@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Thunder One
 
-## Getting Started
+DOOH (Digital Out-of-Home) video publishing platform — MVP.
 
-First, run the development server:
+Stack: Next.js (App Router) + TypeScript + Tailwind CSS + axios, package-managed with **pnpm**.
+
+> Status: R&D. This repo currently contains folder/file scaffolding only —
+> no feature logic is implemented yet.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `.env.example` to `.env.local` and fill in values as they become available.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Architecture: feature-first
 
-## Learn More
+```
+src/
+  app/                 Routes only (App Router). Thin: compose features, no business logic.
+    (dashboard)/
+      videos/page.tsx
+      screens/page.tsx
+      playlists/page.tsx
+      layout.tsx
 
-To learn more about Next.js, take a look at the following resources:
+  features/            One folder per business domain. This is where most work happens.
+    videos/            Video content library (upload/list/manage assets)
+    screens/           Screen / player registry
+    playlists/         Scheduling — assign videos to screens
+    auth/              Authentication / session
+      components/      Feature-scoped UI
+      hooks/           Feature-scoped React hooks
+      services/        API calls for this feature (axios), via src/lib/api/client
+      types/           TypeScript types for this feature's domain
+      index.ts         Public API of the feature — only export what's needed outside it
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+  components/          Shared/cross-feature UI
+    ui/                 Design-system primitives (buttons, inputs, ...)
+    layout/             App shell pieces (header, sidebar, ...)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+  hooks/               Shared/cross-feature hooks
+  lib/
+    api/client.ts       Shared axios instance
+    utils/               Shared utility functions
+  config/              Typed env/config access
+  constants/           Shared constants/enums
+  types/               Shared/global TypeScript types
+```
 
-## Deploy on Vercel
+### Rules of thumb
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- A route file under `app/` should mostly import from `features/*` and render — avoid putting logic directly in `app/`.
+- A feature should not reach into another feature's internals — only import from another feature's `index.ts`.
+- Anything used by 2+ features belongs in `components/`, `hooks/`, `lib/`, or `types/` at the top level, not inside a feature.
+- All HTTP calls go through `src/lib/api/client.ts` (axios instance), wrapped in a feature's `services/`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+```bash
+pnpm dev      # start dev server
+pnpm build    # production build
+pnpm start    # start production server
+pnpm lint     # eslint
+```
