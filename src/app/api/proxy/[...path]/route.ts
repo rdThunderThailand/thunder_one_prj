@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { env } from "@/config/env";
 
 export const dynamic = "force-dynamic";
@@ -32,9 +33,13 @@ async function handle(request: Request, ctx: RouteCtx): Promise<NextResponse> {
   const deviceToken = request.headers.get("x-device-token");
 
   if (deviceToken) {
+    // Player/device path — Bearer only, unchanged.
     headersToSend["Authorization"] = `Bearer ${deviceToken}`;
-  } else if (env.coreApiKey) {
-    headersToSend["x-api-key"] = env.coreApiKey;
+  } else {
+    // App identity always goes; logged-in user token is added on top when present.
+    if (env.coreApiKey) headersToSend["x-api-key"] = env.coreApiKey;
+    const userToken = (await cookies()).get("to_at")?.value;
+    if (userToken) headersToSend["Authorization"] = `Bearer ${userToken}`;
   }
 
   let body: string | undefined = undefined;

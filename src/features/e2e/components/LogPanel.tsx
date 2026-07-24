@@ -1,11 +1,44 @@
 "use client";
 
+import { useState } from "react";
 import type { LogEntry } from "../types";
 
 type LogPanelProps = {
   logs: LogEntry[];
   onClear: () => void;
 };
+
+function formatLog(entry: LogEntry): string {
+  return [
+    `${entry.method} ${entry.url}`,
+    `Status: ${entry.status ?? "ERR"}  ${entry.ms}ms  ${entry.at}`,
+    ``,
+    `Request:`,
+    JSON.stringify(entry.request, null, 2),
+    ``,
+    `Response:`,
+    JSON.stringify(entry.response, null, 2),
+  ].join("\n");
+}
+
+function CopyLogButton({ entry }: { entry: LogEntry }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(formatLog(entry));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="rounded bg-zinc-200 px-1.5 py-0.5 text-[11px] font-medium text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+    >
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
 
 export function LogPanel({ logs, onClear }: LogPanelProps) {
   return (
@@ -67,6 +100,7 @@ export function LogPanel({ logs, onClear }: LogPanelProps) {
                   <div className="flex items-center gap-2 text-zinc-500 font-mono text-[11px]">
                     <span>{entry.ms}ms</span>
                     <span>{new Date(entry.at).toLocaleTimeString()}</span>
+                    <CopyLogButton entry={entry} />
                   </div>
                 </div>
 
