@@ -65,7 +65,6 @@ export function VideosPanel({
     setProgress(0);
 
     try {
-      // Step 1: Request upload URL
       setStep("Step 1/3: Getting upload URL...");
       const { entry: urlEntry, data: urlData } =
         await callApi<VideoUploadUrlResponse>({
@@ -85,11 +84,9 @@ export function VideosPanel({
         return;
       }
 
-      // Step 2: Upload to storage directly
       setStep("Step 2/3: Uploading binary file...");
       await uploadToStorage(urlData.upload_url, file, (pct) => setProgress(pct));
 
-      // Step 3: Register video asset
       setStep("Step 3/3: Registering video metadata...");
       const { entry: regEntry } = await callApi<Video>({
         method: "POST",
@@ -111,6 +108,18 @@ export function VideosPanel({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApprove = async (id: string) => {
+    setLoading(true);
+    const { entry } = await callApi<unknown>({
+      method: "POST",
+      path: `/media/videos/${id}/approve`,
+      body: { status: "approved" },
+    });
+    onLog(entry);
+    await handleRefresh();
+    setLoading(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -201,6 +210,8 @@ export function VideosPanel({
             <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500">
               <th className="py-2 px-1">Title</th>
               <th className="py-2 px-1">ID</th>
+              <th className="py-2 px-1">Kind</th>
+              <th className="py-2 px-1">Approval</th>
               <th className="py-2 px-1">Status</th>
               <th className="py-2 px-1 text-right">Action</th>
             </tr>
@@ -208,7 +219,7 @@ export function VideosPanel({
           <tbody>
             {videos.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-4 text-center text-zinc-400">
+                <td colSpan={6} className="py-4 text-center text-zinc-400">
                   No videos loaded. Click Refresh List.
                 </td>
               </tr>
@@ -224,8 +235,17 @@ export function VideosPanel({
                   <td className="py-2 px-1 font-mono text-[11px] text-zinc-500">
                     {v.id}
                   </td>
+                  <td className="py-2 px-1 text-zinc-500">{v.kind ?? "—"}</td>
+                  <td className="py-2 px-1 text-zinc-500">{v.approval_status ?? "—"}</td>
                   <td className="py-2 px-1 text-zinc-500">{v.status ?? "ready"}</td>
-                  <td className="py-2 px-1 text-right">
+                  <td className="py-2 px-1 text-right flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => handleApprove(v.id)}
+                      disabled={loading}
+                      className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 font-medium"
+                    >
+                      Approve
+                    </button>
                     <button
                       onClick={() => handleDelete(v.id)}
                       className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium"

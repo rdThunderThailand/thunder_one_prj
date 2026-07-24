@@ -90,7 +90,27 @@ export function ScreensPanel({
             ) : (
               screens.map((screen) => {
                 const isSelected = selectedScreenIds.includes(screen.id);
+                const statusLevel = screen.status_level;
                 const isOnline = Boolean(screen.is_online);
+
+                let badgeColor = "bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+                let badgeText = "Offline";
+
+                if (statusLevel) {
+                  if (statusLevel === "online") {
+                    badgeColor = "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
+                    badgeText = "Online";
+                  } else if (statusLevel === "warning") {
+                    badgeColor = "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300";
+                    badgeText = "Warning";
+                  } else {
+                    badgeColor = "bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+                    badgeText = "Offline";
+                  }
+                } else if (isOnline) {
+                  badgeColor = "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
+                  badgeText = "Online";
+                }
 
                 return (
                   <tr
@@ -112,14 +132,8 @@ export function ScreensPanel({
                       {screen.id}
                     </td>
                     <td className="py-2 px-1">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          isOnline
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                            : "bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                        }`}
-                      >
-                        {isOnline ? "Online" : "Offline"}
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${badgeColor}`}>
+                        {badgeText}
                       </span>
                     </td>
                     <td className="py-2 px-1 text-right">
