@@ -7,6 +7,8 @@ import type {
   Publication,
   PublicationDetail,
   PublicationListItem,
+  PublicationTarget,
+  Screen,
   Tag,
 } from "../types";
 
@@ -86,6 +88,25 @@ export async function fetchTags(): Promise<Tag[]> {
   return [];
 }
 
+export async function fetchScreens(): Promise<Screen[]> {
+  const data = await requestApi<{ screens?: Screen[] } | Screen[]>(
+    "GET",
+    "/media/screens"
+  );
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (
+    data &&
+    typeof data === "object" &&
+    "screens" in data &&
+    Array.isArray(data.screens)
+  ) {
+    return data.screens;
+  }
+  return [];
+}
+
 function cleanBasicInfoBody(
   form: BasicInfoForm,
   publicationId: string | null
@@ -121,9 +142,16 @@ function cleanBasicInfoBody(
 
 export async function saveBasicInfo(
   form: BasicInfoForm,
-  publicationId: string | null
+  publicationId: string | null,
+  targets?: PublicationTarget[]
 ): Promise<Publication> {
   const body = cleanBasicInfoBody(form, publicationId);
+  // PATCH replaces every field it receives, so the caller must always post the
+  // whole form. `targets` is the exception: omitting the key leaves the saved
+  // targets untouched, which is what steps 1 and 2 want.
+  if (targets) {
+    body.targets = targets;
+  }
   const method = publicationId ? "PATCH" : "POST";
   return requestApi<Publication>(method, "/media/publications", body);
 }

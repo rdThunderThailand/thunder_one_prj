@@ -106,7 +106,25 @@ export type PublicationDetail = {
   created_at?: string;
   activated_at?: string;
   job_status?: string;
+  /** Delivery status per device — populated only after activation. */
   targets?: unknown[];
+  /** The publication's own targets, saved in step 3. */
+  publication_targets?: PublicationTarget[];
+};
+
+export type Screen = {
+  id: string;
+  name: string;
+  connection_status?: string;
+  status_level?: "online" | "warning" | "offline";
+  last_heartbeat_at?: string | null;
+};
+
+export type PublicationTarget = {
+  target_type: "channel" | "device";
+  channel_id?: string | null;
+  device_id?: string | null;
+  name?: string | null;
 };
 
 export type ContentItem = {

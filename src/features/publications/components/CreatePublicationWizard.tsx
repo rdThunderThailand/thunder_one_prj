@@ -5,12 +5,22 @@ import {
   fetchCampaigns,
   fetchMediaAssets,
   fetchPublication,
+  fetchScreens,
   fetchTags,
   saveBasicInfo,
   savePublicationContent,
 } from "../services/publications-api";
-import type { BasicInfoForm, Campaign, ContentItem, MediaAsset, Tag } from "../types";
+import type {
+  BasicInfoForm,
+  Campaign,
+  ContentItem,
+  MediaAsset,
+  PublicationTarget,
+  Screen,
+  Tag,
+} from "../types";
 import { BasicInfoStep } from "./BasicInfoStep";
+import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
 
 const WIZARD_STEPS = [
@@ -41,24 +51,34 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
   const [tags, setTags] = useState<Tag[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [screens, setScreens] = useState<Screen[]>([]);
+  const [targets, setTargets] = useState<PublicationTarget[]>([]);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingInitial, setLoadingInitial] = useState<boolean>(Boolean(initialPublicationId));
   const [loadingAssets, setLoadingAssets] = useState<boolean>(true);
+  const [loadingScreens, setLoadingScreens] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [assetsError, setAssetsError] = useState<string | null>(null);
+  const [screensError, setScreensError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     const loadInitialData = async () => {
       try {
-        const [fetchedCampaigns, fetchedTags, fetchedAssets] = await Promise.all([
+        const [fetchedCampaigns, fetchedTags, fetchedAssets, fetchedScreens] = await Promise.all([
           fetchCampaigns(),
           fetchTags(),
           fetchMediaAssets().catch((err) => {
             if (isMounted) {
               setAssetsError(err instanceof Error ? err.message : "Failed to load media assets.");
+            }
+            return [];
+          }),
+          fetchScreens().catch((err) => {
+            if (isMounted) {
+              setScreensError(err instanceof Error ? err.message : "Failed to load screens.");
             }
             return [];
           }),
@@ -68,12 +88,15 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
           setCampaigns(fetchedCampaigns);
           setTags(fetchedTags);
           setMediaAssets(fetchedAssets);
+          setScreens(fetchedScreens);
           setLoadingAssets(false);
+          setLoadingScreens(false);
         }
       } catch (err) {
         if (isMounted) {
           setError(err instanceof Error ? err.message : "Failed to load campaigns or tags.");
           setLoadingAssets(false);
+          setLoadingScreens(false);
         }
       }
 
@@ -90,6 +113,7 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
               language: detail.language || "",
               tags: detail.tags || [],
             });
+            setTargets(detail.publication_targets ?? []);
             setPublicationId(detail.id);
           }
         } catch (err) {
@@ -111,14 +135,14 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
     setSavedMessage(null);
   };
 
-  const executeSave = async (): Promise<string | null> => {
+  const executeSave = async (targetsToSave?: PublicationTarget[]): Promise<string | null> => {
     if (!form.name.trim()) return null;
     setLoading(true);
     setError(null);
     setSavedMessage(null);
 
     try {
-      const res = await saveBasicInfo(form, publicationId);
+      const res = await saveBasicInfo(form, publicationId, targetsToSave);
       const newId = res.publication_id || res.id || publicationId;
       if (newId) setPublicationId(newId);
       return newId;
@@ -131,7 +155,9 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
   };
 
   const handleSaveDraft = async () => {
-    const savedId = await executeSave();
+    // Only send targets once the user has reached the step that edits them —
+    // sending them earlier would overwrite saved targets with an empty array.
+    const savedId = await executeSave(step >= 3 ? targets : undefined);
     if (savedId) setSavedMessage(`บันทึก draft แล้ว (ID: ${savedId})`);
   };
 
@@ -161,6 +187,9 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
       } finally {
         setLoading(false);
       }
+    } else if (step === 3) {
+      const savedId = await executeSave(targets);
+      if (savedId) setStep(4);
     } else if (step < 5) {
       setStep((prev) => prev + 1);
     }
@@ -172,7 +201,12 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
 
   const isNameEmpty = !form.name.trim();
   const isNoAssetType = form.publication_type === "html" || form.publication_type === "dynamic";
-  const isNextDisabled = loading || isNameEmpty || (step === 2 && !isNoAssetType && contentItems.length === 0) || step === 5;
+  const isNextDisabled =
+    loading ||
+    isNameEmpty ||
+    (step === 2 && !isNoAssetType && contentItems.length === 0) ||
+    (step === 3 && targets.length === 0) ||
+    step === 5;
 
   if (loadingInitial) {
     return <div className="p-8 text-center text-sm text-zinc-500">Loading draft details…</div>;
@@ -228,8 +262,10 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
           <BasicInfoStep form={form} onChange={handleFormChange} campaigns={campaigns} existingTags={tags} />
         ) : step === 2 ? (
           <ContentStep publicationType={form.publication_type} items={contentItems} onChange={setContentItems} mediaAssets={mediaAssets} loadingAssets={loadingAssets} assetsError={assetsError} />
+        ) : step === 3 ? (
+          <ChannelsStep targets={targets} onChange={setTargets} screens={screens} loadingScreens={loadingScreens} screensError={screensError} />
         ) : (
-          /* ponytail: intentionally a stub for steps 3-5 */
+          /* ponytail: intentionally a stub for steps 4-5 */
           <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900 shadow-sm space-y-2">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Step {step}: {WIZARD_STEPS[step - 1].label}</h2>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">ยังไม่ implement — step {step}</p>

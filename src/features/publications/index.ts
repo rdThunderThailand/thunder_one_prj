@@ -9,7 +9,9 @@ export type {
   Publication,
   PublicationDetail,
   PublicationListItem,
+  PublicationTarget,
   PublicationType,
+  Screen,
   Tag,
 } from "./types";
 export { PRIORITIES, PUBLICATION_TYPES } from "./types";
