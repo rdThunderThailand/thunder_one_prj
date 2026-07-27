@@ -152,7 +152,16 @@ export function DraftList({ publishedName, status = "draft" }: DraftListProps) {
                   className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors"
                 >
                   <td className="py-3 px-4 font-medium text-zinc-900 dark:text-zinc-100">
-                    {draft.name}
+                    {isActive ? (
+                      <Link
+                        href={`/publications/${draft.id}`}
+                        className="hover:underline"
+                      >
+                        {draft.name}
+                      </Link>
+                    ) : (
+                      draft.name
+                    )}
                   </td>
                   <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400 capitalize">
                     {draft.publication_type}

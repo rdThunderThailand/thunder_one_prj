@@ -5,6 +5,8 @@ import type { BasicInfoForm, Campaign, ContentItem, MediaAsset, PublicationTarge
 import { isScheduleFormValid, scheduleFormToPayload, WEEKDAYS } from "../schedule";
 import { checkScheduleConflicts } from "../services/publications-api";
 import { ScheduleCalendar } from "./ScheduleCalendar";
+import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import { MediaThumb } from "./MediaThumb";
 
 type ReviewStepProps = {
   form: BasicInfoForm;
@@ -42,6 +44,8 @@ export function ReviewStep({ form, campaigns, contentItems, mediaAssets, targets
   }, [scheduleForm, deviceIdsKey, deviceIds, publicationId, isValid]);
 
   const sortedContent = useMemo(() => [...contentItems].sort((a, b) => a.position - b.position), [contentItems]);
+  const assetIds = useMemo(() => sortedContent.map((i) => i.media_asset_id), [sortedContent]);
+  const previews = usePreviewUrls(assetIds);
   const campaignName = useMemo(() => campaigns.find((c) => c.id === form.campaign_id)?.name ?? "—", [campaigns, form.campaign_id]);
   const offlineWarningCount = useMemo(() => targets.filter((t) => {
     const s = screens.find((sc) => sc.id === t.device_id);
@@ -81,15 +85,18 @@ export function ReviewStep({ form, campaigns, contentItems, mediaAssets, targets
                 const dim = asset?.width && asset?.height ? `${asset.width}×${asset.height}` : null;
                 const size = asset?.file?.file_size_bytes != null ? `${(asset.file.file_size_bytes / 1024 / 1024).toFixed(1)} MB` : null;
                 return (
-                  <div key={item.media_asset_id + item.position} className="flex flex-col gap-1 rounded-md border border-zinc-100 bg-zinc-50 p-3 text-sm dark:border-zinc-800/60 dark:bg-zinc-800/40">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{item.position}. {title}</span>
-                      {asset?.kind && <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-mono uppercase text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{asset.kind}</span>}
-                    </div>
-                    <div className="flex flex-wrap gap-x-3 text-xs text-zinc-500 dark:text-zinc-400">
-                      {dur && <span>ความยาว: {dur}</span>}
-                      {dim && <span>ขนาด: {dim}</span>}
-                      {size && <span>ไฟล์: {size}</span>}
+                  <div key={item.media_asset_id + item.position} className="flex items-center gap-3 rounded-md border border-zinc-100 bg-zinc-50 p-3 text-sm dark:border-zinc-800/60 dark:bg-zinc-800/40">
+                    <MediaThumb url={previews[item.media_asset_id]} kind={asset?.kind} mimeType={asset?.file?.mime_type} alt={title} className="h-12 w-12" />
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{item.position}. {title}</span>
+                        {asset?.kind && <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-mono uppercase text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{asset.kind}</span>}
+                      </div>
+                      <div className="flex flex-wrap gap-x-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        {dur && <span>ความยาว: {dur}</span>}
+                        {dim && <span>ขนาด: {dim}</span>}
+                        {size && <span>ไฟล์: {size}</span>}
+                      </div>
                     </div>
                   </div>
                 );

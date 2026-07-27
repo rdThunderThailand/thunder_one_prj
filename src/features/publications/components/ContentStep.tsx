@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ContentItem, MediaAsset, PublicationType } from "../types";
+import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import { MediaThumb } from "./MediaThumb";
 
 type ContentStepProps = {
   publicationType?: PublicationType;
@@ -22,6 +24,10 @@ export function ContentStep({
 }: ContentStepProps) {
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<"all" | "image" | "video">("all");
+  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
+
+  const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const isNoAssetType = publicationType === "html" || publicationType === "dynamic";
   const isSingleSelect = publicationType === "image" || publicationType === "video";
@@ -45,6 +51,47 @@ export function ContentStep({
       return matchKind && (!search.trim() || titleText.toLowerCase().includes(search.trim().toLowerCase()));
     });
   }, [mediaAssets, search, kindFilter]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const seen: string[] = [];
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = (entry.target as HTMLElement).dataset.assetId;
+            if (id) {
+              seen.push(id);
+              observer.unobserve(entry.target);
+            }
+          }
+        }
+        if (seen.length > 0) {
+          setVisibleIds((prev) => {
+            const next = new Set(prev);
+            seen.forEach((id) => next.add(id));
+            return next;
+          });
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observerRef.current = observer;
+    cardRefs.current.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [filteredAssets]);
+
+  const registerCard = (id: string) => (el: HTMLElement | null) => {
+    if (el) {
+      el.dataset.assetId = id;
+      cardRefs.current.set(id, el);
+      observerRef.current?.observe(el);
+    } else {
+      cardRefs.current.delete(id);
+    }
+  };
+
+  const visibleAssetIds = useMemo(() => Array.from(visibleIds), [visibleIds]);
+  const previews = usePreviewUrls(visibleAssetIds);
 
   const getDefaultDuration = (asset: MediaAsset): number | null => {
     return asset.kind === "image" ? 10 : (asset.duration_seconds ?? null);
@@ -138,19 +185,39 @@ export function ContentStep({
                 const sizeText = formatFileSize(asset.file?.file_size_bytes);
 
                 return (
-                  <div key={asset.id} onClick={() => handleToggleAsset(asset)} className={`rounded border p-3 text-xs transition-colors ${!isApproved ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50" : isSelected ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-800 cursor-pointer" : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600 cursor-pointer bg-white dark:bg-zinc-900"}`}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{titleText}</div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 uppercase">{asset.kind ?? "file"}</span>
-                        {!isApproved && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">not approved</span>}
-                        {isSelected && <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] font-medium text-white">Selected</span>}
+                  <div
+                    key={asset.id}
+                    ref={registerCard(asset.id)}
+                    onClick={() => handleToggleAsset(asset)}
+                    className={`rounded border p-3 text-xs transition-colors flex items-center gap-3 ${
+                      !isApproved
+                        ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
+                        : isSelected
+                        ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-800 cursor-pointer"
+                        : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600 cursor-pointer bg-white dark:bg-zinc-900"
+                    }`}
+                  >
+                    <MediaThumb
+                      url={previews[asset.id]}
+                      kind={asset.kind}
+                      mimeType={asset.file?.mime_type}
+                      alt={titleText}
+                      className="h-12 w-12"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{titleText}</div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 uppercase">{asset.kind ?? "file"}</span>
+                          {!isApproved && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">not approved</span>}
+                          {isSelected && <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] font-medium text-white">Selected</span>}
+                        </div>
                       </div>
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-                      {asset.width && asset.height && <span>{asset.width}×{asset.height}</span>}
-                      {asset.duration_seconds !== undefined && asset.duration_seconds !== null && <span>{asset.duration_seconds}s</span>}
-                      {sizeText && <span>{sizeText}</span>}
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+                        {asset.width && asset.height && <span>{asset.width}×{asset.height}</span>}
+                        {asset.duration_seconds !== undefined && asset.duration_seconds !== null && <span>{asset.duration_seconds}s</span>}
+                        {sizeText && <span>{sizeText}</span>}
+                      </div>
                     </div>
                   </div>
                 );

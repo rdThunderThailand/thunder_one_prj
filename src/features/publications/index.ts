@@ -1,5 +1,6 @@
 export { CreatePublicationWizard } from "./components/CreatePublicationWizard";
 export { DraftList } from "./components/DraftList";
+export { PublicationDetailView } from "./components/PublicationDetailView";
 export type {
   BasicInfoForm,
   Campaign,

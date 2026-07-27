@@ -4,6 +4,7 @@ import type {
   Campaign,
   ContentItem,
   MediaAsset,
+  PlaylistDetail,
   Publication,
   PublicationDetail,
   PublicationListItem,
@@ -247,3 +248,22 @@ export async function checkScheduleConflicts(payload: {
   );
   return Array.isArray(data) ? data : [];
 }
+
+/** Batch-signs 1h preview URLs for the given media asset ids. Returns id → URL. */
+export async function fetchPreviewUrls(ids: string[]): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
+  const data = await requestApi<{ urls?: Record<string, string> } | Record<string, string>>(
+    "POST",
+    "/media/videos/preview-urls",
+    { ids }
+  );
+  if (data && typeof data === "object" && "urls" in data) {
+    return (data as { urls?: Record<string, string> }).urls ?? {};
+  }
+  return (data as Record<string, string>) ?? {};
+}
+
+export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {
+  return requestApi<PlaylistDetail>("GET", `/media/playlists/${id}`);
+}
+

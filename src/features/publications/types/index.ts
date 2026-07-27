@@ -185,3 +185,19 @@ export type ScheduleConflict = {
   ends_at: string | null;
   screens: string[];
 };
+
+export type PlaylistItem = {
+  media_asset_id: string;
+  title?: string;
+  position: number;
+  duration_seconds?: number | null;
+  transition?: string;
+};
+
+export type PlaylistDetail = {
+  id: string;
+  name: string;
+  status?: string;
+  items: PlaylistItem[];
+};
+
