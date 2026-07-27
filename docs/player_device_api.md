@@ -157,6 +157,37 @@ stateDiagram-v2
 
 ---
 
+## 3.1 End-to-end: จาก publish ถึงขึ้นจอ (ทำไมงานไม่ขึ้นทันที)
+
+จากที่ผู้ดูแลกด publish บนเว็บ Thunder One จนวิดีโอขึ้นจอเครื่องคุณ — **ไม่ใช่ทันที** เพราะระบบเป็น pull ไม่ push
+
+```mermaid
+sequenceDiagram
+    actor U as ผู้ดูแล
+    participant ONE as Thunder One (เว็บ)
+    participant C as Thunder_Core
+    participant ST as Storage
+    participant D as 📺 เครื่องคุณ
+
+    U->>ONE: กด publish → จอ A
+    ONE->>C: สร้าง job (status=pending)
+    Note over C,D: ⏳ server ไม่ push — รอ poll รอบถัดไป
+
+    D->>C: poll jobs (รอบถัดไป)
+    C-->>D: job + signed URL
+    D->>C: ack "downloading"
+    D->>ST: download ไฟล์
+    D->>C: ack "playing"
+    D->>D: 🎬 เล่นขึ้นจอ
+    D->>C: playback log
+```
+
+**Latency = รอบ poll ถัดไป (30–60 วิ) + เวลาโหลดไฟล์** ไม่ใช่ทันที ถ้าอยากให้ไวขึ้น poll ถี่ขึ้นได้ แต่ 30–60 วิคือค่าที่ตกลงกันไว้
+
+> คุณเห็นแค่ตั้งแต่ step "poll" เป็นต้นไป ทุกอย่างก่อนหน้า (upload/publish) เป็นเรื่องฝั่งเว็บ ไม่เกี่ยวกับเครื่อง
+
+---
+
 ## 4. รายละเอียดแต่ละเส้น
 
 ### 4.1 Poll งาน — `POST /media/player/jobs`
@@ -167,7 +198,7 @@ Authorization: Bearer <device_token>
 ```
 ไม่ต้องมี body
 
-**Response 200** (ตัวอย่างจริงจาก production):
+**Response 200** (ตัวอย่างจริงจาก Screen 01 — `jobs` เป็น array คืนได้หลายงาน):
 
 ```json
 {
@@ -196,11 +227,36 @@ Authorization: Bearer <device_token>
             }
           }
         ]
+      },
+      {
+        "target_id": "da7687d6-7a28-40be-9e8b-75076a4534e3",
+        "publication_id": "532fbf33-54cb-4074-bc3f-540c2e18cceb",
+        "created_at": "2026-07-24T...",
+        "playlist": { "id": "9470bd71-...", "name": "Single: 483fdf08-..." },
+        "items": [
+          {
+            "media_asset_id": "483fdf08-7c42-4832-9552-67c2507e17ca",
+            "position": 0,
+            "duration_seconds": null,
+            "transition": "cut",
+            "file": {
+              "bucket_name": "media",
+              "storage_key": "videos/....mp4",
+              "checksum": null,
+              "mime_type": "video/mp4",
+              "original_filename": "sample-360p-10s.mp4",
+              "url": "https://sfiefevtxalqjizdkcsw.supabase.co/storage/v1/object/sign/media/...?token=..."
+            }
+          }
+        ]
       }
     ]
   }
 }
 ```
+
+> ⚠️ **`jobs` คืนได้หลายงานพร้อมกัน** — ต้อง loop ทุกงาน ห้าม assume ว่ามีแค่ตัวเดียว
+> ⚠️ **`duration_seconds` เป็น `null` ได้** (เห็นในงานที่สอง) — ฝั่งเครื่องต้องมี fallback (เช่น เล่นจนจบไฟล์) ไม่งั้นเล่นเวลาผิด
 
 | ฟิลด์ | ชนิด | หมายเหตุ |
 |-------|------|----------|
@@ -208,7 +264,7 @@ Authorization: Bearer <device_token>
 | `jobs[].target_id` | uuid | **ใช้ตัวนี้ตอน ack** (ไม่ใช่ `publication_id`) |
 | `items` | array | เรียงตาม `position` แล้ว |
 | `items[].position` | int | **เริ่มที่ 0** |
-| `items[].duration_seconds` | int | เวลาที่ต้องแสดง |
+| `items[].duration_seconds` | int \| null | เวลาที่ต้องแสดง — **อาจเป็น null** ต้องมี fallback |
 | `items[].file.url` | string \| null | **signed URL — อายุ 1 ชั่วโมง** |
 | `items[].file.checksum` | string \| null | **อาจเป็น null** — ถ้ามีค่อยใช้ตรวจไฟล์ |
 
@@ -341,18 +397,21 @@ curl -X POST "$BASE/api/core/v1/media/player/playback" \
 
 | เครื่อง | device_id | device token | สถานะข้อมูล |
 |--------|-----------|--------------|-------------|
-| **ThunderOne Screen 01** | `11110000-0000-4000-8000-000000000011` | `dtk_6625464d12389e2235c325738ba6dbde3bf7f4edd55d6c80` | ✅ **มีงาน pending รออยู่** — ใช้เครื่องนี้เทส flow เต็ม |
+| **ThunderOne Screen 01** | `11110000-0000-4000-8000-000000000011` | `dtk_6625464d12389e2235c325738ba6dbde3bf7f4edd55d6c80` | ✅ **มี 2 งาน pending รออยู่** — ใช้เครื่องนี้เทส flow เต็ม |
 | **ThunderOne Screen 02** | `11110000-0000-4000-8000-000000000012` | `dtk_d92b8fbab4fc461aaea04f3b5137b1a6121d4c0f7cfc2495` | ไม่มีงาน — ใช้เทสเคส `jobs: []` |
 
-### งานที่รออยู่บน Screen 01
+### งานที่รออยู่บน Screen 01 (ยืนยันกับ DB 2026-07-24 17:5x)
 
-| ข้อมูล | ค่า |
-|-------|-----|
-| `target_id` (ใช้ ack) | `806c2265-e008-4b91-b199-532fde7a46ed` |
-| `publication_id` | `5a4662a2-4aa2-49fe-9e76-07a22377f331` |
-| `playlist` | `48ea7acc-6161-4900-b89a-be2cc084f488` ("test") |
-| `media_asset_id` (ใช้ playback log) | `a5624df1-3c63-4c2a-b98a-365cca0e1891` |
-| ไฟล์ | `sample-360p-10s.mp4` · video/mp4 · 10 วินาที |
+Screen 01 ตอนนี้ **poll จะคืน 2 jobs** — ใช้ตัวแรกเทส flow เต็ม (ข้อมูลครบ ชัดเจนกว่า):
+
+| ข้อมูล | งาน A (แนะนำ) | งาน B |
+|-------|---------------|-------|
+| `target_id` (ใช้ ack) | `806c2265-e008-4b91-b199-532fde7a46ed` | `da7687d6-7a28-40be-9e8b-75076a4534e3` |
+| `publication_id` | `5a4662a2-4aa2-49fe-9e76-07a22377f331` | `532fbf33-54cb-4074-bc3f-540c2e18cceb` |
+| `playlist` | `48ea7acc-6161-4900-b89a-be2cc084f488` ("test") | `9470bd71-2b92-49c7-98a4-18845b297d51` (auto "Single: …") |
+| `media_asset_id` (playback log) | `a5624df1-3c63-4c2a-b98a-365cca0e1891` | `483fdf08-7c42-4832-9552-67c2507e17ca` |
+| `duration_seconds` | `10` | **`null`** — ฝั่งเครื่องต้องมี fallback ถ้าไม่มีค่า |
+| ไฟล์ | `sample-360p-10s.mp4` · video/mp4 | `sample-360p-10s.mp4` · video/mp4 |
 
 ### ลำดับการเทส POC ที่แนะนำ
 
@@ -375,7 +434,7 @@ curl -X POST "$BASE/api/core/v1/media/player/playback" \
 
 | เทส | ผลลัพธ์ |
 |-----|---------|
-| `POST /media/player/jobs` (Screen 01) | ✅ **200** — คืน 1 job + signed URL ใช้งานได้ |
+| `POST /media/player/jobs` (Screen 01) | ✅ **200** — คืน job + signed URL ใช้งานได้ (ปัจจุบันมี 2 งาน pending) |
 | `POST /media/player/heartbeat` | ✅ **200** — `{device_id, received_at}` |
 | token ผิด | ✅ **401** `Unauthorized: invalid or revoked device token` |
 | `GET` แทน `POST` | ✅ **405** (ยืนยันว่าทุกเส้นรับเฉพาะ POST) |
