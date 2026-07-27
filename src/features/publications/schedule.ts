@@ -1,6 +1,7 @@
 import type {
   PublicationSchedule,
   Recurrence,
+  ScheduleConflict,
   ScheduleForm,
   SchedulePayload,
 } from "./types";
@@ -110,7 +111,11 @@ export function scheduleFormToPayload(form: ScheduleForm): SchedulePayload {
   const timezone = form.timezone;
 
   if (form.schedule_type === "now") {
-    return { starts_at: new Date().toISOString(), ends_at: null, timezone, recurrence: {} };
+    // Publish Now starts live at activation; an optional expiry may still be set.
+    const ends_at = form.end_date
+      ? zonedToUtcIso(form.end_date, form.end_time || "23:59", timezone)
+      : null;
+    return { starts_at: new Date().toISOString(), ends_at, timezone, recurrence: {} };
   }
 
   const starts_at = zonedToUtcIso(form.start_date, form.start_time, timezone);
@@ -154,4 +159,101 @@ export function scheduleToForm(schedule?: PublicationSchedule | null): ScheduleF
     daily_start: isWeekly ? rec.daily_start : base.daily_start,
     daily_end: isWeekly ? rec.daily_end : base.daily_end,
   };
+}
+
+// --- month calendar for the conflict-overlap view ---------------------------
+// Day granularity, in the schedule's own timezone. "YYYY-MM-DD" strings sort
+// chronologically, so all range checks are plain string comparisons.
+
+export type CalendarDay = {
+  ymd: string; // "YYYY-MM-DD"; "" for padding cells outside the month
+  day: number; // day-of-month; 0 for padding cells
+  inMonth: boolean;
+  isActive: boolean; // the publication is scheduled to play this day
+  isOverlap: boolean; // active AND colliding with a conflicting publication
+  isToday: boolean;
+};
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** Day-of-week for a pure "YYYY-MM-DD", 0=Sun..6=Sat (timezone-independent). */
+function ymdDow(ymd: string): number {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+/** The publication's [start, end|null] window as day strings, in its timezone. */
+function scheduleWindow(form: ScheduleForm): { start: string; end: string | null } {
+  if (form.schedule_type === "now") {
+    const today = utcToZonedParts(new Date().toISOString(), form.timezone).date;
+    return { start: today, end: form.end_date || null };
+  }
+  return { start: form.start_date, end: form.end_date || null };
+}
+
+/** Does the publication play on `ymd`? (day granularity, in its timezone) */
+export function isScheduleActiveOn(form: ScheduleForm, ymd: string): boolean {
+  const { start, end } = scheduleWindow(form);
+  if (!start || ymd < start) return false;
+  if (end && ymd > end) return false;
+  if (form.schedule_type === "recurring") return form.days.includes(ymdDow(ymd));
+  return true;
+}
+
+/** Does any conflicting publication's window cover `ymd`? */
+export function overlapsConflictOn(
+  ymd: string,
+  conflicts: ScheduleConflict[],
+  timezone: string
+): boolean {
+  return conflicts.some((c) => {
+    const cStart = utcToZonedParts(c.starts_at, timezone).date;
+    const cEnd = c.ends_at ? utcToZonedParts(c.ends_at, timezone).date : null;
+    if (ymd < cStart) return false;
+    if (cEnd && ymd > cEnd) return false;
+    return true;
+  });
+}
+
+/** Build a month matrix (weeks start Sunday) for the overlap calendar. */
+export function buildCalendarMonth(
+  form: ScheduleForm,
+  conflicts: ScheduleConflict[],
+  viewYear: number,
+  viewMonth: number // 0-based
+): CalendarDay[][] {
+  const todayYmd = utcToZonedParts(new Date().toISOString(), form.timezone).date;
+  const firstDow = new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
+
+  const padding = (): CalendarDay => ({
+    ymd: "",
+    day: 0,
+    inMonth: false,
+    isActive: false,
+    isOverlap: false,
+    isToday: false,
+  });
+
+  const cells: CalendarDay[] = [];
+  for (let i = 0; i < firstDow; i++) cells.push(padding());
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ymd = `${viewYear}-${pad2(viewMonth + 1)}-${pad2(d)}`;
+    const isActive = isScheduleActiveOn(form, ymd);
+    cells.push({
+      ymd,
+      day: d,
+      inMonth: true,
+      isActive,
+      isOverlap: isActive && overlapsConflictOn(ymd, conflicts, form.timezone),
+      isToday: ymd === todayYmd,
+    });
+  }
+  while (cells.length % 7 !== 0) cells.push(padding());
+
+  const weeks: CalendarDay[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
 }

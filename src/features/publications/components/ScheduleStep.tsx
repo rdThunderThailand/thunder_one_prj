@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ScheduleConflict, ScheduleForm, ScheduleType } from "../types";
 import { SCHEDULE_TYPES } from "../types";
-import { TIMEZONES, WEEKDAYS, isScheduleFormValid, scheduleFormToPayload } from "../schedule";
+import { TIMEZONES, WEEKDAYS, isScheduleFormValid, scheduleFormToPayload, utcToZonedParts } from "../schedule";
 import { checkScheduleConflicts } from "../services/publications-api";
+import { ScheduleCalendar } from "./ScheduleCalendar";
 
 type ScheduleStepProps = {
   form: ScheduleForm;
@@ -116,6 +117,8 @@ export function ScheduleStep({ form, onChange, deviceIds, publicationId }: Sched
     </div>
   );
 
+  const nowZoned = utcToZonedParts(new Date().toISOString(), form.timezone);
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 shadow-sm space-y-4">
@@ -136,9 +139,43 @@ export function ScheduleStep({ form, onChange, deviceIds, publicationId }: Sched
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Schedule Details</h3>
 
         {form.schedule_type === "now" && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Publishes immediately once the publication is activated.
-          </p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Publish Date</label>
+                <input
+                  type="date"
+                  disabled
+                  value={nowZoned.date}
+                  className="w-full rounded border border-zinc-300 px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-70 disabled:cursor-not-allowed bg-zinc-100 dark:bg-zinc-800/60"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Publish Time</label>
+                <input
+                  type="time"
+                  disabled
+                  value={nowZoned.time}
+                  className="w-full rounded border border-zinc-300 px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-70 disabled:cursor-not-allowed bg-zinc-100 dark:bg-zinc-800/60"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Publishes immediately once activated.
+            </p>
+            <div className="pt-1">
+              <label className="inline-flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasExpiration}
+                  onChange={(e) => handleExpirationToggle(e.target.checked)}
+                  className="rounded border-zinc-300 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800"
+                />
+                Set expiration date
+              </label>
+            </div>
+            {hasExpiration && renderEndFields("End Date", "End Time")}
+          </div>
         )}
 
         {form.schedule_type === "later" && (
@@ -204,6 +241,8 @@ export function ScheduleStep({ form, onChange, deviceIds, publicationId }: Sched
       {checking && (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">Checking for schedule conflicts…</p>
       )}
+
+      {isValid && <ScheduleCalendar form={form} conflicts={activeConflicts} />}
 
       {activeConflicts.length > 0 && (
         <div className="rounded-md bg-amber-50 p-4 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800 text-amber-800 dark:text-amber-300 space-y-3">
