@@ -1,4 +1,4 @@
-# Session Log — Publication Wizard (Basic Info + Content + Channels) & media_core tags
+# Session Log — Publication Wizard (Basic Info + Content + Channels + Schedule) & media_core tags
 
 **Date:** 2026-07-27
 **Branches:** `feat/publication` (thunder_one_prj) · `feat/thunderOne` (`Thunder_Core`)
@@ -16,7 +16,7 @@ Building the **Create Publication** 5-step wizard from the approved redesign
 | 1. Basic Info | ✅ done, wired to the real backend |
 | 2. Content | ✅ done, wired to the real backend |
 | 3. Channels | ✅ done, wired to the real backend (devices only — see §10) |
-| 4. Schedule | ⬜ stub |
+| 4. Schedule | ✅ done, wired to the real backend (weekly recurrence + conflict warning — see §11) |
 | 5. Review & Publish | ⬜ stub |
 
 Plus a drafts list at `/publications` with **Resume** and **Delete**.
@@ -149,6 +149,10 @@ src/app/api/core/v1/media/publications/[id]/route.ts            cd4e150  + DELET
 src/app/api/core/v1/media/publications/[id]/content/route.ts    cd4e150  PUT
 
 supabase/migrations/062_media_publication_get_targets.sql       78c19db
+
+supabase/migrations/063_media_publication_schedule.sql          f60155f
+src/app/api/core/v1/media/publications/[id]/schedule/route.ts   f60155f  PUT
+src/app/api/core/v1/media/publications/conflicts/route.ts       f60155f  POST
 ```
 
 `/media/screens` (`media_screens_list`) already existed — step 3 needed no new route.
@@ -168,6 +172,10 @@ src/app/(dashboard)/publications/new/page.tsx                   c306740  (reads 
 
 src/features/publications/components/ChannelsStep.tsx           6178e2e  NEW
   + types / publications-api / CreatePublicationWizard / index   6178e2e  MOD
+
+src/features/publications/schedule.ts                           85c960d  NEW  (logic, tz helpers)
+src/features/publications/components/ScheduleStep.tsx           85c960d  NEW  (pure UI, via agy)
+  + types / publications-api / CreatePublicationWizard / index   85c960d  MOD
 ```
 
 Routes: `/publications` (drafts) and `/publications/new[?id=<uuid>]` (wizard).
@@ -241,9 +249,9 @@ playlist was confirmed gone, and prod counts returned to baseline. The pre-exist
 - **No thumbnails.** `media_videos_list` returns no preview or signed URL, so step 2 is a text list
   (title, kind badge, dimensions, file size) rather than the image grid in the design. Adding a
   signed URL to that RPC is the next obvious backend task.
-- **Steps 4–5 are stubs** (`ยังไม่ implement — step N`). Both are cheap on the backend:
-  `media_publication_upsert` already accepts `p_starts_at` / `p_ends_at` for step 4, and
-  `media_publication_activate` (which builds `publish_jobs` + `publish_job_targets`) is step 5.
+- **Step 5 is a stub** (`ยังไม่ implement — step 5`). `media_publication_activate` (which builds
+  `publish_jobs` + `publish_job_targets`, and already refuses `playlist_id IS NULL` or no targets)
+  is the backend for it — needs a summary view + an activate route/call. **Step 4 is done — see §11.**
 - **Step 3 covers devices only** — see §10 for exactly what was left out and why.
 - **Deliberately not built** (marked *Disable* in the design): Format & Brand dropdowns, the preview
   panel, AI Assistant, Content Summary panel, the Format & Template / Text & Caption / Call to Action
@@ -292,3 +300,81 @@ Cut, and why — all of it is missing data, not missing effort:
 Getting the full design would need new columns on `public.assets` (location, resolution, screen type)
 plus a `media_channels_list` RPC and channel rows to list. That is a real backend chunk, not a UI
 tweak. The cuts are marked with a `ponytail:` comment at the top of `ChannelsStep.tsx`.
+
+---
+
+## 11. Step 4 (Schedule) — migration 063 & what was built
+
+**Applied to PRODUCTION.** Migration history now reads `063 → 062 → 061 → 060 → 056`.
+
+The schedule lives in `media_core.schedules` (one row per publication), which since 048 already had
+`timezone` and `recurrence jsonb` columns — so **063 is functions only, no table change.**
+
+### 063 — `063_media_publication_schedule.sql` (5 `CREATE OR REPLACE`s)
+
+1. **`media_publication_set_schedule(tenant, id, starts_at, ends_at?, timezone?, recurrence?)`** — the
+   step-4 workhorse (mirrors `set_content`: a dedicated route, not more `upsert` params). Drafts only.
+   Replace-all: deletes the schedule row and writes the new one. Validates the recurrence shape.
+2. **`media_schedule_conflicts(tenant, id, device_ids[], starts_at, ends_at?)`** — advisory. Returns
+   other **active** publications sharing ≥1 screen whose window overlaps. `ponytail:` date-range
+   overlap vs active pubs only; draft-vs-draft and weekday/time-of-day refinement skipped (it's a
+   non-blocking warning — over-warning is acceptable).
+3. **`media_publication_get`** += a `schedule` object `{starts_at, ends_at, timezone, recurrence}` so
+   resuming a draft restores step 4.
+4. **`media_job_poll`** (the real-screen poller) now honours weekly recurrence:
+   `AND (recurrence = '{}' OR <today's DOW in days AND now()::time within daily window, in the schedule tz>)`.
+   **Additive & safe** — every pre-063 schedule is `{}`, so live behaviour is unchanged for them.
+5. **`media_publication_upsert`** — the schedule write is now guarded to run **only on first create**
+   (`IF NOT EXISTS`). Previously it did an unconditional DELETE+INSERT on every basic-info save, which
+   would reset step 4 to `now()/{}`. Same guard rationale as the `playlist_id` COALESCE. **Do not
+   "simplify" this back** — `set_schedule` owns all schedule edits after creation.
+
+### Recurrence jsonb shape
+`{}` = one-time. Weekly is the only recurring frequency:
+`{ "freq":"weekly", "days":[0..6], "daily_start":"HH:MM", "daily_end":"HH:MM" }` — `days` 0=Sun..6=Sat
+(matches `EXTRACT(DOW ...)`). The four UI schedule types all reduce to `(starts_at, ends_at, recurrence)`:
+Publish Now → `now()/null/{}`; Schedule Later → `picked/optional/{}`; Custom Date Range →
+`picked/picked/{}`; Recurring → `range/range/weekly`.
+
+### Frontend
+- **`schedule.ts`** owns all the logic: DST-correct timezone↔UTC conversion via `Intl` (no deps),
+  `isScheduleFormValid`, `scheduleFormToPayload`, `scheduleToForm` (resume), plus the `TIMEZONES` /
+  `WEEKDAYS` lists. Unit-tested (cross-zone + midnight boundary + a resume round-trip).
+- **`ScheduleStep.tsx`** is **pure UI** over those helpers — 4 type buttons, conditional fields,
+  weekday picker, daily-window inputs, and a non-blocking amber conflict banner (debounced call to
+  `checkScheduleConflicts`). It never holds `form` state; the wizard owns save ordering so a step-1
+  re-save can't wipe step 4.
+- Timezone list is a fixed 5-zone dropdown (`ponytail:` — the `Intl` helpers are DST-correct, so
+  adding a DST zone needs no other change).
+
+### HTTP additions (see §4 for the rest)
+```
+PUT    /media/publications/:id/schedule  → { starts_at, ends_at?, timezone?, recurrence? }
+POST   /media/publications/conflicts     → { publication_id?, device_ids[], starts_at, ends_at? }
+GET    /media/publications/:id           → now also returns `schedule`
+```
+
+### Verification
+- **Local Postgres** — 6/6 `set_schedule` validations raise, valid weekly accepted; the upsert
+  clobber-guard holds (recurrence survives a basic-info re-save, 1 row); `schedule_conflicts` overlap
+  / self-exclusion / screen-filter / open-ended / empty-list all correct; recurrence predicate matches
+  today and not another weekday.
+- **Production, real HTTP through the frontend proxy** — created a `ztest-step4-schedule` draft, drove
+  the wizard to step 4, saved a **Recurring** schedule (Wed, 09:00–17:00, 27 Jul–31 Aug, Bangkok).
+  `set_schedule` persisted `06:54Z`/`16:59Z` (correct tz conversion), 1 row, recurrence `{days:[3],…}`;
+  `get` returned the `schedule` object; `scheduleToForm` reverse-map verified against the exact prod
+  values; the draft was then deleted (0 rows left). `pnpm build` + `pnpm lint` pass.
+
+### Cut from the design (missing data / out of scope)
+- **Schedule Preview calendar** and **Publication Summary** right-hand panels — need the media
+  thumbnail (still no signed URL in `media_videos_list`) and per-day layout work; deferred with the
+  rest of the visual polish.
+- **Advanced Options** (publish-order / delay-between-channels), **AI Assistant** panel — marked
+  *Disable* in the design.
+- Timezone dropdown is a short fixed list rather than a full IANA picker.
+
+### Split of work
+Backend (migration 063 + both routes), the frontend contract (types, api service, barrel), the
+`schedule.ts` logic, and all wizard wiring were **written by Claude directly**. Only the presentational
+`ScheduleStep.tsx` was delegated to `agy` (Gemini 3.1 Pro) against an exact props/spec contract, then
+reviewed against the spec before commit. No defects found in review this time.
