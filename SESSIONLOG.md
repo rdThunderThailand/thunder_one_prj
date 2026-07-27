@@ -16,7 +16,7 @@ Building the **Create Publication** 5-step wizard from the approved redesign
 | 1. Basic Info | ✅ done, wired to the real backend |
 | 2. Content | ✅ done, wired to the real backend |
 | 3. Channels | ✅ done, wired to the real backend (devices only — see §10) |
-| 4. Schedule | ✅ done, wired to the real backend (weekly recurrence + conflict warning — see §11) |
+| 4. Schedule | ✅ done, wired to the real backend (weekly recurrence + conflict warning — see §11; Publish-Now expiry + overlap calendar — see §12) |
 | 5. Review & Publish | ⬜ stub |
 
 Plus a drafts list at `/publications` with **Resume** and **Delete**.
@@ -378,3 +378,55 @@ Backend (migration 063 + both routes), the frontend contract (types, api service
 `schedule.ts` logic, and all wizard wiring were **written by Claude directly**. Only the presentational
 `ScheduleStep.tsx` was delegated to `agy` (Gemini 3.1 Pro) against an exact props/spec contract, then
 reviewed against the spec before commit. No defects found in review this time.
+
+---
+
+## 12. Step 4 (Schedule) — Publish-Now expiry + conflict-overlap calendar
+
+**Frontend only. No backend / migration change** — reuses the existing `media_schedule_conflicts` RPC
+and `POST /media/publications/conflicts` route from §11. Committed as `e2beda0`.
+
+### What was added
+1. **Publish Now** now shows a **locked (disabled) Publish Date + Time** block (prefilled with the current
+   wall-clock in the form timezone, recomputed live) and a note "Publishes immediately once activated."
+2. A **"Set expiration date"** checkbox in Publish Now (reusing the `later`-mode pattern). Ticking it
+   reveals End Date/Time. `scheduleFormToPayload` for `now` now emits `ends_at` when an expiry is set
+   (previously hard-coded `null`); `starts_at` is still live `now()` at activation, recurrence stays `{}`.
+3. A **single-month "Schedule Calendar"** (‹ / › month nav) that highlights the days the publication plays
+   (blue = *Scheduled*) and, in red (*Conflict / overlap*), the active days that collide with a conflicting
+   active publication — shown **alongside** the existing amber conflict banner, not replacing it.
+
+### Files
+```
+src/features/publications/schedule.ts                 MOD (Claude)  e2beda0  now+expiry payload; calendar helpers
+src/features/publications/components/ScheduleStep.tsx MOD (agy)     e2beda0  now locked block + expiry + <ScheduleCalendar>
+src/features/publications/components/ScheduleCalendar.tsx NEW (agy)  e2beda0  month grid, nav, legend
+```
+
+### Calendar logic (in `schedule.ts`, unit-tested)
+Day-granularity, in the schedule's own timezone; `"YYYY-MM-DD"` strings sort chronologically so all range
+checks are plain string comparisons.
+- `isScheduleActiveOn(form, ymd)` — `ymd` inside `[start, end|∞]`; for `recurring`, also `DOW ∈ days`.
+  `now`'s window starts today (open-ended unless an expiry is set).
+- `overlapsConflictOn(ymd, conflicts, tz)` — `ymd` inside any conflict's `[starts_at, ends_at|∞]` (converted
+  to the tz's day via `utcToZonedParts`).
+- `buildCalendarMonth(form, conflicts, year, month)` → weeks × 7 `CalendarDay` cells; `isOverlap` requires
+  `isActive` first (an inactive day never highlights red). `ponytail:` date-range level only — matches the
+  backend RPC, which itself ignores weekday/time-of-day (§11).
+
+### Split of work
+`schedule.ts` (the `now`+expiry publish-path change and all calendar date math) was **written by Claude
+directly**; the two presentational `.tsx` files were delegated to `agy` (`gemini-3.1-pro-high`) against an
+exact spec (`$TMPDIR/handoff-schedule-calendar.md`) and reviewed by diff. No defects found in review.
+
+### Verification
+- **Unit test** (throwaway `calendar-test.ts`, run under Node 24 type-stripping) — 20+ assertions:
+  range/recurring active-day membership, open-ended conflict overlap, month-matrix shape + leading-pad count,
+  and the `now`+expiry tz conversion (`2026-08-25 18:00 Asia/Bangkok → 11:00Z`). All green.
+- **`pnpm build` + `pnpm lint` pass** (only the pre-existing PlayerPanel `<img>` warning).
+- **Production E2E over the frontend proxy** — drove a `ztest-calendar-verify` draft through steps 1→4
+  (video asset, both screens). Step 4 rendered: locked Publish Now block, expiry checkbox revealing End
+  fields, and the July 2026 calendar with **27–31 Jul in red** (the draft's only active days, all colliding
+  with 5 real open-ended active conflicts on Screen 01), today-outline on the 27th, legend, and the amber
+  banner listing all 5 conflicts below. Draft then deleted — prod returned to baseline (3 user `test` drafts
+  left untouched).
