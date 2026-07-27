@@ -2,10 +2,22 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { deletePublication, fetchDrafts } from "../services/publications-api";
+import {
+  cancelPublication,
+  deletePublication,
+  fetchPublications,
+} from "../services/publications-api";
 import type { PublicationListItem } from "../types";
 
-export function DraftList() {
+type DraftListProps = {
+  /** Set by the ?published= flag the wizard redirects with after activating. */
+  publishedName?: string;
+  /** Drafts can be resumed and deleted; active publications can only be cancelled. */
+  status?: "draft" | "active";
+};
+
+export function DraftList({ publishedName, status = "draft" }: DraftListProps) {
+  const isActive = status === "active";
   const [drafts, setDrafts] = useState<PublicationListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +28,7 @@ export function DraftList() {
     let isMounted = true;
     const loadDrafts = async () => {
       try {
-        const list = await fetchDrafts();
+        const list = await fetchPublications(status);
         if (isMounted) {
           setDrafts(list);
         }
@@ -37,7 +49,7 @@ export function DraftList() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [status]);
 
   const handleDelete = async (id: string) => {
     if (confirmDeleteId !== id) {
@@ -49,12 +61,17 @@ export function DraftList() {
     setError(null);
 
     try {
-      await deletePublication(id);
+      // Cancelling keeps the row (it stops playing); deleting only ever hits drafts.
+      await (isActive ? cancelPublication(id) : deletePublication(id));
       setDrafts((prev) => prev.filter((d) => d.id !== id));
       setConfirmDeleteId(null);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to delete publication draft."
+        err instanceof Error
+          ? err.message
+          : isActive
+            ? "Failed to cancel publication."
+            : "Failed to delete publication draft."
       );
     } finally {
       setDeletingId(null);
@@ -77,13 +94,21 @@ export function DraftList() {
   if (loading) {
     return (
       <div className="p-8 text-center text-sm text-zinc-500">
-        Loading draft publications…
+        {isActive ? "Loading active publications…" : "Loading draft publications…"}
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      {publishedName && (
+        <div className="rounded-md bg-emerald-50 p-4 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800">
+          <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">
+            เผยแพร่ &ldquo;{publishedName}&rdquo; แล้ว
+          </p>
+        </div>
+      )}
+
       {error && (
         <div className="rounded-md bg-red-50 p-4 border border-red-200 dark:bg-red-950/30 dark:border-red-800">
           <p className="text-sm text-red-700 dark:text-red-300 font-medium">
@@ -95,9 +120,9 @@ export function DraftList() {
       {drafts.length === 0 ? (
         <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900 shadow-sm space-y-3">
           <p className="text-base font-medium text-zinc-700 dark:text-zinc-300">
-            ยังไม่มี draft
+            {isActive ? "ยังไม่มี publication ที่เผยแพร่อยู่" : "ยังไม่มี draft"}
           </p>
-          <div>
+          <div className={isActive ? "hidden" : undefined}>
             <Link
               href="/publications/new"
               className="inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
@@ -159,12 +184,14 @@ export function DraftList() {
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-3">
-                      <Link
-                        href={`/publications/new?id=${draft.id}`}
-                        className="font-medium text-zinc-900 hover:underline dark:text-zinc-100"
-                      >
-                        Resume
-                      </Link>
+                      {!isActive && (
+                        <Link
+                          href={`/publications/new?id=${draft.id}`}
+                          className="font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+                        >
+                          Resume
+                        </Link>
+                      )}
 
                       {confirmDeleteId === draft.id ? (
                         <div className="flex items-center gap-1">
@@ -174,14 +201,18 @@ export function DraftList() {
                             disabled={deletingId === draft.id}
                             className="rounded bg-red-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-red-700 disabled:opacity-50"
                           >
-                            {deletingId === draft.id ? "Deleting…" : "Confirm?"}
+                            {deletingId === draft.id
+                              ? isActive
+                                ? "Cancelling…"
+                                : "Deleting…"
+                              : "Confirm?"}
                           </button>
                           <button
                             type="button"
                             onClick={cancelDelete}
                             className="rounded border border-zinc-300 px-2 py-1 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
                           >
-                            Cancel
+                            {isActive ? "Keep" : "Cancel"}
                           </button>
                         </div>
                       ) : (
@@ -190,7 +221,7 @@ export function DraftList() {
                           onClick={() => handleDelete(draft.id)}
                           className="font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                         >
-                          Delete
+                          {isActive ? "Cancel Publication" : "Delete"}
                         </button>
                       )}
                     </div>

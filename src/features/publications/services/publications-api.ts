@@ -159,10 +159,12 @@ export async function saveBasicInfo(
   return requestApi<Publication>(method, "/media/publications", body);
 }
 
-export async function fetchDrafts(): Promise<PublicationListItem[]> {
+export async function fetchPublications(
+  status: "draft" | "active"
+): Promise<PublicationListItem[]> {
   const data = await requestApi<
     { publications?: PublicationListItem[] } | PublicationListItem[]
-  >("GET", "/media/publications?status=draft");
+  >("GET", `/media/publications?status=${status}`);
   if (Array.isArray(data)) {
     return data;
   }
@@ -183,6 +185,11 @@ export async function fetchPublication(id: string): Promise<PublicationDetail> {
 
 export async function deletePublication(id: string): Promise<void> {
   await requestApi<unknown>("DELETE", `/media/publications/${id}`);
+}
+
+/** Stops an active publication. Devices drop it on their next poll. */
+export async function cancelPublication(id: string): Promise<void> {
+  await requestApi<unknown>("POST", `/media/publications/${id}/cancel`);
 }
 
 export async function fetchMediaAssets(): Promise<MediaAsset[]> {
@@ -212,6 +219,17 @@ export async function savePublicationSchedule(
     "PUT",
     `/media/publications/${id}/schedule`,
     payload
+  );
+}
+
+/**
+ * Step 5. Activates a draft: builds the publish jobs that real screens poll.
+ * The RPC refuses a publication with no playlist or no targets.
+ */
+export async function activatePublication(id: string): Promise<{ job_id?: string }> {
+  return requestApi<{ job_id?: string }>(
+    "POST",
+    `/media/publications/${id}/activate`
   );
 }
 

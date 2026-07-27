@@ -1,7 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  activatePublication,
   fetchCampaigns,
   fetchMediaAssets,
   fetchPublication,
@@ -30,6 +32,7 @@ import {
 import { BasicInfoStep } from "./BasicInfoStep";
 import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
+import { ReviewStep } from "./ReviewStep";
 import { ScheduleStep } from "./ScheduleStep";
 
 const WIZARD_STEPS = [
@@ -45,6 +48,7 @@ type CreatePublicationWizardProps = {
 };
 
 export function CreatePublicationWizard({ initialPublicationId }: CreatePublicationWizardProps) {
+  const router = useRouter();
   const [step, setStep] = useState<number>(1);
   const [form, setForm] = useState<BasicInfoForm>({
     name: "",
@@ -236,6 +240,23 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
     }
   };
 
+  const handlePublish = async () => {
+    if (!publicationId) {
+      setError("Publication ID is missing.");
+      return;
+    }
+    setError(null);
+    setSavedMessage(null);
+    setLoading(true);
+    try {
+      await activatePublication(publicationId);
+      router.push(`/publications?published=${encodeURIComponent(form.name)}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to publish.");
+      setLoading(false);
+    }
+  };
+
   const handleBack = () => {
     if (step > 1) setStep((prev) => prev - 1);
   };
@@ -248,7 +269,13 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
     (step === 2 && !isNoAssetType && contentItems.length === 0) ||
     (step === 3 && targets.length === 0) ||
     (step === 4 && !isScheduleFormValid(scheduleForm)) ||
-    step === 5;
+    // Step 5 publishes for real, so it re-checks every earlier step's requirement
+    // (activate itself refuses a publication with no playlist or no targets).
+    (step === 5 &&
+      (!publicationId ||
+        targets.length === 0 ||
+        !isScheduleFormValid(scheduleForm) ||
+        (!isNoAssetType && contentItems.length === 0)));
 
   if (loadingInitial) {
     return <div className="p-8 text-center text-sm text-zinc-500">Loading draft details…</div>;
@@ -314,11 +341,16 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
             publicationId={publicationId}
           />
         ) : (
-          /* ponytail: step 5 (Review & Publish) is still a stub */
-          <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900 shadow-sm space-y-2">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Step {step}: {WIZARD_STEPS[step - 1].label}</h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">ยังไม่ implement — step {step}</p>
-          </div>
+          <ReviewStep
+            form={form}
+            campaigns={campaigns}
+            contentItems={contentItems}
+            mediaAssets={mediaAssets}
+            targets={targets}
+            screens={screens}
+            scheduleForm={scheduleForm}
+            publicationId={publicationId}
+          />
         )}
       </div>
 
@@ -334,8 +366,8 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
           <button type="button" onClick={handleSaveDraft} disabled={loading || isNameEmpty} className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
             {loading ? "Saving…" : "Save as Draft"}
           </button>
-          <button type="button" onClick={handleNext} disabled={isNextDisabled} title={step === 5 ? "Publishing is not implemented yet" : undefined} className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
-            {loading ? "Saving…" : step === 5 ? "Publish" : "Next"}
+          <button type="button" onClick={step === 5 ? handlePublish : handleNext} disabled={isNextDisabled} className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
+            {loading ? (step === 5 ? "Publishing…" : "Saving…") : step === 5 ? "Publish Now" : "Next"}
           </button>
         </div>
       </div>
