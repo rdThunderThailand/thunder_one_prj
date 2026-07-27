@@ -1,8 +1,17 @@
 import { apiClient } from "@/lib/api/client";
-import type { BasicInfoForm, Campaign, Publication, Tag } from "../types";
+import type {
+  BasicInfoForm,
+  Campaign,
+  ContentItem,
+  MediaAsset,
+  Publication,
+  PublicationDetail,
+  PublicationListItem,
+  Tag,
+} from "../types";
 
 async function requestApi<T>(
-  method: "GET" | "POST" | "PATCH",
+  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
   path: string,
   data?: unknown
 ): Promise<T> {
@@ -117,4 +126,49 @@ export async function saveBasicInfo(
   const body = cleanBasicInfoBody(form, publicationId);
   const method = publicationId ? "PATCH" : "POST";
   return requestApi<Publication>(method, "/media/publications", body);
+}
+
+export async function fetchDrafts(): Promise<PublicationListItem[]> {
+  const data = await requestApi<
+    { publications?: PublicationListItem[] } | PublicationListItem[]
+  >("GET", "/media/publications?status=draft");
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (
+    data &&
+    typeof data === "object" &&
+    "publications" in data &&
+    Array.isArray(data.publications)
+  ) {
+    return data.publications;
+  }
+  return [];
+}
+
+export async function fetchPublication(id: string): Promise<PublicationDetail> {
+  return requestApi<PublicationDetail>("GET", `/media/publications/${id}`);
+}
+
+export async function deletePublication(id: string): Promise<void> {
+  await requestApi<unknown>("DELETE", `/media/publications/${id}`);
+}
+
+export async function fetchMediaAssets(): Promise<MediaAsset[]> {
+  const data = await requestApi<MediaAsset[]>("GET", "/media/videos");
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [];
+}
+
+export async function savePublicationContent(
+  id: string,
+  items: ContentItem[]
+): Promise<{ playlist_id: string; item_count: number }> {
+  return requestApi<{ playlist_id: string; item_count: number }>(
+    "PUT",
+    `/media/publications/${id}/content`,
+    { items }
+  );
 }

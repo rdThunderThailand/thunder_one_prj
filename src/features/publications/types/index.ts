@@ -53,3 +53,65 @@ export type Publication = {
   created_at?: string;
   updated_at?: string;
 };
+
+export type MediaAsset = {
+  id: string;
+  title?: string;
+  status?: string;
+  kind?: "video" | "image";
+  approval_status?: string;
+  language?: string;
+  duration_seconds?: number | null;
+  width?: number;
+  height?: number;
+  codec?: string;
+  created_at?: string;
+  file?: {
+    id?: string;
+    original_filename?: string;
+    mime_type?: string;
+    file_size_bytes?: number;
+    checksum?: string;
+  };
+};
+
+export type PublicationListItem = {
+  id: string;
+  name: string;
+  status: string;
+  publication_type: PublicationType;
+  priority: Priority;
+  language?: string;
+  campaign_id?: string;
+  campaign_name?: string;
+  playlist_id?: string;
+  item_count: number;
+  tags: string[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type PublicationDetail = {
+  id: string;
+  name: string;
+  description?: string;
+  campaign_id?: string;
+  publication_type: PublicationType;
+  priority: Priority;
+  language?: string;
+  metadata?: Record<string, unknown>;
+  status: string;
+  playlist?: { id: string; name: string } | null;
+  tags: string[];
+  created_at?: string;
+  activated_at?: string;
+  job_status?: string;
+  targets?: unknown[];
+};
+
+export type ContentItem = {
+  media_asset_id: string;
+  position: number;
+  duration_seconds?: number | null;
+  transition?: string;
+};
