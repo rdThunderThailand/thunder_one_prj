@@ -7,7 +7,10 @@ import type {
   Publication,
   PublicationDetail,
   PublicationListItem,
+  PublicationSchedule,
   PublicationTarget,
+  ScheduleConflict,
+  SchedulePayload,
   Screen,
   Tag,
 } from "../types";
@@ -199,4 +202,30 @@ export async function savePublicationContent(
     `/media/publications/${id}/content`,
     { items }
   );
+}
+
+export async function savePublicationSchedule(
+  id: string,
+  payload: SchedulePayload
+): Promise<PublicationSchedule> {
+  return requestApi<PublicationSchedule>(
+    "PUT",
+    `/media/publications/${id}/schedule`,
+    payload
+  );
+}
+
+export async function checkScheduleConflicts(payload: {
+  publication_id: string | null;
+  device_ids: string[];
+  starts_at: string;
+  ends_at: string | null;
+}): Promise<ScheduleConflict[]> {
+  if (payload.device_ids.length === 0) return [];
+  const data = await requestApi<ScheduleConflict[]>(
+    "POST",
+    "/media/publications/conflicts",
+    payload
+  );
+  return Array.isArray(data) ? data : [];
 }

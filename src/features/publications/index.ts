@@ -9,9 +9,15 @@ export type {
   Publication,
   PublicationDetail,
   PublicationListItem,
+  PublicationSchedule,
   PublicationTarget,
   PublicationType,
+  Recurrence,
+  ScheduleConflict,
+  ScheduleForm,
+  SchedulePayload,
+  ScheduleType,
   Screen,
   Tag,
 } from "./types";
-export { PRIORITIES, PUBLICATION_TYPES } from "./types";
+export { PRIORITIES, PUBLICATION_TYPES, SCHEDULE_TYPES } from "./types";

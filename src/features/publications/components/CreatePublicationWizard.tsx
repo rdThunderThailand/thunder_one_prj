@@ -9,6 +9,7 @@ import {
   fetchTags,
   saveBasicInfo,
   savePublicationContent,
+  savePublicationSchedule,
 } from "../services/publications-api";
 import type {
   BasicInfoForm,
@@ -16,12 +17,20 @@ import type {
   ContentItem,
   MediaAsset,
   PublicationTarget,
+  ScheduleForm,
   Screen,
   Tag,
 } from "../types";
+import {
+  isScheduleFormValid,
+  makeDefaultScheduleForm,
+  scheduleFormToPayload,
+  scheduleToForm,
+} from "../schedule";
 import { BasicInfoStep } from "./BasicInfoStep";
 import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
+import { ScheduleStep } from "./ScheduleStep";
 
 const WIZARD_STEPS = [
   { id: 1, label: "Basic Info" },
@@ -53,6 +62,7 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [screens, setScreens] = useState<Screen[]>([]);
   const [targets, setTargets] = useState<PublicationTarget[]>([]);
+  const [scheduleForm, setScheduleForm] = useState<ScheduleForm>(makeDefaultScheduleForm);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingInitial, setLoadingInitial] = useState<boolean>(Boolean(initialPublicationId));
@@ -114,6 +124,7 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
               tags: detail.tags || [],
             });
             setTargets(detail.publication_targets ?? []);
+            setScheduleForm(scheduleToForm(detail.schedule));
             setPublicationId(detail.id);
           }
         } catch (err) {
@@ -132,6 +143,11 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
 
   const handleFormChange = (updates: Partial<BasicInfoForm>) => {
     setForm((prev) => ({ ...prev, ...updates }));
+    setSavedMessage(null);
+  };
+
+  const handleScheduleChange = (updates: Partial<ScheduleForm>) => {
+    setScheduleForm((prev) => ({ ...prev, ...updates }));
     setSavedMessage(null);
   };
 
@@ -158,7 +174,18 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
     // Only send targets once the user has reached the step that edits them —
     // sending them earlier would overwrite saved targets with an empty array.
     const savedId = await executeSave(step >= 3 ? targets : undefined);
-    if (savedId) setSavedMessage(`บันทึก draft แล้ว (ID: ${savedId})`);
+    if (!savedId) return;
+    // Persist the schedule too once step 4 is reached, but only if it's valid —
+    // don't push a half-filled recurring form to the backend on a draft save.
+    if (step >= 4 && isScheduleFormValid(scheduleForm)) {
+      try {
+        await savePublicationSchedule(savedId, scheduleFormToPayload(scheduleForm));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to save schedule.");
+        return;
+      }
+    }
+    setSavedMessage(`บันทึก draft แล้ว (ID: ${savedId})`);
   };
 
   const handleNext = async () => {
@@ -190,6 +217,20 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
     } else if (step === 3) {
       const savedId = await executeSave(targets);
       if (savedId) setStep(4);
+    } else if (step === 4) {
+      if (!publicationId) {
+        setError("Publication ID is missing.");
+        return;
+      }
+      setLoading(true);
+      try {
+        await savePublicationSchedule(publicationId, scheduleFormToPayload(scheduleForm));
+        setStep(5);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to save schedule.");
+      } finally {
+        setLoading(false);
+      }
     } else if (step < 5) {
       setStep((prev) => prev + 1);
     }
@@ -206,6 +247,7 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
     isNameEmpty ||
     (step === 2 && !isNoAssetType && contentItems.length === 0) ||
     (step === 3 && targets.length === 0) ||
+    (step === 4 && !isScheduleFormValid(scheduleForm)) ||
     step === 5;
 
   if (loadingInitial) {
@@ -264,8 +306,15 @@ export function CreatePublicationWizard({ initialPublicationId }: CreatePublicat
           <ContentStep publicationType={form.publication_type} items={contentItems} onChange={setContentItems} mediaAssets={mediaAssets} loadingAssets={loadingAssets} assetsError={assetsError} />
         ) : step === 3 ? (
           <ChannelsStep targets={targets} onChange={setTargets} screens={screens} loadingScreens={loadingScreens} screensError={screensError} />
+        ) : step === 4 ? (
+          <ScheduleStep
+            form={scheduleForm}
+            onChange={handleScheduleChange}
+            deviceIds={targets.map((t) => t.device_id).filter((id): id is string => Boolean(id))}
+            publicationId={publicationId}
+          />
         ) : (
-          /* ponytail: intentionally a stub for steps 4-5 */
+          /* ponytail: step 5 (Review & Publish) is still a stub */
           <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900 shadow-sm space-y-2">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Step {step}: {WIZARD_STEPS[step - 1].label}</h2>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">ยังไม่ implement — step {step}</p>

@@ -110,6 +110,8 @@ export type PublicationDetail = {
   targets?: unknown[];
   /** The publication's own targets, saved in step 3. */
   publication_targets?: PublicationTarget[];
+  /** The schedule saved in step 4 (null on a draft that hasn't reached it). */
+  schedule?: PublicationSchedule | null;
 };
 
 export type Screen = {
@@ -132,4 +134,54 @@ export type ContentItem = {
   position: number;
   duration_seconds?: number | null;
   transition?: string;
+};
+
+// --- Step 4: Schedule -------------------------------------------------------
+
+export const SCHEDULE_TYPES = ["now", "later", "recurring", "range"] as const;
+
+export type ScheduleType = (typeof SCHEDULE_TYPES)[number];
+
+/** `{}` = one-time. Weekly is the only recurring frequency the backend honours. */
+export type Recurrence =
+  | Record<string, never>
+  | { freq: "weekly"; days: number[]; daily_start: string; daily_end: string };
+
+/** Wizard-local step-4 form. Dates/times are wall-clock in `timezone`. */
+export type ScheduleForm = {
+  schedule_type: ScheduleType;
+  start_date: string; // "YYYY-MM-DD"
+  start_time: string; // "HH:MM"
+  timezone: string; // IANA, e.g. "Asia/Bangkok"
+  end_date: string; // "YYYY-MM-DD" — "" means none
+  end_time: string; // "HH:MM"
+  days: number[]; // recurring only: 0=Sun .. 6=Sat
+  daily_start: string; // recurring only: "HH:MM"
+  daily_end: string; // recurring only: "HH:MM"
+};
+
+/** Persisted schedule, as returned by set_schedule and media_publication_get. */
+export type PublicationSchedule = {
+  starts_at: string;
+  ends_at: string | null;
+  timezone: string;
+  recurrence: Recurrence;
+};
+
+/** The payload sent to PUT /media/publications/:id/schedule. */
+export type SchedulePayload = {
+  starts_at: string;
+  ends_at: string | null;
+  timezone: string;
+  recurrence: Recurrence;
+};
+
+/** One overlapping active publication, from POST /media/publications/conflicts. */
+export type ScheduleConflict = {
+  publication_id: string;
+  name: string;
+  status: string;
+  starts_at: string;
+  ends_at: string | null;
+  screens: string[];
 };
