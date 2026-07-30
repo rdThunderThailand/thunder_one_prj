@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* This app has no theme toggle — content stays light regardless of OS
+   preference. Switching `dark:` to a class-based trigger (never applied)
+   means it never activates from `prefers-color-scheme`. The sidebar's
+   dark look is intentional and hardcoded separately, not via `dark:`. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -8,19 +14,23 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-plus-jakarta-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Keeps an element scrollable (e.g. if the sidebar nav ever outgrows the
+   viewport) without showing a scrollbar track — used where a visible
+   scrollbar would look out of place against the fixed app chrome. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

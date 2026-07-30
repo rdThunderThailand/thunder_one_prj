@@ -1,6 +1,6 @@
-# playlists
+# assets
 
-An ordered sequence of Assets, with per-item duration and transition settings. Scheduling and targeting (Channel, timing) live in Publications, not here — see `CONTEXT.md` at the repo root.
+Central Asset repository — upload, list, and manage reusable media files (images and video) to be used in Playlists and Publications. See `CONTEXT.md` at the repo root for the Asset definition.
 
 > R&D placeholder — structure only, no implementation yet.
 

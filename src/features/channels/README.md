@@ -1,6 +1,6 @@
-# playlists
+# channels
 
-An ordered sequence of Assets, with per-item duration and transition settings. Scheduling and targeting (Channel, timing) live in Publications, not here — see `CONTEXT.md` at the repo root.
+Channel registry — business-facing publishing destinations (e.g. "Central World – Ground Floor – Entrance Screen"), each backed by a Device. See `CONTEXT.md` at the repo root for the Channel/Device distinction.
 
 > R&D placeholder — structure only, no implementation yet.
 
