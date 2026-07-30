@@ -4,13 +4,24 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
 import { ChevronDownIcon, FilterIcon, GridIcon, ListIcon, SearchIcon, XIcon } from "@/components/ui/icons";
-import { channelCategories, channels, type ChannelCategoryId } from "../mock-data";
+import type { Screen } from "../types";
+import { channelCategories, type ChannelCategoryId, type ChannelItem } from "../mock-data";
 import { ChannelCard, categoryBadgeColor, categoryIcon } from "./ChannelCard";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 const VISIBLE_COUNT = 4;
 
-export function ChannelsStep() {
+export interface ChannelsStepProps {
+  screens?: Screen[];
+  loadingScreens?: boolean;
+  screensError?: string | null;
+}
+
+export function ChannelsStep({
+  screens = [],
+  loadingScreens = false,
+  screensError = null,
+}: ChannelsStepProps) {
   const selectedIds = usePublicationDraftStore((s) => s.channelIds);
   const toggleChannel = usePublicationDraftStore((s) => s.toggleChannelId);
   const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
@@ -20,9 +31,22 @@ export function ChannelsStep() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [view, setView] = useState<"grid" | "list">("grid");
 
+  const channels: ChannelItem[] = useMemo(
+    () =>
+      screens.map((s) => ({
+        id: s.id,
+        name: s.name,
+        category: "dooh" as const,
+        subLabel: s.connection_status ?? "",
+        status: s.status_level ?? "offline",
+        resolution: undefined,
+      })),
+    [screens],
+  );
+
   const filtered = useMemo(
     () => channels.filter((c) => c.name.toLowerCase().includes(search.trim().toLowerCase())),
-    [search],
+    [channels, search],
   );
 
   const categoryCounts = useMemo(() => {
@@ -31,14 +55,14 @@ export function ChannelsStep() {
       counts[cat.id] = channels.filter((c) => c.category === cat.id).length;
     }
     return counts;
-  }, []);
+  }, [channels]);
 
   const statusCounts = useMemo(() => {
     const online = channels.filter((c) => c.status === "online").length;
     const warning = channels.filter((c) => c.status === "warning").length;
     const offline = channels.filter((c) => c.status === "offline").length;
     return { online, warning, offline, total: channels.length };
-  }, []);
+  }, [channels]);
 
   const groups = channelCategories.filter((cat) => activeTab === "all" || activeTab === cat.id);
   const selectedChannels = channels.filter((c) => selectedIds.includes(c.id));
@@ -48,6 +72,8 @@ export function ChannelsStep() {
       <div>
         <h1 className="text-xl font-semibold text-zinc-900">Select Channels</h1>
         <p className="mt-0.5 text-sm text-zinc-500">เลือกช่องทางที่ต้องการเผยแพร่สื่อนี้</p>
+        {loadingScreens && <p className="mt-1 text-xs text-zinc-400">Loading screens...</p>}
+        {screensError && <p className="mt-1 text-xs text-zinc-400">{screensError}</p>}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

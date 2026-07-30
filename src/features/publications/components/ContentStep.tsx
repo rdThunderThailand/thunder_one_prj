@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import {
   ChevronDownIcon,
@@ -13,19 +13,35 @@ import {
   UploadIcon,
   XIcon,
 } from "@/components/ui/icons";
-import { assetLibrary, assetLibraryTabs, campaigns, contentTabs, priorities, publicationTypes } from "../mock-data";
+import {
+  assetLibraryTabs,
+  contentTabs,
+  priorities,
+  publicationTypes,
+} from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { AssetCard } from "./AssetCard";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { fetchMediaAssets } from "../services/publications-api";
+import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import type { Campaign, MediaAsset } from "../types";
 
-function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function ToggleSwitch({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${checked ? "bg-indigo-600" : "bg-zinc-200"}`}
+      className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+        checked ? "bg-indigo-600" : "bg-zinc-200"
+      }`}
     >
       <span
         className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
@@ -36,14 +52,69 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
   );
 }
 
-export function ContentStep() {
+export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const selectedAssetId = usePublicationDraftStore((s) => s.assetId);
   const selectAsset = usePublicationDraftStore((s) => s.setAssetId);
   const [aiSuggest, setAiSuggest] = useState(true);
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const selectedAsset = assetLibrary.find((a) => a.id === selectedAssetId);
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchMediaAssets()
+      .then((data) => {
+        if (!isMounted) return;
+        setAssets(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        setAssets([]);
+        setError(err instanceof Error ? err.message : "Failed to load assets");
+        setLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return assets;
+    const q = searchQuery.toLowerCase();
+    return assets.filter((asset) => {
+      const filename = asset.file?.original_filename ?? "";
+      const title = asset.title ?? "";
+      return filename.toLowerCase().includes(q) || title.toLowerCase().includes(q);
+    });
+  }, [assets, searchQuery]);
+
+  const filteredAssetIds = useMemo(
+    () => filtered.map((a) => a.id),
+    [filtered]
+  );
+  const previews = usePreviewUrls(filteredAssetIds);
+
+  const selectedAsset = assets.find((a) => a.id === selectedAssetId);
+  const selectedFilename = selectedAsset
+    ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id
+    : "";
+  const selectedIsVideo = selectedAsset
+    ? selectedAsset.kind === "video" ||
+      (!selectedAsset.kind && selectedAsset.file?.mime_type?.startsWith("video/"))
+    : false;
+  const selectedKindLabel = selectedIsVideo ? "Video" : "Image";
+  const selectedDimensions = selectedAsset
+    ? selectedAsset.width && selectedAsset.height
+      ? `${selectedAsset.width} x ${selectedAsset.height}`
+      : "—"
+    : "";
+  const selectedPreviewUrl = selectedAssetId ? previews[selectedAssetId] : undefined;
+
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
@@ -79,6 +150,8 @@ export function ContentStep() {
               <div className="relative min-w-[180px] flex-1">
                 <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search assets..."
                   className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
                 />
@@ -146,13 +219,16 @@ export function ContentStep() {
               </div>
             </div>
 
-            <p className="mb-3 text-xs text-zinc-400">{assetLibrary.length} assets found</p>
+            <p className="mb-3 text-xs text-zinc-400">
+              {loading ? "Loading assets…" : error ? error : `${filtered.length} assets found`}
+            </p>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {assetLibrary.map((asset) => (
+              {filtered.map((asset) => (
                 <AssetCard
                   key={asset.id}
                   asset={asset}
+                  previewUrl={previews[asset.id]}
                   selected={asset.id === selectedAssetId}
                   onSelect={() => selectAsset(asset.id)}
                 />
@@ -164,11 +240,20 @@ export function ContentStep() {
             <Card className="p-4">
               <p className="mb-2 text-sm font-semibold text-zinc-900">1 Asset Selected</p>
               <div className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2">
-                <span className={`h-10 w-10 shrink-0 rounded-md bg-gradient-to-br ${selectedAsset.accent}`} />
+                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+                  {selectedPreviewUrl ? (
+                    <img
+                      src={selectedPreviewUrl}
+                      alt={selectedFilename}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
+                </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900">{selectedAsset.filename}</p>
+                  <p className="truncate text-sm font-medium text-zinc-900">{selectedFilename}</p>
                   <p className="text-xs text-zinc-400">
-                    {selectedAsset.kind === "image" ? "Image" : "Video"} · {selectedAsset.dimensions}
+                    {selectedKindLabel} · {selectedDimensions}
                   </p>
                 </div>
                 <button
@@ -191,12 +276,17 @@ export function ContentStep() {
             </button>
           </div>
 
-          <div
-            className={`flex aspect-video w-full items-center justify-center rounded-xl bg-gradient-to-br ${
-              selectedAsset?.accent ?? "from-zinc-100 to-zinc-200"
-            }`}
-          >
-            {!selectedAsset && <p className="text-xs text-zinc-400">No asset selected</p>}
+          <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
+            {selectedAsset && selectedPreviewUrl ? (
+              <img
+                src={selectedPreviewUrl}
+                alt={selectedFilename}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+            ) : !selectedAsset ? (
+              <p className="text-xs text-zinc-400">No asset selected</p>
+            ) : null}
           </div>
 
           <dl className="mt-5 space-y-3 border-t border-zinc-100 pt-4 text-sm">
@@ -204,10 +294,12 @@ export function ContentStep() {
               <div className="flex items-center justify-between">
                 <dt className="text-zinc-500">Selected Asset</dt>
                 <dd className="text-right font-medium text-zinc-900">
-                  {selectedAsset.filename}
-                  <span className="ml-1.5 inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
-                    Approved
-                  </span>
+                  {selectedFilename}
+                  {selectedAsset.approval_status === "approved" && (
+                    <span className="ml-1.5 inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
+                      Approved
+                    </span>
+                  )}
                 </dd>
               </div>
             )}

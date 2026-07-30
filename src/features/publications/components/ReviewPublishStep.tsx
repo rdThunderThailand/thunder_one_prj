@@ -3,10 +3,11 @@
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
+import { MediaThumb } from "./MediaThumb";
+import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import { scheduleStateToForm } from "../draft-mapping";
+import type { Campaign, MediaAsset, Screen } from "../types";
 import {
-  assetLibrary,
-  campaigns,
-  channels,
   createdByMeta,
   priorities,
   prePublishChecklist,
@@ -37,19 +38,42 @@ function formatLongDate(iso: string) {
   });
 }
 
-export function ReviewPublishStep() {
+export interface ReviewPublishStepProps {
+  campaigns?: Campaign[];
+  screens?: Screen[];
+  assets?: MediaAsset[];
+}
+
+export function ReviewPublishStep({ campaigns = [], screens = [], assets = [] }: ReviewPublishStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
+  const assetId = usePublicationDraftStore((s) => s.assetId);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleState = usePublicationDraftStore((s) => s.scheduleState);
-  const assetId = usePublicationDraftStore((s) => s.assetId);
 
-  const selectedChannels = channels.filter((c) => channelIds.includes(c.id));
-  const selectedAsset = assetLibrary.find((a) => a.id === assetId);
+  const selectedChannels = screens
+    .filter((s) => channelIds.includes(s.id))
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      category: "dooh" as const,
+      subLabel: s.connection_status ?? "",
+      status: s.status_level ?? "offline",
+    }));
+
+  const selectedAsset = assets.find((a) => a.id === assetId);
+  const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
+  const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
+
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
+  const scheduleForm = scheduleStateToForm(scheduleState);
   const scheduleType = scheduleTypes.find((s) => s.id === scheduleState.scheduleType);
   const offlineChannels = selectedChannels.filter((c) => c.status === "offline");
+
+  const assetFilename = selectedAsset?.file?.original_filename ?? selectedAsset?.title;
+  const assetDimensions = selectedAsset?.width && selectedAsset?.height ? `${selectedAsset.width} x ${selectedAsset.height}` : undefined;
+  const assetDurationLabel = selectedAsset?.kind === "video" ? `${selectedAsset.duration_seconds ?? 0}s` : selectedAsset?.kind === "image" ? "10s" : undefined;
 
   return (
     <div className="flex flex-col gap-4">
@@ -63,10 +87,15 @@ export function ReviewPublishStep() {
           <Card className="p-5">
             <h2 className="mb-3 text-sm font-semibold text-zinc-900">Content Preview</h2>
             <div className="flex gap-4">
-              <div
-                className={`flex aspect-square w-32 shrink-0 items-center justify-center rounded-xl bg-linear-to-br ${selectedAsset?.accent ?? "from-zinc-100 to-zinc-200"
-                  }`}
-              />
+              <div className="flex aspect-square w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
+                <MediaThumb
+                  url={previewUrl}
+                  kind={selectedAsset?.kind}
+                  mimeType={selectedAsset?.file?.mime_type}
+                  alt={assetFilename ?? basicInfo.name}
+                  className="h-full w-full"
+                />
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
                   {basicInfo.name}
@@ -75,7 +104,7 @@ export function ReviewPublishStep() {
                 <dl className="mt-2 space-y-1.5 text-xs">
                   <div className="flex gap-2">
                     <dt className="w-20 shrink-0 text-zinc-400">Campaign</dt>
-                    <dd className="text-zinc-700">{campaign?.name}</dd>
+                    <dd className="text-zinc-700">{campaign?.name ?? "—"}</dd>
                   </div>
                   <div className="flex gap-2">
                     <dt className="w-20 shrink-0 text-zinc-400">Content Type</dt>
@@ -85,18 +114,16 @@ export function ReviewPublishStep() {
                     </dd>
                   </div>
                   {selectedAsset && (
-                    <>
-                      <div className="flex gap-2">
-                        <dt className="w-20 shrink-0 text-zinc-400">File</dt>
-                        <dd className="text-zinc-700">
-                          {selectedAsset.filename}
-                          <span className="block text-zinc-400">
-                            {selectedAsset.dimensions}
-                            {selectedAsset.durationLabel ? ` · ${selectedAsset.durationLabel}` : ""}
-                          </span>
-                        </dd>
-                      </div>
-                    </>
+                    <div className="flex gap-2">
+                      <dt className="w-20 shrink-0 text-zinc-400">File</dt>
+                      <dd className="text-zinc-700">
+                        {assetFilename}
+                        <span className="block text-zinc-400">
+                          {assetDimensions}
+                          {assetDurationLabel ? ` · ${assetDurationLabel}` : ""}
+                        </span>
+                      </dd>
+                    </div>
                   )}
                 </dl>
               </div>
@@ -192,20 +219,20 @@ export function ReviewPublishStep() {
               <div className="flex items-center justify-between">
                 <dt className="text-zinc-400">Start</dt>
                 <dd className="font-medium text-zinc-700">
-                  {formatShortDate(scheduleState.publishDate)}, {scheduleState.publishTime}
+                  {formatShortDate(scheduleForm.start_date)}, {scheduleForm.start_time}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-zinc-400">End</dt>
                 <dd className="font-medium text-zinc-700">
-                  {scheduleState.expirationEnabled && scheduleState.expirationDate
-                    ? `${formatShortDate(scheduleState.expirationDate)}, ${scheduleState.expirationTime}`
+                  {scheduleForm.end_date
+                    ? `${formatShortDate(scheduleForm.end_date)}, ${scheduleForm.end_time}`
                     : "Not set"}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-zinc-400">Time Zone</dt>
-                <dd className="font-medium text-zinc-700">{scheduleState.timeZone}</dd>
+                <dd className="font-medium text-zinc-700">{scheduleForm.timezone}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-zinc-400">Schedule Type</dt>

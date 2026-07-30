@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ChevronDownIcon, PlusIcon, XIcon } from "@/components/ui/icons";
-import { campaigns, languages, priorities, publicationTypes, type PublicationTypeId } from "../mock-data";
+import type { Campaign } from "../types";
+import { priorities, publicationTypes, type PublicationTypeId } from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
@@ -58,7 +59,11 @@ export interface BasicInfoState {
   tags: string[];
 }
 
-export function BasicInfoForm() {
+export interface BasicInfoFormProps {
+  campaigns?: Campaign[];
+}
+
+export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
   const cancelDraft = usePublicationDraftStore((s) => s.cancelDraft);
@@ -82,6 +87,8 @@ export function BasicInfoForm() {
     patch({ tags: tags.filter((t) => t !== tag) });
   };
 
+  const selectedLanguage = language === "Thai" ? "th" : language === "English" ? "en" : language;
+
   return (
     <Card className="p-5">
       <h2 className="mb-4 text-base font-semibold text-zinc-900">Basic Information</h2>
@@ -95,9 +102,10 @@ export function BasicInfoForm() {
                 onChange={(e) => patch({ campaignId: e.target.value })}
                 className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               >
+                <option value="">— Select campaign —</option>
                 {campaigns.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.emoji} {c.name}
+                    {c.name}
                   </option>
                 ))}
               </select>
@@ -159,15 +167,12 @@ export function BasicInfoForm() {
             <FieldWrapper label="Language">
               <div className="relative">
                 <select
-                  value={language}
+                  value={selectedLanguage}
                   onChange={(e) => patch({ language: e.target.value })}
                   className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
                 >
-                  {languages.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
+                  <option value="th">Thai</option>
+                  <option value="en">English</option>
                 </select>
                 <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               </div>

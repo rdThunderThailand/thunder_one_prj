@@ -10,26 +10,25 @@ import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
-  assetLibrary,
-  campaigns,
   defaultScheduleState,
-  defaultSelectedChannelIds,
   priorities,
   type ScheduleState,
 } from "../mock-data";
 import type { BasicInfoState } from "../components/BasicInfoForm";
 
 const defaultBasicInfo: BasicInfoState = {
-  campaignId: campaigns[0].id,
+  // Campaigns come from the API now, so there is no id to preselect.
+  campaignId: "",
   publicationType: "image",
   name: "KFC Wednesday Special - 199 Baht",
   description: "โปรโมชั่นพิเศษทุกวันพุธ เพียง 199 บาท (ปกติ 299 บาท)",
   priorityId: priorities[1].id,
-  language: "Thai",
+  language: "th",
   tags: ["Promotion", "FOOD", "WEDNESDAY"],
 };
 
 interface DraftFields {
+  publicationId: string | null;
   step: number;
   basicInfo: BasicInfoState;
   assetId: string;
@@ -38,14 +37,16 @@ interface DraftFields {
 }
 
 const defaultDraft: DraftFields = {
+  publicationId: null,
   step: 1,
   basicInfo: defaultBasicInfo,
-  assetId: assetLibrary[0].id,
-  channelIds: defaultSelectedChannelIds,
+  assetId: "",
+  channelIds: [],
   scheduleState: defaultScheduleState,
 };
 
 interface PublicationDraftStore extends DraftFields {
+  setPublicationId: (id: string | null) => void;
   setStep: (step: number) => void;
   goNext: (maxStep: number) => void;
   goBack: () => void;
@@ -62,6 +63,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
   persist(
     (set, get) => ({
       ...defaultDraft,
+      setPublicationId: (publicationId) => set({ publicationId }),
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
       goBack: () => set((s) => ({ step: Math.max(s.step - 1, 1) })),

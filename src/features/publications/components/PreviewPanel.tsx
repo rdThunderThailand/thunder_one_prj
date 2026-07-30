@@ -2,11 +2,12 @@
 
 import { Card } from "@/components/ui/Card";
 import { EyeIcon, ImageIcon } from "@/components/ui/icons";
-import { campaigns, priorities, publicationTypes } from "../mock-data";
+import { priorities, publicationTypes } from "../mock-data";
+import type { Campaign } from "../types";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
-export function PreviewPanel() {
+export function PreviewPanel({ campaigns = [] }: { campaigns?: Campaign[] }) {
   const state = usePublicationDraftStore((s) => s.basicInfo);
   const campaign = campaigns.find((c) => c.id === state.campaignId);
   const type = publicationTypes.find((t) => t.id === state.publicationType);

@@ -3,9 +3,10 @@
 import { useState, type ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, ChevronDownIcon, InfoIcon, LightningIcon, RepeatIcon } from "@/components/ui/icons";
+import { scheduleStateToForm } from "../draft-mapping";
+import { isScheduleFormValid } from "../schedule";
+import type { Campaign, Screen } from "../types";
 import {
-  campaigns,
-  channels,
   delayUnits,
   priorities,
   publicationTypes,
@@ -44,7 +45,12 @@ function formatShortDate(iso: string) {
   });
 }
 
-export function ScheduleStep() {
+export interface ScheduleStepProps {
+  campaigns?: Campaign[];
+  screens?: Screen[];
+}
+
+export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleState = usePublicationDraftStore((s) => s.scheduleState);
@@ -66,7 +72,11 @@ export function ScheduleStep() {
 
   const patch = (next: Partial<ScheduleState>) => setScheduleState({ ...scheduleState, ...next });
 
-  const selectedChannels = channels.filter((c) => channelIds.includes(c.id));
+  const isValidSchedule = isScheduleFormValid(scheduleStateToForm(scheduleState));
+
+  const selectedChannelsCount = screens.length > 0
+    ? screens.filter((s) => channelIds.includes(s.id)).length
+    : channelIds.length;
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
@@ -131,6 +141,11 @@ export function ScheduleStep() {
                 className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               />
             </div>
+            {!isValidSchedule && (
+              <p className="mt-1.5 text-xs text-amber-600">
+                Please enter a valid start date, time, and expiration range.
+              </p>
+            )}
           </div>
 
           <div className="mt-4">
@@ -295,7 +310,7 @@ export function ScheduleStep() {
                 <span className="shrink-0 text-sm font-semibold text-zinc-900">{publishTime}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-zinc-900">{basicInfo.name}</p>
-                  <p className="text-xs text-zinc-400">{selectedChannels.length} channels</p>
+                  <p className="text-xs text-zinc-400">{selectedChannelsCount} channels</p>
                 </div>
               </div>
             </div>
@@ -321,7 +336,7 @@ export function ScheduleStep() {
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500">Channels</dt>
-              <dd className="font-medium text-zinc-900">{selectedChannels.length} channels</dd>
+              <dd className="font-medium text-zinc-900">{selectedChannelsCount} channels</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500">Schedule</dt>
