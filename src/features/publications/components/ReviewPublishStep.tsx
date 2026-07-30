@@ -64,9 +64,8 @@ export function ReviewPublishStep() {
             <h2 className="mb-3 text-sm font-semibold text-zinc-900">Content Preview</h2>
             <div className="flex gap-4">
               <div
-                className={`flex aspect-square w-32 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${
-                  selectedAsset?.accent ?? "from-zinc-100 to-zinc-200"
-                }`}
+                className={`flex aspect-square w-32 shrink-0 items-center justify-center rounded-xl bg-linear-to-br ${selectedAsset?.accent ?? "from-zinc-100 to-zinc-200"
+                  }`}
               />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
@@ -225,7 +224,7 @@ export function ReviewPublishStep() {
 
           <Card className="p-5">
             <h2 className="mb-4 text-sm font-semibold text-zinc-900">Schedule Preview</h2>
-            <MiniCalendar selectedIsoDate={scheduleState.publishDate} onSelect={() => {}} />
+            <MiniCalendar selectedIsoDate={scheduleState.publishDate} onSelect={() => { }} />
             {scheduleState.publishDate && (
               <div className="mt-5 border-t border-zinc-100 pt-4">
                 <p className="mb-2 text-sm font-semibold text-zinc-900">{formatLongDate(scheduleState.publishDate)}</p>

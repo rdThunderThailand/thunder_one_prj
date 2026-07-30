@@ -76,9 +76,8 @@ function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`${baseClasses} ${
-        active ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5 hover:text-white"
-      }`}
+      className={`${baseClasses} ${active ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5 hover:text-white"
+        }`}
     >
       {item.label}
     </Link>
@@ -101,9 +100,8 @@ function SubLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`${baseClasses} ${
-        active ? "text-white font-medium" : "text-slate-400 hover:text-white"
-      }`}
+      className={`${baseClasses} ${active ? "text-white font-medium" : "text-slate-400 hover:text-white"
+        }`}
     >
       <span className="h-1 w-1 rounded-full bg-current" />
       {item.label}
@@ -144,7 +142,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col bg-[#0b1220]">
       <div className="flex items-center gap-2.5 px-4 py-4">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-400 to-blue-600 text-white">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-linear-to-br from-indigo-400 to-blue-600 text-white">
           <LightningIcon className="h-4 w-4" />
         </span>
         <div className="leading-tight">
