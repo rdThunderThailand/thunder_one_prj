@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { buildCalendarMonth } from "../schedule";
+import type { ScheduleConflict, ScheduleForm } from "../types";
 
 const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTH_LABELS = [
@@ -9,70 +11,40 @@ const MONTH_LABELS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-interface CalendarCell {
-  date: number;
-  inMonth: boolean;
-  isoDate: string;
-}
-
-function toIso(year: number, month: number, day: number) {
-  const m = String(month + 1).padStart(2, "0");
-  const d = String(day).padStart(2, "0");
-  return `${year}-${m}-${d}`;
-}
-
-function buildGrid(year: number, month: number): CalendarCell[] {
-  const firstWeekday = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
-
-  const cells: CalendarCell[] = [];
-  for (let i = firstWeekday - 1; i >= 0; i--) {
-    const day = daysInPrevMonth - i;
-    const prevMonth = month === 0 ? 11 : month - 1;
-    const prevYear = month === 0 ? year - 1 : year;
-    cells.push({ date: day, inMonth: false, isoDate: toIso(prevYear, prevMonth, day) });
-  }
-  for (let day = 1; day <= daysInMonth; day++) {
-    cells.push({ date: day, inMonth: true, isoDate: toIso(year, month, day) });
-  }
-  let nextDay = 1;
-  const nextMonth = month === 11 ? 0 : month + 1;
-  const nextYear = month === 11 ? year + 1 : year;
-  while (cells.length % 7 !== 0) {
-    cells.push({ date: nextDay, inMonth: false, isoDate: toIso(nextYear, nextMonth, nextDay) });
-    nextDay++;
-  }
-  return cells;
+export interface MiniCalendarProps {
+  form: ScheduleForm;
+  conflicts: ScheduleConflict[];
+  onSelectDate?: (ymd: string) => void;
 }
 
 export function MiniCalendar({
-  selectedIsoDate,
-  onSelect,
-}: {
-  selectedIsoDate: string;
-  onSelect: (isoDate: string) => void;
-}) {
-  const initial = selectedIsoDate ? new Date(`${selectedIsoDate}T00:00:00`) : new Date();
-  const [year, setYear] = useState(initial.getFullYear());
-  const [month, setMonth] = useState(initial.getMonth());
+  form,
+  conflicts,
+  onSelectDate,
+}: MiniCalendarProps) {
+  const initial =
+    form.start_date && !isNaN(Date.parse(form.start_date))
+      ? new Date(`${form.start_date}T00:00:00`)
+      : new Date();
+  const [viewYear, setViewYear] = useState(initial.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initial.getMonth());
 
-  const cells = buildGrid(year, month);
+  const weeks = buildCalendarMonth(form, conflicts, viewYear, viewMonth);
 
   const goPrevMonth = () => {
-    if (month === 0) {
-      setMonth(11);
-      setYear((y) => y - 1);
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
     } else {
-      setMonth((m) => m - 1);
+      setViewMonth((m) => m - 1);
     }
   };
   const goNextMonth = () => {
-    if (month === 11) {
-      setMonth(0);
-      setYear((y) => y + 1);
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
     } else {
-      setMonth((m) => m + 1);
+      setViewMonth((m) => m + 1);
     }
   };
 
@@ -80,10 +52,11 @@ export function MiniCalendar({
     <div>
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm font-semibold text-zinc-900">
-          {MONTH_LABELS[month]} {year}
+          {MONTH_LABELS[viewMonth]} {viewYear}
         </p>
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={goPrevMonth}
             aria-label="Previous month"
             className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
@@ -91,6 +64,7 @@ export function MiniCalendar({
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
           <button
+            type="button"
             onClick={goNextMonth}
             aria-label="Next month"
             className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
@@ -105,24 +79,53 @@ export function MiniCalendar({
             {d}
           </span>
         ))}
-        {cells.map((cell, i) => {
-          const isSelected = cell.isoDate === selectedIsoDate;
+        {weeks.flat().map((cell, i) => {
+          if (!cell.inMonth && cell.ymd === "") {
+            return <div key={`pad-${i}`} className="h-8 w-8" />;
+          }
+
+          let style = "text-zinc-700 hover:bg-zinc-100";
+          if (!cell.inMonth) {
+            style = "text-zinc-300";
+          } else if (cell.isOverlap) {
+            style = "bg-indigo-50 font-medium text-indigo-600 ring-2 ring-amber-400";
+          } else if (cell.isActive) {
+            style = "bg-indigo-50 font-medium text-indigo-600";
+          } else if (cell.isToday) {
+            style = "ring-1 ring-zinc-300 text-zinc-700 hover:bg-zinc-100";
+          }
+
+          const isClickable = Boolean(onSelectDate && cell.ymd !== "");
+
           return (
             <button
-              key={`${cell.isoDate}-${i}`}
-              onClick={() => onSelect(cell.isoDate)}
-              className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm transition-colors ${
-                isSelected
-                  ? "bg-indigo-600 font-semibold text-white"
-                  : cell.inMonth
-                    ? "text-zinc-700 hover:bg-zinc-100"
-                    : "text-zinc-300 hover:bg-zinc-50"
+              key={`${cell.ymd}-${i}`}
+              type="button"
+              disabled={!isClickable}
+              onClick={() => {
+                if (isClickable && cell.ymd) {
+                  onSelectDate?.(cell.ymd);
+                }
+              }}
+              className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm transition-colors ${style} ${
+                !isClickable ? "cursor-default" : "cursor-pointer"
               }`}
             >
-              {cell.date}
+              {cell.day}
             </button>
           );
         })}
+      </div>
+      <div className="mt-3 flex items-center justify-center gap-4 text-[11px] text-zinc-400">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-indigo-500" /> Active
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-amber-400" /> Conflict
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full ring-1 ring-zinc-400" /> Today
+        </span>
       </div>
     </div>
   );

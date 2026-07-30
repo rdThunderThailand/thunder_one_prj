@@ -1,4 +1,4 @@
-import { DEFAULT_TIMEZONE, makeDefaultScheduleForm } from "./schedule";
+import type { ScheduleTypeId } from "./mock-data";
 import type {
   BasicInfoForm,
   ContentItem,
@@ -6,11 +6,24 @@ import type {
   Priority,
   PublicationTarget,
   PublicationType,
-  ScheduleForm,
+  ScheduleType,
   Screen,
 } from "./types";
 import type { BasicInfoState } from "./components/BasicInfoForm";
-import type { ScheduleState } from "./mock-data";
+
+export const SCHEDULE_TYPE_BY_CARD: Record<ScheduleTypeId, ScheduleType> = {
+  "publish-now": "now",
+  "schedule-later": "later",
+  recurring: "recurring",
+  "custom-range": "range",
+};
+
+export const CARD_BY_SCHEDULE_TYPE: Record<ScheduleType, ScheduleTypeId> = {
+  now: "publish-now",
+  later: "schedule-later",
+  recurring: "recurring",
+  range: "custom-range",
+};
 
 export function basicInfoToForm(basicInfo: BasicInfoState): BasicInfoForm {
   const languageCode =
@@ -28,39 +41,6 @@ export function basicInfoToForm(basicInfo: BasicInfoState): BasicInfoForm {
     priority: basicInfo.priorityId as Priority,
     language: languageCode,
     tags: basicInfo.tags ?? [],
-  };
-}
-
-export function scheduleStateToForm(state: ScheduleState): ScheduleForm {
-  const defaultForm = makeDefaultScheduleForm();
-
-  let schedule_type: ScheduleForm["schedule_type"] = "now";
-  if (state.scheduleType === "publish-now") schedule_type = "now";
-  else if (state.scheduleType === "schedule-later") schedule_type = "later";
-  else if (state.scheduleType === "recurring") schedule_type = "recurring";
-  else if (state.scheduleType === "custom-range") schedule_type = "range";
-
-  // ponytail: Bangkok is the only zone the UI offers, so the display string
-  // ("(GMT+07:00) Bangkok") always resolves to DEFAULT_TIMEZONE. Map it properly
-  // here once `timeZones` in mock-data grows a second entry.
-  const timezone = DEFAULT_TIMEZONE;
-
-  const start_date = state.publishDate || defaultForm.start_date;
-  const start_time = state.publishTime || defaultForm.start_time;
-
-  const end_date = state.expirationEnabled ? state.expirationDate || "" : "";
-  const end_time = state.expirationEnabled ? state.expirationTime || "" : "";
-
-  return {
-    schedule_type,
-    start_date,
-    start_time,
-    timezone,
-    end_date,
-    end_time,
-    days: defaultForm.days,
-    daily_start: defaultForm.daily_start,
-    daily_end: defaultForm.daily_end,
   };
 }
 

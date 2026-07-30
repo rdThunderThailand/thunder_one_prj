@@ -116,7 +116,7 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
           <FieldWrapper label="Publication Name" required>
             <div className="relative">
               <input
-                value={name}
+                placeholder={name}
                 maxLength={100}
                 onChange={(e) => patch({ name: e.target.value })}
                 className="w-full rounded-lg border border-zinc-200 py-2.5 pl-3.5 pr-16 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
@@ -130,7 +130,7 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
           <FieldWrapper label="Description" optional>
             <div className="relative">
               <textarea
-                value={description}
+                placeholder={description}
                 maxLength={300}
                 rows={3}
                 onChange={(e) => patch({ description: e.target.value })}

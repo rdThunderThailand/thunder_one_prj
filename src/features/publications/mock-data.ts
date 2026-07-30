@@ -57,7 +57,6 @@ export const assetLibraryTabs = [
   { id: "recent", label: "Recently Used", enabled: false },
 ];
 
-
 export type ChannelCategoryId = "dooh" | "in-store" | "online" | "social" | "others";
 
 export interface ChannelCategory {
@@ -95,42 +94,12 @@ export interface ScheduleTypeOption {
 
 export const scheduleTypes: ScheduleTypeOption[] = [
   { id: "publish-now", label: "Publish Now", sublabel: "เผยแพร่ทันที", enabled: true },
-  { id: "schedule-later", label: "Schedule Later", sublabel: "กำหนดเวลาภายหลัง", enabled: false },
-  { id: "recurring", label: "Recurring Schedule", sublabel: "ตั้งเวลาซ้ำ", enabled: false },
-  { id: "custom-range", label: "Custom Date Range", sublabel: "กำหนดช่วงเวลาเอง", enabled: false },
+  { id: "schedule-later", label: "Schedule Later", sublabel: "กำหนดเวลาภายหลัง", enabled: true },
+  { id: "recurring", label: "Recurring Schedule", sublabel: "ตั้งเวลาซ้ำ", enabled: true },
+  { id: "custom-range", label: "Custom Date Range", sublabel: "กำหนดช่วงเวลาเอง", enabled: true },
 ];
 
-export const timeZones = ["(GMT+07:00) Bangkok"];
-
 export const delayUnits = ["seconds", "minutes", "hours"];
-
-export type PublishOrder = "same-time" | "sequence";
-
-export interface ScheduleState {
-  scheduleType: ScheduleTypeId;
-  publishDate: string;
-  publishTime: string;
-  timeZone: string;
-  expirationEnabled: boolean;
-  expirationDate: string;
-  expirationTime: string;
-  publishOrder: PublishOrder;
-  delayValue: string;
-  delayUnit: string;
-}
-
-export const defaultScheduleState: ScheduleState = {
-  scheduleType: "publish-now",
-  publishDate: "2025-05-16",
-  publishTime: "09:00",
-  timeZone: timeZones[0],
-  expirationEnabled: false,
-  expirationDate: "",
-  expirationTime: "",
-  publishOrder: "same-time",
-  delayValue: "10",
-  delayUnit: "seconds",
-};
 
 export const prePublishChecklist = [
   "ไฟล์สื่อผ่านการตรวจสอบแล้ว",

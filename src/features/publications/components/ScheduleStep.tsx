@@ -3,21 +3,25 @@
 import { useState, type ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, ChevronDownIcon, InfoIcon, LightningIcon, RepeatIcon } from "@/components/ui/icons";
-import { scheduleStateToForm } from "../draft-mapping";
-import { isScheduleFormValid } from "../schedule";
-import type { Campaign, Screen } from "../types";
+import { CARD_BY_SCHEDULE_TYPE, SCHEDULE_TYPE_BY_CARD } from "../draft-mapping";
+import {
+  TIMEZONES,
+  WEEKDAYS,
+  isScheduleFormValid,
+  utcToZonedParts,
+} from "../schedule";
+import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
 import {
   delayUnits,
   priorities,
   publicationTypes,
   scheduleTypes,
-  timeZones,
-  type ScheduleState,
   type ScheduleTypeId,
 } from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { MiniCalendar } from "./MiniCalendar";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { usePreviewUrls } from "../hooks/usePreviewUrls";
 
 const scheduleTypeIcon: Record<ScheduleTypeId, ReactNode> = {
   "publish-now": <LightningIcon />,
@@ -48,38 +52,79 @@ function formatShortDate(iso: string) {
 export interface ScheduleStepProps {
   campaigns?: Campaign[];
   screens?: Screen[];
+  assets?: MediaAsset[];
+  conflicts?: ScheduleConflict[];
+  checkingConflicts?: boolean;
 }
 
-export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps) {
+export function ScheduleStep({
+  campaigns = [],
+  screens = [],
+  assets = [],
+  conflicts = [],
+  checkingConflicts = false,
+}: ScheduleStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
+  const assetId = usePublicationDraftStore((s) => s.assetId);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
-  const scheduleState = usePublicationDraftStore((s) => s.scheduleState);
-  const setScheduleState = usePublicationDraftStore((s) => s.setScheduleState);
+  const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+  const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
   const [advancedOpen, setAdvancedOpen] = useState(true);
 
-  const {
-    scheduleType,
-    publishDate,
-    publishTime,
-    timeZone,
-    expirationEnabled,
-    expirationDate,
-    expirationTime,
-    publishOrder,
-    delayValue,
-    delayUnit,
-  } = scheduleState;
+  const patch = (next: Partial<typeof scheduleForm>) =>
+    setScheduleForm({ ...scheduleForm, ...next });
 
-  const patch = (next: Partial<ScheduleState>) => setScheduleState({ ...scheduleState, ...next });
+  const isValidSchedule = isScheduleFormValid(scheduleForm);
+  const nowZoned = utcToZonedParts(new Date().toISOString(), scheduleForm.timezone);
 
-  const isValidSchedule = isScheduleFormValid(scheduleStateToForm(scheduleState));
+  const selectedAsset = assets.find((a) => a.id === assetId);
+  const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
+  const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
 
-  const selectedChannelsCount = screens.length > 0
-    ? screens.filter((s) => channelIds.includes(s.id)).length
-    : channelIds.length;
+  const isVideo =
+    selectedAsset?.kind === "video" ||
+    selectedAsset?.file?.mime_type?.startsWith("video/");
+
+  const isMismatch =
+    selectedAsset &&
+    ((basicInfo.publicationType === "image" && isVideo) ||
+      (basicInfo.publicationType === "video" && selectedAsset.kind === "image"));
+
+  const selectedChannelsCount =
+    screens.length > 0
+      ? screens.filter((s) => channelIds.includes(s.id)).length
+      : channelIds.length;
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
+
+  const hasExpiration = Boolean(scheduleForm.end_date);
+
+  const toggleDay = (val: number) => {
+    const next = scheduleForm.days.includes(val)
+      ? scheduleForm.days.filter((d) => d !== val)
+      : [...scheduleForm.days, val].sort((a, b) => a - b);
+    patch({ days: next });
+  };
+
+  const handleExpirationToggle = (checked: boolean) => {
+    if (checked) {
+      patch({
+        end_date: scheduleForm.end_date || nowZoned.date,
+        end_time: scheduleForm.end_time || "23:59",
+      });
+    } else {
+      patch({ end_date: "", end_time: "" });
+    }
+  };
+
+  const activeCardId = CARD_BY_SCHEDULE_TYPE[scheduleForm.schedule_type];
+
+  // Helper values for displaying date/time in summary
+  const displayStartDate =
+    scheduleForm.schedule_type === "now" ? nowZoned.date : scheduleForm.start_date;
+  const displayStartTime =
+    scheduleForm.schedule_type === "now" ? nowZoned.time : scheduleForm.start_time;
 
   return (
     <div className="flex flex-col gap-4">
@@ -93,22 +138,18 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
           <p className="mb-2 text-sm font-medium text-zinc-700">Schedule Type</p>
           <div className="grid grid-cols-2 gap-2.5">
             {scheduleTypes.map((option) => {
-              const active = scheduleType === option.id;
+              const active = activeCardId === option.id;
               return (
                 <button
                   key={option.id}
                   type="button"
-                  disabled={!option.enabled}
-                  title={!option.enabled ? "Not built yet" : undefined}
                   onClick={() => {
-                    patch({ scheduleType: option.id });
+                    patch({ schedule_type: SCHEDULE_TYPE_BY_CARD[option.id] });
                   }}
                   className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-colors ${
-                    !option.enabled
-                      ? "cursor-not-allowed border-zinc-100 opacity-50"
-                      : active
-                        ? "border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400"
-                        : "border-zinc-200 hover:border-zinc-300"
+                    active
+                      ? "border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400"
+                      : "border-zinc-200 hover:border-zinc-300"
                   }`}
                 >
                   <span className={`h-5 w-5 ${active ? "text-indigo-600" : "text-zinc-400"}`}>
@@ -122,25 +163,43 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
           </div>
 
           <div className="mt-4">
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Publish Date &amp; Time</label>
-            <div className="grid grid-cols-2 gap-2.5">
-              <input
-                type="date"
-                value={publishDate}
-                onChange={(e) => {
-                  patch({ publishDate: e.target.value });
-                }}
-                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-              />
-              <input
-                type="time"
-                value={publishTime}
-                onChange={(e) => {
-                  patch({ publishTime: e.target.value });
-                }}
-                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-              />
-            </div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+              Publish Date &amp; Time
+            </label>
+            {scheduleForm.schedule_type === "now" ? (
+              <>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <input
+                    type="date"
+                    disabled
+                    value={nowZoned.date}
+                    className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-400 outline-none cursor-not-allowed"
+                  />
+                  <input
+                    type="time"
+                    disabled
+                    value={nowZoned.time}
+                    className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-400 outline-none cursor-not-allowed"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-zinc-500">Publishes immediately once activated.</p>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 gap-2.5">
+                <input
+                  type="date"
+                  value={scheduleForm.start_date}
+                  onChange={(e) => patch({ start_date: e.target.value })}
+                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                />
+                <input
+                  type="time"
+                  value={scheduleForm.start_time}
+                  onChange={(e) => patch({ start_time: e.target.value })}
+                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+            )}
             {!isValidSchedule && (
               <p className="mt-1.5 text-xs text-amber-600">
                 Please enter a valid start date, time, and expiration range.
@@ -148,19 +207,107 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
             )}
           </div>
 
+          {scheduleForm.schedule_type === "range" && (
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                End Date &amp; Time
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <input
+                  type="date"
+                  value={scheduleForm.end_date}
+                  onChange={(e) => patch({ end_date: e.target.value })}
+                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                />
+                <input
+                  type="time"
+                  value={scheduleForm.end_time}
+                  onChange={(e) => patch({ end_time: e.target.value })}
+                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+            </div>
+          )}
+
+          {scheduleForm.schedule_type === "recurring" && (
+            <>
+              <div className="mt-4">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                  End Date &amp; Time
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <input
+                    type="date"
+                    value={scheduleForm.end_date}
+                    onChange={(e) => patch({ end_date: e.target.value })}
+                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                  <input
+                    type="time"
+                    value={scheduleForm.end_time}
+                    onChange={(e) => patch({ end_time: e.target.value })}
+                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Repeat On</label>
+                <div className="flex flex-wrap gap-2">
+                  {WEEKDAYS.map((w) => {
+                    const isSelected = scheduleForm.days.includes(w.value);
+                    return (
+                      <button
+                        key={w.value}
+                        type="button"
+                        onClick={() => toggleDay(w.value)}
+                        className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                          isSelected
+                            ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+                            : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                        }`}
+                      >
+                        {w.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Daily Window</label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <input
+                    type="time"
+                    value={scheduleForm.daily_start}
+                    onChange={(e) => patch({ daily_start: e.target.value })}
+                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                  <input
+                    type="time"
+                    value={scheduleForm.daily_end}
+                    onChange={(e) => patch({ daily_end: e.target.value })}
+                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-zinc-500">
+                  Plays on the selected weekdays, within this daily time window, across the date range above.
+                </p>
+              </div>
+            </>
+          )}
+
           <div className="mt-4">
             <label className="mb-1.5 block text-sm font-medium text-zinc-700">Time Zone</label>
             <div className="relative">
               <select
-                value={timeZone}
-                onChange={(e) => {
-                  patch({ timeZone: e.target.value });
-                }}
+                value={scheduleForm.timezone}
+                onChange={(e) => patch({ timezone: e.target.value })}
                 className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               >
-                {timeZones.map((tz) => (
-                  <option key={tz} value={tz}>
-                    {tz}
+                {TIMEZONES.map((tz) => (
+                  <option key={tz.id} value={tz.id}>
+                    {tz.label}
                   </option>
                 ))}
               </select>
@@ -168,39 +315,35 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
             </div>
           </div>
 
-          <div className="mt-4">
-            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-zinc-700">
-              <input
-                type="checkbox"
-                checked={expirationEnabled}
-                onChange={(e) => {
-                  patch({ expirationEnabled: e.target.checked });
-                }}
-                className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              Expiration <span className="text-zinc-400">(Optional)</span>
-            </label>
-            <div className="grid grid-cols-2 gap-2.5">
-              <input
-                type="date"
-                disabled={!expirationEnabled}
-                value={expirationDate}
-                onChange={(e) => {
-                  patch({ expirationDate: e.target.value });
-                }}
-                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
-              />
-              <input
-                type="time"
-                disabled={!expirationEnabled}
-                value={expirationTime}
-                onChange={(e) => {
-                  patch({ expirationTime: e.target.value });
-                }}
-                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
-              />
+          {(scheduleForm.schedule_type === "now" || scheduleForm.schedule_type === "later") && (
+            <div className="mt-4">
+              <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-zinc-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasExpiration}
+                  onChange={(e) => handleExpirationToggle(e.target.checked)}
+                  className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                Expiration <span className="text-zinc-400">(Optional)</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <input
+                  type="date"
+                  disabled={!hasExpiration}
+                  value={scheduleForm.end_date}
+                  onChange={(e) => patch({ end_date: e.target.value })}
+                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
+                />
+                <input
+                  type="time"
+                  disabled={!hasExpiration}
+                  value={scheduleForm.end_time}
+                  onChange={(e) => patch({ end_time: e.target.value })}
+                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mt-4 border-t border-zinc-100 pt-4">
             <button
@@ -209,7 +352,9 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
               className="flex w-full items-center justify-between text-sm font-medium text-zinc-900"
             >
               Advanced Options
-              <ChevronDownIcon className={`h-4 w-4 text-zinc-400 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+              <ChevronDownIcon
+                className={`h-4 w-4 text-zinc-400 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+              />
             </button>
             {advancedOpen && (
               <div className="mt-3 flex flex-col gap-4">
@@ -221,33 +366,37 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
                     </span>
                   </p>
                   <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2 text-sm text-zinc-700">
+                    <label
+                      title="Not built yet"
+                      className="flex items-center gap-2 text-sm text-zinc-400 cursor-not-allowed"
+                    >
                       <input
                         type="radio"
-                        name="publishOrder"
-                        checked={publishOrder === "same-time"}
-                        onChange={() => {
-                          patch({ publishOrder: "same-time" });
-                        }}
+                        disabled
+                        checked
+                        title="Not built yet"
+                        readOnly
                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
                       />
                       Publish to all channels at the same time
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-zinc-700">
+                    <label
+                      title="Not built yet"
+                      className="flex items-center gap-2 text-sm text-zinc-400 cursor-not-allowed"
+                    >
                       <input
                         type="radio"
-                        name="publishOrder"
-                        checked={publishOrder === "sequence"}
-                        onChange={() => {
-                          patch({ publishOrder: "sequence" });
-                        }}
+                        disabled
+                        checked={false}
+                        title="Not built yet"
+                        readOnly
                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
                       />
                       Publish to channels in sequence
                     </label>
                   </div>
                 </div>
-                <div className={publishOrder === "sequence" ? "" : "opacity-50"}>
+                <div className="opacity-50">
                   <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-zinc-700">
                     Delay between channels
                     <span title="Wait time before each next channel goes live">
@@ -257,22 +406,17 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
                   <div className="flex gap-2">
                     <input
                       type="number"
-                      min={0}
-                      disabled={publishOrder !== "sequence"}
-                      value={delayValue}
-                      onChange={(e) => {
-                        patch({ delayValue: e.target.value });
-                      }}
-                      className="w-20 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
+                      disabled
+                      title="Not built yet"
+                      defaultValue={10}
+                      className="w-20 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none cursor-not-allowed bg-zinc-50"
                     />
                     <div className="relative flex-1">
                       <select
-                        disabled={publishOrder !== "sequence"}
-                        value={delayUnit}
-                        onChange={(e) => {
-                          patch({ delayUnit: e.target.value });
-                        }}
-                        className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
+                        disabled
+                        title="Not built yet"
+                        defaultValue="seconds"
+                        className="w-full appearance-none rounded-lg border border-zinc-200 bg-zinc-50 py-2 pl-3 pr-8 text-sm text-zinc-900 outline-none cursor-not-allowed"
                       >
                         {delayUnits.map((u) => (
                           <option key={u} value={u}>
@@ -298,16 +442,23 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
           <h2 className="mb-1 text-base font-semibold text-zinc-900">Schedule Preview</h2>
           <p className="mb-4 text-sm text-zinc-500">ตัวอย่างกำหนดการ</p>
           <MiniCalendar
-            selectedIsoDate={publishDate}
-            onSelect={(d) => {
-              patch({ publishDate: d });
-            }}
+            form={scheduleForm}
+            conflicts={conflicts}
+            onSelectDate={
+              scheduleForm.schedule_type !== "now"
+                ? (ymd) => patch({ start_date: ymd })
+                : undefined
+            }
           />
-          {publishDate && (
+          {displayStartDate && (
             <div className="mt-5 border-t border-zinc-100 pt-4">
-              <p className="mb-2 text-sm font-semibold text-zinc-900">{formatLongDate(publishDate)}</p>
+              <p className="mb-2 text-sm font-semibold text-zinc-900">
+                {formatLongDate(displayStartDate)}
+              </p>
               <div className="flex items-center gap-3 rounded-lg border border-zinc-200 p-3">
-                <span className="shrink-0 text-sm font-semibold text-zinc-900">{publishTime}</span>
+                <span className="shrink-0 text-sm font-semibold text-zinc-900">
+                  {displayStartTime}
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-zinc-900">{basicInfo.name}</p>
                   <p className="text-xs text-zinc-400">{selectedChannelsCount} channels</p>
@@ -315,23 +466,92 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
               </div>
             </div>
           )}
+
+          {checkingConflicts && (
+            <p className="mt-4 text-xs text-zinc-400">กำลังตรวจสอบความขัดแย้งของตารางเผยแพร่…</p>
+          )}
+
+          {conflicts.length > 0 && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <h4 className="text-sm font-semibold text-amber-800">
+                ⚠ Schedule conflict — {conflicts.length} publication(s) overlap
+              </h4>
+              <p className="mt-0.5 text-[11px] text-amber-700">
+                Warning only (publishing is still allowed)
+              </p>
+              <div className="mt-3 space-y-2 text-xs text-amber-900">
+                {conflicts.map((c) => {
+                  const startStr = new Date(c.starts_at).toLocaleString();
+                  const endStr = c.ends_at ? new Date(c.ends_at).toLocaleString() : "no end";
+                  return (
+                    <div key={c.publication_id} className="border-t border-amber-200/60 pt-2 first:border-0 first:pt-0">
+                      <div className="font-medium">{c.name}</div>
+                      <div className="text-[11px] opacity-90">
+                        Window: {startStr} – {endStr}
+                      </div>
+                      {c.screens.length > 0 && (
+                        <div className="text-[11px] opacity-80">
+                          Screens: {c.screens.join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </Card>
 
         <Card className="p-5">
           <h2 className="mb-4 text-base font-semibold text-zinc-900">Publication Summary</h2>
-          <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400">
-            <p className="text-xs">Content preview will appear here</p>
-          </div>
+          {selectedAsset && previewUrl ? (
+            <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
+              {isVideo ? (
+                <video
+                  src={previewUrl}
+                  controls
+                  preload="metadata"
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <img
+                  src={previewUrl}
+                  alt={selectedAsset.title ?? "Preview"}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+          ) : (
+            <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400">
+              <p className="text-xs">Content preview will appear here</p>
+            </div>
+          )}
+
           <dl className="mt-5 space-y-3 border-t border-zinc-100 pt-4 text-sm">
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500">Campaign</dt>
-              <dd className="font-medium text-zinc-900">{campaign?.name}</dd>
+              <dd className="font-medium text-zinc-900">{campaign?.name ?? "—"}</dd>
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <dt className="text-zinc-500">Publication Type</dt>
+                <dd className="flex items-center gap-1.5 font-medium text-zinc-900">
+                  <span className="h-4 w-4 text-zinc-500">
+                    {type && publicationTypeIcons[type.id]}
+                  </span>
+                  {type?.label}
+                </dd>
+              </div>
+              {isMismatch && (
+                <p className="mt-1 text-xs text-amber-600 text-right">
+                  Selected asset is a {selectedAsset?.kind} while publication type is {basicInfo.publicationType}.
+                </p>
+              )}
             </div>
             <div className="flex items-center justify-between">
-              <dt className="text-zinc-500">Publication Type</dt>
-              <dd className="flex items-center gap-1.5 font-medium text-zinc-900">
-                <span className="h-4 w-4 text-zinc-500">{type && publicationTypeIcons[type.id]}</span>
-                {type?.label}
+              <dt className="text-zinc-500">Content</dt>
+              <dd className="max-w-[180px] truncate font-medium text-zinc-900 text-right" title={selectedAsset?.file?.original_filename ?? selectedAsset?.title ?? selectedAsset?.id}>
+                {selectedAsset ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between">
@@ -341,14 +561,31 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500">Schedule</dt>
               <dd className="text-right font-medium text-zinc-900">
-                {formatShortDate(publishDate)}, {publishTime}
-                <span className="block text-xs font-normal text-zinc-400">{timeZone}</span>
+                {formatShortDate(displayStartDate)}, {displayStartTime}
+                <span className="block text-xs font-normal text-zinc-400">
+                  {scheduleForm.timezone}
+                </span>
               </dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500">Expiration</dt>
               <dd className="font-medium text-zinc-900">
-                {expirationEnabled && expirationDate ? formatShortDate(expirationDate) : "Not set"}
+                {scheduleForm.end_date ? formatShortDate(scheduleForm.end_date) : "Not set"}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-zinc-500 font-medium">Conflicts</dt>
+              <dd className="text-right font-medium">
+                {conflicts.length === 0 ? (
+                  <span className="text-zinc-900">None</span>
+                ) : (
+                  <div>
+                    <span className="text-amber-600">{conflicts.length} publication(s)</span>
+                    <span className="block text-xs font-normal text-amber-700 truncate max-w-[180px]">
+                      {conflicts.map((c) => c.name).join(", ")}
+                    </span>
+                  </div>
+                )}
               </dd>
             </div>
             <div className="flex items-center justify-between">
@@ -360,7 +597,9 @@ export function ScheduleStep({ campaigns = [], screens = [] }: ScheduleStepProps
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="shrink-0 text-zinc-500">Tags</dt>
-              <dd className="text-right font-medium text-zinc-900">{basicInfo.tags.join(", ") || "—"}</dd>
+              <dd className="text-right font-medium text-zinc-900">
+                {basicInfo.tags.join(", ") || "—"}
+              </dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500">Language</dt>

@@ -31,6 +31,8 @@ export function CreatePublicationPage() {
     saving,
     error,
     publishedId,
+    conflicts,
+    checkingConflicts,
     saveDraft,
     publishNow,
     canPublish,
@@ -90,8 +92,23 @@ export function CreatePublicationPage() {
 
       {step === 2 && <ContentStep campaigns={campaigns} />}
       {step === 3 && <ChannelsStep screens={screens} loadingScreens={loadingRefs} />}
-      {step === 4 && <ScheduleStep campaigns={campaigns} screens={screens} />}
-      {step === 5 && <ReviewPublishStep campaigns={campaigns} screens={screens} assets={assets} />}
+      {step === 4 && (
+        <ScheduleStep
+          campaigns={campaigns}
+          screens={screens}
+          assets={assets}
+          conflicts={conflicts}
+          checkingConflicts={checkingConflicts}
+        />
+      )}
+      {step === 5 && (
+        <ReviewPublishStep
+          campaigns={campaigns}
+          screens={screens}
+          assets={assets}
+          conflicts={conflicts}
+        />
+      )}
 
       <Card className="flex flex-col gap-3 p-4">
         <div className="flex items-center gap-4">

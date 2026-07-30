@@ -9,22 +9,20 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import {
-  defaultScheduleState,
-  priorities,
-  type ScheduleState,
-} from "../mock-data";
+import { makeDefaultScheduleForm } from "../schedule";
+import type { ScheduleForm } from "../types";
+import { priorities } from "../mock-data";
 import type { BasicInfoState } from "../components/BasicInfoForm";
 
 const defaultBasicInfo: BasicInfoState = {
   // Campaigns come from the API now, so there is no id to preselect.
   campaignId: "",
   publicationType: "image",
-  name: "KFC Wednesday Special - 199 Baht",
-  description: "โปรโมชั่นพิเศษทุกวันพุธ เพียง 199 บาท (ปกติ 299 บาท)",
+  name: "",
+  description: "",
   priorityId: priorities[1].id,
   language: "th",
-  tags: ["Promotion", "FOOD", "WEDNESDAY"],
+  tags: [],
 };
 
 interface DraftFields {
@@ -33,17 +31,19 @@ interface DraftFields {
   basicInfo: BasicInfoState;
   assetId: string;
   channelIds: string[];
-  scheduleState: ScheduleState;
+  scheduleForm: ScheduleForm;
 }
 
-const defaultDraft: DraftFields = {
-  publicationId: null,
-  step: 1,
-  basicInfo: defaultBasicInfo,
-  assetId: "",
-  channelIds: [],
-  scheduleState: defaultScheduleState,
-};
+function getDefaultDraft(): DraftFields {
+  return {
+    publicationId: null,
+    step: 1,
+    basicInfo: defaultBasicInfo,
+    assetId: "",
+    channelIds: [],
+    scheduleForm: makeDefaultScheduleForm(),
+  };
+}
 
 interface PublicationDraftStore extends DraftFields {
   setPublicationId: (id: string | null) => void;
@@ -54,7 +54,7 @@ interface PublicationDraftStore extends DraftFields {
   setAssetId: (assetId: string) => void;
   setChannelIds: (channelIds: string[]) => void;
   toggleChannelId: (id: string) => void;
-  setScheduleState: (scheduleState: ScheduleState) => void;
+  setScheduleForm: (scheduleForm: ScheduleForm) => void;
   /** Resets in-memory state and wipes the persisted draft — used by Cancel. */
   cancelDraft: () => void;
 }
@@ -62,7 +62,7 @@ interface PublicationDraftStore extends DraftFields {
 export const usePublicationDraftStore = create<PublicationDraftStore>()(
   persist(
     (set, get) => ({
-      ...defaultDraft,
+      ...getDefaultDraft(),
       setPublicationId: (publicationId) => set({ publicationId }),
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
@@ -75,18 +75,18 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
         const next = channelIds.includes(id) ? channelIds.filter((c) => c !== id) : [...channelIds, id];
         set({ channelIds: next });
       },
-      setScheduleState: (scheduleState) => set({ scheduleState }),
+      setScheduleForm: (scheduleForm) => set({ scheduleForm }),
       cancelDraft: () => {
-        set({ ...defaultDraft });
+        set(getDefaultDraft());
         usePublicationDraftStore.persist.clearStorage();
       },
     }),
     {
-      name: "thunderone.publications.create-draft",
+      name: "thunderone.publications.create-draft.v2",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the
-      // server always renders with `defaultDraft` (no localStorage there).
+      // server always renders with defaultDraft (no localStorage there).
       skipHydration: true,
     },
   ),
