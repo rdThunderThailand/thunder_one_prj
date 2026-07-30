@@ -38,12 +38,22 @@ export function AssetCard({
     >
       <div className="relative flex aspect-square w-full items-center justify-center bg-zinc-100">
         {previewUrl ? (
-          <img
-            src={previewUrl}
-            alt={filename}
-            loading="lazy"
-            className="h-full w-full object-cover"
-          />
+          isVideo ? (
+            // #t=0.1 makes the browser paint the first frame as a poster.
+            <video
+              src={`${previewUrl}#t=0.1`}
+              muted
+              preload="metadata"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <img
+              src={previewUrl}
+              alt={filename}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          )
         ) : null}
         {isVideo && (
           <span className="absolute flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-zinc-900">

@@ -11,6 +11,20 @@ import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 const VISIBLE_COUNT = 4;
 
+/** Secondary line on a channel card. `connection_status` is a stored column that
+ * does not track liveness — only `last_heartbeat_at` (and the `status_level`
+ * derived from it: >5min = offline, >2min = warning) says whether a screen is up. */
+function formatLastSeen(iso?: string | null): string {
+  if (!iso) return "Never connected";
+  const minutes = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+  if (!Number.isFinite(minutes) || minutes < 0) return "Last seen just now";
+  if (minutes < 1) return "Last seen just now";
+  if (minutes < 60) return `Last seen ${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Last seen ${hours}h ago`;
+  return `Last seen ${Math.floor(hours / 24)}d ago`;
+}
+
 export interface ChannelsStepProps {
   screens?: Screen[];
   loadingScreens?: boolean;
@@ -37,7 +51,7 @@ export function ChannelsStep({
         id: s.id,
         name: s.name,
         category: "dooh" as const,
-        subLabel: s.connection_status ?? "",
+        subLabel: formatLastSeen(s.last_heartbeat_at),
         status: s.status_level ?? "offline",
         resolution: undefined,
       })),

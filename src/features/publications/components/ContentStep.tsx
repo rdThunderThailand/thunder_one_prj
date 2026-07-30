@@ -21,6 +21,7 @@ import {
 } from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { AssetCard } from "./AssetCard";
+import { MediaThumb } from "./MediaThumb";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { fetchMediaAssets } from "../services/publications-api";
 import { usePreviewUrls } from "../hooks/usePreviewUrls";
@@ -241,14 +242,13 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
               <p className="mb-2 text-sm font-semibold text-zinc-900">1 Asset Selected</p>
               <div className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2">
                 <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-100">
-                  {selectedPreviewUrl ? (
-                    <img
-                      src={selectedPreviewUrl}
-                      alt={selectedFilename}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : null}
+                  <MediaThumb
+                    url={selectedPreviewUrl}
+                    kind={selectedAsset.kind}
+                    mimeType={selectedAsset.file?.mime_type}
+                    alt={selectedFilename}
+                    className="h-full w-full"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-zinc-900">{selectedFilename}</p>
@@ -278,12 +278,21 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
 
           <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
             {selectedAsset && selectedPreviewUrl ? (
-              <img
-                src={selectedPreviewUrl}
-                alt={selectedFilename}
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
+              selectedIsVideo ? (
+                <video
+                  src={selectedPreviewUrl}
+                  controls
+                  preload="metadata"
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <img
+                  src={selectedPreviewUrl}
+                  alt={selectedFilename}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              )
             ) : !selectedAsset ? (
               <p className="text-xs text-zinc-400">No asset selected</p>
             ) : null}
