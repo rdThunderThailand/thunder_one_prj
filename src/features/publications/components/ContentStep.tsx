@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ContentItem, MediaAsset, PublicationType } from "../types";
 import { usePreviewUrls } from "../hooks/usePreviewUrls";
 import { MediaThumb } from "./MediaThumb";
@@ -24,10 +24,6 @@ export function ContentStep({
 }: ContentStepProps) {
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<"all" | "image" | "video">("all");
-  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
-
-  const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const isNoAssetType = publicationType === "html" || publicationType === "dynamic";
   const isSingleSelect = publicationType === "image" || publicationType === "video";
@@ -52,46 +48,8 @@ export function ContentStep({
     });
   }, [mediaAssets, search, kindFilter]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const seen: string[] = [];
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const id = (entry.target as HTMLElement).dataset.assetId;
-            if (id) {
-              seen.push(id);
-              observer.unobserve(entry.target);
-            }
-          }
-        }
-        if (seen.length > 0) {
-          setVisibleIds((prev) => {
-            const next = new Set(prev);
-            seen.forEach((id) => next.add(id));
-            return next;
-          });
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observerRef.current = observer;
-    cardRefs.current.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [filteredAssets]);
-
-  const registerCard = (id: string) => (el: HTMLElement | null) => {
-    if (el) {
-      el.dataset.assetId = id;
-      cardRefs.current.set(id, el);
-      observerRef.current?.observe(el);
-    } else {
-      cardRefs.current.delete(id);
-    }
-  };
-
-  const visibleAssetIds = useMemo(() => Array.from(visibleIds), [visibleIds]);
-  const previews = usePreviewUrls(visibleAssetIds);
+  const filteredAssetIds = useMemo(() => filteredAssets.map((a) => a.id), [filteredAssets]);
+  const previews = usePreviewUrls(filteredAssetIds);
 
   const getDefaultDuration = (asset: MediaAsset): number | null => {
     return asset.kind === "image" ? 10 : (asset.duration_seconds ?? null);
@@ -187,7 +145,6 @@ export function ContentStep({
                 return (
                   <div
                     key={asset.id}
-                    ref={registerCard(asset.id)}
                     onClick={() => handleToggleAsset(asset)}
                     className={`rounded border p-3 text-xs transition-colors flex items-center gap-3 ${
                       !isApproved

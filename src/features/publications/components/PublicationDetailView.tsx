@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fetchPlaylist, fetchPublication } from "../services/publications-api";
-import type { PlaylistItem, PublicationDetail } from "../types";
+import { fetchMediaAssets, fetchPlaylist, fetchPublication } from "../services/publications-api";
+import type { MediaAsset, PlaylistItem, PublicationDetail } from "../types";
 import { usePreviewUrls } from "../hooks/usePreviewUrls";
 import { MediaThumb } from "./MediaThumb";
 
@@ -33,6 +33,7 @@ export function PublicationDetailView({ id }: PublicationDetailViewProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<PlaylistItem[]>([]);
+  const [assetsById, setAssetsById] = useState<Record<string, MediaAsset>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -80,6 +81,24 @@ export function PublicationDetailView({ id }: PublicationDetailViewProps) {
       isMounted = false;
     };
   }, [playlistId]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchMediaAssets()
+      .then((assets) => {
+        if (isMounted) {
+          setAssetsById(Object.fromEntries(assets.map((a) => [a.id, a])));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setAssetsById({});
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const assetIds = useMemo(() => items.map((i) => i.media_asset_id), [items]);
   const previews = usePreviewUrls(assetIds);
@@ -152,8 +171,8 @@ export function PublicationDetailView({ id }: PublicationDetailViewProps) {
                 >
                   <MediaThumb
                     url={previews[it.media_asset_id]}
-                    mimeType={undefined}
-                    kind={undefined}
+                    mimeType={assetsById[it.media_asset_id]?.file?.mime_type}
+                    kind={assetsById[it.media_asset_id]?.kind}
                     alt={it.title ?? it.media_asset_id}
                     className="h-12 w-12"
                   />
