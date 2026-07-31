@@ -16,7 +16,7 @@ import type {
   Tag,
 } from "../types";
 
-async function requestApi<T>(
+export async function requestApi<T>(
   method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
   path: string,
   data?: unknown

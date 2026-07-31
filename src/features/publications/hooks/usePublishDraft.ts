@@ -20,6 +20,17 @@ import {
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
 
+/** The two backend rejections that mean "the persisted draft id is no longer usable":
+ * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
+ * Matched on the message because the proxy only forwards `{ error: string }`. */
+function isStaleDraftError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : "";
+  return (
+    msg.includes("publication not found for this tenant") ||
+    msg.includes("only draft publications can be edited")
+  );
+}
+
 export function usePublishDraft() {
   const [screens, setScreens] = useState<Screen[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -140,7 +151,20 @@ export function usePublishDraft() {
     const targets =
       forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, screens) : undefined;
 
-    const res = await saveBasicInfo(basicInfoToForm(state.basicInfo), state.publicationId, targets);
+    const basicForm = basicInfoToForm(state.basicInfo);
+    let res;
+    try {
+      res = await saveBasicInfo(basicForm, state.publicationId, targets);
+    } catch (err) {
+      // The draft id lives in localStorage forever, but the row it points at can be
+      // deleted (or leave `draft` via cancel/activate) from the /publications page —
+      // which used to brick the wizard until the user hit Cancel. Re-create instead.
+      if (state.publicationId && isStaleDraftError(err)) {
+        res = await saveBasicInfo(basicForm, null, targets);
+      } else {
+        throw err;
+      }
+    }
     const newId = res.publication_id || res.id || state.publicationId;
     if (!newId) {
       throw new Error("No publication ID returned from backend.");

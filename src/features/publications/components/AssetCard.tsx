@@ -36,7 +36,7 @@ export function AssetCard({
           : "border-zinc-200 hover:border-zinc-300"
       }`}
     >
-      <div className="relative flex aspect-square w-full items-center justify-center bg-zinc-100">
+      <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
         {previewUrl ? (
           isVideo ? (
             // #t=0.1 makes the browser paint the first frame as a poster.
@@ -44,14 +44,14 @@ export function AssetCard({
               src={`${previewUrl}#t=0.1`}
               muted
               preload="metadata"
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover object-center"
             />
           ) : (
             <img
               src={previewUrl}
               alt={filename}
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover object-center"
             />
           )
         ) : null}

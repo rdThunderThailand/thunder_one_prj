@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import {
   ChevronDownIcon,
@@ -25,6 +25,12 @@ import { MediaThumb } from "./MediaThumb";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { fetchMediaAssets } from "../services/publications-api";
 import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import {
+  fetchUploadUrl,
+  readVideoDuration,
+  registerVideo,
+  uploadToStorage,
+} from "../services/upload-api";
 import type { Campaign, MediaAsset } from "../types";
 
 function ToggleSwitch({
@@ -65,24 +71,58 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // ponytail: promise chain, not async/await — react-hooks/set-state-in-effect follows an
+  // async callee into its body and flags the setState calls even though they're post-await.
+  const loadAssets = useCallback(
+    () =>
+      fetchMediaAssets()
+        .then((data) => {
+          setAssets(data);
+          setError(null);
+        })
+        .catch((err) => {
+          setAssets([]);
+          setError(err instanceof Error ? err.message : "Failed to load assets");
+        })
+        .finally(() => setLoading(false)),
+    []
+  );
+
   useEffect(() => {
-    let isMounted = true;
-    fetchMediaAssets()
-      .then((data) => {
-        if (!isMounted) return;
-        setAssets(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!isMounted) return;
-        setAssets([]);
-        setError(err instanceof Error ? err.message : "Failed to load assets");
-        setLoading(false);
+    void loadAssets();
+  }, [loadAssets]);
+
+  async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file) return;
+
+    setUploadError(null);
+    setUploadPct(0);
+    try {
+      const isVideoFile = file.type.startsWith("video/");
+      const duration = isVideoFile ? await readVideoDuration(file) : 10;
+      const { file_id, upload_url } = await fetchUploadUrl(file);
+      await uploadToStorage(upload_url, file, setUploadPct);
+      const asset = await registerVideo({
+        file_id,
+        title: file.name,
+        ...(duration ? { duration_seconds: duration } : {}),
       });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      await loadAssets();
+      if (asset?.id) {
+        selectAsset(asset.id);
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadPct(null);
+    }
+  }
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return assets;
@@ -214,14 +254,33 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
                     <ListIcon className="h-4 w-4" />
                   </button>
                 </div>
-                <button className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50">
-                  <UploadIcon className="h-3.5 w-3.5" /> Upload Asset
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*,image/*"
+                  onChange={handleFilePicked}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadPct !== null}
+                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  <UploadIcon className="h-3.5 w-3.5" />{" "}
+                  {uploadPct !== null ? `Uploading ${uploadPct}%` : "Upload Asset"}
                 </button>
               </div>
             </div>
 
-            <p className="mb-3 text-xs text-zinc-400">
-              {loading ? "Loading assets…" : error ? error : `${filtered.length} assets found`}
+            <p className={`mb-3 text-xs ${uploadError ? "text-red-500" : "text-zinc-400"}`}>
+              {loading
+                ? "Loading assets…"
+                : uploadError
+                  ? uploadError
+                  : error
+                    ? error
+                    : `${filtered.length} assets found`}
             </p>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
