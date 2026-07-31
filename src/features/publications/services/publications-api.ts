@@ -5,11 +5,13 @@ import type {
   ContentItem,
   MediaAsset,
   PlaylistDetail,
+  Priority,
   Publication,
   PublicationDetail,
   PublicationListItem,
   PublicationSchedule,
   PublicationTarget,
+  Recurrence,
   ScheduleConflict,
   SchedulePayload,
   Screen,
@@ -239,6 +241,9 @@ export async function checkScheduleConflicts(payload: {
   device_ids: string[];
   starts_at: string;
   ends_at: string | null;
+  recurrence?: Recurrence;
+  timezone?: string;
+  priority?: Priority;
 }): Promise<ScheduleConflict[]> {
   if (payload.device_ids.length === 0) return [];
   const data = await requestApi<ScheduleConflict[]>(

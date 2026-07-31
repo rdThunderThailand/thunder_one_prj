@@ -194,6 +194,11 @@ export type ScheduleConflict = {
   starts_at: string;
   ends_at: string | null;
   screens: string[];
+  priority: Priority;
+  /** If this draft is published, does it fully suppress this conflict (override wins)? */
+  would_suppress: boolean;
+  /** If this draft is published, is it the one suppressed for the overlap (override loses)? */
+  would_be_suppressed: boolean;
 };
 
 export type PlaylistItem = {

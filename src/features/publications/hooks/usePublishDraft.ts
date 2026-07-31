@@ -18,7 +18,7 @@ import {
   savePublicationSchedule,
 } from "../services/publications-api";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
+import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
  * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
@@ -103,6 +103,9 @@ export function usePublishDraft() {
         device_ids: channelIds,
         starts_at: payload.starts_at,
         ends_at: payload.ends_at,
+        recurrence: payload.recurrence,
+        timezone: payload.timezone,
+        priority: basicInfo.priorityId as Priority,
       })
         .then((res) => {
           if (!cancelled) {
@@ -136,6 +139,7 @@ export function usePublishDraft() {
     scheduleForm.end_time,
     scheduleForm.daily_start,
     scheduleForm.daily_end,
+    basicInfo.priorityId,
   ]);
 
   /**
