@@ -211,3 +211,10 @@ export type PlaylistDetail = {
   items: PlaylistItem[];
 };
 
+export type DraftAssetItem = {
+  media_asset_id: string;
+  /** Seconds on screen. Images default to 10 and are user-editable; videos stay null
+   *  so the backend falls back to the file's own duration. */
+  duration_seconds: number | null;
+};
+

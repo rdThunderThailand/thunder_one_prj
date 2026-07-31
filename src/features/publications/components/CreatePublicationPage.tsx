@@ -35,7 +35,7 @@ export function CreatePublicationPage() {
   const setPublicationId = usePublicationDraftStore((s) => s.setPublicationId);
   const setStep = usePublicationDraftStore((s) => s.setStep);
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
-  const setAssetId = usePublicationDraftStore((s) => s.setAssetId);
+  const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
   const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
   const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
 
@@ -75,7 +75,7 @@ export function CreatePublicationPage() {
         const draft = detailToDraft(detail, playlist);
 
         setBasicInfo(draft.basicInfo);
-        setAssetId(draft.assetId);
+        setAssetItems(draft.assetItems);
         setChannelIds(draft.channelIds);
         setScheduleForm(draft.scheduleForm);
         setPublicationId(detail.id);
@@ -100,7 +100,7 @@ export function CreatePublicationPage() {
     idParam,
     publicationId,
     setBasicInfo,
-    setAssetId,
+    setAssetItems,
     setChannelIds,
     setScheduleForm,
     setPublicationId,

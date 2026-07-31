@@ -32,6 +32,12 @@ import {
   uploadToStorage,
 } from "../services/upload-api";
 import type { Campaign, MediaAsset } from "../types";
+import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
+
+function toPositiveInt(raw: string): number {
+  const parsed = parseInt(raw, 10);
+  return Number.isNaN(parsed) || parsed < 1 ? DEFAULT_IMAGE_DURATION_SECONDS : parsed;
+}
 
 function ToggleSwitch({
   checked,
@@ -61,8 +67,14 @@ function ToggleSwitch({
 
 export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
-  const selectedAssetId = usePublicationDraftStore((s) => s.assetId);
-  const selectAsset = usePublicationDraftStore((s) => s.setAssetId);
+  const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
+  const toggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
+  const setAssetDuration = usePublicationDraftStore((s) => s.setAssetDuration);
+  const moveAssetItem = usePublicationDraftStore((s) => s.moveAssetItem);
+
+  const isPlaylistMode = basicInfo.publicationType === "playlist";
+
   const [aiSuggest, setAiSuggest] = useState(true);
   const [view, setView] = useState<"grid" | "list">("grid");
 
@@ -105,7 +117,12 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
     setUploadPct(0);
     try {
       const isVideoFile = file.type.startsWith("video/");
-      const duration = isVideoFile ? await readVideoDuration(file) : 10;
+      // An image has no intrinsic duration, but media_video_register refuses to store one
+      // without it, so the library gets the same default the wizard uses. The value that
+      // actually airs is the per-item one chosen in the Asset Selected card below.
+      const duration = isVideoFile
+        ? await readVideoDuration(file)
+        : DEFAULT_IMAGE_DURATION_SECONDS;
       const { file_id, upload_url } = await fetchUploadUrl(file);
       await uploadToStorage(upload_url, file, setUploadPct);
       const asset = await registerVideo({
@@ -115,7 +132,11 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
       });
       await loadAssets();
       if (asset?.id) {
-        selectAsset(asset.id);
+        if (isPlaylistMode) {
+          toggleAssetItem({ id: asset.id, isImage: !isVideoFile });
+        } else {
+          setAssetItems([{ media_asset_id: asset.id, duration_seconds: !isVideoFile ? DEFAULT_IMAGE_DURATION_SECONDS : null }]);
+        }
       }
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Upload failed");
@@ -140,7 +161,7 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
   );
   const previews = usePreviewUrls(filteredAssetIds);
 
-  const selectedAsset = assets.find((a) => a.id === selectedAssetId);
+  const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const selectedFilename = selectedAsset
     ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id
     : "";
@@ -148,13 +169,7 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
     ? selectedAsset.kind === "video" ||
       (!selectedAsset.kind && selectedAsset.file?.mime_type?.startsWith("video/"))
     : false;
-  const selectedKindLabel = selectedIsVideo ? "Video" : "Image";
-  const selectedDimensions = selectedAsset
-    ? selectedAsset.width && selectedAsset.height
-      ? `${selectedAsset.width} x ${selectedAsset.height}`
-      : "—"
-    : "";
-  const selectedPreviewUrl = selectedAssetId ? previews[selectedAssetId] : undefined;
+  const selectedPreviewUrl = assetItems[0]?.media_asset_id ? previews[assetItems[0].media_asset_id] : undefined;
 
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
@@ -289,39 +304,113 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
                   key={asset.id}
                   asset={asset}
                   previewUrl={previews[asset.id]}
-                  selected={asset.id === selectedAssetId}
-                  onSelect={() => selectAsset(asset.id)}
+                  selected={assetItems.some((i) => i.media_asset_id === asset.id)}
+                  onSelect={() => {
+                    const isImage = isImageAsset(asset);
+                    if (isPlaylistMode) {
+                      toggleAssetItem({ id: asset.id, isImage });
+                    } else {
+                      setAssetItems([{ media_asset_id: asset.id, duration_seconds: isImage ? DEFAULT_IMAGE_DURATION_SECONDS : null }]);
+                    }
+                  }}
                 />
               ))}
             </div>
           </Card>
 
-          {selectedAsset && (
+          {assetItems.length > 0 && (
             <Card className="p-4">
-              <p className="mb-2 text-sm font-semibold text-zinc-900">1 Asset Selected</p>
-              <div className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2">
-                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-100">
-                  <MediaThumb
-                    url={selectedPreviewUrl}
-                    kind={selectedAsset.kind}
-                    mimeType={selectedAsset.file?.mime_type}
-                    alt={selectedFilename}
-                    className="h-full w-full"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900">{selectedFilename}</p>
-                  <p className="text-xs text-zinc-400">
-                    {selectedKindLabel} · {selectedDimensions}
-                  </p>
-                </div>
-                <button
-                  onClick={() => selectAsset("")}
-                  aria-label="Remove selected asset"
-                  className="shrink-0 text-zinc-400 hover:text-zinc-700"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
+              <p className="mb-2 text-sm font-semibold text-zinc-900">{`${assetItems.length} Asset${assetItems.length > 1 ? "s" : ""} Selected`}</p>
+              <div className="flex flex-col gap-2">
+                {assetItems.map((item, index) => {
+                  const asset = assets.find((a) => a.id === item.media_asset_id);
+                  if (!asset) return null;
+                  
+                  const isImage = isImageAsset(asset);
+                  const filename = asset.file?.original_filename ?? asset.title ?? asset.id;
+                  const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "—";
+                  const kindLabel = isImage ? "Image" : "Video";
+                  const previewUrl = previews[asset.id];
+
+                  return (
+                    <div key={item.media_asset_id} className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2">
+                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+                        <MediaThumb
+                          url={previewUrl}
+                          kind={asset.kind}
+                          mimeType={asset.file?.mime_type}
+                          alt={filename}
+                          className="h-full w-full"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-zinc-900">{filename}</p>
+                        <p className="text-xs text-zinc-400">
+                          {kindLabel} · {dimensions}
+                        </p>
+                      </div>
+                      
+                      {isImage && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <input
+                            type="number"
+                            min={1}
+                            step={1}
+                            // ponytail: uncontrolled + clamp on blur. Bound to the store it snapped an
+                            // emptied field straight back to 10, so you could never backspace and retype.
+                            defaultValue={item.duration_seconds ?? DEFAULT_IMAGE_DURATION_SECONDS}
+                            onBlur={(e) => {
+                              const secs = toPositiveInt(e.target.value);
+                              e.target.value = String(secs);
+                              setAssetDuration(item.media_asset_id, secs);
+                            }}
+                            aria-label={`Seconds on screen for ${filename}`}
+                            className="w-16 rounded-lg border border-zinc-200 px-2 py-1 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                          />
+                          <span className="text-xs text-zinc-400">วิ</span>
+                        </div>
+                      )}
+
+                      {isPlaylistMode && assetItems.length > 1 && (
+                        <div className="flex flex-col gap-0.5 shrink-0 ml-2">
+                          <button
+                            type="button"
+                            onClick={() => moveAssetItem(item.media_asset_id, -1)}
+                            disabled={index === 0}
+                            aria-label="Move up"
+                            className="text-zinc-400 hover:text-zinc-700 disabled:opacity-30 disabled:hover:text-zinc-400"
+                          >
+                            <ChevronDownIcon className="h-4 w-4 rotate-180" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveAssetItem(item.media_asset_id, 1)}
+                            disabled={index === assetItems.length - 1}
+                            aria-label="Move down"
+                            className="text-zinc-400 hover:text-zinc-700 disabled:opacity-30 disabled:hover:text-zinc-400"
+                          >
+                            <ChevronDownIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isPlaylistMode) {
+                            toggleAssetItem({ id: asset.id, isImage });
+                          } else {
+                            setAssetItems([]);
+                          }
+                        }}
+                        aria-label="Remove selected asset"
+                        className="shrink-0 text-zinc-400 hover:text-zinc-700 ml-2"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </Card>
           )}

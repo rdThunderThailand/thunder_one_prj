@@ -65,7 +65,7 @@ export function ScheduleStep({
   checkingConflicts = false,
 }: ScheduleStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
-  const assetId = usePublicationDraftStore((s) => s.assetId);
+  const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
   const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
@@ -77,7 +77,7 @@ export function ScheduleStep({
   const isValidSchedule = isScheduleFormValid(scheduleForm);
   const nowZoned = utcToZonedParts(new Date().toISOString(), scheduleForm.timezone);
 
-  const selectedAsset = assets.find((a) => a.id === assetId);
+  const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
   const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
 

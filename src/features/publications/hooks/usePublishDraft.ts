@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  assetToContentItems,
+  draftItemsToContentItems,
   basicInfoToForm,
   channelIdsToTargets,
 } from "../draft-mapping";
@@ -44,13 +44,13 @@ export function usePublishDraft() {
 
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
-  const assetId = usePublicationDraftStore((s) => s.assetId);
+  const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
 
   const canPublish =
     basicInfo.name.trim().length > 0 &&
-    Boolean(assetId) &&
+    assetItems.length > 0 &&
     channelIds.length > 0;
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export function usePublishDraft() {
     }
     state.setPublicationId(newId);
 
-    const contentItems = assetToContentItems(assets.find((a) => a.id === state.assetId));
+    const contentItems = draftItemsToContentItems(state.assetItems);
     if (contentItems.length > 0) {
       await savePublicationContent(newId, contentItems);
     }

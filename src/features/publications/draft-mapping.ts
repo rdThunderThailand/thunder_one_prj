@@ -8,6 +8,7 @@ import type {
   PublicationType,
   ScheduleType,
   Screen,
+  DraftAssetItem,
 } from "./types";
 import type { BasicInfoState } from "./components/BasicInfoForm";
 
@@ -55,13 +56,18 @@ export function channelIdsToTargets(channelIds: string[], screens: Screen[]): Pu
   });
 }
 
-export function assetToContentItems(asset: MediaAsset | undefined): ContentItem[] {
-  if (!asset) return [];
-  return [
-    {
-      media_asset_id: asset.id,
-      position: 1,
-      duration_seconds: asset.kind === "image" ? 10 : (asset.duration_seconds ?? null),
-    },
-  ];
+export function draftItemsToContentItems(items: DraftAssetItem[]): ContentItem[] {
+  return items.map((item, index) => ({
+    media_asset_id: item.media_asset_id,
+    position: index + 1,
+    duration_seconds: item.duration_seconds,
+  }));
 }
+
+/** Mirrors the existing checks in AssetCard/ContentStep: explicit `kind` wins, mime type is the fallback. */
+export function isImageAsset(asset: MediaAsset): boolean {
+  if (asset.kind) return asset.kind === "image";
+  return !asset.file?.mime_type?.startsWith("video/");
+}
+
+export const DEFAULT_IMAGE_DURATION_SECONDS = 10;

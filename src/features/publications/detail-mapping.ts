@@ -1,10 +1,10 @@
-import type { PlaylistDetail, PublicationDetail, ScheduleForm } from "./types";
+import type { PlaylistDetail, PublicationDetail, ScheduleForm, DraftAssetItem } from "./types";
 import type { BasicInfoState } from "./components/BasicInfoForm";
 import { scheduleToForm } from "./schedule";
 
 export type ResumedDraft = {
   basicInfo: BasicInfoState;
-  assetId: string;
+  assetItems: DraftAssetItem[];
   channelIds: string[];
   scheduleForm: ScheduleForm;
 };
@@ -23,11 +23,12 @@ export function detailToDraft(
     tags: detail.tags ?? [],
   };
 
-  let assetId = "";
-  if (playlist?.items && playlist.items.length > 0) {
-    const sorted = [...playlist.items].sort((a, b) => a.position - b.position);
-    assetId = sorted[0]?.media_asset_id ?? "";
-  }
+  const assetItems: DraftAssetItem[] = [...(playlist?.items ?? [])]
+    .sort((a, b) => a.position - b.position)
+    .map((item) => ({
+      media_asset_id: item.media_asset_id,
+      duration_seconds: item.duration_seconds ?? null,
+    }));
 
   const channelIds = (detail.publication_targets ?? [])
     .filter((t) => t.target_type === "device" && Boolean(t.device_id))
@@ -37,7 +38,7 @@ export function detailToDraft(
 
   return {
     basicInfo,
-    assetId,
+    assetItems,
     channelIds,
     scheduleForm,
   };

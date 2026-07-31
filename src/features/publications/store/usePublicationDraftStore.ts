@@ -10,7 +10,8 @@ import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { makeDefaultScheduleForm } from "../schedule";
-import type { ScheduleForm } from "../types";
+import { DEFAULT_IMAGE_DURATION_SECONDS } from "../draft-mapping";
+import type { ScheduleForm, DraftAssetItem } from "../types";
 import { priorities } from "../mock-data";
 import type { BasicInfoState } from "../components/BasicInfoForm";
 
@@ -29,7 +30,7 @@ interface DraftFields {
   publicationId: string | null;
   step: number;
   basicInfo: BasicInfoState;
-  assetId: string;
+  assetItems: DraftAssetItem[];
   channelIds: string[];
   scheduleForm: ScheduleForm;
 }
@@ -39,7 +40,7 @@ function getDefaultDraft(): DraftFields {
     publicationId: null,
     step: 1,
     basicInfo: defaultBasicInfo,
-    assetId: "",
+    assetItems: [],
     channelIds: [],
     scheduleForm: makeDefaultScheduleForm(),
   };
@@ -51,7 +52,13 @@ interface PublicationDraftStore extends DraftFields {
   goNext: (maxStep: number) => void;
   goBack: () => void;
   setBasicInfo: (basicInfo: BasicInfoState) => void;
-  setAssetId: (assetId: string) => void;
+  setAssetItems: (assetItems: DraftAssetItem[]) => void;
+  /** Playlist mode: add if absent, remove if present. Images enter at 10s, videos at null. */
+  toggleAssetItem: (asset: { id: string; isImage: boolean }) => void;
+  /** Only meaningful for images; ignored when the id isn't selected. */
+  setAssetDuration: (mediaAssetId: string, seconds: number | null) => void;
+  /** Moves one item by ±1. Out-of-range moves are a no-op. */
+  moveAssetItem: (mediaAssetId: string, direction: -1 | 1) => void;
   setChannelIds: (channelIds: string[]) => void;
   toggleChannelId: (id: string) => void;
   setScheduleForm: (scheduleForm: ScheduleForm) => void;
@@ -67,8 +74,38 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
       goBack: () => set((s) => ({ step: Math.max(s.step - 1, 1) })),
-      setBasicInfo: (basicInfo) => set({ basicInfo }),
-      setAssetId: (assetId) => set({ assetId }),
+      setBasicInfo: (basicInfo) => set((s) => ({
+        basicInfo,
+        assetItems:
+          basicInfo.publicationType === "playlist" ? s.assetItems : s.assetItems.slice(0, 1),
+      })),
+      setAssetItems: (assetItems) => set({ assetItems }),
+      toggleAssetItem: ({ id, isImage }) => set((s) => {
+        const exists = s.assetItems.some(i => i.media_asset_id === id);
+        if (exists) {
+          return { assetItems: s.assetItems.filter(i => i.media_asset_id !== id) };
+        }
+        return {
+          assetItems: [
+            ...s.assetItems,
+            { media_asset_id: id, duration_seconds: isImage ? DEFAULT_IMAGE_DURATION_SECONDS : null },
+          ],
+        };
+      }),
+      setAssetDuration: (mediaAssetId, seconds) => set((s) => ({
+        assetItems: s.assetItems.map(i => i.media_asset_id === mediaAssetId ? { ...i, duration_seconds: seconds } : i)
+      })),
+      moveAssetItem: (mediaAssetId, direction) => set((s) => {
+        const index = s.assetItems.findIndex(i => i.media_asset_id === mediaAssetId);
+        if (index === -1) return { assetItems: s.assetItems };
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= s.assetItems.length) return { assetItems: s.assetItems };
+        const nextItems = [...s.assetItems];
+        const temp = nextItems[index];
+        nextItems[index] = nextItems[newIndex];
+        nextItems[newIndex] = temp;
+        return { assetItems: nextItems };
+      }),
       setChannelIds: (channelIds) => set({ channelIds }),
       toggleChannelId: (id) => {
         const { channelIds } = get();
@@ -82,7 +119,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       },
     }),
     {
-      name: "thunderone.publications.create-draft.v2",
+      name: "thunderone.publications.create-draft.v3",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

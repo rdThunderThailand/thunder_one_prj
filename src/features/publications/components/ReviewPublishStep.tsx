@@ -52,7 +52,7 @@ export function ReviewPublishStep({
   conflicts = [],
 }: ReviewPublishStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
-  const assetId = usePublicationDraftStore((s) => s.assetId);
+  const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
 
@@ -66,7 +66,7 @@ export function ReviewPublishStep({
       status: s.status_level ?? "offline",
     }));
 
-  const selectedAsset = assets.find((a) => a.id === assetId);
+  const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
   const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
 
@@ -159,7 +159,7 @@ export function ReviewPublishStep({
                     <div className="flex gap-2">
                       <dt className="w-20 shrink-0 text-zinc-400">File</dt>
                       <dd className="text-zinc-700">
-                        {assetFilename ?? "—"}
+                        {assetFilename ?? "—"}{assetItems.length > 1 ? ` +${assetItems.length - 1} more` : ""}
                         <span className="block text-zinc-400">
                           {assetDimensions ?? "—"}
                           {assetDurationLabel ? ` · ${assetDurationLabel}` : ""}
@@ -392,7 +392,7 @@ export function ReviewPublishStep({
               <div className="flex items-center justify-between">
                 <dt className="text-zinc-500">Content</dt>
                 <dd className="max-w-[180px] truncate font-medium text-zinc-900 text-right" title={selectedAsset?.file?.original_filename ?? selectedAsset?.title ?? selectedAsset?.id}>
-                  {selectedAsset ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id : "—"}
+                  {selectedAsset ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id : "—"}{assetItems.length > 1 ? ` +${assetItems.length - 1} more` : ""}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
