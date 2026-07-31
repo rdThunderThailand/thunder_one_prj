@@ -117,12 +117,9 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
     setUploadPct(0);
     try {
       const isVideoFile = file.type.startsWith("video/");
-      // An image has no intrinsic duration, but media_video_register refuses to store one
-      // without it, so the library gets the same default the wizard uses. The value that
-      // actually airs is the per-item one chosen in the Asset Selected card below.
-      const duration = isVideoFile
-        ? await readVideoDuration(file)
-        : DEFAULT_IMAGE_DURATION_SECONDS;
+      // Images carry no intrinsic duration; media_video_register defaults one server-side
+      // (migration 066). What actually airs is the per-item value chosen in the card below.
+      const duration = isVideoFile ? await readVideoDuration(file) : null;
       const { file_id, upload_url } = await fetchUploadUrl(file);
       await uploadToStorage(upload_url, file, setUploadPct);
       const asset = await registerVideo({
