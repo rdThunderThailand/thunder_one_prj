@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -7,6 +9,9 @@ import { ArrowLeftIcon, ArrowRightIcon, PaperPlaneIcon } from "@/components/ui/i
 import { wizardSteps } from "../mock-data";
 import { useHasHydratedDraft, usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePublishDraft } from "../hooks/usePublishDraft";
+import { fetchPlaylist, fetchPublication } from "../services/publications-api";
+import { detailToDraft } from "../detail-mapping";
+import type { PlaylistDetail } from "../types";
 import { BasicInfoForm } from "./BasicInfoForm";
 import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
@@ -18,10 +23,89 @@ import { ScheduleStep } from "./ScheduleStep";
 const MAX_BUILT_STEP = 5;
 
 export function CreatePublicationPage() {
+  const searchParams = useSearchParams();
+  const idParam = searchParams.get("id");
+
   const hasHydrated = useHasHydratedDraft();
   const step = usePublicationDraftStore((s) => s.step);
+  const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
   const goBack = usePublicationDraftStore((s) => s.goBack);
+
+  const setPublicationId = usePublicationDraftStore((s) => s.setPublicationId);
+  const setStep = usePublicationDraftStore((s) => s.setStep);
+  const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
+  const setAssetId = usePublicationDraftStore((s) => s.setAssetId);
+  const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
+  const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
+
+  const [resumedId, setResumedId] = useState<string | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const loadedIdRef = useRef<string | null>(null);
+
+  // Derived, not state: `resumedId` only settles once the fetch has finished, so
+  // the wizard never paints the *previous* draft's values before ?id= replaces
+  // them. Starting from a boolean that flips inside the effect would show one
+  // frame of the wrong publication.
+  const resumePending = Boolean(idParam) && idParam !== resumedId && idParam !== publicationId;
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (!idParam) return;
+    if (idParam === publicationId) return;
+    if (loadedIdRef.current === idParam) return;
+
+    loadedIdRef.current = idParam;
+    let alive = true;
+
+    const load = async () => {
+      try {
+        const detail = await fetchPublication(idParam);
+        let playlist: PlaylistDetail | null = null;
+        if (detail.playlist?.id) {
+          try {
+            playlist = await fetchPlaylist(detail.playlist.id);
+          } catch {
+            // Ignore playlist error per spec
+          }
+        }
+
+        if (!alive) return;
+
+        const draft = detailToDraft(detail, playlist);
+
+        setBasicInfo(draft.basicInfo);
+        setAssetId(draft.assetId);
+        setChannelIds(draft.channelIds);
+        setScheduleForm(draft.scheduleForm);
+        setPublicationId(detail.id);
+        setStep(1);
+      } catch (err) {
+        if (!alive) return;
+        setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
+      } finally {
+        // Marks the attempt finished either way, so a failure shows the error
+        // instead of hanging on the loading branch forever.
+        if (alive) setResumedId(idParam);
+      }
+    };
+
+    load();
+
+    return () => {
+      alive = false;
+    };
+  }, [
+    hasHydrated,
+    idParam,
+    publicationId,
+    setBasicInfo,
+    setAssetId,
+    setChannelIds,
+    setScheduleForm,
+    setPublicationId,
+    setStep,
+  ]);
 
   const {
     screens,
@@ -44,8 +128,10 @@ export function CreatePublicationPage() {
   const prevStepLabel = wizardSteps[step - 2]?.label;
 
   // Avoid flashing step-1 defaults before a restored draft (possibly on a
-  // later step) loads from localStorage.
-  if (!hasHydrated) return null;
+  // later step) loads from localStorage or via ?id=.
+  if (!hasHydrated || resumePending) return null;
+
+  const displayError = error || resumeError;
 
   return (
     <div className="flex flex-col gap-6">
@@ -140,7 +226,7 @@ export function CreatePublicationPage() {
             </Button>
           )}
         </div>
-        {error && <p className="text-xs font-medium text-red-600">{error}</p>}
+        {displayError && <p className="text-xs font-medium text-red-600">{displayError}</p>}
         {publishedId && (
           <p className="text-xs font-medium text-emerald-600">
             Published successfully! (ID: {publishedId})

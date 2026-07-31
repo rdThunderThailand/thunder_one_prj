@@ -15,15 +15,16 @@ const variantClasses: Record<ButtonVariant, string> = {
     "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100",
 };
 
+/** Button styling for elements that must not be a <button> — chiefly next/link,
+ * since <a> wrapping <button> is invalid HTML and breaks keyboard navigation. */
+export function buttonClasses(variant: ButtonVariant = "primary", className = ""): string {
+  return `inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`;
+}
+
 export function Button({
   variant = "primary",
   className = "",
   ...props
 }: ButtonProps) {
-  return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`}
-      {...props}
-    />
-  );
+  return <button className={buttonClasses(variant, className)} {...props} />;
 }

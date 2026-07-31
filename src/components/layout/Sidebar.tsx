@@ -33,7 +33,7 @@ const sections: NavSection[] = [
     label: "Publishing",
     icon: <BroadcastIcon />,
     items: [
-      { label: "Now & Next" },
+      { label: "Now & Next", href: "/publications" },
       { label: "Calendar" },
       { label: "Campaigns" },
       { label: "Playlists", href: "/playlists" },

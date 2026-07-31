@@ -137,66 +137,9 @@ export const topPerformingChannels: TopChannelRow[] = [
   { rank: 5, name: "Siam Paragon - Digital Wall", platform: "DOOH", views: "412K" },
 ];
 
-export interface PublicationRow {
-  id: string;
-  name: string;
-  version: string;
-  campaign: string;
-  channel: string;
-  status: "Live" | "Scheduled";
-  startTime: string;
-}
-
-export const nowLivePublications: PublicationRow[] = [
-  {
-    id: "1",
-    name: "KFC Wednesday Special",
-    version: "v.2",
-    campaign: "KFC Wow Wednesday",
-    channel: "Central World - LED Screen 1",
-    status: "Live",
-    startTime: "Today 08:00",
-  },
-  {
-    id: "2",
-    name: "Summer Bucket Set",
-    version: "v.1",
-    campaign: "Summer Promotion 2024",
-    channel: "KFC All In-Store Screens",
-    status: "Live",
-    startTime: "Today 00:00",
-  },
-  {
-    id: "3",
-    name: "Iced Latte Signage",
-    version: "v.1",
-    campaign: "Coffee Lovers",
-    channel: "KFC Drive Thru Screens",
-    status: "Live",
-    startTime: "Today 06:00",
-  },
-];
-
-export const nextUpPublications: PublicationRow[] = [
-  {
-    id: "4",
-    name: "Weekend Brunch Promo",
-    version: "v.1",
-    campaign: "Weekend Specials",
-    channel: "Siam Paragon - Digital Wall",
-    status: "Scheduled",
-    startTime: "Tomorrow 08:00",
-  },
-  {
-    id: "5",
-    name: "New Menu Launch",
-    version: "v.3",
-    campaign: "Spring Menu 2024",
-    channel: "All In-Store Screens",
-    status: "Scheduled",
-    startTime: "Tomorrow 10:00",
-  },
-];
+// PublicationRow / nowLivePublications / nextUpPublications lived here until
+// NowNextPublicationsCard started reading GET /media/publications. Its `version`
+// column had no source anywhere in the API or the domain model.
 
 export type QuickActionIcon =
   | "publication"

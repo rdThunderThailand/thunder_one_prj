@@ -91,6 +91,16 @@ export type PublicationListItem = {
   updated_at?: string;
 };
 
+/** Per-device delivery status. Populated only after activation. */
+export type PublicationDeliveryTarget = {
+  device_id: string;
+  device_name?: string | null;
+  status?: string | null;
+  attempt_count?: number | null;
+  error_message?: string | null;
+  acked_at?: string | null;
+};
+
 export type PublicationDetail = {
   id: string;
   name: string;
@@ -107,7 +117,7 @@ export type PublicationDetail = {
   activated_at?: string;
   job_status?: string;
   /** Delivery status per device — populated only after activation. */
-  targets?: unknown[];
+  targets?: PublicationDeliveryTarget[];
   /** The publication's own targets, saved in step 3. */
   publication_targets?: PublicationTarget[];
   /** The schedule saved in step 4 (null on a draft that hasn't reached it). */

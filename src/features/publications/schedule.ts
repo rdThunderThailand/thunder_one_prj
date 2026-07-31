@@ -217,6 +217,85 @@ export function overlapsConflictOn(
   });
 }
 
+// --- airing state, for the Overview "Now & Next" card ------------------------
+// Time-of-day granularity, unlike isScheduleActiveOn above: this answers "on air
+// at this minute?", so a weekly window of 08:00-17:00 is not live at 22:00.
+
+export type AiringState = "live" | "next" | "ended";
+
+/**
+ * Is the publication on air now, still to come, or finished?
+ *
+ * `null` means "cannot tell" — no schedule, or one we can't parse. Callers must
+ * surface that rather than guessing a bucket; claiming something is live when we
+ * don't know is the bug this function exists to prevent.
+ */
+export function classifyPublicationAiring(
+  schedule: PublicationSchedule | null | undefined,
+  now: Date = new Date()
+): AiringState | null {
+  if (!schedule?.starts_at) return null;
+
+  const start = Date.parse(schedule.starts_at);
+  if (Number.isNaN(start)) return null;
+  const end = schedule.ends_at ? Date.parse(schedule.ends_at) : null;
+  const instant = now.getTime();
+
+  if (instant < start) return "next";
+  if (end !== null && !Number.isNaN(end) && instant >= end) return "ended";
+
+  const rec = schedule.recurrence;
+  if (!rec || !("freq" in rec)) return "live"; // one-off: the whole window is on air
+
+  // Weekly: inside the overall window, but only on listed days and within the
+  // daily time window — both read in the publication's own timezone.
+  const { date, time } = utcToZonedParts(now.toISOString(), schedule.timezone);
+  if (!rec.days?.includes(ymdDow(date))) return "next";
+  return withinDailyWindow(time, rec.daily_start, rec.daily_end) ? "live" : "next";
+}
+
+/** "HH:MM" comparison. An end at or before the start means the window wraps midnight. */
+function withinDailyWindow(time: string, start: string, end: string): boolean {
+  if (!start || !end) return true;
+  return end > start ? time >= start && time < end : time >= start || time < end;
+}
+
+function shiftYmd(ymd: string, days: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d + days));
+  return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-${pad2(t.getUTCDate())}`;
+}
+
+function dayMonthLabel(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  // timeZone UTC because `ymd` is already wall-clock in the schedule's own zone.
+  return new Intl.DateTimeFormat("th-TH", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/** The card's "Start Time" cell: a daily window when weekly, else the start instant. */
+export function formatScheduleStart(
+  schedule: PublicationSchedule | null | undefined,
+  now: Date = new Date()
+): string {
+  if (!schedule?.starts_at) return "—";
+
+  const rec = schedule.recurrence;
+  if (rec && "freq" in rec && rec.daily_start && rec.daily_end) {
+    return `${rec.daily_start}–${rec.daily_end}`;
+  }
+
+  const start = utcToZonedParts(schedule.starts_at, schedule.timezone);
+  const today = utcToZonedParts(now.toISOString(), schedule.timezone).date;
+  if (start.date === today) return `วันนี้ ${start.time}`;
+  if (start.date === shiftYmd(today, 1)) return `พรุ่งนี้ ${start.time}`;
+  if (start.date === shiftYmd(today, -1)) return `เมื่อวาน ${start.time}`;
+  return `${dayMonthLabel(start.date)} ${start.time}`;
+}
+
 /** Build a month matrix (weeks start Sunday) for the overlap calendar. */
 export function buildCalendarMonth(
   form: ScheduleForm,
