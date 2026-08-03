@@ -4,8 +4,9 @@ DOOH (Digital Out-of-Home) video publishing platform — MVP.
 
 Stack: Next.js (App Router) + TypeScript + Tailwind CSS + axios, package-managed with **pnpm**.
 
-> Status: R&D. This repo currently contains folder/file scaffolding only —
-> no feature logic is implemented yet.
+> Status: R&D. `auth` (login/register) and `overview` (dashboard home) have
+> real UI, backed by mock data / placeholder endpoints — no backend exists
+> yet. Everything else is folder/file scaffolding only.
 
 ## Getting started
 
@@ -23,17 +24,23 @@ Copy `.env.example` to `.env.local` and fill in values as they become available.
 ```
 src/
   app/                 Routes only (App Router). Thin: compose features, no business logic.
-    (dashboard)/
-      videos/page.tsx
-      screens/page.tsx
+    (auth)/              Unauthenticated shell — no sidebar/topbar
+      login/page.tsx
+      register/page.tsx
+      layout.tsx
+    (dashboard)/         Authenticated shell — Sidebar + Topbar + ShortcutsBar
+      page.tsx            Overview (dashboard home, route "/")
+      assets/page.tsx
+      channels/page.tsx
       playlists/page.tsx
       layout.tsx
 
   features/            One folder per business domain. This is where most work happens.
-    videos/            Video content library (upload/list/manage assets)
-    screens/           Screen / player registry
-    playlists/         Scheduling — assign videos to screens
-    auth/              Authentication / session
+    overview/          Dashboard home — composes widgets from other features
+    assets/            Central Asset repository (upload/list/manage media files)
+    channels/          Channel registry — publishing destinations, each backed by a Device
+    playlists/         Ordered sequences of Assets (no scheduling/targeting — see Publication)
+    auth/              Authentication / session — LoginForm, RegisterForm
       components/      Feature-scoped UI
       hooks/           Feature-scoped React hooks
       services/        API calls for this feature (axios), via src/lib/api/client
@@ -41,8 +48,8 @@ src/
       index.ts         Public API of the feature — only export what's needed outside it
 
   components/          Shared/cross-feature UI
-    ui/                 Design-system primitives (buttons, inputs, ...)
-    layout/             App shell pieces (header, sidebar, ...)
+    ui/                 Design-system primitives (Button, Input, Card, Badge, ...)
+    layout/             App shell pieces (Sidebar, Topbar, PageHeader, ShortcutsBar)
 
   hooks/               Shared/cross-feature hooks
   lib/

@@ -1,6 +1,6 @@
 # playlists
 
-Scheduling — assign videos to screens and control when/where they play.
+An ordered sequence of Assets, with per-item duration and transition settings. Scheduling and targeting (Channel, timing) live in Publications, not here — see `CONTEXT.md` at the repo root.
 
 > R&D placeholder — structure only, no implementation yet.
 
