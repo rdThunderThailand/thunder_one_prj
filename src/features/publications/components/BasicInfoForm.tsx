@@ -71,8 +71,15 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
 
   const [tagDraft, setTagDraft] = useState("");
   const [addingTag, setAddingTag] = useState(false);
+  const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const [pendingType, setPendingType] = useState<PublicationTypeId | null>(null);
 
   const patch = (next: Partial<BasicInfoState>) => setBasicInfo({ ...basicInfo, ...next });
+  const handleTypeClick = (typeId: PublicationTypeId) => {
+    if (typeId === publicationType) return;
+    if (typeId !== "playlist" && assetItems.length > 1) setPendingType(typeId);
+    else patch({ publicationType: typeId });
+  };
 
   const addTag = () => {
     const value = tagDraft.trim();
@@ -189,7 +196,7 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
                   <button
                     key={type.id}
                     type="button"
-                    onClick={() => patch({ publicationType: type.id })}
+                    onClick={() => handleTypeClick(type.id)}
                     className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-colors ${
                       active
                         ? "border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400"
@@ -205,6 +212,29 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
                 );
               })}
             </div>
+            {pendingType && (
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <span>
+                  เปลี่ยนเป็น {publicationTypes.find((t) => t.id === pendingType)?.label} จะเหลือ asset แรกเท่านั้น อีก {assetItems.length - 1} ชิ้นจะถูกเอาออก ดำเนินการต่อ?
+                </span>
+                <div className="flex shrink-0 gap-2">
+                  <Button type="button" variant="secondary" className="px-2.5 py-1 text-xs" onClick={() => setPendingType(null)}>
+                    ยกเลิก
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    className="bg-red-600 px-2.5 py-1 text-xs hover:bg-red-500"
+                    onClick={() => {
+                      patch({ publicationType: pendingType });
+                      setPendingType(null);
+                    }}
+                  >
+                    ยืนยัน
+                  </Button>
+                </div>
+              </div>
+            )}
           </FieldWrapper>
 
           <div className="grid grid-cols-2 gap-3">
