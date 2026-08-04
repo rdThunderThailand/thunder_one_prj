@@ -82,6 +82,14 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // ponytail: default reflects Publication Type at mount only (set in the prior wizard
+  // step); doesn't re-sync if the user navigates back and changes type, so the filter
+  // stays a starting point the user can override, not a forced constraint.
+  const [typeFilter, setTypeFilter] = useState<"all" | "image" | "video">(() =>
+    basicInfo.publicationType === "image" || basicInfo.publicationType === "video"
+      ? basicInfo.publicationType
+      : "all"
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
@@ -143,14 +151,20 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
   }
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return assets;
-    const q = searchQuery.toLowerCase();
-    return assets.filter((asset) => {
-      const filename = asset.file?.original_filename ?? "";
-      const title = asset.title ?? "";
-      return filename.toLowerCase().includes(q) || title.toLowerCase().includes(q);
-    });
-  }, [assets, searchQuery]);
+    let list = assets;
+    if (typeFilter !== "all") {
+      list = list.filter((asset) => isImageAsset(asset) === (typeFilter === "image"));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((asset) => {
+        const filename = asset.file?.original_filename ?? "";
+        const title = asset.title ?? "";
+        return filename.toLowerCase().includes(q) || title.toLowerCase().includes(q);
+      });
+    }
+    return list;
+  }, [assets, searchQuery, typeFilter]);
 
   const filteredAssetIds = useMemo(
     () => filtered.map((a) => a.id),
@@ -209,7 +223,19 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
                   className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
-              {["All Types", "All Formats", "All Brands", "All Languages"].map((label) => (
+              <div className="relative">
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as "all" | "image" | "video")}
+                  className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                >
+                  <option value="all">All Types</option>
+                  <option value="image">Image</option>
+                  <option value="video">Video</option>
+                </select>
+                <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+              </div>
+              {["All Formats", "All Brands", "All Languages"].map((label) => (
                 <div key={label} className="relative">
                   <select className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
                     <option>{label}</option>
