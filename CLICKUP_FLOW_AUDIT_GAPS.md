@@ -191,7 +191,11 @@
 - [ ] Publication Type ไม่มี disabled configuration ตาม capability — **ยืนยันแล้ว (2026-08-04):
   backend gap จริง** ไม่มี config/capability API ใดๆ อยู่เบื้องหลัง `publicationTypes` เลย
   (`mock-data.ts` hardcode ล้วน) ตัดสินใจไม่ทำ ไม่สร้าง fake config UI
-- [ ] Step Content ไม่เปิด default media filter ตาม Publication Type
+- [x] Step Content ไม่เปิด default media filter ตาม Publication Type — **แก้แล้ว
+  (2026-08-04)** `ContentStep.tsx` เปิด default filter เป็น image/video ตาม
+  `basicInfo.publicationType` (playlist ไม่ auto-filter เพราะผสมสื่อได้), แทนที่ dropdown
+  "All Types" เดิมที่เป็นแค่ placeholder ด้วยของจริงที่ผู้ใช้เปลี่ยนทับได้ — verified ผ่าน
+  browser จริง
 - [ ] Permission/load error states ยังไม่ครบ
 
 **พร้อม Review เมื่อ**
