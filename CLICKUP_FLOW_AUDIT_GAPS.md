@@ -176,8 +176,10 @@
 
 **ยังขาด/ไม่เรียบร้อย**
 
-- [ ] Name และ Description ไม่เป็น controlled inputs ที่ restore จาก store ได้แน่นอน
-- [ ] Draft ที่โหลดกลับมาอาจมีข้อมูลใน store แต่ input ไม่แสดงค่า
+- [x] Name และ Description ไม่เป็น controlled inputs ที่ restore จาก store ได้แน่นอน — **แก้แล้ว
+  (2026-08-04)** เพิ่ม `value={name}` / `value={description}` ให้ input/textarea ที่ขาดไป
+  (`BasicInfoForm.tsx`) — verified ผ่าน browser จริง (Next → Back และ reload หน้าแล้วค่ายังอยู่)
+- [x] Draft ที่โหลดกลับมาอาจมีข้อมูลใน store แต่ input ไม่แสดงค่า — เดียวกับข้อบน แก้พร้อมกัน
 - [x] เปลี่ยน Publication Type แล้ว Selected Content อาจถูกตัดเหลือรายการเดียว — **แก้แล้ว
   (2026-08-04)** เพิ่ม confirm banner ก่อน apply เมื่อจะเปลี่ยนออกจาก Playlist ขณะเลือก asset
   มากกว่า 1 ชิ้น (`BasicInfoForm.tsx` `handleTypeClick`/`pendingType`), truncation logic เดิมใน
