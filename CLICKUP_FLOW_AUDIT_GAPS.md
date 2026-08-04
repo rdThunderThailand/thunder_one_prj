@@ -358,11 +358,22 @@ re-derive ที่นี่:
 
 **ยังต้องเพิ่ม**
 
-- [ ] Component/integration test สำหรับทุก Step transition
-- [ ] Required validation และ Next gate tests
-- [ ] Save failure, retry และ restore tests
-- [ ] Revision conflict/409 tests
-- [ ] Upload validation, cancel, retry และ idempotency tests
+- [x] Component/integration test สำหรับทุก Step transition — `next-transition.check.mts`
+  covers `attemptNext` for steps 1-4 (valid + invalid each), gated on each step's own fields.
+- [x] Required validation และ Next gate tests — same file: invalid step 1 (missing name)
+  never reaches `persist`; steps 2/3/4 gate on assets/channels/schedule respectively.
+- [x] Save failure, retry และ restore tests — save failure (`Error` and non-`Error` throws),
+  retry-after-failure with same inputs, and the 5-case `isResumePending` resume guard are all
+  in `next-transition.check.mts`.
+- [ ] Revision conflict/409 tests — `classifyApiError` already returns `kind: "conflict"` for
+  409 (`api-error.ts:53`) and is covered in `api-error.check.mts`, but
+  `usePublishDraft.ts:218,236` only reads `.message` and discards `.kind` — there's no distinct
+  UI for "someone else edited this draft" yet. Blocked on a design decision (build that UI, or
+  accept generic-error messaging) before any new test can assert real behavior.
+- [ ] Upload validation, cancel, retry และ idempotency tests — `upload-api.ts` (64 lines) has
+  no cancel/retry/idempotency logic at all. This is a feature-build gap, not a test-writing
+  gap; needs requirements (can a user cancel mid-upload? retry limit? idempotency key?) before
+  any code or test.
 - [x] Channels empty/zero-count tests — `channels-logic.ts` + `channels-logic.check.mts`
   (2026-08-04): covers empty screens, missing `status_level` fallback, search filter,
   category counts, and the `statusPercent` zero-division guard (mutation-tested). Error-state
