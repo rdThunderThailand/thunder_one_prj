@@ -178,11 +178,17 @@
 
 - [ ] Name และ Description ไม่เป็น controlled inputs ที่ restore จาก store ได้แน่นอน
 - [ ] Draft ที่โหลดกลับมาอาจมีข้อมูลใน store แต่ input ไม่แสดงค่า
-- [ ] เปลี่ยน Publication Type แล้ว Selected Content อาจถูกตัดเหลือรายการเดียว
-- [ ] Playlist behavior ยังปรากฏแม้ ClickUp ระบุว่า Out of Scope
-- [ ] ไม่มี Autosave และ `Saved` state
-- [ ] ไม่มี revision conflict handling
-- [ ] Publication Type ไม่มี disabled configuration ตาม capability
+- [x] เปลี่ยน Publication Type แล้ว Selected Content อาจถูกตัดเหลือรายการเดียว — **แก้แล้ว
+  (2026-08-04)** เพิ่ม confirm banner ก่อน apply เมื่อจะเปลี่ยนออกจาก Playlist ขณะเลือก asset
+  มากกว่า 1 ชิ้น (`BasicInfoForm.tsx` `handleTypeClick`/`pendingType`), truncation logic เดิมใน
+  `usePublicationDraftStore.setBasicInfo` ไม่ได้แก้ — แค่ gate การเรียกจาก UI
+- [ ] Playlist behavior ยังปรากฏแม้ ClickUp ระบุว่า Out of Scope — **ตัดสินใจไว้ (2026-08-04):
+  ไม่ทำรอบนี้** ผู้ใช้สั่งไม่ให้รื้อ ทิ้งไว้ตามเดิม
+- [ ] ไม่มี Autosave และ `Saved` state — ยังไม่ได้คุยรอบนี้ (เกี่ยวโยงกับ revision conflict ด้านล่าง)
+- [ ] ไม่มี revision conflict handling — ยังไม่ได้คุยรอบนี้
+- [ ] Publication Type ไม่มี disabled configuration ตาม capability — **ยืนยันแล้ว (2026-08-04):
+  backend gap จริง** ไม่มี config/capability API ใดๆ อยู่เบื้องหลัง `publicationTypes` เลย
+  (`mock-data.ts` hardcode ล้วน) ตัดสินใจไม่ทำ ไม่สร้าง fake config UI
 - [ ] Step Content ไม่เปิด default media filter ตาม Publication Type
 - [ ] Permission/load error states ยังไม่ครบ
 
@@ -248,8 +254,8 @@
   Type/Location ทำไม่ได้ ทำ Status เดี่ยวจะ UI ไม่สม่ำเสมอ)
 - [ ] More Filters ไม่มี logic
 - [ ] ไม่มี Estimated Reach/Coverage — บล็อกด้วยเหตุผลเดียวกัน (ไม่มี field จาก backend)
-- [x] Status Summary นับทุก Channel แทนเฉพาะรายการที่เลือก — **แก้แล้ว (2026-08-04)** นับจาก
-  `selectedChannels` เท่านั้น, เปลี่ยนหัวข้อการ์ดเป็น "Selected Channel Status"
+- [x] ~~Status Summary นับทุก Channel แทนเฉพาะรายการที่เลือก~~ — ไม่ใช่บั๊ก พฤติกรรมเดิม (นับทุก
+  channel ที่ fetch มา) ถูกต้องแล้ว **revert กลับ (2026-08-04)** หลังแก้เป็นนับเฉพาะ selected ไปก่อนหน้านี้
 - [x] จำนวน Channel เป็น 0 แล้วเปอร์เซ็นต์แสดง `NaN%` — **แก้แล้ว (2026-08-04)** guard
   division-by-zero ผ่าน `statusPercent()`, verified ผ่าน browser จริง (เคลียร์ selection แล้วเห็น `0%`)
 - [x] Fetch error ถูกแปลงเป็น empty list ทำให้แยก Error กับ Empty ไม่ได้ — **แก้แล้ว (2026-08-04)**
