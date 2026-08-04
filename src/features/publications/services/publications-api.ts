@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/client";
+import { ApiError } from "../api-error";
 import type {
   BasicInfoForm,
   Campaign,
@@ -39,11 +40,13 @@ export async function requestApi<T>(
   ) {
     const errorMsg =
       (resData as { error: string }).error || "API request failed";
-    throw new Error(errorMsg);
+    // The proxy can return an error body with a 2xx, so carry the status through
+    // rather than assuming the failure kind from the message alone.
+    throw new ApiError(errorMsg, res.status);
   }
 
   if (res.status < 200 || res.status >= 300) {
-    throw new Error(`HTTP Error ${res.status}`);
+    throw new ApiError(`HTTP Error ${res.status}`, res.status);
   }
 
   if (resData && typeof resData === "object") {

@@ -19,6 +19,7 @@ import {
 } from "../services/publications-api";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
+import { classifyApiError } from "../api-error";
 import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
@@ -214,7 +215,7 @@ export function usePublishDraft() {
     try {
       return await persistDraft(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save draft.");
+      setError(classifyApiError(err, "Failed to save draft.").message);
       return null;
     } finally {
       setSaving(false);
@@ -224,14 +225,23 @@ export function usePublishDraft() {
   const publishNow = async (): Promise<void> => {
     setSaving(true);
     setError(null);
+    const state = usePublicationDraftStore.getState();
     try {
       const newId = await persistDraft(true);
       if (!newId) return;
       await activatePublication(newId);
       setPublishedId(newId);
-      usePublicationDraftStore.getState().cancelDraft();
+      state.cancelDraft();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to publish publication.");
+      const classified = classifyApiError(err, "Failed to publish publication.");
+      // A retry after a timed-out publish lands here: the backend refused because
+      // the first attempt already activated it, so this is a success reaching us late.
+      if (classified.kind === "already-active" && state.publicationId) {
+        setPublishedId(state.publicationId);
+        state.cancelDraft();
+        return;
+      }
+      setError(classified.message);
     } finally {
       setSaving(false);
     }
