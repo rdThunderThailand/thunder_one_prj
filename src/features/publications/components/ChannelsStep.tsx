@@ -77,11 +77,11 @@ export function ChannelsStep({
   const selectedChannels = channels.filter((c) => selectedIds.includes(c.id));
 
   const statusCounts = useMemo(() => {
-    const online = selectedChannels.filter((c) => c.status === "online").length;
-    const warning = selectedChannels.filter((c) => c.status === "warning").length;
-    const offline = selectedChannels.filter((c) => c.status === "offline").length;
-    return { online, warning, offline, total: selectedChannels.length };
-  }, [selectedChannels]);
+    const online = channels.filter((c) => c.status === "online").length;
+    const warning = channels.filter((c) => c.status === "warning").length;
+    const offline = channels.filter((c) => c.status === "offline").length;
+    return { online, warning, offline, total: channels.length };
+  }, [channels]);
 
   const statusPercent = (count: number) =>
     statusCounts.total === 0 ? 0 : Math.round((count / statusCounts.total) * 100);
@@ -243,7 +243,7 @@ export function ChannelsStep({
           </Card>
 
           <Card className="p-4">
-            <h2 className="mb-3 text-sm font-semibold text-zinc-900">Selected Channel Status</h2>
+            <h2 className="mb-3 text-sm font-semibold text-zinc-900">Channel Status</h2>
             <div className="flex items-center gap-4">
               <DonutChart
                 size={96}
