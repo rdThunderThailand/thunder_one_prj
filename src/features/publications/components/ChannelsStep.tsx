@@ -6,24 +6,17 @@ import { DonutChart } from "@/components/ui/DonutChart";
 import { ChevronDownIcon, FilterIcon, GridIcon, ListIcon, SearchIcon, XIcon } from "@/components/ui/icons";
 import type { Screen } from "../types";
 import { channelCategories, type ChannelCategoryId, type ChannelItem } from "../mock-data";
+import {
+  computeCategoryCounts,
+  computeStatusCounts,
+  filterBySearch,
+  statusPercent as computeStatusPercent,
+  toChannelItems,
+} from "../channels-logic";
 import { ChannelCard, categoryBadgeColor, categoryIcon } from "./ChannelCard";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 const VISIBLE_COUNT = 4;
-
-/** Secondary line on a channel card. `connection_status` is a stored column that
- * does not track liveness — only `last_heartbeat_at` (and the `status_level`
- * derived from it: >5min = offline, >2min = warning) says whether a screen is up. */
-function formatLastSeen(iso?: string | null): string {
-  if (!iso) return "Never connected";
-  const minutes = Math.floor((Date.now() - Date.parse(iso)) / 60000);
-  if (!Number.isFinite(minutes) || minutes < 0) return "Last seen just now";
-  if (minutes < 1) return "Last seen just now";
-  if (minutes < 60) return `Last seen ${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Last seen ${hours}h ago`;
-  return `Last seen ${Math.floor(hours / 24)}d ago`;
-}
 
 export interface ChannelsStepProps {
   screens?: Screen[];
@@ -45,46 +38,18 @@ export function ChannelsStep({
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const channels: ChannelItem[] = useMemo(
-    () =>
-      screens.map((s) => ({
-        id: s.id,
-        name: s.name,
-        // ponytail: Screen has no category field yet — every screen reads as
-        // dooh until the backend adds one; upgrade when that lands.
-        category: "dooh" as const,
-        subLabel: formatLastSeen(s.last_heartbeat_at),
-        status: s.status_level ?? "offline",
-        resolution: undefined,
-      })),
-    [screens],
-  );
+  const channels: ChannelItem[] = useMemo(() => toChannelItems(screens), [screens]);
 
-  const filtered = useMemo(
-    () => channels.filter((c) => c.name.toLowerCase().includes(search.trim().toLowerCase())),
-    [channels, search],
-  );
+  const filtered = useMemo(() => filterBySearch(channels, search), [channels, search]);
 
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: channels.length };
-    for (const cat of channelCategories) {
-      counts[cat.id] = channels.filter((c) => c.category === cat.id).length;
-    }
-    return counts;
-  }, [channels]);
+  const categoryCounts = useMemo(() => computeCategoryCounts(channels), [channels]);
 
   const groups = channelCategories.filter((cat) => activeTab === "all" || activeTab === cat.id);
   const selectedChannels = channels.filter((c) => selectedIds.includes(c.id));
 
-  const statusCounts = useMemo(() => {
-    const online = channels.filter((c) => c.status === "online").length;
-    const warning = channels.filter((c) => c.status === "warning").length;
-    const offline = channels.filter((c) => c.status === "offline").length;
-    return { online, warning, offline, total: channels.length };
-  }, [channels]);
+  const statusCounts = useMemo(() => computeStatusCounts(channels), [channels]);
 
-  const statusPercent = (count: number) =>
-    statusCounts.total === 0 ? 0 : Math.round((count / statusCounts.total) * 100);
+  const statusPercent = (count: number) => computeStatusPercent(count, statusCounts.total);
 
   return (
     <div className="flex flex-col gap-4">
