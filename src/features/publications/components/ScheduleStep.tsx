@@ -55,6 +55,7 @@ export interface ScheduleStepProps {
   assets?: MediaAsset[];
   conflicts?: ScheduleConflict[];
   checkingConflicts?: boolean;
+  conflictsError?: string | null;
 }
 
 export function ScheduleStep({
@@ -63,6 +64,7 @@ export function ScheduleStep({
   assets = [],
   conflicts = [],
   checkingConflicts = false,
+  conflictsError = null,
 }: ScheduleStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -471,6 +473,13 @@ export function ScheduleStep({
             <p className="mt-4 text-xs text-zinc-400">กำลังตรวจสอบความขัดแย้งของตารางเผยแพร่…</p>
           )}
 
+          {!checkingConflicts && conflictsError && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+              <h4 className="text-sm font-semibold text-red-800">⚠ Unable to verify schedule conflicts</h4>
+              <p className="mt-0.5 text-[11px] text-red-700">{conflictsError} — Publish is blocked until this resolves.</p>
+            </div>
+          )}
+
           {conflicts.length > 0 && (() => {
             const suppressedCount = conflicts.filter((c) => c.would_be_suppressed).length;
             return (
@@ -603,7 +612,9 @@ export function ScheduleStep({
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500 font-medium">Conflicts</dt>
               <dd className="text-right font-medium">
-                {conflicts.length === 0 ? (
+                {conflictsError ? (
+                  <span className="text-red-600">Unknown/Error</span>
+                ) : conflicts.length === 0 ? (
                   <span className="text-zinc-900">None</span>
                 ) : (
                   <div>

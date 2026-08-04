@@ -121,6 +121,7 @@ export function CreatePublicationPage() {
     publishedId,
     conflicts,
     checkingConflicts,
+    conflictsError,
     saveDraft,
     publishNow,
     canPublish,
@@ -226,6 +227,7 @@ export function CreatePublicationPage() {
           assets={assets}
           conflicts={conflicts}
           checkingConflicts={checkingConflicts}
+          conflictsError={conflictsError}
         />
       )}
       {step === 5 && (

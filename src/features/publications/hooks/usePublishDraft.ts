@@ -45,6 +45,7 @@ export function usePublishDraft() {
   const [publishedId, setPublishedId] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<ScheduleConflict[]>([]);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
+  const [conflictsError, setConflictsError] = useState<string | null>(null);
 
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const step = usePublicationDraftStore((s) => s.step);
@@ -57,6 +58,7 @@ export function usePublishDraft() {
     draft: { publicationId, step, basicInfo, assetItems, channelIds, scheduleForm },
     assets,
     conflicts,
+    conflictsError,
     loadingRefs,
     checkingConflicts,
   });
@@ -102,6 +104,7 @@ export function usePublishDraft() {
         if (!cancelled) {
           setConflicts([]);
           setCheckingConflicts(false);
+          setConflictsError(null);
         }
       }, 0);
       return () => {
@@ -126,12 +129,14 @@ export function usePublishDraft() {
           if (!cancelled) {
             setConflicts(res);
             setCheckingConflicts(false);
+            setConflictsError(null);
           }
         })
-        .catch(() => {
+        .catch((err) => {
           if (!cancelled) {
             setConflicts([]);
             setCheckingConflicts(false);
+            setConflictsError(err instanceof Error ? err.message : "Failed to check schedule conflicts.");
           }
         });
     }, 400);
@@ -244,6 +249,7 @@ export function usePublishDraft() {
     publishedId,
     conflicts,
     checkingConflicts,
+    conflictsError,
     saveDraft,
     publishNow,
     canPublish,

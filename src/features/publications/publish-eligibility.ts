@@ -21,10 +21,11 @@ export function computeEligibility(params: {
   draft: DraftFields;
   assets: MediaAsset[];
   conflicts: ScheduleConflict[];
+  conflictsError: string | null;
   loadingRefs: boolean;
   checkingConflicts: boolean;
 }): EligibilityResult {
-  const { draft, assets, conflicts, loadingRefs, checkingConflicts } = params;
+  const { draft, assets, conflicts, conflictsError, loadingRefs, checkingConflicts } = params;
 
   let contentCheckStatus: EligibilityStatus;
   if (draft.assetItems.length === 0) {
@@ -56,11 +57,12 @@ export function computeEligibility(params: {
   const scheduleCheckStatus: EligibilityStatus = validateStep(4, draft).valid ? "pass" : "fail";
   const channelsCheckStatus: EligibilityStatus = validateStep(3, draft).valid ? "pass" : "fail";
   const policyCheckStatus: EligibilityStatus = "unknown";
-  const conflictsCheckStatus: EligibilityStatus = checkingConflicts
-    ? "unknown"
-    : conflicts.length === 0
-    ? "pass"
-    : "fail";
+  const conflictsCheckStatus: EligibilityStatus =
+    checkingConflicts || conflictsError
+      ? "unknown"
+      : conflicts.length === 0
+      ? "pass"
+      : "fail";
 
   const checks: EligibilityCheck[] = [
     { status: contentCheckStatus },
