@@ -90,7 +90,8 @@
 **Acceptance criteria**
 
 - [x] Checklist fail หนึ่งรายการแล้ว Publish ต้อง disabled — verified (conflict fail → disabled)
-- [x] Schedule invalid หรือ conflict API error แล้ว Publish ต้อง disabled — conflict-fail path verified, schedule-invalid path ยังไม่ทดสอบ
+- [x] Schedule invalid หรือ conflict API error แล้ว Publish ต้อง disabled — conflict-fail path browser-verified; schedule-invalid path covered ที่ระดับ
+  `publish-eligibility.check.mts` (2026-08-04), ยังไม่ได้ browser-verify
 - [ ] UI และ server ให้ผล eligibility ตรงกัน — ยังไม่ verify เพราะยังไม่ได้กด Publish จริงตอนผ่านเกณฑ์ครบ (ไม่ได้ activate publication จริงระหว่าง verify รอบนี้)
 - [x] Phase 1 ไม่เพิ่ม Approval Workflow ที่อยู่นอก Scope — checklist row policy คงเป็น manual/neutral เสมอตามที่ตั้งใจ
 
@@ -367,8 +368,16 @@ re-derive ที่นี่:
   category counts, and the `statusPercent` zero-division guard (mutation-tested). Error-state
   and reach/coverage tests still open — reach has no backend field yet (see Channels flow
   section above), error-state is just a prop passthrough with little logic to test.
-- [ ] Schedule invalid/conflict service failure tests
-- [ ] Publish eligibility และ duplicate activation tests
+- [x] Schedule invalid tests — `isScheduleFormValid` cases added to `schedule.check.mts`
+  (2026-08-04): later/range/recurring start-end ordering, missing recurring days/daily
+  window, reversed daily window (mutation-tested by loosening the `end <= start` guard).
+- [x] Publish eligibility และ conflict service failure tests — new
+  `publish-eligibility.check.mts` (2026-08-04): `computeEligibility()` covers
+  conflict-service-failure → `unknown` (blocks Publish, not read as "no conflict"),
+  in-flight conflict check, real conflict → `fail`, invalid schedule, missing/unresolved/
+  unapproved content, empty channels, `loadingRefs` gate (mutation-tested). Duplicate
+  activation tests still open — that's problem B in P0.3, deferred (no `FOR UPDATE`,
+  low urgency per prod evidence).
 - [ ] E2E: Create Draft → reload/restore → Publish
 - [ ] แก้ `<img>` lint warnings หรือบันทึกเหตุผลที่ยอมรับได้
 
