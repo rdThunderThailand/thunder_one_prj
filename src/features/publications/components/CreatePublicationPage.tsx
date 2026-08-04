@@ -111,6 +111,7 @@ export function CreatePublicationPage() {
 
   const {
     screens,
+    screensError,
     campaigns,
     assets,
     loadingRefs,
@@ -215,7 +216,9 @@ export function CreatePublicationPage() {
       )}
 
       {step === 2 && <ContentStep campaigns={campaigns} />}
-      {step === 3 && <ChannelsStep screens={screens} loadingScreens={loadingRefs} />}
+      {step === 3 && (
+        <ChannelsStep screens={screens} loadingScreens={loadingRefs} screensError={screensError} />
+      )}
       {step === 4 && (
         <ScheduleStep
           campaigns={campaigns}

@@ -241,13 +241,20 @@
 
 **ยังขาด/ไม่เรียบร้อย**
 
-- [ ] ทุก Screen ถูกบังคับ category เป็น `dooh` ทำให้ Category อื่นว่าง
-- [ ] Type/Status/Location filters ไม่มี logic
+- [ ] ทุก Screen ถูกบังคับ category เป็น `dooh` ทำให้ Category อื่นว่าง — บล็อกเพราะ `Screen` type
+  ไม่มี field รองรับ (ดูหมายเหตุด้านล่าง), มาร์ก `ponytail:` ไว้ในโค้ดแล้ว
+- [ ] Type/Location filters ไม่มี logic — บล็อกด้วยเหตุผลเดียวกับ category (ไม่มี field);
+  Status filter ยังไม่ implement เช่นกันแม้ `status_level` มีอยู่แล้ว (ไม่ทำรอบนี้เพราะเหลือ
+  Type/Location ทำไม่ได้ ทำ Status เดี่ยวจะ UI ไม่สม่ำเสมอ)
 - [ ] More Filters ไม่มี logic
-- [ ] ไม่มี Estimated Reach/Coverage
-- [ ] Status Summary นับทุก Channel แทนเฉพาะรายการที่เลือก
-- [ ] จำนวน Channel เป็น 0 แล้วเปอร์เซ็นต์แสดง `NaN%`
-- [ ] Fetch error ถูกแปลงเป็น empty list ทำให้แยก Error กับ Empty ไม่ได้
+- [ ] ไม่มี Estimated Reach/Coverage — บล็อกด้วยเหตุผลเดียวกัน (ไม่มี field จาก backend)
+- [x] Status Summary นับทุก Channel แทนเฉพาะรายการที่เลือก — **แก้แล้ว (2026-08-04)** นับจาก
+  `selectedChannels` เท่านั้น, เปลี่ยนหัวข้อการ์ดเป็น "Selected Channel Status"
+- [x] จำนวน Channel เป็น 0 แล้วเปอร์เซ็นต์แสดง `NaN%` — **แก้แล้ว (2026-08-04)** guard
+  division-by-zero ผ่าน `statusPercent()`, verified ผ่าน browser จริง (เคลียร์ selection แล้วเห็น `0%`)
+- [x] Fetch error ถูกแปลงเป็น empty list ทำให้แยก Error กับ Empty ไม่ได้ — **แก้แล้ว (2026-08-04)**
+  `usePublishDraft` เก็บ error message จริงแยกจาก empty state, เพิ่ม empty-state message ด้วย —
+  **ยังไม่ได้ simulate fetch error จริงเพื่อทดสอบ** (verified เฉพาะ empty-state path)
 - [ ] Selection persistence ต้องยืนยันกับ backend ไม่ใช่ local state อย่างเดียว
 
 **พร้อม Review เมื่อ**

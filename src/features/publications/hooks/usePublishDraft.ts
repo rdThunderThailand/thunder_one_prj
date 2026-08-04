@@ -37,6 +37,7 @@ export function usePublishDraft() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loadingRefs, setLoadingRefs] = useState(true);
+  const [screensError, setScreensError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -66,7 +67,12 @@ export function usePublishDraft() {
     let isMounted = true;
 
     Promise.all([
-      fetchScreens().catch(() => []),
+      fetchScreens().catch((err) => {
+        if (isMounted) {
+          setScreensError(err instanceof Error ? err.message : "Failed to load channels.");
+        }
+        return [];
+      }),
       fetchCampaigns().catch(() => []),
       fetchMediaAssets().catch(() => []),
     ]).then(([fetchedScreens, fetchedCampaigns, fetchedAssets]) => {
@@ -228,6 +234,7 @@ export function usePublishDraft() {
 
   return {
     screens,
+    screensError,
     campaigns,
     assets,
     loadingRefs,

@@ -50,6 +50,8 @@ export function ChannelsStep({
       screens.map((s) => ({
         id: s.id,
         name: s.name,
+        // ponytail: Screen has no category field yet — every screen reads as
+        // dooh until the backend adds one; upgrade when that lands.
         category: "dooh" as const,
         subLabel: formatLastSeen(s.last_heartbeat_at),
         status: s.status_level ?? "offline",
@@ -71,15 +73,18 @@ export function ChannelsStep({
     return counts;
   }, [channels]);
 
-  const statusCounts = useMemo(() => {
-    const online = channels.filter((c) => c.status === "online").length;
-    const warning = channels.filter((c) => c.status === "warning").length;
-    const offline = channels.filter((c) => c.status === "offline").length;
-    return { online, warning, offline, total: channels.length };
-  }, [channels]);
-
   const groups = channelCategories.filter((cat) => activeTab === "all" || activeTab === cat.id);
   const selectedChannels = channels.filter((c) => selectedIds.includes(c.id));
+
+  const statusCounts = useMemo(() => {
+    const online = selectedChannels.filter((c) => c.status === "online").length;
+    const warning = selectedChannels.filter((c) => c.status === "warning").length;
+    const offline = selectedChannels.filter((c) => c.status === "offline").length;
+    return { online, warning, offline, total: selectedChannels.length };
+  }, [selectedChannels]);
+
+  const statusPercent = (count: number) =>
+    statusCounts.total === 0 ? 0 : Math.round((count / statusCounts.total) * 100);
 
   return (
     <div className="flex flex-col gap-4">
@@ -87,7 +92,12 @@ export function ChannelsStep({
         <h1 className="text-xl font-semibold text-zinc-900">Select Channels</h1>
         <p className="mt-0.5 text-sm text-zinc-500">เลือกช่องทางที่ต้องการเผยแพร่สื่อนี้</p>
         {loadingScreens && <p className="mt-1 text-xs text-zinc-400">Loading screens...</p>}
-        {screensError && <p className="mt-1 text-xs text-zinc-400">{screensError}</p>}
+        {!loadingScreens && screensError && (
+          <p className="mt-1 text-xs text-red-600">{screensError}</p>
+        )}
+        {!loadingScreens && !screensError && channels.length === 0 && (
+          <p className="mt-1 text-xs text-zinc-400">No channels available yet.</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -143,6 +153,9 @@ export function ChannelsStep({
                   className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
+              {/* ponytail: decorative only — Screen has no type/location field
+                  and "status" already drives the summary card; wire these up
+                  once the backend exposes type/location per screen. */}
               {["All Types", "All Status", "All Locations"].map((label) => (
                 <div key={label} className="relative">
                   <select className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
@@ -230,7 +243,7 @@ export function ChannelsStep({
           </Card>
 
           <Card className="p-4">
-            <h2 className="mb-3 text-sm font-semibold text-zinc-900">Channel Status</h2>
+            <h2 className="mb-3 text-sm font-semibold text-zinc-900">Selected Channel Status</h2>
             <div className="flex items-center gap-4">
               <DonutChart
                 size={96}
@@ -247,7 +260,7 @@ export function ChannelsStep({
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Online
                   </span>
                   <span className="font-medium text-zinc-900">
-                    {statusCounts.online} ({Math.round((statusCounts.online / statusCounts.total) * 100)}%)
+                    {statusCounts.online} ({statusPercent(statusCounts.online)}%)
                   </span>
                 </li>
                 <li className="flex items-center justify-between">
@@ -255,7 +268,7 @@ export function ChannelsStep({
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> Warning
                   </span>
                   <span className="font-medium text-zinc-900">
-                    {statusCounts.warning} ({Math.round((statusCounts.warning / statusCounts.total) * 100)}%)
+                    {statusCounts.warning} ({statusPercent(statusCounts.warning)}%)
                   </span>
                 </li>
                 <li className="flex items-center justify-between">
@@ -263,7 +276,7 @@ export function ChannelsStep({
                     <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Offline
                   </span>
                   <span className="font-medium text-zinc-900">
-                    {statusCounts.offline} ({Math.round((statusCounts.offline / statusCounts.total) * 100)}%)
+                    {statusCounts.offline} ({statusPercent(statusCounts.offline)}%)
                   </span>
                 </li>
                 <li className="mt-1 flex items-center justify-between border-t border-zinc-100 pt-1.5">
