@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { MediaThumb } from "./MediaThumb";
 import { usePreviewUrls } from "../hooks/usePreviewUrls";
-import { isScheduleFormValid, utcToZonedParts } from "../schedule";
+import { utcToZonedParts } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
 import {
   createdByMeta,
@@ -18,6 +18,8 @@ import { publicationTypeIcons } from "./publicationTypeIcons";
 import { categoryBadgeColor, categoryIcon } from "./ChannelCard";
 import { MiniCalendar } from "./MiniCalendar";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+
+import { type EligibilityCheck, isAllGatingPassed } from "../publish-eligibility";
 
 function formatShortDate(iso: string) {
   if (!iso) return "";
@@ -43,6 +45,7 @@ export interface ReviewPublishStepProps {
   screens?: Screen[];
   assets?: MediaAsset[];
   conflicts?: ScheduleConflict[];
+  eligibilityChecks?: EligibilityCheck[];
 }
 
 export function ReviewPublishStep({
@@ -50,6 +53,7 @@ export function ReviewPublishStep({
   screens = [],
   assets = [],
   conflicts = [],
+  eligibilityChecks = [],
 }: ReviewPublishStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -96,7 +100,6 @@ export function ReviewPublishStep({
       ? "10s"
       : undefined;
 
-  const isValidSchedule = isScheduleFormValid(scheduleForm);
   const nowZoned = utcToZonedParts(new Date().toISOString(), scheduleForm.timezone);
 
   const displayStartDate =
@@ -104,16 +107,7 @@ export function ReviewPublishStep({
   const displayStartTime =
     scheduleForm.schedule_type === "now" ? nowZoned.time : scheduleForm.start_time;
 
-  // Pre-publish checklist logic
-  const checkStatus: Record<number, { pass: boolean; neutral?: boolean }> = {
-    0: { pass: selectedAsset?.approval_status === "approved" },
-    1: { pass: isValidSchedule },
-    2: { pass: channelIds.length > 0 },
-    3: { pass: false, neutral: true },
-    4: { pass: conflicts.length === 0 },
-  };
-
-  const allPassed = Object.values(checkStatus).every((c) => c.pass || c.neutral);
+  const allPassed = isAllGatingPassed(eligibilityChecks);
 
   return (
     <div className="flex flex-col gap-4">
@@ -219,19 +213,19 @@ export function ReviewPublishStep({
               </div>
               <ul className="flex flex-col gap-2">
                 {prePublishChecklist.map((item, idx) => {
-                  const st = checkStatus[idx];
+                  const status = eligibilityChecks[idx]?.status ?? "unknown";
                   return (
                     <li key={item} className="flex items-center justify-between gap-2 text-xs text-zinc-600">
                       <span>
                         {item}
                         {idx === 4 && conflicts.length > 0 ? ` (${conflicts.length})` : ""}
                       </span>
-                      {st?.neutral ? (
+                      {status === "unknown" ? (
                         <span
                           className="h-2 w-2 shrink-0 rounded-full bg-zinc-300"
                           title="ตรวจสอบด้วยตนเอง"
                         />
-                      ) : st?.pass ? (
+                      ) : status === "pass" ? (
                         <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-500" />
                       ) : (
                         <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />

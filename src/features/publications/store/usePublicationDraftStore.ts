@@ -26,7 +26,7 @@ const defaultBasicInfo: BasicInfoState = {
   tags: [],
 };
 
-interface DraftFields {
+export interface DraftFields {
   publicationId: string | null;
   step: number;
   basicInfo: BasicInfoState;

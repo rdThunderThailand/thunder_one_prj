@@ -12,6 +12,7 @@ import { usePublishDraft } from "../hooks/usePublishDraft";
 import { fetchPlaylist, fetchPublication } from "../services/publications-api";
 import { detailToDraft } from "../detail-mapping";
 import type { PlaylistDetail } from "../types";
+import { validateStep, type WizardStepId } from "../step-validation";
 import { BasicInfoForm } from "./BasicInfoForm";
 import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
@@ -41,6 +42,7 @@ export function CreatePublicationPage() {
 
   const [resumedId, setResumedId] = useState<string | null>(null);
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const loadedIdRef = useRef<string | null>(null);
 
   // Derived, not state: `resumedId` only settles once the fetch has finished, so
@@ -114,18 +116,54 @@ export function CreatePublicationPage() {
     loadingRefs,
     saving,
     error,
+    setError,
     publishedId,
     conflicts,
     checkingConflicts,
     saveDraft,
     publishNow,
     canPublish,
+    eligibilityChecks,
+    persistDraft,
+    saveStatus,
+    setSaveStatus,
+    savingNext,
+    setSavingNext,
   } = usePublishDraft();
 
-  const goNext = () => goNextAction(MAX_BUILT_STEP);
+  const handleNext = async () => {
+    if (savingNext) return;
+    const result = validateStep(step as WizardStepId, usePublicationDraftStore.getState());
+    if (!result.valid) {
+      setValidationErrors(result.errors);
+      return;
+    }
+    setValidationErrors([]);
+    setSavingNext(true);
+    setSaveStatus("saving");
+    try {
+      await persistDraft(false);
+      setSaveStatus("saved");
+      goNextAction(MAX_BUILT_STEP);
+    } catch (err) {
+      setSaveStatus("error");
+      setError(err instanceof Error ? err.message : "Failed to save draft.");
+    } finally {
+      setSavingNext(false);
+    }
+  };
+
   const isLastStep = step === wizardSteps.length;
   const nextStepLabel = wizardSteps[step]?.label ?? wizardSteps[wizardSteps.length - 1].label;
   const prevStepLabel = wizardSteps[step - 2]?.label;
+  const nextButtonContent =
+    saveStatus === "saving" ? (
+      "Saving…"
+    ) : (
+      <>
+        Next: {nextStepLabel} <ArrowRightIcon className="h-4 w-4" />
+      </>
+    );
 
   // Avoid flashing step-1 defaults before a restored draft (possibly on a
   // later step) loads from localStorage or via ?id=.
@@ -153,8 +191,8 @@ export function CreatePublicationPage() {
               <Button variant="secondary" onClick={saveDraft} disabled={saving}>
                 {saving ? "Saving…" : "Save as Draft"}
               </Button>
-              <Button variant="primary" onClick={goNext} disabled={step >= MAX_BUILT_STEP}>
-                Next: {nextStepLabel} <ArrowRightIcon className="h-4 w-4" />
+              <Button variant="primary" onClick={handleNext} disabled={savingNext || step >= MAX_BUILT_STEP}>
+                {nextButtonContent}
               </Button>
             </>
           )
@@ -193,6 +231,7 @@ export function CreatePublicationPage() {
           screens={screens}
           assets={assets}
           conflicts={conflicts}
+          eligibilityChecks={eligibilityChecks}
         />
       )}
 
@@ -221,12 +260,35 @@ export function CreatePublicationPage() {
               <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
             </Button>
           ) : (
-            <Button variant="primary" onClick={goNext} disabled={step >= MAX_BUILT_STEP}>
-              Next: {nextStepLabel} <ArrowRightIcon className="h-4 w-4" />
+            <Button variant="primary" onClick={handleNext} disabled={savingNext || step >= MAX_BUILT_STEP}>
+              {nextButtonContent}
             </Button>
           )}
         </div>
-        {displayError && <p className="text-xs font-medium text-red-600">{displayError}</p>}
+        {validationErrors.length > 0 && (
+          <div className="flex flex-col gap-1">
+            {validationErrors.map((err, idx) => (
+              <p key={idx} className="text-xs font-medium text-red-600">
+                {err}
+              </p>
+            ))}
+          </div>
+        )}
+        {displayError && (
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium text-red-600">{displayError}</p>
+            {saveStatus === "error" && (
+              <Button
+                variant="secondary"
+                className="px-2.5 py-1 text-xs"
+                onClick={handleNext}
+                disabled={savingNext}
+              >
+                Retry
+              </Button>
+            )}
+          </div>
+        )}
         {publishedId && (
           <p className="text-xs font-medium text-emerald-600">
             Published successfully! (ID: {publishedId})

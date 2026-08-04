@@ -18,6 +18,7 @@ import {
   savePublicationSchedule,
 } from "../services/publications-api";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { computeEligibility } from "../publish-eligibility";
 import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
@@ -38,20 +39,28 @@ export function usePublishDraft() {
   const [loadingRefs, setLoadingRefs] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [savingNext, setSavingNext] = useState(false);
   const [publishedId, setPublishedId] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<ScheduleConflict[]>([]);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
 
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
+  const step = usePublicationDraftStore((s) => s.step);
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
 
-  const canPublish =
-    basicInfo.name.trim().length > 0 &&
-    assetItems.length > 0 &&
-    channelIds.length > 0;
+  const eligibility = computeEligibility({
+    draft: { publicationId, step, basicInfo, assetItems, channelIds, scheduleForm },
+    assets,
+    conflicts,
+    loadingRefs,
+    checkingConflicts,
+  });
+  const canPublish = eligibility.canPublish;
+  const eligibilityChecks = eligibility.checks;
 
   useEffect(() => {
     let isMounted = true;
@@ -224,11 +233,18 @@ export function usePublishDraft() {
     loadingRefs,
     saving,
     error,
+    setError,
     publishedId,
     conflicts,
     checkingConflicts,
     saveDraft,
     publishNow,
     canPublish,
+    eligibilityChecks,
+    persistDraft,
+    saveStatus,
+    setSaveStatus,
+    savingNext,
+    setSavingNext,
   };
 }
