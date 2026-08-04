@@ -1,6 +1,6 @@
 import type { DraftFields } from "./store/usePublicationDraftStore";
 import type { MediaAsset, ScheduleConflict } from "./types";
-import { validateStep } from "./step-validation";
+import { validateStep } from "./step-validation.ts";
 
 export type EligibilityStatus = "pass" | "fail" | "unknown";
 
