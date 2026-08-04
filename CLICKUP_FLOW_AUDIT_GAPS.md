@@ -101,27 +101,24 @@
 **หัวข้อ:** Draft consistency / idempotency  
 **ไฟล์หลัก:** [`usePublishDraft.ts`](./src/features/publications/hooks/usePublishDraft.ts)
 
-**ปัจจุบัน**
+**แตกเป็น 4 ปัญหาแยกกัน (2026-08-04)** — วิเคราะห์เต็มพร้อมหลักฐานจาก prod query อยู่ที่
+[`docs/publications/plan-revision-409.md`](./docs/publications/plan-revision-409.md) อย่า
+re-derive ที่นี่:
 
-- การบันทึกทำเป็น Basic Info → Content → Schedule → Activate ต่อกัน
-- คำสั่งกลางทางล้มเหลวแล้วอาจเหลือข้อมูลบางส่วนใน backend
-- Client ไม่ส่ง revision/version หรือ idempotency key
-- Retry หลัง timeout อาจสร้าง publish operation ซ้ำ
-
-**ยังต้องทำ**
-
-- [ ] เพิ่ม draft `revision` หรือ `version`
-- [ ] Autosave/manual save ต้องส่ง expected revision
-- [ ] รองรับ `409 Conflict` พร้อม reload/merge/retry UX
-- [ ] ออกแบบ publish command ให้ idempotent
-- [ ] ใช้ idempotency key เดิมเมื่อ retry operation เดิม
-- [ ] ป้องกัน partial activation หรือมี recovery ที่ระบุสถานะชัดเจน
-
-**Acceptance criteria**
-
-- เปิด draft สองหน้าต่างแล้ว save ข้อมูลเก่าไม่ทับข้อมูลใหม่แบบเงียบ ๆ
-- Timeout แล้ว retry ไม่สร้าง Publication/Publish Job ซ้ำ
-- Operation ล้มเหลวกลางทางแล้วผู้ใช้ทราบสถานะและกู้คืนได้
+- [x] **C — error ทุกชนิดถูกยุบเป็น string เดียว, retry หลัง timeout โชว์ error ทั้งที่สำเร็จแล้ว**
+  — **แก้แล้ว (2026-08-04)** `ApiError` เก็บ status code, `classifyApiError()` แยก
+  `conflict`/`already-active`/`rejected`/`retryable`, `publishNow` map "Already active"
+  (retry หลัง timeout) เป็น success แทน error — verify: tsc/eslint/build/`.check.mts` ผ่าน
+  + mutation test ยืนยันเทสจับบั๊กจริง, `conflict` (409) ยัง verify ผ่าน HTTP จริงไม่ได้เพราะ
+  backend ไม่เคยส่ง 409 มา (ผูกกับ A ที่ยังไม่ทำ)
+- [ ] **B — duplicate activate จาก race** (`media_publication_activate` ไม่มี `FOR UPDATE`)
+  — ยังไม่เคยเกิดจริงบน prod (24 publish_jobs / 24 publications, ตรวจ 2026-08-04) แนะนำ
+  แก้ด้วย `FOR UPDATE` 1 บรรทัดถ้าจะทำ แต่ไม่เร่งด่วน
+- [ ] **A — เพิ่ม draft `revision`/`version` กัน lost update** — **ตัดสินใจ (2026-08-04): YAGNI**
+  ไม่มีหลักฐานว่าเคยเกิดจริง เครื่องมือ internal คนสร้าง publication มักทำคนเดียวจบในรอบเดียว
+  รอจนมีคนรายงานว่าข้อมูลหายก่อนค่อยทำ (ต้อง migration + แก้ RPC 3 ตัว + contract สองฝั่ง)
+- [ ] **D — partial save ระหว่าง Basic Info → Content → Schedule** — **ยอมรับใน Phase 1**
+  draft resume ได้จาก localStorage/`?id=` อยู่แล้ว กด Next ใหม่ก็ save ทับ
 
 ---
 
