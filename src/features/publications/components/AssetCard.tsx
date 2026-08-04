@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { CheckIcon, PlayIcon } from "@/components/ui/icons";
 import type { MediaAsset } from "../types";
 
@@ -47,11 +48,12 @@ export function AssetCard({
               className="absolute inset-0 h-full w-full object-cover object-center"
             />
           ) : (
-            <img
+            <Image
               src={previewUrl}
               alt={filename}
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover object-center"
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              className="object-cover object-center"
             />
           )
         ) : null}

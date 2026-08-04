@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 type MediaThumbProps = {
   url?: string;
   kind?: string;
@@ -21,7 +23,11 @@ export function MediaThumb({ url, kind, mimeType, alt, className }: MediaThumbPr
   if (isVideo) {
     return <video src={`${url}#t=0.1`} muted preload="metadata" className={`${base} object-cover`} />;
   }
-  // url present: image, OR unknown type (default to <img> — most assets are images; a broken
-  // <img> degrades gracefully). Fallback label tile only ever shows when url is absent (above).
-  return <img src={url} alt={alt} loading="lazy" className={`${base} object-cover`} />;
+  // url present: image, OR unknown type (default to image — most assets are images; a broken
+  // image degrades gracefully). Fallback label tile only ever shows when url is absent (above).
+  return (
+    <div className={`${base} relative`}>
+      <Image src={url} alt={alt} fill sizes="128px" className="object-cover" />
+    </div>
+  );
 }

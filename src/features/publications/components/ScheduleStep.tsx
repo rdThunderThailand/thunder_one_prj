@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, ChevronDownIcon, InfoIcon, LightningIcon, RepeatIcon } from "@/components/ui/icons";
 import { CARD_BY_SCHEDULE_TYPE, SCHEDULE_TYPE_BY_CARD } from "../draft-mapping";
@@ -541,7 +542,7 @@ export function ScheduleStep({
         <Card className="p-5">
           <h2 className="mb-4 text-base font-semibold text-zinc-900">Publication Summary</h2>
           {selectedAsset && previewUrl ? (
-            <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
+            <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
               {isVideo ? (
                 <video
                   src={previewUrl}
@@ -550,10 +551,12 @@ export function ScheduleStep({
                   className="h-full w-full object-contain"
                 />
               ) : (
-                <img
+                <Image
                   src={previewUrl}
                   alt={selectedAsset.title ?? "Preview"}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(min-width: 1024px) 480px, 100vw"
+                  className="object-cover"
                 />
               )}
             </div>

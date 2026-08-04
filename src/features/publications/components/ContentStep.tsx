@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import {
   ChevronDownIcon,
@@ -457,11 +458,12 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
                   className="h-full w-full object-contain"
                 />
               ) : (
-                <img
+                <Image
                   src={selectedPreviewUrl}
                   alt={selectedFilename}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(min-width: 1024px) 480px, 100vw"
+                  className="object-cover"
                 />
               )
             ) : !selectedAsset ? (
