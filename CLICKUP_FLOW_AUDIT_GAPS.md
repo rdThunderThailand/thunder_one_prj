@@ -291,9 +291,15 @@
 - [ ] Delay Between Channels เป็น disabled placeholder
 - [ ] Advanced Options ไม่มี state/API contract
 - [ ] AI Assistant/Get Suggestions ไม่มี implementation และควรนำออกหาก Out of Scope
-- [ ] Next ไม่ถูกปิดเมื่อ Schedule invalid
+- [x] Next ไม่ถูกปิดเมื่อ Schedule invalid — **ไม่ใช่ gap แล้ว** covered โดย P0.1's
+  `validateStep()` (ทุก step รวม step 4 ต้องผ่าน `isScheduleFormValid` ก่อน Next ถึงเปลี่ยน
+  step ได้ — ปุ่มไม่มี `disabled` attribute ตาม validity แต่ block การเปลี่ยน step จริงเหมือน step อื่น)
 - [ ] Save/Restore ครอบคลุมเฉพาะข้อมูลหลัก
-- [ ] Conflict API failure ถูกตีความเป็น “ไม่มี conflict”
+- [x] Conflict API failure ถูกตีความเป็น "ไม่มี conflict" — **แก้แล้ว (2026-08-04)** เพิ่ม
+  `conflictsError` ใน `usePublishDraft.ts` (pattern เดียวกับ `screensError`),
+  `computeEligibility()` ตีเป็น `unknown` (บล็อก Publish) แทน `pass`, `ScheduleStep.tsx`
+  แสดง error banner + "Unknown/Error" ใน summary — verified ผ่าน browser จริง (block
+  `conflicts` endpoint ใน DevTools แล้วเห็น banner/Publish ถูกบล็อก, unblock แล้ว recover)
 - [ ] Summary ต้องยืนยันว่ามาจากข้อมูล persisted ไม่ใช่ local state เท่านั้น
 
 **พร้อม Review เมื่อ**
