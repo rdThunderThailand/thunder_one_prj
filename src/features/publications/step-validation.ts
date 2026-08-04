@@ -1,5 +1,7 @@
 import type { DraftFields } from "./store/usePublicationDraftStore";
-import { isScheduleFormValid } from "./schedule";
+// Explicit .ts extension so next-transition.check.mts can load this module
+// under Node's ESM resolver, which does no extension guessing.
+import { isScheduleFormValid } from "./schedule.ts";
 
 export type WizardStepId = 1 | 2 | 3 | 4;
 

@@ -12,7 +12,8 @@ import { usePublishDraft } from "../hooks/usePublishDraft";
 import { fetchPlaylist, fetchPublication } from "../services/publications-api";
 import { detailToDraft } from "../detail-mapping";
 import type { PlaylistDetail } from "../types";
-import { validateStep, type WizardStepId } from "../step-validation";
+import { attemptNext, isResumePending } from "../next-transition";
+import { type WizardStepId } from "../step-validation";
 import { BasicInfoForm } from "./BasicInfoForm";
 import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
@@ -49,7 +50,7 @@ export function CreatePublicationPage() {
   // the wizard never paints the *previous* draft's values before ?id= replaces
   // them. Starting from a boolean that flips inside the effect would show one
   // frame of the wrong publication.
-  const resumePending = Boolean(idParam) && idParam !== resumedId && idParam !== publicationId;
+  const resumePending = isResumePending(idParam, resumedId, publicationId);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -135,23 +136,31 @@ export function CreatePublicationPage() {
 
   const handleNext = async () => {
     if (savingNext) return;
-    const result = validateStep(step as WizardStepId, usePublicationDraftStore.getState());
-    if (!result.valid) {
-      setValidationErrors(result.errors);
+    const outcome = await attemptNext(
+      step as WizardStepId,
+      usePublicationDraftStore.getState(),
+      () => {
+        // Only reached when the step validates, so the "saving" flip and the
+        // stale-error clear both land at the same moment they used to.
+        setValidationErrors([]);
+        setSavingNext(true);
+        setSaveStatus("saving");
+        return persistDraft(false);
+      }
+    );
+
+    if (outcome.kind === "invalid") {
+      setValidationErrors(outcome.errors);
       return;
     }
-    setValidationErrors([]);
-    setSavingNext(true);
-    setSaveStatus("saving");
-    try {
-      await persistDraft(false);
+    setSavingNext(false);
+    if (outcome.kind === "saved") {
       setSaveStatus("saved");
+      setError(null); // clear a stale error from a prior failed attempt (e.g. Retry succeeding)
       goNextAction(MAX_BUILT_STEP);
-    } catch (err) {
+    } else {
       setSaveStatus("error");
-      setError(err instanceof Error ? err.message : "Failed to save draft.");
-    } finally {
-      setSavingNext(false);
+      setError(outcome.message);
     }
   };
 
