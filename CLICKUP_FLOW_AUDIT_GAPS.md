@@ -362,7 +362,11 @@ re-derive ที่นี่:
 - [ ] Save failure, retry และ restore tests
 - [ ] Revision conflict/409 tests
 - [ ] Upload validation, cancel, retry และ idempotency tests
-- [ ] Channels empty/error/zero-count/reach tests
+- [x] Channels empty/zero-count tests — `channels-logic.ts` + `channels-logic.check.mts`
+  (2026-08-04): covers empty screens, missing `status_level` fallback, search filter,
+  category counts, and the `statusPercent` zero-division guard (mutation-tested). Error-state
+  and reach/coverage tests still open — reach has no backend field yet (see Channels flow
+  section above), error-state is just a prop passthrough with little logic to test.
 - [ ] Schedule invalid/conflict service failure tests
 - [ ] Publish eligibility และ duplicate activation tests
 - [ ] E2E: Create Draft → reload/restore → Publish
