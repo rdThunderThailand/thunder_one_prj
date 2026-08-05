@@ -194,7 +194,7 @@ export function usePublishDraft() {
         // Surfaced as a dedicated banner (CreatePublicationPage), not the generic
         // error text — "reload" / "overwrite" are actions, not just a message.
         if (err instanceof Error && isConflict(err.message)) {
-          setRevisionConflict(err.message);
+          setRevisionConflict(classifyApiError(err, err.message).message);
         }
         throw err;
       }
