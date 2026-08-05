@@ -276,6 +276,12 @@ export function PublicationDetailPage({ id }: { id: string }) {
             </dd>
           </div>
           <div>
+            <dt className="text-xs font-medium text-zinc-400">Published By</dt>
+            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              {detail.published_by?.display_name ?? "ไม่ทราบผู้เผยแพร่"}
+            </dd>
+          </div>
+          <div>
             <dt className="text-xs font-medium text-zinc-400">Job Status</dt>
             <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
               {detail.job_status ?? "—"}
