@@ -125,7 +125,11 @@ re-derive ที่นี่:
   2026-08-05** — migration `071_publication_draft_revision.sql` (revision column ·
   เช็คที่ `upsert` bump ทั้ง 3 · error prefix `Already modified:`) + frontend
   (draft key `.v3`→`.v4` · banner โหลดใหม่/บันทึกทับ) `tsc`/`eslint`/`build`/`.check.mts`
-  ผ่านหมด **ยังไม่ได้ทดสอบผ่าน browser จริง** — ต้องมีดราฟต์ 2 อันชนกันจริงถึงจะยืนยันได้
+  ผ่านหมด **verify ผ่าน browser จริงแล้ว 2026-08-05** — รัน `Thunder_Core` local (พอร์ต 3011,
+  ชี้ prod DB เดิม) คู่กับ frontend local, สร้าง draft จริง, บังคับ conflict ด้วยการ bump
+  `revision` ตรงบน prod DB ระหว่างที่ tab เปิดค้างไว้ (จำลอง "อีกคนแก้"), ยืนยัน 409 ขึ้นจริง,
+  ข้อความ banner ถูกต้อง (เจอบั๊กระหว่างเทส: banner โชว์ raw RPC string แทนข้อความไทย — แก้แล้ว),
+  ปุ่ม**โหลดใหม่**และ**บันทึกทับ**ทำงานถูกต้องทั้งคู่ (ยืนยันจาก network request จริง)
 - [ ] **D — partial save ระหว่าง Basic Info → Content → Schedule** — **ยอมรับใน Phase 1**
   draft resume ได้จาก localStorage/`?id=` อยู่แล้ว กด Next ใหม่ก็ save ทับ
 
