@@ -129,7 +129,18 @@ re-derive ที่นี่:
   ชี้ prod DB เดิม) คู่กับ frontend local, สร้าง draft จริง, บังคับ conflict ด้วยการ bump
   `revision` ตรงบน prod DB ระหว่างที่ tab เปิดค้างไว้ (จำลอง "อีกคนแก้"), ยืนยัน 409 ขึ้นจริง,
   ข้อความ banner ถูกต้อง (เจอบั๊กระหว่างเทส: banner โชว์ raw RPC string แทนข้อความไทย — แก้แล้ว),
-  ปุ่ม**โหลดใหม่**และ**บันทึกทับ**ทำงานถูกต้องทั้งคู่ (ยืนยันจาก network request จริง)
+  ปุ่ม**โหลดใหม่**และ**บันทึกทับ**ทำงานถูกต้องทั้งคู่ (ยืนยันจาก network request จริง) —
+  **แต่การ verify นี้ไม่ครอบคลุม**: draft ที่ใช้เทสมีแค่ชื่อ ไม่มี schedule/channels
+  จึงไม่จับ regression ด้านล่างได้
+  **⚠️ REGRESSION ที่เจอทีหลัง (2026-08-05 บ่าย):** migration `071` เขียนจากซอร์สเก่า
+  (ไฟล์ 060 ที่เก่ากว่า migration 062/063) แทนที่จะ query prod จริงก่อน — **ทับ
+  `media_publication_get` แล้วลบ `schedule` กับ `publication_targets` ทิ้งไปทั้งคู่**
+  ทำให้ Overview "Now & Next" ขึ้น "ไม่ทราบสถานะการออกอากาศ" สำหรับ publication ที่กำลัง
+  แอร์อยู่จริง และ resume draft/reload ทับ Channels+Schedule step เป็นค่าว่างเงียบๆ
+  แก้แล้วด้วย migration `072_publication_get_schedule.sql` (คืนทั้งสองฟิลด์ เก็บ `revision`
+  ไว้) verify ตรงกับ prod แล้วว่า 4 publication ที่มีปัญหาได้ข้อมูลกลับมาครบ
+  **บทเรียน: ต้อง query `pg_proc.prosrc` จริงก่อนเขียน `CREATE OR REPLACE` ทุกครั้ง
+  ห้ามอ่านจากไฟล์ migration เก่าเฉยๆ**
 - [ ] **D — partial save ระหว่าง Basic Info → Content → Schedule** — **ยอมรับใน Phase 1**
   draft resume ได้จาก localStorage/`?id=` อยู่แล้ว กด Next ใหม่ก็ save ทับ
 
