@@ -23,7 +23,10 @@
 ## Scope ที่ต้องเข้าใจก่อนแก้
 
 - Phase 1 ไม่มี Approval Workflow ดังนั้น Publish gate ต้องตรวจ Content ว่า `Ready` และ persisted แล้ว แต่ไม่ต้องสร้าง approval gate ใหม่
-- AI Media Assistant / AI Suggestions เป็น Out of Scope ตาม ClickUp หากไม่มีการเปลี่ยน Scope ให้ซ่อนหรือนำออกจาก flow
+- AI Media Assistant / AI Suggestions เป็น Out of Scope ตาม ClickUp หากไม่มีการเปลี่ยน Scope ให้ซ่อนหรือนำออกจาก flow —
+  **ขัดกับ `overview/README.md` ที่ระบุว่าเป็น mockup ตั้งใจของ Phase 2–5 (design fork, ยังไม่ resolve)
+  ตัดสินใจไว้ (2026-08-05): ค้างไว้ก่อน ไม่แก้โค้ดรอบนี้** — รอ PM/ClickUp ยืนยันว่า Out-of-Scope
+  หมายถึง "ห้ามมี UI เลย" หรือ "ห้าม ship ใน Phase 1 แต่ mockup ไว้ล่วงหน้าได้"
 - Playlist behavior ที่ปรากฏใน wizard ต้องยึด ClickUp Phase 1 เป็นหลัก อย่าเพิ่ม implementation ต่อโดยไม่มี Scope ยืนยัน
 - Publication lifecycle และ Publish Job delivery status เป็นคนละเรื่อง ห้ามรวม status vocabulary เข้าด้วยกัน ดูรายละเอียดใน `CONTEXT.md`
 
@@ -144,7 +147,10 @@ re-derive ที่นี่:
 - [ ] Top Channels ยังใช้ mock data
 - [ ] ไม่มี dashboard refresh ที่ดึงข้อมูลใหม่จริง
 - [ ] Now & Next คำนวณเวลาใหม่ทุก 60 วินาทีจากข้อมูลเดิม แต่ไม่ได้ refetch
-- [ ] AI Media Assistant ยังแสดงทั้งที่ Out of Scope
+- [ ] AI Media Assistant ยังแสดงทั้งที่ Out of Scope — **ตัดสินใจไว้ (2026-08-05): ไม่ทำรอบนี้**
+  ขัดกับ README ของ feature นี้ที่บอกว่าเป็น mockup ตั้งใจของ Phase 2–5 (ดู "Scope ที่ต้องเข้าใจ
+  ก่อนแก้" ด้านบน) — รอ PM/ClickUp ชี้ขาดก่อนแตะ `page.tsx`, `OverviewDashboard.tsx`'s
+  `AIAssistantCard`, หรือ `aiSuggest` toggle ใน `ContentStep.tsx`
 - [ ] Quick Actions อื่นยัง disabled
 - [ ] Loading/empty/error/refresh states ยังไม่ครบ
 
@@ -158,7 +164,8 @@ re-derive ที่นี่:
 
 - Dashboard card ที่อยู่ใน Phase 1 ใช้ API จริงและมี loading/empty/error states
 - Refresh ดึงข้อมูลใหม่จริง
-- Component ที่ Out of Scope ถูกนำออกหรือปิดด้วย Scope ที่ชัดเจน
+- Component ที่ Out of Scope ถูกนำออกหรือปิดด้วย Scope ที่ชัดเจน (AI Media Assistant: บล็อกอยู่ที่
+  design fork กับ README, ดูด้านบน — ไม่นับเป็นงานค้างจนกว่าจะ resolve)
 
 ## 2. Basic Info
 
@@ -294,7 +301,8 @@ re-derive ที่นี่:
 - [ ] Publish Order เป็น disabled placeholder
 - [ ] Delay Between Channels เป็น disabled placeholder
 - [ ] Advanced Options ไม่มี state/API contract
-- [ ] AI Assistant/Get Suggestions ไม่มี implementation และควรนำออกหาก Out of Scope
+- [ ] AI Assistant/Get Suggestions ไม่มี implementation และควรนำออกหาก Out of Scope — เดียวกับ
+  design fork ที่ Overview section ด้านบน (2026-08-05), ค้างไว้ก่อนจนกว่าจะ resolve scope
 - [x] Next ไม่ถูกปิดเมื่อ Schedule invalid — **ไม่ใช่ gap แล้ว** covered โดย P0.1's
   `validateStep()` (ทุก step รวม step 4 ต้องผ่าน `isScheduleFormValid` ก่อน Next ถึงเปลี่ยน
   step ได้ — ปุ่มไม่มี `disabled` attribute ตาม validity แต่ block การเปลี่ยน step จริงเหมือน step อื่น)
