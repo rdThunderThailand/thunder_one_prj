@@ -1,6 +1,6 @@
-import { Avatar } from "@/components/ui/Avatar";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { BellIcon, ChevronDownIcon, HelpIcon } from "@/components/ui/icons";
+import { BellIcon, HelpIcon } from "@/components/ui/icons";
+import { UserMenu } from "./UserMenu";
 
 interface TopbarProps {
   userName?: string;
@@ -34,16 +34,7 @@ export function Topbar({
         >
           <HelpIcon />
         </button>
-        <button className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-          <Avatar name={userName} />
-          <span className="text-left leading-tight">
-            <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              {userName}
-            </span>
-            <span className="block text-xs text-zinc-500 dark:text-zinc-400">{userRole}</span>
-          </span>
-          <ChevronDownIcon className="h-4 w-4 text-zinc-400" />
-        </button>
+        <UserMenu userName={userName} userRole={userRole} />
       </div>
     </header>
   );
