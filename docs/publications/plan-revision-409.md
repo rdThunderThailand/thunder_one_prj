@@ -1,6 +1,7 @@
 # Plan — P0.3: draft revision, 409 conflict, publish idempotency
 
-**สถานะ:** ยังไม่เริ่มลงมือ — รอเคาะ design fork (ดู §4)
+**สถานะ (2026-08-05):** design fork เคาะครบแล้ว → `docs/adr/0003-draft-optimistic-locking.md`
+B ทำเสร็จและ apply ลง prod แล้ว · C ทำเสร็จก่อนหน้านี้ · A พร้อมลงมือ · D ยอมรับ
 **ขอบเขต:** ข้ามสอง repo (`thunder_one_prj` frontend + `Thunder_Core` backend/DB)
 **วันที่สำรวจ:** 2026-08-04
 
@@ -122,9 +123,11 @@ Migration ต้องยิงผ่าน Supabase MCP `apply_migration` เ�
    ผู้ใช้เจอทุกวัน: error ทุกชนิดหน้าตาเหมือนกันหมด (`HTTP Error 500`) ผู้ใช้แยกไม่ออกว่า
    ควร retry หรือควรแก้ฟอร์ม frontend ล้วน ไม่ต้อง deploy backend
 2. **B1 — ทำก็ได้** race มีจริงแต่ยังไม่เคยยิง (§1.3) ทำเพราะราคา 1 บรรทัด ไม่ใช่เพราะเร่งด่วน
-3. **A — YAGNI** ต้อง migration + แก้ RPC 3 ตัว + contract สองฝั่ง + UX merge เพื่อกันเคสที่
-   ต้องมีคน 2 คนแก้ draft เดียวกันพร้อมกัน บนเครื่องมือ internal ที่คนสร้าง publication
-   มักทำคนเดียวจบในรอบเดียว — **รอจนมีคนรายงานว่าข้อมูลหายจริงก่อน**
+3. ~~**A — YAGNI**~~ **กลับคำ 2026-08-05 → ทำ** เดิมรอหลักฐานว่าข้อมูลหายจริงก่อน
+   gate นั้นถูกยกเลิกด้วยเหตุผลเชิงคาดการณ์ (ทีมกำลังโต + กำลังจะต่อ login/identity
+   กับ Thunder_Core) ไม่ใช่เพราะมีเคสเกิดขึ้น — ขอบเขตและเหตุผลที่เลือกอยู่ใน
+   `docs/adr/0003-draft-optimistic-locking.md` **identity ไม่ใช่ prerequisite** ทำ revision
+   ก่อน แล้วค่อยอัปเกรดข้อความจาก "มีคนอื่นแก้" เป็นชื่อคนทีหลัง
 4. **D — ยอมรับ** draft resume ได้อยู่แล้ว กด Next ใหม่ก็ save ทับ
 
 ---
@@ -138,9 +141,13 @@ Migration ต้องยิงผ่าน Supabase MCP `apply_migration` เ�
 | **A1** เพิ่ม `revision integer NOT NULL DEFAULT 1`, RPC ทุกตัว `WHERE revision = p_expected_revision` แล้ว `+1` | ✅ 1 migration | ชัดเจน ตรงไปตรงมา ไม่มี edge case |
 | **A2** ใช้ `updated_at` ที่มีอยู่แล้วเป็น token (สไตล์ If-Unmodified-Since) | ❌ | **`set_schedule` ไม่ bump `updated_at` (§1.2)** → ต้องแก้ RPC นั้นอยู่ดี และเหลือ edge case เรื่อง `now()` เท่ากันใน transaction ที่ชนกันพอดี |
 
-**แนะนำ A1** — A2 ดูเหมือนประหยัดกว่าเพราะไม่ต้อง migration แต่พอ `set_schedule` ไม่ bump
-`updated_at` ก็ต้องเขียน migration แก้ RPC อยู่ดี พอต้องเขียน migration เท่ากันแล้ว
-เอาอันที่ถูกต้องบน edge case ดีกว่า
+**เคาะแล้ว 2026-08-05: A1** — เหตุผลเต็มใน ADR 0003 สรุป: A2 ดูเหมือนประหยัดกว่าเพราะไม่ต้อง
+migration แต่พอ `set_schedule` ไม่ bump `updated_at` ก็ต้องเขียน migration แก้ RPC อยู่ดี
+พอต้องเขียน migration เท่ากันแล้ว เอาอันที่ถูกต้องบน edge case ดีกว่า
+
+**ขอบเขตการเช็ค (เคาะแล้ว): เช็คที่ `upsert` ตัวเดียว แต่ bump ทั้ง 3 ตัว** — `persistDraft`
+ยิง 3 call เรียงกันบนแถวเดียวกัน ถ้าให้ทุกตัวเช็คโดย client ถือ revision เดิม call ที่ 2
+จะ 409 ชนกับตัวเองทั้งที่ไม่มีใครมาแตะ ช่องที่ยอมให้หลุดคือ ~200ms ภายใน save cycle ตัวเอง
 
 ### 4.2 B — จะปิด race ยังไง
 
@@ -149,7 +156,9 @@ Migration ต้องยิงผ่าน Supabase MCP `apply_migration` เ�
 | **B1** เติม `FOR UPDATE` ใน `SELECT` ของ `media_publication_activate` | 1 บรรทัดใน migration ใหม่ | ปิด race ได้ครบ ไม่แตะ contract ไม่แตะ frontend |
 | **B2** ทำ idempotency key เต็มรูปแบบตาม pattern booking (§1.4) | migration + route + frontend ส่ง header | ครอบคลุมกว่า แต่ status guard เดิมทำงานได้อยู่แล้วเมื่อมี lock |
 
-**แนะนำ B1** — status guard มีอยู่แล้ว ขาดแค่ lock การเติม `FOR UPDATE` ปิดช่องได้ 100%
+**เคาะแล้ว B1 — ทำเสร็จและ apply ลง prod แล้ว 2026-08-05**
+(`Thunder_Core/supabase/migrations/070_media_publication_activate_row_lock.sql`,
+ตรวจ `prosrc` ตรงกับไฟล์แล้ว) status guard มีอยู่แล้ว ขาดแค่ lock การเติม `FOR UPDATE` ปิดช่องได้ 100%
 โดยไม่ต้องเปลี่ยนสัญญา API เลย และเนื่องจาก race ยังไม่เคยเกิดจริง (§1.3) B2 จึงเกินความจำเป็น
 ชัดเจน — จ่าย contract เปลี่ยนทั้งสองฝั่งเพื่อปัญหาที่ 1 บรรทัดปิดได้
 

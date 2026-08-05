@@ -119,9 +119,11 @@ re-derive ที่นี่:
   — แก้แล้ว 2026-08-05: apply migration `media_publication_activate_row_lock` ลง prod
   (`ThunderCore`) เพิ่ม `FOR UPDATE` ที่ SELECT status, ตรวจ `prosrc` ตรงกับไฟล์ migration แล้ว
   — ไฟล์: `Thunder_Core/supabase/migrations/070_media_publication_activate_row_lock.sql`
-- [ ] **A — เพิ่ม draft `revision`/`version` กัน lost update** — **ตัดสินใจ (2026-08-04): YAGNI**
-  ไม่มีหลักฐานว่าเคยเกิดจริง เครื่องมือ internal คนสร้าง publication มักทำคนเดียวจบในรอบเดียว
-  รอจนมีคนรายงานว่าข้อมูลหายก่อนค่อยทำ (ต้อง migration + แก้ RPC 3 ตัว + contract สองฝั่ง)
+- [ ] **A — เพิ่ม draft `revision` กัน lost update** — **กลับคำ (2026-08-05): ทำ** (เดิม 2026-08-04
+  ตัดสินใจ YAGNI) เหตุผลเชิงคาดการณ์: ทีมกำลังโต + กำลังจะต่อ login/identity กับ Thunder_Core
+  design fork เคาะครบแล้ว → `docs/adr/0003-draft-optimistic-locking.md`
+  (revision column · เช็คที่ `upsert` bump ทั้ง 3 · error prefix `Already modified:` ·
+  UI สองปุ่ม โหลดใหม่/บันทึกทับ · draft key `.v3`→`.v4`) **ยังไม่เขียนโค้ด — พร้อมลงมือ**
 - [ ] **D — partial save ระหว่าง Basic Info → Content → Schedule** — **ยอมรับใน Phase 1**
   draft resume ได้จาก localStorage/`?id=` อยู่แล้ว กด Next ใหม่ก็ save ทับ
 
