@@ -115,9 +115,10 @@ re-derive ที่นี่:
   (retry หลัง timeout) เป็น success แทน error — verify: tsc/eslint/build/`.check.mts` ผ่าน
   + mutation test ยืนยันเทสจับบั๊กจริง, `conflict` (409) ยัง verify ผ่าน HTTP จริงไม่ได้เพราะ
   backend ไม่เคยส่ง 409 มา (ผูกกับ A ที่ยังไม่ทำ)
-- [ ] **B — duplicate activate จาก race** (`media_publication_activate` ไม่มี `FOR UPDATE`)
-  — ยังไม่เคยเกิดจริงบน prod (24 publish_jobs / 24 publications, ตรวจ 2026-08-04) แนะนำ
-  แก้ด้วย `FOR UPDATE` 1 บรรทัดถ้าจะทำ แต่ไม่เร่งด่วน
+- [x] **B — duplicate activate จาก race** (`media_publication_activate` ไม่มี `FOR UPDATE`)
+  — แก้แล้ว 2026-08-05: apply migration `media_publication_activate_row_lock` ลง prod
+  (`ThunderCore`) เพิ่ม `FOR UPDATE` ที่ SELECT status, ตรวจ `prosrc` ตรงกับไฟล์ migration แล้ว
+  — ไฟล์: `Thunder_Core/supabase/migrations/070_media_publication_activate_row_lock.sql`
 - [ ] **A — เพิ่ม draft `revision`/`version` กัน lost update** — **ตัดสินใจ (2026-08-04): YAGNI**
   ไม่มีหลักฐานว่าเคยเกิดจริง เครื่องมือ internal คนสร้าง publication มักทำคนเดียวจบในรอบเดียว
   รอจนมีคนรายงานว่าข้อมูลหายก่อนค่อยทำ (ต้อง migration + แก้ RPC 3 ตัว + contract สองฝั่ง)
