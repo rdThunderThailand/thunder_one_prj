@@ -19,7 +19,7 @@ import {
 } from "../services/publications-api";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
-import { classifyApiError } from "../api-error";
+import { classifyApiError, isConflict } from "../api-error";
 import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
@@ -47,6 +47,10 @@ export function usePublishDraft() {
   const [conflicts, setConflicts] = useState<ScheduleConflict[]>([]);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
   const [conflictsError, setConflictsError] = useState<string | null>(null);
+  // Named distinctly from `conflicts` above — that's schedule/channel overlap
+  // (media_schedule_conflicts). This is the draft revision optimistic-lock
+  // conflict (docs/adr/0003), a different domain entirely.
+  const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
 
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const step = usePublicationDraftStore((s) => s.step);
@@ -179,7 +183,7 @@ export function usePublishDraft() {
     const basicForm = basicInfoToForm(state.basicInfo);
     let res;
     try {
-      res = await saveBasicInfo(basicForm, state.publicationId, targets);
+      res = await saveBasicInfo(basicForm, state.publicationId, targets, state.revision);
     } catch (err) {
       // The draft id lives in localStorage forever, but the row it points at can be
       // deleted (or leave `draft` via cancel/activate) from the /publications page —
@@ -187,6 +191,11 @@ export function usePublishDraft() {
       if (state.publicationId && isStaleDraftError(err)) {
         res = await saveBasicInfo(basicForm, null, targets);
       } else {
+        // Surfaced as a dedicated banner (CreatePublicationPage), not the generic
+        // error text — "reload" / "overwrite" are actions, not just a message.
+        if (err instanceof Error && isConflict(err.message)) {
+          setRevisionConflict(err.message);
+        }
         throw err;
       }
     }
@@ -195,6 +204,9 @@ export function usePublishDraft() {
       throw new Error("No publication ID returned from backend.");
     }
     state.setPublicationId(newId);
+    if (typeof res.revision === "number") {
+      state.setRevision(res.revision);
+    }
 
     const contentItems = draftItemsToContentItems(state.assetItems);
     if (contentItems.length > 0) {
@@ -218,7 +230,9 @@ export function usePublishDraft() {
       usePublicationDraftStore.getState().setExplicitlySaved(true);
       return resId;
     } catch (err) {
-      setError(classifyApiError(err, "Failed to save draft.").message);
+      const classified = classifyApiError(err, "Failed to save draft.");
+      // The revision-conflict banner already shows this — avoid saying it twice.
+      if (classified.kind !== "conflict") setError(classified.message);
       return null;
     } finally {
       setSaving(false);
@@ -244,7 +258,7 @@ export function usePublishDraft() {
         state.cancelDraft();
         return;
       }
-      setError(classified.message);
+      if (classified.kind !== "conflict") setError(classified.message);
     } finally {
       setSaving(false);
     }
@@ -263,6 +277,8 @@ export function usePublishDraft() {
     conflicts,
     checkingConflicts,
     conflictsError,
+    revisionConflict,
+    setRevisionConflict,
     saveDraft,
     publishNow,
     canPublish,

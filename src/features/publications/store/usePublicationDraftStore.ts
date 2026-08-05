@@ -53,8 +53,13 @@ function serializeDraftFields(f: Pick<DraftFields, "basicInfo" | "assetItems" | 
 interface PublicationDraftStore extends DraftFields {
   savedSnapshot: string;
   explicitlySaved: boolean;
+  /** Optimistic-lock counter from the last successful save (docs/adr/0003).
+   * `null` until the first save/load — omitting `expected_revision` on that
+   * first write is what `media_publication_upsert` treats as "no check". */
+  revision: number | null;
   markSaved: () => void;
   setExplicitlySaved: (v: boolean) => void;
+  setRevision: (revision: number | null) => void;
   setPublicationId: (id: string | null) => void;
   setStep: (step: number) => void;
   goNext: (maxStep: number) => void;
@@ -80,8 +85,10 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       ...getDefaultDraft(),
       savedSnapshot: serializeDraftFields(getDefaultDraft()),
       explicitlySaved: false,
+      revision: null,
       markSaved: () => set((s) => ({ savedSnapshot: serializeDraftFields(s) })),
       setExplicitlySaved: (explicitlySaved) => set({ explicitlySaved }),
+      setRevision: (revision) => set({ revision }),
       setPublicationId: (publicationId) => set({ publicationId }),
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
@@ -130,12 +137,16 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
           ...getDefaultDraft(),
           savedSnapshot: serializeDraftFields(getDefaultDraft()),
           explicitlySaved: false,
+          revision: null,
         });
         usePublicationDraftStore.persist.clearStorage();
       },
     }),
     {
-      name: "thunderone.publications.create-draft.v3",
+      // v3 → v4: added `revision` (docs/adr/0003). Bumping the key means an
+      // in-flight v3 draft is dropped on load rather than rehydrated into a
+      // shape the new code doesn't expect.
+      name: "thunderone.publications.create-draft.v4",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

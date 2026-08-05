@@ -152,7 +152,8 @@ function cleanBasicInfoBody(
 export async function saveBasicInfo(
   form: BasicInfoForm,
   publicationId: string | null,
-  targets?: PublicationTarget[]
+  targets?: PublicationTarget[],
+  expectedRevision?: number | null
 ): Promise<Publication> {
   const body = cleanBasicInfoBody(form, publicationId);
   // PATCH replaces every field it receives, so the caller must always post the
@@ -160,6 +161,11 @@ export async function saveBasicInfo(
   // targets untouched, which is what steps 1 and 2 want.
   if (targets) {
     body.targets = targets;
+  }
+  // Only meaningful on an update — a fresh draft (POST) has no revision to
+  // race against yet. `media_publication_upsert` skips the check when omitted.
+  if (publicationId && expectedRevision != null) {
+    body.expected_revision = expectedRevision;
   }
   const method = publicationId ? "PATCH" : "POST";
   return requestApi<Publication>(method, "/media/publications", body);

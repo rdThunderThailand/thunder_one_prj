@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +11,7 @@ import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "
 import { usePublishDraft } from "../hooks/usePublishDraft";
 import { deletePublication, fetchPlaylist, fetchPublication } from "../services/publications-api";
 import { detailToDraft } from "../detail-mapping";
+import { isConflict } from "../api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
 import { type WizardStepId } from "../step-validation";
@@ -56,6 +57,35 @@ export function CreatePublicationPage() {
   // frame of the wrong publication.
   const resumePending = isResumePending(idParam, resumedId, publicationId);
 
+  // Shared by the `?id=` resume effect below and the revision-conflict banner's
+  // "โหลดใหม่" action — both fully overwrite local state from the server, on
+  // the premise that any local edits are the ones in question, not worth keeping.
+  const loadPublicationIntoDraft = useCallback(
+    async (id: string) => {
+      const detail = await fetchPublication(id);
+      let playlist: PlaylistDetail | null = null;
+      if (detail.playlist?.id) {
+        try {
+          playlist = await fetchPlaylist(detail.playlist.id);
+        } catch {
+          // Ignore playlist error per spec
+        }
+      }
+
+      const draft = detailToDraft(detail, playlist);
+
+      setBasicInfo(draft.basicInfo);
+      setAssetItems(draft.assetItems);
+      setChannelIds(draft.channelIds);
+      setScheduleForm(draft.scheduleForm);
+      setPublicationId(detail.id);
+      usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
+      usePublicationDraftStore.getState().markSaved();
+      usePublicationDraftStore.getState().setExplicitlySaved(true);
+    },
+    [setBasicInfo, setAssetItems, setChannelIds, setScheduleForm, setPublicationId]
+  );
+
   useEffect(() => {
     if (!hasHydrated) return;
     if (!idParam) return;
@@ -67,28 +97,9 @@ export function CreatePublicationPage() {
 
     const load = async () => {
       try {
-        const detail = await fetchPublication(idParam);
-        let playlist: PlaylistDetail | null = null;
-        if (detail.playlist?.id) {
-          try {
-            playlist = await fetchPlaylist(detail.playlist.id);
-          } catch {
-            // Ignore playlist error per spec
-          }
-        }
-
+        await loadPublicationIntoDraft(idParam);
         if (!alive) return;
-
-        const draft = detailToDraft(detail, playlist);
-
-        setBasicInfo(draft.basicInfo);
-        setAssetItems(draft.assetItems);
-        setChannelIds(draft.channelIds);
-        setScheduleForm(draft.scheduleForm);
-        setPublicationId(detail.id);
         setStep(1);
-        usePublicationDraftStore.getState().markSaved();
-        usePublicationDraftStore.getState().setExplicitlySaved(true);
       } catch (err) {
         if (!alive) return;
         setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
@@ -104,17 +115,7 @@ export function CreatePublicationPage() {
     return () => {
       alive = false;
     };
-  }, [
-    hasHydrated,
-    idParam,
-    publicationId,
-    setBasicInfo,
-    setAssetItems,
-    setChannelIds,
-    setScheduleForm,
-    setPublicationId,
-    setStep,
-  ]);
+  }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
 
   const {
     screens,
@@ -129,6 +130,8 @@ export function CreatePublicationPage() {
     conflicts,
     checkingConflicts,
     conflictsError,
+    revisionConflict,
+    setRevisionConflict,
     saveDraft,
     publishNow,
     canPublish,
@@ -139,6 +142,39 @@ export function CreatePublicationPage() {
     savingNext,
     setSavingNext,
   } = usePublishDraft();
+
+  const [conflictBusy, setConflictBusy] = useState(false);
+
+  const handleReloadFromServer = async () => {
+    if (!publicationId) return;
+    setConflictBusy(true);
+    try {
+      await loadPublicationIntoDraft(publicationId);
+      setRevisionConflict(null);
+    } catch (err) {
+      setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
+    } finally {
+      setConflictBusy(false);
+    }
+  };
+
+  // Deliberately does not retry the save that hit the conflict — that action
+  // (Save / Next / Publish) is a click the user makes again themselves, so an
+  // overwrite is never silently auto-retried. Only re-arms the revision this
+  // draft is holding, from the row's current value.
+  const handleOverwrite = async () => {
+    if (!publicationId) return;
+    setConflictBusy(true);
+    try {
+      const detail = await fetchPublication(publicationId);
+      usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
+      setRevisionConflict(null);
+    } catch (err) {
+      setResumeError(err instanceof Error ? err.message : "โหลดข้อมูลล่าสุดไม่สำเร็จ");
+    } finally {
+      setConflictBusy(false);
+    }
+  };
 
   const performCancel = async () => {
     setCancelBusy(true);
@@ -188,7 +224,8 @@ export function CreatePublicationPage() {
       goNextAction(MAX_BUILT_STEP);
     } else {
       setSaveStatus("error");
-      setError(outcome.message);
+      // The revision-conflict banner already shows this — avoid saying it twice.
+      if (!isConflict(outcome.message)) setError(outcome.message);
     }
   };
 
@@ -258,6 +295,30 @@ export function CreatePublicationPage() {
               disabled={cancelBusy}
             >
               {cancelBusy ? "Leaving…" : "Leave"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {revisionConflict && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <span>{revisionConflict}</span>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="secondary"
+              className="px-3 py-1.5 text-xs"
+              onClick={handleReloadFromServer}
+              disabled={conflictBusy}
+            >
+              {conflictBusy ? "กำลังโหลด…" : "โหลดใหม่"}
+            </Button>
+            <Button
+              variant="primary"
+              className="px-3 py-1.5 text-xs"
+              onClick={handleOverwrite}
+              disabled={conflictBusy}
+            >
+              {conflictBusy ? "กำลังโหลด…" : "บันทึกทับ"}
             </Button>
           </div>
         </div>

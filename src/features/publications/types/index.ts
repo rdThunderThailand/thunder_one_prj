@@ -50,6 +50,7 @@ export type Publication = {
   tags?: string[];
   playlist_id?: string;
   status?: string;
+  revision?: number;
   created_at?: string;
   updated_at?: string;
 };
@@ -111,6 +112,8 @@ export type PublicationDetail = {
   language?: string;
   metadata?: Record<string, unknown>;
   status: string;
+  /** Optimistic-lock counter — bumped on every draft write (docs/adr/0003). */
+  revision?: number;
   playlist?: { id: string; name: string } | null;
   tags: string[];
   created_at?: string;

@@ -7,7 +7,7 @@
  * *.check.mts files here. api-error.ts imports nothing, so this loads clean.
  */
 import assert from "node:assert/strict";
-import { ApiError, classifyApiError } from "./api-error.ts";
+import { ApiError, classifyApiError, isConflict } from "./api-error.ts";
 
 const FALLBACK = "Failed to save draft.";
 
@@ -22,12 +22,22 @@ assert.equal(
   "already-active" // case-insensitive, and works on a plain Error too
 );
 
-// 409 is the whole point of the exercise: the user must be told to reload,
-// not handed the raw backend string and left guessing.
-const conflict = classifyApiError(new ApiError("row version mismatch", 409), FALLBACK);
+// docs/adr/0003-draft-optimistic-locking.md: conflict is matched on the exact
+// "Already modified:" prefix media_publication_upsert raises, not on bare 409 —
+// 409 is a shared bucket (api-utils.ts maps any "already" message to it) and
+// other RPCs raise unrelated "Already " messages through the same status.
+const conflict = classifyApiError(new ApiError("Already modified: draft was changed elsewhere", 409), FALLBACK);
 assert.equal(conflict.kind, "conflict");
-assert.notEqual(conflict.message, "row version mismatch"); // replaced with actionable guidance
+assert.notEqual(conflict.message, "Already modified: draft was changed elsewhere"); // replaced with actionable guidance
 assert.ok(conflict.message.includes("โหลดหน้านี้ใหม่"));
+assert.ok(isConflict("Already modified: draft was changed elsewhere"));
+
+// A 409 that isn't our specific revision-conflict message must NOT be treated as
+// one — e.g. media_video_delete's "Already in use: ..." would otherwise tell a
+// user deleting a referenced video to go reload the publication wizard.
+assert.equal(classifyApiError(new ApiError("Already in use: video is still referenced by a playlist", 409), FALLBACK).kind, "rejected");
+assert.equal(classifyApiError(new ApiError("row version mismatch", 409), FALLBACK).kind, "rejected");
+assert.equal(isConflict("Already in use: video is still referenced by a playlist"), false);
 
 // 4xx means the request itself was refused — retrying it unchanged is pointless.
 assert.equal(classifyApiError(new ApiError("Invalid input: name required", 400), FALLBACK).kind, "rejected");

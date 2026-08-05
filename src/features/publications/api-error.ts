@@ -37,6 +37,18 @@ function isAlreadyActive(message: string): boolean {
   return message.toLowerCase().includes("already active");
 }
 
+/**
+ * `media_publication_upsert` raises this exact prefix on a stale revision
+ * (docs/adr/0003-draft-optimistic-locking.md). Matched on message, not on
+ * HTTP 409 alone — 409 is a shared bucket (`api-utils.ts` maps any "already"
+ * message to it) and other RPCs raise unrelated "Already " messages that are
+ * not a revision conflict, so branching on status alone would misclassify
+ * `media_video_delete`'s "Already in use: ..." as a draft conflict.
+ */
+export function isConflict(message: string): boolean {
+  return message.startsWith("Already modified:");
+}
+
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
   const message = err instanceof Error && err.message ? err.message : fallback;
 
@@ -44,17 +56,17 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
     return { kind: "already-active", message };
   }
 
-  // Without a status we can't tell a rejection from an outage, and guessing
-  // "retryable" on a rejected command invites the user to hammer a dead request.
-  if (!(err instanceof ApiError)) {
-    return { kind: "retryable", message };
-  }
-
-  if (err.status === 409) {
+  if (isConflict(message)) {
     return {
       kind: "conflict",
       message: "ข้อมูลถูกแก้ไขจากที่อื่นระหว่างที่คุณทำงานอยู่ กรุณาโหลดหน้านี้ใหม่ก่อนบันทึกอีกครั้ง",
     };
+  }
+
+  // Without a status we can't tell a rejection from an outage, and guessing
+  // "retryable" on a rejected command invites the user to hammer a dead request.
+  if (!(err instanceof ApiError)) {
+    return { kind: "retryable", message };
   }
 
   if (err.status >= 400 && err.status < 500) {
