@@ -32,7 +32,7 @@ While a Publication is a `Draft`, two operators editing it concurrently is a rea
 _Avoid_: Campaign (Campaign is a later, larger grouping of Publications — not yet in scope)
 
 **Schedule**:
-The timing rules (start/end date-time, recurrence) attached to a Publication. A standalone concept, not embedded in Playlist. Times are wall-clock with no baked-in time zone of their own — each target Channel resolves the Schedule against its own Location's time zone independently at Job-evaluation time, so a multi-Channel Publication spanning Locations fires at local business hours everywhere, not at one shared instant. Publication's own "Time zone" field is a display default only, not the evaluation source of truth (see ADR-0003).
+The timing rules (start/end date-time, recurrence) attached to a Publication. A standalone concept, not embedded in Playlist. Times are wall-clock with no baked-in time zone of their own — each target Channel resolves the Schedule against its own Location's time zone independently at Job-evaluation time, so a multi-Channel Publication spanning Locations fires at local business hours everywhere, not at one shared instant. Publication's own "Time zone" field is a display default only, not the evaluation source of truth.
 
 **Channel**:
 A business-facing publishing destination (e.g. "Central World – Ground Floor – Entrance Screen"). MVP UI enforces 1 Channel → 1 Device, but the schema must support 1 Channel → many Devices to avoid rework.
