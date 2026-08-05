@@ -79,7 +79,11 @@ export type MediaAsset = {
 export type PublicationListItem = {
   id: string;
   name: string;
+  /** Stored operator intent: draft | active | cancelled (docs/adr/0004). */
   status: string;
+  /** Clock-aware lifecycle for display: adds scheduled | ended. Read this to
+   * answer "what phase is this in"; read `status` for "was it activated". */
+  effective_status?: string;
   publication_type: PublicationType;
   priority: Priority;
   language?: string;
@@ -111,7 +115,10 @@ export type PublicationDetail = {
   priority: Priority;
   language?: string;
   metadata?: Record<string, unknown>;
+  /** Stored operator intent: draft | active | cancelled (docs/adr/0004). */
   status: string;
+  /** Clock-aware lifecycle for display: adds scheduled | ended. */
+  effective_status?: string;
   /** Optimistic-lock counter — bumped on every draft write (docs/adr/0003). */
   revision?: number;
   playlist?: { id: string; name: string } | null;

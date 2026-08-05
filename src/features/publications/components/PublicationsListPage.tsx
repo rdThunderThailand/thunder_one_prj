@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
@@ -11,6 +12,7 @@ import {
   deletePublication,
   fetchPublications,
 } from "../services/publications-api";
+import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
 import type { PublicationListItem } from "../types";
 
 export function PublicationsListPage() {
@@ -106,6 +108,7 @@ export function PublicationsListPage() {
           <thead>
             <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-400 dark:border-zinc-800">
               <th className="py-2 pr-3">Name</th>
+              <th className="py-2 pr-3">Status</th>
               <th className="py-2 pr-3">Type</th>
               <th className="py-2 pr-3">Priority</th>
               <th className="py-2 pr-3">Items</th>
@@ -132,6 +135,14 @@ export function PublicationsListPage() {
                     >
                       {item.name}
                     </Link>
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    <Badge
+                      color={publicationStatusColor(publicationDisplayStatus(item))}
+                      variant="pill"
+                    >
+                      {publicationDisplayStatus(item)}
+                    </Badge>
                   </td>
                   <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
                     {item.publication_type}

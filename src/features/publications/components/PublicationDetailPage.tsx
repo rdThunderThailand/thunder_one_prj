@@ -13,6 +13,7 @@ import {
   fetchPlaylist,
   fetchPublication,
 } from "../services/publications-api";
+import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
 import type { PlaylistDetail, PublicationDetail } from "../types";
 
 function formatDate(dateStr?: string | null): string {
@@ -117,9 +118,14 @@ export function PublicationDetailPage({ id }: { id: string }) {
     );
   }
 
+  // Behaviour gates read the STORED status: whether this can be edited or
+  // cancelled follows from whether an operator activated it, not from whether
+  // the schedule window has since closed (docs/adr/0004).
   const isDraft = detail.status === "draft";
   const isActive = detail.status === "active";
-  const statusColor = isActive ? "green" : "zinc";
+  // The label, by contrast, is the clock-aware one.
+  const displayStatus = publicationDisplayStatus(detail);
+  const statusColor = publicationStatusColor(displayStatus);
 
   const playlistItems = playlist?.items
     ? [...playlist.items].sort((a, b) => a.position - b.position)
@@ -130,7 +136,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       {/* 1. Header */}
       <PageHeader
         title={detail.name}
-        subtitle={`Status: ${detail.status}`}
+        subtitle={`Status: ${displayStatus}`}
         actions={
           <div className="flex items-center gap-2">
             <Link href="/publications" className={buttonClasses("secondary")}>
@@ -223,7 +229,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
             <dt className="text-xs font-medium text-zinc-400">Status</dt>
             <dd className="mt-1">
               <Badge color={statusColor} variant="pill">
-                {detail.status}
+                {displayStatus}
               </Badge>
             </dd>
           </div>
