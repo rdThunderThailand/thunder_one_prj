@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ArrowLeftIcon, ArrowRightIcon, PaperPlaneIcon } from "@/components/ui/icons";
 import { wizardSteps } from "../mock-data";
-import { useHasHydratedDraft, usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePublishDraft } from "../hooks/usePublishDraft";
-import { fetchPlaylist, fetchPublication } from "../services/publications-api";
+import { deletePublication, fetchPlaylist, fetchPublication } from "../services/publications-api";
 import { detailToDraft } from "../detail-mapping";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
@@ -25,10 +25,12 @@ import { ScheduleStep } from "./ScheduleStep";
 const MAX_BUILT_STEP = 5;
 
 export function CreatePublicationPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const idParam = searchParams.get("id");
 
   const hasHydrated = useHasHydratedDraft();
+  const isDirty = useIsDraftDirty();
   const step = usePublicationDraftStore((s) => s.step);
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
@@ -44,6 +46,8 @@ export function CreatePublicationPage() {
   const [resumedId, setResumedId] = useState<string | null>(null);
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
   // Derived, not state: `resumedId` only settles once the fetch has finished, so
@@ -83,6 +87,8 @@ export function CreatePublicationPage() {
         setScheduleForm(draft.scheduleForm);
         setPublicationId(detail.id);
         setStep(1);
+        usePublicationDraftStore.getState().markSaved();
+        usePublicationDraftStore.getState().setExplicitlySaved(true);
       } catch (err) {
         if (!alive) return;
         setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
@@ -133,6 +139,28 @@ export function CreatePublicationPage() {
     savingNext,
     setSavingNext,
   } = usePublishDraft();
+
+  const performCancel = async () => {
+    setCancelBusy(true);
+    const state = usePublicationDraftStore.getState();
+    if (state.publicationId && !state.explicitlySaved) {
+      try {
+        await deletePublication(state.publicationId);
+      } catch {
+        // Best-effort cleanup of an orphaned empty draft — don't block navigation on it.
+      }
+    }
+    state.cancelDraft();
+    router.push("/publications");
+  };
+
+  const handleCancelClick = () => {
+    if (isDirty) {
+      setConfirmingCancel(true);
+    } else {
+      performCancel();
+    }
+  };
 
   const handleNext = async () => {
     if (savingNext) return;
@@ -190,6 +218,9 @@ export function CreatePublicationPage() {
         actions={
           isLastStep ? (
             <>
+              <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>
+                Cancel
+              </Button>
               <Button variant="secondary" onClick={goBack}>
                 <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
               </Button>
@@ -199,6 +230,9 @@ export function CreatePublicationPage() {
             </>
           ) : (
             <>
+              <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>
+                Cancel
+              </Button>
               <Button variant="secondary" onClick={saveDraft} disabled={saving}>
                 {saving ? "Saving…" : "Save as Draft"}
               </Button>
@@ -209,6 +243,25 @@ export function CreatePublicationPage() {
           )
         }
       />
+
+      {confirmingCancel && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <span>มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ออกจากหน้านี้จะทำให้ข้อมูลหายไป ดำเนินการต่อ?</span>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setConfirmingCancel(false)}>
+              Stay
+            </Button>
+            <Button
+              variant="primary"
+              className="bg-red-600 px-3 py-1.5 text-xs hover:bg-red-500"
+              onClick={performCancel}
+              disabled={cancelBusy}
+            >
+              {cancelBusy ? "Leaving…" : "Leave"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Card className="p-5">
         <PublicationStepper currentStep={step} />

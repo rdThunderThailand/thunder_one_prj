@@ -46,7 +46,15 @@ function getDefaultDraft(): DraftFields {
   };
 }
 
+function serializeDraftFields(f: Pick<DraftFields, "basicInfo" | "assetItems" | "channelIds" | "scheduleForm">): string {
+  return JSON.stringify({ basicInfo: f.basicInfo, assetItems: f.assetItems, channelIds: f.channelIds, scheduleForm: f.scheduleForm });
+}
+
 interface PublicationDraftStore extends DraftFields {
+  savedSnapshot: string;
+  explicitlySaved: boolean;
+  markSaved: () => void;
+  setExplicitlySaved: (v: boolean) => void;
   setPublicationId: (id: string | null) => void;
   setStep: (step: number) => void;
   goNext: (maxStep: number) => void;
@@ -70,6 +78,10 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
   persist(
     (set, get) => ({
       ...getDefaultDraft(),
+      savedSnapshot: serializeDraftFields(getDefaultDraft()),
+      explicitlySaved: false,
+      markSaved: () => set((s) => ({ savedSnapshot: serializeDraftFields(s) })),
+      setExplicitlySaved: (explicitlySaved) => set({ explicitlySaved }),
       setPublicationId: (publicationId) => set({ publicationId }),
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
@@ -114,7 +126,11 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       },
       setScheduleForm: (scheduleForm) => set({ scheduleForm }),
       cancelDraft: () => {
-        set(getDefaultDraft());
+        set({
+          ...getDefaultDraft(),
+          savedSnapshot: serializeDraftFields(getDefaultDraft()),
+          explicitlySaved: false,
+        });
         usePublicationDraftStore.persist.clearStorage();
       },
     }),
@@ -146,4 +162,10 @@ export function useHasHydratedDraft() {
   }, []);
 
   return hasHydrated;
+}
+
+export function useIsDraftDirty(): boolean {
+  return usePublicationDraftStore(
+    (s) => serializeDraftFields(s) !== s.savedSnapshot
+  );
 }

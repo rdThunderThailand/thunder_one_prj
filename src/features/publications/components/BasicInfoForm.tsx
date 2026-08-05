@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ChevronDownIcon, PlusIcon, XIcon } from "@/components/ui/icons";
@@ -66,7 +65,6 @@ export interface BasicInfoFormProps {
 export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
-  const cancelDraft = usePublicationDraftStore((s) => s.cancelDraft);
   const { campaignId, publicationType, name, description, priorityId, language, tags } = basicInfo;
 
   const [tagDraft, setTagDraft] = useState("");
@@ -296,11 +294,6 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
         </FieldWrapper>
       </div>
 
-      <div className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4">
-        <Link href="/" onClick={() => cancelDraft()}>
-          <Button variant="secondary">Cancel</Button>
-        </Link>
-      </div>
     </Card>
   );
 }

@@ -213,7 +213,10 @@ export function usePublishDraft() {
     setSaving(true);
     setError(null);
     try {
-      return await persistDraft(false);
+      const resId = await persistDraft(false);
+      usePublicationDraftStore.getState().markSaved();
+      usePublicationDraftStore.getState().setExplicitlySaved(true);
+      return resId;
     } catch (err) {
       setError(classifyApiError(err, "Failed to save draft.").message);
       return null;
