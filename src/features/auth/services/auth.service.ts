@@ -1,6 +1,5 @@
 import { apiClient } from "@/lib/api/client";
 import type {
-  AuthUser,
   LoginCredentials,
   RegisterPayload,
 } from "../types/auth.types";
@@ -27,9 +26,6 @@ export async function login(
 // No backend exists yet — this calls placeholder endpoints and will throw
 // until the API is implemented. RegisterForm already handles the rejection.
 
-export async function register(
-  payload: RegisterPayload,
-): Promise<AuthUser> {
-  const { data } = await apiClient.post<AuthUser>("/auth/register", payload);
-  return data;
+export async function register(payload: RegisterPayload): Promise<void> {
+  await apiClient.post("/auth/register", payload);
 }

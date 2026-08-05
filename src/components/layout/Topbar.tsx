@@ -3,14 +3,12 @@ import { BellIcon, HelpIcon } from "@/components/ui/icons";
 import { UserMenu } from "./UserMenu";
 
 interface TopbarProps {
-  userName?: string;
-  userRole?: string;
+  userName: string;
   notificationCount?: number;
 }
 
 export function Topbar({
-  userName = "Kanittha W.",
-  userRole = "Media Manager",
+  userName,
   notificationCount = 13,
 }: TopbarProps) {
   return (
@@ -34,7 +32,7 @@ export function Topbar({
         >
           <HelpIcon />
         </button>
-        <UserMenu userName={userName} userRole={userRole} />
+        <UserMenu userName={userName} />
       </div>
     </header>
   );

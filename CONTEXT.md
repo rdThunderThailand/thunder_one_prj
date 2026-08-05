@@ -6,6 +6,13 @@ Digital signage / DOOH media management platform. Operators publish media conten
 
 ### Roles
 
+These three are the *intended* product roles. Nothing enforces them yet: Thunder One has no
+permission gates, and the platform's own role data does not use this vocabulary — `public.roles`
+holds tiers (`super_admin`, `company_admin`, `department_admin`, `executive_viewer`, `operator`,
+`tenant`) and facilities-flavoured personas (`operator_technician`, `main_staff`), with no media
+persona at all. Reconciling the two is deferred until permission gates exist; until then no role is
+shown in the UI (`docs/adr/0006-current-user-in-topbar.md`).
+
 **Administrator**:
 Full access, including Org/User/Role/Location/Device/Channel management and the Audit Log.
 

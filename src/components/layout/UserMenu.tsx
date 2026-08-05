@@ -7,10 +7,9 @@ import { ChevronDownIcon } from "@/components/ui/icons";
 
 interface UserMenuProps {
   userName: string;
-  userRole: string;
 }
 
-export function UserMenu({ userName, userRole }: UserMenuProps) {
+export function UserMenu({ userName }: UserMenuProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -41,7 +40,6 @@ export function UserMenu({ userName, userRole }: UserMenuProps) {
           <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
             {userName}
           </span>
-          <span className="block text-xs text-zinc-500 dark:text-zinc-400">{userRole}</span>
         </span>
         <ChevronDownIcon className="h-4 w-4 text-zinc-400" />
       </button>
