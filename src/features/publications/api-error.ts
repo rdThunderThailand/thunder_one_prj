@@ -50,11 +50,28 @@ export function isConflict(message: string): boolean {
   return message.startsWith("Already modified:");
 }
 
+/**
+ * `media_publication_set_content` raises this when any item points at an asset that
+ * is not `approved`. The UI blocks picking one, so reaching here means the asset lost
+ * its approval after it was chosen — the raw wording names neither the asset nor the
+ * way out, so it must not reach the user.
+ */
+function isUnapprovedAsset(message: string): boolean {
+  return message.includes("media asset(s) are not approved");
+}
+
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
   const message = err instanceof Error && err.message ? err.message : fallback;
 
   if (isAlreadyActive(message)) {
     return { kind: "already-active", message };
+  }
+
+  if (isUnapprovedAsset(message)) {
+    return {
+      kind: "rejected",
+      message: "สื่อที่เลือกไว้ยังไม่ผ่านการอนุมัติ กรุณากลับไปขั้นตอน Content แล้วเลือกสื่อที่อนุมัติแล้วแทน",
+    };
   }
 
   if (isConflict(message)) {

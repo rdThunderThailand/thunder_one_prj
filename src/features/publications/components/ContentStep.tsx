@@ -33,7 +33,7 @@ import {
   uploadToStorage,
 } from "../services/upload-api";
 import type { Campaign, MediaAsset } from "../types";
-import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
+import { DEFAULT_IMAGE_DURATION_SECONDS, dropUnapprovedItems, isImageAsset } from "../draft-mapping";
 
 function toPositiveInt(raw: string): number {
   const parsed = parseInt(raw, 10);
@@ -105,6 +105,12 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
         .then((data) => {
           setAssets(data);
           setError(null);
+          // Drafts saved before unapproved assets became unpickable still hold one,
+          // and every save retries the RPC that refuses it — drop them on sight so
+          // the wizard cannot stay stuck on a selection the user can no longer see.
+          const store = usePublicationDraftStore.getState();
+          const kept = dropUnapprovedItems(store.assetItems, data);
+          if (kept.length !== store.assetItems.length) store.setAssetItems(kept);
         })
         .catch((err) => {
           setAssets([]);

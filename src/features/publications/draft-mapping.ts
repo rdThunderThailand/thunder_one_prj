@@ -70,4 +70,22 @@ export function isImageAsset(asset: MediaAsset): boolean {
   return !asset.file?.mime_type?.startsWith("video/");
 }
 
+/** `media_publication_set_content` rejects the whole save if any item points at an
+ *  asset that is not `approved`, so an unapproved pick makes the draft unsavable. */
+export function isApprovedAsset(asset: MediaAsset): boolean {
+  return asset.approval_status === "approved";
+}
+
+/** Drops items the RPC would reject. Items whose asset is absent from `assets` are
+ *  kept — a short or failed library load must not silently wipe a valid selection. */
+export function dropUnapprovedItems(
+  items: DraftAssetItem[],
+  assets: MediaAsset[]
+): DraftAssetItem[] {
+  return items.filter((item) => {
+    const asset = assets.find((a) => a.id === item.media_asset_id);
+    return !asset || isApprovedAsset(asset);
+  });
+}
+
 export const DEFAULT_IMAGE_DURATION_SECONDS = 10;

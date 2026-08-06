@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { CheckIcon, PlayIcon } from "@/components/ui/icons";
+import { isApprovedAsset } from "../draft-mapping";
 import type { MediaAsset } from "../types";
 
 export function AssetCard({
@@ -25,17 +26,22 @@ export function AssetCard({
   const durationLabel = asset.duration_seconds
     ? `${Math.round(asset.duration_seconds)}s`
     : undefined;
-  const approved = asset.approval_status === "approved";
+  // An unapproved asset can be shown but not picked: `media_publication_set_content`
+  // refuses to save content containing one, so allowing the pick would only strand
+  // the draft in a state that can never be saved.
+  const approved = isApprovedAsset(asset);
 
   return (
     <button
       type="button"
       onClick={onSelect}
+      disabled={!approved}
+      title={approved ? undefined : "สื่อนี้ยังไม่ผ่านการอนุมัติ จึงยังเลือกไม่ได้"}
       className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition-colors ${
         selected
           ? "border-indigo-500 ring-2 ring-indigo-500/30"
           : "border-zinc-200 hover:border-zinc-300"
-      }`}
+      } ${approved ? "" : "cursor-not-allowed opacity-50"}`}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
         {previewUrl ? (
@@ -83,9 +89,13 @@ export function AssetCard({
           {kindLabel} · {dimensions}
           {durationLabel ? ` · ${durationLabel}` : ""}
         </p>
-        {approved && (
+        {approved ? (
           <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
             Approved
+          </span>
+        ) : (
+          <span className="inline-flex w-fit items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+            รออนุมัติ
           </span>
         )}
       </div>
