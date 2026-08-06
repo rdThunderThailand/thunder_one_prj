@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   draftItemsToContentItems,
   basicInfoToForm,
@@ -241,11 +242,15 @@ export function usePublishDraft() {
       const resId = await persistDraft(false);
       usePublicationDraftStore.getState().markSaved();
       usePublicationDraftStore.getState().setExplicitlySaved(true);
+      toast.success("บันทึกร่างแล้ว");
       return resId;
     } catch (err) {
       const classified = classifyApiError(err, "Failed to save draft.");
       // The revision-conflict banner already shows this — avoid saying it twice.
-      if (classified.kind !== "conflict") setError(classified.message);
+      if (classified.kind !== "conflict") {
+        setError(classified.message);
+        toast.error(classified.message);
+      }
       return null;
     } finally {
       setSaving(false);
