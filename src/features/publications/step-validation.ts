@@ -2,6 +2,7 @@ import type { DraftFields } from "./store/usePublicationDraftStore";
 // Explicit .ts extension so next-transition.check.mts can load this module
 // under Node's ESM resolver, which does no extension guessing.
 import { isScheduleFormValid } from "./schedule.ts";
+import { PUBLICATION_LIMITS } from "../../config/limits.ts";
 
 export type WizardStepId = 1 | 2 | 3 | 4;
 
@@ -22,6 +23,9 @@ export function validateStep(
     }
     if (!state.basicInfo.campaignId.trim()) {
       errors.push("กรุณาเลือก Campaign");
+    }
+    if (state.basicInfo.description.length > PUBLICATION_LIMITS.descriptionMaxLength) {
+      errors.push(`คำอธิบายยาวเกิน ${PUBLICATION_LIMITS.descriptionMaxLength} ตัวอักษร`);
     }
   } else if (step === 2) {
     if (state.assetItems.length === 0) {

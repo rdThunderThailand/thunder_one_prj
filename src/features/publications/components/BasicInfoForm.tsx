@@ -8,6 +8,8 @@ import type { Campaign } from "../types";
 import { priorities, publicationTypes, type PublicationTypeId } from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { PUBLICATION_LIMITS } from "@/config/limits";
+import { stripHtmlTags } from "../sanitize";
 
 interface FieldWrapperProps {
   label: string;
@@ -94,6 +96,8 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
 
   const selectedLanguage = language === "Thai" ? "th" : language === "English" ? "en" : language;
 
+  const isDescriptionOverLimit = description.length > PUBLICATION_LIMITS.descriptionMaxLength;
+
   return (
     <Card className="p-5">
       <h2 className="mb-4 text-base font-semibold text-zinc-900">Basic Information</h2>
@@ -122,13 +126,13 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
             <div className="relative">
               <input
                 placeholder="เช่น แคมเปญลดราคาหน้าร้อน 2024"
-                maxLength={100}
+                maxLength={PUBLICATION_LIMITS.nameMaxLength}
                 value={name}
                 onChange={(e) => patch({ name: e.target.value })}
                 className="w-full rounded-lg border border-zinc-200 py-2.5 pl-3.5 pr-16 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               />
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
-                {name.length}/100
+                {name.length}/{PUBLICATION_LIMITS.nameMaxLength}
               </span>
             </div>
           </FieldWrapper>
@@ -137,16 +141,34 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
             <div className="relative">
               <textarea
                 placeholder="เพิ่มคำอธิบายสั้นๆ เกี่ยวกับ publication นี้..."
-                maxLength={300}
                 rows={3}
                 value={description}
                 onChange={(e) => patch({ description: e.target.value })}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pasted = e.clipboardData.getData("text");
+                  const sanitized = stripHtmlTags(pasted);
+                  const start = e.currentTarget.selectionStart ?? 0;
+                  const end = e.currentTarget.selectionEnd ?? 0;
+                  const nextValue = description.slice(0, start) + sanitized + description.slice(end);
+                  patch({ description: nextValue });
+                }}
+                aria-invalid={isDescriptionOverLimit}
                 className="w-full resize-none rounded-lg border border-zinc-200 py-2.5 pl-3.5 pr-3.5 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               />
-              <span className="pointer-events-none absolute bottom-2 right-3 text-xs text-zinc-400">
-                {description.length}/300
+              <span
+                className={`pointer-events-none absolute bottom-2 right-3 text-xs ${
+                  isDescriptionOverLimit ? "font-medium text-red-600" : "text-zinc-400"
+                }`}
+              >
+                {description.length}/{PUBLICATION_LIMITS.descriptionMaxLength}
               </span>
             </div>
+            {isDescriptionOverLimit && (
+              <p className="text-xs font-medium text-red-600">
+                คำอธิบายยาวเกิน {PUBLICATION_LIMITS.descriptionMaxLength} ตัวอักษร
+              </p>
+            )}
           </FieldWrapper>
 
           <div className="grid grid-cols-2 gap-3">
