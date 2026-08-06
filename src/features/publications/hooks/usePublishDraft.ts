@@ -15,6 +15,7 @@ import {
   fetchMediaAssets,
   fetchPublication,
   fetchScreens,
+  fetchTags,
   saveBasicInfo,
   savePublicationContent,
   savePublicationSchedule,
@@ -22,7 +23,7 @@ import {
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
 import { classifyApiError, isConflict } from "../api-error";
-import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen } from "../types";
+import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen, Tag } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
  * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
@@ -38,6 +39,7 @@ function isStaleDraftError(err: unknown): boolean {
 export function usePublishDraft() {
   const [screens, setScreens] = useState<Screen[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loadingRefs, setLoadingRefs] = useState(true);
   const [screensError, setScreensError] = useState<string | null>(null);
@@ -84,11 +86,13 @@ export function usePublishDraft() {
       }),
       fetchCampaigns().catch(() => []),
       fetchMediaAssets().catch(() => []),
-    ]).then(([fetchedScreens, fetchedCampaigns, fetchedAssets]) => {
+      fetchTags().catch(() => []),
+    ]).then(([fetchedScreens, fetchedCampaigns, fetchedAssets, fetchedTags]) => {
       if (isMounted) {
         setScreens(fetchedScreens);
         setCampaigns(fetchedCampaigns);
         setAssets(fetchedAssets);
+        setTags(fetchedTags);
         setLoadingRefs(false);
       }
     });
@@ -297,6 +301,7 @@ export function usePublishDraft() {
     screens,
     screensError,
     campaigns,
+    tags,
     assets,
     loadingRefs,
     saving,

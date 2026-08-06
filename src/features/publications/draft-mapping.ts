@@ -1,4 +1,4 @@
-import type { ScheduleTypeId } from "./mock-data";
+import { languageCode, type ScheduleTypeId } from "./mock-data.ts";
 import type {
   BasicInfoForm,
   ContentItem,
@@ -27,20 +27,13 @@ export const CARD_BY_SCHEDULE_TYPE: Record<ScheduleType, ScheduleTypeId> = {
 };
 
 export function basicInfoToForm(basicInfo: BasicInfoState): BasicInfoForm {
-  const languageCode =
-    basicInfo.language === "Thai" || basicInfo.language === "th"
-      ? "th"
-      : basicInfo.language === "English" || basicInfo.language === "en"
-      ? "en"
-      : basicInfo.language;
-
   return {
     name: basicInfo.name.trim(),
     description: basicInfo.description || undefined,
     campaign_id: basicInfo.campaignId || undefined,
     publication_type: basicInfo.publicationType as PublicationType,
     priority: basicInfo.priorityId as Priority,
-    language: languageCode,
+    language: languageCode(basicInfo.language),
     tags: basicInfo.tags ?? [],
   };
 }

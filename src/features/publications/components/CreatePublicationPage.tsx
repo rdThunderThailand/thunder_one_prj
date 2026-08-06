@@ -121,6 +121,7 @@ export function CreatePublicationPage() {
     screens,
     screensError,
     campaigns,
+    tags,
     assets,
     loadingRefs,
     saving,
@@ -331,7 +332,7 @@ export function CreatePublicationPage() {
       {step === 1 && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <BasicInfoForm campaigns={campaigns} />
+            <BasicInfoForm campaigns={campaigns} workspaceTags={tags} />
           </div>
           <div>
             <PreviewPanel campaigns={campaigns} />

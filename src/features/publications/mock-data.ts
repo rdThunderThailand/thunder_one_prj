@@ -32,7 +32,21 @@ export const priorities: PriorityOption[] = [
   { id: "urgent", label: "Urgent", color: "bg-red-500" },
 ];
 
-export const languages = ["Thai", "English"];
+/** The only language values the backend has ever stored on a publication. There is no
+ * tenant-level language configuration table, so this list is the configuration. */
+export const languageOptions = [
+  { code: "th", label: "Thai" },
+  { code: "en", label: "English" },
+];
+
+/** Drafts persisted before this list existed may hold either the code or the label. */
+export function languageCode(value: string): string {
+  return languageOptions.find((l) => l.label === value)?.code ?? value;
+}
+
+export function languageLabel(value: string): string {
+  return languageOptions.find((l) => l.code === languageCode(value))?.label ?? value;
+}
 
 export const wizardSteps = [
   { step: 1, label: "Basic Info" },

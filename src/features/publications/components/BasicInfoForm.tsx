@@ -4,8 +4,14 @@ import { useState, type ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ChevronDownIcon, PlusIcon, XIcon } from "@/components/ui/icons";
-import type { Campaign } from "../types";
-import { priorities, publicationTypes, type PublicationTypeId } from "../mock-data";
+import type { Campaign, Tag } from "../types";
+import {
+  languageCode,
+  languageOptions,
+  priorities,
+  publicationTypes,
+  type PublicationTypeId,
+} from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { PUBLICATION_LIMITS } from "@/config/limits";
@@ -30,22 +36,12 @@ function FieldWrapper({ label, required, optional, children }: FieldWrapperProps
   );
 }
 
-function FieldSelect({
-  children,
-  disabled,
-}: {
-  children: ReactNode;
-  disabled?: boolean;
-}) {
+/** Derived metadata (Brand, Format) — the value follows another field, so it is shown
+ * rather than picked. Brand lives on the campaign and Format on the publication type. */
+function DerivedField({ value }: { value: string | undefined }) {
   return (
-    <div className="relative">
-      <select
-        disabled={disabled}
-        className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
-      >
-        {children}
-      </select>
-      <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-3.5 pr-3.5 text-sm text-zinc-600">
+      {value || <span className="text-zinc-400">—</span>}
     </div>
   );
 }
@@ -62,9 +58,10 @@ export interface BasicInfoState {
 
 export interface BasicInfoFormProps {
   campaigns?: Campaign[];
+  workspaceTags?: Tag[];
 }
 
-export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
+export function BasicInfoForm({ campaigns = [], workspaceTags = [] }: BasicInfoFormProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
   const { campaignId, publicationType, name, description, priorityId, language, tags } = basicInfo;
@@ -94,7 +91,7 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
     patch({ tags: tags.filter((t) => t !== tag) });
   };
 
-  const selectedLanguage = language === "Thai" ? "th" : language === "English" ? "en" : language;
+  const selectedLanguage = languageCode(language);
 
   const isDescriptionOverLimit = description.length > PUBLICATION_LIMITS.descriptionMaxLength;
 
@@ -200,8 +197,11 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
                   onChange={(e) => patch({ language: e.target.value })}
                   className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
                 >
-                  <option value="th">Thai</option>
-                  <option value="en">English</option>
+                  {languageOptions.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               </div>
@@ -261,14 +261,10 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <FieldWrapper label="Format">
-              <FieldSelect disabled>
-                <option>All Formats</option>
-              </FieldSelect>
+              <DerivedField value={publicationTypes.find((t) => t.id === publicationType)?.label} />
             </FieldWrapper>
             <FieldWrapper label="Brand">
-              <FieldSelect disabled>
-                <option>All Brands</option>
-              </FieldSelect>
+              <DerivedField value={campaigns.find((c) => c.id === campaignId)?.brand_name} />
             </FieldWrapper>
           </div>
         </div>
@@ -294,15 +290,25 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
               </span>
             ))}
             {addingTag ? (
-              <input
-                autoFocus
-                value={tagDraft}
-                onChange={(e) => setTagDraft(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addTag()}
-                onBlur={addTag}
-                placeholder="Tag name"
-                className="w-28 rounded-full border border-indigo-300 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30"
-              />
+              <>
+                <input
+                  autoFocus
+                  list="publication-workspace-tags"
+                  value={tagDraft}
+                  onChange={(e) => setTagDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addTag()}
+                  onBlur={addTag}
+                  placeholder="Tag name"
+                  className="w-28 rounded-full border border-indigo-300 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30"
+                />
+                <datalist id="publication-workspace-tags">
+                  {workspaceTags
+                    .filter((t) => !tags.includes(t.name))
+                    .map((t) => (
+                      <option key={t.id} value={t.name} />
+                    ))}
+                </datalist>
+              </>
             ) : (
               <button
                 type="button"
