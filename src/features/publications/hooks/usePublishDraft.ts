@@ -236,6 +236,17 @@ export function usePublishDraft() {
   };
 
   const saveDraft = async (): Promise<string | null> => {
+    // The name is the one field the publications endpoint refuses to take empty,
+    // and Save as Draft skips the step gate that Next runs — so a brand-new draft
+    // would reach the API with `name: ""` and come back as a schema error. Nothing
+    // else is required here: a draft should save with as little filled in as the
+    // backend will accept.
+    if (!usePublicationDraftStore.getState().basicInfo.name.trim()) {
+      const message = "กรุณากรอกชื่อ Publication ก่อนบันทึกร่าง";
+      setError(message);
+      toast.error(message);
+      return null;
+    }
     setSaving(true);
     setError(null);
     try {

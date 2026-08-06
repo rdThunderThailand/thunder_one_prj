@@ -81,6 +81,18 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
     };
   }
 
+  // Everything the API rejects on shape — zod schema failures and the remaining
+  // `Invalid input:` RPC guards — arrives worded for whoever wrote the schema
+  // ("Too small: expected string to have >=1 characters"). The specific cases worth
+  // naming are handled above; this keeps the rest off the screen. The raw text is
+  // still in the network response for anyone debugging.
+  if (message.startsWith("Invalid input:")) {
+    return {
+      kind: "rejected",
+      message: "ข้อมูลที่กรอกยังไม่ครบหรือไม่ถูกต้อง กรุณาตรวจสอบแต่ละขั้นตอนแล้วลองใหม่",
+    };
+  }
+
   if (err instanceof ApiError && err.status === 403) {
     return {
       kind: "forbidden",

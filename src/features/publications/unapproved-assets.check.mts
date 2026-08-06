@@ -53,4 +53,14 @@ assert.equal(classified.kind, "rejected");
 assert.ok(!classified.message.includes("Invalid input"), "raw DB wording leaked to the UI");
 assert.ok(classified.message.includes("อนุมัติ"), "message should tell the user what to do");
 
+// 6. The unapproved case keeps its specific wording — the generic "Invalid input:"
+//    fallback must not swallow it, since both share that prefix.
+const generic = classifyApiError(
+  new Error("Invalid input: Too small: expected string to have >=1 characters"),
+  "fallback"
+);
+assert.equal(generic.kind, "rejected");
+assert.ok(!generic.message.includes("Invalid input"), "raw schema wording leaked to the UI");
+assert.notEqual(generic.message, classified.message, "generic fallback shadowed the approval case");
+
 console.log("unapproved-assets.check.mts — all assertions passed");
