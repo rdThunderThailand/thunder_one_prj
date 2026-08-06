@@ -14,6 +14,7 @@ export class ApiError extends Error {
 }
 
 export type ApiErrorKind =
+  | "forbidden"
   /** The draft changed underneath us — reloading is the only way forward. */
   | "conflict"
   /** The publication is already live; a retried publish is a success, not a failure. */
@@ -60,6 +61,13 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
     return {
       kind: "conflict",
       message: "ข้อมูลถูกแก้ไขจากที่อื่นระหว่างที่คุณทำงานอยู่ กรุณาโหลดหน้านี้ใหม่ก่อนบันทึกอีกครั้ง",
+    };
+  }
+
+  if (err instanceof ApiError && err.status === 403) {
+    return {
+      kind: "forbidden",
+      message: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงข้อมูลนี้ ติดต่อผู้ดูแลระบบหากคิดว่าไม่ถูกต้อง",
     };
   }
 

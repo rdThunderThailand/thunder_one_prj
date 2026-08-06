@@ -15,6 +15,8 @@ import {
 } from "../services/publications-api";
 import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
 import type { PlaylistDetail, PublicationDetail } from "../types";
+import { classifyApiError, type ClassifiedError } from "../api-error";
+import { NoAccess } from "@/components/ui/NoAccess";
 
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "—";
@@ -31,7 +33,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
   const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
   const [playlistError, setPlaylistError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ClassifiedError | null>(null);
 
   const [confirming, setConfirming] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
@@ -62,7 +64,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       })
       .catch((err) => {
         if (!alive) return;
-        setError(err instanceof Error ? err.message : "โหลด publication ไม่สำเร็จ");
+        setError(classifyApiError(err, "โหลด publication ไม่สำเร็จ"));
         setLoading(false);
       });
 
@@ -105,16 +107,22 @@ export function PublicationDetailPage({ id }: { id: string }) {
 
   if (error || !detail) {
     return (
-      <Card className="p-6">
-        <p className="text-center text-sm text-red-600 dark:text-red-400">
-          {error || "ไม่พบ publication"}
-        </p>
+      <>
+        {error?.kind === "forbidden" ? (
+          <NoAccess message={error.message} />
+        ) : (
+          <Card className="p-6">
+            <p className="text-center text-sm text-red-600 dark:text-red-400">
+              {error ? error.message : "ไม่พบ publication"}
+            </p>
+          </Card>
+        )}
         <div className="mt-4 flex justify-center">
           <Link href="/publications" className={buttonClasses("secondary")}>
             กลับไปยังรายการ
           </Link>
         </div>
-      </Card>
+      </>
     );
   }
 
