@@ -83,9 +83,10 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  // ponytail: default reflects Publication Type at mount only (set in the prior wizard
-  // step); doesn't re-sync if the user navigates back and changes type, so the filter
-  // stays a starting point the user can override, not a forced constraint.
+  // Default mirrors Publication Type (docs/adr/0009). This step only mounts while
+  // step === 2, so returning to it re-runs this initializer and the default tracks
+  // the current type. Every other type falls back to All Media — the media library
+  // only holds image and video assets today.
   const [typeFilter, setTypeFilter] = useState<"all" | "image" | "video">(() =>
     basicInfo.publicationType === "image" || basicInfo.publicationType === "video"
       ? basicInfo.publicationType
@@ -230,9 +231,9 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
                   onChange={(e) => setTypeFilter(e.target.value as "all" | "image" | "video")}
                   className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
                 >
-                  <option value="all">All Types</option>
-                  <option value="image">Image</option>
-                  <option value="video">Video</option>
+                  <option value="all">All Media</option>
+                  <option value="image">Images</option>
+                  <option value="video">Videos</option>
                 </select>
                 <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
               </div>
