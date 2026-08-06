@@ -12,6 +12,7 @@ import {
   checkScheduleConflicts,
   fetchCampaigns,
   fetchMediaAssets,
+  fetchPublication,
   fetchScreens,
   saveBasicInfo,
   savePublicationContent,
@@ -209,13 +210,25 @@ export function usePublishDraft() {
     }
 
     const contentItems = draftItemsToContentItems(state.assetItems);
-    if (contentItems.length > 0) {
+    const savedContent = contentItems.length > 0;
+    if (savedContent) {
       await savePublicationContent(newId, contentItems);
     }
 
     const form = state.scheduleForm;
-    if (forPublish || (state.step >= 4 && isScheduleFormValid(form))) {
+    const savedSchedule = forPublish || (state.step >= 4 && isScheduleFormValid(form));
+    if (savedSchedule) {
       await savePublicationSchedule(newId, scheduleFormToPayload(form));
+    }
+
+    // `set_content`/`set_schedule` bump `revision` server-side too (ADR 0003) but
+    // don't return it, so re-fetch to keep the client's expected_revision from
+    // going stale and self-conflicting on the next save.
+    if (savedContent || savedSchedule) {
+      const fresh = await fetchPublication(newId);
+      if (typeof fresh.revision === "number") {
+        state.setRevision(fresh.revision);
+      }
     }
 
     return newId;
