@@ -75,6 +75,13 @@ Concretely:
    `Thunder Enterprise Master` holds **zero** `media_core` rows today, so nothing collides. This is
    what makes the cross-tenant `channel_devices` link correct rather than merely tolerated, and it
    means no membership has to be invented to grant people access to their own data.
+5. **Only `memberships.status = 'active'` counts as access.** An invitation that has not been
+   accepted is not access, so `status = 'invited'` is excluded from the intersection in point 2.
+   `GET /core/v1/me/memberships` previously listed `invited` rows as well; it now filters to
+   `active` so the two paths cannot disagree. Consequence: `/me/memberships` no longer surfaces
+   pending invitations. That costs nothing today — acceptance runs off an emailed token against
+   `user_invitations`, not off this list — but if a "your pending invitations" view is ever built,
+   it needs its own endpoint reading `user_invitations`, not this one.
 
 ### Why consolidate rather than grant membership in `ThunderOne`
 
