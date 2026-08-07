@@ -28,6 +28,12 @@ const defaultBasicInfo: BasicInfoState = {
 
 export interface DraftFields {
   publicationId: string | null;
+  /** Minted once per draft, sent on the first (create) POST so a same-tab
+   * double submit or a retried request resolves to one row instead of two
+   * (docs/adr/0007 media). Must be minted here, at draft construction — never
+   * lazily inside the save path, where two concurrent saves could each read
+   * a null key and mint their own. */
+  idempotencyKey: string;
   step: number;
   basicInfo: BasicInfoState;
   assetItems: DraftAssetItem[];
@@ -38,6 +44,7 @@ export interface DraftFields {
 function getDefaultDraft(): DraftFields {
   return {
     publicationId: null,
+    idempotencyKey: crypto.randomUUID(),
     step: 1,
     basicInfo: defaultBasicInfo,
     assetItems: [],
@@ -61,6 +68,10 @@ interface PublicationDraftStore extends DraftFields {
   setExplicitlySaved: (v: boolean) => void;
   setRevision: (revision: number | null) => void;
   setPublicationId: (id: string | null) => void;
+  /** Re-mints the create-request key. Used when a stale draft id is being
+   * abandoned for a fresh create POST — reusing the old key would resolve
+   * back to the dead row instead of creating a new one. */
+  resetIdempotencyKey: () => void;
   setStep: (step: number) => void;
   goNext: (maxStep: number) => void;
   goBack: () => void;
@@ -90,6 +101,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       setExplicitlySaved: (explicitlySaved) => set({ explicitlySaved }),
       setRevision: (revision) => set({ revision }),
       setPublicationId: (publicationId) => set({ publicationId }),
+      resetIdempotencyKey: () => set({ idempotencyKey: crypto.randomUUID() }),
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
       goBack: () => set((s) => ({ step: Math.max(s.step - 1, 1) })),
@@ -143,10 +155,10 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       },
     }),
     {
-      // v3 → v4: added `revision` (docs/adr/0003). Bumping the key means an
-      // in-flight v3 draft is dropped on load rather than rehydrated into a
-      // shape the new code doesn't expect.
-      name: "thunderone.publications.create-draft.v4",
+      // v4 → v5: added `idempotencyKey` (docs/adr/0007 media). Bumping the key
+      // means an in-flight v4 draft is dropped on load rather than rehydrated
+      // without a key, which would leave its next create-POST unprotected.
+      name: "thunderone.publications.create-draft.v5",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

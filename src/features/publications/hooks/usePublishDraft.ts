@@ -57,6 +57,7 @@ export function usePublishDraft() {
   const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
 
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
+  const idempotencyKey = usePublicationDraftStore((s) => s.idempotencyKey);
   const step = usePublicationDraftStore((s) => s.step);
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -64,7 +65,7 @@ export function usePublishDraft() {
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
 
   const eligibility = computeEligibility({
-    draft: { publicationId, step, basicInfo, assetItems, channelIds, scheduleForm },
+    draft: { publicationId, idempotencyKey, step, basicInfo, assetItems, channelIds, scheduleForm },
     assets,
     conflicts,
     conflictsError,
@@ -189,13 +190,16 @@ export function usePublishDraft() {
     const basicForm = basicInfoToForm(state.basicInfo);
     let res;
     try {
-      res = await saveBasicInfo(basicForm, state.publicationId, targets, state.revision);
+      res = await saveBasicInfo(basicForm, state.publicationId, targets, state.revision, state.idempotencyKey);
     } catch (err) {
       // The draft id lives in localStorage forever, but the row it points at can be
       // deleted (or leave `draft` via cancel/activate) from the /publications page —
       // which used to brick the wizard until the user hit Cancel. Re-create instead.
       if (state.publicationId && isStaleDraftError(err)) {
-        res = await saveBasicInfo(basicForm, null, targets);
+        // Re-minting first: reusing the old key would resolve the retry back to
+        // the same dead row instead of creating a fresh draft (docs/adr/0007 media).
+        state.resetIdempotencyKey();
+        res = await saveBasicInfo(basicForm, null, targets, undefined, usePublicationDraftStore.getState().idempotencyKey);
       } else {
         // Surfaced as a dedicated banner (CreatePublicationPage), not the generic
         // error text — "reload" / "overwrite" are actions, not just a message.

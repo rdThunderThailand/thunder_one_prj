@@ -15,6 +15,7 @@ import type { MediaAsset, ScheduleConflict } from "./types/index.ts";
 
 const validDraft: DraftFields = {
   publicationId: null,
+  idempotencyKey: "idem-key-1",
   step: 4,
   basicInfo: {
     campaignId: "camp-1",

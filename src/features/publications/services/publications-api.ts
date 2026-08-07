@@ -153,7 +153,8 @@ export async function saveBasicInfo(
   form: BasicInfoForm,
   publicationId: string | null,
   targets?: PublicationTarget[],
-  expectedRevision?: number | null
+  expectedRevision?: number | null,
+  idempotencyKey?: string
 ): Promise<Publication> {
   const body = cleanBasicInfoBody(form, publicationId);
   // PATCH replaces every field it receives, so the caller must always post the
@@ -166,6 +167,11 @@ export async function saveBasicInfo(
   // race against yet. `media_publication_upsert` skips the check when omitted.
   if (publicationId && expectedRevision != null) {
     body.expected_revision = expectedRevision;
+  }
+  // Only sent on create: PATCH already addresses the row by publication_id and
+  // never needs a dedupe key.
+  if (!publicationId && idempotencyKey) {
+    body.idempotency_key = idempotencyKey;
   }
   const method = publicationId ? "PATCH" : "POST";
   return requestApi<Publication>(method, "/media/publications", body);

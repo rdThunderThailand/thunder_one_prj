@@ -21,6 +21,7 @@ assert.equal(stripHtmlTags("ลดราคา 50%"), "ลดราคา 50%");
 
 const baseDraft: DraftFields = {
   publicationId: null,
+  idempotencyKey: "idem-key-1",
   step: 1,
   basicInfo: {
     campaignId: "camp-1",
