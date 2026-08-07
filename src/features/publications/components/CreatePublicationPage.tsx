@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon, ArrowRightIcon, PaperPlaneIcon } from "@/components/ui/icons";
 import { wizardSteps } from "../mock-data";
 import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePublishDraft } from "../hooks/usePublishDraft";
 import { deletePublication, fetchPlaylist, fetchPublication } from "../services/publications-api";
 import { detailToDraft } from "../detail-mapping";
-import { isConflict } from "../api-error";
+import { isConflict, classifyApiError, type ClassifiedError } from "../api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
 import { type WizardStepId } from "../step-validation";
@@ -46,6 +48,7 @@ export function CreatePublicationPage() {
 
   const [resumedId, setResumedId] = useState<string | null>(null);
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [resumeFailure, setResumeFailure] = useState<ClassifiedError | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
@@ -96,13 +99,14 @@ export function CreatePublicationPage() {
     let alive = true;
 
     const load = async () => {
+      setResumeFailure(null);
       try {
         await loadPublicationIntoDraft(idParam);
         if (!alive) return;
         setStep(1);
       } catch (err) {
         if (!alive) return;
-        setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
+        setResumeFailure(classifyApiError(err, "โหลด draft ไม่สำเร็จ"));
       } finally {
         // Marks the attempt finished either way, so a failure shows the error
         // instead of hanging on the loading branch forever.
@@ -116,6 +120,22 @@ export function CreatePublicationPage() {
       alive = false;
     };
   }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
+
+  const [retrying, setRetrying] = useState(false);
+
+  const handleRetryResume = async () => {
+    if (!idParam || retrying) return;
+    setRetrying(true);
+    setResumeFailure(null);
+    try {
+      await loadPublicationIntoDraft(idParam);
+      setStep(1);
+    } catch (err) {
+      setResumeFailure(classifyApiError(err, "โหลด draft ไม่สำเร็จ"));
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   const {
     screens,
@@ -243,8 +263,39 @@ export function CreatePublicationPage() {
     );
 
   // Avoid flashing step-1 defaults before a restored draft (possibly on a
-  // later step) loads from localStorage or via ?id=.
-  if (!hasHydrated || resumePending) return null;
+  // later step) loads from localStorage.
+  if (!hasHydrated) return null;
+  if (resumePending) {
+    return (
+      <Card className="p-6">
+        <p className="text-center text-sm text-zinc-400">กำลังโหลด draft…</p>
+      </Card>
+    );
+  }
+
+  if (resumeFailure) {
+    return (
+      <>
+        {resumeFailure.kind === "forbidden" ? (
+          <NoAccess message={resumeFailure.message} />
+        ) : (
+          <Card className="p-6">
+            <p className="text-center text-sm text-red-600 dark:text-red-400">{resumeFailure.message}</p>
+          </Card>
+        )}
+        <div className="mt-4 flex justify-center gap-3">
+          {resumeFailure.kind === "retryable" && (
+            <Button variant="primary" onClick={handleRetryResume} disabled={retrying}>
+              {retrying ? "กำลังโหลด…" : "ลองใหม่"}
+            </Button>
+          )}
+          <Link href="/publications" className={buttonClasses("secondary")}>
+            กลับไปยังรายการ
+          </Link>
+        </div>
+      </>
+    );
+  }
 
   const displayError = error || resumeError;
 

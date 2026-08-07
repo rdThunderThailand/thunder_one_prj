@@ -41,8 +41,15 @@ assert.equal(isConflict("Already in use: video is still referenced by a playlist
 
 // 4xx means the request itself was refused — retrying it unchanged is pointless.
 assert.equal(classifyApiError(new ApiError("Invalid input: name required", 400), FALLBACK).kind, "rejected");
-assert.equal(classifyApiError(new ApiError("not found", 404), FALLBACK).kind, "rejected");
 assert.equal(classifyApiError(new ApiError("nope", 499), FALLBACK).kind, "rejected");
+
+// 403 still classifies as "forbidden", and 400 still as "rejected" (the new branch must not widen).
+assert.equal(classifyApiError(new ApiError("HTTP Error 403", 403), FALLBACK).kind, "forbidden");
+assert.equal(classifyApiError(new ApiError("HTTP Error 400", 400), FALLBACK).kind, "rejected");
+assert.equal(classifyApiError(new ApiError("HTTP Error 404", 404), FALLBACK).kind, "not-found");
+
+// A conflict message carried on a 404 still classifies as "conflict" — message-based branches keep priority over status.
+assert.equal(classifyApiError(new ApiError("Already modified: draft was changed elsewhere", 404), FALLBACK).kind, "conflict");
 
 // 5xx is worth retrying, and so is anything we can't attribute.
 assert.equal(classifyApiError(new ApiError("boom", 500), FALLBACK).kind, "retryable");

@@ -15,6 +15,8 @@ export class ApiError extends Error {
 
 export type ApiErrorKind =
   | "forbidden"
+  /** The draft is gone or the id is wrong — retrying cannot help. */
+  | "not-found"
   /** The draft changed underneath us — reloading is the only way forward. */
   | "conflict"
   /** The publication is already live; a retried publish is a success, not a failure. */
@@ -98,6 +100,10 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
       kind: "forbidden",
       message: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงข้อมูลนี้ ติดต่อผู้ดูแลระบบหากคิดว่าไม่ถูกต้อง",
     };
+  }
+
+  if (err instanceof ApiError && err.status === 404) {
+    return { kind: "not-found", message: "ไม่พบ draft นี้ อาจถูกลบไปแล้วหรือลิงก์ไม่ถูกต้อง" };
   }
 
   // Without a status we can't tell a rejection from an outage, and guessing
