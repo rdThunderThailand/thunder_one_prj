@@ -117,6 +117,7 @@ export function PublicationsListPage() {
               <th className="py-2 pr-3">Type</th>
               <th className="py-2 pr-3">Priority</th>
               <th className="py-2 pr-3">Items</th>
+              <th className="py-2 pr-3">Created by</th>
               <th className="py-2 pr-3">Updated</th>
               <th className="py-2 text-right">Actions</th>
             </tr>
@@ -157,6 +158,9 @@ export function PublicationsListPage() {
                   </td>
                   <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
                     {item.item_count ?? 0}
+                  </td>
+                  <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                    {item.created_by?.display_name ?? "—"}
                   </td>
                   <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
                     {updatedDisplay}

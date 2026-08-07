@@ -92,6 +92,8 @@ export type PublicationListItem = {
   playlist_id?: string;
   item_count: number;
   tags: string[];
+  /** Who created the draft — null for rows created before this field existed. */
+  created_by?: { id: string; display_name: string } | null;
   created_at?: string;
   updated_at?: string;
 };
