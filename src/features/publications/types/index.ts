@@ -128,6 +128,8 @@ export type PublicationDetail = {
   job_status?: string;
   /** Who pressed publish — null for publications activated before ADR 0005. */
   published_by?: { id: string; display_name: string } | null;
+  /** Who created the draft — null for rows created before this field existed. */
+  created_by?: { id: string; display_name: string } | null;
   /** Delivery status per device — populated only after activation. */
   targets?: PublicationDeliveryTarget[];
   /** The publication's own targets, saved in step 3. */

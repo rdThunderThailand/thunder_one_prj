@@ -289,6 +289,14 @@ export function PublicationDetailPage({ id }: { id: string }) {
               {detail.published_by?.display_name ?? "ไม่ทราบผู้เผยแพร่"}
             </dd>
           </div>
+          {detail.created_by && detail.created_by.id !== detail.published_by?.id ? (
+            <div>
+              <dt className="text-xs font-medium text-zinc-400">Created By</dt>
+              <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                {detail.created_by.display_name}
+              </dd>
+            </div>
+          ) : null}
           <div>
             <dt className="text-xs font-medium text-zinc-400">Job Status</dt>
             <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
