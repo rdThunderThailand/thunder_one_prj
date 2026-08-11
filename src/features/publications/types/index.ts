@@ -23,6 +23,7 @@ export type BasicInfoForm = {
   priority?: Priority;
   language?: string;
   tags?: string[];
+  playlist_id?: string;
 };
 
 export type Publication = {

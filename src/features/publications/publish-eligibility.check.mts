@@ -27,6 +27,7 @@ const validDraft: DraftFields = {
     tags: [],
   },
   assetItems: [{ media_asset_id: "asset-1", duration_seconds: 10 }],
+  playlistId: null,
   channelIds: ["screen-1"],
   scheduleForm: { ...makeDefaultScheduleForm(), schedule_type: "now" },
 };

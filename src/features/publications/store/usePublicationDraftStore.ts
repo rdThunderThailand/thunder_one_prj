@@ -37,6 +37,7 @@ export interface DraftFields {
   step: number;
   basicInfo: BasicInfoState;
   assetItems: DraftAssetItem[];
+  playlistId: string | null;
   channelIds: string[];
   scheduleForm: ScheduleForm;
 }
@@ -48,13 +49,14 @@ function getDefaultDraft(): DraftFields {
     step: 1,
     basicInfo: defaultBasicInfo,
     assetItems: [],
+    playlistId: null,
     channelIds: [],
     scheduleForm: makeDefaultScheduleForm(),
   };
 }
 
-function serializeDraftFields(f: Pick<DraftFields, "basicInfo" | "assetItems" | "channelIds" | "scheduleForm">): string {
-  return JSON.stringify({ basicInfo: f.basicInfo, assetItems: f.assetItems, channelIds: f.channelIds, scheduleForm: f.scheduleForm });
+function serializeDraftFields(f: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "channelIds" | "scheduleForm">): string {
+  return JSON.stringify({ basicInfo: f.basicInfo, assetItems: f.assetItems, playlistId: f.playlistId, channelIds: f.channelIds, scheduleForm: f.scheduleForm });
 }
 
 interface PublicationDraftStore extends DraftFields {
@@ -68,6 +70,7 @@ interface PublicationDraftStore extends DraftFields {
   setExplicitlySaved: (v: boolean) => void;
   setRevision: (revision: number | null) => void;
   setPublicationId: (id: string | null) => void;
+  setPlaylistId: (id: string | null) => void;
   /** Re-mints the create-request key. Used when a stale draft id is being
    * abandoned for a fresh create POST — reusing the old key would resolve
    * back to the dead row instead of creating a new one. */
@@ -101,15 +104,23 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       setExplicitlySaved: (explicitlySaved) => set({ explicitlySaved }),
       setRevision: (revision) => set({ revision }),
       setPublicationId: (publicationId) => set({ publicationId }),
+      setPlaylistId: (playlistId) => set({ playlistId }),
       resetIdempotencyKey: () => set({ idempotencyKey: crypto.randomUUID() }),
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
       goBack: () => set((s) => ({ step: Math.max(s.step - 1, 1) })),
-      setBasicInfo: (basicInfo) => set((s) => ({
-        basicInfo,
-        assetItems:
-          basicInfo.publicationType === "playlist" ? s.assetItems : s.assetItems.slice(0, 1),
-      })),
+      setBasicInfo: (basicInfo) => set((s) => {
+        // ponytail: switching to playlist clears assetItems; switching to image/video clears playlistId
+        // and keeps only the items still valid for the new type. The store has no access to the asset list,
+        // so it cannot call dropMismatchedItems — clear assetItems entirely on any type change instead,
+        // and let the operator re-pick.
+        const typeChanged = s.basicInfo.publicationType !== basicInfo.publicationType;
+        return {
+          basicInfo,
+          assetItems: typeChanged ? [] : s.assetItems,
+          playlistId: typeChanged ? null : s.playlistId,
+        };
+      }),
       setAssetItems: (assetItems) => set({ assetItems }),
       toggleAssetItem: ({ id, isImage }) => set((s) => {
         const exists = s.assetItems.some(i => i.media_asset_id === id);
@@ -155,10 +166,10 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       },
     }),
     {
-      // v4 → v5: added `idempotencyKey` (docs/adr/0007 media). Bumping the key
-      // means an in-flight v4 draft is dropped on load rather than rehydrated
-      // without a key, which would leave its next create-POST unprotected.
-      name: "thunderone.publications.create-draft.v5",
+      // v5 → v6: added `playlistId`. A v5 draft holds `assetItems` for a
+      // playlist-type publication and cannot be rehydrated into the new shape,
+      // so it is dropped rather than migrated.
+      name: "thunderone.publications.create-draft.v6",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

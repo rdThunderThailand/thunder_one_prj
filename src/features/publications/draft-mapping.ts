@@ -26,8 +26,8 @@ export const CARD_BY_SCHEDULE_TYPE: Record<ScheduleType, ScheduleTypeId> = {
   range: "custom-range",
 };
 
-export function basicInfoToForm(basicInfo: BasicInfoState): BasicInfoForm {
-  return {
+export function basicInfoToForm(basicInfo: BasicInfoState, playlistId?: string | null): BasicInfoForm {
+  const form: BasicInfoForm = {
     name: basicInfo.name.trim(),
     description: basicInfo.description || undefined,
     campaign_id: basicInfo.campaignId || undefined,
@@ -36,6 +36,10 @@ export function basicInfoToForm(basicInfo: BasicInfoState): BasicInfoForm {
     language: languageCode(basicInfo.language),
     tags: basicInfo.tags ?? [],
   };
+  if (playlistId?.trim()) {
+    form.playlist_id = playlistId.trim();
+  }
+  return form;
 }
 
 export function channelIdsToTargets(channelIds: string[], screens: Screen[]): PublicationTarget[] {

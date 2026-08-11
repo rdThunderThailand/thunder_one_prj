@@ -27,6 +27,7 @@ const validStep1: DraftFields = {
     tags: [],
   },
   assetItems: [],
+  playlistId: null,
   channelIds: [],
   scheduleForm: makeDefaultScheduleForm(),
 };

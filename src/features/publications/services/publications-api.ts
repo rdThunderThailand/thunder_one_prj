@@ -58,6 +58,9 @@ function cleanBasicInfoBody(
   if (form.publication_type) {
     body.publication_type = form.publication_type;
   }
+  if (form.playlist_id?.trim()) {
+    body.playlist_id = form.playlist_id.trim();
+  }
   if (form.priority) {
     body.priority = form.priority;
   }

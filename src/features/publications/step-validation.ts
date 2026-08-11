@@ -28,8 +28,14 @@ export function validateStep(
       errors.push(`คำอธิบายยาวเกิน ${PUBLICATION_LIMITS.descriptionMaxLength} ตัวอักษร`);
     }
   } else if (step === 2) {
-    if (state.assetItems.length === 0) {
-      errors.push("กรุณาเลือกสื่ออย่างน้อย 1 รายการ");
+    if (state.basicInfo.publicationType === "playlist") {
+      if (!state.playlistId) {
+        errors.push("กรุณาเลือก Playlist");
+      }
+    } else {
+      if (state.assetItems.length === 0) {
+        errors.push("กรุณาเลือกสื่ออย่างน้อย 1 รายการ");
+      }
     }
   } else if (step === 3) {
     if (state.channelIds.length === 0) {

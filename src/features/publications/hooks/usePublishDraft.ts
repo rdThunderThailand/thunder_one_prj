@@ -63,9 +63,10 @@ export function usePublishDraft() {
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
 
   const eligibility = computeEligibility({
-    draft: { publicationId, idempotencyKey, step, basicInfo, assetItems, channelIds, scheduleForm },
+    draft: { publicationId, idempotencyKey, step, basicInfo, assetItems, playlistId, channelIds, scheduleForm },
     assets,
     conflicts,
     conflictsError,
@@ -187,7 +188,7 @@ export function usePublishDraft() {
     const targets =
       forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, screens) : undefined;
 
-    const basicForm = basicInfoToForm(state.basicInfo);
+    const basicForm = basicInfoToForm(state.basicInfo, state.playlistId);
     let res;
     try {
       res = await saveBasicInfo(basicForm, state.publicationId, targets, state.revision, state.idempotencyKey);
@@ -220,7 +221,9 @@ export function usePublishDraft() {
 
     const contentItems = draftItemsToContentItems(state.assetItems);
     const savedContent = contentItems.length > 0;
-    if (savedContent) {
+    if (savedContent && state.basicInfo.publicationType !== "playlist") {
+      // The RPC deletes every item of the linked playlist before inserting, so calling it with a
+      // playlist the operator owns empties that playlist (ADR 0011).
       await savePublicationContent(newId, contentItems);
     }
 

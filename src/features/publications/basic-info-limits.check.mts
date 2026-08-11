@@ -33,6 +33,7 @@ const baseDraft: DraftFields = {
     tags: [],
   },
   assetItems: [],
+  playlistId: null,
   channelIds: [],
   scheduleForm: makeDefaultScheduleForm(),
 };

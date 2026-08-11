@@ -28,7 +28,9 @@ export function computeEligibility(params: {
   const { draft, assets, conflicts, conflictsError, loadingRefs, checkingConflicts } = params;
 
   let contentCheckStatus: EligibilityStatus;
-  if (draft.assetItems.length === 0) {
+  if (draft.basicInfo.publicationType === "playlist") {
+    contentCheckStatus = draft.playlistId ? "pass" : "fail";
+  } else if (draft.assetItems.length === 0) {
     contentCheckStatus = "fail";
   } else {
     let allFound = true;
