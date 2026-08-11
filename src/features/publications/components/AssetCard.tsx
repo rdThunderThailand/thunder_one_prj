@@ -1,23 +1,73 @@
 "use client";
 
 import Image from "next/image";
-import { CheckIcon, PlayIcon } from "@/components/ui/icons";
+import { CheckIcon, ListIcon, PlayIcon } from "@/components/ui/icons";
 import { isApprovedAsset } from "../draft-mapping";
 import type { MediaAsset } from "../types";
+import type { PlaylistListItem } from "@/features/playlists";
 
-export function AssetCard({
-  asset,
-  previewUrl,
-  selected,
-  onSelect,
-  disabled,
-}: {
-  asset: MediaAsset;
+type AssetCardBaseProps = {
   previewUrl?: string;
   selected: boolean;
   onSelect: () => void;
   disabled?: boolean;
-}) {
+};
+
+type AssetCardProps =
+  | (AssetCardBaseProps & { kind: "asset"; asset: MediaAsset })
+  | (AssetCardBaseProps & { kind: "playlist"; playlist: PlaylistListItem });
+
+export function AssetCard(props: AssetCardProps) {
+  const { previewUrl, selected, onSelect, disabled } = props;
+
+  if (props.kind === "playlist") {
+    const { playlist } = props;
+    return (
+      <button
+        type="button"
+        onClick={onSelect}
+        disabled={disabled}
+        title={disabled ? "ประเภทเนื้อหานี้ไม่ตรงกับประเภทของ Publication นี้" : undefined}
+        className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition-colors ${
+          selected
+            ? "border-indigo-500 ring-2 ring-indigo-500/30"
+            : "border-zinc-200 hover:border-zinc-300"
+        } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+      >
+        <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
+          {previewUrl ? (
+            <Image
+              src={previewUrl}
+              alt={playlist.name}
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              className="object-cover object-center"
+            />
+          ) : (
+            <ListIcon className="h-6 w-6 text-zinc-300" />
+          )}
+          <span
+            className={`absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+              selected
+                ? "border-indigo-500 bg-indigo-500 text-white"
+                : "border-white/80 bg-white/20"
+            }`}
+          >
+            {selected && <CheckIcon className="h-3 w-3" />}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1 p-2">
+          <p className="truncate text-xs font-medium text-zinc-900">{playlist.name}</p>
+          <p className="text-[11px] text-zinc-400">{playlist.item_count} items</p>
+          <span className="inline-flex w-fit items-center rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">
+            Playlist
+          </span>
+        </div>
+      </button>
+    );
+  }
+
+  const { asset } = props;
   const filename = asset.file?.original_filename ?? asset.title ?? asset.id;
   const isVideo =
     asset.kind === "video" ||

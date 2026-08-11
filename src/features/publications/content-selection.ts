@@ -17,6 +17,12 @@ export function canSelectAsset(type: PublicationType, asset: MediaAsset): boolea
   return (expectedKind === "image" && isImage) || (expectedKind === "video" && !isImage);
 }
 
+/** True when a playlist may be picked for this publication type. Only `playlist`
+ *  publications reference one; image/video publications hold their own assets. */
+export function canSelectPlaylist(type: PublicationType): boolean {
+  return type === "playlist";
+}
+
 /** Drops items whose asset no longer matches the publication type. Items whose asset
  *  is absent from `assets` are KEPT — mirrors dropUnapprovedItems, so a short or
  *  failed library load never silently wipes a valid selection. */

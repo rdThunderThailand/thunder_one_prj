@@ -1,14 +1,10 @@
 "use client";
 
 import { contentTabs } from "../mock-data";
-import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import type { Campaign } from "../types";
-import { PlaylistPickerStep } from "./PlaylistPickerStep";
 import { AssetLibraryStep } from "./AssetLibraryStep";
 
 export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
-  const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
-
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -33,11 +29,7 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
         ))}
       </div>
 
-      {basicInfo.publicationType === "playlist" ? (
-        <PlaylistPickerStep />
-      ) : (
-        <AssetLibraryStep campaigns={campaigns} />
-      )}
+      <AssetLibraryStep campaigns={campaigns} />
     </div>
   );
 }

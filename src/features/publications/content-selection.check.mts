@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { acceptedAssetKind, canSelectAsset, dropMismatchedItems } from "./content-selection.ts";
+import { acceptedAssetKind, canSelectAsset, canSelectPlaylist, dropMismatchedItems } from "./content-selection.ts";
 import type { DraftAssetItem, MediaAsset } from "./types/index.ts";
 
 function imageAsset(id: string): MediaAsset {
@@ -44,5 +44,12 @@ assert.deepEqual(
   dropMismatchedItems("video", items, assets),
   [item("bad-vid"), item("missing")]
 );
+
+// 4. canSelectPlaylist is only true for publication_type = playlist.
+assert.equal(canSelectPlaylist("playlist"), true);
+assert.equal(canSelectPlaylist("image"), false);
+assert.equal(canSelectPlaylist("video"), false);
+assert.equal(canSelectPlaylist("html"), false);
+assert.equal(canSelectPlaylist("dynamic"), false);
 
 console.log("content-selection.check.mts — all assertions passed");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import {
   ChevronDownIcon,
@@ -26,7 +27,9 @@ import {
 } from "../services/upload-api";
 import type { Campaign, MediaAsset } from "../types";
 import { dropUnapprovedItems, isImageAsset } from "../draft-mapping";
-import { acceptedAssetKind, canSelectAsset } from "../content-selection.ts";
+import { acceptedAssetKind, canSelectAsset, canSelectPlaylist } from "../content-selection.ts";
+import { fetchPlaylists } from "@/features/playlists";
+import type { PlaylistListItem } from "@/features/playlists";
 
 function ToggleSwitch({
   checked,
@@ -58,6 +61,8 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const toggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
+  const setPlaylistId = usePublicationDraftStore((s) => s.setPlaylistId);
   const publicationType = basicInfo.publicationType;
 
   const [aiSuggest, setAiSuggest] = useState(true);
@@ -66,9 +71,13 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [playlists, setPlaylists] = useState<PlaylistListItem[]>([]);
+  const [playlistsError, setPlaylistsError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "image" | "video">(() =>
-    publicationType === "image" || publicationType === "video"
+  const [typeFilter, setTypeFilter] = useState<"all" | "image" | "video" | "playlist">(() =>
+    publicationType === "image" || publicationType === "video" || publicationType === "playlist"
       ? publicationType
       : "all"
   );
@@ -100,9 +109,24 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
     []
   );
 
+  const loadPlaylists = useCallback(
+    () =>
+      fetchPlaylists()
+        .then((data) => {
+          setPlaylists(data);
+          setPlaylistsError(null);
+        })
+        .catch((err) => {
+          setPlaylists([]);
+          setPlaylistsError(err instanceof Error ? err.message : "Failed to load playlists");
+        }),
+    []
+  );
+
   useEffect(() => {
     void loadAssets();
-  }, [loadAssets]);
+    void loadPlaylists();
+  }, [loadAssets, loadPlaylists]);
 
   async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -132,7 +156,8 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
     }
   }
 
-  const filtered = useMemo(() => {
+  const filteredAssets = useMemo(() => {
+    if (typeFilter === "playlist") return [];
     let list = assets;
     if (typeFilter !== "all") {
       list = list.filter((asset) => isImageAsset(asset) === (typeFilter === "image"));
@@ -148,11 +173,24 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
     return list;
   }, [assets, searchQuery, typeFilter]);
 
-  const filteredAssetIds = useMemo(
-    () => filtered.map((a) => a.id),
-    [filtered]
-  );
-  const previews = usePreviewUrls(filteredAssetIds);
+  const filteredPlaylists = useMemo(() => {
+    if (typeFilter === "image" || typeFilter === "video") return [];
+    let list = playlists;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [playlists, searchQuery, typeFilter]);
+
+  const previewIds = useMemo(() => {
+    const ids = filteredAssets.map((a) => a.id);
+    for (const p of filteredPlaylists) {
+      if (p.cover_asset_id) ids.push(p.cover_asset_id);
+    }
+    return ids;
+  }, [filteredAssets, filteredPlaylists]);
+  const previews = usePreviewUrls(previewIds);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -171,15 +209,23 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
             <div className="relative">
               <select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as "all" | "image" | "video")}
+                onChange={(e) => setTypeFilter(e.target.value as "all" | "image" | "video" | "playlist")}
                 className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               >
                 <option value="all">All Media</option>
                 <option value="image">Images</option>
                 <option value="video">Videos</option>
+                <option value="playlist">Playlists</option>
               </select>
               <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
             </div>
+            <Link
+              href="/playlists/create"
+              target="_blank"
+              className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+            >
+              สร้าง Playlist ใหม่
+            </Link>
             {["All Formats", "All Brands", "All Languages"].map((label) => (
               <div key={label} className="relative">
                 <select className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
@@ -261,17 +307,18 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
               ? "Loading assets…"
               : uploadError
                 ? uploadError
-                : error
-                  ? error
-                  : `${filtered.length} assets found`}
+                : error || playlistsError
+                  ? error || playlistsError
+                  : `${filteredAssets.length + filteredPlaylists.length} items found`}
           </p>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((asset) => {
+            {filteredAssets.map((asset) => {
               const selectable = canSelectAsset(publicationType, asset);
               return (
                 <AssetCard
                   key={asset.id}
+                  kind="asset"
                   asset={asset}
                   previewUrl={previews[asset.id]}
                   selected={assetItems.some((i) => i.media_asset_id === asset.id)}
@@ -279,6 +326,23 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
                     if (selectable) {
                       toggleAssetItem({ id: asset.id, isImage: isImageAsset(asset) });
                     }
+                  }}
+                  disabled={!selectable}
+                />
+              );
+            })}
+            {filteredPlaylists.map((playlist) => {
+              const selectable = canSelectPlaylist(publicationType);
+              const selected = playlistId === playlist.id;
+              return (
+                <AssetCard
+                  key={playlist.id}
+                  kind="playlist"
+                  playlist={playlist}
+                  previewUrl={playlist.cover_asset_id ? previews[playlist.cover_asset_id] : undefined}
+                  selected={selected}
+                  onSelect={() => {
+                    if (selectable) setPlaylistId(selected ? null : playlist.id);
                   }}
                   disabled={!selectable}
                 />
