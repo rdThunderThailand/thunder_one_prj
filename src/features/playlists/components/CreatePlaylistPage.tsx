@@ -254,6 +254,31 @@ export function CreatePlaylistPage() {
                 ? "Configure playback and display options for your playlist."
                 : "Review playlist details and confirm before creating."
         }
+        actions={
+          <>
+            <Button variant="secondary" onClick={goBack} disabled={submitting}>
+              <ArrowLeftIcon className="h-4 w-4" />
+              {step === 1 ? "Back: Playlists" : "Back"}
+            </Button>
+            {step < LAST_STEP ? (
+              <Button onClick={goNext}>
+                Next
+                <ArrowRightIcon className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button onClick={handleSubmit} disabled={submitting}>
+                {submitting ? (
+                  "กำลังบันทึก..."
+                ) : (
+                  <>
+                    <CheckIcon className="h-4 w-4" />
+                    {retryOnly ? "ลองใหม่" : editingId ? "Save Changes" : "Create Playlist"}
+                  </>
+                )}
+              </Button>
+            )}
+          </>
+        }
       />
 
       {showDraftBanner && (
@@ -301,31 +326,6 @@ export function CreatePlaylistPage() {
               <p className="text-sm text-red-600 dark:text-red-400">{submitError.message}</p>
             </Card>
           )}
-
-          <div className="flex items-center justify-between">
-            <Button variant="secondary" onClick={goBack} disabled={submitting}>
-              <ArrowLeftIcon className="h-4 w-4" />
-              {step === 1 ? "Back: Playlists" : "Back"}
-            </Button>
-
-            {step < LAST_STEP ? (
-              <Button onClick={goNext}>
-                Next
-                <ArrowRightIcon className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button onClick={handleSubmit} disabled={submitting}>
-                {submitting ? (
-                  "กำลังบันทึก..."
-                ) : (
-                  <>
-                    <CheckIcon className="h-4 w-4" />
-                    {retryOnly ? "ลองใหม่" : editingId ? "Save Changes" : "Create Playlist"}
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
         </div>
 
         <PlaylistSummary assets={assets} campaigns={campaigns} workspaceTags={tags} />
