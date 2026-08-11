@@ -10,11 +10,13 @@ export function AssetCard({
   previewUrl,
   selected,
   onSelect,
+  disabled,
 }: {
   asset: MediaAsset;
   previewUrl?: string;
   selected: boolean;
   onSelect: () => void;
+  disabled?: boolean;
 }) {
   const filename = asset.file?.original_filename ?? asset.title ?? asset.id;
   const isVideo =
@@ -35,13 +37,13 @@ export function AssetCard({
     <button
       type="button"
       onClick={onSelect}
-      disabled={!approved}
-      title={approved ? undefined : "สื่อนี้ยังไม่ผ่านการอนุมัติ จึงยังเลือกไม่ได้"}
+      disabled={!approved || disabled}
+      title={!approved ? "สื่อนี้ยังไม่ผ่านการอนุมัติ จึงยังเลือกไม่ได้" : disabled ? "ชนิดไฟล์ไม่ตรงกับประเภทของ Publication นี้" : undefined}
       className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition-colors ${
         selected
           ? "border-indigo-500 ring-2 ring-indigo-500/30"
           : "border-zinc-200 hover:border-zinc-300"
-      } ${approved ? "" : "cursor-not-allowed opacity-50"}`}
+      } ${(!approved || disabled) ? "cursor-not-allowed opacity-50" : ""}`}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
         {previewUrl ? (
