@@ -15,7 +15,7 @@ import {
 } from "../services/publications-api";
 import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
 import type { PlaylistDetail, PublicationDetail } from "../types";
-import { classifyApiError, type ClassifiedError } from "../api-error";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 
 function formatDate(dateStr?: string | null): string {

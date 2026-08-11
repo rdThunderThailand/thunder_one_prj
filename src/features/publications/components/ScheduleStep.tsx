@@ -22,7 +22,7 @@ import {
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { MiniCalendar } from "./MiniCalendar";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 
 const scheduleTypeIcon: Record<ScheduleTypeId, ReactNode> = {
   "publish-now": <LightningIcon />,

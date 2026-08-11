@@ -1,7 +1,7 @@
 /**
  * Runnable check for API error classification:
  *
- *     node src/features/publications/api-error.check.mts
+ *     node src/lib/api/api-error.check.mts
  *
  * ponytail: node:assert plus Node's native TS stripping, same as the other
  * *.check.mts files here. api-error.ts imports nothing, so this loads clean.

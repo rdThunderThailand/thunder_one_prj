@@ -14,7 +14,7 @@ import {
 } from "../services/publications-api";
 import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
 import type { PublicationListItem } from "../types";
-import { classifyApiError, type ClassifiedError } from "../api-error";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 
 export function PublicationsListPage() {

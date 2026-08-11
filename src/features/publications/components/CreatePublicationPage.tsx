@@ -13,7 +13,7 @@ import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "
 import { usePublishDraft } from "../hooks/usePublishDraft";
 import { deletePublication, fetchPlaylist, fetchPublication } from "../services/publications-api";
 import { detailToDraft } from "../detail-mapping";
-import { isConflict, classifyApiError, type ClassifiedError } from "../api-error";
+import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
 import { type WizardStepId } from "../step-validation";

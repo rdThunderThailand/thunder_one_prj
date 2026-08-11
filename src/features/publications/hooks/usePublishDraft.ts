@@ -22,7 +22,7 @@ import {
 } from "../services/publications-api";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
-import { classifyApiError, isConflict } from "../api-error";
+import { classifyApiError, isConflict } from "@/lib/api/api-error";
 import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen, Tag } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":

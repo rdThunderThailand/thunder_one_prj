@@ -10,7 +10,7 @@
  */
 import assert from "node:assert/strict";
 import { dropUnapprovedItems, isApprovedAsset } from "./draft-mapping.ts";
-import { classifyApiError } from "./api-error.ts";
+import { classifyApiError } from "../../lib/api/api-error.ts";
 import type { DraftAssetItem, MediaAsset } from "./types/index.ts";
 
 function asset(id: string, approval_status: string): MediaAsset {

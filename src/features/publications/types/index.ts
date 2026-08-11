@@ -12,21 +12,8 @@ export const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
 
 export type Priority = (typeof PRIORITIES)[number];
 
-export type Campaign = {
-  id: string;
-  name: string;
-  status?: string;
-  starts_at?: string;
-  ends_at?: string;
-  brand_id?: string;
-  brand_name?: string;
-};
-
-export type Tag = {
-  id: string;
-  name: string;
-  usage_count?: number;
-};
+// Shared with playlists — the shapes live in src/types/domain.ts.
+export type { Campaign, MediaAsset, Tag } from "@/types/domain";
 
 export type BasicInfoForm = {
   name: string;
@@ -53,27 +40,6 @@ export type Publication = {
   revision?: number;
   created_at?: string;
   updated_at?: string;
-};
-
-export type MediaAsset = {
-  id: string;
-  title?: string;
-  status?: string;
-  kind?: "video" | "image";
-  approval_status?: string;
-  language?: string;
-  duration_seconds?: number | null;
-  width?: number;
-  height?: number;
-  codec?: string;
-  created_at?: string;
-  file?: {
-    id?: string;
-    original_filename?: string;
-    mime_type?: string;
-    file_size_bytes?: number;
-    checksum?: string;
-  };
 };
 
 export type PublicationListItem = {

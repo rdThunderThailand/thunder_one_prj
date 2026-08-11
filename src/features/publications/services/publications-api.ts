@@ -1,10 +1,11 @@
-import { apiClient } from "@/lib/api/client";
-import { ApiError } from "../api-error";
+import { requestApi } from "@/lib/api/media-api";
+
+// Shared media endpoints live in the lib layer; re-exported so existing call sites
+// keep importing from this service.
+export { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api";
 import type {
   BasicInfoForm,
-  Campaign,
   ContentItem,
-  MediaAsset,
   PlaylistDetail,
   Priority,
   Publication,
@@ -16,86 +17,7 @@ import type {
   ScheduleConflict,
   SchedulePayload,
   Screen,
-  Tag,
 } from "../types";
-
-export async function requestApi<T>(
-  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
-  path: string,
-  data?: unknown
-): Promise<T> {
-  const res = await apiClient.request({
-    url: `/api/proxy${path}`,
-    method,
-    data,
-    validateStatus: () => true,
-  });
-
-  const resData = res.data;
-
-  if (
-    resData &&
-    typeof resData === "object" &&
-    "error" in (resData as Record<string, unknown>)
-  ) {
-    const errorMsg =
-      (resData as { error: string }).error || "API request failed";
-    // The proxy can return an error body with a 2xx, so carry the status through
-    // rather than assuming the failure kind from the message alone.
-    throw new ApiError(errorMsg, res.status);
-  }
-
-  if (res.status < 200 || res.status >= 300) {
-    throw new ApiError(`HTTP Error ${res.status}`, res.status);
-  }
-
-  if (resData && typeof resData === "object") {
-    if (
-      "success" in (resData as Record<string, unknown>) &&
-      "data" in (resData as Record<string, unknown>)
-    ) {
-      return (resData as { data: T }).data;
-    }
-    return resData as T;
-  }
-
-  return resData as T;
-}
-
-export async function fetchCampaigns(): Promise<Campaign[]> {
-  const data = await requestApi<{ campaigns?: Campaign[] } | Campaign[]>(
-    "GET",
-    "/media/campaigns"
-  );
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (
-    data &&
-    typeof data === "object" &&
-    "campaigns" in data &&
-    Array.isArray(data.campaigns)
-  ) {
-    return data.campaigns;
-  }
-  return [];
-}
-
-export async function fetchTags(): Promise<Tag[]> {
-  const data = await requestApi<{ tags?: Tag[] } | Tag[]>("GET", "/media/tags");
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (
-    data &&
-    typeof data === "object" &&
-    "tags" in data &&
-    Array.isArray(data.tags)
-  ) {
-    return data.tags;
-  }
-  return [];
-}
 
 export async function fetchScreens(): Promise<Screen[]> {
   const data = await requestApi<{ screens?: Screen[] } | Screen[]>(
@@ -210,14 +132,6 @@ export async function cancelPublication(id: string): Promise<void> {
   await requestApi<unknown>("POST", `/media/publications/${id}/cancel`);
 }
 
-export async function fetchMediaAssets(): Promise<MediaAsset[]> {
-  const data = await requestApi<MediaAsset[]>("GET", "/media/videos");
-  if (Array.isArray(data)) {
-    return data;
-  }
-  return [];
-}
-
 export async function savePublicationContent(
   id: string,
   items: ContentItem[]
@@ -267,20 +181,6 @@ export async function checkScheduleConflicts(payload: {
     payload
   );
   return Array.isArray(data) ? data : [];
-}
-
-/** Batch-signs 1h preview URLs for the given media asset ids. Returns id → URL. */
-export async function fetchPreviewUrls(ids: string[]): Promise<Record<string, string>> {
-  if (ids.length === 0) return {};
-  const data = await requestApi<{ urls?: Record<string, string> } | Record<string, string>>(
-    "POST",
-    "/media/videos/preview-urls",
-    { ids }
-  );
-  if (data && typeof data === "object" && "urls" in data) {
-    return (data as { urls?: Record<string, string> }).urls ?? {};
-  }
-  return (data as Record<string, string>) ?? {};
 }
 
 export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {

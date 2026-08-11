@@ -22,10 +22,10 @@ import {
 } from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { AssetCard } from "./AssetCard";
-import { MediaThumb } from "./MediaThumb";
+import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { fetchMediaAssets } from "../services/publications-api";
-import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import {
   fetchUploadUrl,
   readVideoDuration,

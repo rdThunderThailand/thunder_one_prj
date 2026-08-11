@@ -3,8 +3,8 @@
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
-import { MediaThumb } from "./MediaThumb";
-import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import { MediaThumb } from "@/components/ui/MediaThumb";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { utcToZonedParts } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
 import {

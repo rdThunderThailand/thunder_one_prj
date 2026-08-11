@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fetchPreviewUrls } from "../services/publications-api";
+import { fetchPreviewUrls } from "@/lib/api/media-api";
 
 /**
  * Returns a map of media_asset_id → signed preview URL for the given ids,
