@@ -1,4 +1,5 @@
-// Placeholder route — wires to the "playlists" feature once it's implemented.
+import { PlaylistsListPage } from "@/features/playlists/components/PlaylistsListPage";
+
 export default function PlaylistsPage() {
-  return <h1 className="text-2xl font-semibold">Playlists</h1>;
+  return <PlaylistsListPage />;
 }

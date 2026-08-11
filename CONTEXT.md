@@ -27,8 +27,8 @@ A reusable media file (image or video) stored in the central repository. Not vid
 _Avoid_: Video, media file, content (when a specific entity is meant)
 
 **Playlist**:
-An ordered sequence of Assets, with per-item duration and transition settings. Has no scheduling or targeting responsibility of its own.
-_Avoid_: Schedule, rotation
+An ordered sequence of Assets, with per-item duration and transition settings. Has no scheduling or targeting responsibility of its own. Only two of its properties reach a screen — each item's duration and its transition (`cut` or `fade`); everything else an operator sets on a Playlist is descriptive. It carries a **Cover**, which is a reference to one of the Assets already in the Playlist (never a separately uploaded file) and falls back to the first item when none is picked, and a **creator**, recorded once at creation and never reassigned by later edits. The playback settings an operator can configure (play mode, repeat, media fit, volume, failure handling) are stored but no player reads them yet — see `docs/adr/0010-playlist-settings-in-metadata.md`. Archiving a Playlist means setting it `inactive`; there is no delete.
+_Avoid_: Schedule, rotation, Cover image (implies an uploaded file — a Cover is a pointer to a member Asset)
 
 **Layout**:
 A screen composition containing one or more display zones, each of which can hold different content. MVP ships without Layout (single content or Playlist only); Grid Layout and Custom Layout arrive in Phase 3.
@@ -39,7 +39,8 @@ While a Publication is a `Draft`, two operators editing it concurrently is a rea
 _Avoid_: Campaign (Campaign is a later, larger grouping of Publications — not yet in scope)
 
 **Schedule**:
-The timing rules (start/end date-time, recurrence) attached to a Publication. A standalone concept, not embedded in Playlist. Times are wall-clock with no baked-in time zone of their own — each target Channel resolves the Schedule against its own Location's time zone independently at Job-evaluation time, so a multi-Channel Publication spanning Locations fires at local business hours everywhere, not at one shared instant. Publication's own "Time zone" field is a display default only, not the evaluation source of truth.
+The timing rules (start/end date-time, recurrence) attached to a Publication. A standalone concept, not embedded in Playlist. Carries a single explicit `timezone` (set once at schedule creation, defaults to `Asia/Bangkok`) — this is the direct evaluation source of truth: `media_job_poll` evaluates recurrence (day-of-week, daily start/end) against `now() AT TIME ZONE schedules.timezone` with no further resolution step. There is no per-Channel or per-Location time zone — `media_core.channels` carries neither, and no `locations` table exists in the schema — so every Channel targeted by a multi-Channel Publication fires at the same instant, evaluated in the one time zone the Schedule was given. A Publication spanning Locations in different real-world time zones does *not* fire at "local business hours everywhere"; it fires at whatever wall-clock time the Schedule's single timezone maps to for each Channel.
+_Known gap, not yet resolved: if Thunder One ever needs per-Location evaluation (a multi-timezone tenant), `schedules.timezone` would need to stop being the sole input — the same single-timezone assumption is called out explicitly in `Thunder_Core/supabase/migrations/069_media_poll_window_conflicts_and_airtime_report.sql` (the `ponytail: recurrence/time-window overlap...` comment on `media_schedule_conflicts`)._
 
 **Channel**:
 A business-facing publishing destination (e.g. "Central World – Ground Floor – Entrance Screen"). MVP UI enforces 1 Channel → 1 Device, but the schema must support 1 Channel → many Devices to avoid rework.
