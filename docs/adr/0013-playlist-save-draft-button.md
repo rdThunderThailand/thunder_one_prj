@@ -37,7 +37,7 @@ button is added to steps 1-3 so the user is not limited to waiting for the next 
 
 ## Decision
 
-**Add a "Save Draft" button to the Basic Info, Metadata, and Content steps**, calling the same
+**Add a "Save Draft" button to the Basic Info (1), Content (2), and Settings (3) steps**, calling the same
 `persistDraft({ activate: false })` used by `goNext`. This corrects ADR 0012's rejection: the
 premise that publications does without one was wrong, and now that `goNext` carries the full
 payload every time, adding the button is a small, consistent addition rather than a new
