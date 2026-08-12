@@ -1,14 +1,6 @@
 import { requestApi } from "@/lib/api/media-api";
 import type { PlaylistDetail, PlaylistListItem, PlaylistStatus, Transition } from "../types";
 
-type PlaylistWrite = {
-  name: string;
-  status?: PlaylistStatus;
-  /** ponytail: dropped by the deployed route's zod schema until the Phase 2 migration lands
-   *  (docs/playlists/plan-playlist-ui.md) — sending it early is harmless, not an error. */
-  metadata?: Record<string, unknown>;
-};
-
 export async function fetchPlaylists(): Promise<PlaylistListItem[]> {
   const data = await requestApi<{ playlists?: PlaylistListItem[] } | PlaylistListItem[]>(
     "GET",
@@ -25,15 +17,32 @@ export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {
   return requestApi<PlaylistDetail>("GET", `/media/playlists/${id}`);
 }
 
-export async function createPlaylist(body: PlaylistWrite): Promise<{ playlist_id: string }> {
-  return requestApi<{ playlist_id: string }>("POST", "/media/playlists", body);
-}
+export type UpsertPlaylistInput = {
+  name: string;
+  status?: PlaylistStatus;
+  metadata?: Record<string, unknown>;
+  playlistId?: string | null;
+  /** Only meaningful on an update — a fresh draft (POST) has no revision to
+   *  race against yet. `media_playlist_upsert` skips the check when omitted. */
+  expectedRevision?: number | null;
+  /** Only sent on create: an update already addresses the row by id and
+   *  never needs a dedupe key. */
+  idempotencyKey?: string;
+};
 
-export async function updatePlaylist(
-  id: string,
-  body: PlaylistWrite
-): Promise<{ playlist_id: string }> {
-  return requestApi<{ playlist_id: string }>("PATCH", `/media/playlists/${id}`, body);
+export async function upsertPlaylist(
+  input: UpsertPlaylistInput
+): Promise<{ playlist_id: string; revision: number }> {
+  const body: Record<string, unknown> = { name: input.name.trim() };
+  if (input.status) body.status = input.status;
+  if (input.metadata) body.metadata = input.metadata;
+
+  if (input.playlistId) {
+    if (input.expectedRevision != null) body.expected_revision = input.expectedRevision;
+    return requestApi("PATCH", `/media/playlists/${input.playlistId}`, body);
+  }
+  if (input.idempotencyKey) body.idempotency_key = input.idempotencyKey;
+  return requestApi("POST", "/media/playlists", body);
 }
 
 /** What `PUT /{id}/items` accepts — `duration_seconds` is omitted (not null) to let the
@@ -49,6 +58,6 @@ export type PlaylistItemPayload = {
 export async function setPlaylistItems(
   id: string,
   items: PlaylistItemPayload[]
-): Promise<{ item_count?: number }> {
-  return requestApi<{ item_count?: number }>("PUT", `/media/playlists/${id}/items`, { items });
+): Promise<{ item_count?: number; revision?: number }> {
+  return requestApi("PUT", `/media/playlists/${id}/items`, { items });
 }
