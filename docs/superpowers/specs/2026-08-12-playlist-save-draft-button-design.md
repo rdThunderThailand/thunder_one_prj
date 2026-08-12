@@ -124,9 +124,10 @@ reached — the button would have nothing to do there.
 ### 6. Testing
 
 `resolveDraftStatus` is extracted specifically so the branching is testable
-without mounting the wizard. It lives beside the hook in
-`src/features/playlists/hooks/resolve-draft-status.ts`, with one new
-`src/features/playlists/hooks/resolve-draft-status.check.mts` covering the four
+without mounting the wizard. Pure logic modules in this feature live at the
+feature root next to their check file (`step-validation.ts`, `metadata.ts`,
+`duration.ts`), so it goes to `src/features/playlists/resolve-draft-status.ts`
+with `src/features/playlists/resolve-draft-status.check.mts` covering the four
 rows of the table above — `node:assert` only, run with `node <file>.check.mts`,
 following the existing convention (`step-validation.check.mts`).
 
@@ -186,7 +187,7 @@ Also out of scope:
 ## Verification plan
 
 - `pnpm tsc --noEmit` clean.
-- `node src/features/playlists/hooks/resolve-draft-status.check.mts` passes.
+- `node src/features/playlists/resolve-draft-status.check.mts` passes.
 - Browser checklist (requires Thunder_Core PR #29 deployed first — the frontend
   calls the deployed backend, not local code):
   1. New playlist → fill name → Next → row exists with `status='draft'`.
