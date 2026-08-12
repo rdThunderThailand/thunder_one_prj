@@ -3,7 +3,7 @@
 export const TRANSITIONS = ["cut", "fade"] as const;
 export type Transition = (typeof TRANSITIONS)[number];
 
-export const PLAYLIST_STATUSES = ["active", "inactive"] as const;
+export const PLAYLIST_STATUSES = ["draft", "active", "inactive"] as const;
 export type PlaylistStatus = (typeof PLAYLIST_STATUSES)[number];
 
 export const PLAYLIST_TYPES = ["standard", "dynamic", "loop", "manual"] as const;
@@ -88,6 +88,7 @@ export type PlaylistDetail = {
   name: string;
   status: PlaylistStatus;
   items: PlaylistItem[];
+  revision: number;
   /** Phase 2 fields — absent until the get RPC is extended. */
   metadata?: Record<string, unknown>;
   created_by?: Creator;
