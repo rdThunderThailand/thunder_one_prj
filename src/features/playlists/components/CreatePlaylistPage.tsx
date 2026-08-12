@@ -10,24 +10,15 @@ import { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api
 import { classifyApiError, isConflict, type ClassifiedError } from "@/lib/api/api-error";
 import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { hasDraftContent, useDraftHydrated, usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
-import { fetchPlaylist, setPlaylistItems, upsertPlaylist } from "../services/playlists-api";
-import { encodeMetadata } from "../metadata";
+import { fetchPlaylist, upsertPlaylist } from "../services/playlists-api";
 import { validateStep, type WizardStepId } from "../step-validation";
+import { isStaleDraftError, usePlaylistDraftSave } from "../hooks/usePlaylistDraftSave";
 import { LAST_STEP, PlaylistStepper } from "./PlaylistStepper";
 import { BasicInfoStep } from "./BasicInfoStep";
 import { ContentStep } from "./ContentStep";
 import { SettingsStep } from "./SettingsStep";
 import { ReviewStep } from "./ReviewStep";
 import { PlaylistSummary } from "./PlaylistSummary";
-
-/** The backend rejection that means "this draft id is no longer usable" — the row
- *  was deleted, or moved out of 'draft' from elsewhere. Matched on message because
- *  the proxy only forwards `{ error: string }`. Same shape as publications'
- *  isStaleDraftError in usePublishDraft.ts. */
-function isStaleDraftError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : "";
-  return msg.includes("playlist not found for this tenant");
-}
 
 function detailToDraftItems(items: { media_asset_id: string; title?: string; position: number; duration_seconds?: number | null; transition?: string }[]) {
   return [...items]
@@ -48,6 +39,7 @@ export function CreatePlaylistPage() {
   const hydrated = useDraftHydrated();
   const draft = usePlaylistDraftStore();
   const { step, name, info, items, editingId, playlistId } = draft;
+  const { persistDraft } = usePlaylistDraftSave();
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -191,41 +183,12 @@ export function CreatePlaylistPage() {
     router.push("/playlists");
   };
 
-  const buildItemPayload = () =>
-    items.map((item, index) => ({
-      media_asset_id: item.mediaAssetId,
-      position: index,
-      ...(item.durationSeconds != null ? { duration_seconds: item.durationSeconds } : {}),
-      transition: item.transition,
-    }));
-
   const handleSubmit = async () => {
     setSubmitError(null);
     setRevisionConflict(null);
-
-    const current = usePlaylistDraftStore.getState();
-    const id = current.playlistId ?? current.editingId;
-    if (!id) {
-      setSubmitError({ kind: "rejected", message: "ไม่พบ playlist ที่จะบันทึก กรุณากลับไปเริ่มใหม่จากขั้นตอนแรก" });
-      return;
-    }
-
     setSubmitting(true);
     try {
-      const metadata = encodeMetadata({ info, playback: draft.playback });
-
-      const res = await upsertPlaylist({
-        name: name.trim(),
-        status: "active",
-        metadata,
-        playlistId: id,
-        expectedRevision: current.revision,
-      });
-      draft.setRevision(res.revision);
-
-      const itemsRes = await setPlaylistItems(id, buildItemPayload());
-      if (typeof itemsRes.revision === "number") draft.setRevision(itemsRes.revision);
-
+      await persistDraft({ activate: true });
       draft.reset();
       router.push("/playlists");
     } catch (err) {
