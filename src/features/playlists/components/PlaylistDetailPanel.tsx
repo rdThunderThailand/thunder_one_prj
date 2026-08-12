@@ -10,6 +10,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { fetchPlaylist } from "../services/playlists-api";
 import { decodeMetadata, resolveCoverAssetId } from "../metadata";
 import { formatDuration, totalDurationSeconds } from "../duration";
+import { statusBadge } from "../status-display";
 import type { PlaylistDetail, PlaylistListItem } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 
@@ -72,8 +73,8 @@ export function PlaylistDetailPanel({
       />
 
       <div className="p-4">
-        <Badge color={playlist.status === "active" ? "green" : "zinc"} variant="pill">
-          {playlist.status === "active" ? "Active" : "Inactive"}
+        <Badge color={statusBadge(playlist.status).color} variant="pill">
+          {statusBadge(playlist.status).label}
         </Badge>
 
         {error && <p className="mt-3 text-sm text-red-500">{error.message}</p>}
@@ -117,14 +118,19 @@ export function PlaylistDetailPanel({
           >
             Edit Playlist
           </Link>
-          <Button
-            variant="secondary"
-            onClick={() =>
-              onStatusChange(playlist.id, playlist.status === "active" ? "inactive" : "active")
-            }
-          >
-            {playlist.status === "active" ? "Archive" : "Activate"}
-          </Button>
+          {/* A draft has no status toggle on purpose: it would read as "Activate" and publish a
+              playlist that never passed validateStep — no items, no playback settings — straight
+              to the screens. Finishing it goes through the wizard (docs/adr/0014). */}
+          {playlist.status !== "draft" && (
+            <Button
+              variant="secondary"
+              onClick={() =>
+                onStatusChange(playlist.id, playlist.status === "active" ? "inactive" : "active")
+              }
+            >
+              {playlist.status === "active" ? "Archive" : "Activate"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

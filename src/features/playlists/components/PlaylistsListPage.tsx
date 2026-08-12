@@ -13,6 +13,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchPlaylists, upsertPlaylist } from "../services/playlists-api";
 import { decodeMetadata, resolveCoverAssetId } from "../metadata";
+import { statusBadge } from "../status-display";
 import type { PlaylistListItem, PlaylistStatus } from "../types";
 import { PlaylistDetailPanel } from "./PlaylistDetailPanel";
 
@@ -20,6 +21,7 @@ const STATUS_FILTERS: { value: PlaylistStatus | "all"; label: string }[] = [
   { value: "all", label: "All Status" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
+  { value: "draft", label: "Draft" },
 ];
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -72,8 +74,8 @@ function PlaylistRow({
       </td>
       <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">{playlist.item_count}</td>
       <td className="py-3">
-        <Badge color={playlist.status === "active" ? "green" : "zinc"} variant="pill">
-          {playlist.status === "active" ? "Active" : "Inactive"}
+        <Badge color={statusBadge(playlist.status).color} variant="pill">
+          {statusBadge(playlist.status).label}
         </Badge>
       </td>
       <td className="py-3 text-sm text-zinc-500 dark:text-zinc-400">
@@ -113,8 +115,9 @@ export function PlaylistsListPage() {
   const stats = useMemo(() => {
     const total = playlists?.length ?? 0;
     const active = playlists?.filter((p) => p.status === "active").length ?? 0;
-    const inactive = total - active;
-    return { total, active, inactive };
+    const inactive = playlists?.filter((p) => p.status === "inactive").length ?? 0;
+    const draft = playlists?.filter((p) => p.status === "draft").length ?? 0;
+    return { total, active, inactive, draft };
   }, [playlists]);
 
   const selected = filtered.find((p) => p.id === selectedId) ?? null;
@@ -148,10 +151,11 @@ export function PlaylistsListPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Playlists" value={stats.total} />
         <StatCard label="Active" value={stats.active} />
         <StatCard label="Inactive" value={stats.inactive} />
+        <StatCard label="Draft" value={stats.draft} />
       </div>
 
       {error && (
