@@ -137,9 +137,8 @@ export function CreatePlaylistPage() {
   // whole point. Only the name is required, because the endpoint refuses an empty one.
   const saveDraft = async () => {
     if (!name.trim()) {
-      const message = "กรุณากรอกชื่อ playlist ก่อนบันทึกร่าง";
-      setSubmitError({ kind: "rejected", message });
-      toast.error(message);
+      // Inline card only — same one-surface intent as the revision-conflict branch below.
+      setSubmitError({ kind: "rejected", message: "กรุณากรอกชื่อ playlist ก่อนบันทึกร่าง" });
       return;
     }
     setSavingDraft(true);
