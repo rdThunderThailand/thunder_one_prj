@@ -7,24 +7,27 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "@/components/ui/icons";
 import { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api";
-import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { classifyApiError, isConflict, type ClassifiedError } from "@/lib/api/api-error";
 import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { hasDraftContent, useDraftHydrated, usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
-import {
-  createPlaylist,
-  fetchPlaylist,
-  fetchPlaylists,
-  setPlaylistItems,
-  updatePlaylist,
-} from "../services/playlists-api";
+import { fetchPlaylist, setPlaylistItems, upsertPlaylist } from "../services/playlists-api";
 import { encodeMetadata } from "../metadata";
-import { isNameTaken, validateStep, type WizardStepId } from "../step-validation";
+import { validateStep, type WizardStepId } from "../step-validation";
 import { LAST_STEP, PlaylistStepper } from "./PlaylistStepper";
 import { BasicInfoStep } from "./BasicInfoStep";
 import { ContentStep } from "./ContentStep";
 import { SettingsStep } from "./SettingsStep";
 import { ReviewStep } from "./ReviewStep";
 import { PlaylistSummary } from "./PlaylistSummary";
+
+/** The backend rejection that means "this draft id is no longer usable" — the row
+ *  was deleted, or moved out of 'draft' from elsewhere. Matched on message because
+ *  the proxy only forwards `{ error: string }`. Same shape as publications'
+ *  isStaleDraftError in usePublishDraft.ts. */
+function isStaleDraftError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : "";
+  return msg.includes("playlist not found for this tenant");
+}
 
 function detailToDraftItems(items: { media_asset_id: string; title?: string; position: number; duration_seconds?: number | null; transition?: string }[]) {
   return [...items]
@@ -50,10 +53,6 @@ export function CreatePlaylistPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(true);
-  // Every existing playlist name in the tenant. UNIQUE (tenant_id, name) is enforced in
-  // Postgres and the RPC reports the violation as an opaque 500, so the collision has to
-  // be caught before submit — see docs/playlists/plan-playlist-ui.md.
-  const [existingNames, setExistingNames] = useState<{ id: string; name: string }[]>([]);
 
   const [resumeError, setResumeError] = useState<ClassifiedError | null>(null);
   const [resuming, setResuming] = useState(!!idParam);
@@ -62,22 +61,15 @@ export function CreatePlaylistPage() {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<ClassifiedError | null>(null);
-  const [retryOnly, setRetryOnly] = useState(false);
+  const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
+  const [creatingDraft, setCreatingDraft] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    Promise.allSettled([
-      fetchCampaigns(),
-      fetchTags(),
-      fetchMediaAssets(),
-      fetchPlaylists(),
-    ]).then(([c, t, a, p]) => {
+    Promise.allSettled([fetchCampaigns(), fetchTags(), fetchMediaAssets()]).then(([c, t, a]) => {
       if (c.status === "fulfilled") setCampaigns(c.value);
       if (t.status === "fulfilled") setTags(t.value);
       if (a.status === "fulfilled") setAssets(a.value);
-      if (p.status === "fulfilled") {
-        setExistingNames(p.value.map((pl) => ({ id: pl.id, name: pl.name })));
-      }
       setAssetsLoading(false);
     });
   }, []);
@@ -95,6 +87,7 @@ export function CreatePlaylistPage() {
         draft.setName(detail.name);
         draft.setItems(detailToDraftItems(detail.items));
         draft.setPlaylistId(detail.id);
+        draft.setRevision(detail.revision);
         usePlaylistDraftStore.setState({ editingId: detail.id, step: 1 });
       })
       .catch((err) => {
@@ -128,16 +121,55 @@ export function CreatePlaylistPage() {
   const showDraftBanner =
     !idParam && !editingId && !dismissedBanner && hasDraftContent(draft) && step === 1;
 
-  // The playlist being edited keeps its own name; every other name in the tenant is taken.
-  const takenNames = existingNames.filter((p) => p.id !== editingId).map((p) => p.name);
+  const validatableDraft = { name, description: info.description, items };
 
-  const validatableDraft = { name, description: info.description, items, takenNames };
-
-  const goNext = () => {
+  // Draft row is created (or updated) on the first Next from step 1 — mirrors
+  // publications' persistDraft trigger point (docs/adr/0012).
+  const goNext = async () => {
     if (step >= LAST_STEP) return;
     const result = validateStep(step as WizardStepId, validatableDraft);
     setValidationErrors(result.errors);
     if (!result.valid) return;
+
+    if (step === 1) {
+      setCreatingDraft(true);
+      setSubmitError(null);
+      try {
+        const current = usePlaylistDraftStore.getState();
+        const res = await upsertPlaylist({
+          name: name.trim(),
+          status: "draft",
+          playlistId: current.playlistId ?? current.editingId,
+          expectedRevision: current.revision,
+          idempotencyKey: current.idempotencyKey,
+        });
+        draft.setPlaylistId(res.playlist_id);
+        draft.setRevision(res.revision);
+      } catch (err) {
+        if (isStaleDraftError(err)) {
+          draft.resetIdempotencyKey();
+          draft.setPlaylistId(null);
+          draft.setRevision(null);
+          const res = await upsertPlaylist({
+            name: name.trim(),
+            status: "draft",
+            idempotencyKey: usePlaylistDraftStore.getState().idempotencyKey,
+          });
+          draft.setPlaylistId(res.playlist_id);
+          draft.setRevision(res.revision);
+        } else {
+          if (err instanceof Error && isConflict(err.message)) {
+            setRevisionConflict(classifyApiError(err, err.message).message);
+          } else {
+            setSubmitError(classifyApiError(err, "บันทึก draft ไม่สำเร็จ"));
+          }
+          setCreatingDraft(false);
+          return;
+        }
+      }
+      setCreatingDraft(false);
+    }
+
     draft.setStep(step + 1);
   };
 
@@ -159,59 +191,33 @@ export function CreatePlaylistPage() {
 
   const handleSubmit = async () => {
     setSubmitError(null);
-
-    // Re-checked here and not only on step 1: the list was read when the wizard opened, and
-    // someone else may have taken the name since. Catching it before the write turns an
-    // opaque 500 into a sentence the operator can act on.
-    if (!retryOnly && isNameTaken(name, takenNames)) {
-      setValidationErrors([]);
-      setSubmitError({
-        kind: "rejected",
-        message: "มี playlist ชื่อนี้อยู่แล้ว กรุณากลับไปขั้นตอน Basic Info แล้วเปลี่ยนชื่อ",
-      });
-      return;
-    }
-
     setSubmitting(true);
     try {
+      const current = usePlaylistDraftStore.getState();
       const metadata = encodeMetadata({ info, playback: draft.playback });
-
-      let id = playlistId ?? editingId;
-      if (!retryOnly) {
-        if (editingId) {
-          await updatePlaylist(editingId, { name: name.trim(), metadata });
-          id = editingId;
-        } else {
-          const created = await createPlaylist({ name: name.trim(), metadata });
-          id = created.playlist_id;
-          draft.setPlaylistId(id);
-        }
-      }
+      const id = current.playlistId ?? current.editingId;
       if (!id) throw new Error("missing playlist id");
 
-      await setPlaylistItems(id, buildItemPayload());
+      const res = await upsertPlaylist({
+        name: name.trim(),
+        status: "active",
+        metadata,
+        playlistId: id,
+        expectedRevision: current.revision,
+      });
+      draft.setRevision(res.revision);
+
+      const itemsRes = await setPlaylistItems(id, buildItemPayload());
+      if (typeof itemsRes.revision === "number") draft.setRevision(itemsRes.revision);
 
       draft.reset();
       router.push("/playlists");
     } catch (err) {
-      // Once the playlist row exists, only the items call needs retrying — retrying the
-      // whole thing would hit UNIQUE(tenant_id, name) on a fresh create.
-      const rowExists = !!(playlistId ?? editingId);
-      setRetryOnly(rowExists);
-      const classified = classifyApiError(err, "สร้าง playlist ไม่สำเร็จ");
-      // The name-write RPC masks a UNIQUE (tenant_id, name) violation as a generic
-      // failure (`callMedia` only passes through its own EXPECTED_ERROR prefixes), so a
-      // failure on the name write with no row created is most likely a duplicate name.
-      // Phase 2 makes the RPC say so itself; until then, say it here.
-      setSubmitError(
-        !rowExists && classified.kind === "retryable"
-          ? {
-              kind: "rejected",
-              message:
-                "บันทึกไม่สำเร็จ — สาเหตุที่พบบ่อยที่สุดคือมี playlist ชื่อนี้อยู่แล้ว ลองเปลี่ยนชื่อในขั้นตอน Basic Info",
-            }
-          : classified
-      );
+      if (err instanceof Error && isConflict(err.message)) {
+        setRevisionConflict(classifyApiError(err, err.message).message);
+      } else {
+        setSubmitError(classifyApiError(err, "สร้าง playlist ไม่สำเร็จ"));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -220,22 +226,13 @@ export function CreatePlaylistPage() {
   const stepContent = () => {
     switch (step) {
       case 1:
-        return (
-          <BasicInfoStep campaigns={campaigns} workspaceTags={tags} takenNames={takenNames} />
-        );
+        return <BasicInfoStep campaigns={campaigns} workspaceTags={tags} />;
       case 2:
         return <ContentStep assets={assets} loading={assetsLoading} />;
       case 3:
         return <SettingsStep />;
       case 4:
-        return (
-          <ReviewStep
-            assets={assets}
-            campaigns={campaigns}
-            workspaceTags={tags}
-            takenNames={takenNames}
-          />
-        );
+        return <ReviewStep assets={assets} campaigns={campaigns} workspaceTags={tags} />;
       default:
         return null;
     }
@@ -256,23 +253,23 @@ export function CreatePlaylistPage() {
         }
         actions={
           <>
-            <Button variant="secondary" onClick={goBack} disabled={submitting}>
+            <Button variant="secondary" onClick={goBack} disabled={submitting || creatingDraft}>
               <ArrowLeftIcon className="h-4 w-4" />
               {step === 1 ? "Back: Playlists" : "Back"}
             </Button>
             {step < LAST_STEP ? (
-              <Button onClick={goNext}>
+              <Button onClick={goNext} disabled={creatingDraft}>
                 Next
                 <ArrowRightIcon className="h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={submitting}>
+              <Button onClick={handleSubmit} disabled={submitting || creatingDraft}>
                 {submitting ? (
                   "กำลังบันทึก..."
                 ) : (
                   <>
                     <CheckIcon className="h-4 w-4" />
-                    {retryOnly ? "ลองใหม่" : editingId ? "Save Changes" : "Create Playlist"}
+                    {editingId ? "Save Changes" : "Create Playlist"}
                   </>
                 )}
               </Button>
@@ -324,6 +321,26 @@ export function CreatePlaylistPage() {
           {submitError && (
             <Card className="border-red-200 p-4 dark:border-red-900">
               <p className="text-sm text-red-600 dark:text-red-400">{submitError.message}</p>
+            </Card>
+          )}
+
+          {revisionConflict && (
+            <Card className="border-amber-200 p-4 dark:border-amber-900">
+              <p className="text-sm text-amber-700 dark:text-amber-400">{revisionConflict}</p>
+              <Button
+                className="mt-2"
+                variant="secondary"
+                onClick={async () => {
+                  const id = playlistId ?? editingId;
+                  if (!id) return;
+                  const fresh = await fetchPlaylist(id);
+                  draft.setName(fresh.name);
+                  draft.setRevision(fresh.revision);
+                  setRevisionConflict(null);
+                }}
+              >
+                โหลดใหม่
+              </Button>
             </Card>
           )}
         </div>
