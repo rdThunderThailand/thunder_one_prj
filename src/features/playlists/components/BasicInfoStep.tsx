@@ -6,7 +6,7 @@ import { XIcon, PlusIcon } from "@/components/ui/icons";
 import type { Campaign, Tag } from "@/types/domain";
 import { Field, Select, TextArea, inputClasses } from "./form";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
-import { isNameTaken, PLAYLIST_LIMITS } from "../step-validation";
+import { PLAYLIST_LIMITS } from "../step-validation";
 import { PLAYLIST_TYPES } from "../types";
 
 const RESOLUTIONS = [
@@ -21,11 +21,9 @@ const FRAME_RATES = [24, 25, 30, 60];
 export function BasicInfoStep({
   campaigns,
   workspaceTags,
-  takenNames,
 }: {
   campaigns: Campaign[];
   workspaceTags: Tag[];
-  takenNames: string[];
 }) {
   const { name, info, setName, setInfo } = usePlaylistDraftStore();
   const [tagDraft, setTagDraft] = useState("");
@@ -40,7 +38,6 @@ export function BasicInfoStep({
 
   const nameLength = name.length;
   const descriptionLength = info.description?.length ?? 0;
-  const nameTaken = isNameTaken(name, takenNames);
 
   return (
     <Card className="p-5">
@@ -59,12 +56,8 @@ export function BasicInfoStep({
             maxLength={PLAYLIST_LIMITS.nameMax}
             onChange={(e) => setName(e.target.value)}
             placeholder="เช่น KFC Wednesday Main Playlist"
-            aria-invalid={nameTaken}
-            className={`${inputClasses} ${nameTaken ? "border-red-400 focus:border-red-500" : ""}`}
+            className={inputClasses}
           />
-          {nameTaken && (
-            <p className="text-xs text-red-500">มี playlist ชื่อนี้อยู่แล้ว กรุณาใช้ชื่ออื่น</p>
-          )}
         </Field>
 
         <Field label="Campaign" optional>

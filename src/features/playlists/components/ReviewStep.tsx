@@ -8,7 +8,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
 import { formatDuration, totalDurationSeconds } from "../duration";
-import { canSubmit, isNameTaken } from "../step-validation";
+import { canSubmit } from "../step-validation";
 import { useMemo } from "react";
 
 function ReviewRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -24,12 +24,10 @@ export function ReviewStep({
   assets,
   campaigns,
   workspaceTags,
-  takenNames,
 }: {
   assets: MediaAsset[];
   campaigns: Campaign[];
   workspaceTags: Tag[];
-  takenNames: string[];
 }) {
   const draft = usePlaylistDraftStore();
   const { name, info, playback, items } = draft;
@@ -47,8 +45,7 @@ export function ReviewStep({
     (id) => workspaceTags.find((t) => t.id === id)?.name ?? id
   );
 
-  const ready = canSubmit({ name, description: info.description, items, takenNames });
-  const nameTaken = isNameTaken(name, takenNames);
+  const ready = canSubmit({ name, description: info.description, items });
 
   return (
     <div className="flex flex-col gap-4">
@@ -165,19 +162,15 @@ export function ReviewStep({
           </span>
           <span
             className={`flex items-center gap-2 ${
-              name.trim() && !nameTaken ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-500"
+              name.trim() ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-500"
             }`}
           >
-            {name.trim() && !nameTaken ? (
+            {name.trim() ? (
               <CheckCircleIcon className="h-4 w-4" />
             ) : (
               <WarningTriangleIcon className="h-4 w-4 text-amber-500" />
             )}
-            {!name.trim()
-              ? "ยังไม่ได้ตั้งชื่อ playlist"
-              : nameTaken
-                ? "ชื่อนี้ถูกใช้ไปแล้ว กรุณากลับไปเปลี่ยนที่ Basic Info"
-                : "ตั้งชื่อ playlist แล้ว"}
+            {name.trim() ? "ตั้งชื่อ playlist แล้ว" : "ยังไม่ได้ตั้งชื่อ playlist"}
           </span>
         </div>
       </Card>
