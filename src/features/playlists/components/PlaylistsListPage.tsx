@@ -11,7 +11,7 @@ import { SearchIcon } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { fetchPlaylists, updatePlaylist } from "../services/playlists-api";
+import { fetchPlaylists, upsertPlaylist } from "../services/playlists-api";
 import { decodeMetadata, resolveCoverAssetId } from "../metadata";
 import type { PlaylistListItem, PlaylistStatus } from "../types";
 import { PlaylistDetailPanel } from "./PlaylistDetailPanel";
@@ -125,7 +125,7 @@ export function PlaylistsListPage() {
     // Optimistic: archiving is low-stakes and instantly reversible from the same panel.
     setPlaylists((prev) => prev?.map((p) => (p.id === id ? { ...p, status: next } : p)) ?? prev);
     try {
-      await updatePlaylist(id, { name: target.name, status: next });
+      await upsertPlaylist({ playlistId: id, name: target.name, status: next });
     } catch (err) {
       setPlaylists((prev) => prev?.map((p) => (p.id === id ? { ...p, status: target.status } : p)) ?? prev);
       setError(classifyApiError(err, "อัปเดตสถานะไม่สำเร็จ"));
