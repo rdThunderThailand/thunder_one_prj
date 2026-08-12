@@ -58,7 +58,10 @@ export function AssetCard(props: AssetCardProps) {
         </div>
         <div className="flex flex-col gap-1 p-2">
           <p className="truncate text-xs font-medium text-zinc-900">{playlist.name}</p>
-          <p className="text-[11px] text-zinc-400">{playlist.item_count} items</p>
+          <p className="text-[11px] text-zinc-400">
+            {playlist.item_count} items
+            {playlist.created_at ? ` · ${new Date(playlist.created_at).toLocaleDateString()}` : ""}
+          </p>
           <span className="inline-flex w-fit items-center rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">
             Playlist
           </span>
