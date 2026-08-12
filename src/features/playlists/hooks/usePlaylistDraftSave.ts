@@ -39,6 +39,13 @@ export function usePlaylistDraftSave() {
       current.setRevision(res.revision);
     } catch (err) {
       if (!isStaleDraftError(err)) throw err;
+      // Edit mode (`editingId` set — the wizard was opened via `?id=`) means the row was
+      // never a leftover draft this hook just created; a stale-draft error here means the
+      // playlist the operator was editing is genuinely gone. Retrying as a fresh create
+      // would silently spin up a second, new playlist instead of telling them that — so
+      // rethrow and let the caller surface the error. Create mode has no such row to lose,
+      // so it keeps retrying below.
+      if (current.editingId) throw err;
       // Re-mint first: reusing the old key would resolve the retry back to the
       // same dead row instead of creating a fresh draft.
       current.resetIdempotencyKey();
