@@ -1,8 +1,9 @@
 "use client";
 
-// Single source of truth for the Create Playlist wizard. Unlike the publications draft,
-// nothing here is persisted server-side until the final submit — the whole wizard is local
-// (docs/playlists/plan-playlist-ui.md), so this store *is* the draft.
+// Single source of truth for the Create Playlist wizard. This store is the local mirror of
+// a draft that is also persisted server-side on every Next and on Save Draft (docs/adr/0012,
+// docs/adr/0013) — `playlistId`, `revision`, and `idempotencyKey` below are what tie this
+// local copy to that server-side row.
 
 import { useEffect, useState } from "react";
 import { create } from "zustand";
@@ -36,7 +37,7 @@ function defaultPlayback(): PlaylistPlayback {
 
 export interface PlaylistDraftFields {
   /** Set only after a successful create — lets a failed `setItems` retry without
-   *  re-creating the playlist (which would hit UNIQUE (tenant_id, name) anyway). */
+   *  re-creating the playlist. */
   playlistId: string | null;
   /** Set when the wizard opened as `?id=<uuid>` — the final button saves instead of creates. */
   editingId: string | null;
