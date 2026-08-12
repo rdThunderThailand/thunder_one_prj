@@ -10,9 +10,9 @@ import { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api
 import { classifyApiError, isConflict, type ClassifiedError } from "@/lib/api/api-error";
 import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { hasDraftContent, useDraftHydrated, usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
-import { fetchPlaylist, upsertPlaylist } from "../services/playlists-api";
+import { fetchPlaylist } from "../services/playlists-api";
 import { validateStep, type WizardStepId } from "../step-validation";
-import { isStaleDraftError, usePlaylistDraftSave } from "../hooks/usePlaylistDraftSave";
+import { usePlaylistDraftSave } from "../hooks/usePlaylistDraftSave";
 import { LAST_STEP, PlaylistStepper } from "./PlaylistStepper";
 import { BasicInfoStep } from "./BasicInfoStep";
 import { ContentStep } from "./ContentStep";
@@ -115,61 +115,29 @@ export function CreatePlaylistPage() {
 
   const validatableDraft = { name, description: info.description, items };
 
-  // Draft row is created (or updated) on the first Next from step 1 — mirrors
-  // publications' persistDraft trigger point (docs/adr/0012).
+  // Every Next persists the whole draft — name, metadata and items. Restricting
+  // this to step 1 (as it originally was) left a crash mid-wizard with a
+  // name-only row and every picked asset lost.
   const goNext = async () => {
     if (step >= LAST_STEP) return;
     const result = validateStep(step as WizardStepId, validatableDraft);
     setValidationErrors(result.errors);
     if (!result.valid) return;
 
-    if (step === 1) {
-      setCreatingDraft(true);
-      setSubmitError(null);
-      setRevisionConflict(null);
-      let ok = true;
-      try {
-        const current = usePlaylistDraftStore.getState();
-        const existingId = current.playlistId ?? current.editingId;
-        const res = await upsertPlaylist({
-          name: name.trim(),
-          status: existingId ? undefined : "draft",
-          playlistId: existingId,
-          expectedRevision: current.revision,
-          idempotencyKey: current.idempotencyKey,
-        });
-        draft.setPlaylistId(res.playlist_id);
-        draft.setRevision(res.revision);
-      } catch (err) {
-        if (isStaleDraftError(err)) {
-          draft.resetIdempotencyKey();
-          draft.setPlaylistId(null);
-          draft.setRevision(null);
-          try {
-            const res = await upsertPlaylist({
-              name: name.trim(),
-              status: "draft",
-              idempotencyKey: usePlaylistDraftStore.getState().idempotencyKey,
-            });
-            draft.setPlaylistId(res.playlist_id);
-            draft.setRevision(res.revision);
-            usePlaylistDraftStore.setState({ editingId: null });
-          } catch (retryErr) {
-            setSubmitError(classifyApiError(retryErr, "บันทึก draft ไม่สำเร็จ"));
-            ok = false;
-          }
-        } else {
-          if (err instanceof Error && isConflict(err.message)) {
-            setRevisionConflict(classifyApiError(err, err.message).message);
-          } else {
-            setSubmitError(classifyApiError(err, "บันทึก draft ไม่สำเร็จ"));
-          }
-          ok = false;
-        }
-      } finally {
-        setCreatingDraft(false);
+    setCreatingDraft(true);
+    setSubmitError(null);
+    setRevisionConflict(null);
+    try {
+      await persistDraft({ activate: false });
+    } catch (err) {
+      if (err instanceof Error && isConflict(err.message)) {
+        setRevisionConflict(classifyApiError(err, err.message).message);
+      } else {
+        setSubmitError(classifyApiError(err, "บันทึก draft ไม่สำเร็จ"));
       }
-      if (!ok) return;
+      return;
+    } finally {
+      setCreatingDraft(false);
     }
 
     draft.setStep(step + 1);
