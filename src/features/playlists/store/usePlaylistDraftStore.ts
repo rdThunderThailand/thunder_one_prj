@@ -86,6 +86,8 @@ interface PlaylistDraftStore extends PlaylistDraftFields {
   setPlaylistId: (id: string | null) => void;
   setRevision: (revision: number | null) => void;
   resetIdempotencyKey: () => void;
+  /** Merges a partial draft in — used to restore a fetched `PlaylistDetail` (via
+   *  `draft-from-detail.ts`) without re-typing every field at each call site. */
   loadDraft: (draft: Partial<PlaylistDraftFields>) => void;
   reset: () => void;
 }

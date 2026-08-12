@@ -14,23 +14,13 @@ import { hasDraftContent, useDraftHydrated, usePlaylistDraftStore } from "../sto
 import { fetchPlaylist } from "../services/playlists-api";
 import { validateStep, type WizardStepId } from "../step-validation";
 import { usePlaylistDraftSave } from "../hooks/usePlaylistDraftSave";
+import { playlistDetailToDraftFields } from "../draft-from-detail";
 import { LAST_STEP, PlaylistStepper } from "./PlaylistStepper";
 import { BasicInfoStep } from "./BasicInfoStep";
 import { ContentStep } from "./ContentStep";
 import { SettingsStep } from "./SettingsStep";
 import { ReviewStep } from "./ReviewStep";
 import { PlaylistSummary } from "./PlaylistSummary";
-
-function detailToDraftItems(items: { media_asset_id: string; title?: string; position: number; duration_seconds?: number | null; transition?: string }[]) {
-  return [...items]
-    .sort((a, b) => a.position - b.position)
-    .map((item) => ({
-      mediaAssetId: item.media_asset_id,
-      title: item.title,
-      durationSeconds: item.duration_seconds ?? null,
-      transition: item.transition === "cut" ? ("cut" as const) : ("fade" as const),
-    }));
-}
 
 export function CreatePlaylistPage() {
   const router = useRouter();
@@ -77,11 +67,9 @@ export function CreatePlaylistPage() {
     fetchPlaylist(idParam)
       .then((detail) => {
         if (!alive) return;
+        const fields = playlistDetailToDraftFields(detail);
         draft.reset();
-        draft.setName(detail.name);
-        draft.setItems(detailToDraftItems(detail.items));
-        draft.setPlaylistId(detail.id);
-        draft.setRevision(detail.revision);
+        draft.loadDraft(fields);
         usePlaylistDraftStore.setState({ editingId: detail.id, step: 1 });
       })
       .catch((err) => {
@@ -321,9 +309,7 @@ export function CreatePlaylistPage() {
                   const id = playlistId ?? editingId;
                   if (!id) return;
                   const fresh = await fetchPlaylist(id);
-                  draft.setName(fresh.name);
-                  draft.setItems(detailToDraftItems(fresh.items));
-                  draft.setRevision(fresh.revision);
+                  draft.loadDraft(playlistDetailToDraftFields(fresh));
                   setRevisionConflict(null);
                 }}
               >

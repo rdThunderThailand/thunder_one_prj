@@ -197,6 +197,9 @@ Also out of scope:
   5. Finish the wizard → row flips to `status='active'`, appears in `/playlists`.
   6. Two tabs editing the same draft → second save shows the revision-conflict
      banner, not a silent overwrite.
+  7. Open an existing **active** playlist via `?id=` → confirm its description, tags and
+     playback settings actually load into the wizard → press Next → refresh → all of them are
+     unchanged, and the playlist is still `active`.
 
-Per the working agreement, ask before running the browser pass; steps 1–6 above
+Per the working agreement, ask before running the browser pass; steps 1–7 above
 are equally usable as a checklist handed to the operator.
