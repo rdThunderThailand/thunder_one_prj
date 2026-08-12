@@ -134,12 +134,15 @@ export function CreatePlaylistPage() {
     if (step === 1) {
       setCreatingDraft(true);
       setSubmitError(null);
+      setRevisionConflict(null);
+      let ok = true;
       try {
         const current = usePlaylistDraftStore.getState();
+        const existingId = current.playlistId ?? current.editingId;
         const res = await upsertPlaylist({
           name: name.trim(),
-          status: "draft",
-          playlistId: current.playlistId ?? current.editingId,
+          status: existingId ? undefined : "draft",
+          playlistId: existingId,
           expectedRevision: current.revision,
           idempotencyKey: current.idempotencyKey,
         });
@@ -150,24 +153,30 @@ export function CreatePlaylistPage() {
           draft.resetIdempotencyKey();
           draft.setPlaylistId(null);
           draft.setRevision(null);
-          const res = await upsertPlaylist({
-            name: name.trim(),
-            status: "draft",
-            idempotencyKey: usePlaylistDraftStore.getState().idempotencyKey,
-          });
-          draft.setPlaylistId(res.playlist_id);
-          draft.setRevision(res.revision);
+          try {
+            const res = await upsertPlaylist({
+              name: name.trim(),
+              status: "draft",
+              idempotencyKey: usePlaylistDraftStore.getState().idempotencyKey,
+            });
+            draft.setPlaylistId(res.playlist_id);
+            draft.setRevision(res.revision);
+          } catch (retryErr) {
+            setSubmitError(classifyApiError(retryErr, "บันทึก draft ไม่สำเร็จ"));
+            ok = false;
+          }
         } else {
           if (err instanceof Error && isConflict(err.message)) {
             setRevisionConflict(classifyApiError(err, err.message).message);
           } else {
             setSubmitError(classifyApiError(err, "บันทึก draft ไม่สำเร็จ"));
           }
-          setCreatingDraft(false);
-          return;
+          ok = false;
         }
+      } finally {
+        setCreatingDraft(false);
       }
-      setCreatingDraft(false);
+      if (!ok) return;
     }
 
     draft.setStep(step + 1);
@@ -191,12 +200,18 @@ export function CreatePlaylistPage() {
 
   const handleSubmit = async () => {
     setSubmitError(null);
+    setRevisionConflict(null);
+
+    const current = usePlaylistDraftStore.getState();
+    const id = current.playlistId ?? current.editingId;
+    if (!id) {
+      setSubmitError({ kind: "rejected", message: "ไม่พบ playlist ที่จะบันทึก กรุณากลับไปเริ่มใหม่จากขั้นตอนแรก" });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const current = usePlaylistDraftStore.getState();
       const metadata = encodeMetadata({ info, playback: draft.playback });
-      const id = current.playlistId ?? current.editingId;
-      if (!id) throw new Error("missing playlist id");
 
       const res = await upsertPlaylist({
         name: name.trim(),
