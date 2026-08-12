@@ -15,6 +15,7 @@ import { fetchPlaylist } from "../services/playlists-api";
 import { validateStep, type WizardStepId } from "../step-validation";
 import { usePlaylistDraftSave } from "../hooks/usePlaylistDraftSave";
 import { playlistDetailToDraftFields } from "../draft-from-detail";
+import { shouldShowResumePrompt } from "../resume-prompt";
 import { LAST_STEP, PlaylistStepper } from "./PlaylistStepper";
 import { BasicInfoStep } from "./BasicInfoStep";
 import { ContentStep } from "./ContentStep";
@@ -47,6 +48,16 @@ export function CreatePlaylistPage() {
   const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
+
+  // Captured once, the first time we render with a rehydrated store. Anything the operator
+  // types afterwards must not change this answer.
+  const hadContentAtHydrationRef = useRef<boolean | null>(null);
+  // eslint-disable-next-line react-hooks/refs
+  if (hydrated && hadContentAtHydrationRef.current === null) {
+    hadContentAtHydrationRef.current = hasDraftContent(draft);
+  }
+  // eslint-disable-next-line react-hooks/refs
+  const hadContentAtHydration = hadContentAtHydrationRef.current ?? false;
 
   useEffect(() => {
     Promise.allSettled([fetchCampaigns(), fetchTags(), fetchMediaAssets()]).then(([c, t, a]) => {
@@ -99,8 +110,11 @@ export function CreatePlaylistPage() {
     );
   }
 
-  const showDraftBanner =
-    !idParam && !editingId && !dismissedBanner && hasDraftContent(draft) && step === 1;
+  const showDraftBanner = shouldShowResumePrompt({
+    hadContentAtHydration,
+    isEditMode: !!idParam || !!editingId,
+    dismissed: dismissedBanner,
+  });
 
   const validatableDraft = { name, description: info.description, items };
 
