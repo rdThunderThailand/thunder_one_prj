@@ -1,10 +1,14 @@
 import { requestApi } from "@/lib/api/media-api";
 import type { PlaylistDetail, PlaylistListItem, PlaylistStatus, Transition } from "../types";
 
-export async function fetchPlaylists(): Promise<PlaylistListItem[]> {
+/** `includeDrafts` defaults to `false` so a caller that forgets to opt in never
+ *  leaks drafts into the publication content picker — an unfinished playlist
+ *  must never be selectable for scheduling. */
+export async function fetchPlaylists(includeDrafts = false): Promise<PlaylistListItem[]> {
+  const path = includeDrafts ? "/media/playlists?include_drafts=true" : "/media/playlists";
   const data = await requestApi<{ playlists?: PlaylistListItem[] } | PlaylistListItem[]>(
     "GET",
-    "/media/playlists"
+    path
   );
   if (Array.isArray(data)) return data;
   if (data && typeof data === "object" && Array.isArray(data.playlists)) {

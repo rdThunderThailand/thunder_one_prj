@@ -92,7 +92,7 @@ export function PlaylistsListPage() {
 
   useEffect(() => {
     let alive = true;
-    fetchPlaylists()
+    fetchPlaylists(true)
       .then((data) => alive && setPlaylists(data))
       .catch((err) => alive && setError(classifyApiError(err, "โหลด playlists ไม่สำเร็จ")));
     return () => {
