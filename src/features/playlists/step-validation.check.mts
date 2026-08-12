@@ -20,7 +20,10 @@ import { validateStep, canSubmit } from "./step-validation.ts";
 {
   assert.strictEqual(canSubmit({ name: "Lobby Loop", items: [] }), false);
   assert.strictEqual(
-    canSubmit({ name: "Lobby Loop", items: [{ mediaAssetId: "a", transition: "cut" }] }),
+    canSubmit({
+      name: "Lobby Loop",
+      items: [{ mediaAssetId: "a", transition: "cut", durationSeconds: null }],
+    }),
     true
   );
 }
