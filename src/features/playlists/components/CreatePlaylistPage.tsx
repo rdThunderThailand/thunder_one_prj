@@ -45,7 +45,6 @@ export function CreatePlaylistPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<ClassifiedError | null>(null);
   const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
-  const [creatingDraft, setCreatingDraft] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
@@ -105,31 +104,13 @@ export function CreatePlaylistPage() {
 
   const validatableDraft = { name, description: info.description, items };
 
-  // Every Next persists the whole draft — name, metadata and items. Restricting
-  // this to step 1 (as it originally was) left a crash mid-wizard with a
-  // name-only row and every picked asset lost.
-  const goNext = async () => {
+  // Walking the wizard is local-only: a draft row exists only once the operator asks for
+  // one with Save Draft (docs/adr/0014). localStorage carries the work until then.
+  const goNext = () => {
     if (step >= LAST_STEP) return;
     const result = validateStep(step as WizardStepId, validatableDraft);
     setValidationErrors(result.errors);
     if (!result.valid) return;
-
-    setCreatingDraft(true);
-    setSubmitError(null);
-    setRevisionConflict(null);
-    try {
-      await persistDraft({ activate: false });
-    } catch (err) {
-      if (err instanceof Error && isConflict(err.message)) {
-        setRevisionConflict(classifyApiError(err, err.message).message);
-      } else {
-        setSubmitError(classifyApiError(err, "บันทึก draft ไม่สำเร็จ"));
-      }
-      return;
-    } finally {
-      setCreatingDraft(false);
-    }
-
     draft.setStep(step + 1);
   };
 
@@ -218,7 +199,7 @@ export function CreatePlaylistPage() {
         }
         actions={
           <>
-            <Button variant="secondary" onClick={goBack} disabled={savingDraft || submitting || creatingDraft}>
+            <Button variant="secondary" onClick={goBack} disabled={savingDraft || submitting}>
               <ArrowLeftIcon className="h-4 w-4" />
               {step === 1 ? "Back: Playlists" : "Back"}
             </Button>
@@ -226,18 +207,18 @@ export function CreatePlaylistPage() {
               <Button
                 variant="secondary"
                 onClick={saveDraft}
-                disabled={savingDraft || submitting || creatingDraft}
+                disabled={savingDraft || submitting}
               >
                 {savingDraft ? "กำลังบันทึก..." : "Save Draft"}
               </Button>
             )}
             {step < LAST_STEP ? (
-              <Button onClick={goNext} disabled={savingDraft || creatingDraft}>
+              <Button onClick={goNext} disabled={savingDraft}>
                 Next
                 <ArrowRightIcon className="h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={savingDraft || submitting || creatingDraft}>
+              <Button onClick={handleSubmit} disabled={savingDraft || submitting}>
                 {submitting ? (
                   "กำลังบันทึก..."
                 ) : (
