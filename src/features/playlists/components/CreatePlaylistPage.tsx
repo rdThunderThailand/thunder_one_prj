@@ -161,6 +161,7 @@ export function CreatePlaylistPage() {
             });
             draft.setPlaylistId(res.playlist_id);
             draft.setRevision(res.revision);
+            usePlaylistDraftStore.setState({ editingId: null });
           } catch (retryErr) {
             setSubmitError(classifyApiError(retryErr, "บันทึก draft ไม่สำเร็จ"));
             ok = false;
@@ -350,6 +351,7 @@ export function CreatePlaylistPage() {
                   if (!id) return;
                   const fresh = await fetchPlaylist(id);
                   draft.setName(fresh.name);
+                  draft.setItems(detailToDraftItems(fresh.items));
                   draft.setRevision(fresh.revision);
                   setRevisionConflict(null);
                 }}

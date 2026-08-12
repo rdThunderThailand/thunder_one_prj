@@ -44,7 +44,7 @@
 - Create: `supabase/migrations/086_playlist_draft_save.sql`
 
 **Interfaces:**
-- Produces: `media_core.playlists.revision integer`, `media_core.playlists.idempotency_key uuid`, `status IN ('draft','active','inactive')`, no more `UNIQUE(tenant_id, name)`. RPC `media_playlist_upsert(p_tenant_id uuid, p_playlist_id uuid, p_name varchar, p_status varchar DEFAULT 'active', p_metadata jsonb DEFAULT NULL, p_created_by uuid DEFAULT NULL, p_expected_revision integer DEFAULT NULL, p_idempotency_key uuid DEFAULT NULL) RETURNS jsonb` with `{ playlist_id, revision }`.
+- Produces: `media_core.playlists.revision integer`, `media_core.playlists.idempotency_key uuid`, `status IN ('draft','active','inactive')`, no more `UNIQUE(tenant_id, name)`. RPC `media_playlist_upsert(p_tenant_id uuid, p_playlist_id uuid, p_name varchar, p_status varchar DEFAULT NULL, p_metadata jsonb DEFAULT NULL, p_created_by uuid DEFAULT NULL, p_expected_revision integer DEFAULT NULL, p_idempotency_key uuid DEFAULT NULL) RETURNS jsonb` with `{ playlist_id, revision }`. `p_status` defaults to `NULL` (validation skips the enum check when NULL) and both update branches apply `status = COALESCE(p_status, status)`, so omitting `status` on an update leaves the current status unchanged instead of forcing `'active'` — this avoids silently demoting an already-published playlist back to `'active'`/`'draft'` when only its name is edited.
 
 - [ ] **Step 1: Write the migration file**
 
@@ -94,7 +94,7 @@ CREATE OR REPLACE FUNCTION public.media_playlist_upsert(
     p_tenant_id uuid,
     p_playlist_id uuid,
     p_name character varying,
-    p_status character varying DEFAULT 'active'::character varying,
+    p_status character varying DEFAULT NULL::character varying,
     p_metadata jsonb DEFAULT NULL::jsonb,
     p_created_by uuid DEFAULT NULL::uuid,
     p_expected_revision integer DEFAULT NULL::integer,
@@ -115,7 +115,7 @@ BEGIN
     IF p_name IS NULL OR length(trim(p_name)) = 0 THEN
         RAISE EXCEPTION 'Invalid input: name is required';
     END IF;
-    IF p_status NOT IN ('draft', 'active', 'inactive') THEN
+    IF p_status IS NOT NULL AND p_status NOT IN ('draft', 'active', 'inactive') THEN
         RAISE EXCEPTION 'Invalid input: status must be draft, active or inactive';
     END IF;
 
@@ -162,7 +162,7 @@ BEGIN
 
             UPDATE media_core.playlists
             SET name = p_name,
-                status = p_status,
+                status = COALESCE(p_status, status),
                 metadata = COALESCE(p_metadata, metadata),
                 revision = revision + 1,
                 updated_at = now()
@@ -189,7 +189,7 @@ BEGIN
 
         UPDATE media_core.playlists
         SET name = p_name,
-            status = p_status,
+            status = COALESCE(p_status, status),
             metadata = COALESCE(p_metadata, metadata),
             revision = revision + 1,
             updated_at = now()
