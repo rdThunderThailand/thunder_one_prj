@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -55,6 +56,7 @@ export function CreatePlaylistPage() {
   const [submitError, setSubmitError] = useState<ClassifiedError | null>(null);
   const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
   const [creatingDraft, setCreatingDraft] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -143,6 +145,35 @@ export function CreatePlaylistPage() {
     draft.setStep(step + 1);
   };
 
+  // Deliberately skips validateStep — saving work that is not yet complete is the
+  // whole point. Only the name is required, because the endpoint refuses an empty one.
+  const saveDraft = async () => {
+    if (!name.trim()) {
+      const message = "กรุณากรอกชื่อ playlist ก่อนบันทึกร่าง";
+      setSubmitError({ kind: "rejected", message });
+      toast.error(message);
+      return;
+    }
+    setSavingDraft(true);
+    setSubmitError(null);
+    setRevisionConflict(null);
+    try {
+      await persistDraft({ activate: false });
+      toast.success("บันทึกร่างแล้ว");
+    } catch (err) {
+      // The revision-conflict banner already shows this — avoid saying it twice.
+      if (err instanceof Error && isConflict(err.message)) {
+        setRevisionConflict(classifyApiError(err, err.message).message);
+      } else {
+        const classified = classifyApiError(err, "บันทึกร่างไม่สำเร็จ");
+        setSubmitError(classified);
+        toast.error(classified.message);
+      }
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   const goBack = () => {
     if (step > 1) {
       draft.setStep(step - 1);
@@ -200,17 +231,26 @@ export function CreatePlaylistPage() {
         }
         actions={
           <>
-            <Button variant="secondary" onClick={goBack} disabled={submitting || creatingDraft}>
+            <Button variant="secondary" onClick={goBack} disabled={savingDraft || submitting || creatingDraft}>
               <ArrowLeftIcon className="h-4 w-4" />
               {step === 1 ? "Back: Playlists" : "Back"}
             </Button>
+            {step < LAST_STEP && (
+              <Button
+                variant="secondary"
+                onClick={saveDraft}
+                disabled={savingDraft || submitting || creatingDraft}
+              >
+                {savingDraft ? "กำลังบันทึก..." : "Save Draft"}
+              </Button>
+            )}
             {step < LAST_STEP ? (
-              <Button onClick={goNext} disabled={creatingDraft}>
+              <Button onClick={goNext} disabled={savingDraft || creatingDraft}>
                 Next
                 <ArrowRightIcon className="h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={submitting || creatingDraft}>
+              <Button onClick={handleSubmit} disabled={savingDraft || submitting || creatingDraft}>
                 {submitting ? (
                   "กำลังบันทึก..."
                 ) : (
