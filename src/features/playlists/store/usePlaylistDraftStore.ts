@@ -138,12 +138,18 @@ export const usePlaylistDraftStore = create<PlaylistDraftStore>()(
 );
 
 /** True once zustand has rehydrated from localStorage — render nothing draft-dependent
- *  before that or the server HTML and the first client paint disagree. */
+ *  before that or the server HTML and the first client paint disagree.
+ *
+ *  NOTE: `usePlaylistDraftStore.persist` is undefined during SSR (the persist
+ *  middleware only attaches on the client where localStorage exists), so we
+ *  guard every access and default to `false` on the server. */
 export function useDraftHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(usePlaylistDraftStore.persist.hasHydrated());
+  const [hydrated, setHydrated] = useState(
+    () => usePlaylistDraftStore.persist?.hasHydrated?.() ?? false
+  );
   useEffect(() => {
-    const unsub = usePlaylistDraftStore.persist.onFinishHydration(() => setHydrated(true));
-    return () => unsub();
+    const unsub = usePlaylistDraftStore.persist?.onFinishHydration?.(() => setHydrated(true));
+    return () => unsub?.();
   }, []);
   return hydrated;
 }
