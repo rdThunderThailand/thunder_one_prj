@@ -10,7 +10,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { DraftItem, PlaylistInfo, PlaylistPlayback } from "../types";
 
 /** Bumping the shape means bumping this key — a rehydrated old draft would crash the wizard. */
-const STORAGE_KEY = "thunderone.playlists.create-draft.v1";
+const STORAGE_KEY = "thunderone.playlists.create-draft.v2";
 
 export const DEFAULT_IMAGE_DURATION_SECONDS = 10;
 
@@ -40,9 +40,17 @@ export interface PlaylistDraftFields {
   playlistId: string | null;
   /** Set when the wizard opened as `?id=<uuid>` — the final button saves instead of creates. */
   editingId: string | null;
+  /** Minted once per draft, sent on the first (create) POST — same role as
+   *  the publication draft's idempotencyKey. Must be minted at construction,
+   *  never lazily inside the save path. */
+  idempotencyKey: string;
+  /** Optimistic-lock counter from the last successful save. `null` until the
+   *  first save/load — omitting `expected_revision` on that first write is
+   *  what `media_playlist_upsert` treats as "no check". */
+  revision: number | null;
   step: number;
   name: string;
-  status: "active" | "inactive";
+  status: "draft" | "active" | "inactive";
   info: PlaylistInfo;
   playback: PlaylistPlayback;
   items: DraftItem[];
@@ -52,9 +60,11 @@ function getDefaultDraft(): PlaylistDraftFields {
   return {
     playlistId: null,
     editingId: null,
+    idempotencyKey: crypto.randomUUID(),
+    revision: null,
     step: 1,
     name: "",
-    status: "active",
+    status: "draft",
     info: defaultInfo(),
     playback: defaultPlayback(),
     items: [],
@@ -73,6 +83,8 @@ interface PlaylistDraftStore extends PlaylistDraftFields {
   patchItem: (mediaAssetId: string, patch: Partial<DraftItem>) => void;
   setCover: (mediaAssetId: string | undefined) => void;
   setPlaylistId: (id: string | null) => void;
+  setRevision: (revision: number | null) => void;
+  resetIdempotencyKey: () => void;
   loadDraft: (draft: Partial<PlaylistDraftFields>) => void;
   reset: () => void;
 }
@@ -127,6 +139,8 @@ export const usePlaylistDraftStore = create<PlaylistDraftStore>()(
         set((s) => ({ info: { ...s.info, coverAssetId: mediaAssetId } })),
 
       setPlaylistId: (playlistId) => set({ playlistId }),
+      setRevision: (revision) => set({ revision }),
+      resetIdempotencyKey: () => set({ idempotencyKey: crypto.randomUUID() }),
       loadDraft: (draft) => set((s) => ({ ...s, ...draft })),
       reset: () => set(getDefaultDraft()),
     }),
