@@ -103,7 +103,7 @@ export async function saveBasicInfo(
 }
 
 export async function fetchPublications(
-  status: "draft" | "active"
+  status: "draft" | "active" | "cancelled"
 ): Promise<PublicationListItem[]> {
   const data = await requestApi<
     { publications?: PublicationListItem[] } | PublicationListItem[]
@@ -133,6 +133,12 @@ export async function deletePublication(id: string): Promise<void> {
 /** Stops an active publication. Devices drop it on their next poll. */
 export async function cancelPublication(id: string): Promise<void> {
   await requestApi<unknown>("POST", `/media/publications/${id}/cancel`);
+}
+
+export async function duplicatePublication(
+  id: string
+): Promise<{ publication_id: string; playlist_id: string | null }> {
+  return requestApi("POST", `/media/publications/${id}/duplicate`);
 }
 
 export async function savePublicationContent(
