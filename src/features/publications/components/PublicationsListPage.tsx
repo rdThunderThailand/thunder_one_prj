@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
@@ -10,6 +11,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import {
   cancelPublication,
   deletePublication,
+  duplicatePublication,
   fetchPublications,
 } from "../services/publications-api";
 import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
@@ -18,35 +20,53 @@ import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 
 export function PublicationsListPage() {
+  const router = useRouter();
   const [drafts, setDrafts] = useState<PublicationListItem[] | null>(null);
   const [active, setActive] = useState<PublicationListItem[] | null>(null);
+  const [cancelled, setCancelled] = useState<PublicationListItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   // Per-tab, so one failing list cannot make the other read as empty.
   const [draftError, setDraftError] = useState<ClassifiedError | null>(null);
   const [activeError, setActiveError] = useState<ClassifiedError | null>(null);
+  const [cancelledError, setCancelledError] = useState<ClassifiedError | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  // "Active" keeps ADR 0004's meaning (scheduled/active only); ended rows move to
+  // "Inactive" alongside cancelled ones instead, per ADR 0015.
+  const activeOnly = active?.filter((item) => item.effective_status !== "ended") ?? null;
+  const inactive =
+    active && cancelled
+      ? [...active.filter((item) => item.effective_status === "ended"), ...cancelled]
+      : null;
+
   useEffect(() => {
     let alive = true;
 
-    Promise.allSettled([fetchPublications("draft"), fetchPublications("active")]).then(
-      ([draftRes, activeRes]) => {
-        if (!alive) return;
+    Promise.allSettled([
+      fetchPublications("draft"),
+      fetchPublications("active"),
+      fetchPublications("cancelled"),
+    ]).then(([draftRes, activeRes, cancelledRes]) => {
+      if (!alive) return;
 
-        if (draftRes.status === "fulfilled") setDrafts(draftRes.value);
-        else
-          setDraftError(classifyApiError(draftRes.reason, "โหลดดราฟต์ไม่สำเร็จ"));
+      if (draftRes.status === "fulfilled") setDrafts(draftRes.value);
+      else setDraftError(classifyApiError(draftRes.reason, "โหลดดราฟต์ไม่สำเร็จ"));
 
-        if (activeRes.status === "fulfilled") setActive(activeRes.value);
-        else
-          setActiveError(classifyApiError(activeRes.reason, "โหลด active ไม่สำเร็จ"));
+      if (activeRes.status === "fulfilled") setActive(activeRes.value);
+      else
+        setActiveError(classifyApiError(activeRes.reason, "โหลด active ไม่สำเร็จ"));
 
-        setLoading(false);
-      }
-    );
+      if (cancelledRes.status === "fulfilled") setCancelled(cancelledRes.value);
+      else
+        setCancelledError(
+          classifyApiError(cancelledRes.reason, "โหลด inactive ไม่สำเร็จ")
+        );
+
+      setLoading(false);
+    });
 
     return () => {
       alive = false;
@@ -81,9 +101,21 @@ export function PublicationsListPage() {
     }
   };
 
+  const handleDuplicate = async (id: string) => {
+    try {
+      setBusyId(id);
+      setActionError(null);
+      const res = await duplicatePublication(id);
+      router.push(`/publications/create?id=${res.publication_id}`);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "ทำสำเนาไม่สำเร็จ");
+      setBusyId(null);
+    }
+  };
+
   const renderTable = (
     items: PublicationListItem[] | null,
-    tab: "draft" | "active",
+    tab: "draft" | "active" | "inactive",
     error: ClassifiedError | null
   ) => {
     if (loading) {
@@ -102,7 +134,11 @@ export function PublicationsListPage() {
     if (!items || items.length === 0) {
       return (
         <p className="py-6 text-center text-sm text-zinc-400">
-          {tab === "draft" ? "ไม่มี publication ดราฟต์" : "ไม่มี publication ที่ใช้งานอยู่"}
+          {tab === "draft"
+            ? "ไม่มี publication ดราฟต์"
+            : tab === "active"
+              ? "ไม่มี publication ที่ใช้งานอยู่"
+              : "ไม่มี publication ที่จบหรือถูกยกเลิก"}
         </p>
       );
     }
@@ -176,8 +212,8 @@ export function PublicationsListPage() {
                         </Link>
                       )}
 
-                      {tab === "draft" ? (
-                        isConfirming ? (
+                      {tab === "draft" &&
+                        (isConfirming ? (
                           <>
                             <Button
                               variant="primary"
@@ -205,34 +241,47 @@ export function PublicationsListPage() {
                           >
                             Delete
                           </Button>
-                        )
-                      ) : isConfirming ? (
-                        <>
+                        ))}
+
+                      {tab === "active" &&
+                        (isConfirming ? (
+                          <>
+                            <Button
+                              variant="primary"
+                              disabled={isBusy}
+                              onClick={() => handleCancel(item.id)}
+                              className="bg-red-600 hover:bg-red-500 dark:bg-red-600 text-xs px-2.5 py-1"
+                            >
+                              {isBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              disabled={isBusy}
+                              onClick={() => setConfirmingId(null)}
+                              className="text-xs px-2.5 py-1"
+                            >
+                              ไม่
+                            </Button>
+                          </>
+                        ) : (
                           <Button
-                            variant="primary"
+                            variant="ghost"
                             disabled={isBusy}
-                            onClick={() => handleCancel(item.id)}
-                            className="bg-red-600 hover:bg-red-500 dark:bg-red-600 text-xs px-2.5 py-1"
+                            onClick={() => setConfirmingId(item.id)}
+                            className="text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 px-2.5 py-1"
                           >
-                            {isBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
+                            Cancel
                           </Button>
-                          <Button
-                            variant="secondary"
-                            disabled={isBusy}
-                            onClick={() => setConfirmingId(null)}
-                            className="text-xs px-2.5 py-1"
-                          >
-                            ไม่
-                          </Button>
-                        </>
-                      ) : (
+                        ))}
+
+                      {(tab === "active" || tab === "inactive") && !isConfirming && (
                         <Button
-                          variant="ghost"
+                          variant="secondary"
                           disabled={isBusy}
-                          onClick={() => setConfirmingId(item.id)}
-                          className="text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 px-2.5 py-1"
+                          onClick={() => handleDuplicate(item.id)}
+                          className="text-xs px-2.5 py-1"
                         >
-                          Cancel
+                          {isBusy ? "กำลังทำสำเนา…" : "Duplicate"}
                         </Button>
                       )}
                     </div>
@@ -271,8 +320,13 @@ export function PublicationsListPage() {
             },
             {
               key: "active",
-              label: `Active (${active ? active.length : 0})`,
-              content: renderTable(active, "active", activeError),
+              label: `Active (${activeOnly ? activeOnly.length : 0})`,
+              content: renderTable(activeOnly, "active", activeError),
+            },
+            {
+              key: "inactive",
+              label: `Inactive (${inactive ? inactive.length : 0})`,
+              content: renderTable(inactive, "inactive", cancelledError),
             },
           ]}
         />
