@@ -1,9 +1,10 @@
 "use client";
 
-// Single source of truth for the Create Playlist wizard. This store is the local mirror of
-// a draft that is also persisted server-side on every Next and on Save Draft (docs/adr/0012,
-// docs/adr/0013) — `playlistId`, `revision`, and `idempotencyKey` below are what tie this
-// local copy to that server-side row.
+// Single source of truth for the Create Playlist wizard. This store holds in-progress work as
+// local-only state, persisted to localStorage on every change to survive a refresh or tab crash.
+// A server-side draft row is created only by explicit Save Draft or the final submit
+// (docs/adr/0014) — `playlistId`, `revision`, and `idempotencyKey` below are populated once
+// a server row exists, tying this local copy to that persistent record.
 
 import { useEffect, useState } from "react";
 import { create } from "zustand";

@@ -14,10 +14,12 @@ export function isStaleDraftError(err: unknown): boolean {
   return msg.includes("playlist not found for this tenant");
 }
 
-/** Writes the whole draft — name, metadata and items — in one cycle. Used by
- *  Next, by the Save Draft button, and by the final submit; only `activate`
- *  differs between them. Throws on failure so the caller can decide between the
- *  revision-conflict banner and an inline error. */
+/** Writes the whole draft — name, metadata and items — in one cycle. Called by
+ *  the Save Draft button and by the final submit; only `activate` differs between
+ *  them. Adding a third caller should be a deliberate decision, not a matter of
+ *  convenience — it determines whether a user action creates a persistent server row.
+ *  Throws on failure so the caller can decide between the revision-conflict banner
+ *  and an inline error. */
 export function usePlaylistDraftSave() {
   const persistDraft = async ({ activate }: { activate: boolean }): Promise<string> => {
     const current = usePlaylistDraftStore.getState();

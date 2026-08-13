@@ -126,6 +126,20 @@ session that ever reached step 2, visible nowhere. Both remain deferred backend 
 this change.
 
 Migration `087_playlists_list_include_drafts.sql` is written but was deliberately not applied to
-any database as part of this change — applying it is a separate, explicit production step. Until
-it is applied, `/playlists`'s `include_drafts=true` request hits the old one-argument RPC, and the
-frontend code that depends on the new parameter cannot be exercised end-to-end.
+any database as part of this change — applying it is a separate, explicit production step that
+dictates the deploy order: **apply migration 087 first, then deploy `Thunder_Core`, then deploy
+the frontend.**
+
+Until migration 087 is applied, `Thunder_Core` will fail to deploy because
+`Thunder_Core/src/app/api/core/v1/media/playlists/route.ts` sends `p_include_drafts` on every
+call unconditionally. With only the old one-argument `media_playlists_list(p_tenant_id uuid)`
+available, PostgREST returns HTTP 500 (function not found), breaking both the `/playlists`
+management page and the publication content picker — even though the picker never asks for drafts,
+the route adds the argument on its behalf. Deploying the migration first ensures the new function
+signature is ready before the frontend code that calls it reaches production.
+
+Why the other orderings are safe: Deploying the frontend before the backend is harmless because
+the old route ignores the `include_drafts` query parameter entirely. Applying the migration early
+is harmless because the new function's `DEFAULT false` on `p_include_drafts` lets the old
+single-argument call still resolve, so any interim call site that has not yet been updated finds a
+working RPC with the safe default (drafts hidden).
