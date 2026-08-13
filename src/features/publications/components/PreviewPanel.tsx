@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/Card";
 import { EyeIcon, ImageIcon } from "@/components/ui/icons";
-import { priorities, publicationTypes } from "../mock-data";
+import { languageLabel, priorities, publicationTypes } from "../mock-data";
 import type { Campaign } from "../types";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
@@ -55,7 +55,11 @@ export function PreviewPanel({ campaigns = [] }: { campaigns?: Campaign[] }) {
         </div>
         <div className="flex items-center justify-between">
           <dt className="text-zinc-500">Language</dt>
-          <dd className="font-medium text-zinc-900">{state.language}</dd>
+          <dd className="font-medium text-zinc-900">{languageLabel(state.language)}</dd>
+        </div>
+        <div className="flex items-center justify-between">
+          <dt className="text-zinc-500">Brand</dt>
+          <dd className="font-medium text-zinc-900">{campaign?.brand_name ?? "—"}</dd>
         </div>
       </dl>
     </Card>

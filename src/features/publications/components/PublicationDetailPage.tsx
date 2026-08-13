@@ -13,7 +13,10 @@ import {
   fetchPlaylist,
   fetchPublication,
 } from "../services/publications-api";
+import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
 import type { PlaylistDetail, PublicationDetail } from "../types";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { NoAccess } from "@/components/ui/NoAccess";
 
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "—";
@@ -30,7 +33,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
   const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
   const [playlistError, setPlaylistError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ClassifiedError | null>(null);
 
   const [confirming, setConfirming] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
@@ -61,7 +64,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       })
       .catch((err) => {
         if (!alive) return;
-        setError(err instanceof Error ? err.message : "โหลด publication ไม่สำเร็จ");
+        setError(classifyApiError(err, "โหลด publication ไม่สำเร็จ"));
         setLoading(false);
       });
 
@@ -104,22 +107,33 @@ export function PublicationDetailPage({ id }: { id: string }) {
 
   if (error || !detail) {
     return (
-      <Card className="p-6">
-        <p className="text-center text-sm text-red-600 dark:text-red-400">
-          {error || "ไม่พบ publication"}
-        </p>
+      <>
+        {error?.kind === "forbidden" ? (
+          <NoAccess message={error.message} />
+        ) : (
+          <Card className="p-6">
+            <p className="text-center text-sm text-red-600 dark:text-red-400">
+              {error ? error.message : "ไม่พบ publication"}
+            </p>
+          </Card>
+        )}
         <div className="mt-4 flex justify-center">
           <Link href="/publications" className={buttonClasses("secondary")}>
             กลับไปยังรายการ
           </Link>
         </div>
-      </Card>
+      </>
     );
   }
 
+  // Behaviour gates read the STORED status: whether this can be edited or
+  // cancelled follows from whether an operator activated it, not from whether
+  // the schedule window has since closed (docs/adr/0004).
   const isDraft = detail.status === "draft";
   const isActive = detail.status === "active";
-  const statusColor = isActive ? "green" : "zinc";
+  // The label, by contrast, is the clock-aware one.
+  const displayStatus = publicationDisplayStatus(detail);
+  const statusColor = publicationStatusColor(displayStatus);
 
   const playlistItems = playlist?.items
     ? [...playlist.items].sort((a, b) => a.position - b.position)
@@ -130,7 +144,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       {/* 1. Header */}
       <PageHeader
         title={detail.name}
-        subtitle={`Status: ${detail.status}`}
+        subtitle={`Status: ${displayStatus}`}
         actions={
           <div className="flex items-center gap-2">
             <Link href="/publications" className={buttonClasses("secondary")}>
@@ -223,7 +237,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
             <dt className="text-xs font-medium text-zinc-400">Status</dt>
             <dd className="mt-1">
               <Badge color={statusColor} variant="pill">
-                {detail.status}
+                {displayStatus}
               </Badge>
             </dd>
           </div>
@@ -269,6 +283,20 @@ export function PublicationDetailPage({ id }: { id: string }) {
               {formatDate(detail.activated_at)}
             </dd>
           </div>
+          <div>
+            <dt className="text-xs font-medium text-zinc-400">Published By</dt>
+            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              {detail.published_by?.display_name ?? "ไม่ทราบผู้เผยแพร่"}
+            </dd>
+          </div>
+          {detail.created_by && detail.created_by.id !== detail.published_by?.id ? (
+            <div>
+              <dt className="text-xs font-medium text-zinc-400">Created By</dt>
+              <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                {detail.created_by.display_name}
+              </dd>
+            </div>
+          ) : null}
           <div>
             <dt className="text-xs font-medium text-zinc-400">Job Status</dt>
             <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">

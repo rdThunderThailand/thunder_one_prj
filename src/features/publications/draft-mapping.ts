@@ -1,4 +1,4 @@
-import type { ScheduleTypeId } from "./mock-data";
+import { languageCode, type ScheduleTypeId } from "./mock-data.ts";
 import type {
   BasicInfoForm,
   ContentItem,
@@ -26,23 +26,20 @@ export const CARD_BY_SCHEDULE_TYPE: Record<ScheduleType, ScheduleTypeId> = {
   range: "custom-range",
 };
 
-export function basicInfoToForm(basicInfo: BasicInfoState): BasicInfoForm {
-  const languageCode =
-    basicInfo.language === "Thai" || basicInfo.language === "th"
-      ? "th"
-      : basicInfo.language === "English" || basicInfo.language === "en"
-      ? "en"
-      : basicInfo.language;
-
-  return {
+export function basicInfoToForm(basicInfo: BasicInfoState, playlistId?: string | null): BasicInfoForm {
+  const form: BasicInfoForm = {
     name: basicInfo.name.trim(),
     description: basicInfo.description || undefined,
     campaign_id: basicInfo.campaignId || undefined,
     publication_type: basicInfo.publicationType as PublicationType,
     priority: basicInfo.priorityId as Priority,
-    language: languageCode,
+    language: languageCode(basicInfo.language),
     tags: basicInfo.tags ?? [],
   };
+  if (playlistId?.trim()) {
+    form.playlist_id = playlistId.trim();
+  }
+  return form;
 }
 
 export function channelIdsToTargets(channelIds: string[], screens: Screen[]): PublicationTarget[] {
@@ -68,6 +65,24 @@ export function draftItemsToContentItems(items: DraftAssetItem[]): ContentItem[]
 export function isImageAsset(asset: MediaAsset): boolean {
   if (asset.kind) return asset.kind === "image";
   return !asset.file?.mime_type?.startsWith("video/");
+}
+
+/** `media_publication_set_content` rejects the whole save if any item points at an
+ *  asset that is not `approved`, so an unapproved pick makes the draft unsavable. */
+export function isApprovedAsset(asset: MediaAsset): boolean {
+  return asset.approval_status === "approved";
+}
+
+/** Drops items the RPC would reject. Items whose asset is absent from `assets` are
+ *  kept — a short or failed library load must not silently wipe a valid selection. */
+export function dropUnapprovedItems(
+  items: DraftAssetItem[],
+  assets: MediaAsset[]
+): DraftAssetItem[] {
+  return items.filter((item) => {
+    const asset = assets.find((a) => a.id === item.media_asset_id);
+    return !asset || isApprovedAsset(asset);
+  });
 }
 
 export const DEFAULT_IMAGE_DURATION_SECONDS = 10;

@@ -1,14 +1,21 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ChevronDownIcon, PlusIcon, XIcon } from "@/components/ui/icons";
-import type { Campaign } from "../types";
-import { priorities, publicationTypes, type PublicationTypeId } from "../mock-data";
+import type { Campaign, Tag } from "../types";
+import {
+  languageCode,
+  languageOptions,
+  priorities,
+  publicationTypes,
+  type PublicationTypeId,
+} from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { PUBLICATION_LIMITS } from "@/config/limits";
+import { stripHtmlTags } from "../sanitize";
 
 interface FieldWrapperProps {
   label: string;
@@ -29,22 +36,12 @@ function FieldWrapper({ label, required, optional, children }: FieldWrapperProps
   );
 }
 
-function FieldSelect({
-  children,
-  disabled,
-}: {
-  children: ReactNode;
-  disabled?: boolean;
-}) {
+/** Derived metadata (Brand, Format) — the value follows another field, so it is shown
+ * rather than picked. Brand lives on the campaign and Format on the publication type. */
+function DerivedField({ value }: { value: string | undefined }) {
   return (
-    <div className="relative">
-      <select
-        disabled={disabled}
-        className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
-      >
-        {children}
-      </select>
-      <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-3.5 pr-3.5 text-sm text-zinc-600">
+      {value || <span className="text-zinc-400">—</span>}
     </div>
   );
 }
@@ -61,18 +58,25 @@ export interface BasicInfoState {
 
 export interface BasicInfoFormProps {
   campaigns?: Campaign[];
+  workspaceTags?: Tag[];
 }
 
-export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
+export function BasicInfoForm({ campaigns = [], workspaceTags = [] }: BasicInfoFormProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
-  const cancelDraft = usePublicationDraftStore((s) => s.cancelDraft);
   const { campaignId, publicationType, name, description, priorityId, language, tags } = basicInfo;
 
   const [tagDraft, setTagDraft] = useState("");
   const [addingTag, setAddingTag] = useState(false);
+  const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const [pendingType, setPendingType] = useState<PublicationTypeId | null>(null);
 
   const patch = (next: Partial<BasicInfoState>) => setBasicInfo({ ...basicInfo, ...next });
+  const handleTypeClick = (typeId: PublicationTypeId) => {
+    if (typeId === publicationType) return;
+    if (typeId !== "playlist" && assetItems.length > 1) setPendingType(typeId);
+    else patch({ publicationType: typeId });
+  };
 
   const addTag = () => {
     const value = tagDraft.trim();
@@ -87,7 +91,9 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
     patch({ tags: tags.filter((t) => t !== tag) });
   };
 
-  const selectedLanguage = language === "Thai" ? "th" : language === "English" ? "en" : language;
+  const selectedLanguage = languageCode(language);
+
+  const isDescriptionOverLimit = description.length > PUBLICATION_LIMITS.descriptionMaxLength;
 
   return (
     <Card className="p-5">
@@ -117,12 +123,13 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
             <div className="relative">
               <input
                 placeholder="เช่น แคมเปญลดราคาหน้าร้อน 2024"
-                maxLength={100}
+                maxLength={PUBLICATION_LIMITS.nameMaxLength}
+                value={name}
                 onChange={(e) => patch({ name: e.target.value })}
                 className="w-full rounded-lg border border-zinc-200 py-2.5 pl-3.5 pr-16 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               />
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
-                {name.length}/100
+                {name.length}/{PUBLICATION_LIMITS.nameMaxLength}
               </span>
             </div>
           </FieldWrapper>
@@ -131,15 +138,34 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
             <div className="relative">
               <textarea
                 placeholder="เพิ่มคำอธิบายสั้นๆ เกี่ยวกับ publication นี้..."
-                maxLength={300}
                 rows={3}
+                value={description}
                 onChange={(e) => patch({ description: e.target.value })}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pasted = e.clipboardData.getData("text");
+                  const sanitized = stripHtmlTags(pasted);
+                  const start = e.currentTarget.selectionStart ?? 0;
+                  const end = e.currentTarget.selectionEnd ?? 0;
+                  const nextValue = description.slice(0, start) + sanitized + description.slice(end);
+                  patch({ description: nextValue });
+                }}
+                aria-invalid={isDescriptionOverLimit}
                 className="w-full resize-none rounded-lg border border-zinc-200 py-2.5 pl-3.5 pr-3.5 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               />
-              <span className="pointer-events-none absolute bottom-2 right-3 text-xs text-zinc-400">
-                {description.length}/300
+              <span
+                className={`pointer-events-none absolute bottom-2 right-3 text-xs ${
+                  isDescriptionOverLimit ? "font-medium text-red-600" : "text-zinc-400"
+                }`}
+              >
+                {description.length}/{PUBLICATION_LIMITS.descriptionMaxLength}
               </span>
             </div>
+            {isDescriptionOverLimit && (
+              <p className="text-xs font-medium text-red-600">
+                คำอธิบายยาวเกิน {PUBLICATION_LIMITS.descriptionMaxLength} ตัวอักษร
+              </p>
+            )}
           </FieldWrapper>
 
           <div className="grid grid-cols-2 gap-3">
@@ -171,8 +197,11 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
                   onChange={(e) => patch({ language: e.target.value })}
                   className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
                 >
-                  <option value="th">Thai</option>
-                  <option value="en">English</option>
+                  {languageOptions.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               </div>
@@ -189,7 +218,7 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
                   <button
                     key={type.id}
                     type="button"
-                    onClick={() => patch({ publicationType: type.id })}
+                    onClick={() => handleTypeClick(type.id)}
                     className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-colors ${
                       active
                         ? "border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400"
@@ -205,18 +234,37 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
                 );
               })}
             </div>
+            {pendingType && (
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <span>
+                  เปลี่ยนเป็น {publicationTypes.find((t) => t.id === pendingType)?.label} จะเหลือ asset แรกเท่านั้น อีก {assetItems.length - 1} ชิ้นจะถูกเอาออก ดำเนินการต่อ?
+                </span>
+                <div className="flex shrink-0 gap-2">
+                  <Button type="button" variant="secondary" className="px-2.5 py-1 text-xs" onClick={() => setPendingType(null)}>
+                    ยกเลิก
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    className="bg-red-600 px-2.5 py-1 text-xs hover:bg-red-500"
+                    onClick={() => {
+                      patch({ publicationType: pendingType });
+                      setPendingType(null);
+                    }}
+                  >
+                    ยืนยัน
+                  </Button>
+                </div>
+              </div>
+            )}
           </FieldWrapper>
 
           <div className="grid grid-cols-2 gap-3">
             <FieldWrapper label="Format">
-              <FieldSelect disabled>
-                <option>All Formats</option>
-              </FieldSelect>
+              <DerivedField value={publicationTypes.find((t) => t.id === publicationType)?.label} />
             </FieldWrapper>
             <FieldWrapper label="Brand">
-              <FieldSelect disabled>
-                <option>All Brands</option>
-              </FieldSelect>
+              <DerivedField value={campaigns.find((c) => c.id === campaignId)?.brand_name} />
             </FieldWrapper>
           </div>
         </div>
@@ -242,15 +290,25 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
               </span>
             ))}
             {addingTag ? (
-              <input
-                autoFocus
-                value={tagDraft}
-                onChange={(e) => setTagDraft(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addTag()}
-                onBlur={addTag}
-                placeholder="Tag name"
-                className="w-28 rounded-full border border-indigo-300 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30"
-              />
+              <>
+                <input
+                  autoFocus
+                  list="publication-workspace-tags"
+                  value={tagDraft}
+                  onChange={(e) => setTagDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addTag()}
+                  onBlur={addTag}
+                  placeholder="Tag name"
+                  className="w-28 rounded-full border border-indigo-300 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30"
+                />
+                <datalist id="publication-workspace-tags">
+                  {workspaceTags
+                    .filter((t) => !tags.includes(t.name))
+                    .map((t) => (
+                      <option key={t.id} value={t.name} />
+                    ))}
+                </datalist>
+              </>
             ) : (
               <button
                 type="button"
@@ -264,11 +322,6 @@ export function BasicInfoForm({ campaigns = [] }: BasicInfoFormProps) {
         </FieldWrapper>
       </div>
 
-      <div className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4">
-        <Link href="/" onClick={() => cancelDraft()}>
-          <Button variant="secondary">Cancel</Button>
-        </Link>
-      </div>
     </Card>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, ChevronDownIcon, InfoIcon, LightningIcon, RepeatIcon } from "@/components/ui/icons";
 import { CARD_BY_SCHEDULE_TYPE, SCHEDULE_TYPE_BY_CARD } from "../draft-mapping";
@@ -21,7 +22,7 @@ import {
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { MiniCalendar } from "./MiniCalendar";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import { usePreviewUrls } from "../hooks/usePreviewUrls";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 
 const scheduleTypeIcon: Record<ScheduleTypeId, ReactNode> = {
   "publish-now": <LightningIcon />,
@@ -55,6 +56,7 @@ export interface ScheduleStepProps {
   assets?: MediaAsset[];
   conflicts?: ScheduleConflict[];
   checkingConflicts?: boolean;
+  conflictsError?: string | null;
 }
 
 export function ScheduleStep({
@@ -63,6 +65,7 @@ export function ScheduleStep({
   assets = [],
   conflicts = [],
   checkingConflicts = false,
+  conflictsError = null,
 }: ScheduleStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -471,6 +474,13 @@ export function ScheduleStep({
             <p className="mt-4 text-xs text-zinc-400">กำลังตรวจสอบความขัดแย้งของตารางเผยแพร่…</p>
           )}
 
+          {!checkingConflicts && conflictsError && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+              <h4 className="text-sm font-semibold text-red-800">⚠ Unable to verify schedule conflicts</h4>
+              <p className="mt-0.5 text-[11px] text-red-700">{conflictsError} — Publish is blocked until this resolves.</p>
+            </div>
+          )}
+
           {conflicts.length > 0 && (() => {
             const suppressedCount = conflicts.filter((c) => c.would_be_suppressed).length;
             return (
@@ -532,7 +542,7 @@ export function ScheduleStep({
         <Card className="p-5">
           <h2 className="mb-4 text-base font-semibold text-zinc-900">Publication Summary</h2>
           {selectedAsset && previewUrl ? (
-            <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
+            <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
               {isVideo ? (
                 <video
                   src={previewUrl}
@@ -541,10 +551,12 @@ export function ScheduleStep({
                   className="h-full w-full object-contain"
                 />
               ) : (
-                <img
+                <Image
                   src={previewUrl}
                   alt={selectedAsset.title ?? "Preview"}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(min-width: 1024px) 480px, 100vw"
+                  className="object-cover"
                 />
               )}
             </div>
@@ -603,7 +615,9 @@ export function ScheduleStep({
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500 font-medium">Conflicts</dt>
               <dd className="text-right font-medium">
-                {conflicts.length === 0 ? (
+                {conflictsError ? (
+                  <span className="text-red-600">Unknown/Error</span>
+                ) : conflicts.length === 0 ? (
                   <span className="text-zinc-900">None</span>
                 ) : (
                   <div>

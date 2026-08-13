@@ -3,8 +3,6 @@
 export { LoginForm } from "./components/LoginForm";
 export { RegisterForm } from "./components/RegisterForm";
 export type {
-  AuthUser,
   LoginCredentials,
   RegisterPayload,
-  UserRole,
 } from "./types/auth.types";

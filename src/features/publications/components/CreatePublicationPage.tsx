@@ -1,17 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon, ArrowRightIcon, PaperPlaneIcon } from "@/components/ui/icons";
 import { wizardSteps } from "../mock-data";
-import { useHasHydratedDraft, usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePublishDraft } from "../hooks/usePublishDraft";
-import { fetchPlaylist, fetchPublication } from "../services/publications-api";
+import { deletePublication, fetchPlaylist, fetchPublication } from "../services/publications-api";
 import { detailToDraft } from "../detail-mapping";
+import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
+import { attemptNext, isResumePending } from "../next-transition";
+import { type WizardStepId } from "../step-validation";
 import { BasicInfoForm } from "./BasicInfoForm";
 import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
@@ -23,10 +28,12 @@ import { ScheduleStep } from "./ScheduleStep";
 const MAX_BUILT_STEP = 5;
 
 export function CreatePublicationPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const idParam = searchParams.get("id");
 
   const hasHydrated = useHasHydratedDraft();
+  const isDirty = useIsDraftDirty();
   const step = usePublicationDraftStore((s) => s.step);
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
@@ -41,13 +48,46 @@ export function CreatePublicationPage() {
 
   const [resumedId, setResumedId] = useState<string | null>(null);
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [resumeFailure, setResumeFailure] = useState<ClassifiedError | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
   // Derived, not state: `resumedId` only settles once the fetch has finished, so
   // the wizard never paints the *previous* draft's values before ?id= replaces
   // them. Starting from a boolean that flips inside the effect would show one
   // frame of the wrong publication.
-  const resumePending = Boolean(idParam) && idParam !== resumedId && idParam !== publicationId;
+  const resumePending = isResumePending(idParam, resumedId, publicationId);
+
+  // Shared by the `?id=` resume effect below and the revision-conflict banner's
+  // "โหลดใหม่" action — both fully overwrite local state from the server, on
+  // the premise that any local edits are the ones in question, not worth keeping.
+  const loadPublicationIntoDraft = useCallback(
+    async (id: string) => {
+      const detail = await fetchPublication(id);
+      let playlist: PlaylistDetail | null = null;
+      if (detail.playlist?.id) {
+        try {
+          playlist = await fetchPlaylist(detail.playlist.id);
+        } catch {
+          // Ignore playlist error per spec
+        }
+      }
+
+      const draft = detailToDraft(detail, playlist);
+
+      setBasicInfo(draft.basicInfo);
+      setAssetItems(draft.assetItems);
+      setChannelIds(draft.channelIds);
+      setScheduleForm(draft.scheduleForm);
+      setPublicationId(detail.id);
+      usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
+      usePublicationDraftStore.getState().markSaved();
+      usePublicationDraftStore.getState().setExplicitlySaved(true);
+    },
+    [setBasicInfo, setAssetItems, setChannelIds, setScheduleForm, setPublicationId]
+  );
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -59,30 +99,14 @@ export function CreatePublicationPage() {
     let alive = true;
 
     const load = async () => {
+      setResumeFailure(null);
       try {
-        const detail = await fetchPublication(idParam);
-        let playlist: PlaylistDetail | null = null;
-        if (detail.playlist?.id) {
-          try {
-            playlist = await fetchPlaylist(detail.playlist.id);
-          } catch {
-            // Ignore playlist error per spec
-          }
-        }
-
+        await loadPublicationIntoDraft(idParam);
         if (!alive) return;
-
-        const draft = detailToDraft(detail, playlist);
-
-        setBasicInfo(draft.basicInfo);
-        setAssetItems(draft.assetItems);
-        setChannelIds(draft.channelIds);
-        setScheduleForm(draft.scheduleForm);
-        setPublicationId(detail.id);
         setStep(1);
       } catch (err) {
         if (!alive) return;
-        setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
+        setResumeFailure(classifyApiError(err, "โหลด draft ไม่สำเร็จ"));
       } finally {
         // Marks the attempt finished either way, so a failure shows the error
         // instead of hanging on the loading branch forever.
@@ -95,41 +119,183 @@ export function CreatePublicationPage() {
     return () => {
       alive = false;
     };
-  }, [
-    hasHydrated,
-    idParam,
-    publicationId,
-    setBasicInfo,
-    setAssetItems,
-    setChannelIds,
-    setScheduleForm,
-    setPublicationId,
-    setStep,
-  ]);
+  }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
+
+  const [retrying, setRetrying] = useState(false);
+
+  const handleRetryResume = async () => {
+    if (!idParam || retrying) return;
+    setRetrying(true);
+    setResumeFailure(null);
+    try {
+      await loadPublicationIntoDraft(idParam);
+      setStep(1);
+    } catch (err) {
+      setResumeFailure(classifyApiError(err, "โหลด draft ไม่สำเร็จ"));
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   const {
     screens,
+    screensError,
     campaigns,
+    tags,
     assets,
     loadingRefs,
     saving,
     error,
+    setError,
     publishedId,
     conflicts,
     checkingConflicts,
+    conflictsError,
+    revisionConflict,
+    setRevisionConflict,
     saveDraft,
     publishNow,
     canPublish,
+    eligibilityChecks,
+    persistDraft,
+    saveStatus,
+    setSaveStatus,
+    savingNext,
+    setSavingNext,
   } = usePublishDraft();
 
-  const goNext = () => goNextAction(MAX_BUILT_STEP);
+  const [conflictBusy, setConflictBusy] = useState(false);
+
+  const handleReloadFromServer = async () => {
+    if (!publicationId) return;
+    setConflictBusy(true);
+    try {
+      await loadPublicationIntoDraft(publicationId);
+      setRevisionConflict(null);
+    } catch (err) {
+      setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
+    } finally {
+      setConflictBusy(false);
+    }
+  };
+
+  // Deliberately does not retry the save that hit the conflict — that action
+  // (Save / Next / Publish) is a click the user makes again themselves, so an
+  // overwrite is never silently auto-retried. Only re-arms the revision this
+  // draft is holding, from the row's current value.
+  const handleOverwrite = async () => {
+    if (!publicationId) return;
+    setConflictBusy(true);
+    try {
+      const detail = await fetchPublication(publicationId);
+      usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
+      setRevisionConflict(null);
+    } catch (err) {
+      setResumeError(err instanceof Error ? err.message : "โหลดข้อมูลล่าสุดไม่สำเร็จ");
+    } finally {
+      setConflictBusy(false);
+    }
+  };
+
+  const performCancel = async () => {
+    setCancelBusy(true);
+    const state = usePublicationDraftStore.getState();
+    if (state.publicationId && !state.explicitlySaved) {
+      try {
+        await deletePublication(state.publicationId);
+      } catch {
+        // Best-effort cleanup of an orphaned empty draft — don't block navigation on it.
+      }
+    }
+    state.cancelDraft();
+    router.push("/publications");
+  };
+
+  const handleCancelClick = () => {
+    if (isDirty) {
+      setConfirmingCancel(true);
+    } else {
+      performCancel();
+    }
+  };
+
+  const handleNext = async () => {
+    if (savingNext) return;
+    const outcome = await attemptNext(
+      step as WizardStepId,
+      usePublicationDraftStore.getState(),
+      () => {
+        // Only reached when the step validates, so the "saving" flip and the
+        // stale-error clear both land at the same moment they used to.
+        setValidationErrors([]);
+        setSavingNext(true);
+        setSaveStatus("saving");
+        return persistDraft(false);
+      }
+    );
+
+    if (outcome.kind === "invalid") {
+      setValidationErrors(outcome.errors);
+      return;
+    }
+    setSavingNext(false);
+    if (outcome.kind === "saved") {
+      setSaveStatus("saved");
+      setError(null); // clear a stale error from a prior failed attempt (e.g. Retry succeeding)
+      goNextAction(MAX_BUILT_STEP);
+    } else {
+      setSaveStatus("error");
+      // The revision-conflict banner already shows this — avoid saying it twice.
+      if (!isConflict(outcome.message)) setError(outcome.message);
+    }
+  };
+
   const isLastStep = step === wizardSteps.length;
   const nextStepLabel = wizardSteps[step]?.label ?? wizardSteps[wizardSteps.length - 1].label;
   const prevStepLabel = wizardSteps[step - 2]?.label;
+  const nextButtonContent =
+    saveStatus === "saving" ? (
+      "Saving…"
+    ) : (
+      <>
+        Next: {nextStepLabel} <ArrowRightIcon className="h-4 w-4" />
+      </>
+    );
 
   // Avoid flashing step-1 defaults before a restored draft (possibly on a
-  // later step) loads from localStorage or via ?id=.
-  if (!hasHydrated || resumePending) return null;
+  // later step) loads from localStorage.
+  if (!hasHydrated) return null;
+  if (resumePending) {
+    return (
+      <Card className="p-6">
+        <p className="text-center text-sm text-zinc-400">กำลังโหลด draft…</p>
+      </Card>
+    );
+  }
+
+  if (resumeFailure) {
+    return (
+      <>
+        {resumeFailure.kind === "forbidden" ? (
+          <NoAccess message={resumeFailure.message} />
+        ) : (
+          <Card className="p-6">
+            <p className="text-center text-sm text-red-600 dark:text-red-400">{resumeFailure.message}</p>
+          </Card>
+        )}
+        <div className="mt-4 flex justify-center gap-3">
+          {resumeFailure.kind === "retryable" && (
+            <Button variant="primary" onClick={handleRetryResume} disabled={retrying}>
+              {retrying ? "กำลังโหลด…" : "ลองใหม่"}
+            </Button>
+          )}
+          <Link href="/publications" className={buttonClasses("secondary")}>
+            กลับไปยังรายการ
+          </Link>
+        </div>
+      </>
+    );
+  }
 
   const displayError = error || resumeError;
 
@@ -141,6 +307,9 @@ export function CreatePublicationPage() {
         actions={
           isLastStep ? (
             <>
+              <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>
+                Cancel
+              </Button>
               <Button variant="secondary" onClick={goBack}>
                 <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
               </Button>
@@ -150,16 +319,62 @@ export function CreatePublicationPage() {
             </>
           ) : (
             <>
+              <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>
+                Cancel
+              </Button>
               <Button variant="secondary" onClick={saveDraft} disabled={saving}>
                 {saving ? "Saving…" : "Save as Draft"}
               </Button>
-              <Button variant="primary" onClick={goNext} disabled={step >= MAX_BUILT_STEP}>
-                Next: {nextStepLabel} <ArrowRightIcon className="h-4 w-4" />
+              <Button variant="primary" onClick={handleNext} disabled={savingNext || step >= MAX_BUILT_STEP}>
+                {nextButtonContent}
               </Button>
             </>
           )
         }
       />
+
+      {confirmingCancel && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <span>มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ออกจากหน้านี้จะทำให้ข้อมูลหายไป ดำเนินการต่อ?</span>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setConfirmingCancel(false)}>
+              Stay
+            </Button>
+            <Button
+              variant="primary"
+              className="bg-red-600 px-3 py-1.5 text-xs hover:bg-red-500"
+              onClick={performCancel}
+              disabled={cancelBusy}
+            >
+              {cancelBusy ? "Leaving…" : "Leave"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {revisionConflict && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <span>{revisionConflict}</span>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="secondary"
+              className="px-3 py-1.5 text-xs"
+              onClick={handleReloadFromServer}
+              disabled={conflictBusy}
+            >
+              {conflictBusy ? "กำลังโหลด…" : "โหลดใหม่"}
+            </Button>
+            <Button
+              variant="primary"
+              className="px-3 py-1.5 text-xs"
+              onClick={handleOverwrite}
+              disabled={conflictBusy}
+            >
+              {conflictBusy ? "กำลังโหลด…" : "บันทึกทับ"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Card className="p-5">
         <PublicationStepper currentStep={step} />
@@ -168,7 +383,7 @@ export function CreatePublicationPage() {
       {step === 1 && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <BasicInfoForm campaigns={campaigns} />
+            <BasicInfoForm campaigns={campaigns} workspaceTags={tags} />
           </div>
           <div>
             <PreviewPanel campaigns={campaigns} />
@@ -177,7 +392,9 @@ export function CreatePublicationPage() {
       )}
 
       {step === 2 && <ContentStep campaigns={campaigns} />}
-      {step === 3 && <ChannelsStep screens={screens} loadingScreens={loadingRefs} />}
+      {step === 3 && (
+        <ChannelsStep screens={screens} loadingScreens={loadingRefs} screensError={screensError} />
+      )}
       {step === 4 && (
         <ScheduleStep
           campaigns={campaigns}
@@ -185,6 +402,7 @@ export function CreatePublicationPage() {
           assets={assets}
           conflicts={conflicts}
           checkingConflicts={checkingConflicts}
+          conflictsError={conflictsError}
         />
       )}
       {step === 5 && (
@@ -193,6 +411,7 @@ export function CreatePublicationPage() {
           screens={screens}
           assets={assets}
           conflicts={conflicts}
+          eligibilityChecks={eligibilityChecks}
         />
       )}
 
@@ -221,12 +440,35 @@ export function CreatePublicationPage() {
               <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
             </Button>
           ) : (
-            <Button variant="primary" onClick={goNext} disabled={step >= MAX_BUILT_STEP}>
-              Next: {nextStepLabel} <ArrowRightIcon className="h-4 w-4" />
+            <Button variant="primary" onClick={handleNext} disabled={savingNext || step >= MAX_BUILT_STEP}>
+              {nextButtonContent}
             </Button>
           )}
         </div>
-        {displayError && <p className="text-xs font-medium text-red-600">{displayError}</p>}
+        {validationErrors.length > 0 && (
+          <div className="flex flex-col gap-1">
+            {validationErrors.map((err, idx) => (
+              <p key={idx} className="text-xs font-medium text-red-600">
+                {err}
+              </p>
+            ))}
+          </div>
+        )}
+        {displayError && (
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium text-red-600">{displayError}</p>
+            {saveStatus === "error" && (
+              <Button
+                variant="secondary"
+                className="px-2.5 py-1 text-xs"
+                onClick={handleNext}
+                disabled={savingNext}
+              >
+                Retry
+              </Button>
+            )}
+          </div>
+        )}
         {publishedId && (
           <p className="text-xs font-medium text-emerald-600">
             Published successfully! (ID: {publishedId})

@@ -31,3 +31,43 @@ export type PublishJobStatus =
   | "playing"
   | "failed"
   | "cancelled";
+
+// Campaign, Tag and Asset are read by both publications and playlists — the API shapes
+// live here so neither feature has to import from the other.
+
+export type Campaign = {
+  id: string;
+  name: string;
+  status?: string;
+  starts_at?: string;
+  ends_at?: string;
+  brand_id?: string;
+  brand_name?: string;
+};
+
+export type Tag = {
+  id: string;
+  name: string;
+  usage_count?: number;
+};
+
+export type MediaAsset = {
+  id: string;
+  title?: string;
+  status?: string;
+  kind?: "video" | "image";
+  approval_status?: string;
+  language?: string;
+  duration_seconds?: number | null;
+  width?: number;
+  height?: number;
+  codec?: string;
+  created_at?: string;
+  file?: {
+    id?: string;
+    original_filename?: string;
+    mime_type?: string;
+    file_size_bytes?: number;
+    checksum?: string;
+  };
+};

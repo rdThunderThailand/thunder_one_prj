@@ -12,21 +12,8 @@ export const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
 
 export type Priority = (typeof PRIORITIES)[number];
 
-export type Campaign = {
-  id: string;
-  name: string;
-  status?: string;
-  starts_at?: string;
-  ends_at?: string;
-  brand_id?: string;
-  brand_name?: string;
-};
-
-export type Tag = {
-  id: string;
-  name: string;
-  usage_count?: number;
-};
+// Shared with playlists — the shapes live in src/types/domain.ts.
+export type { Campaign, MediaAsset, Tag } from "@/types/domain";
 
 export type BasicInfoForm = {
   name: string;
@@ -36,6 +23,7 @@ export type BasicInfoForm = {
   priority?: Priority;
   language?: string;
   tags?: string[];
+  playlist_id?: string;
 };
 
 export type Publication = {
@@ -50,35 +38,19 @@ export type Publication = {
   tags?: string[];
   playlist_id?: string;
   status?: string;
+  revision?: number;
   created_at?: string;
   updated_at?: string;
-};
-
-export type MediaAsset = {
-  id: string;
-  title?: string;
-  status?: string;
-  kind?: "video" | "image";
-  approval_status?: string;
-  language?: string;
-  duration_seconds?: number | null;
-  width?: number;
-  height?: number;
-  codec?: string;
-  created_at?: string;
-  file?: {
-    id?: string;
-    original_filename?: string;
-    mime_type?: string;
-    file_size_bytes?: number;
-    checksum?: string;
-  };
 };
 
 export type PublicationListItem = {
   id: string;
   name: string;
+  /** Stored operator intent: draft | active | cancelled (docs/adr/0004). */
   status: string;
+  /** Clock-aware lifecycle for display: adds scheduled | ended. Read this to
+   * answer "what phase is this in"; read `status` for "was it activated". */
+  effective_status?: string;
   publication_type: PublicationType;
   priority: Priority;
   language?: string;
@@ -87,6 +59,8 @@ export type PublicationListItem = {
   playlist_id?: string;
   item_count: number;
   tags: string[];
+  /** Who created the draft — null for rows created before this field existed. */
+  created_by?: { id: string; display_name: string } | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -110,12 +84,21 @@ export type PublicationDetail = {
   priority: Priority;
   language?: string;
   metadata?: Record<string, unknown>;
+  /** Stored operator intent: draft | active | cancelled (docs/adr/0004). */
   status: string;
+  /** Clock-aware lifecycle for display: adds scheduled | ended. */
+  effective_status?: string;
+  /** Optimistic-lock counter — bumped on every draft write (docs/adr/0003). */
+  revision?: number;
   playlist?: { id: string; name: string } | null;
   tags: string[];
   created_at?: string;
   activated_at?: string;
   job_status?: string;
+  /** Who pressed publish — null for publications activated before ADR 0005. */
+  published_by?: { id: string; display_name: string } | null;
+  /** Who created the draft — null for rows created before this field existed. */
+  created_by?: { id: string; display_name: string } | null;
   /** Delivery status per device — populated only after activation. */
   targets?: PublicationDeliveryTarget[];
   /** The publication's own targets, saved in step 3. */

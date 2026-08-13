@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
@@ -11,15 +12,18 @@ import {
   deletePublication,
   fetchPublications,
 } from "../services/publications-api";
+import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
 import type { PublicationListItem } from "../types";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { NoAccess } from "@/components/ui/NoAccess";
 
 export function PublicationsListPage() {
   const [drafts, setDrafts] = useState<PublicationListItem[] | null>(null);
   const [active, setActive] = useState<PublicationListItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   // Per-tab, so one failing list cannot make the other read as empty.
-  const [draftError, setDraftError] = useState<string | null>(null);
-  const [activeError, setActiveError] = useState<string | null>(null);
+  const [draftError, setDraftError] = useState<ClassifiedError | null>(null);
+  const [activeError, setActiveError] = useState<ClassifiedError | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -34,15 +38,11 @@ export function PublicationsListPage() {
 
         if (draftRes.status === "fulfilled") setDrafts(draftRes.value);
         else
-          setDraftError(
-            draftRes.reason instanceof Error ? draftRes.reason.message : "โหลดดราฟต์ไม่สำเร็จ"
-          );
+          setDraftError(classifyApiError(draftRes.reason, "โหลดดราฟต์ไม่สำเร็จ"));
 
         if (activeRes.status === "fulfilled") setActive(activeRes.value);
         else
-          setActiveError(
-            activeRes.reason instanceof Error ? activeRes.reason.message : "โหลด active ไม่สำเร็จ"
-          );
+          setActiveError(classifyApiError(activeRes.reason, "โหลด active ไม่สำเร็จ"));
 
         setLoading(false);
       }
@@ -84,13 +84,20 @@ export function PublicationsListPage() {
   const renderTable = (
     items: PublicationListItem[] | null,
     tab: "draft" | "active",
-    error: string | null
+    error: ClassifiedError | null
   ) => {
     if (loading) {
       return <p className="py-6 text-center text-sm text-zinc-400">กำลังโหลด…</p>;
     }
     if (error) {
-      return <p className="py-6 text-center text-sm text-red-600 dark:text-red-400">{error}</p>;
+      if (error.kind === "forbidden") {
+        return <NoAccess message={error.message} />;
+      }
+      return (
+        <p className="py-6 text-center text-sm text-red-600 dark:text-red-400">
+          {error.message}
+        </p>
+      );
     }
     if (!items || items.length === 0) {
       return (
@@ -106,9 +113,11 @@ export function PublicationsListPage() {
           <thead>
             <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-400 dark:border-zinc-800">
               <th className="py-2 pr-3">Name</th>
+              <th className="py-2 pr-3">Status</th>
               <th className="py-2 pr-3">Type</th>
               <th className="py-2 pr-3">Priority</th>
               <th className="py-2 pr-3">Items</th>
+              <th className="py-2 pr-3">Created by</th>
               <th className="py-2 pr-3">Updated</th>
               <th className="py-2 text-right">Actions</th>
             </tr>
@@ -133,6 +142,14 @@ export function PublicationsListPage() {
                       {item.name}
                     </Link>
                   </td>
+                  <td className="py-2.5 pr-3">
+                    <Badge
+                      color={publicationStatusColor(publicationDisplayStatus(item))}
+                      variant="pill"
+                    >
+                      {publicationDisplayStatus(item)}
+                    </Badge>
+                  </td>
                   <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
                     {item.publication_type}
                   </td>
@@ -141,6 +158,9 @@ export function PublicationsListPage() {
                   </td>
                   <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
                     {item.item_count ?? 0}
+                  </td>
+                  <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                    {item.created_by?.display_name ?? "—"}
                   </td>
                   <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
                     {updatedDisplay}

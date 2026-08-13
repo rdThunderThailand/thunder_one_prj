@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api/client";
-import { requestApi } from "./publications-api";
+import { requestApi } from "@/lib/api/media-api";
 import type { MediaAsset } from "../types";
 
 type UploadUrlResponse = {

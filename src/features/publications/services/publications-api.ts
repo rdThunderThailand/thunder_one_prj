@@ -1,9 +1,11 @@
-import { apiClient } from "@/lib/api/client";
+import { requestApi } from "@/lib/api/media-api";
+
+// Shared media endpoints live in the lib layer; re-exported so existing call sites
+// keep importing from this service.
+export { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api";
 import type {
   BasicInfoForm,
-  Campaign,
   ContentItem,
-  MediaAsset,
   PlaylistDetail,
   Priority,
   Publication,
@@ -15,84 +17,7 @@ import type {
   ScheduleConflict,
   SchedulePayload,
   Screen,
-  Tag,
 } from "../types";
-
-export async function requestApi<T>(
-  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
-  path: string,
-  data?: unknown
-): Promise<T> {
-  const res = await apiClient.request({
-    url: `/api/proxy${path}`,
-    method,
-    data,
-    validateStatus: () => true,
-  });
-
-  const resData = res.data;
-
-  if (
-    resData &&
-    typeof resData === "object" &&
-    "error" in (resData as Record<string, unknown>)
-  ) {
-    const errorMsg =
-      (resData as { error: string }).error || "API request failed";
-    throw new Error(errorMsg);
-  }
-
-  if (res.status < 200 || res.status >= 300) {
-    throw new Error(`HTTP Error ${res.status}`);
-  }
-
-  if (resData && typeof resData === "object") {
-    if (
-      "success" in (resData as Record<string, unknown>) &&
-      "data" in (resData as Record<string, unknown>)
-    ) {
-      return (resData as { data: T }).data;
-    }
-    return resData as T;
-  }
-
-  return resData as T;
-}
-
-export async function fetchCampaigns(): Promise<Campaign[]> {
-  const data = await requestApi<{ campaigns?: Campaign[] } | Campaign[]>(
-    "GET",
-    "/media/campaigns"
-  );
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (
-    data &&
-    typeof data === "object" &&
-    "campaigns" in data &&
-    Array.isArray(data.campaigns)
-  ) {
-    return data.campaigns;
-  }
-  return [];
-}
-
-export async function fetchTags(): Promise<Tag[]> {
-  const data = await requestApi<{ tags?: Tag[] } | Tag[]>("GET", "/media/tags");
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (
-    data &&
-    typeof data === "object" &&
-    "tags" in data &&
-    Array.isArray(data.tags)
-  ) {
-    return data.tags;
-  }
-  return [];
-}
 
 export async function fetchScreens(): Promise<Screen[]> {
   const data = await requestApi<{ screens?: Screen[] } | Screen[]>(
@@ -133,6 +58,9 @@ function cleanBasicInfoBody(
   if (form.publication_type) {
     body.publication_type = form.publication_type;
   }
+  if (form.playlist_id?.trim()) {
+    body.playlist_id = form.playlist_id.trim();
+  }
   if (form.priority) {
     body.priority = form.priority;
   }
@@ -149,7 +77,9 @@ function cleanBasicInfoBody(
 export async function saveBasicInfo(
   form: BasicInfoForm,
   publicationId: string | null,
-  targets?: PublicationTarget[]
+  targets?: PublicationTarget[],
+  expectedRevision?: number | null,
+  idempotencyKey?: string
 ): Promise<Publication> {
   const body = cleanBasicInfoBody(form, publicationId);
   // PATCH replaces every field it receives, so the caller must always post the
@@ -157,6 +87,16 @@ export async function saveBasicInfo(
   // targets untouched, which is what steps 1 and 2 want.
   if (targets) {
     body.targets = targets;
+  }
+  // Only meaningful on an update — a fresh draft (POST) has no revision to
+  // race against yet. `media_publication_upsert` skips the check when omitted.
+  if (publicationId && expectedRevision != null) {
+    body.expected_revision = expectedRevision;
+  }
+  // Only sent on create: PATCH already addresses the row by publication_id and
+  // never needs a dedupe key.
+  if (!publicationId && idempotencyKey) {
+    body.idempotency_key = idempotencyKey;
   }
   const method = publicationId ? "PATCH" : "POST";
   return requestApi<Publication>(method, "/media/publications", body);
@@ -193,14 +133,6 @@ export async function deletePublication(id: string): Promise<void> {
 /** Stops an active publication. Devices drop it on their next poll. */
 export async function cancelPublication(id: string): Promise<void> {
   await requestApi<unknown>("POST", `/media/publications/${id}/cancel`);
-}
-
-export async function fetchMediaAssets(): Promise<MediaAsset[]> {
-  const data = await requestApi<MediaAsset[]>("GET", "/media/videos");
-  if (Array.isArray(data)) {
-    return data;
-  }
-  return [];
 }
 
 export async function savePublicationContent(
@@ -252,20 +184,6 @@ export async function checkScheduleConflicts(payload: {
     payload
   );
   return Array.isArray(data) ? data : [];
-}
-
-/** Batch-signs 1h preview URLs for the given media asset ids. Returns id → URL. */
-export async function fetchPreviewUrls(ids: string[]): Promise<Record<string, string>> {
-  if (ids.length === 0) return {};
-  const data = await requestApi<{ urls?: Record<string, string> } | Record<string, string>>(
-    "POST",
-    "/media/videos/preview-urls",
-    { ids }
-  );
-  if (data && typeof data === "object" && "urls" in data) {
-    return (data as { urls?: Record<string, string> }).urls ?? {};
-  }
-  return (data as Record<string, string>) ?? {};
 }
 
 export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {

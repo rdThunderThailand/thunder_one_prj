@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   draftItemsToContentItems,
   basicInfoToForm,
@@ -12,13 +13,17 @@ import {
   checkScheduleConflicts,
   fetchCampaigns,
   fetchMediaAssets,
+  fetchPublication,
   fetchScreens,
+  fetchTags,
   saveBasicInfo,
   savePublicationContent,
   savePublicationSchedule,
 } from "../services/publications-api";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen } from "../types";
+import { computeEligibility } from "../publish-eligibility";
+import { classifyApiError, isConflict } from "@/lib/api/api-error";
+import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen, Tag } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
  * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
@@ -34,37 +39,62 @@ function isStaleDraftError(err: unknown): boolean {
 export function usePublishDraft() {
   const [screens, setScreens] = useState<Screen[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loadingRefs, setLoadingRefs] = useState(true);
+  const [screensError, setScreensError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [savingNext, setSavingNext] = useState(false);
   const [publishedId, setPublishedId] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<ScheduleConflict[]>([]);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
+  const [conflictsError, setConflictsError] = useState<string | null>(null);
+  // Named distinctly from `conflicts` above — that's schedule/channel overlap
+  // (media_schedule_conflicts). This is the draft revision optimistic-lock
+  // conflict (docs/adr/0003), a different domain entirely.
+  const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
 
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
+  const idempotencyKey = usePublicationDraftStore((s) => s.idempotencyKey);
+  const step = usePublicationDraftStore((s) => s.step);
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
 
-  const canPublish =
-    basicInfo.name.trim().length > 0 &&
-    assetItems.length > 0 &&
-    channelIds.length > 0;
+  const eligibility = computeEligibility({
+    draft: { publicationId, idempotencyKey, step, basicInfo, assetItems, playlistId, channelIds, scheduleForm },
+    assets,
+    conflicts,
+    conflictsError,
+    loadingRefs,
+    checkingConflicts,
+  });
+  const canPublish = eligibility.canPublish;
+  const eligibilityChecks = eligibility.checks;
 
   useEffect(() => {
     let isMounted = true;
 
     Promise.all([
-      fetchScreens().catch(() => []),
+      fetchScreens().catch((err) => {
+        if (isMounted) {
+          setScreensError(err instanceof Error ? err.message : "Failed to load channels.");
+        }
+        return [];
+      }),
       fetchCampaigns().catch(() => []),
       fetchMediaAssets().catch(() => []),
-    ]).then(([fetchedScreens, fetchedCampaigns, fetchedAssets]) => {
+      fetchTags().catch(() => []),
+    ]).then(([fetchedScreens, fetchedCampaigns, fetchedAssets, fetchedTags]) => {
       if (isMounted) {
         setScreens(fetchedScreens);
         setCampaigns(fetchedCampaigns);
         setAssets(fetchedAssets);
+        setTags(fetchedTags);
         setLoadingRefs(false);
       }
     });
@@ -87,6 +117,7 @@ export function usePublishDraft() {
         if (!cancelled) {
           setConflicts([]);
           setCheckingConflicts(false);
+          setConflictsError(null);
         }
       }, 0);
       return () => {
@@ -111,12 +142,14 @@ export function usePublishDraft() {
           if (!cancelled) {
             setConflicts(res);
             setCheckingConflicts(false);
+            setConflictsError(null);
           }
         })
-        .catch(() => {
+        .catch((err) => {
           if (!cancelled) {
             setConflicts([]);
             setCheckingConflicts(false);
+            setConflictsError(err instanceof Error ? err.message : "Failed to check schedule conflicts.");
           }
         });
     }, 400);
@@ -155,17 +188,25 @@ export function usePublishDraft() {
     const targets =
       forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, screens) : undefined;
 
-    const basicForm = basicInfoToForm(state.basicInfo);
+    const basicForm = basicInfoToForm(state.basicInfo, state.playlistId);
     let res;
     try {
-      res = await saveBasicInfo(basicForm, state.publicationId, targets);
+      res = await saveBasicInfo(basicForm, state.publicationId, targets, state.revision, state.idempotencyKey);
     } catch (err) {
       // The draft id lives in localStorage forever, but the row it points at can be
       // deleted (or leave `draft` via cancel/activate) from the /publications page —
       // which used to brick the wizard until the user hit Cancel. Re-create instead.
       if (state.publicationId && isStaleDraftError(err)) {
-        res = await saveBasicInfo(basicForm, null, targets);
+        // Re-minting first: reusing the old key would resolve the retry back to
+        // the same dead row instead of creating a fresh draft (docs/adr/0007 media).
+        state.resetIdempotencyKey();
+        res = await saveBasicInfo(basicForm, null, targets, undefined, usePublicationDraftStore.getState().idempotencyKey);
       } else {
+        // Surfaced as a dedicated banner (CreatePublicationPage), not the generic
+        // error text — "reload" / "overwrite" are actions, not just a message.
+        if (err instanceof Error && isConflict(err.message)) {
+          setRevisionConflict(classifyApiError(err, err.message).message);
+        }
         throw err;
       }
     }
@@ -174,27 +215,64 @@ export function usePublishDraft() {
       throw new Error("No publication ID returned from backend.");
     }
     state.setPublicationId(newId);
+    if (typeof res.revision === "number") {
+      state.setRevision(res.revision);
+    }
 
     const contentItems = draftItemsToContentItems(state.assetItems);
-    if (contentItems.length > 0) {
+    const savedContent = contentItems.length > 0;
+    if (savedContent && state.basicInfo.publicationType !== "playlist") {
+      // The RPC deletes every item of the linked playlist before inserting, so calling it with a
+      // playlist the operator owns empties that playlist (ADR 0011).
       await savePublicationContent(newId, contentItems);
     }
 
     const form = state.scheduleForm;
-    if (forPublish || (state.step >= 4 && isScheduleFormValid(form))) {
+    const savedSchedule = forPublish || (state.step >= 4 && isScheduleFormValid(form));
+    if (savedSchedule) {
       await savePublicationSchedule(newId, scheduleFormToPayload(form));
+    }
+
+    // `set_content`/`set_schedule` bump `revision` server-side too (ADR 0003) but
+    // don't return it, so re-fetch to keep the client's expected_revision from
+    // going stale and self-conflicting on the next save.
+    if (savedContent || savedSchedule) {
+      const fresh = await fetchPublication(newId);
+      if (typeof fresh.revision === "number") {
+        state.setRevision(fresh.revision);
+      }
     }
 
     return newId;
   };
 
   const saveDraft = async (): Promise<string | null> => {
+    // The name is the one field the publications endpoint refuses to take empty,
+    // and Save as Draft skips the step gate that Next runs — so a brand-new draft
+    // would reach the API with `name: ""` and come back as a schema error. Nothing
+    // else is required here: a draft should save with as little filled in as the
+    // backend will accept.
+    if (!usePublicationDraftStore.getState().basicInfo.name.trim()) {
+      const message = "กรุณากรอกชื่อ Publication ก่อนบันทึกร่าง";
+      setError(message);
+      toast.error(message);
+      return null;
+    }
     setSaving(true);
     setError(null);
     try {
-      return await persistDraft(false);
+      const resId = await persistDraft(false);
+      usePublicationDraftStore.getState().markSaved();
+      usePublicationDraftStore.getState().setExplicitlySaved(true);
+      toast.success("บันทึกร่างแล้ว");
+      return resId;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save draft.");
+      const classified = classifyApiError(err, "Failed to save draft.");
+      // The revision-conflict banner already shows this — avoid saying it twice.
+      if (classified.kind !== "conflict") {
+        setError(classified.message);
+        toast.error(classified.message);
+      }
       return null;
     } finally {
       setSaving(false);
@@ -204,14 +282,23 @@ export function usePublishDraft() {
   const publishNow = async (): Promise<void> => {
     setSaving(true);
     setError(null);
+    const state = usePublicationDraftStore.getState();
     try {
       const newId = await persistDraft(true);
       if (!newId) return;
       await activatePublication(newId);
       setPublishedId(newId);
-      usePublicationDraftStore.getState().cancelDraft();
+      state.cancelDraft();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to publish publication.");
+      const classified = classifyApiError(err, "Failed to publish publication.");
+      // A retry after a timed-out publish lands here: the backend refused because
+      // the first attempt already activated it, so this is a success reaching us late.
+      if (classified.kind === "already-active" && state.publicationId) {
+        setPublishedId(state.publicationId);
+        state.cancelDraft();
+        return;
+      }
+      if (classified.kind !== "conflict") setError(classified.message);
     } finally {
       setSaving(false);
     }
@@ -219,16 +306,28 @@ export function usePublishDraft() {
 
   return {
     screens,
+    screensError,
     campaigns,
+    tags,
     assets,
     loadingRefs,
     saving,
     error,
+    setError,
     publishedId,
     conflicts,
     checkingConflicts,
+    conflictsError,
+    revisionConflict,
+    setRevisionConflict,
     saveDraft,
     publishNow,
     canPublish,
+    eligibilityChecks,
+    persistDraft,
+    saveStatus,
+    setSaveStatus,
+    savingNext,
+    setSavingNext,
   };
 }
