@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { CheckIcon, ListIcon, PlayIcon } from "@/components/ui/icons";
+import { isVideoUrl } from "@/lib/media-kind";
 import { isApprovedAsset } from "../draft-mapping";
 import type { MediaAsset } from "../types";
 import type { PlaylistListItem } from "@/features/playlists";
@@ -36,13 +37,25 @@ export function AssetCard(props: AssetCardProps) {
       >
         <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
           {previewUrl ? (
-            <Image
-              src={previewUrl}
-              alt={playlist.name}
-              fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-              className="object-cover object-center"
-            />
+            // A playlist's cover falls back to its first item, which is often a video, and
+            // nothing here carries the asset's kind — so the extension decides, exactly as
+            // in MediaThumb. #t=0.1 makes the browser paint the first frame as a poster.
+            isVideoUrl(previewUrl) ? (
+              <video
+                src={`${previewUrl}#t=0.1`}
+                muted
+                preload="metadata"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+              />
+            ) : (
+              <Image
+                src={previewUrl}
+                alt={playlist.name}
+                fill
+                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                className="object-cover object-center"
+              />
+            )
           ) : (
             <ListIcon className="h-6 w-6 text-zinc-300" />
           )}
