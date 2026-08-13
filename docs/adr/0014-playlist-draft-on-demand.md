@@ -130,13 +130,16 @@ any database as part of this change — applying it is a separate, explicit prod
 dictates the deploy order: **apply migration 087 first, then deploy `Thunder_Core`, then deploy
 the frontend.**
 
-Until migration 087 is applied, `Thunder_Core` will fail to deploy because
-`Thunder_Core/src/app/api/core/v1/media/playlists/route.ts` sends `p_include_drafts` on every
-call unconditionally. With only the old one-argument `media_playlists_list(p_tenant_id uuid)`
-available, PostgREST returns HTTP 500 (function not found), breaking both the `/playlists`
-management page and the publication content picker — even though the picker never asks for drafts,
-the route adds the argument on its behalf. Deploying the migration first ensures the new function
-signature is ready before the frontend code that calls it reaches production.
+Deploying `Thunder_Core` before migration 087 is applied does not fail at deploy time — the build
+and the release succeed. It fails at runtime, on every request, from the moment the release goes
+live: `Thunder_Core/src/app/api/core/v1/media/playlists/route.ts` sends `p_include_drafts` on every
+call unconditionally, so with only the old one-argument `media_playlists_list(p_tenant_id uuid)`
+available, PostgREST cannot resolve the function and `GET /api/core/v1/media/playlists` returns
+HTTP 500. That breaks both the `/playlists` management page and the publication content picker —
+even though the picker never asks for drafts, the route adds the argument on its behalf. The
+danger is precisely that nothing stops the deploy: the damage is silent until someone loads either
+screen. Applying the migration first ensures the new signature exists before any code that calls
+it is serving traffic.
 
 Why the other orderings are safe: Deploying the frontend before the backend is harmless because
 the old route ignores the `include_drafts` query parameter entirely. Applying the migration early
