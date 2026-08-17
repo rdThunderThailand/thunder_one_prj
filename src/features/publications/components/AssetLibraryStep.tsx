@@ -22,6 +22,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import {
   captureVideoThumbnail,
   fetchUploadUrl,
+  readMediaDimensions,
   readVideoDuration,
   registerVideo,
   uploadToStorage,
@@ -148,6 +149,7 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
     try {
       const isVideoFile = file.type.startsWith("video/");
       const duration = isVideoFile ? await readVideoDuration(file) : null;
+      const dimensions = await readMediaDimensions(file);
       const thumbnailBlob = isVideoFile ? await captureVideoThumbnail(file) : undefined;
       const { file_id, upload_url } = await fetchUploadUrl(file);
       await uploadToStorage(upload_url, file, setUploadPct);
@@ -167,6 +169,7 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
         title: file.name,
         ...(duration ? { duration_seconds: duration } : {}),
         ...(thumbnail_storage_key ? { thumbnail_storage_key } : {}),
+        ...(dimensions ?? {}),
       });
       await loadAssets();
       if (asset?.id && acceptedAssetKind(publicationType) === (isVideoFile ? "video" : "image")) {

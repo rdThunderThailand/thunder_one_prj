@@ -40,8 +40,41 @@ export async function registerVideo(payload: {
   title: string;
   duration_seconds?: number;
   thumbnail_storage_key?: string;
+  width?: number;
+  height?: number;
 }): Promise<MediaAsset> {
   return requestApi<MediaAsset>("POST", "/media/videos", payload);
+}
+
+// ponytail: the browser has already decoded the file by the time it reports these, so the
+// dimensions the playlist compatibility check needs (ADR 0019) are free here. Undefined when
+// the file cannot be decoded — the asset registers without them and the check stays silent.
+export function readMediaDimensions(
+  file: File
+): Promise<{ width: number; height: number } | undefined> {
+  const url = URL.createObjectURL(file);
+  const isVideo = file.type.startsWith("video/");
+
+  return new Promise((resolve) => {
+    const done = (size?: { width: number; height: number }) => {
+      URL.revokeObjectURL(url);
+      resolve(size?.width && size.height ? size : undefined);
+    };
+
+    if (isVideo) {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => done({ width: video.videoWidth, height: video.videoHeight });
+      video.onerror = () => done();
+      video.src = url;
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => done({ width: image.naturalWidth, height: image.naturalHeight });
+    image.onerror = () => done();
+    image.src = url;
+  });
 }
 
 // ponytail: reads duration from a detached <video>; returns undefined for anything the
