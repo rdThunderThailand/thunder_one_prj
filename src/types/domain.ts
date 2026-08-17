@@ -71,3 +71,51 @@ export type MediaAsset = {
     checksum?: string;
   };
 };
+
+// Playlist read shapes — moved here from features/playlists so
+// src/lib/api/media-api.ts (which never imports from a feature) can host the
+// read calls (`fetchPlaylist`, `fetchPlaylists`) both publications and
+// playlists use. features/playlists/types re-exports these; write-side
+// concerns (metadata sub-shapes, draft shapes) stay feature-local.
+
+/** The only transitions a screen understands — `playlist_items.transition` is
+ *  `CHECK (transition IN ('cut','fade'))`. Slide/Wipe from the mockup do not exist. */
+export const TRANSITIONS = ["cut", "fade"] as const;
+export type Transition = (typeof TRANSITIONS)[number];
+
+export const PLAYLIST_STATUSES = ["draft", "active", "inactive"] as const;
+export type PlaylistStatus = (typeof PLAYLIST_STATUSES)[number];
+
+/** `{id, display_name}` or null — same shape publications uses (migrations 077/079). */
+export type Creator = { id: string; display_name: string } | null;
+
+export type PlaylistItem = {
+  media_asset_id: string;
+  title?: string;
+  position: number;
+  duration_seconds?: number | null;
+  transition?: Transition;
+};
+
+export type PlaylistListItem = {
+  id: string;
+  name: string;
+  status: PlaylistStatus;
+  item_count: number;
+  created_at?: string;
+  /** Phase 2 fields — absent until the list RPC is extended. */
+  metadata?: Record<string, unknown>;
+  cover_asset_id?: string | null;
+  created_by?: Creator;
+};
+
+export type PlaylistDetail = {
+  id: string;
+  name: string;
+  status: PlaylistStatus;
+  items: PlaylistItem[];
+  revision: number;
+  /** Phase 2 fields — absent until the get RPC is extended. */
+  metadata?: Record<string, unknown>;
+  created_by?: Creator;
+};

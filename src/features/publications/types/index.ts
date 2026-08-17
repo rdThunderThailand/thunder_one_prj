@@ -13,7 +13,7 @@ export const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
 // Shared with playlists — the shapes live in src/types/domain.ts.
-export type { Campaign, MediaAsset, Tag } from "@/types/domain";
+export type { Campaign, MediaAsset, Tag, PlaylistItem, PlaylistDetail } from "@/types/domain";
 
 export type BasicInfoForm = {
   name: string;
@@ -182,21 +182,6 @@ export type ScheduleConflict = {
   would_suppress: boolean;
   /** If this draft is published, is it the one suppressed for the overlap (override loses)? */
   would_be_suppressed: boolean;
-};
-
-export type PlaylistItem = {
-  media_asset_id: string;
-  title?: string;
-  position: number;
-  duration_seconds?: number | null;
-  transition?: string;
-};
-
-export type PlaylistDetail = {
-  id: string;
-  name: string;
-  status?: string;
-  items: PlaylistItem[];
 };
 
 export type DraftAssetItem = {

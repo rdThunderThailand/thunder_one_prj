@@ -6,7 +6,6 @@ export { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api
 import type {
   BasicInfoForm,
   ContentItem,
-  PlaylistDetail,
   Priority,
   Publication,
   PublicationDetail,
@@ -190,9 +189,5 @@ export async function checkScheduleConflicts(payload: {
     payload
   );
   return Array.isArray(data) ? data : [];
-}
-
-export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {
-  return requestApi<PlaylistDetail>("GET", `/media/playlists/${id}`);
 }
 
