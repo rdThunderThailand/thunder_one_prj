@@ -42,6 +42,7 @@ export function CreatePlaylistPage() {
   const [resuming, setResuming] = useState(!!idParam);
   const [dismissedBanner, setDismissedBanner] = useState(false);
 
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<ClassifiedError | null>(null);
@@ -156,9 +157,16 @@ export function CreatePlaylistPage() {
     }
   };
 
+  // Stepping backwards inside the wizard keeps the draft, so only leaving it is worth a
+  // confirmation: the store holds one draft for the whole app, and opening another playlist
+  // resets it. No `beforeunload` — the draft is in localStorage, a refresh loses nothing.
   const goBack = () => {
     if (step > 1) {
       draft.setStep(step - 1);
+      return;
+    }
+    if (hasDraftContent(draft)) {
+      setConfirmLeave(true);
       return;
     }
     router.push("/playlists");
@@ -264,6 +272,23 @@ export function CreatePlaylistPage() {
               }}
             >
               เริ่มใหม่
+            </Button>
+          </span>
+        </Card>
+      )}
+
+      {confirmLeave && (
+        <Card className="flex items-center justify-between gap-4 border-amber-200 p-4 dark:border-amber-900">
+          <p className="text-sm text-amber-700 dark:text-amber-400">
+            ยังไม่ได้บันทึกร่างนี้ลงระบบ — ออกไปตอนนี้ร่างจะค้างอยู่ในเครื่องและถูกทับเมื่อเปิด
+            playlist อื่น
+          </p>
+          <span className="flex shrink-0 gap-2">
+            <Button variant="secondary" onClick={() => setConfirmLeave(false)}>
+              อยู่ต่อ
+            </Button>
+            <Button variant="ghost" onClick={() => router.push("/playlists")}>
+              ออกโดยไม่บันทึก
             </Button>
           </span>
         </Card>
