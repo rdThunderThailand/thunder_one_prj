@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -9,10 +10,10 @@ import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { statusBadge } from "@/features/playlists";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+import { fetchPublication } from "../services/publications-api";
 import { utcToZonedParts } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
 import {
-  createdByMeta,
   priorities,
   prePublishChecklist,
   publicationTypes,
@@ -31,6 +32,17 @@ function formatShortDate(iso: string) {
     day: "numeric",
     month: "long",
     year: "numeric",
+  });
+}
+
+function formatDateTime(iso: string | undefined) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -62,12 +74,35 @@ export function ReviewPublishStep({
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
+  const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
 
   const isPlaylist = basicInfo.publicationType === "playlist";
   const { playlist, failed: playlistFailed, coverAssetId: playlistCoverId, durationLabel: playlistDuration } =
     usePlaylistPreview(playlistId, isPlaylist);
+
+  // Step 5 is only reachable once Step 1's Next has saved the draft, so a
+  // publicationId always exists here — but keyed by id anyway, same reason as
+  // usePlaylistPreview: a stale response must never render under a switched draft.
+  const [metaResult, setMetaResult] = useState<{ id: string; createdBy?: string; createdAt?: string } | null>(
+    null
+  );
+  useEffect(() => {
+    if (!publicationId) return;
+    let alive = true;
+    fetchPublication(publicationId)
+      .then(
+        (detail) =>
+          alive &&
+          setMetaResult({ id: publicationId, createdBy: detail.created_by?.display_name, createdAt: detail.created_at })
+      )
+      .catch(() => alive && setMetaResult({ id: publicationId }));
+    return () => {
+      alive = false;
+    };
+  }, [publicationId]);
+  const meta = metaResult?.id === publicationId ? metaResult : null;
 
   const selectedChannels = screens
     .filter((s) => channelIds.includes(s.id))
@@ -205,12 +240,11 @@ export function ReviewPublishStep({
                 </dl>
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 text-xs text-zinc-400">
+            <div className="mt-4 flex items-center border-t border-zinc-100 pt-3 text-xs text-zinc-400">
               <span className="flex items-center gap-1.5">
-                <Avatar name={createdByMeta.name} size={20} />
-                Created by {createdByMeta.name} · {createdByMeta.createdAt}
+                <Avatar name={meta?.createdBy ?? "—"} size={20} />
+                Created by {meta?.createdBy ?? "—"} · {formatDateTime(meta?.createdAt)}
               </span>
-              <span>Last updated {createdByMeta.updatedAt}</span>
             </div>
           </Card>
 
