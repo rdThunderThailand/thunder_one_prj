@@ -7,6 +7,7 @@ import { ChevronDownIcon, StarIcon, XIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { MediaAsset } from "@/types/domain";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
+import { checkContentCompatibility, incompatibilityLabel } from "../content-compatibility";
 import { resolveCoverAssetId } from "../metadata";
 import { TRANSITIONS, type Transition } from "../types";
 
@@ -88,6 +89,7 @@ export function SelectedItems({ assets }: { assets: MediaAsset[] }) {
             const label = item.title ?? asset?.title ?? item.mediaAssetId;
             const isVideo = (item.kind ?? asset?.kind) === "video";
             const isCover = coverId === item.mediaAssetId;
+            const mismatch = asset ? checkContentCompatibility(info.resolution, asset) : null;
             return (
               <tr key={item.mediaAssetId}>
                 <td className="py-2.5">
@@ -107,6 +109,16 @@ export function SelectedItems({ assets }: { assets: MediaAsset[] }) {
                     <span className="truncate font-medium text-zinc-900 dark:text-zinc-100">
                       {label}
                     </span>
+                    {mismatch && (
+                      <span
+                        className="shrink-0"
+                        title={`${asset?.width}×${asset?.height} · Profile ${info.resolution}`}
+                      >
+                        <Badge color="yellow" variant="pill">
+                          {incompatibilityLabel(mismatch)}
+                        </Badge>
+                      </span>
+                    )}
                   </span>
                 </td>
                 <td className="py-2.5">

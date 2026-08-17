@@ -26,7 +26,7 @@ description ≤300), `metadata.ts:62-63` (resolution/frame rate into `metadata.i
 
 | AC | What's missing | Where it would go |
 |---|---|---|
-| 12 | Output Profile never used to check content compatibility in Step 2 | `ContentStep.tsx` / `AssetPicker.tsx` — currently no read of `info.resolution` |
+| 12 | ~~Output Profile never used to check content compatibility in Step 2~~ — **implemented 2026-08-17 (ADR 0019)**, together with the upload-side dimension capture it turned out to depend on | `content-compatibility.ts`, `SelectedItems.tsx`, `ReviewStep.tsx`, `upload-api.ts` |
 | 14 | ~~No Playlist Owner field at all~~ — **resolved 2026-08-17 (ADR 0018): not implemented, AC 14/15 amended.** `created_by` (migration 083) stays the only person field | no code |
 | 16 | No cover **upload** and no 5 MB limit — cover is picked from media already in the playlist (`info.coverAssetId`) | see Fork C |
 | 26 | No unsaved-changes confirmation. `grep beforeunload` in `src/` → 0 hits. The resume banner (`resume-prompt.ts`) is a different thing: it fires on *return*, not on *leave* | `CreatePlaylistPage.tsx` |
@@ -165,17 +165,29 @@ re-derives them:
   with search. It is gated by `requireTenantAdmin` and `thunder_one_prj` never calls it. Do
   not plan a new one.
 
-### Phase 3 — Output Profile compatibility (AC 12) · after Fork decisions
+### Phase 3 — Output Profile compatibility (AC 12) · DECIDED 2026-08-17 → ADR 0019
 
-- [ ] **3.1** Define what "incompatible" means — asset resolution below the playlist's, or
-      aspect-ratio mismatch? Needs a product answer; this is the check's entire spec.
-- [ ] **3.2** Pure function `checkContentCompatibility(profile, asset)` in
-      `src/features/playlists/`, with a `.check.mts`.
-- [ ] **3.3** Wire a warning (not a hard block) into `AssetPicker` / `ContentStep`.
-      *Dependency resolved 2026-08-17:* `media_assets` **does** have `width` / `height`
-      (`048_media_core_schema.sql:27-28`, `integer CHECK (> 0)`, nullable) and
-      `media_videos_list` (`056`) already returns both to the frontend. No backend work needed
-      — nullable, so the UI must handle assets with no dimensions recorded.
+- [x] **3.1** "Incompatible" = geometry only: aspect ratio off by more than 1%, or either
+      dimension below 90% of the profile. Warning, never a block; computed on every render, never
+      stored; unknown dimensions are silent. Frame rate and codec are excluded — reasons and both
+      rejected alternatives in `docs/adr/0019-playlist-content-compatibility.md`.
+- [x] **3.0 — the real dependency, found the same day.** The plan's earlier note that the data was
+      already there was wrong in practice. `media_assets.width` / `height` exist and
+      `media_videos_list` returns them, but **nothing writes them**: `registerVideo()` posted only
+      `file_id`, `title`, `duration_seconds`, `thumbnail_storage_key`, and a count against
+      production confirmed all 17 rows (7 video, 10 image) have `width`, `height` and `codec`
+      NULL. Fixed by reading dimensions in the browser at upload
+      (`readMediaDimensions` in `upload-api.ts`) — the `<video>` is already decoded for duration
+      and the poster frame. The 17 existing rows are **not** backfilled; they stay silent.
+- [x] **3.2** `checkContentCompatibility(profileResolution, asset)` →
+      `"aspect" | "resolution" | null`, in `src/features/playlists/content-compatibility.ts` with
+      `content-compatibility.check.mts` (15 assertions, passing).
+- [x] **3.3** Wired into `SelectedItems` (amber pill per row, dimensions in the `title`) and
+      `ReviewStep` (one line in Validation Summary). Deliberately **not** in `AssetPicker`: badging
+      every card before anything is selected turns the grid into a wall of yellow.
+      *Verified:* `tsc --noEmit`, `eslint`, `pnpm build`, 7/7 `.check.mts` — clean. Browser: **not
+      yet run** — needs an upload of a known-mismatched file, since no existing asset has
+      dimensions.
 
 ### Phase 4 — Audit log (AC 30) · after Fork decisions
 

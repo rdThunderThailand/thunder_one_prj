@@ -7,6 +7,7 @@ import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
+import { checkContentCompatibility } from "../content-compatibility";
 import { formatDuration, totalDurationSeconds } from "../duration";
 import { canSubmit } from "../step-validation";
 import { useMemo } from "react";
@@ -46,6 +47,12 @@ export function ReviewStep({
   );
 
   const ready = canSubmit({ name, description: info.description, items });
+
+  // ADR 0019: a count, not a blocker — assets with no recorded dimensions never appear here.
+  const mismatchCount = items.filter((item) => {
+    const asset = assetById[item.mediaAssetId];
+    return asset ? checkContentCompatibility(info.resolution, asset) !== null : false;
+  }).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -171,6 +178,20 @@ export function ReviewStep({
               <WarningTriangleIcon className="h-4 w-4 text-amber-500" />
             )}
             {name.trim() ? "ตั้งชื่อ playlist แล้ว" : "ยังไม่ได้ตั้งชื่อ playlist"}
+          </span>
+          <span
+            className={`flex items-center gap-2 ${
+              mismatchCount === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-500"
+            }`}
+          >
+            {mismatchCount === 0 ? (
+              <CheckCircleIcon className="h-4 w-4" />
+            ) : (
+              <WarningTriangleIcon className="h-4 w-4 text-amber-500" />
+            )}
+            {mismatchCount === 0
+              ? `media ทั้งหมดเข้ากับ Output Profile ${info.resolution ?? "—"}`
+              : `media ${mismatchCount} รายการไม่ตรงกับ Output Profile ${info.resolution ?? "—"} — ยังสร้างได้ จอจะย่อ/ขยายให้เอง`}
           </span>
         </div>
       </Card>
