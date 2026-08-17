@@ -1,10 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import {
+  decodeMetadata,
+  fetchPlaylist,
+  formatDuration,
+  resolveCoverAssetId,
+  statusBadge,
+  totalDurationSeconds,
+  type PlaylistDetail,
+} from "@/features/playlists";
 import { utcToZonedParts } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
 import {
@@ -57,8 +69,42 @@ export function ReviewPublishStep({
 }: ReviewPublishStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+
+  const isPlaylist = basicInfo.publicationType === "playlist";
+
+  // Keyed by playlist id, not just presence, so a stale response for the previous
+  // playlist never renders once the operator has picked a different one.
+  const [playlistResult, setPlaylistResult] = useState<
+    { id: string; detail: PlaylistDetail } | { id: string; failed: true } | null
+  >(null);
+
+  useEffect(() => {
+    if (!isPlaylist || !playlistId) return;
+    let alive = true;
+    fetchPlaylist(playlistId)
+      .then((detail) => alive && setPlaylistResult({ id: playlistId, detail }))
+      .catch(() => alive && setPlaylistResult({ id: playlistId, failed: true }));
+    return () => {
+      alive = false;
+    };
+  }, [isPlaylist, playlistId]);
+
+  const playlistCurrent = playlistResult?.id === playlistId ? playlistResult : null;
+  const playlist = playlistCurrent && "detail" in playlistCurrent ? playlistCurrent.detail : null;
+  const playlistMetadata = decodeMetadata(playlist?.metadata);
+  const playlistCoverId = playlist
+    ? resolveCoverAssetId(playlistMetadata.info.coverAssetId, playlist.items)
+    : undefined;
+  const playlistDuration = playlist
+    ? formatDuration(
+        totalDurationSeconds(
+          playlist.items.map((i) => ({ mediaAssetId: i.media_asset_id, durationSeconds: i.duration_seconds ?? null }))
+        )
+      )
+    : undefined;
 
   const selectedChannels = screens
     .filter((s) => channelIds.includes(s.id))
@@ -71,9 +117,10 @@ export function ReviewPublishStep({
     }));
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
-  const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
-  const previewUrl = selectedAsset ? previews.urls[selectedAsset.id] : undefined;
-  const thumbnailUrl = selectedAsset ? previews.thumbnailUrls[selectedAsset.id] : undefined;
+  const previewAssetId = isPlaylist ? playlistCoverId : selectedAsset?.id;
+  const previews = usePreviewUrls(previewAssetId ? [previewAssetId] : []);
+  const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
+  const thumbnailUrl = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
 
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
@@ -126,9 +173,9 @@ export function ReviewPublishStep({
                 <MediaThumb
                   url={previewUrl}
                   thumbnailUrl={thumbnailUrl}
-                  kind={selectedAsset?.kind}
-                  mimeType={selectedAsset?.file?.mime_type}
-                  alt={assetFilename ?? basicInfo.name}
+                  kind={isPlaylist ? undefined : selectedAsset?.kind}
+                  mimeType={isPlaylist ? undefined : selectedAsset?.file?.mime_type}
+                  alt={isPlaylist ? playlist?.name ?? basicInfo.name : assetFilename ?? basicInfo.name}
                   className="h-full w-full"
                 />
               </div>
@@ -151,17 +198,46 @@ export function ReviewPublishStep({
                       {type?.label}
                     </dd>
                   </div>
-                  {selectedAsset && (
+                  {isPlaylist ? (
                     <div className="flex gap-2">
-                      <dt className="w-20 shrink-0 text-zinc-400">File</dt>
+                      <dt className="w-20 shrink-0 text-zinc-400">Playlist</dt>
                       <dd className="text-zinc-700">
-                        {assetFilename ?? "—"}{assetItems.length > 1 ? ` +${assetItems.length - 1} more` : ""}
-                        <span className="block text-zinc-400">
-                          {assetDimensions ?? "—"}
-                          {assetDurationLabel ? ` · ${assetDurationLabel}` : ""}
-                        </span>
+                        {playlist ? (
+                          <Link
+                            href={`/playlists/${playlist.id}`}
+                            target="_blank"
+                            className="font-medium text-indigo-600 hover:underline"
+                          >
+                            {playlist.name}
+                          </Link>
+                        ) : playlistCurrent && "failed" in playlistCurrent ? (
+                          "โหลด playlist ไม่สำเร็จ"
+                        ) : (
+                          "กำลังโหลด..."
+                        )}
+                        {playlist && (
+                          <span className="mt-0.5 flex items-center gap-1.5 text-zinc-400">
+                            <Badge color={statusBadge(playlist.status).color} variant="pill">
+                              {statusBadge(playlist.status).label}
+                            </Badge>
+                            {playlist.items.length} items · {playlistDuration}
+                          </span>
+                        )}
                       </dd>
                     </div>
+                  ) : (
+                    selectedAsset && (
+                      <div className="flex gap-2">
+                        <dt className="w-20 shrink-0 text-zinc-400">File</dt>
+                        <dd className="text-zinc-700">
+                          {assetFilename ?? "—"}{assetItems.length > 1 ? ` +${assetItems.length - 1} more` : ""}
+                          <span className="block text-zinc-400">
+                            {assetDimensions ?? "—"}
+                            {assetDurationLabel ? ` · ${assetDurationLabel}` : ""}
+                          </span>
+                        </dd>
+                      </div>
+                    )
                   )}
                 </dl>
               </div>
