@@ -82,7 +82,7 @@ export function ScheduleStep({
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
-  const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
+  const previewUrl = selectedAsset ? previews.urls[selectedAsset.id] : undefined;
 
   const isVideo =
     selectedAsset?.kind === "video" ||

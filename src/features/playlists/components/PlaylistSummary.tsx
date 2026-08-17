@@ -59,7 +59,7 @@ export function PlaylistSummary({
 
         <div className="mb-3 flex items-center gap-3">
           <MediaThumb
-            url={coverId ? previews[coverId] : undefined}
+            url={coverId ? previews.urls[coverId] : undefined}
             kind={coverAsset?.kind}
             alt={name || "Playlist cover"}
             className="h-16 w-16"

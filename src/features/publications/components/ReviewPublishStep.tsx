@@ -72,7 +72,8 @@ export function ReviewPublishStep({
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
-  const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
+  const previewUrl = selectedAsset ? previews.urls[selectedAsset.id] : undefined;
+  const thumbnailUrl = selectedAsset ? previews.thumbnailUrls[selectedAsset.id] : undefined;
 
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
@@ -124,6 +125,7 @@ export function ReviewPublishStep({
               <div className="flex aspect-square w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
                 <MediaThumb
                   url={previewUrl}
+                  thumbnailUrl={thumbnailUrl}
                   kind={selectedAsset?.kind}
                   mimeType={selectedAsset?.file?.mime_type}
                   alt={assetFilename ?? basicInfo.name}

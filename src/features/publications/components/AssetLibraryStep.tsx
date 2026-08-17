@@ -20,6 +20,7 @@ import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { fetchMediaAssets } from "../services/publications-api";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import {
+  captureVideoThumbnail,
   fetchUploadUrl,
   readVideoDuration,
   registerVideo,
@@ -28,6 +29,7 @@ import {
 import type { Campaign, MediaAsset } from "../types";
 import { dropUnapprovedItems, isImageAsset } from "../draft-mapping";
 import { acceptedAssetKind, canSelectAsset, canSelectPlaylist } from "../content-selection.ts";
+import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL, rejectUploadReason } from "../upload-limits";
 import { fetchPlaylists } from "@/features/playlists";
 import type { PlaylistListItem } from "@/features/playlists";
 
@@ -133,17 +135,38 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
     e.target.value = ""; // allow re-picking the same file
     if (!file) return;
 
+    // The `accept` attribute is a hint the OS picker lets the user override, so the
+    // real gate is here — nothing downstream converts what the pipeline cannot store.
+    const rejection = rejectUploadReason(file);
+    if (rejection) {
+      setUploadError(rejection);
+      return;
+    }
+
     setUploadError(null);
     setUploadPct(0);
     try {
       const isVideoFile = file.type.startsWith("video/");
       const duration = isVideoFile ? await readVideoDuration(file) : null;
+      const thumbnailBlob = isVideoFile ? await captureVideoThumbnail(file) : undefined;
       const { file_id, upload_url } = await fetchUploadUrl(file);
       await uploadToStorage(upload_url, file, setUploadPct);
+
+      let thumbnail_storage_key: string | undefined;
+      if (thumbnailBlob) {
+        const thumbFile = new File([thumbnailBlob], `${file.name}.thumb.jpg`, {
+          type: "image/jpeg",
+        });
+        const thumbUpload = await fetchUploadUrl(thumbFile);
+        await uploadToStorage(thumbUpload.upload_url, thumbFile, () => {});
+        thumbnail_storage_key = thumbUpload.storage_key;
+      }
+
       const asset = await registerVideo({
         file_id,
         title: file.name,
         ...(duration ? { duration_seconds: duration } : {}),
+        ...(thumbnail_storage_key ? { thumbnail_storage_key } : {}),
       });
       await loadAssets();
       if (asset?.id && acceptedAssetKind(publicationType) === (isVideoFile ? "video" : "image")) {
@@ -286,7 +309,7 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="video/*,image/*"
+                accept={UPLOAD_ACCEPT_ATTR}
                 onChange={handleFilePicked}
                 className="hidden"
               />
@@ -309,7 +332,7 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
                 ? uploadError
                 : error || playlistsError
                   ? error || playlistsError
-                  : `${filteredAssets.length + filteredPlaylists.length} items found`}
+                  : `${filteredAssets.length + filteredPlaylists.length} items found · ${UPLOAD_ACCEPT_LABEL}`}
           </p>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -320,7 +343,8 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
                   key={asset.id}
                   kind="asset"
                   asset={asset}
-                  previewUrl={previews[asset.id]}
+                  previewUrl={previews.urls[asset.id]}
+                  thumbnailUrl={previews.thumbnailUrls[asset.id]}
                   selected={assetItems.some((i) => i.media_asset_id === asset.id)}
                   onSelect={() => {
                     if (selectable) {
@@ -339,7 +363,8 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
                   key={playlist.id}
                   kind="playlist"
                   playlist={playlist}
-                  previewUrl={playlist.cover_asset_id ? previews[playlist.cover_asset_id] : undefined}
+                  previewUrl={playlist.cover_asset_id ? previews.urls[playlist.cover_asset_id] : undefined}
+                  thumbnailUrl={playlist.cover_asset_id ? previews.thumbnailUrls[playlist.cover_asset_id] : undefined}
                   selected={selected}
                   onSelect={() => {
                     if (selectable) setPlaylistId(selected ? null : playlist.id);
@@ -351,10 +376,10 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
           </div>
         </Card>
 
-        <SelectedAssetList assets={assets} previews={previews} />
+        <SelectedAssetList assets={assets} previews={previews.urls} />
       </div>
 
-      <ContentSummaryPanel assets={assets} previews={previews} campaigns={campaigns} />
+      <ContentSummaryPanel assets={assets} previews={previews.urls} campaigns={campaigns} />
     </div>
   );
 }

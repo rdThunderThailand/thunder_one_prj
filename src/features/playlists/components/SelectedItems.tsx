@@ -99,7 +99,7 @@ export function SelectedItems({ assets }: { assets: MediaAsset[] }) {
                 <td className="py-2.5">
                   <span className="flex items-center gap-3">
                     <MediaThumb
-                      url={previews[item.mediaAssetId]}
+                      url={previews.urls[item.mediaAssetId]}
                       kind={item.kind ?? asset?.kind}
                       alt={label}
                       className="h-10 w-14"

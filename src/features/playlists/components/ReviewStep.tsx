@@ -100,7 +100,7 @@ export function ReviewStep({
                   <li key={item.mediaAssetId} className="flex items-center gap-3">
                     <span className="w-5 text-xs text-zinc-400">{index + 1}</span>
                     <MediaThumb
-                      url={previews[item.mediaAssetId]}
+                      url={previews.urls[item.mediaAssetId]}
                       kind={item.kind ?? asset?.kind}
                       alt={item.title ?? asset?.title ?? item.mediaAssetId}
                       className="h-10 w-14"

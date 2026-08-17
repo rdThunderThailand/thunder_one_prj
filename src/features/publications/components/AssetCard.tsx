@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { CheckIcon, ListIcon, PlayIcon } from "@/components/ui/icons";
+import { LazyVideo } from "@/components/ui/LazyVideo";
 import { isVideoUrl } from "@/lib/media-kind";
 import { isApprovedAsset } from "../draft-mapping";
 import type { MediaAsset } from "../types";
@@ -9,6 +10,7 @@ import type { PlaylistListItem } from "@/features/playlists";
 
 type AssetCardBaseProps = {
   previewUrl?: string;
+  thumbnailUrl?: string;
   selected: boolean;
   onSelect: () => void;
   disabled?: boolean;
@@ -19,7 +21,7 @@ type AssetCardProps =
   | (AssetCardBaseProps & { kind: "playlist"; playlist: PlaylistListItem });
 
 export function AssetCard(props: AssetCardProps) {
-  const { previewUrl, selected, onSelect, disabled } = props;
+  const { previewUrl, thumbnailUrl, selected, onSelect, disabled } = props;
 
   if (props.kind === "playlist") {
     const { playlist } = props;
@@ -36,15 +38,22 @@ export function AssetCard(props: AssetCardProps) {
         } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
         <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
-          {previewUrl ? (
+          {thumbnailUrl ? (
+            // Captured poster (ADR 0016) — skips the video decode entirely.
+            <Image
+              src={thumbnailUrl}
+              alt={playlist.name}
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              className="object-cover object-center"
+            />
+          ) : previewUrl ? (
             // A playlist's cover falls back to its first item, which is often a video, and
             // nothing here carries the asset's kind — so the extension decides, exactly as
             // in MediaThumb. #t=0.1 makes the browser paint the first frame as a poster.
             isVideoUrl(previewUrl) ? (
-              <video
-                src={`${previewUrl}#t=0.1`}
-                muted
-                preload="metadata"
+              <LazyVideo
+                src={previewUrl}
                 className="absolute inset-0 h-full w-full object-cover object-center"
               />
             ) : (
@@ -112,13 +121,21 @@ export function AssetCard(props: AssetCardProps) {
       } ${(!approved || disabled) ? "cursor-not-allowed opacity-50" : ""}`}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
-        {previewUrl ? (
+        {isVideo && thumbnailUrl ? (
+          // Captured poster (ADR 0016) — skips the video decode entirely. Videos
+          // uploaded before capture existed have no thumbnail yet and fall through
+          // to LazyVideo below.
+          <Image
+            src={thumbnailUrl}
+            alt={filename}
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            className="object-cover object-center"
+          />
+        ) : previewUrl ? (
           isVideo ? (
-            // #t=0.1 makes the browser paint the first frame as a poster.
-            <video
-              src={`${previewUrl}#t=0.1`}
-              muted
-              preload="metadata"
+            <LazyVideo
+              src={previewUrl}
               className="absolute inset-0 h-full w-full object-cover object-center"
             />
           ) : (

@@ -56,7 +56,7 @@ function PlaylistRow({
     >
       <td className="py-3 pl-1">
         <div className="flex items-center gap-3">
-          <MediaThumb url={coverId ? previews[coverId] : undefined} alt={playlist.name} className="h-10 w-14" />
+          <MediaThumb url={coverId ? previews.urls[coverId] : undefined} alt={playlist.name} className="h-10 w-14" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
               {playlist.name}

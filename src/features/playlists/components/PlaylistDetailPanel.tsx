@@ -67,7 +67,7 @@ export function PlaylistDetailPanel({
       </div>
 
       <MediaThumb
-        url={coverId ? previews[coverId] : undefined}
+        url={coverId ? previews.urls[coverId] : undefined}
         alt={playlist.name}
         className="h-40 w-full rounded-none"
       />
