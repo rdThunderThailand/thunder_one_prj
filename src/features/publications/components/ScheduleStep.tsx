@@ -23,6 +23,7 @@ import { publicationTypeIcons } from "./publicationTypeIcons";
 import { MiniCalendar } from "./MiniCalendar";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 
 const scheduleTypeIcon: Record<ScheduleTypeId, ReactNode> = {
@@ -90,11 +91,12 @@ export function ScheduleStep({
   const previewAssetId = isPlaylist ? playlistCoverId : selectedAsset?.id;
   const previews = usePreviewUrls(previewAssetId ? [previewAssetId] : []);
   const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
+  const previewPoster = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
 
-  const isVideo =
-    !isPlaylist &&
-    (selectedAsset?.kind === "video" ||
-      selectedAsset?.file?.mime_type?.startsWith("video/"));
+  // A playlist cover arrives as a bare asset id, so its kind has to be looked up here
+  // before the preview picks next/image over <video> — see preview-kind.ts.
+  const previewAsset = assets.find((a) => a.id === previewAssetId);
+  const isVideo = isVideoPreview(previewAsset, previewUrl);
 
   const isMismatch =
     selectedAsset &&
@@ -554,6 +556,7 @@ export function ScheduleStep({
               {isVideo ? (
                 <video
                   src={previewUrl}
+                  poster={previewPoster}
                   controls
                   preload="metadata"
                   className="h-full w-full object-contain"
