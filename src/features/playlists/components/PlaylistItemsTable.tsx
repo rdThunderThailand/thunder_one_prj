@@ -67,7 +67,7 @@ export function PlaylistItemsTable({
                           alt={name}
                           className="h-10 w-14"
                         />
-                        <span className="truncate font-medium text-zinc-900 dark:text-zinc-100">{name}</span>
+                        <span className="max-w-40 truncate font-medium text-zinc-900 dark:text-zinc-100">{name}</span>
                       </div>
                     </td>
                     <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-300">{resolution}</td>

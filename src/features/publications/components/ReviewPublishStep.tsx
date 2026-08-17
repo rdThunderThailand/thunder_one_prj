@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -8,15 +7,8 @@ import { Badge } from "@/components/ui/Badge";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import {
-  decodeMetadata,
-  fetchPlaylist,
-  formatDuration,
-  resolveCoverAssetId,
-  statusBadge,
-  totalDurationSeconds,
-  type PlaylistDetail,
-} from "@/features/playlists";
+import { statusBadge } from "@/features/playlists";
+import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { utcToZonedParts } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
 import {
@@ -74,37 +66,8 @@ export function ReviewPublishStep({
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
 
   const isPlaylist = basicInfo.publicationType === "playlist";
-
-  // Keyed by playlist id, not just presence, so a stale response for the previous
-  // playlist never renders once the operator has picked a different one.
-  const [playlistResult, setPlaylistResult] = useState<
-    { id: string; detail: PlaylistDetail } | { id: string; failed: true } | null
-  >(null);
-
-  useEffect(() => {
-    if (!isPlaylist || !playlistId) return;
-    let alive = true;
-    fetchPlaylist(playlistId)
-      .then((detail) => alive && setPlaylistResult({ id: playlistId, detail }))
-      .catch(() => alive && setPlaylistResult({ id: playlistId, failed: true }));
-    return () => {
-      alive = false;
-    };
-  }, [isPlaylist, playlistId]);
-
-  const playlistCurrent = playlistResult?.id === playlistId ? playlistResult : null;
-  const playlist = playlistCurrent && "detail" in playlistCurrent ? playlistCurrent.detail : null;
-  const playlistMetadata = decodeMetadata(playlist?.metadata);
-  const playlistCoverId = playlist
-    ? resolveCoverAssetId(playlistMetadata.info.coverAssetId, playlist.items)
-    : undefined;
-  const playlistDuration = playlist
-    ? formatDuration(
-        totalDurationSeconds(
-          playlist.items.map((i) => ({ mediaAssetId: i.media_asset_id, durationSeconds: i.duration_seconds ?? null }))
-        )
-      )
-    : undefined;
+  const { playlist, failed: playlistFailed, coverAssetId: playlistCoverId, durationLabel: playlistDuration } =
+    usePlaylistPreview(playlistId, isPlaylist);
 
   const selectedChannels = screens
     .filter((s) => channelIds.includes(s.id))
@@ -210,7 +173,7 @@ export function ReviewPublishStep({
                           >
                             {playlist.name}
                           </Link>
-                        ) : playlistCurrent && "failed" in playlistCurrent ? (
+                        ) : playlistFailed ? (
                           "โหลด playlist ไม่สำเร็จ"
                         ) : (
                           "กำลังโหลด..."
