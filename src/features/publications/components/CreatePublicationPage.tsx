@@ -11,7 +11,8 @@ import { ArrowLeftIcon, ArrowRightIcon, PaperPlaneIcon } from "@/components/ui/i
 import { wizardSteps } from "../mock-data";
 import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePublishDraft } from "../hooks/usePublishDraft";
-import { deletePublication, fetchPlaylist, fetchPublication } from "../services/publications-api";
+import { deletePublication, fetchPublication } from "../services/publications-api";
+import { fetchPlaylist } from "@/features/playlists";
 import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";

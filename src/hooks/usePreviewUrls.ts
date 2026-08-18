@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fetchPreviewUrls } from "@/lib/api/media-api";
+import { fetchPreviewUrls, type PreviewUrls } from "@/lib/api/media-api";
 
 /**
- * Returns a map of media_asset_id → signed preview URL for the given ids,
+ * Returns { urls, thumbnailUrls } keyed by media_asset_id for the given ids,
  * fetching each id at most once. ponytail: signed URLs live 1h and are never
  * refreshed — fine for a wizard/detail session; revisit if a page stays open longer.
  */
-export function usePreviewUrls(ids: string[]): Record<string, string> {
-  const [urls, setUrls] = useState<Record<string, string>>({});
+export function usePreviewUrls(ids: string[]): PreviewUrls {
+  const [result, setResult] = useState<PreviewUrls>({ urls: {}, thumbnailUrls: {} });
   const requested = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -25,7 +25,10 @@ export function usePreviewUrls(ids: string[]): Record<string, string> {
         // marking eagerly (before the cancelled check) would let the
         // discarded first attempt permanently block the real retry.
         missing.forEach((id) => requested.current.add(id));
-        setUrls((prev) => ({ ...prev, ...map }));
+        setResult((prev) => ({
+          urls: { ...prev.urls, ...map.urls },
+          thumbnailUrls: { ...prev.thumbnailUrls, ...map.thumbnailUrls },
+        }));
       })
       .catch(() => {
         // Leave these ids un-URL'd; the card falls back to its icon/label.
@@ -35,5 +38,5 @@ export function usePreviewUrls(ids: string[]): Record<string, string> {
     };
   }, [ids]);
 
-  return urls;
+  return result;
 }

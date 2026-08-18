@@ -1,25 +1,11 @@
 import { requestApi } from "@/lib/api/media-api";
-import type { PlaylistDetail, PlaylistListItem, PlaylistStatus, Transition } from "../types";
+import type { PlaylistStatus, Transition } from "../types";
 
-/** `includeDrafts` defaults to `false` so a caller that forgets to opt in never
- *  leaks drafts into the publication content picker — an unfinished playlist
- *  must never be selectable for scheduling. */
-export async function fetchPlaylists(includeDrafts = false): Promise<PlaylistListItem[]> {
-  const path = includeDrafts ? "/media/playlists?include_drafts=true" : "/media/playlists";
-  const data = await requestApi<{ playlists?: PlaylistListItem[] } | PlaylistListItem[]>(
-    "GET",
-    path
-  );
-  if (Array.isArray(data)) return data;
-  if (data && typeof data === "object" && Array.isArray(data.playlists)) {
-    return data.playlists;
-  }
-  return [];
-}
-
-export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {
-  return requestApi<PlaylistDetail>("GET", `/media/playlists/${id}`);
-}
+// Reads (fetchPlaylist, fetchPlaylists) live in src/lib/api/media-api.ts — see
+// docs/adr/0020 — since publications reads playlists too and a feature service
+// isn't a legal import target from outside the feature. Re-exported here so
+// existing call sites in this feature keep working unchanged.
+export { fetchPlaylist, fetchPlaylists } from "@/lib/api/media-api";
 
 export type UpsertPlaylistInput = {
   name: string;

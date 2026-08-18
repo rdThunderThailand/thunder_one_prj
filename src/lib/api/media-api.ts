@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/api-error";
-import type { Campaign, MediaAsset, Tag } from "@/types/domain";
+import type { Campaign, MediaAsset, PlaylistDetail, PlaylistListItem, Tag } from "@/types/domain";
 
 /**
  * Shared transport for every `/api/proxy/media/*` call. Feature services build
@@ -49,18 +49,19 @@ export async function requestApi<T>(
   return resData as T;
 }
 
-/** Batch-signs 1h preview URLs for the given media asset ids. Returns id → URL. */
-export async function fetchPreviewUrls(ids: string[]): Promise<Record<string, string>> {
-  if (ids.length === 0) return {};
-  const data = await requestApi<{ urls?: Record<string, string> } | Record<string, string>>(
-    "POST",
-    "/media/videos/preview-urls",
-    { ids }
-  );
-  if (data && typeof data === "object" && "urls" in data) {
-    return (data as { urls?: Record<string, string> }).urls ?? {};
-  }
-  return (data as Record<string, string>) ?? {};
+export type PreviewUrls = {
+  urls: Record<string, string>;
+  thumbnailUrls: Record<string, string>;
+};
+
+/** Batch-signs 1h preview URLs (and, for videos with a captured poster, thumbnail URLs). */
+export async function fetchPreviewUrls(ids: string[]): Promise<PreviewUrls> {
+  if (ids.length === 0) return { urls: {}, thumbnailUrls: {} };
+  const data = await requestApi<{
+    urls?: Record<string, string>;
+    thumbnail_urls?: Record<string, string>;
+  }>("POST", "/media/videos/preview-urls", { ids });
+  return { urls: data.urls ?? {}, thumbnailUrls: data.thumbnail_urls ?? {} };
 }
 
 export async function fetchCampaigns(): Promise<Campaign[]> {
@@ -87,4 +88,27 @@ export async function fetchTags(): Promise<Tag[]> {
 export async function fetchMediaAssets(): Promise<MediaAsset[]> {
   const data = await requestApi<MediaAsset[]>("GET", "/media/videos");
   return Array.isArray(data) ? data : [];
+}
+
+// Playlist reads — shared by publications and playlists (docs/adr/0020). Writes
+// (`upsertPlaylist`, `setPlaylistItems`) stay in features/playlists/services.
+
+/** `includeDrafts` defaults to `false` so a caller that forgets to opt in never
+ *  leaks drafts into the publication content picker — an unfinished playlist
+ *  must never be selectable for scheduling. */
+export async function fetchPlaylists(includeDrafts = false): Promise<PlaylistListItem[]> {
+  const path = includeDrafts ? "/media/playlists?include_drafts=true" : "/media/playlists";
+  const data = await requestApi<{ playlists?: PlaylistListItem[] } | PlaylistListItem[]>(
+    "GET",
+    path
+  );
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object" && Array.isArray(data.playlists)) {
+    return data.playlists;
+  }
+  return [];
+}
+
+export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {
+  return requestApi<PlaylistDetail>("GET", `/media/playlists/${id}`);
 }

@@ -23,6 +23,8 @@ import { publicationTypeIcons } from "./publicationTypeIcons";
 import { MiniCalendar } from "./MiniCalendar";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { isVideoPreview } from "../preview-kind";
+import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 
 const scheduleTypeIcon: Record<ScheduleTypeId, ReactNode> = {
   "publish-now": <LightningIcon />,
@@ -69,6 +71,7 @@ export function ScheduleStep({
 }: ScheduleStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
   const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
@@ -80,13 +83,20 @@ export function ScheduleStep({
   const isValidSchedule = isScheduleFormValid(scheduleForm);
   const nowZoned = utcToZonedParts(new Date().toISOString(), scheduleForm.timezone);
 
-  const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
-  const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
-  const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
+  const isPlaylist = basicInfo.publicationType === "playlist";
+  const { playlist, coverAssetId: playlistCoverId, durationLabel: playlistDuration } =
+    usePlaylistPreview(playlistId, isPlaylist);
 
-  const isVideo =
-    selectedAsset?.kind === "video" ||
-    selectedAsset?.file?.mime_type?.startsWith("video/");
+  const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
+  const previewAssetId = isPlaylist ? playlistCoverId : selectedAsset?.id;
+  const previews = usePreviewUrls(previewAssetId ? [previewAssetId] : []);
+  const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
+  const previewPoster = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
+
+  // A playlist cover arrives as a bare asset id, so its kind has to be looked up here
+  // before the preview picks next/image over <video> — see preview-kind.ts.
+  const previewAsset = assets.find((a) => a.id === previewAssetId);
+  const isVideo = isVideoPreview(previewAsset, previewUrl);
 
   const isMismatch =
     selectedAsset &&
@@ -541,11 +551,12 @@ export function ScheduleStep({
 
         <Card className="p-5">
           <h2 className="mb-4 text-base font-semibold text-zinc-900">Publication Summary</h2>
-          {selectedAsset && previewUrl ? (
+          {(selectedAsset || isPlaylist) && previewUrl ? (
             <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
               {isVideo ? (
                 <video
                   src={previewUrl}
+                  poster={previewPoster}
                   controls
                   preload="metadata"
                   className="h-full w-full object-contain"
@@ -553,7 +564,7 @@ export function ScheduleStep({
               ) : (
                 <Image
                   src={previewUrl}
-                  alt={selectedAsset.title ?? "Preview"}
+                  alt={selectedAsset?.title ?? playlist?.name ?? "Preview"}
                   fill
                   sizes="(min-width: 1024px) 480px, 100vw"
                   className="object-cover"
@@ -589,8 +600,14 @@ export function ScheduleStep({
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500">Content</dt>
-              <dd className="max-w-[180px] truncate font-medium text-zinc-900 text-right" title={selectedAsset?.file?.original_filename ?? selectedAsset?.title ?? selectedAsset?.id}>
-                {selectedAsset ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id : "—"}
+              <dd className="max-w-[180px] truncate font-medium text-zinc-900 text-right" title={isPlaylist ? playlist?.name : selectedAsset?.file?.original_filename ?? selectedAsset?.title ?? selectedAsset?.id}>
+                {isPlaylist
+                  ? playlist
+                    ? `${playlist.name}${playlistDuration ? ` (${playlistDuration})` : ""}`
+                    : "—"
+                  : selectedAsset
+                  ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id
+                  : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between">
