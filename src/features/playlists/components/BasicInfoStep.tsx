@@ -6,7 +6,7 @@ import { XIcon, PlusIcon } from "@/components/ui/icons";
 import type { Campaign, Tag } from "@/types/domain";
 import { Field, Select, TextArea, inputClasses } from "./form";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
-import { PLAYLIST_LIMITS } from "../step-validation";
+import { validateBasicInfo, PLAYLIST_LIMITS } from "../step-validation";
 import { PLAYLIST_TYPES } from "../types";
 
 const RESOLUTIONS = [
@@ -21,9 +21,11 @@ const FRAME_RATES = [24, 25, 30, 60];
 export function BasicInfoStep({
   campaigns,
   workspaceTags,
+  showErrors = false,
 }: {
   campaigns: Campaign[];
   workspaceTags: Tag[];
+  showErrors?: boolean;
 }) {
   const { name, info, setName, setInfo } = usePlaylistDraftStore();
   const [tagDraft, setTagDraft] = useState("");
@@ -39,6 +41,9 @@ export function BasicInfoStep({
   const nameLength = name.length;
   const descriptionLength = info.description?.length ?? 0;
 
+  // Recompute every render so a field's error clears the moment it becomes valid
+  const fieldErrors = showErrors ? validateBasicInfo({ name, description: info.description }) : {};
+
   return (
     <Card className="p-5">
       <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">
@@ -50,13 +55,15 @@ export function BasicInfoStep({
           label="Playlist Name"
           required
           hint={`${nameLength} / ${PLAYLIST_LIMITS.nameMax}`}
+          error={fieldErrors.name}
         >
           <input
             value={name}
             maxLength={PLAYLIST_LIMITS.nameMax}
             onChange={(e) => setName(e.target.value)}
             placeholder="เช่น KFC Wednesday Main Playlist"
-            className={inputClasses}
+            className={`${inputClasses} ${fieldErrors.name ? "border-red-400" : ""}`}
+            aria-invalid={!!fieldErrors.name}
           />
         </Field>
 
@@ -106,6 +113,7 @@ export function BasicInfoStep({
         optional
         className="mt-4"
         hint={`${descriptionLength} / ${PLAYLIST_LIMITS.descriptionMax}`}
+        error={fieldErrors.description}
       >
         <TextArea
           rows={4}
@@ -113,6 +121,8 @@ export function BasicInfoStep({
           maxLength={PLAYLIST_LIMITS.descriptionMax}
           onChange={(e) => setInfo({ description: e.target.value })}
           placeholder="เพิ่มคำอธิบายสั้นๆ เกี่ยวกับ playlist นี้..."
+          className={fieldErrors.description ? "border-red-400" : ""}
+          aria-invalid={!!fieldErrors.description}
         />
       </Field>
 

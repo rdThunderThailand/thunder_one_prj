@@ -14,11 +14,12 @@ interface FieldProps {
   required?: boolean;
   optional?: boolean;
   hint?: string;
+  error?: string;
   children: ReactNode;
   className?: string;
 }
 
-export function Field({ label, required, optional, hint, children, className = "" }: FieldProps) {
+export function Field({ label, required, optional, hint, error, children, className = "" }: FieldProps) {
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -26,7 +27,11 @@ export function Field({ label, required, optional, hint, children, className = "
         {optional && <span className="text-zinc-400">(Optional)</span>}
       </label>
       {children}
-      {hint && <p className="text-xs text-zinc-400">{hint}</p>}
+      {error ? (
+        <p className="text-xs font-medium text-red-600">{error}</p>
+      ) : hint ? (
+        <p className="text-xs text-zinc-400">{hint}</p>
+      ) : null}
     </div>
   );
 }

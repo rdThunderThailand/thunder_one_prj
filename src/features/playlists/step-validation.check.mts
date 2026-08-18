@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { validateStep, canSubmit } from "./step-validation.ts";
+import { validateStep, canSubmit, validateBasicInfo, PLAYLIST_LIMITS } from "./step-validation.ts";
 
 // Empty name still fails step 1 — the one rule that survived the uniqueness removal.
 {
@@ -26,6 +26,44 @@ import { validateStep, canSubmit } from "./step-validation.ts";
     }),
     true
   );
+}
+
+{
+  const errors = validateBasicInfo({ name: "Lobby Loop", description: "" });
+  assert.deepEqual(errors, {});
+}
+{
+  const errors = validateBasicInfo({ name: "" });
+  assert.strictEqual(errors.name, "ตั้งชื่อ playlist ก่อน");
+}
+{
+  const errors = validateBasicInfo({ name: "   " });
+  assert.strictEqual(errors.name, "ตั้งชื่อ playlist ก่อน");
+}
+{
+  const nameOfLimit = "a".repeat(PLAYLIST_LIMITS.nameMax);
+  const errors = validateBasicInfo({ name: nameOfLimit });
+  assert.strictEqual(errors.name, undefined);
+}
+{
+  const nameOverLimit = "a".repeat(PLAYLIST_LIMITS.nameMax + 1);
+  const errors = validateBasicInfo({ name: nameOverLimit });
+  assert.strictEqual(errors.name, `ชื่อยาวเกิน ${PLAYLIST_LIMITS.nameMax} ตัวอักษร`);
+}
+{
+  const descOverLimit = "a".repeat(PLAYLIST_LIMITS.descriptionMax + 1);
+  const errors = validateBasicInfo({ name: "Valid", description: descOverLimit });
+  assert.strictEqual(errors.description, `คำอธิบายยาวเกิน ${PLAYLIST_LIMITS.descriptionMax} ตัวอักษร`);
+}
+{
+  const descAtLimit = "a".repeat(PLAYLIST_LIMITS.descriptionMax);
+  const errors = validateBasicInfo({ name: "Valid", description: descAtLimit });
+  assert.strictEqual(errors.description, undefined);
+}
+{
+  const result = validateStep(1, { name: "", items: [] });
+  assert.strictEqual(result.valid, false);
+  assert.ok(result.errors.includes("ตั้งชื่อ playlist ก่อน"));
 }
 
 console.log("step-validation.check.mts OK");
