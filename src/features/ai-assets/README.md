@@ -4,11 +4,18 @@ Asset registry for Asset Intelligence — organization-wide physical assets (lap
 
 > R&D placeholder — structure only, mock data. No Thunder_Core sync yet (see `docs/asset-intelligence/questions-thunder-core-contract.md`).
 
-- `components/` — `AssetsListPage` (all-assets table), `AssetOverviewDashboard` (Asset/IT Manager's dashboard — stat tiles, attention required, work status, team workload), `MyAssetsPage` (Employee/User's "My Assets" view — filters the same `Asset` registry by `assigneeId`, per the repo mapping doc §5 which places this view inside this feature rather than a separate one), `RegisterAssetPage` (Employee's simulated Scan QR → confirm receipt flow, EMP-01)
+- `components/` —
+  - `AssetOverviewPage` — Asset/IT Manager's landing page. Owns the "+ Add Asset" (AM-02) toggle as a client component so the header button and the form below it can share state; composes `AssetOverviewDashboard` + `AssetsListPage`.
+  - `AssetsListPage` — all-assets table. Its Department column doubles as the AM-04 "Pass to Department" action for any asset with `departmentId: null` — real, working local state (select a department, confirm), not persisted (see `DepartmentCell`'s own comment for why).
+  - `AssetOverviewDashboard` — stat tiles, attention required, work status, team workload
+  - `AddAssetForm` — AM-02's form (tag/category/location/vendor/value/warranty), with real duplicate-tag validation against `services/mock-assets.ts`
+  - `LocationsPage` (AM-05, flat list — not the doc's hierarchical tree, future work), `MaintenancePage` (AM-03, Maintenance Agreements + expiry status), `InspectionsPage` (AM-07), `WorkOrdersPage` (AM-06, org-wide — reads `ai-work-orders`'s `getMockWorkOrders`/`WorkOrderCard` directly rather than duplicating them), `AnalyticsPage` (AM-08, category donut + summary tiles), `ReportsPage` (AM-08, org-wide category/value table, no export — same as every other role's un-exportable Reports page)
+  - `MyAssetsPage` (Employee/User's "My Assets" view — filters the same `Asset` registry by `assigneeId`, per the repo mapping doc §5 which places this view inside this feature rather than a separate one), `RegisterAssetPage` (Employee's simulated Scan QR → confirm receipt flow, EMP-01)
 - `hooks/` — feature-scoped React hooks (e.g. data fetching, local state)
 - `services/` — data access for this feature; `mock-assets.ts` stands in until the Thunder_Core sync contract exists
-- `types/` — `Asset` and its `category`/`status`/`lifecycleStatus` taxonomies (see `docs/adr/0024-asset-device-cross-reference-model.md` for the `category: "media_player_device"` / `externalRef` cross-reference to Media Workspace's Device; `lifecycleStatus` is a minimal 2-value slice of the full onboarding state machine in the requirement doc §5.1, just enough to drive the Register flow)
-- `mock-data.ts` — Asset/IT Manager dashboard widgets, derived from `services/mock-assets.ts` where possible
+- `types/` — `Asset` and its `category`/`status`/`lifecycleStatus` taxonomies (see `docs/adr/0024-asset-device-cross-reference-model.md` for the `category: "media_player_device"` / `externalRef` cross-reference to Media Workspace's Device; `lifecycleStatus` covers `active`/`pending_department_ack` (DM-01)/`pending_acknowledgement` (EMP-01) — a partial slice of the full onboarding state machine in the requirement doc §5.1)
+- `mock-data.ts` — Asset/IT Manager overview dashboard widgets, derived from `services/mock-assets.ts` where possible
+- `mock-reference-data.ts`, `mock-maintenance.ts`, `mock-inspections.ts` — locations/departments, Maintenance Agreements, and Inspections — each its own small placeholder dataset, no backend yet
 
 "Who is the current employee" (for `MyAssetsPage`/`RegisterAssetPage`, and for `ai-issues`/`ai-requests`) lives in `src/config/current-employee.ts`, not here — it's used by more than one feature.
 

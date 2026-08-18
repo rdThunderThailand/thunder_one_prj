@@ -18,15 +18,17 @@
 // my-assets/, matching how Thunder Care's Customers/Work Queue/Reports were
 // already nested under service-ops/) — don't reintroduce it for a new page.
 //
-// CEO and Asset/IT Manager's other items are still inert (no `href`) — the
-// mockup's fuller sidebar, not yet backed by a page. Employee/User, Thunder
-// Care, Technician, and Department Manager's navs are further along (real
-// pages beyond the landing route) since those roles' flows were built out in
-// detail — see ai-issues/ai-requests/ai-assets's RegisterAssetPage for
-// Employee, ai-service-ops's Customers/Work Queue/Reports pages for Thunder
-// Care, ai-work-orders's Assigned/Calendar pages for Technician, and
+// Only CEO's other items (Insights/Reports/Approvals/Settings) are still
+// inert (no `href`) — the mockup's fuller sidebar, not yet backed by a page.
+// Every other persona's nav is further along (real pages beyond the landing
+// route) since those roles' flows were built out in detail — see
+// ai-issues/ai-requests/ai-assets's RegisterAssetPage for Employee,
+// ai-service-ops's Customers/Work Queue/Reports pages for Thunder Care,
+// ai-work-orders's Assigned/Calendar pages for Technician,
 // ai-departments's Assets/Team/Requests/Approvals/Reports pages for
-// Department Manager.
+// Department Manager, and ai-assets's Locations/Work Orders/Maintenance/
+// Inspections/Analytics/Reports pages (plus Add Asset/Pass to Department)
+// for Asset/IT Manager.
 import {
   BoxIcon,
   CalendarIcon,
@@ -77,12 +79,12 @@ const assetManagerNav: NavConfig = {
   },
   sections: [],
   standaloneLinks: [
-    { label: "Locations" },
-    { label: "Work Orders" },
-    { label: "Maintenance" },
-    { label: "Inspections" },
-    { label: "Analytics" },
-    { label: "Reports" },
+    { label: "Locations", href: "/asset-intelligence/assets/locations" },
+    { label: "Work Orders", href: "/asset-intelligence/assets/work-orders" },
+    { label: "Maintenance", href: "/asset-intelligence/assets/maintenance" },
+    { label: "Inspections", href: "/asset-intelligence/assets/inspections" },
+    { label: "Analytics", href: "/asset-intelligence/assets/analytics" },
+    { label: "Reports", href: "/asset-intelligence/assets/reports" },
     { label: "Settings" },
   ] satisfies NavItem[],
   standaloneIcons: [

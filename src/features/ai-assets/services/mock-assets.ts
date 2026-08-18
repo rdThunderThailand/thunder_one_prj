@@ -157,6 +157,25 @@ const mockAssets: Asset[] = [
     healthScore: 100,
     externalRef: null,
   },
+  // Newly received into Asset Manager's own pool, not yet passed to any
+  // department (AM-02/AM-04) — departmentId: null is what makes "Pass to
+  // Department" available on AssetsListPage for this row.
+  {
+    id: "nb-060",
+    tag: "NB-060",
+    category: "laptop",
+    status: "healthy",
+    lifecycleStatus: "active",
+    model: "Dell Latitude 5450",
+    locationId: "bangkok-server-room",
+    departmentId: null,
+    assigneeId: null,
+    vendorId: "dell",
+    warrantyExpiry: "2029-01-15",
+    purchaseValue: 43000,
+    healthScore: 100,
+    externalRef: null,
+  },
 ];
 
 export function getMockAssets(): Asset[] {

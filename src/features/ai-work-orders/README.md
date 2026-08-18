@@ -12,4 +12,6 @@ Technician's dashboard for Asset Intelligence (requirement doc §4.4). Namespace
 - `calendar-grid.ts` — the shared August grid (`WEEKS`, `WEEKDAY_LABELS`, `TODAY_DAY`) used by both `MiniCalendar` and `CalendarPage`, so they don't drift apart
 - `mock-data.ts` — `mockWorkOrders` (spans several dates, not just "today"), `todaySummary` (derived from it), and `mockTechnicians` (read by `ai-service-ops`'s Work Queue dispatch picker)
 
+`getMockWorkOrders`/`WorkOrderCard`/`WorkOrder` are also exported for `ai-assets`'s org-wide "Work Orders" page (AM-06) to read directly, rather than that feature duplicating the grouping logic `AssignedPage` already has.
+
 **Routing note**: `AssignedPage`/`CalendarPage` route under `/asset-intelligence/work-orders/**` (not top-level siblings) — `resolveAssetIntelligenceNav` (`src/config/nav/asset-intelligence.tsx`) only reads the URL's third path segment to pick a nav, so any page beyond a persona's landing route must nest under that persona's own segment or the sidebar silently falls back to the CEO nav (this bit Employee's pages once — see that file's own comment).
