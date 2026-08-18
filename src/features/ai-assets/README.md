@@ -11,3 +11,5 @@ Asset registry for Asset Intelligence — organization-wide physical assets (lap
 - `mock-data.ts` — Asset/IT Manager dashboard widgets, derived from `services/mock-assets.ts` where possible
 
 "Who is the current employee" (for `MyAssetsPage`/`RegisterAssetPage`, and for `ai-issues`/`ai-requests`) lives in `src/config/current-employee.ts`, not here — it's used by more than one feature.
+
+**Known gap, confirmed 2026-08-18, not this sprint**: `RegisterAssetPage`'s Scan QR flow is simulated (pre-filled, no camera). Real registration must scan the physical QR code displayed on the asset — needs camera access, a QR-decode library, and a way to generate/print a per-asset QR label, none of which exist in this codebase yet. See that component's own comment and the Decision Log in the Obsidian requirement doc (§8).

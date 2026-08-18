@@ -6,12 +6,18 @@ import { CheckCircleIcon, SearchIcon } from "@/components/ui/icons";
 import { CURRENT_EMPLOYEE_ID } from "@/config/current-employee";
 import { getMockAssets } from "../services/mock-assets";
 
-// Simulated QR scan (requirement doc EMP-01) — there's no camera integration
-// anywhere in this codebase, so this pre-fills the "scan result" with the
-// employee's pending asset rather than opening a real scanner. Confirming
-// shows a real local success state; it doesn't write back to mock-assets.ts
-// (see ai-issues/components/ReportProblemForm.tsx's comment for why this
-// sprint keeps mutations client-local rather than introducing mock server state).
+// Simulated QR scan (requirement doc EMP-01) — this pre-fills the "scan
+// result" with the employee's pending asset instead of opening a real
+// scanner. Confirmed with the user (2026-08-18) that real registration must
+// scan the physical QR code displayed on the asset itself — this is a known,
+// deliberate gap for a future sprint (needs camera access via getUserMedia, a
+// QR-decode library, and a way to generate/print a QR label per asset — none
+// of which exist in this codebase yet), not an incidental shortcut. See the
+// Decision Log in the Obsidian requirement doc (§8) for the confirmed note.
+// Confirming here shows a real local success state; it doesn't write back to
+// mock-assets.ts (see ai-issues/components/ReportProblemForm.tsx's comment
+// for why this sprint keeps mutations client-local rather than introducing
+// mock server state).
 export function RegisterAssetPage() {
   const pending = getMockAssets().find(
     (a) => a.assigneeId === CURRENT_EMPLOYEE_ID && a.lifecycleStatus === "pending_acknowledgement",
