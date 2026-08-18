@@ -1,7 +1,10 @@
 // Asset Intelligence's sidebar nav — see docs/adr/0016-app-switcher-multi-app-shell.md
-// and docs/asset-intelligence/plan-app-switcher.md. Sections beyond Assets are
-// inert placeholders (no `href`) until their features are built in later sprints
-// (see Asset Intelligence - Dev Process Mapping §5 in the Obsidian vault).
+// and docs/asset-intelligence/plan-app-switcher.md. One landing route per persona
+// (requirement doc §4) now exists as a placeholder so every role's page is
+// reachable for review, even though nothing is role-gated yet (no permission
+// gates exist — see docs/adr/0021-role-vocabulary-reconciliation.md). Locations/
+// Maintenance/Inspections stay inert (no `href`) — narrower sub-views inside
+// Asset Overview, not yet built.
 import { BoxIcon, ChartIcon, SettingsIcon } from "@/components/ui/icons";
 import type { NavConfig, NavItem } from "./types";
 
@@ -17,6 +20,7 @@ export const assetIntelligenceNav: NavConfig = {
       icon: <BoxIcon />,
       items: [
         { label: "All Assets", href: "/asset-intelligence/assets" },
+        { label: "My Assets", href: "/asset-intelligence/my-assets" },
         { label: "Locations" },
         { label: "Maintenance" },
         { label: "Inspections" },
@@ -25,7 +29,11 @@ export const assetIntelligenceNav: NavConfig = {
     {
       label: "Operations",
       icon: <SettingsIcon />,
-      items: [{ label: "Departments" }, { label: "Work Orders" }, { label: "Service Ops" }],
+      items: [
+        { label: "Departments", href: "/asset-intelligence/departments" },
+        { label: "Work Orders", href: "/asset-intelligence/work-orders" },
+        { label: "Service Ops", href: "/asset-intelligence/service-ops" },
+      ],
     },
   ],
   standaloneLinks: [{ label: "Reports & Analytics" }, { label: "Settings" }] satisfies NavItem[],

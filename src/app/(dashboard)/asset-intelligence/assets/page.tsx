@@ -1,4 +1,12 @@
-// Placeholder route — wires to the "ai-assets" feature's list page once it's implemented.
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AssetsListPage } from "@/features/ai-assets";
+
+// Asset/IT Manager — "Asset Overview" (requirement doc §4.2).
 export default function AssetIntelligenceAssetsPage() {
-  return <h1 className="text-2xl font-semibold">Assets</h1>;
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Asset Overview" subtitle="Manage asset risk and operations." />
+      <AssetsListPage />
+    </div>
+  );
 }
