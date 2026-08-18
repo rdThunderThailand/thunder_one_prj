@@ -62,7 +62,7 @@ export function BasicInfoStep({
             maxLength={PLAYLIST_LIMITS.nameMax}
             onChange={(e) => setName(e.target.value)}
             placeholder="เช่น KFC Wednesday Main Playlist"
-            className={`${inputClasses} ${fieldErrors.name ? "border-red-400" : ""}`}
+            className={`${inputClasses} ${fieldErrors.name ? "border-red-400!" : ""}`}
             aria-invalid={!!fieldErrors.name}
           />
         </Field>
@@ -121,7 +121,7 @@ export function BasicInfoStep({
           maxLength={PLAYLIST_LIMITS.descriptionMax}
           onChange={(e) => setInfo({ description: e.target.value })}
           placeholder="เพิ่มคำอธิบายสั้นๆ เกี่ยวกับ playlist นี้..."
-          className={fieldErrors.description ? "border-red-400" : ""}
+          className={fieldErrors.description ? "border-red-400!" : ""}
           aria-invalid={!!fieldErrors.description}
         />
       </Field>
