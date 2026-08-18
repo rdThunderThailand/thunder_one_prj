@@ -21,11 +21,12 @@
 // Most personas only have their own landing route built (Sprint 1 placeholders
 // — see docs/asset-intelligence/plan-role-requirements.md), so most other items
 // below are intentionally inert (no `href`) — the mockup's fuller sidebar, not
-// yet backed by a page. Employee/User and Thunder Care's navs are further
-// along (real pages beyond the landing route) since those roles' flows were
-// built out in detail — see ai-issues/ai-requests/ai-assets's RegisterAssetPage
-// for Employee, and ai-service-ops's Customers/Work Queue/Reports pages for
-// Thunder Care.
+// yet backed by a page. Employee/User, Thunder Care, and Technician's navs are
+// further along (real pages beyond the landing route) since those roles'
+// flows were built out in detail — see ai-issues/ai-requests/ai-assets's
+// RegisterAssetPage for Employee, ai-service-ops's Customers/Work Queue/
+// Reports pages for Thunder Care, and ai-work-orders's Assigned/Calendar
+// pages for Technician.
 import {
   BoxIcon,
   CalendarIcon,
@@ -126,8 +127,8 @@ const technicianNav: NavConfig = {
   },
   sections: [],
   standaloneLinks: [
-    { label: "Assigned" },
-    { label: "Calendar" },
+    { label: "Assigned", href: "/asset-intelligence/work-orders/assigned" },
+    { label: "Calendar", href: "/asset-intelligence/work-orders/calendar" },
     { label: "Assets" },
     { label: "Knowledge" },
     { label: "Settings" },

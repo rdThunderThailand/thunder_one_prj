@@ -1,33 +1,93 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { todaySchedule, todaySummary } from "../mock-data";
+import { mockWorkOrders, todaySummary, TODAY_DATE, type WorkOrderStatus } from "../mock-data";
 import { MiniCalendar } from "./MiniCalendar";
 
+function ScheduleRow({
+  title,
+  severity,
+  subtitle,
+  time,
+  status,
+  onStart,
+}: {
+  title: string;
+  severity?: "critical";
+  subtitle: string;
+  time: string;
+  status: WorkOrderStatus;
+  onStart: () => void;
+}) {
+  return (
+    <li className="flex items-center gap-3 py-3">
+      <span className="w-14 shrink-0 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+        {time}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          {title}
+          {severity && (
+            <Badge color="red" variant="pill">
+              Critical
+            </Badge>
+          )}
+        </p>
+        <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+      </div>
+      {status === "assigned" && (
+        <button
+          onClick={onStart}
+          className="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+        >
+          Start
+        </button>
+      )}
+      {status === "in_progress" && (
+        <span className="shrink-0 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+          In Progress
+        </span>
+      )}
+      {status === "completed" && (
+        <span className="shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          Completed
+        </span>
+      )}
+    </li>
+  );
+}
+
 function ScheduleList() {
+  const today = mockWorkOrders.filter((w) => w.date === TODAY_DATE);
+  const [statuses, setStatuses] = useState<Record<string, WorkOrderStatus>>(
+    Object.fromEntries(today.map((w) => [w.id, w.status])),
+  );
+
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">My Work</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">My Work</h2>
+        <Link
+          href="/asset-intelligence/work-orders/assigned"
+          className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+        >
+          View all assigned
+        </Link>
+      </div>
       <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-900">
-        {todaySchedule.map((item) => (
-          <li key={item.id} className="flex items-center gap-3 py-3">
-            <span className="w-14 shrink-0 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-              {item.time}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                {item.title}
-                {item.severity && (
-                  <Badge color="red" variant="pill">
-                    Critical
-                  </Badge>
-                )}
-              </p>
-              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{item.subtitle}</p>
-            </div>
-            <button className="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500">
-              Start
-            </button>
-          </li>
+        {today.map((item) => (
+          <ScheduleRow
+            key={item.id}
+            title={item.title}
+            severity={item.severity}
+            subtitle={`${item.assetTag} · ${item.location}`}
+            time={item.time}
+            status={statuses[item.id]}
+            onStart={() => setStatuses((prev) => ({ ...prev, [item.id]: "in_progress" }))}
+          />
         ))}
       </ul>
     </Card>
