@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ChevronDownIcon, PlusIcon, XIcon } from "@/components/ui/icons";
@@ -16,35 +16,8 @@ import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { PUBLICATION_LIMITS } from "@/config/limits";
 import { stripHtmlTags } from "../sanitize";
-
-interface FieldWrapperProps {
-  label: string;
-  required?: boolean;
-  optional?: boolean;
-  children: ReactNode;
-}
-
-function FieldWrapper({ label, required, optional, children }: FieldWrapperProps) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-zinc-700">
-        {label} {required && <span className="text-red-500">*</span>}
-        {optional && <span className="text-zinc-400">(Optional)</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-/** Derived metadata (Brand, Format) — the value follows another field, so it is shown
- * rather than picked. Brand lives on the campaign and Format on the publication type. */
-function DerivedField({ value }: { value: string | undefined }) {
-  return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-3.5 pr-3.5 text-sm text-zinc-600">
-      {value || <span className="text-zinc-400">—</span>}
-    </div>
-  );
-}
+import { FieldWrapper, DerivedField } from "./basic-info-fields";
+import { validateBasicInfo } from "../step-validation";
 
 export interface BasicInfoState {
   campaignId: string;
@@ -59,9 +32,10 @@ export interface BasicInfoState {
 export interface BasicInfoFormProps {
   campaigns?: Campaign[];
   workspaceTags?: Tag[];
+  showErrors?: boolean;
 }
 
-export function BasicInfoForm({ campaigns = [], workspaceTags = [] }: BasicInfoFormProps) {
+export function BasicInfoForm({ campaigns = [], workspaceTags = [], showErrors = false }: BasicInfoFormProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
   const { campaignId, publicationType, name, description, priorityId, language, tags } = basicInfo;
@@ -95,18 +69,25 @@ export function BasicInfoForm({ campaigns = [], workspaceTags = [] }: BasicInfoF
 
   const isDescriptionOverLimit = description.length > PUBLICATION_LIMITS.descriptionMaxLength;
 
+  // Recompute on every render so a field's error disappears the instant it becomes valid.
+  // An empty list means "not loaded yet" (or the fetch failed), not "no campaign exists" —
+  // passing it would flag a perfectly good campaignId as unavailable.
+  const campaignCtx = campaigns.length > 0 ? { campaignIds: campaigns.map((c) => c.id) } : undefined;
+  const fieldErrors = showErrors ? validateBasicInfo(basicInfo, campaignCtx) : {};
+
   return (
     <Card className="p-5">
       <h2 className="mb-4 text-base font-semibold text-zinc-900">Basic Information</h2>
 
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <FieldWrapper label="Campaign" required>
+          <FieldWrapper label="Campaign" required error={fieldErrors.campaignId}>
             <div className="relative">
               <select
                 value={campaignId}
                 onChange={(e) => patch({ campaignId: e.target.value })}
-                className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                aria-invalid={!!fieldErrors.campaignId}
+                className={`w-full appearance-none rounded-lg border ${fieldErrors.campaignId ? "border-red-400" : "border-zinc-200"} bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
               >
                 <option value="">— Select campaign —</option>
                 {campaigns.map((c) => (
@@ -119,14 +100,15 @@ export function BasicInfoForm({ campaigns = [], workspaceTags = [] }: BasicInfoF
             </div>
           </FieldWrapper>
 
-          <FieldWrapper label="Publication Name" required>
+          <FieldWrapper label="Publication Name" required error={fieldErrors.name}>
             <div className="relative">
               <input
                 placeholder="เช่น แคมเปญลดราคาหน้าร้อน 2024"
                 maxLength={PUBLICATION_LIMITS.nameMaxLength}
                 value={name}
                 onChange={(e) => patch({ name: e.target.value })}
-                className="w-full rounded-lg border border-zinc-200 py-2.5 pl-3.5 pr-16 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                aria-invalid={!!fieldErrors.name}
+                className={`w-full rounded-lg border ${fieldErrors.name ? "border-red-400" : "border-zinc-200"} py-2.5 pl-3.5 pr-16 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
               />
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
                 {name.length}/{PUBLICATION_LIMITS.nameMaxLength}
@@ -210,7 +192,7 @@ export function BasicInfoForm({ campaigns = [], workspaceTags = [] }: BasicInfoF
         </div>
 
         <div className="flex flex-col gap-4">
-          <FieldWrapper label="Publication Type" required>
+          <FieldWrapper label="Publication Type" required error={fieldErrors.publicationType}>
             <div className="grid grid-cols-3 gap-2.5">
               {publicationTypes.map((type) => {
                 const active = publicationType === type.id;

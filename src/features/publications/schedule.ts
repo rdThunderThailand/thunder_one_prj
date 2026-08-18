@@ -88,23 +88,50 @@ export function makeDefaultScheduleForm(): ScheduleForm {
   };
 }
 
-export function isScheduleFormValid(form: ScheduleForm): boolean {
-  if (form.schedule_type === "now") return true;
-  if (!form.start_date || !form.start_time) return false;
-  if (form.schedule_type === "later") return true; // expiration is optional
+export type ScheduleFieldId =
+  | "start_date" | "start_time" | "end_date" | "end_time"
+  | "days" | "daily_start" | "daily_end";
+
+export type ScheduleErrors = Partial<Record<ScheduleFieldId, string>>;
+
+export function validateScheduleForm(form: ScheduleForm): ScheduleErrors {
+  if (form.schedule_type === "now") return {};
+
+  const errors: ScheduleErrors = {};
+
+  if (!form.start_date) errors.start_date = "เลือกวันที่เริ่ม";
+  if (!form.start_time) errors.start_time = "เลือกเวลาเริ่ม";
+  // Do not evaluate later rules when start is incomplete
+  if (!form.start_date || !form.start_time) return errors;
+
+  if (form.schedule_type === "later") return {}; // expiration is optional
 
   // range | recurring both require an end strictly after the start
-  if (!form.end_date || !form.end_time) return false;
+  if (!form.end_date) errors.end_date = "เลือกวันที่สิ้นสุด";
+  if (!form.end_time) errors.end_time = "เลือกเวลาสิ้นสุด";
+  if (!form.end_date || !form.end_time) return errors;
+
   const start = Date.parse(zonedToUtcIso(form.start_date, form.start_time, form.timezone));
   const end = Date.parse(zonedToUtcIso(form.end_date, form.end_time, form.timezone));
-  if (end <= start) return false;
+  if (end <= start) {
+    errors.end_date = "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
+    return errors;
+  }
 
   if (form.schedule_type === "recurring") {
-    if (form.days.length === 0) return false;
-    if (!form.daily_start || !form.daily_end) return false;
-    if (form.daily_start >= form.daily_end) return false; // "HH:MM" compares lexically
+    if (form.days.length === 0) errors.days = "เลือกวันในสัปดาห์อย่างน้อย 1 วัน";
+    if (!form.daily_start) errors.daily_start = "กำหนดช่วงเวลารายวัน";
+    if (!form.daily_end) errors.daily_end = "กำหนดช่วงเวลารายวัน";
+    if (form.daily_start && form.daily_end && form.daily_start >= form.daily_end) {
+      errors.daily_end = "เวลาจบรายวันต้องอยู่หลังเวลาเริ่ม"; // "HH:MM" compares lexically
+    }
   }
-  return true;
+
+  return errors;
+}
+
+export function isScheduleFormValid(form: ScheduleForm): boolean {
+  return Object.keys(validateScheduleForm(form)).length === 0;
 }
 
 export function scheduleFormToPayload(form: ScheduleForm): SchedulePayload {

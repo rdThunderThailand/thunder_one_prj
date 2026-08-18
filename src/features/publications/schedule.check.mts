@@ -18,6 +18,7 @@ import {
   formatScheduleStart,
   isScheduleFormValid,
   makeDefaultScheduleForm,
+  validateScheduleForm,
 } from "./schedule.ts";
 import type { PublicationSchedule, ScheduleForm } from "./types/index.ts";
 
@@ -116,5 +117,54 @@ assert.equal(isScheduleFormValid({ ...recurringBase, days: [] }), false);
 assert.equal(isScheduleFormValid({ ...recurringBase, daily_start: "", daily_end: "" }), false);
 assert.equal(isScheduleFormValid({ ...recurringBase, daily_start: "17:00", daily_end: "08:00" }), false); // reversed
 assert.equal(isScheduleFormValid({ ...recurringBase, daily_start: "08:00", daily_end: "08:00" }), false); // equal
+
+// --- validateScheduleForm: which field each failure lands on ---
+
+// "now" is unconditionally clean.
+assert.deepEqual(validateScheduleForm({ ...base, schedule_type: "now" }), {});
+
+// A missing start reports both start fields and stops there — no end-date noise.
+assert.deepEqual(
+  validateScheduleForm({ ...rangeBase, start_date: "", start_time: "", end_date: "", end_time: "" }),
+  { start_date: "เลือกวันที่เริ่ม", start_time: "เลือกเวลาเริ่ม" },
+);
+
+// Missing end lands on the end fields, one message each.
+assert.deepEqual(validateScheduleForm({ ...rangeBase, end_date: "", end_time: "" }), {
+  end_date: "เลือกวันที่สิ้นสุด",
+  end_time: "เลือกเวลาสิ้นสุด",
+});
+
+// An end that is not after the start lands on end_date alone.
+assert.deepEqual(
+  validateScheduleForm({ ...rangeBase, end_date: "2026-08-10", end_time: "09:00" }),
+  { end_date: "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม" },
+);
+
+// Recurring: no weekday selected reports under Repeat On only.
+assert.deepEqual(validateScheduleForm({ ...recurringBase, days: [] }), {
+  days: "เลือกวันในสัปดาห์อย่างน้อย 1 วัน",
+});
+
+// Recurring: an empty daily window reports on both daily fields at once…
+assert.deepEqual(
+  validateScheduleForm({ ...recurringBase, daily_start: "", daily_end: "" }),
+  { daily_start: "กำหนดช่วงเวลารายวัน", daily_end: "กำหนดช่วงเวลารายวัน" },
+);
+
+// …and a reversed one lands on the end of the window.
+assert.deepEqual(
+  validateScheduleForm({ ...recurringBase, daily_start: "17:00", daily_end: "08:00" }),
+  { daily_end: "เวลาจบรายวันต้องอยู่หลังเวลาเริ่ม" },
+);
+
+// Recurring can report a missing weekday and a bad daily window together.
+assert.deepEqual(
+  validateScheduleForm({ ...recurringBase, days: [], daily_start: "17:00", daily_end: "08:00" }),
+  { days: "เลือกวันในสัปดาห์อย่างน้อย 1 วัน", daily_end: "เวลาจบรายวันต้องอยู่หลังเวลาเริ่ม" },
+);
+
+// A fully valid recurring form has no errors at all.
+assert.deepEqual(validateScheduleForm(recurringBase), {});
 
 console.log("schedule.check.mts — all assertions passed");

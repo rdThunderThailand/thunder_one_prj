@@ -13,6 +13,7 @@ import { publicationDisplayStatus, publicationStatusColor } from "../publication
 import type { PlaylistDetail, PublicationDetail } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
+import { DeliveryProgress } from "./DeliveryProgress";
 
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "—";
@@ -223,6 +224,10 @@ export function PublicationDetailPage({ id }: { id: string }) {
         <p className="text-sm text-red-600 dark:text-red-400">{actionError}</p>
       )}
 
+      {/* A draft has never been activated, so there are no publish jobs to report on —
+          and nothing to poll for either. */}
+      {!isDraft && <DeliveryProgress id={id} initialDetail={detail} />}
+
       {/* 2. Overview */}
       <Card className="p-5">
         <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">
@@ -426,49 +431,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       </Card>
 
       {/* 6. Delivery */}
-      <Card className="p-5">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">
-          Delivery
-        </h2>
-        {detail.targets && detail.targets.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-400 dark:border-zinc-800">
-                  <th className="py-2 pr-3">Device Name</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 pr-3">Attempt Count</th>
-                  <th className="py-2 pr-3">Acked At</th>
-                  <th className="py-2 text-right">Error Message</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detail.targets.map((t, idx) => (
-                  <tr key={idx} className="border-t border-zinc-100 dark:border-zinc-800">
-                    <td className="py-2.5 pr-3 font-medium text-zinc-900 dark:text-zinc-100">
-                      {t.device_name ?? t.device_id}
-                    </td>
-                    <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
-                      {t.status ?? "—"}
-                    </td>
-                    <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
-                      {t.attempt_count ?? 0}
-                    </td>
-                    <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
-                      {formatDate(t.acked_at)}
-                    </td>
-                    <td className="py-2.5 text-right text-red-600 dark:text-red-400">
-                      {t.error_message ?? "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-sm text-zinc-400">ยังไม่มีข้อมูลการส่ง</p>
-        )}
-      </Card>
+      
     </div>
   );
 }

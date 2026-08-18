@@ -173,6 +173,18 @@ export async function activatePublication(id: string): Promise<{ job_id?: string
   );
 }
 
+/** Retries failed/offline-stuck targets. Omit deviceIds to retry every eligible target. */
+export async function retryPublicationTargets(
+  id: string,
+  deviceIds?: string[]
+): Promise<{ retried_count: number; skipped_count: number }> {
+  return requestApi<{ retried_count: number; skipped_count: number }>(
+    "POST",
+    `/media/publications/${id}/retry`,
+    deviceIds ? { device_ids: deviceIds } : {}
+  );
+}
+
 export async function checkScheduleConflicts(payload: {
   publication_id: string | null;
   device_ids: string[];

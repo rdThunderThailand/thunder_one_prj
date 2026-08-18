@@ -8,7 +8,7 @@ import { CARD_BY_SCHEDULE_TYPE, SCHEDULE_TYPE_BY_CARD } from "../draft-mapping";
 import {
   TIMEZONES,
   WEEKDAYS,
-  isScheduleFormValid,
+  validateScheduleForm,
   utcToZonedParts,
 } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
@@ -25,6 +25,12 @@ import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+
+// ponytail: this file is well over the 300-line house limit — split the right-hand summary column out next time it is touched
+
+function FieldError({ message }: { message?: string }) {
+  return message ? <p className="mt-1 text-xs font-medium text-red-600">{message}</p> : null;
+}
 
 const scheduleTypeIcon: Record<ScheduleTypeId, ReactNode> = {
   "publish-now": <LightningIcon />,
@@ -59,6 +65,7 @@ export interface ScheduleStepProps {
   conflicts?: ScheduleConflict[];
   checkingConflicts?: boolean;
   conflictsError?: string | null;
+  showErrors?: boolean;
 }
 
 export function ScheduleStep({
@@ -68,6 +75,7 @@ export function ScheduleStep({
   conflicts = [],
   checkingConflicts = false,
   conflictsError = null,
+  showErrors = false,
 }: ScheduleStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -80,7 +88,8 @@ export function ScheduleStep({
   const patch = (next: Partial<typeof scheduleForm>) =>
     setScheduleForm({ ...scheduleForm, ...next });
 
-  const isValidSchedule = isScheduleFormValid(scheduleForm);
+  // Recompute every render so a field's error clears the moment it becomes valid
+  const fieldErrors = showErrors ? validateScheduleForm(scheduleForm) : {};
   const nowZoned = utcToZonedParts(new Date().toISOString(), scheduleForm.timezone);
 
   const isPlaylist = basicInfo.publicationType === "playlist";
@@ -203,21 +212,20 @@ export function ScheduleStep({
                   type="date"
                   value={scheduleForm.start_date}
                   onChange={(e) => patch({ start_date: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  aria-invalid={!!fieldErrors.start_date}
+                  className={`rounded-lg border ${fieldErrors.start_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                 />
                 <input
                   type="time"
                   value={scheduleForm.start_time}
                   onChange={(e) => patch({ start_time: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  aria-invalid={!!fieldErrors.start_time}
+                  className={`rounded-lg border ${fieldErrors.start_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                 />
               </div>
             )}
-            {!isValidSchedule && (
-              <p className="mt-1.5 text-xs text-amber-600">
-                Please enter a valid start date, time, and expiration range.
-              </p>
-            )}
+            <FieldError message={fieldErrors.start_date} />
+            <FieldError message={fieldErrors.start_time} />
           </div>
 
           {scheduleForm.schedule_type === "range" && (
@@ -230,15 +238,19 @@ export function ScheduleStep({
                   type="date"
                   value={scheduleForm.end_date}
                   onChange={(e) => patch({ end_date: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  aria-invalid={!!fieldErrors.end_date}
+                  className={`rounded-lg border ${fieldErrors.end_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                 />
                 <input
                   type="time"
                   value={scheduleForm.end_time}
                   onChange={(e) => patch({ end_time: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  aria-invalid={!!fieldErrors.end_time}
+                  className={`rounded-lg border ${fieldErrors.end_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                 />
               </div>
+              <FieldError message={fieldErrors.end_date} />
+              <FieldError message={fieldErrors.end_time} />
             </div>
           )}
 
@@ -253,15 +265,19 @@ export function ScheduleStep({
                     type="date"
                     value={scheduleForm.end_date}
                     onChange={(e) => patch({ end_date: e.target.value })}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    aria-invalid={!!fieldErrors.end_date}
+                    className={`rounded-lg border ${fieldErrors.end_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                   />
                   <input
                     type="time"
                     value={scheduleForm.end_time}
                     onChange={(e) => patch({ end_time: e.target.value })}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    aria-invalid={!!fieldErrors.end_time}
+                    className={`rounded-lg border ${fieldErrors.end_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                   />
                 </div>
+                <FieldError message={fieldErrors.end_date} />
+                <FieldError message={fieldErrors.end_time} />
               </div>
 
               <div className="mt-4">
@@ -285,6 +301,7 @@ export function ScheduleStep({
                     );
                   })}
                 </div>
+                <FieldError message={fieldErrors.days} />
               </div>
 
               <div className="mt-4">
@@ -294,15 +311,19 @@ export function ScheduleStep({
                     type="time"
                     value={scheduleForm.daily_start}
                     onChange={(e) => patch({ daily_start: e.target.value })}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    aria-invalid={!!fieldErrors.daily_start}
+                    className={`rounded-lg border ${fieldErrors.daily_start ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                   />
                   <input
                     type="time"
                     value={scheduleForm.daily_end}
                     onChange={(e) => patch({ daily_end: e.target.value })}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    aria-invalid={!!fieldErrors.daily_end}
+                    className={`rounded-lg border ${fieldErrors.daily_end ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                   />
                 </div>
+                <FieldError message={fieldErrors.daily_start} />
+                <FieldError message={fieldErrors.daily_end} />
                 <p className="mt-1.5 text-xs text-zinc-500">
                   Plays on the selected weekdays, within this daily time window, across the date range above.
                 </p>

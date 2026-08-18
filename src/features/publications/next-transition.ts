@@ -1,7 +1,7 @@
 import type { DraftFields } from "./store/usePublicationDraftStore";
 // Explicit .ts extension so the .check.mts beside this file can load it under
 // Node's ESM resolver, which does no extension guessing.
-import { validateStep, type WizardStepId } from "./step-validation.ts";
+import { validateStep, type WizardStepId, type Step1Context } from "./step-validation.ts";
 
 /**
  * What a Next click resolved to. `saved` is the only outcome that may advance
@@ -21,9 +21,10 @@ export type NextOutcome =
 export async function attemptNext(
   step: WizardStepId,
   state: DraftFields,
-  persist: () => Promise<unknown>
+  persist: () => Promise<unknown>,
+  ctx?: Step1Context
 ): Promise<NextOutcome> {
-  const result = validateStep(step, state);
+  const result = validateStep(step, state, ctx);
   if (!result.valid) return { kind: "invalid", errors: result.errors };
 
   try {

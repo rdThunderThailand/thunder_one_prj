@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   draftItemsToContentItems,
@@ -37,6 +38,7 @@ function isStaleDraftError(err: unknown): boolean {
 }
 
 export function usePublishDraft() {
+  const router = useRouter();
   const [screens, setScreens] = useState<Screen[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -289,6 +291,7 @@ export function usePublishDraft() {
       await activatePublication(newId);
       setPublishedId(newId);
       state.cancelDraft();
+      router.push(`/publications/${newId}`);
     } catch (err) {
       const classified = classifyApiError(err, "Failed to publish publication.");
       // A retry after a timed-out publish lands here: the backend refused because
@@ -296,6 +299,7 @@ export function usePublishDraft() {
       if (classified.kind === "already-active" && state.publicationId) {
         setPublishedId(state.publicationId);
         state.cancelDraft();
+        router.push(`/publications/${state.publicationId}`);
         return;
       }
       if (classified.kind !== "conflict") setError(classified.message);

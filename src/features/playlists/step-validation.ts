@@ -23,6 +23,25 @@ export interface ValidatableDraft {
   items: DraftItem[];
 }
 
+export type BasicInfoFieldId = "name" | "description";
+export type BasicInfoErrors = Partial<Record<BasicInfoFieldId, string>>;
+
+export function validateBasicInfo(
+  draft: Pick<ValidatableDraft, "name" | "description">
+): BasicInfoErrors {
+  const errors: BasicInfoErrors = {};
+  const trimmed = draft.name.trim();
+  if (trimmed.length === 0) {
+    errors.name = "ตั้งชื่อ playlist ก่อน";
+  } else if (trimmed.length > PLAYLIST_LIMITS.nameMax) {
+    errors.name = `ชื่อยาวเกิน ${PLAYLIST_LIMITS.nameMax} ตัวอักษร`;
+  }
+  if ((draft.description?.length ?? 0) > PLAYLIST_LIMITS.descriptionMax) {
+    errors.description = `คำอธิบายยาวเกิน ${PLAYLIST_LIMITS.descriptionMax} ตัวอักษร`;
+  }
+  return errors;
+}
+
 export function validateStep(
   step: WizardStepId,
   draft: ValidatableDraft
@@ -30,15 +49,7 @@ export function validateStep(
   const errors: string[] = [];
 
   if (step === 1) {
-    const trimmed = draft.name.trim();
-    if (trimmed.length === 0) {
-      errors.push("ตั้งชื่อ playlist ก่อน");
-    } else if (trimmed.length > PLAYLIST_LIMITS.nameMax) {
-      errors.push(`ชื่อยาวเกิน ${PLAYLIST_LIMITS.nameMax} ตัวอักษร`);
-    }
-    if ((draft.description?.length ?? 0) > PLAYLIST_LIMITS.descriptionMax) {
-      errors.push(`คำอธิบายยาวเกิน ${PLAYLIST_LIMITS.descriptionMax} ตัวอักษร`);
-    }
+    errors.push(...Object.values(validateBasicInfo(draft)));
   }
 
   if (step === 2 && draft.items.length === 0) {

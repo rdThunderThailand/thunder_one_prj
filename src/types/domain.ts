@@ -21,16 +21,15 @@ export type PublicationLifecycleStatus =
   | "ended"
   | "cancelled";
 
-// Publish Job delivery status — one Job per Channel x Device. See
-// CONTEXT.md: "Publish Job".
+// Per-target delivery status — one row per Publish Job x Device. See
+// CONTEXT.md: "Publish Job". Mirrors media_core.publish_job_targets.status
+// (Thunder_Core migration 091 added "delivered").
 export type PublishJobStatus =
-  | "queued"
-  | "processing"
+  | "pending"
   | "downloading"
   | "delivered"
   | "playing"
-  | "failed"
-  | "cancelled";
+  | "failed";
 
 // Campaign, Tag and Asset are read by both publications and playlists — the API shapes
 // live here so neither feature has to import from the other.
