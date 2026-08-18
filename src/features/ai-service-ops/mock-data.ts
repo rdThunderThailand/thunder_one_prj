@@ -43,3 +43,22 @@ export const todayCard = {
   onsite: 8,
   remote: 13,
 };
+
+export interface CustomerRow {
+  id: string;
+  name: string;
+  healthScore: number;
+  openRequests: number;
+  status: "red" | "yellow" | "green";
+}
+
+// A representative sample, not literally all 18 (serviceStatTiles.totalCustomers)
+// — same "plausible, not exhaustive" mock discipline as the rest of this sprint.
+export const mockCustomers: CustomerRow[] = [
+  { id: "abc", name: "ABC Company", healthScore: 42, openRequests: 1, status: "red" },
+  { id: "xyz", name: "XYZ Company", healthScore: 68, openRequests: 3, status: "yellow" },
+  { id: "def", name: "DEF Company", healthScore: 95, openRequests: 0, status: "green" },
+  { id: "ghi", name: "GHI Logistics", healthScore: 88, openRequests: 1, status: "green" },
+  { id: "jkl", name: "JKL Retail Group", healthScore: 74, openRequests: 2, status: "yellow" },
+  { id: "mno", name: "MNO Bank", healthScore: 91, openRequests: 0, status: "green" },
+];

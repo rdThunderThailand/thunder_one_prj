@@ -27,3 +27,17 @@ export const todaySummary = {
   completed: 0,
   overdue: 2,
 };
+
+// Read by Thunder Care's Work Queue dispatch action (ai-service-ops) — picking
+// a technician there conceptually feeds this list, though nothing is wired
+// live (see ai-issues/components/ReportProblemForm.tsx's comment for why this
+// sprint keeps such actions client-local rather than mutating shared mock state).
+export interface TechnicianOption {
+  id: string;
+  name: string;
+}
+
+export const mockTechnicians: TechnicianOption[] = [
+  { id: "tech-a", name: "Technician A" },
+  { id: "tech-b", name: "Technician B" },
+];

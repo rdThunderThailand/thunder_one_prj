@@ -1,31 +1,29 @@
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { StatTile } from "@/components/ui/StatTile";
-import { getMockIssues, type IssueStatus } from "@/features/ai-issues";
+import { getMockIssues } from "@/features/ai-issues";
 import { customerAttention, serviceStatTiles, todayCard } from "../mock-data";
-
-const dotColor: Record<(typeof customerAttention)[number]["severity"], string> = {
-  red: "bg-red-500",
-  yellow: "bg-amber-500",
-  green: "bg-emerald-500",
-};
-
-const actionColor: Record<(typeof customerAttention)[number]["severity"], string> = {
-  red: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
-  yellow: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  green: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-};
+import { customerActionColor, customerDotColor, issueStatusBadge } from "../status-colors";
 
 function CustomerAttentionCard() {
   return (
     <Card className="flex h-full flex-col p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-        Customer Attention
-      </h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+          Customer Attention
+        </h2>
+        <Link
+          href="/asset-intelligence/service-ops/customers"
+          className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+        >
+          View all
+        </Link>
+      </div>
       <ul className="flex flex-1 flex-col gap-3">
         {customerAttention.map((row) => (
           <li key={row.id} className="flex items-center gap-2.5">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor[row.severity]}`} />
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${customerDotColor[row.severity]}`} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 {row.name}
@@ -33,7 +31,7 @@ function CustomerAttentionCard() {
               <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{row.subtitle}</p>
             </div>
             <span
-              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${actionColor[row.severity]}`}
+              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${customerActionColor[row.severity]}`}
             >
               Open
             </span>
@@ -72,19 +70,21 @@ function TodayCard() {
   );
 }
 
-const queueStatusBadge: Record<IssueStatus, { color: "red" | "yellow" | "green"; label: string }> = {
-  waiting: { color: "red", label: "Waiting" },
-  in_progress: { color: "yellow", label: "In Progress" },
-  resolved: { color: "green", label: "Resolved" },
-};
-
 function WorkQueueCard() {
   // Internal issues employees report (EMP-02 -> TCARE-01), distinct from the
   // external-customer "Customer Attention" list above (multi-tenant MSP mode).
   const issues = getMockIssues();
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Work Queue</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Work Queue</h2>
+        <Link
+          href="/asset-intelligence/service-ops/work-queue"
+          className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+        >
+          View all
+        </Link>
+      </div>
       <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-900">
         {issues.map((issue) => (
           <li key={issue.id} className="flex items-center gap-3 py-2.5">
@@ -96,8 +96,8 @@ function WorkQueueCard() {
                 {issue.description}
               </p>
             </div>
-            <Badge color={queueStatusBadge[issue.status].color} variant="pill">
-              {queueStatusBadge[issue.status].label}
+            <Badge color={issueStatusBadge[issue.status].color} variant="pill">
+              {issueStatusBadge[issue.status].label}
             </Badge>
           </li>
         ))}
