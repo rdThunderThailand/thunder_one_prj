@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { StatTile } from "@/components/ui/StatTile";
 import { SettingsIcon, WarningTriangleIcon } from "@/components/ui/icons";
@@ -79,9 +80,12 @@ export function DepartmentPage() {
         <NeedsAttentionCard />
         <RequestsCard />
       </div>
-      <button className="self-start text-sm font-medium text-indigo-600 hover:text-indigo-500">
+      <Link
+        href="/asset-intelligence/departments/assets"
+        className="self-start text-sm font-medium text-indigo-600 hover:text-indigo-500"
+      >
         View all department assets →
-      </button>
+      </Link>
     </div>
   );
 }

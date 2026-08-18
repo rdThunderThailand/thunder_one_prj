@@ -18,15 +18,15 @@
 // my-assets/, matching how Thunder Care's Customers/Work Queue/Reports were
 // already nested under service-ops/) — don't reintroduce it for a new page.
 //
-// Most personas only have their own landing route built (Sprint 1 placeholders
-// — see docs/asset-intelligence/plan-role-requirements.md), so most other items
-// below are intentionally inert (no `href`) — the mockup's fuller sidebar, not
-// yet backed by a page. Employee/User, Thunder Care, and Technician's navs are
-// further along (real pages beyond the landing route) since those roles'
-// flows were built out in detail — see ai-issues/ai-requests/ai-assets's
-// RegisterAssetPage for Employee, ai-service-ops's Customers/Work Queue/
-// Reports pages for Thunder Care, and ai-work-orders's Assigned/Calendar
-// pages for Technician.
+// CEO and Asset/IT Manager's other items are still inert (no `href`) — the
+// mockup's fuller sidebar, not yet backed by a page. Employee/User, Thunder
+// Care, Technician, and Department Manager's navs are further along (real
+// pages beyond the landing route) since those roles' flows were built out in
+// detail — see ai-issues/ai-requests/ai-assets's RegisterAssetPage for
+// Employee, ai-service-ops's Customers/Work Queue/Reports pages for Thunder
+// Care, ai-work-orders's Assigned/Calendar pages for Technician, and
+// ai-departments's Assets/Team/Requests/Approvals/Reports pages for
+// Department Manager.
 import {
   BoxIcon,
   CalendarIcon,
@@ -104,11 +104,11 @@ const departmentManagerNav: NavConfig = {
   },
   sections: [],
   standaloneLinks: [
-    { label: "Assets" },
-    { label: "My Team" },
-    { label: "Requests" },
-    { label: "Approvals" },
-    { label: "Reports" },
+    { label: "Assets", href: "/asset-intelligence/departments/assets" },
+    { label: "My Team", href: "/asset-intelligence/departments/team" },
+    { label: "Requests", href: "/asset-intelligence/departments/requests" },
+    { label: "Approvals", href: "/asset-intelligence/departments/approvals" },
+    { label: "Reports", href: "/asset-intelligence/departments/reports" },
   ] satisfies NavItem[],
   standaloneIcons: [
     <BoxIcon key="assets" />,

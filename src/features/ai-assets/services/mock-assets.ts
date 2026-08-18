@@ -118,6 +118,45 @@ const mockAssets: Asset[] = [
     healthScore: 100,
     externalRef: null,
   },
+  // Owned by the Sales department but not yet assigned to a specific
+  // employee — the kind of row Department Manager's "Assets"/"My Team" pages
+  // would offer up for DM-02 (assign/reassign), not built this round.
+  {
+    id: "prn-044",
+    tag: "PRN-044",
+    category: "printer",
+    status: "critical",
+    lifecycleStatus: "active",
+    model: "HP LaserJet Pro",
+    locationId: "bangkok-floor-3",
+    departmentId: "sales",
+    assigneeId: null,
+    vendorId: "hp",
+    warrantyExpiry: "2026-10-05",
+    purchaseValue: 18000,
+    healthScore: 31,
+    externalRef: null,
+  },
+  // Transferred from Asset Manager, awaiting Department Manager's
+  // acknowledgement (DM-01) — one step earlier in the onboarding flow than
+  // mon-044 above, which is already past that step and waiting on the
+  // employee instead.
+  {
+    id: "mon-051",
+    tag: "MON-051",
+    category: "other",
+    status: "healthy",
+    lifecycleStatus: "pending_department_ack",
+    model: 'Dell 24" Monitor',
+    locationId: "bangkok-floor-3",
+    departmentId: "sales",
+    assigneeId: null,
+    vendorId: "dell",
+    warrantyExpiry: "2028-06-01",
+    purchaseValue: 7200,
+    healthScore: 100,
+    externalRef: null,
+  },
 ];
 
 export function getMockAssets(): Asset[] {

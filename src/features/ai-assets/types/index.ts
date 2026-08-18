@@ -13,14 +13,16 @@ export type AssetCategory = "laptop" | "printer" | "nas" | "media_player_device"
 export type AssetStatus = "healthy" | "attention" | "critical";
 
 /**
- * A minimal 2-value slice of the full onboarding state machine from the
- * requirement doc §5.1 (`unassigned → pending_department_ack →
- * assigned_pending_deploy → pending_employee_ack → active`) — just enough to
- * drive the Employee "register the asset I received" flow (EMP-01). Modeling
- * the full 5-state machine (department/technician handoff, deploy work order)
- * is separate future work, not decided here.
+ * A partial slice of the full onboarding state machine from the requirement
+ * doc §5.1 (`unassigned → pending_department_ack → assigned_pending_deploy →
+ * pending_employee_ack → active`) — just enough to drive the two
+ * acknowledge-a-transfer flows that exist so far: Department Manager's
+ * Approvals (DM-01, `pending_department_ack`) and Employee's Scan QR
+ * (EMP-01, `pending_acknowledgement` — a stand-in for `pending_employee_ack`).
+ * `assigned_pending_deploy` (the Technician deploy work order in between) is
+ * not modeled — separate future work, not decided here.
  */
-export type AssetLifecycleStatus = "active" | "pending_acknowledgement";
+export type AssetLifecycleStatus = "active" | "pending_department_ack" | "pending_acknowledgement";
 
 export interface Asset {
   id: string;
