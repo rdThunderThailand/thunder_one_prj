@@ -1,16 +1,22 @@
-import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { SearchIcon } from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { MyAssetsPage as MyAssetsList } from "@/features/ai-assets";
 
-// Employee/User — "My Assets" (requirement doc §4.5). Per the repo mapping doc §5
-// this is meant to become a scoped view within features/ai-assets, not a separate
-// feature — placeholder route until that view exists.
+// Employee/User — "My Assets" (requirement doc §4.5).
 export default function MyAssetsPage() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="My Assets" subtitle="Equipment currently assigned to you." />
-      <Card className="p-6 text-sm text-zinc-500 dark:text-zinc-400">
-        Not built yet — see requirement doc §4.5 (Employee/User).
-      </Card>
+      <PageHeader
+        title="My Assets"
+        subtitle="Equipment currently assigned to you."
+        actions={
+          <Button variant="secondary">
+            <SearchIcon className="h-4 w-4" /> Scan QR
+          </Button>
+        }
+      />
+      <MyAssetsList />
     </div>
   );
 }

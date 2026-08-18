@@ -3,3 +3,5 @@
 export type { Asset, AssetCategory, AssetStatus } from "./types";
 export { getMockAssets } from "./services/mock-assets";
 export { AssetsListPage } from "./components/AssetsListPage";
+export { AssetOverviewDashboard } from "./components/AssetOverviewDashboard";
+export { MyAssetsPage } from "./components/MyAssetsPage";
