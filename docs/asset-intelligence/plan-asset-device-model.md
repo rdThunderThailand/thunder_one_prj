@@ -1,6 +1,6 @@
 # Plan: Asset↔Device cross-reference model
 
-Expands `docs/adr/0018-asset-device-cross-reference-model.md` into the concrete schema notes for `src/features/ai-assets/types/index.ts`.
+Expands `docs/adr/0024-asset-device-cross-reference-model.md` into the concrete schema notes for `src/features/ai-assets/types/index.ts`.
 
 ## Current shape
 
@@ -37,6 +37,6 @@ This repo cannot decide this alone — see `questions-thunder-core-contract.md` 
 
 ## When this gets implemented
 
-1. Direction decided with Thunder_Core team → recorded in a follow-up ADR (0018 stays as the "we decided to defer this" record; a new ADR records the actual answer, per this repo's convention of not editing a shipped ADR's Decision after the fact).
+1. Direction decided with Thunder_Core team → recorded in a follow-up ADR (0024 stays as the "we decided to defer this" record; a new ADR records the actual answer, per this repo's convention of not editing a shipped ADR's Decision after the fact).
 2. Assignment flow (requirement doc §5.1 state machine) writes `externalRef` when an Asset of category `media_player_device` is assigned to Media Workspace.
 3. `features/ai-assets` gains a real service call (replacing `services/mock-assets.ts`) once the sync contract exists.

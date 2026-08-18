@@ -1,6 +1,6 @@
 # Plan: App Switcher implementation notes
 
-Expands `docs/adr/0016-app-switcher-multi-app-shell.md` into concrete implementation notes. The ADR is the decision record; this file is where to look for "which file does what" without re-deriving it from the diff.
+Expands `docs/adr/0022-app-switcher-multi-app-shell.md` into concrete implementation notes. The ADR is the decision record; this file is where to look for "which file does what" without re-deriving it from the diff.
 
 ## Files
 

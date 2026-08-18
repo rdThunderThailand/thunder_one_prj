@@ -1,5 +1,5 @@
 // Registry of apps served by this shell. The URL (`basePath`) is the source of
-// truth for which app is active — see docs/adr/0016-app-switcher-multi-app-shell.md.
+// truth for which app is active — see docs/adr/0022-app-switcher-multi-app-shell.md.
 // Add a new app by adding an entry here; Sidebar reads this list, it does not
 // hardcode app names.
 import type { ReactNode } from "react";

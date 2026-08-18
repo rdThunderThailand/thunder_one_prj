@@ -1,4 +1,4 @@
-# 0017 — Asset Intelligence feature folders use an `ai-` prefix, not a renamed entity
+# 0023 — Asset Intelligence feature folders use an `ai-` prefix, not a renamed entity
 
 ## Context
 
@@ -12,7 +12,7 @@ The two meanings are not just an accidental naming clash to be designed around. 
 `Asset` category taxonomy explicitly includes `media_player_device` — hardware whose job is to run
 Media Workspace's Device role (`CONTEXT.md`'s `Device` glossary entry: "the physical player/endpoint
 that receives and plays content"). When an Asset Intelligence `Asset` of that category is assigned to
-a department, it becomes — via a cross-reference recorded on the Asset row (see ADR 0018) — the same
+a department, it becomes — via a cross-reference recorded on the Asset row (see ADR 0024) — the same
 physical hardware Media Workspace tracks as a `Device` through `channel_devices`. The word `Asset`
 being shared across both modules reflects a real relationship between two systems, not a coincidence
 that renaming would hide.
@@ -44,7 +44,7 @@ rename that every call site pays for.
 
 Route paths get the same treatment for the same reason: Asset Intelligence's asset list lives at
 `/asset-intelligence/assets`, distinct from Media Workspace's `/assets`, by virtue of route
-namespacing (ADR 0016) rather than a different route segment name.
+namespacing (ADR 0022) rather than a different route segment name.
 
 ## Options rejected
 

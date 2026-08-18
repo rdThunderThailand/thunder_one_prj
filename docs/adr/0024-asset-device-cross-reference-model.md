@@ -1,4 +1,4 @@
-# 0018 — Asset↔Device cross-reference: a category value and a nullable pointer field
+# 0024 — Asset↔Device cross-reference: a category value and a nullable pointer field
 
 ## Context
 
@@ -13,7 +13,7 @@ media player is, from Asset Intelligence's point of view, one category of asset 
 
 This repo has no code yet that models that relationship — `features/ai-assets` does not exist before
 this ADR, and `media_core`'s `channel_devices` has no column pointing at anything outside
-`media_core`. Sprint 1 (ADR 0016/0017) is standing up the Asset Intelligence feature shell and its
+`media_core`. Sprint 1 (ADR 0022/0023) is standing up the Asset Intelligence feature shell and its
 first entity type; this ADR decides what that type's shape has to be from the start, because adding
 a cross-reference field after `ai-assets` rows already exist is a migration this project does not
 need to create for itself.

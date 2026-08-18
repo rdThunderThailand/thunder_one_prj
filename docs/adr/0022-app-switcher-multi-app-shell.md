@@ -1,9 +1,9 @@
-# 0016 — App Switcher: a real dropdown drives a multi-app shell
+# 0022 — App Switcher: a real dropdown drives a multi-app shell
 
 ## Context
 
 Thunder One is about to stop being a single-app repo. A second app, "Asset Intelligence" (org-wide
-physical asset management — laptops, printers, NAS, and media-player hardware — see ADR 0017/0018
+physical asset management — laptops, printers, NAS, and media-player hardware — see ADR 0023/0024
 for how it relates to the existing Media Workspace domain), is being added into this same codebase
 rather than as a separate deployment, and it needs its own navigation, its own landing page, and a
 way for an operator to move between it and Media Workspace without a page reload losing the app

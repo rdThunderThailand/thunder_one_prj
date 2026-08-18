@@ -1,5 +1,5 @@
 // Media Workspace's sidebar nav — extracted verbatim from Sidebar.tsx
-// (see docs/adr/0016-app-switcher-multi-app-shell.md) with no behavior change.
+// (see docs/adr/0022-app-switcher-multi-app-shell.md) with no behavior change.
 import {
   BroadcastIcon,
   ChartIcon,

@@ -1,7 +1,7 @@
 // Asset Intelligence's sidebar nav — one distinct nav per persona (requirement
 // doc §2.2 / the "6 Core Personas" mockup), not one shared nav for the whole
 // app. Selected by which persona route segment is active (resolveAssetIntelligenceNav),
-// the same way the App Switcher (docs/adr/0016) picks a nav by app. This is a
+// the same way the App Switcher (docs/adr/0022) picks a nav by app. This is a
 // route-based approximation of role-based nav, not real RBAC — nothing gates
 // which persona's pages a given user can reach (no permission gates exist yet,
 // see docs/adr/0021-role-vocabulary-reconciliation.md); every persona's pages
