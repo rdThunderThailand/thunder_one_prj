@@ -7,15 +7,24 @@
 // see docs/adr/0021-role-vocabulary-reconciliation.md); every persona's pages
 // are reachable by anyone who navigates to their URL directly.
 //
+// IMPORTANT: resolveAssetIntelligenceNav only reads the URL's third path
+// segment (pathname.split("/")[2]) to pick a nav. Any page beyond a persona's
+// own landing route MUST therefore live under that persona's own segment
+// (e.g. /asset-intelligence/my-assets/scan-qr, /asset-intelligence/service-ops/reports)
+// — a sibling route like /asset-intelligence/scan-qr will silently fall back
+// to the CEO nav instead of the Employee one, since "scan-qr" isn't a key in
+// NAV_BY_PERSONA_SEGMENT below. This bit Employee's My Requests/Service
+// Status/Scan QR pages once (fixed 2026-08-18 by nesting them under
+// my-assets/, matching how Thunder Care's Customers/Work Queue/Reports were
+// already nested under service-ops/) — don't reintroduce it for a new page.
+//
 // Most personas only have their own landing route built (Sprint 1 placeholders
 // — see docs/asset-intelligence/plan-role-requirements.md), so most other items
 // below are intentionally inert (no `href`) — the mockup's fuller sidebar, not
 // yet backed by a page. Employee/User and Thunder Care's navs are further
 // along (real pages beyond the landing route) since those roles' flows were
 // built out in detail — see ai-issues/ai-requests/ai-assets's RegisterAssetPage
-// for Employee, and ai-service-ops's Customers/Work Queue/Reports pages
-// (nested under /asset-intelligence/service-ops/** to avoid colliding with
-// other personas' own inert "Reports"/"Settings" items at the top level) for
+// for Employee, and ai-service-ops's Customers/Work Queue/Reports pages for
 // Thunder Care.
 import {
   BoxIcon,
@@ -140,9 +149,9 @@ const employeeNav: NavConfig = {
   },
   sections: [],
   standaloneLinks: [
-    { label: "My Requests", href: "/asset-intelligence/my-requests" },
-    { label: "Service Status", href: "/asset-intelligence/service-status" },
-    { label: "Scan QR", href: "/asset-intelligence/scan-qr" },
+    { label: "My Requests", href: "/asset-intelligence/my-assets/my-requests" },
+    { label: "Service Status", href: "/asset-intelligence/my-assets/service-status" },
+    { label: "Scan QR", href: "/asset-intelligence/my-assets/scan-qr" },
     { label: "Help" },
   ] satisfies NavItem[],
   standaloneIcons: [
