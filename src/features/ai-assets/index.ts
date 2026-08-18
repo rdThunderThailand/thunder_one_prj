@@ -1,7 +1,8 @@
 // Public API for the "ai-assets" feature.
 // Only export what other layers (app routes / other features) are allowed to consume.
-export type { Asset, AssetCategory, AssetStatus } from "./types";
+export type { Asset, AssetCategory, AssetStatus, AssetLifecycleStatus } from "./types";
 export { getMockAssets } from "./services/mock-assets";
 export { AssetsListPage } from "./components/AssetsListPage";
 export { AssetOverviewDashboard } from "./components/AssetOverviewDashboard";
 export { MyAssetsPage } from "./components/MyAssetsPage";
+export { RegisterAssetPage } from "./components/RegisterAssetPage";

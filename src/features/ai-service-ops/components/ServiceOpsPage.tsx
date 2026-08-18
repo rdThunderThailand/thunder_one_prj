@@ -1,5 +1,7 @@
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { StatTile } from "@/components/ui/StatTile";
+import { getMockIssues, type IssueStatus } from "@/features/ai-issues";
 import { customerAttention, serviceStatTiles, todayCard } from "../mock-data";
 
 const dotColor: Record<(typeof customerAttention)[number]["severity"], string> = {
@@ -70,6 +72,40 @@ function TodayCard() {
   );
 }
 
+const queueStatusBadge: Record<IssueStatus, { color: "red" | "yellow" | "green"; label: string }> = {
+  waiting: { color: "red", label: "Waiting" },
+  in_progress: { color: "yellow", label: "In Progress" },
+  resolved: { color: "green", label: "Resolved" },
+};
+
+function WorkQueueCard() {
+  // Internal issues employees report (EMP-02 -> TCARE-01), distinct from the
+  // external-customer "Customer Attention" list above (multi-tenant MSP mode).
+  const issues = getMockIssues();
+  return (
+    <Card className="p-4">
+      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Work Queue</h2>
+      <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-900">
+        {issues.map((issue) => (
+          <li key={issue.id} className="flex items-center gap-3 py-2.5">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                {issue.assetTag}
+              </p>
+              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                {issue.description}
+              </p>
+            </div>
+            <Badge color={queueStatusBadge[issue.status].color} variant="pill">
+              {queueStatusBadge[issue.status].label}
+            </Badge>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 export function ServiceOpsPage() {
   return (
     <div className="flex flex-col gap-6">
@@ -84,6 +120,7 @@ export function ServiceOpsPage() {
         </div>
         <TodayCard />
       </div>
+      <WorkQueueCard />
     </div>
   );
 }

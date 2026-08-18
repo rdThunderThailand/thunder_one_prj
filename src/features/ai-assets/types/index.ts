@@ -12,11 +12,24 @@ export type AssetCategory = "laptop" | "printer" | "nas" | "media_player_device"
 
 export type AssetStatus = "healthy" | "attention" | "critical";
 
+/**
+ * A minimal 2-value slice of the full onboarding state machine from the
+ * requirement doc §5.1 (`unassigned → pending_department_ack →
+ * assigned_pending_deploy → pending_employee_ack → active`) — just enough to
+ * drive the Employee "register the asset I received" flow (EMP-01). Modeling
+ * the full 5-state machine (department/technician handoff, deploy work order)
+ * is separate future work, not decided here.
+ */
+export type AssetLifecycleStatus = "active" | "pending_acknowledgement";
+
 export interface Asset {
   id: string;
   tag: string;
   category: AssetCategory;
   status: AssetStatus;
+  lifecycleStatus: AssetLifecycleStatus;
+  /** Friendly display name (e.g. "Dell Latitude 5450") — optional, mainly used by employee-facing views. */
+  model?: string;
   locationId: string | null;
   departmentId: string | null;
   assigneeId: string | null;

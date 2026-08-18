@@ -1,6 +1,7 @@
 // R&D placeholder — no Thunder_Core sync exists yet (see AM-01 in the
 // requirement doc, and docs/asset-intelligence/questions-thunder-core-contract.md).
 // Replace with a real service call once that contract is settled.
+import { CURRENT_EMPLOYEE_ID } from "@/config/current-employee";
 import type { Asset } from "../types";
 
 const mockAssets: Asset[] = [
@@ -9,6 +10,7 @@ const mockAssets: Asset[] = [
     tag: "NAS-001",
     category: "nas",
     status: "critical",
+    lifecycleStatus: "active",
     locationId: "bangkok-server-room",
     departmentId: "it",
     assigneeId: null,
@@ -23,6 +25,7 @@ const mockAssets: Asset[] = [
     tag: "PRN-019",
     category: "printer",
     status: "attention",
+    lifecycleStatus: "active",
     locationId: "bangkok-floor-4",
     departmentId: "accounting",
     assigneeId: null,
@@ -37,9 +40,11 @@ const mockAssets: Asset[] = [
     tag: "NB-032",
     category: "laptop",
     status: "attention",
+    lifecycleStatus: "active",
+    model: "Dell Latitude 5450",
     locationId: "bangkok-floor-3",
     departmentId: "sales",
-    assigneeId: "emp-114",
+    assigneeId: CURRENT_EMPLOYEE_ID,
     vendorId: "dell",
     warrantyExpiry: "2026-09-01",
     purchaseValue: 42000,
@@ -51,6 +56,7 @@ const mockAssets: Asset[] = [
     tag: "CCTV-021",
     category: "media_player_device",
     status: "healthy",
+    lifecycleStatus: "active",
     locationId: "central-world-entrance",
     departmentId: "it",
     assigneeId: null,
@@ -58,6 +64,58 @@ const mockAssets: Asset[] = [
     warrantyExpiry: "2027-03-10",
     purchaseValue: 68000,
     healthScore: 91,
+    externalRef: null,
+  },
+  // The following are the current employee's own equipment (formerly a
+  // separate mock-my-assets.ts shape) — folded into the real Asset registry so
+  // "which employee holds which asset" has one source of truth.
+  {
+    id: "mon-019",
+    tag: "MON-019",
+    category: "other",
+    status: "healthy",
+    lifecycleStatus: "active",
+    model: 'Dell 27" Monitor',
+    locationId: "bangkok-floor-3",
+    departmentId: "sales",
+    assigneeId: CURRENT_EMPLOYEE_ID,
+    vendorId: "dell",
+    warrantyExpiry: "2027-01-20",
+    purchaseValue: 9000,
+    healthScore: 95,
+    externalRef: null,
+  },
+  {
+    id: "phone-008",
+    tag: "PHONE-008",
+    category: "other",
+    status: "healthy",
+    lifecycleStatus: "active",
+    model: "iPhone 14",
+    locationId: "bangkok-floor-3",
+    departmentId: "sales",
+    assigneeId: CURRENT_EMPLOYEE_ID,
+    vendorId: "apple",
+    warrantyExpiry: "2027-05-02",
+    purchaseValue: 28000,
+    healthScore: 97,
+    externalRef: null,
+  },
+  // Newly assigned, waiting for the employee to scan/confirm receipt (EMP-01).
+  {
+    id: "mon-044",
+    tag: "MON-044",
+    category: "other",
+    status: "healthy",
+    lifecycleStatus: "pending_acknowledgement",
+    model: 'LG 24" Monitor',
+    locationId: "bangkok-floor-3",
+    departmentId: "sales",
+    assigneeId: CURRENT_EMPLOYEE_ID,
+    vendorId: "lg",
+    warrantyExpiry: "2028-02-10",
+    purchaseValue: 6500,
+    healthScore: 100,
     externalRef: null,
   },
 ];

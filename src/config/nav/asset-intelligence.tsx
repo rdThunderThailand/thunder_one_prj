@@ -7,10 +7,12 @@
 // see docs/adr/0021-role-vocabulary-reconciliation.md); every persona's pages
 // are reachable by anyone who navigates to their URL directly.
 //
-// Only each persona's own landing route is built so far (Sprint 1 placeholders
-// — see docs/asset-intelligence/plan-role-requirements.md), so every other item
-// below is intentionally inert (no `href`) — the mockup's fuller sidebar, not
-// yet backed by a page.
+// Most personas only have their own landing route built (Sprint 1 placeholders
+// — see docs/asset-intelligence/plan-role-requirements.md), so most other items
+// below are intentionally inert (no `href`) — the mockup's fuller sidebar, not
+// yet backed by a page. Employee/User's nav is further along (My Requests,
+// Service Status, Scan QR all have real pages) since that role's flows were
+// built out in detail — see ai-issues/ai-requests/ai-assets's RegisterAssetPage.
 import {
   BoxIcon,
   CalendarIcon,
@@ -134,9 +136,9 @@ const employeeNav: NavConfig = {
   },
   sections: [],
   standaloneLinks: [
-    { label: "My Requests" },
-    { label: "Service Status" },
-    { label: "Scan QR" },
+    { label: "My Requests", href: "/asset-intelligence/my-requests" },
+    { label: "Service Status", href: "/asset-intelligence/service-status" },
+    { label: "Scan QR", href: "/asset-intelligence/scan-qr" },
     { label: "Help" },
   ] satisfies NavItem[],
   standaloneIcons: [
