@@ -4,6 +4,8 @@ interface ProgressBarProps {
   value: number;
   color?: ProgressBarColor;
   className?: string;
+  /** Overlay a moving sheen, for a bar whose underlying job is still running. */
+  animated?: boolean;
 }
 
 const barColor: Record<ProgressBarColor, string> = {
@@ -17,6 +19,7 @@ export function ProgressBar({
   value,
   color = "indigo",
   className = "",
+  animated = false,
 }: ProgressBarProps) {
   const clamped = Math.min(100, Math.max(0, value));
   return (
@@ -28,7 +31,9 @@ export function ProgressBar({
       aria-valuemax={100}
     >
       <div
-        className={`h-full rounded-full ${barColor[color]}`}
+        className={`h-full rounded-full transition-[width] duration-500 ease-out ${barColor[color]} ${
+          animated ? "progress-stripes" : ""
+        }`}
         style={{ width: `${clamped}%` }}
       />
     </div>

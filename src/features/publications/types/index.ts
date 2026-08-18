@@ -14,6 +14,8 @@ export type Priority = (typeof PRIORITIES)[number];
 
 // Shared with playlists — the shapes live in src/types/domain.ts.
 export type { Campaign, MediaAsset, Tag, PlaylistItem, PlaylistDetail } from "@/types/domain";
+export type { PublishJobStatus } from "@/types/domain";
+import type { PublishJobStatus } from "@/types/domain";
 
 export type BasicInfoForm = {
   name: string;
@@ -65,14 +67,27 @@ export type PublicationListItem = {
   updated_at?: string;
 };
 
+/** Per-file ack detail, keyed by media_asset_id. Diagnostic only — see migration 084. */
+export type FileStatusEntry = {
+  status: "downloading" | "delivered" | "playing" | "failed";
+  error?: string | null;
+  acked_at: string;
+};
+
 /** Per-device delivery status. Populated only after activation. */
 export type PublicationDeliveryTarget = {
   device_id: string;
   device_name?: string | null;
-  status?: string | null;
+  status?: PublishJobStatus | null;
   attempt_count?: number | null;
   error_message?: string | null;
   acked_at?: string | null;
+  updated_at?: string | null;
+  file_statuses?: Record<string, FileStatusEntry>;
+  retry_count?: number | null;
+  last_retried_at?: string | null;
+  last_heartbeat_at?: string | null;
+  status_level?: "online" | "warning" | "offline";
 };
 
 export type PublicationDetail = {
@@ -94,6 +109,9 @@ export type PublicationDetail = {
   tags: string[];
   created_at?: string;
   activated_at?: string;
+  /** Set only when status is cancelled (migration 067) — the delivery-progress "completed at"
+   * for a Cancelled result reads this since no target activity marks a cancellation. */
+  cancelled_at?: string | null;
   job_status?: string;
   /** Who pressed publish — null for publications activated before ADR 0005. */
   published_by?: { id: string; display_name: string } | null;
