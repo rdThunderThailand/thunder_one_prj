@@ -433,3 +433,23 @@ export function RepeatIcon({ className = "h-4 w-4" }: IconProps) {
     </svg>
   );
 }
+
+export function BoxIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M12 3 3 7.5 12 12l9-4.5L12 3Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3 7.5V16l9 5m0-9v9m9-13.5V16l-9 5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
