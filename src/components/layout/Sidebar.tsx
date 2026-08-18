@@ -4,15 +4,17 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { APPS, resolveActiveApp } from "@/config/apps";
-import { assetIntelligenceNav } from "@/config/nav/asset-intelligence";
+import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
 import { ChevronDownIcon, LayoutIcon, LightningIcon } from "@/components/ui/icons";
 
-const NAV_BY_APP_ID: Record<string, NavConfig> = {
-  "media-workspace": mediaWorkspaceNav,
-  "asset-intelligence": assetIntelligenceNav,
-};
+// Media Workspace has one nav for the whole app; Asset Intelligence has one nav
+// per persona, resolved from the route (see config/nav/asset-intelligence.tsx).
+function resolveNavConfig(appId: string, pathname: string): NavConfig {
+  if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
+  return mediaWorkspaceNav;
+}
 
 function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
   const baseClasses = "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-semibold transition-colors";
@@ -140,7 +142,7 @@ function AppSwitcher({ activeAppId }: { activeAppId: string }) {
 export function Sidebar() {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
-  const nav = NAV_BY_APP_ID[activeApp.id];
+  const nav = resolveNavConfig(activeApp.id, pathname);
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col bg-[#0b1220]">
