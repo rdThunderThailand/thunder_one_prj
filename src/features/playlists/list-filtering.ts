@@ -78,3 +78,64 @@ export function copyName(base: string, existingNames: string[]): string {
   }
   return `${stem} (Copy ${Date.now()})`;
 }
+
+export const SORT_KEYS = ["name", "type", "campaign", "duration", "status", "updated"] as const;
+export type SortKey = (typeof SORT_KEYS)[number];
+export type SortDir = "asc" | "desc";
+export type Sort = { key: SortKey; dir: SortDir };
+export const DEFAULT_SORT: Sort = { key: "updated", dir: "desc" };
+
+const STATUS_ORDER: Record<PlaylistStatus, number> = { active: 0, inactive: 1, draft: 2 };
+
+/** null means "empty" — sortPlaylists always pushes empty values to the bottom,
+ *  regardless of direction, instead of letting them flip to the top on desc. */
+function sortValue(
+  playlist: PlaylistListItem,
+  key: SortKey,
+  campaignNames: Record<string, string>
+): string | number | null {
+  switch (key) {
+    case "name":
+      return playlist.name;
+    case "type":
+      return playlistType(playlist);
+    case "campaign":
+      return campaignNames[playlistCampaignId(playlist) ?? ""] || null;
+    case "duration":
+      return playlist.total_duration_seconds ?? null;
+    case "status":
+      return STATUS_ORDER[playlist.status];
+    case "updated": {
+      const ms = Date.parse(playlist.updated_at ?? playlist.created_at ?? "");
+      return Number.isNaN(ms) ? null : ms;
+    }
+  }
+}
+
+/** Empty values sort last no matter the direction — only non-empty comparisons flip
+ *  with `dirMultiplier`, so switching direction never sends a "—" row to the top. */
+function compareValues(a: string | number | null, b: string | number | null, dirMultiplier: number): number {
+  if (a === null && b === null) return 0;
+  if (a === null) return 1;
+  if (b === null) return -1;
+  const raw = typeof a === "string" ? a.localeCompare(b as string) : a - (b as number);
+  return raw * dirMultiplier;
+}
+
+export function sortPlaylists(
+  playlists: PlaylistListItem[],
+  sort: Sort,
+  campaignNames: Record<string, string>
+): PlaylistListItem[] {
+  const dirMultiplier = sort.dir === "asc" ? 1 : -1;
+
+  return [...playlists].sort((a, b) => {
+    const cmp = compareValues(
+      sortValue(a, sort.key, campaignNames),
+      sortValue(b, sort.key, campaignNames),
+      dirMultiplier
+    );
+    if (cmp !== 0) return cmp;
+    return a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
+  });
+}

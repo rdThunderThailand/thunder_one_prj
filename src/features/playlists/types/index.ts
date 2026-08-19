@@ -2,7 +2,9 @@
 // PlaylistDetail) live in src/types/domain.ts — see docs/adr/0020 — so
 // src/lib/api/media-api.ts can host fetchPlaylist/fetchPlaylists without importing
 // from this feature. Re-exported here so existing imports keep working.
-import { TRANSITIONS, PLAYLIST_STATUSES } from "@/types/domain";
+// Relative (not "@/…") so this barrel's values stay importable from a plain `node
+// *.check.mts` run, which has no path-alias resolution — same file either way.
+import { TRANSITIONS, PLAYLIST_STATUSES } from "../../../types/domain.ts";
 import type {
   Transition,
   PlaylistStatus,
@@ -10,7 +12,7 @@ import type {
   PlaylistItem,
   PlaylistListItem,
   PlaylistDetail,
-} from "@/types/domain";
+} from "../../../types/domain.ts";
 
 export { TRANSITIONS, PLAYLIST_STATUSES };
 export type { Transition, PlaylistStatus, Creator, PlaylistItem, PlaylistListItem, PlaylistDetail };

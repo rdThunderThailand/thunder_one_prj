@@ -7,7 +7,7 @@ import { MoreIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";
 import { formatDuration } from "../duration";
-import { playlistType } from "../list-filtering";
+import { playlistType, type Sort, type SortKey } from "../list-filtering";
 import { statusBadge } from "../status-display";
 import type { PlaylistListItem } from "../types";
 
@@ -35,15 +35,19 @@ export function PlaylistsTable({
   campaignNames,
   selectedId,
   busyId,
+  sort,
   onSelect,
   onAction,
+  onSortChange,
 }: {
   rows: PlaylistListItem[];
   campaignNames: Record<string, string>;
   selectedId: string | null;
   busyId: string | null;
+  sort: Sort;
   onSelect: (playlist: PlaylistListItem) => void;
   onAction: (action: RowAction, playlist: PlaylistListItem) => void;
+  onSortChange: (key: SortKey) => void;
 }) {
   // One signing call for every cover on the page, not one per row.
   const coverIds = useMemo(
@@ -57,12 +61,12 @@ export function PlaylistsTable({
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-            <th className="py-2 pl-1">Playlist Name</th>
-            <th className="py-2">Type</th>
-            <th className="py-2">Campaign</th>
-            <th className="py-2">Duration</th>
-            <th className="py-2">Status</th>
-            <th className="py-2">Last Updated</th>
+            <SortHeader label="Playlist Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2 pl-1" />
+            <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="py-2" />
+            <SortHeader label="Campaign" sortKey="campaign" sort={sort} onSortChange={onSortChange} className="py-2" />
+            <SortHeader label="Duration" sortKey="duration" sort={sort} onSortChange={onSortChange} className="py-2" />
+            <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="py-2" />
+            <SortHeader label="Last Updated" sortKey="updated" sort={sort} onSortChange={onSortChange} className="py-2" />
             <th className="py-2 pr-1 text-right">Actions</th>
           </tr>
         </thead>
@@ -132,6 +136,34 @@ export function PlaylistsTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function SortHeader({
+  label,
+  sortKey,
+  sort,
+  onSortChange,
+  className,
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: Sort;
+  onSortChange: (key: SortKey) => void;
+  className?: string;
+}) {
+  const active = sort.key === sortKey;
+  return (
+    <th className={className} aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+      <button
+        type="button"
+        onClick={() => onSortChange(sortKey)}
+        className="inline-flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-200"
+      >
+        {label}
+        {active && <span aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span>}
+      </button>
+    </th>
   );
 }
 

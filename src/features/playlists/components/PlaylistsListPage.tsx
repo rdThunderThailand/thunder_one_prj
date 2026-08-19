@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -12,20 +12,14 @@ import { fetchCampaigns } from "@/lib/api/media-api";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { Campaign } from "@/types/domain";
 import { deletePlaylist, duplicatePlaylist, fetchPlaylists } from "../services/playlists-api";
-import { copyName, filterPlaylists, paginate, playlistCampaignId, summarize } from "../list-filtering";
+import { copyName, filterPlaylists, paginate, playlistCampaignId, sortPlaylists, summarize } from "../list-filtering";
 import { describeDeleteError } from "../status-display";
-import type { OwnershipTab } from "../list-filtering";
+import { readListState, writeListState } from "../list-url-state";
+import type { OwnershipTab, Sort, SortKey } from "../list-filtering";
 import type { PlaylistListItem } from "../types";
 import { PlaylistsFilters, type FilterState } from "./PlaylistsFilters";
 import { PlaylistsTable, type RowAction } from "./PlaylistsTable";
 import { PlaylistSidePanel } from "./PlaylistSidePanel";
-
-const EMPTY_FILTERS: FilterState = {
-  query: "",
-  status: "all",
-  type: "all",
-  campaignId: "all",
-};
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
@@ -66,16 +60,36 @@ function TabButton({
 
 export function PlaylistsListPage({ currentUserId }: { currentUserId: string | null }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Read once on mount — the URL is the initial value, not a live subscription, so
+  // typing in the search box doesn't fight with the effect that writes it back below.
+  const [initial] = useState(() => readListState(new URLSearchParams(searchParams.toString())));
   const [playlists, setPlaylists] = useState<PlaylistListItem[] | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [tab, setTab] = useState<OwnershipTab>("all");
-  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [tab, setTab] = useState<OwnershipTab>(initial.tab);
+  const [filters, setFilters] = useState<FilterState>(initial.filters);
+  const [sort, setSort] = useState<Sort>(initial.sort);
+  const [page, setPage] = useState(initial.page);
+  const [perPage, setPerPage] = useState(initial.perPage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Keeps the URL in sync with the view — no setState here, only history, so this
+  // effect stays outside the lint rule against synchronous setState in effects.
+  useEffect(() => {
+    const qs = writeListState({ tab, filters, sort, page, perPage });
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [tab, filters, sort, page, perPage]);
+
+  const handleSortChange = (key: SortKey) => {
+    setSort((current) => {
+      if (current.key === key) return { key, dir: current.dir === "asc" ? "desc" : "asc" };
+      return { key, dir: key === "updated" || key === "duration" ? "desc" : "asc" };
+    });
+    setPage(1);
+  };
 
   // One dataset feeds the cards, both tab counts, the filters and the page slice — the
   // list RPC already returns one row per playlist (Thunder_Core migration 087), so
@@ -125,9 +139,14 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
     [playlists, filters, tab, currentUserId]
   );
 
+  const sorted = useMemo(
+    () => sortPlaylists(filtered, sort, campaignNames),
+    [filtered, sort, campaignNames]
+  );
+
   // paginate() clamps the page itself, so narrowing a filter can never strand the view
   // on a page that no longer exists — no reset effect needed.
-  const { rows, page: currentPage, totalPages } = paginate(filtered, page, perPage);
+  const { rows, page: currentPage, totalPages } = paginate(sorted, page, perPage);
   const selected = filtered.find((p) => p.id === selectedId) ?? null;
 
   const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
@@ -235,16 +254,18 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
                 campaignNames={campaignNames}
                 selectedId={selectedId}
                 busyId={busyId}
+                sort={sort}
                 onSelect={(playlist) => setSelectedId(playlist.id)}
                 onAction={handleAction}
+                onSortChange={handleSortChange}
               />
               <Pagination
                 page={currentPage}
                 totalPages={totalPages}
                 perPage={perPage}
-                totalItems={filtered.length}
+                totalItems={sorted.length}
                 rangeStart={(currentPage - 1) * perPage + 1}
-                rangeEnd={Math.min(currentPage * perPage, filtered.length)}
+                rangeEnd={Math.min(currentPage * perPage, sorted.length)}
                 onPageChange={setPage}
                 onPerPageChange={(next) => {
                   setPerPage(next);

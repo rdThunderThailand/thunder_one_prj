@@ -78,4 +78,85 @@ assert.equal(
 // Stays inside the column's 200-char limit however long the source name is.
 assert.ok(copyName("x".repeat(400), []).length <= 200);
 
+// Sorting
+import { sortPlaylists } from "./list-filtering.ts";
+
+const campaignNames = { "c-1": "Beta Campaign", "c-2": "Alpha Campaign" };
+// Update playlists list to be more comprehensive for sorting tests
+const p1 = row({
+  id: "p1",
+  name: "B Playlist",
+  status: "active", // 0
+  total_duration_seconds: 100,
+  updated_at: "2024-01-02",
+  metadata: meta({ campaign_id: "c-1" }) // "Beta Campaign"
+});
+const p2 = row({
+  id: "p2",
+  name: "A Playlist",
+  status: "draft", // 2
+  total_duration_seconds: 50,
+  updated_at: "2024-01-01",
+  metadata: meta({ campaign_id: "c-2" }) // "Alpha Campaign"
+});
+const p3 = row({
+  id: "p3",
+  name: "C Playlist",
+  status: "inactive", // 1
+  total_duration_seconds: undefined, // empty
+  updated_at: "invalid-date", // empty
+});
+const p4 = row({
+  id: "p4",
+  name: "C Playlist", // tie on name
+  status: "active",
+  total_duration_seconds: undefined, // empty
+  created_at: "invalid-date", // empty
+});
+const sortInput = [p1, p2, p3, p4];
+// name asc -> A (p2), B (p1), C (p3), C (p4)
+assert.deepEqual(
+  sortPlaylists(sortInput, { key: "name", dir: "asc" }, campaignNames).map(p => p.id),
+  ["p2", "p1", "p3", "p4"]
+);
+// name desc -> C (p3), C (p4), B (p1), A (p2)
+assert.deepEqual(
+  sortPlaylists(sortInput, { key: "name", dir: "desc" }, campaignNames).map(p => p.id),
+  ["p3", "p4", "p1", "p2"]
+);
+
+// duration asc -> 50 (p2), 100 (p1), empty (p3, p4)
+assert.deepEqual(
+  sortPlaylists(sortInput, { key: "duration", dir: "asc" }, campaignNames).map(p => p.id),
+  ["p2", "p1", "p3", "p4"] // tiebreak: p3 < p4 in id
+);
+// duration desc -> 100 (p1), 50 (p2), empty (p3, p4)
+assert.deepEqual(
+  sortPlaylists(sortInput, { key: "duration", dir: "desc" }, campaignNames).map(p => p.id),
+  ["p1", "p2", "p3", "p4"]
+);
+
+// status asc -> active (p1, p4), inactive (p3), draft (p2)
+assert.deepEqual(
+  sortPlaylists(sortInput, { key: "status", dir: "asc" }, campaignNames).map(p => p.id),
+  ["p1", "p4", "p3", "p2"] // p1 and p4 tiebreak on name B vs C
+);
+
+// campaign asc -> Alpha (p2), Beta (p1), empty (p3, p4)
+assert.deepEqual(
+  sortPlaylists(sortInput, { key: "campaign", dir: "asc" }, campaignNames).map(p => p.id),
+  ["p2", "p1", "p3", "p4"]
+);
+
+// updated desc -> 2024-01-02 (p1), 2024-01-01 (p2), empty (p3, p4)
+assert.deepEqual(
+  sortPlaylists(sortInput, { key: "updated", dir: "desc" }, campaignNames).map(p => p.id),
+  ["p1", "p2", "p3", "p4"]
+);
+
+// stable sort and non-mutating
+const orig = [...sortInput];
+sortPlaylists(sortInput, { key: "name", dir: "asc" }, campaignNames);
+assert.deepEqual(sortInput, orig, "sortPlaylists mutated its input");
+
 console.log("list-filtering.check.mts — all assertions passed");
