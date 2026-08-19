@@ -9,10 +9,14 @@ import { mockTechnicians } from "@/features/ai-work-orders";
 import { issueStatusBadge } from "../status-colors";
 
 // Real, working dispatch UI (pick a technician, confirm) with real local
-// state — but doesn't write back to ai-issues's mock data or ai-work-orders's
-// schedule. Same reasoning as ai-issues/components/ReportProblemForm.tsx: no
-// live cross-page mutation this sprint, cross-role consistency comes from
-// shared seeded mock data instead.
+// state — but doesn't write back to ai-issues's mock data or create a row in
+// ai-work-orders's mockWorkOrders. Same reasoning as
+// ai-issues/components/ReportProblemForm.tsx: no live cross-page mutation
+// this sprint, cross-role consistency comes from shared seeded mock data
+// instead. A real dispatch would create a WorkOrder with
+// issueId = this issue's id and technicianId = the chosen technician — see
+// ai-work-orders/mock-data.ts's wo-1/wo-2/wo-10 for what that looks like
+// once seeded, and ai-issues/README.md for how this was verified end to end.
 function DispatchControl() {
   const [technicianId, setTechnicianId] = useState(mockTechnicians[0]?.id ?? "");
   const [dispatchedTo, setDispatchedTo] = useState<string | null>(null);

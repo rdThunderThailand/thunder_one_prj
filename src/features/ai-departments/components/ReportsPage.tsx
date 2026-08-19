@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { StatTile } from "@/components/ui/StatTile";
+import { getMockIssues, ResolvedIssuesList } from "@/features/ai-issues";
 import { getDepartmentAssets } from "../mock-data";
 
 const categoryLabel: Record<string, string> = {
@@ -15,6 +16,10 @@ const categoryLabel: Record<string, string> = {
 // backend to generate a file from).
 export function ReportsPage() {
   const assets = getDepartmentAssets();
+  const deptAssetIds = new Set(assets.map((a) => a.id));
+  const resolvedIssues = getMockIssues().filter(
+    (i) => i.status === "resolved" && deptAssetIds.has(i.assetId),
+  );
   const totalValue = assets.reduce((sum, a) => sum + a.purchaseValue, 0);
   const byCategory = new Map<string, { count: number; value: number }>();
   for (const asset of assets) {
@@ -63,6 +68,7 @@ export function ReportsPage() {
           </tbody>
         </table>
       </Card>
+      <ResolvedIssuesList issues={resolvedIssues} />
     </div>
   );
 }

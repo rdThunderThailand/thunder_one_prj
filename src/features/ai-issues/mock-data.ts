@@ -2,6 +2,13 @@
 // ReportProblemForm, which only shows a local confirmation — see its own
 // comment) so Employee's Service Status and Thunder Care's Work Queue can both
 // show a consistent, connected picture without live cross-page mutation.
+//
+// issue-1 and issue-3 are "resolved" with a resolvedAt — every role's
+// Reports page (ai-assets, ai-departments, ai-mission-control) reads
+// resolved issues to show recent activity. issue-1 (NB-032) is also linked
+// to a completed WorkOrder (ai-work-orders's wo-10, via Issue.id ==
+// WorkOrder.issueId) so the full Employee -> Thunder Care -> Technician ->
+// Reports chain traces through one real asset end to end.
 import { CURRENT_EMPLOYEE_ID } from "@/config/current-employee";
 import type { Issue } from "./types";
 
@@ -12,9 +19,10 @@ export const mockIssues: Issue[] = [
     assetTag: "NB-032",
     description: "Laptop battery drains within an hour, even fully charged.",
     severity: "attention",
-    status: "in_progress",
+    status: "resolved",
     reportedBy: CURRENT_EMPLOYEE_ID,
     reportedAt: "2026-08-15",
+    resolvedAt: "2026-08-18",
   },
   {
     id: "issue-2",
@@ -35,6 +43,7 @@ export const mockIssues: Issue[] = [
     status: "resolved",
     reportedBy: "emp-305",
     reportedAt: "2026-08-10",
+    resolvedAt: "2026-08-12",
   },
 ];
 

@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { StatTile } from "@/components/ui/StatTile";
+import { getMockIssues, ResolvedIssuesList } from "@/features/ai-issues";
 import { getMockAssets } from "../services/mock-assets";
 
 const categoryLabel: Record<string, string> = {
@@ -14,6 +15,7 @@ const categoryLabel: Record<string, string> = {
 // as every other role's un-exportable Reports page this sprint.
 export function ReportsPage() {
   const assets = getMockAssets();
+  const resolvedIssues = getMockIssues().filter((i) => i.status === "resolved");
   const totalValue = assets.reduce((sum, a) => sum + a.purchaseValue, 0);
   const byCategory = new Map<string, { count: number; value: number }>();
   for (const asset of assets) {
@@ -58,6 +60,7 @@ export function ReportsPage() {
           </tbody>
         </table>
       </Card>
+      <ResolvedIssuesList issues={resolvedIssues} />
     </div>
   );
 }

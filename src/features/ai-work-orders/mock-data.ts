@@ -1,6 +1,13 @@
 // R&D placeholder data for the Technician role (requirement doc §4.4). No
 // backend yet — a real version would come from
 // GET /api/v1/work-orders?assignee_id=me&date=.
+//
+// wo-1/wo-2/wo-10 are explicitly linked to ai-issues via issueId (Employee
+// reported -> Thunder Care dispatched -> Technician worked it), closing what
+// was otherwise two unconnected mock datasets sharing only coincidentally
+// similar descriptions. Everything else here (scheduled inspections,
+// deploys) has no issueId — not every work order originates from a reported
+// problem.
 
 // Must stay in sync with calendar-grid.ts's TODAY_DAY (11).
 export const TODAY_DATE = "2026-08-11";
@@ -17,6 +24,15 @@ export interface WorkOrder {
   description: string;
   status: WorkOrderStatus;
   severity?: "critical";
+  /**
+   * Which reported problem this work order exists for (requirement doc §3
+   * data model: Work Order.source(issue_id/onboarding_id) — only the issue
+   * side is modeled here). `undefined` for work orders that didn't originate
+   * from an Employee-reported Issue (e.g. scheduled inspections, deploys).
+   */
+  issueId?: string;
+  /** Which of mockTechnicians this is assigned to. `undefined` = unassigned. */
+  technicianId?: string;
 }
 
 export const mockWorkOrders: WorkOrder[] = [
@@ -30,6 +46,8 @@ export const mockWorkOrders: WorkOrder[] = [
     description: "Nightly backup has failed three nights in a row — inspect and restore.",
     status: "in_progress",
     severity: "critical",
+    issueId: "issue-2",
+    technicianId: "tech-a",
   },
   {
     id: "wo-2",
@@ -39,7 +57,9 @@ export const mockWorkOrders: WorkOrder[] = [
     assetTag: "PRN-019",
     location: "Accounting · Floor 4",
     description: "Recurring paper jam on tray 2.",
-    status: "assigned",
+    status: "completed",
+    issueId: "issue-3",
+    technicianId: "tech-b",
   },
   {
     id: "wo-3",
@@ -110,6 +130,18 @@ export const mockWorkOrders: WorkOrder[] = [
     location: "Sales",
     description: "Replacement device handover, confirmed received.",
     status: "completed",
+  },
+  {
+    id: "wo-10",
+    date: "2026-08-18",
+    time: "11:30",
+    title: "Repair NB-032",
+    assetTag: "NB-032",
+    location: "Sales",
+    description: "Laptop battery drains within an hour, even fully charged.",
+    status: "completed",
+    issueId: "issue-1",
+    technicianId: "tech-a",
   },
 ];
 

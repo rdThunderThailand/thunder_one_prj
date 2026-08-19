@@ -13,4 +13,6 @@ export interface Issue {
   status: IssueStatus;
   reportedBy: string;
   reportedAt: string;
+  /** Set once `status` reaches "resolved" — read by every role's Reports page to show recent activity. */
+  resolvedAt?: string;
 }
