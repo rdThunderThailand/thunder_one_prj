@@ -1,0 +1,365 @@
+import type {
+  PublicationSchedule,
+  Recurrence,
+  ScheduleConflict,
+  ScheduleForm,
+  SchedulePayload,
+} from "./types";
+
+export const DEFAULT_TIMEZONE = "Asia/Bangkok";
+
+// ponytail: a short fixed list is enough for a Thailand-first product. The
+// helpers below are DST-correct via Intl, so adding a DST zone here needs no
+// other change.
+export const TIMEZONES = [
+  { id: "Asia/Bangkok", label: "(GMT+07:00) Bangkok" },
+  { id: "Asia/Jakarta", label: "(GMT+07:00) Jakarta" },
+  { id: "Asia/Singapore", label: "(GMT+08:00) Singapore" },
+  { id: "Asia/Tokyo", label: "(GMT+09:00) Tokyo" },
+  { id: "UTC", label: "(GMT+00:00) UTC" },
+] as const;
+
+// 0 = Sunday .. 6 = Saturday, matching Postgres EXTRACT(DOW ...).
+export const WEEKDAYS = [
+  { value: 0, label: "Sun" },
+  { value: 1, label: "Mon" },
+  { value: 2, label: "Tue" },
+  { value: 3, label: "Wed" },
+  { value: 4, label: "Thu" },
+  { value: 5, label: "Fri" },
+  { value: 6, label: "Sat" },
+] as const;
+
+// --- timezone-aware date <-> UTC conversion (no dependencies) ----------------
+
+function partsInZone(instant: number, timeZone: string): Record<string, string> {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const out: Record<string, string> = {};
+  for (const { type, value } of fmt.formatToParts(instant)) out[type] = value;
+  return out;
+}
+
+function tzOffsetMs(instant: number, timeZone: string): number {
+  const p = partsInZone(instant, timeZone);
+  const hour = p.hour === "24" ? "00" : p.hour;
+  const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, +hour, +p.minute, +p.second);
+  return asUtc - instant;
+}
+
+/** Treat "YYYY-MM-DD" + "HH:MM" as wall-clock in `timeZone`; return a UTC ISO. */
+export function zonedToUtcIso(date: string, time: string, timeZone: string): string {
+  const naive = Date.parse(`${date}T${time}:00Z`); // wall clock read as if UTC
+  // Two passes so a DST transition resolves to the offset at the real instant.
+  const offset1 = tzOffsetMs(naive, timeZone);
+  const offset2 = tzOffsetMs(naive - offset1, timeZone);
+  return new Date(naive - offset2).toISOString();
+}
+
+/** Inverse: a UTC ISO -> wall-clock "YYYY-MM-DD" / "HH:MM" in `timeZone`. */
+export function utcToZonedParts(iso: string, timeZone: string): { date: string; time: string } {
+  const p = partsInZone(Date.parse(iso), timeZone);
+  const hour = p.hour === "24" ? "00" : p.hour;
+  return { date: `${p.year}-${p.month}-${p.day}`, time: `${hour}:${p.minute}` };
+}
+
+// --- form defaults, validation, and mapping ----------------------------------
+
+export function makeDefaultScheduleForm(): ScheduleForm {
+  const now = utcToZonedParts(new Date().toISOString(), DEFAULT_TIMEZONE);
+  return {
+    schedule_type: "now",
+    start_date: now.date,
+    start_time: now.time,
+    timezone: DEFAULT_TIMEZONE,
+    end_date: "",
+    end_time: "",
+    days: [],
+    daily_start: "09:00",
+    daily_end: "17:00",
+  };
+}
+
+export type ScheduleFieldId =
+  | "start_date" | "start_time" | "end_date" | "end_time"
+  | "days" | "daily_start" | "daily_end";
+
+export type ScheduleErrors = Partial<Record<ScheduleFieldId, string>>;
+
+export function validateScheduleForm(form: ScheduleForm): ScheduleErrors {
+  if (form.schedule_type === "now") return {};
+
+  const errors: ScheduleErrors = {};
+
+  if (!form.start_date) errors.start_date = "เลือกวันที่เริ่ม";
+  if (!form.start_time) errors.start_time = "เลือกเวลาเริ่ม";
+  // Do not evaluate later rules when start is incomplete
+  if (!form.start_date || !form.start_time) return errors;
+
+  if (form.schedule_type === "later") return {}; // expiration is optional
+
+  // range | recurring both require an end strictly after the start
+  if (!form.end_date) errors.end_date = "เลือกวันที่สิ้นสุด";
+  if (!form.end_time) errors.end_time = "เลือกเวลาสิ้นสุด";
+  if (!form.end_date || !form.end_time) return errors;
+
+  const start = Date.parse(zonedToUtcIso(form.start_date, form.start_time, form.timezone));
+  const end = Date.parse(zonedToUtcIso(form.end_date, form.end_time, form.timezone));
+  if (end <= start) {
+    errors.end_date = "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
+    return errors;
+  }
+
+  if (form.schedule_type === "recurring") {
+    if (form.days.length === 0) errors.days = "เลือกวันในสัปดาห์อย่างน้อย 1 วัน";
+    if (!form.daily_start) errors.daily_start = "กำหนดช่วงเวลารายวัน";
+    if (!form.daily_end) errors.daily_end = "กำหนดช่วงเวลารายวัน";
+    if (form.daily_start && form.daily_end && form.daily_start >= form.daily_end) {
+      errors.daily_end = "เวลาจบรายวันต้องอยู่หลังเวลาเริ่ม"; // "HH:MM" compares lexically
+    }
+  }
+
+  return errors;
+}
+
+export function isScheduleFormValid(form: ScheduleForm): boolean {
+  return Object.keys(validateScheduleForm(form)).length === 0;
+}
+
+export function scheduleFormToPayload(form: ScheduleForm): SchedulePayload {
+  const timezone = form.timezone;
+
+  if (form.schedule_type === "now") {
+    // Publish Now starts live at activation; an optional expiry may still be set.
+    const ends_at = form.end_date
+      ? zonedToUtcIso(form.end_date, form.end_time || "23:59", timezone)
+      : null;
+    return { starts_at: new Date().toISOString(), ends_at, timezone, recurrence: {} };
+  }
+
+  const starts_at = zonedToUtcIso(form.start_date, form.start_time, timezone);
+  const ends_at = form.end_date
+    ? zonedToUtcIso(form.end_date, form.end_time || "23:59", timezone)
+    : null;
+
+  if (form.schedule_type === "recurring") {
+    const recurrence: Recurrence = {
+      freq: "weekly",
+      days: [...form.days].sort((a, b) => a - b),
+      daily_start: form.daily_start,
+      daily_end: form.daily_end,
+    };
+    return { starts_at, ends_at, timezone, recurrence };
+  }
+
+  // "later" (ends_at optional) and "range" (ends_at required) are both one-time.
+  return { starts_at, ends_at, timezone, recurrence: {} };
+}
+
+/** Reverse-map a persisted schedule to the form when resuming a draft. */
+export function scheduleToForm(schedule?: PublicationSchedule | null): ScheduleForm {
+  const base = makeDefaultScheduleForm();
+  if (!schedule) return base;
+
+  const timezone = schedule.timezone || DEFAULT_TIMEZONE;
+  const start = utcToZonedParts(schedule.starts_at, timezone);
+  const end = schedule.ends_at ? utcToZonedParts(schedule.ends_at, timezone) : { date: "", time: "" };
+  const rec = schedule.recurrence;
+  const isWeekly = !!rec && "freq" in rec && rec.freq === "weekly";
+
+  return {
+    schedule_type: isWeekly ? "recurring" : schedule.ends_at ? "range" : "later",
+    start_date: start.date,
+    start_time: start.time,
+    timezone,
+    end_date: end.date,
+    end_time: end.time,
+    days: isWeekly ? rec.days : base.days,
+    daily_start: isWeekly ? rec.daily_start : base.daily_start,
+    daily_end: isWeekly ? rec.daily_end : base.daily_end,
+  };
+}
+
+// --- month calendar for the conflict-overlap view ---------------------------
+// Day granularity, in the schedule's own timezone. "YYYY-MM-DD" strings sort
+// chronologically, so all range checks are plain string comparisons.
+
+export type CalendarDay = {
+  ymd: string; // "YYYY-MM-DD"; "" for padding cells outside the month
+  day: number; // day-of-month; 0 for padding cells
+  inMonth: boolean;
+  isActive: boolean; // the publication is scheduled to play this day
+  isOverlap: boolean; // active AND colliding with a conflicting publication
+  isToday: boolean;
+};
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** Day-of-week for a pure "YYYY-MM-DD", 0=Sun..6=Sat (timezone-independent). */
+function ymdDow(ymd: string): number {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+/** The publication's [start, end|null] window as day strings, in its timezone. */
+function scheduleWindow(form: ScheduleForm): { start: string; end: string | null } {
+  if (form.schedule_type === "now") {
+    const today = utcToZonedParts(new Date().toISOString(), form.timezone).date;
+    return { start: today, end: form.end_date || null };
+  }
+  return { start: form.start_date, end: form.end_date || null };
+}
+
+/** Does the publication play on `ymd`? (day granularity, in its timezone) */
+export function isScheduleActiveOn(form: ScheduleForm, ymd: string): boolean {
+  const { start, end } = scheduleWindow(form);
+  if (!start || ymd < start) return false;
+  if (end && ymd > end) return false;
+  if (form.schedule_type === "recurring") return form.days.includes(ymdDow(ymd));
+  return true;
+}
+
+/** Does any conflicting publication's window cover `ymd`? */
+export function overlapsConflictOn(
+  ymd: string,
+  conflicts: ScheduleConflict[],
+  timezone: string
+): boolean {
+  return conflicts.some((c) => {
+    const cStart = utcToZonedParts(c.starts_at, timezone).date;
+    const cEnd = c.ends_at ? utcToZonedParts(c.ends_at, timezone).date : null;
+    if (ymd < cStart) return false;
+    if (cEnd && ymd > cEnd) return false;
+    return true;
+  });
+}
+
+// --- airing state, for the Overview "Now & Next" card ------------------------
+// Time-of-day granularity, unlike isScheduleActiveOn above: this answers "on air
+// at this minute?", so a weekly window of 08:00-17:00 is not live at 22:00.
+
+export type AiringState = "live" | "next" | "ended";
+
+/**
+ * Is the publication on air now, still to come, or finished?
+ *
+ * `null` means "cannot tell" — no schedule, or one we can't parse. Callers must
+ * surface that rather than guessing a bucket; claiming something is live when we
+ * don't know is the bug this function exists to prevent.
+ */
+export function classifyPublicationAiring(
+  schedule: PublicationSchedule | null | undefined,
+  now: Date = new Date()
+): AiringState | null {
+  if (!schedule?.starts_at) return null;
+
+  const start = Date.parse(schedule.starts_at);
+  if (Number.isNaN(start)) return null;
+  const end = schedule.ends_at ? Date.parse(schedule.ends_at) : null;
+  const instant = now.getTime();
+
+  if (instant < start) return "next";
+  if (end !== null && !Number.isNaN(end) && instant >= end) return "ended";
+
+  const rec = schedule.recurrence;
+  if (!rec || !("freq" in rec)) return "live"; // one-off: the whole window is on air
+
+  // Weekly: inside the overall window, but only on listed days and within the
+  // daily time window — both read in the publication's own timezone.
+  const { date, time } = utcToZonedParts(now.toISOString(), schedule.timezone);
+  if (!rec.days?.includes(ymdDow(date))) return "next";
+  return withinDailyWindow(time, rec.daily_start, rec.daily_end) ? "live" : "next";
+}
+
+/** "HH:MM" comparison. An end at or before the start means the window wraps midnight. */
+function withinDailyWindow(time: string, start: string, end: string): boolean {
+  if (!start || !end) return true;
+  return end > start ? time >= start && time < end : time >= start || time < end;
+}
+
+function shiftYmd(ymd: string, days: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d + days));
+  return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-${pad2(t.getUTCDate())}`;
+}
+
+function dayMonthLabel(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  // timeZone UTC because `ymd` is already wall-clock in the schedule's own zone.
+  return new Intl.DateTimeFormat("th-TH", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/** The card's "Start Time" cell: a daily window when weekly, else the start instant. */
+export function formatScheduleStart(
+  schedule: PublicationSchedule | null | undefined,
+  now: Date = new Date()
+): string {
+  if (!schedule?.starts_at) return "—";
+
+  const rec = schedule.recurrence;
+  if (rec && "freq" in rec && rec.daily_start && rec.daily_end) {
+    return `${rec.daily_start}–${rec.daily_end}`;
+  }
+
+  const start = utcToZonedParts(schedule.starts_at, schedule.timezone);
+  const today = utcToZonedParts(now.toISOString(), schedule.timezone).date;
+  if (start.date === today) return `วันนี้ ${start.time}`;
+  if (start.date === shiftYmd(today, 1)) return `พรุ่งนี้ ${start.time}`;
+  if (start.date === shiftYmd(today, -1)) return `เมื่อวาน ${start.time}`;
+  return `${dayMonthLabel(start.date)} ${start.time}`;
+}
+
+/** Build a month matrix (weeks start Sunday) for the overlap calendar. */
+export function buildCalendarMonth(
+  form: ScheduleForm,
+  conflicts: ScheduleConflict[],
+  viewYear: number,
+  viewMonth: number // 0-based
+): CalendarDay[][] {
+  const todayYmd = utcToZonedParts(new Date().toISOString(), form.timezone).date;
+  const firstDow = new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
+
+  const padding = (): CalendarDay => ({
+    ymd: "",
+    day: 0,
+    inMonth: false,
+    isActive: false,
+    isOverlap: false,
+    isToday: false,
+  });
+
+  const cells: CalendarDay[] = [];
+  for (let i = 0; i < firstDow; i++) cells.push(padding());
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ymd = `${viewYear}-${pad2(viewMonth + 1)}-${pad2(d)}`;
+    const isActive = isScheduleActiveOn(form, ymd);
+    cells.push({
+      ymd,
+      day: d,
+      inMonth: true,
+      isActive,
+      isOverlap: isActive && overlapsConflictOn(ymd, conflicts, form.timezone),
+      isToday: ymd === todayYmd,
+    });
+  }
+  while (cells.length % 7 !== 0) cells.push(padding());
+
+  const weeks: CalendarDay[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}

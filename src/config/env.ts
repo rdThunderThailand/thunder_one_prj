@@ -3,4 +3,6 @@
 
 export const env = {
   apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
+  coreApiUrl: process.env.CORE_API_URL ?? "",
+  coreApiKey: process.env.CORE_API_KEY ?? "",
 } as const;
