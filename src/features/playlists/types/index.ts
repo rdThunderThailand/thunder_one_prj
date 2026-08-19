@@ -1,10 +1,19 @@
-/** The only transitions a screen understands — `playlist_items.transition` is
- *  `CHECK (transition IN ('cut','fade'))`. Slide/Wipe from the mockup do not exist. */
-export const TRANSITIONS = ["cut", "fade"] as const;
-export type Transition = (typeof TRANSITIONS)[number];
+// Read shapes (Transition, PlaylistStatus, Creator, PlaylistItem, PlaylistListItem,
+// PlaylistDetail) live in src/types/domain.ts — see docs/adr/0020 — so
+// src/lib/api/media-api.ts can host fetchPlaylist/fetchPlaylists without importing
+// from this feature. Re-exported here so existing imports keep working.
+import { TRANSITIONS, PLAYLIST_STATUSES } from "@/types/domain";
+import type {
+  Transition,
+  PlaylistStatus,
+  Creator,
+  PlaylistItem,
+  PlaylistListItem,
+  PlaylistDetail,
+} from "@/types/domain";
 
-export const PLAYLIST_STATUSES = ["draft", "active", "inactive"] as const;
-export type PlaylistStatus = (typeof PLAYLIST_STATUSES)[number];
+export { TRANSITIONS, PLAYLIST_STATUSES };
+export type { Transition, PlaylistStatus, Creator, PlaylistItem, PlaylistListItem, PlaylistDetail };
 
 export const PLAYLIST_TYPES = ["standard", "dynamic", "loop", "manual"] as const;
 export type PlaylistType = (typeof PLAYLIST_TYPES)[number];
@@ -58,40 +67,6 @@ export type PlaylistPlayback = {
 export type PlaylistMetadata = {
   info: PlaylistInfo;
   playback: PlaylistPlayback;
-};
-
-/** `{id, display_name}` or null — same shape publications uses (migrations 077/079). */
-export type Creator = { id: string; display_name: string } | null;
-
-export type PlaylistItem = {
-  media_asset_id: string;
-  title?: string;
-  position: number;
-  duration_seconds?: number | null;
-  transition?: Transition;
-};
-
-export type PlaylistListItem = {
-  id: string;
-  name: string;
-  status: PlaylistStatus;
-  item_count: number;
-  created_at?: string;
-  /** Phase 2 fields — absent until the list RPC is extended. */
-  metadata?: Record<string, unknown>;
-  cover_asset_id?: string | null;
-  created_by?: Creator;
-};
-
-export type PlaylistDetail = {
-  id: string;
-  name: string;
-  status: PlaylistStatus;
-  items: PlaylistItem[];
-  revision: number;
-  /** Phase 2 fields — absent until the get RPC is extended. */
-  metadata?: Record<string, unknown>;
-  created_by?: Creator;
 };
 
 /** One row in the wizard's working list, before it becomes a `playlist_items` row. */

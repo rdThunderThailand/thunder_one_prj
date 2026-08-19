@@ -8,7 +8,7 @@ import { CARD_BY_SCHEDULE_TYPE, SCHEDULE_TYPE_BY_CARD } from "../draft-mapping";
 import {
   TIMEZONES,
   WEEKDAYS,
-  isScheduleFormValid,
+  validateScheduleForm,
   utcToZonedParts,
 } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
@@ -23,6 +23,14 @@ import { publicationTypeIcons } from "./publicationTypeIcons";
 import { MiniCalendar } from "./MiniCalendar";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { isVideoPreview } from "../preview-kind";
+import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+
+// ponytail: this file is well over the 300-line house limit — split the right-hand summary column out next time it is touched
+
+function FieldError({ message }: { message?: string }) {
+  return message ? <p className="mt-1 text-xs font-medium text-red-600">{message}</p> : null;
+}
 
 const scheduleTypeIcon: Record<ScheduleTypeId, ReactNode> = {
   "publish-now": <LightningIcon />,
@@ -57,6 +65,7 @@ export interface ScheduleStepProps {
   conflicts?: ScheduleConflict[];
   checkingConflicts?: boolean;
   conflictsError?: string | null;
+  showErrors?: boolean;
 }
 
 export function ScheduleStep({
@@ -66,9 +75,11 @@ export function ScheduleStep({
   conflicts = [],
   checkingConflicts = false,
   conflictsError = null,
+  showErrors = false,
 }: ScheduleStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
   const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
@@ -77,16 +88,24 @@ export function ScheduleStep({
   const patch = (next: Partial<typeof scheduleForm>) =>
     setScheduleForm({ ...scheduleForm, ...next });
 
-  const isValidSchedule = isScheduleFormValid(scheduleForm);
+  // Recompute every render so a field's error clears the moment it becomes valid
+  const fieldErrors = showErrors ? validateScheduleForm(scheduleForm) : {};
   const nowZoned = utcToZonedParts(new Date().toISOString(), scheduleForm.timezone);
 
-  const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
-  const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
-  const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
+  const isPlaylist = basicInfo.publicationType === "playlist";
+  const { playlist, coverAssetId: playlistCoverId, durationLabel: playlistDuration } =
+    usePlaylistPreview(playlistId, isPlaylist);
 
-  const isVideo =
-    selectedAsset?.kind === "video" ||
-    selectedAsset?.file?.mime_type?.startsWith("video/");
+  const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
+  const previewAssetId = isPlaylist ? playlistCoverId : selectedAsset?.id;
+  const previews = usePreviewUrls(previewAssetId ? [previewAssetId] : []);
+  const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
+  const previewPoster = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
+
+  // A playlist cover arrives as a bare asset id, so its kind has to be looked up here
+  // before the preview picks next/image over <video> — see preview-kind.ts.
+  const previewAsset = assets.find((a) => a.id === previewAssetId);
+  const isVideo = isVideoPreview(previewAsset, previewUrl);
 
   const isMismatch =
     selectedAsset &&
@@ -193,21 +212,20 @@ export function ScheduleStep({
                   type="date"
                   value={scheduleForm.start_date}
                   onChange={(e) => patch({ start_date: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  aria-invalid={!!fieldErrors.start_date}
+                  className={`rounded-lg border ${fieldErrors.start_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                 />
                 <input
                   type="time"
                   value={scheduleForm.start_time}
                   onChange={(e) => patch({ start_time: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  aria-invalid={!!fieldErrors.start_time}
+                  className={`rounded-lg border ${fieldErrors.start_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                 />
               </div>
             )}
-            {!isValidSchedule && (
-              <p className="mt-1.5 text-xs text-amber-600">
-                Please enter a valid start date, time, and expiration range.
-              </p>
-            )}
+            <FieldError message={fieldErrors.start_date} />
+            <FieldError message={fieldErrors.start_time} />
           </div>
 
           {scheduleForm.schedule_type === "range" && (
@@ -220,15 +238,19 @@ export function ScheduleStep({
                   type="date"
                   value={scheduleForm.end_date}
                   onChange={(e) => patch({ end_date: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  aria-invalid={!!fieldErrors.end_date}
+                  className={`rounded-lg border ${fieldErrors.end_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                 />
                 <input
                   type="time"
                   value={scheduleForm.end_time}
                   onChange={(e) => patch({ end_time: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                  aria-invalid={!!fieldErrors.end_time}
+                  className={`rounded-lg border ${fieldErrors.end_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                 />
               </div>
+              <FieldError message={fieldErrors.end_date} />
+              <FieldError message={fieldErrors.end_time} />
             </div>
           )}
 
@@ -243,15 +265,19 @@ export function ScheduleStep({
                     type="date"
                     value={scheduleForm.end_date}
                     onChange={(e) => patch({ end_date: e.target.value })}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    aria-invalid={!!fieldErrors.end_date}
+                    className={`rounded-lg border ${fieldErrors.end_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                   />
                   <input
                     type="time"
                     value={scheduleForm.end_time}
                     onChange={(e) => patch({ end_time: e.target.value })}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    aria-invalid={!!fieldErrors.end_time}
+                    className={`rounded-lg border ${fieldErrors.end_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                   />
                 </div>
+                <FieldError message={fieldErrors.end_date} />
+                <FieldError message={fieldErrors.end_time} />
               </div>
 
               <div className="mt-4">
@@ -275,6 +301,7 @@ export function ScheduleStep({
                     );
                   })}
                 </div>
+                <FieldError message={fieldErrors.days} />
               </div>
 
               <div className="mt-4">
@@ -284,15 +311,19 @@ export function ScheduleStep({
                     type="time"
                     value={scheduleForm.daily_start}
                     onChange={(e) => patch({ daily_start: e.target.value })}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    aria-invalid={!!fieldErrors.daily_start}
+                    className={`rounded-lg border ${fieldErrors.daily_start ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                   />
                   <input
                     type="time"
                     value={scheduleForm.daily_end}
                     onChange={(e) => patch({ daily_end: e.target.value })}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    aria-invalid={!!fieldErrors.daily_end}
+                    className={`rounded-lg border ${fieldErrors.daily_end ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
                   />
                 </div>
+                <FieldError message={fieldErrors.daily_start} />
+                <FieldError message={fieldErrors.daily_end} />
                 <p className="mt-1.5 text-xs text-zinc-500">
                   Plays on the selected weekdays, within this daily time window, across the date range above.
                 </p>
@@ -541,11 +572,12 @@ export function ScheduleStep({
 
         <Card className="p-5">
           <h2 className="mb-4 text-base font-semibold text-zinc-900">Publication Summary</h2>
-          {selectedAsset && previewUrl ? (
+          {(selectedAsset || isPlaylist) && previewUrl ? (
             <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
               {isVideo ? (
                 <video
                   src={previewUrl}
+                  poster={previewPoster}
                   controls
                   preload="metadata"
                   className="h-full w-full object-contain"
@@ -553,7 +585,7 @@ export function ScheduleStep({
               ) : (
                 <Image
                   src={previewUrl}
-                  alt={selectedAsset.title ?? "Preview"}
+                  alt={selectedAsset?.title ?? playlist?.name ?? "Preview"}
                   fill
                   sizes="(min-width: 1024px) 480px, 100vw"
                   className="object-cover"
@@ -589,8 +621,14 @@ export function ScheduleStep({
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-zinc-500">Content</dt>
-              <dd className="max-w-[180px] truncate font-medium text-zinc-900 text-right" title={selectedAsset?.file?.original_filename ?? selectedAsset?.title ?? selectedAsset?.id}>
-                {selectedAsset ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id : "—"}
+              <dd className="max-w-[180px] truncate font-medium text-zinc-900 text-right" title={isPlaylist ? playlist?.name : selectedAsset?.file?.original_filename ?? selectedAsset?.title ?? selectedAsset?.id}>
+                {isPlaylist
+                  ? playlist
+                    ? `${playlist.name}${playlistDuration ? ` (${playlistDuration})` : ""}`
+                    : "—"
+                  : selectedAsset
+                  ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id
+                  : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between">

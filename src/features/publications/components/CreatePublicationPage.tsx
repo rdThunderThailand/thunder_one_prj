@@ -10,8 +10,11 @@ import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon, ArrowRightIcon, PaperPlaneIcon } from "@/components/ui/icons";
 import { wizardSteps } from "../mock-data";
 import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { hasDraftContent, shouldShowResumePrompt } from "../resume-prompt";
+import { Modal } from "@/components/ui/Modal";
 import { usePublishDraft } from "../hooks/usePublishDraft";
-import { deletePublication, fetchPlaylist, fetchPublication } from "../services/publications-api";
+import { deletePublication, fetchPublication } from "../services/publications-api";
+import { fetchPlaylist } from "@/features/playlists";
 import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
@@ -50,9 +53,21 @@ export function CreatePublicationPage() {
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [resumeFailure, setResumeFailure] = useState<ClassifiedError | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
+  const [dismissedResume, setDismissedResume] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
+
+  // Captured once, the first time we render with a rehydrated store. Anything the operator
+  // types afterwards must not change this answer.
+  const hadContentAtHydrationRef = useRef<boolean | null>(null);
+  // eslint-disable-next-line react-hooks/refs
+  if (hasHydrated && hadContentAtHydrationRef.current === null) {
+    hadContentAtHydrationRef.current = hasDraftContent(usePublicationDraftStore.getState());
+  }
+  // eslint-disable-next-line react-hooks/refs
+  const hadContentAtHydration = hadContentAtHydrationRef.current ?? false;
 
   // Derived, not state: `resumedId` only settles once the fetch has finished, so
   // the wizard never paints the *previous* draft's values before ?id= replaces
@@ -228,14 +243,19 @@ export function CreatePublicationPage() {
         // Only reached when the step validates, so the "saving" flip and the
         // stale-error clear both land at the same moment they used to.
         setValidationErrors([]);
+        setShowFieldErrors(false);
         setSavingNext(true);
         setSaveStatus("saving");
         return persistDraft(false);
-      }
+      },
+      // Empty means the campaign list has not loaded — skip the availability check
+      // rather than flag a valid campaignId as gone.
+      campaigns.length > 0 ? { campaignIds: campaigns.map((c) => c.id) } : undefined
     );
 
     if (outcome.kind === "invalid") {
       setValidationErrors(outcome.errors);
+      if (step === 1 || step === 4) setShowFieldErrors(true);
       return;
     }
     setSavingNext(false);
@@ -299,6 +319,13 @@ export function CreatePublicationPage() {
 
   const displayError = error || resumeError;
 
+  // Arriving with ?id= means the operator deliberately opened an existing draft — never prompt there.
+  const showResumePrompt = shouldShowResumePrompt({
+    hadContentAtHydration,
+    isEditMode: Boolean(idParam),
+    dismissed: dismissedResume,
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -332,6 +359,34 @@ export function CreatePublicationPage() {
           )
         }
       />
+
+      <Modal
+        open={showResumePrompt}
+        onClose={() => setDismissedResume(true)}
+        title="มี draft ที่ทำค้างไว้"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => { usePublicationDraftStore.getState().cancelDraft(); setDismissedResume(true); }}>
+              เริ่มใหม่
+            </Button>
+            <Button variant="primary" onClick={() => setDismissedResume(true)}>
+              ทำต่อ
+            </Button>
+          </>
+        }
+      >
+        <p>เจอร่าง publication ที่ทำค้างไว้ในเครื่องนี้ — จะทำต่อจากเดิม หรือเริ่มใหม่?</p>
+        <p>เริ่มใหม่จะล้างเฉพาะร่างในเครื่อง ร่างที่เคยบันทึกขึ้นระบบแล้วยังอยู่ในหน้า Publications</p>
+      </Modal>
+
+      <Modal
+        open={(step === 2 || step === 3) && validationErrors.length > 0}
+        onClose={() => setValidationErrors([])}
+        title={step === 2 ? "ยังไม่ได้เลือกสื่อ" : "ยังไม่ได้เลือกช่องทาง"}
+        footer={<Button variant="primary" onClick={() => setValidationErrors([])}>{step === 2 ? "เลือกสื่อ" : "เลือกช่องทาง"}</Button>}
+      >
+        {validationErrors.map((err, idx) => (<p key={idx}>{err}</p>))}
+      </Modal>
 
       {confirmingCancel && (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -383,7 +438,7 @@ export function CreatePublicationPage() {
       {step === 1 && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <BasicInfoForm campaigns={campaigns} workspaceTags={tags} />
+            <BasicInfoForm campaigns={campaigns} workspaceTags={tags} showErrors={showFieldErrors} />
           </div>
           <div>
             <PreviewPanel campaigns={campaigns} />
@@ -403,6 +458,7 @@ export function CreatePublicationPage() {
           conflicts={conflicts}
           checkingConflicts={checkingConflicts}
           conflictsError={conflictsError}
+          showErrors={showFieldErrors}
         />
       )}
       {step === 5 && (
@@ -445,15 +501,6 @@ export function CreatePublicationPage() {
             </Button>
           )}
         </div>
-        {validationErrors.length > 0 && (
-          <div className="flex flex-col gap-1">
-            {validationErrors.map((err, idx) => (
-              <p key={idx} className="text-xs font-medium text-red-600">
-                {err}
-              </p>
-            ))}
-          </div>
-        )}
         {displayError && (
           <div className="flex items-center gap-2">
             <p className="text-xs font-medium text-red-600">{displayError}</p>

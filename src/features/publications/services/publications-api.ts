@@ -6,7 +6,6 @@ export { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api
 import type {
   BasicInfoForm,
   ContentItem,
-  PlaylistDetail,
   Priority,
   Publication,
   PublicationDetail,
@@ -174,6 +173,18 @@ export async function activatePublication(id: string): Promise<{ job_id?: string
   );
 }
 
+/** Retries failed/offline-stuck targets. Omit deviceIds to retry every eligible target. */
+export async function retryPublicationTargets(
+  id: string,
+  deviceIds?: string[]
+): Promise<{ retried_count: number; skipped_count: number }> {
+  return requestApi<{ retried_count: number; skipped_count: number }>(
+    "POST",
+    `/media/publications/${id}/retry`,
+    deviceIds ? { device_ids: deviceIds } : {}
+  );
+}
+
 export async function checkScheduleConflicts(payload: {
   publication_id: string | null;
   device_ids: string[];
@@ -190,9 +201,5 @@ export async function checkScheduleConflicts(payload: {
     payload
   );
   return Array.isArray(data) ? data : [];
-}
-
-export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {
-  return requestApi<PlaylistDetail>("GET", `/media/playlists/${id}`);
 }
 

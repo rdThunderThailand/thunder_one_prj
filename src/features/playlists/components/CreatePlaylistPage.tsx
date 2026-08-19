@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "@/components/ui/icons";
 import { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api";
 import { classifyApiError, isConflict, type ClassifiedError } from "@/lib/api/api-error";
@@ -42,7 +43,9 @@ export function CreatePlaylistPage() {
   const [resuming, setResuming] = useState(!!idParam);
   const [dismissedBanner, setDismissedBanner] = useState(false);
 
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<ClassifiedError | null>(null);
   const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
@@ -124,7 +127,11 @@ export function CreatePlaylistPage() {
     if (step >= LAST_STEP) return;
     const result = validateStep(step as WizardStepId, validatableDraft);
     setValidationErrors(result.errors);
-    if (!result.valid) return;
+    if (!result.valid) {
+      if (step === 1) setShowFieldErrors(true);
+      return;
+    }
+    setShowFieldErrors(false);
     draft.setStep(step + 1);
   };
 
@@ -156,9 +163,16 @@ export function CreatePlaylistPage() {
     }
   };
 
+  // Stepping backwards inside the wizard keeps the draft, so only leaving it is worth a
+  // confirmation: the store holds one draft for the whole app, and opening another playlist
+  // resets it. No `beforeunload` — the draft is in localStorage, a refresh loses nothing.
   const goBack = () => {
     if (step > 1) {
       draft.setStep(step - 1);
+      return;
+    }
+    if (hasDraftContent(draft)) {
+      setConfirmLeave(true);
       return;
     }
     router.push("/playlists");
@@ -186,7 +200,7 @@ export function CreatePlaylistPage() {
   const stepContent = () => {
     switch (step) {
       case 1:
-        return <BasicInfoStep campaigns={campaigns} workspaceTags={tags} />;
+        return <BasicInfoStep campaigns={campaigns} workspaceTags={tags} showErrors={showFieldErrors} />;
       case 2:
         return <ContentStep assets={assets} loading={assetsLoading} />;
       case 3:
@@ -269,6 +283,32 @@ export function CreatePlaylistPage() {
         </Card>
       )}
 
+      {confirmLeave && (
+        <Card className="flex items-center justify-between gap-4 border-amber-200 p-4 dark:border-amber-900">
+          <p className="text-sm text-amber-700 dark:text-amber-400">
+            ยังไม่ได้บันทึกร่างนี้ลงระบบ — ออกไปตอนนี้ร่างจะค้างอยู่ในเครื่องและถูกทับเมื่อเปิด
+            playlist อื่น
+          </p>
+          <span className="flex shrink-0 gap-2">
+            <Button variant="secondary" onClick={() => setConfirmLeave(false)}>
+              อยู่ต่อ
+            </Button>
+            <Button variant="ghost" onClick={() => router.push("/playlists")}>
+              ออกโดยไม่บันทึก
+            </Button>
+          </span>
+        </Card>
+      )}
+
+      <Modal
+        open={step === 2 && validationErrors.length > 0}
+        onClose={() => setValidationErrors([])}
+        title="ยังไม่ได้เลือก media"
+        footer={<Button variant="primary" onClick={() => setValidationErrors([])}>เลือก media</Button>}
+      >
+        {validationErrors.map((err, idx) => (<p key={idx}>{err}</p>))}
+      </Modal>
+
       <Card className="p-5">
         <PlaylistStepper currentStep={step} onStepClick={(s) => draft.setStep(s)} />
       </Card>
@@ -276,16 +316,6 @@ export function CreatePlaylistPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-4">
           {stepContent()}
-
-          {validationErrors.length > 0 && (
-            <Card className="border-red-200 p-4 dark:border-red-900">
-              <ul className="list-inside list-disc text-sm text-red-600 dark:text-red-400">
-                {validationErrors.map((e) => (
-                  <li key={e}>{e}</li>
-                ))}
-              </ul>
-            </Card>
-          )}
 
           {submitError && (
             <Card className="border-red-200 p-4 dark:border-red-900">

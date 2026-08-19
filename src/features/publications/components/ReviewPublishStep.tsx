@@ -1,14 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { statusBadge } from "@/features/playlists";
+import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+import { fetchPublication } from "../services/publications-api";
 import { utcToZonedParts } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
 import {
-  createdByMeta,
   priorities,
   prePublishChecklist,
   publicationTypes,
@@ -27,6 +32,17 @@ function formatShortDate(iso: string) {
     day: "numeric",
     month: "long",
     year: "numeric",
+  });
+}
+
+function formatDateTime(iso: string | undefined) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -57,8 +73,36 @@ export function ReviewPublishStep({
 }: ReviewPublishStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
+  const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+
+  const isPlaylist = basicInfo.publicationType === "playlist";
+  const { playlist, failed: playlistFailed, coverAssetId: playlistCoverId, durationLabel: playlistDuration } =
+    usePlaylistPreview(playlistId, isPlaylist);
+
+  // Step 5 is only reachable once Step 1's Next has saved the draft, so a
+  // publicationId always exists here — but keyed by id anyway, same reason as
+  // usePlaylistPreview: a stale response must never render under a switched draft.
+  const [metaResult, setMetaResult] = useState<{ id: string; createdBy?: string; createdAt?: string } | null>(
+    null
+  );
+  useEffect(() => {
+    if (!publicationId) return;
+    let alive = true;
+    fetchPublication(publicationId)
+      .then(
+        (detail) =>
+          alive &&
+          setMetaResult({ id: publicationId, createdBy: detail.created_by?.display_name, createdAt: detail.created_at })
+      )
+      .catch(() => alive && setMetaResult({ id: publicationId }));
+    return () => {
+      alive = false;
+    };
+  }, [publicationId]);
+  const meta = metaResult?.id === publicationId ? metaResult : null;
 
   const selectedChannels = screens
     .filter((s) => channelIds.includes(s.id))
@@ -71,8 +115,10 @@ export function ReviewPublishStep({
     }));
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
-  const previews = usePreviewUrls(selectedAsset ? [selectedAsset.id] : []);
-  const previewUrl = selectedAsset ? previews[selectedAsset.id] : undefined;
+  const previewAssetId = isPlaylist ? playlistCoverId : selectedAsset?.id;
+  const previews = usePreviewUrls(previewAssetId ? [previewAssetId] : []);
+  const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
+  const thumbnailUrl = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
 
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
@@ -124,9 +170,10 @@ export function ReviewPublishStep({
               <div className="flex aspect-square w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
                 <MediaThumb
                   url={previewUrl}
-                  kind={selectedAsset?.kind}
-                  mimeType={selectedAsset?.file?.mime_type}
-                  alt={assetFilename ?? basicInfo.name}
+                  thumbnailUrl={thumbnailUrl}
+                  kind={isPlaylist ? undefined : selectedAsset?.kind}
+                  mimeType={isPlaylist ? undefined : selectedAsset?.file?.mime_type}
+                  alt={isPlaylist ? playlist?.name ?? basicInfo.name : assetFilename ?? basicInfo.name}
                   className="h-full w-full"
                 />
               </div>
@@ -149,27 +196,55 @@ export function ReviewPublishStep({
                       {type?.label}
                     </dd>
                   </div>
-                  {selectedAsset && (
+                  {isPlaylist ? (
                     <div className="flex gap-2">
-                      <dt className="w-20 shrink-0 text-zinc-400">File</dt>
+                      <dt className="w-20 shrink-0 text-zinc-400">Playlist</dt>
                       <dd className="text-zinc-700">
-                        {assetFilename ?? "—"}{assetItems.length > 1 ? ` +${assetItems.length - 1} more` : ""}
-                        <span className="block text-zinc-400">
-                          {assetDimensions ?? "—"}
-                          {assetDurationLabel ? ` · ${assetDurationLabel}` : ""}
-                        </span>
+                        {playlist ? (
+                          <Link
+                            href={`/playlists/${playlist.id}`}
+                            target="_blank"
+                            className="font-medium text-indigo-600 hover:underline"
+                          >
+                            {playlist.name}
+                          </Link>
+                        ) : playlistFailed ? (
+                          "โหลด playlist ไม่สำเร็จ"
+                        ) : (
+                          "กำลังโหลด..."
+                        )}
+                        {playlist && (
+                          <span className="mt-0.5 flex items-center gap-1.5 text-zinc-400">
+                            <Badge color={statusBadge(playlist.status).color} variant="pill">
+                              {statusBadge(playlist.status).label}
+                            </Badge>
+                            {playlist.items.length} items · {playlistDuration}
+                          </span>
+                        )}
                       </dd>
                     </div>
+                  ) : (
+                    selectedAsset && (
+                      <div className="flex gap-2">
+                        <dt className="w-20 shrink-0 text-zinc-400">File</dt>
+                        <dd className="text-zinc-700">
+                          {assetFilename ?? "—"}{assetItems.length > 1 ? ` +${assetItems.length - 1} more` : ""}
+                          <span className="block text-zinc-400">
+                            {assetDimensions ?? "—"}
+                            {assetDurationLabel ? ` · ${assetDurationLabel}` : ""}
+                          </span>
+                        </dd>
+                      </div>
+                    )
                   )}
                 </dl>
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 text-xs text-zinc-400">
+            <div className="mt-4 flex items-center border-t border-zinc-100 pt-3 text-xs text-zinc-400">
               <span className="flex items-center gap-1.5">
-                <Avatar name={createdByMeta.name} size={20} />
-                Created by {createdByMeta.name} · {createdByMeta.createdAt}
+                <Avatar name={meta?.createdBy ?? "—"} size={20} />
+                Created by {meta?.createdBy ?? "—"} · {formatDateTime(meta?.createdAt)}
               </span>
-              <span>Last updated {createdByMeta.updatedAt}</span>
             </div>
           </Card>
 

@@ -122,9 +122,3 @@ export const prePublishChecklist = [
   "เนื้อหาไม่ขัดต่อนโยบายการเผยแพร่",
   "ไม่มีความขัดแย้งของตารางเผยแพร่",
 ];
-
-export const createdByMeta = {
-  name: "Kanittha W.",
-  createdAt: "7 May 2025, 11:30",
-  updatedAt: "12 May 2025, 16:45",
-};

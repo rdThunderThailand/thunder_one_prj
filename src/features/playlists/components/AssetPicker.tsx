@@ -86,7 +86,7 @@ export function AssetPicker({
               >
                 <div className="relative">
                   <MediaThumb
-                    url={previews[asset.id]}
+                    url={previews.urls[asset.id]}
                     kind={asset.kind}
                     mimeType={asset.file?.mime_type}
                     alt={label}
