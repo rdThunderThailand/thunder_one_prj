@@ -2,7 +2,6 @@
 // ai-assets's mock data where it makes sense, rather than duplicating fake
 // numbers from scratch. Replace once a real assets/insights backend exists.
 import { getMockAssets } from "@/features/ai-assets";
-import type { DonutSegment } from "@/components/ui/DonutChart";
 
 const assets = getMockAssets();
 
@@ -59,7 +58,7 @@ export const statCards: StatCardData[] = [
   },
 ];
 
-export interface AttentionItemData {
+export interface AlertItemData {
   id: string;
   severity: "red" | "yellow" | "blue";
   title: string;
@@ -70,18 +69,58 @@ export interface AttentionItemData {
 const severityFor = (status: (typeof assets)[number]["status"]): "red" | "yellow" | "blue" =>
   status === "critical" ? "red" : status === "attention" ? "yellow" : "blue";
 
-export const attentionItems: AttentionItemData[] = assets
+// The simple asset+severity+time feed (requirement doc §4.1 "Recent Alerts
+// list") — distinct from mockRecommendations below ("Requires Your
+// Attention": a decision with evidence, not just a status ping).
+const TIMES_AGO = ["5m ago", "18m ago", "32m ago", "50m ago", "1h ago", "2h ago"];
+
+export const recentAlerts: AlertItemData[] = assets
   .filter((a) => a.status !== "healthy")
-  .map((a) => ({
+  .map((a, index) => ({
     id: a.id,
     severity: severityFor(a.status),
     title: a.tag,
     subtitle: a.category === "nas" ? "Backup failed, Server Room" : "Repeated failures",
-    timeAgo: "Review",
+    timeAgo: TIMES_AGO[index % TIMES_AGO.length],
   }));
 
-export const assetOutlook: DonutSegment[] = [
-  { label: "Healthy", value: assets.filter((a) => a.status === "healthy").length, color: "#1baf7a" },
-  { label: "Attention", value: attention, color: "#eda100" },
-  { label: "Critical", value: critical, color: "#e04f4f" },
+export type RecommendationStatus = "pending" | "approved" | "rejected";
+
+export interface RecommendationData {
+  id: string;
+  title: string;
+  summary: string;
+  evidence: string;
+  status: RecommendationStatus;
+}
+
+// CEO-03: a decision with evidence, reviewed via Approvals (CEO-04) —
+// matches the requirement doc's mockup text exactly.
+export const mockRecommendations: RecommendationData[] = [
+  {
+    id: "rec-1",
+    title: "Replacement decision",
+    summary: "3 Accounting printers now cost 42% of replacement value to maintain.",
+    evidence: "11 incidents / 90 days",
+    status: "pending",
+  },
 ];
+
+export function getMockRecommendations(): RecommendationData[] {
+  return mockRecommendations;
+}
+
+export interface AssetOutlookData {
+  warrantyExposure: string;
+  criticalAssetRisks: number;
+  maintenanceCostTrend: string;
+  majorIncidents: number;
+}
+
+// CEO-02 — matches the requirement doc's mockup text exactly.
+export const assetOutlook: AssetOutlookData = {
+  warrantyExposure: "฿420K",
+  criticalAssetRisks: 4,
+  maintenanceCostTrend: "+18%",
+  majorIncidents: 7,
+};

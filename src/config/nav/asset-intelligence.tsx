@@ -18,17 +18,16 @@
 // my-assets/, matching how Thunder Care's Customers/Work Queue/Reports were
 // already nested under service-ops/) — don't reintroduce it for a new page.
 //
-// Only CEO's other items (Insights/Reports/Approvals/Settings) are still
-// inert (no `href`) — the mockup's fuller sidebar, not yet backed by a page.
-// Every other persona's nav is further along (real pages beyond the landing
-// route) since those roles' flows were built out in detail — see
+// Every persona's nav is now fully wired except "Settings", intentionally
+// left inert everywhere (no settings page exists for any role) — see
 // ai-issues/ai-requests/ai-assets's RegisterAssetPage for Employee,
 // ai-service-ops's Customers/Work Queue/Reports pages for Thunder Care,
 // ai-work-orders's Assigned/Calendar pages for Technician,
 // ai-departments's Assets/Team/Requests/Approvals/Reports pages for
-// Department Manager, and ai-assets's Locations/Work Orders/Maintenance/
+// Department Manager, ai-assets's Locations/Work Orders/Maintenance/
 // Inspections/Analytics/Reports pages (plus Add Asset/Pass to Department)
-// for Asset/IT Manager.
+// for Asset/IT Manager, and ai-mission-control's Insights/Reports/Approvals
+// pages for CEO.
 import {
   BoxIcon,
   CalendarIcon,
@@ -58,9 +57,9 @@ const ceoNav: NavConfig = {
   },
   sections: [],
   standaloneLinks: [
-    { label: "Insights" },
-    { label: "Reports" },
-    { label: "Approvals" },
+    { label: "Insights", href: "/asset-intelligence/mission-control/insights" },
+    { label: "Reports", href: "/asset-intelligence/mission-control/reports" },
+    { label: "Approvals", href: "/asset-intelligence/mission-control/approvals" },
     { label: "Settings" },
   ] satisfies NavItem[],
   standaloneIcons: [

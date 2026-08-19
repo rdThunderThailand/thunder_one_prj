@@ -2,6 +2,7 @@
 // Only export what other layers (app routes / other features) are allowed to consume.
 export type { Asset, AssetCategory, AssetStatus, AssetLifecycleStatus } from "./types";
 export { getMockAssets } from "./services/mock-assets";
+export { mockDepartments, type DepartmentOption } from "./mock-reference-data";
 export { AssetsListPage } from "./components/AssetsListPage";
 export { AssetOverviewDashboard } from "./components/AssetOverviewDashboard";
 export { AssetOverviewPage } from "./components/AssetOverviewPage";

@@ -15,7 +15,7 @@ Asset registry for Asset Intelligence — organization-wide physical assets (lap
 - `services/` — data access for this feature; `mock-assets.ts` stands in until the Thunder_Core sync contract exists
 - `types/` — `Asset` and its `category`/`status`/`lifecycleStatus` taxonomies (see `docs/adr/0024-asset-device-cross-reference-model.md` for the `category: "media_player_device"` / `externalRef` cross-reference to Media Workspace's Device; `lifecycleStatus` covers `active`/`pending_department_ack` (DM-01)/`pending_acknowledgement` (EMP-01) — a partial slice of the full onboarding state machine in the requirement doc §5.1)
 - `mock-data.ts` — Asset/IT Manager overview dashboard widgets, derived from `services/mock-assets.ts` where possible
-- `mock-reference-data.ts`, `mock-maintenance.ts`, `mock-inspections.ts` — locations/departments, Maintenance Agreements, and Inspections — each its own small placeholder dataset, no backend yet
+- `mock-reference-data.ts`, `mock-maintenance.ts`, `mock-inspections.ts` — locations/departments, Maintenance Agreements, and Inspections — each its own small placeholder dataset, no backend yet. `mockDepartments` is exported via `index.ts` too — `ai-mission-control`'s Insights/Reports pages read it directly for cross-department rollups.
 
 "Who is the current employee" (for `MyAssetsPage`/`RegisterAssetPage`, and for `ai-issues`/`ai-requests`) lives in `src/config/current-employee.ts`, not here — it's used by more than one feature.
 
