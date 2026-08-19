@@ -102,10 +102,13 @@ export type PlaylistListItem = {
   status: PlaylistStatus;
   item_count: number;
   created_at?: string;
-  /** Phase 2 fields — absent until the list RPC is extended. */
   metadata?: Record<string, unknown>;
   cover_asset_id?: string | null;
   created_by?: Creator;
+  /** Added by Thunder_Core migration 097 — optional so a frontend deploy that lands
+   *  ahead of the backend renders "—" instead of crashing. */
+  updated_at?: string;
+  total_duration_seconds?: number;
 };
 
 export type PlaylistDetail = {

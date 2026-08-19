@@ -4,6 +4,9 @@ import { env } from "@/config/env";
 
 export interface Session {
   userName: string;
+  /** `public.users.id` — the same id `created_by` carries on every media row, so the
+   *  playlists page can tell "mine" from "everyone's" without a second lookup. */
+  userId: string | null;
   tenantName: string | null;
 }
 
@@ -41,7 +44,7 @@ export async function getSession(): Promise<SessionResult> {
       cache: "no-store",
     });
   } catch {
-    return { userName: FALLBACK_NAME, tenantName: null };
+    return { userName: FALLBACK_NAME, userId: null, tenantName: null };
   }
 
   if (res.status === 401) {
@@ -51,7 +54,7 @@ export async function getSession(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!res.ok) {
-    return { userName: FALLBACK_NAME, tenantName: null };
+    return { userName: FALLBACK_NAME, userId: null, tenantName: null };
   }
 
   const body = await res.json().catch(() => null);
@@ -59,10 +62,11 @@ export async function getSession(): Promise<SessionResult> {
   const tenantName = body?.data?.tenant?.name ?? null;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, tenantName };
+    return { userName: FALLBACK_NAME, userId: null, tenantName };
   }
 
-  return { userName: resolveUserName(user), tenantName };
+  const userId = typeof user.id === "string" ? user.id : null;
+  return { userName: resolveUserName(user), userId, tenantName };
 }
 
 function resolveUserName(user: Record<string, unknown>): string {
