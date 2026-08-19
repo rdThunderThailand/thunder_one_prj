@@ -109,6 +109,10 @@ export type PlaylistListItem = {
    *  ahead of the backend renders "—" instead of crashing. */
   updated_at?: string;
   total_duration_seconds?: number;
+  /** Publications pointing at this playlist, any status — Thunder_Core migration 098.
+   *  Optional for the same deploy-ordering reason as the fields above; when it is
+   *  missing the display status falls back to the stored `status`. */
+  publication_count?: number;
 };
 
 export type PlaylistDetail = {
@@ -120,4 +124,6 @@ export type PlaylistDetail = {
   /** Phase 2 fields — absent until the get RPC is extended. */
   metadata?: Record<string, unknown>;
   created_by?: Creator;
+  /** Publications pointing at this playlist, any status — Thunder_Core migration 098. */
+  publication_count?: number;
 };

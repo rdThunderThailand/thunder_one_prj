@@ -8,7 +8,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";
 import { formatDuration } from "../duration";
 import { playlistType, type Sort, type SortKey } from "../list-filtering";
-import { statusBadge } from "../status-display";
+import { playlistDisplayStatus, statusBadge } from "../status-display";
 import type { PlaylistListItem } from "../types";
 
 /** "14 May 2025 10:30" — the list is client-rendered after its fetch, so the browser's
@@ -74,7 +74,7 @@ export function PlaylistsTable({
           {rows.map((playlist) => {
             const cover = coverAssetId(playlist);
             const campaignId = decodeMetadata(playlist.metadata).info.campaignId;
-            const badge = statusBadge(playlist.status);
+            const badge = statusBadge(playlistDisplayStatus(playlist));
 
             return (
               <tr

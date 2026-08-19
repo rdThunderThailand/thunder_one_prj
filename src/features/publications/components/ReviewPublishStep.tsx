@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { statusBadge } from "@/features/playlists";
+import { playlistDisplayStatus, statusBadge } from "@/features/playlists";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { fetchPublication } from "../services/publications-api";
 import { utcToZonedParts } from "../schedule";
@@ -154,6 +154,7 @@ export function ReviewPublishStep({
     scheduleForm.schedule_type === "now" ? nowZoned.time : scheduleForm.start_time;
 
   const allPassed = isAllGatingPassed(eligibilityChecks);
+  const badge = playlist ? statusBadge(playlistDisplayStatus(playlist)) : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -213,10 +214,10 @@ export function ReviewPublishStep({
                         ) : (
                           "กำลังโหลด..."
                         )}
-                        {playlist && (
+                        {playlist && badge && (
                           <span className="mt-0.5 flex items-center gap-1.5 text-zinc-400">
-                            <Badge color={statusBadge(playlist.status).color} variant="pill">
-                              {statusBadge(playlist.status).label}
+                            <Badge color={badge.color} variant="pill">
+                              {badge.label}
                             </Badge>
                             {playlist.items.length} items · {playlistDuration}
                           </span>

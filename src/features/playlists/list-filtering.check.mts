@@ -16,6 +16,7 @@ const playlists: PlaylistListItem[] = [
   row({
     id: "kfc",
     name: "KFC Wednesday",
+    publication_count: 2,
     created_by: { id: "u-1", display_name: "Kantida" },
     metadata: meta({ playlist_type: "standard", campaign_id: "c-1" }),
   }),
@@ -23,13 +24,15 @@ const playlists: PlaylistListItem[] = [
     id: "coffee",
     name: "Coffee Corner Loop",
     status: "draft",
+    publication_count: 1,
     created_by: { id: "u-2", display_name: "Nattapong" },
     metadata: meta({ playlist_type: "loop", campaign_id: "c-2" }),
   }),
   row({
     id: "legacy",
     name: "Legacy no metadata",
-    status: "inactive",
+    status: "active",
+    publication_count: 0,
     created_by: { id: "u-1", display_name: "Kantida" },
   }),
 ];
@@ -65,8 +68,18 @@ assert.deepEqual(paginate([1, 2, 3, 4, 5], 9, 2), { rows: [5], page: 3, totalPag
 assert.deepEqual(paginate([1, 2, 3], 0, 10), { rows: [1, 2, 3], page: 1, totalPages: 1 });
 assert.deepEqual(paginate([], 4, 10), { rows: [], page: 1, totalPages: 1 });
 
+// "legacy" is stored as active but nothing references it, so both the cards and the
+// Inactive filter must read it as inactive — that derivation is the whole point of 0028.
 assert.deepEqual(summarize(playlists), { total: 3, active: 1, inactive: 1, draft: 1 });
 assert.deepEqual(summarize([]), { total: 0, active: 0, inactive: 0, draft: 0 });
+assert.deepEqual(filterPlaylists(playlists, { ...all, status: "inactive" }).map((p) => p.id), ["legacy"]);
+assert.deepEqual(filterPlaylists(playlists, { ...all, status: "active" }).map((p) => p.id), ["kfc"]);
+// A row the backend has not caught up with yet keeps its stored status instead of
+// collapsing into Inactive.
+assert.deepEqual(
+  summarize([row({ id: "pending", status: "active" })]),
+  { total: 1, active: 1, inactive: 0, draft: 0 }
+);
 
 // A copy never collides with a name already on the page.
 assert.equal(copyName("KFC Wednesday", []), "KFC Wednesday (Copy)");
@@ -86,7 +99,8 @@ const campaignNames = { "c-1": "Beta Campaign", "c-2": "Alpha Campaign" };
 const p1 = row({
   id: "p1",
   name: "B Playlist",
-  status: "active", // 0
+  status: "active",
+  publication_count: 1, // referenced -> active (0)
   total_duration_seconds: 100,
   updated_at: "2024-01-02",
   metadata: meta({ campaign_id: "c-1" }) // "Beta Campaign"
@@ -94,7 +108,8 @@ const p1 = row({
 const p2 = row({
   id: "p2",
   name: "A Playlist",
-  status: "draft", // 2
+  status: "draft", // draft wins over the count (2)
+  publication_count: 1,
   total_duration_seconds: 50,
   updated_at: "2024-01-01",
   metadata: meta({ campaign_id: "c-2" }) // "Alpha Campaign"
@@ -102,7 +117,8 @@ const p2 = row({
 const p3 = row({
   id: "p3",
   name: "C Playlist",
-  status: "inactive", // 1
+  status: "active",
+  publication_count: 0, // referenced by nobody -> derives to inactive (1)
   total_duration_seconds: undefined, // empty
   updated_at: "invalid-date", // empty
 });
@@ -110,6 +126,7 @@ const p4 = row({
   id: "p4",
   name: "C Playlist", // tie on name
   status: "active",
+  publication_count: 2, // referenced -> active (0)
   total_duration_seconds: undefined, // empty
   created_at: "invalid-date", // empty
 });
@@ -136,7 +153,8 @@ assert.deepEqual(
   ["p1", "p2", "p3", "p4"]
 );
 
-// status asc -> active (p1, p4), inactive (p3), draft (p2)
+// status asc -> active (p1, p4), inactive (p3), draft (p2) — p3 is stored "active",
+// so this only holds if the sort derives the status the badge shows.
 assert.deepEqual(
   sortPlaylists(sortInput, { key: "status", dir: "asc" }, campaignNames).map(p => p.id),
   ["p1", "p4", "p3", "p2"] // p1 and p4 tiebreak on name B vs C

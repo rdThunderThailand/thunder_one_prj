@@ -3,6 +3,7 @@
 // whole lot is checkable without React — see list-filtering.check.mts.
 
 import { decodeMetadata } from "./metadata.ts";
+import { playlistDisplayStatus } from "./status-display.ts";
 import type { PlaylistListItem, PlaylistStatus, PlaylistType } from "./types";
 
 export type OwnershipTab = "all" | "mine";
@@ -34,7 +35,7 @@ export function filterPlaylists(
   const needle = filters.query.trim().toLowerCase();
   return playlists.filter((p) => {
     if (filters.tab === "mine" && p.created_by?.id !== filters.currentUserId) return false;
-    if (filters.status !== "all" && p.status !== filters.status) return false;
+    if (filters.status !== "all" && playlistDisplayStatus(p) !== filters.status) return false;
     if (filters.type !== "all" && playlistType(p) !== filters.type) return false;
     if (filters.campaignId !== "all" && playlistCampaignId(p) !== filters.campaignId) return false;
     if (needle && !p.name.toLowerCase().includes(needle)) return false;
@@ -57,12 +58,9 @@ export function paginate<T>(items: T[], page: number, perPage: number): Page<T> 
 export type Summary = { total: number; active: number; inactive: number; draft: number };
 
 export function summarize(playlists: PlaylistListItem[]): Summary {
-  return {
-    total: playlists.length,
-    active: playlists.filter((p) => p.status === "active").length,
-    inactive: playlists.filter((p) => p.status === "inactive").length,
-    draft: playlists.filter((p) => p.status === "draft").length,
-  };
+  const summary: Summary = { total: playlists.length, active: 0, inactive: 0, draft: 0 };
+  for (const p of playlists) summary[playlistDisplayStatus(p)] += 1;
+  return summary;
 }
 
 /** `media_core.playlists` is UNIQUE (tenant_id, name), so a duplicate has to pick a name
@@ -104,7 +102,7 @@ function sortValue(
     case "duration":
       return playlist.total_duration_seconds ?? null;
     case "status":
-      return STATUS_ORDER[playlist.status];
+      return STATUS_ORDER[playlistDisplayStatus(playlist)];
     case "updated": {
       const ms = Date.parse(playlist.updated_at ?? playlist.created_at ?? "");
       return Number.isNaN(ms) ? null : ms;

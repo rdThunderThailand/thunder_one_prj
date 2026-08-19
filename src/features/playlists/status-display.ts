@@ -1,6 +1,22 @@
 import type { BadgeColor } from "@/components/ui/Badge";
 import type { PlaylistStatus } from "./types";
 
+/**
+ * ADR 0028: active means "referenced by at least one publication (any status)",
+ * inactive means "finished but referenced by none". The stored `status` column
+ * defaults to 'active' and is never written as 'inactive', so it only still means
+ * draft / not-draft. A missing `publication_count` (backend not deployed yet) falls
+ * back to the stored value rather than claiming everything is inactive.
+ */
+export function playlistDisplayStatus(playlist: {
+  status: PlaylistStatus;
+  publication_count?: number;
+}): PlaylistStatus {
+  if (playlist.status === "draft") return "draft";
+  if (playlist.publication_count === undefined) return playlist.status;
+  return playlist.publication_count > 0 ? "active" : "inactive";
+}
+
 /** Draft is yellow rather than zinc so it reads as in-progress, not switched off. */
 export function statusBadge(status: PlaylistStatus): { color: BadgeColor; label: string } {
   if (status === "active") return { color: "green", label: "Active" };

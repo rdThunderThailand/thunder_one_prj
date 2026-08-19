@@ -1,10 +1,22 @@
 /** Run: node src/features/playlists/status-display.check.mts */
 import assert from "node:assert/strict";
-import { describeDeleteError, statusBadge } from "./status-display.ts";
+import { describeDeleteError, playlistDisplayStatus, statusBadge } from "./status-display.ts";
 
 assert.deepEqual(statusBadge("active"), { color: "green", label: "Active" });
 assert.deepEqual(statusBadge("draft"), { color: "yellow", label: "Draft" });
 assert.deepEqual(statusBadge("inactive"), { color: "zinc", label: "Inactive" });
+
+// A draft stays a draft however many publications point at it — the stored status is
+// still the only thing that decides draft / not-draft.
+assert.equal(playlistDisplayStatus({ status: "draft", publication_count: 3 }), "draft");
+// Nobody references it: inactive, whatever the (untrustworthy) stored value says.
+assert.equal(playlistDisplayStatus({ status: "active", publication_count: 0 }), "inactive");
+// Referenced: active, even on a row someone archived by hand before ADR 0028.
+assert.equal(playlistDisplayStatus({ status: "inactive", publication_count: 3 }), "active");
+// No count at all — a frontend deployed ahead of Thunder_Core 098 keeps the stored
+// value rather than declaring every playlist inactive.
+assert.equal(playlistDisplayStatus({ status: "active" }), "active");
+assert.equal(playlistDisplayStatus({ status: "inactive" }), "inactive");
 
 // The count survives; the raw RPC wording does not.
 assert.equal(

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { statusBadge } from "../status-display";
+import { playlistDisplayStatus, statusBadge } from "../status-display";
 import type { PlaylistDetail, PlaylistMetadata } from "../types";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -23,12 +23,13 @@ export function PlaylistProperties({
   itemCount: number;
   totalDuration: string;
 }) {
+  const badge = statusBadge(playlistDisplayStatus(detail));
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{detail.name}</h2>
-        <Badge color={statusBadge(detail.status).color} variant="pill">
-          {statusBadge(detail.status).label}
+        <Badge color={badge.color} variant="pill">
+          {badge.label}
         </Badge>
       </div>
       <div className="divide-y divide-zinc-100 dark:divide-zinc-800">

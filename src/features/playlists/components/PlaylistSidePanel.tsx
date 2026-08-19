@@ -11,7 +11,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError } from "@/lib/api/api-error";
 import { fetchPlaylist } from "../services/playlists-api";
 import { decodeMetadata, resolveCoverAssetId } from "../metadata";
-import { statusBadge } from "../status-display";
+import { playlistDisplayStatus, statusBadge } from "../status-display";
 import type { PlaylistDetail, PlaylistListItem } from "../types";
 import { ContentTab, DetailsTab, HistoryTab, ScheduleTab } from "./PlaylistPanelTabs";
 
@@ -62,7 +62,7 @@ export function PlaylistSidePanel({
     playlist.cover_asset_id ??
     resolveCoverAssetId(decodeMetadata(playlist.metadata).info.coverAssetId, detail?.items ?? []);
   const previews = usePreviewUrls(useMemo(() => (coverId ? [coverId] : []), [coverId]));
-  const badge = statusBadge(playlist.status);
+  const badge = statusBadge(playlistDisplayStatus(playlist));
 
   return (
     <aside className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
