@@ -53,6 +53,10 @@ export function DetailsTab({
       <Row label="Items" value={detail.items.length} />
       <Row label="Duration" value={duration} />
       <Row label="Play Mode" value={metadata.playback.playMode ?? "—"} />
+      <Row
+        label="Start Playback From"
+        value={metadata.playback.startFrom === "resume" ? "Resume last successful item" : "First item"}
+      />
       <Row label="Resolution" value={metadata.info.resolution ?? "—"} />
       <Row label="Created By" value={detail.created_by?.display_name ?? "—"} />
       {metadata.info.tags && metadata.info.tags.length > 0 && (

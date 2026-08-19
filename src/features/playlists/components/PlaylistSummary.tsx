@@ -86,6 +86,10 @@ export function PlaylistSummary({
           <Row label="Play Mode" value={playback.playMode ?? "—"} />
           <Row label="Repeat" value={playback.repeat ?? "—"} />
           <Row
+            label="Start Playback From"
+            value={playback.startFrom === "resume" ? "Resume last successful item" : "First item"}
+          />
+          <Row
             label="Default Transition"
             value={
               playback.defaultTransition

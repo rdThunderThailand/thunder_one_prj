@@ -35,7 +35,7 @@ export function CreatePlaylistPage() {
 
   const hydrated = useDraftHydrated();
   const draft = usePlaylistDraftStore();
-  const { step, name, info, items, editingId, playlistId } = draft;
+  const { step, name, info, items, editingId, playlistId, playback } = draft;
   const { persistDraft } = usePlaylistDraftSave();
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -116,7 +116,7 @@ export function CreatePlaylistPage() {
     dismissed: dismissedBanner,
   });
 
-  const validatableDraft = { name, description: info.description, items };
+  const validatableDraft = { name, description: info.description, items, playback };
 
   // Walking the wizard is local-only: a draft row exists only once the operator asks for
   // one with Save Draft (docs/adr/0014). localStorage carries the work until then.

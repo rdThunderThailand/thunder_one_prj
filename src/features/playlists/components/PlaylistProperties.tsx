@@ -40,6 +40,10 @@ export function PlaylistProperties({
         <Row label="Frame Rate" value={metadata.info.frameRate ? `${metadata.info.frameRate} fps` : "—"} />
         <Row label="Play Mode" value={metadata.playback.playMode ?? "—"} />
         <Row label="Repeat" value={metadata.playback.repeat ?? "—"} />
+        <Row
+          label="Start Playback From"
+          value={metadata.playback.startFrom === "resume" ? "Resume last successful item" : "First item"}
+        />
         <Row label="Transition" value={metadata.playback.defaultTransition ?? "—"} />
         <Row label="Media Fit" value={metadata.playback.mediaFit ?? "—"} />
         <Row label="Audio" value={metadata.playback.audioEnabled === false ? "Muted" : "On"} />

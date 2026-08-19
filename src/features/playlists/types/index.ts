@@ -26,6 +26,9 @@ export type PlayMode = (typeof PLAY_MODES)[number];
 export const REPEAT_MODES = ["loop", "once"] as const;
 export type RepeatMode = (typeof REPEAT_MODES)[number];
 
+export const START_FROMS = ["first", "resume"] as const;
+export type StartFrom = (typeof START_FROMS)[number];
+
 export const MEDIA_FITS = ["fit", "fill", "stretch"] as const;
 export type MediaFit = (typeof MEDIA_FITS)[number];
 
@@ -48,14 +51,13 @@ export type PlaylistInfo = {
 /**
  * Playback preferences, stored under `metadata.playback`.
  *
- * ponytail: only `defaultImageDuration` and `defaultTransition` reach a screen, and only
- * because the wizard bakes them into each `playlist_items` row. `media_job_poll` reads
- * nothing else off a playlist — see docs/adr/0010-playlist-settings-in-metadata.md.
+ * play_mode/repeat/start_from are now emitted on every media_job_poll slot under `playback`;
+ * see docs/adr/0031-playback-behavior-reaches-the-player.md.
  */
 export type PlaylistPlayback = {
   playMode?: PlayMode;
   repeat?: RepeatMode;
-  startFrom?: "first";
+  startFrom?: StartFrom;
   defaultImageDuration?: number;
   mediaFit?: MediaFit;
   audioEnabled?: boolean;

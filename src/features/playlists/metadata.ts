@@ -10,6 +10,7 @@ import type {
   PlaylistMetadata,
   PlaylistPlayback,
 } from "./types";
+import { PLAY_MODES, REPEAT_MODES, START_FROMS } from "./types";
 
 export const METADATA_VERSION = 1;
 
@@ -108,9 +109,9 @@ export function decodeMetadata(raw: unknown): PlaylistMetadata {
   };
 
   const playback: PlaylistPlayback = {
-    playMode: oneOf(rawPlayback, "play_mode", ["sequential", "shuffle"]),
-    repeat: oneOf(rawPlayback, "repeat", ["loop", "once"]),
-    startFrom: oneOf(rawPlayback, "start_from", ["first"]),
+    playMode: oneOf(rawPlayback, "play_mode", PLAY_MODES),
+    repeat: oneOf(rawPlayback, "repeat", REPEAT_MODES),
+    startFrom: oneOf(rawPlayback, "start_from", START_FROMS),
     defaultImageDuration: num(rawPlayback, "default_image_duration"),
     mediaFit: oneOf(rawPlayback, "media_fit", ["fit", "fill", "stretch"]),
     audioEnabled: bool(rawPlayback, "audio_enabled"),

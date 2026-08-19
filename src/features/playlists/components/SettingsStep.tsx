@@ -37,11 +37,14 @@ export function SettingsStep() {
               onChange={(e) => setPlayback({ repeat: e.target.value as "loop" | "once" })}
             />
           </Field>
-          <Field label="Start Playback From">
+          <Field label="Start Playback From" hint="ไม่มี state หรือ item เดิมถูกลบ ให้ fallback ไป First Item">
             <Select
-              value="first"
-              options={[{ value: "first", label: "First item" }]}
-              onChange={() => setPlayback({ startFrom: "first" })}
+              value={playback.startFrom ?? "first"}
+              options={[
+                { value: "first", label: "First item" },
+                { value: "resume", label: "Resume last successful item" },
+              ]}
+              onChange={(e) => setPlayback({ startFrom: e.target.value as "first" | "resume" })}
             />
           </Field>
         </div>
