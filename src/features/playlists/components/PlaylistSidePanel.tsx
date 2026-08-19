@@ -13,7 +13,7 @@ import { fetchPlaylist } from "../services/playlists-api";
 import { decodeMetadata, resolveCoverAssetId } from "../metadata";
 import { statusBadge } from "../status-display";
 import type { PlaylistDetail, PlaylistListItem } from "../types";
-import { ContentTab, DetailsTab, ScheduleTab } from "./PlaylistPanelTabs";
+import { ContentTab, DetailsTab, HistoryTab, ScheduleTab } from "./PlaylistPanelTabs";
 
 export function PlaylistSidePanel({
   playlist,
@@ -121,11 +121,7 @@ export function PlaylistSidePanel({
               {
                 key: "history",
                 label: "History",
-                content: (
-                  <p className="py-8 text-center text-sm text-zinc-400">
-                    ยังไม่มีประวัติการแก้ไข
-                  </p>
-                ),
+                content: <HistoryTab playlistId={playlist.id} />,
               },
             ]}
           />

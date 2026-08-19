@@ -10,6 +10,11 @@ import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { fetchPublications } from "@/features/publications/services/publications-api";
 import type { PublicationListItem } from "@/features/publications/types";
+import {
+  isPastPublication,
+  publicationDisplayStatus,
+  publicationStatusColor,
+} from "@/features/publications/publication-status";
 import { decodeMetadata } from "../metadata";
 import { formatDuration, totalDurationSeconds } from "../duration";
 import { paginate } from "../list-filtering";
@@ -110,16 +115,15 @@ export function ContentTab({ detail }: { detail: PlaylistDetail }) {
 }
 
 /** A playlist has no schedule of its own (ADR 0011) — what it has is the publications
- *  that point at it, so this lists those. Loaded only when the tab is first opened.
+ *  that point at it, so these tabs list those, split into what's live and what's past
+ *  (ADR 0015). Loaded only when a tab is first opened.
  *  ponytail: no dates — the publications list carries no starts_at, that would need one
  *  detail call per publication. */
-const SCHEDULE_STATUS_RANK: Record<string, number> = { active: 0, draft: 1 };
-const SCHEDULE_PER_PAGE = 5;
+const PER_PAGE = 5;
 
-export function ScheduleTab({ playlistId }: { playlistId: string }) {
+function usePlaylistPublications(playlistId: string) {
   const [publications, setPublications] = useState<PublicationListItem[] | null>(null);
   const [failed, setFailed] = useState(false);
-  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let alive = true;
@@ -138,73 +142,140 @@ export function ScheduleTab({ playlistId }: { playlistId: string }) {
     };
   }, [playlistId]);
 
+  return { publications, failed };
+}
+
+function PageNav({
+  page,
+  totalPages,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  onChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex items-center justify-between pt-1 text-xs text-zinc-500 dark:text-zinc-400">
+      <button
+        type="button"
+        disabled={page <= 1}
+        onClick={() => onChange(page - 1)}
+        className="rounded px-2 py-1 hover:bg-zinc-50 disabled:opacity-40 dark:hover:bg-zinc-800"
+      >
+        ก่อนหน้า
+      </button>
+      <span>
+        {page} / {totalPages}
+      </span>
+      <button
+        type="button"
+        disabled={page >= totalPages}
+        onClick={() => onChange(page + 1)}
+        className="rounded px-2 py-1 hover:bg-zinc-50 disabled:opacity-40 dark:hover:bg-zinc-800"
+      >
+        ถัดไป
+      </button>
+    </div>
+  );
+}
+
+function PublicationRow({ publication }: { publication: PublicationListItem }) {
+  return (
+    <li className="flex items-center justify-between gap-2 rounded-lg border border-zinc-100 p-2 dark:border-zinc-800">
+      <Link
+        href={`/publications/${publication.id}`}
+        className="min-w-0 flex-1 truncate text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+      >
+        {publication.name}
+      </Link>
+      <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+        {publication.campaign_name ?? "—"}
+      </span>
+      <Badge color={publicationStatusColor(publication.effective_status ?? publication.status)} variant="pill">
+        {publicationDisplayStatus(publication)}
+      </Badge>
+    </li>
+  );
+}
+
+const SCHEDULE_STATUS_RANK: Record<string, number> = { active: 0, scheduled: 1, draft: 2 };
+
+export function ScheduleTab({ playlistId }: { playlistId: string }) {
+  const { publications, failed } = usePlaylistPublications(playlistId);
+  const [page, setPage] = useState(1);
+
   if (failed) {
     return <p className="py-8 text-center text-sm text-zinc-400">โหลดตารางเวลาไม่สำเร็จ</p>;
   }
   if (publications === null) {
     return <p className="py-8 text-center text-sm text-zinc-400">กำลังโหลด...</p>;
   }
-  if (publications.length === 0) {
+
+  const live = publications.filter((p) => !isPastPublication(p));
+  if (live.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-zinc-400">
-        ยังไม่มี publication ที่ใช้ playlist นี้
+        ยังไม่มี publication ที่กำลังใช้ playlist นี้
       </p>
     );
   }
 
-  // active first, then draft, then anything else (cancelled) — status the operator most
-  // needs to act on floats to the top.
-  const sorted = [...publications].sort(
-    (a, b) => (SCHEDULE_STATUS_RANK[a.status] ?? 2) - (SCHEDULE_STATUS_RANK[b.status] ?? 2)
+  // active first, then scheduled, then draft — status the operator most needs to act
+  // on floats to the top.
+  const sorted = [...live].sort(
+    (a, b) =>
+      (SCHEDULE_STATUS_RANK[a.effective_status ?? a.status] ?? 3) -
+      (SCHEDULE_STATUS_RANK[b.effective_status ?? b.status] ?? 3)
   );
-  const { rows, totalPages, page: current } = paginate(sorted, page, SCHEDULE_PER_PAGE);
+  const { rows, totalPages, page: current } = paginate(sorted, page, PER_PAGE);
 
   return (
     <div className="flex flex-col gap-2">
       <ul className="flex flex-col gap-2">
         {rows.map((publication) => (
-          <li
-            key={publication.id}
-            className="flex items-center justify-between gap-2 rounded-lg border border-zinc-100 p-2 dark:border-zinc-800"
-          >
-            <Link
-              href={`/publications/${publication.id}`}
-              className="min-w-0 flex-1 truncate text-sm text-indigo-600 hover:underline dark:text-indigo-400"
-            >
-              {publication.name}
-            </Link>
-            <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
-              {publication.campaign_name ?? "—"}
-            </span>
-            <Badge color="zinc" variant="pill">
-              {publication.effective_status ?? publication.status}
-            </Badge>
-          </li>
+          <PublicationRow key={publication.id} publication={publication} />
         ))}
       </ul>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          <button
-            type="button"
-            disabled={current <= 1}
-            onClick={() => setPage(current - 1)}
-            className="rounded px-2 py-1 hover:bg-zinc-50 disabled:opacity-40 dark:hover:bg-zinc-800"
-          >
-            ก่อนหน้า
-          </button>
-          <span>
-            {current} / {totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={current >= totalPages}
-            onClick={() => setPage(current + 1)}
-            className="rounded px-2 py-1 hover:bg-zinc-50 disabled:opacity-40 dark:hover:bg-zinc-800"
-          >
-            ถัดไป
-          </button>
-        </div>
-      )}
+      <PageNav page={current} totalPages={totalPages} onChange={setPage} />
+    </div>
+  );
+}
+
+export function HistoryTab({ playlistId }: { playlistId: string }) {
+  const { publications, failed } = usePlaylistPublications(playlistId);
+  const [page, setPage] = useState(1);
+
+  if (failed) {
+    return <p className="py-8 text-center text-sm text-zinc-400">โหลดประวัติไม่สำเร็จ</p>;
+  }
+  if (publications === null) {
+    return <p className="py-8 text-center text-sm text-zinc-400">กำลังโหลด...</p>;
+  }
+
+  const past = publications.filter(isPastPublication);
+  if (past.length === 0) {
+    return (
+      <p className="py-8 text-center text-sm text-zinc-400">ยังไม่มี publication ที่จบไปแล้ว</p>
+    );
+  }
+
+  // ล่าสุดก่อน
+  const sorted = [...past].sort(
+    (a, b) =>
+      new Date(b.updated_at ?? b.created_at ?? 0).getTime() -
+      new Date(a.updated_at ?? a.created_at ?? 0).getTime()
+  );
+  const { rows, totalPages, page: current } = paginate(sorted, page, PER_PAGE);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2">
+        {rows.map((publication) => (
+          <PublicationRow key={publication.id} publication={publication} />
+        ))}
+      </ul>
+      <PageNav page={current} totalPages={totalPages} onChange={setPage} />
     </div>
   );
 }
