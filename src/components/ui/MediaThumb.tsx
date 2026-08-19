@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import { isVideoUrl } from "@/lib/media-kind";
 import { LazyVideo } from "./LazyVideo";
@@ -22,7 +25,11 @@ export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className }
     (!kind && mimeType?.startsWith("video/")) ||
     (!kind && !mimeType && !!url && isVideoUrl(url));
 
-  if (!url) {
+  // Track image load failure so a dead thumbnail URL falls through to the no-URL
+  // placeholder below — reuses the existing branch, no second placeholder needed.
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (!url || imgFailed) {
     return (
       <div className={`${base} flex items-center justify-center text-[10px] font-medium uppercase text-zinc-400`}>
         {kind ?? "file"}
@@ -34,7 +41,14 @@ export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className }
   if (isVideo && thumbnailUrl) {
     return (
       <div className={`${base} relative`}>
-        <Image src={thumbnailUrl} alt={alt} fill sizes="128px" className="object-cover" />
+        <Image
+          src={thumbnailUrl}
+          alt={alt}
+          fill
+          sizes="128px"
+          className="object-cover"
+          onError={() => setImgFailed(true)}
+        />
       </div>
     );
   }
@@ -45,7 +59,14 @@ export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className }
   // image — a broken image degrades gracefully, where next/image on a video does not).
   return (
     <div className={`${base} relative`}>
-      <Image src={url} alt={alt} fill sizes="128px" className="object-cover" />
+      <Image
+        src={url}
+        alt={alt}
+        fill
+        sizes="128px"
+        className="object-cover"
+        onError={() => setImgFailed(true)}
+      />
     </div>
   );
 }

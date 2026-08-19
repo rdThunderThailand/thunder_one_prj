@@ -16,7 +16,7 @@ export type ListState = {
   perPage: number;
 };
 
-const DEFAULT_STATE: ListState = {
+export const DEFAULT_STATE: ListState = {
   tab: "all",
   filters: { query: "", status: "all", type: "all", campaignId: "all" },
   sort: DEFAULT_SORT,

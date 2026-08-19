@@ -14,49 +14,14 @@ import type { Campaign } from "@/types/domain";
 import { deletePlaylist, duplicatePlaylist, fetchPlaylists } from "../services/playlists-api";
 import { copyName, filterPlaylists, paginate, playlistCampaignId, sortPlaylists, summarize } from "../list-filtering";
 import { describeDeleteError } from "../status-display";
-import { readListState, writeListState } from "../list-url-state";
+import { readListState, writeListState, DEFAULT_STATE } from "../list-url-state";
 import type { OwnershipTab, Sort, SortKey } from "../list-filtering";
 import type { PlaylistListItem } from "../types";
 import { PlaylistsFilters, type FilterState } from "./PlaylistsFilters";
 import { PlaylistsTable, type RowAction } from "./PlaylistsTable";
 import { PlaylistSidePanel } from "./PlaylistSidePanel";
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</p>
-    </Card>
-  );
-}
-
-function TabButton({
-  active,
-  label,
-  count,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  count: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-        active
-          ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-          : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-      }`}
-    >
-      {label} ({count})
-    </button>
-  );
-}
+import { emptyCause, hasActiveFilters } from "../list-empty-state";
+import { ListEmpty, ListError, ListSkeleton, StatCard, SummarySkeleton, TabButton } from "./PlaylistsListStates";
 
 export function PlaylistsListPage({ currentUserId }: { currentUserId: string | null }) {
   const router = useRouter();
@@ -75,6 +40,7 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
   const [page, setPage] = useState(initial.page);
   const [perPage, setPerPage] = useState(initial.perPage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Keeps the URL in sync with the view — no setState here, only history, so this
   // effect stays outside the lint rule against synchronous setState in effects.
@@ -118,17 +84,27 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
     };
   }, []);
 
-  const reload = () =>
-    fetchPlaylists(true)
-      .then(setPlaylists)
-      .catch((err) => setError(classifyApiError(err, "โหลด playlists ไม่สำเร็จ")));
+  // Keeps current rows on failure — retry preserves filters/sort/tab/page since
+  // they live in component state reload() never touches.
+  const reload = () => {
+    setRefreshing(true);
+    return fetchPlaylists(true)
+      .then((data) => {
+        setPlaylists(data);
+        setError(null);
+        setRefreshing(false);
+      })
+      .catch((err) => {
+        setError(classifyApiError(err, "โหลด playlists ไม่สำเร็จ"));
+        setRefreshing(false);
+      });
+  };
 
   const campaignNames = useMemo(
     () => Object.fromEntries(campaigns.map((c) => [c.id, c.name])),
     [campaigns]
   );
 
-  const stats = useMemo(() => summarize(playlists ?? []), [playlists]);
   const mineCount = useMemo(
     () => (playlists ?? []).filter((p) => p.created_by?.id === currentUserId).length,
     [playlists, currentUserId]
@@ -144,10 +120,15 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
     [filtered, sort, campaignNames]
   );
 
-  // paginate() clamps the page itself, so narrowing a filter can never strand the view
-  // on a page that no longer exists — no reset effect needed.
+  // paginate() clamps the page itself, so narrowing a filter can never strand the view.
   const { rows, page: currentPage, totalPages } = paginate(sorted, page, perPage);
   const selected = filtered.find((p) => p.id === selectedId) ?? null;
+
+  // Clear Filters resets filters to defaults and page to 1.
+  const handleClearFilters = () => {
+    setFilters(DEFAULT_STATE.filters);
+    setPage(1);
+  };
 
   const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
     if (action === "edit") {
@@ -187,6 +168,9 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
     return <NoAccess />;
   }
 
+  // Stats are derived only when data is available — never show 0/0/0/0 during load.
+  const stats = playlists !== null ? summarize(playlists) : null;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -199,29 +183,28 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Playlists" value={stats.total} />
-        <StatCard label="Active" value={stats.active} />
-        <StatCard label="Inactive" value={stats.inactive} />
-        <StatCard label="Draft" value={stats.draft} />
-      </div>
-
-      {error && (
-        <Card className="p-4">
-          <p className="text-sm text-red-500">{error.message}</p>
-        </Card>
+      {/* Summary row: skeleton during initial load, real cards once data arrives */}
+      {stats === null ? (
+        <SummarySkeleton />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Total Playlists" value={stats.total} />
+          <StatCard label="Active" value={stats.active} />
+          <StatCard label="Inactive" value={stats.inactive} />
+          <StatCard label="Draft" value={stats.draft} />
+        </div>
       )}
 
       <div className={selected ? "grid gap-6 lg:grid-cols-[1fr_380px]" : ""}>
         <Card className="p-5">
           <div
             role="tablist"
-            className="mb-4 flex gap-1 border-b border-zinc-100 dark:border-zinc-800"
+            className="mb-4 flex items-center gap-1 border-b border-zinc-100 dark:border-zinc-800"
           >
             <TabButton
               active={tab === "all"}
               label="All Playlists"
-              count={stats.total}
+              count={playlists?.length ?? 0}
               onClick={() => setTab("all")}
             />
             <TabButton
@@ -230,6 +213,10 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
               count={mineCount}
               onClick={() => setTab("mine")}
             />
+            {/* กำลังรีเฟรช… shown only during a background reload, not initial load */}
+            {refreshing && playlists !== null && (
+              <span className="ml-auto text-xs text-zinc-400">กำลังรีเฟรช…</span>
+            )}
           </div>
 
           <PlaylistsFilters
@@ -243,10 +230,30 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
 
           {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
 
-          {playlists === null ? (
-            <p className="py-10 text-center text-sm text-zinc-400">กำลังโหลด...</p>
+          {/* Error card shown above the table when a background refresh failed */}
+          {error && playlists !== null && (
+            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
+              <p className="text-sm text-red-500">{error.message}</p>
+            </div>
+          )}
+
+          {playlists === null && !error ? (
+            // Initial load — no data yet, no error: show skeletons
+            <ListSkeleton />
+          ) : playlists === null && error ? (
+            // Initial load failed — no data at all: show full-page error with Retry, no spinner
+            <ListError message={error.message} onRetry={reload} retrying={refreshing} />
           ) : rows.length === 0 ? (
-            <p className="py-10 text-center text-sm text-zinc-400">ไม่พบ playlist</p>
+            // Data loaded but this view is empty: show cause-specific message
+            <ListEmpty
+              cause={emptyCause({
+                totalCount: playlists!.length,
+                mineCount,
+                tab,
+                hasActiveFilters: hasActiveFilters(filters),
+              })}
+              onClearFilters={handleClearFilters}
+            />
           ) : (
             <>
               <PlaylistsTable

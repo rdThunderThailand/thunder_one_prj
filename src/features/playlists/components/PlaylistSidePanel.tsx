@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { XIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
@@ -37,7 +38,9 @@ export function PlaylistSidePanel({
   >(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  useEffect(() => {
+  // Extracted into a named function so the error branch can call it again for retry.
+  // The result object is keyed by playlist.id, so the id guard at line 57 stays intact.
+  const load = () => {
     let alive = true;
     fetchPlaylist(playlist.id)
       .then((detail) => alive && setResult({ id: playlist.id, detail }))
@@ -52,6 +55,11 @@ export function PlaylistSidePanel({
     return () => {
       alive = false;
     };
+  };
+
+  useEffect(() => {
+    return load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playlist.id]);
 
   const current = result?.id === playlist.id ? result : null;
@@ -94,10 +102,31 @@ export function PlaylistSidePanel({
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <div>
+          <p className="text-sm text-red-500">{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setResult(null);
+              load();
+            }}
+            className="mt-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            ลองใหม่
+          </button>
+        </div>
+      )}
 
       {!detail && !error ? (
-        <p className="py-8 text-center text-sm text-zinc-400">กำลังโหลด...</p>
+        // Loading skeleton sized like the Details tab
+        <div className="space-y-3 py-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
       ) : (
         detail && (
           <Tabs
