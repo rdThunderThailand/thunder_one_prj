@@ -1,66 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import type { ReactNode } from "react";
-import {
-  BroadcastIcon,
-  ChartIcon,
-  ChevronDownIcon,
-  GridIcon,
-  LayoutIcon,
-  LightningIcon,
-  MonitorIcon,
-  SettingsIcon,
-} from "@/components/ui/icons";
+import { APPS, resolveActiveApp } from "@/config/apps";
+import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
+import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
+import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
+import { ChevronDownIcon, LayoutIcon, LightningIcon } from "@/components/ui/icons";
 
-interface NavItem {
-  label: string;
-  href?: string; // omit for routes not built yet — renders inert
+// Media Workspace has one nav for the whole app; Asset Intelligence has one nav
+// per persona, resolved from the route (see config/nav/asset-intelligence.tsx).
+function resolveNavConfig(appId: string, pathname: string): NavConfig {
+  if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
+  return mediaWorkspaceNav;
 }
-
-interface NavSection {
-  label: string;
-  icon: ReactNode;
-  items: NavItem[];
-}
-
-const overviewItem: NavItem = { label: "Overview", href: "/" };
-
-const sections: NavSection[] = [
-  {
-    label: "Publishing",
-    icon: <BroadcastIcon />,
-    items: [
-      { label: "Now & Next", href: "/publications" },
-      { label: "Calendar" },
-      { label: "Campaigns" },
-      { label: "Playlists", href: "/playlists" },
-    ],
-  },
-  {
-    label: "Channels",
-    icon: <GridIcon />,
-    items: [
-      { label: "All Channels", href: "/channels" },
-      { label: "DOOH" },
-      { label: "In-Store" },
-      { label: "Online" },
-      { label: "Social" },
-      { label: "Other" },
-    ],
-  },
-  {
-    label: "Monitoring",
-    icon: <MonitorIcon />,
-    items: [{ label: "Live View" }, { label: "Alerts" }, { label: "System Health" }],
-  },
-];
-
-const standaloneLinks: NavItem[] = [{ label: "Reports & Analytics" }, { label: "Settings" }];
-
-const standaloneIcons: ReactNode[] = [<ChartIcon key="reports" />, <SettingsIcon key="settings" />];
 
 function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
   const baseClasses = "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-semibold transition-colors";
@@ -136,8 +90,59 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   );
 }
 
+function AppSwitcher({ activeAppId }: { activeAppId: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const activeApp = APPS.find((app) => app.id === activeAppId) ?? APPS[0];
+
+  return (
+    <div className="relative mx-3 mb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500"
+      >
+        <span className="flex items-center gap-2">
+          {activeApp.icon}
+          {activeApp.label}
+        </span>
+        <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-white/10 bg-[#0b1220] shadow-lg"
+        >
+          {APPS.map((app) => (
+            <button
+              key={app.id}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                router.push(app.basePath);
+              }}
+              className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors ${app.id === activeApp.id
+                  ? "bg-white/10 font-semibold text-white"
+                  : "text-slate-300 hover:bg-white/5 hover:text-white"
+                }`}
+            >
+              {app.icon}
+              {app.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
+  const activeApp = resolveActiveApp(pathname);
+  const nav = resolveNavConfig(activeApp.id, pathname);
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col bg-[#0b1220]">
@@ -147,36 +152,30 @@ export function Sidebar() {
         </span>
         <div className="leading-tight">
           <p className="text-sm font-bold text-white">ThunderOne</p>
-          <p className="text-[10px] uppercase tracking-wide text-slate-400">Communication OS</p>
+          <p className="text-[10px] uppercase tracking-wide text-slate-400">{activeApp.tagline}</p>
         </div>
       </div>
 
-      <button className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500">
-        <span className="flex items-center gap-2">
-          <GridIcon className="h-4 w-4" />
-          Media Workspace
-        </span>
-        <ChevronDownIcon className="h-4 w-4" />
-      </button>
+      <AppSwitcher activeAppId={activeApp.id} />
 
       <nav className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-3 pb-4">
         <div>
           <div className="flex items-center gap-2.5 rounded-lg bg-white/10 px-2.5 py-2 text-sm font-semibold text-white">
-            <GridIcon className="h-4 w-4 shrink-0" />
-            <Link href={overviewItem.href!} className="flex-1">
-              {overviewItem.label}
+            {nav.overviewItem.icon}
+            <Link href={nav.overviewItem.href!} className="flex-1">
+              {nav.overviewItem.label}
             </Link>
           </div>
         </div>
 
-        {sections.map((section) => (
+        {nav.sections.map((section) => (
           <SidebarSection key={section.label} section={section} pathname={pathname} />
         ))}
 
         <div className="space-y-0.5 border-t border-white/10 pt-3">
-          {standaloneLinks.map((item, index) => (
+          {nav.standaloneLinks.map((item, index) => (
             <div key={item.label} className="flex items-center gap-2.5">
-              <span className="pl-2.5 text-slate-400">{standaloneIcons[index]}</span>
+              <span className="pl-2.5 text-slate-400">{nav.standaloneIcons[index]}</span>
               <TopLevelLink item={item} active={!!item.href && pathname === item.href} />
             </div>
           ))}
