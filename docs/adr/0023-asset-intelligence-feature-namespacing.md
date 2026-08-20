@@ -1,5 +1,7 @@
 # 0023 — Asset Intelligence feature folders use an `ai-` prefix, not a renamed entity
 
+**Status: the `ai-` prefix mechanism below is superseded by `docs/adr/0034-feature-folders-nest-under-app.md`** (2026-08-20) — folder collisions are now avoided by nesting under `src/features/asset-intelligence/*` instead of a prefix. This ADR's actual subject — why the `Asset` entity itself isn't renamed to `Equipment` — is unaffected and still stands.
+
 ## Context
 
 Asset Intelligence's core entity is called `Asset`: an organization-wide physical asset (laptop,
