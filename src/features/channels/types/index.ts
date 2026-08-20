@@ -8,7 +8,7 @@ export type ChannelOrientation = "landscape" | "portrait";
 export interface ChannelDeviceCandidate {
   id: string;
   name: string;
-  code: string;
+  code: string | null;
   health: MediaDeviceHealth;
   last_heartbeat_at: string | null;
   orientation: ChannelOrientation | null;
@@ -17,7 +17,15 @@ export interface ChannelDeviceCandidate {
 
 /** A Physical Device candidate read from the existing `/media/screens` endpoint.
  * It is intentionally not a Channel row. */
-export type ChannelDevice = ChannelDeviceCandidate;
+export interface ChannelDevice {
+  id: string;
+  name: string;
+  code: string;
+  health: MediaDeviceHealth;
+  last_heartbeat_at: string | null;
+  orientation: ChannelOrientation | null;
+  resolution: string | null;
+}
 
 export interface ChannelTypeOption {
   id: string;

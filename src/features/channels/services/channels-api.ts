@@ -1,6 +1,7 @@
 import type {
   ChannelCategory,
   ChannelDetail,
+  ChannelDevice,
   ChannelDeviceCandidate,
   ChannelDraftInput,
   ChannelLifecycle,
@@ -10,6 +11,7 @@ import type {
   ChannelReferenceData,
   ChannelTypeOption,
 } from "../types/index.ts";
+import { deriveChannelHealth } from "../channel-logic.ts";
 
 type ChannelRequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -64,9 +66,13 @@ function unwrapData(data: unknown): unknown {
   return isRecord(data) && "data" in data ? data.data : data;
 }
 
+function isPositiveSafeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+}
+
 function assertExpectedRevision(expectedRevision: number): void {
-  if (!Number.isInteger(expectedRevision)) {
-    throw new TypeError("Channel expected_revision must be an integer");
+  if (!isPositiveSafeInteger(expectedRevision)) {
+    throw new TypeError("Channel expected_revision must be a positive safe integer");
   }
 }
 
@@ -95,7 +101,7 @@ function parseChannelLocation(value: unknown): ChannelLocationOption {
   return { id: value.id, name: value.name };
 }
 
-function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
+function parseChannelDevice(value: unknown): ChannelDevice {
   if (
     !isRecord(value) ||
     !isString(value.id) ||
@@ -106,7 +112,7 @@ function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
     !(value.orientation === null || isOneOf(value.orientation, ["landscape", "portrait"])) ||
     !isNullableString(value.resolution)
   ) {
-    throw new TypeError("Channel device candidate data is malformed");
+    throw new TypeError("Channel device data is malformed");
   }
   return {
     id: value.id,
@@ -116,6 +122,31 @@ function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
     last_heartbeat_at: value.last_heartbeat_at,
     orientation: value.orientation,
     resolution: value.resolution,
+  };
+}
+
+function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
+  if (
+    !isRecord(value) ||
+    !isString(value.id) ||
+    !isString(value.name) ||
+    !(value.status_level === undefined || isOneOf(value.status_level, ["online", "warning", "offline"])) ||
+    !(
+      value.last_heartbeat_at === undefined ||
+      value.last_heartbeat_at === null ||
+      isTimestamp(value.last_heartbeat_at)
+    )
+  ) {
+    throw new TypeError("Channel device candidate data is malformed");
+  }
+  return {
+    id: value.id,
+    name: value.name,
+    code: null,
+    health: value.status_level ?? "offline",
+    last_heartbeat_at: value.last_heartbeat_at ?? null,
+    orientation: null,
+    resolution: null,
   };
 }
 
@@ -137,33 +168,42 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !(value.expected_orientation === null || isOneOf(value.expected_orientation, ["landscape", "portrait"])) ||
     !isNullableString(value.expected_resolution) ||
     !(value.default_playlist === null || isRecord(value.default_playlist)) ||
-    !Number.isInteger(value.revision) ||
+    !isPositiveSafeInteger(value.revision) ||
     !isTimestamp(value.updated_at)
   ) {
     throw new TypeError("Channel data is malformed");
   }
 
   const channelType = value.channel_type === null ? null : parseChannelType(value.channel_type);
+  if (channelType !== null && channelType.channel_category !== value.category) {
+    throw new TypeError("Channel type category does not match Channel category");
+  }
   const location = value.location === null ? null : parseChannelLocation(value.location);
   const defaultPlaylist =
     value.default_playlist === null
       ? null
       : parseChannelLocation(value.default_playlist);
 
+  const devices = value.devices.map(parseChannelDevice);
+  const health = deriveChannelHealth(devices.map((device) => device.health));
+  if (value.health !== health) {
+    throw new TypeError("Channel health does not match device health");
+  }
+
   return {
     id: value.id,
     name: value.name,
     description: value.description,
     lifecycle: value.lifecycle,
-    health: value.health,
+    health,
     category: value.category,
     channel_type: channelType,
     location,
-    devices: value.devices.map(parseChannelDeviceCandidate),
+    devices,
     expected_orientation: value.expected_orientation,
     expected_resolution: value.expected_resolution,
     default_playlist: defaultPlaylist,
-    revision: value.revision as number,
+    revision: value.revision,
     updated_at: value.updated_at,
   };
 }
@@ -202,6 +242,40 @@ export function buildUpdateChannelBody(
 ): UpdateChannelBody {
   assertExpectedRevision(expectedRevision);
   return { ...buildCreateChannelBody(draft), expected_revision: expectedRevision };
+}
+
+export function buildFetchChannelsRequest(
+  query: ChannelListQuery = {},
+): ChannelRequestDescriptor {
+  return { method: "GET", path: buildChannelListPath(query) };
+}
+
+export function buildFetchChannelRequest(id: string): ChannelRequestDescriptor {
+  return { method: "GET", path: `/media/channels/${id}` };
+}
+
+export function buildChannelReferenceDataRequest(): ChannelRequestDescriptor {
+  return { method: "GET", path: "/media/channels/reference-data" };
+}
+
+export function buildCreateChannelRequest(draft: ChannelDraftInput): ChannelRequestDescriptor {
+  return {
+    method: "POST",
+    path: "/media/channels",
+    body: buildCreateChannelBody(draft),
+  };
+}
+
+export function buildUpdateChannelRequest(
+  id: string,
+  draft: ChannelDraftInput,
+  expectedRevision: number,
+): ChannelRequestDescriptor {
+  return {
+    method: "PATCH",
+    path: `/media/channels/${id}`,
+    body: buildUpdateChannelBody(draft, expectedRevision),
+  };
 }
 
 export function buildDeleteDraftChannelRequest(
@@ -297,22 +371,19 @@ export function parseChannelDeviceCandidates(data: unknown): ChannelDeviceCandid
 export async function fetchChannels(
   query: ChannelListQuery = {},
 ): Promise<ChannelListItem[]> {
-  const data = await requestChannelApi<unknown>({
-    method: "GET",
-    path: buildChannelListPath(query),
-  });
+  const data = await requestChannelApi<unknown>(buildFetchChannelsRequest(query));
   return parseChannelList(data);
 }
 
 export async function fetchChannel(id: string): Promise<ChannelDetail> {
   return parseChannelDetail(
-    await requestChannelApi<unknown>({ method: "GET", path: `/media/channels/${id}` }),
+    await requestChannelApi<unknown>(buildFetchChannelRequest(id)),
   );
 }
 
 export async function fetchChannelReferenceData(): Promise<ChannelReferenceData> {
   return parseChannelReferenceData(
-    await requestChannelApi<unknown>({ method: "GET", path: "/media/channels/reference-data" }),
+    await requestChannelApi<unknown>(buildChannelReferenceDataRequest()),
   );
 }
 
@@ -325,11 +396,7 @@ export async function fetchChannelDeviceCandidates(): Promise<ChannelDeviceCandi
 
 export async function createChannel(draft: ChannelDraftInput): Promise<ChannelDetail> {
   return parseChannelDetail(
-    await requestChannelApi<unknown>({
-      method: "POST",
-      path: "/media/channels",
-      body: buildCreateChannelBody(draft),
-    }),
+    await requestChannelApi<unknown>(buildCreateChannelRequest(draft)),
   );
 }
 
@@ -339,11 +406,7 @@ export async function updateChannel(
   expectedRevision: number,
 ): Promise<ChannelDetail> {
   return parseChannelDetail(
-    await requestChannelApi<unknown>({
-      method: "PATCH",
-      path: `/media/channels/${id}`,
-      body: buildUpdateChannelBody(draft, expectedRevision),
-    }),
+    await requestChannelApi<unknown>(buildUpdateChannelRequest(id, draft, expectedRevision)),
   );
 }
 
