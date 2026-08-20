@@ -4,10 +4,14 @@ import {
   deriveChannelHealth,
   filterChannels,
   formatChannelLastSeen,
+  getDeviceCompatibility,
+  mergeChannelDeviceCandidates,
+  mergeChannelTypeOptions,
+  shouldConfirmResolutionMismatch,
   summarizeChannels,
   validateChannelDraft,
-} from "./index.ts";
-import type { ChannelListItem } from "./index.ts";
+} from "./domain.ts";
+import type { ChannelListItem } from "./domain.ts";
 
 const fixtures: ChannelListItem[] = [
   {
@@ -169,8 +173,141 @@ assert.deepEqual(filterChannels(fixtures, { ...allFilters, health: "unknown" }).
 ]);
 
 assert.deepEqual(
-  validateChannelDraft({ name: "", category: "in_store", channel_type_id: "", device_ids: [] }),
+  validateChannelDraft({
+    name: "",
+    category: "in_store",
+    channel_type_id: "",
+    device_ids: [],
+    confirm_mismatch: false,
+  }),
   { name: "กรุณาระบุชื่อ Channel", channel_type_id: "กรุณาเลือก Channel Type" },
+);
+
+const partialProfileDevice = {
+  id: "device-partial",
+  name: "Partial Profile Screen",
+  code: null,
+  health: "online" as const,
+  last_heartbeat_at: null,
+  orientation: "portrait" as const,
+  resolution: null,
+};
+
+assert.equal(
+  getDeviceCompatibility(partialProfileDevice, "landscape", "1920x1080"),
+  "orientation-mismatch",
+);
+assert.equal(
+  getDeviceCompatibility(
+    { ...partialProfileDevice, orientation: null, resolution: "1280x720" },
+    "landscape",
+    "1920x1080",
+  ),
+  "resolution-mismatch",
+);
+assert.equal(
+  getDeviceCompatibility(
+    { ...partialProfileDevice, resolution: "1280x720" },
+    "landscape",
+    "1920x1080",
+  ),
+  "orientation-mismatch",
+);
+assert.equal(
+  getDeviceCompatibility(
+    { ...partialProfileDevice, orientation: "landscape", resolution: null },
+    "landscape",
+    "1920x1080",
+  ),
+  "profile-unavailable",
+);
+assert.equal(
+  getDeviceCompatibility(
+    { ...partialProfileDevice, orientation: "landscape", resolution: "1920x1080" },
+    "landscape",
+    "1920x1080",
+  ),
+  "compatible",
+);
+assert.equal(getDeviceCompatibility(partialProfileDevice, null, null), "not-checked");
+assert.equal(
+  shouldConfirmResolutionMismatch(
+    [{ ...partialProfileDevice, orientation: null, resolution: "1280x720" }],
+    "1920x1080",
+    new Set(["device-partial"]),
+  ),
+  true,
+);
+assert.equal(
+  shouldConfirmResolutionMismatch(
+    [{ ...partialProfileDevice, orientation: null, resolution: "1280x720" }],
+    "1920x1080",
+    new Set(),
+  ),
+  false,
+);
+assert.equal(
+  shouldConfirmResolutionMismatch(
+    [{ ...partialProfileDevice, orientation: "landscape", resolution: "1920x1080" }],
+    "1920x1080",
+    new Set(),
+  ),
+  false,
+);
+
+assert.deepEqual(
+  mergeChannelDeviceCandidates(
+    [
+      {
+        id: "device-assigned",
+        name: "Live Screen Name",
+        code: null,
+        health: "warning",
+        last_heartbeat_at: "2026-08-20T03:00:00.000Z",
+        orientation: null,
+        resolution: null,
+      },
+    ],
+    [
+      {
+        id: "device-assigned",
+        name: "Assigned Screen Name",
+        code: "CW-01",
+        health: "offline",
+        last_heartbeat_at: "2026-08-19T03:00:00.000Z",
+        orientation: "landscape",
+        resolution: "1920x1080",
+      },
+    ],
+  ),
+  [
+    {
+      id: "device-assigned",
+      name: "Live Screen Name",
+      code: "CW-01",
+      health: "warning",
+      last_heartbeat_at: "2026-08-20T03:00:00.000Z",
+      orientation: "landscape",
+      resolution: "1920x1080",
+    },
+  ],
+);
+
+const currentInactiveType = {
+  id: "type-current-inactive",
+  code: "legacy_menu_board",
+  name: "Legacy Menu Board",
+  channel_category: "in_store" as const,
+};
+assert.deepEqual(mergeChannelTypeOptions([], currentInactiveType), [
+  { ...currentInactiveType, is_active: false },
+]);
+assert.deepEqual(
+  mergeChannelTypeOptions(
+    [{ ...currentInactiveType, name: "Current Reference Name", is_active: false }],
+    currentInactiveType,
+  ),
+  [{ ...currentInactiveType, name: "Current Reference Name", is_active: false }],
 );
 
 assert.equal(formatChannelLastSeen(null), "Never connected");

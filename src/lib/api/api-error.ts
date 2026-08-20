@@ -103,7 +103,7 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
   }
 
   if (err instanceof ApiError && err.status === 404) {
-    return { kind: "not-found", message: "ไม่พบ draft นี้ อาจถูกลบไปแล้วหรือลิงก์ไม่ถูกต้อง" };
+    return { kind: "not-found", message: "ไม่พบเนื้อหานี้ อาจถูกลบไปแล้วหรือลิงก์ไม่ถูกต้อง" };
   }
 
   // Without a status we can't tell a rejection from an outage, and guessing

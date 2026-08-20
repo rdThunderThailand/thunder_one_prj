@@ -34,6 +34,7 @@ const draft: ChannelDraftInput = {
   expected_orientation: "landscape",
   expected_resolution: "1920x1080",
   default_playlist_id: "playlist-kfc-wednesday",
+  confirm_mismatch: true,
 };
 
 // A wrong query key or order would make filtering silently diverge from the future API contract.
@@ -65,6 +66,7 @@ assert.deepEqual(buildCreateChannelBody(draft), {
   expected_orientation: "landscape",
   expected_resolution: "1920x1080",
   default_playlist_id: "playlist-kfc-wednesday",
+  confirm_mismatch: true,
 });
 assert.deepEqual(buildCreateChannelRequest(draft), {
   method: "POST",
@@ -79,11 +81,12 @@ assert.deepEqual(buildCreateChannelRequest(draft), {
     expected_orientation: "landscape",
     expected_resolution: "1920x1080",
     default_playlist_id: "playlist-kfc-wednesday",
+    confirm_mismatch: true,
   },
 });
 
 // An update must retain every normalized field and the optimistic-lock revision.
-assert.deepEqual(buildUpdateChannelBody(draft, 7), {
+assert.deepEqual(buildUpdateChannelBody(draft, 7, false), {
   name: "Central World Menu Boards",
   description: "Menu boards for in-store promotions",
   channel_category: "in_store",
@@ -93,9 +96,11 @@ assert.deepEqual(buildUpdateChannelBody(draft, 7), {
   expected_orientation: "landscape",
   expected_resolution: "1920x1080",
   default_playlist_id: "playlist-kfc-wednesday",
+  confirm_mismatch: true,
   expected_revision: 7,
+  overwrite: false,
 });
-assert.deepEqual(buildUpdateChannelRequest("channel-1", draft, 7), {
+assert.deepEqual(buildUpdateChannelRequest("channel-1", draft, 7, false), {
   method: "PATCH",
   path: "/media/channels/channel-1",
   body: {
@@ -108,15 +113,27 @@ assert.deepEqual(buildUpdateChannelRequest("channel-1", draft, 7), {
     expected_orientation: "landscape",
     expected_resolution: "1920x1080",
     default_playlist_id: "playlist-kfc-wednesday",
+    confirm_mismatch: true,
     expected_revision: 7,
+    overwrite: false,
   },
 });
+assert.equal(buildUpdateChannelBody(draft, 8, true).overwrite, true);
+assert.equal(buildUpdateChannelRequest("channel-1", draft, 8, true).body &&
+  (buildUpdateChannelRequest("channel-1", draft, 8, true).body as { overwrite: boolean }).overwrite, true);
 
 // Optional editor fields normalize to null, so updates can deliberately clear them.
 assert.deepEqual(
   buildUpdateChannelBody(
-    { name: "Draft kiosk", category: "dooh", channel_type_id: "type-kiosk", device_ids: [] },
+    {
+      name: "Draft kiosk",
+      category: "dooh",
+      channel_type_id: "type-kiosk",
+      device_ids: [],
+      confirm_mismatch: false,
+    },
     3,
+    false,
   ),
   {
     name: "Draft kiosk",
@@ -128,7 +145,9 @@ assert.deepEqual(
     expected_orientation: null,
     expected_resolution: null,
     default_playlist_id: null,
+    confirm_mismatch: false,
     expected_revision: 3,
+    overwrite: false,
   },
 );
 
@@ -198,6 +217,8 @@ assert.deepEqual(parseChannelDeviceCandidates({
     name: "Entrance Screen",
     status_level: "online",
     last_heartbeat_at: "2026-08-20T00:00:00.000Z",
+    orientation: "landscape",
+    resolution: "1920x1080",
   }],
 }), [{
   id: "screen-1",
@@ -205,8 +226,8 @@ assert.deepEqual(parseChannelDeviceCandidates({
   code: null,
   health: "online",
   last_heartbeat_at: "2026-08-20T00:00:00.000Z",
-  orientation: null,
-  resolution: null,
+  orientation: "landscape",
+  resolution: "1920x1080",
 }]);
 assert.deepEqual(parseChannelDeviceCandidates({ screens: [{ id: "screen-2", name: "Unknown Screen" }] }), [{
   id: "screen-2",
@@ -232,15 +253,67 @@ assert.throws(() => parseChannelDetail({
   ...channel,
   health: null,
 }));
+assert.throws(() => parseChannelDetail({
+  ...channel,
+  expected_resolution: "full-hd",
+}));
+assert.throws(() => parseChannelDetail({
+  ...channel,
+  expected_resolution: "1600x900",
+}));
+assert.throws(() => parseChannelDetail({
+  ...channel,
+  devices: [{ ...channel.devices[0], resolution: "full-hd" }],
+}));
+assert.equal(
+  parseChannelDetail({
+    ...channel,
+    devices: [{ ...channel.devices[0], resolution: "1600x900" }],
+  }).devices[0]?.resolution,
+  "1600x900",
+);
 assert.throws(() => parseChannelReferenceData({ channel_types: [], locations: "bad" }));
 assert.throws(() => parseChannelReferenceData({
   channel_types: [{ id: "type-1", code: "broken", name: "Broken", channel_category: "other" }],
   locations: [],
 }));
 assert.throws(() => parseChannelDeviceCandidates([{ id: "screen-1", name: "Bad status", status_level: "unknown" }]));
-assert.throws(() => buildUpdateChannelBody(draft, 1.5));
-assert.throws(() => buildUpdateChannelBody(draft, Number.NaN));
-assert.throws(() => buildUpdateChannelBody(draft, Number.MAX_SAFE_INTEGER + 1));
+assert.throws(() => parseChannelDeviceCandidates([{ id: "screen-1", name: "Bad orientation", orientation: "square" }]));
+assert.throws(() => parseChannelDeviceCandidates([{ id: "screen-1", name: "Bad resolution", resolution: "full-hd" }]));
+assert.deepEqual(
+  parseChannelReferenceData({
+    channel_types: [
+      {
+        id: "type-retired",
+        code: "retired",
+        name: "Retired Menu Board",
+        channel_category: "in_store",
+        is_active: false,
+      },
+    ],
+    locations: [],
+  }).channel_types[0],
+  {
+    id: "type-retired",
+    code: "retired",
+    name: "Retired Menu Board",
+    channel_category: "in_store",
+    is_active: false,
+  },
+);
+assert.throws(() => parseChannelReferenceData({
+  channel_types: [{
+    id: "type-1",
+    code: "bad-active",
+    name: "Bad Active",
+    channel_category: "dooh",
+    is_active: "yes",
+  }],
+  locations: [],
+}));
+assert.throws(() => buildUpdateChannelBody(draft, 1.5, false));
+assert.throws(() => buildUpdateChannelBody(draft, Number.NaN, false));
+assert.throws(() => buildUpdateChannelBody(draft, Number.MAX_SAFE_INTEGER + 1, false));
 assert.throws(() => buildActivateChannelRequest("channel-1", 1.5));
 assert.throws(() => buildDeleteDraftChannelRequest("channel-1", 0));
 assert.throws(() => buildDeactivateChannelRequest("channel-1", -1));

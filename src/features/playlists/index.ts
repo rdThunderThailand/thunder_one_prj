@@ -9,4 +9,10 @@ export { fetchPlaylist, fetchPlaylists } from "./services/playlists-api";
 export { decodeMetadata, resolveCoverAssetId } from "./metadata";
 export { playlistDisplayStatus, statusBadge } from "./status-display";
 export { formatDuration, totalDurationSeconds } from "./duration";
+export {
+  RESOLUTIONS,
+  aspectRatio,
+  parseResolution,
+  resolutionLabel,
+} from "./output-profile";
 export type * from "./types";

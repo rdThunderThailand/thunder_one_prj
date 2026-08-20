@@ -32,6 +32,7 @@ export interface ChannelTypeOption {
   code: string;
   name: string;
   channel_category: ChannelCategory;
+  is_active?: boolean;
 }
 
 export interface ChannelLocationOption {
@@ -77,6 +78,7 @@ export interface ChannelDraftInput {
   expected_orientation?: ChannelOrientation | null;
   expected_resolution?: string | null;
   default_playlist_id?: string | null;
+  confirm_mismatch: boolean;
 }
 
 export interface ChannelFilters {

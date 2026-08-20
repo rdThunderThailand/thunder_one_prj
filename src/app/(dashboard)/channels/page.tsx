@@ -1,4 +1,5 @@
-// Placeholder route — wires to the "channels" feature once it's implemented.
+import { ChannelsListPage } from "@/features/channels";
+
 export default function ChannelsPage() {
-  return <h1 className="text-2xl font-semibold">Channels</h1>;
+  return <ChannelsListPage />;
 }

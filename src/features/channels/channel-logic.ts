@@ -1,10 +1,99 @@
 import type { MediaDeviceHealth } from "../../types/domain.ts";
 import type {
+  ChannelDevice,
+  ChannelDeviceCandidate,
   ChannelDraftInput,
   ChannelFilters,
   ChannelHealth,
   ChannelListItem,
+  ChannelOrientation,
+  ChannelTypeOption,
 } from "./types/index.ts";
+
+export type DeviceCompatibility =
+  | "compatible"
+  | "orientation-mismatch"
+  | "resolution-mismatch"
+  | "profile-unavailable"
+  | "not-checked";
+
+export function getDeviceCompatibility(
+  device: ChannelDeviceCandidate,
+  expectedOrientation: ChannelOrientation | null,
+  expectedResolution: string | null,
+): DeviceCompatibility {
+  if (!expectedOrientation && !expectedResolution) return "not-checked";
+  if (
+    expectedOrientation &&
+    device.orientation !== null &&
+    device.orientation !== expectedOrientation
+  ) {
+    return "orientation-mismatch";
+  }
+  if (
+    expectedResolution &&
+    device.resolution !== null &&
+    device.resolution !== expectedResolution
+  ) {
+    return "resolution-mismatch";
+  }
+  if (
+    (expectedOrientation && device.orientation === null) ||
+    (expectedResolution && device.resolution === null)
+  ) {
+    return "profile-unavailable";
+  }
+  return "compatible";
+}
+
+export function shouldConfirmResolutionMismatch(
+  selectedDevices: readonly ChannelDeviceCandidate[],
+  expectedResolution: string | null,
+  confirmedDeviceIds: ReadonlySet<string>,
+): boolean {
+  if (!expectedResolution) return false;
+  const mismatches = selectedDevices.filter(
+    (device) => device.resolution !== null && device.resolution !== expectedResolution,
+  );
+  return (
+    mismatches.length > 0 &&
+    mismatches.every((device) => confirmedDeviceIds.has(device.id))
+  );
+}
+
+export function mergeChannelDeviceCandidates(
+  candidates: readonly ChannelDeviceCandidate[],
+  assignedDevices: readonly ChannelDevice[],
+): ChannelDeviceCandidate[] {
+  const assignedById = new Map(assignedDevices.map((device) => [device.id, device]));
+  const candidateIds = new Set(candidates.map((device) => device.id));
+  const merged = candidates.map((candidate) => {
+    const assigned = assignedById.get(candidate.id);
+    if (!assigned) return candidate;
+    return {
+      ...candidate,
+      code: assigned.code ?? candidate.code,
+      orientation: assigned.orientation ?? candidate.orientation,
+      resolution: assigned.resolution ?? candidate.resolution,
+    };
+  });
+  return [
+    ...merged,
+    ...assignedDevices
+      .filter((device) => !candidateIds.has(device.id))
+      .map((device) => ({ ...device })),
+  ];
+}
+
+export function mergeChannelTypeOptions(
+  referenceTypes: readonly ChannelTypeOption[],
+  currentType: ChannelTypeOption | null,
+): ChannelTypeOption[] {
+  if (!currentType || referenceTypes.some((option) => option.id === currentType.id)) {
+    return [...referenceTypes];
+  }
+  return [...referenceTypes, { ...currentType, is_active: false }];
+}
 
 export function deriveChannelHealth(healths: readonly MediaDeviceHealth[]): ChannelHealth {
   if (healths.length === 0) return null;

@@ -3,14 +3,10 @@
 // here. Thunder_Core's playlist routes enforce the same lists on the wire; see
 // docs/adr/0032-playlist-output-profile.md for why that duplication is deliberate.
 //
-// No imports: this file is pulled in by `node *.check.mts`, which has no path-alias resolution.
+// Relative import keeps this file compatible with the native Node runnable checks.
+import { DISPLAY_RESOLUTIONS } from "../../lib/display-resolution.ts";
 
-export const RESOLUTIONS = [
-  { value: "1920x1080", width: 1920, height: 1080 },
-  { value: "1080x1920", width: 1080, height: 1920 },
-  { value: "3840x2160", width: 3840, height: 2160 },
-  { value: "1280x720", width: 1280, height: 720 },
-] as const;
+export const RESOLUTIONS = DISPLAY_RESOLUTIONS;
 
 export const FRAME_RATES = [24, 25, 30, 60] as const;
 

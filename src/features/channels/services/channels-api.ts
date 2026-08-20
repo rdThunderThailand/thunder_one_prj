@@ -12,6 +12,7 @@ import type {
   ChannelTypeOption,
 } from "../types/index.ts";
 import { deriveChannelHealth } from "../channel-logic.ts";
+import { isDisplayResolution } from "../../../lib/display-resolution.ts";
 
 type ChannelRequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -36,10 +37,12 @@ export interface CreateChannelBody {
   expected_orientation: ChannelOrientation | null;
   expected_resolution: string | null;
   default_playlist_id: string | null;
+  confirm_mismatch: boolean;
 }
 
 export interface UpdateChannelBody extends CreateChannelBody {
   expected_revision: number;
+  overwrite: boolean;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -52,6 +55,15 @@ function isString(value: unknown): value is string {
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || isString(value);
+}
+
+function isResolution(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const match = /^(\d+)x(\d+)$/.exec(value);
+  if (!match) return false;
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  return Number.isSafeInteger(width) && width > 0 && Number.isSafeInteger(height) && height > 0;
 }
 
 function isTimestamp(value: unknown): value is string {
@@ -82,16 +94,19 @@ function parseChannelType(value: unknown): ChannelTypeOption {
     !isString(value.id) ||
     !isString(value.code) ||
     !isString(value.name) ||
-    !isOneOf(value.channel_category, ["dooh", "in_store", "online", "social"])
+    !isOneOf(value.channel_category, ["dooh", "in_store", "online", "social"]) ||
+    !(value.is_active === undefined || typeof value.is_active === "boolean")
   ) {
     throw new TypeError("Channel type data is malformed");
   }
-  return {
+  const channelType: ChannelTypeOption = {
     id: value.id,
     code: value.code,
     name: value.name,
     channel_category: value.channel_category,
   };
+  if (value.is_active !== undefined) channelType.is_active = value.is_active;
+  return channelType;
 }
 
 function parseChannelLocation(value: unknown): ChannelLocationOption {
@@ -110,7 +125,7 @@ function parseChannelDevice(value: unknown): ChannelDevice {
     !isOneOf(value.health, ["online", "warning", "offline"]) ||
     !(value.last_heartbeat_at === null || isTimestamp(value.last_heartbeat_at)) ||
     !(value.orientation === null || isOneOf(value.orientation, ["landscape", "portrait"])) ||
-    !isNullableString(value.resolution)
+    !(value.resolution === null || isResolution(value.resolution))
   ) {
     throw new TypeError("Channel device data is malformed");
   }
@@ -135,6 +150,16 @@ function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
       value.last_heartbeat_at === undefined ||
       value.last_heartbeat_at === null ||
       isTimestamp(value.last_heartbeat_at)
+    ) ||
+    !(
+      value.orientation === undefined ||
+      value.orientation === null ||
+      isOneOf(value.orientation, ["landscape", "portrait"])
+    ) ||
+    !(
+      value.resolution === undefined ||
+      value.resolution === null ||
+      isResolution(value.resolution)
     )
   ) {
     throw new TypeError("Channel device candidate data is malformed");
@@ -145,8 +170,8 @@ function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
     code: null,
     health: value.status_level ?? "offline",
     last_heartbeat_at: value.last_heartbeat_at ?? null,
-    orientation: null,
-    resolution: null,
+    orientation: value.orientation ?? null,
+    resolution: value.resolution ?? null,
   };
 }
 
@@ -166,7 +191,7 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !(value.location === null || isRecord(value.location)) ||
     !Array.isArray(value.devices) ||
     !(value.expected_orientation === null || isOneOf(value.expected_orientation, ["landscape", "portrait"])) ||
-    !isNullableString(value.expected_resolution) ||
+    !(value.expected_resolution === null || isDisplayResolution(value.expected_resolution)) ||
     !(value.default_playlist === null || isRecord(value.default_playlist)) ||
     !isPositiveSafeInteger(value.revision) ||
     !isTimestamp(value.updated_at)
@@ -233,15 +258,17 @@ export function buildCreateChannelBody(draft: ChannelDraftInput): CreateChannelB
     expected_orientation: draft.expected_orientation ?? null,
     expected_resolution: draft.expected_resolution ?? null,
     default_playlist_id: draft.default_playlist_id ?? null,
+    confirm_mismatch: draft.confirm_mismatch,
   };
 }
 
 export function buildUpdateChannelBody(
   draft: ChannelDraftInput,
   expectedRevision: number,
+  overwrite: boolean,
 ): UpdateChannelBody {
   assertExpectedRevision(expectedRevision);
-  return { ...buildCreateChannelBody(draft), expected_revision: expectedRevision };
+  return { ...buildCreateChannelBody(draft), expected_revision: expectedRevision, overwrite };
 }
 
 export function buildFetchChannelsRequest(
@@ -270,11 +297,12 @@ export function buildUpdateChannelRequest(
   id: string,
   draft: ChannelDraftInput,
   expectedRevision: number,
+  overwrite: boolean,
 ): ChannelRequestDescriptor {
   return {
     method: "PATCH",
     path: `/media/channels/${id}`,
-    body: buildUpdateChannelBody(draft, expectedRevision),
+    body: buildUpdateChannelBody(draft, expectedRevision, overwrite),
   };
 }
 
@@ -404,9 +432,12 @@ export async function updateChannel(
   id: string,
   draft: ChannelDraftInput,
   expectedRevision: number,
+  overwrite: boolean,
 ): Promise<ChannelDetail> {
   return parseChannelDetail(
-    await requestChannelApi<unknown>(buildUpdateChannelRequest(id, draft, expectedRevision)),
+    await requestChannelApi<unknown>(
+      buildUpdateChannelRequest(id, draft, expectedRevision, overwrite),
+    ),
   );
 }
 
