@@ -5,7 +5,7 @@ export type ChannelHealth = MediaDeviceHealth | "degraded" | null;
 export type ChannelCategory = "dooh" | "in_store" | "online" | "social";
 export type ChannelOrientation = "landscape" | "portrait";
 
-export interface ChannelDevice {
+export interface ChannelDeviceCandidate {
   id: string;
   name: string;
   code: string;
@@ -14,6 +14,10 @@ export interface ChannelDevice {
   orientation: ChannelOrientation | null;
   resolution: string | null;
 }
+
+/** A Physical Device candidate read from the existing `/media/screens` endpoint.
+ * It is intentionally not a Channel row. */
+export type ChannelDevice = ChannelDeviceCandidate;
 
 export interface ChannelTypeOption {
   id: string;
