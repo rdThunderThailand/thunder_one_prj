@@ -2,7 +2,8 @@
 // CONTEXT.md at the repo root — keep both in sync when either changes.
 
 export type ChannelType = "dooh" | "in_store" | "online" | "social" | "other";
-export type ChannelOnlineStatus = "online" | "warning" | "offline";
+export type MediaDeviceHealth = "online" | "warning" | "offline";
+export type ChannelOnlineStatus = MediaDeviceHealth;
 
 export interface Channel {
   id: string;
