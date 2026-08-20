@@ -47,18 +47,18 @@ const fixtures: ChannelListItem[] = [
     location: { id: "location-siam", name: "Siam Square" },
     devices: [
       {
-        id: "device-siam-primary",
-        name: "Primary LED Screen",
-        code: "SS-LED-PRIMARY",
+        id: "device-siam-north",
+        name: "North LED Screen",
+        code: "SS-LED-NORTH",
         health: "online",
         last_heartbeat_at: "2026-08-20T00:00:00.000Z",
         orientation: "landscape",
         resolution: "3840x2160",
       },
       {
-        id: "device-siam-backup",
-        name: "Backup LED Screen",
-        code: "SS-LED-BACKUP",
+        id: "device-siam-south",
+        name: "South LED Screen",
+        code: "SS-LED-SOUTH",
         health: "offline",
         last_heartbeat_at: "2026-08-19T22:00:00.000Z",
         orientation: "landscape",
@@ -72,19 +72,19 @@ const fixtures: ChannelListItem[] = [
     updated_at: "2026-08-20T00:00:00.000Z",
   },
   {
-    id: "channel-draft-social",
-    name: "Social Mall Display",
+    id: "channel-draft-dooh",
+    name: "Rama Nine LED Display",
     description: null,
     lifecycle: "draft",
     health: "online",
-    category: "social",
-    channel_type: { id: "type-social-led", code: "led_display", name: "LED Display", channel_category: "social" },
-    location: { id: "location-social-mall", name: "Social Mall" },
+    category: "dooh",
+    channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
+    location: { id: "location-rama-nine", name: "Rama Nine" },
     devices: [
       {
-        id: "device-social-mall",
-        name: "Atrium LED Screen",
-        code: "SM-LED-01",
+        id: "device-rama-nine",
+        name: "West LED Screen",
+        code: "RN-LED-01",
         health: "online",
         last_heartbeat_at: "2026-08-20T00:00:00.000Z",
         orientation: "portrait",
@@ -98,13 +98,13 @@ const fixtures: ChannelListItem[] = [
     updated_at: "2026-08-20T00:00:00.000Z",
   },
   {
-    id: "channel-inactive-online",
-    name: "Online Archive Display",
+    id: "channel-inactive-in-store",
+    name: "Archive Menu Board",
     description: null,
     lifecycle: "inactive",
     health: null,
-    category: "online",
-    channel_type: { id: "type-online-led", code: "led_display", name: "LED Display", channel_category: "online" },
+    category: "in_store",
+    channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: null,
     devices: [],
     expected_orientation: null,
@@ -153,16 +153,19 @@ assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "cw-entrance"
   "channel-active-in-store",
 ]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, category: "social" }).map((channel) => channel.id), [
-  "channel-draft-social",
+]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, category: "dooh" }).map((channel) => channel.id), [
+  "channel-active-dooh",
+  "channel-draft-dooh",
 ]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, lifecycle: "draft" }).map((channel) => channel.id), [
-  "channel-draft-social",
+  "channel-draft-dooh",
 ]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, health: "degraded" }).map((channel) => channel.id), [
   "channel-active-dooh",
 ]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, health: "unknown" }).map((channel) => channel.id), [
-  "channel-inactive-online",
+  "channel-inactive-in-store",
 ]);
 
 assert.deepEqual(
@@ -170,6 +173,7 @@ assert.deepEqual(
   { name: "กรุณาระบุชื่อ Channel", channel_type_id: "กรุณาเลือก Channel Type" },
 );
 
+assert.equal(formatChannelLastSeen(null), "Never connected");
 assert.equal(
   formatChannelLastSeen(fixtures[0]!.devices[0]!.last_heartbeat_at, Date.parse("2026-08-20T00:00:00.000Z")),
   "Last seen just now",
