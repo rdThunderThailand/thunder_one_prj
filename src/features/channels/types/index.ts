@@ -22,6 +22,18 @@ export interface ChannelTypeOption {
   channel_category: ChannelCategory;
 }
 
+export interface ChannelLocationOption {
+  id: string;
+  name: string;
+}
+
+/** Reference rows owned by the future Channel API. Device and playlist choices
+ * deliberately stay on their existing read endpoints until those contracts move. */
+export interface ChannelReferenceData {
+  channel_types: ChannelTypeOption[];
+  locations: ChannelLocationOption[];
+}
+
 export interface ChannelListItem {
   id: string;
   name: string;
