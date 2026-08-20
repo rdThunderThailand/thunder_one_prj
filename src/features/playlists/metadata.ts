@@ -10,7 +10,8 @@ import type {
   PlaylistMetadata,
   PlaylistPlayback,
 } from "./types";
-import { PLAY_MODES, REPEAT_MODES, START_FROMS } from "./types";
+import { PLAY_MODES, PLAYLIST_TYPES, REPEAT_MODES, START_FROMS } from "./types";
+import { parseResolution } from "./output-profile.ts";
 
 export const METADATA_VERSION = 1;
 
@@ -61,6 +62,13 @@ export function encodeMetadata(metadata: PlaylistMetadata): Json {
   put(info, "tags", metadata.info.tags);
   put(info, "playlist_type", metadata.info.playlistType);
   put(info, "resolution", metadata.info.resolution);
+  // width/height are derived from resolution, not a second thing the caller can set — one
+  // canonical value (resolution) in, two representations out (ADR 0032).
+  const dimensions = parseResolution(metadata.info.resolution);
+  if (dimensions) {
+    put(info, "width", dimensions.width);
+    put(info, "height", dimensions.height);
+  }
   put(info, "frame_rate", metadata.info.frameRate);
   put(info, "cover_asset_id", metadata.info.coverAssetId);
 
@@ -102,8 +110,12 @@ export function decodeMetadata(raw: unknown): PlaylistMetadata {
     description: str(rawInfo, "description"),
     campaignId: str(rawInfo, "campaign_id"),
     tags: Array.isArray(tags) ? tags.filter((t): t is string => typeof t === "string") : undefined,
-    playlistType: oneOf(rawInfo, "playlist_type", ["standard", "dynamic", "loop", "manual"]),
+    playlistType: oneOf(rawInfo, "playlist_type", PLAYLIST_TYPES),
     resolution: str(rawInfo, "resolution"),
+    // Prefer the stored numbers; fall back to parsing resolution for rows written before
+    // width/height existed. Either way the caller always gets numbers, never has to parse.
+    width: num(rawInfo, "width") ?? parseResolution(str(rawInfo, "resolution"))?.width,
+    height: num(rawInfo, "height") ?? parseResolution(str(rawInfo, "resolution"))?.height,
     frameRate: num(rawInfo, "frame_rate"),
     coverAssetId: str(rawInfo, "cover_asset_id"),
   };

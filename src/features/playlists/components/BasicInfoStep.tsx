@@ -7,16 +7,8 @@ import type { Campaign, Tag } from "@/types/domain";
 import { Field, Select, TextArea, inputClasses } from "./form";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
 import { validateBasicInfo, PLAYLIST_LIMITS } from "../step-validation";
-import { PLAYLIST_TYPES } from "../types";
-
-const RESOLUTIONS = [
-  { value: "1920x1080", label: "1920 × 1080 (16:9)" },
-  { value: "1080x1920", label: "1080 × 1920 (9:16)" },
-  { value: "3840x2160", label: "3840 × 2160 (4K)" },
-  { value: "1280x720", label: "1280 × 720 (16:9)" },
-];
-
-const FRAME_RATES = [24, 25, 30, 60];
+import { CREATABLE_PLAYLIST_TYPES } from "../types";
+import { FRAME_RATES, RESOLUTIONS, resolutionLabel } from "../output-profile";
 
 export function BasicInfoStep({
   campaigns,
@@ -81,12 +73,12 @@ export function BasicInfoStep({
         <Field label="Playlist Type">
           <Select
             value={info.playlistType ?? "standard"}
-            options={PLAYLIST_TYPES.map((t) => ({
+            options={CREATABLE_PLAYLIST_TYPES.map((t) => ({
               value: t,
               label: t.charAt(0).toUpperCase() + t.slice(1),
             }))}
             onChange={(e) =>
-              setInfo({ playlistType: e.target.value as (typeof PLAYLIST_TYPES)[number] })
+              setInfo({ playlistType: e.target.value as (typeof CREATABLE_PLAYLIST_TYPES)[number] })
             }
           />
         </Field>
@@ -94,7 +86,7 @@ export function BasicInfoStep({
         <Field label="Resolution">
           <Select
             value={info.resolution ?? ""}
-            options={RESOLUTIONS}
+            options={RESOLUTIONS.map((r) => ({ value: r.value, label: resolutionLabel(r.value) }))}
             onChange={(e) => setInfo({ resolution: e.target.value })}
           />
         </Field>

@@ -3,6 +3,7 @@
 // converts files (ADR 0016) and the screen scales at playback.
 
 import type { MediaAsset } from "@/types/domain";
+import { parseResolution } from "./output-profile.ts";
 
 export type Incompatibility = "aspect" | "resolution";
 
@@ -10,12 +11,6 @@ export type Incompatibility = "aspect" | "resolution";
 const ASPECT_TOLERANCE = 0.01;
 /** Below 90% of the profile, upscaling starts to show. 720p on 1080p (67%) is the common case. */
 const RESOLUTION_FLOOR = 0.9;
-
-function parseResolution(resolution: string | undefined): { width: number; height: number } | null {
-  const [width, height] = (resolution ?? "").split("x").map(Number);
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return null;
-  return { width, height };
-}
 
 /**
  * Returns why the asset does not fit the profile, or null when it fits — or when either side's

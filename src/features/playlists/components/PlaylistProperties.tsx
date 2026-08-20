@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { playlistDisplayStatus, statusBadge } from "../status-display";
+import { resolutionLabel } from "../output-profile";
 import type { PlaylistDetail, PlaylistMetadata } from "../types";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -36,7 +37,7 @@ export function PlaylistProperties({
         <Row label="Playlist Type" value={metadata.info.playlistType ?? "—"} />
         <Row label="Items" value={itemCount} />
         <Row label="Total Duration" value={totalDuration} />
-        <Row label="Resolution" value={metadata.info.resolution ?? "—"} />
+        <Row label="Resolution" value={resolutionLabel(metadata.info.resolution)} />
         <Row label="Frame Rate" value={metadata.info.frameRate ? `${metadata.info.frameRate} fps` : "—"} />
         <Row label="Play Mode" value={metadata.playback.playMode ?? "—"} />
         <Row label="Repeat" value={metadata.playback.repeat ?? "—"} />

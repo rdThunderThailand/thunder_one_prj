@@ -16,6 +16,7 @@ import {
   publicationStatusColor,
 } from "@/features/publications/publication-status";
 import { decodeMetadata } from "../metadata";
+import { resolutionLabel } from "../output-profile";
 import { formatDuration, totalDurationSeconds } from "../duration";
 import { paginate } from "../list-filtering";
 import type { PlaylistDetail } from "../types";
@@ -57,7 +58,7 @@ export function DetailsTab({
         label="Start Playback From"
         value={metadata.playback.startFrom === "resume" ? "Resume last successful item" : "First item"}
       />
-      <Row label="Resolution" value={metadata.info.resolution ?? "—"} />
+      <Row label="Resolution" value={resolutionLabel(metadata.info.resolution)} />
       <Row label="Created By" value={detail.created_by?.display_name ?? "—"} />
       {metadata.info.tags && metadata.info.tags.length > 0 && (
         <Row

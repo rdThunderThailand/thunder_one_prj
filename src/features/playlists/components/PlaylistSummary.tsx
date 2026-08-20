@@ -9,6 +9,7 @@ import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
 import { formatDuration, totalDurationSeconds } from "../duration";
 import { resolveCoverAssetId } from "../metadata";
+import { resolutionLabel } from "../output-profile";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -81,7 +82,7 @@ export function PlaylistSummary({
             value={formatDuration(totalDurationSeconds(items, assetDurations))}
           />
           <Row label="Playlist Type" value={info.playlistType ?? "—"} />
-          <Row label="Resolution" value={info.resolution ?? "—"} />
+          <Row label="Resolution" value={resolutionLabel(info.resolution)} />
           <Row label="Frame Rate" value={info.frameRate ? `${info.frameRate} fps` : "—"} />
           <Row label="Play Mode" value={playback.playMode ?? "—"} />
           <Row label="Repeat" value={playback.repeat ?? "—"} />

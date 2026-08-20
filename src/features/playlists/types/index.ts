@@ -17,8 +17,14 @@ import type {
 export { TRANSITIONS, PLAYLIST_STATUSES };
 export type { Transition, PlaylistStatus, Creator, PlaylistItem, PlaylistListItem, PlaylistDetail };
 
-export const PLAYLIST_TYPES = ["standard", "dynamic", "loop", "manual"] as const;
+/** Every type the system knows. `loop` and `manual` were dropped — nothing ever produced one
+ *  and no prod row holds either (ADR 0032). */
+export const PLAYLIST_TYPES = ["standard", "dynamic"] as const;
 export type PlaylistType = (typeof PLAYLIST_TYPES)[number];
+
+/** What the Create wizard may actually emit. `dynamic` is reserved, not producible this phase,
+ *  so offering it would be a dead dropdown option. */
+export const CREATABLE_PLAYLIST_TYPES = ["standard"] as const;
 
 export const PLAY_MODES = ["sequential", "shuffle"] as const;
 export type PlayMode = (typeof PLAY_MODES)[number];
@@ -41,7 +47,11 @@ export type PlaylistInfo = {
   campaignId?: string;
   tags?: string[];
   playlistType?: PlaylistType;
+  /** Canonical selector value, e.g. "1920x1080". `width`/`height` are derived from it at encode
+   *  time so the stored profile carries real numbers (ADR 0032). */
   resolution?: string;
+  width?: number;
+  height?: number;
   frameRate?: number;
   /** Set only when the operator explicitly picks a cover. Absent means "use item 1"
    *  — resolved at read time so reordering never needs a write-back. */
