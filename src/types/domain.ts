@@ -1,17 +1,7 @@
 // Shared domain entity types, used by 2+ features. Mirrors the glossary in
 // CONTEXT.md at the repo root — keep both in sync when either changes.
 
-export type ChannelType = "dooh" | "in_store" | "online" | "social" | "other";
 export type MediaDeviceHealth = "online" | "warning" | "offline";
-export type ChannelOnlineStatus = MediaDeviceHealth;
-
-export interface Channel {
-  id: string;
-  name: string;
-  type: ChannelType;
-  locationName: string;
-  status: ChannelOnlineStatus;
-}
 
 // Publication's own lifecycle status — separate from Publish Job delivery
 // status. See CONTEXT.md: "Publication".

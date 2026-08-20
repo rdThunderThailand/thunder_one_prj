@@ -10,6 +10,16 @@ export interface ChannelDevice {
   name: string;
   code: string;
   health: MediaDeviceHealth;
+  last_heartbeat_at: string | null;
+  orientation: ChannelOrientation | null;
+  resolution: string | null;
+}
+
+export interface ChannelTypeOption {
+  id: string;
+  code: string;
+  name: string;
+  channel_category: ChannelCategory;
 }
 
 export interface ChannelListItem {
@@ -19,7 +29,7 @@ export interface ChannelListItem {
   lifecycle: ChannelLifecycle;
   health: ChannelHealth;
   category: ChannelCategory;
-  channel_type: { id: string; code: string; name: string } | null;
+  channel_type: ChannelTypeOption | null;
   location: { id: string; name: string } | null;
   devices: ChannelDevice[];
   expected_orientation: ChannelOrientation | null;
@@ -43,12 +53,6 @@ export interface ChannelDraftInput {
   expected_orientation?: ChannelOrientation | null;
   expected_resolution?: string | null;
   default_playlist_id?: string | null;
-}
-
-export interface ChannelTypeOption {
-  id: string;
-  code: string;
-  name: string;
 }
 
 export interface ChannelFilters {
