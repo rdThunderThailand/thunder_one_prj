@@ -1,19 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { APPS, resolveActiveApp } from "@/config/apps";
+import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
-import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
+import { communicationNav } from "@/config/nav/communication";
+import { resolveShellNav } from "@/config/nav/shell";
+import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
 import { ChevronDownIcon, LayoutIcon, LightningIcon } from "@/components/ui/icons";
 
-// Media Workspace has one nav for the whole app; Asset Intelligence has one nav
-// per persona, resolved from the route (see config/nav/asset-intelligence.tsx).
-function resolveNavConfig(appId: string, pathname: string): NavConfig {
+const SHELL_TAGLINE = "Thunder One Shell";
+
+// Communication has one nav for the whole app; Asset Intelligence and
+// ThunderCare each have one nav per persona, resolved from the route (see
+// config/nav/asset-intelligence.tsx, config/nav/thunder-care.tsx). A null
+// appId means the route belongs to no App — Thunder One's shell nav
+// (config/nav/shell.tsx) applies instead — docs/adr/0033.
+function resolveNavConfig(appId: string | null, pathname: string): NavConfig {
   if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
-  return mediaWorkspaceNav;
+  if (appId === "thunder-care") return resolveThunderCareNav(pathname);
+  if (appId === "communication") return communicationNav;
+  return resolveShellNav(pathname);
 }
 
 function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -90,73 +99,24 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   );
 }
 
-function AppSwitcher({ activeAppId }: { activeAppId: string }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const activeApp = APPS.find((app) => app.id === activeAppId) ?? APPS[0];
-
-  return (
-    <div className="relative mx-3 mb-2">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500"
-      >
-        <span className="flex items-center gap-2">
-          {activeApp.icon}
-          {activeApp.label}
-        </span>
-        <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-white/10 bg-[#0b1220] shadow-lg"
-        >
-          {APPS.map((app) => (
-            <button
-              key={app.id}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                router.push(app.basePath);
-              }}
-              className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors ${app.id === activeApp.id
-                  ? "bg-white/10 font-semibold text-white"
-                  : "text-slate-300 hover:bg-white/5 hover:text-white"
-                }`}
-            >
-              {app.icon}
-              {app.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function Sidebar() {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
-  const nav = resolveNavConfig(activeApp.id, pathname);
+  const nav = resolveNavConfig(activeApp?.id ?? null, pathname);
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col bg-[#0b1220]">
-      <div className="flex items-center gap-2.5 px-4 py-4">
+      <Link href="/" className="flex items-center gap-2.5 px-4 py-4 hover:bg-white/5">
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-linear-to-br from-indigo-400 to-blue-600 text-white">
           <LightningIcon className="h-4 w-4" />
         </span>
         <div className="leading-tight">
           <p className="text-sm font-bold text-white">ThunderOne</p>
-          <p className="text-[10px] uppercase tracking-wide text-slate-400">{activeApp.tagline}</p>
+          <p className="text-[10px] uppercase tracking-wide text-slate-400">
+            {activeApp?.tagline ?? SHELL_TAGLINE}
+          </p>
         </div>
-      </div>
-
-      <AppSwitcher activeAppId={activeApp.id} />
+      </Link>
 
       <nav className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-3 pb-4">
         <div>
