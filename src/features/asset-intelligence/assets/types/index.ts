@@ -48,3 +48,50 @@ export interface Asset {
    */
   externalRef: string | null;
 }
+
+/**
+ * Request body for `POST /api/core/v1/tenants/{id}/assets` — registers a real
+ * device with Thunder_Core directly. This is a different, narrower shape than
+ * `Asset` above: Thunder_Core's device registry has no `category`,
+ * `departmentId`, `purchaseValue`, etc., and this UI only surfaces a subset
+ * of the API's accepted fields (the rest — `app_version`, `ip_address`,
+ * `screen_ratio`, `screen_dimension`, `activation_code`, `image_url`,
+ * `download_mode`, the `*_log_enable`/`*_log_days` pair, `capture_screen`,
+ * `sync_media`, `cctv_url`, `location_url` — exist server-side with their own
+ * defaults but have no form control here yet). `device_name` is the only
+ * required field.
+ */
+export interface CreateAssetDeviceInput {
+  device_name: string;
+  serial_number?: string;
+  mac_address?: string;
+  model?: string;
+  /** Free-text; server defaults to `"Other"` when omitted. */
+  device_type?: string;
+  site?: string;
+  zone?: string;
+  tags?: string[];
+}
+
+/** Only the fields this UI reads back — the real row almost certainly carries
+ *  more (every request field above, plus server-generated ones), left
+ *  untyped rather than guessed. */
+export interface CreatedAssetDevice {
+  id: string;
+  device_name: string;
+  serial_number: string | null;
+  mac_address: string | null;
+}
+
+/** Generated server-side alongside the asset row; shown once so the operator
+ *  can provision the physical device — not retrievable again from any
+ *  endpoint this app currently calls. */
+export interface AssetDeviceCredentials {
+  mqtt_client_id: string;
+  access_token: string;
+}
+
+export interface CreateAssetDeviceResult {
+  asset: CreatedAssetDevice;
+  credentials: AssetDeviceCredentials;
+}
