@@ -157,7 +157,7 @@ export function ChannelDetailPanel({
       </div>
 
       <Link
-        href={`/channels/${channel.id}/edit`}
+        href={`/communication/channels/${channel.id}/edit`}
         className={buttonClasses("primary", "mt-5 w-full")}
       >
         Edit Channel
