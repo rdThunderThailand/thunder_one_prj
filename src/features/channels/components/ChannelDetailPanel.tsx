@@ -5,10 +5,9 @@ import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { XIcon } from "@/components/ui/icons";
-import { formatChannelLastSeen } from "../channel-logic";
+import { countOnlineDevices, formatChannelLastSeen } from "../channel-logic";
 import type {
   ChannelCategory,
-  ChannelHealth,
   ChannelLifecycle,
   ChannelListItem,
 } from "../types";
@@ -24,13 +23,6 @@ const lifecycleBadges: Record<ChannelLifecycle, { label: string; color: BadgeCol
   draft: { label: "Draft", color: "zinc" },
   active: { label: "Active", color: "green" },
   inactive: { label: "Inactive", color: "zinc" },
-};
-
-const healthBadges: Record<Exclude<ChannelHealth, null>, { label: string; color: BadgeColor }> = {
-  online: { label: "Online", color: "green" },
-  warning: { label: "Warning", color: "yellow" },
-  degraded: { label: "Degraded", color: "yellow" },
-  offline: { label: "Offline", color: "red" },
 };
 
 function latestHeartbeat(channel: ChannelListItem): string | null {
@@ -60,7 +52,7 @@ export function ChannelDetailPanel({
   onClose: () => void;
 }) {
   const lifecycle = lifecycleBadges[channel.lifecycle];
-  const health = channel.health === null ? null : healthBadges[channel.health];
+  const online = countOnlineDevices(channel.devices);
   const heartbeat = latestHeartbeat(channel);
   const expectedOutput =
     [channel.expected_orientation, channel.expected_resolution].filter(Boolean).join(" · ") ||
@@ -105,11 +97,9 @@ export function ChannelDetailPanel({
         <Badge color={lifecycle.color} variant="pill">
           {lifecycle.label}
         </Badge>
-        {health ? (
-          <Badge color={health.color}>{health.label}</Badge>
-        ) : (
-          <Badge color="zinc">Unassigned</Badge>
-        )}
+        <Badge color={channel.devices.length === 0 ? "zinc" : online === channel.devices.length ? "green" : "red"}>
+          {channel.devices.length === 0 ? "Unassigned" : `${online}/${channel.devices.length} online`}
+        </Badge>
       </div>
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-5 py-5">

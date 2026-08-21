@@ -1,7 +1,7 @@
 /** Run: node src/features/channels/channel-logic.check.mts */
 import assert from "node:assert/strict";
 import {
-  deriveChannelHealth,
+  countOnlineDevices,
   filterChannels,
   formatChannelLastSeen,
   getDeviceCompatibility,
@@ -19,7 +19,6 @@ const fixtures: ChannelListItem[] = [
     name: "Flagship Store Channel",
     description: null,
     lifecycle: "active",
-    health: "online",
     category: "in_store",
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: { id: "location-central-world", name: "Central World" },
@@ -45,7 +44,6 @@ const fixtures: ChannelListItem[] = [
     name: "Siam Square Billboard",
     description: null,
     lifecycle: "active",
-    health: "degraded",
     category: "dooh",
     channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
     location: { id: "location-siam", name: "Siam Square" },
@@ -80,7 +78,6 @@ const fixtures: ChannelListItem[] = [
     name: "Rama Nine LED Display",
     description: null,
     lifecycle: "draft",
-    health: "online",
     category: "dooh",
     channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
     location: { id: "location-rama-nine", name: "Rama Nine" },
@@ -106,7 +103,6 @@ const fixtures: ChannelListItem[] = [
     name: "Archive Menu Board",
     description: null,
     lifecycle: "inactive",
-    health: null,
     category: "in_store",
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: null,
@@ -119,28 +115,24 @@ const fixtures: ChannelListItem[] = [
   },
 ];
 
-const allFilters = { search: "", category: "all", lifecycle: "all", health: "all" } as const;
+const allFilters = { search: "", category: "all", lifecycle: "all" } as const;
 
-assert.equal(deriveChannelHealth([]), null);
-assert.equal(deriveChannelHealth(["online", "online"]), "online");
-assert.equal(deriveChannelHealth(["online", "warning"]), "warning");
-assert.equal(deriveChannelHealth(["warning", "warning"]), "warning");
-assert.equal(deriveChannelHealth(["online", "offline"]), "degraded");
-assert.equal(deriveChannelHealth(["warning", "offline"]), "degraded");
-assert.equal(deriveChannelHealth(["offline", "offline"]), "offline");
+assert.equal(countOnlineDevices([]), 0);
+assert.equal(countOnlineDevices([{ health: "online" }, { health: "offline" }]), 1);
+assert.equal(countOnlineDevices([{ health: "warning" }]), 0);
 
-assert.deepEqual(summarizeChannels(fixtures), {
-  lifecycle: { total: 4, draft: 1, active: 2, inactive: 1 },
-  health: { online: 2, warning: 0, degraded: 1, offline: 0, unknown: 1 },
-  unassigned: 1,
-});
+const summary = summarizeChannels(fixtures);
+assert.deepEqual(summary.lifecycle, { total: 4, draft: 1, active: 2, inactive: 1 });
+assert.equal(summary.unassigned, 1); // the Channel with no devices assigned
+// Rolled up across every fixture Channel, so the tile counts devices and not Channels:
+// four assigned in total, one of them offline.
+assert.deepEqual(summary.devices, { total: 4, online: 3 });
 
 assert.deepEqual(
   filterChannels(fixtures, {
     search: "central world",
     category: "in_store",
     lifecycle: "active",
-    health: "all",
   }).map((channel) => channel.id),
   ["channel-active-in-store"],
 );
@@ -165,12 +157,6 @@ assert.deepEqual(filterChannels(fixtures, { ...allFilters, category: "dooh" }).m
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, lifecycle: "draft" }).map((channel) => channel.id), [
   "channel-draft-dooh",
 ]);
-assert.deepEqual(filterChannels(fixtures, { ...allFilters, health: "degraded" }).map((channel) => channel.id), [
-  "channel-active-dooh",
-]);
-assert.deepEqual(filterChannels(fixtures, { ...allFilters, health: "unknown" }).map((channel) => channel.id), [
-  "channel-inactive-in-store",
-]);
 
 assert.deepEqual(
   validateChannelDraft({
@@ -179,6 +165,7 @@ assert.deepEqual(
     channel_type_id: "",
     device_ids: [],
     confirm_mismatch: false,
+    as_draft: true,
   }),
   { name: "กรุณาระบุชื่อ Channel", channel_type_id: "กรุณาเลือก Channel Type" },
 );

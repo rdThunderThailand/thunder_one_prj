@@ -11,7 +11,6 @@ import type {
   ChannelReferenceData,
   ChannelTypeOption,
 } from "../types/index.ts";
-import { deriveChannelHealth } from "../channel-logic.ts";
 import { isDisplayResolution } from "../../../lib/display-resolution.ts";
 
 type ChannelRequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
@@ -38,9 +37,12 @@ export interface CreateChannelBody {
   expected_resolution: string | null;
   default_playlist_id: string | null;
   confirm_mismatch: boolean;
+  as_draft: boolean;
 }
 
-export interface UpdateChannelBody extends CreateChannelBody {
+export interface UpdateChannelBody extends Omit<CreateChannelBody, "as_draft"> {
+  /** Sent only when a Draft is being committed. Absent on an ordinary edit. */
+  as_draft?: boolean;
   expected_revision: number;
   overwrite: boolean;
 }
@@ -182,10 +184,6 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !isString(value.name) ||
     !isNullableString(value.description) ||
     !isOneOf(value.lifecycle, ["draft", "active", "inactive"]) ||
-    !(
-      value.health === null ||
-      isOneOf(value.health, ["online", "warning", "offline", "degraded"])
-    ) ||
     !isOneOf(value.category, ["dooh", "in_store", "online", "social"]) ||
     !(value.channel_type === null || isRecord(value.channel_type)) ||
     !(value.location === null || isRecord(value.location)) ||
@@ -210,17 +208,12 @@ function parseChannelListItem(value: unknown): ChannelListItem {
       : parseChannelLocation(value.default_playlist);
 
   const devices = value.devices.map(parseChannelDevice);
-  const health = deriveChannelHealth(devices.map((device) => device.health));
-  if (value.health !== health) {
-    throw new TypeError("Channel health does not match device health");
-  }
 
   return {
     id: value.id,
     name: value.name,
     description: value.description,
     lifecycle: value.lifecycle,
-    health,
     category: value.category,
     channel_type: channelType,
     location,
@@ -259,6 +252,9 @@ export function buildCreateChannelBody(draft: ChannelDraftInput): CreateChannelB
     expected_resolution: draft.expected_resolution ?? null,
     default_playlist_id: draft.default_playlist_id ?? null,
     confirm_mismatch: draft.confirm_mismatch,
+    // A create has to pick a side; `null` is an update-only value, so it falls back to the
+    // side that reserves nothing.
+    as_draft: draft.as_draft ?? true,
   };
 }
 
@@ -268,7 +264,10 @@ export function buildUpdateChannelBody(
   overwrite: boolean,
 ): UpdateChannelBody {
   assertExpectedRevision(expectedRevision);
-  return { ...buildCreateChannelBody(draft), expected_revision: expectedRevision, overwrite };
+  const { as_draft, ...rest } = buildCreateChannelBody(draft);
+  const body: UpdateChannelBody = { ...rest, expected_revision: expectedRevision, overwrite };
+  if (draft.as_draft !== null) body.as_draft = as_draft;
+  return body;
 }
 
 export function buildFetchChannelsRequest(
@@ -314,18 +313,6 @@ export function buildDeleteDraftChannelRequest(
   return {
     method: "DELETE",
     path: `/media/channels/${id}`,
-    body: { expected_revision: expectedRevision },
-  };
-}
-
-export function buildActivateChannelRequest(
-  id: string,
-  expectedRevision: number,
-): ChannelRequestDescriptor {
-  assertExpectedRevision(expectedRevision);
-  return {
-    method: "POST",
-    path: `/media/channels/${id}/activate`,
     body: { expected_revision: expectedRevision },
   };
 }
@@ -445,10 +432,8 @@ export async function deleteDraftChannel(id: string, expectedRevision: number): 
   await requestChannelApi<unknown>(buildDeleteDraftChannelRequest(id, expectedRevision));
 }
 
-export async function activateChannel(id: string, expectedRevision: number): Promise<void> {
-  await requestChannelApi<unknown>(buildActivateChannelRequest(id, expectedRevision));
-}
-
-export async function deactivateChannel(id: string, expectedRevision: number): Promise<void> {
-  await requestChannelApi<unknown>(buildDeactivateChannelRequest(id, expectedRevision));
+export async function deactivateChannel(id: string, expectedRevision: number): Promise<ChannelDetail> {
+  return parseChannelDetail(
+    await requestChannelApi<unknown>(buildDeactivateChannelRequest(id, expectedRevision)),
+  );
 }

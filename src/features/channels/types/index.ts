@@ -1,7 +1,11 @@
 import type { MediaDeviceHealth } from "../../../types/domain.ts";
 
+/**
+ * ADR 0037: one status, three values. `draft` is stored; `active` / `inactive` are derived
+ * server-side from `publication_count` — a committed Channel that nothing publishes to is Inactive.
+ * Device liveness is no longer a second status axis; it is read off `devices[].health`.
+ */
 export type ChannelLifecycle = "draft" | "active" | "inactive";
-export type ChannelHealth = MediaDeviceHealth | "degraded" | null;
 export type ChannelCategory = "dooh" | "in_store" | "online" | "social";
 export type ChannelOrientation = "landscape" | "portrait";
 
@@ -52,7 +56,6 @@ export interface ChannelListItem {
   name: string;
   description: string | null;
   lifecycle: ChannelLifecycle;
-  health: ChannelHealth;
   category: ChannelCategory;
   channel_type: ChannelTypeOption | null;
   location: { id: string; name: string } | null;
@@ -79,11 +82,16 @@ export interface ChannelDraftInput {
   expected_resolution?: string | null;
   default_playlist_id?: string | null;
   confirm_mismatch: boolean;
+  /**
+   * Which button was pressed (ADR 0037): `true` stages a Draft, `false` commits the Channel and
+   * reserves its devices. `null` means "leave the stage alone" — an ordinary edit of a Channel
+   * that has already been created. Only valid on update; a create must choose.
+   */
+  as_draft: boolean | null;
 }
 
 export interface ChannelFilters {
   search: string;
   category: ChannelCategory | "all";
   lifecycle: ChannelLifecycle | "all";
-  health: Exclude<ChannelHealth, null> | "unknown" | "all";
 }

@@ -1,6 +1,7 @@
 import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { deriveChannelHealth, formatChannelLastSeen } from "../channel-logic";
+import { MonitorIcon } from "@/components/ui/icons";
+import { countOnlineDevices, formatChannelLastSeen } from "../channel-logic";
 import type {
   ChannelCategory,
   ChannelDeviceCandidate,
@@ -61,11 +62,11 @@ export function ChannelEditorSummary({
   showOperationalStatus: boolean;
 }) {
   const lifecycleBadge = lifecycleBadges[lifecycle];
-  const health = deriveChannelHealth(selectedDevices.map((device) => device.health));
+  const onlineDevices = countOnlineDevices(selectedDevices);
   const expectedOutput = [orientation, resolution].filter(Boolean).join(" · ") || "Not set";
 
   return (
-    <Card className="relative overflow-hidden p-5 xl:sticky xl:top-0 xl:self-start">
+    <Card className="relative overflow-hidden p-5">
       <div className="absolute inset-x-0 top-0 h-1 bg-indigo-600" aria-hidden="true" />
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-400">
         Review before save
@@ -73,6 +74,16 @@ export function ChannelEditorSummary({
       <h2 className="mt-1 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
         Channel Summary
       </h2>
+
+      {/* ponytail: preview needs playlist_id -> cover_asset_id -> preview-urls; no
+          publication is linked to a channel yet (docs/adr/0036), so this stays a
+          placeholder until that endpoint exists. */}
+      <div className="mt-4 flex h-32 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-center dark:border-zinc-800 dark:bg-zinc-950/60">
+        <MonitorIcon className="h-6 w-6 text-zinc-300 dark:text-zinc-700" />
+        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          No preview available yet
+        </p>
+      </div>
 
       <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-zinc-50 px-3.5 py-3 dark:bg-zinc-950/60">
         <Badge color={lifecycleBadge.color} variant="pill">
@@ -92,8 +103,12 @@ export function ChannelEditorSummary({
         {showOperationalStatus && (
           <>
             <SummaryItem
-              label="Health"
-              value={health ? health[0].toUpperCase() + health.slice(1) : "Unassigned"}
+              label="Devices online"
+              value={
+                selectedDevices.length === 0
+                  ? "Unassigned"
+                  : `${onlineDevices}/${selectedDevices.length}`
+              }
             />
             <SummaryItem
               label="Last seen"
@@ -102,6 +117,21 @@ export function ChannelEditorSummary({
           </>
         )}
       </dl>
+
+      {showOperationalStatus && (
+        <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+          <p className="text-[11px] font-medium text-zinc-400">
+            Waiting on the Player to report telemetry
+          </p>
+          <dl className="mt-1">
+            <SummaryItem label="Current Content" value="—" />
+            <SummaryItem label="Next Content" value="—" />
+            <SummaryItem label="Uptime" value="—" />
+            <SummaryItem label="Player Version" value="—" />
+            <SummaryItem label="Storage Used" value="—" />
+          </dl>
+        </div>
+      )}
     </Card>
   );
 }

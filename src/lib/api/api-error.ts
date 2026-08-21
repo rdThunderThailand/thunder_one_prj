@@ -53,6 +53,16 @@ export function isConflict(message: string): boolean {
 }
 
 /**
+ * Raised by any RPC guarding a per-tenant unique name. The raw text names the
+ * colliding value in English ("Already exists: a channel named X already exists"),
+ * and `api-utils.ts` buckets it into the same 409 as every other "already" message,
+ * so without this case it reaches the screen untranslated.
+ */
+export function isDuplicateName(message: string): boolean {
+  return message.startsWith("Already exists:");
+}
+
+/**
  * `media_publication_set_content` raises this when any item points at an asset that
  * is not `approved`. The UI blocks picking one, so reaching here means the asset lost
  * its approval after it was chosen — the raw wording names neither the asset nor the
@@ -80,6 +90,13 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
     return {
       kind: "conflict",
       message: "ข้อมูลถูกแก้ไขจากที่อื่นระหว่างที่คุณทำงานอยู่ กรุณาโหลดหน้านี้ใหม่ก่อนบันทึกอีกครั้ง",
+    };
+  }
+
+  if (isDuplicateName(message)) {
+    return {
+      kind: "rejected",
+      message: "ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่นแล้วลองใหม่",
     };
   }
 

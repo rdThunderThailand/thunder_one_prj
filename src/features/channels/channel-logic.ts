@@ -1,10 +1,8 @@
-import type { MediaDeviceHealth } from "../../types/domain.ts";
 import type {
   ChannelDevice,
   ChannelDeviceCandidate,
   ChannelDraftInput,
   ChannelFilters,
-  ChannelHealth,
   ChannelListItem,
   ChannelOrientation,
   ChannelTypeOption,
@@ -95,25 +93,23 @@ export function mergeChannelTypeOptions(
   return [...referenceTypes, { ...currentType, is_active: false }];
 }
 
-export function deriveChannelHealth(healths: readonly MediaDeviceHealth[]): ChannelHealth {
-  if (healths.length === 0) return null;
-  if (healths.every((health) => health === "online")) return "online";
-  if (healths.every((health) => health === "offline")) return "offline";
-  if (healths.some((health) => health === "offline")) return "degraded";
-  return "warning";
+/** How much of a Channel is actually up. ADR 0037 replaced the channel-level health value
+ * with this count, so "Active" and "2/3 online" are two separate facts on the row. */
+export function countOnlineDevices(devices: readonly Pick<ChannelDevice, "health">[]): number {
+  return devices.filter((device) => device.health === "online").length;
 }
 
 export function summarizeChannels(channels: readonly ChannelListItem[]) {
   const summary = {
     lifecycle: { total: channels.length, draft: 0, active: 0, inactive: 0 },
-    health: { online: 0, warning: 0, degraded: 0, offline: 0, unknown: 0 },
+    devices: { total: 0, online: 0 },
     unassigned: 0,
   };
 
   for (const channel of channels) {
     summary.lifecycle[channel.lifecycle] += 1;
-    if (channel.health === null) summary.health.unknown += 1;
-    else summary.health[channel.health] += 1;
+    summary.devices.total += channel.devices.length;
+    summary.devices.online += countOnlineDevices(channel.devices);
     if (channel.devices.length === 0) summary.unassigned += 1;
   }
 
@@ -137,11 +133,8 @@ export function filterChannels(
       );
     const matchesCategory = filters.category === "all" || channel.category === filters.category;
     const matchesLifecycle = filters.lifecycle === "all" || channel.lifecycle === filters.lifecycle;
-    const matchesHealth =
-      filters.health === "all" ||
-      (filters.health === "unknown" ? channel.health === null : channel.health === filters.health);
 
-    return matchesSearch && matchesCategory && matchesLifecycle && matchesHealth;
+    return matchesSearch && matchesCategory && matchesLifecycle;
   });
 }
 

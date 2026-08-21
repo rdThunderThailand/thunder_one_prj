@@ -8,7 +8,6 @@ export type {
   ChannelDeviceCandidate,
   ChannelDraftInput,
   ChannelFilters,
-  ChannelHealth,
   ChannelListItem,
   ChannelLifecycle,
   ChannelOrientation,

@@ -54,21 +54,6 @@ export function ChannelFiltersBar({
         <option value="inactive">Inactive</option>
       </select>
 
-      <select
-        aria-label="Health"
-        value={value.health}
-        onChange={(event) =>
-          onChange({ ...value, health: event.target.value as ChannelFilters["health"] })
-        }
-        className={selectClasses}
-      >
-        <option value="all">All health</option>
-        <option value="online">Online</option>
-        <option value="warning">Warning</option>
-        <option value="degraded">Degraded</option>
-        <option value="offline">Offline</option>
-        <option value="unknown">Unassigned</option>
-      </select>
     </div>
   );
 }

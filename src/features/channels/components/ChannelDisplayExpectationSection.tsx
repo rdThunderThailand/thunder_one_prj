@@ -32,7 +32,7 @@ export function ChannelDisplayExpectationSection({
               Output contract
             </p>
             <h2 className="mt-1 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-              Display Expectation &amp; Defaults
+              Playback Configuration
             </h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               Describe the intended screen geometry before assigning hardware.
