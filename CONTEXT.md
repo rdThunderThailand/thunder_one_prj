@@ -17,7 +17,7 @@ shown in the UI (`docs/adr/0006-current-user-in-topbar.md`).
 Full access, including Org/User/Role/Location/Device/Channel management and the Audit Log.
 
 **Media Operator**:
-Can create/manage Assets, Playlists, and Publications, and publish without any approval gate (Approval Workflow doesn't exist until Phase 3). Cannot manage Org/User/Role/Device/Channel, and cannot see the Audit Log.
+Can create/manage Assets, Playlists, Publications, and Channels, assign existing Media Devices to Channels, and publish without any approval gate (Approval Workflow doesn't exist until Phase 3). Cannot manage Org/User/Role or register/edit Media Device master data, and cannot see the Audit Log.
 
 **Viewer**:
 Read-only across content and Monitoring. Cannot see the Audit Log.
@@ -43,16 +43,32 @@ While a Publication is a `Draft`, two operators editing it concurrently is a rea
 _Avoid_: Campaign (Campaign is a later, larger grouping of Publications — not yet in scope)
 
 **Schedule**:
-The timing rules (start/end date-time, recurrence) attached to a Publication. A standalone concept, not embedded in Playlist. Carries a single explicit `timezone` (set once at schedule creation, defaults to `Asia/Bangkok`) — this is the direct evaluation source of truth: `media_job_poll` evaluates recurrence (day-of-week, daily start/end) against `now() AT TIME ZONE schedules.timezone` with no further resolution step. There is no per-Channel or per-Location time zone — `media_core.channels` carries neither, and no `locations` table exists in the schema — so every Channel targeted by a multi-Channel Publication fires at the same instant, evaluated in the one time zone the Schedule was given. A Publication spanning Locations in different real-world time zones does *not* fire at "local business hours everywhere"; it fires at whatever wall-clock time the Schedule's single timezone maps to for each Channel.
+The timing rules (start/end date-time, recurrence) attached to a Publication. A standalone concept, not embedded in Playlist. Carries a single explicit `timezone` (set once at schedule creation, defaults to `Asia/Bangkok`) — this is the direct evaluation source of truth: `media_job_poll` evaluates recurrence (day-of-week, daily start/end) against `now() AT TIME ZONE schedules.timezone` with no further resolution step. There is no per-Channel or per-Location time zone — `public.locations` exists and `media_core.channels.location_id` references it (`channels_location_id_fkey`, `ON DELETE SET NULL`), but neither table carries a time zone — so every Channel targeted by a multi-Channel Publication fires at the same instant, evaluated in the one time zone the Schedule was given. A Publication spanning Locations in different real-world time zones does *not* fire at "local business hours everywhere"; it fires at whatever wall-clock time the Schedule's single timezone maps to for each Channel.
 _Known gap, not yet resolved: if Thunder One ever needs per-Location evaluation (a multi-timezone tenant), `schedules.timezone` would need to stop being the sole input — the same single-timezone assumption is called out explicitly in `Thunder_Core/supabase/migrations/069_media_poll_window_conflicts_and_airtime_report.sql` (the `ponytail: recurrence/time-window overlap...` comment on `media_schedule_conflicts`)._
 
 **Channel**:
-A business-facing publishing destination (e.g. "Central World – Ground Floor – Entrance Screen"). MVP UI enforces 1 Channel → 1 Device, but the schema must support 1 Channel → many Devices to avoid rework.
-_Avoid_: Screen (ambiguous between Channel and Device), Player
+A business-facing publishing destination containing one or more equal Media Devices that receive the same media and Schedule. Its lifecycle is `Draft → Active ↔ Inactive`; once activated it never returns to Draft. A Media Device may be prepared in multiple Draft Channels but is reserved by only one Active Channel. It has no primary/backup or failover relationship between members. Removing or moving a Media Device is blocked while an Active or Scheduled Publication still targets it. Membership and exclusivity: `docs/adr/0030-channel-endpoint-membership-and-active-exclusivity.md`; lifecycle, retirement and concurrency: `docs/adr/0033-channel-lifecycle-retirement-and-concurrency.md`; the display expectation and the target-snapshot guard: `docs/adr/0034-channel-display-expectation-and-target-snapshot.md`.
+_Avoid_: Screen (ambiguous between Channel and Media Device), Player, Primary Device, Backup Device
+
+**Channel Category**:
+The delivery family of a Channel: `DOOH`, `In-store`, `Online`, or `Social`. The current phase allows creating only DOOH and In-store Channels; Online and Social are reserved for future connector-backed endpoints.
+_Avoid_: Channel Type, Device Type
+
+**Channel Type**:
+A controlled business-display subtype within a Channel Category, such as `LED Display` or `Menu Board`. It describes the destination's use, not its delivery family or hardware model.
+_Avoid_: Channel Category, Device Type
+
+**Channel Health**:
+The aggregate operating condition of a Channel's Media Devices. `Degraded` exists only at Channel level and means at least one member is Offline while another is Online or Warning; individual Media Devices remain Online, Warning, or Offline. Derived on read, never stored — `docs/adr/0035-channel-monitoring-policy-alerts-and-remote-operations.md`.
+_Avoid_: Channel lifecycle, Device Health
 
 **Device**:
-The physical player/endpoint that receives and plays content. Distinct from Channel — a Channel is what operators target; a Device is what actually downloads and plays. On pairing, receives a long-lived token (scoped to one `organization_id` + `device_id`) with no time-based expiry — deregistering the Device server-side invalidates the token immediately, checked on every poll request, not just at login. When a Device's underlying hardware is registered in Asset Intelligence (as an Asset of category `media_player_device`), the two records refer to the same physical box — see the Asset Intelligence glossary entry above and `docs/adr/0024-asset-device-cross-reference-model.md`. The direction of that cross-reference is not yet decided (`docs/asset-intelligence/questions-thunder-core-contract.md`).
-_Avoid_: Screen, Player (when the physical hardware is meant, not the software concept)
+The generic physical-equipment concept used outside Media Workspace. Do not use this unqualified term for a Channel endpoint because the platform also has a separate Device registry.
+_Avoid_: Media Device
+
+**Media Device**:
+The physical player endpoint that receives and plays Media Workspace content. In this phase its canonical identity follows the existing Media runtime identity rather than the platform Device registry; unifying those identities remains a separate cross-context decision (`docs/adr/0030-channel-endpoint-membership-and-active-exclusivity.md`, `docs/adr/0024-asset-device-cross-reference-model.md`). A Channel is what operators target, while a Media Device is what downloads and plays. On pairing, it receives a long-lived token scoped to one Organization and Media Device; deregistration invalidates that token on subsequent player requests.
+_Avoid_: Device (ambiguous across contexts), Screen, Player
 
 **Publish Job**:
 A technical delivery task generated by the Publish Job Engine for a given Publication × Channel × Device combination. Tracks download/delivery/playback status independently of the Publication's own status. Exactly one Job exists per Channel×Device per Publication — "Retry" is an idempotent instruction against that same Job ID (never spawns a sibling Job), forcing the Device to re-attempt; this structurally prevents duplicate playback. Retry is capped at 3 attempts, after which the Job is marked permanently `Failed` — recovering requires the operator to republish the Publication (see Publication: edit-in-place re-snapshot).
