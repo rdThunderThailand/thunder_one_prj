@@ -8,7 +8,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
 import { checkContentCompatibility } from "../content-compatibility";
-import { formatDuration, totalDurationSeconds } from "../duration";
+import { durationPerLoopSeconds, formatDuration } from "../duration";
 import { canSubmit } from "../step-validation";
 import { useMemo } from "react";
 
@@ -46,7 +46,7 @@ export function ReviewStep({
     (id) => workspaceTags.find((t) => t.id === id)?.name ?? id
   );
 
-  const ready = canSubmit({ name, description: info.description, items });
+  const ready = canSubmit({ name, description: info.description, items, playback });
 
   // ADR 0019: a count, not a blocker — assets with no recorded dimensions never appear here.
   const mismatchCount = items.filter((item) => {
@@ -126,8 +126,8 @@ export function ReviewStep({
             </ul>
           )}
           <p className="mt-3 border-t border-zinc-100 pt-3 text-xs text-zinc-400 dark:border-zinc-800">
-            {items.length} items · Total duration{" "}
-            {formatDuration(totalDurationSeconds(items, assetDurations))}
+            {items.length} items · Duration per Loop{" "}
+            {formatDuration(durationPerLoopSeconds(items, assetDurations, playback))}
           </p>
         </Card>
 
@@ -138,6 +138,10 @@ export function ReviewStep({
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             <ReviewRow label="Play Mode" value={playback.playMode ?? "—"} />
             <ReviewRow label="Repeat" value={playback.repeat ?? "—"} />
+            <ReviewRow
+              label="Start Playback From"
+              value={playback.startFrom === "resume" ? "Resume last successful item" : "First item"}
+            />
             <ReviewRow label="Media Fit" value={playback.mediaFit ?? "—"} />
             <ReviewRow label="Video Audio" value={playback.audioEnabled ? "On" : "Off"} />
             <ReviewRow

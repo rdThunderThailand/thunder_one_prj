@@ -1,25 +1,29 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "@/components/ui/icons";
 import { fetchCampaigns, fetchMediaAssets, fetchTags } from "@/lib/api/media-api";
 import { classifyApiError, isConflict, type ClassifiedError } from "@/lib/api/api-error";
 import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { hasDraftContent, useDraftHydrated, usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
+import { useResumeSnapshot } from "../hooks/useResumeSnapshot";
 import { fetchPlaylist } from "../services/playlists-api";
 import { validateStep, type WizardStepId } from "../step-validation";
 import { usePlaylistDraftSave } from "../hooks/usePlaylistDraftSave";
 import { playlistDetailToDraftFields } from "../draft-from-detail";
-import { shouldShowResumePrompt } from "../resume-prompt";
+import { resumePromptKind } from "../resume-prompt";
 import { LAST_STEP, PlaylistStepper } from "./PlaylistStepper";
 import { BasicInfoStep } from "./BasicInfoStep";
 import { ContentStep } from "./ContentStep";
+import { ResumeDraftModal } from "./ResumeDraftModal";
+import { UnsavedLeaveConfirm } from "./UnsavedLeaveConfirm";
+import { RevisionConflictCard } from "./RevisionConflictCard";
+import { CreatePlaylistActions } from "./CreatePlaylistActions";
 import { SettingsStep } from "./SettingsStep";
 import { ReviewStep } from "./ReviewStep";
 import { PlaylistSummary } from "./PlaylistSummary";
@@ -31,18 +35,16 @@ export function CreatePlaylistPage() {
 
   const hydrated = useDraftHydrated();
   const draft = usePlaylistDraftStore();
-  const { step, name, info, items, editingId, playlistId } = draft;
+  const { step, name, info, items, editingId, playlistId, playback } = draft;
   const { persistDraft } = usePlaylistDraftSave();
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(true);
-
   const [resumeError, setResumeError] = useState<ClassifiedError | null>(null);
   const [resuming, setResuming] = useState(!!idParam);
   const [dismissedBanner, setDismissedBanner] = useState(false);
-
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showFieldErrors, setShowFieldErrors] = useState(false);
@@ -52,23 +54,17 @@ export function CreatePlaylistPage() {
   const [savingDraft, setSavingDraft] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
-  // Captured once, the first time we render with a rehydrated store. Anything the operator
-  // types afterwards must not change this answer.
-  const hadContentAtHydrationRef = useRef<boolean | null>(null);
-  // eslint-disable-next-line react-hooks/refs
-  if (hydrated && hadContentAtHydrationRef.current === null) {
-    hadContentAtHydrationRef.current = hasDraftContent(draft);
-  }
-  // eslint-disable-next-line react-hooks/refs
-  const hadContentAtHydration = hadContentAtHydrationRef.current ?? false;
+  const { hadContentAtHydration, hadEditingIdAtHydration } = useResumeSnapshot(hydrated, draft);
+
+  const loadAssets = useCallback(() => fetchMediaAssets().then((data) => setAssets(data)), []);
 
   useEffect(() => {
-    Promise.allSettled([fetchCampaigns(), fetchTags(), fetchMediaAssets()]).then(([c, t, a]) => {
+    Promise.allSettled([fetchCampaigns(), fetchTags(), loadAssets()]).then(([c, t]) => {
       if (c.status === "fulfilled") setCampaigns(c.value);
       if (t.status === "fulfilled") setTags(t.value);
-      if (a.status === "fulfilled") setAssets(a.value);
       setAssetsLoading(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Edit mode: ?id= prefills from the API and overwrites whatever local draft exists.
@@ -94,6 +90,9 @@ export function CreatePlaylistPage() {
 
     return () => {
       alive = false;
+      // ponytail: release the guard so a re-run refetches — StrictMode's remount would
+      // otherwise skip the fetch and leave `resuming` stuck true forever.
+      if (loadedIdRef.current === idParam) loadedIdRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, idParam]);
@@ -113,13 +112,14 @@ export function CreatePlaylistPage() {
     );
   }
 
-  const showDraftBanner = shouldShowResumePrompt({
+  const promptKind = resumePromptKind({
     hadContentAtHydration,
-    isEditMode: !!idParam || !!editingId,
+    hadEditingIdAtHydration,
+    isUrlEditMode: !!idParam,
     dismissed: dismissedBanner,
   });
 
-  const validatableDraft = { name, description: info.description, items };
+  const validatableDraft = { name, description: info.description, items, playback };
 
   // Walking the wizard is local-only: a draft row exists only once the operator asks for
   // one with Save Draft (docs/adr/0014). localStorage carries the work until then.
@@ -202,7 +202,7 @@ export function CreatePlaylistPage() {
       case 1:
         return <BasicInfoStep campaigns={campaigns} workspaceTags={tags} showErrors={showFieldErrors} />;
       case 2:
-        return <ContentStep assets={assets} loading={assetsLoading} />;
+        return <ContentStep assets={assets} loading={assetsLoading} onAssetUploaded={loadAssets} />;
       case 3:
         return <SettingsStep />;
       case 4:
@@ -226,78 +226,35 @@ export function CreatePlaylistPage() {
                 : "Review playlist details and confirm before creating."
         }
         actions={
-          <>
-            <Button variant="secondary" onClick={goBack} disabled={savingDraft || submitting}>
-              <ArrowLeftIcon className="h-4 w-4" />
-              {step === 1 ? "Back: Playlists" : "Back"}
-            </Button>
-            {step < LAST_STEP && (
-              <Button
-                variant="secondary"
-                onClick={saveDraft}
-                disabled={savingDraft || submitting}
-              >
-                {savingDraft ? "กำลังบันทึก..." : "Save Draft"}
-              </Button>
-            )}
-            {step < LAST_STEP ? (
-              <Button onClick={goNext} disabled={savingDraft}>
-                Next
-                <ArrowRightIcon className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button onClick={handleSubmit} disabled={savingDraft || submitting}>
-                {submitting ? (
-                  "กำลังบันทึก..."
-                ) : (
-                  <>
-                    <CheckIcon className="h-4 w-4" />
-                    {editingId ? "Save Changes" : "Create Playlist"}
-                  </>
-                )}
-              </Button>
-            )}
-          </>
+          <CreatePlaylistActions
+            step={step}
+            lastStep={LAST_STEP}
+            isEditing={Boolean(editingId)}
+            savingDraft={savingDraft}
+            submitting={submitting}
+            onBack={goBack}
+            onSaveDraft={saveDraft}
+            onNext={goNext}
+            onSubmit={handleSubmit}
+          />
         }
       />
 
-      {showDraftBanner && (
-        <Card className="flex items-center justify-between gap-4 p-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            มี draft ที่ทำค้างไว้อยู่ — ต้องการทำต่อ หรือเริ่มใหม่
-          </p>
-          <span className="flex shrink-0 gap-2">
-            <Button variant="secondary" onClick={() => setDismissedBanner(true)}>
-              ทำต่อ
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                draft.reset();
-                setDismissedBanner(true);
-              }}
-            >
-              เริ่มใหม่
-            </Button>
-          </span>
-        </Card>
-      )}
+      <ResumeDraftModal
+        kind={promptKind}
+        playlistName={name}
+        onResume={() => setDismissedBanner(true)}
+        onStartFresh={() => {
+          draft.reset();
+          setDismissedBanner(true);
+        }}
+      />
 
       {confirmLeave && (
-        <Card className="flex items-center justify-between gap-4 border-amber-200 p-4 dark:border-amber-900">
-          <p className="text-sm text-amber-700 dark:text-amber-400">
-            ยังไม่ได้บันทึกร่างนี้ลงระบบ — ออกไปตอนนี้ร่างจะค้างอยู่ในเครื่องและถูกทับเมื่อเปิด
-            playlist อื่น
-          </p>
-          <span className="flex shrink-0 gap-2">
-            <Button variant="secondary" onClick={() => setConfirmLeave(false)}>
-              อยู่ต่อ
-            </Button>
-            <Button variant="ghost" onClick={() => router.push("/communication/playlists")}>
-              ออกโดยไม่บันทึก
-            </Button>
-          </span>
-        </Card>
+        <UnsavedLeaveConfirm
+          onStay={() => setConfirmLeave(false)}
+          onLeave={() => router.push("/communication/playlists")}
+        />
       )}
 
       <Modal
@@ -324,22 +281,16 @@ export function CreatePlaylistPage() {
           )}
 
           {revisionConflict && (
-            <Card className="border-amber-200 p-4 dark:border-amber-900">
-              <p className="text-sm text-amber-700 dark:text-amber-400">{revisionConflict}</p>
-              <Button
-                className="mt-2"
-                variant="secondary"
-                onClick={async () => {
-                  const id = playlistId ?? editingId;
-                  if (!id) return;
-                  const fresh = await fetchPlaylist(id);
-                  draft.loadDraft(playlistDetailToDraftFields(fresh));
-                  setRevisionConflict(null);
-                }}
-              >
-                โหลดใหม่
-              </Button>
-            </Card>
+            <RevisionConflictCard
+              message={revisionConflict}
+              onReload={async () => {
+                const id = playlistId ?? editingId;
+                if (!id) return;
+                const fresh = await fetchPlaylist(id);
+                draft.loadDraft(playlistDetailToDraftFields(fresh));
+                setRevisionConflict(null);
+              }}
+            />
           )}
         </div>
 

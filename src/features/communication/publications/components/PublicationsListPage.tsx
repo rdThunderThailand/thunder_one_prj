@@ -14,7 +14,11 @@ import {
   duplicatePublication,
   fetchPublications,
 } from "../services/publications-api";
-import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
+import {
+  isPastPublication,
+  publicationDisplayStatus,
+  publicationStatusColor,
+} from "../publication-status";
 import type { PublicationListItem } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
@@ -36,11 +40,9 @@ export function PublicationsListPage() {
 
   // "Active" keeps ADR 0004's meaning (scheduled/active only); ended rows move to
   // "Inactive" alongside cancelled ones instead, per ADR 0015.
-  const activeOnly = active?.filter((item) => item.effective_status !== "ended") ?? null;
+  const activeOnly = active?.filter((item) => !isPastPublication(item)) ?? null;
   const inactive =
-    active && cancelled
-      ? [...active.filter((item) => item.effective_status === "ended"), ...cancelled]
-      : null;
+    active && cancelled ? [...active.filter(isPastPublication), ...cancelled] : null;
 
   useEffect(() => {
     let alive = true;

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button, buttonClasses } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { NoAccess } from "@/components/ui/NoAccess";
@@ -12,7 +12,7 @@ import { fetchMediaAssets } from "@/lib/api/media-api";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { isVideoUrl } from "@/lib/media-kind";
 import type { MediaAsset } from "@/types/domain";
-import { fetchPlaylist, upsertPlaylist } from "../services/playlists-api";
+import { fetchPlaylist } from "../services/playlists-api";
 import { decodeMetadata, resolveCoverAssetId } from "../metadata";
 import { formatDuration, totalDurationSeconds } from "../duration";
 import { computePlaylistTotals } from "../totals";
@@ -30,7 +30,6 @@ export function PlaylistDetailPage({ playlistId }: { playlistId: string }) {
   >(null);
   const [assets, setAssets] = useState<MediaAsset[] | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-  const [statusBusy, setStatusBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -106,19 +105,6 @@ export function PlaylistDetailPage({ playlistId }: { playlistId: string }) {
   );
   const totals = computePlaylistTotals(items, assetsById);
 
-  const handleStatusChange = async (next: "active" | "inactive") => {
-    if (!detail) return;
-    setStatusBusy(true);
-    try {
-      await upsertPlaylist({ playlistId: detail.id, name: detail.name, status: next });
-      setResult({ id: playlistId, detail: { ...detail, status: next } });
-    } catch (err) {
-      setResult({ id: playlistId, error: classifyApiError(err, "อัปเดตสถานะไม่สำเร็จ") });
-    } finally {
-      setStatusBusy(false);
-    }
-  };
-
   if (error?.kind === "forbidden") {
     return <NoAccess message={error.message} />;
   }
@@ -157,17 +143,6 @@ export function PlaylistDetailPage({ playlistId }: { playlistId: string }) {
             <Link href={`/communication/playlists/create?id=${detail.id}`} className={buttonClasses("secondary")}>
               Edit Playlist
             </Link>
-            {/* A draft has no status toggle: it hasn't passed validateStep — no items,
-                no playback settings — so it must not be publishable straight from here. */}
-            {detail.status !== "draft" && (
-              <Button
-                variant="secondary"
-                disabled={statusBusy}
-                onClick={() => handleStatusChange(detail.status === "active" ? "inactive" : "active")}
-              >
-                {detail.status === "active" ? "Archive" : "Activate"}
-              </Button>
-            )}
           </div>
         }
       />

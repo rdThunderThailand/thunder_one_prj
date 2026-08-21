@@ -2,7 +2,9 @@
 // PlaylistDetail) live in src/types/domain.ts — see docs/adr/0020 — so
 // src/lib/api/media-api.ts can host fetchPlaylist/fetchPlaylists without importing
 // from this feature. Re-exported here so existing imports keep working.
-import { TRANSITIONS, PLAYLIST_STATUSES } from "@/types/domain";
+// Relative (not "@/…") so this barrel's values stay importable from a plain `node
+// *.check.mts` run, which has no path-alias resolution — same file either way.
+import { TRANSITIONS, PLAYLIST_STATUSES } from "../../../../types/domain.ts";
 import type {
   Transition,
   PlaylistStatus,
@@ -10,19 +12,28 @@ import type {
   PlaylistItem,
   PlaylistListItem,
   PlaylistDetail,
-} from "@/types/domain";
+} from "../../../../types/domain.ts";
 
 export { TRANSITIONS, PLAYLIST_STATUSES };
 export type { Transition, PlaylistStatus, Creator, PlaylistItem, PlaylistListItem, PlaylistDetail };
 
-export const PLAYLIST_TYPES = ["standard", "dynamic", "loop", "manual"] as const;
+/** Every type the system knows. `loop` and `manual` were dropped — nothing ever produced one
+ *  and no prod row holds either (ADR 0032). */
+export const PLAYLIST_TYPES = ["standard", "dynamic"] as const;
 export type PlaylistType = (typeof PLAYLIST_TYPES)[number];
+
+/** What the Create wizard may actually emit. `dynamic` is reserved, not producible this phase,
+ *  so offering it would be a dead dropdown option. */
+export const CREATABLE_PLAYLIST_TYPES = ["standard"] as const;
 
 export const PLAY_MODES = ["sequential", "shuffle"] as const;
 export type PlayMode = (typeof PLAY_MODES)[number];
 
 export const REPEAT_MODES = ["loop", "once"] as const;
 export type RepeatMode = (typeof REPEAT_MODES)[number];
+
+export const START_FROMS = ["first", "resume"] as const;
+export type StartFrom = (typeof START_FROMS)[number];
 
 export const MEDIA_FITS = ["fit", "fill", "stretch"] as const;
 export type MediaFit = (typeof MEDIA_FITS)[number];
@@ -36,7 +47,11 @@ export type PlaylistInfo = {
   campaignId?: string;
   tags?: string[];
   playlistType?: PlaylistType;
+  /** Canonical selector value, e.g. "1920x1080". `width`/`height` are derived from it at encode
+   *  time so the stored profile carries real numbers (ADR 0032). */
   resolution?: string;
+  width?: number;
+  height?: number;
   frameRate?: number;
   /** Set only when the operator explicitly picks a cover. Absent means "use item 1"
    *  — resolved at read time so reordering never needs a write-back. */
@@ -46,14 +61,13 @@ export type PlaylistInfo = {
 /**
  * Playback preferences, stored under `metadata.playback`.
  *
- * ponytail: only `defaultImageDuration` and `defaultTransition` reach a screen, and only
- * because the wizard bakes them into each `playlist_items` row. `media_job_poll` reads
- * nothing else off a playlist — see docs/adr/0010-playlist-settings-in-metadata.md.
+ * play_mode/repeat/start_from are now emitted on every media_job_poll slot under `playback`;
+ * see docs/adr/0031-playback-behavior-reaches-the-player.md.
  */
 export type PlaylistPlayback = {
   playMode?: PlayMode;
   repeat?: RepeatMode;
-  startFrom?: "first";
+  startFrom?: StartFrom;
   defaultImageDuration?: number;
   mediaFit?: MediaFit;
   audioEnabled?: boolean;

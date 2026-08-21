@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { statusBadge } from "../status-display";
+import { playlistDisplayStatus, statusBadge } from "../status-display";
+import { resolutionLabel } from "../output-profile";
 import type { PlaylistDetail, PlaylistMetadata } from "../types";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -23,22 +24,27 @@ export function PlaylistProperties({
   itemCount: number;
   totalDuration: string;
 }) {
+  const badge = statusBadge(playlistDisplayStatus(detail));
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{detail.name}</h2>
-        <Badge color={statusBadge(detail.status).color} variant="pill">
-          {statusBadge(detail.status).label}
+        <Badge color={badge.color} variant="pill">
+          {badge.label}
         </Badge>
       </div>
       <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
         <Row label="Playlist Type" value={metadata.info.playlistType ?? "—"} />
         <Row label="Items" value={itemCount} />
         <Row label="Total Duration" value={totalDuration} />
-        <Row label="Resolution" value={metadata.info.resolution ?? "—"} />
+        <Row label="Resolution" value={resolutionLabel(metadata.info.resolution)} />
         <Row label="Frame Rate" value={metadata.info.frameRate ? `${metadata.info.frameRate} fps` : "—"} />
         <Row label="Play Mode" value={metadata.playback.playMode ?? "—"} />
         <Row label="Repeat" value={metadata.playback.repeat ?? "—"} />
+        <Row
+          label="Start Playback From"
+          value={metadata.playback.startFrom === "resume" ? "Resume last successful item" : "First item"}
+        />
         <Row label="Transition" value={metadata.playback.defaultTransition ?? "—"} />
         <Row label="Media Fit" value={metadata.playback.mediaFit ?? "—"} />
         <Row label="Audio" value={metadata.playback.audioEnabled === false ? "Muted" : "On"} />

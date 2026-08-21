@@ -30,9 +30,13 @@ export function detailToDraft(
       duration_seconds: item.duration_seconds ?? null,
     }));
 
+  // Only Channel targets rehydrate into the wizard. A draft saved before ADR 0037
+  // holds device targets, which step 3 can no longer express — it resumes with an
+  // empty selection so the operator re-picks Channels rather than silently
+  // publishing to a set the UI cannot show.
   const channelIds = (detail.publication_targets ?? [])
-    .filter((t) => t.target_type === "device" && Boolean(t.device_id))
-    .map((t) => t.device_id as string);
+    .filter((t) => t.target_type === "channel" && Boolean(t.channel_id))
+    .map((t) => t.channel_id as string);
 
   const scheduleForm = scheduleToForm(detail.schedule);
 

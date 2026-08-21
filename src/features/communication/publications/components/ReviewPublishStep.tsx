@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/Badge";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { statusBadge } from "@/features/communication/playlists";
+import { playlistDisplayStatus, statusBadge } from "@/features/communication/playlists";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { fetchPublication } from "../services/publications-api";
 import { utcToZonedParts } from "../schedule";
-import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
+import type { Campaign, MediaAsset, ScheduleConflict } from "../types";
+import type { ChannelListItem } from "../../channels/types";
+import { toChannelItems } from "../channels-logic";
 import {
   priorities,
   prePublishChecklist,
@@ -58,7 +60,7 @@ function formatLongDate(iso: string) {
 
 export interface ReviewPublishStepProps {
   campaigns?: Campaign[];
-  screens?: Screen[];
+  channels?: ChannelListItem[];
   assets?: MediaAsset[];
   conflicts?: ScheduleConflict[];
   eligibilityChecks?: EligibilityCheck[];
@@ -66,7 +68,7 @@ export interface ReviewPublishStepProps {
 
 export function ReviewPublishStep({
   campaigns = [],
-  screens = [],
+  channels = [],
   assets = [],
   conflicts = [],
   eligibilityChecks = [],
@@ -104,15 +106,7 @@ export function ReviewPublishStep({
   }, [publicationId]);
   const meta = metaResult?.id === publicationId ? metaResult : null;
 
-  const selectedChannels = screens
-    .filter((s) => channelIds.includes(s.id))
-    .map((s) => ({
-      id: s.id,
-      name: s.name,
-      category: "dooh" as const,
-      subLabel: s.connection_status ?? "",
-      status: s.status_level ?? "offline",
-    }));
+  const selectedChannels = toChannelItems(channels).filter((c) => channelIds.includes(c.id));
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const previewAssetId = isPlaylist ? playlistCoverId : selectedAsset?.id;
@@ -154,6 +148,7 @@ export function ReviewPublishStep({
     scheduleForm.schedule_type === "now" ? nowZoned.time : scheduleForm.start_time;
 
   const allPassed = isAllGatingPassed(eligibilityChecks);
+  const badge = playlist ? statusBadge(playlistDisplayStatus(playlist)) : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -213,10 +208,10 @@ export function ReviewPublishStep({
                         ) : (
                           "กำลังโหลด..."
                         )}
-                        {playlist && (
+                        {playlist && badge && (
                           <span className="mt-0.5 flex items-center gap-1.5 text-zinc-400">
-                            <Badge color={statusBadge(playlist.status).color} variant="pill">
-                              {statusBadge(playlist.status).label}
+                            <Badge color={badge.color} variant="pill">
+                              {badge.label}
                             </Badge>
                             {playlist.items.length} items · {playlistDuration}
                           </span>

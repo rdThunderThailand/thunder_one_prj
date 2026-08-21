@@ -169,7 +169,10 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // v5 → v6: added `playlistId`. A v5 draft holds `assetItems` for a
       // playlist-type publication and cannot be rehydrated into the new shape,
       // so it is dropped rather than migrated.
-      name: "thunderone.publications.create-draft.v6",
+      // v7: `channelIds` moved from Media Device ids to Channel ids (ADR 0037). A v6
+      // draft rehydrated here would send device ids as channel targets and be
+      // rejected with "channel not found".
+      name: "thunderone.publications.create-draft.v7",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

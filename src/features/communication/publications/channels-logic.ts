@@ -1,31 +1,61 @@
-import type { Screen } from "./types";
-import { channelCategories, type ChannelCategory, type ChannelItem } from "./mock-data.ts";
+import type { ChannelCategory as ChannelDomainCategory, ChannelListItem } from "../channels/types";
+import { channelCategories, type ChannelCategory, type ChannelItem, type ChannelStatus } from "./mock-data.ts";
 
-/** Secondary line on a channel card. `connection_status` is a stored column that
- * does not track liveness — only `last_heartbeat_at` (and the `status_level`
- * derived from it: >5min = offline, >2min = warning) says whether a screen is up. */
-export function formatLastSeen(iso: string | null | undefined, now = Date.now()): string {
-  if (!iso) return "Never connected";
-  const minutes = Math.floor((now - Date.parse(iso)) / 60000);
-  if (!Number.isFinite(minutes) || minutes < 0) return "Last seen just now";
-  if (minutes < 1) return "Last seen just now";
-  if (minutes < 60) return `Last seen ${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Last seen ${hours}h ago`;
-  return `Last seen ${Math.floor(hours / 24)}d ago`;
+/** The Channel domain and this wizard spell the same categories differently
+ * (`in_store` vs `in-store`), and the wizard carries an extra `others` bucket
+ * that the domain has no value for. */
+const CATEGORY_ID: Record<ChannelDomainCategory, ChannelItem["category"]> = {
+  dooh: "dooh",
+  in_store: "in-store",
+  online: "online",
+  social: "social",
+};
+
+/** ADR 0037 dropped the channel-level health value; the card's dot is rolled up from the
+ * devices instead. A Channel with none assigned has no liveness to report and reads offline. */
+function toCardStatus(devices: ChannelListItem["devices"]): ChannelStatus {
+  if (devices.length === 0) return "offline";
+  if (devices.every((device) => device.health === "online")) return "online";
+  if (devices.every((device) => device.health === "offline")) return "offline";
+  return "warning";
 }
 
-export function toChannelItems(screens: Screen[], now = Date.now()): ChannelItem[] {
-  return screens.map((s) => ({
-    id: s.id,
-    name: s.name,
-    // ponytail: Screen has no category field yet — every screen reads as
-    // dooh until the backend adds one; upgrade when that lands.
-    category: "dooh" as const,
-    subLabel: formatLastSeen(s.last_heartbeat_at, now),
-    status: s.status_level ?? "offline",
-    resolution: undefined,
-  }));
+/** Secondary line on a channel card: how much of the Channel is actually up. */
+export function formatDeviceSummary(devices: ChannelListItem["devices"]): string {
+  if (devices.length === 0) return "No devices assigned";
+  const online = devices.filter((device) => device.health === "online").length;
+  return `${online}/${devices.length} devices online`;
+}
+
+/**
+ * A Publication targets committed Channels only — a Draft Channel holds no device
+ * reservations, so publishing to one would drive screens nothing has claimed.
+ */
+export function toChannelItems(channels: ChannelListItem[]): ChannelItem[] {
+  return channels
+    .filter((channel) => channel.lifecycle !== "draft")
+    .map((channel) => ({
+      id: channel.id,
+      name: channel.name,
+      category: CATEGORY_ID[channel.category],
+      subLabel: formatDeviceSummary(channel.devices),
+      status: toCardStatus(channel.devices),
+      resolution: channel.expected_resolution ?? undefined,
+    }));
+}
+
+/** Every device behind the selected Channels. `media_schedule_conflicts` is still
+ * device-level, so the Channel selection has to be flattened before it is asked. */
+export function selectedChannelDeviceIds(
+  channels: ChannelListItem[],
+  selectedIds: string[],
+): string[] {
+  const ids = new Set<string>();
+  for (const channel of channels) {
+    if (!selectedIds.includes(channel.id)) continue;
+    for (const device of channel.devices) ids.add(device.id);
+  }
+  return [...ids];
 }
 
 export function filterBySearch(channels: ChannelItem[], search: string): ChannelItem[] {

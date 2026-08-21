@@ -1,30 +1,41 @@
 import assert from "node:assert";
-import { shouldShowResumePrompt } from "./resume-prompt.ts";
+import { resumePromptKind } from "./resume-prompt.ts";
 
-// Nothing was in storage — a fresh wizard must stay quiet, and typing cannot change that
-// because current content is not an input to this decision at all. This is the reported bug.
+// Nothing was in storage — a fresh wizard must stay quiet.
 assert.strictEqual(
-  shouldShowResumePrompt({ hadContentAtHydration: false, isEditMode: false, dismissed: false }),
-  false
+  resumePromptKind({ hadContentAtHydration: false, hadEditingIdAtHydration: false, isUrlEditMode: false, dismissed: false }),
+  null
 );
 
-// Leftover work from a previous visit — ask before overwriting or resuming it.
+// Leftover draft content from a previous visit, no editingId — prompt to resume the draft.
 assert.strictEqual(
-  shouldShowResumePrompt({ hadContentAtHydration: true, isEditMode: false, dismissed: false }),
-  true
+  resumePromptKind({ hadContentAtHydration: true, hadEditingIdAtHydration: false, isUrlEditMode: false, dismissed: false }),
+  "draft"
 );
 
-// Opened as ?id=<uuid>: the wizard is deliberately loading a specific playlist, so there is
-// nothing to ask about.
+// editingId was set at hydration (no content flag matters) — prompt to resume editing.
 assert.strictEqual(
-  shouldShowResumePrompt({ hadContentAtHydration: true, isEditMode: true, dismissed: false }),
-  false
+  resumePromptKind({ hadContentAtHydration: false, hadEditingIdAtHydration: true, isUrlEditMode: false, dismissed: false }),
+  "editing"
+);
+
+// Opened as ?id=<uuid>: the wizard is deliberately loading a specific playlist, so there
+// is nothing to ask about — even if content and editingId were present.
+assert.strictEqual(
+  resumePromptKind({ hadContentAtHydration: true, hadEditingIdAtHydration: true, isUrlEditMode: true, dismissed: false }),
+  null
 );
 
 // Already answered once — do not nag for the rest of the session.
 assert.strictEqual(
-  shouldShowResumePrompt({ hadContentAtHydration: true, isEditMode: false, dismissed: true }),
-  false
+  resumePromptKind({ hadContentAtHydration: true, hadEditingIdAtHydration: true, isUrlEditMode: false, dismissed: true }),
+  null
+);
+
+// editingId AND content both present — "editing" wins because the editingId check comes first.
+assert.strictEqual(
+  resumePromptKind({ hadContentAtHydration: true, hadEditingIdAtHydration: true, isUrlEditMode: false, dismissed: false }),
+  "editing"
 );
 
 console.log("resume-prompt.check.mts OK");

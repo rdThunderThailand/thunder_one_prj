@@ -3,7 +3,7 @@ import { validateStep, canSubmit, validateBasicInfo, PLAYLIST_LIMITS } from "./s
 
 // Empty name still fails step 1 — the one rule that survived the uniqueness removal.
 {
-  const result = validateStep(1, { name: "", items: [] });
+  const result = validateStep(1, { name: "", items: [], playback: {} });
   assert.strictEqual(result.valid, false);
   assert.ok(result.errors.includes("ตั้งชื่อ playlist ก่อน"));
 }
@@ -12,20 +12,60 @@ import { validateStep, canSubmit, validateBasicInfo, PLAYLIST_LIMITS } from "./s
 // behavior change this task exists to make, so assert it directly rather than just
 // asserting the old rejection is gone.
 {
-  const result = validateStep(1, { name: "Lobby Loop", items: [] });
+  const result = validateStep(1, { name: "Lobby Loop", items: [], playback: {} });
   assert.strictEqual(result.valid, true);
 }
 
 // canSubmit requires step 2's item rule too.
 {
-  assert.strictEqual(canSubmit({ name: "Lobby Loop", items: [] }), false);
+  assert.strictEqual(canSubmit({ name: "Lobby Loop", items: [], playback: {} }), false);
   assert.strictEqual(
     canSubmit({
       name: "Lobby Loop",
       items: [{ mediaAssetId: "a", transition: "cut", durationSeconds: null }],
+      playback: {},
     }),
     true
   );
+}
+
+// step 3: a supported playback value passes.
+{
+  const result = validateStep(3, { name: "Lobby Loop", items: [], playback: { playMode: "sequential" } });
+  assert.strictEqual(result.valid, true);
+}
+
+// step 3: an unsupported play_mode blocks Next.
+{
+  const result = validateStep(3, {
+    name: "Lobby Loop",
+    items: [],
+    playback: { playMode: "backwards" as never },
+  });
+  assert.strictEqual(result.valid, false);
+  assert.ok(result.errors.some((e) => e.includes("Play Mode")));
+}
+
+// step 3: an unsupported repeat blocks Next.
+{
+  const result = validateStep(3, {
+    name: "Lobby Loop",
+    items: [],
+    playback: { repeat: "sometimes" as never },
+  });
+  assert.strictEqual(result.valid, false);
+  assert.ok(result.errors.some((e) => e.includes("Repeat")));
+}
+
+// step 3: an unsupported start_from blocks Next.
+{
+  const result = validateStep(3, {
+    name: "Lobby Loop",
+    items: [],
+    playback: { startFrom: "middle" as never },
+  });
+  assert.strictEqual(result.valid, false);
+  assert.ok(result.errors.some((e) => e.includes("Start Playback From")));
 }
 
 {
@@ -61,7 +101,7 @@ import { validateStep, canSubmit, validateBasicInfo, PLAYLIST_LIMITS } from "./s
   assert.strictEqual(errors.description, undefined);
 }
 {
-  const result = validateStep(1, { name: "", items: [] });
+  const result = validateStep(1, { name: "", items: [], playback: {} });
   assert.strictEqual(result.valid, false);
   assert.ok(result.errors.includes("ตั้งชื่อ playlist ก่อน"));
 }

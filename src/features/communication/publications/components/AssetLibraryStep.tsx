@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import {
@@ -12,6 +12,7 @@ import {
   SparklesIcon,
   UploadIcon,
 } from "@/components/ui/icons";
+import { useAssetUpload } from "@/features/communication/assets/useAssetUpload";
 import { assetLibraryTabs } from "../mock-data";
 import { AssetCard } from "./AssetCard";
 import { SelectedAssetList } from "./SelectedAssetList";
@@ -19,18 +20,10 @@ import { ContentSummaryPanel } from "./ContentSummaryPanel";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { fetchMediaAssets } from "../services/publications-api";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import {
-  captureVideoThumbnail,
-  fetchUploadUrl,
-  readMediaDimensions,
-  readVideoDuration,
-  registerVideo,
-  uploadToStorage,
-} from "../services/upload-api";
 import type { Campaign, MediaAsset } from "../types";
 import { dropUnapprovedItems, isImageAsset } from "../draft-mapping";
 import { acceptedAssetKind, canSelectAsset, canSelectPlaylist } from "../content-selection.ts";
-import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL, rejectUploadReason } from "../upload-limits";
+import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "../upload-limits";
 import { fetchPlaylists } from "@/features/communication/playlists";
 import type { PlaylistListItem } from "@/features/communication/playlists";
 
@@ -85,10 +78,6 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
       : "all"
   );
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadPct, setUploadPct] = useState<number | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
   // ponytail: promise chain, not async/await — react-hooks/set-state-in-effect follows an
   // async callee into its body and flags the setState calls even though they're post-await.
   const loadAssets = useCallback(
@@ -131,56 +120,14 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
     void loadPlaylists();
   }, [loadAssets, loadPlaylists]);
 
-  async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-picking the same file
-    if (!file) return;
-
-    // The `accept` attribute is a hint the OS picker lets the user override, so the
-    // real gate is here — nothing downstream converts what the pipeline cannot store.
-    const rejection = rejectUploadReason(file);
-    if (rejection) {
-      setUploadError(rejection);
-      return;
-    }
-
-    setUploadError(null);
-    setUploadPct(0);
-    try {
-      const isVideoFile = file.type.startsWith("video/");
-      const duration = isVideoFile ? await readVideoDuration(file) : null;
-      const dimensions = await readMediaDimensions(file);
-      const thumbnailBlob = isVideoFile ? await captureVideoThumbnail(file) : undefined;
-      const { file_id, upload_url } = await fetchUploadUrl(file);
-      await uploadToStorage(upload_url, file, setUploadPct);
-
-      let thumbnail_storage_key: string | undefined;
-      if (thumbnailBlob) {
-        const thumbFile = new File([thumbnailBlob], `${file.name}.thumb.jpg`, {
-          type: "image/jpeg",
-        });
-        const thumbUpload = await fetchUploadUrl(thumbFile);
-        await uploadToStorage(thumbUpload.upload_url, thumbFile, () => {});
-        thumbnail_storage_key = thumbUpload.storage_key;
-      }
-
-      const asset = await registerVideo({
-        file_id,
-        title: file.name,
-        ...(duration ? { duration_seconds: duration } : {}),
-        ...(thumbnail_storage_key ? { thumbnail_storage_key } : {}),
-        ...(dimensions ?? {}),
-      });
+  const { fileInputRef, uploadPct, uploadError, handleFilePicked } = useAssetUpload(
+    async (asset, isVideoFile) => {
       await loadAssets();
       if (asset?.id && acceptedAssetKind(publicationType) === (isVideoFile ? "video" : "image")) {
         toggleAssetItem({ id: asset.id, isImage: !isVideoFile });
       }
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setUploadPct(null);
     }
-  }
+  );
 
   const filteredAssets = useMemo(() => {
     if (typeFilter === "playlist") return [];

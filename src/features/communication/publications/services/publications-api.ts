@@ -15,27 +15,7 @@ import type {
   Recurrence,
   ScheduleConflict,
   SchedulePayload,
-  Screen,
 } from "../types";
-
-export async function fetchScreens(): Promise<Screen[]> {
-  const data = await requestApi<{ screens?: Screen[] } | Screen[]>(
-    "GET",
-    "/media/screens"
-  );
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (
-    data &&
-    typeof data === "object" &&
-    "screens" in data &&
-    Array.isArray(data.screens)
-  ) {
-    return data.screens;
-  }
-  return [];
-}
 
 function cleanBasicInfoBody(
   form: BasicInfoForm,

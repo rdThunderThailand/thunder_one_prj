@@ -56,6 +56,11 @@ assert.deepEqual(decodeMetadata("nonsense"), empty);
 assert.deepEqual(decodeMetadata([1, 2]), empty);
 assert.deepEqual(decodeMetadata({ v: 99, info: { description: "future" } }), empty);
 
+// start_from "resume" survives the round trip (added alongside "first").
+const resumed = encodeMetadata({ info: {}, playback: { startFrom: "resume" } });
+assert.deepEqual(resumed, { v: 1, playback: { start_from: "resume" } });
+assert.equal(decodeMetadata(resumed).playback.startFrom, "resume");
+
 // Values outside the allowed set are dropped, not passed through to a <select>.
 assert.equal(decodeMetadata({ v: 1, playback: { media_fit: "cover" } }).playback.mediaFit, undefined);
 assert.equal(decodeMetadata({ v: 1, info: { frame_rate: "30" } }).info.frameRate, undefined);

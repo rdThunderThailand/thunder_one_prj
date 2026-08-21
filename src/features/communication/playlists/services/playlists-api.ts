@@ -1,4 +1,4 @@
-import { requestApi } from "@/lib/api/media-api";
+import { fetchPlaylist, requestApi } from "@/lib/api/media-api";
 import type { PlaylistStatus, Transition } from "../types";
 
 // Reads (fetchPlaylist, fetchPlaylists) live in src/lib/api/media-api.ts — see
@@ -43,6 +43,54 @@ export type PlaylistItemPayload = {
   duration_seconds?: number;
   transition?: Transition;
 };
+
+/**
+ * There is no duplicate endpoint for playlists (publications have one, playlists never
+ * needed it until now) — the copy is composed from the two writes the wizard already
+ * makes. It lands as a draft on purpose: if the items call fails, a half-copied playlist
+ * is unfinished rather than something a screen could pick up.
+ */
+export async function duplicatePlaylist(
+  sourceId: string,
+  name: string
+): Promise<{ playlistId: string; itemsCopied: boolean }> {
+  const source = await fetchPlaylist(sourceId);
+  const { playlist_id } = await upsertPlaylist({
+    name,
+    status: "draft",
+    metadata: source.metadata,
+    idempotencyKey: crypto.randomUUID(),
+  });
+
+  if (source.items.length === 0) return { playlistId: playlist_id, itemsCopied: true };
+
+  try {
+    await setPlaylistItems(
+      playlist_id,
+      [...source.items]
+        .sort((a, b) => a.position - b.position)
+        .map((item, index) => ({
+          media_asset_id: item.media_asset_id,
+          position: index,
+          // Omitted, not null: that is how the backend is told to fall back to the
+          // asset's own duration.
+          ...(item.duration_seconds != null ? { duration_seconds: item.duration_seconds } : {}),
+          transition: item.transition,
+        }))
+    );
+    return { playlistId: playlist_id, itemsCopied: true };
+  } catch {
+    return { playlistId: playlist_id, itemsCopied: false };
+  }
+}
+
+/**
+ * Hard delete (Thunder_Core migration 097). The RPC refuses while any publication still
+ * points at the playlist, so a caller must surface that message — see `describeDeleteError`.
+ */
+export async function deletePlaylist(id: string): Promise<void> {
+  await requestApi<unknown>("DELETE", `/media/playlists/${id}`);
+}
 
 /** Replaces the playlist's items wholesale — positions must already be 0-based and dense. */
 export async function setPlaylistItems(

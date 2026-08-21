@@ -153,8 +153,8 @@ export function CreatePublicationPage() {
   };
 
   const {
-    screens,
-    screensError,
+    channels,
+    channelsError,
     campaigns,
     tags,
     assets,
@@ -448,12 +448,12 @@ export function CreatePublicationPage() {
 
       {step === 2 && <ContentStep campaigns={campaigns} />}
       {step === 3 && (
-        <ChannelsStep screens={screens} loadingScreens={loadingRefs} screensError={screensError} />
+        <ChannelsStep channels={channels} loadingChannels={loadingRefs} channelsError={channelsError} />
       )}
       {step === 4 && (
         <ScheduleStep
           campaigns={campaigns}
-          screens={screens}
+          channels={channels}
           assets={assets}
           conflicts={conflicts}
           checkingConflicts={checkingConflicts}
@@ -464,7 +464,7 @@ export function CreatePublicationPage() {
       {step === 5 && (
         <ReviewPublishStep
           campaigns={campaigns}
-          screens={screens}
+          channels={channels}
           assets={assets}
           conflicts={conflicts}
           eligibilityChecks={eligibilityChecks}
