@@ -1,7 +1,7 @@
 # 0036 — The Channel UI splits on read vs write, not on backed vs unbacked
 
-Part of the Channel set: 0030 (membership and exclusivity), 0033 (lifecycle and concurrency),
-0034 (display expectation and target snapshot), 0035 (monitoring, alerts, notifications), this ADR.
+Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and concurrency),
+0039 (display expectation and target snapshot), 0035 (monitoring, alerts, notifications), this ADR.
 
 ## Context
 
@@ -62,7 +62,7 @@ down its whole length is noise, and a button that cannot respond is the exact th
 
 ### Status is a read-only pill, never the mock's toggle
 
-The mock draws a two-state switch. ADR 0033 makes `Draft → Active` one-way, and both real
+The mock draws a two-state switch. ADR 0038 makes `Draft → Active` one-way, and both real
 transitions carry preconditions a switch cannot express: activation requires at least one assigned
 device, and deactivation is refused while an Active or Scheduled Publication targets the channel.
 
@@ -91,7 +91,7 @@ sections is not a UI, it is an apology. The cost is also real: several hundred l
 that no test exercises and no save path touches, decaying until the milestone lands.
 
 **Do the N+1 fan-out for the Publications tab, lazily on tab open.** Rejected on latency — a hundred
-or more requests against production to populate one tab — and because the snapshot caveat in ADR 0034
+or more requests against production to populate one tab — and because the snapshot caveat in ADR 0039
 means the answer would be wrong anyway: activated publications freeze their device ids, so matching
 them against a channel's *current* membership disagrees with what was actually published.
 

@@ -1,6 +1,6 @@
 # 0035 — Channel monitoring extends the existing sweep, alert and notification stacks rather than adding a second one
 
-Part of the Channel set: 0030 (membership and exclusivity), 0033 (lifecycle and concurrency), 0034
+Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and concurrency), 0039
 (display expectation and target snapshot), this ADR.
 
 ## Context

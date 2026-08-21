@@ -1,6 +1,6 @@
 # Plan: Channels & Monitoring
 
-Execution detail for ADR 0030 (membership and exclusivity), 0033 (lifecycle and concurrency), 0034
+Execution detail for ADR 0030 (membership and exclusivity), 0038 (lifecycle and concurrency), 0039
 (display expectation and target snapshot) and 0035 (monitoring, alerts, remote operations). The
 ADRs hold the decisions and the rejected alternatives; this file holds everything that would rot
 inside one.
@@ -83,8 +83,8 @@ by design and require a human decision before proceeding.
 
 | # | change | notes |
 | --- | --- | --- |
-| 1 | `channels.revision integer NOT NULL DEFAULT 1` | ADR 0033; matches ADR 0003's type |
-| 2 | `channels.activated_at timestamptz NULL`; backfill `= created_at` for the 2 existing `active` rows | ADR 0033 |
+| 1 | `channels.revision integer NOT NULL DEFAULT 1` | ADR 0038; matches ADR 0003's type |
+| 2 | `channels.activated_at timestamptz NULL`; backfill `= created_at` for the 2 existing `active` rows | ADR 0038 |
 | 3 | rewrite `channels_status_check` → `('draft','active','inactive')` **and** `ALTER COLUMN status SET DEFAULT 'draft'` | current default is `'active'`; an insert that omits `status` must not create a live Channel |
 | 4 | **PREFLIGHT** category audit: any row on `website` / `email` / `mobile_app` | §3 |
 | 5 | **expand** `channels_channel_type_check` to allow `online` alongside the existing six | must precede the data update — the current CHECK rejects `online` |
@@ -92,7 +92,7 @@ by design and require a human decision before proceeding.
 | 7 | **narrow** the CHECK to `('dooh','in_store','online','social')`, then `RENAME COLUMN channel_type TO channel_category` | ADR 0030; the column has always held Category values |
 | 8 | `media_core.channel_types` reference table + seed; `channels.channel_type_id uuid NULL REFERENCES channel_types(id)` | ADR 0030 — Type is a table, not a CHECK |
 | 9 | Channel Display Expectation columns + CHECKs | §4a |
-| 10 | `channels.default_playlist_id uuid NULL REFERENCES media_core.playlists(id) ON DELETE SET NULL` | ADR 0034; `SET NULL` so a prefill pointer never blocks ADR 0025's delete guard |
+| 10 | `channels.default_playlist_id uuid NULL REFERENCES media_core.playlists(id) ON DELETE SET NULL` | ADR 0039; `SET NULL` so a prefill pointer never blocks ADR 0025's delete guard |
 | 11 | `media_core.monitoring_policy_defaults` (per tenant) + nullable override columns on `channels` | §4b |
 | 12 | **PREFLIGHT** duplicate active membership | §2 preflight queries |
 | 13 | `channel_device_reservations` (**`ON DELETE RESTRICT`** to `assets`); populate from currently-active channels | §4 |
@@ -126,7 +126,7 @@ JOIN   media_core.channels c ON c.id = cd.channel_id
 WHERE  c.status = 'active'
 GROUP  BY cd.device_id
 HAVING count(*) > 1;
--- any row → migration FAILS with this report. Do not pick a winner. (ADR 0033)
+-- any row → migration FAILS with this report. Do not pick a winner. (ADR 0038)
 
 -- Step 13b: cross-tenant membership (ADR 0007 records that channel_devices can cross tenants)
 SELECT cd.channel_id, cd.device_id, c.tenant_id AS channel_tenant, a.tenant_id AS asset_tenant
@@ -202,7 +202,7 @@ Seed set for launch (`channel_category = 'dooh'` unless noted): `led_display`, `
 `video_wall`, `kiosk`, and `menu_board` (`in_store`). **This seed list is the one item still open to
 product** — it is the launch vocabulary, not a constraint, so adding to it later is an insert rather
 than a migration. `channels.channel_type_id` is nullable in step 8 and becomes required at
-activation (ADR 0033), so the two existing rows do not need backfilling before the column exists.
+activation (ADR 0038), so the two existing rows do not need backfilling before the column exists.
 
 ---
 
@@ -223,7 +223,7 @@ CREATE TABLE media_core.channel_device_reservations (
 - `tenant_id` is carried even though the unique key does not need it, because isolation is enforced
   in the RPC layer, not RLS (ADR 0007). The activation RPC asserts
   `channels.tenant_id = reservation.tenant_id = assets.tenant_id` before inserting.
-- Written and deleted only inside the activation / deactivation transaction (ADR 0033).
+- Written and deleted only inside the activation / deactivation transaction (ADR 0038).
 - The conflict response carries the holding `channel_id` **and** `name`, because the UI has to say
   which Channel is holding the device.
 - **`ON DELETE RESTRICT`, not `CASCADE`.** A cascade would let deleting an `assets` row silently
@@ -243,7 +243,7 @@ Channels; recorded here so it is not rediscovered as a bug.
 
 ## 4a. Channel Display Expectation columns
 
-Typed columns, not jsonb — these are compared numerically on every assignment (ADR 0034).
+Typed columns, not jsonb — these are compared numerically on every assignment (ADR 0039).
 
 ```sql
 ALTER TABLE media_core.channels
@@ -291,7 +291,7 @@ smaller threshold is a value the system cannot honour. System defaults are const
 | edit | `media.channels.manage` | `Already modified: channel was changed elsewhere` → **409** |
 | delete Draft | `media.channels.manage` | `Already in use:` + blocking references; refused when `activated_at IS NOT NULL` |
 | activate | `media.channels.activate` | `Invalid input:` (missing name/category/type/device), `Already in use:` + holding channel |
-| deactivate | `media.channels.activate` | `Already in use:` + list of Active/Scheduled Publications — blocked while any targets the Channel (ADR 0033) |
+| deactivate | `media.channels.activate` | `Already in use:` + list of Active/Scheduled Publications — blocked while any targets the Channel (ADR 0038) |
 | assign device | `media.devices.assign` | `Invalid input:` orientation mismatch (**block**); resolution mismatch needs `p_confirm_mismatch` |
 | remove device | `media.devices.assign` | `Already in use:` + list of Active/Scheduled Publications |
 | acknowledge incident | `media.monitoring.incidents.manage` | — |
@@ -515,7 +515,7 @@ watchdog and its own ADR.
 | event | actor | before/after | reason required |
 | --- | --- | --- | --- |
 | create / edit Channel | yes | yes | no |
-| **deliberate overwrite** (ADR 0033) | yes | yes | no — but recorded as its own event type |
+| **deliberate overwrite** (ADR 0038) | yes | yes | no — but recorded as its own event type |
 | activate / deactivate | yes | yes | no |
 | delete Draft | yes | before only | no |
 | assign / remove Media Device | yes | yes | no |
@@ -653,9 +653,9 @@ post-restart `Completed`. **None of this is verified.** Backend-only work cannot
 
 - ADR numbering is non-contiguous: 0031 (playback behavior) and 0032 (playlist Output Profile) were
   claimed by concurrent playlist work while this set was under review. The Channel set is 0030,
-  0033, 0034, 0035. `src/features/playlists/output-profile.ts:4` correctly cites 0032 for the
+  0038, 0039, 0035. `src/features/playlists/output-profile.ts:4` correctly cites 0032 for the
   playlist profile and needs no change — the Channel-side geometry rule is a different concept in
-  ADR 0034.
+  ADR 0039.
 - `CONTEXT.md:46` claimed no `locations` table existed. Corrected in this change set —
   `public.locations` exists and `channels.location_id` references it.
 - `CONTEXT.md`'s Roles section now grants the Media Operator Channel management. ADR 0030 is the

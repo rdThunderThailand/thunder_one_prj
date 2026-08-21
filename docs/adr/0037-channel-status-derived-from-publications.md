@@ -1,12 +1,12 @@
 # 0037 — Channel status is derived from Publications; commitment replaces activation
 
-Part of the Channel set: 0030 (membership and exclusivity), 0033 (lifecycle and concurrency, which
-this ADR partly **supersedes**), 0034 (configuration boundary and target snapshot), 0035
+Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and concurrency, which
+this ADR partly **supersedes**), 0039 (configuration boundary and target snapshot), 0035
 (monitoring), 0036 (UI scope, whose *Status is a read-only pill* section this ADR **amends**).
 
 ## Context
 
-ADR 0033 gave a Channel a stored lifecycle changed by an explicit **Activate** button, and rejected
+ADR 0038 gave a Channel a stored lifecycle changed by an explicit **Activate** button, and rejected
 deriving it. That rejection rested on one claim: *"there is no underlying fact to derive from."*
 
 That claim is no longer true, and was already less true than it read. Verified against ThunderCore
@@ -115,13 +115,13 @@ Two consequences that are not obvious:
 
 ## Alternatives rejected
 
-**Keep Activate and derive nothing (ADR 0033 as written).** Rejected by the operator: activation is
+**Keep Activate and derive nothing (ADR 0038 as written).** Rejected by the operator: activation is
 a step that records no decision an operator actually makes. Whether a Channel is live is a fact
 about Publications, not a button press, and two sources of truth for it drift.
 
 **Reserve devices when a Publication targets the Channel, release when the last one ends.** The
 tightest possible coupling between "Active" and "holds screens". Rejected for the same reason ADR
-0033 rejected deferred release: it needs a worker to notice the last Publication ending, so
+0038 rejected deferred release: it needs a worker to notice the last Publication ending, so
 exclusivity would depend on a job running rather than on a transaction. Committing at Create keeps
 it inside one `BEGIN`.
 
@@ -145,12 +145,12 @@ the parser and roughly fifteen components for a word that is already accurate.
 
 - The single production Channel that stores `active` will read **Inactive** until a Publication
   targets it. That is the intended meaning, not a regression.
-- The list's lifecycle counts are no longer counts of a stored column (reversing ADR 0033's
+- The list's lifecycle counts are no longer counts of a stored column (reversing ADR 0038's
   consequence note) — a tenant with no channel-targeted Publications reads zero Active, legitimately.
 - `?health=` on a bookmarked list URL is ignored; `sort=health` falls back to the default sort.
 - Deactivate is now the only lifecycle button, and its "these publications still target this
   channel" guard is reachable for the first time, because Publications can finally target a Channel.
-- A Channel committed at create time carries `activated_at`, so ADR 0033's hard-delete carve-out
+- A Channel committed at create time carries `activated_at`, so ADR 0038's hard-delete carve-out
   (`activated_at IS NULL`) now covers exactly the Drafts and nothing else.
 - `media_channel_create` and `media_channel_update` change signature. Both old signatures are
   dropped before the new ones are created, and their grants re-issued — `CREATE OR REPLACE` with an

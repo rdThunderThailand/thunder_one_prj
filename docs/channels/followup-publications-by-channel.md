@@ -38,7 +38,7 @@ Option A is the better shape now that channel targets are the normal case: it ke
 Publications does this Channel have" as one question the database answers, and it does not grow the
 list payload for the pages that do not care.
 
-Note that ADR 0034 freezes a Publication's targets at publish time, so either shape must say whether
+Note that ADR 0039 freezes a Publication's targets at publish time, so either shape must say whether
 it reads the draft `publication_targets` or the post-activation snapshot. For a Channel target the
 two agree far more often than they did for device targets, because the Channel id survives device
 membership changes — but "which devices" and "which Channel" are still different questions.

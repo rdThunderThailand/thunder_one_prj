@@ -1,6 +1,6 @@
-# 0033 — Channel lifecycle is `Draft → Active ↔ Inactive`, retirement is one-way, concurrency reuses ADR 0003
+# 0038 — Channel lifecycle is `Draft → Active ↔ Inactive`, retirement is one-way, concurrency reuses ADR 0003
 
-Part of the Channel set: 0030 (membership and exclusivity), this ADR, 0034 (configuration boundary
+Part of the Channel set: 0030 (membership and exclusivity), this ADR, 0039 (configuration boundary
 and target snapshot), 0035 (monitoring, alerts, notifications).
 
 ## Context
@@ -36,7 +36,7 @@ Draft ──activate──▶ Active ◀──activate──┐
 reversible, because deactivation is an operational pause, not a deletion.
 
 **Deactivation is blocked while any Active or Scheduled Publication targets the Channel** — the same
-guard, with the same error shape, that ADR 0034 puts on removing a Media Device. Deactivating
+guard, with the same error shape, that ADR 0039 puts on removing a Media Device. Deactivating
 releases the Channel's device reservations; if a running Publication is still driving those screens
 through its frozen target snapshot, releasing them lets another Channel reserve the same device and
 produces exactly the double-playback state the reservation exists to prevent. The refusal lists the
@@ -64,7 +64,7 @@ A Channel may be **hard-deleted** only when all three hold:
 
 Anything else **deactivates instead**. This keeps Publication history, monitoring history and the
 audit trail resolvable: a deleted Channel row would turn every historical reference into a dangling
-id, and `publication_targets` is exactly the frozen snapshot ADR 0034 refuses to rewrite.
+id, and `publication_targets` is exactly the frozen snapshot ADR 0039 refuses to rewrite.
 
 ### Activation is one transaction
 

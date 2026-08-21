@@ -1,6 +1,6 @@
-# 0034 — Channel Display Expectation is an assignment gate; the Publication Target Snapshot stays frozen
+# 0039 — Channel Display Expectation is an assignment gate; the Publication Target Snapshot stays frozen
 
-Part of the Channel set: 0030 (membership and exclusivity), 0033 (lifecycle and concurrency), this
+Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and concurrency), this
 ADR, 0035 (monitoring, alerts, notifications).
 
 ## Context
@@ -130,7 +130,7 @@ reuse it. A second list would drift.
   enforces.
 - Removing a Media Device can now fail with a list of blocking Publications. That list is part of
   the error payload, in the shape ADR 0025's delete guard established for playlists.
-- The same guard covers deactivation, not just device removal: ADR 0033 blocks deactivating a
+- The same guard covers deactivation, not just device removal: ADR 0038 blocks deactivating a
   Channel while an Active or Scheduled Publication targets it. Without that, deactivation would
   release the reservations and re-open the double-playback path from the other side.
 - `channels.default_playlist_id` is a new nullable column referencing `media_core.playlists`,

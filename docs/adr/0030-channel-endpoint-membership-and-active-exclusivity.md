@@ -2,7 +2,7 @@
 
 Supersedes the single-file draft `0030-channel-endpoints-and-monitoring.md`, which bundled
 membership, lifecycle, snapshot and monitoring into one undivided decision. That draft is replaced
-by this ADR plus 0033, 0034, 0035 and `docs/channels/plan-channels-monitoring.md`. (0031 and 0032
+by this ADR plus 0038, 0039, 0035 and `docs/channels/plan-channels-monitoring.md`. (0031 and 0032
 went to concurrent playlist work while this set was being reviewed, so the Channel ADRs are not
 contiguous.)
 
@@ -105,8 +105,8 @@ channel's `tenant_id`, the reservation's `tenant_id` and the asset's `tenant_id`
 inserting.
 
 Rows are created when a Channel activates and removed when it deactivates or is deleted — inside
-the activation transaction described in ADR 0033. Deactivation cannot strand a running Publication,
-because ADR 0033 blocks it while one is still targeting the Channel.
+the activation transaction described in ADR 0038. Deactivation cannot strand a running Publication,
+because ADR 0038 blocks it while one is still targeting the Channel.
 
 The foreign key to `public.assets` is **`ON DELETE RESTRICT`**, not `CASCADE`. A cascade would let
 deleting an asset silently drop the reservation and leave an Active Channel holding a device it no
