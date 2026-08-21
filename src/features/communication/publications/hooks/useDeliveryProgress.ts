@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { fetchPublication } from "../services/publications-api";
-import { summarizeDelivery } from "../delivery-progress";
+import { deliveryPollIntervalMs, summarizeDelivery } from "../delivery-progress";
 import type { PublicationDetail } from "../types";
 
-const POLL_INTERVAL_MS = 10_000;
-
 /**
- * Keeps a publication's delivery status fresh while it's still settling. Re-fetches
- * `fetchPublication` on a timer and stops once the run reaches a final result (ADR 0021) —
- * an already-settled publication never polls at all.
+ * Keeps a publication's delivery status fresh while delivery/playback can still advance.
+ * The interval adapts to the playback window and pauses entirely while the tab is hidden.
  */
 export function useDeliveryProgress(id: string, initialDetail?: PublicationDetail | null) {
   const [detail, setDetail] = useState<PublicationDetail | null>(initialDetail ?? null);
@@ -22,16 +19,14 @@ export function useDeliveryProgress(id: string, initialDetail?: PublicationDetai
     let alive = true;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    function scheduleNext() {
-      if (!alive) return;
-      timeoutId = setTimeout(tick, POLL_INTERVAL_MS);
+    function scheduleNext(delayMs: number) {
+      if (!alive || document.hidden) return;
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(tick, delayMs);
     }
 
     function tick() {
-      if (document.hidden) {
-        scheduleNext();
-        return;
-      }
+      if (document.hidden) return;
       fetchPublication(id)
         .then((pubDetail) => {
           if (!alive) return;
@@ -44,7 +39,12 @@ export function useDeliveryProgress(id: string, initialDetail?: PublicationDetai
             pubDetail.schedule,
             new Date()
           );
-          if (summary.result === "Publishing") scheduleNext();
+          const nextInterval = deliveryPollIntervalMs(
+            pubDetail.targets ?? [],
+            pubDetail,
+            summary
+          );
+          if (nextInterval !== null) scheduleNext(nextInterval);
         })
         .catch((err) => {
           if (!alive) return;
@@ -52,6 +52,17 @@ export function useDeliveryProgress(id: string, initialDetail?: PublicationDetai
           setLoading(false);
         });
     }
+
+    function handleVisibilityChange() {
+      if (!alive) return;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      if (!document.hidden) tick();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // refreshToken > 0 means a caller asked for an immediate re-fetch (e.g. right after a
     // retry) — always tick in that case, even though initialDetail hasn't changed.
@@ -62,13 +73,19 @@ export function useDeliveryProgress(id: string, initialDetail?: PublicationDetai
         initialDetail.schedule,
         new Date()
       );
-      if (summary.result === "Publishing") scheduleNext();
+      const nextInterval = deliveryPollIntervalMs(
+        initialDetail.targets ?? [],
+        initialDetail,
+        summary
+      );
+      if (nextInterval !== null) scheduleNext(nextInterval);
     } else {
       tick();
     }
 
     return () => {
       alive = false;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [id, initialDetail, refreshToken]);

@@ -72,6 +72,26 @@ export type FileStatusEntry = {
   status: "downloading" | "delivered" | "playing" | "failed";
   error?: string | null;
   acked_at: string;
+  /** Device-clock evidence from the success-only Publication download report. */
+  reported_at?: string | null;
+  /** Local cache filename, not the original uploaded filename. */
+  file_name?: string | null;
+  /** Actual bytes on the device after download/cache reuse. */
+  file_size?: number | null;
+  /** Echo of the checksum supplied by the player jobs response. */
+  checksum?: string | null;
+  /** False with a null checksum means verification was unavailable, not failed. */
+  verified?: boolean;
+  /** True = fetched this attempt; false = an existing cache entry was reused. */
+  downloaded?: boolean;
+  delivery_attempt?: number;
+};
+
+export type PublicationPlaybackWindow = {
+  state: "before" | "open" | "between" | "ended";
+  opened_at: string | null;
+  closes_at: string | null;
+  next_opens_at: string | null;
 };
 
 /** Per-device delivery status. Populated only after activation. */
@@ -123,6 +143,8 @@ export type PublicationDetail = {
   publication_targets?: PublicationTarget[];
   /** The schedule saved in step 4 (null on a draft that hasn't reached it). */
   schedule?: PublicationSchedule | null;
+  /** Recurrence-aware current/next playback window, derived by the backend. */
+  playback_window?: PublicationPlaybackWindow | null;
 };
 
 export type PublicationTarget = {
@@ -200,4 +222,3 @@ export type DraftAssetItem = {
    *  so the backend falls back to the file's own duration. */
   duration_seconds: number | null;
 };
-

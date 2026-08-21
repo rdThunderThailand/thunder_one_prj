@@ -10,6 +10,7 @@ import {
   summarizeDelivery,
   buildDeliveryRows,
   canRetryTarget,
+  deliveryPollIntervalMs,
   type PublishResult,
 } from "../delivery-progress";
 import { retryPublicationTargets } from "../services/publications-api";
@@ -72,8 +73,9 @@ export function DeliveryProgress({
 
   const now = new Date();
   const summary = summarizeDelivery(targets, detail, detail.schedule, now);
-  const rows = buildDeliveryRows(targets, detail.schedule, now);
+  const rows = buildDeliveryRows(targets, detail.schedule, now, detail.playback_window);
   const hasRetryableTargets = rows.some(({ progress }) => canRetryTarget(progress));
+  const pollInterval = deliveryPollIntervalMs(targets, detail, summary);
 
   async function handleRetryAll() {
     setRetrying(true);
@@ -140,10 +142,10 @@ export function DeliveryProgress({
           {summary.overallPercent}% — {summary.stage3Done} of {summary.total} devices confirmed
           playback
         </span>
-        {isPublishing && (
+        {pollInterval !== null && (
           <span className="inline-flex items-center gap-1.5 text-indigo-500">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-500" />
-            อัปเดตอัตโนมัติทุก 10 วินาที
+            อัปเดตอัตโนมัติทุก {pollInterval / 1000} วินาที
           </span>
         )}
       </p>
@@ -184,7 +186,13 @@ export function DeliveryProgress({
         </div>
       )}
 
-      <DeliveryDeviceTable id={id} targets={targets} schedule={detail.schedule} onRetried={refresh} />
+      <DeliveryDeviceTable
+        id={id}
+        targets={targets}
+        schedule={detail.schedule}
+        playbackWindow={detail.playback_window}
+        onRetried={refresh}
+      />
     </Card>
   );
 }

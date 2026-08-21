@@ -12,7 +12,11 @@ import {
 } from "../delivery-progress";
 import { retryPublicationTargets } from "../services/publications-api";
 import { classifyApiError } from "@/lib/api/api-error";
-import type { PublicationDeliveryTarget, PublicationSchedule } from "../types";
+import type {
+  PublicationDeliveryTarget,
+  PublicationPlaybackWindow,
+  PublicationSchedule,
+} from "../types";
 
 const RESULT_LABEL: Record<DeviceResult, string> = {
   success: "Success",
@@ -39,15 +43,25 @@ function formatDate(dateStr?: string | null): string {
   }
 }
 
+function formatBytes(bytes?: number | null): string {
+  if (bytes == null) return "—";
+  const exact = `${bytes.toLocaleString()} B`;
+  if (bytes < 1024) return exact;
+  if (bytes < 1024 * 1024) return `${exact} (${(bytes / 1024).toFixed(1)} KB)`;
+  return `${exact} (${(bytes / (1024 * 1024)).toFixed(1)} MB)`;
+}
+
 export function DeliveryDeviceTable({
   id,
   targets,
   schedule,
+  playbackWindow,
   onRetried,
 }: {
   id: string;
   targets: PublicationDeliveryTarget[];
   schedule?: PublicationSchedule | null;
+  playbackWindow?: PublicationPlaybackWindow | null;
   onRetried: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -56,7 +70,11 @@ export function DeliveryDeviceTable({
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [retryError, setRetryError] = useState<string | null>(null);
 
-  const rows = filterDeliveryRows(buildDeliveryRows(targets, schedule, new Date()), query, resultFilter);
+  const rows = filterDeliveryRows(
+    buildDeliveryRows(targets, schedule, new Date(), playbackWindow),
+    query,
+    resultFilter
+  );
 
   async function handleRetryOne(deviceId: string) {
     setRetryingId(deviceId);
@@ -177,11 +195,29 @@ export function DeliveryDeviceTable({
                         {target.file_statuses && Object.keys(target.file_statuses).length > 0 && (
                           <div className="mt-2">
                             <span className="text-zinc-400">Files</span>
-                            <ul className="mt-1 flex flex-col gap-0.5">
+                            <ul className="mt-1 flex flex-col gap-2">
                               {Object.entries(target.file_statuses).map(([assetId, entry]) => (
-                                <li key={assetId}>
-                                  {assetId}: {entry.status}
-                                  {entry.error ? ` — ${entry.error}` : ""}
+                                <li key={assetId} className="rounded border border-zinc-200 p-2 dark:border-zinc-700">
+                                  <div className="font-medium text-zinc-800 dark:text-zinc-200">
+                                    Local filename: {entry.file_name ?? "—"}
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-zinc-500">
+                                    <span>Asset: {assetId}</span>
+                                    <span>Status: {entry.status}</span>
+                                    <span>Actual bytes on disk: {formatBytes(entry.file_size)}</span>
+                                    {entry.downloaded !== undefined && (
+                                      <span>{entry.downloaded ? "Fetched this run" : "Cache reused"}</span>
+                                    )}
+                                    {entry.verified !== undefined && (
+                                      <span>
+                                        Verification: {entry.checksum == null ? "Unavailable" : entry.verified ? "Verified" : "Failed"}
+                                      </span>
+                                    )}
+                                    <span>Device reported: {formatDate(entry.reported_at)}</span>
+                                    <span>Server received: {formatDate(entry.acked_at)}</span>
+                                  </div>
+                                  {entry.checksum && <div className="mt-1 break-all text-zinc-400">Checksum: {entry.checksum}</div>}
+                                  {entry.error && <div className="mt-1 text-red-600 dark:text-red-400">{entry.error}</div>}
                                 </li>
                               ))}
                             </ul>

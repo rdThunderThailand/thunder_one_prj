@@ -1,5 +1,6 @@
 import type {
   PublicationDeliveryTarget,
+  PublicationPlaybackWindow,
   PublicationSchedule,
 } from "./types";
 
@@ -74,7 +75,8 @@ function isScheduleExpired(schedule: PublicationSchedule | null | undefined, now
 export function deriveDeviceProgress(
   target: PublicationDeliveryTarget,
   schedule: PublicationSchedule | null | undefined,
-  now: Date
+  now: Date,
+  playbackWindow?: PublicationPlaybackWindow | null
 ): DeviceProgress {
   const deviceId = target.device_id;
   const deviceName = target.device_name ?? deviceId;
@@ -102,7 +104,11 @@ export function deriveDeviceProgress(
       stage3 = "confirmed";
     } else {
       const startsAt = schedule?.starts_at ? new Date(schedule.starts_at) : null;
-      stage3 = startsAt && startsAt.getTime() > now.getTime() ? "waiting-scheduled" : "pending";
+      const isWaitingForWindow =
+        playbackWindow?.state === "before" || playbackWindow?.state === "between";
+      stage3 = isWaitingForWindow || (startsAt && startsAt.getTime() > now.getTime())
+        ? "waiting-scheduled"
+        : "pending";
     }
   }
 
@@ -133,11 +139,12 @@ export function canRetryTarget(progress: DeviceProgress): boolean {
 export function buildDeliveryRows(
   targets: PublicationDeliveryTarget[],
   schedule: PublicationSchedule | null | undefined,
-  now: Date
+  now: Date,
+  playbackWindow?: PublicationPlaybackWindow | null
 ): DeliveryRow[] {
   return targets.map((target) => ({
     target,
-    progress: deriveDeviceProgress(target, schedule, now),
+    progress: deriveDeviceProgress(target, schedule, now, playbackWindow),
   }));
 }
 
@@ -170,7 +177,12 @@ function latestTargetActivity(targets: PublicationDeliveryTarget[]): string | nu
 
 export function summarizeDelivery(
   targets: PublicationDeliveryTarget[],
-  publication: { status?: string; activated_at?: string | null; cancelled_at?: string | null },
+  publication: {
+    status?: string;
+    activated_at?: string | null;
+    cancelled_at?: string | null;
+    playback_window?: PublicationPlaybackWindow | null;
+  },
   schedule: PublicationSchedule | null | undefined,
   now: Date
 ): DeliverySummary {
@@ -192,10 +204,18 @@ export function summarizeDelivery(
     result = "Publish Failed";
   } else {
     const hasOutstanding = targets.some((t) => t.status !== "playing" && t.status !== "failed");
-    const activatedAt = publication.activated_at ? new Date(publication.activated_at).getTime() : null;
-    const withinSettleWindow = activatedAt === null || now.getTime() - activatedAt < SETTLE_WINDOW_MS;
+    const window = publication.playback_window;
+    const settleAnchor = window?.state === "open" && window.opened_at
+      ? new Date(window.opened_at).getTime()
+      : publication.activated_at
+        ? new Date(publication.activated_at).getTime()
+        : null;
+    const isWaitingForWindow = window?.state === "before" || window?.state === "between";
+    const hasEnded = window?.state === "ended";
+    const withinSettleWindow =
+      !hasEnded && (settleAnchor === null || now.getTime() - settleAnchor < SETTLE_WINDOW_MS);
 
-    if (hasOutstanding && withinSettleWindow) {
+    if ((isWaitingForWindow && stage3Done < total) || (hasOutstanding && withinSettleWindow)) {
       result = "Publishing";
     } else if (stage3Done === total) {
       result = "Published Successfully";
@@ -226,4 +246,38 @@ export function summarizeDelivery(
     result,
     completedAt,
   };
+}
+
+export const FAST_DELIVERY_POLL_MS = 10_000;
+export const SLOW_DELIVERY_POLL_MS = 60_000;
+
+/** Keep late reports visible without polling a future/weekly schedule every ten seconds. */
+export function deliveryPollIntervalMs(
+  targets: PublicationDeliveryTarget[],
+  publication: {
+    status?: string;
+    effective_status?: string;
+    playback_window?: PublicationPlaybackWindow | null;
+  },
+  summary: DeliverySummary
+): number | null {
+  if (
+    publication.status === "cancelled" ||
+    publication.status === "ended" ||
+    publication.effective_status === "ended" ||
+    publication.playback_window?.state === "ended"
+  ) {
+    return null;
+  }
+
+  const hasUnresolved = targets.some((target) =>
+    target.status !== "playing" && target.status !== "failed"
+  );
+  if (!hasUnresolved) return null;
+
+  const windowState = publication.playback_window?.state;
+  if (windowState === "before" || windowState === "between") {
+    return SLOW_DELIVERY_POLL_MS;
+  }
+  return summary.result === "Publishing" ? FAST_DELIVERY_POLL_MS : SLOW_DELIVERY_POLL_MS;
 }

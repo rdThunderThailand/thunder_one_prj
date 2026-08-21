@@ -10,10 +10,29 @@ import {
   filterDeliveryRows,
   buildDeliveryRows,
   canRetryTarget,
+  deliveryPollIntervalMs,
+  FAST_DELIVERY_POLL_MS,
+  SLOW_DELIVERY_POLL_MS,
 } from "./delivery-progress.ts";
-import type { PublicationDeliveryTarget, PublicationSchedule } from "./types/index.ts";
+import type {
+  PublicationDeliveryTarget,
+  PublicationPlaybackWindow,
+  PublicationSchedule,
+} from "./types/index.ts";
 
 const now = new Date("2026-08-18T10:00:00Z");
+
+function playbackWindow(
+  overrides: Partial<PublicationPlaybackWindow>
+): PublicationPlaybackWindow {
+  return {
+    state: "open",
+    opened_at: "2026-08-18T09:55:00Z",
+    closes_at: null,
+    next_opens_at: null,
+    ...overrides,
+  };
+}
 
 function target(overrides: Partial<PublicationDeliveryTarget>): PublicationDeliveryTarget {
   return {
@@ -134,6 +153,68 @@ function target(overrides: Partial<PublicationDeliveryTarget>): PublicationDeliv
   assert.equal(summary.result, "Publishing");
 }
 
+// A future or between-recurrence window must not fail before playback is expected.
+{
+  const targets = [target({ status: "delivered" })];
+  for (const state of ["before", "between"] as const) {
+    const summary = summarizeDelivery(
+      targets,
+      {
+        status: "active",
+        activated_at: "2026-08-18T01:00:00Z",
+        playback_window: playbackWindow({ state, opened_at: null }),
+      },
+      null,
+      now
+    );
+    assert.equal(summary.result, "Publishing");
+
+    const failedSummary = summarizeDelivery(
+      [target({ status: "failed" })],
+      {
+        status: "active",
+        playback_window: playbackWindow({ state, opened_at: null }),
+      },
+      null,
+      now
+    );
+    assert.equal(failedSummary.result, "Publishing");
+  }
+}
+
+// Once a weekly window opens, its own opened_at is the settle anchor, not an old activation.
+{
+  const targets = [target({ status: "delivered" })];
+  const summary = summarizeDelivery(
+    targets,
+    {
+      status: "active",
+      activated_at: "2026-08-01T01:00:00Z",
+      playback_window: playbackWindow({ opened_at: "2026-08-18T09:55:00Z" }),
+    },
+    null,
+    now
+  );
+  assert.equal(summary.result, "Publishing");
+}
+
+// An ended schedule settles from target outcomes even when the total schedule was shorter than
+// the normal settle window.
+{
+  const targets = [target({ status: "delivered" })];
+  const summary = summarizeDelivery(
+    targets,
+    {
+      status: "active",
+      activated_at: "2026-08-18T09:55:00Z",
+      playback_window: playbackWindow({ state: "ended", opened_at: null }),
+    },
+    null,
+    now
+  );
+  assert.equal(summary.result, "Publish Failed");
+}
+
 // past the settle window, an offline/pending target stops blocking and the run settles with warnings.
 {
   const targets = [target({ status: "playing" }), target({ status: "pending", status_level: "offline", device_id: "dev-2" })];
@@ -231,6 +312,52 @@ function target(overrides: Partial<PublicationDeliveryTarget>): PublicationDeliv
   const byResult = filterDeliveryRows(rows, "", "error");
   assert.equal(byResult.length, 1);
   assert.equal(byResult[0].target.device_id, "dev-2");
+}
+
+// Poll fast while an open run is settling, slow while waiting/late, and stop at terminals.
+{
+  const targets = [target({ status: "delivered" })];
+  const fastPublication = {
+    status: "active",
+    playback_window: playbackWindow({}),
+  };
+  const fastSummary = summarizeDelivery(
+    targets,
+    { ...fastPublication, activated_at: "2026-08-18T09:55:00Z" },
+    null,
+    now
+  );
+  assert.equal(
+    deliveryPollIntervalMs(targets, fastPublication, fastSummary),
+    FAST_DELIVERY_POLL_MS
+  );
+
+  const waitingPublication = {
+    status: "active",
+    playback_window: playbackWindow({ state: "between", opened_at: null }),
+  };
+  assert.equal(
+    deliveryPollIntervalMs(targets, waitingPublication, fastSummary),
+    SLOW_DELIVERY_POLL_MS
+  );
+
+  assert.equal(
+    deliveryPollIntervalMs(
+      [target({ status: "playing" })],
+      fastPublication,
+      fastSummary
+    ),
+    null
+  );
+
+  assert.equal(
+    deliveryPollIntervalMs(
+      [target({ status: "pending" })],
+      { status: "active", effective_status: "ended" },
+      fastSummary
+    ),
+    null
+  );
 }
 
 console.log("delivery-progress.check.mts: all checks passed");
