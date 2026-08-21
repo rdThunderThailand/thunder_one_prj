@@ -15,16 +15,18 @@ import {
   fetchCampaigns,
   fetchMediaAssets,
   fetchPublication,
-  fetchScreens,
   fetchTags,
   saveBasicInfo,
   savePublicationContent,
   savePublicationSchedule,
 } from "../services/publications-api";
+import { fetchChannels } from "../../channels/services/channels-api";
+import type { ChannelListItem } from "../../channels/types";
+import { selectedChannelDeviceIds } from "../channels-logic";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
 import { classifyApiError, isConflict } from "@/lib/api/api-error";
-import type { Campaign, MediaAsset, Priority, ScheduleConflict, Screen, Tag } from "../types";
+import type { Campaign, MediaAsset, Priority, ScheduleConflict, Tag } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
  * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
@@ -39,12 +41,12 @@ function isStaleDraftError(err: unknown): boolean {
 
 export function usePublishDraft() {
   const router = useRouter();
-  const [screens, setScreens] = useState<Screen[]>([]);
+  const [channels, setChannels] = useState<ChannelListItem[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loadingRefs, setLoadingRefs] = useState(true);
-  const [screensError, setScreensError] = useState<string | null>(null);
+  const [channelsError, setChannelsError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -82,18 +84,18 @@ export function usePublishDraft() {
     let isMounted = true;
 
     Promise.all([
-      fetchScreens().catch((err) => {
+      fetchChannels().catch((err) => {
         if (isMounted) {
-          setScreensError(err instanceof Error ? err.message : "Failed to load channels.");
+          setChannelsError(err instanceof Error ? err.message : "Failed to load channels.");
         }
         return [];
       }),
       fetchCampaigns().catch(() => []),
       fetchMediaAssets().catch(() => []),
       fetchTags().catch(() => []),
-    ]).then(([fetchedScreens, fetchedCampaigns, fetchedAssets, fetchedTags]) => {
+    ]).then(([fetchedChannels, fetchedCampaigns, fetchedAssets, fetchedTags]) => {
       if (isMounted) {
-        setScreens(fetchedScreens);
+        setChannels(fetchedChannels);
         setCampaigns(fetchedCampaigns);
         setAssets(fetchedAssets);
         setTags(fetchedTags);
@@ -133,7 +135,7 @@ export function usePublishDraft() {
       const payload = scheduleFormToPayload(scheduleForm);
       checkScheduleConflicts({
         publication_id: publicationId,
-        device_ids: channelIds,
+        device_ids: selectedChannelDeviceIds(channels, channelIds),
         starts_at: payload.starts_at,
         ends_at: payload.ends_at,
         recurrence: payload.recurrence,
@@ -162,6 +164,7 @@ export function usePublishDraft() {
     };
   }, [
     publicationId,
+    channels,
     channelIds,
     scheduleForm,
     channelIdsStr,
@@ -188,7 +191,7 @@ export function usePublishDraft() {
   const persistDraft = async (forPublish: boolean): Promise<string | null> => {
     const state = usePublicationDraftStore.getState();
     const targets =
-      forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, screens) : undefined;
+      forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, channels) : undefined;
 
     const basicForm = basicInfoToForm(state.basicInfo, state.playlistId);
     let res;
@@ -309,8 +312,8 @@ export function usePublishDraft() {
   };
 
   return {
-    screens,
-    screensError,
+    channels,
+    channelsError,
     campaigns,
     tags,
     assets,

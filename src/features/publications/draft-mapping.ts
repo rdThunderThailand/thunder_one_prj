@@ -7,9 +7,9 @@ import type {
   PublicationTarget,
   PublicationType,
   ScheduleType,
-  Screen,
   DraftAssetItem,
 } from "./types";
+import type { ChannelListItem } from "../channels/types";
 import type { BasicInfoState } from "./components/BasicInfoForm";
 
 export const SCHEDULE_TYPE_BY_CARD: Record<ScheduleTypeId, ScheduleType> = {
@@ -42,13 +42,16 @@ export function basicInfoToForm(basicInfo: BasicInfoState, playlistId?: string |
   return form;
 }
 
-export function channelIdsToTargets(channelIds: string[], screens: Screen[]): PublicationTarget[] {
+export function channelIdsToTargets(
+  channelIds: string[],
+  channels: ChannelListItem[],
+): PublicationTarget[] {
   return channelIds.map((id) => {
-    const screen = screens.find((s) => s.id === id);
+    const channel = channels.find((c) => c.id === id);
     return {
-      target_type: "device",
-      device_id: id,
-      name: screen ? screen.name : null,
+      target_type: "channel",
+      channel_id: id,
+      name: channel ? channel.name : null,
     };
   });
 }

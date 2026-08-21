@@ -11,7 +11,8 @@ import {
   validateScheduleForm,
   utcToZonedParts,
 } from "../schedule";
-import type { Campaign, MediaAsset, ScheduleConflict, Screen } from "../types";
+import type { Campaign, MediaAsset, ScheduleConflict } from "../types";
+import type { ChannelListItem } from "../../channels/types";
 import {
   delayUnits,
   priorities,
@@ -60,7 +61,7 @@ function formatShortDate(iso: string) {
 
 export interface ScheduleStepProps {
   campaigns?: Campaign[];
-  screens?: Screen[];
+  channels?: ChannelListItem[];
   assets?: MediaAsset[];
   conflicts?: ScheduleConflict[];
   checkingConflicts?: boolean;
@@ -70,7 +71,7 @@ export interface ScheduleStepProps {
 
 export function ScheduleStep({
   campaigns = [],
-  screens = [],
+  channels = [],
   assets = [],
   conflicts = [],
   checkingConflicts = false,
@@ -113,8 +114,8 @@ export function ScheduleStep({
       (basicInfo.publicationType === "video" && selectedAsset.kind === "image"));
 
   const selectedChannelsCount =
-    screens.length > 0
-      ? screens.filter((s) => channelIds.includes(s.id)).length
+    channels.length > 0
+      ? channels.filter((c) => channelIds.includes(c.id)).length
       : channelIds.length;
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);

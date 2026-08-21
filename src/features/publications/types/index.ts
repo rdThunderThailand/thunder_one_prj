@@ -125,14 +125,6 @@ export type PublicationDetail = {
   schedule?: PublicationSchedule | null;
 };
 
-export type Screen = {
-  id: string;
-  name: string;
-  connection_status?: string;
-  status_level?: "online" | "warning" | "offline";
-  last_heartbeat_at?: string | null;
-};
-
 export type PublicationTarget = {
   target_type: "channel" | "device";
   channel_id?: string | null;

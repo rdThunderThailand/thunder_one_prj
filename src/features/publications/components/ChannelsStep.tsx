@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
 import { ChevronDownIcon, FilterIcon, GridIcon, ListIcon, SearchIcon, XIcon } from "@/components/ui/icons";
-import type { Screen } from "../types";
+import type { ChannelListItem } from "../../channels/types";
 import { channelCategories, type ChannelCategoryId, type ChannelItem } from "../mock-data";
 import {
   computeCategoryCounts,
@@ -19,15 +19,15 @@ import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 const VISIBLE_COUNT = 4;
 
 export interface ChannelsStepProps {
-  screens?: Screen[];
-  loadingScreens?: boolean;
-  screensError?: string | null;
+  channels?: ChannelListItem[];
+  loadingChannels?: boolean;
+  channelsError?: string | null;
 }
 
 export function ChannelsStep({
-  screens = [],
-  loadingScreens = false,
-  screensError = null,
+  channels: source = [],
+  loadingChannels = false,
+  channelsError = null,
 }: ChannelsStepProps) {
   const selectedIds = usePublicationDraftStore((s) => s.channelIds);
   const toggleChannel = usePublicationDraftStore((s) => s.toggleChannelId);
@@ -38,7 +38,7 @@ export function ChannelsStep({
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const channels: ChannelItem[] = useMemo(() => toChannelItems(screens), [screens]);
+  const channels: ChannelItem[] = useMemo(() => toChannelItems(source), [source]);
 
   const filtered = useMemo(() => filterBySearch(channels, search), [channels, search]);
 
@@ -56,12 +56,12 @@ export function ChannelsStep({
       <div>
         <h1 className="text-xl font-semibold text-zinc-900">Select Channels</h1>
         <p className="mt-0.5 text-sm text-zinc-500">เลือกช่องทางที่ต้องการเผยแพร่สื่อนี้</p>
-        {loadingScreens && <p className="mt-1 text-xs text-zinc-400">Loading screens...</p>}
-        {!loadingScreens && screensError && (
-          <p className="mt-1 text-xs text-red-600">{screensError}</p>
+        {loadingChannels && <p className="mt-1 text-xs text-zinc-400">Loading channels...</p>}
+        {!loadingChannels && channelsError && (
+          <p className="mt-1 text-xs text-red-600">{channelsError}</p>
         )}
-        {!loadingScreens && !screensError && channels.length === 0 && (
-          <p className="mt-1 text-xs text-zinc-400">No channels available yet.</p>
+        {!loadingChannels && !channelsError && channels.length === 0 && (
+          <p className="mt-1 text-xs text-zinc-400">No Channels available yet — create one first.</p>
         )}
       </div>
 
@@ -118,9 +118,9 @@ export function ChannelsStep({
                   className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
-              {/* ponytail: decorative only — Screen has no type/location field
-                  and "status" already drives the summary card; wire these up
-                  once the backend exposes type/location per screen. */}
+              {/* ponytail: decorative only — the category tabs and the summary card
+                  already cover type and status; wire these up if filtering by
+                  Channel location turns out to be worth the control. */}
               {["All Types", "All Status", "All Locations"].map((label) => (
                 <div key={label} className="relative">
                   <select className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
