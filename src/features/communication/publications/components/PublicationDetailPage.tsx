@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { cancelPublication, deletePublication, fetchPublication } from "../services/publications-api";
-import { fetchPlaylist } from "@/features/playlists";
+import { fetchPlaylist } from "@/features/communication/playlists";
 import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
 import type { PlaylistDetail, PublicationDetail } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";

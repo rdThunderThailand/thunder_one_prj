@@ -1,4 +1,4 @@
-import { ChannelEditorPage } from "@/features/channels";
+import { ChannelEditorPage } from "@/features/communication/channels";
 
 export default function Page() {
   return <ChannelEditorPage />;

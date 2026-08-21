@@ -1,4 +1,4 @@
-import { PublicationsListPage } from "@/features/publications";
+import { PublicationsListPage } from "@/features/communication/publications";
 
 export default function Page() {
   return <PublicationsListPage />;

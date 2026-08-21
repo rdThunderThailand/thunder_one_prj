@@ -8,7 +8,7 @@ import {
   resolveCoverAssetId,
   totalDurationSeconds,
   type PlaylistDetail,
-} from "@/features/playlists";
+} from "@/features/communication/playlists";
 
 /**
  * Shared by Step 4 (Schedule) and Step 5 (Review & Publish) — both preview the

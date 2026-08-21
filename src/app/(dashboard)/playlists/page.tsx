@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { getSession } from "@/features/auth/services/get-session";
-import { PlaylistsListPage } from "@/features/playlists/components/PlaylistsListPage";
+import { PlaylistsListPage } from "@/features/communication/playlists/components/PlaylistsListPage";
 
 export default async function PlaylistsPage() {
   // The "My Playlists" tab needs the caller's user id, and the layout's own getSession()

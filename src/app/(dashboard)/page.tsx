@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { MoreIcon, PlusIcon, SparklesIcon } from "@/components/ui/icons";
-import { OverviewDashboard } from "@/features/overview";
+import { OverviewDashboard } from "@/features/communication/overview";
 
 export default function OverviewPage() {
   return (

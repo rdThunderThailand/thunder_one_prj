@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { playlistDisplayStatus, statusBadge } from "@/features/playlists";
+import { playlistDisplayStatus, statusBadge } from "@/features/communication/playlists";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { fetchPublication } from "../services/publications-api";
 import { utcToZonedParts } from "../schedule";

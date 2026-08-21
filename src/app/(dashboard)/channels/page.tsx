@@ -1,4 +1,4 @@
-import { ChannelsListPage } from "@/features/channels";
+import { ChannelsListPage } from "@/features/communication/channels";
 
 export default function ChannelsPage() {
   return <ChannelsListPage />;

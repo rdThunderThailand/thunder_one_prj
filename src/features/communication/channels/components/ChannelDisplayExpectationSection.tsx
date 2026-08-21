@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/Card";
-import { RESOLUTIONS, parseResolution, resolutionLabel } from "@/features/playlists";
+import { RESOLUTIONS, parseResolution, resolutionLabel } from "@/features/communication/playlists";
 import type { ChannelOrientation } from "../types";
 
 const fieldClasses =

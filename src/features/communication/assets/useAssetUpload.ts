@@ -9,8 +9,8 @@ import {
   readVideoDuration,
   registerVideo,
   uploadToStorage,
-} from "@/features/publications/services/upload-api";
-import { rejectUploadReason } from "@/features/publications/upload-limits";
+} from "@/features/communication/publications/services/upload-api";
+import { rejectUploadReason } from "@/features/communication/publications/upload-limits";
 
 /** Shared upload pipeline for the file-picker "Upload Asset" button in both the
  *  Publication and Playlist wizards: signed URL → PUT to storage → (video only)

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { CreatePlaylistPage } from "@/features/playlists/components/CreatePlaylistPage";
+import { CreatePlaylistPage } from "@/features/communication/playlists/components/CreatePlaylistPage";
 
 export default function Page() {
   return (

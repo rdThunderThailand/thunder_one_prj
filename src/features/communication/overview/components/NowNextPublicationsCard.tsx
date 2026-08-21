@@ -13,7 +13,7 @@ import {
   formatScheduleStart,
   type PublicationDetail,
   type PublicationListItem,
-} from "@/features/publications";
+} from "@/features/communication/publications";
 
 /**
  * Channel and start time only exist on the detail payload, so this card is a 1+N

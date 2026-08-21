@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { CreatePublicationPage } from "@/features/publications";
+import { CreatePublicationPage } from "@/features/communication/publications";
 
 export default function Page() {
   return (

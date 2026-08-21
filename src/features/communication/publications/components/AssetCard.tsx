@@ -6,7 +6,7 @@ import { LazyVideo } from "@/components/ui/LazyVideo";
 import { isVideoUrl } from "@/lib/media-kind";
 import { isApprovedAsset } from "../draft-mapping";
 import type { MediaAsset } from "../types";
-import type { PlaylistListItem } from "@/features/playlists";
+import type { PlaylistListItem } from "@/features/communication/playlists";
 
 type AssetCardBaseProps = {
   previewUrl?: string;

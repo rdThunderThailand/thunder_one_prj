@@ -12,7 +12,7 @@ import {
   SparklesIcon,
   UploadIcon,
 } from "@/components/ui/icons";
-import { useAssetUpload } from "@/features/assets/useAssetUpload";
+import { useAssetUpload } from "@/features/communication/assets/useAssetUpload";
 import { assetLibraryTabs } from "../mock-data";
 import { AssetCard } from "./AssetCard";
 import { SelectedAssetList } from "./SelectedAssetList";
@@ -24,8 +24,8 @@ import type { Campaign, MediaAsset } from "../types";
 import { dropUnapprovedItems, isImageAsset } from "../draft-mapping";
 import { acceptedAssetKind, canSelectAsset, canSelectPlaylist } from "../content-selection.ts";
 import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "../upload-limits";
-import { fetchPlaylists } from "@/features/playlists";
-import type { PlaylistListItem } from "@/features/playlists";
+import { fetchPlaylists } from "@/features/communication/playlists";
+import type { PlaylistListItem } from "@/features/communication/playlists";
 
 function ToggleSwitch({
   checked,

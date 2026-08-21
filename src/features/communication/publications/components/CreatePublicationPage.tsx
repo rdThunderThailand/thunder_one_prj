@@ -14,7 +14,7 @@ import { hasDraftContent, shouldShowResumePrompt } from "../resume-prompt";
 import { Modal } from "@/components/ui/Modal";
 import { usePublishDraft } from "../hooks/usePublishDraft";
 import { deletePublication, fetchPublication } from "../services/publications-api";
-import { fetchPlaylist } from "@/features/playlists";
+import { fetchPlaylist } from "@/features/communication/playlists";
 import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";

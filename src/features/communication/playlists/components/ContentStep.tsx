@@ -1,10 +1,10 @@
 "use client";
 
-import { useAssetUpload } from "@/features/assets/useAssetUpload";
+import { useAssetUpload } from "@/features/communication/assets/useAssetUpload";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { UploadIcon } from "@/components/ui/icons";
-import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "@/features/publications/upload-limits";
+import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "@/features/communication/publications/upload-limits";
 import type { MediaAsset } from "@/types/domain";
 import { AssetPicker } from "./AssetPicker";
 import { SelectedItems } from "./SelectedItems";

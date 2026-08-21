@@ -8,13 +8,13 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { fetchPublications } from "@/features/publications/services/publications-api";
-import type { PublicationListItem } from "@/features/publications/types";
+import { fetchPublications } from "@/features/communication/publications/services/publications-api";
+import type { PublicationListItem } from "@/features/communication/publications/types";
 import {
   isPastPublication,
   publicationDisplayStatus,
   publicationStatusColor,
-} from "@/features/publications/publication-status";
+} from "@/features/communication/publications/publication-status";
 import { decodeMetadata } from "../metadata";
 import { resolutionLabel } from "../output-profile";
 import { formatDuration, totalDurationSeconds } from "../duration";
