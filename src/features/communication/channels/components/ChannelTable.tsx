@@ -175,7 +175,7 @@ function CategoryGroupRows({
               </td>
               <td className="px-4 py-3 text-right">
                 <Link
-                  href={`/channels/${channel.id}/edit`}
+                  href={`/communication/channels/${channel.id}/edit`}
                   onClick={(event) => event.stopPropagation()}
                   className="rounded-md px-2 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
                 >
