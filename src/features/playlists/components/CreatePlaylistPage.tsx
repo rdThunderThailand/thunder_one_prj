@@ -90,6 +90,9 @@ export function CreatePlaylistPage() {
 
     return () => {
       alive = false;
+      // ponytail: release the guard so a re-run refetches — StrictMode's remount would
+      // otherwise skip the fetch and leave `resuming` stuck true forever.
+      if (loadedIdRef.current === idParam) loadedIdRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, idParam]);
