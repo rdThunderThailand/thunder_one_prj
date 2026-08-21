@@ -60,6 +60,14 @@ A publishable package that binds an immutable snapshot of content (single Asset 
 While a Publication is a `Draft`, two operators editing it concurrently is a real possibility: the second save is *refused* rather than silently overwriting the first, and the operator chooses between reloading and deliberately overwriting (`docs/adr/0003-draft-optimistic-locking.md`). Being told "this changed elsewhere" is therefore part of the Draft experience, not an error condition.
 _Avoid_: Campaign (Campaign is a later, larger grouping of Publications — not yet in scope)
 
+**Publication Priority**:
+The precedence tier that decides airtime when Publications overlap: `urgent` > `high` > `normal` > `low`. A higher tier fully suppresses lower tiers during the overlap, while Publications at the same tier share the playback loop.
+_Avoid_: Urgency, display order
+
+**Schedule Conflict**:
+An overlap where Publications target at least one of the same Media Devices during the same Schedule window. It is a warning when the new Publication has equal or higher Publication Priority, and a publish blocker when any overlapping Publication has higher priority.
+_Avoid_: Revision conflict, visual overlay
+
 **Schedule**:
 The timing rules (start/end date-time, recurrence) attached to a Publication. A standalone concept, not embedded in Playlist. Carries a single explicit `timezone` (set once at schedule creation, defaults to `Asia/Bangkok`) — this is the direct evaluation source of truth: `media_job_poll` evaluates recurrence (day-of-week, daily start/end) against `now() AT TIME ZONE schedules.timezone` with no further resolution step. There is no per-Channel or per-Location time zone — `public.locations` exists and `media_core.channels.location_id` references it (`channels_location_id_fkey`, `ON DELETE SET NULL`), but neither table carries a time zone — so every Channel targeted by a multi-Channel Publication fires at the same instant, evaluated in the one time zone the Schedule was given. A Publication spanning Locations in different real-world time zones does *not* fire at "local business hours everywhere"; it fires at whatever wall-clock time the Schedule's single timezone maps to for each Channel.
 _Known gap, not yet resolved: if Thunder One ever needs per-Location evaluation (a multi-timezone tenant), `schedules.timezone` would need to stop being the sole input — the same single-timezone assumption is called out explicitly in `Thunder_Core/supabase/migrations/069_media_poll_window_conflicts_and_airtime_report.sql` (the `ponytail: recurrence/time-window overlap...` comment on `media_schedule_conflicts`)._

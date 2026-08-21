@@ -467,6 +467,8 @@ export function CreatePublicationPage() {
           channels={channels}
           assets={assets}
           conflicts={conflicts}
+          checkingConflicts={checkingConflicts}
+          conflictsError={conflictsError}
           eligibilityChecks={eligibilityChecks}
         />
       )}

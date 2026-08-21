@@ -13,6 +13,36 @@ export interface EligibilityResult {
   canPublish: boolean;
 }
 
+export interface PriorityConflictSummary {
+  higherPriorityCount: number;
+  lowerPriorityCount: number;
+  equalPriorityCount: number;
+  hasBlockingConflict: boolean;
+}
+
+export function summarizePriorityConflicts(conflicts: ScheduleConflict[]): PriorityConflictSummary {
+  let higherPriorityCount = 0;
+  let lowerPriorityCount = 0;
+  let equalPriorityCount = 0;
+
+  for (const conflict of conflicts) {
+    if (conflict.would_be_suppressed) {
+      higherPriorityCount += 1;
+    } else if (conflict.would_suppress) {
+      lowerPriorityCount += 1;
+    } else {
+      equalPriorityCount += 1;
+    }
+  }
+
+  return {
+    higherPriorityCount,
+    lowerPriorityCount,
+    equalPriorityCount,
+    hasBlockingConflict: higherPriorityCount > 0,
+  };
+}
+
 export function isAllGatingPassed(checks: EligibilityCheck[]): boolean {
   return [0, 1, 2, 4].every((idx) => checks[idx]?.status === "pass");
 }
@@ -59,12 +89,13 @@ export function computeEligibility(params: {
   const scheduleCheckStatus: EligibilityStatus = validateStep(4, draft).valid ? "pass" : "fail";
   const channelsCheckStatus: EligibilityStatus = validateStep(3, draft).valid ? "pass" : "fail";
   const policyCheckStatus: EligibilityStatus = "unknown";
+  const priorityConflicts = summarizePriorityConflicts(conflicts);
   const conflictsCheckStatus: EligibilityStatus =
     checkingConflicts || conflictsError
       ? "unknown"
-      : conflicts.length === 0
-      ? "pass"
-      : "fail";
+      : priorityConflicts.hasBlockingConflict
+      ? "fail"
+      : "pass";
 
   const checks: EligibilityCheck[] = [
     { status: contentCheckStatus },

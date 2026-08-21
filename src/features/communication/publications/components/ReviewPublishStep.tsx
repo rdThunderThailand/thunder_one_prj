@@ -26,7 +26,11 @@ import { categoryBadgeColor, categoryIcon } from "./ChannelCard";
 import { MiniCalendar } from "./MiniCalendar";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
-import { type EligibilityCheck, isAllGatingPassed } from "../publish-eligibility";
+import {
+  type EligibilityCheck,
+  isAllGatingPassed,
+  summarizePriorityConflicts,
+} from "../publish-eligibility";
 
 function formatShortDate(iso: string) {
   if (!iso) return "";
@@ -63,6 +67,8 @@ export interface ReviewPublishStepProps {
   channels?: ChannelListItem[];
   assets?: MediaAsset[];
   conflicts?: ScheduleConflict[];
+  checkingConflicts?: boolean;
+  conflictsError?: string | null;
   eligibilityChecks?: EligibilityCheck[];
 }
 
@@ -71,6 +77,8 @@ export function ReviewPublishStep({
   channels = [],
   assets = [],
   conflicts = [],
+  checkingConflicts = false,
+  conflictsError = null,
   eligibilityChecks = [],
 }: ReviewPublishStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
@@ -148,6 +156,7 @@ export function ReviewPublishStep({
     scheduleForm.schedule_type === "now" ? nowZoned.time : scheduleForm.start_time;
 
   const allPassed = isAllGatingPassed(eligibilityChecks);
+  const priorityConflicts = summarizePriorityConflicts(conflicts);
   const badge = playlist ? statusBadge(playlistDisplayStatus(playlist)) : null;
 
   return (
@@ -309,16 +318,50 @@ export function ReviewPublishStep({
             <Card className="p-5">
               <h2 className="mb-3 text-sm font-semibold text-zinc-900">Conflicts &amp; Warnings</h2>
               <div className="flex flex-col gap-3">
-                {conflicts.length > 0 ? (
+                {checkingConflicts || conflictsError ? (
                   <div className="flex items-start gap-2">
-                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-red-500" />
                     <div>
-                      <p className="text-xs font-medium text-zinc-900">
-                        Schedule Conflict ({conflicts.length})
+                      <p className="text-xs font-medium text-red-700">Unable to verify priority conflicts</p>
+                      <p className="text-[11px] text-zinc-500">
+                        {checkingConflicts
+                          ? "กำลังตรวจสอบ — Publish จะเปิดเมื่อได้ผลลัพธ์แล้ว"
+                          : "ตรวจสอบไม่สำเร็จ — Publish ถูกบล็อกจนกว่าจะลองใหม่สำเร็จ"}
                       </p>
-                      <p className="text-[11px] text-zinc-400">
-                        มีความขัดแย้งของตารางเวลา {conflicts.length} รายการ
+                    </div>
+                  </div>
+                ) : conflicts.length > 0 ? (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon
+                      className={`h-4 w-4 shrink-0 ${priorityConflicts.hasBlockingConflict ? "text-red-500" : "text-amber-500"}`}
+                    />
+                    <div>
+                      <p className={`text-xs font-medium ${priorityConflicts.hasBlockingConflict ? "text-red-700" : "text-zinc-900"}`}>
+                        {priorityConflicts.hasBlockingConflict
+                          ? `Publish blocked (${priorityConflicts.higherPriorityCount} higher-priority conflict(s))`
+                          : `Priority warning (${conflicts.length})`}
                       </p>
+                      <p className="text-[11px] text-zinc-500">
+                        {priorityConflicts.hasBlockingConflict
+                          ? "Publication นี้จะถูกกดทับอย่างน้อยหนึ่งช่วงเวลา"
+                          : "Publish ได้ โดยระบบจะกดทับรายการที่ Priority ต่ำกว่า และรวมรายการ Priority เท่ากันเข้า loop"}
+                      </p>
+                      <ul className="mt-1.5 space-y-1 text-[11px] text-zinc-500">
+                        {conflicts.map((conflict) => (
+                          <li key={conflict.publication_id}>
+                            <Link
+                              href={`/communication/publications/${conflict.publication_id}`}
+                              className="font-medium text-zinc-700 underline decoration-zinc-400 underline-offset-2 hover:decoration-zinc-700"
+                            >
+                              {conflict.name}
+                            </Link> ({conflict.priority}) — {conflict.would_be_suppressed
+                              ? "higher priority; blocks Publish"
+                              : conflict.would_suppress
+                              ? "lower priority; will be suppressed"
+                              : "same priority; appends to loop"}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 ) : (

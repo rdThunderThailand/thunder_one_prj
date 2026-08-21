@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, ChevronDownIcon, InfoIcon, LightningIcon, RepeatIcon } from "@/components/ui/icons";
 import { CARD_BY_SCHEDULE_TYPE, SCHEDULE_TYPE_BY_CARD } from "../draft-mapping";
@@ -26,6 +27,7 @@ import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+import { summarizePriorityConflicts } from "../publish-eligibility";
 
 // ponytail: this file is well over the 300-line house limit — split the right-hand summary column out next time it is touched
 
@@ -120,6 +122,7 @@ export function ScheduleStep({
   const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
+  const priorityConflicts = summarizePriorityConflicts(conflicts);
 
   const hasExpiration = Boolean(scheduleForm.end_date);
 
@@ -514,26 +517,30 @@ export function ScheduleStep({
           )}
 
           {conflicts.length > 0 && (() => {
-            const suppressedCount = conflicts.filter((c) => c.would_be_suppressed).length;
+            const isBlocked = priorityConflicts.hasBlockingConflict;
             return (
               <div
                 className={`mt-4 rounded-xl border p-4 ${
-                  suppressedCount > 0
+                  isBlocked
                     ? "border-red-200 bg-red-50"
                     : "border-amber-200 bg-amber-50"
                 }`}
               >
-                <h4 className={`text-sm font-semibold ${suppressedCount > 0 ? "text-red-800" : "text-amber-800"}`}>
-                  {suppressedCount > 0
-                    ? `⛔ Will not air — ${suppressedCount} higher-priority publication(s) overlap`
-                    : `⚠ Schedule conflict — ${conflicts.length} publication(s) overlap`}
+                <h4 className={`text-sm font-semibold ${isBlocked ? "text-red-800" : "text-amber-800"}`}>
+                  {isBlocked
+                    ? `⛔ Publish blocked — ${priorityConflicts.higherPriorityCount} higher-priority publication(s) overlap`
+                    : `⚠ Priority overlap — ${conflicts.length} publication(s)`}
                 </h4>
-                <p className={`mt-0.5 text-[11px] ${suppressedCount > 0 ? "text-red-700" : "text-amber-700"}`}>
-                  {suppressedCount > 0
-                    ? "During the overlap this publication won't play at all (priority override) — publishing is still allowed"
-                    : "Warning only (publishing is still allowed)"}
+                <p className={`mt-0.5 text-[11px] ${isBlocked ? "text-red-700" : "text-amber-700"}`}>
+                  {isBlocked
+                    ? "This publication would be suppressed during at least one overlap. Raise its priority or change the schedule."
+                    : priorityConflicts.lowerPriorityCount > 0 && priorityConflicts.equalPriorityCount > 0
+                    ? `This publication will suppress ${priorityConflicts.lowerPriorityCount} lower-priority publication(s) and append with ${priorityConflicts.equalPriorityCount} at the same priority — publishing is allowed.`
+                    : priorityConflicts.lowerPriorityCount > 0
+                    ? `This publication will suppress ${priorityConflicts.lowerPriorityCount} lower-priority publication(s) during the overlap — publishing is allowed.`
+                    : "Publications at the same priority will append to the playback loop — publishing is allowed."}
                 </p>
-                <div className={`mt-3 space-y-2 text-xs ${suppressedCount > 0 ? "text-red-900" : "text-amber-900"}`}>
+                <div className={`mt-3 space-y-2 text-xs ${isBlocked ? "text-red-900" : "text-amber-900"}`}>
                   {conflicts.map((c) => {
                     const startStr = new Date(c.starts_at).toLocaleString();
                     const endStr = c.ends_at ? new Date(c.ends_at).toLocaleString() : "no end";
@@ -541,18 +548,26 @@ export function ScheduleStep({
                       <div
                         key={c.publication_id}
                         className={`border-t pt-2 first:border-0 first:pt-0 ${
-                          suppressedCount > 0 ? "border-red-200/60" : "border-amber-200/60"
+                          isBlocked ? "border-red-200/60" : "border-amber-200/60"
                         }`}
                       >
                         <div className="font-medium">
-                          {c.name}
+                          <Link
+                            href={`/communication/publications/${c.publication_id}`}
+                            className="underline decoration-current/40 underline-offset-2 hover:decoration-current"
+                          >
+                            {c.name}
+                          </Link>
                           <span className="ml-1.5 font-normal opacity-70">({c.priority})</span>
                         </div>
                         {c.would_be_suppressed && (
-                          <div className="text-[11px] font-medium">This publication is suppressed during the overlap</div>
+                          <div className="text-[11px] font-medium">Higher priority: this publication would be suppressed — Publish blocked</div>
                         )}
                         {c.would_suppress && (
-                          <div className="text-[11px] font-medium opacity-90">This publication suppresses {c.name} during the overlap</div>
+                          <div className="text-[11px] font-medium opacity-90">Lower priority: this publication will suppress {c.name} during the overlap</div>
+                        )}
+                        {!c.would_be_suppressed && !c.would_suppress && (
+                          <div className="text-[11px] font-medium opacity-90">Same priority: both publications will append to the playback loop</div>
                         )}
                         <div className="text-[11px] opacity-90">
                           Window: {startStr} – {endStr}

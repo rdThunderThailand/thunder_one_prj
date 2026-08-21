@@ -1,14 +1,14 @@
 /**
  * Runnable check for publish eligibility:
  *
- *     node src/features/publications/publish-eligibility.check.mts
+ *     node src/features/communication/publications/publish-eligibility.check.mts
  *
- * Covers the two P2 gaps that mattered most: an invalid schedule blocking
- * Publish, and a conflict-service failure blocking Publish as "unknown"
- * rather than being silently read as "no conflict".
+ * Covers priority-aware schedule conflicts, invalid schedules, and conflict-
+ * service failures that must block Publish as "unknown" rather than being
+ * silently read as "no conflict".
  */
 import assert from "node:assert/strict";
-import { computeEligibility } from "./publish-eligibility.ts";
+import { computeEligibility, summarizePriorityConflicts } from "./publish-eligibility.ts";
 import { makeDefaultScheduleForm } from "./schedule.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 import type { MediaAsset, ScheduleConflict } from "./types/index.ts";
@@ -56,10 +56,9 @@ const stillChecking = computeEligibility({ ...base, checkingConflicts: true });
 assert.equal(stillChecking.checks[4].status, "unknown");
 assert.equal(stillChecking.canPublish, false);
 
-// A real conflict (service healthy, but overlap found) is "fail", not "unknown".
-const realConflict: ScheduleConflict = {
+const samePriorityConflict: ScheduleConflict = {
   publication_id: "pub-2",
-  name: "Other promo",
+  name: "Other normal promo",
   status: "active",
   priority: "normal",
   starts_at: "2026-08-10T00:00:00Z",
@@ -68,9 +67,52 @@ const realConflict: ScheduleConflict = {
   would_be_suppressed: false,
   would_suppress: false,
 };
-const withConflict = computeEligibility({ ...base, conflicts: [realConflict] });
-assert.equal(withConflict.checks[4].status, "fail");
-assert.equal(withConflict.canPublish, false);
+
+// Same-tier publications append to the playback loop, so the overlap is advisory.
+const withSamePriority = computeEligibility({ ...base, conflicts: [samePriorityConflict] });
+assert.equal(withSamePriority.checks[4].status, "pass");
+assert.equal(withSamePriority.canPublish, true);
+
+// A higher-priority draft suppresses the lower tier and is allowed to publish.
+const lowerPriorityConflict: ScheduleConflict = {
+  ...samePriorityConflict,
+  publication_id: "pub-low",
+  name: "Low promo",
+  priority: "low",
+  would_suppress: true,
+};
+const withLowerPriority = computeEligibility({ ...base, conflicts: [lowerPriorityConflict] });
+assert.equal(withLowerPriority.checks[4].status, "pass");
+assert.equal(withLowerPriority.canPublish, true);
+
+// A draft that would be suppressed by a higher tier must remain blocked.
+const higherPriorityConflict: ScheduleConflict = {
+  ...samePriorityConflict,
+  publication_id: "pub-high",
+  name: "High promo",
+  priority: "high",
+  would_be_suppressed: true,
+};
+const withHigherPriority = computeEligibility({ ...base, conflicts: [higherPriorityConflict] });
+assert.equal(withHigherPriority.checks[4].status, "fail");
+assert.equal(withHigherPriority.canPublish, false);
+
+// Any losing conflict blocks the draft, even when it also wins or ties elsewhere.
+const withMixedPriorities = computeEligibility({
+  ...base,
+  conflicts: [lowerPriorityConflict, samePriorityConflict, higherPriorityConflict],
+});
+assert.equal(withMixedPriorities.checks[4].status, "fail");
+assert.equal(withMixedPriorities.canPublish, false);
+assert.deepEqual(
+  summarizePriorityConflicts([lowerPriorityConflict, samePriorityConflict, higherPriorityConflict]),
+  {
+    higherPriorityCount: 1,
+    lowerPriorityCount: 1,
+    equalPriorityCount: 1,
+    hasBlockingConflict: true,
+  }
+);
 
 // --- invalid schedule: index 1 is the schedule check ---
 const invalidSchedule = computeEligibility({
