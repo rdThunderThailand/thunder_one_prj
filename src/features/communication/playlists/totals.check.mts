@@ -1,7 +1,7 @@
 /** Run: node src/features/playlists/totals.check.mts */
 import assert from "node:assert/strict";
 import { formatBytes, computePlaylistTotals } from "./totals.ts";
-import type { MediaAsset } from "../../types/domain.ts";
+import type { MediaAsset } from "../../../types/domain.ts";
 
 assert.equal(formatBytes(500), "500 B");
 assert.equal(formatBytes(1536), "2 KB");

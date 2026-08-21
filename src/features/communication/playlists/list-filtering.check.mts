@@ -1,7 +1,7 @@
 /** Run: node src/features/playlists/list-filtering.check.mts */
 import assert from "node:assert/strict";
 import { copyName, filterPlaylists, paginate, playlistType, summarize } from "./list-filtering.ts";
-import type { PlaylistListItem } from "../../types/domain.ts";
+import type { PlaylistListItem } from "../../../types/domain.ts";
 
 const meta = (info: Record<string, unknown>) => ({ v: 1, info });
 

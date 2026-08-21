@@ -75,7 +75,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       setActionBusy(true);
       setActionError(null);
       await deletePublication(id);
-      router.push("/publications");
+      router.push("/communication/publications");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
       setActionBusy(false);
@@ -87,7 +87,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       setActionBusy(true);
       setActionError(null);
       await cancelPublication(id);
-      router.push("/publications");
+      router.push("/communication/publications");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
       setActionBusy(false);
@@ -115,7 +115,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
           </Card>
         )}
         <div className="mt-4 flex justify-center">
-          <Link href="/publications" className={buttonClasses("secondary")}>
+          <Link href="/communication/publications" className={buttonClasses("secondary")}>
             กลับไปยังรายการ
           </Link>
         </div>
@@ -144,13 +144,13 @@ export function PublicationDetailPage({ id }: { id: string }) {
         subtitle={`Status: ${displayStatus}`}
         actions={
           <div className="flex items-center gap-2">
-            <Link href="/publications" className={buttonClasses("secondary")}>
+            <Link href="/communication/publications" className={buttonClasses("secondary")}>
               กลับ
             </Link>
 
             {isDraft && (
               <Link
-                href={`/publications/create?id=${id}`}
+                href={`/communication/publications/create?id=${id}`}
                 className={buttonClasses("secondary")}
               >
                 Edit

@@ -1,4 +1,4 @@
-import type { MediaDeviceHealth } from "../../../types/domain.ts";
+import type { MediaDeviceHealth } from "../../../../types/domain.ts";
 
 /**
  * ADR 0037: one status, three values. `draft` is stored; `active` / `inactive` are derived

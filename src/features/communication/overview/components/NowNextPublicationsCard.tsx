@@ -81,7 +81,7 @@ function PublicationTable({ rows, empty }: { rows: Row[]; empty: string }) {
                 </span>
                 <div className="min-w-0">
                   <Link
-                    href={`/publications/${row.id}`}
+                    href={`/communication/publications/${row.id}`}
                     className="truncate font-medium text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400"
                   >
                     {row.name}
@@ -189,7 +189,7 @@ export function NowNextPublicationsCard() {
           Now &amp; Next Publications
         </h2>
         <Link
-          href="/publications"
+          href="/communication/publications"
           className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
         >
           View all

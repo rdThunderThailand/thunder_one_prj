@@ -4,7 +4,7 @@
 // from this feature. Re-exported here so existing imports keep working.
 // Relative (not "@/…") so this barrel's values stay importable from a plain `node
 // *.check.mts` run, which has no path-alias resolution — same file either way.
-import { TRANSITIONS, PLAYLIST_STATUSES } from "../../../types/domain.ts";
+import { TRANSITIONS, PLAYLIST_STATUSES } from "../../../../types/domain.ts";
 import type {
   Transition,
   PlaylistStatus,
@@ -12,7 +12,7 @@ import type {
   PlaylistItem,
   PlaylistListItem,
   PlaylistDetail,
-} from "../../../types/domain.ts";
+} from "../../../../types/domain.ts";
 
 export { TRANSITIONS, PLAYLIST_STATUSES };
 export type { Transition, PlaylistStatus, Creator, PlaylistItem, PlaylistListItem, PlaylistDetail };

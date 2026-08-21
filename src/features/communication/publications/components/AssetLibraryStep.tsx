@@ -193,7 +193,7 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
               <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
             </div>
             <Link
-              href="/playlists/create"
+              href="/communication/playlists/create"
               target="_blank"
               className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
             >

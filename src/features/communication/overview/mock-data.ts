@@ -157,7 +157,7 @@ export interface QuickActionData {
 }
 
 export const quickActions: QuickActionData[] = [
-  { label: "Create Publication", icon: "publication", color: "indigo", href: "/publications/create" },
+  { label: "Create Publication", icon: "publication", color: "indigo", href: "/communication/publications/create" },
   { label: "Create Playlist", icon: "playlist", color: "blue" },
   { label: "Upload Media", icon: "upload", color: "emerald" },
   { label: "Create Campaign", icon: "campaign", color: "amber" },

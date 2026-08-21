@@ -34,7 +34,7 @@ function ChannelsHeader() {
       title="Channels"
       subtitle="Manage physical delivery endpoints, assignments and operational health."
       actions={
-        <Link href="/channels/create" className={buttonClasses("primary")}>
+        <Link href="/communication/channels/create" className={buttonClasses("primary")}>
           <PlusIcon />
           Add Channel
         </Link>

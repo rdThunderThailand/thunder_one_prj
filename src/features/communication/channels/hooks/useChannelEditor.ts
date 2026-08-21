@@ -115,7 +115,7 @@ export function useChannelEditor(channelId: string | undefined) {
     if (!beginMutation()) return;
     try {
       const saved = await saveDraft(draft, revision ?? undefined, false);
-      if (saved) router.push("/channels");
+      if (saved) router.push("/communication/channels");
     } catch (caught) {
       // A name collision belongs on the name field, not in the summary card at the top of the form.
       if (caught instanceof Error && isDuplicateName(caught.message)) {
@@ -177,7 +177,7 @@ export function useChannelEditor(channelId: string | undefined) {
         return;
       }
       await updateChannel(channelId, draft, latest.revision, true);
-      router.push("/channels");
+      router.push("/communication/channels");
     } catch (caught) {
       if (caught instanceof Error && isDuplicateName(caught.message)) {
         setValidationErrors((current) => ({ ...current, name: DUPLICATE_NAME_MESSAGE }));
@@ -251,6 +251,6 @@ export function useChannelEditor(channelId: string | undefined) {
     updateDisplay,
     toggleDevice,
     confirmResolution,
-    onDeleted: () => router.push("/channels"),
+    onDeleted: () => router.push("/communication/channels"),
   };
 }

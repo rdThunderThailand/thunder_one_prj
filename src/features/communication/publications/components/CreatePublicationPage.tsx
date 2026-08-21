@@ -223,7 +223,7 @@ export function CreatePublicationPage() {
       }
     }
     state.cancelDraft();
-    router.push("/publications");
+    router.push("/communication/publications");
   };
 
   const handleCancelClick = () => {
@@ -309,7 +309,7 @@ export function CreatePublicationPage() {
               {retrying ? "กำลังโหลด…" : "ลองใหม่"}
             </Button>
           )}
-          <Link href="/publications" className={buttonClasses("secondary")}>
+          <Link href="/communication/publications" className={buttonClasses("secondary")}>
             กลับไปยังรายการ
           </Link>
         </div>

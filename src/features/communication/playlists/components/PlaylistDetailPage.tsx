@@ -119,7 +119,7 @@ export function PlaylistDetailPage({ playlistId }: { playlistId: string }) {
         >
           {error.message}
         </p>
-        <Link href="/playlists" className={buttonClasses("secondary")}>
+        <Link href="/communication/playlists" className={buttonClasses("secondary")}>
           กลับไปยังรายการ
         </Link>
       </div>
@@ -137,10 +137,10 @@ export function PlaylistDetailPage({ playlistId }: { playlistId: string }) {
         subtitle={`${items.length} items · ${totalDuration}`}
         actions={
           <div className="flex items-center gap-2">
-            <Link href="/playlists" className={buttonClasses("secondary")}>
+            <Link href="/communication/playlists" className={buttonClasses("secondary")}>
               กลับ
             </Link>
-            <Link href={`/playlists/create?id=${detail.id}`} className={buttonClasses("secondary")}>
+            <Link href={`/communication/playlists/create?id=${detail.id}`} className={buttonClasses("secondary")}>
               Edit Playlist
             </Link>
           </div>

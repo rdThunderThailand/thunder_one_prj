@@ -177,7 +177,7 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
         title="Playlists"
         subtitle="Create and manage playlists for your campaigns and channels."
         actions={
-          <Link href="/playlists/create" className={buttonClasses("primary")}>
+          <Link href="/communication/playlists/create" className={buttonClasses("primary")}>
             + Create Playlist
           </Link>
         }

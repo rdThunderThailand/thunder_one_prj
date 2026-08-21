@@ -1,8 +1,26 @@
-# ThunderOne Media Workspace
+# Thunder One
 
-Digital signage / DOOH media management platform. Operators publish media content to physical screens across locations, and the platform tracks delivery and playback.
+The shell every user lands in after login, wrapping three Apps — Communication, Asset Intelligence, and ThunderCare — reached through the Work Space launcher (see `### Shell & Apps` below). Most of this file documents Communication's domain: digital signage / DOOH media management, where operators publish media content to physical screens across locations and the platform tracks delivery and playback. ThunderCare has no distinct terms of its own yet.
 
 ## Language
+
+### Shell & Apps
+
+**Thunder One**:
+The outer shell every user lands in after login (`/`) — introduced so a growing number of Apps stop competing for the top-level route `/` previously owned by Communication alone. Wraps every App and owns two cross-app rollup destinations that belong to no single App: **Mission Control** (organization-wide, strategic rollup) and **My Work** (cross-app "what's assigned to me"), plus two sections named after the Asset Intelligence requirement doc's Experience Layers but not yet built: **Intelligence** (risk/insight/recommendation) and **Governance** (ownership/permission/policy/audit). None of these four is a mandated cross-app aggregation pattern — each sources its own data however it needs to. `docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md`.
+_Avoid_: ThunderOne (the sidebar wordmark/product name, written without a space — same brand, but that's the logo text, not this shell concept)
+
+**App**:
+One of the three domains reached from inside Thunder One: **Communication**, **Asset Intelligence**, **ThunderCare**. Never landed on directly after login — only Thunder One is.
+
+**Work Space**:
+The launcher into the Apps — a dedicated page listing every App as a tile, not a dropdown menu. A dropdown was rejected because the App list is expected to keep growing. `docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md`. Opening an App tile navigates in the same tab, same as every other link in Thunder One — the shell's Sidebar persists across every App (one shared `DashboardLayout`), so the shell is always one click away via the logo; a new tab/window was considered and rejected 2026-08-20 as unneeded overhead.
+
+**Communication** (formerly "Media Workspace"):
+The DOOH content-management App. The rest of this file — `### Roles` onward — describes Communication's domain unless marked otherwise (the two Asset Intelligence terms are the deliberate exception; see the note on why not to split this file yet).
+
+**ThunderCare**:
+The field-service App. Absorbs Asset Intelligence's former Technician and Thunder Care personas (work-order execution, service-queue/SLA management) wholesale — see `src/features/thunder-care/work-orders`, `src/features/thunder-care/service-ops`. Nested under `features/thunder-care/*`, same pattern as Communication and Asset Intelligence — `docs/adr/0034-feature-folders-nest-under-app.md`.
 
 ### Roles
 
@@ -22,13 +40,13 @@ Can create/manage Assets, Playlists, Publications, and Channels, assign existing
 **Viewer**:
 Read-only across content and Monitoring. Cannot see the Audit Log.
 
-**Asset** (Media Workspace):
+**Asset** (Communication):
 A reusable media file (image or video) stored in the central repository. Not video-specific — MVP formats are JPG, PNG, and MP4 (H.264). "Archive" hides it from pickers without removing it. "Delete" is a true hard-delete and is blocked outright if the Asset is referenced by any Active or Scheduled Publication — the operator must stop/cancel or wait out those Publications first.
 _Avoid_: Video, media file, content (when a specific entity is meant)
-_Note_: A second app in this repo, Asset Intelligence, also has an entity called `Asset` with a different meaning — see the Asset Intelligence glossary entry below and `docs/adr/0023-asset-intelligence-feature-namespacing.md` for why neither was renamed.
+_Note_: Another App in this repo, Asset Intelligence, also has an entity called `Asset` with a different meaning — see the Asset Intelligence glossary entry below and `docs/adr/0023-asset-intelligence-feature-namespacing.md` for why neither was renamed.
 
 **Asset** (Asset Intelligence):
-An organization-wide physical asset (laptop, printer, NAS, or media-player hardware) owned end-to-end (register/track/manage/assign) by Asset Intelligence's Asset/IT Manager role — see `src/features/ai-assets`. Deliberately shares the name `Asset` with Media Workspace's media-file entity above rather than being renamed to something like `Equipment`, because the two are genuinely related: an Asset of category `media_player_device` is, once assigned, the same physical hardware Media Workspace tracks as a `Device` (below) — see `docs/adr/0024-asset-device-cross-reference-model.md` for the `externalRef` cross-reference field. Namespaced as `features/ai-*` (not `features/assets`) to avoid a folder collision — `docs/adr/0023-asset-intelligence-feature-namespacing.md`.
+An organization-wide physical asset (laptop, printer, NAS, or media-player hardware) owned end-to-end (register/track/manage/assign) by Asset Intelligence's Asset/IT Manager role — see `src/features/asset-intelligence/assets`. Deliberately shares the name `Asset` with Communication's media-file entity above rather than being renamed to something like `Equipment`, because the two are genuinely related: an Asset of category `media_player_device` is, once assigned, the same physical hardware Communication tracks as a `Device` (below) — see `docs/adr/0024-asset-device-cross-reference-model.md` for the `externalRef` cross-reference field. Namespaced as `features/asset-intelligence/*` (not `features/communication/assets`) to avoid a folder collision — `docs/adr/0034-feature-folders-nest-under-app.md` (originally a flat `ai-` prefix, `docs/adr/0023-asset-intelligence-feature-namespacing.md`). Scoped to three personas — Asset/IT Manager, Department Manager, Employee; its former CEO and Technician personas moved out when Thunder One was introduced — `docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md`.
 
 **Playlist**:
 An ordered sequence of Assets, with per-item duration and transition settings. Has no scheduling or targeting responsibility of its own. Only two of its properties reach a screen — each item's duration and its transition (`cut` or `fade`); everything else an operator sets on a Playlist is descriptive. It carries a **Cover**, which is a reference to one of the Assets already in the Playlist (never a separately uploaded file) and falls back to the first item when none is picked, and a **creator**, recorded once at creation and never reassigned by later edits. The playback settings an operator can configure (play mode, repeat, media fit, volume, failure handling) are stored but no player reads them yet — see `docs/adr/0010-playlist-settings-in-metadata.md`. Archiving a Playlist means setting it `inactive`; there is no delete.
@@ -79,4 +97,5 @@ _Avoid_: CDN (implies a third-party service; this may be self-hosted), edge comp
 
 **Flagged ambiguities**:
 - The existing codebase scaffold (`src/features/videos`, `src/features/screens`, `src/features/playlists`) predates this glossary and conflicts with it: `videos` should become `assets`, `screens` should split into `channels` + `devices`, and `playlists` (currently doubling as scheduling) should narrow to pure ordered-asset-sequences with a new `publications` feature owning the scheduling/targeting role. Resolved 2026-07-23: the plan's glossary is authoritative; the scaffold will be renamed to match, not the other way around.
-- Asset Intelligence (a second app added to this repo, switched via the App Switcher — `docs/adr/0022-app-switcher-multi-app-shell.md`) introduces its own `Asset` entity, colliding in name with Media Workspace's existing `Asset` (media file). Resolved 2026-08-18: both meanings are kept — the name collision reflects a real relationship (Asset Intelligence's `media_player_device` category assets are Media Workspace's Devices, see `docs/adr/0024-asset-device-cross-reference-model.md`), so neither entity is renamed. Disambiguated instead by feature-folder namespace: `src/features/assets` (Media Workspace) vs. `src/features/ai-assets` (Asset Intelligence) — `docs/adr/0023-asset-intelligence-feature-namespacing.md`.
+- Asset Intelligence (a second App added to this repo, originally switched via a two-item App Switcher dropdown — `docs/adr/0022-app-switcher-multi-app-shell.md`) introduces its own `Asset` entity, colliding in name with Communication's existing `Asset` (media file). Resolved 2026-08-18: both meanings are kept — the name collision reflects a real relationship (Asset Intelligence's `media_player_device` category assets are Communication's Devices, see `docs/adr/0024-asset-device-cross-reference-model.md`), so neither entity is renamed. Disambiguated instead by feature-folder namespace: `src/features/communication/assets` vs. `src/features/asset-intelligence/assets` — originally a flat `ai-` prefix (`docs/adr/0023-asset-intelligence-feature-namespacing.md`), now App-level nesting (`docs/adr/0034-feature-folders-nest-under-app.md`, 2026-08-20).
+- Introducing the Thunder One shell (2026-08-20) means `/` now belongs to Thunder One, not Communication (formerly "Media Workspace") — Communication moves to `/communication`. Asset Intelligence narrows from 6 personas to 3 (Asset/IT Manager, Department Manager, Employee); its former CEO and Technician personas move out — CEO's function is absorbed into Thunder One's shell-level **Mission Control**, and Technician (together with Thunder Care) moves wholesale into a new **ThunderCare** App. One deliberate overlap, not a bug: Thunder One's shell-level **My Work** (cross-app rollup) and ThunderCare's Technician-persona home page (also labeled "My Work", single-app) share a label on purpose — different scope, same name. `docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md`.

@@ -11,7 +11,7 @@ import type {
   ChannelReferenceData,
   ChannelTypeOption,
 } from "../types/index.ts";
-import { isDisplayResolution } from "../../../lib/display-resolution.ts";
+import { isDisplayResolution } from "../../../../lib/display-resolution.ts";
 
 type ChannelRequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -228,7 +228,7 @@ function parseChannelListItem(value: unknown): ChannelListItem {
 
 /** Uses a lazy import so the runnable pure contract check has no axios dependency. */
 async function requestChannelApi<T>(request: ChannelRequestDescriptor): Promise<T> {
-  const { requestApi } = await import("../../../lib/api/media-api.ts");
+  const { requestApi } = await import("../../../../lib/api/media-api.ts");
   return requestApi<T>(request.method, request.path, request.body);
 }
 

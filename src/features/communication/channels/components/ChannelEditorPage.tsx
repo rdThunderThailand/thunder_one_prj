@@ -70,7 +70,7 @@ function ChannelEditor({ channelId }: { channelId?: string }) {
         subtitle={subtitle}
         actions={
           <>
-            <Link href="/channels" className={buttonClasses("secondary")}>
+            <Link href="/communication/channels" className={buttonClasses("secondary")}>
               <ArrowLeftIcon />
               Cancel
             </Link>

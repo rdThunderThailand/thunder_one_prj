@@ -197,7 +197,7 @@ export function ReviewPublishStep({
                       <dd className="text-zinc-700">
                         {playlist ? (
                           <Link
-                            href={`/playlists/${playlist.id}`}
+                            href={`/communication/playlists/${playlist.id}`}
                             target="_blank"
                             className="font-medium text-indigo-600 hover:underline"
                           >

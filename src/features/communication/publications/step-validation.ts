@@ -2,7 +2,7 @@ import type { DraftFields } from "./store/usePublicationDraftStore";
 // Explicit .ts extension so next-transition.check.mts can load this module
 // under Node's ESM resolver, which does no extension guessing.
 import { validateScheduleForm } from "./schedule.ts";
-import { PUBLICATION_LIMITS } from "../../config/limits.ts";
+import { PUBLICATION_LIMITS } from "../../../config/limits.ts";
 import { publicationTypes } from "./mock-data.ts";
 
 export type WizardStepId = 1 | 2 | 3 | 4;

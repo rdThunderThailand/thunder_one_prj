@@ -105,7 +105,7 @@ export function CreatePlaylistPage() {
     return (
       <Card className="p-6">
         <p className="text-sm text-red-500">{resumeError.message}</p>
-        <Button className="mt-4" variant="secondary" onClick={() => router.push("/playlists")}>
+        <Button className="mt-4" variant="secondary" onClick={() => router.push("/communication/playlists")}>
           กลับไป Playlists
         </Button>
       </Card>
@@ -175,7 +175,7 @@ export function CreatePlaylistPage() {
       setConfirmLeave(true);
       return;
     }
-    router.push("/playlists");
+    router.push("/communication/playlists");
   };
 
   const handleSubmit = async () => {
@@ -185,7 +185,7 @@ export function CreatePlaylistPage() {
     try {
       await persistDraft({ activate: true });
       draft.reset();
-      router.push("/playlists");
+      router.push("/communication/playlists");
     } catch (err) {
       if (err instanceof Error && isConflict(err.message)) {
         setRevisionConflict(classifyApiError(err, err.message).message);
@@ -253,7 +253,7 @@ export function CreatePlaylistPage() {
       {confirmLeave && (
         <UnsavedLeaveConfirm
           onStay={() => setConfirmLeave(false)}
-          onLeave={() => router.push("/playlists")}
+          onLeave={() => router.push("/communication/playlists")}
         />
       )}
 

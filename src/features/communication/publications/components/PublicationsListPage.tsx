@@ -108,7 +108,7 @@ export function PublicationsListPage() {
       setBusyId(id);
       setActionError(null);
       const res = await duplicatePublication(id);
-      router.push(`/publications/create?id=${res.publication_id}`);
+      router.push(`/communication/publications/create?id=${res.publication_id}`);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "ทำสำเนาไม่สำเร็จ");
       setBusyId(null);
@@ -174,7 +174,7 @@ export function PublicationsListPage() {
                 >
                   <td className="py-2.5 pr-3">
                     <Link
-                      href={`/publications/${item.id}`}
+                      href={`/communication/publications/${item.id}`}
                       className="font-medium text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400"
                     >
                       {item.name}
@@ -207,7 +207,7 @@ export function PublicationsListPage() {
                     <div className="flex items-center justify-end gap-2">
                       {tab === "draft" && (
                         <Link
-                          href={`/publications/create?id=${item.id}`}
+                          href={`/communication/publications/create?id=${item.id}`}
                           className={buttonClasses("secondary", "text-xs px-2.5 py-1")}
                         >
                           Edit
@@ -303,7 +303,7 @@ export function PublicationsListPage() {
         title="Publications"
         subtitle="จัดการ publication ที่บันทึกและเผยแพร่ไว้"
         actions={
-          <Link href="/publications/create" className={buttonClasses("primary")}>
+          <Link href="/communication/publications/create" className={buttonClasses("primary")}>
             Create Publication
           </Link>
         }

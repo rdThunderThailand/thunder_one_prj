@@ -8,7 +8,7 @@
 // Order matters: the asset's own `kind`/`mime_type` when we have the asset, and only
 // then the URL's extension (ponytail: extension sniffing, see lib/media-kind).
 
-import { isVideoUrl } from "../../lib/media-kind.ts";
+import { isVideoUrl } from "../../../lib/media-kind.ts";
 import type { MediaAsset } from "@/types/domain";
 
 export function isVideoPreview(asset: MediaAsset | undefined, url: string | undefined): boolean {

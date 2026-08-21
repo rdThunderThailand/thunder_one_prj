@@ -7,30 +7,30 @@
 // see docs/adr/0021-role-vocabulary-reconciliation.md); every persona's pages
 // are reachable by anyone who navigates to their URL directly.
 //
+// Narrowed to three personas — CEO and Technician (+ Thunder Care) moved out
+// to Thunder One's shell-level Mission Control and the new ThunderCare app
+// respectively — docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md.
+// Their nav configs live in ./shell.tsx and ./thunder-care.tsx now, not here.
+//
 // IMPORTANT: resolveAssetIntelligenceNav only reads the URL's third path
 // segment (pathname.split("/")[2]) to pick a nav. Any page beyond a persona's
 // own landing route MUST therefore live under that persona's own segment
-// (e.g. /asset-intelligence/my-assets/scan-qr, /asset-intelligence/service-ops/reports)
-// — a sibling route like /asset-intelligence/scan-qr will silently fall back
-// to the CEO nav instead of the Employee one, since "scan-qr" isn't a key in
+// (e.g. /asset-intelligence/my-assets/scan-qr) — a sibling route like
+// /asset-intelligence/scan-qr will silently fall back to the Asset/IT
+// Manager nav instead of the Employee one, since "scan-qr" isn't a key in
 // NAV_BY_PERSONA_SEGMENT below. This bit Employee's My Requests/Service
 // Status/Scan QR pages once (fixed 2026-08-18 by nesting them under
-// my-assets/, matching how Thunder Care's Customers/Work Queue/Reports were
-// already nested under service-ops/) — don't reintroduce it for a new page.
+// my-assets/) — don't reintroduce it for a new page.
 //
-// Every persona's nav is now fully wired except "Settings", intentionally
-// left inert everywhere (no settings page exists for any role) — see
-// ai-issues/ai-requests/ai-assets's RegisterAssetPage for Employee,
-// ai-service-ops's Customers/Work Queue/Reports pages for Thunder Care,
-// ai-work-orders's Assigned/Calendar pages for Technician,
-// ai-departments's Assets/Team/Requests/Approvals/Reports pages for
-// Department Manager, ai-assets's Locations/Work Orders/Maintenance/
-// Inspections/Analytics/Reports pages (plus Add Asset/Pass to Department)
-// for Asset/IT Manager, and ai-mission-control's Insights/Reports/Approvals
-// pages for CEO.
+// Every remaining persona's nav is fully wired except "Settings",
+// intentionally left inert everywhere (no settings page exists for any
+// role) — see asset-intelligence/issues/asset-intelligence/requests/asset-intelligence/assets's RegisterAssetPage for
+// Employee, asset-intelligence/departments's Assets/Team/Requests/Approvals/Reports pages
+// for Department Manager, and asset-intelligence/assets's Locations/Work Orders/
+// Maintenance/Inspections/Analytics/Reports pages (plus Add Asset/Pass to
+// Department) for Asset/IT Manager.
 import {
   BoxIcon,
-  CalendarIcon,
   ChartIcon,
   CheckCircleIcon,
   CheckIcon,
@@ -38,37 +38,13 @@ import {
   GlobeIcon,
   GridIcon,
   HelpIcon,
-  InfoIcon,
   ListIcon,
   MonitorIcon,
   SearchIcon,
   SettingsIcon,
-  SparklesIcon,
   UsersIcon,
-  WarningTriangleIcon,
 } from "@/components/ui/icons";
 import type { NavConfig, NavItem } from "./types";
-
-const ceoNav: NavConfig = {
-  overviewItem: {
-    label: "Mission Control",
-    href: "/asset-intelligence/mission-control",
-    icon: <BoxIcon className="h-4 w-4 shrink-0" />,
-  },
-  sections: [],
-  standaloneLinks: [
-    { label: "Insights", href: "/asset-intelligence/mission-control/insights" },
-    { label: "Reports", href: "/asset-intelligence/mission-control/reports" },
-    { label: "Approvals", href: "/asset-intelligence/mission-control/approvals" },
-    { label: "Settings" },
-  ] satisfies NavItem[],
-  standaloneIcons: [
-    <SparklesIcon key="insights" />,
-    <ChartIcon key="reports" />,
-    <CheckCircleIcon key="approvals" />,
-    <SettingsIcon key="settings" />,
-  ],
-};
 
 const assetManagerNav: NavConfig = {
   overviewItem: {
@@ -120,29 +96,6 @@ const departmentManagerNav: NavConfig = {
   ],
 };
 
-const technicianNav: NavConfig = {
-  overviewItem: {
-    label: "My Work",
-    href: "/asset-intelligence/work-orders",
-    icon: <ListIcon className="h-4 w-4 shrink-0" />,
-  },
-  sections: [],
-  standaloneLinks: [
-    { label: "Assigned", href: "/asset-intelligence/work-orders/assigned" },
-    { label: "Calendar", href: "/asset-intelligence/work-orders/calendar" },
-    { label: "Assets" },
-    { label: "Knowledge" },
-    { label: "Settings" },
-  ] satisfies NavItem[],
-  standaloneIcons: [
-    <ListIcon key="assigned" />,
-    <CalendarIcon key="calendar" />,
-    <BoxIcon key="assets" />,
-    <InfoIcon key="knowledge" />,
-    <SettingsIcon key="settings" />,
-  ],
-};
-
 const employeeNav: NavConfig = {
   overviewItem: {
     label: "My Assets",
@@ -164,39 +117,13 @@ const employeeNav: NavConfig = {
   ],
 };
 
-const thunderCareNav: NavConfig = {
-  overviewItem: {
-    label: "Overview",
-    href: "/asset-intelligence/service-ops",
-    icon: <GridIcon className="h-4 w-4 shrink-0" />,
-  },
-  sections: [],
-  standaloneLinks: [
-    { label: "Customers", href: "/asset-intelligence/service-ops/customers" },
-    { label: "Work Queue", href: "/asset-intelligence/service-ops/work-queue" },
-    { label: "SLA" },
-    { label: "Reports", href: "/asset-intelligence/service-ops/reports" },
-    { label: "Settings" },
-  ] satisfies NavItem[],
-  standaloneIcons: [
-    <UsersIcon key="customers" />,
-    <ListIcon key="work-queue" />,
-    <WarningTriangleIcon key="sla" />,
-    <ChartIcon key="reports" />,
-    <SettingsIcon key="settings" />,
-  ],
-};
-
 const NAV_BY_PERSONA_SEGMENT: Record<string, NavConfig> = {
-  "mission-control": ceoNav,
   assets: assetManagerNav,
   departments: departmentManagerNav,
-  "work-orders": technicianNav,
   "my-assets": employeeNav,
-  "service-ops": thunderCareNav,
 };
 
 export function resolveAssetIntelligenceNav(pathname: string): NavConfig {
   const personaSegment = pathname.split("/")[2];
-  return NAV_BY_PERSONA_SEGMENT[personaSegment] ?? ceoNav;
+  return NAV_BY_PERSONA_SEGMENT[personaSegment] ?? assetManagerNav;
 }

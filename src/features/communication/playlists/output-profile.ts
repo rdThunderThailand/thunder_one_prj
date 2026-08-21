@@ -4,7 +4,7 @@
 // docs/adr/0032-playlist-output-profile.md for why that duplication is deliberate.
 //
 // Relative import keeps this file compatible with the native Node runnable checks.
-import { DISPLAY_RESOLUTIONS } from "../../lib/display-resolution.ts";
+import { DISPLAY_RESOLUTIONS } from "../../../lib/display-resolution.ts";
 
 export const RESOLUTIONS = DISPLAY_RESOLUTIONS;
 

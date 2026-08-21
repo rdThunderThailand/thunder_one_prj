@@ -2,7 +2,7 @@
 
 An ordered sequence of Assets, with per-item duration and transition settings. Scheduling and targeting (Channel, timing) live in Publications, not here — see `CONTEXT.md` at the repo root.
 
-UI: an overview (`/playlists`) plus a 4-step wizard (`/playlists/create`, or `?id=<uuid>` to
+UI: an overview (`/communication/playlists`) plus a 4-step wizard (`/communication/playlists/create`, or `?id=<uuid>` to
 edit). See `docs/playlists/plan-playlist-ui.md` for the full design and
 `docs/adr/0010-playlist-settings-in-metadata.md` for why the settings step writes fields no
 player reads yet.

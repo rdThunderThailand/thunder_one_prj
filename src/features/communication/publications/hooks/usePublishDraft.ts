@@ -294,7 +294,7 @@ export function usePublishDraft() {
       await activatePublication(newId);
       setPublishedId(newId);
       state.cancelDraft();
-      router.push(`/publications/${newId}`);
+      router.push(`/communication/publications/${newId}`);
     } catch (err) {
       const classified = classifyApiError(err, "Failed to publish publication.");
       // A retry after a timed-out publish lands here: the backend refused because
@@ -302,7 +302,7 @@ export function usePublishDraft() {
       if (classified.kind === "already-active" && state.publicationId) {
         setPublishedId(state.publicationId);
         state.cancelDraft();
-        router.push(`/publications/${state.publicationId}`);
+        router.push(`/communication/publications/${state.publicationId}`);
         return;
       }
       if (classified.kind !== "conflict") setError(classified.message);

@@ -59,7 +59,7 @@ export function UnsupportedCategoryState({ category }: { category: "online" | "s
         {category === "online" ? "Online" : "Social"} Channels require a different endpoint editor.
         This page will not submit a category that its controls cannot display.
       </p>
-      <Link href="/channels" className={buttonClasses("secondary", "mt-4")}>
+      <Link href="/communication/channels" className={buttonClasses("secondary", "mt-4")}>
         Back to Channels
       </Link>
     </Card>
