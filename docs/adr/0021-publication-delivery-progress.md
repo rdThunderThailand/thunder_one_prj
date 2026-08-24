@@ -137,3 +137,21 @@ Warnings / Publish Failed run stopped moving. Migration 094 adds `cancelled_at` 
 `media_publication_get`'s response (it existed on the table but was never returned); for every
 other settled result, `completedAt` is the latest `updated_at`/`acked_at` across all targets — the
 moment the last device to report in did so. `completedAt` is `null` while `Publishing`.
+
+## Amendment — Publication Download Report (2026-08-21)
+
+The player no longer produces `delivered` through the generic ACK route. After all distinct
+Assets in a Publication snapshot are locally available, it sends the success-only
+`POST /media/player/jobs/{publication_id}/publication` report. The backend atomically records the
+file diagnostics and advances the matching `publish_job_target` to `delivered`. The sibling ACK
+route remains responsible for `playing` and `failed`, so stage 2 and stage 3 keep separate evidence.
+
+The report is bound to `retry_count` through `delivery_attempt`. A replay of an accepted attempt
+is idempotent, a stale attempt is rejected, and a failed target must be retried before another
+report can be accepted. Fresh downloads and cache reuse are both successful delivery outcomes.
+
+The ten-minute settle window is now recurrence-aware. The backend returns `playback_window` with
+`before|open|between|ended`; only an `open` window starts settlement, using that occurrence's
+`opened_at`. Polling is 10 seconds during an open settlement, 60 seconds while waiting for a
+schedule or a late target, pauses while the tab is hidden, and stops for cancelled/ended/all-terminal
+runs.

@@ -81,9 +81,30 @@ body {
   animation: stage-flow 1.4s ease-in-out infinite;
 }
 
+/* One-shot ring pulse on the section a rejected command points at, so the jump the
+   focus made is visible rather than just silently repositioning the page. */
+@keyframes flash-outline {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 0);
+  }
+  25%,
+  75% {
+    box-shadow: 0 0 0 3px rgb(239 68 68 / 0.55);
+  }
+}
+.flash-outline {
+  animation: flash-outline 1.4s ease-in-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .progress-stripes,
-  .stage-flow::after {
+  .stage-flow::after,
+  .flash-outline {
     animation: none;
+  }
+  /* The flash is the only cue that focus moved, so keep a static ring when it cannot pulse. */
+  .flash-outline {
+    box-shadow: 0 0 0 3px rgb(239 68 68 / 0.55);
   }
 }

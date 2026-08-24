@@ -1,16 +1,7 @@
 // Shared domain entity types, used by 2+ features. Mirrors the glossary in
 // CONTEXT.md at the repo root — keep both in sync when either changes.
 
-export type ChannelType = "dooh" | "in_store" | "online" | "social" | "other";
-export type ChannelOnlineStatus = "online" | "warning" | "offline";
-
-export interface Channel {
-  id: string;
-  name: string;
-  type: ChannelType;
-  locationName: string;
-  status: ChannelOnlineStatus;
-}
+export type MediaDeviceHealth = "online" | "warning" | "offline";
 
 // Publication's own lifecycle status — separate from Publish Job delivery
 // status. See CONTEXT.md: "Publication".
@@ -102,10 +93,17 @@ export type PlaylistListItem = {
   status: PlaylistStatus;
   item_count: number;
   created_at?: string;
-  /** Phase 2 fields — absent until the list RPC is extended. */
   metadata?: Record<string, unknown>;
   cover_asset_id?: string | null;
   created_by?: Creator;
+  /** Added by Thunder_Core migration 097 — optional so a frontend deploy that lands
+   *  ahead of the backend renders "—" instead of crashing. */
+  updated_at?: string;
+  total_duration_seconds?: number;
+  /** Publications pointing at this playlist, any status — Thunder_Core migration 098.
+   *  Optional for the same deploy-ordering reason as the fields above; when it is
+   *  missing the display status falls back to the stored `status`. */
+  publication_count?: number;
 };
 
 export type PlaylistDetail = {
@@ -117,4 +115,6 @@ export type PlaylistDetail = {
   /** Phase 2 fields — absent until the get RPC is extended. */
   metadata?: Record<string, unknown>;
   created_by?: Creator;
+  /** Publications pointing at this playlist, any status — Thunder_Core migration 098. */
+  publication_count?: number;
 };

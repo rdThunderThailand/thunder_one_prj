@@ -7,7 +7,7 @@
  * *.check.mts files here. api-error.ts imports nothing, so this loads clean.
  */
 import assert from "node:assert/strict";
-import { ApiError, classifyApiError, isConflict } from "./api-error.ts";
+import { ApiError, classifyApiError, isConflict, isDuplicateName } from "./api-error.ts";
 
 const FALLBACK = "Failed to save draft.";
 
@@ -31,6 +31,17 @@ assert.equal(conflict.kind, "conflict");
 assert.notEqual(conflict.message, "Already modified: draft was changed elsewhere"); // replaced with actionable guidance
 assert.ok(conflict.message.includes("โหลดหน้านี้ใหม่"));
 assert.ok(isConflict("Already modified: draft was changed elsewhere"));
+
+// media_channel_create/update raise "Already exists: a channel named X already exists" — this
+// must never reach the screen verbatim (raw backend text is not allowed to reach the user), and
+// must not be confused with the revision-conflict case above despite sharing the "Already " prefix
+// and the same 409 bucket in api-utils.ts.
+const duplicate = classifyApiError(new ApiError("Already exists: a channel named Foo already exists", 409), FALLBACK);
+assert.equal(duplicate.kind, "rejected");
+assert.notEqual(duplicate.message, "Already exists: a channel named Foo already exists");
+assert.ok(!duplicate.message.includes("Foo")); // no leaked backend text of any kind
+assert.ok(isDuplicateName("Already exists: a channel named Foo already exists"));
+assert.equal(isDuplicateName("Already modified: draft was changed elsewhere"), false);
 
 // A 409 that isn't our specific revision-conflict message must NOT be treated as
 // one — e.g. media_video_delete's "Already in use: ..." would otherwise tell a

@@ -2,6 +2,8 @@
 
 Expands `docs/adr/0022-app-switcher-multi-app-shell.md` into concrete implementation notes. The ADR is the decision record; this file is where to look for "which file does what" without re-deriving it from the diff.
 
+**Superseded 2026-08-20 by `docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md`** — everything below describes the two-app dropdown shell as it stood before that ADR. `media-workspace.tsx` is now `communication.tsx`, `ai-mission-control`/`ai-work-orders`/`ai-service-ops` are now `mission-control`/`tc-work-orders`/`tc-service-ops`, the `AppSwitcher` dropdown is gone in favor of the `/work-space` launcher page, and Asset Intelligence's nav lost the CEO/Technician/Thunder Care personas described here. Left as-is for the historical file map of the original two-app shell rather than rewritten.
+
 ## Files
 
 - `src/config/apps.tsx` — the `APPS` registry (`id`, `label`, `tagline`, `icon`, `basePath`) and `resolveActiveApp(pathname)`, which matches the longest non-root `basePath` first so `/asset-intelligence/**` doesn't fall through to the `/` (Media Workspace) entry.
