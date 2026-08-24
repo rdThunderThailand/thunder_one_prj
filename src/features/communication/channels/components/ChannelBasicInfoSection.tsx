@@ -23,6 +23,7 @@ export interface ChannelBasicInfoValue {
   channelTypeId: string;
   locationId: string;
   description: string;
+  syncEnabled: boolean;
 }
 
 export function ChannelBasicInfoSection({
@@ -32,6 +33,7 @@ export function ChannelBasicInfoSection({
   currentChannelTypeId,
   locations,
   errors,
+  directTargetConflicts,
   onChange,
 }: {
   value: ChannelBasicInfoValue;
@@ -40,6 +42,9 @@ export function ChannelBasicInfoSection({
   currentChannelTypeId: string | null;
   locations: ChannelLocationOption[];
   errors: Partial<Record<"name" | "channel_type_id", string>>;
+  /** Active/scheduled Publications that target one of this Channel's Devices directly. Informational
+   * only — turning synchronization on does not get blocked by these (ADR 0042 decision Q6). */
+  directTargetConflicts: string[];
   onChange: (next: ChannelBasicInfoValue) => void;
 }) {
   const availableTypes = channelTypes.filter(
@@ -169,6 +174,31 @@ export function ChannelBasicInfoSection({
             className={`${fieldClasses} resize-y`}
           />
         </label>
+
+        <div className="md:col-span-2">
+          <label className="flex items-start gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <input
+              type="checkbox"
+              checked={value.syncEnabled}
+              onChange={(event) => onChange({ ...value, syncEnabled: event.target.checked })}
+              className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-700"
+            />
+            <span>
+              Synchronized playback
+              <span className="mt-0.5 block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                Devices in this Channel align to the same position in the playback loop when they
+                hold the same content.
+              </span>
+            </span>
+          </label>
+          {value.syncEnabled && directTargetConflicts.length > 0 && (
+            <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+              {directTargetConflicts.length} publication{directTargetConflicts.length === 1 ? "" : "s"}{" "}
+              target a Device in this Channel directly, bypassing it: {directTargetConflicts.join(", ")}.
+              Those Devices may fall out of sync. This does not block saving.
+            </p>
+          )}
+        </div>
       </div>
     </Card>
   );

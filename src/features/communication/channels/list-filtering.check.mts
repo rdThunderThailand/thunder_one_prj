@@ -16,6 +16,8 @@ const createChannel = (id: string, overrides: Partial<ChannelListItem>): Channel
   default_playlist: null,
   revision: 1,
   updated_at: "",
+  sync_enabled: false,
+  direct_target_conflicts: [],
   ...overrides,
 });
 

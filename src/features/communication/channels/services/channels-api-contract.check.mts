@@ -35,6 +35,7 @@ const draft: ChannelDraftInput = {
   default_playlist_id: "playlist-kfc-wednesday",
   confirm_mismatch: true,
   as_draft: null,
+  sync_enabled: false,
 };
 
 // A wrong query key or order would make filtering silently diverge from the future API contract.
@@ -69,8 +70,10 @@ assert.deepEqual(buildCreateChannelBody(draft), {
   default_playlist_id: "playlist-kfc-wednesday",
   confirm_mismatch: true,
   as_draft: true,
+  sync_enabled: false,
 });
 assert.equal(buildCreateChannelBody({ ...draft, as_draft: false }).as_draft, false);
+assert.equal(buildCreateChannelBody({ ...draft, sync_enabled: true }).sync_enabled, true);
 assert.deepEqual(buildCreateChannelRequest(draft), {
   method: "POST",
   path: "/media/channels",
@@ -86,6 +89,7 @@ assert.deepEqual(buildCreateChannelRequest(draft), {
     default_playlist_id: "playlist-kfc-wednesday",
     confirm_mismatch: true,
     as_draft: true,
+    sync_enabled: false,
   },
 });
 
@@ -102,6 +106,7 @@ assert.deepEqual(buildUpdateChannelBody(draft, 7, false), {
   expected_resolution: "1920x1080",
   default_playlist_id: "playlist-kfc-wednesday",
   confirm_mismatch: true,
+  sync_enabled: false,
   expected_revision: 7,
   overwrite: false,
 });
@@ -122,6 +127,7 @@ assert.deepEqual(buildUpdateChannelRequest("channel-1", draft, 7, false), {
     expected_resolution: "1920x1080",
     default_playlist_id: "playlist-kfc-wednesday",
     confirm_mismatch: true,
+    sync_enabled: false,
     expected_revision: 7,
     overwrite: false,
   },
@@ -140,6 +146,7 @@ assert.deepEqual(
       device_ids: [],
       confirm_mismatch: false,
       as_draft: null,
+      sync_enabled: true,
     },
     3,
     false,
@@ -155,6 +162,7 @@ assert.deepEqual(
     expected_resolution: null,
     default_playlist_id: null,
     confirm_mismatch: false,
+    sync_enabled: true,
     expected_revision: 3,
     overwrite: false,
   },
@@ -206,6 +214,8 @@ const channel = {
   revision: 7,
   updated_at: "2026-08-20T00:00:00.000Z",
   created_at: "2026-08-19T00:00:00.000Z",
+  sync_enabled: false,
+  direct_target_conflicts: [],
 };
 
 const parsedList = parseChannelList({ channels: [channel] });
@@ -276,6 +286,13 @@ assert.equal(
     devices: [{ ...channel.devices[0], resolution: "1600x900" }],
   }).devices[0]?.resolution,
   "1600x900",
+);
+assert.throws(() => parseChannelDetail({ ...channel, sync_enabled: "yes" }));
+assert.throws(() => parseChannelDetail({ ...channel, direct_target_conflicts: "not-an-array" }));
+assert.deepEqual(
+  parseChannelDetail({ ...channel, sync_enabled: true, direct_target_conflicts: ["BOEtest"] })
+    .direct_target_conflicts,
+  ["BOEtest"],
 );
 assert.throws(() => parseChannelReferenceData({ channel_types: [], locations: "bad" }));
 assert.throws(() => parseChannelReferenceData({

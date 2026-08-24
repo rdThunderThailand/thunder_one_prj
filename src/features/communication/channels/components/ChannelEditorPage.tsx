@@ -134,6 +134,7 @@ function ChannelEditor({ channelId }: { channelId?: string }) {
               currentChannelTypeId={data.detail?.channel_type?.id ?? null}
               locations={data.references.locations}
               errors={validationErrors}
+              directTargetConflicts={data.detail?.direct_target_conflicts ?? []}
               onChange={updateBasicInfo}
             />
 

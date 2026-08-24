@@ -1,6 +1,12 @@
 # Server-anchored synchronized playback
 
-**Status:** proposed (2026-08-21)
+**Status:** superseded by ADR 0042 (2026-08-24) — never accepted; proposed 2026-08-21
+
+> Superseded by `docs/adr/0042-epoch-phase-synchronized-playback.md`, which reaches synchronized
+> playback with a shared server clock and a fixed epoch instead of the capability contract, READY
+> gate, and Channel Group boundary proposed below. Retained because its analysis of mixed-repeat
+> behavior, timezone-versus-phase, and direct targeting is still the reference for why those
+> problems exist. Do not implement from this document.
 
 Thunder One will synchronize playback from a stable server-time anchor, not from a database counter
 that is updated continuously and not from the moment each Media Device happens to receive a poll

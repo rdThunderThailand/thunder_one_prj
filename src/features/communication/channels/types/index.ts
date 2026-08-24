@@ -65,6 +65,15 @@ export interface ChannelListItem {
   default_playlist: { id: string; name: string } | null;
   revision: number;
   updated_at: string;
+  /** ADR 0042. Off by default; nothing about lifecycle or device membership depends on it. */
+  sync_enabled: boolean;
+  /**
+   * Names of active/scheduled Publications that target one of this Channel's Devices directly,
+   * bypassing the Channel. Non-empty here is exactly what would newly be blocked by the
+   * direct-target guard going forward — existing rows are grandfathered, not broken. Shown as a
+   * warning when `sync_enabled` is on; never blocks saving (ADR 0042 decision Q6, option b).
+   */
+  direct_target_conflicts: string[];
 }
 
 export interface ChannelDetail extends ChannelListItem {
@@ -88,6 +97,7 @@ export interface ChannelDraftInput {
    * that has already been created. Only valid on update; a create must choose.
    */
   as_draft: boolean | null;
+  sync_enabled: boolean;
 }
 
 export interface ChannelFilters {

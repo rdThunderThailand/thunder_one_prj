@@ -33,6 +33,8 @@ function channel(over: Partial<ChannelListItem> & Pick<ChannelListItem, "id" | "
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-21T00:00:00Z",
+    sync_enabled: false,
+    direct_target_conflicts: [],
     ...over,
   };
 }

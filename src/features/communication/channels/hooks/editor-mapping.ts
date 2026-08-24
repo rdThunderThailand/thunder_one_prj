@@ -15,6 +15,7 @@ export const emptyForm: ChannelFormValue = {
   orientation: null,
   resolution: null,
   defaultPlaylistId: "",
+  syncEnabled: false,
 };
 
 export function mergePlaylistOptions(
@@ -38,6 +39,7 @@ export function detailToForm(detail: ChannelDetail): ChannelFormValue {
     orientation: detail.expected_orientation,
     resolution: detail.expected_resolution,
     defaultPlaylistId: detail.default_playlist?.id ?? "",
+    syncEnabled: detail.sync_enabled,
   };
 }
 
@@ -64,6 +66,7 @@ export function toDraft(
       resolutionConfirmations,
     ),
     as_draft: asDraft,
+    sync_enabled: form.syncEnabled,
   };
 }
 

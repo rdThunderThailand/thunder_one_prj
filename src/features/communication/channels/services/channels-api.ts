@@ -38,6 +38,7 @@ export interface CreateChannelBody {
   default_playlist_id: string | null;
   confirm_mismatch: boolean;
   as_draft: boolean;
+  sync_enabled: boolean;
 }
 
 export interface UpdateChannelBody extends Omit<CreateChannelBody, "as_draft"> {
@@ -57,6 +58,10 @@ function isString(value: unknown): value is string {
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || isString(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
 function isResolution(value: unknown): value is string {
@@ -192,7 +197,9 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !(value.expected_resolution === null || isDisplayResolution(value.expected_resolution)) ||
     !(value.default_playlist === null || isRecord(value.default_playlist)) ||
     !isPositiveSafeInteger(value.revision) ||
-    !isTimestamp(value.updated_at)
+    !isTimestamp(value.updated_at) ||
+    typeof value.sync_enabled !== "boolean" ||
+    !isStringArray(value.direct_target_conflicts)
   ) {
     throw new TypeError("Channel data is malformed");
   }
@@ -223,6 +230,8 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     default_playlist: defaultPlaylist,
     revision: value.revision,
     updated_at: value.updated_at,
+    sync_enabled: value.sync_enabled,
+    direct_target_conflicts: value.direct_target_conflicts,
   };
 }
 
@@ -255,6 +264,7 @@ export function buildCreateChannelBody(draft: ChannelDraftInput): CreateChannelB
     // A create has to pick a side; `null` is an update-only value, so it falls back to the
     // side that reserves nothing.
     as_draft: draft.as_draft ?? true,
+    sync_enabled: draft.sync_enabled,
   };
 }
 

@@ -38,6 +38,8 @@ const fixtures: ChannelListItem[] = [
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
+    sync_enabled: false,
+    direct_target_conflicts: [],
   },
   {
     id: "channel-active-dooh",
@@ -72,6 +74,8 @@ const fixtures: ChannelListItem[] = [
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
+    sync_enabled: false,
+    direct_target_conflicts: [],
   },
   {
     id: "channel-draft-dooh",
@@ -97,6 +101,8 @@ const fixtures: ChannelListItem[] = [
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
+    sync_enabled: false,
+    direct_target_conflicts: [],
   },
   {
     id: "channel-inactive-in-store",
@@ -112,6 +118,8 @@ const fixtures: ChannelListItem[] = [
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
+    sync_enabled: false,
+    direct_target_conflicts: [],
   },
 ];
 
@@ -166,6 +174,7 @@ assert.deepEqual(
     device_ids: [],
     confirm_mismatch: false,
     as_draft: true,
+    sync_enabled: false,
   }),
   { name: "กรุณาระบุชื่อ Channel", channel_type_id: "กรุณาเลือก Channel Type" },
 );
