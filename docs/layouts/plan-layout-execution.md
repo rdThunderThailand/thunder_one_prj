@@ -109,7 +109,7 @@ public/swagger-core-v1.json                        modify — new paths
 **thunder_one_prj**
 
 ```
-src/features/communication/layouts/
+src/features/media-workspace/layouts/
   types/index.ts              create — Layout, LayoutZone, ZoneRole, LayoutStatus
   geometry.ts                 create — validation + overlap + tenth-rounding (pure)
   geometry.check.mts          create
@@ -133,14 +133,14 @@ src/features/communication/layouts/
     LayoutSettingsStep.tsx    create — step 2 (name / ratio / background / status)
   index.ts                    create — feature's public surface
 
-src/app/(dashboard)/(application)/communication/layouts/page.tsx             create
-src/app/(dashboard)/(application)/communication/layouts/create/page.tsx      create
-src/app/(dashboard)/(application)/communication/layouts/[layoutId]/page.tsx  create
-src/config/nav/communication.tsx                                             modify — one nav item
+src/app/(dashboard)/(application)/media-workspace/layouts/page.tsx             create
+src/app/(dashboard)/(application)/media-workspace/layouts/create/page.tsx      create
+src/app/(dashboard)/(application)/media-workspace/layouts/[layoutId]/page.tsx  create
+src/config/nav/media-workspace.tsx                                             modify — one nav item
 ```
 
 Every pure module gets a sibling `.check.mts`; components are verified in the browser
-(§"Verification"). This mirrors `src/features/communication/playlists/`, which is the
+(§"Verification"). This mirrors `src/features/media-workspace/playlists/`, which is the
 closest analogue in the codebase and the file to read whenever this plan says "follow the
 Playlist pattern".
 
@@ -463,9 +463,9 @@ Verify the swagger still parses: `jq empty public/swagger-core-v1.json`.
 ## Task 3 — Frontend types and geometry validation
 
 **Files:**
-- Create: `src/features/communication/layouts/types/index.ts`
-- Create: `src/features/communication/layouts/geometry.ts`
-- Create: `src/features/communication/layouts/geometry.check.mts`
+- Create: `src/features/media-workspace/layouts/types/index.ts`
+- Create: `src/features/media-workspace/layouts/geometry.ts`
+- Create: `src/features/media-workspace/layouts/geometry.check.mts`
 
 **Interfaces produced:** consumed by Tasks 4, 5, 6, 7 and 8.
 
@@ -575,7 +575,7 @@ export function validateZones(zones: ZoneRect[]): GeometryError[] {
 - [x] **Step 3: Write the check file**
 
 ```ts
-/** Run: node src/features/communication/layouts/geometry.check.mts */
+/** Run: node src/features/media-workspace/layouts/geometry.check.mts */
 import assert from "node:assert/strict";
 import { rectsOverlap, roundPercent, validateZones } from "./geometry.ts";
 
@@ -614,7 +614,7 @@ console.log("geometry.check.mts — all assertions passed");
 
 - [x] **Step 4: Run it**
 
-Run: `node src/features/communication/layouts/geometry.check.mts`
+Run: `node src/features/media-workspace/layouts/geometry.check.mts`
 Expected: `geometry.check.mts — all assertions passed`
 
 ---
@@ -622,8 +622,8 @@ Expected: `geometry.check.mts — all assertions passed`
 ## Task 4 — The seven starting templates
 
 **Files:**
-- Create: `src/features/communication/layouts/templates.ts`
-- Create: `src/features/communication/layouts/templates.check.mts`
+- Create: `src/features/media-workspace/layouts/templates.ts`
+- Create: `src/features/media-workspace/layouts/templates.check.mts`
 
 **Interfaces consumed:** `LayoutZone`, `validateZones` from Task 3.
 **Interfaces produced:** `LAYOUT_TEMPLATES: LayoutTemplate[]` — Task 7's template rail.
@@ -674,7 +674,7 @@ export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
 - [x] **Step 2: Write the check — every template must validate clean**
 
 ```ts
-/** Run: node src/features/communication/layouts/templates.check.mts */
+/** Run: node src/features/media-workspace/layouts/templates.check.mts */
 import assert from "node:assert/strict";
 import { LAYOUT_TEMPLATES } from "./templates.ts";
 import { MAX_ZONES, validateZones } from "./geometry.ts";
@@ -700,7 +700,7 @@ console.log("templates.check.mts — all assertions passed");
 
 - [x] **Step 3: Run it**
 
-Run: `node src/features/communication/layouts/templates.check.mts`
+Run: `node src/features/media-workspace/layouts/templates.check.mts`
 Expected: `templates.check.mts — all assertions passed`
 
 ---
@@ -708,7 +708,7 @@ Expected: `templates.check.mts — all assertions passed`
 ## Task 5 — The wireframe component
 
 **Files:**
-- Create: `src/features/communication/layouts/components/LayoutWireframe.tsx`
+- Create: `src/features/media-workspace/layouts/components/LayoutWireframe.tsx`
 
 **Interfaces consumed:** `LayoutZone`, `ZoneRole` from Task 3.
 **Interfaces produced:** `<LayoutWireframe zones background aspectRatio className />` — used
@@ -752,19 +752,19 @@ This is a Server Component — it holds no state and takes no events. Do not add
 ## Task 6 — Screen 1: the Layouts list
 
 **Files:**
-- Create: `src/features/communication/layouts/list-filtering.ts` + `.check.mts`
-- Create: `src/features/communication/layouts/list-url-state.ts` + `.check.mts`
-- Create: `src/features/communication/layouts/status-display.ts`
-- Create: `src/features/communication/layouts/services/layouts-api.ts`
+- Create: `src/features/media-workspace/layouts/list-filtering.ts` + `.check.mts`
+- Create: `src/features/media-workspace/layouts/list-url-state.ts` + `.check.mts`
+- Create: `src/features/media-workspace/layouts/status-display.ts`
+- Create: `src/features/media-workspace/layouts/services/layouts-api.ts`
 - Create: `components/LayoutsListPage.tsx`, `LayoutsFilters.tsx`, `LayoutsTable.tsx`
-- Create: `src/app/(dashboard)/(application)/communication/layouts/page.tsx`
-- Modify: `src/config/nav/communication.tsx`
+- Create: `src/app/(dashboard)/(application)/media-workspace/layouts/page.tsx`
+- Modify: `src/config/nav/media-workspace.tsx`
 
 **Interfaces consumed:** Tasks 2, 3, 5.
 
 - [x] **Step 1: Write `list-filtering.ts` and its check**
 
-Mirror `src/features/communication/playlists/list-filtering.ts` — same exported shapes
+Mirror `src/features/media-workspace/playlists/list-filtering.ts` — same exported shapes
 (`filterLayouts`, `sortLayouts`, `paginate`, `summarize`, `copyName`, `SORT_KEYS`,
 `DEFAULT_SORT`), same "empty values sort last regardless of direction" rule, same
 `copyName` duplicate-naming helper (`media_core.layouts` is `UNIQUE (tenant_id, name)`
@@ -784,7 +784,7 @@ number past the end instead of returning an empty slice.
 Mirror `playlists/list-url-state.ts` exactly, minus the keys that no longer exist. Keep its
 two rules verbatim, because both are load-bearing: an unrecognised sort key resets the
 direction with it, and only non-default values are written so an untouched page keeps a
-clean `/communication/layouts` URL.
+clean `/media-workspace/layouts` URL.
 
 Leave a comment noting that ADR 0046's folder filter is the next key to join this state, so
 the composition point is obvious when folders land.
@@ -841,7 +841,7 @@ and renders the client shell inside `<Suspense>`.
 
 - [x] **Step 6: Add the nav entry**
 
-In `src/config/nav/communication.tsx`, add `{ label: "Layouts", href: "/communication/layouts" }`
+In `src/config/nav/media-workspace.tsx`, add `{ label: "Layouts", href: "/media-workspace/layouts" }`
 to the `Publishing` section's `items`, directly after `Playlists`.
 
 - [x] **Step 7: Run the checks**
@@ -855,8 +855,8 @@ Run each new `.check.mts` with `node <path>`. All must print `all assertions pas
 **Files:**
 - Create: `components/LayoutEditorPage.tsx`, `TemplateRail.tsx`, `LayoutCanvas.tsx`,
   `ZoneProperties.tsx`, `LayoutSettingsStep.tsx`
-- Create: `src/app/(dashboard)/(application)/communication/layouts/create/page.tsx`
-- Create: `src/app/(dashboard)/(application)/communication/layouts/[layoutId]/page.tsx`
+- Create: `src/app/(dashboard)/(application)/media-workspace/layouts/create/page.tsx`
+- Create: `src/app/(dashboard)/(application)/media-workspace/layouts/[layoutId]/page.tsx`
 
 **Interfaces consumed:** Tasks 3, 4, 5, 6.
 
@@ -931,11 +931,11 @@ central decision of ADR 0044 §1 and the thing mockup 3 got wrong.
 - [x] **Step 1: Run every check file in both repos**
 
 ```bash
-node src/features/communication/layouts/geometry.check.mts
-node src/features/communication/layouts/templates.check.mts
-node src/features/communication/layouts/list-filtering.check.mts
-node src/features/communication/layouts/list-url-state.check.mts
-node src/features/communication/layouts/status-display.check.mts
+node src/features/media-workspace/layouts/geometry.check.mts
+node src/features/media-workspace/layouts/templates.check.mts
+node src/features/media-workspace/layouts/list-filtering.check.mts
+node src/features/media-workspace/layouts/list-url-state.check.mts
+node src/features/media-workspace/layouts/status-display.check.mts
 ```
 
 and in `Thunder_Core`:
@@ -958,7 +958,7 @@ browser myself, (2) here is a checklist for you to run, (3) skip and mark unveri
 
 The checklist, if it goes that way:
 
-1. `/communication/layouts` lists Layouts with a wireframe thumbnail per row.
+1. `/media-workspace/layouts` lists Layouts with a wireframe thumbnail per row.
 2. Search, status filter and sort each change the rows **and the URL**; a refresh
    reproduces the same view; back/forward works.
 3. "New Layout" → template rail → pick 70/30 → canvas shows two Zones.

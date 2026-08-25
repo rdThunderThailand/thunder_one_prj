@@ -1,69 +1,55 @@
 // Thunder One's shell-level nav — rendered when the active route belongs to
 // no App (Sidebar.tsx falls back to this when config/apps.tsx's
-// resolveActiveApp returns null). Mission Control gets its own detailed
-// subnav (moved here from Asset Intelligence's former CEO persona — same
-// Insights/Reports/Approvals pages, now shell-level) since it's the one
-// shell destination that's actually built; My Work, Work Space,
-// Intelligence, and Governance are flat links with no subnav of their own
-// yet — docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md.
-import {
-  BoxIcon,
-  ChartIcon,
-  CheckCircleIcon,
-  GridIcon,
-  LightningIcon,
-  ListIcon,
-  SettingsIcon,
-  SparklesIcon,
-} from "@/components/ui/icons";
-import type { NavConfig, NavItem } from "./types";
+// resolveActiveApp returns null). Flat, 5 items, same list on every shell
+// route (Mission Control's former Insights/Reports/Approvals sub-nav was
+// dropped — those pages are still reachable from Mission Control's own page
+// content) — docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md.
+import type { ReactNode } from "react";
+import { GridIcon, HomeIcon, ListIcon, SettingsIcon, SparklesIcon } from "@/components/ui/icons";
 
-const missionControlNav: NavConfig = {
-  overviewItem: {
-    label: "Mission Control",
-    href: "/mission-control",
-    icon: <BoxIcon className="h-4 w-4 shrink-0" />,
-  },
-  sections: [],
-  standaloneLinks: [
-    { label: "Insights", href: "/mission-control/insights" },
-    { label: "Reports", href: "/mission-control/reports" },
-    { label: "Approvals", href: "/mission-control/approvals" },
-    { label: "Settings" },
-  ] satisfies NavItem[],
-  standaloneIcons: [
-    <SparklesIcon key="insights" />,
-    <ChartIcon key="reports" />,
-    <CheckCircleIcon key="approvals" />,
-    <SettingsIcon key="settings" />,
-  ],
-};
-
-const shellHomeNav: NavConfig = {
-  overviewItem: {
-    label: "Home",
-    href: "/",
-    icon: <LightningIcon className="h-4 w-4 shrink-0" />,
-  },
-  sections: [],
-  standaloneLinks: [
-    { label: "Mission Control", href: "/mission-control" },
-    { label: "My Work", href: "/my-work" },
-    { label: "Work Space", href: "/work-space" },
-    { label: "Intelligence", href: "/intelligence" },
-    { label: "Governance", href: "/governance" },
-  ] satisfies NavItem[],
-  standaloneIcons: [
-    <BoxIcon key="mission-control" />,
-    <ListIcon key="my-work" />,
-    <GridIcon key="work-space" />,
-    <SparklesIcon key="intelligence" />,
-    <CheckCircleIcon key="governance" />,
-  ],
-};
-
-export function resolveShellNav(pathname: string): NavConfig {
-  const topSegment = pathname.split("/")[1];
-  if (topSegment === "mission-control") return missionControlNav;
-  return shellHomeNav;
+export interface ShellNavItem {
+  label: string;
+  sublabel: string;
+  href: string;
+  icon: ReactNode;
+  /** Shows a small count pill next to the label. Placeholder — no cross-App
+   * task aggregation exists yet (My Work's own page says as much). */
+  badge?: number;
+  /** Purely decorative affordance for items that lead to a chooser (Workspaces). */
+  chevron?: boolean;
 }
+
+export const shellNavItems: ShellNavItem[] = [
+  {
+    label: "Mission Control",
+    sublabel: "Strategic Overview",
+    href: "/mission-control",
+    icon: <HomeIcon className="h-4 w-4 shrink-0" />,
+  },
+  {
+    label: "My Work",
+    sublabel: "Tasks & Approvals",
+    href: "/my-work",
+    icon: <ListIcon className="h-4 w-4 shrink-0" />,
+    badge: 6,
+  },
+  {
+    label: "Intelligence",
+    sublabel: "Insights & Analytics",
+    href: "/intelligence",
+    icon: <SparklesIcon className="h-4 w-4 shrink-0" />,
+  },
+  {
+    label: "Workspaces",
+    sublabel: "Open specialized apps",
+    href: "/work-space",
+    icon: <GridIcon className="h-4 w-4 shrink-0" />,
+    chevron: true,
+  },
+  {
+    label: "Governance",
+    sublabel: "Governance & Control",
+    href: "/governance",
+    icon: <SettingsIcon className="h-4 w-4 shrink-0" />,
+  },
+];

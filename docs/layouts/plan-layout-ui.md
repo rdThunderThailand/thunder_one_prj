@@ -47,7 +47,7 @@ and the priority-overlap block — every one of which lives on the Publication p
 **Decided (2026-08-25): keep the screen, change what it is** — recorded in ADR 0044 §1.
 
 The wizard already has five steps — `Basic Info → Content → Channels → Schedule → Review & Publish`
-(`src/features/communication/publications/mock-data.ts`) — so this is **not** a new step. Step 2
+(`src/features/media-workspace/publications/mock-data.ts`) — so this is **not** a new step. Step 2
 (`Content`) gains a full-screen / Layout mode switch; in Layout mode the operator picks a Layout and
 binds a source plus playback settings per Zone. `Save Layout` and `Publish` are removed and the
 wizard footer owns navigation. The Layout editor keeps geometry and settings and never sees a
@@ -80,7 +80,7 @@ Library when those pages are next touched.
 
 Still cut: the `Tags` tab (many-to-many, a separate decision) and `Trash`, which contradicts the
 `active ↔ inactive` lifecycle Layouts and Playlists share. The list still reuses
-`src/features/communication/playlists/list-filtering.ts` and `list-url-state.ts` — the folder filter
+`src/features/media-workspace/playlists/list-filtering.ts` and `list-url-state.ts` — the folder filter
 composes with the search, status and sort filters and goes in the URL like they do.
 
 ### 2.3 `Z-Index` field on the Zone properties panel (mockup 1)
@@ -154,8 +154,8 @@ to read them — and both belong to the player A1 work, not to Layout.
 
 Three screens, in this order, all behind ADR 0045 landing first.
 
-**Screen 1 — Layouts list** (`src/app/(dashboard)/(application)/layouts`, feature folder
-`src/features/communication/layouts`)
+**Screen 1 — Layouts list** (`src/app/(dashboard)/(application)/media-workspace/layouts`, feature folder
+`src/features/media-workspace/layouts`)
 Reuses the Playlist list wholesale — search, status filter, sort, URL state persistence, empty state
 — plus the shared folder sidebar from ADR 0046, whose selection composes with those filters and lives
 in the URL alongside them. Columns: wireframe thumbnail, name, aspect ratio, Zones, Used In, last modified,

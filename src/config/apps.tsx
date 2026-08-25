@@ -21,11 +21,11 @@ export interface AppConfig {
 
 export const APPS: AppConfig[] = [
   {
-    id: "communication",
-    label: "Communication",
-    tagline: "Communication OS",
+    id: "media-workspace",
+    label: "Media Workspace",
+    tagline: "Media Workspace OS",
     icon: <GridIcon className="h-4 w-4" />,
-    basePath: "/communication",
+    basePath: "/media-workspace",
   },
   {
     id: "asset-intelligence",

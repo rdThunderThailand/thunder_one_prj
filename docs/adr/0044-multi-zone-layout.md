@@ -53,7 +53,7 @@ Content is chosen per Zone inside the Publication wizard, so Publication remains
 that answers "what plays where and when", exactly as `CONTEXT.md` requires.
 
 Concretely, that is **step 2 (`Content`) of the existing five-step wizard** — `Basic Info → Content →
-Channels → Schedule → Review & Publish` (`src/features/communication/publications/mock-data.ts`) —
+Channels → Schedule → Review & Publish` (`src/features/media-workspace/publications/mock-data.ts`) —
 not a sixth step. Step 2 already owns "what plays"; it gains a full-screen / Layout mode switch, and
 in Layout mode the operator picks a Layout, then binds a source and playback settings per Zone. The
 switch mirrors the data model exactly: ADR 0045 §1 gives a flat Publication one implicit full-screen
