@@ -1,9 +1,12 @@
 // R&D placeholder data for the CEO Mission Control dashboard — derived from
-// asset-intelligence/assets's mock data where it makes sense, rather than duplicating fake
-// numbers from scratch. Replace once a real assets/insights backend exists.
+// asset-intelligence/assets and thunder-care/work-orders mock data where it
+// makes sense, rather than inventing separate fake numbers from scratch.
+// Replace once a real cross-App insights backend exists.
 import { getMockAssets } from "@/features/asset-intelligence/assets";
+import { getMockWorkOrders } from "@/features/thunder-care/work-orders";
 
 const assets = getMockAssets();
+const workOrders = getMockWorkOrders();
 
 export interface StatCardData {
   id: string;
@@ -18,7 +21,10 @@ export interface StatCardData {
 const critical = assets.filter((a) => a.status === "critical").length;
 const attention = assets.filter((a) => a.status === "attention").length;
 const maintenanceYtd = assets.reduce((sum, a) => sum + a.purchaseValue * 0.02, 0);
+const overdueWorkOrders = workOrders.filter((w) => w.status === "overdue").length;
 
+// Read by InsightsPage — kept in the original "Total Assets / Attention /
+// Critical / Maintenance YTD" shape (requirement doc §4.1 CEO-01).
 export const statCards: StatCardData[] = [
   {
     id: "total-assets",
@@ -58,32 +64,6 @@ export const statCards: StatCardData[] = [
   },
 ];
 
-export interface AlertItemData {
-  id: string;
-  severity: "red" | "yellow" | "blue";
-  title: string;
-  subtitle: string;
-  timeAgo: string;
-}
-
-const severityFor = (status: (typeof assets)[number]["status"]): "red" | "yellow" | "blue" =>
-  status === "critical" ? "red" : status === "attention" ? "yellow" : "blue";
-
-// The simple asset+severity+time feed (requirement doc §4.1 "Recent Alerts
-// list") — distinct from mockRecommendations below ("Requires Your
-// Attention": a decision with evidence, not just a status ping).
-const TIMES_AGO = ["5m ago", "18m ago", "32m ago", "50m ago", "1h ago", "2h ago"];
-
-export const recentAlerts: AlertItemData[] = assets
-  .filter((a) => a.status !== "healthy")
-  .map((a, index) => ({
-    id: a.id,
-    severity: severityFor(a.status),
-    title: a.tag,
-    subtitle: a.category === "nas" ? "Backup failed, Server Room" : "Repeated failures",
-    timeAgo: TIMES_AGO[index % TIMES_AGO.length],
-  }));
-
 export type RecommendationStatus = "pending" | "approved" | "rejected";
 
 export interface RecommendationData {
@@ -110,17 +90,177 @@ export function getMockRecommendations(): RecommendationData[] {
   return mockRecommendations;
 }
 
-export interface AssetOutlookData {
-  warrantyExposure: string;
-  criticalAssetRisks: number;
-  maintenanceCostTrend: string;
-  majorIncidents: number;
+// Strategic Brief (top of Mission Control) — a short AI-style summary plus
+// five headline metrics. Critical Risks reuses the same critical-asset count
+// as statCards; the rest are placeholder numbers with no backend source yet.
+export interface StrategicBriefData {
+  summary: string[];
+  organizationHealth: { score: number; status: "Good" | "Fair" | "Poor"; trend: number[]; deltaLabel: string };
+  keyPriorities: { active: number; onTrack: number; atRisk: number };
+  financialSnapshot: { budgetUtilization: number; deltaLabel: string };
+  engagement: { interactions: string; trend: number[]; deltaLabel: string };
+  criticalRisks: { count: number; deltaLabel: string };
 }
 
-// CEO-02 — matches the requirement doc's mockup text exactly.
-export const assetOutlook: AssetOutlookData = {
-  warrantyExposure: "฿420K",
-  criticalAssetRisks: 4,
-  maintenanceCostTrend: "+18%",
-  majorIncidents: 7,
+export const strategicBrief: StrategicBriefData = {
+  summary: [
+    "Overall, the organization is on track.",
+    "Media Workspace has one delayed campaign requiring your approval.",
+    `Field Operations workload is above normal — ${overdueWorkOrders} work order${
+      overdueWorkOrders === 1 ? "" : "s"
+    } overdue.`,
+    "Customer engagement improved this week.",
+  ],
+  organizationHealth: {
+    score: 82,
+    status: "Good",
+    trend: [70, 72, 74, 73, 76, 78, 77, 79, 80, 81, 81, 82],
+    deltaLabel: "▲ 6 vs last week",
+  },
+  keyPriorities: { active: 3, onTrack: 2, atRisk: 1 },
+  financialSnapshot: { budgetUtilization: 92, deltaLabel: "▲ 4% vs last month" },
+  engagement: {
+    interactions: "128K",
+    trend: [90, 95, 98, 100, 105, 108, 112, 115, 118, 122, 125, 128],
+    deltaLabel: "▲ 18% vs last week",
+  },
+  criticalRisks: { count: critical, deltaLabel: "vs last week" },
 };
+
+// "Needs Your Attention" — operational status pings (distinct from
+// decisionItems below, which need an explicit approve/reject).
+export interface AttentionItemData {
+  id: string;
+  icon: "warning" | "users" | "phone";
+  title: string;
+  description: string;
+  owner: string;
+  due: string;
+  severity: "High" | "Medium" | "Low";
+}
+
+export const attentionItems: AttentionItemData[] = [
+  {
+    id: "att-campaign",
+    icon: "phone",
+    title: "Q3 Product Launch Campaign Delayed",
+    description: "Content approval is overdue in Media Workspace.",
+    owner: "Marketing Team",
+    due: "This week",
+    severity: "High",
+  },
+  {
+    id: "att-field-ops",
+    icon: "users",
+    title: "Field Operations Workload High",
+    description: `${overdueWorkOrders} work order${overdueWorkOrders === 1 ? "" : "s"} overdue across active technicians.`,
+    owner: "Operations Team",
+    due: "This week",
+    severity: "Medium",
+  },
+  {
+    id: "att-critical-assets",
+    icon: "warning",
+    title: `${critical} Critical Asset${critical === 1 ? "" : "s"} Flagged`,
+    description: "Repeated failures reported — see Asset Intelligence for detail.",
+    owner: "Asset Intelligence",
+    due: "Today",
+    severity: critical > 0 ? "High" : "Low",
+  },
+];
+
+// "Decisions Waiting for You" — items that need an explicit yes/no. The
+// first reuses mockRecommendations (the one real, working Approvals queue);
+// the rest are narrative placeholders that also route there — same "one
+// queue for everything" simplification RequiresAttentionCard used before.
+export interface DecisionItemData {
+  id: string;
+  icon: "clipboard" | "user" | "megaphone";
+  title: string;
+  meta: string;
+}
+
+export const decisionItems: DecisionItemData[] = [
+  {
+    id: "dec-asset-replacement",
+    icon: "clipboard",
+    title: mockRecommendations[0]?.title ?? "Approve pending recommendation",
+    meta: `Evidence: ${mockRecommendations[0]?.evidence ?? "—"}`,
+  },
+  {
+    id: "dec-field-resources",
+    icon: "user",
+    title: "Confirm Additional Field Resources",
+    meta: "Request from Field Operations",
+  },
+  {
+    id: "dec-announcement",
+    icon: "megaphone",
+    title: "Review ThunderOne Announcement",
+    meta: "New feature release communication",
+  },
+];
+
+// "Ask ThunderOne" — a static, non-interactive preview of an AI panel (no
+// assistant backend exists yet); bullets restate the items above.
+export interface AskRecommendation {
+  id: string;
+  icon: "target" | "users" | "phone";
+  title: string;
+  detail: string;
+}
+
+export const askRecommendations: AskRecommendation[] = [
+  {
+    id: "ask-1",
+    icon: "target",
+    title: "Focus on approving the Q3 campaign",
+    detail: "It is blocking the planned launch.",
+  },
+  {
+    id: "ask-2",
+    icon: "users",
+    title: "Review Field Operations workload",
+    detail: `${overdueWorkOrders} work order${overdueWorkOrders === 1 ? "" : "s"} overdue.`,
+  },
+  {
+    id: "ask-3",
+    icon: "phone",
+    title: "Customer complaints are trending up",
+    detail: "Review top issues and response time.",
+  },
+];
+
+// "Today & Now" — a static preview of the day's calendar (no calendar
+// backend exists yet). Two feeds: a flat list of the day's events, and a
+// short "what's next" rail that can include non-calendar items too.
+export interface ScheduleEventData {
+  id: string;
+  time: string;
+  title: string;
+}
+
+export const todaySchedule: ScheduleEventData[] = [
+  { id: "sch-1", time: "09:30", title: "Management Daily" },
+  { id: "sch-2", time: "13:00", title: "Customer Meeting" },
+  { id: "sch-3", time: "16:00", title: "Product Review" },
+];
+
+export interface NextUpEventData {
+  id: string;
+  title: string;
+  timeRange: string;
+  statusLabel: string;
+  statusTone: "now" | "upcoming";
+}
+
+export const nextUpEvents: NextUpEventData[] = [
+  { id: "next-1", title: "Management Daily", timeRange: "09:30 - 10:00", statusLabel: "In 15 min", statusTone: "now" },
+  {
+    id: "next-2",
+    title: "Review Campaign Q3",
+    timeRange: "10:30 - 11:00",
+    statusLabel: "Upcoming",
+    statusTone: "upcoming",
+  },
+];
