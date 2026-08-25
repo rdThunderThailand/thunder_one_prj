@@ -30,4 +30,14 @@ assert.match(
 // Anything unrecognised degrades to a generic retry message rather than leaking the body.
 assert.equal(describeDeleteError("permission denied for table playlists"), "ลบ playlist ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
 
+// media_video_delete (ADR 0045 §10), reached via the kind='single' cascade.
+assert.equal(
+  describeDeleteError("Already in use: video is still referenced by a playlist"),
+  "ลบไม่ได้ — วิดีโอนี้ยังถูกใช้อยู่ใน playlist กรุณานำออกจาก playlist ก่อน"
+);
+assert.equal(
+  describeDeleteError("Already in use: video has been published and is part of a broadcast history snapshot"),
+  "ลบไม่ได้ — วิดีโอนี้เคย publish ไปแล้วจึงลบถาวรไม่ได้ ใช้ Archive แทน"
+);
+
 console.log("status-display.check.mts — all assertions passed");
