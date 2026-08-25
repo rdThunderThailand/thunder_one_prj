@@ -150,6 +150,13 @@ export function ChannelDetailPanel({
                 <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                   Heartbeat · {formatChannelLastSeen(device.last_heartbeat_at)}
                 </p>
+                {channel.sync_enabled && (
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    {device.sync_phase_error_ms === null
+                      ? "Sync · no report yet"
+                      : `Sync · ${device.sync_phase_error_ms > 0 ? "+" : ""}${device.sync_phase_error_ms} ms · loop ${device.sync_loop_duration_seconds ?? "?"}s`}
+                  </p>
+                )}
               </li>
             ))}
           </ul>

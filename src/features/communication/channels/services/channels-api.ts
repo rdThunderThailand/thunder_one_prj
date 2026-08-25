@@ -52,6 +52,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object";
 }
 
+function isNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function isString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
@@ -132,7 +136,17 @@ function parseChannelDevice(value: unknown): ChannelDevice {
     !isOneOf(value.health, ["online", "warning", "offline"]) ||
     !(value.last_heartbeat_at === null || isTimestamp(value.last_heartbeat_at)) ||
     !(value.orientation === null || isOneOf(value.orientation, ["landscape", "portrait"])) ||
-    !(value.resolution === null || isResolution(value.resolution))
+    !(value.resolution === null || isResolution(value.resolution)) ||
+    !(
+      value.sync_phase_error_ms === undefined ||
+      value.sync_phase_error_ms === null ||
+      isNumber(value.sync_phase_error_ms)
+    ) ||
+    !(
+      value.sync_loop_duration_seconds === undefined ||
+      value.sync_loop_duration_seconds === null ||
+      isNumber(value.sync_loop_duration_seconds)
+    )
   ) {
     throw new TypeError("Channel device data is malformed");
   }
@@ -144,6 +158,8 @@ function parseChannelDevice(value: unknown): ChannelDevice {
     last_heartbeat_at: value.last_heartbeat_at,
     orientation: value.orientation,
     resolution: value.resolution,
+    sync_phase_error_ms: value.sync_phase_error_ms ?? null,
+    sync_loop_duration_seconds: value.sync_loop_duration_seconds ?? null,
   };
 }
 

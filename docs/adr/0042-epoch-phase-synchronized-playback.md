@@ -1,6 +1,8 @@
 # Epoch-phase synchronized playback
 
-**Status:** accepted (2026-08-24) — supersedes ADR 0041
+**Status:** accepted (2026-08-24) — supersedes ADR 0041. The anchor decision (Decisions §2) is
+superseded by `docs/adr/0043-schedule-anchored-playback-loop.md`; every other decision in this ADR
+(time source, toggle, observability, member equality, the direct-target guard) still stands.
 
 Media Devices in a Channel with synchronized playback enabled compute their position in the
 playback loop from a shared server clock and a fixed universal epoch, with no coordination between
