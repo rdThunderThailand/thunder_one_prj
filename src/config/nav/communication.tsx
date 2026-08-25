@@ -26,6 +26,7 @@ export const communicationNav: NavConfig = {
         { label: "Calendar" },
         { label: "Campaigns" },
         { label: "Playlists", href: "/communication/playlists" },
+        { label: "Layouts", href: "/communication/layouts" },
       ],
     },
     {
