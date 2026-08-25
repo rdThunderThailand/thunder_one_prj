@@ -29,6 +29,9 @@ export interface ChannelDevice {
   last_heartbeat_at: string | null;
   orientation: ChannelOrientation | null;
   resolution: string | null;
+  /** Latest reported value only (ADR 0042 decision 4) — not a history, overwritten every heartbeat. */
+  sync_phase_error_ms: number | null;
+  sync_loop_duration_seconds: number | null;
 }
 
 export interface ChannelTypeOption {

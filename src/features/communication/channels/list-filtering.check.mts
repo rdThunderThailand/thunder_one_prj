@@ -34,8 +34,8 @@ assert.deepStrictEqual(sortChannels(channels, { key: "name", dir: "desc" }).map(
 
 // lastSeen puts null last in both directions
 const cNull = createChannel("C", { devices: [] }); // null lastSeen
-const cOld = createChannel("D", { devices: [{ id: "d1", name: "", code: "", health: "online", last_heartbeat_at: "2020-01-01T00:00:00Z", orientation: null, resolution: null }] });
-const cNew = createChannel("E", { devices: [{ id: "e1", name: "", code: "", health: "online", last_heartbeat_at: "2024-01-01T00:00:00Z", orientation: null, resolution: null }] });
+const cOld = createChannel("D", { devices: [{ id: "d1", name: "", code: "", health: "online", last_heartbeat_at: "2020-01-01T00:00:00Z", orientation: null, resolution: null, sync_phase_error_ms: null, sync_loop_duration_seconds: null }] });
+const cNew = createChannel("E", { devices: [{ id: "e1", name: "", code: "", health: "online", last_heartbeat_at: "2024-01-01T00:00:00Z", orientation: null, resolution: null, sync_phase_error_ms: null, sync_loop_duration_seconds: null }] });
 
 const withSeen = [cNull, cNew, cOld];
 assert.deepStrictEqual(sortChannels(withSeen, { key: "lastSeen", dir: "asc" }).map(c => c.id), ["D", "E", "C"]);

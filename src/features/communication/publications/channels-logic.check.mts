@@ -17,7 +17,7 @@ import { channelIdsToTargets } from "./draft-mapping.ts";
 import type { ChannelDevice, ChannelListItem } from "../channels/types/index.ts";
 
 function device(id: string, health: ChannelDevice["health"]): ChannelDevice {
-  return { id, name: id, code: id, health, last_heartbeat_at: null, orientation: null, resolution: null };
+  return { id, name: id, code: id, health, last_heartbeat_at: null, orientation: null, resolution: null, sync_phase_error_ms: null, sync_loop_duration_seconds: null };
 }
 
 function channel(over: Partial<ChannelListItem> & Pick<ChannelListItem, "id" | "name">): ChannelListItem {

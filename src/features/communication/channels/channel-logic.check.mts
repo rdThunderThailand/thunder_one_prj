@@ -31,6 +31,8 @@ const fixtures: ChannelListItem[] = [
         last_heartbeat_at: "2026-08-20T00:00:00.000Z",
         orientation: "landscape",
         resolution: "1920x1080",
+        sync_phase_error_ms: null,
+        sync_loop_duration_seconds: null,
       },
     ],
     expected_orientation: "landscape",
@@ -58,6 +60,8 @@ const fixtures: ChannelListItem[] = [
         last_heartbeat_at: "2026-08-20T00:00:00.000Z",
         orientation: "landscape",
         resolution: "3840x2160",
+        sync_phase_error_ms: null,
+        sync_loop_duration_seconds: null,
       },
       {
         id: "device-siam-south",
@@ -67,6 +71,8 @@ const fixtures: ChannelListItem[] = [
         last_heartbeat_at: "2026-08-19T22:00:00.000Z",
         orientation: "landscape",
         resolution: "1920x1080",
+        sync_phase_error_ms: null,
+        sync_loop_duration_seconds: null,
       },
     ],
     expected_orientation: "landscape",
@@ -94,6 +100,8 @@ const fixtures: ChannelListItem[] = [
         last_heartbeat_at: "2026-08-20T00:00:00.000Z",
         orientation: "portrait",
         resolution: "1080x1920",
+        sync_phase_error_ms: null,
+        sync_loop_duration_seconds: null,
       },
     ],
     expected_orientation: "portrait",
@@ -187,6 +195,8 @@ const partialProfileDevice = {
   last_heartbeat_at: null,
   orientation: "portrait" as const,
   resolution: null,
+  sync_phase_error_ms: null,
+  sync_loop_duration_seconds: null,
 };
 
 assert.equal(
@@ -273,6 +283,8 @@ assert.deepEqual(
         last_heartbeat_at: "2026-08-19T03:00:00.000Z",
         orientation: "landscape",
         resolution: "1920x1080",
+        sync_phase_error_ms: null,
+        sync_loop_duration_seconds: null,
       },
     ],
   ),

@@ -206,6 +206,8 @@ const channel = {
       last_heartbeat_at: "2026-08-20T00:00:00.000Z",
       orientation: "landscape",
       resolution: "1920x1080",
+      sync_phase_error_ms: null,
+      sync_loop_duration_seconds: null,
     },
   ],
   expected_orientation: "landscape",
