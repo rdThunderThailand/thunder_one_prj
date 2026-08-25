@@ -355,11 +355,12 @@ export const managerWorkspaceActivity: ManagerWorkspaceActivityData[] = [
 // without Pinned Workspaces (not in the reference mockup for this persona)
 // and with a "More Workspaces" tile in place of Tools & Integrations,
 // matching the reference mockup exactly (Nie, 2026-08-25). Same "Ploy S." /
-// Marketing persona as this feature's other employee variants. Unlike the
-// manager variant, Communication and Media are shown as two separate tiles
-// here (per the mockup) — both point into the real media-workspace App, at
-// its /channels and /assets sub-routes respectively, rather than being one
-// dead "coming soon" tile duplicating Media Workspace's purpose.
+// Marketing persona as this feature's other employee variants. The mockup
+// showed Communication and Media as two separate tiles, but Nie flagged
+// that as confusing once both point into the same app — consolidated into
+// one "Media Workspace" tile at the app's root (`/media-workspace`), same
+// as the manager variant's `mw-media` below, rather than two tiles into two
+// different sub-routes of one app.
 
 export const employeeWorkspaceCategories = ["All", "Communication", "Customer", "Project", "Operations", "Tools"] as const;
 
@@ -378,27 +379,15 @@ export interface EmployeeWorkspaceTileData {
 
 export const employeeWorkspaceTiles: EmployeeWorkspaceTileData[] = [
   {
-    id: "ew-communication",
-    href: "/media-workspace/channels",
+    id: "ew-media",
+    href: "/media-workspace",
     icon: "megaphone",
     iconTone: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
     category: "Communication",
-    name: "Communication Workspace",
-    description: "Create and send messages, news, and campaigns across every channel.",
+    name: "Media Workspace",
+    description: "Company-wide media: campaigns, channels, playlists, and announcements.",
     members: ["Ploy S.", "Tan T.", "Fah F."],
     membersOverflow: 8,
-    roleLabel: "Editor",
-  },
-  {
-    id: "ew-media",
-    href: "/media-workspace/assets",
-    icon: "image",
-    iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-    category: "Communication",
-    name: "Media Workspace",
-    description: "Manage digital media, the asset library, playlists, and publishing.",
-    members: ["Ploy S.", "Golf T."],
-    membersOverflow: 5,
     roleLabel: "Editor",
   },
   {
@@ -517,9 +506,8 @@ export const workspaceAnnouncements: WorkspaceAnnouncementData[] = [
 ];
 
 export const employeeRecentlyOpened: ManagerRecentlyOpenedData[] = [
-  { id: "ero-1", icon: "megaphone", label: "Communication Workspace", countLabel: "2 min ago" },
-  { id: "ero-2", icon: "image", label: "Media Workspace", countLabel: "15 min ago" },
-  { id: "ero-3", icon: "clipboard", label: "Project Workspace", countLabel: "1 hour ago" },
-  { id: "ero-4", icon: "chart", label: "Analytics Workspace", countLabel: "3 hours ago" },
-  { id: "ero-5", icon: "users", label: "CRM Workspace", countLabel: "Yesterday, 10:30" },
+  { id: "ero-1", icon: "megaphone", label: "Media Workspace", countLabel: "2 min ago" },
+  { id: "ero-2", icon: "clipboard", label: "Project Workspace", countLabel: "1 hour ago" },
+  { id: "ero-3", icon: "chart", label: "Analytics Workspace", countLabel: "3 hours ago" },
+  { id: "ero-4", icon: "users", label: "CRM Workspace", countLabel: "Yesterday, 10:30" },
 ];
