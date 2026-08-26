@@ -1,11 +1,15 @@
 # Player contract v2 — zoned payload
 
 Hand-off spec for the Windows (`Ads_Manager_WindowApp`) and Android (`Ads_Manager_AndroidApp`)
-players. Decisions and rationale: `docs/adr/0044-multi-zone-layout.md`. Snapshot semantics this
-depends on: `docs/adr/0045-publication-snapshot-materialization.md`. This document is the shape only.
+players. Decisions and rationale: `docs/adr/0044-multi-zone-layout.md`,
+`docs/adr/0049-composition-layout-with-content.md` (a Layout's content lives on a **Composition**, and
+`role` is dropped), `docs/adr/0050-wide-layouts-across-monitors.md` (geometry precision, spanning
+several monitors). Snapshot semantics this depends on:
+`docs/adr/0045-publication-snapshot-materialization.md`. This document is the shape only.
 
-**Nothing here changes the existing single-zone path.** A Publication without a Layout returns the
-same `slots[]` payload it returns today, forever. Zones are an alternative shape, not a replacement.
+**Nothing here changes the existing single-zone path.** A Publication without a Composition returns
+the same `slots[]` payload it returns today, forever. Zones are an alternative shape, not a
+replacement.
 
 ## Endpoint
 
@@ -49,13 +53,12 @@ between competing Layouts.
       {
         "snapshot_zone_id": "…",                 // NOT the Layout's zone id — see below
         "name": "Main Content",
-        "role": "main",
         "x": 0, "y": 0, "width": 100, "height": 55,
         "loop_duration_seconds": 62,
         "slots": [ /* identical to today's slot objects */ ]
       },
       {
-        "snapshot_zone_id": "…", "name": "News", "role": "secondary",
+        "snapshot_zone_id": "…", "name": "News",
         "x": 0, "y": 55, "width": 50, "height": 45,
         "loop_duration_seconds": 45,
         "slots": [ /* … */ ]
@@ -70,9 +73,8 @@ between competing Layouts.
 | Field | Type | Notes |
 |---|---|---|
 | `snapshot_zone_id` | uuid | stable for the life of this snapshot; echo it back verbatim in playback logs. Same name on the wire, in the schema (`publication_snapshot_zones.id` as referenced by `playback_logs.snapshot_zone_id`) and in the ADRs |
-| `name` | string | operator-facing label, not a rendering input |
-| `role` | enum | `main` \| `sidebar` \| `ticker` \| `secondary` — advisory |
-| `x`, `y`, `width`, `height` | number | **percent of display area**, 0–100, one decimal place |
+| `name` | string | operator-facing label, not a rendering input. There is no `role` field: it was advisory, duplicated `name`, and is dropped (ADR 0049 §2) |
+| `x`, `y`, `width`, `height` | number | **percent of display area**, 0–100, **three decimal places** — three equal columns are `33.333`, and at 5760 px wide one tenth of a percent is 5.76 px (ADR 0050 §1) |
 | `loop_duration_seconds` | int | this Zone's own loop, independent of every other Zone |
 | `slots` | array | **the existing slot object, unchanged in every field** |
 
@@ -87,8 +89,10 @@ Layout's own zone id is never sent to the player.
 - Zones **may not tile the display**. Paint uncovered area with `layout.background`.
 - Each Zone has at least one slot; empty Zones are not sent.
 - `x + width <= 100` and `y + height <= 100`.
-- Geometry is percent against `layout.aspect_ratio`. Release one is single-screen only — no
-  multi-monitor spanning.
+- Geometry is percent against `layout.aspect_ratio`, and stays percent however wide the surface is.
+  One machine may span several monitors — `SpanAllDisplays` positions the window across the virtual
+  desktop and the reported `screen_width` follows (ADR 0050 §5). Several machines driving one image
+  in step is still out of scope.
 
 ### Slot object
 
@@ -199,16 +203,17 @@ From `AUDIT_Player_Gaps_Priority.md`:
   and `android.widget.VideoView` (`minSdk 24`, no ExoPlayer/media3), targeting Android 7 boxes that
   commonly expose one hardware H.264 decoder. Until A2, `max_video_zones` will be small, so Layouts
   with more than one video Zone are refused on a single screen.
-- **A6 — multi-monitor.** A2 is *not* what unblocks Aurora video-wall customers: they span multiple
-  monitors, which release one does not support at all (ADR 0044 §13) and which needs A6, new work
-  rather than a port — Aurora's own display-settings subscription is commented out. Shipping A2
-  alone still leaves them refused.
+- **A6 — multi-monitor. The audit entry is wrong and A6 is largely already done.** The current player
+  already subscribes to `SystemEvents.DisplaySettingsChanged` (`App.xaml.cs:112`) with a two-second
+  debounce, so plugging in a monitor already re-reports the profile. What is left is one config flag
+  and one window-positioning change (ADR 0050 §5). A2 remains the real constraint on how many video
+  Zones a wide Layout may hold.
 - **Vestigial `MediaItems.Zone`.** `SyncService.cs:122` assigns `Zone = slot.TargetId` — an ID
   carrier, not a Zone. Remove or rename it before real Zones land.
 
 ## Deliberately not in this contract
 
-Scenes / scene carousels, `angle`, `opacity`, `z`, per-Zone schedules, per-Zone priority, per-Zone
-anchors, widget or live-data Zones, styled or scrolling ticker text, multi-monitor spanning, and
-`compositions[]` (multiple Layouts in one response — deferred, see ADR 0044 §9). See ADR 0044 for why
-each was rejected or deferred.
+Scenes / scene carousels, `angle`, `opacity`, `z`, `role`, per-Zone schedules, per-Zone priority,
+per-Zone anchors, widget or live-data Zones, styled or scrolling ticker text, multi-**machine** video
+walls, and `compositions[]` (multiple Layouts in one response — deferred, see ADR 0044 §9). See
+ADR 0044 and ADR 0049 for why each was rejected or dropped.

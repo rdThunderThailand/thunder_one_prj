@@ -1,5 +1,12 @@
 # Layout UI — execution plan (release one)
 
+> **DONE / HISTORICAL — 2026-08-26.** This plan shipped the Layouts list and editor and the
+> `layouts` / `layout_zones` schema. Everything after that point is superseded: content binding now
+> lives on a **Composition** (`docs/adr/0049-composition-layout-with-content.md`). The current plan is
+> `docs/layouts/plan-composition.md`; the current spec is `docs/layouts/spec-composition-content.md`.
+> Note that this plan's `layout_zones` behaviour is itself changed by ticket 01 — Zone ids are now
+> stable and geometry is `numeric(6,3)`.
+
 > **For agentic workers:** implement task-by-task in order. Steps use checkbox (`- [ ]`) syntax.
 > Do not commit, push, deploy, or apply a migration unless separately instructed — see
 > "Risk tags" below.

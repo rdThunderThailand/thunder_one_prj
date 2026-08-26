@@ -1,7 +1,14 @@
 # Multi-zone Layout
 
-**Status:** accepted (2026-08-25) — **blocked on `docs/adr/0045-publication-snapshot-materialization.md`**,
-which builds the snapshot this ADR copies into. Layout is not the next piece of work; snapshots are.
+**Status:** accepted (2026-08-25), **§1 and §13 superseded** (2026-08-26) — **§2–§12 stand.**
+- §1 (a Layout carries geometry and Zone roles only; content is bound per Zone in the Publication
+  wizard) → `docs/adr/0049-composition-layout-with-content.md`. Content lives on a **Composition**,
+  and `role` is dropped entirely.
+- §13 (multi-monitor spanning deferred) → `docs/adr/0050-wide-layouts-across-monitors.md`. One machine
+  driving several monitors is in scope; several machines driving one image is not.
+
+Originally **blocked on `docs/adr/0045-publication-snapshot-materialization.md`**, which builds the
+snapshot this ADR copies into.
 
 A **Layout** becomes a first-class entity in `media_core`: a named, reusable screen composition of
 up to four non-overlapping rectangular **Zones**, expressed as percentages of the display area. A

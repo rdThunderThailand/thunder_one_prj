@@ -1,5 +1,13 @@
 # Plan: Layout UI, measured against the mockups
 
+> **Partly overtaken 2026-08-26.** Its geometry, validation and wireframe findings still hold, but its
+> central verdict — that the mockup showing content inside a Layout is wrong — is now half right. The
+> mockup was right that an operator wants to author content against a geometry; it was wrong about
+> which entity holds it. That entity is the **Composition**
+> (`docs/adr/0049-composition-layout-with-content.md`), and the screen it describes is the Composition
+> editor, ticket 03. Zone `role` no longer exists; every mention of it below is stale. Percentages are
+> now three decimal places (`docs/adr/0050-wide-layouts-across-monitors.md`).
+
 Reviews the three FigJam mockups in this folder against `docs/adr/0044-multi-zone-layout.md`,
 `docs/layouts/contract-v2-zones.md` and the two player audits, and states what release one can
 actually ship.
