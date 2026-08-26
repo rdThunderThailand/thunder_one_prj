@@ -1,12 +1,7 @@
-import { PageHeader } from "@/components/layout/PageHeader";
-import { LocationsPage } from "@/features/asset-intelligence/assets";
+import { AssetLocationsPage } from "@/features/asset-intelligence/assets";
 
-// Asset/IT Manager — "Locations" (requirement doc AM-05).
+// Asset/IT Manager ("Asset Admin") — locations & areas, redesigned to match
+// the reference mockup (Nie, 2026-08-26). See AssetLocationsPage.
 export default function LocationsRoute() {
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Locations" subtitle="Where assets are, org-wide." />
-      <LocationsPage />
-    </div>
-  );
+  return <AssetLocationsPage />;
 }

@@ -24,7 +24,7 @@ function errorMessage(err: unknown): string {
       return "Couldn't add this device — the tenant's device quota is full, or the serial number/MAC address is already registered.";
     }
     if (err.status === 403) {
-      return "Your account doesn't have permission to add devices for this tenant (requires super_admin or company_admin).";
+      return "Your account doesn't have permission to add devices for this tenant (requires Asset Admin, company_admin, or super_admin).";
     }
     return err.message || "The server rejected this request.";
   }
@@ -32,9 +32,13 @@ function errorMessage(err: unknown): string {
 }
 
 // AM-02: add an asset. Real POST to Thunder_Core (`services/assets-api.ts`),
-// not the mock registry `mock-assets.ts` reads from — the two are genuinely
-// disconnected right now (no list/read endpoint exists yet to fold this back
-// into "All Assets" below), see that service file's header comment.
+// which now writes into the same `assets` table the real Asset List page
+// (../AssetRegistryTable.tsx) reads from — so an asset created here does show
+// up there. The four fields below (Category/Owner/Value/Received Date) match
+// what that list displays, but Core doesn't accept or persist them yet — see
+// CreateAssetDeviceInput's header comment in ../types/index.ts. Collecting
+// them here anyway so the form is ready the moment Core's schema catches up,
+// rather than needing a second UI pass later.
 export function AddAssetForm({ onClose }: { onClose: () => void }) {
   const [deviceName, setDeviceName] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
@@ -44,6 +48,10 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
   const [site, setSite] = useState("");
   const [zone, setZone] = useState("");
   const [tags, setTags] = useState("");
+  const [assetCategory, setAssetCategory] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [currentValue, setCurrentValue] = useState("");
+  const [purchaseDate, setPurchaseDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<CreateAssetDeviceResult | null>(null);
@@ -96,6 +104,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean);
+      const trimmedValue = currentValue.trim();
       const created = await createAsset({
         device_name: trimmedName,
         serial_number: trimmedOrUndefined(serialNumber),
@@ -105,6 +114,10 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
         site: trimmedOrUndefined(site),
         zone: trimmedOrUndefined(zone),
         tags: parsedTags.length > 0 ? parsedTags : undefined,
+        asset_category: trimmedOrUndefined(assetCategory),
+        owner_name: trimmedOrUndefined(ownerName),
+        current_value: trimmedValue ? Number(trimmedValue) : undefined,
+        purchase_date: trimmedOrUndefined(purchaseDate),
       });
       setResult(created);
     } catch (err) {
@@ -188,6 +201,58 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
             />
           </label>
         </div>
+
+        <div className="border-t border-zinc-100 pt-3 dark:border-zinc-800">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            Asset List fields
+            <span
+              title="Core's create-asset endpoint doesn't accept these yet — collected here so the form is ready once it does; they won't show up in the real list until then."
+              className="cursor-help text-zinc-300"
+            >
+              ⓘ
+            </span>
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              Category
+              <input
+                value={assetCategory}
+                onChange={(e) => setAssetCategory(e.target.value)}
+                placeholder="e.g. IT Equipment"
+                className={inputClasses}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              Owner Name
+              <input
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+                className={inputClasses}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              Value (THB)
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={currentValue}
+                onChange={(e) => setCurrentValue(e.target.value)}
+                className={inputClasses}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              Received Date
+              <input
+                type="date"
+                value={purchaseDate}
+                onChange={(e) => setPurchaseDate(e.target.value)}
+                className={inputClasses}
+              />
+            </label>
+          </div>
+        </div>
+
         {error && <p className="text-xs text-red-500">{error}</p>}
         <div className="flex items-center gap-2">
           <Button type="submit" variant="primary" disabled={submitting}>

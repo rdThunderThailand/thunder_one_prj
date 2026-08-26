@@ -1,12 +1,7 @@
-import { PageHeader } from "@/components/layout/PageHeader";
-import { ReportsPage } from "@/features/asset-intelligence/assets";
+import { AssetReportsPage } from "@/features/asset-intelligence/assets";
 
-// Asset/IT Manager — "Reports" (requirement doc AM-08).
+// Asset/IT Manager ("Asset Admin") — reports & analytics, redesigned to
+// match the reference mockup (Nie, 2026-08-26). See AssetReportsPage.
 export default function AssetManagerReportsRoute() {
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Reports" subtitle="Asset value and category summary, org-wide." />
-      <ReportsPage />
-    </div>
-  );
+  return <AssetReportsPage />;
 }
