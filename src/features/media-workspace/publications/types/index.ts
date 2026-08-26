@@ -4,6 +4,7 @@ export const PUBLICATION_TYPES = [
   "playlist",
   "html",
   "dynamic",
+  "composition",
 ] as const;
 
 export type PublicationType = (typeof PUBLICATION_TYPES)[number];
@@ -26,6 +27,7 @@ export type BasicInfoForm = {
   language?: string;
   tags?: string[];
   playlist_id?: string;
+  composition_id?: string;
 };
 
 export type Publication = {
@@ -39,6 +41,7 @@ export type Publication = {
   language?: string;
   tags?: string[];
   playlist_id?: string;
+  composition_id?: string;
   status?: string;
   revision?: number;
   created_at?: string;
@@ -59,6 +62,8 @@ export type PublicationListItem = {
   campaign_id?: string;
   campaign_name?: string;
   playlist_id?: string;
+  composition_id?: string;
+  composition_name?: string;
   item_count: number;
   tags: string[];
   /** Who created the draft — null for rows created before this field existed. */
@@ -126,6 +131,8 @@ export type PublicationDetail = {
   /** Optimistic-lock counter — bumped on every draft write (docs/adr/0003). */
   revision?: number;
   playlist?: { id: string; name: string } | null;
+  /** Set only for publication_type = 'composition' (ADR 0049 §5, §12). */
+  composition?: { id: string; name: string; status: string } | null;
   tags: string[];
   created_at?: string;
   activated_at?: string;
@@ -221,4 +228,5 @@ export type DraftAssetItem = {
   /** Seconds on screen. Images default to 10 and are user-editable; videos stay null
    *  so the backend falls back to the file's own duration. */
   duration_seconds: number | null;
+  transition?: "cut" | "fade";
 };

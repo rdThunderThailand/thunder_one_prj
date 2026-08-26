@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/Card";
 import { roundPercent } from "../geometry";
-import { ZONE_ROLES, type LayoutZone, type ZoneRole } from "../types";
+import type { LayoutZone } from "../types";
 
 const inputClasses =
   "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
@@ -34,7 +34,7 @@ export function ZoneProperties({
       <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label} (%)</label>
       <input
         type="number"
-        step={0.1}
+        step={0.001}
         min={key === "width" || key === "height" ? 0.1 : 0}
         max={100}
         value={zone[key]}
@@ -69,21 +69,6 @@ export function ZoneProperties({
           onChange={(e) => onChange({ ...zone, name: e.target.value })}
           className={inputClasses}
         />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Role</label>
-        <select
-          value={zone.role}
-          onChange={(e) => onChange({ ...zone, role: e.target.value as ZoneRole })}
-          className={inputClasses}
-        >
-          {ZONE_ROLES.map((role) => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

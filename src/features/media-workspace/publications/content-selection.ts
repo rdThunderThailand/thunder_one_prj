@@ -1,8 +1,9 @@
 import type { MediaAsset, PublicationType, DraftAssetItem } from "./types";
 import { isImageAsset } from "./draft-mapping.ts";
 
-/** The asset kinds a publication type accepts. `playlist`, `html` and `dynamic`
- *  take no assets through this path at all. */
+/** The asset kinds a publication type accepts. `playlist`, `composition`, `html` and `dynamic`
+ *  take no assets through this path at all — a composition publication's content lives on the
+ *  Composition it references, one level down (ADR 0049 §5). */
 export function acceptedAssetKind(type: PublicationType): "image" | "video" | null {
   if (type === "image") return "image";
   if (type === "video") return "video";

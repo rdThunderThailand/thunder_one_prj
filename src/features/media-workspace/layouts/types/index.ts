@@ -1,23 +1,20 @@
 // Shapes for the Layout authoring screens (docs/adr/0044-multi-zone-layout.md). A Layout
-// carries geometry and Zone roles only — there is deliberately no playlist, asset or
-// duration field anywhere in here. Content is bound per Zone inside the Publication wizard.
-
-export const ZONE_ROLES = ["main", "sidebar", "ticker", "secondary"] as const;
-export type ZoneRole = (typeof ZONE_ROLES)[number];
+// carries geometry only — there is deliberately no playlist, asset or duration field
+// anywhere in here. Content is bound to a Composition (docs/adr/0049), one per Zone.
 
 export const LAYOUT_STATUSES = ["active", "inactive"] as const;
 export type LayoutStatus = (typeof LAYOUT_STATUSES)[number];
 
-/** Percent of the display area, 0–100, one decimal place — both axes, independently. */
+/** Percent of the display area, 0–100, three decimal places — both axes, independently. */
 export type ZoneRect = { x: number; y: number; width: number; height: number };
 
 export type LayoutZone = ZoneRect & {
-  /** Absent on a Zone the editor has not saved yet. */
+  /** Absent on a Zone the editor has not saved yet. Stable once assigned — a rename or
+   *  resize keeps the id, which is what lets a Composition bind to it durably. */
   id?: string;
   /** Display order, 0-based and dense. Not a stacking order — Zones never overlap. */
   position: number;
   name: string;
-  role: ZoneRole;
 };
 
 export type LayoutListItem = {
@@ -26,6 +23,7 @@ export type LayoutListItem = {
   aspect_ratio: string;
   background: string;
   status: LayoutStatus;
+  reference_resolution?: string | null;
   zone_count: number;
   zones: LayoutZone[];
   created_at?: string;

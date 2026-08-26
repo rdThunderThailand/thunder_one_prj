@@ -35,6 +35,7 @@ const baseDraft: DraftFields = {
   },
   assetItems: [],
   playlistId: null,
+  compositionId: null,
   channelIds: [],
   scheduleForm: makeDefaultScheduleForm(),
 };
@@ -124,5 +125,18 @@ const res10 = validateStep(1, {
 assert.equal(res10.valid, false);
 assert.ok(res10.errors.includes("กรุณาเลือก Campaign"));
 assert.ok(res10.errors.includes("กรุณากรอกชื่อ Publication"));
+
+// Step 2 keeps the existing behavior for asset-based types.
+assert.equal(validateStep(2, { ...baseDraft, assetItems: [{ media_asset_id: "asset-1", duration_seconds: 10 }] }).valid, true);
+
+// A composition publication needs a Composition picked (ADR 0049 §5) — the operator-facing
+// error still says "Layout" (ADR 0052 §1) even though the field is compositionId.
+const compositionDraft = {
+  ...baseDraft,
+  basicInfo: { ...baseDraft.basicInfo, publicationType: "composition" as const },
+};
+assert.equal(validateStep(2, compositionDraft).valid, false);
+assert.ok(validateStep(2, compositionDraft).errors.includes("กรุณาเลือก Layout"));
+assert.equal(validateStep(2, { ...compositionDraft, compositionId: "composition-1" }).valid, true);
 
 console.log("basic-info-limits.check.mts — all assertions passed");

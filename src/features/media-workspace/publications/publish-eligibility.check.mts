@@ -28,6 +28,7 @@ const validDraft: DraftFields = {
   },
   assetItems: [{ media_asset_id: "asset-1", duration_seconds: 10 }],
   playlistId: null,
+  compositionId: null,
   channelIds: ["screen-1"],
   scheduleForm: { ...makeDefaultScheduleForm(), schedule_type: "now" },
 };
@@ -140,6 +141,32 @@ const unapprovedAsset = computeEligibility({
 });
 assert.equal(unapprovedAsset.checks[0].status, "fail");
 assert.equal(unapprovedAsset.canPublish, false);
+
+// --- composition content gate: without this branch the assets fallthrough marks a
+// composition draft ineligible even though its content lives on the Composition (ADR 0049 §5) ---
+const compositionNoPick = computeEligibility({
+  ...base,
+  draft: {
+    ...validDraft,
+    basicInfo: { ...validDraft.basicInfo, publicationType: "composition" },
+    assetItems: [],
+    compositionId: null,
+  },
+});
+assert.equal(compositionNoPick.checks[0].status, "fail");
+assert.equal(compositionNoPick.canPublish, false);
+
+const compositionPicked = computeEligibility({
+  ...base,
+  draft: {
+    ...validDraft,
+    basicInfo: { ...validDraft.basicInfo, publicationType: "composition" },
+    assetItems: [],
+    compositionId: "composition-1",
+  },
+});
+assert.equal(compositionPicked.checks[0].status, "pass");
+assert.equal(compositionPicked.canPublish, true);
 
 // --- channels gate: index 2 ---
 const noChannels = computeEligibility({ ...base, draft: { ...validDraft, channelIds: [] } });

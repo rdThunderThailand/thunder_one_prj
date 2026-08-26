@@ -7,14 +7,16 @@
 
 import { useRef, useState } from "react";
 import { parseAspectRatio, roundPercent, validateZones } from "../geometry";
-import type { LayoutZone, ZoneRole } from "../types";
+import type { LayoutZone } from "../types";
 
-const ROLE_FILL: Record<ZoneRole, string> = {
-  main: "bg-violet-500/60 border-violet-600",
-  sidebar: "bg-sky-500/60 border-sky-600",
-  ticker: "bg-amber-500/60 border-amber-600",
-  secondary: "bg-zinc-400/60 border-zinc-500",
-};
+// Zone fill cycles by position — role is gone (ADR 0049 §2), so colour is purely for telling
+// adjacent Zones apart, not for meaning.
+const ZONE_FILL = [
+  "bg-violet-500/60 border-violet-600",
+  "bg-sky-500/60 border-sky-600",
+  "bg-amber-500/60 border-amber-600",
+  "bg-zinc-400/60 border-zinc-500",
+];
 
 type Handle = "move" | "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
@@ -86,7 +88,7 @@ export function LayoutCanvas({
     containerHeight: number;
   } | null>(null);
 
-  const [ratioW, ratioH] = parseAspectRatio(aspectRatio);
+  const [ratioW, ratioH] = parseAspectRatio(aspectRatio) ?? [16, 9];
   const errors = validateZones(zones);
   const overlapping = new Set(
     errors.flatMap((e) => (e.kind === "overlap" ? [e.a, e.b] : []))
@@ -165,7 +167,7 @@ export function LayoutCanvas({
               e.stopPropagation();
               onSelectIndex(index);
             }}
-            className={`absolute cursor-move border-2 ${ROLE_FILL[zone.role]} ${
+            className={`absolute cursor-move border-2 ${ZONE_FILL[index % ZONE_FILL.length]} ${
               overlapping.has(index) ? "outline outline-2 outline-red-500" : ""
             } ${selectedIndex === index ? "ring-2 ring-offset-1 ring-indigo-500" : ""}`}
             style={{
@@ -176,7 +178,7 @@ export function LayoutCanvas({
             }}
           >
             <span className="absolute left-1 top-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] text-white">
-              {zone.name} · {zone.width.toFixed(1)}×{zone.height.toFixed(1)}%
+              {zone.name} · {zone.width.toFixed(3)}×{zone.height.toFixed(3)}%
             </span>
             {selectedIndex === index &&
               RESIZE_HANDLES.map((h) => (

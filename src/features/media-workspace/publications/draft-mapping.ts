@@ -26,7 +26,11 @@ export const CARD_BY_SCHEDULE_TYPE: Record<ScheduleType, ScheduleTypeId> = {
   range: "custom-range",
 };
 
-export function basicInfoToForm(basicInfo: BasicInfoState, playlistId?: string | null): BasicInfoForm {
+export function basicInfoToForm(
+  basicInfo: BasicInfoState,
+  playlistId?: string | null,
+  compositionId?: string | null
+): BasicInfoForm {
   const form: BasicInfoForm = {
     name: basicInfo.name.trim(),
     description: basicInfo.description || undefined,
@@ -38,6 +42,9 @@ export function basicInfoToForm(basicInfo: BasicInfoState, playlistId?: string |
   };
   if (playlistId?.trim()) {
     form.playlist_id = playlistId.trim();
+  }
+  if (compositionId?.trim()) {
+    form.composition_id = compositionId.trim();
   }
   return form;
 }
@@ -61,6 +68,7 @@ export function draftItemsToContentItems(items: DraftAssetItem[]): ContentItem[]
     media_asset_id: item.media_asset_id,
     position: index + 1,
     duration_seconds: item.duration_seconds,
+    ...(item.transition ? { transition: item.transition } : {}),
   }));
 }
 

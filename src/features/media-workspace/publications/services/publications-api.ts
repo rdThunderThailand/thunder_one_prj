@@ -40,6 +40,9 @@ function cleanBasicInfoBody(
   if (form.playlist_id?.trim()) {
     body.playlist_id = form.playlist_id.trim();
   }
+  if (form.composition_id?.trim()) {
+    body.composition_id = form.composition_id.trim();
+  }
   if (form.priority) {
     body.priority = form.priority;
   }
@@ -182,4 +185,3 @@ export async function checkScheduleConflicts(payload: {
   );
   return Array.isArray(data) ? data : [];
 }
-

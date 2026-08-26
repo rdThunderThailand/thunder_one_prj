@@ -7,25 +7,26 @@ import type { ZoneRect } from "./types";
 
 export const MAX_ZONES = 4;
 
-/** Percentages carry one decimal place (docs/layouts/contract-v2-zones.md). Comparing them
- *  as tenths keeps every check on integers, so 33.3 + 33.3 + 33.4 lands on exactly 100
- *  instead of a float a hair over it that would fail the bounds test. */
-export function toTenths(value: number): number {
-  return Math.round(value * 10);
+/** Percentages carry three decimal places (docs/layouts/contract-v2-zones.md) — enough for
+ *  three equal columns across three monitors to land exactly on the bezels. Comparing them
+ *  as thousandths keeps every check on integers, so 33.333 + 33.333 + 33.334 lands on
+ *  exactly 100 instead of a float a hair over it that would fail the bounds test. */
+export function toThousandths(value: number): number {
+  return Math.round(value * 1000);
 }
 
 export function roundPercent(value: number): number {
-  return toTenths(value) / 10;
+  return toThousandths(value) / 1000;
 }
 
 /** Touching edges are not an overlap: a 0–50 / 50–100 split is the commonest Layout there
  *  is, and a `<=` here would reject it. */
 export function rectsOverlap(a: ZoneRect, b: ZoneRect): boolean {
   return (
-    toTenths(a.x) < toTenths(b.x) + toTenths(b.width) &&
-    toTenths(b.x) < toTenths(a.x) + toTenths(a.width) &&
-    toTenths(a.y) < toTenths(b.y) + toTenths(b.height) &&
-    toTenths(b.y) < toTenths(a.y) + toTenths(a.height)
+    toThousandths(a.x) < toThousandths(b.x) + toThousandths(b.width) &&
+    toThousandths(b.x) < toThousandths(a.x) + toThousandths(a.width) &&
+    toThousandths(a.y) < toThousandths(b.y) + toThousandths(b.height) &&
+    toThousandths(b.y) < toThousandths(a.y) + toThousandths(a.height)
   );
 }
 
@@ -44,15 +45,15 @@ export function validateZones(zones: ZoneRect[]): GeometryError[] {
   zones.forEach((zone, index) => {
     // A zero-area Zone fails on its own terms; reporting it as out-of-bounds too would
     // just be the same mistake counted twice.
-    if (toTenths(zone.width) <= 0 || toTenths(zone.height) <= 0) {
+    if (toThousandths(zone.width) <= 0 || toThousandths(zone.height) <= 0) {
       errors.push({ kind: "non-positive", index });
       return;
     }
     if (
-      toTenths(zone.x) < 0 ||
-      toTenths(zone.y) < 0 ||
-      toTenths(zone.x) + toTenths(zone.width) > 1000 ||
-      toTenths(zone.y) + toTenths(zone.height) > 1000
+      toThousandths(zone.x) < 0 ||
+      toThousandths(zone.y) < 0 ||
+      toThousandths(zone.x) + toThousandths(zone.width) > 100000 ||
+      toThousandths(zone.y) + toThousandths(zone.height) > 100000
     ) {
       errors.push({ kind: "out-of-bounds", index });
     }
@@ -82,12 +83,14 @@ export function clampRect(rect: ZoneRect): ZoneRect {
   };
 }
 
-/** "16:9" → [16, 9]. Anything unparseable falls back to 16:9 rather than throwing: a bad
- *  stored value must render a box, never crash a list row. */
-export function parseAspectRatio(value: string): [number, number] {
-  const match = /^(\d{1,2}):(\d{1,2})$/.exec(value.trim());
-  if (!match) return [16, 9];
+/** "16:9" → [16, 9]. "5760:1080" (a spanned 3-monitor width) must parse too, so both sides
+ *  take up to 5 digits — matching `layouts.reference_resolution`'s own bound. An unparseable
+ *  value is `null`, a validation error the caller must handle explicitly rather than a
+ *  silent 16:9 that would misrepresent what is actually stored. */
+export function parseAspectRatio(value: string): [number, number] | null {
+  const match = /^(\d{1,5}):(\d{1,5})$/.exec(value.trim());
+  if (!match) return null;
   const w = Number(match[1]);
   const h = Number(match[2]);
-  return w > 0 && h > 0 ? [w, h] : [16, 9];
+  return w > 0 && h > 0 ? [w, h] : null;
 }

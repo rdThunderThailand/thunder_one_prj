@@ -1,5 +1,5 @@
 import { requestApi } from "@/lib/api/media-api";
-import type { LayoutListItem, LayoutStatus, LayoutZone } from "../types";
+import type { LayoutListItem, LayoutStatus } from "../types";
 
 // Reads live here rather than in src/lib/api/media-api.ts (the shared cross-feature
 // surface, see fetchPlaylist/fetchPlaylists there): nothing outside this feature reads a
@@ -22,8 +22,10 @@ export async function fetchLayout(id: string): Promise<LayoutListItem> {
 }
 
 export type ZonePayload = {
+  /** Round-tripped from a loaded Zone so an edit that only renames or resizes keeps the
+   *  same `layout_zones.id` — absent for a Zone the editor has not saved yet. */
+  id?: string;
   name: string;
-  role: LayoutZone["role"];
   x: number;
   y: number;
   width: number;
@@ -75,9 +77,10 @@ export async function duplicateLayout(sourceId: string, name: string): Promise<{
     aspectRatio: source.aspect_ratio,
     background: source.background,
     status: "active",
+    // A duplicate is a new Layout with fresh Zone ids, not a copy of the source's — omitting
+    // `id` here is what makes the upsert insert instead of update.
     zones: source.zones.map((z) => ({
       name: z.name,
-      role: z.role,
       x: z.x,
       y: z.y,
       width: z.width,

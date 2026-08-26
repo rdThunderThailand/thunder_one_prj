@@ -60,6 +60,11 @@ export function computeEligibility(params: {
   let contentCheckStatus: EligibilityStatus;
   if (draft.basicInfo.publicationType === "playlist") {
     contentCheckStatus = draft.playlistId ? "pass" : "fail";
+  } else if (draft.basicInfo.publicationType === "composition") {
+    // Without this branch the else below reads a composition draft's empty assetItems as
+    // "no content" and marks it ineligible — its content lives on the Composition, not here
+    // (ADR 0049 §5).
+    contentCheckStatus = draft.compositionId ? "pass" : "fail";
   } else if (draft.assetItems.length === 0) {
     contentCheckStatus = "fail";
   } else {

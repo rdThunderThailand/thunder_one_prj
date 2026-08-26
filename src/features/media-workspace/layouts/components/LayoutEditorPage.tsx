@@ -17,7 +17,7 @@ import { LayoutSettingsStep } from "./LayoutSettingsStep";
 import { TemplateRail } from "./TemplateRail";
 import { ZoneProperties } from "./ZoneProperties";
 
-const BLANK_ZONES: LayoutZone[] = [{ position: 0, name: "Main", role: "main", x: 0, y: 0, width: 100, height: 100 }];
+const BLANK_ZONES: LayoutZone[] = [{ position: 0, name: "Main", x: 0, y: 0, width: 100, height: 100 }];
 
 function emptyDraft(): LayoutDraft {
   return {

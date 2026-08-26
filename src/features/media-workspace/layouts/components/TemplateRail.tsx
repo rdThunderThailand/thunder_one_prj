@@ -6,7 +6,7 @@ import { LayoutWireframe } from "./LayoutWireframe";
 
 /** A Layout must have at least one Zone (ADR 0044 §3), so an empty canvas is never a
  *  legal state to sit in — "Start blank" seeds a single full-screen main Zone instead. */
-const BLANK_ZONES: LayoutZone[] = [{ position: 0, name: "Main", role: "main", x: 0, y: 0, width: 100, height: 100 }];
+const BLANK_ZONES: LayoutZone[] = [{ position: 0, name: "Main", x: 0, y: 0, width: 100, height: 100 }];
 
 export function TemplateRail({
   background,

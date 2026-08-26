@@ -96,6 +96,7 @@ export function CreatePublicationPage() {
       setAssetItems(draft.assetItems);
       setChannelIds(draft.channelIds);
       setScheduleForm(draft.scheduleForm);
+      usePublicationDraftStore.getState().setCompositionId(draft.compositionId);
       setPublicationId(detail.id);
       usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
       usePublicationDraftStore.getState().markSaved();

@@ -30,19 +30,19 @@ assert.deepEqual(validateZones([full, left]).filter((e) => e.kind === "overlap")
   { kind: "overlap", a: 0, b: 1 },
 ]);
 
-// Thirds must land on exactly 100, not 99.99999999999999 — this is the reason the module
-// compares tenths rather than floats.
+// Three equal columns must land on exactly 100, not 99.999999999999 — this is the reason
+// the module compares thousandths rather than floats.
 assert.deepEqual(
   validateZones([
-    { x: 0, y: 0, width: 33.3, height: 100 },
-    { x: 33.3, y: 0, width: 33.3, height: 100 },
-    { x: 66.6, y: 0, width: 33.4, height: 100 },
+    { x: 0, y: 0, width: 33.333, height: 100 },
+    { x: 33.333, y: 0, width: 33.333, height: 100 },
+    { x: 66.666, y: 0, width: 33.334, height: 100 },
   ]),
   []
 );
 
-assert.equal(roundPercent(33.34), 33.3);
-assert.equal(roundPercent(33.35), 33.4);
+assert.equal(roundPercent(33.3334), 33.333);
+assert.equal(roundPercent(33.3335), 33.334);
 
 // clampRect pulls a dragged rectangle back inside the frame instead of rejecting it.
 assert.deepEqual(clampRect({ x: 90, y: 0, width: 50, height: 50 }), {
@@ -63,8 +63,11 @@ assert.deepEqual(validateZones([clampRect({ x: 120, y: 120, width: 200, height: 
 
 assert.deepEqual(parseAspectRatio("16:9"), [16, 9]);
 assert.deepEqual(parseAspectRatio("16:3"), [16, 3]);
-// A bad stored value renders a 16:9 box rather than crashing a list row.
-assert.deepEqual(parseAspectRatio("1920x1080"), [16, 9]);
-assert.deepEqual(parseAspectRatio("0:0"), [16, 9]);
+// A spanned 3-monitor width — this is exactly what the widened regex exists to accept.
+assert.deepEqual(parseAspectRatio("5760:1080"), [5760, 1080]);
+// An unparseable value is a validation error, never a silent 16:9.
+assert.equal(parseAspectRatio("1920x1080"), null);
+assert.equal(parseAspectRatio("0:0"), null);
+assert.equal(parseAspectRatio("not-a-ratio"), null);
 
 console.log("geometry.check.mts — all assertions passed");
