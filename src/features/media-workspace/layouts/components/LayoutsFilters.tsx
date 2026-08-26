@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { SearchIcon } from "@/components/ui/icons";
 import type { ListFilters } from "../list-filtering";
 import { LAYOUT_STATUSES, type LayoutStatus } from "../types";
@@ -15,9 +16,14 @@ const selectClasses =
 export function LayoutsFilters({
   value,
   onChange,
+  onClearAll,
 }: {
   value: ListFilters;
   onChange: (next: ListFilters) => void;
+  /** Omitted when the whole list state is already at its default, which is also exactly
+   *  when the URL carries no query string — so the button appears only when it would do
+   *  something. Resets sort and paging too, not just the filters shown here. */
+  onClearAll?: () => void;
 }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -43,6 +49,12 @@ export function LayoutsFilters({
           </option>
         ))}
       </select>
+
+      {onClearAll ? (
+        <Button variant="ghost" onClick={onClearAll}>
+          Clear all
+        </Button>
+      ) : null}
     </div>
   );
 }

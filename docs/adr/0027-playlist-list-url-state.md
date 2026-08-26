@@ -1,5 +1,10 @@
 # 0027 — Playlists list state (tab/filters/sort/page) lives in the URL query string
 
+> **Superseded in part by [0047](0047-list-url-state-history-navigation.md):** the
+> `replaceState`-only write in "Decision" below left Back/Forward with no history entries to
+> navigate; 0047 replaces it with push/replace via a shared hook while keeping everything else
+> here (URL as source of truth, read-once via `readListState`, no `nuqs`) unchanged.
+
 ## Context
 
 `PlaylistsListPage.tsx` holds tab, filters, sort, and pagination entirely in `useState`.

@@ -950,26 +950,38 @@ node src/app/api/core/v1/media/layouts/schema.check.mts
 `thunder-core-tsc-never-clean` memory) — gate on the delta for changed files, not the total.
 Measure the baseline by stashing, exactly as the snapshot migration's session did.
 
-- [ ] **Step 3: Browser verification**
+- [x] **Step 3: Browser verification**
 
-**Ask first, per `CLAUDE.md` §3** — this is a completion claim, not mid-debug poking, and
-the question is asked at every verify point, not once per session. Offer: (1) I drive the
-browser myself, (2) here is a checklist for you to run, (3) skip and mark unverified.
+Done across two sessions:
 
-The checklist, if it goes that way:
+1. [x] `/media-workspace/layouts` lists Layouts with a wireframe thumbnail per row —
+   verified 2026-08-25 (`.docs/SESSIONLOG-layout-ui-browser-2026-08-25.md`).
+2. [x] Search, status filter and sort each change the rows **and the URL**; a refresh
+   reproduces the same view; **back/forward works** — first attempt (2026-08-25) failed:
+   `window.history.replaceState` swallowed every history entry. Root-caused, fixed and
+   verified 2026-08-26 (`.docs/SESSIONLOG-layout-history-and-duplicate-name-2026-08-26.md`)
+   across all three list pages (Layouts, Playlists, Channels), including a `Clear all`
+   control added when it turned out none existed.
+3. [x] "New Layout" → template rail → pick 70/30 → canvas shows two Zones — verified 2026-08-25.
+4. [x] Drag the split handle; the percentage readout updates; releasing leaves one decimal —
+   verified 2026-08-25.
+5. [x] Drag one Zone on top of another: an overlap error appears and Save is disabled —
+   verified 2026-08-25.
+6. [x] Fix the overlap, go to step 2, set a name and background, save — verified 2026-08-25.
+7. [x] The new Layout appears in the list with the right zone count and aspect ratio —
+   verified 2026-08-25.
+8. [x] Edit it, change a Zone, save, reopen — the change persisted — verified 2026-08-25.
+9. [x] Archive it (with the confirm step) → it shows Inactive; restore it → Active —
+   verified 2026-08-25.
+10. [x] Save a second Layout with the same name → the Thai duplicate-name message appears,
+    not a raw Postgres unique-violation string — first attempt (2026-08-25) failed with the
+    generic `Media operation failed`. `media_layout_upsert` fixed to catch `unique_violation`
+    (migration `20260825104559_layout_upsert_duplicate_name.sql`, applied to production
+    2026-08-26) and verified through the UI 2026-08-26: message
+    `ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่นแล้วลองใหม่`, no second row created.
 
-1. `/media-workspace/layouts` lists Layouts with a wireframe thumbnail per row.
-2. Search, status filter and sort each change the rows **and the URL**; a refresh
-   reproduces the same view; back/forward works.
-3. "New Layout" → template rail → pick 70/30 → canvas shows two Zones.
-4. Drag the split handle; the percentage readout updates; releasing leaves one decimal.
-5. Drag one Zone on top of another: an overlap error appears and Save is disabled.
-6. Fix the overlap, go to step 2, set a name and background, save.
-7. The new Layout appears in the list with the right zone count and aspect ratio.
-8. Edit it, change a Zone, save, reopen — the change persisted.
-9. Archive it (with the confirm step) → it shows Inactive; restore it → Active.
-10. Save a second Layout with the same name → the Thai duplicate-name message appears,
-    not a raw Postgres unique-violation string.
+Multi-row sort ordering was accepted from `list-filtering.check.mts` rather than a second
+production Layout, per the same reasoning recorded in the 2026-08-25 session log.
 
 - [x] **Step 4: Write the session log**
 

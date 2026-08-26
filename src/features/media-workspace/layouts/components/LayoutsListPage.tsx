@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -38,12 +39,20 @@ export function LayoutsListPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<LayoutListItem | null>(null);
 
-  // Keeps the URL in sync with the view — no setState here, only history, so this
-  // effect stays outside the lint rule against synchronous setState in effects.
-  useEffect(() => {
-    const qs = writeListState({ filters, sort, page, perPage });
-    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [filters, sort, page, perPage]);
+  // Keeps the URL in sync with the view (push/replace decided by useListUrlState — a
+  // search-typing run collapses into one history step) and restores filters/sort/page
+  // from window.location on Back/Forward.
+  const restore = useCallback(() => {
+    const s = readListState(new URLSearchParams(window.location.search));
+    setFilters(s.filters);
+    setSort(s.sort);
+    setPage(s.page);
+    setPerPage(s.perPage);
+  }, []);
+  // An empty query string is exactly the "everything is at its default" signal, so it
+  // doubles as the test for whether "Clear all" would do anything.
+  const qs = writeListState({ filters, sort, page, perPage });
+  useListUrlState(qs, restore);
 
   const handleSortChange = (key: SortKey) => {
     setSort((current) => {
@@ -84,9 +93,13 @@ export function LayoutsListPage() {
   // paginate() clamps the page itself, so narrowing a filter can never strand the view.
   const { rows, page: currentPage, totalPages } = paginate(sorted, page, perPage);
 
-  const handleClearFilters = () => {
+  // Resets sort and paging alongside the filters: the button says "Clear all", and its
+  // promise is that the view — and the URL — come back to their pristine state.
+  const handleClearAll = () => {
     setFilters(DEFAULT_STATE.filters);
-    setPage(1);
+    setSort(DEFAULT_STATE.sort);
+    setPage(DEFAULT_STATE.page);
+    setPerPage(DEFAULT_STATE.perPage);
   };
 
   const runAction = async (id: string, run: () => Promise<unknown>, fallback: string) => {
@@ -169,6 +182,7 @@ export function LayoutsListPage() {
 
         <LayoutsFilters
           value={filters}
+          onClearAll={qs === "" ? undefined : handleClearAll}
           onChange={(next) => {
             setFilters(next);
             setPage(1);
@@ -190,7 +204,7 @@ export function LayoutsListPage() {
         ) : rows.length === 0 ? (
           <ListEmpty
             cause={layouts!.length === 0 ? "no-layouts" : "no-match"}
-            onClearFilters={handleClearFilters}
+            onClearFilters={handleClearAll}
           />
         ) : (
           <>
