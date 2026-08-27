@@ -199,9 +199,13 @@ backend deploy.
   Every Device receives a zoned payload for a composition Publication regardless of what it has or
   has not reported.
 - `media_heartbeat`'s `profile_required` flag does fire when `player_capabilities` is null, so a
-  Device that has never reported is re-prompted on every heartbeat. Players should keep honouring
-  `profile_required` — it is how the fleet's real capacity gets measured, and that measurement is the
-  precondition for enforcement, not a gate in itself.
+  Device that has never reported is flagged on every heartbeat.
+  > **Correction, 2026-08-27.** An earlier version of this bullet said "players should keep
+  > honouring `profile_required`". **No build honours it, and none ever has** — Windows reduces the
+  > heartbeat response to a `bool` and Android to an HTTP status, and both send `device-profile`
+  > once at startup and never again. The flag is written by the server and read by nobody. Making
+  > players fetch and act on it is **ticket 18**, and until that ships the fleet's coverage moves
+  > only when a screen restarts. See `docs/adr/0055-geometry-fit-is-advisory.md`.
 - **Enforcement is deferred** (ADR 0054) until there is a player implementation that reports and a
   hardware validation of the number. Turning it on is a new ADR and ticket, not a config change.
 

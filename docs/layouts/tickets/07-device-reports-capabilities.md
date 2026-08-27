@@ -9,19 +9,25 @@ never said so is told to. **Nothing is gated on the answer** — enforcement is 
 (ADR 0054), not this one and not ticket 05. This ticket only makes the answer exist.
 
 **Blocked by:** None — independent of the Composition track, can run in parallel with 01–06.
-**Blocks:** no publish rule reads what it stores (ADR 0054). Its production apply was a schema
-prerequisite for ticket 16 (production now has `player_capabilities`, the widened `media_heartbeat`,
-and the three-argument `media_device_profile_set` — both environments match). Sequence was
-`07 production apply → 16 → 10`; the first step is done.
+**Blocks:** nothing any more. No publish rule reads what it stores (ADR 0054), and the production
+apply was a schema prerequisite for ticket 16 only while ticket 16 replaced `media_heartbeat` — ADR
+0055 moved that replacement to ticket 18, so the sequence `07 → 16 → 10` no longer has an edge into
+16. Ticket 18 inherits the benefit: both environments now hold the same `media_heartbeat`,
+`player_capabilities` and the three-argument `media_device_profile_set`.
 
 **Status:** applied to develop **and production** (`sfiefevtxalqjizdkcsw`, 2026-08-27, R0 approved).
-No publish rule reads what it stores; ticket 16's schema prerequisite is now satisfied.
+No publish rule reads what it stores.
 
 Applied to `develop` (`ftfmokgphewzyxzwjitv`) on 2026-08-27. **No rule in the current phase reads the
 value it stores** (ADR 0054): `player_capabilities` is written by the profile call and read by
-nothing that decides a publish. The `develop` migration is **not** rolled back — the column and the
-widened `profile_required` are how the fleet's real capacity eventually gets measured, which is the
-precondition for ticket 08.
+nothing that decides a publish. The `develop` migration is **not** rolled back — the column is where
+a reporting build will eventually put its answer, which is the precondition for ticket 08.
+
+**Correction (2026-08-27):** an earlier version of this paragraph credited the widened
+`profile_required` with getting the fleet measured. It does not. Neither player build reads the
+heartbeat response body, so the flag has no reader on either platform (sources in ticket 18). The
+widening shipped here is inert until **ticket 18** gives it one — that is not a reason to roll it
+back, but it is a reason not to count it as evidence-gathering.
 
 The migration `supabase/migrations/20260826093000_media_device_capabilities.sql` and the route change
 `src/app/api/core/v1/media/player/device-profile/route.ts` are committed on `feat/layout`

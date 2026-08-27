@@ -16,8 +16,12 @@ the moment the warning ships and `profile_required` prompts for geometry; that i
 ticket 10 and it should be closable then. This ticket cannot be closed on the same schedule: it waits
 on the fleet, which is outside anyone's control here.
 
-**Blocked by:** 16 — Layout ↔ target geometry fit (the fit module, the warnings, and the widened
-`profile_required` that makes recovery real)
+**Blocked by:**
+- 16 — Layout ↔ target geometry fit (the fit module and the warnings)
+- **18 — a prompted Device actually re-reports its profile.** Without it there is no way to drive the
+  readiness ratio at all: no player build reads `profile_required`, so an unprofiled Device is never
+  asked again and coverage moves only when a screen happens to restart. A threshold nobody can move
+  is not a gate, it is a wait.
 
 **Blocks:** nothing. Ticket 10 deliberately does not wait on this — see ticket 16's *Blocks*.
 
@@ -47,11 +51,13 @@ from public.assets a
 join public.device_credentials dc on dc.asset_id = a.id and dc.is_revoked = false;
 ```
 
-Before ticket 16, the ratio may change when a player profiles for another reason — a boot, a config
-change, a monitor being plugged in — which is how the 4 in each column got there. What does not exist
-yet is a **guaranteed or bounded convergence mechanism**: until `profile_required` prompts for
-geometry, nothing asks an unprofiled Device again, so the ratio can drift upward by luck but cannot
-be driven to a target. Ticket 16 is what makes the number something this ticket can wait on.
+The ratio changes only when a player profiles for its own reasons — a boot, a config change, a
+monitor being plugged in — which is how the 4 in each column got there. What does not exist is a
+**guaranteed or bounded convergence mechanism**, and ticket 16 does not create one: widening
+`profile_required` was moved out of it precisely because no player build reads the heartbeat
+response body (ADR 0055; the sources are listed in ticket 18). Until **ticket 18** ships both halves,
+nothing asks an unprofiled Device again and the ratio can drift upward by luck but cannot be driven
+to a target.
 
 ## Acceptance criteria
 
@@ -59,13 +65,28 @@ be driven to a target. Ticket 16 is what makes the number something this ticket 
       measurement it was taken from
 - [ ] The measurement is re-run against production and meets that threshold **before** any code
       changes — if it does not, the ticket goes back to blocked rather than shipping a refusal
+- [ ] **Readiness is three things, not one.** Coverage alone does not establish that refusing is
+      safe, because the 15% band was chosen from a four-device sample:
+      1. **Coverage** — the ratio below meets the threshold.
+      2. **Distribution** — the `deviceFit` outcome of every profiled Device against every active
+         Layout, counted. How many Devices would this refusal actually block, and on which Layouts.
+      3. **Review** — each Device in that blocked set is confirmed to be a genuine misconfiguration
+         (a portrait panel really is receiving a landscape Layout) rather than a band that is too
+         tight. A single false positive here is the signal to stop and re-examine the band, not to
+         ship the refusal and let operators discover it.
 - [ ] `media_publication_activate` refuses a composition Publication whose resolved target set holds
       a Device that does not fit **or** has no reported geometry, naming the Devices and which of the
       two it is, in the message shape activation's existing refusals use (`Invalid input: …`, names
       aggregated). It reuses the target Device array activation already resolves exactly once and
       never re-queries Channel membership (ADR 0045 §8)
-- [ ] The refusal uses ticket 16's fit module verbatim — the same orientation derivation and the same
-      15% band — so the server and the wizard cannot disagree about what fits
+- [ ] The refusal implements the **same formula** as ticket 16's fit module — orientation derived
+      from `screen_width`/`screen_height`, the same 15% symmetric band, `screen_ratio` and
+      `screen_dimension` unread. It cannot reuse the module itself: ticket 16's `deviceFit` is
+      TypeScript and this refusal lives in plpgsql inside `media_publication_activate`. Two
+      implementations of one rule is the risk, so bind them with a **shared fixture table** — the
+      cases in `geometry.check.mts` (1920×1080, 1920×1008, 1920×1200, 1080×1080, 1080×1920,
+      1024×768 against 16:9, plus 1920×1080 against 16:3) re-run as a SQL probe with the same
+      expected outcomes, and any change to the band updates both
 - [ ] Step 3's warnings stay warnings; step 5's warning becomes a block, reusing ticket 16's
       component and copy rather than adding a second path
 - [ ] `publish-eligibility.ts` gains its gating row and `publish-eligibility.check.mts` the
@@ -86,7 +107,11 @@ be driven to a target. Ticket 16 is what makes the number something this ticket 
 
 ## Explicitly not this ticket
 
-- The fit module, the wizard warnings, and the `profile_required` widening — **ticket 16**.
+- The fit module and the wizard warnings — **ticket 16**.
+- The `profile_required` widening and the player's re-report — **ticket 18**, this ticket's other
+  prerequisite.
 - Decoder capacity — deferred by ADR 0054, ticket 08.
-- Re-tuning the 15% aspect band. If the threshold measurement shows the band is wrong, that is a
-  finding to record and decide on its own evidence, not a knob to turn while flipping enforcement.
+- Re-tuning the 15% aspect band **inside this ticket**. If the readiness review above finds a false
+  positive, that is a finding to record and decide on its own evidence — this ticket goes back to
+  blocked and the band is re-decided separately. It is not a knob to turn while flipping
+  enforcement, because the same change would then be both the fix and the thing being validated.

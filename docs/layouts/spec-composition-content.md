@@ -309,8 +309,10 @@ isolation is filtered inside the RPC, not by RLS.
   carrying at least `multi_zone_v1` and `max_video_zones` — *deferred groundwork, written but never
   read by a publish decision (ADR 0054).*
 - **`media_heartbeat`** returns `profile_required` = true when the calling Device's
-  `player_capabilities IS NULL`, and does not otherwise change its response — *deferred groundwork:
-  it prompts a Device to report, which gates nothing and builds the evidence enforcement will need.*
+  `player_capabilities IS NULL`, and does not otherwise change its response — *deferred groundwork
+  that currently reaches nobody: neither player build reads the heartbeat response body, so the flag
+  has no reader (ADR 0055). Widening it to cover geometry, and giving the players a reason to fetch
+  it, is **ticket 18**.*
 - **`media_schedule_conflicts`** gains a blocking outcome distinct from the existing advisory one:
   equal priority + overlapping window + same Media Device + either side carries a Composition.
   Differing priorities keep today's `would_suppress` / `would_be_suppressed` shape untouched.
@@ -446,7 +448,8 @@ migration applied over MCP is live immediately.
   Publication type, then activation, then the equal-priority overlap block, and the `zones[]` payload
   last of those. It no longer waits on a capability gate — ADR 0054 defers that — so the order is
   **05 → (09, 16) → 10**, where 16 is the Layout ↔ target geometry fit rule — advisory per ADR 0055 —
-  itself preceded by ticket 07's production apply as a schema prerequisite (applied 2026-08-27).
+  with no prerequisite of its own beyond 05: ADR 0055 removed the `media_heartbeat` replacement from
+  it, so ticket 07's production apply (done 2026-08-27) is no longer a gate on anything here.
 - **Known limitation — concurrent video capacity is not checked anywhere.** `max_video_zones` per
   platform is unmeasured, no player build reports it, and ADR 0054 defers enforcement rather than
   gating on a number nobody has taken. A Composition may therefore be published to a Device that

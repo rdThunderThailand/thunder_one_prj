@@ -2,12 +2,15 @@
 
 **Ticket:** `docs/layouts/tickets/16-layout-target-geometry-fit.md`
 **Decided by:** `docs/adr/0055-geometry-fit-is-advisory.md`
-**Risk:** R1 (frontend across four files + one `CREATE OR REPLACE` migration). The production apply is
-**R0** and needs its own approval at the end.
+**Risk:** R1 — frontend across six files. **No migration, no R0, nothing touches production.**
 
 **Goal:** warn the operator, at steps 3 and 5, when a targeted Media Device's geometry does not fit
-the Layout or has never been reported — and start prompting unprofiled Devices to report. Nothing is
-refused anywhere.
+the Layout or has never been reported. Nothing is refused anywhere, and no server behaviour changes.
+
+**Not in this plan:** the `media_heartbeat` `profile_required` widening. It moved to ticket 18 —
+neither player build reads the heartbeat response body, so widening the flag here would deploy an R0
+to production with no reader and nothing to verify against. See ADR 0055 and ticket 18. If a step
+below seems to want it, the answer is no.
 
 ---
 
@@ -46,18 +49,14 @@ Measured read-only on production (`sfiefevtxalqjizdkcsw`) and `develop` (`ftfmok
    warning is therefore unobservable on production until one is published; `develop` has one
    composition Publication (`7b6cb708-…`, tenant `22222222-…`) used as the fixture for tickets 05,
    06 and 09.
-7. **Production and `develop` now hold identical `media_heartbeat` bodies** — ticket 07 applied to
-   production 2026-08-27. One migration body satisfies both.
-8. **`media_heartbeat` currently computes** (verified against the live definition on both):
-   ```sql
-   'profile_required', (v_row.os_version IS NULL AND v_row.machine_name IS NULL)
-                       OR v_row.player_capabilities IS NULL
-   ```
-9. **ESLint forbids synchronous `setState` in a `useEffect` body**, and follows into async callees.
+7. **No player build reads the heartbeat response body**, and `device-profile` is sent once at
+   startup only — verified in both player repos, sources listed in ticket 18. This is why there is
+   no migration here.
+8. **ESLint forbids synchronous `setState` in a `useEffect` body**, and follows into async callees.
    Use a promise chain and `setState` inside `.then()`.
-10. **There is no test runner.** Checks are `*.check.mts` run as `node <file>.check.mts`.
-11. **Supabase CLI migrations are broken** (history drift). Apply via the Supabase MCP
-    `apply_migration`. Auto-mode has blocked MCP writes before — if it does, stop and ask, then retry.
+9. **There is no test runner.** Checks are `*.check.mts` run as `node <file>.check.mts`.
+10. **`usePlaylistPreview.ts:18` is the house pattern** for "fetch a thing keyed by a draft id" —
+    keyed state, stale responses discarded, failure distinguished from absence. Task 2 copies it.
 
 ---
 
@@ -67,14 +66,15 @@ Measured read-only on production (`sfiefevtxalqjizdkcsw`) and `develop` (`ftfmok
 |---|---|
 | `src/features/media-workspace/layouts/geometry.ts` | **Modify.** Add the fit function beside `parseAspectRatio`, which it reuses. No new file — the parser and the band belong together. |
 | `src/features/media-workspace/layouts/geometry.check.mts` | **Modify.** Add the fit cases to the existing 73-line check. |
-| `src/features/media-workspace/publications/hooks/useLayoutAspectRatio.ts` | **Create.** `compositionId → aspect_ratio \| null`. Two fetches, promise-chained. Kept out of `usePublishDraft` because that file is already over the line limit. |
-| `src/features/media-workspace/publications/components/CreatePublicationPage.tsx` | **Modify.** Call the hook; pass `aspectRatio` to `ChannelsStep` and `ReviewPublishStep`. |
+| `src/features/media-workspace/publications/hooks/useLayoutAspectRatio.ts` | **Create.** `compositionId → { aspectRatio, failed }`, keyed by id like `usePlaylistPreview`. Kept out of `usePublishDraft` because that file is already over the line limit. |
+| `src/features/media-workspace/publications/components/CreatePublicationPage.tsx` | **Modify.** Read `compositionId` from the store (the hook does not return it), call the hook, pass `aspectRatio` and `fitCheckFailed` to `ChannelsStep` and `ReviewPublishStep`. |
 | `src/features/media-workspace/publications/components/ChannelsStep.tsx` | **Modify.** Render the step-3 warning. |
 | `src/features/media-workspace/publications/components/ReviewPublishStep.tsx` | **Modify.** Render the same warning at step 5. Touch nothing that decides `canPublish`. |
-| `Thunder_Core/supabase/migrations/2026____________profile_required_geometry.sql` | **Create.** `CREATE OR REPLACE media_heartbeat` only. |
+| `src/features/media-workspace/publications/channels-logic.ts` + `.check.mts` | **Modify.** The selected-Channel → Device fan-out already lives here; the warning summary joins it. |
 
 Not touched, deliberately: `publish-eligibility.ts`, `publish-eligibility.check.mts`,
-`media_publication_activate`, `media_schedule_conflicts`, `types/index.ts`.
+`media_publication_activate`, `media_schedule_conflicts`, `media_heartbeat`, `types/index.ts`, and
+every file under `Thunder_Core/`.
 
 ---
 
@@ -135,8 +135,10 @@ export function deviceFit(resolution: string | null, aspectRatio: string): Devic
 
   const [dw, dh] = device;
   const [lw, lh] = layout;
-  // A square Device has no orientation to disagree with.
-  if (dw !== dh && dw > dh !== lw > lh) return "orientation-mismatch";
+  // A square Device fits any Layout (ADR 0055 §3) — return before the band, or 1080x1080
+  // against 16:9 falls through to a spread of 1.778 and reports a mismatch.
+  if (dw === dh) return "fits";
+  if (dw > dh !== lw > lh) return "orientation-mismatch";
 
   const deviceAR = dw / dh;
   const layoutAR = lw / lh;
@@ -165,7 +167,18 @@ git commit -m "feat(layouts): compute Layout to target geometry fit"
 modify `src/features/media-workspace/publications/components/CreatePublicationPage.tsx`
 
 **Consumes:** `fetchComposition`, `fetchLayout` (both already exist).
-**Produces:** `useLayoutAspectRatio(compositionId: string | null): string | null`
+**Produces:** `useLayoutAspectRatio(compositionId: string | null): { aspectRatio: string | null; failed: boolean }`
+
+Three things the naive version gets wrong, all of them already solved by `usePlaylistPreview.ts:18`
+— **copy that pattern, do not invent a second one**:
+
+1. **Stale ratio across a Composition switch.** Keying the state by id and reading
+   `result?.id === compositionId ? result : null` means A's ratio is never shown while B loads.
+2. **A failed fetch silently means "no Composition".** Collapsing both to `null` hides every
+   warning at the moment the check is least trustworthy. Distinguish `failed`.
+3. **`setState` synchronously in the effect body** on the `!compositionId` path — the exact ESLint
+   rule this repo enforces. The keyed read makes it unnecessary: no Composition means nothing
+   matches the key, so no state has to be cleared.
 
 - [ ] **Step 1: write the hook**
 
@@ -177,45 +190,50 @@ import { fetchComposition } from "@/features/media-workspace/compositions/servic
 import { fetchLayout } from "@/features/media-workspace/layouts/services/layouts-api";
 
 /** The Layout's declared aspect ratio, for the advisory geometry fit warning (ADR 0055).
- *  Composition reads carry `layout_id` but not the ratio, so it takes two hops. Null while
- *  loading, on failure, and for a Publication with no Composition — the warning simply does
- *  not render, which is the correct advisory behaviour. */
-export function useLayoutAspectRatio(compositionId: string | null): string | null {
-  const [aspectRatio, setAspectRatio] = useState<string | null>(null);
+ *  Composition reads carry `layout_id` but not the ratio, so it takes two hops.
+ *  Keyed by composition id, exactly as usePlaylistPreview is keyed by playlist id, so a stale
+ *  response for a previously-selected Composition never renders. `failed` is distinct from
+ *  "no Composition": the caller must say it could not check, not quietly show nothing. */
+export function useLayoutAspectRatio(compositionId: string | null): {
+  aspectRatio: string | null;
+  failed: boolean;
+} {
+  const [result, setResult] = useState<
+    { id: string; aspectRatio: string } | { id: string; failed: true } | null
+  >(null);
 
   useEffect(() => {
-    if (!compositionId) {
-      setAspectRatio(null);
-      return;
-    }
-    let cancelled = false;
+    if (!compositionId) return;
+    let alive = true;
     fetchComposition(compositionId)
       .then((composition) => fetchLayout(composition.layout_id))
-      .then((layout) => {
-        if (!cancelled) setAspectRatio(layout.aspect_ratio);
-      })
-      .catch(() => {
-        if (!cancelled) setAspectRatio(null);
-      });
+      .then((layout) => alive && setResult({ id: compositionId, aspectRatio: layout.aspect_ratio }))
+      .catch(() => alive && setResult({ id: compositionId, failed: true }));
     return () => {
-      cancelled = true;
+      alive = false;
     };
   }, [compositionId]);
 
-  return aspectRatio;
+  const current = result?.id === compositionId ? result : null;
+  return {
+    aspectRatio: current && "aspectRatio" in current ? current.aspectRatio : null,
+    failed: current ? "failed" in current : false,
+  };
 }
 ```
 
 - [ ] **Step 2: wire it in `CreatePublicationPage.tsx`**
 
-Call it beside the existing `usePublishDraft()` destructure (line 181), and pass the result down:
+`compositionId` is **not** returned by `usePublishDraft()` and is **not** among the page's existing
+store selectors — read it from the store beside them (they start at line 40):
 
 ```tsx
-const layoutAspectRatio = useLayoutAspectRatio(compositionId);
+const compositionId = usePublicationDraftStore((s) => s.compositionId);
+const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
 ```
 
-then `aspectRatio={layoutAspectRatio}` on both `<ChannelsStep …>` (line 452) and
-`<ReviewPublishStep …>` (line 466). `compositionId` is already available from the draft store.
+then pass `aspectRatio={layoutAspectRatio}` and `fitCheckFailed={fitCheckFailed}` to both
+`<ChannelsStep …>` (line 452) and `<ReviewPublishStep …>` (line 466).
 
 - [ ] **Step 3: verify it compiles and lints**
 
@@ -327,6 +345,9 @@ is non-empty. Two separate sentences, because the ticket requires saying which o
 - unprofiled → *"These screens have not reported their size yet, so their fit is unknown:
   <names>. You can still publish."*
 
+- `fitCheckFailed` → *"Could not check whether these screens fit the Layout."* — the check failing
+  is not the same as everything fitting, and going silent there is the one case that would mislead.
+
 Match the existing advisory card styling in `ReviewPublishStep.tsx` — do not invent a new one.
 
 - [ ] **Step 6: render it at step 5**
@@ -351,95 +372,49 @@ git commit -m "feat(media-workspace): warn when a target screen does not fit the
 
 ---
 
-## Task 4 — `profile_required` prompts for geometry
+## Task 4 — verify at the layer the operator uses, and write it down
 
-**Files:** Create `Thunder_Core/supabase/migrations/<ts>_profile_required_geometry.sql`
-
-The body is production's current `media_heartbeat` verbatim with the flag rewritten. Signature is
-unchanged, so `CREATE OR REPLACE` is correct and no `DROP` is involved. Re-read the live definition
-before writing the file rather than reconstructing it — it carries the sync telemetry
-(`sync_phase_error_ms`, `sync_loop_duration_seconds`) that an older body would silently drop.
-
-- [ ] **Step 1: capture the current body from production**
-
-```sql
-select pg_get_functiondef(p.oid)
-from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-where n.nspname = 'public' and p.proname = 'media_heartbeat';
-```
-
-- [ ] **Step 2: write the migration** — same body, this flag:
-
-```sql
-        'profile_required', (
-            v_row.os_version IS NULL
-            OR v_row.machine_name IS NULL
-            OR v_row.screen_width IS NULL
-            OR v_row.screen_height IS NULL
-        ) OR v_row.player_capabilities IS NULL,
-```
-
-Two changes, both required by the ticket: geometry joins the condition, and the identity clause
-becomes `OR` so a partial profile is prompted. Keep the trailing
-`REVOKE ALL … FROM PUBLIC, anon, authenticated;` and `GRANT EXECUTE … TO service_role;`. Header
-comment states: ticket 16, ADR 0055 §8; why `CREATE OR REPLACE` is safe here; and that the body is
-copied from the live definition, not rebuilt.
-
-- [ ] **Step 3: apply to `develop` and probe**
-
-Apply via Supabase MCP `apply_migration` to `ftfmokgphewzyxzwjitv`, then probe against a scratch
-Device — the partial-profile cases the ticket names:
-
-```sql
--- identity present, geometry missing  → expect profile_required: true
--- identity present, capabilities set, geometry missing → true
--- geometry present, identity missing  → true
--- everything present                  → false
-```
-Restore whatever columns the probe nulled out afterwards.
-
-- [ ] **Step 4: verify on `develop`**
-
-Exactly one overload of `media_heartbeat`; ACL is `postgres` / `service_role` only; the live
-definition matches the file; the `telemetry` object is unchanged key-for-key.
-
-- [ ] **Step 5: commit the migration**
-
-```bash
-cd ../Thunder_Core
-git add supabase/migrations/<ts>_profile_required_geometry.sql
-git commit -m "feat(media): prompt a Device to report missing geometry"
-```
-
-- [ ] **Step 6: production apply — R0, STOP AND ASK**
-
-Present the exact diff, the environment, and the effect (Devices with partial profiles begin being
-re-prompted; no data is written or deleted) and wait for approval. Then apply verbatim to
-`sfiefevtxalqjizdkcsw` and re-run the Step 4 verification there.
-
----
-
-## Task 5 — verify at the layer the operator uses, and write it down
+**No unfitting Device exists on `develop`.** All four profiled Devices there report landscape
+`1920x1080` or `1920x1008`, both of which fit the only Layout (`16:9`) — so selecting a real Channel
+proves nothing. The mismatch has to be staged, the same way tickets 05, 06 and 09 staged their
+fixtures.
 
 - [ ] **Step 1: ask before browser-testing.** Per the working agreement, at every verify point:
       offer (1) I drive the browser, (2) a checklist you run, (3) skip. Options 2 and 3 count as
       unverified and force the PR to Draft.
-- [ ] **Step 2: step 3.** On `develop`, open the composition Publication fixture, select the Channel
-      holding Screen 04 (`1080x1920` — orientation mismatch against the 16:9 Layout) and confirm the
-      unfitting warning names it. Confirm an unprofiled Device produces the other sentence.
-- [ ] **Step 3: step 5.** Confirm the same warning renders **and the Publish button stays enabled**.
+- [ ] **Step 2: stage the fixture on `develop`.** Record the current values first, then flip one
+      Device in a Channel the composition Publication targets to portrait:
+
+```sql
+-- capture before touching anything
+select id, name, screen_width, screen_height from public.assets where name = 'ThunderOne Screen 04';
+-- orientation mismatch against the 16:9 Layout
+update public.assets set screen_width = 1080, screen_height = 1920 where name = 'ThunderOne Screen 04';
+```
+      For the unprofiled sentence, either null both dimensions on a second Device in the same
+      Channel, or pick one of the nine Devices that already have none — but confirm it is actually a
+      member of a selected Channel, or the warning will correctly not fire and the check proves
+      nothing.
+- [ ] **Step 3: step 3.** Open the composition Publication fixture (`7b6cb708-…`), select that
+      Channel, and confirm both sentences appear and name the right Devices.
+- [ ] **Step 4: step 5.** Confirm the same warning renders **and the Publish button stays enabled**.
       This is the acceptance criterion most likely to regress, since every neighbouring warning in
       that component does gate.
-- [ ] **Step 4: no regression on the flat path.** A Publication with no Composition shows neither
-      sentence at either step.
-- [ ] **Step 5: restore `develop`** — any Publication status or Device column the probes changed.
-- [ ] **Step 6: `.docs/SESSIONLOG-ticket16-geometry-fit-<date>.md`**, stating plainly which layers
+- [ ] **Step 5: the failed-check path.** Confirm the "could not check" advisory renders rather than
+      silence — easiest by pointing `fetchLayout` at a bad id in the browser devtools, or by
+      temporarily nulling the Composition's `layout_id` on `develop` and restoring it.
+- [ ] **Step 6: no regression on the flat path.** A Publication with no Composition shows none of
+      the three sentences at either step.
+- [ ] **Step 7: restore `develop`** — every value captured in Step 2, plus any Publication status the
+      probes changed. Verify the restore with the same `select`, do not assume it.
+- [ ] **Step 8: `.docs/SESSIONLOG-ticket16-geometry-fit-<date>.md`**, stating plainly which layers
       were verified and which were not, and update ticket 16's Status line.
 
 ---
 
 ## Open questions
 
-None. ADR 0055 settled the fit definition, the field set, the tolerance, the warn-not-block
-decision, and ticket 17's expanded charter. The one number still unset — ticket 17's fleet readiness
-threshold — is deliberately out of scope here and belongs at grooming.
+None. ADR 0055 settled the fit definition, the field set, the tolerance, the warn-not-block decision,
+ticket 17's expanded charter, and the removal of the heartbeat migration to ticket 18. The one number
+still unset — ticket 17's fleet readiness threshold — is deliberately out of scope here and belongs
+at grooming, and it cannot move until ticket 18 ships.

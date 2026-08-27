@@ -7,8 +7,8 @@
 **What to build:** the operator is warned when a targeted Media Device's geometry does not fit the
 Layout — wrong orientation, or an aspect ratio outside a 15% band — or when the Device has never
 reported geometry at all. The warning appears at step 3 as soon as such a Channel is selected and
-again at step 5. **Nothing is refused.** Alongside it, `media_heartbeat` starts prompting for missing
-geometry, so the fleet begins reporting the values ticket 17 will need.
+again at step 5. **Nothing is refused, and nothing on the server changes.** This ticket is frontend
+only: no migration, no R0.
 
 **Why the rule is advisory:** ADR 0055 has the measured argument. In short: the profile call reports
 the *work area*, so a taskbar makes a 16:9 panel report 1920×1008; `screen_ratio` has two writers and
@@ -16,31 +16,33 @@ contradicts the profile fields on real Devices; and an exact match refuses two o
 production Devices for reasons no operator could act on. The warning is what makes the fleet
 measurable, which is the precondition for enforcing anything.
 
-**Blocked by:**
-- 05 — Activation materializes Zones and records revisions (the Composition path this warns about)
-- 07 — production apply. **Done, 2026-08-27.** This ticket does `CREATE OR REPLACE` on
-  `media_heartbeat`, and before the apply the two environments held different bodies of it. They now
-  match.
+**Blocked by:** 05 — Activation materializes Zones and records revisions (the Composition path this
+warns about). Nothing else. Ticket 07's production apply is no longer a prerequisite: it was one
+only because this ticket used to `CREATE OR REPLACE media_heartbeat`, and it no longer does. (It was
+applied 2026-08-27 regardless.)
 
-**Blocks:** 10 — `zones[]` payload, for the warning and the `profile_required` widening only. Ticket
-10 no longer waits on a refusal, because there is none.
+**Blocks:** 10 — `zones[]` payload, for the operator-facing warning only. Ticket 10 no longer waits
+on a refusal, because there is none.
 
-**Status:** ready-for-agent. ADR 0055 accepted 2026-08-27; ticket 07 applied to production the same
-day.
+**Status:** ready-for-agent. ADR 0055 accepted 2026-08-27.
 
 ## Scope note — what ADR 0055 removed from this ticket
 
 An earlier version of this ticket refused an unfitting Device at step 5 and again inside
-`media_publication_activate`. Both are gone:
+`media_publication_activate`, and widened `media_heartbeat`'s `profile_required`. All three are
+gone:
 
-- **`media_publication_activate` is not modified by this ticket.** The activation transaction keeps
-  exactly the checks it has today, including ticket 09's equal-priority overlap block.
+- **`media_publication_activate` is not modified.** The activation transaction keeps exactly the
+  checks it has today, including ticket 09's equal-priority overlap block.
 - **`publish-eligibility.ts` gains no row and no gate.** Its positional check array and `gateChecks`
   are unchanged. `publish-eligibility.check.mts` therefore gains no fit case either.
-- The only server-side change is `media_heartbeat`'s `profile_required`.
+- **`media_heartbeat` is not modified.** The widening moved to **ticket 18**, because neither player
+  build reads the heartbeat response body, so the flag has no reader and widening it here would
+  change a value nobody fetches. ADR 0055 carries the sources. Do not re-add it to this ticket "for
+  free" — it is not free, it is an R0 to production with nothing to verify at the far end.
 
 Ticket 17 owns turning enforcement on, and it now owns **both** halves — known mismatch and unknown
-geometry — behind one fleet readiness threshold.
+geometry — behind one fleet readiness threshold, with ticket 18 as its prerequisite.
 
 ## Acceptance criteria
 
@@ -69,24 +71,16 @@ geometry — behind one fleet readiness threshold.
 - [ ] Step 5 shows the same warning and **does not** prevent publishing. The Publish button's enabled
       state is unchanged by geometry
 - [ ] A Publication with no Composition is never checked — the flat path is unchanged
-- [ ] **`media_heartbeat`'s `profile_required` is widened to include missing geometry** — a Device
-      lacking `screen_width` or `screen_height` is re-prompted — **and its identity clause is
-      corrected from `AND` to `OR` in the same change**, so a partially profiled Device is prompted
-      too. `CREATE OR REPLACE` is safe: the signature does not change
-- [ ] A check covers the **partial profile** cases explicitly: identity present + geometry missing;
-      identity present + capabilities present + geometry missing; geometry present + identity
-      missing. Each must still be prompted. This is the case that silently breaks recovery today
-- [ ] Post-apply verification on both environments: `pg_get_functiondef` matches the migration file,
-      exactly one overload of `media_heartbeat`, grants confirmed with `has_function_privilege`,
-      advisors show no new finding
-- [ ] SQL probe: a Device with identity set and geometry missing gets `profile_required: true`; a
-      Device with everything set gets `false`; the flat telemetry echo is unchanged
+- [ ] The fit check failing to run (the Layout's aspect ratio could not be loaded) says so, rather
+      than rendering as "everything fits". A silent check is worse than no check
+- [ ] No migration, and no file under `Thunder_Core/supabase/migrations/` is added or modified
 - [ ] Verified in the browser at steps 3 and 5 — the warning appears, and Publish stays enabled
 
 ## Explicitly not this ticket
 
 - Refusing anything on geometry, at any layer — **ticket 17**, both halves, behind a threshold.
 - The readiness threshold itself — ticket 17, at grooming.
+- Making unprofiled Devices report — **ticket 18**. This ticket warns about them; it cannot fix them.
 - Removing the `screen_ratio` / `screen_dimension` double-write from `media_heartbeat` — recorded as
   debt by ADR 0055 §9. Nothing here reads either field.
 - Decoder capacity / `max_video_zones` — deferred by ADR 0054, ticket 08.

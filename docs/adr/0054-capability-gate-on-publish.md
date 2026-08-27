@@ -59,11 +59,26 @@ as a capability check. Worse than no gate, because it looks like one.
    (ticket 07, applied to `develop`) remain as groundwork. They accept and store whatever a player
    sends. **No publish semantics read them.** `media_heartbeat`'s widened `profile_required` also
    remains: prompting a device to report costs nothing and accumulates the evidence the deferred
-   decision will need. **Ticket 07 has no publish semantics, but its production apply is now a schema
-   prerequisite for ticket 16** — `develop` and production hold different bodies of
-   `media_heartbeat` (production has neither the column nor the capabilities clause, and still the
-   two-argument `media_device_profile_set`), so ticket 16's `CREATE OR REPLACE` cannot be written to
-   satisfy both. Applying it stays **R0** and needs its own approval; it is a schema ordering fact,
+   decision will need.
+   > **Correction (2026-08-27), see `0055-geometry-fit-is-advisory.md`.** The second half of that
+   > sentence is wrong. Prompting accumulates nothing: neither player build reads the heartbeat
+   > response body, and `device-profile` is sent once at startup and never again. `profile_required`
+   > has no reader on either platform, so widening it changes a value nobody fetches. The flag stays
+   > as it is — this does not undo ticket 07 — but it is not evidence-gathering, and **ticket 18**
+   > is what makes it one, by shipping the player half alongside the server half.
+
+   **Ticket 07 has no publish semantics, but its production apply was a schema
+   prerequisite for ticket 16** — `develop` and production held different bodies of
+   `media_heartbeat` (production had neither the column nor the capabilities clause, and still the
+   two-argument `media_device_profile_set`), so ticket 16's `CREATE OR REPLACE` could not be written
+   to satisfy both.
+   > **Also corrected 2026-08-27 (ADR 0055).** Ticket 16 no longer replaces `media_heartbeat` at all,
+   > so it is no longer the reason this apply had to happen. The apply went ahead on its own
+   > approval that day and the two environments now match; the prerequisite is discharged rather
+   > than merely reassigned. Ticket 18 inherits the `CREATE OR REPLACE`, and benefits from the
+   > environments already being aligned.
+
+   Applying it stays **R0** and needs its own approval; it is a schema ordering fact,
    not a reversal of this decision.
 10. Turning capacity enforcement on later **requires a new ADR that supersedes this decision**,
     followed by reactivating or replacing ticket 08. There is one route and it starts with the ADR:
@@ -98,6 +113,14 @@ stands unchanged, and none of them depends on a device capability:
   - **A Device that has never reported geometry warns and still publishes** until a fleet readiness
     threshold is met — §4 says unknown geometry fails, and enforcing that today would refuse 8 of 12
     production Devices. ADR 0044 §4 carries the staged exception; ticket 17 holds the flip.
+  > **Superseded 2026-08-27 by `0055-geometry-fit-is-advisory.md`.** Neither stage survives as
+  > written: **nothing on the geometry path refuses**, in ticket 16 or anywhere else in this phase.
+  > Both halves — known mismatch and unknown geometry — became warnings, and ticket 17 owns turning
+  > either into a refusal, behind ticket 18. The reason is measured rather than principled: the
+  > profile call reports the work area (a taskbar makes a 16:9 panel report 1920×1008) and an exact
+  > aspect match would refuse two of the four profiled production Devices. What this ADR says above
+  > about geometry being untouched by the *capacity* deferral still holds — the two remain
+  > independent; geometry simply turned out to need its own decision.
 - Tenant isolation is still enforced inside every RPC.
 - The flat (non-composition) Publication contract is unchanged in every respect.
 - `zones[]` still ships with signed URLs and snapshot-only polling.
@@ -148,6 +171,11 @@ nothing on all of them.
   reasoning held only until ticket 16 existed, and ticket 16 now gives the migration a concrete
   schema-ordering purpose — `media_heartbeat` has diverged between environments and ticket 16
   replaces it. The `develop` migration is not rolled back.
+  > **Outcome, 2026-08-27.** The apply happened on its own R0 approval, so the environments match.
+  > The stated reason did not survive the day: ADR 0055 removed the `media_heartbeat` replacement
+  > from ticket 16 entirely (it moved to ticket 18), so ticket 16 has no schema prerequisite at all
+  > and is frontend-only. The apply was still the right call — ticket 18 inherits the aligned
+  > environments — but this bullet's causal claim is retired, not fulfilled.
 - Re-publish (ADR 0053) gains no new refusal, so ticket 06's drift indicator keeps the behaviour it
   was verified with.
 - The pre-publish preview (ADR 0051) does not simulate decoding capacity, and it is no longer

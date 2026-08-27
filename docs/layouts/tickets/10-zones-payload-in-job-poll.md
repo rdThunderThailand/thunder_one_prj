@@ -12,8 +12,7 @@ it reads (ticket 05) and the equal-priority overlap block that stops two composi
 being merged into one loop with no arbitration (ticket 09). It no longer waits on the capability
 gate — ADR 0054 defers that — and it no longer waits on a geometry *refusal*: ADR 0055 makes the
 Layout ↔ target fit rule advisory, so ticket 16 warns rather than refuses and nothing on the geometry
-path blocks a publish. Ticket 16 still precedes this one, for the operator-facing warning and the
-widened `profile_required` that starts the fleet reporting.
+path blocks a publish. Ticket 16 still precedes this one, for the operator-facing warning.
 
 **Blocked by:** 05 — Activation materializes Zones and records revisions · 09 — Equal-priority
 overlap blocks publish · 16 — Layout ↔ target geometry fit, now advisory (ADR 0055)
@@ -30,9 +29,10 @@ ticket 17, the flip to refusing unprofiled Devices, which is held behind a fleet
 **Known limitation inherited from ticket 16 (widened by ADR 0055):** until ticket 17 lands, a Device
 receives a zoned payload whether or not its geometry fits the Layout, and whether or not it has ever
 reported geometry at all — nothing on that path refuses. The operator is warned at steps 3 and 5.
-That is the same class of knowingly accepted risk as the deferred decoder capacity above, and it
-narrows as the fleet reports — ticket 16 widens `profile_required` so unprofiled and partially
-profiled Devices are actually asked.
+That is the same class of knowingly accepted risk as the deferred decoder capacity above. It does
+**not** narrow on its own: no player build reads `profile_required`, so an unprofiled Device is
+asked again only when it restarts. Ticket 18 is what changes that, and this ticket deliberately does
+not wait on it.
 
 - [ ] `media_job_poll` branches on the polled Job's snapshot: no Composition → `slots[]`; with one →
       `zones[]`

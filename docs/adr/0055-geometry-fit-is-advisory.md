@@ -3,9 +3,10 @@
 **Status:** accepted · **Date:** 2026-08-27 ·
 **Supersedes:** `0044-multi-zone-layout.md` §4 (the enforcement half of the Layout ↔ target rule,
 including the staged exception added 2026-08-27) ·
-**Amends:** `0054-capability-gate-on-publish.md` — its "What this does not relax" bullet asserted
-that a Device whose reported geometry is known not to fit is refused by ticket 16. That is no longer
-true; nothing on the geometry path refuses. ·
+**Amends:** `0054-capability-gate-on-publish.md` on two points, both corrected in place there —
+its "What this does not relax" bullet asserted that a Device whose reported geometry is known not to
+fit is refused by ticket 16 (nothing on the geometry path refuses now), and its Decision 9 asserted
+that prompting via `profile_required` accumulates evidence (no player build reads the flag) ·
 **Related:** `0045-publication-snapshot-materialization.md` §8 · `0049-composition-layout-with-content.md`
 
 ## Context
@@ -65,6 +66,26 @@ so a partially profiled Device is never re-prompted. Enforcement therefore had *
 the known-mismatch half would refuse working screens, and the unknown half was already deferred to
 ticket 17.
 
+### `profile_required` is not a recovery path, because nothing reads it
+
+An earlier draft of this ADR made the widening of `profile_required` a decision of this phase, on
+the grounds that prompting costs nothing and starts the evidence accumulating. **Reading the player
+sources shows that claim is false, and it is corrected here rather than left standing.** Neither
+build looks at the heartbeat response body:
+
+- Windows `PlayerApiClient.SendHeartbeatAsync` returns `bool` and reads the body only on failure, to
+  log it (`Ads_Manager_WindowApp-main/Services/PlayerApiClient.cs:60`). `HeartbeatService` uses that
+  boolean solely to set the status string to `"Online"` (`Services/HeartbeatService.cs:32`).
+- Android keeps `httpStatusCode` from the heartbeat and nothing else
+  (`playerapi/PlayerApiClient.kt:84`); the caller logs success (`MainActivity.kt:1595`).
+- Both call `device-profile` **once at startup** and never again — on Android, literally
+  `sendDeviceProfileOnce(reason = "player_shell")` (`MainActivity.kt:307`).
+
+So `profile_required` has no reader on either platform. Widening it changes a value nobody fetches.
+The only mechanism that moves geometry coverage today is a device restart, which is precisely what
+ticket 17 already described as drifting "upward by luck". A server-side flag cannot create a
+recovery path on its own; the player half has to exist, and it does not.
+
 ## Decision
 
 **The Layout ↔ target geometry fit rule is advisory in this phase. It warns; it never refuses.**
@@ -92,19 +113,22 @@ ticket 17.
    tenant checks, and everything else in it stand exactly as they are.
 7. **`publish-eligibility.ts` gains no row and no gate.** Its positional check array and
    `gateChecks` are unchanged, as they were left by ADR 0054.
-8. **`media_heartbeat`'s `profile_required` is widened** to prompt for missing geometry, and its
-   identity clause is corrected from `AND` to `OR` in the same change, so a partially profiled
-   Device is re-prompted. This is the one server-side change on the geometry path, and it exists to
-   make the evidence accumulate. Prompting costs nothing: the profile call is idempotent by contract.
+8. **There is no server-side change at all in this phase.** `media_heartbeat` is not modified.
+   Widening `profile_required` to cover geometry — and correcting its identity clause from `AND` to
+   `OR`, so a partially profiled Device is prompted — is real work and still wanted, but it is half
+   of a two-part contract whose other half does not exist. It moves to **ticket 18**, where it ships
+   together with the player change that reads the flag and re-sends the profile, so the pair can be
+   verified end to end instead of a flag being deployed to production with no reader.
 9. **The `screen_ratio` double-write is left in place.** Nothing in this decision reads it, and
    removing it from `media_heartbeat` changes a player contract that still documents the field as
    accepted. Recorded as debt, not fixed here.
 10. **Turning enforcement on is ticket 17**, which now owns both halves — refusing a known mismatch
     and refusing unknown geometry — behind one fleet readiness threshold, because both are gated on
     the same condition: enough Devices reporting complete geometry, and a recovery path that
-    actually prompts. Splitting them would invent a dependency between two switches that flip
+    actually works. Splitting them would invent a dependency between two switches that flip
     together. Ticket 16 builds the module that computes both outcomes; ticket 17 changes what is
-    done with them.
+    done with them; **ticket 18 is what makes the readiness number movable at all**, and is
+    therefore a prerequisite of 17 — but not of 16, and not of 10.
 
 ## Accepted consequence
 
@@ -158,9 +182,11 @@ today, so this reclassifies half the profiled fleet as unprofiled and makes the 
 Devices that have in fact reported.
 
 **Ship no geometry check at all until ticket 17.** The minimal option, and defensible — nothing
-enforces, so why compute. Rejected because the warning is the mechanism that surfaces which Devices
-are misconfigured, and ticket 17 cannot set a readiness threshold against data nobody is collecting.
-The advisory phase is how the fleet becomes measurable.
+enforces, so why compute. Rejected because the warning is what surfaces a misconfigured screen to
+the person who can fix it, at the moment they are choosing it, and because ticket 17's readiness
+review needs the outcome distribution across the already-profiled fleet before anyone can judge
+whether the 15% band is safe to enforce. Note what this reason is **not**: the advisory phase does
+not make unprofiled Devices report. That takes ticket 18.
 
 ## Consequences
 
@@ -170,9 +196,16 @@ The advisory phase is how the fleet becomes measurable.
 - Ticket 10 (`zones[]` payload) loses its stated precondition that "a Device whose geometry is known
   not to fit is refused". Nothing is refused; ticket 10 proceeds on ticket 16's advisory landing.
 - Ticket 17 expands from "unknown geometry fails" to "geometry enforcement turns on", covering both
-  halves behind one readiness threshold, and remains without a number until grooming.
+  halves behind one readiness threshold, and remains without a number until grooming. It gains
+  ticket 18 as a prerequisite.
+- Ticket 18 is created: the player reads `profile_required` and re-sends `device-profile`, and
+  `media_heartbeat` is widened to set the flag on missing geometry. Cross-repo, and on nobody's
+  critical path — 16 and 10 both proceed without it.
 - ADR 0044 §4's staged exception is superseded whole rather than amended again: it distinguished a
   half in force from a half deferred, and after this decision neither half is in force.
-- The `profile_required` widening is the only production-visible change on this path, and its effect
-  is that partially profiled Devices — invisible today — begin re-reporting. Expect
-  `screen_width`/`screen_height` coverage to rise from 4 of 12 without any player-side work.
+- **Nothing in this decision changes production.** Ticket 16 is frontend only; there is no
+  migration, no R0, and no behaviour visible to a player. Geometry coverage stays at 4 of 12 until
+  ticket 18 lands or Devices happen to restart, and ticket 17's readiness number cannot be moved
+  deliberately before then. That is a real cost of this decision and it is accepted knowingly: the
+  alternative was shipping a flag to production that no build fetches, and calling it a recovery
+  path.

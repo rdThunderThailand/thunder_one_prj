@@ -16,12 +16,13 @@
                                │            └──→ 04 publication_type ──→ 05 Activation ──┬──→ 06 Drift
                                │                                                         ├──→ 09 Overlap block ──┐
                                └─→ 11 Layout editor wide-screen tools                    │                       ├──→ 10 zones[] payload
-                       07 prod apply (R0) ───────────────────────────────────────→ 16 Geometry fit ──┴──→ 17 flip
+                                                                                  16 Geometry fit ──┴──→ 17 enforcement ←── 18 player re-reports
 
-07 Device capabilities — no publish semantics reads it, but its PRODUCTION APPLY is a schema
-   prerequisite for 16: prod and develop hold different bodies of media_heartbeat
+07 Device capabilities — no publish semantics reads it; APPLIED to prod 2026-08-27, blocks nothing now
 08 Capability gate — DEFERRED by ADR 0054, not on the critical path
-17 Unknown-geometry flip — waits on a fleet readiness threshold, blocks nothing
+16 Geometry fit — ADVISORY per ADR 0055: warns, never refuses. Frontend only, no migration
+17 Geometry enforcement — both halves; waits on a fleet readiness threshold AND on 18. Blocks nothing
+18 Player re-reports on prompt — cross-repo; the only thing that can move the readiness ratio
 13 Player span — other repo, not this branch
 ```
 
@@ -37,17 +38,18 @@ Four orderings are load-bearing and everything else is convenience:
    Publications get merged into one loop on the same screen with no arbitration (ADR 0044 §8); and
    the Layout ↔ target geometry fit rule, or a composition is laid out against a frame that does not
    fit it (§4). It no longer waits on the capability gate — ADR 0054 defers that — so the critical
-   path is **05 → (09, 16) → 10**, with **07's production apply ahead of 16** as a schema
-   prerequisite. 10 does **not** wait on 17.
+   path is **05 → (09, 16) → 10**. 16 is advisory per ADR 0055 and has no prerequisite of its own,
+   so nothing sits ahead of it. 10 does **not** wait on 17, and neither waits on 18.
 4. **14 before 15, and 15 replaces 03's pages.** ADR 0052 merges the two authoring pages into one.
    15 cannot start until `layouts.kind` exists, because an operator drawing geometry without picking a
    Template needs somewhere private to put it.
 
 07 shares nothing with the Composition track semantically — no publish decision reads what it stores
-(ADR 0054) — but its **production apply is a schema prerequisite for 16**, because `media_heartbeat`
-has diverged between environments and 16 replaces that function. Verified read-only on both,
-2026-08-27. 08 is deferred entirely; 17 waits on the fleet. 14 is additive and shares nothing with 04
-or 05, so it can run at any time.
+(ADR 0054). It was briefly a schema prerequisite for 16, because `media_heartbeat` had diverged
+between environments and 16 replaced that function; **ADR 0055 removed the replacement from 16**
+(it moved to the new ticket 18), and 07 was applied to production on 2026-08-27 regardless, so that
+edge is gone and 16 has no server-side dependency at all. 08 is deferred entirely; 17 waits on the
+fleet *and* on 18. 14 is additive and shares nothing with 04 or 05, so it can run at any time.
 
 ## Phases
 
