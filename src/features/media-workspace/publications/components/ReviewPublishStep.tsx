@@ -337,12 +337,16 @@ export function ReviewPublishStep({
                     />
                     <div>
                       <p className={`text-xs font-medium ${priorityConflicts.hasBlockingConflict ? "text-red-700" : "text-zinc-900"}`}>
-                        {priorityConflicts.hasBlockingConflict
+                        {priorityConflicts.blockingOverlapCount > 0
+                          ? `Publish blocked (${priorityConflicts.blockingOverlapCount} equal-priority layout overlap${priorityConflicts.blockingOverlapCount > 1 ? "s" : ""})`
+                          : priorityConflicts.hasBlockingConflict
                           ? `Publish blocked (${priorityConflicts.higherPriorityCount} higher-priority conflict(s))`
                           : `Priority warning (${conflicts.length})`}
                       </p>
                       <p className="text-[11px] text-zinc-500">
-                        {priorityConflicts.hasBlockingConflict
+                        {priorityConflicts.blockingOverlapCount > 0
+                          ? "Publication นี้กับอีกรายการ Priority เท่ากันอยู่บนจอเดียวกัน และมีฝั่งใดฝั่งหนึ่งเป็น Composition — เปลี่ยน Priority, ตารางเวลา หรือ Target"
+                          : priorityConflicts.hasBlockingConflict
                           ? "Publication นี้จะถูกกดทับอย่างน้อยหนึ่งช่วงเวลา"
                           : "Publish ได้ โดยระบบจะกดทับรายการที่ Priority ต่ำกว่า และรวมรายการ Priority เท่ากันเข้า loop"}
                       </p>
@@ -354,7 +358,9 @@ export function ReviewPublishStep({
                               className="font-medium text-zinc-700 underline decoration-zinc-400 underline-offset-2 hover:decoration-zinc-700"
                             >
                               {conflict.name}
-                            </Link> ({conflict.priority}) — {conflict.would_be_suppressed
+                            </Link> ({conflict.priority}) — {conflict.blocks
+                              ? "same priority + layout; blocks Publish"
+                              : conflict.would_be_suppressed
                               ? "higher priority; blocks Publish"
                               : conflict.would_suppress
                               ? "lower priority; will be suppressed"

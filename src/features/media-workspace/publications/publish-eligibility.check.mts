@@ -67,6 +67,7 @@ const samePriorityConflict: ScheduleConflict = {
   screens: [],
   would_be_suppressed: false,
   would_suppress: false,
+  blocks: false,
 };
 
 // Same-tier publications append to the playback loop, so the overlap is advisory.
@@ -111,9 +112,39 @@ assert.deepEqual(
     higherPriorityCount: 1,
     lowerPriorityCount: 1,
     equalPriorityCount: 1,
+    blockingOverlapCount: 0,
     hasBlockingConflict: true,
   }
 );
+
+// --- ticket 09: equal-priority overlap where either side is a Composition blocks Publish ---
+const blockingOverlap: ScheduleConflict = {
+  ...samePriorityConflict,
+  publication_id: "pub-layout",
+  name: "Menu board",
+  blocks: true,
+};
+
+// On its own: same priority (so no suppress flags), but `blocks` still fails the gate.
+const withBlockingOverlap = computeEligibility({ ...base, conflicts: [blockingOverlap] });
+assert.equal(withBlockingOverlap.checks[4].status, "fail");
+assert.equal(withBlockingOverlap.canPublish, false);
+
+// A plain equal-priority overlap alongside a blocking one still fails.
+const withBlockingAndAdvisory = computeEligibility({
+  ...base,
+  conflicts: [samePriorityConflict, blockingOverlap],
+});
+assert.equal(withBlockingAndAdvisory.checks[4].status, "fail");
+assert.equal(withBlockingAndAdvisory.canPublish, false);
+
+assert.deepEqual(summarizePriorityConflicts([samePriorityConflict, blockingOverlap]), {
+  higherPriorityCount: 0,
+  lowerPriorityCount: 0,
+  equalPriorityCount: 2,
+  blockingOverlapCount: 1,
+  hasBlockingConflict: true,
+});
 
 // --- invalid schedule: index 1 is the schedule check ---
 const invalidSchedule = computeEligibility({

@@ -225,6 +225,11 @@ export type ScheduleConflict = {
   would_suppress: boolean;
   /** If this draft is published, is it the one suppressed for the overlap (override loses)? */
   would_be_suppressed: boolean;
+  /**
+   * Equal priority, shared Media Device, and either side carries a Composition — the two cannot
+   * share a screen, so publishing is refused rather than merged (ticket 09, ADR 0044 §8).
+   */
+  blocks: boolean;
 };
 
 export type DraftAssetItem = {

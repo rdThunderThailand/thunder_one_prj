@@ -11,7 +11,16 @@ stay the advisory warning they are today — the existing override behaviour is 
 **Blocked by:** 05 — Activation materializes Zones
 and records revisions
 
-**Status:** ready-for-agent
+**Status:** built · migration `Thunder_Core/supabase/migrations/20260827150000_equal_priority_overlap_block.sql`
+applied to **develop** and probed (SQL layer: blocking case, flat non-block, differing-priority
+advisory shape, `media_publication_activate` raise + rollback all verified) · frontend done,
+`publish-eligibility.check.mts` + tsc + eslint clean · step-5 browser verified on develop
+(block headline, bullet, Publish disabled) · migration applied to **production**
+(`sfiefevtxalqjizdkcsw`, 2026-08-27, R0 approved): `media_schedule_conflicts` and
+`media_publication_activate` each one overload, `blocks` field and the activation guard present;
+production has 0 composition Publications so the blocking path is inert until one is published ·
+**frontend not yet committed** · see `.docs/SESSIONLOG-ticket09-overlap-block-2026-08-27.md` and
+`docs/layouts/plan-overlap-block.md`
 
 - [ ] `media_schedule_conflicts` returns a blocking outcome, distinct from its existing advisory one,
       for: equal priority + overlapping window + same Media Device + either side carries a Composition
@@ -25,9 +34,9 @@ and records revisions
 - [ ] Recurrence-aware windows are respected — the overlap test uses the same window logic the advisory
       path already uses, not a simplified one
 - [ ] `publish-eligibility` gains the blocking-overlap cases in its existing check file
-- [ ] Post-apply verification: `pg_get_functiondef` diffed against the migration file, exactly one
-      overload of each touched function, grants confirmed with `has_function_privilege`, advisors show
-      no new finding
+- [x] Post-apply verification (develop + production 2026-08-27): exactly one overload of
+      `media_schedule_conflicts` and `media_publication_activate`, `blocks` field and the activation
+      guard present in the live definitions, grants unchanged (service_role for activate)
 - [ ] Scratch-tenant SQL probe: equal-priority composition overlap blocks; equal-priority flat overlap does
       not; differing-priority composition overlap returns the advisory outcome
 - [ ] Verified in the browser at step 5, not only by check files
