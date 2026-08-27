@@ -34,8 +34,10 @@ mount point is unblocked and may ship first)
       hidden — the operator needs to see why something will not air
 - [ ] A timeline scrubber sets `t`; 2× and 4× speed change how fast `t` advances (`<video>` already has
       `playbackRate`)
-- [ ] Decoding capacity is not simulated — whether a device can run three video Zones is the capability
-      gate's answer (ticket 08), not a browser's
+- [ ] Decoding capacity is not simulated and is not enforced during the current publish phase. The
+      preview demonstrates timing and geometry only; it does not prove that a target Device can decode
+      every video Zone concurrently (ADR 0054 — ticket 08 is deferred, so nothing else proves it
+      either)
 - [ ] When step 5 has detected a schedule conflict — `computeEligibility` already receives `conflicts`
       — a banner names how many other Publications will merge into the same loop. Until ticket 09
       lands the banner shows for **every** type; suppressing it for Compositions before then would

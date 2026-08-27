@@ -157,6 +157,11 @@ row and re-send; do not assume partial acceptance.
 
 ## Capability reporting
 
+> **Accepted and stored; not enforced.** ADR 0054 defers device-capacity enforcement until a player
+> build actually reports and the number has been measured on real hardware. The wire shape below is
+> final and a player may send it today, but in this phase the server compares nothing, refuses
+> nothing, and a missing field or a `NULL` blocks no publish.
+
 Capabilities go on the **device-profile** call (`POST /api/core/v1/media/player/device-profile` →
 `public.media_device_profile_set`), not on the 60-second heartbeat. They change only when the app or
 the hardware changes, which is exactly what that endpoint was added for (`096_media_device_profile.sql`).
@@ -173,23 +178,32 @@ the hardware changes, which is exactly what that endpoint was added for (`096_me
 | `multi_zone_v1` | this build renders the `zones[]` payload |
 | `max_video_zones` | how many Zones containing video this build/hardware can decode concurrently |
 
-The server compares `max_video_zones` against **the number of Zones holding at least one item of
-`kind: "video"`**, not the number of video items — Zone loops run independently, so all such Zones
-can be playing video at the same phase.
+When enforcement is eventually turned on, `max_video_zones` will be compared against **the number of
+Zones holding at least one item of `kind: "video"`**, not the number of video items — Zone loops run
+independently, so all such Zones can be playing video at the same phase. That counting rule is
+settled; the enforcement is not.
 
 Cheapest correct implementation: **hardcode both per build.** No runtime probing. Change the number
 when it has been measured on real hardware and it ships with the next release — no migration, no
 backend deploy.
 
-### How the server uses it
+### How the server uses it today
 
-- A device that has not reported `multi_zone_v1` **never receives** a zoned payload; activation is
-  refused at publish time. Write no defensive fallback — silently rendering only the first Zone is
-  the failure mode this gate exists to prevent.
-- A Layout needing more video Zones than a target device's `max_video_zones` is refused the same way.
-- **Unknown counts as failing.** `media_heartbeat`'s existing `profile_required` flag is widened to
-  fire when `player_capabilities` is null, so a device that has never reported is re-prompted on
-  every heartbeat rather than waiting for a reboot. Players must keep honouring `profile_required`.
+- **It stores it, and nothing more.** `media_device_profile_set` accepts `capabilities` and writes
+  `public.assets.player_capabilities`. A non-object value is rejected with
+  `Invalid input: capabilities must be an object`; a call that omits the field leaves the stored
+  value untouched.
+- **Reporting is not required of a player in this phase.** A build that never sends `capabilities` is
+  fully supported.
+- **`NULL`, an absent `capabilities` object, or a missing `max_video_zones` key blocks no publish.**
+  Every Device receives a zoned payload for a composition Publication regardless of what it has or
+  has not reported.
+- `media_heartbeat`'s `profile_required` flag does fire when `player_capabilities` is null, so a
+  Device that has never reported is re-prompted on every heartbeat. Players should keep honouring
+  `profile_required` — it is how the fleet's real capacity gets measured, and that measurement is the
+  precondition for enforcement, not a gate in itself.
+- **Enforcement is deferred** (ADR 0054) until there is a player implementation that reports and a
+  hardware validation of the number. Turning it on is a new ADR and ticket, not a config change.
 
 ## Known prerequisites on the player side
 
@@ -201,8 +215,9 @@ From `AUDIT_Player_Gaps_Priority.md`:
   player has no equivalent abstraction either.
 - **A2 — MPV.** Aurora ran three concurrent video Zones on MPV. This stack uses WPF `MediaElement`
   and `android.widget.VideoView` (`minSdk 24`, no ExoPlayer/media3), targeting Android 7 boxes that
-  commonly expose one hardware H.264 decoder. Until A2, `max_video_zones` will be small, so Layouts
-  with more than one video Zone are refused on a single screen.
+  commonly expose one hardware H.264 decoder. Until A2, a single screen realistically decodes one
+  video Zone. Nothing refuses a Layout that asks for more (ADR 0054) — it will simply play badly on
+  hardware that cannot keep up, which is the accepted risk of this phase.
 - **A6 — multi-monitor. The audit entry is wrong and A6 is largely already done.** The current player
   already subscribes to `SystemEvents.DisplaySettingsChanged` (`App.xaml.cs:112`) with a two-second
   debounce, so plugging in a monitor already re-reports the profile. What is left is one config flag

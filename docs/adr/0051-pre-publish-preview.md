@@ -102,8 +102,10 @@ reasonable thing to want and a separate one; it is not built here.
 
 - **Assets that are unapproved or missing** are drawn as marked placeholders carrying the asset name,
   not hidden. The operator needs to see why something will not air.
-- **Decoding capacity** is not simulated. Whether a device can run three video Zones at once is the
-  capability gate's answer (ADR 0044 §11), not a browser's.
+- **Decoding capacity** is not simulated and is not enforced during the current publish phase. The
+  preview demonstrates timing and geometry only; it does not prove that a target Device can decode
+  every video Zone concurrently. ADR 0044 §11's capability gate was meant to be that answer, and ADR
+  0054 defers it — so in this phase nothing answers it, neither the browser nor the server.
 - **Monitor bezels** cannot be shown — a browser draws one continuous surface. ADR 0050 §3's seam
   guides in the editor are the compensation, and this is why they exist.
 

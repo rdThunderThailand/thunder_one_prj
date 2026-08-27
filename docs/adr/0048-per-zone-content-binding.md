@@ -5,6 +5,9 @@
 content lives on a **Composition**, not on the Publication. `publication_zones`,
 `publications.layout_id` and `media_publication_set_zones` do not exist and are not to be created.
 The parts of its implementation that survive are named in ADR 0049's Consequences.
+Its references to the §11 capability gate are historical design: that gate was never built, and ADR
+0054 defers device-capacity enforcement entirely. Read them as the reasoning of the day, not as a
+requirement.
 **Extended:** `0044-multi-zone-layout.md` §1, §5 · `0045-publication-snapshot-materialization.md` §1, §2
 
 ## Context

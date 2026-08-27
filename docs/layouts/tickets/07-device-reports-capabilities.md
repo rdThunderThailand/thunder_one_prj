@@ -1,11 +1,12 @@
 # 07 — Media Device reports its rendering capabilities
 
 **Spec:** `docs/layouts/spec-composition-content.md` · **Decided by:** `docs/adr/0044-multi-zone-layout.md` §11
+(§11 superseded by `docs/adr/0054-capability-gate-on-publish.md` — this ticket survives as groundwork)
 
 **What to build:** a Media Device tells the server what it can actually render — whether it supports
 multi-zone composition at all, and how many video Zones it can decode at once — and a Device that has
-never said so is told to. Nothing is gated on the answer yet (that is ticket 05); this ticket makes the
-answer exist.
+never said so is told to. **Nothing is gated on the answer** — enforcement is the deferred ticket 08
+(ADR 0054), not this one and not ticket 05. This ticket only makes the answer exist.
 
 **Blocked by:** None — independent of the Composition track, can run in parallel with 01–06.
 

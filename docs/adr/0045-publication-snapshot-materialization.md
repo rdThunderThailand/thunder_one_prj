@@ -208,14 +208,20 @@ from `playback_logs`.
 
 ### 8. Activation resolves its target set once, inside one transaction
 
-Capability and geometry checks (`docs/adr/0044-multi-zone-layout.md` §4, §11) are only meaningful if
-the device set they validate is the same set the Job Targets are created for. Channel membership can
-change between resolving targets, validating them, and inserting `publish_job_targets`.
+Any per-device check — the geometry fit rule (`docs/adr/0044-multi-zone-layout.md` §4) today, and a
+device-capacity check if ADR 0054's deferral is ever lifted — is only meaningful if the device set it
+validates is the same set the Job Targets are created for. Channel membership can change between
+resolving targets, validating them, and inserting `publish_job_targets`.
 
 The lock the existing activation path takes (`070_media_publication_activate_row_lock.sql`) does not
 cover this: it locks the **Publication row only**, not Channel membership, not the target Device
-rows, not the capability rows the geometry and `max_video_zones` checks read. Citing it as the
-guarantee would repeat the mistake §8 exists to prevent.
+rows, not the per-device rows such a check reads. Citing it as the guarantee would repeat the mistake
+§8 exists to prevent.
+
+This requirement outlives the particular check that motivated it. **A capacity check added in a
+later phase must reuse the resolved array this section mandates and must never re-resolve Channel
+membership of its own** — that constraint is the durable part, not the capability gate ADR 0044 §11
+originally cited here, which ADR 0054 has since deferred.
 
 The executable requirement is:
 

@@ -66,10 +66,10 @@ in Layout mode the operator picks a Layout, then binds a source and playback set
 switch mirrors the data model exactly: ADR 0045 §1 gives a flat Publication one implicit full-screen
 Zone, so full-screen is the one-Zone case of the same screen rather than a separate path.
 
-The Layout editor itself therefore never picks a Playlist and has no publish action. The checks that
-need both a Layout and a target set — the capability gate (§11) and the geometry fit rule (§4) —
-cannot resolve at step 2, because targets are chosen at step 3 (`Channels`). They surface at step 3
-and again at step 5 (`Review & Publish`), alongside the equal-priority overlap block (§8), which
+The Layout editor itself therefore never picks a Playlist and has no publish action. The geometry fit
+rule (§4) needs both a Layout and a target set, so it cannot resolve at step 2, because targets are
+chosen at step 3 (`Channels`). It surfaces at step 3 and again at step 5 (`Review & Publish`),
+alongside the equal-priority overlap block (§8), which
 needs the Schedule from step 4.
 
 Rejected: **Layout holds content too** (Aurora's model, and what mockup 2 depicts). It turns a Layout
@@ -240,6 +240,15 @@ validates and inserts against that same set inside one transaction —
 **Counting video Zones.** A Zone has no `kind`; its *items* do. `max_video_zones` is compared against
 **the number of snapshot Zones holding at least one item of `kind: "video"`** — not the number of
 video items. Because Zone loops run independently (§10), every such Zone can be showing video
+> **Superseded by [ADR 0054](0054-capability-gate-on-publish.md) (2026-08-27).** Everything below is
+> retained as the original reasoning and is **no longer in force**. Device-capacity enforcement is
+> deferred: nothing reads `max_video_zones` to decide a publish, and a Device that has never reported
+> is not refused. The groundwork this section specifies — `public.assets.player_capabilities`, the
+> `capabilities` argument on `media_device_profile_set`, and the widened `profile_required` — was
+> built (ticket 07) and remains, storing whatever a player sends without any publish semantics
+> reading it. The counting rule below (Zones holding at least one video *item*, not video items)
+> carries forward to whenever enforcement is reconsidered.
+
 simultaneously at some phase, so the conservative count is the correct one.
 
 Rejected: **gating on `app_version`.** There is no `player_platform` column, and Windows and Android
@@ -308,7 +317,8 @@ ADR 0045 snapshot materialization  →  playback_logs defects  →  player A1 (+
 
 In: the wizard from mockup 3 (template picker → per-Zone content → settings), the seven templates,
 `layouts` / `layout_zones`, per-Zone content binding in the Publication wizard, the `zones[]`
-payload, the equal-priority block (§8), the capability gate (§11).
+payload, the equal-priority block (§8). The capability gate (§11) was in this list and has since
+been deferred out of the release by ADR 0054.
 
 Out: the free-form drag-resize canvas with live preview (mockup 2); folders, tags, summary tiles and
 the three list view modes (mockup 1); user-saved templates; widget Zones (weather / news / clock —
@@ -326,3 +336,4 @@ broadcast-style day-long Program schedule, if genuinely wanted, is its own ADR.
   carries no text field — far cheaper than a layout engine, but it does not serve the lobby case that
   motivated this ADR.
 - The `max_video_zones` each platform build reports, pending measurement on real Android 7 hardware.
+  ADR 0054 defers all enforcement until that measurement exists and a player build actually reports.

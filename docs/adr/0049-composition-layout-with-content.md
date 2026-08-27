@@ -101,7 +101,8 @@ contract and the frontend.
 
 `role` never carried behaviour: `layouts.sql:81` and `contract-v2-zones.md:74` both mark it advisory,
 and ADR 0044:233 states that the capability gate counts video Zones from a Zone's **items**, not from
-its role — *"A Zone has no `kind`; its items do."* It was redundant with `name` from the first commit:
+its role — *"A Zone has no `kind`; its items do."* (That gate is deferred by ADR 0054; the reasoning
+about `role` carrying no behaviour is unaffected either way.) It was redundant with `name` from the first commit:
 `templates.ts:49` writes `zone(1, "Ticker", "ticker", …)`, naming the same fact twice.
 
 Every Zone is equal. A Zone's free-text `name` (already `varchar(120) NOT NULL`) is the only label,
@@ -379,7 +380,11 @@ leaving a dead column that still ships to players.
 - `CONTEXT.md` gains **Composition**, and the Layout entry's *"never content"* wording changes to
   point at Composition rather than at the Publication wizard. Zone's entry loses `role`.
 - ADR 0044 §1 and ADR 0048 are marked superseded. ADR 0044 §2–§11 (no scenes, no overlap, percent
-  geometry, two fit rules, capability gate, equal-priority overlap block) remain in force.
+  geometry, two fit rules, capability gate, equal-priority overlap block) remain in force —
+  **except §11**, whose capability gate was subsequently deferred by ADR 0054. Device capacity is
+  not enforced in this phase: a Composition may be published to a Device that cannot decode all of
+  its video Zones concurrently. Everything else in that list stands, the equal-priority overlap
+  block and both fit rules included.
 - Player contract v2 drops the `role` field from `zones[]`. It was advisory, so no player behaviour
   changes.
 - Two production-affecting migrations are required and are **R0**: widening the `publication_type`

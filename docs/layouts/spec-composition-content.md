@@ -1,4 +1,4 @@
-# Spec — Composition, wide Layouts, capability gate, overlap block, `zones[]` payload, preview
+# Spec — Composition, wide Layouts, overlap block, `zones[]` payload, preview
 
 **Written** 2026-08-26 (replaces `spec-per-zone-content.md`, written against the superseded model) ·
 repos: `thunder_one_prj` + `Thunder_Core` · branch `feat/layout`
@@ -6,7 +6,8 @@ repos: `thunder_one_prj` + `Thunder_Core` · branch `feat/layout`
 `docs/adr/0050-wide-layouts-across-monitors.md` · `docs/adr/0051-pre-publish-preview.md` ·
 `docs/adr/0044-multi-zone-layout.md` §2–§12 · `docs/adr/0045-publication-snapshot-materialization.md`
 **Its frontend flow is superseded by ADR 0052 / ticket 15.** Everything below about *entities, RPCs,
-snapshots, capability gate, overlap block and the `zones[]` payload* still stands. What no longer
+snapshots, overlap block and the `zones[]` payload* still stands. (The capability gate that this
+document originally carried is **deferred by ADR 0054** and is not built in this phase.) What no longer
 holds is the **two-page authoring shape**: a separate `/media-workspace/compositions` list and editor,
 and picking a Layout from a dropdown beside the wireframe. Those merge into one page at
 `/media-workspace/layouts` — read `docs/adr/0052-merged-layout-authoring.md` before building any
@@ -31,7 +32,8 @@ Publication cannot hold a Playlist in one Zone and images in another. ADR 0049 r
 putting content on a new entity, the **Composition**.
 
 Five further failure modes sit behind shipping this, and all of them are invisible until a screen is
-already wrong:
+already wrong. **Four are closed in the current phase. Device decoding capacity is knowingly deferred
+by ADR 0054 and remains a documented rollout risk** — see *Known limitation* under Further Notes:
 
 - Editing a Layout today deletes and re-inserts every Zone row, so `layout_zones.id` is not stable.
   Anything that references a Zone loses its reference the next time somebody renames one.
@@ -69,10 +71,12 @@ wholesale replace and becomes a diff that keeps Zone ids, and a Zone bound by an
 be deleted. Geometry gains a decimal place at every one of the four points on its path, so a wide
 Layout across three monitors can be expressed exactly.
 
-Targets are chosen at step 3 and the Schedule at step 4, so the two checks that need both are raised
-where they can be answered: step 3 warns as soon as a chosen Channel contains a Media Device that
-cannot render this Layout, and step 5 blocks publishing on that, and on an equal-priority overlap
-with another composition Publication on the same Media Device.
+Targets are chosen at step 3 and the Schedule at step 4, so the checks that need both are raised
+where they can be answered: step 3 warns when a chosen Channel contains a Media Device whose
+resolution or orientation does not fit this Layout (the geometry fit rule, ADR 0044 §4), and step 5
+blocks publishing on an equal-priority overlap with another composition Publication on the same
+Media Device. **Device decoding capacity is not among them** — ADR 0054 defers that check until a
+player build reports capability and the number has been measured on real hardware.
 
 At publish, the composition is frozen into the Publication snapshot together with the revisions of
 everything it materialized, so a later edit surfaces as a **drift indicator** offering re-publish
@@ -157,13 +161,13 @@ draft back at its real proportions with every Zone looping on its own length fro
 
 **Gates**
 
-31. As a Media Operator, I want step 3 to warn me when a Channel I selected contains a Media Device
-    that cannot render this Layout, naming the Devices and the reason, so that I can change target or
-    Layout before I get to the end.
-32. As a Media Operator, I want a Media Device that has never reported its capabilities treated as
-    unable, so that an unknown player is never assumed to be a capable one.
-33. As a Media Operator, I want step 5 to refuse to publish while an incapable Media Device is
-    targeted, and the server to refuse it again if the UI is bypassed.
+> **Stories 31–33 are deferred by ADR 0054 and are not built in this phase.** They keep their numbers
+> so cross-references stay valid and the requirement is not lost:
+> *31 — step 3 warns when a selected Channel holds a Media Device that cannot render this Layout;
+> 32 — a Device that has never reported counts as unable; 33 — step 5 and the server both refuse an
+> incapable target.* Nothing checks device decoding capacity in this phase. The geometry fit rule at
+> step 3 and the equal-priority overlap block at step 5 are unaffected and remain in scope.
+
 34. As a Media Operator, I want step 5 to refuse to publish when an equal-priority Publication already
     overlaps this one on a targeted Media Device and either side uses a Layout, naming the other
     Publication and its window.
@@ -191,7 +195,8 @@ draft back at its real proportions with every Zone looping on its own length fro
     duration and its own `slots[]` per Zone, so that I can compose the screen without resolving
     anything.
 43. As a Media Device, I want to report my rendering capabilities when I register my profile, so that
-    the server can decide what I may be sent.
+    the fleet's real capacity can be measured before anything is gated on it. *(Deferred groundwork:
+    ticket 07 built the storage and the argument; ADR 0054 means nothing reads the value yet.)*
 44. As a Media Device, I want the heartbeat to tell me my profile is required when I have never
     reported capabilities, so that I know to send it without being reconfigured.
 45. As a Media Device driving three monitors, I want the option to span the virtual desktop, so that
@@ -233,8 +238,9 @@ There is no `position` column: Zone order is `layout_zones.position`, read by jo
 - `UNIQUE (layout_id, position)` on `layout_zones` is dropped and recreated
   `DEFERRABLE INITIALLY DEFERRED` — a diff that reorders two Zones violates it mid-statement, and
   `SET CONSTRAINTS` cannot defer a constraint not declared deferrable.
-- `public.assets` gains `player_capabilities jsonb NULL` (ADR 0044 §11). NULL means *never reported*
-  and is a publish failure, not a pass. Note `public.assets` — Media Devices are `public.assets` rows
+- `public.assets` gains `player_capabilities jsonb NULL` — **deferred groundwork**. It stores
+  whatever a player reports and **no publish semantics read it** (ADR 0054, superseding ADR 0044
+  §11's "NULL is a publish failure"). Note `public.assets` — Media Devices are `public.assets` rows
   per migration `096`, not `media_core.assets`.
 - The snapshot records what it materialized from: `composition_revision`, `layout_updated_at`, and one
   `playlist_revision` per snapshot Zone.
@@ -291,12 +297,14 @@ isolation is filtered inside the RPC, not by RLS.
   `composition_revision`, `layout_updated_at` and each Zone's `playlist_revision`. A Publication with
   no `composition_id` continues to produce the single implicit full-screen Zone of ADR 0045 §1. It
   refuses an incomplete Composition, a non-`active` Composition, a Composition from another tenant,
-  and re-runs the capability gate and the overlap block inside the same transaction — the UI checks
-  are advisory, the RPC is the enforcement point.
+  and re-runs the overlap block inside the same transaction — the UI checks are advisory, the RPC is
+  the enforcement point. It runs **no** device-capacity check (ADR 0054).
 - **`media_device_profile_set`** gains a `capabilities` argument stored on `assets.player_capabilities`,
-  carrying at least `multi_zone_v1` and `max_video_zones`.
+  carrying at least `multi_zone_v1` and `max_video_zones` — *deferred groundwork, written but never
+  read by a publish decision (ADR 0054).*
 - **`media_heartbeat`** returns `profile_required` = true when the calling Device's
-  `player_capabilities IS NULL`, and does not otherwise change its response.
+  `player_capabilities IS NULL`, and does not otherwise change its response — *deferred groundwork:
+  it prompts a Device to report, which gates nothing and builds the evidence enforcement will need.*
 - **`media_schedule_conflicts`** gains a blocking outcome distinct from the existing advisory one:
   equal priority + overlapping window + same Media Device + either side carries a Composition.
   Differing priorities keep today's `would_suppress` / `would_be_suppressed` shape untouched.
@@ -311,8 +319,6 @@ isolation is filtered inside the RPC, not by RLS.
   `PUT /media/compositions/:id/zones`, `PUT /media/compositions/:id/status` → the four RPCs above.
   Zod validates shape only; membership and tenancy stay in the RPC, matching the existing loose-zod
   convention.
-- `POST /media/publications/capability-check` → returns, for a Composition and a set of Channel ids,
-  the Media Devices that cannot render it and why.
 - The jobs route must sign asset URLs by walking `result.zones[].slots` as well as `result.slots`, or
   every asset in a zoned payload arrives with `file.url = null`.
 - Existing `PUT /media/publications/:id/content` is not modified.
@@ -385,8 +391,9 @@ added.** Prior art: `layouts/geometry.check.mts`, `publications/publish-eligibil
 - `geometry.check.mts` moves to thousandths — note it currently asserts
   `roundPercent(33.34) === 33.3` and will break loudly, which is the good case — and gains the
   `parseAspectRatio` error cases and the even-split remainder.
-- `publish-eligibility.check.mts` gains the `composition` branch, the capability block and the
-  equal-priority overlap block.
+- `publish-eligibility.check.mts` gains the `composition` branch and the equal-priority overlap
+  block. No capability block — ADR 0054 defers it, so `publish-eligibility.ts` grows no capability
+  row and its positional check array is otherwise unchanged.
 - `step-validation` gains the composition-type step-2 completeness case.
 - The preview's clock gets one check: item index and offset for a given `t` across two Zones of
   different lengths, including a zero-length Zone.
@@ -430,11 +437,15 @@ migration applied over MCP is live immediately.
 - Sequencing that actually matters: Zone-id stability and geometry precision come **first**, because
   every Composition binding depends on a Zone id that survives a Layout save and the snapshot's
   geometry type caps the whole feature. Then the Composition entity, then its editor, then the
-  Publication type, then activation. The `zones[]` payload ships **last** — it must not reach a screen
-  before the capability gate that protects it, which is the whole argument of ADR 0044 §9.
-- The capability gate's `max_video_zones` values per platform are still unmeasured. Until real
-  Android 7 numbers exist, the gate reads the reported number and refuses the unknown — it does not
-  need the table of values to be correct to be safe.
+  Publication type, then activation, then the equal-priority overlap block, and the `zones[]` payload
+  last of those. It no longer waits on a capability gate — ADR 0054 defers that — so the order is
+  **05 → (09, 16) → 10**, where 16 is the Layout ↔ target geometry fit rule, itself preceded by
+  ticket 07's production apply as a schema prerequisite.
+- **Known limitation — concurrent video capacity is not checked anywhere.** `max_video_zones` per
+  platform is unmeasured, no player build reports it, and ADR 0054 defers enforcement rather than
+  gating on a number nobody has taken. A Composition may therefore be published to a Device that
+  cannot decode all of its video Zones at once; playback may stutter, drop video, or fail on that
+  Device. This is a knowingly accepted rollout risk, not an oversight.
 - Nobody has measured what a real three-monitor machine reports for `screen_width`. ADR 0050 §5
   predicts 1920 until the window is made to span.
 - `apply_migration` assigns its own timestamp, so local migration filenames will not match production

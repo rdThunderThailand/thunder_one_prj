@@ -42,7 +42,7 @@ nothing with 04 or 05, so it can run at any time too.
 
 | Phase | Tickets | Repos | Ends when |
 |---|---|---|---|
-| A — foundations | 01, 07 | both | a Zone survives a Layout rename; a Device reports capabilities |
+| A — foundations | 01, 07 | both | a Zone survives a Layout rename; a Device *can* report capabilities (stored, unused) |
 | B — the entity | 02, 03 | both | an operator can author and activate a Composition |
 | C — publishing | 04, 05 | both | a composition Publication activates and snapshots correctly |
 | B2 — one page *(runs after C)* | 14, 15 | both | geometry and content are authored on one page, reachable from the sidebar |
@@ -92,8 +92,11 @@ reasons, re-confirmed 2026-08-26 when ADR 0052 §8 was written:
 - **B1, the player's multi-Zone renderer, does not exist.** Everything here is verifiable up to the
   payload; none of it can be seen on a real screen until B1 lands. That is the actual ship gate for
   the three-monitor customer, and it is in neither of these repos.
-- `max_video_zones` per platform is unmeasured. The gate reads the reported number and refuses the
-  unknown, which is safe without the table being right.
+- **Rollout risk: server-side publish does not guarantee decoder capacity.** `max_video_zones` per
+  platform is unmeasured and no player build reports it, so ADR 0054 defers enforcement rather than
+  gate on a number nobody has taken. A composition Publication may reach a Device that cannot decode
+  all of its video Zones concurrently; playback may stutter, drop video, or fail there. Knowingly
+  accepted for this phase. See **Deferred** below.
 - Nobody has measured what a real three-monitor machine reports for `screen_width`. ADR 0050 §5
   predicts 1920 until the window is made to span.
 - `apply_migration` assigns its own timestamp, so local migration filenames will not match production

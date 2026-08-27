@@ -49,8 +49,8 @@ The detail page has `Insert to Zone`, `Content Source: Playlist → Corporate Ma
 geometry and Zone roles **only**, and content is bound per Zone when an operator builds a
 Publication, so Publication stays the single place that decides what plays where and when.
 
-Publishing from the Layout editor also routes around Schedule, target selection, the capability gate
-and the priority-overlap block — every one of which lives on the Publication path.
+Publishing from the Layout editor also routes around Schedule, target selection, the geometry fit
+rule and the priority-overlap block — every one of which lives on the Publication path.
 
 **Decided (2026-08-25): keep the screen, change what it is** — recorded in ADR 0044 §1.
 
@@ -61,9 +61,11 @@ binds a source plus playback settings per Zone. `Save Layout` and `Publish` are 
 wizard footer owns navigation. The Layout editor keeps geometry and settings and never sees a
 Playlist. Nothing in the visual design is wasted; it moves one route over.
 
-Where the errors surface: the capability gate and the geometry fit rule need a target set, which is
-step 3 (`Channels`), so they cannot fire at step 2 — they appear at step 3 and again at step 5. The
-equal-priority overlap block also needs the Schedule from step 4, so it is a step 5 check.
+Where the errors surface: the geometry fit rule needs a target set, which is step 3 (`Channels`), so
+it cannot fire at step 2 — it appears at step 3 and again at step 5. The equal-priority overlap block
+also needs the Schedule from step 4, so it is a step 5 check. **No capability warning at step 3 and
+no capability block at step 5** — ADR 0054 defers device-capacity enforcement, so the wizard holds no
+Device capability state of its own and offers no override.
 
 ### 2.2 Folders, tags and Trash on the list page (mockup 2)
 
@@ -183,7 +185,8 @@ Existing `ContentStep.tsx` gains a full-screen / Layout switch. In Layout mode: 
 media/playlist picker, canvas = read-only Layout geometry with click-to-select, right panel =
 `Content` (source Playlist) + `Behavior` (play mode, repeat, start position). No `Publish` button.
 `step-validation.ts` gains the rule that every Zone of the chosen Layout has a source bound. The
-capability gate and fit check surface at step 3, the overlap block at step 5.
+geometry fit check surfaces at step 3 and the overlap block at step 5. Device capacity is neither
+warned about nor blocked on, per ADR 0054.
 
 ### Sequencing
 
