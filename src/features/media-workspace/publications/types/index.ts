@@ -17,6 +17,7 @@ export type Priority = (typeof PRIORITIES)[number];
 export type { Campaign, MediaAsset, Tag, PlaylistItem, PlaylistDetail } from "@/types/domain";
 export type { PublishJobStatus } from "@/types/domain";
 import type { PublishJobStatus } from "@/types/domain";
+import type { PublicationDriftCheck } from "../publication-drift";
 
 export type BasicInfoForm = {
   name: string;
@@ -133,6 +134,9 @@ export type PublicationDetail = {
   playlist?: { id: string; name: string } | null;
   /** Set only for publication_type = 'composition' (ADR 0049 §5, §12). */
   composition?: { id: string; name: string; status: string } | null;
+  /** Recorded-vs-live revisions of the airing snapshot; null for a flat Publication and for
+   *  one never activated. Compare with `publicationDrift` (ADR 0049 §11). */
+  drift_check?: PublicationDriftCheck | null;
   tags: string[];
   created_at?: string;
   activated_at?: string;

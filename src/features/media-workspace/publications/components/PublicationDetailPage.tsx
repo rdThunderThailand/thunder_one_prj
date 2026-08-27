@@ -7,13 +7,33 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { cancelPublication, deletePublication, fetchPublication } from "../services/publications-api";
+import {
+  cancelPublication,
+  deletePublication,
+  fetchPublication,
+  republishPublication,
+} from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
+import { publicationDrift, type DriftFinding } from "../publication-drift";
 import type { PlaylistDetail, PublicationDetail } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { DeliveryProgress } from "./DeliveryProgress";
+
+/** Names what changed, so re-publishing is a decision rather than a guess (ADR 0049 §11). */
+function describeDrift(finding: DriftFinding): string {
+  switch (finding.level) {
+    case "composition":
+      return "Composition ถูกแก้ไขหลังเผยแพร่";
+    case "layout":
+      return "Layout ของ Composition ถูกแก้ไขหลังเผยแพร่";
+    case "playlist":
+      return finding.zoneName
+        ? `Playlist "${finding.playlistName}" ในโซน "${finding.zoneName}" ถูกแก้ไขหลังเผยแพร่`
+        : `Playlist "${finding.playlistName}" ถูกแก้ไขหลังเผยแพร่`;
+  }
+}
 
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "—";
@@ -35,6 +55,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
   const [confirming, setConfirming] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [republishConfirming, setRepublishConfirming] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -94,6 +115,23 @@ export function PublicationDetailPage({ id }: { id: string }) {
     }
   };
 
+  const handleRepublish = async () => {
+    try {
+      setActionBusy(true);
+      setActionError(null);
+      await republishPublication(id);
+      // A fresh snapshot and a fresh job, so every recorded revision and the whole delivery
+      // table are new — re-read rather than patching the copy in hand.
+      const fresh = await fetchPublication(id);
+      setDetail(fresh);
+      setRepublishConfirming(false);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "เผยแพร่ซ้ำไม่สำเร็จ");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card className="p-6">
@@ -135,6 +173,10 @@ export function PublicationDetailPage({ id }: { id: string }) {
   const playlistItems = playlist?.items
     ? [...playlist.items].sort((a, b) => a.position - b.position)
     : [];
+
+  // Empty unless this is an active composition Publication whose Composition, Layout or one of
+  // its Zone Playlists changed since it was published (ADR 0049 §11).
+  const drift = publicationDrift(detail);
 
   return (
     <div className="flex flex-col gap-6">
@@ -222,6 +264,49 @@ export function PublicationDetailPage({ id }: { id: string }) {
 
       {actionError && (
         <p className="text-sm text-red-600 dark:text-red-400">{actionError}</p>
+      )}
+
+      {/* The snapshot rule is not weakened: what is airing is still the frozen copy taken at
+          publish. This says the source has moved on since, and offers the one action that
+          closes the gap — a deliberate re-publish (ADR 0049 §7). */}
+      {drift.length > 0 && (
+        <Card className="border-amber-300 p-5 dark:border-amber-800">
+          <h2 className="text-base font-semibold text-amber-700 dark:text-amber-500">
+            มีการแก้ไขหลังเผยแพร่
+          </h2>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            สิ่งที่ออกจอตอนนี้ยังเป็นเวอร์ชันที่เผยแพร่ไว้ เผยแพร่ซ้ำเพื่อส่งของใหม่ขึ้นจอ
+          </p>
+          <ul className="mt-3 list-inside list-disc text-sm text-zinc-700 dark:text-zinc-300">
+            {drift.map((finding, idx) => (
+              <li key={idx}>{describeDrift(finding)}</li>
+            ))}
+          </ul>
+          <div className="mt-4 flex items-center gap-2">
+            {republishConfirming ? (
+              <>
+                <Button variant="primary" disabled={actionBusy} onClick={handleRepublish}>
+                  {actionBusy ? "กำลังเผยแพร่ซ้ำ…" : "ยืนยันเผยแพร่ซ้ำ?"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={actionBusy}
+                  onClick={() => setRepublishConfirming(false)}
+                >
+                  ไม่
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                disabled={actionBusy}
+                onClick={() => setRepublishConfirming(true)}
+              >
+                เผยแพร่ซ้ำ
+              </Button>
+            )}
+          </div>
+        </Card>
       )}
 
       {/* A draft has never been activated, so there are no publish jobs to report on —
