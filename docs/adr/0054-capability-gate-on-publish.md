@@ -62,8 +62,11 @@ as a capability check. Worse than no gate, because it looks like one.
    decision will need.
    > **Correction (2026-08-27), see `0055-geometry-fit-is-advisory.md`.** The second half of that
    > sentence is wrong. Prompting accumulates nothing: neither player build reads the heartbeat
-   > response body, and `device-profile` is sent once at startup and never again. `profile_required`
-   > has no reader on either platform, so widening it changes a value nobody fetches. The flag stays
+   > response body, and `device-profile` is sent only on the players' own triggers (app start,
+   > settings change, display change; entering the player shell) — never in response to a heartbeat.
+   > `profile_required` has no reader on either platform, so widening it changes a value nobody
+   > fetches. It is also **stuck on**: it fires when `player_capabilities IS NULL` and no build
+   > sends capabilities, so it can never read `false`. The flag stays
    > as it is — this does not undo ticket 07 — but it is not evidence-gathering, and **ticket 18**
    > is what makes it one, by shipping the player half alongside the server half.
 
