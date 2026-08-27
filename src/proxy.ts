@@ -11,7 +11,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (token && isAuthPage) {
+  // Keep /login reachable as the recovery path when a revoked or expired token
+  // outlives its cookie. Redirecting on cookie presence alone traps the 401
+  // redirect from getSession() in a /login <-> / loop.
+  if (token && pathname === "/register") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
