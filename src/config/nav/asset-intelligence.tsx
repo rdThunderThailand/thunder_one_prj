@@ -22,23 +22,30 @@
 // Status/Scan QR pages once (fixed 2026-08-18 by nesting them under
 // my-assets/) — don't reintroduce it for a new page.
 //
-// Every remaining persona's nav is fully wired except "Settings",
-// intentionally left inert everywhere (no settings page exists for any
-// role) — see asset-intelligence/issues/asset-intelligence/requests/asset-intelligence/assets's RegisterAssetPage for
-// Employee, asset-intelligence/departments's Assets/Team/Requests/Approvals/Reports pages
-// for Department Manager, and asset-intelligence/assets's Locations/Work Orders/
-// Maintenance/Inspections/Analytics/Reports pages (plus Add Asset/Pass to
-// Department) for Asset/IT Manager.
+// Every remaining persona's nav is fully wired except "Settings"/items noted
+// below as not built yet — see asset-intelligence/issues/asset-intelligence/requests/asset-intelligence/assets's RegisterAssetPage for
+// Employee, and asset-intelligence/departments's Assets/Team/Requests/Approvals/Reports pages
+// for Department Manager.
+//
+// Asset/IT Manager's nav was restructured 2026-08-26 (Nie) from a flat link
+// list into sections, matching the "Asset Admin" dashboard mockup exactly:
+// Home (the new dashboard, replacing the old combined overview+list page),
+// then ทรัพย์สิน (Assets)/โครงสร้างทรัพย์สิน (Asset Structure)/การบริการ
+// (Service) sections plus a standalone คลังความรู้ (Knowledge Base) link.
+// Only Home, All Assets, Locations, and Reports have real pages so far —
+// Work Orders/Maintenance/Inspections/Analytics existed before this
+// redesign and still have real pages, just no nav entry anymore (not part
+// of this mockup's IA; not deleted, reachable by direct URL only). The rest
+// (Allocation/Borrow&Return/Transfer/Count/Categories/Warranty/Knowledge
+// Base) are inert until their own mockups arrive.
 import {
   BoxIcon,
   ChartIcon,
   CheckCircleIcon,
-  CheckIcon,
   EnvelopeIcon,
-  GlobeIcon,
   GridIcon,
   HelpIcon,
-  ListIcon,
+  HomeIcon,
   MonitorIcon,
   SearchIcon,
   SettingsIcon,
@@ -48,29 +55,49 @@ import type { NavConfig, NavItem } from "./types";
 
 const assetManagerNav: NavConfig = {
   overviewItem: {
-    label: "Assets",
+    label: "หน้าหลัก",
     href: "/asset-intelligence/assets",
-    icon: <BoxIcon className="h-4 w-4 shrink-0" />,
+    icon: <HomeIcon className="h-4 w-4 shrink-0" />,
   },
-  sections: [],
-  standaloneLinks: [
-    { label: "Locations", href: "/asset-intelligence/assets/locations" },
-    { label: "Work Orders", href: "/asset-intelligence/assets/work-orders" },
-    { label: "Maintenance", href: "/asset-intelligence/assets/maintenance" },
-    { label: "Inspections", href: "/asset-intelligence/assets/inspections" },
-    { label: "Analytics", href: "/asset-intelligence/assets/analytics" },
-    { label: "Reports", href: "/asset-intelligence/assets/reports" },
-    { label: "Settings" },
-  ] satisfies NavItem[],
-  standaloneIcons: [
-    <GlobeIcon key="locations" />,
-    <ListIcon key="work-orders" />,
-    <SettingsIcon key="maintenance" />,
-    <CheckIcon key="inspections" />,
-    <ChartIcon key="analytics" />,
-    <ChartIcon key="reports" />,
-    <SettingsIcon key="settings" />,
+  sections: [
+    {
+      label: "ทรัพย์สิน",
+      icon: <BoxIcon className="h-4 w-4" />,
+      items: [
+        { label: "ทรัพย์สินทั้งหมด", href: "/asset-intelligence/assets/all" },
+        { label: "การจัดสรรทรัพย์สิน", href: "/asset-intelligence/assets/allocation" },
+        { label: "การคืนและส่งมอบ", href: "/asset-intelligence/assets/borrow-return" },
+        { label: "การโอนย้าย", href: "/asset-intelligence/assets/transfer" },
+        { label: "การตรวจนับทรัพย์สิน", href: "/asset-intelligence/assets/count" },
+      ] satisfies NavItem[],
+    },
+    {
+      label: "โครงสร้างทรัพย์สิน",
+      icon: <GridIcon className="h-4 w-4" />,
+      items: [
+        { label: "ประเภททรัพย์สิน", href: "/asset-intelligence/assets/categories" },
+        { label: "สถานที่และพื้นที่", href: "/asset-intelligence/assets/locations" },
+      ] satisfies NavItem[],
+    },
+    {
+      label: "การบริการ",
+      icon: <SettingsIcon className="h-4 w-4" />,
+      items: [
+        { label: "Warranty / Lifecycle", href: "/asset-intelligence/assets/warranty" },
+        { label: "รายงาน", href: "/asset-intelligence/assets/reports" },
+      ] satisfies NavItem[],
+    },
+    // Restructured 2026-08-26 (Nie) to match the Categories mockup's
+    // sidebar: "คลังความรู้" moved from a bottom standaloneLink into its
+    // own "ช่วยเหลือ" section, same collapsible shape as the other three.
+    {
+      label: "ช่วยเหลือ",
+      icon: <HelpIcon className="h-4 w-4" />,
+      items: [{ label: "คลังความรู้", href: "/asset-intelligence/assets/knowledge-base" }] satisfies NavItem[],
+    },
   ],
+  standaloneLinks: [],
+  standaloneIcons: [],
 };
 
 const departmentManagerNav: NavConfig = {

@@ -30,7 +30,7 @@ export const APPS: AppConfig[] = [
   {
     id: "asset-intelligence",
     label: "Asset Intelligence",
-    tagline: "Business OS",
+    tagline: "Asset Workspace",
     icon: <BoxIcon className="h-4 w-4" />,
     basePath: "/asset-intelligence",
   },

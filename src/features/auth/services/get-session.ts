@@ -22,6 +22,10 @@ export interface Session {
    *  playlists page can tell "mine" from "everyone's" without a second lookup. */
   userId: string | null;
   tenantName: string | null;
+  /** `public.tenants.id` — needed for any additional tenant-scoped Core call a
+   *  page makes beyond session/membership (e.g. `GET /tenants/{id}/assets/*`).
+   *  Pair with `getAuthToken()` below rather than re-deriving the token. */
+  tenantId: string | null;
   roleType: RoleType | null;
   /** The winning role's `roles.code` — e.g. "operator_technician", "manager_it_asset",
    * or a tenant-authored persona code like "CEO". Finer-grained than roleType (the tier);
@@ -116,7 +120,7 @@ export async function getSession(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, tenantName: null, ...NO_ROLE };
+    return { userName: FALLBACK_NAME, userId: null, tenantName: null, tenantId: null, ...NO_ROLE };
   }
 
   if (sessionRes.status === 401) {
@@ -126,7 +130,7 @@ export async function getSession(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, tenantName: null, ...NO_ROLE };
+    return { userName: FALLBACK_NAME, userId: null, tenantName: null, tenantId: null, ...NO_ROLE };
   }
 
   const body = await sessionRes.json().catch(() => null);
@@ -136,11 +140,19 @@ export async function getSession(): Promise<SessionResult> {
   const role = await resolveRole(membershipsRes, tenantId);
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, tenantName, ...role };
+    return { userName: FALLBACK_NAME, userId: null, tenantName, tenantId, ...role };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
-  return { userName: resolveUserName(user), userId, tenantName, ...role };
+  return { userName: resolveUserName(user), userId, tenantName, tenantId, ...role };
+}
+
+/** Same `to_at` cookie `getSession()` reads, exposed for pages that need to
+ *  make an additional tenant-scoped Core call beyond session/membership
+ *  (e.g. the Asset List page's list/summary/filters endpoints) without a
+ *  second round-trip to derive it. */
+export async function getAuthToken(): Promise<string | null> {
+  return (await cookies()).get("to_at")?.value ?? null;
 }
 
 /** One membership row from `GET /me/memberships`, loosely typed — it's an external response. */
