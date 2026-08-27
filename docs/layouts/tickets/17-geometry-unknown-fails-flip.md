@@ -9,7 +9,7 @@ targeted Media Device's reported geometry does **not fit** the Layout, and when 
 reported** geometry at all. Both conditions flip together; everything they depend on was built in
 ticket 16, which computes both outcomes and today only warns about them.
 
-**Why both halves are here, and not one in ticket 16:** ADR 0055 §10. They are gated on the same
+**Why both halves are here, and not one in ticket 16:** ADR 0055 §11. They are gated on the same
 condition — enough Devices reporting complete geometry, and a recovery path the server can actually
 trigger (ticket 18; today it cannot ask at all) — so splitting them invents a dependency between two
 switches that flip together. Ticket 16 is complete the moment the warning ships — that is what
@@ -19,13 +19,13 @@ schedule: it waits on the fleet, and on player work in another repo.
 **Blocked by:**
 - 16 — Layout ↔ target geometry fit (the fit module and the warnings)
 - **18 — a prompted Device actually re-reports its profile.** Without it there is no way to drive the
-  readiness ratio at all: no player build reads `profile_required`, so an unprofiled Device is never
-  asked again and coverage moves only when a screen happens to restart. A threshold nobody can move
-  is not a gate, it is a wait.
+  readiness ratio at all: no player build reads `profile_required`, so nothing the server does can
+  ask an unprofiled Device, and coverage moves only on the fleet's own schedule. A threshold nobody
+  can move is not a gate, it is a wait.
 
 **Blocks:** nothing. Ticket 10 deliberately does not wait on this — see ticket 16's *Blocks*.
 
-**Status:** blocked — waits on a fleet readiness threshold that is **not yet set**.
+**Status:** blocked — on ticket 18, and on a fleet readiness threshold that is **not yet set**.
 
 ## The readiness threshold
 
@@ -35,8 +35,8 @@ re-run of the measurement below, and write the chosen figure into this ticket be
 **Baseline, read-only, 2026-08-27** — complete geometry means both `screen_width` and
 `screen_height` are non-null. `orientation` is **not** part of it: ADR 0055 derives orientation from
 the two dimensions rather than trusting the column, so a Device is measurable the moment it reports
-them. Re-run the query below rather than reusing this number; the `profile_required` widening in
-ticket 16 is expected to move it without any player-side work.
+them. Re-run the query below rather than reusing this number — and note that nothing moves it
+deliberately until ticket 18 ships.
 
 | Environment | Complete | Total |
 |---|---|---|

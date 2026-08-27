@@ -129,10 +129,34 @@ from the dimensions and ignoring `screen_ratio` matches what the players actuall
    of a two-part contract whose other half does not exist. It moves to **ticket 18**, where it ships
    together with the player change that reads the flag and re-sends the profile, so the pair can be
    verified end to end instead of a flag being deployed to production with no reader.
-9. **The `screen_ratio` double-write is left in place.** Nothing in this decision reads it, and
+
+9. **`profile_required` means "something you can supply is missing", and drops its capabilities
+   clause** (decided 2026-08-27, implemented by ticket 18):
+
+   ```sql
+   'profile_required', (
+       v_row.os_version IS NULL OR v_row.machine_name IS NULL
+       OR v_row.screen_width IS NULL OR v_row.screen_height IS NULL
+   )
+   ```
+
+   The clause being removed is `OR v_row.player_capabilities IS NULL`. **It makes the flag
+   permanently true on every real Device:** neither `DeviceInfo` (Windows) nor `PlayerDeviceProfile`
+   (Android) has a `capabilities` field, so a player that reports its geometry perfectly is still
+   told `profile_required: true` on the next heartbeat, forever. A client that loops until the flag
+   clears never terminates, and rate limiting only hides that.
+
+   A prompt with no reachable `false` is not a prompt. Capability prompting returns with **ticket
+   08**, alongside the build that would answer it — that is the point at which the condition can be
+   re-added and mean something. ADR 0054 Decision 9 kept the clause on the grounds that prompting
+   "accumulates evidence"; that rationale is already retracted there, so this removes a condition
+   whose justification has gone rather than reversing a live decision.
+
+   The flag stays a boolean, and stays at **`data.profile_required`** inside the API envelope.
+10. **The `screen_ratio` double-write is left in place.** Nothing in this decision reads it, and
    removing it from `media_heartbeat` changes a player contract that still documents the field as
    accepted. Recorded as debt, not fixed here.
-10. **Turning enforcement on is ticket 17**, which now owns both halves — refusing a known mismatch
+11. **Turning enforcement on is ticket 17**, which now owns both halves — refusing a known mismatch
     and refusing unknown geometry — behind one fleet readiness threshold, because both are gated on
     the same condition: enough Devices reporting complete geometry, and a recovery path that
     actually works. Splitting them would invent a dependency between two switches that flip

@@ -207,11 +207,15 @@ backend deploy.
   > a display change; Android on entering the player shell — and never in response to a heartbeat.
   > The flag is written by the server and read by nobody.
   >
-  > It is also **permanently `true`** on every real Device: it fires when `player_capabilities IS
-  > NULL`, and neither `DeviceInfo` (Windows) nor `PlayerDeviceProfile` (Android) has a
-  > `capabilities` field to fill it with. **Do not write a player that loops until the flag clears
-  > — as the contract stands today it never will.** Making the flag both readable and terminable is
-  > **ticket 18**. See `docs/adr/0055-geometry-fit-is-advisory.md`.
+  > It is also **permanently `true`** on every real Device as the contract stands today: it fires on
+  > `player_capabilities IS NULL`, and neither `DeviceInfo` (Windows) nor `PlayerDeviceProfile`
+  > (Android) has a `capabilities` field to fill it with. **Do not write a player that loops until
+  > the flag clears until ticket 18 has shipped** — it never will before then.
+  >
+  > **Ticket 18 changes the flag's meaning** (ADR 0055 §9) to *"something you can supply is
+  > missing"*: identity or geometry, with the capabilities clause removed, so it reaches `false`
+  > once a build reports what it has. Capability prompting comes back with ticket 08. Treat that as
+  > the contract to write players against.
 - **Enforcement is deferred** (ADR 0054) until there is a player implementation that reports and a
   hardware validation of the number. Turning it on is a new ADR and ticket, not a config change.
 

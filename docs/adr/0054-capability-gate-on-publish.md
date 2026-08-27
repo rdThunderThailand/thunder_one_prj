@@ -66,7 +66,10 @@ as a capability check. Worse than no gate, because it looks like one.
    > settings change, display change; entering the player shell) — never in response to a heartbeat.
    > `profile_required` has no reader on either platform, so widening it changes a value nobody
    > fetches. It is also **stuck on**: it fires when `player_capabilities IS NULL` and no build
-   > sends capabilities, so it can never read `false`. The flag stays
+   > sends capabilities, so it can never read `false`. **ADR 0055 §9 therefore removes the
+   > capabilities clause** — re-adding it belongs to ticket 08, alongside a build that can answer
+   > it. The column and the `capabilities` argument stay exactly as this decision left them. The flag
+   > stays
    > as it is — this does not undo ticket 07 — but it is not evidence-gathering, and **ticket 18**
    > is what makes it one, by shipping the player half alongside the server half.
 
