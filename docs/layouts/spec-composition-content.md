@@ -294,7 +294,8 @@ isolation is filtered inside the RPC, not by RLS.
   and `source_layout_zone_id` recorded, then each Zone's Playlist expanded into
   `publication_snapshot_items` with `file_version_no` pinned (ADR 0045 §4) and
   `COALESCE(pi.duration_seconds, ma.duration_seconds)` as it does today. It records
-  `composition_revision`, `layout_updated_at` and each Zone's `playlist_revision`. A Publication with
+  `composition_revision`, `layout_updated_at` and each Zone's `playlist_revision`. It enforces the
+  Layout ↔ target geometry fit rule (ADR 0044 §4, ticket 16) against the resolved target set. A Publication with
   no `composition_id` continues to produce the single implicit full-screen Zone of ADR 0045 §1. It
   refuses an incomplete Composition, a non-`active` Composition, a Composition from another tenant,
   and re-runs the overlap block inside the same transaction — the UI checks are advisory, the RPC is

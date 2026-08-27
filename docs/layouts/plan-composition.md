@@ -14,11 +14,14 @@
                                │            │                    14 Template kind → 15 Merged editor
                                │            │                              │
                                │            └──→ 04 publication_type ──→ 05 Activation ──┬──→ 06 Drift
-                               │                                                         │
-                               └─→ 11 Layout editor wide-screen tools                    ├──→ 09 Overlap block
-                                                                                         │
-07 Device capabilities (parallel, independent) ──────────────────→ 08 Capability gate ───┴──→ 10 zones[] payload
+                               │                                                         ├──→ 09 Overlap block ──┐
+                               └─→ 11 Layout editor wide-screen tools                    │                       ├──→ 10 zones[] payload
+                       07 prod apply (R0) ───────────────────────────────────────→ 16 Geometry fit ──┴──→ 17 flip
 
+07 Device capabilities — no publish semantics reads it, but its PRODUCTION APPLY is a schema
+   prerequisite for 16: prod and develop hold different bodies of media_heartbeat
+08 Capability gate — DEFERRED by ADR 0054, not on the critical path
+17 Unknown-geometry flip — waits on a fleet readiness threshold, blocks nothing
 13 Player span — other repo, not this branch
 ```
 
@@ -28,15 +31,23 @@ Four orderings are load-bearing and everything else is convenience:
    fresh on every Layout save, so binding anything before 01 lands guarantees the bindings are wiped
    the first time somebody renames a Zone. Precision rides along because it alters the same two
    tables and the same RPC.
-2. **05 before 08, 09 and 10.** The gates and the payload all read the snapshot.
-3. **10 last.** The `zones[]` payload must not reach a screen before the capability gate that protects
-   it — the whole argument of ADR 0044 §9.
+2. **05 before 09 and 10.** The overlap block and the payload both read the snapshot.
+3. **09 and 16 before 10.** The `zones[]` payload must not reach a screen before the guards that make
+   one `zones[]` sufficient and correct: the equal-priority overlap block, or two composition
+   Publications get merged into one loop on the same screen with no arbitration (ADR 0044 §8); and
+   the Layout ↔ target geometry fit rule, or a composition is laid out against a frame that does not
+   fit it (§4). It no longer waits on the capability gate — ADR 0054 defers that — so the critical
+   path is **05 → (09, 16) → 10**, with **07's production apply ahead of 16** as a schema
+   prerequisite. 10 does **not** wait on 17.
 4. **14 before 15, and 15 replaces 03's pages.** ADR 0052 merges the two authoring pages into one.
    15 cannot start until `layouts.kind` exists, because an operator drawing geometry without picking a
    Template needs somewhere private to put it.
 
-07 shares nothing with the Composition track and can run at any time. 14 is additive and shares
-nothing with 04 or 05, so it can run at any time too.
+07 shares nothing with the Composition track semantically — no publish decision reads what it stores
+(ADR 0054) — but its **production apply is a schema prerequisite for 16**, because `media_heartbeat`
+has diverged between environments and 16 replaces that function. Verified read-only on both,
+2026-08-27. 08 is deferred entirely; 17 waits on the fleet. 14 is additive and shares nothing with 04
+or 05, so it can run at any time.
 
 ## Phases
 
@@ -46,7 +57,8 @@ nothing with 04 or 05, so it can run at any time too.
 | B — the entity | 02, 03 | both | an operator can author and activate a Composition |
 | C — publishing | 04, 05 | both | a composition Publication activates and snapshots correctly |
 | B2 — one page *(runs after C)* | 14, 15 | both | geometry and content are authored on one page, reachable from the sidebar |
-| D — safety | 06, 08, 09 | both | drift is visible; incapable and contending targets are refused |
+| D — safety | 06, 09, 16 | both | drift is visible; contending targets and geometrically unfit targets are refused |
+| D2 — the flip *(waits on the fleet)* | 17 | both | unprofiled targets are refused too |
 | E — the screen | 10 | Thunder_Core | a zoned payload reaches a player |
 | F — polish | 11, 12 | frontend | wide Layouts are drawable; drafts are watchable |
 | — | 13 | player repo | separate instruction |
@@ -59,8 +71,8 @@ Phase B2 was added on 2026-08-26 after the UX mockups were read against the ship
 for that reason, and keeps the B2 name only because the dependency graph puts 14/15 off 03. Three
 reasons, re-confirmed 2026-08-26 when ADR 0052 §8 was written:
 
-- **04 is the only thing blocking 05, and 05 blocks 06, 08, 09 and 10.** B2 is a leaf; nothing waits
-  on it. Clearing the trunk first keeps five tickets from queueing behind a decision.
+- **04 is the only thing blocking 05, and 05 blocks 06, 09, 16 and 10.** B2 is a leaf; nothing waits
+  on it. Clearing the trunk first keeps the whole downstream from queueing behind a decision.
 - **04's frontend is written and uncommitted right now.** Ticket 15 moves the very routes it links
   to, so running B2 first would rewrite the working tree under 44 modified files and force 04's
   browser verification to be redone after the move.
@@ -106,6 +118,20 @@ reasons, re-confirmed 2026-08-26 when ADR 0052 §8 was written:
   Fill Mode and Mute, drag-and-drop media, and the editor toolbar. ADR 0052 §7 records the reason each
   is deferred and which are refused outright (`role`). Tickets 06–13 have **not** been audited against
   the mockups; only 04, 05 and the Layout/Composition pages were.
+
+## Deferred
+
+- **Device-capacity enforcement (`max_video_zones`), ticket 08.** Deferred by ADR 0054. Nothing
+  computes a required video-Zone count, nothing reads a reported one, there is no capability-check
+  endpoint, no wizard warning or block, and no operator override. Reactivating it needs a player
+  build that reports, a measurement on real Android 7 hardware, a rollout policy for Devices that
+  have never reported, and a fresh decision on whether anything may override it.
+- **Ticket 17, the unknown-geometry flip.** Held behind a fleet readiness threshold that is not yet
+  set. It blocks nothing, ticket 10 included.
+
+Ticket 07's production apply is **no longer deferred** — see the note above the phase table. It is
+still R0 and still needs its own approval, but it now sits ahead of ticket 16 rather than with the
+enforcement phase.
 
 ## Working tree at the time of writing
 

@@ -7,13 +7,29 @@
 own geometry, loop duration and slot list — so it can lay out the screen without resolving anything. A
 screen showing anything else receives the flat payload it receives today, unchanged, indefinitely.
 
-This ticket ships last on purpose: the payload must not reach a screen before the guards that make a
-single `zones[]` sufficient (tickets 05 and 06) are in place.
+This ticket ships after the guards that make a single `zones[]` sufficient and correct: the snapshot
+it reads (ticket 05), the equal-priority overlap block that stops two composition Publications being
+merged into one loop with no arbitration (ticket 09), and the Layout ↔ target geometry fit rule that
+stops a composition being laid out against a frame the server has never seen (ticket 16). It no
+longer waits on the capability gate — ADR 0054 defers that.
 
-**Blocked by:** 05 — Activation materializes Zones and records revisions · 08 — Publish is gated on
-reported capability · 09 — Equal-priority overlap blocks publish
+**Blocked by:** 05 — Activation materializes Zones and records revisions · 09 — Equal-priority
+overlap blocks publish · 16 — Layout ↔ target geometry fit (which in turn needs ticket 07's
+production apply as a schema prerequisite)
 
-**Status:** ready-for-agent
+**Known limitation:** the server contract and the poll payload are verifiable here; player rendering
+is a separate layer of verification in another repo. There is **no per-device capacity enforcement**
+(ADR 0054), so a zoned payload reaches a Device whatever it can decode. **Do not report real playback
+as verified until it has been tested against a real player build** — a correct payload is not a
+rendered screen.
+
+**Status:** blocked — ready-for-agent after 05, 09 and 16 are complete. It does **not** wait on
+ticket 17, the flip to refusing unprofiled Devices, which is held behind a fleet readiness threshold.
+
+**Known limitation inherited from ticket 16:** until ticket 17 lands, a Device that has never
+reported its geometry still receives a zoned payload. That is the same class of knowingly accepted
+risk as the deferred decoder capacity above, and it narrows on its own as the fleet reports — ticket
+16 widens `profile_required` so those Devices are actually asked.
 
 - [ ] `media_job_poll` branches on the polled Job's snapshot: no Composition → `slots[]`; with one →
       `zones[]`

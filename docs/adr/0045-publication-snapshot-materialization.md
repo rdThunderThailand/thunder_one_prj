@@ -226,8 +226,10 @@ originally cited here, which ADR 0054 has since deferred.
 The executable requirement is:
 
 - resolve the device set **once**, into a CTE or an array, at the top of the activation transaction;
-- run every capability and geometry check, and the `publish_job_targets` insert, against that same
-  CTE or array — never by re-querying Channel membership;
+- run every **currently enabled** per-device check and the `publish_job_targets` insert against that
+  same CTE or array — never by re-querying Channel membership. Geometry fit is a current-release
+  requirement defined by ADR 0044 §4 and implemented by ticket 16 before ticket 10 may proceed; any
+  future capacity check inherits this requirement only once a new ADR enables it;
 - if the implementation cannot stay a single statement, take `FOR SHARE` row locks on the resolved
   target Device rows, or persist the checked capability result alongside the Job, so a concurrent
   membership or profile change cannot invalidate a check that already passed.

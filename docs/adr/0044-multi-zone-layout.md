@@ -118,10 +118,40 @@ Fit is **two separate rules**, not one reused rule:
 **One deliberate divergence, stated because it is a rule change and not a reuse:** today a Device
 with `orientation` or `screen_width`/`screen_height` still `NULL` — never profiled — simply *skips*
 both checks (102's own rationale notes the editor "could only ever see NULL and skip both checks").
-For Layout-bearing activation, unknown geometry **fails** instead, matching §11's treatment of
-unknown capability. Silently skipping a check on an unprofiled Device is acceptable when the cost is
-a stretched full-screen image; it is not acceptable when the cost is a composition laid out against
-a frame the server has never seen.
+For Layout-bearing activation, unknown geometry **fails** instead. Silently skipping a check on an
+unprofiled Device is acceptable when the cost is a stretched full-screen image; it is not acceptable
+when the cost is a composition laid out against a frame the server has never seen.
+
+> **Note (2026-08-27).** This rule originally justified itself by analogy to §11's treatment of
+> unknown capability. §11 is superseded by ADR 0054, so that analogy no longer carries it and the
+> rule now rests on the sentence above alone. The two cases do differ: geometry reporting works and
+> is already in the field — the device-profile call populates `orientation` and
+> `screen_width`/`screen_height`, and real players send them — whereas no player build reports
+> capabilities at all.
+>
+> **But the recovery path is not yet an invariant.** `media_heartbeat` computes `profile_required` as
+> `(os_version IS NULL AND machine_name IS NULL) OR player_capabilities IS NULL` — geometry appears
+> nowhere in it, and the identity half is an `AND`. A Device missing only `orientation` or its
+> dimensions is never re-prompted. Today's fleet appears to self-heal only because every
+> geometry-less Device happens to be missing its identity fields too: a property of the current data,
+> not a contract the SQL guarantees. **Ticket 16 owns widening that flag** and may not lean on the
+> recovery until it has.
+>
+> **The blast radius is real and must be sized first:** geometry is complete on 4 of 13 Media Devices
+> on `develop` and 4 of 12 on production — 8 production Devices would be refused a composition
+> today.
+>
+> **Staged exception (2026-08-27), amending this section's rule.** "Unknown geometry fails" is
+> adopted but not switched on at once:
+> - **A Device whose reported geometry is known not to fit is refused immediately** — ticket 16
+>   This half of §4 is in force as written.
+> - **A Device that has never reported geometry warns at step 3 and still publishes**, until
+>   `profile_required` has been widened to prompt for geometry and a production readiness threshold
+>   is met — ticket 17. Until then this half of §4 is documented and unenforced, deliberately.
+>
+> The exception exists because the recovery path described above does not yet run, so enforcing on
+> day one would refuse most of the fleet with no mechanism to clear it — the same failure ADR 0054
+> rejected for capability. It expires when ticket 17 lands; it is not a permanent relaxation.
 
 ### 5. The composition is materialized into the Publication snapshot
 
@@ -210,6 +240,15 @@ duration as its modulus.
 
 ### 11. Publish is gated on reported capability, not on version strings
 
+> **Superseded by [ADR 0054](0054-capability-gate-on-publish.md) (2026-08-27).** Everything below is
+> retained as the original reasoning and is **no longer in force**. Device-capacity enforcement is
+> deferred: nothing reads `max_video_zones` to decide a publish, and a Device that has never reported
+> is not refused. The groundwork this section specifies — `public.assets.player_capabilities`, the
+> `capabilities` argument on `media_device_profile_set`, and the widened `profile_required` — was
+> built (ticket 07) and remains, storing whatever a player sends without any publish semantics
+> reading it. The counting rule below (Zones holding at least one video *item*, not video items)
+> carries forward to whenever enforcement is reconsidered.
+
 Activating a Layout-bearing Publication is refused when any target Media Device has not reported the
 required capability, or reports a lower `max_video_zones` than the Layout needs.
 
@@ -240,15 +279,6 @@ validates and inserts against that same set inside one transaction —
 **Counting video Zones.** A Zone has no `kind`; its *items* do. `max_video_zones` is compared against
 **the number of snapshot Zones holding at least one item of `kind: "video"`** — not the number of
 video items. Because Zone loops run independently (§10), every such Zone can be showing video
-> **Superseded by [ADR 0054](0054-capability-gate-on-publish.md) (2026-08-27).** Everything below is
-> retained as the original reasoning and is **no longer in force**. Device-capacity enforcement is
-> deferred: nothing reads `max_video_zones` to decide a publish, and a Device that has never reported
-> is not refused. The groundwork this section specifies — `public.assets.player_capabilities`, the
-> `capabilities` argument on `media_device_profile_set`, and the widened `profile_required` — was
-> built (ticket 07) and remains, storing whatever a player sends without any publish semantics
-> reading it. The counting rule below (Zones holding at least one video *item*, not video items)
-> carries forward to whenever enforcement is reconsidered.
-
 simultaneously at some phase, so the conservative count is the correct one.
 
 Rejected: **gating on `app_version`.** There is no `player_platform` column, and Windows and Android
