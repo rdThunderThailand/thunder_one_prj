@@ -150,9 +150,18 @@ when the cost is a composition laid out against a frame the server has never see
 > **But the recovery path is not yet an invariant.** `media_heartbeat` computes `profile_required` as
 > `(os_version IS NULL AND machine_name IS NULL) OR player_capabilities IS NULL` — geometry appears
 > nowhere in it, and the identity half is an `AND`. A Device missing only `orientation` or its
-> dimensions is never re-prompted. Today's fleet appears to self-heal only because every
+> dimensions is never re-prompted.
+>
+> **Corrected 2026-08-27 (ADR 0055): the flag is not ticket 16's to widen, and widening it would
+> not have prompted anyone.** No player build reads the heartbeat response body at all, so
+> `profile_required` has no reader on either platform. The widening moved to **ticket 18**, which
+> ships it with the player half. Read the rest of this note as the reasoning that was believed at
+> the time, not as a description of ticket 16.
+>
+> Today's fleet appears to self-heal only because every
 > geometry-less Device happens to be missing its identity fields too: a property of the current data,
-> not a contract the SQL guarantees. **Ticket 16 owns widening that flag** and may not lean on the
+> not a contract the SQL guarantees. **Ticket 18 owns widening that flag** (it was ticket 16's until
+> ADR 0055; see the correction above) and may not lean on the
 > recovery until it has.
 >
 > **The blast radius is real and must be sized first:** geometry is complete on 4 of 13 Media Devices

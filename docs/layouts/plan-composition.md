@@ -128,12 +128,15 @@ reasons, re-confirmed 2026-08-26 when ADR 0052 §8 was written:
   endpoint, no wizard warning or block, and no operator override. Reactivating it needs a player
   build that reports, a measurement on real Android 7 hardware, a rollout policy for Devices that
   have never reported, and a fresh decision on whether anything may override it.
-- **Ticket 17, the unknown-geometry flip.** Held behind a fleet readiness threshold that is not yet
-  set. It blocks nothing, ticket 10 included.
+- **Ticket 17, geometry enforcement** (both halves, per ADR 0055). Held behind a fleet readiness
+  threshold that is not yet set, and behind ticket 18. It blocks nothing, ticket 10 included.
+- **Ticket 18, the player recovery path.** Cross-repo. No player build reads `profile_required`, so
+  the server cannot ask an unprofiled Device for its geometry at all. Prerequisite of 17 only.
 
-Ticket 07's production apply is **no longer deferred** — see the note above the phase table. It is
-still R0 and still needs its own approval, but it now sits ahead of ticket 16 rather than with the
-enforcement phase.
+Ticket 07's production apply is **done** (2026-08-27, R0 approved). It briefly sat ahead of ticket 16
+as a schema prerequisite; ADR 0055 removed the `media_heartbeat` replacement from 16 altogether, so
+that edge no longer exists and 16 has no server-side dependency. Ticket 18 inherits the aligned
+environments.
 
 ## Working tree at the time of writing
 

@@ -78,13 +78,23 @@ build looks at the heartbeat response body:
   boolean solely to set the status string to `"Online"` (`Services/HeartbeatService.cs:32`).
 - Android keeps `httpStatusCode` from the heartbeat and nothing else
   (`playerapi/PlayerApiClient.kt:84`); the caller logs success (`MainActivity.kt:1595`).
-- Both call `device-profile` **once at startup** and never again — on Android, literally
-  `sendDeviceProfileOnce(reason = "player_shell")` (`MainActivity.kt:307`).
 
-So `profile_required` has no reader on either platform. Widening it changes a value nobody fetches.
-The only mechanism that moves geometry coverage today is a device restart, which is precisely what
-ticket 17 already described as drifting "upward by luck". A server-side flag cannot create a
-recovery path on its own; the player half has to exist, and it does not.
+`device-profile` is sent on **the players' own lifecycle and UI triggers only, never in response to
+a heartbeat**: Windows on `ContentRendered`, on a settings change, and on a debounced display change
+(`App.xaml.cs:90`); Android on entering the player shell, which several paths reach
+(`MainActivity.kt:297`, called from four call sites). So coverage is not frozen until a reboot — a
+monitor change or a settings edit moves it too — but **nothing the server does can ask for it**.
+
+That is the property that matters here. `profile_required` has no reader on either platform, so
+widening it changes a value nobody fetches, and no server-side change can create a recovery path on
+its own: the player half has to exist, and it does not.
+
+A second finding from the same reading, recorded because it independently supports Decision 1
+below: Windows computes `orientation` from width and height rather than storing it separately
+(`Models/DeviceInfo.cs`), and **neither build sends `screen_ratio` at all** — both send an
+`aspect_ratio` key, which is not in the route's schema and is dropped. Every `screen_ratio` value in
+the database therefore comes from the heartbeat, never from the profile call. Deriving orientation
+from the dimensions and ignoring `screen_ratio` matches what the players actually do.
 
 ## Decision
 
@@ -190,9 +200,9 @@ not make unprofiled Devices report. That takes ticket 18.
 
 ## Consequences
 
-- Ticket 16 shrinks: a pure fit module with its check file, two wizard warnings, and one
-  `media_heartbeat` migration. No `media_publication_activate` change, no `publish-eligibility`
-  change, no new refusal anywhere.
+- Ticket 16 shrinks to frontend only: a pure fit module with its check file and the wizard warnings.
+  No migration, no `media_publication_activate` change, no `publish-eligibility` change, no new
+  refusal anywhere, and no R0.
 - Ticket 10 (`zones[]` payload) loses its stated precondition that "a Device whose geometry is known
   not to fit is refused". Nothing is refused; ticket 10 proceeds on ticket 16's advisory landing.
 - Ticket 17 expands from "unknown geometry fails" to "geometry enforcement turns on", covering both
@@ -204,8 +214,9 @@ not make unprofiled Devices report. That takes ticket 18.
 - ADR 0044 §4's staged exception is superseded whole rather than amended again: it distinguished a
   half in force from a half deferred, and after this decision neither half is in force.
 - **Nothing in this decision changes production.** Ticket 16 is frontend only; there is no
-  migration, no R0, and no behaviour visible to a player. Geometry coverage stays at 4 of 12 until
-  ticket 18 lands or Devices happen to restart, and ticket 17's readiness number cannot be moved
-  deliberately before then. That is a real cost of this decision and it is accepted knowingly: the
+  migration, no R0, and no behaviour visible to a player. Geometry coverage sits at 4 of 12 and can
+  only drift — a monitor change, a settings edit, or re-entering the player shell will move it, and
+  nothing the server does can. Ticket 17's readiness number therefore cannot be *driven* to a target
+  until ticket 18 lands. That is a real cost of this decision and it is accepted knowingly: the
   alternative was shipping a flag to production that no build fetches, and calling it a recovery
   path.

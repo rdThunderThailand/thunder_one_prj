@@ -10,11 +10,11 @@ reported** geometry at all. Both conditions flip together; everything they depen
 ticket 16, which computes both outcomes and today only warns about them.
 
 **Why both halves are here, and not one in ticket 16:** ADR 0055 §10. They are gated on the same
-condition — enough Devices reporting complete geometry, and a recovery path that actually prompts —
-so splitting them invents a dependency between two switches that flip together. Ticket 16 is complete
-the moment the warning ships and `profile_required` prompts for geometry; that is what unblocks
-ticket 10 and it should be closable then. This ticket cannot be closed on the same schedule: it waits
-on the fleet, which is outside anyone's control here.
+condition — enough Devices reporting complete geometry, and a recovery path the server can actually
+trigger (ticket 18; today it cannot ask at all) — so splitting them invents a dependency between two
+switches that flip together. Ticket 16 is complete the moment the warning ships — that is what
+unblocks ticket 10, and it should be closable then. This ticket cannot be closed on the same
+schedule: it waits on the fleet, and on player work in another repo.
 
 **Blocked by:**
 - 16 — Layout ↔ target geometry fit (the fit module and the warnings)
@@ -51,13 +51,13 @@ from public.assets a
 join public.device_credentials dc on dc.asset_id = a.id and dc.is_revoked = false;
 ```
 
-The ratio changes only when a player profiles for its own reasons — a boot, a config change, a
-monitor being plugged in — which is how the 4 in each column got there. What does not exist is a
-**guaranteed or bounded convergence mechanism**, and ticket 16 does not create one: widening
-`profile_required` was moved out of it precisely because no player build reads the heartbeat
-response body (ADR 0055; the sources are listed in ticket 18). Until **ticket 18** ships both halves,
-nothing asks an unprofiled Device again and the ratio can drift upward by luck but cannot be driven
-to a target.
+The ratio changes only when a player profiles for **its own** reasons — Windows on app start, a
+settings change or a display change; Android on entering the player shell — which is how the 4 in
+each column got there. What does not exist is a **server-triggered** mechanism, and ticket 16 does
+not create one: widening `profile_required` was moved out of it precisely because no player build
+reads the heartbeat response body (ADR 0055; the sources are listed in ticket 18). Until **ticket
+18** ships both halves, the ratio drifts on the fleet's own schedule and cannot be driven to a
+target on ours.
 
 ## Acceptance criteria
 
@@ -68,8 +68,11 @@ to a target.
 - [ ] **Readiness is three things, not one.** Coverage alone does not establish that refusing is
       safe, because the 15% band was chosen from a four-device sample:
       1. **Coverage** — the ratio below meets the threshold.
-      2. **Distribution** — the `deviceFit` outcome of every profiled Device against every active
-         Layout, counted. How many Devices would this refusal actually block, and on which Layouts.
+      2. **Distribution** — the `deviceFit` outcome across the pairs that can actually occur:
+         within one tenant, and only Device × Layout pairs a Publication could really target (the
+         Device is in a Channel, the Layout belongs to an `active` Composition). A full cross-product
+         over the whole system counts combinations nobody can publish and inflates the answer. How
+         many Devices would this refusal actually block, and on which Layouts.
       3. **Review** — each Device in that blocked set is confirmed to be a genuine misconfiguration
          (a portrait panel really is receiving a landscape Layout) rather than a band that is too
          tight. A single false positive here is the signal to stop and re-examine the band, not to

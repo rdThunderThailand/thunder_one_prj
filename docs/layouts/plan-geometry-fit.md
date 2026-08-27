@@ -49,13 +49,17 @@ Measured read-only on production (`sfiefevtxalqjizdkcsw`) and `develop` (`ftfmok
    warning is therefore unobservable on production until one is published; `develop` has one
    composition Publication (`7b6cb708-…`, tenant `22222222-…`) used as the fixture for tickets 05,
    06 and 09.
-7. **No player build reads the heartbeat response body**, and `device-profile` is sent once at
-   startup only — verified in both player repos, sources listed in ticket 18. This is why there is
-   no migration here.
-8. **ESLint forbids synchronous `setState` in a `useEffect` body**, and follows into async callees.
+7. **No player build reads the heartbeat response body.** `device-profile` is sent on the players'
+   own lifecycle triggers (Windows: start, settings change, display change; Android: entering the
+   player shell) and **never in response to a heartbeat**. Verified in both player repos, sources in
+   ticket 18. This is why there is no migration here.
+8. **`compositions.layout_id` is `NOT NULL REFERENCES media_core.layouts(id) ON DELETE RESTRICT`** —
+   it cannot be nulled to simulate a failed layout fetch. Task 4 Step 6 forces that path on the
+   client.
+9. **ESLint forbids synchronous `setState` in a `useEffect` body**, and follows into async callees.
    Use a promise chain and `setState` inside `.then()`.
-9. **There is no test runner.** Checks are `*.check.mts` run as `node <file>.check.mts`.
-10. **`usePlaylistPreview.ts:18` is the house pattern** for "fetch a thing keyed by a draft id" —
+10. **There is no test runner.** Checks are `*.check.mts` run as `node <file>.check.mts`.
+11. **`usePlaylistPreview.ts:18` is the house pattern** for "fetch a thing keyed by a draft id" —
     keyed state, stale responses discarded, failure distinguished from absence. Task 2 copies it.
 
 ---
@@ -382,32 +386,49 @@ fixtures.
 - [ ] **Step 1: ask before browser-testing.** Per the working agreement, at every verify point:
       offer (1) I drive the browser, (2) a checklist you run, (3) skip. Options 2 and 3 count as
       unverified and force the PR to Draft.
-- [ ] **Step 2: stage the fixture on `develop`.** Record the current values first, then flip one
-      Device in a Channel the composition Publication targets to portrait:
+- [ ] **Step 2: preflight — find the exact rows, by id.** Never mutate by `name`: it is not unique
+      and carries no tenant guard, so a bare `WHERE name = 'ThunderOne Screen 04'` can hit Devices in
+      other tenants. Resolve the id **and** confirm Channel membership first, or the warning will
+      correctly not fire and the run proves nothing:
 
 ```sql
--- capture before touching anything
-select id, name, screen_width, screen_height from public.assets where name = 'ThunderOne Screen 04';
--- orientation mismatch against the 16:9 Layout
-update public.assets set screen_width = 1080, screen_height = 1920 where name = 'ThunderOne Screen 04';
+select a.id, a.tenant_id, a.name, a.screen_width, a.screen_height, ch.id as channel_id, ch.name as channel
+from public.assets a
+join media_core.channel_devices cd on cd.device_id = a.id
+join media_core.channels ch on ch.id = cd.channel_id
+where a.tenant_id = '22222222-...'   -- the fixture tenant, not a guess
+order by a.name;
 ```
-      For the unprofiled sentence, either null both dimensions on a second Device in the same
-      Channel, or pick one of the nine Devices that already have none — but confirm it is actually a
-      member of a selected Channel, or the warning will correctly not fire and the check proves
-      nothing.
-- [ ] **Step 3: step 3.** Open the composition Publication fixture (`7b6cb708-…`), select that
-      Channel, and confirm both sentences appear and name the right Devices.
-- [ ] **Step 4: step 5.** Confirm the same warning renders **and the Publish button stays enabled**.
-      This is the acceptance criterion most likely to regress, since every neighbouring warning in
-      that component does gate.
-- [ ] **Step 5: the failed-check path.** Confirm the "could not check" advisory renders rather than
-      silence — easiest by pointing `fetchLayout` at a bad id in the browser devtools, or by
-      temporarily nulling the Composition's `layout_id` on `develop` and restoring it.
-- [ ] **Step 6: no regression on the flat path.** A Publication with no Composition shows none of
+
+- [ ] **Step 3: write the restore statement before mutating anything**, with the values from Step 2
+      filled in literally, and keep it in the session log. Then stage the mismatch by id:
+
+```sql
+-- RESTORE (write this first, with real values):
+-- update public.assets set screen_width = 1920, screen_height = 1080 where id = '<uuid>';
+
+update public.assets set screen_width = 1080, screen_height = 1920 where id = '<uuid>';   -- portrait
+update public.assets set screen_width = null, screen_height = null where id = '<other-uuid>';  -- unprofiled
+```
+      **If any later step fails or is abandoned, run the restore immediately** — do not leave it to
+      Step 7. A half-finished verification must not leave `develop` misreporting its screens.
+- [ ] **Step 4: step 3 of the wizard.** Open the composition Publication fixture (`7b6cb708-…`),
+      select that Channel, and confirm both sentences appear and name the right Devices.
+- [ ] **Step 5: step 5 of the wizard.** Confirm the same warning renders **and the Publish button
+      stays enabled**. This is the acceptance criterion most likely to regress, since every
+      neighbouring warning in that component does gate.
+- [ ] **Step 6: the failed-check path.** Confirm the "could not check" advisory renders rather than
+      silence. **Do not do this by nulling `compositions.layout_id`** — the column is
+      `NOT NULL REFERENCES media_core.layouts(id) ON DELETE RESTRICT`, so the update simply fails,
+      and anything that did work would be tampering with a foreign key to fake a fetch error. Force
+      it on the client instead: block the exact `GET /api/proxy/media/layouts/<id>` request in
+      devtools, or make `fetchLayout` throw behind a one-line local edit reverted in the same step.
+- [ ] **Step 7: no regression on the flat path.** A Publication with no Composition shows none of
       the three sentences at either step.
-- [ ] **Step 7: restore `develop`** — every value captured in Step 2, plus any Publication status the
-      probes changed. Verify the restore with the same `select`, do not assume it.
-- [ ] **Step 8: `.docs/SESSIONLOG-ticket16-geometry-fit-<date>.md`**, stating plainly which layers
+- [ ] **Step 8: restore `develop`** — run the statement written in Step 3, plus any Publication
+      status the probes changed, then **re-run Step 2's `select` and confirm the values came back**.
+      Do not assume the restore worked.
+- [ ] **Step 9: `.docs/SESSIONLOG-ticket16-geometry-fit-<date>.md`**, stating plainly which layers
       were verified and which were not, and update ticket 16's Status line.
 
 ---
