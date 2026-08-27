@@ -159,7 +159,7 @@ export function PlaylistSidePanel({
 
       <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
         <Link
-          href={`/playlists/create?id=${playlist.id}`}
+          href={`/media-workspace/playlists/create?id=${playlist.id}`}
           className={buttonClasses("secondary")}
         >
           Edit Playlist
