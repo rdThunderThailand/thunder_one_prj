@@ -73,10 +73,12 @@ Layout across three monitors can be expressed exactly.
 
 Targets are chosen at step 3 and the Schedule at step 4, so the checks that need both are raised
 where they can be answered: step 3 warns when a chosen Channel contains a Media Device whose
-resolution or orientation does not fit this Layout (the geometry fit rule, ADR 0044 §4), and step 5
-blocks publishing on an equal-priority overlap with another composition Publication on the same
-Media Device. **Device decoding capacity is not among them** — ADR 0054 defers that check until a
-player build reports capability and the number has been measured on real hardware.
+orientation or aspect ratio does not fit this Layout, or that has never reported its geometry (the
+geometry fit rule, ADR 0044 §4 as superseded by ADR 0055 — it **warns and never refuses** in this
+phase), and step 5 blocks publishing on an equal-priority overlap with another composition
+Publication on the same Media Device. **Device decoding capacity is not among them** — ADR 0054
+defers that check until a player build reports capability and the number has been measured on real
+hardware.
 
 At publish, the composition is frozen into the Publication snapshot together with the revisions of
 everything it materialized, so a later edit surfaces as a **drift indicator** offering re-publish
@@ -165,8 +167,10 @@ draft back at its real proportions with every Zone looping on its own length fro
 > so cross-references stay valid and the requirement is not lost:
 > *31 — step 3 warns when a selected Channel holds a Media Device that cannot render this Layout;
 > 32 — a Device that has never reported counts as unable; 33 — step 5 and the server both refuse an
-> incapable target.* Nothing checks device decoding capacity in this phase. The geometry fit rule at
-> step 3 and the equal-priority overlap block at step 5 are unaffected and remain in scope.
+> incapable target.* Nothing checks device decoding capacity in this phase. The equal-priority
+> overlap block at step 5 is unaffected and remains in scope. The geometry fit rule remains in scope
+> too, but **as a warning only** — ADR 0055 made it advisory at both steps and at the server, and
+> ticket 17 owns turning it into a refusal.
 
 34. As a Media Operator, I want step 5 to refuse to publish when an equal-priority Publication already
     overlaps this one on a targeted Media Device and either side uses a Layout, naming the other
@@ -294,8 +298,9 @@ isolation is filtered inside the RPC, not by RLS.
   and `source_layout_zone_id` recorded, then each Zone's Playlist expanded into
   `publication_snapshot_items` with `file_version_no` pinned (ADR 0045 §4) and
   `COALESCE(pi.duration_seconds, ma.duration_seconds)` as it does today. It records
-  `composition_revision`, `layout_updated_at` and each Zone's `playlist_revision`. It enforces the
-  Layout ↔ target geometry fit rule (ADR 0044 §4, ticket 16) against the resolved target set. A Publication with
+  `composition_revision`, `layout_updated_at` and each Zone's `playlist_revision`. It runs **no**
+  geometry check — ADR 0055 made the Layout ↔ target fit rule advisory, so ticket 16 leaves this RPC
+  untouched and ticket 17 is what adds a refusal here. A Publication with
   no `composition_id` continues to produce the single implicit full-screen Zone of ADR 0045 §1. It
   refuses an incomplete Composition, a non-`active` Composition, a Composition from another tenant,
   and re-runs the overlap block inside the same transaction — the UI checks are advisory, the RPC is
@@ -440,8 +445,8 @@ migration applied over MCP is live immediately.
   geometry type caps the whole feature. Then the Composition entity, then its editor, then the
   Publication type, then activation, then the equal-priority overlap block, and the `zones[]` payload
   last of those. It no longer waits on a capability gate — ADR 0054 defers that — so the order is
-  **05 → (09, 16) → 10**, where 16 is the Layout ↔ target geometry fit rule, itself preceded by
-  ticket 07's production apply as a schema prerequisite.
+  **05 → (09, 16) → 10**, where 16 is the Layout ↔ target geometry fit rule — advisory per ADR 0055 —
+  itself preceded by ticket 07's production apply as a schema prerequisite (applied 2026-08-27).
 - **Known limitation — concurrent video capacity is not checked anywhere.** `max_video_zones` per
   platform is unmeasured, no player build reports it, and ADR 0054 defers enforcement rather than
   gating on a number nobody has taken. A Composition may therefore be published to a Device that

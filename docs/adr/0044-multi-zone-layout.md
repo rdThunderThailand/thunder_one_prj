@@ -1,11 +1,17 @@
 # Multi-zone Layout
 
-**Status:** accepted (2026-08-25), **§1 and §13 superseded** (2026-08-26) — **§2–§12 stand.**
+**Status:** accepted (2026-08-25) — **§1, §13 superseded (2026-08-26); §11 and §4's fit
+enforcement superseded (2026-08-27). The rest stands.**
 - §1 (a Layout carries geometry and Zone roles only; content is bound per Zone in the Publication
   wizard) → `docs/adr/0049-composition-layout-with-content.md`. Content lives on a **Composition**,
   and `role` is dropped entirely.
 - §13 (multi-monitor spanning deferred) → `docs/adr/0050-wide-layouts-across-monitors.md`. One machine
   driving several monitors is in scope; several machines driving one image is not.
+- §11 (device capability gate at publish) → `docs/adr/0054-capability-gate-on-publish.md`. The publish
+  contract ships; decoder-capacity enforcement is deferred.
+- §4's **Layout ↔ target** enforcement, including the staged exception dated 2026-08-27 below →
+  `docs/adr/0055-geometry-fit-is-advisory.md`. The rule warns and never refuses in this phase. §4's
+  percent-against-declared-aspect-ratio geometry, and its **Channel ↔ Media Device** rule, stand.
 
 Originally **blocked on `docs/adr/0045-publication-snapshot-materialization.md`**, which builds the
 snapshot this ADR copies into.
@@ -114,6 +120,18 @@ Fit is **two separate rules**, not one reused rule:
   can make is orientation and aspect-ratio compatibility against the target Device. A Layout-level
   *resolution* warning is not possible without adding `reference_resolution` to `layouts`; it is not
   added, because release one has no case that needs it.
+
+> **Superseded (2026-08-27) by `docs/adr/0055-geometry-fit-is-advisory.md`.** Everything from here to
+> the end of this section — the divergence below and the staged exception after it — is replaced.
+> The Layout ↔ target rule now **warns and never refuses**: fit is computed from `screen_width` /
+> `screen_height` alone (orientation derived from them, `screen_ratio` and `screen_dimension`
+> ignored), aspect compatibility is a symmetric 15% band, and neither a known mismatch nor unknown
+> geometry blocks a publish. `media_publication_activate` gains no geometry check. Ticket 16 builds
+> the advisory module; ticket 17 owns turning enforcement on, both halves at once. Read 0055 for the
+> measured fleet data that forced it — in particular that the profile call reports the *work area*
+> (a taskbar makes a 16:9 panel report 1920×1008) and that `screen_ratio` has two writers.
+>
+> Kept below as the record of what was decided first.
 
 **One deliberate divergence, stated because it is a rule change and not a reuse:** today a Device
 with `orientation` or `screen_width`/`screen_height` still `NULL` — never profiled — simply *skips*
