@@ -18,6 +18,12 @@ ticket built — the implicit-Playlist resolution, the clear-bindings confirmati
 selector, `zone-bindings.ts` — all survive and move. Nothing here was ever added to the sidebar, so no
 operator has used it.
 
+**Known gap, carries into ticket 15 — found in the ticket 04 browser pass, 2026-08-26.** The
+"activation refused, unbound Zones named" requirement above is not met as shipped: activating with an
+unbound Zone just disables the button, with no message naming which Zone. Ticket 15 line 64 already
+requires the Zone names in the message, so this is not a new acceptance item to add there — it is a
+flag that the requirement is not free just because the page moves as-is.
+
 ### Acceptance as specified — historical
 
 Shipped in `99c859f` (23 files: the three routes, `CompositionsListPage` / `CompositionEditorPage` /

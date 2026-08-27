@@ -191,7 +191,10 @@ export function usePublishDraft() {
    */
   const persistDraft = async (forPublish: boolean): Promise<string | null> => {
     const state = usePublicationDraftStore.getState();
-    if (state.basicInfo.publicationType === "composition" && !state.compositionId) {
+    // A composition draft may be saved before step 2 picks a Composition — the backend allows it
+    // (media_publication_upsert, ADR 0049 §12, revised 2026-08-26) exactly like an unpicked
+    // Playlist. Publishing still requires it; that guard stays.
+    if (forPublish && state.basicInfo.publicationType === "composition" && !state.compositionId) {
       throw new Error("กรุณาเลือก Layout ก่อนบันทึก");
     }
     const targets =

@@ -16,6 +16,16 @@ reshaping an airing screen. Screens do not receive the new shape yet; that is ti
 
 **R0 — this rewrites an activation function already live in production. Rehearse on `develop` first.**
 
+**`media_publication_activate` currently has no `composition` branch at all** — checked 2026-08-26
+while fixing ticket 04's draft-save guard. It reads `playlist_id`, refuses activation when that is
+`NULL`, and materializes only Playlist items. A `composition`-type Publication always has
+`playlist_id = NULL` (ADR 0049 §12), so today it fails at
+`'Invalid input: publication has no playlist — add content before activating'` regardless of whether
+a Composition was picked. This is exactly the invariant this ticket must add: refuse activation when
+`publication_type = 'composition' AND composition_id IS NULL`, with a message of the same shape
+(`'Invalid input: publication has no layout — add one before activating'`), before falling into the
+Zone-materializing path this ticket already describes.
+
 - [ ] `media_publication_activate` writes one `publication_snapshot_zones` row per `composition_zones`
       row, with geometry read from `layout_zones` at activation time and `source_layout_zone_id`
       recorded for tracing
