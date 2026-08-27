@@ -94,3 +94,32 @@ export function parseAspectRatio(value: string): [number, number] | null {
   const h = Number(match[2]);
   return w > 0 && h > 0 ? [w, h] : null;
 }
+
+export type DeviceFit = "fits" | "orientation-mismatch" | "aspect-mismatch" | "unknown";
+
+/** ponytail: 1.15 is measured, not theoretical — it must accept a taskbar-cropped 1920×1008
+ *  (1.071) and a 16:10 panel (1.111), and reject 4:3 (1.333) and any video-wall ratio.
+ *  Re-tune it against a fleet measurement, not by taste (ADR 0055 §4). */
+const ASPECT_TOLERANCE = 1.15;
+
+/** Layout ↔ target fit, advisory (ADR 0055). `resolution` is `media_screens_list`'s
+ *  `screen_width || 'x' || screen_height`; orientation is derived from those two rather than read
+ *  from `assets.orientation`, which contradicts them on real Devices. `screen_ratio` and
+ *  `screen_dimension` are deliberately not consulted — both are deprecated and double-written. */
+export function deviceFit(resolution: string | null, aspectRatio: string): DeviceFit {
+  const device = parseAspectRatio((resolution ?? "").replace("x", ":"));
+  const layout = parseAspectRatio(aspectRatio);
+  if (!device || !layout) return "unknown";
+
+  const [dw, dh] = device;
+  const [lw, lh] = layout;
+  // A square Device fits any Layout (ADR 0055 §3) — return before the band, or 1080x1080
+  // against 16:9 falls through to a spread of 1.778 and reports a mismatch.
+  if (dw === dh) return "fits";
+  if (dw > dh !== lw > lh) return "orientation-mismatch";
+
+  const deviceAR = dw / dh;
+  const layoutAR = lw / lh;
+  const spread = Math.max(deviceAR, layoutAR) / Math.min(deviceAR, layoutAR);
+  return spread <= ASPECT_TOLERANCE ? "fits" : "aspect-mismatch";
+}

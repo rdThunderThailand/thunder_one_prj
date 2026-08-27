@@ -1,6 +1,6 @@
 /** Run: node src/features/media-workspace/layouts/geometry.check.mts */
 import assert from "node:assert/strict";
-import { clampRect, parseAspectRatio, rectsOverlap, roundPercent, validateZones } from "./geometry.ts";
+import { clampRect, deviceFit, parseAspectRatio, rectsOverlap, roundPercent, validateZones } from "./geometry.ts";
 
 const full = { x: 0, y: 0, width: 100, height: 100 };
 const left = { x: 0, y: 0, width: 50, height: 100 };
@@ -69,5 +69,22 @@ assert.deepEqual(parseAspectRatio("5760:1080"), [5760, 1080]);
 assert.equal(parseAspectRatio("1920x1080"), null);
 assert.equal(parseAspectRatio("0:0"), null);
 assert.equal(parseAspectRatio("not-a-ratio"), null);
+
+// Fits — the two shapes the production fleet actually reports (ADR 0055).
+assert.equal(deviceFit("1920x1080", "16:9"), "fits");
+assert.equal(deviceFit("1920x1008", "16:9"), "fits");   // taskbar work area, 1.071 in band
+assert.equal(deviceFit("1920x1200", "16:9"), "fits");   // 16:10 panel, 1.111 in band
+assert.equal(deviceFit("1080x1080", "16:9"), "fits");   // square fits anything
+
+// Does not fit.
+assert.equal(deviceFit("1080x1920", "16:9"), "orientation-mismatch");
+assert.equal(deviceFit("1024x768", "16:9"), "aspect-mismatch");    // 4:3, 1.333
+assert.equal(deviceFit("1920x1080", "16:3"), "aspect-mismatch");   // videowall layout, 3.000
+
+// Unknown — never "does not fit".
+assert.equal(deviceFit(null, "16:9"), "unknown");
+assert.equal(deviceFit("1920x", "16:9"), "unknown");
+assert.equal(deviceFit("0x1080", "16:9"), "unknown");
+assert.equal(deviceFit("1920x1080", "not-a-ratio"), "unknown");
 
 console.log("geometry.check.mts — all assertions passed");
