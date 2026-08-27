@@ -9,7 +9,11 @@ snapshot rule is not weakened: nothing reaches a screen without a re-publish.
 
 **Blocked by:** 05 — Activation materializes Zones and records revisions
 
-**Status:** ready-for-agent
+**Status:** built and verified on develop (`thunder_one_prj@1dac6c5`, `Thunder_Core@361c428`, not
+pushed) · migration applied to develop and production · browser scenarios A–F verified in the
+originating session, scenario G (drift on a `draft` Publication shows no indicator) verified
+2026-08-27 · residual: the `republish` HTTP route has not been exercised in isolation · see
+`.docs/SESSIONLOG-ticket06-drift-indicator-2026-08-27.md`
 
 - [ ] The Publication read path returns, for a composition Publication, both the recorded revisions
       and the live ones: `compositions.revision`, `layouts.updated_at`, and each bound Playlist's

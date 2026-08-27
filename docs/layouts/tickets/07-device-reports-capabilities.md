@@ -9,14 +9,13 @@ never said so is told to. **Nothing is gated on the answer** — enforcement is 
 (ADR 0054), not this one and not ticket 05. This ticket only makes the answer exist.
 
 **Blocked by:** None — independent of the Composition track, can run in parallel with 01–06.
-**Blocks:** no publish rule reads what it stores (ADR 0054), but **its production apply is a schema
-prerequisite for ticket 16**: production has neither `player_capabilities` nor the
-capabilities clause in `media_heartbeat`, and still the two-argument `media_device_profile_set`, so
-ticket 16's `CREATE OR REPLACE` of `media_heartbeat` cannot be written to fit both environments.
-Sequence is `07 production apply → 16 → 10`.
+**Blocks:** no publish rule reads what it stores (ADR 0054). Its production apply was a schema
+prerequisite for ticket 16 (production now has `player_capabilities`, the widened `media_heartbeat`,
+and the three-argument `media_device_profile_set` — both environments match). Sequence was
+`07 production apply → 16 → 10`; the first step is done.
 
-**Status:** groundwork applied to develop; production apply pending separate R0 approval and
-required before ticket 16. No publish rule reads what it stores.
+**Status:** applied to develop **and production** (`sfiefevtxalqjizdkcsw`, 2026-08-27, R0 approved).
+No publish rule reads what it stores; ticket 16's schema prerequisite is now satisfied.
 
 Applied to `develop` (`ftfmokgphewzyxzwjitv`) on 2026-08-27. **No rule in the current phase reads the
 value it stores** (ADR 0054): `player_capabilities` is written by the profile call and read by
@@ -33,7 +32,12 @@ Post-apply verification on `develop`: column present with the intended comment; 
 each of `media_device_profile_set` (3-arg) and `media_heartbeat` (2-arg), old 2-arg `profile_set`
 gone; `has_function_privilege` confirms `service_role` only, `anon`/`authenticated` revoked; security
 advisors show no finding naming either function. Functional probe passed (see checklist).
-**Not done:** production apply + approval.
+
+Production apply (2026-08-27, R0 approved): same migration verbatim (header ticket refs corrected to
+ticket 08 first). Post-apply verification on production — `player_capabilities` column present;
+exactly one overload each of `media_device_profile_set` (3-arg) and `media_heartbeat` (2-arg), old
+2-arg `profile_set` dropped; `media_device_profile_set` ACL narrowed to `postgres`/`service_role`
+(the pre-existing `PUBLIC` EXECUTE grant is now gone); `media_heartbeat` `profile_required` widened.
 
 - [x] `public.assets` has a nullable `player_capabilities jsonb`; NULL means *never reported*
       (Media Devices are `public.assets` rows, per ADR 0044 §11 and migration `096` — not
@@ -57,8 +61,9 @@ advisors show no finding naming either function. Functional probe passed (see ch
       (Side effect: that seed device now carries a capabilities value on develop — harmless.)
       **This probe proves the schema and the RPC contract only. It is not evidence that any real
       player reports capabilities** — none ever has, on either environment.
-- [ ] **Production apply + approval — R0, still required, and now a prerequisite for ticket 16**
-      rather than deferred to the enforcement phase. Verified read-only on production
-      2026-08-27: no `player_capabilities` column, `media_device_profile_set(text, jsonb)` only,
-      `media_heartbeat` with no capabilities clause. Note the `DROP FUNCTION` on the live two-argument
-      signature — adding a parameter otherwise mints an ambiguous overload.
+- [x] **Production apply + approval — R0** (2026-08-27). Column present; one overload each of
+      `media_device_profile_set` (3-arg) / `media_heartbeat` (2-arg); old 2-arg `profile_set` gone;
+      `profile_set` ACL narrowed to `postgres`/`service_role`; `media_heartbeat` flag widened.
+      Pre-apply read-only check (2026-08-27) had confirmed production lacked the column and carried
+      `media_device_profile_set(text, jsonb)` only, so the migration's `DROP FUNCTION` on the live
+      two-argument signature was required — adding a parameter otherwise mints an ambiguous overload.
