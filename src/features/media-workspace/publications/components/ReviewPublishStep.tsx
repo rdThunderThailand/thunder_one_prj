@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -14,7 +14,7 @@ import { fetchPublication } from "../services/publications-api";
 import { utcToZonedParts } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict } from "../types";
 import type { ChannelListItem } from "../../channels/types";
-import { toChannelItems } from "../channels-logic";
+import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
 import {
   priorities,
   prePublishChecklist,
@@ -70,6 +70,8 @@ export interface ReviewPublishStepProps {
   checkingConflicts?: boolean;
   conflictsError?: string | null;
   eligibilityChecks?: EligibilityCheck[];
+  aspectRatio?: string | null;
+  fitCheckFailed?: boolean;
 }
 
 export function ReviewPublishStep({
@@ -80,6 +82,8 @@ export function ReviewPublishStep({
   checkingConflicts = false,
   conflictsError = null,
   eligibilityChecks = [],
+  aspectRatio = null,
+  fitCheckFailed = false,
 }: ReviewPublishStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -135,6 +139,10 @@ export function ReviewPublishStep({
       : "custom-range")
   );
   const offlineChannels = selectedChannels.filter((c) => c.status === "offline");
+  const geometryFit = useMemo(
+    () => summarizeGeometryFit(channels, channelIds, aspectRatio),
+    [channels, channelIds, aspectRatio],
+  );
 
   const assetFilename = selectedAsset?.file?.original_filename ?? selectedAsset?.title;
   const assetDimensions =
@@ -397,6 +405,42 @@ export function ReviewPublishStep({
                     <div>
                       <p className="text-xs font-medium text-zinc-900">No Device Issues</p>
                       <p className="text-[11px] text-zinc-400">อุปกรณ์ทั้งหมดพร้อมใช้งาน</p>
+                    </div>
+                  </div>
+                )}
+                {fitCheckFailed && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <p className="text-xs font-medium text-zinc-900">
+                      Could not check whether these screens fit the Layout.
+                    </p>
+                  </div>
+                )}
+                {geometryFit.unfitting.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <div>
+                      <p className="text-xs font-medium text-zinc-900">
+                        Layout shape mismatch ({geometryFit.unfitting.length})
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        These screens do not match this Layout&apos;s shape and will show it distorted or
+                        rotated: {geometryFit.unfitting.join(", ")}. You can still publish.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {geometryFit.unprofiled.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <div>
+                      <p className="text-xs font-medium text-zinc-900">
+                        Screen size unknown ({geometryFit.unprofiled.length})
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        These screens have not reported their size yet, so their fit is unknown:{" "}
+                        {geometryFit.unprofiled.join(", ")}. You can still publish.
+                      </p>
                     </div>
                   </div>
                 )}

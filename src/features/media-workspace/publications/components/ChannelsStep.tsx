@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
-import { ChevronDownIcon, FilterIcon, GridIcon, ListIcon, SearchIcon, XIcon } from "@/components/ui/icons";
+import { ChevronDownIcon, FilterIcon, GridIcon, ListIcon, SearchIcon, WarningTriangleIcon, XIcon } from "@/components/ui/icons";
 import type { ChannelListItem } from "../../channels/types";
 import { channelCategories, type ChannelCategoryId, type ChannelItem } from "../mock-data";
 import {
@@ -11,6 +11,7 @@ import {
   computeStatusCounts,
   filterBySearch,
   statusPercent as computeStatusPercent,
+  summarizeGeometryFit,
   toChannelItems,
 } from "../channels-logic";
 import { ChannelCard, categoryBadgeColor, categoryIcon } from "./ChannelCard";
@@ -22,12 +23,16 @@ export interface ChannelsStepProps {
   channels?: ChannelListItem[];
   loadingChannels?: boolean;
   channelsError?: string | null;
+  aspectRatio?: string | null;
+  fitCheckFailed?: boolean;
 }
 
 export function ChannelsStep({
   channels: source = [],
   loadingChannels = false,
   channelsError = null,
+  aspectRatio = null,
+  fitCheckFailed = false,
 }: ChannelsStepProps) {
   const selectedIds = usePublicationDraftStore((s) => s.channelIds);
   const toggleChannel = usePublicationDraftStore((s) => s.toggleChannelId);
@@ -50,6 +55,11 @@ export function ChannelsStep({
   const statusCounts = useMemo(() => computeStatusCounts(channels), [channels]);
 
   const statusPercent = (count: number) => computeStatusPercent(count, statusCounts.total);
+
+  const geometryFit = useMemo(
+    () => summarizeGeometryFit(source, selectedIds, aspectRatio),
+    [source, selectedIds, aspectRatio],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -134,6 +144,49 @@ export function ChannelsStep({
               </button>
             </div>
           </Card>
+
+          {(fitCheckFailed || geometryFit.unfitting.length > 0 || geometryFit.unprofiled.length > 0) && (
+            <Card className="p-4">
+              <div className="flex flex-col gap-3">
+                {fitCheckFailed && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <p className="text-xs font-medium text-zinc-900">
+                      Could not check whether these screens fit the Layout.
+                    </p>
+                  </div>
+                )}
+                {geometryFit.unfitting.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <div>
+                      <p className="text-xs font-medium text-zinc-900">
+                        Layout shape mismatch ({geometryFit.unfitting.length})
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        These screens do not match this Layout&apos;s shape and will show it distorted or
+                        rotated: {geometryFit.unfitting.join(", ")}. You can still publish.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {geometryFit.unprofiled.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <div>
+                      <p className="text-xs font-medium text-zinc-900">
+                        Screen size unknown ({geometryFit.unprofiled.length})
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        These screens have not reported their size yet, so their fit is unknown:{" "}
+                        {geometryFit.unprofiled.join(", ")}. You can still publish.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
 
           {groups.map((cat) => {
             const items = filtered.filter((c) => c.category === cat.id);
