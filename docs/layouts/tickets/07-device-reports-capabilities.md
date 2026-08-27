@@ -18,9 +18,8 @@ fixed in a follow-up commit. `player_capabilities` still absent from production.
 Post-apply verification on `develop`: column present with the intended comment; exactly one overload
 each of `media_device_profile_set` (3-arg) and `media_heartbeat` (2-arg), old 2-arg `profile_set`
 gone; `has_function_privilege` confirms `service_role` only, `anon`/`authenticated` revoked; security
-advisors show no finding naming either function. **Not done:** the scratch-tenant functional probe
-(calling the SECURITY DEFINER RPCs is a write, blocked by the auto-mode classifier this session) and
-production apply.
+advisors show no finding naming either function. Functional probe passed (see checklist).
+**Not done:** production apply + approval.
 
 - [x] `public.assets` has a nullable `player_capabilities jsonb`; NULL means *never reported*
       (Media Devices are `public.assets` rows, per ADR 0044 §11 and migration `096` — not
@@ -37,7 +36,9 @@ production apply.
       new function is created — no overload is left behind
 - [x] Post-apply verification (`develop`): comment, exactly one overload of each touched function,
       grants confirmed with `has_function_privilege`, advisors show no new finding
-- [ ] Scratch-tenant SQL probe: a Device with NULL capabilities gets `profile_required`, reports
-      capabilities, and then does not — **blocked**: calling the RPCs is a write, denied by the
-      auto-mode classifier this session
+- [x] SQL probe on `develop` (seed device "ThunderOne Screen 01", os+machine set, caps NULL):
+      heartbeat → `profile_required: true` → `media_device_profile_set` with
+      `{multi_zone_v1, max_video_zones}` echoes them back → heartbeat → `profile_required: false`;
+      a non-object capabilities arg raises `Invalid input: capabilities must be an object`.
+      (Side effect: that seed device now carries a capabilities value on develop — harmless.)
 - [ ] Production apply + approval
