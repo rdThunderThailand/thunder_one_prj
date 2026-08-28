@@ -59,8 +59,8 @@ not wait on it.
 - [ ] `loop_anchor_at` is a single top-level value shared by every Zone, not per Zone
 - [ ] Zone slots come from the snapshot only — `playlist_items` and `playlists` are not read
 - [ ] Items are not deduplicated across Zones: the same asset in two Zones appears in both
-- [ ] The device contract documentation states both shapes and that the player branches on the presence
-      of `zones`
+- [x] The device contract documentation states both shapes and that the player branches on the presence
+      of `zones` — `docs/layouts/contract-v2-zones.md`
 - [ ] Post-apply verification: `pg_get_functiondef` diffed against the migration file, exactly one
       overload, grants confirmed with `has_function_privilege`, advisors show no new finding
 - [ ] Scratch-tenant SQL probe calling `media_job_poll` for a flat Publication and a two-Zone composition
