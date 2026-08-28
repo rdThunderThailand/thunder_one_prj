@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/Card";
-import { roundPercent } from "../geometry";
+import { parseResolution, referencePixels, roundPercent } from "../geometry";
 import type { LayoutZone } from "../types";
 
 const inputClasses =
@@ -12,11 +12,13 @@ const inputClasses =
  *  carries exactly one decimal place either way. */
 export function ZoneProperties({
   zone,
+  referenceResolution = null,
   onChange,
   onRemove,
   canRemove,
 }: {
   zone: LayoutZone | null;
+  referenceResolution?: string | null;
   onChange: (next: LayoutZone) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -28,6 +30,8 @@ export function ZoneProperties({
       </Card>
     );
   }
+
+  const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
 
   const field = (key: "x" | "y" | "width" | "height", label: string) => (
     <div className="flex flex-col gap-1">
@@ -45,6 +49,11 @@ export function ZoneProperties({
         }}
         className={inputClasses}
       />
+      {resolution && (
+        <span className="text-[11px] text-zinc-400">
+          ≈ {referencePixels(zone[key], key === "x" || key === "width" ? resolution[0] : resolution[1])}px
+        </span>
+      )}
     </div>
   );
 

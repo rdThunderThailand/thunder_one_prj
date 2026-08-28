@@ -5,9 +5,9 @@
 // by the container's own measured box is already the right unit, with no px/frame
 // conversion layer to get wrong (docs/layouts/plan-layout-execution.md Task 7 Step 2).
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { parseAspectRatio, roundPercent, validateZones } from "../geometry";
+import { parseAspectRatio, parseResolution, referencePixels, roundPercent, validateZones } from "../geometry";
 import type { LayoutZone } from "../types";
 
 // Zone fill cycles by position — role is gone (ADR 0049 §2), so colour is purely for telling
@@ -66,6 +66,7 @@ export function LayoutCanvas({
   zones,
   background,
   aspectRatio,
+  referenceResolution = null,
   zonePreviews = {},
   selectedIndex,
   onSelectIndex,
@@ -74,6 +75,7 @@ export function LayoutCanvas({
   zones: LayoutZone[];
   background: string;
   aspectRatio: string;
+  referenceResolution?: string | null;
   zonePreviews?: Record<string, { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string }>;
   selectedIndex: number | null;
   onSelectIndex: (index: number | null) => void;
@@ -81,6 +83,20 @@ export function LayoutCanvas({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [snap, setSnap] = useState(false);
+  // 70vh is a page-layout guess that's wrong once real content (page header, template
+  // rail, other cards) sits above the canvas — measure the actual remaining viewport height
+  // from where the canvas starts, so a portrait resolution never needs a page scroll to see
+  // the whole frame (Ticket 19 item 4, found wrong in browser verification).
+  const [maxHeightPx, setMaxHeightPx] = useState<number | null>(null);
+  useEffect(() => {
+    const recompute = () => {
+      const top = containerRef.current?.getBoundingClientRect().top ?? 0;
+      setMaxHeightPx(Math.max(200, window.innerHeight - top - 24));
+    };
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, []);
   const drag = useRef<{
     index: number;
     handle: Handle;
@@ -92,6 +108,7 @@ export function LayoutCanvas({
   } | null>(null);
 
   const [ratioW, ratioH] = parseAspectRatio(aspectRatio) ?? [16, 9];
+  const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   const errors = validateZones(zones);
   const overlapping = new Set(
     errors.flatMap((e) => (e.kind === "overlap" ? [e.a, e.b] : []))
@@ -152,9 +169,13 @@ export function LayoutCanvas({
       <div
         ref={containerRef}
         onClick={() => onSelectIndex(null)}
-        className="relative mx-auto w-full max-w-2xl select-none overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
+        className="relative mx-auto w-full select-none overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
         style={{
           aspectRatio: `${ratioW} / ${ratioH}`,
+          // Bounded on both axes: capped at 42rem wide (the old max-w-2xl) OR whatever
+          // width keeps the height under the measured remaining viewport space, whichever
+          // is smaller — a portrait ratio like 1080x1920 no longer scrolls the page.
+          maxWidth: `min(42rem, calc(${maxHeightPx ?? 500}px * ${ratioW} / ${ratioH}))`,
           backgroundColor: background,
           backgroundImage: snap
             ? "linear-gradient(to right, rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.15) 1px, transparent 1px)"
@@ -192,6 +213,8 @@ export function LayoutCanvas({
             )}
             <span className="absolute left-1 top-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] text-white">
               {zone.name} · {zone.width.toFixed(3)}×{zone.height.toFixed(3)}%
+              {resolution &&
+                ` — ${referencePixels(zone.width, resolution[0])}×${referencePixels(zone.height, resolution[1])}px`}
             </span>
             {selectedIndex === index &&
               RESIZE_HANDLES.map((h) => (

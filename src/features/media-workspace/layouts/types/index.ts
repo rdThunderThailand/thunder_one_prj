@@ -41,10 +41,15 @@ export type LayoutDraft = {
   id: string | null;
   name: string;
   aspectRatio: string;
+  /** Absent (`null`) only for a legacy Layout that predates Ticket 19 — it reopens, edits
+   *  and saves with no pixel ruler and no forced migration (ADR 0050 §1–§3). */
+  referenceResolution: string | null;
   background: string;
   status: LayoutStatus;
   zones: LayoutZone[];
 };
 
 export const DEFAULT_ASPECT_RATIO = "16:9";
+export const DEFAULT_RESOLUTION = "1920x1080";
+export const RESOLUTION_PRESETS = ["1920x1080", "1080x1920", "3840x2160"] as const;
 export const DEFAULT_BACKGROUND = "#000000";

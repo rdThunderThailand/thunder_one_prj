@@ -1,5 +1,18 @@
-import { MAX_ZONES, roundPercent } from "./geometry.ts";
+import { MAX_ZONES, evenSplitPercents, roundPercent } from "./geometry.ts";
 import type { LayoutZone } from "./types/index.ts";
+
+/** Replaces the whole frame with `count` equal-width, full-height columns — the seam
+ *  positions ARE the resulting Zone edges (ADR 0050 §1–§3), so there is no separate guide
+ *  overlay to draw. */
+export function evenSplitColumns(count: number): LayoutZone[] {
+  const widths = evenSplitPercents(count);
+  let x = 0;
+  return widths.map((width, position) => {
+    const zone: LayoutZone = { position, name: `Zone ${position + 1}`, x, y: 0, width, height: 100 };
+    x = roundPercent(x + width);
+    return zone;
+  });
+}
 
 export function splitZone(zones: LayoutZone[], index: number): LayoutZone[] | null {
   const source = zones[index];

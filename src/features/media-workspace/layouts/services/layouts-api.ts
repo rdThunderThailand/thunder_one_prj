@@ -36,6 +36,7 @@ export type UpsertLayoutInput = {
   layoutId?: string | null;
   name: string;
   aspectRatio: string;
+  referenceResolution?: string | null;
   background: string;
   status?: LayoutStatus;
   zones: ZonePayload[];
@@ -47,6 +48,7 @@ export async function upsertLayout(
   const body: Record<string, unknown> = {
     name: input.name.trim(),
     aspect_ratio: input.aspectRatio,
+    reference_resolution: input.referenceResolution ?? null,
     background: input.background,
     zones: input.zones,
   };
@@ -82,6 +84,7 @@ export async function duplicateLayout(sourceId: string, name: string): Promise<{
   const { layout_id } = await upsertLayout({
     name,
     aspectRatio: source.aspect_ratio,
+    referenceResolution: source.reference_resolution ?? null,
     background: source.background,
     status: "active",
     // A duplicate is a new Layout with fresh Zone ids, not a copy of the source's — omitting

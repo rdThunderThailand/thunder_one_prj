@@ -95,6 +95,50 @@ export function parseAspectRatio(value: string): [number, number] | null {
   return w > 0 && h > 0 ? [w, h] : null;
 }
 
+/** `1920x1080` → [1920, 1080], matching `layouts.reference_resolution`'s own CHECK
+ *  (`^[0-9]{3,5}x[0-9]{3,5}$`, i.e. 100–99999 per side). */
+export function parseResolution(value: string): [number, number] | null {
+  const match = /^([0-9]{3,5})x([0-9]{3,5})$/.exec(value.trim());
+  if (!match) return null;
+  const w = Number(match[1]);
+  const h = Number(match[2]);
+  return w >= 100 && w <= 99999 && h >= 100 && h <= 99999 ? [w, h] : null;
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+/** `1920x1080` → `"16:9"`, reduced by GCD — matches the ratio strings Layouts were already
+ *  storing before this ticket, rather than `"1920:1080"`. */
+export function deriveAspectRatio(width: number, height: number): string {
+  const g = gcd(width, height);
+  return `${width / g}:${height / g}`;
+}
+
+/** Compares two ratios numerically (cross-multiplication), never as strings — `16:9` and
+ *  `32:18` must read as the same ratio even though nothing here ever produces the latter. */
+export function sameRatio(a: [number, number], b: [number, number]): boolean {
+  return a[0] * b[1] === b[0] * a[1];
+}
+
+/** A Zone's stored percentage against a reference dimension, for the pixel readout beside
+ *  the percentage in the inspector. Rounds to the nearest pixel — sub-pixel geometry is not
+ *  meaningful to an operator. */
+export function referencePixels(percent: number, dimension: number): number {
+  return Math.round((percent / 100) * dimension);
+}
+
+/** Divides 100% into `count` equal columns, remainder on the last one rather than a leftover
+ *  strip of background (e.g. 3 → 33.333/33.333/33.334). Pure math shared by "even split" and
+ *  the seam guides it produces, which land exactly on the resulting Zone edges. */
+export function evenSplitPercents(count: number): number[] {
+  const base = Math.floor(100000 / count);
+  const widths = Array(count).fill(base);
+  widths[count - 1] = 100000 - base * (count - 1);
+  return widths.map((thousandths) => thousandths / 1000);
+}
+
 export type DeviceFit = "fits" | "orientation-mismatch" | "aspect-mismatch" | "unknown";
 
 /** ponytail: 1.15 is measured, not theoretical — it must accept a taskbar-cropped 1920×1008

@@ -1,6 +1,18 @@
 /** Run: node src/features/media-workspace/layouts/geometry.check.mts */
 import assert from "node:assert/strict";
-import { clampRect, deviceFit, parseAspectRatio, rectsOverlap, roundPercent, validateZones } from "./geometry.ts";
+import {
+  clampRect,
+  deriveAspectRatio,
+  deviceFit,
+  evenSplitPercents,
+  parseAspectRatio,
+  parseResolution,
+  rectsOverlap,
+  referencePixels,
+  roundPercent,
+  sameRatio,
+  validateZones,
+} from "./geometry.ts";
 
 const full = { x: 0, y: 0, width: 100, height: 100 };
 const left = { x: 0, y: 0, width: 50, height: 100 };
@@ -86,5 +98,40 @@ assert.equal(deviceFit(null, "16:9"), "unknown");
 assert.equal(deviceFit("1920x", "16:9"), "unknown");
 assert.equal(deviceFit("0x1080", "16:9"), "unknown");
 assert.equal(deviceFit("1920x1080", "not-a-ratio"), "unknown");
+
+// Ticket 19 — resolution parse/validate.
+assert.deepEqual(parseResolution("1920x1080"), [1920, 1080]);
+assert.deepEqual(parseResolution("3000x2000"), [3000, 2000]);
+assert.deepEqual(parseResolution("5760x1080"), [5760, 1080]); // spanned 3-monitor width
+assert.equal(parseResolution("99x1080"), null); // below the 100 floor
+assert.equal(parseResolution("100000x1080"), null); // above the 99999 ceiling
+assert.equal(parseResolution("1920:1080"), null); // wrong separator
+assert.equal(parseResolution("not-a-resolution"), null);
+
+// Ticket 19 — GCD ratio derivation, matching what Layouts already stored before this ticket.
+assert.equal(deriveAspectRatio(1920, 1080), "16:9");
+assert.equal(deriveAspectRatio(1080, 1920), "9:16");
+assert.equal(deriveAspectRatio(3840, 2160), "16:9");
+assert.equal(deriveAspectRatio(3000, 2000), "3:2");
+assert.equal(deriveAspectRatio(5760, 1080), "16:3");
+
+// Ticket 19 — numeric same-ratio comparison, never string comparison.
+assert.equal(sameRatio([1920, 1080], [3840, 2160]), true);
+assert.equal(sameRatio(parseAspectRatio("16:9")!, [1920, 1080]), true);
+assert.equal(sameRatio([1920, 1080], [1080, 1920]), false);
+
+// Ticket 19 — percent to reference-pixel conversion.
+assert.equal(referencePixels(50, 1920), 960);
+assert.equal(referencePixels(33.333, 5760), 1920); // lands exactly on one monitor
+assert.equal(referencePixels(100, 1080), 1080);
+
+// Ticket 19 — even split into N columns, remainder on exactly one column.
+assert.deepEqual(evenSplitPercents(2), [50, 50]);
+assert.deepEqual(evenSplitPercents(3), [33.333, 33.333, 33.334]);
+assert.deepEqual(evenSplitPercents(4), [25, 25, 25, 25]);
+assert.equal(
+  evenSplitPercents(3).reduce((a, b) => a + b, 0),
+  100
+);
 
 console.log("geometry.check.mts — all assertions passed");

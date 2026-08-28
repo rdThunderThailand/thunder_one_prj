@@ -8,11 +8,11 @@ import { Card } from "@/components/ui/Card";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 // Reused rather than re-written — see docs/layouts/plan-layout-execution.md Task 7 Step 5.
 import { UnsavedLeaveConfirm } from "../../playlists/components/UnsavedLeaveConfirm";
-import { validateZones } from "../geometry";
-import { splitZone } from "../split-zone";
+import { deriveAspectRatio, parseResolution, sameRatio, validateZones } from "../geometry";
+import { evenSplitColumns, splitZone } from "../split-zone";
 import { fetchLayout, upsertLayout } from "../services/layouts-api";
 import { describeSaveError } from "../status-display";
-import { DEFAULT_ASPECT_RATIO, DEFAULT_BACKGROUND, type LayoutDraft, type LayoutZone } from "../types";
+import { DEFAULT_ASPECT_RATIO, DEFAULT_BACKGROUND, DEFAULT_RESOLUTION, type LayoutDraft, type LayoutZone } from "../types";
 import { LayoutCanvas } from "./LayoutCanvas";
 import { LayoutSettingsStep } from "./LayoutSettingsStep";
 import { TemplateRail } from "./TemplateRail";
@@ -25,6 +25,7 @@ function emptyDraft(): LayoutDraft {
     id: null,
     name: "",
     aspectRatio: DEFAULT_ASPECT_RATIO,
+    referenceResolution: DEFAULT_RESOLUTION,
     background: DEFAULT_BACKGROUND,
     status: "active",
     zones: BLANK_ZONES,
@@ -60,6 +61,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
           id: detail.id,
           name: detail.name,
           aspectRatio: detail.aspect_ratio,
+          referenceResolution: detail.reference_resolution ?? null,
           background: detail.background,
           status: detail.status,
           zones: detail.zones,
@@ -79,6 +81,36 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   const geometryErrors = validateZones(draft.zones);
   const selectedZone = selectedIndex !== null ? (draft.zones[selectedIndex] ?? null) : null;
 
+  /** Item 6: a same-ratio resolution change (e.g. 1920x1080 → 3840x2160) applies silently.
+   *  A ratio-changing one asks once, naming the Composition count for a Template — Zones are
+   *  never rewritten either way, only the stored resolution and its derived aspect ratio. */
+  const handleSettingsChange = (next: {
+    name: string;
+    aspectRatio: string;
+    referenceResolution: string | null;
+    background: string;
+    status: LayoutDraft["status"];
+  }) => {
+    if (next.referenceResolution !== draft.referenceResolution) {
+      const nextRes = next.referenceResolution ? parseResolution(next.referenceResolution) : null;
+      const prevRes = draft.referenceResolution ? parseResolution(draft.referenceResolution) : null;
+      if (nextRes) {
+        const nextAspectRatio = deriveAspectRatio(nextRes[0], nextRes[1]);
+        const ratioChanged = !!prevRes && !sameRatio(prevRes, nextRes);
+        const confirmMessage =
+          usageCount > 0
+            ? `This changes the aspect ratio and will affect ${usageCount} Composition(s) using this Template. Zone percentages are kept as-is.`
+            : "This changes the aspect ratio. Zone percentages are kept as-is.";
+        if (ratioChanged && draft.zones.length > 0 && !window.confirm(confirmMessage)) {
+          return;
+        }
+        setDraft((d) => ({ ...d, ...next, aspectRatio: nextAspectRatio }));
+        return;
+      }
+    }
+    setDraft((d) => ({ ...d, ...next }));
+  };
+
   const goBack = () => {
     if (isDirty) {
       setConfirmLeave(true);
@@ -96,6 +128,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
         layoutId: draft.id,
         name: draft.name,
         aspectRatio: draft.aspectRatio,
+        referenceResolution: draft.referenceResolution,
         background: draft.background,
         status: draft.status,
         zones: draft.zones,
@@ -202,6 +235,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
                 zones={draft.zones}
                 background={draft.background}
                 aspectRatio={draft.aspectRatio}
+                referenceResolution={draft.referenceResolution}
                 selectedIndex={selectedIndex}
                 onSelectIndex={setSelectedIndex}
                 onChange={(zones) => setDraft((d) => ({ ...d, zones }))}
@@ -210,6 +244,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
 
             <ZoneProperties
               zone={selectedZone}
+              referenceResolution={draft.referenceResolution}
               canRemove={draft.zones.length > 1}
               onChange={(next) =>
                 setDraft((d) => ({
@@ -222,29 +257,44 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
                 setSelectedIndex(null);
               }}
             />
-            {selectedIndex !== null && (
-              <Button
-                variant="secondary"
-                disabled={draft.zones.length >= 4}
-                onClick={() => {
-                  const next = splitZone(draft.zones, selectedIndex);
-                  if (!next) return;
-                  setDraft((draft) => ({ ...draft, zones: next }));
-                  setSelectedIndex(selectedIndex + 1);
-                }}
-              >
-                Split Zone
-              </Button>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {selectedIndex !== null && (
+                <Button
+                  variant="secondary"
+                  disabled={draft.zones.length >= 4}
+                  onClick={() => {
+                    const next = splitZone(draft.zones, selectedIndex);
+                    if (!next) return;
+                    setDraft((draft) => ({ ...draft, zones: next }));
+                    setSelectedIndex(selectedIndex + 1);
+                  }}
+                >
+                  Split Zone
+                </Button>
+              )}
+              {[2, 3, 4].map((count) => (
+                <Button
+                  key={count}
+                  variant="secondary"
+                  onClick={() => {
+                    setDraft((d) => ({ ...d, zones: evenSplitColumns(count) }));
+                    setSelectedIndex(null);
+                  }}
+                >
+                  Even split × {count}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
         <LayoutSettingsStep
           name={draft.name}
           aspectRatio={draft.aspectRatio}
+          referenceResolution={draft.referenceResolution}
           background={draft.background}
           status={draft.status}
-          onChange={(next) => setDraft((d) => ({ ...d, ...next }))}
+          onChange={handleSettingsChange}
         />
       )}
     </div>
