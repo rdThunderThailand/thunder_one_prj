@@ -23,7 +23,7 @@ export const APPS: AppConfig[] = [
   {
     id: "media-workspace",
     label: "Media Workspace",
-    tagline: "Media Workspace OS",
+    tagline: "Media Workspace",
     icon: <GridIcon className="h-4 w-4" />,
     basePath: "/media-workspace",
   },

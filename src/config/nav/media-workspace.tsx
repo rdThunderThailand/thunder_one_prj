@@ -5,11 +5,16 @@
 // media/DOOH publishing feature, not a generic "Communication" one; "Media
 // Workspace" was the original, correct name per CONTEXT.md).
 import {
+  BellIcon,
   BroadcastIcon,
+  CalendarIcon,
   ChartIcon,
   GridIcon,
+  LayoutIcon,
   MonitorIcon,
-  SettingsIcon,
+  ShareNodesIcon,
+  UploadIcon,
+  WarningTriangleIcon,
 } from "@/components/ui/icons";
 import type { NavConfig, NavItem } from "./types";
 
@@ -21,34 +26,48 @@ export const mediaWorkspaceNav: NavConfig = {
   },
   sections: [
     {
-      label: "Publishing",
-      icon: <BroadcastIcon />,
+      label: "Content",
+      items: [
+        { label: "Media Library", href: "/media-workspace/assets", icon: <UploadIcon /> },
+        { label: "Playlists", href: "/media-workspace/playlists", icon: <BroadcastIcon /> },
+        { label: "Layouts", href: "/media-workspace/layouts", icon: <LayoutIcon />, badge: "NEW" },
+      ],
+    },
+    {
+      label: "Programming",
+      triggerLabel: "Programs",
+      icon: <MonitorIcon />,
       items: [
         { label: "Now & Next", href: "/media-workspace/publications" },
-        { label: "Calendar" },
-        { label: "Campaigns" },
-        { label: "Playlists", href: "/media-workspace/playlists" },
-        { label: "Layouts", href: "/media-workspace/layouts" },
+        { label: "Calendar", icon: <CalendarIcon /> },
       ],
     },
     {
       label: "Channels",
-      icon: <GridIcon />,
       items: [
-        { label: "All Channels", href: "/media-workspace/channels" },
-        { label: "DOOH" },
-        { label: "In-Store" },
-        { label: "Online" },
-        { label: "Social" },
-        { label: "Other" },
+        { label: "All Channels", href: "/media-workspace/channels", icon: <MonitorIcon /> },
+        { label: "Screens", icon: <ShareNodesIcon /> },
+        { label: "TV", icon: <MonitorIcon /> },
+        { label: "PA / Audio", icon: <BroadcastIcon /> },
+        { label: "Kiosks", icon: <LayoutIcon /> },
       ],
     },
     {
       label: "Monitoring",
-      icon: <MonitorIcon />,
-      items: [{ label: "Live View" }, { label: "Alerts" }, { label: "System Health" }],
+      items: [
+        { label: "Live View", icon: <GridIcon /> },
+        { label: "Alerts", icon: <BellIcon />, badge: "12" },
+        { label: "System Health", icon: <WarningTriangleIcon /> },
+      ],
+    },
+    {
+      label: "Reports & Analytics",
+      items: [
+        { label: "Reports", icon: <ChartIcon /> },
+        { label: "Analytics", icon: <ChartIcon /> },
+      ],
     },
   ],
-  standaloneLinks: [{ label: "Reports & Analytics" }, { label: "Settings" }] satisfies NavItem[],
-  standaloneIcons: [<ChartIcon key="reports" />, <SettingsIcon key="settings" />],
+  standaloneLinks: [] satisfies NavItem[],
+  standaloneIcons: [],
 };

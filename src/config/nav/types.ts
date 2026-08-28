@@ -3,11 +3,14 @@ import type { ReactNode } from "react";
 export interface NavItem {
   label: string;
   href?: string; // omit for routes not built yet — renders inert
+  icon?: ReactNode;
+  badge?: string;
 }
 
 export interface NavSection {
   label: string;
-  icon: ReactNode;
+  triggerLabel?: string;
+  icon?: ReactNode;
   items: NavItem[];
 }
 
