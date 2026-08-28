@@ -1,6 +1,6 @@
 # Wide Layouts spanning several monitors
 
-**Status:** accepted · 2026-08-26
+**Status:** accepted · 2026-08-26 · amended 2026-08-28
 **Supersedes:** `0044-multi-zone-layout.md` §13
 **Extends:** `0044-multi-zone-layout.md` §4
 
@@ -124,6 +124,34 @@ has, so one Layout still serves a 1920×1080 and a 3840×2160 screen of the same
 is an **authoring reference**, not a constraint — which is why it is nullable and why existing
 Layouts are unaffected.
 
+Every new Layout gets a resolution, but **not through a gate in front of the canvas**. A `template` is
+already created through a form that asks for a name, so the resolution field goes there with
+`1920x1080` preselected, common presets and Custom. An `inline` Layout is created by drawing, and ADR
+0052 §4 exists precisely so that nothing has to be answered before the canvas opens: it starts at
+`1920x1080` and the resolution is changed in the inspector like any other Layout property. A modal in
+front of the inline canvas was rejected — it reintroduces the step ADR 0052 removed, and buys nothing,
+because changing the resolution later preserves every percentage and a same-ratio change is not even
+worth a confirmation.
+
+Each dimension is an integer from 100 through 99999 — the same range the CHECK already encodes.
+Orientation is not stored; it is `width > height`. `aspect_ratio` is derived and **reduced by their
+GCD**, so `1920x1080` stores `16:9` and sits beside the Layouts drawn before this ADR instead of
+reading `1920:1080` next to them. Two resolutions count as the same ratio when `w/h` compares equal as
+a number, never by comparing the stored strings — `3840x2160` and `1920x1080` both reduce to `16:9`,
+but `3000x2000` and `1500x1000` would not survive a string test if a later change stopped reducing.
+The database column remains nullable solely for backward compatibility: an existing null-valued Layout
+keeps its declared `aspect_ratio`, remains editable and savable, and shows no reference-pixel ruler
+until an operator supplies a resolution. No backfill is required.
+
+The canvas is a logical artboard sized by CSS from the ratio, never a pixel-sized DOM element — which
+is already how `LayoutCanvas` works. What changes is that it must fit **both** axes of the available
+workspace: today it is bounded by width alone, so a `1080x1920` Layout renders taller than the window
+and has to be scrolled. Zone geometry stays in percentages while rulers, guides and the inspector
+translate it into reference pixels. Changing only scale at the same ratio preserves geometry without
+interruption. An aspect-ratio change also preserves percentages, but when Zones exist the editor asks
+once for confirmation and, for a shared Template, names how many referencing Compositions will follow
+the change — the count `media_layout_get` already returns as `usage_count`.
+
 It earns its place because of §1. Now that the operator must type `33.333`, something has to tell
 them where that number comes from. With the pixel width known, the editor can show a Zone's real size
 ("1920 × 1080 — exactly one monitor") instead of a bare percentage.
@@ -209,8 +237,11 @@ set during provisioning changes the behaviour of exactly the machines that want 
 - `media_layout_upsert` accepts and returns the new column, and — per ADR 0049 §9 — is becoming a
   diff in the same migration set.
 - Frontend: `roundPercent` and the `step` on Zone inputs move to three decimals; the aspect-ratio
-  parser widens and starts reporting invalid input; the editor gains a resolution field, seam guides
-  and an even-split action.
+  parser widens and starts reporting invalid input; the Template create form gains a preset/custom
+  resolution field and an inline Layout starts at `1920x1080`; the canvas gains a height bound so a
+  portrait Layout fits without scrolling; the editor gains reference-pixel rulers, seam guides, an
+  `%`/pixel inspector and an even-split action. Ticket 11 carried this list first and Ticket 19
+  supersedes it — nothing on it is dropped.
 - Setting `reference_resolution` is another write into a Layout that live Compositions may be bound
   to. It changes no Zone, so ADR 0049 §10 already covers it: a Composition cannot be made incomplete
   by it, and the `layouts.updated_at` bump surfaces it as drift.

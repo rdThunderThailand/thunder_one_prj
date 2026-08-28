@@ -10,7 +10,11 @@ their head.
 
 **Blocked by:** 01 — Layout Zone identity is stable, geometry gains precision
 
-**Status:** ready-for-agent
+**Status:** superseded by Ticket 19 · 2026-08-28
+
+Never started. `docs/layouts/plan-ticket-19-custom-resolution.md` carries every item below — the
+resolution field, derived `aspect_ratio`, pixel readout, seam guides and the even-split action —
+plus the creation-form entry point and the canvas height fit. Build from the plan, not from here.
 
 - [ ] The Layout editor has a `reference_resolution` field, validated against
       `^[0-9]{3,5}x[0-9]{3,5}$` before it is sent, with the same message the server's CHECK enforces
