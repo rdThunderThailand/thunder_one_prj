@@ -199,6 +199,17 @@ export function PublicationDetailPage({ id }: { id: string }) {
               </Link>
             )}
 
+            {detail.composition && (
+              <Link
+                href={`/media-workspace/preview/publication/${id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClasses("secondary")}
+              >
+                Open full preview
+              </Link>
+            )}
+
             {isDraft &&
               (confirming ? (
                 <>

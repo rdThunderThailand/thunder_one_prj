@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { fetchLayout } from "@/features/media-workspace/layouts/services/layouts-api";
 import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
+import { loadCompositionPreview } from "@/features/media-workspace/preview/composition-preview";
 import { groupDeviceGeometries } from "@/features/media-workspace/preview/preview-geometry";
 import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
-import { fetchComposition } from "@/features/media-workspace/compositions/services/compositions-api";
-import type { MediaAsset, PlaylistItem } from "@/types/domain";
+import type { MediaAsset } from "@/types/domain";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 export function PublicationPlaybackPreviewButton({
@@ -46,37 +45,10 @@ export function PublicationPlaybackPreviewButton({
     setError(null);
     try {
       if (basicInfo.publicationType === "composition" && compositionId) {
-        const composition = await fetchComposition(compositionId);
-        const layout = await fetchLayout(composition.layout_id);
-        const playlists = await Promise.all(
-          composition.zones.map(async (zone) => {
-            if (!zone.playlist_id) return [zone.layout_zone_id, []] as const;
-            const playlist = await fetchPlaylist(zone.playlist_id);
-            return [zone.layout_zone_id, playlist.items] as const;
-          }),
-        );
-        const itemsByZoneId = Object.fromEntries(playlists);
-        setZones(composition.zones.map((zone) => ({
-          id: zone.layout_zone_id,
-          name: zone.name,
-          x: zone.x,
-          y: zone.y,
-          width: zone.width,
-          height: zone.height,
-          playback: zone.playback ? {
-            playMode: zone.playback.play_mode,
-            repeat: zone.playback.repeat,
-            startFrom: zone.playback.start_from,
-          } : undefined,
-          items: (itemsByZoneId[zone.layout_zone_id] ?? []).map((item: PlaylistItem) => ({
-            mediaAssetId: item.media_asset_id,
-            label: item.title,
-            durationSeconds: item.duration_seconds,
-            transition: item.transition,
-          })),
-        })));
-        setAspectRatio(layout.aspect_ratio);
-        setReferenceResolution(layout.reference_resolution ?? null);
+        const preview = await loadCompositionPreview(compositionId);
+        setZones(preview.zones);
+        setAspectRatio(preview.aspectRatio);
+        setReferenceResolution(preview.referenceResolution);
       } else if (basicInfo.publicationType === "playlist" && playlistId) {
         const playlist = await fetchPlaylist(playlistId);
         const playback = decodeMetadata(playlist.metadata).playback;

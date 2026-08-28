@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +17,7 @@ import { setPlaylistItems, upsertPlaylist } from "@/features/media-workspace/pla
 import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
 import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
+import type { CompositionPreview } from "@/features/media-workspace/preview/composition-preview";
 import type { MediaAsset, PlaylistItem } from "@/types/domain";
 import {
   fetchComposition,
@@ -67,6 +68,7 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const fullPreviewChannel = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -273,6 +275,34 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
       };
     });
   }, [assets, bindings, layout, playlistItemsById]);
+  const previewHandoff = useMemo<CompositionPreview & { compositionId: string; assets: MediaAsset[] } | null>(() => {
+    if (!id || !layout) return null;
+    const assetIds = new Set(playbackPreviewZones.flatMap((zone) => zone.items.map((item) => item.mediaAssetId)));
+    return {
+      compositionId: id,
+      zones: playbackPreviewZones,
+      assets: assets.filter((asset) => assetIds.has(asset.id)),
+      aspectRatio: layout.aspect_ratio,
+      referenceResolution: layout.reference_resolution ?? null,
+    };
+  }, [assets, id, layout, playbackPreviewZones]);
+  const previewHandoffRef = useRef(previewHandoff);
+
+  useEffect(() => {
+    previewHandoffRef.current = previewHandoff;
+  }, [previewHandoff]);
+
+  useEffect(() => {
+    const closePreviewSession = () => {
+      fullPreviewChannel.current?.postMessage({ type: "close" });
+      fullPreviewChannel.current?.close();
+    };
+    window.addEventListener("beforeunload", closePreviewSession);
+    return () => {
+      window.removeEventListener("beforeunload", closePreviewSession);
+      closePreviewSession();
+    };
+  }, []);
 
   const chooseLayout = (nextLayoutId: string) => {
     const nextLayout = layouts.find((l) => l.id === nextLayoutId);
@@ -296,6 +326,29 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
       return;
     }
     router.push("/media-workspace/layouts");
+  };
+
+  const openFullPreview = () => {
+    if (!id) return;
+    const path = `/media-workspace/preview/composition/${encodeURIComponent(id)}`;
+    if (!isDirty || !previewHandoff) {
+      window.open(path, "_blank", "noopener");
+      return;
+    }
+    fullPreviewChannel.current?.close();
+    const channelName = `thunder-one-preview:${crypto.randomUUID()}`;
+    const channel = new BroadcastChannel(channelName);
+    channel.onmessage = ({ data }: MessageEvent<{ type?: string }>) => {
+      if (data?.type !== "connect" && data?.type !== "heartbeat") return;
+      const current = previewHandoffRef.current;
+      if (!current) return;
+      channel.postMessage({ type: "handoff", handoff: current });
+      channel.postMessage({ type: "heartbeat-reply" });
+    };
+    fullPreviewChannel.current = channel;
+    // The random channel id is a transient rendezvous handle, not draft data. Keeping it in the
+    // URL lets a refresh reconnect while the editor is open without exposing the draft itself.
+    window.open(`${path}?previewSession=${encodeURIComponent(channelName)}`, "_blank", "noopener");
   };
 
   /** Resolves every "assets" Zone into a saved inline Playlist (creating or updating it),
@@ -503,6 +556,9 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
             </Button>
             <Button variant="secondary" onClick={() => setPreviewOpen(true)} disabled={!layout}>
               Preview
+            </Button>
+            <Button variant="secondary" onClick={openFullPreview} disabled={!id || !layout} title={!id ? "บันทึก Draft ก่อนเปิด preview เต็มจอ" : undefined}>
+              Open full preview
             </Button>
             <Button variant="secondary" onClick={handleSaveDraft} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>
               {saving ? "กำลังบันทึก..." : "Save draft"}
