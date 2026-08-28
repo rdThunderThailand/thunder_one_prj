@@ -23,11 +23,12 @@ is a separate layer of verification in another repo. There is **no per-device ca
 as verified until it has been tested against a real player build** — a correct payload is not a
 rendered screen.
 
-**Status:** ready-for-agent · unblocked 2026-08-28. All three blockers are done: 05 is applied to
-production (`media_publication_activate` writes `publication_snapshot_zones`), 09 is applied to
-production with its frontend committed as `4b6d9d7`, and 16's advisory warnings are committed
-(`0e3e75e`, `63c9f04`, `f594573`). It does **not** wait on ticket 17, the flip to refusing unprofiled
-Devices, which is held behind a fleet readiness threshold.
+**Status:** server implementation and verification complete · 2026-08-28. The migration is applied
+on both `develop` and production; develop verifies both RPC shapes and the HTTP route's nested URL
+signing. Production has one `media_job_poll(text)` overload, emits `zones`, and is executable by
+`service_role` only. It does **not** wait on ticket 17, the flip to refusing unprofiled Devices,
+which is held behind a fleet readiness threshold. Player rendering remains a separate repository
+verification.
 
 **Production baseline checked 2026-08-28** — `media_job_poll` is one overload and *already* joins
 `publication_snapshot_zones`, but only to reach snapshot items
