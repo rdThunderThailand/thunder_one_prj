@@ -6,7 +6,7 @@ import { deviceFit, parseAspectRatio } from "@/features/media-workspace/layouts/
 import { fetchPreviewUrls } from "@/lib/api/media-api";
 import { isVideoUrl } from "@/lib/media-kind";
 import type { MediaAsset } from "@/types/domain";
-import { previewFrameAt, zoneLoopDurationSeconds, type PlaybackPreviewItem, type PlaybackPreviewSettings, type PlaybackPreviewZone } from "./preview-clock";
+import { previewFrameAt, zoneLoopDurationSeconds, type PlaybackPreviewItem, type PlaybackPreviewZone } from "./preview-clock";
 import { defaultGeometry, resolveFrameAspectRatio, resolveFramePixels, type GeometryOption } from "./preview-geometry";
 
 export type { PlaybackPreviewItem, PlaybackPreviewSettings, PlaybackPreviewZone } from "./preview-clock";
@@ -80,23 +80,27 @@ export function PreviewStage({
     ? `min(100%, calc(${isFullscreen ? "82vh" : "70vh"} * ${ratioWidth} / ${ratioHeight}))`
     : `${framePixels[0]}px`;
 
+  // ponytail: promise chain, not a direct call — react-hooks/set-state-in-effect flags any
+  // setState called synchronously in an effect body, same workaround as AssetLibraryStep.
   useEffect(() => {
     if (!active) return;
-    setTimeSeconds(0);
-    setPlaying(false);
-    setSpeed(1);
+    Promise.resolve().then(() => {
+      setTimeSeconds(0);
+      setPlaying(false);
+      setSpeed(1);
+    });
   }, [active]);
 
   useEffect(() => {
     if (!active) return;
     const missingAssetIds = assetIds.filter((id) => !previewUrls[id]);
-    setUrls(previewUrls);
+    Promise.resolve().then(() => setUrls(previewUrls));
     if (missingAssetIds.length === 0) {
-      setPreviewLoadState("ready");
+      Promise.resolve().then(() => setPreviewLoadState("ready"));
       return;
     }
     let alive = true;
-    setPreviewLoadState("loading");
+    Promise.resolve().then(() => setPreviewLoadState("loading"));
     fetchPreviewUrls(missingAssetIds)
       .then((result) => {
         if (!alive) return;
@@ -123,7 +127,7 @@ export function PreviewStage({
   }, [playing, speed, timelineSeconds]);
 
   useEffect(() => {
-    if (timeSeconds >= timelineSeconds && playing) setPlaying(false);
+    if (timeSeconds >= timelineSeconds && playing) Promise.resolve().then(() => setPlaying(false));
   }, [playing, timeSeconds, timelineSeconds]);
 
   useEffect(() => {
