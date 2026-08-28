@@ -48,12 +48,27 @@ constraint.
 **Blocks:** 17 — geometry enforcement. Not 16, and not 10: both proceed without this, and ADR 0055
 is explicit that they must not be made to wait on player teams.
 
-**Status:** server half **applied to `develop` only, verified at SQL layer only** — 2026-08-28.
-Migration `Thunder_Core/supabase/migrations/20260828160000_profile_required_geometry.sql`. Production
-is deliberately untouched (`pg_get_functiondef` md5 still `d4fb6843…`) and stays that way until a
-player owner exists: the end-to-end criterion needs a real build echoing `profile_required: false`,
-and no player repo is available. The ticket therefore stays open. Contract settled 2026-08-27
-(below). Cross-repo; the player half needs an owner on each platform before it can be scheduled.
+**Status:** server half **applied to both `develop` and production, verified at SQL layer only** —
+production applied 2026-08-28. Migration
+`Thunder_Core/supabase/migrations/20260828160000_profile_required_geometry.sql`. The ticket stays
+open: the end-to-end criterion needs a real build echoing `profile_required: false` and no player
+repo is available, so production's apply is verified the same way develop's was — SQL layer only, no
+live device heartbeat exercised against it. Contract settled 2026-08-27 (below). Cross-repo; the
+player half needs an owner on each platform before it can be scheduled.
+
+### What was verified on production (2026-08-28)
+
+- `pg_get_functiondef` md5 moved `d4fb6843…` → `1027002b…` — **byte-identical to develop's
+  post-apply definition**, same md5 on both environments.
+- Exactly one overload, `media_heartbeat(text,jsonb)`.
+- Grants: `service_role` and `postgres` (owner) only — confirmed via
+  `information_schema.role_routine_grants`; no `PUBLIC`, `anon`, or `authenticated`.
+- Pre-apply baseline was read back first and matched the expected prior state (md5 `d4fb6843…`, one
+  overload, `player_capabilities IS NULL` present, no geometry clause) before the migration ran.
+- **Not done on production:** no live device heartbeat was called. Production has no device set aside
+  for this kind of test, and the ticket's own end-to-end criterion targets a real player build against
+  `develop`, not production — so this was left as SQL-layer verification, matching how develop's own
+  apply was verified.
 
 ### What was verified on `develop` (2026-08-28)
 
@@ -118,10 +133,10 @@ future reader learn why.
       present + identity missing; everything present **with `player_capabilities` still NULL** (the
       case that used to be stuck — it must now return `false`); everything present with
       capabilities set. The first two prompt, the last two do not
-- [x] Post-apply verification on `develop` (production not applied — see Status)
-      ~~on both environments~~: `pg_get_functiondef` matches the file, exactly
-      one overload, grants confirmed with `has_function_privilege`, advisors show no new finding
-- [ ] Production apply is **R0** and gets its own approval
+- [x] Post-apply verification on both `develop` and production: `pg_get_functiondef` matches the
+      file (and matches between the two environments), exactly one overload, grants confirmed
+      (`service_role` + owner only), no `PUBLIC`/`anon`/`authenticated`
+- [x] Production apply is **R0** and got its own approval — applied 2026-08-28
 
 **Player** (both platforms)
 

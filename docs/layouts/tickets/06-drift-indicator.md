@@ -12,9 +12,15 @@ snapshot rule is not weakened: nothing reaches a screen without a re-publish.
 **Status:** built and verified on develop (`thunder_one_prj@1dac6c5`, `Thunder_Core@361c428`, both
 pushed to `origin/feat/layout` — confirmed 2026-08-28) · migration applied to develop and production
 · browser scenarios A–F verified in the originating session, scenario G (drift on a `draft`
-Publication shows no indicator) verified 2026-08-27 · residual: the `republish` HTTP route has not
-been exercised in isolation · see
-`.docs/SESSIONLOG-ticket06-drift-indicator-2026-08-27.md`
+Publication shows no indicator) verified 2026-08-27 · **`republish` HTTP route exercised in isolation
+2026-08-28**: forced drift by re-saving Layout `413d7b1f-b1f5-4c97-b5b0-8616d537570b` (bumps
+`updated_at`, no content change), confirmed the drift banner on Publication
+`7b6cb708-bceb-4a0d-b266-a5e10e1f821e`, clicked re-publish in the browser —
+`POST /api/proxy/media/publications/{id}/republish → 200 OK`, banner cleared, `Activated At` moved
+from `3:10:41 PM` to `6:09:44 PM`, `compositions.revision` unchanged at `4` (the route re-snapshots
+the same Composition, it does not bump its revision) — no residual left · see
+`.docs/SESSIONLOG-ticket06-drift-indicator-2026-08-27.md`,
+`.docs/SESSIONLOG-player-contract-reply-and-prs-2026-08-28.md`
 
 - [ ] The Publication read path returns, for a composition Publication, both the recorded revisions
       and the live ones: `compositions.revision`, `layouts.updated_at`, and each bound Playlist's
