@@ -9,7 +9,10 @@ seam-guide and even-split tools carried from Ticket 11.
 
 **Blocked by:** nothing. Ticket 01 and Ticket 15 provide the implemented baseline.
 
-**Status:** ready-for-execution · 2026-08-28
+**Status:** shipped · 2026-08-28. Committed as `c757ec8` and pushed to `feat/layout`. Browser-verified
+in two passes: the first found a canvas viewport overflow and a non-functional custom-resolution
+mode, both fixed and re-verified; preset/custom resolution, portrait fit, same-ratio and
+ratio-changing edits, legacy null-resolution reopen, and 3-column even split all confirmed working.
 
 **Supersedes:** 11 — Layout editor tools for wide screens.
 

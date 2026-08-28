@@ -24,12 +24,14 @@ applied 2026-08-27 regardless.)
 **Blocks:** 10 — `zones[]` payload, for the operator-facing warning only. Ticket 10 no longer waits
 on a refusal, because there is none.
 
-**Status:** implementation complete; browser verification partial (2026-08-27). Tasks 1–3 are
+**Status:** implementation complete; browser verification complete (2026-08-28). Tasks 1–3 are
 committed as `0e3e75e`, `63c9f04`, and `f594573`. The authenticated browser pass confirms the
-step-3 and step-5 warnings and the flat-publication regression; the explicit failed-layout-fetch
-path remains unverified because the available browser surface cannot block that request. No defect
-was reproduced in the reported one-off step-5 draft-loading stall, and both staged Device geometry
-fixtures were restored to `1920×1080`.
+step-3 and step-5 warnings, the flat-publication regression, and the explicit failed-layout-fetch
+path: an XHR-level force-fail of `/media/layouts/{id}` produced "Could not check whether these
+screens fit the Layout." at both steps, and the Publish button stayed enabled (a real, unrelated
+equal-priority overlap block from ticket 09 was also observed and correctly blocked Publish on its
+own). No defect was reproduced in the reported one-off step-5 draft-loading stall, and both staged
+Device geometry fixtures were restored to `1920×1080`. The test draft was discarded unsaved.
 
 ## Scope note — what ADR 0055 removed from this ticket
 
@@ -76,10 +78,10 @@ geometry — behind one fleet readiness threshold, with ticket 18 as its prerequ
 - [ ] Step 5 shows the same warning and **does not** prevent publishing. The Publish button's enabled
       state is unchanged by geometry
 - [ ] A Publication with no Composition is never checked — the flat path is unchanged
-- [ ] The fit check failing to run (the Layout's aspect ratio could not be loaded) says so, rather
+- [x] The fit check failing to run (the Layout's aspect ratio could not be loaded) says so, rather
       than rendering as "everything fits". A silent check is worse than no check
-- [ ] No migration, and no file under `Thunder_Core/supabase/migrations/` is added or modified
-- [ ] Verified in the browser at steps 3 and 5 — the warning appears, and Publish stays enabled
+- [x] No migration, and no file under `Thunder_Core/supabase/migrations/` is added or modified
+- [x] Verified in the browser at steps 3 and 5 — the warning appears, and Publish stays enabled
 
 ## Explicitly not this ticket
 
