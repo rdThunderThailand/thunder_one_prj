@@ -48,8 +48,26 @@ constraint.
 **Blocks:** 17 — geometry enforcement. Not 16, and not 10: both proceed without this, and ADR 0055
 is explicit that they must not be made to wait on player teams.
 
-**Status:** ready-for-grooming. Contract settled 2026-08-27 (below). Cross-repo; the player half
-needs an owner on each platform before it can be scheduled.
+**Status:** server half **applied to `develop` only, verified at SQL layer only** — 2026-08-28.
+Migration `Thunder_Core/supabase/migrations/20260828160000_profile_required_geometry.sql`. Production
+is deliberately untouched (`pg_get_functiondef` md5 still `d4fb6843…`) and stays that way until a
+player owner exists: the end-to-end criterion needs a real build echoing `profile_required: false`,
+and no player repo is available. The ticket therefore stays open. Contract settled 2026-08-27
+(below). Cross-repo; the player half needs an owner on each platform before it can be scheduled.
+
+### What was verified on `develop` (2026-08-28)
+
+- `pg_get_functiondef` md5 moved `d4fb6843…` → `1027002b…`; the `profile_required` expression in the
+  deployed body reads exactly the three-clause OR below, and the `telemetry` object is unchanged.
+- Exactly one overload, `media_heartbeat(text,jsonb)` — the signature never changed, so
+  `CREATE OR REPLACE` replaced rather than overloaded.
+- `has_function_privilege`: `service_role` true, `anon` false, `authenticated` false.
+- Security advisors: 145 pre-existing findings, **none** naming `media_heartbeat`.
+- Probe over the six profile shapes (identity-only, geometry-only, all-present-capabilities-NULL,
+  all-present-capabilities-set, partial identity, partial geometry) returns
+  `true,true,false,false,true,true`. The third case is the one that used to be stuck `true`.
+  The probe evaluates the expression over synthetic rows — no Device records were created or
+  mutated, and the RPC itself was not called with a live device token.
 
 ## The flag's contract — settled, ADR 0055 §9
 
@@ -86,21 +104,22 @@ future reader learn why.
 
 **Server** (`Thunder_Core`, one migration, `CREATE OR REPLACE` — signature unchanged)
 
-- [ ] `media_heartbeat`'s `profile_required` includes missing geometry: a Device lacking
+- [x] `media_heartbeat`'s `profile_required` includes missing geometry: a Device lacking
       `screen_width` or `screen_height` is prompted
-- [ ] Its identity clause is corrected from `AND` to `OR` in the same change, so a Device with a
+- [x] Its identity clause is corrected from `AND` to `OR` in the same change, so a Device with a
       partial profile is prompted rather than slipping through
-- [ ] **`OR v_row.player_capabilities IS NULL` is removed** (ADR 0055 §9), so a Device that reports
+- [x] **`OR v_row.player_capabilities IS NULL` is removed** (ADR 0055 §9), so a Device that reports
       everything a shipped build can report stops being prompted. Verify the reachable `false`
       directly: it is the whole point of the change
-- [ ] The body is copied from the live definition rather than rebuilt — it carries
+- [x] The body is copied from the live definition rather than rebuilt — it carries
       `sync_phase_error_ms` / `sync_loop_duration_seconds`, which an older body would silently drop
-- [ ] The `telemetry` object is unchanged key-for-key; grants stay `service_role` only
-- [ ] A SQL probe covers the partial-profile cases: identity present + geometry missing; geometry
+- [x] The `telemetry` object is unchanged key-for-key; grants stay `service_role` only
+- [x] A SQL probe covers the partial-profile cases: identity present + geometry missing; geometry
       present + identity missing; everything present **with `player_capabilities` still NULL** (the
       case that used to be stuck — it must now return `false`); everything present with
       capabilities set. The first two prompt, the last two do not
-- [ ] Post-apply verification on both environments: `pg_get_functiondef` matches the file, exactly
+- [x] Post-apply verification on `develop` (production not applied — see Status)
+      ~~on both environments~~: `pg_get_functiondef` matches the file, exactly
       one overload, grants confirmed with `has_function_privilege`, advisors show no new finding
 - [ ] Production apply is **R0** and gets its own approval
 
