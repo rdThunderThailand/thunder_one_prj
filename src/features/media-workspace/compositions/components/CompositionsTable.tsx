@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
+import { MediaThumb } from "@/components/ui/MediaThumb";
 import { MoreIcon } from "@/components/ui/icons";
 import type { Sort, SortKey } from "../list-filtering";
 import { statusBadge } from "../status-display";
@@ -18,15 +19,18 @@ function formatUpdatedAt(iso?: string): string {
 }
 
 export type RowAction = "edit" | "duplicate" | "deactivate" | "activate";
+export type CompositionContentPreview = { url: string; thumbnailUrl?: string };
 
 export function CompositionsTable({
   rows,
+  contentPreviews,
   busyId,
   sort,
   onAction,
   onSortChange,
 }: {
   rows: CompositionListItem[];
+  contentPreviews: Record<string, CompositionContentPreview | undefined>;
   busyId: string | null;
   sort: Sort;
   onAction: (action: RowAction, composition: CompositionListItem) => void;
@@ -37,6 +41,7 @@ export function CompositionsTable({
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+            <th className="py-2 pl-1">Content</th>
             <SortHeader label="Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2 pl-1" />
             <SortHeader label="Layout" sortKey="layout" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Zones bound" sortKey="zones" sort={sort} onSortChange={onSortChange} className="py-2" />
@@ -48,11 +53,24 @@ export function CompositionsTable({
         <tbody>
           {rows.map((composition) => {
             const badge = statusBadge(composition.status);
+            const preview = contentPreviews[composition.id];
             return (
               <tr
                 key={composition.id}
                 className="border-b border-zinc-100 last:border-0 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
               >
+                <td className="py-3 pl-1">
+                  {preview ? (
+                    <MediaThumb
+                      url={preview.url}
+                      thumbnailUrl={preview.thumbnailUrl}
+                      alt={`${composition.name} content`}
+                      className="h-10 w-16"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-16 items-center justify-center rounded bg-zinc-100 text-[10px] text-zinc-400 dark:bg-zinc-800">—</div>
+                  )}
+                </td>
                 <td className="py-3 pl-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">{composition.name}</td>
                 <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">{composition.layout_name}</td>
                 <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">

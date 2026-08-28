@@ -25,6 +25,7 @@ export function ZoneContentPicker({
   assets,
   playlists,
   previews,
+  playlistPreviews,
   playlistDurations,
 }: {
   zoneName: string;
@@ -33,6 +34,7 @@ export function ZoneContentPicker({
   assets: MediaAsset[];
   playlists: PlaylistListItem[];
   previews: Record<string, string | undefined>;
+  playlistPreviews: Record<string, { url?: string; thumbnailUrl?: string }>;
   playlistDurations: Record<string, number | undefined>;
 }) {
   const [query, setQuery] = useState("");
@@ -140,11 +142,14 @@ export function ZoneContentPicker({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {filteredPlaylists.map((playlist) => {
             const selected = binding.playlistId === playlist.id;
+            const preview = playlistPreviews[playlist.id];
             return (
               <AssetCard
                 key={playlist.id}
                 kind="playlist"
                 playlist={playlist}
+                previewUrl={preview?.url}
+                thumbnailUrl={preview?.thumbnailUrl}
                 selected={selected}
                 onSelect={() => onChange({ ...binding, source: "playlist", playlistId: selected ? null : playlist.id, playlistName: playlist.name, assetItems: [] })}
               />

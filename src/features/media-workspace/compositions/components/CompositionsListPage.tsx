@@ -11,14 +11,19 @@ import { NoAccess } from "@/components/ui/NoAccess";
 import { Pagination } from "@/components/ui/Pagination";
 import { StatTile } from "@/components/ui/StatTile";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { duplicateComposition, fetchCompositions, setCompositionStatus } from "../services/compositions-api";
+import { fetchPreviewUrls } from "@/lib/api/media-api";
+import { fetchLayouts } from "@/features/media-workspace/layouts/services/layouts-api";
+import type { LayoutKind } from "@/features/media-workspace/layouts/types";
+import { duplicateComposition, fetchComposition, fetchCompositions, setCompositionStatus } from "../services/compositions-api";
+import { firstPlaylistAssetId } from "../content-preview";
+import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { copyName, filterCompositions, paginate, sortCompositions, summarize } from "../list-filtering";
 import { describeSaveError } from "../status-display";
 import { readListState, writeListState, DEFAULT_STATE } from "../list-url-state";
 import type { ListFilters, Sort, SortKey } from "../list-filtering";
 import type { CompositionListItem } from "../types";
 import { CompositionsFilters } from "./CompositionsFilters";
-import { CompositionsTable, type RowAction } from "./CompositionsTable";
+import { CompositionsTable, type CompositionContentPreview, type RowAction } from "./CompositionsTable";
 import { ListEmpty, ListError, ListSkeleton, SummarySkeleton } from "./CompositionsListStates";
 
 export function CompositionsListPage() {
@@ -34,6 +39,8 @@ export function CompositionsListPage() {
   const [page, setPage] = useState(initial.page);
   const [perPage, setPerPage] = useState(initial.perPage);
   const [refreshing, setRefreshing] = useState(false);
+  const [layoutKinds, setLayoutKinds] = useState<Record<string, LayoutKind>>({});
+  const [contentPreviews, setContentPreviews] = useState<Record<string, CompositionContentPreview | undefined>>({});
 
   const restore = useCallback(() => {
     const s = readListState(new URLSearchParams(window.location.search));
@@ -55,8 +62,12 @@ export function CompositionsListPage() {
 
   useEffect(() => {
     let alive = true;
-    fetchCompositions()
-      .then((data) => alive && setCompositions(data))
+    Promise.all([fetchCompositions(), fetchLayouts("template"), fetchLayouts("inline")])
+      .then(([data, templates, inline]) => {
+        if (!alive) return;
+        setCompositions(data);
+        setLayoutKinds(Object.fromEntries([...templates, ...inline].map((layout) => [layout.id, layout.kind ?? "template"])));
+      })
       .catch((err) => alive && setError(classifyApiError(err, "โหลด Compositions ไม่สำเร็จ")));
     return () => {
       alive = false;
@@ -65,9 +76,10 @@ export function CompositionsListPage() {
 
   const reload = () => {
     setRefreshing(true);
-    return fetchCompositions()
-      .then((data) => {
+    return Promise.all([fetchCompositions(), fetchLayouts("template"), fetchLayouts("inline")])
+      .then(([data, templates, inline]) => {
         setCompositions(data);
+        setLayoutKinds(Object.fromEntries([...templates, ...inline].map((layout) => [layout.id, layout.kind ?? "template"])));
         setError(null);
         setRefreshing(false);
       })
@@ -80,6 +92,44 @@ export function CompositionsListPage() {
   const filtered = filterCompositions(compositions ?? [], filters);
   const sorted = sortCompositions(filtered, sort);
   const { rows, page: currentPage, totalPages } = paginate(sorted, page, perPage);
+
+  useEffect(() => {
+    let alive = true;
+    const missing = rows.filter((composition) => !(composition.id in contentPreviews));
+    if (missing.length === 0) return;
+
+    Promise.all(missing.map(async (composition) => {
+      try {
+        const detail = await fetchComposition(composition.id);
+        const playlistId = [...detail.zones]
+          .sort((a, b) => a.position - b.position)
+          .find((zone) => zone.playlist_id)?.playlist_id;
+        if (!playlistId) return [composition.id, undefined] as const;
+        const playlist = await fetchPlaylist(playlistId);
+        const assetId = firstPlaylistAssetId(playlist.items);
+        return [composition.id, assetId] as const;
+      } catch {
+        return [composition.id, undefined] as const;
+      }
+    })).then(async (entries) => {
+      const assetIds = entries.flatMap(([, assetId]) => assetId ? [assetId] : []);
+      const previewUrls = await fetchPreviewUrls(assetIds);
+      if (!alive) return;
+      setContentPreviews((current) => ({
+        ...current,
+        ...Object.fromEntries(entries.map(([compositionId, assetId]) => [
+          compositionId,
+          assetId && previewUrls.urls[assetId]
+            ? { url: previewUrls.urls[assetId], thumbnailUrl: previewUrls.thumbnailUrls[assetId] }
+            : undefined,
+        ])),
+      }));
+    }).catch(() => undefined);
+
+    return () => {
+      alive = false;
+    };
+  }, [contentPreviews, rows]);
 
   const handleClearAll = () => {
     setFilters(DEFAULT_STATE.filters);
@@ -104,7 +154,7 @@ export function CompositionsListPage() {
 
   const handleAction = (action: RowAction, composition: CompositionListItem) => {
     if (action === "edit") {
-      router.push(`/media-workspace/compositions/${composition.id}`);
+      router.push(`/media-workspace/layouts/${composition.id}`);
       return;
     }
     if (action === "activate") {
@@ -127,15 +177,17 @@ export function CompositionsListPage() {
   }
 
   const stats = compositions !== null ? summarize(compositions) : null;
+  const templateCount = compositions?.filter((composition) => layoutKinds[composition.layout_id] !== "inline").length ?? 0;
+  const customCount = compositions?.filter((composition) => layoutKinds[composition.layout_id] === "inline").length ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Compositions"
-        subtitle="Bind content to each Zone of a Layout and reuse it across publications."
+        title="Layouts"
+        subtitle="Arrange Zones and bind content for each layout."
         actions={
-          <Link href="/media-workspace/compositions/create" className={buttonClasses("primary")}>
-            + New Composition
+          <Link href="/media-workspace/layouts/create" className={buttonClasses("primary")}>
+            + New Layout
           </Link>
         }
       />
@@ -143,11 +195,10 @@ export function CompositionsListPage() {
       {stats === null ? (
         <SummarySkeleton />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <StatTile label="Total Compositions" value={String(stats.total)} />
-          <StatTile label="Draft" value={String(stats.draft)} />
-          <StatTile label="Active" value={String(stats.active)} color="emerald" />
-          <StatTile label="Inactive" value={String(stats.inactive)} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatTile label="Total Layouts" value={String(stats.total)} />
+          <StatTile label="Templates" value={String(templateCount)} />
+          <StatTile label="Custom" value={String(customCount)} />
         </div>
       )}
 
@@ -188,6 +239,7 @@ export function CompositionsListPage() {
           <>
             <CompositionsTable
               rows={rows}
+              contentPreviews={contentPreviews}
               busyId={busyId}
               sort={sort}
               onAction={handleAction}

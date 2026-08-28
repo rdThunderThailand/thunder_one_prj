@@ -24,7 +24,12 @@ applied 2026-08-27 regardless.)
 **Blocks:** 10 — `zones[]` payload, for the operator-facing warning only. Ticket 10 no longer waits
 on a refusal, because there is none.
 
-**Status:** ready-for-agent. ADR 0055 accepted 2026-08-27.
+**Status:** implementation complete; browser verification partial (2026-08-27). Tasks 1–3 are
+committed as `0e3e75e`, `63c9f04`, and `f594573`. The authenticated browser pass confirms the
+step-3 and step-5 warnings and the flat-publication regression; the explicit failed-layout-fetch
+path remains unverified because the available browser surface cannot block that request. No defect
+was reproduced in the reported one-off step-5 draft-loading stall, and both staged Device geometry
+fixtures were restored to `1920×1080`.
 
 ## Scope note — what ADR 0055 removed from this ticket
 

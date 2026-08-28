@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { CompositionEditorPage } from "@/features/media-workspace/compositions/components/CompositionEditorPage";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return (
-    <Suspense fallback={null}>
-      <CompositionEditorPage />
-    </Suspense>
-  );
+  redirect("/media-workspace/layouts/create");
 }

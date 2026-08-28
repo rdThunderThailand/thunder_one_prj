@@ -24,6 +24,7 @@ import {
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { categoryBadgeColor, categoryIcon } from "./ChannelCard";
 import { MiniCalendar } from "./MiniCalendar";
+import { PublicationPlaybackPreviewButton } from "./PublicationPlaybackPreviewButton";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 import {
@@ -177,7 +178,10 @@ export function ReviewPublishStep({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div className="flex flex-col gap-4 lg:col-span-2">
           <Card className="p-5">
-            <h2 className="mb-3 text-sm font-semibold text-zinc-900">Content Preview</h2>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-zinc-900">Content Preview</h2>
+              <PublicationPlaybackPreviewButton assets={assets} conflictCount={conflicts.length} />
+            </div>
             <div className="flex gap-4">
               <div className="flex aspect-square w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
                 <MediaThumb

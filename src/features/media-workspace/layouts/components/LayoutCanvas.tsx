@@ -6,6 +6,7 @@
 // conversion layer to get wrong (docs/layouts/plan-layout-execution.md Task 7 Step 2).
 
 import { useRef, useState } from "react";
+import { MediaThumb } from "@/components/ui/MediaThumb";
 import { parseAspectRatio, roundPercent, validateZones } from "../geometry";
 import type { LayoutZone } from "../types";
 
@@ -65,6 +66,7 @@ export function LayoutCanvas({
   zones,
   background,
   aspectRatio,
+  zonePreviews = {},
   selectedIndex,
   onSelectIndex,
   onChange,
@@ -72,6 +74,7 @@ export function LayoutCanvas({
   zones: LayoutZone[];
   background: string;
   aspectRatio: string;
+  zonePreviews?: Record<string, { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string }>;
   selectedIndex: number | null;
   onSelectIndex: (index: number | null) => void;
   onChange: (zones: LayoutZone[]) => void;
@@ -177,6 +180,16 @@ export function LayoutCanvas({
               height: `${zone.height}%`,
             }}
           >
+            {zone.id && zonePreviews[zone.id] && (
+              <MediaThumb
+                url={zonePreviews[zone.id].url}
+                thumbnailUrl={zonePreviews[zone.id].thumbnailUrl}
+                kind={zonePreviews[zone.id].kind}
+                mimeType={zonePreviews[zone.id].mimeType}
+                alt={`${zone.name} content`}
+                className="pointer-events-none absolute inset-0 h-full w-full rounded-none"
+              />
+            )}
             <span className="absolute left-1 top-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] text-white">
               {zone.name} · {zone.width.toFixed(3)}×{zone.height.toFixed(3)}%
             </span>

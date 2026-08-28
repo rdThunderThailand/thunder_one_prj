@@ -9,7 +9,7 @@ Template management. The sidebar gains its first working entry for any of this.
 
 **Blocked by:** 14 — `layouts.kind`
 
-**Status:** ready-for-agent
+**Status:** in progress (2026-08-27)
 
 **Frontend only. No migration, no RPC** — ticket 14 carries every backend change this needs,
 including `media_composition_fork_layout` (ADR 0052 §8).

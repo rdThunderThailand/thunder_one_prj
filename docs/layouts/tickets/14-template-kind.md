@@ -10,7 +10,9 @@ merged authoring flow — ticket 15 stays UI-only because everything it needs la
 
 **Blocked by:** none — additive, independent of 04 and 05
 
-**Status:** ready-for-agent
+**Status:** implementation complete; migrations applied and contract/rollback-probe verified on
+`develop` (2026-08-27). Production apply, cross-tenant probes, and authenticated route/UI
+verification remain pending.
 
 **The migration is additive and changes no function signature — R1, not R0.** Keep it that way: if a
 change here starts requiring `DROP FUNCTION`, stop and re-read ADR 0052 §4 before continuing.

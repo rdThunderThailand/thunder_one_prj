@@ -9,6 +9,7 @@ import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 // Reused rather than re-written — see docs/layouts/plan-layout-execution.md Task 7 Step 5.
 import { UnsavedLeaveConfirm } from "../../playlists/components/UnsavedLeaveConfirm";
 import { validateZones } from "../geometry";
+import { splitZone } from "../split-zone";
 import { fetchLayout, upsertLayout } from "../services/layouts-api";
 import { describeSaveError } from "../status-display";
 import { DEFAULT_ASPECT_RATIO, DEFAULT_BACKGROUND, type LayoutDraft, type LayoutZone } from "../types";
@@ -47,6 +48,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [usageCount, setUsageCount] = useState(0);
 
   useEffect(() => {
     if (!layoutId) return;
@@ -64,6 +66,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
         };
         setDraft(loaded);
         setInitial(loaded);
+        setUsageCount(detail.usage_count ?? 0);
       })
       .catch((err) => alive && setLoadError(classifyApiError(err, "โหลด Layout ไม่สำเร็จ")))
       .finally(() => alive && setLoading(false));
@@ -81,10 +84,11 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       setConfirmLeave(true);
       return;
     }
-    router.push("/media-workspace/layouts");
+    router.push("/media-workspace/layouts/templates");
   };
 
   const handleSave = async () => {
+    if (usageCount > 1 && !window.confirm(`This Template is used by ${usageCount} Layouts. Changing the Zones affects all of them.`)) return;
     setSaveError(null);
     setSaving(true);
     try {
@@ -96,7 +100,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
         status: draft.status,
         zones: draft.zones,
       });
-      router.push("/media-workspace/layouts");
+      router.push("/media-workspace/layouts/templates");
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       setSaveError(message.startsWith("Invalid input:") ? describeSaveError(message) : classifyApiError(err, "บันทึก Layout ไม่สำเร็จ").message);
@@ -113,8 +117,8 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
     return (
       <Card className="p-6">
         <p className="text-sm text-red-500">{loadError.message}</p>
-        <Button className="mt-4" variant="secondary" onClick={() => router.push("/media-workspace/layouts")}>
-          กลับไป Layouts
+        <Button className="mt-4" variant="secondary" onClick={() => router.push("/media-workspace/layouts/templates")}>
+          กลับไป Templates
         </Button>
       </Card>
     );
@@ -164,13 +168,19 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       {confirmLeave && (
         <UnsavedLeaveConfirm
           onStay={() => setConfirmLeave(false)}
-          onLeave={() => router.push("/media-workspace/layouts")}
+          onLeave={() => router.push("/media-workspace/layouts/templates")}
         />
       )}
 
       {saveError && (
         <Card className="border-red-200 p-4 dark:border-red-900">
           <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+        </Card>
+      )}
+
+      {usageCount > 1 && (
+        <Card className="border-amber-200 p-4 dark:border-amber-800">
+          <p className="text-sm text-amber-800 dark:text-amber-200">Change-all mode: this Template is used by {usageCount} Layouts.</p>
         </Card>
       )}
 
@@ -212,6 +222,20 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
                 setSelectedIndex(null);
               }}
             />
+            {selectedIndex !== null && (
+              <Button
+                variant="secondary"
+                disabled={draft.zones.length >= 4}
+                onClick={() => {
+                  const next = splitZone(draft.zones, selectedIndex);
+                  if (!next) return;
+                  setDraft((draft) => ({ ...draft, zones: next }));
+                  setSelectedIndex(selectedIndex + 1);
+                }}
+              >
+                Split Zone
+              </Button>
+            )}
           </div>
         </div>
       ) : (

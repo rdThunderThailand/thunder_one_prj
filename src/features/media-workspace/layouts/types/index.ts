@@ -4,6 +4,8 @@
 
 export const LAYOUT_STATUSES = ["active", "inactive"] as const;
 export type LayoutStatus = (typeof LAYOUT_STATUSES)[number];
+export const LAYOUT_KINDS = ["inline", "template"] as const;
+export type LayoutKind = (typeof LAYOUT_KINDS)[number];
 
 /** Percent of the display area, 0–100, three decimal places — both axes, independently. */
 export type ZoneRect = { x: number; y: number; width: number; height: number };
@@ -23,6 +25,9 @@ export type LayoutListItem = {
   aspect_ratio: string;
   background: string;
   status: LayoutStatus;
+  /** Absent only while the deployed Core has not yet applied Ticket 14's migration. */
+  kind?: LayoutKind;
+  usage_count?: number;
   reference_resolution?: string | null;
   zone_count: number;
   zones: LayoutZone[];

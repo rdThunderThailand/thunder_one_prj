@@ -1,0 +1,120 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { fetchLayout } from "@/features/media-workspace/layouts/services/layouts-api";
+import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
+import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
+import { fetchComposition } from "@/features/media-workspace/compositions/services/compositions-api";
+import type { MediaAsset, PlaylistItem } from "@/types/domain";
+import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+
+export function PublicationPlaybackPreviewButton({ assets, className = "", conflictCount = 0 }: { assets: MediaAsset[]; className?: string; conflictCount?: number }) {
+  const basicInfo = usePublicationDraftStore((state) => state.basicInfo);
+  const assetItems = usePublicationDraftStore((state) => state.assetItems);
+  const playlistId = usePublicationDraftStore((state) => state.playlistId);
+  const compositionId = usePublicationDraftStore((state) => state.compositionId);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [zones, setZones] = useState<PlaybackPreviewZone[]>([]);
+  const [aspectRatio, setAspectRatio] = useState("16:9");
+
+  const hasContent = basicInfo.publicationType === "composition"
+    ? !!compositionId
+    : basicInfo.publicationType === "playlist"
+    ? !!playlistId
+    : assetItems.length > 0;
+
+  const openPreview = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (basicInfo.publicationType === "composition" && compositionId) {
+        const composition = await fetchComposition(compositionId);
+        const layout = await fetchLayout(composition.layout_id);
+        const playlists = await Promise.all(
+          composition.zones.map(async (zone) => {
+            if (!zone.playlist_id) return [zone.layout_zone_id, []] as const;
+            const playlist = await fetchPlaylist(zone.playlist_id);
+            return [zone.layout_zone_id, playlist.items] as const;
+          }),
+        );
+        const itemsByZoneId = Object.fromEntries(playlists);
+        setZones(composition.zones.map((zone) => ({
+          id: zone.layout_zone_id,
+          name: zone.name,
+          x: zone.x,
+          y: zone.y,
+          width: zone.width,
+          height: zone.height,
+          playback: zone.playback ? {
+            playMode: zone.playback.play_mode,
+            repeat: zone.playback.repeat,
+            startFrom: zone.playback.start_from,
+          } : undefined,
+          items: (itemsByZoneId[zone.layout_zone_id] ?? []).map((item: PlaylistItem) => ({
+            mediaAssetId: item.media_asset_id,
+            label: item.title,
+            durationSeconds: item.duration_seconds,
+            transition: item.transition,
+          })),
+        })));
+        setAspectRatio(layout.aspect_ratio);
+      } else if (basicInfo.publicationType === "playlist" && playlistId) {
+        const playlist = await fetchPlaylist(playlistId);
+        const playback = decodeMetadata(playlist.metadata).playback;
+        setZones([{
+          id: playlist.id,
+          name: playlist.name,
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          playback: {
+            playMode: playback.playMode,
+            repeat: playback.repeat,
+            startFrom: playback.startFrom,
+          },
+          items: playlist.items.map((item) => ({
+            mediaAssetId: item.media_asset_id,
+            label: item.title,
+            durationSeconds: item.duration_seconds,
+            transition: item.transition,
+          })),
+        }]);
+        setAspectRatio("16:9");
+      } else {
+        setZones([{
+          id: "publication-assets",
+          name: basicInfo.name || "Publication",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          items: assetItems.map((item) => ({
+            mediaAssetId: item.media_asset_id,
+            durationSeconds: item.duration_seconds,
+            transition: item.transition,
+          })),
+        }]);
+        setAspectRatio("16:9");
+      }
+      setOpen(true);
+    } catch {
+      setError("โหลด Content สำหรับ preview ไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <Button variant="secondary" className={`px-3 py-1.5 text-xs ${className}`} onClick={openPreview} disabled={!hasContent || loading}>
+        {loading ? "Loading preview…" : "Preview playback"}
+      </Button>
+      {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
+      <PlaybackPreviewModal open={open} onClose={() => setOpen(false)} zones={zones} assets={assets} aspectRatio={aspectRatio} conflictCount={conflictCount} />
+    </>
+  );
+}

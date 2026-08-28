@@ -52,14 +52,22 @@ export async function setCompositionStatus(
   return requestApi("PUT", `/media/compositions/${id}/status`, { status });
 }
 
-/** There is no duplicate endpoint — the copy is composed from a read plus an upsert, following
- *  `duplicateLayout`'s precedent. Bindings are not copied: a fresh Composition starts unbound,
- *  matching the "draft may be saved incomplete" rule (ADR 0049 §6). */
 export async function duplicateComposition(
   sourceId: string,
   name: string,
 ): Promise<{ compositionId: string }> {
-  const source = await fetchComposition(sourceId);
-  const { composition_id } = await upsertComposition({ name, layoutId: source.layout_id });
+  const { composition_id } = await requestApi<{ composition_id: string }>(
+    "POST",
+    `/media/compositions/${sourceId}/duplicate`,
+    { name: name.trim() },
+  );
   return { compositionId: composition_id };
+}
+
+export async function forkCompositionLayout(
+  compositionId: string,
+  expectedRevision?: number | null,
+): Promise<{ layout_id: string; revision: number }> {
+  const body = expectedRevision != null ? { expected_revision: expectedRevision } : {};
+  return requestApi("POST", `/media/compositions/${compositionId}/fork-layout`, body);
 }

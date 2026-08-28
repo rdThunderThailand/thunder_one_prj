@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { LayoutsListPage } from "@/features/media-workspace/layouts/components/LayoutsListPage";
+import { CompositionsListPage } from "@/features/media-workspace/compositions/components/CompositionsListPage";
 
 export default function LayoutsPage() {
   return (
     <Suspense fallback={null}>
-      <LayoutsListPage />
+      <CompositionsListPage />
     </Suspense>
   );
 }

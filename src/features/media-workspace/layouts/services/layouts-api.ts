@@ -1,5 +1,5 @@
 import { requestApi } from "@/lib/api/media-api";
-import type { LayoutListItem, LayoutStatus } from "../types";
+import type { LayoutKind, LayoutListItem, LayoutStatus } from "../types";
 
 // Reads live here rather than in src/lib/api/media-api.ts (the shared cross-feature
 // surface, see fetchPlaylist/fetchPlaylists there): nothing outside this feature reads a
@@ -7,10 +7,10 @@ import type { LayoutListItem, LayoutStatus } from "../types";
 // ponytail: move fetchLayouts/fetchLayout to media-api.ts when Screen 3 makes the
 // Publication wizard a second reader.
 
-export async function fetchLayouts(): Promise<LayoutListItem[]> {
+export async function fetchLayouts(kind: LayoutKind = "template"): Promise<LayoutListItem[]> {
   const data = await requestApi<{ layouts?: LayoutListItem[] } | LayoutListItem[]>(
     "GET",
-    "/media/layouts"
+    `/media/layouts?kind=${kind}`
   );
   if (Array.isArray(data)) return data;
   if (data && typeof data === "object" && Array.isArray(data.layouts)) return data.layouts;
@@ -63,6 +63,13 @@ export async function setLayoutStatus(
   status: LayoutStatus
 ): Promise<{ layout_id: string; status: LayoutStatus }> {
   return requestApi("PATCH", `/media/layouts/${id}`, { status });
+}
+
+export async function setLayoutKind(
+  id: string,
+  kind: LayoutKind,
+): Promise<{ layout_id: string; kind: LayoutKind }> {
+  return requestApi("PATCH", `/media/layouts/${id}/kind`, { kind });
 }
 
 /**

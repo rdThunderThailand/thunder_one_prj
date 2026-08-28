@@ -445,7 +445,7 @@ export function CreatePublicationPage() {
             <BasicInfoForm campaigns={campaigns} workspaceTags={tags} showErrors={showFieldErrors} />
           </div>
           <div>
-            <PreviewPanel campaigns={campaigns} />
+            <PreviewPanel campaigns={campaigns} assets={assets} />
           </div>
         </div>
       )}

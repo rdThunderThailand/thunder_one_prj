@@ -1,11 +1,6 @@
-import { Suspense } from "react";
-import { CompositionEditorPage } from "@/features/media-workspace/compositions/components/CompositionEditorPage";
+import { redirect } from "next/navigation";
 
 export default async function Page({ params }: { params: Promise<{ compositionId: string }> }) {
   const { compositionId } = await params;
-  return (
-    <Suspense fallback={null}>
-      <CompositionEditorPage compositionId={compositionId} />
-    </Suspense>
-  );
+  redirect(`/media-workspace/layouts/${compositionId}`);
 }
