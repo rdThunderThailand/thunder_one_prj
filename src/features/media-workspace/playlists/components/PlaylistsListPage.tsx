@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -42,12 +43,21 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Keeps the URL in sync with the view — no setState here, only history, so this
-  // effect stays outside the lint rule against synchronous setState in effects.
-  useEffect(() => {
-    const qs = writeListState({ tab, filters, sort, page, perPage });
-    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [tab, filters, sort, page, perPage]);
+  // Keeps the URL in sync with the view (push/replace decided by useListUrlState — a
+  // search-typing run collapses into one history step) and restores tab/filters/sort/page
+  // from window.location on Back/Forward.
+  const restore = useCallback(() => {
+    const s = readListState(new URLSearchParams(window.location.search));
+    setTab(s.tab);
+    setFilters(s.filters);
+    setSort(s.sort);
+    setPage(s.page);
+    setPerPage(s.perPage);
+  }, []);
+  // An empty query string is exactly the "everything is at its default" signal, so it
+  // doubles as the test for whether "Clear all" would do anything.
+  const qs = writeListState({ tab, filters, sort, page, perPage });
+  useListUrlState(qs, restore);
 
   const handleSortChange = (key: SortKey) => {
     setSort((current) => {
@@ -125,14 +135,19 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
   const selected = filtered.find((p) => p.id === selectedId) ?? null;
 
   // Clear Filters resets filters to defaults and page to 1.
-  const handleClearFilters = () => {
+  // Resets the tab, sort and paging alongside the filters: the button says "Clear all",
+  // and its promise is that the view — and the URL — come back to their pristine state.
+  const handleClearAll = () => {
+    setTab(DEFAULT_STATE.tab);
     setFilters(DEFAULT_STATE.filters);
-    setPage(1);
+    setSort(DEFAULT_STATE.sort);
+    setPage(DEFAULT_STATE.page);
+    setPerPage(DEFAULT_STATE.perPage);
   };
 
   const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
     if (action === "edit") {
-      router.push(`/playlists/create?id=${playlist.id}`);
+      router.push(`/media-workspace/playlists/create?id=${playlist.id}`);
       return;
     }
 
@@ -220,6 +235,7 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
           </div>
 
           <PlaylistsFilters
+            onClearAll={qs === "" ? undefined : handleClearAll}
             value={filters}
             campaigns={campaigns}
             onChange={(next) => {
@@ -252,7 +268,7 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
                 tab,
                 hasActiveFilters: hasActiveFilters(filters),
               })}
-              onClearFilters={handleClearFilters}
+              onClearFilters={handleClearAll}
             />
           ) : (
             <>

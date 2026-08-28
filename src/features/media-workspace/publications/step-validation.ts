@@ -64,7 +64,12 @@ export function validateStep(
   if (step === 1) {
     errors.push(...Object.values(validateBasicInfo(state.basicInfo, ctx)));
   } else if (step === 2) {
-    if (state.basicInfo.publicationType === "playlist") {
+    if (state.basicInfo.publicationType === "composition") {
+      // Contract word is "composition"; the operator-facing error still says "Layout" (ADR 0052 §1).
+      if (!state.compositionId) {
+        errors.push("กรุณาเลือก Layout");
+      }
+    } else if (state.basicInfo.publicationType === "playlist") {
       if (!state.playlistId) {
         errors.push("กรุณาเลือก Playlist");
       }

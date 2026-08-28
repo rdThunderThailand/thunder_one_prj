@@ -11,6 +11,7 @@ import {
   formatDeviceSummary,
   selectedChannelDeviceIds,
   statusPercent,
+  summarizeGeometryFit,
   toChannelItems,
 } from "./channels-logic.ts";
 import { channelIdsToTargets } from "./draft-mapping.ts";
@@ -99,5 +100,26 @@ assert.equal(statusPercent(empty.online, empty.total), 0); // NaN guard
 const mixed = computeStatusCounts(items);
 assert.deepEqual(mixed, { online: 1, warning: 1, offline: 1, total: 3 });
 assert.equal(statusPercent(mixed.online, mixed.total), 33);
+
+// --- summarizeGeometryFit ---
+const geometryChannels = [
+  { id: "c1", devices: [
+    { id: "d1", name: "Screen 01", resolution: "1920x1080" },
+    { id: "d2", name: "Screen 04", resolution: "1080x1920" },
+    { id: "d3", name: "Screen 09", resolution: null },
+  ] },
+  { id: "c2", devices: [{ id: "d4", name: "Screen 05", resolution: "1024x768" }] },
+] as unknown as ChannelListItem[];
+
+assert.deepEqual(summarizeGeometryFit(geometryChannels, ["c1"], "16:9"),
+  { unfitting: ["Screen 04"], unprofiled: ["Screen 09"] });
+assert.deepEqual(summarizeGeometryFit(geometryChannels, ["c1", "c2"], "16:9"),
+  { unfitting: ["Screen 04", "Screen 05"], unprofiled: ["Screen 09"] });
+// No Composition selected: nothing to compare against, nothing to warn about.
+assert.deepEqual(summarizeGeometryFit(geometryChannels, ["c1"], null),
+  { unfitting: [], unprofiled: [] });
+// Unselected Channels are not scanned.
+assert.deepEqual(summarizeGeometryFit(geometryChannels, [], "16:9"),
+  { unfitting: [], unprofiled: [] });
 
 console.log("channels-logic.check.mts — all assertions passed");

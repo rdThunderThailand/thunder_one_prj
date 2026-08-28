@@ -1,16 +1,19 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import type { Campaign, MediaAsset, Tag } from "@/types/domain";
 import { usePlaylistDraftStore } from "../store/usePlaylistDraftStore";
 import { checkContentCompatibility } from "../content-compatibility";
 import { durationPerLoopSeconds, formatDuration } from "../duration";
 import { canSubmit } from "../step-validation";
-import { useMemo } from "react";
+import { aspectRatio, parseResolution } from "../output-profile";
 
 function ReviewRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -32,6 +35,7 @@ export function ReviewStep({
 }) {
   const draft = usePlaylistDraftStore();
   const { name, info, playback, items } = draft;
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const ids = useMemo(() => items.map((i) => i.mediaAssetId), [items]);
   const previews = usePreviewUrls(ids);
@@ -47,6 +51,27 @@ export function ReviewStep({
   );
 
   const ready = canSubmit({ name, description: info.description, items, playback });
+  const previewZones = useMemo<PlaybackPreviewZone[]>(() => [{
+    id: "playlist-preview",
+    name: name || "Playlist",
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+    playback: {
+      playMode: playback.playMode,
+      repeat: playback.repeat,
+      startFrom: playback.startFrom,
+    },
+    items: items.map((item) => ({
+      mediaAssetId: item.mediaAssetId,
+      label: item.title,
+      durationSeconds: item.durationSeconds ?? assetDurations[item.mediaAssetId],
+      transition: item.transition,
+    })),
+  }], [assetDurations, items, name]);
+  const resolution = parseResolution(info.resolution);
+  const previewAspectRatio = resolution ? aspectRatio(resolution.width, resolution.height) : "16:9";
 
   // ADR 0019: a count, not a blocker — assets with no recorded dimensions never appear here.
   const mismatchCount = items.filter((item) => {
@@ -57,13 +82,16 @@ export function ReviewStep({
   return (
     <div className="flex flex-col gap-4">
       <Card className="p-5">
-        <div className="mb-4 flex items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
             Review Playlist
           </h2>
           <Badge color={ready ? "green" : "yellow"} variant="pill">
             {ready ? "Ready to create" : "ยังไม่พร้อม"}
           </Badge>
+          <Button variant="secondary" className="ml-auto px-3 py-1.5 text-xs" onClick={() => setPreviewOpen(true)} disabled={items.length === 0}>
+            Preview playback
+          </Button>
         </div>
 
         <h3 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
@@ -91,6 +119,16 @@ export function ReviewStep({
           />
         </div>
       </Card>
+
+      <PlaybackPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        zones={previewZones}
+        assets={assets}
+        aspectRatio={previewAspectRatio}
+        referenceResolution={resolution ? `${resolution.width}x${resolution.height}` : null}
+        previewUrls={previews.urls}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="p-5">

@@ -1,13 +1,15 @@
 "use client";
 
 import { Card } from "@/components/ui/Card";
-import { EyeIcon, ImageIcon } from "@/components/ui/icons";
+import { ImageIcon } from "@/components/ui/icons";
 import { languageLabel, priorities, publicationTypes } from "../mock-data";
 import type { Campaign } from "../types";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import type { MediaAsset } from "@/types/domain";
+import { PublicationPlaybackPreviewButton } from "./PublicationPlaybackPreviewButton";
 
-export function PreviewPanel({ campaigns = [] }: { campaigns?: Campaign[] }) {
+export function PreviewPanel({ campaigns = [], assets = [] }: { campaigns?: Campaign[]; assets?: MediaAsset[] }) {
   const state = usePublicationDraftStore((s) => s.basicInfo);
   const campaign = campaigns.find((c) => c.id === state.campaignId);
   const type = publicationTypes.find((t) => t.id === state.publicationType);
@@ -17,9 +19,7 @@ export function PreviewPanel({ campaigns = [] }: { campaigns?: Campaign[] }) {
     <Card className="p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-zinc-900">Preview</h2>
-        <button className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50">
-          <EyeIcon className="h-3.5 w-3.5" /> Preview
-        </button>
+        <PublicationPlaybackPreviewButton assets={assets} />
       </div>
 
       <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400">

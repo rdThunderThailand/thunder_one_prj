@@ -18,6 +18,9 @@ export type UpsertPlaylistInput = {
   /** Only sent on create: an update already addresses the row by id and
    *  never needs a dedupe key. */
   idempotencyKey?: string;
+  /** Create-only, and only ever 'inline' — a Composition Zone's picked-assets playlist
+   *  (ADR 0049 §3). The backend fixes `kind` at creation; an update never resends it. */
+  kind?: "inline";
 };
 
 export async function upsertPlaylist(
@@ -32,6 +35,7 @@ export async function upsertPlaylist(
     return requestApi("PATCH", `/media/playlists/${input.playlistId}`, body);
   }
   if (input.idempotencyKey) body.idempotency_key = input.idempotencyKey;
+  if (input.kind) body.kind = input.kind;
   return requestApi("POST", "/media/playlists", body);
 }
 

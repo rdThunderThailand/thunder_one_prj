@@ -40,6 +40,9 @@ function cleanBasicInfoBody(
   if (form.playlist_id?.trim()) {
     body.playlist_id = form.playlist_id.trim();
   }
+  if (form.composition_id?.trim()) {
+    body.composition_id = form.composition_id.trim();
+  }
   if (form.priority) {
     body.priority = form.priority;
   }
@@ -153,6 +156,18 @@ export async function activatePublication(id: string): Promise<{ job_id?: string
   );
 }
 
+/**
+ * Re-publishes an active publication in place: a fresh snapshot and a fresh job, same
+ * publication id (ADR 0053). This is the action a drift indicator offers — never a partial
+ * update, so nothing reaches a screen without a deliberate publish (ADR 0049 §7).
+ */
+export async function republishPublication(id: string): Promise<{ job_id?: string }> {
+  return requestApi<{ job_id?: string }>(
+    "POST",
+    `/media/publications/${id}/republish`
+  );
+}
+
 /** Retries failed/offline-stuck targets. Omit deviceIds to retry every eligible target. */
 export async function retryPublicationTargets(
   id: string,
@@ -182,4 +197,3 @@ export async function checkScheduleConflicts(payload: {
   );
   return Array.isArray(data) ? data : [];
 }
-

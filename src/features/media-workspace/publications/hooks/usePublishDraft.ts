@@ -68,9 +68,10 @@ export function usePublishDraft() {
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
+  const compositionId = usePublicationDraftStore((s) => s.compositionId);
 
   const eligibility = computeEligibility({
-    draft: { publicationId, idempotencyKey, step, basicInfo, assetItems, playlistId, channelIds, scheduleForm },
+    draft: { publicationId, idempotencyKey, step, basicInfo, assetItems, playlistId, compositionId, channelIds, scheduleForm },
     assets,
     conflicts,
     conflictsError,
@@ -190,10 +191,16 @@ export function usePublishDraft() {
    */
   const persistDraft = async (forPublish: boolean): Promise<string | null> => {
     const state = usePublicationDraftStore.getState();
+    // A composition draft may be saved before step 2 picks a Composition — the backend allows it
+    // (media_publication_upsert, ADR 0049 §12, revised 2026-08-26) exactly like an unpicked
+    // Playlist. Publishing still requires it; that guard stays.
+    if (forPublish && state.basicInfo.publicationType === "composition" && !state.compositionId) {
+      throw new Error("กรุณาเลือก Layout ก่อนบันทึก");
+    }
     const targets =
       forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, channels) : undefined;
 
-    const basicForm = basicInfoToForm(state.basicInfo, state.playlistId);
+    const basicForm = basicInfoToForm(state.basicInfo, state.playlistId, state.compositionId);
     let res;
     try {
       res = await saveBasicInfo(basicForm, state.publicationId, targets, state.revision, state.idempotencyKey);

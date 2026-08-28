@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -14,7 +14,7 @@ import { fetchPublication } from "../services/publications-api";
 import { utcToZonedParts } from "../schedule";
 import type { Campaign, MediaAsset, ScheduleConflict } from "../types";
 import type { ChannelListItem } from "../../channels/types";
-import { toChannelItems } from "../channels-logic";
+import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
 import {
   priorities,
   prePublishChecklist,
@@ -24,6 +24,7 @@ import {
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { categoryBadgeColor, categoryIcon } from "./ChannelCard";
 import { MiniCalendar } from "./MiniCalendar";
+import { PublicationPlaybackPreviewButton } from "./PublicationPlaybackPreviewButton";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 import {
@@ -70,6 +71,8 @@ export interface ReviewPublishStepProps {
   checkingConflicts?: boolean;
   conflictsError?: string | null;
   eligibilityChecks?: EligibilityCheck[];
+  aspectRatio?: string | null;
+  fitCheckFailed?: boolean;
 }
 
 export function ReviewPublishStep({
@@ -80,6 +83,8 @@ export function ReviewPublishStep({
   checkingConflicts = false,
   conflictsError = null,
   eligibilityChecks = [],
+  aspectRatio = null,
+  fitCheckFailed = false,
 }: ReviewPublishStepProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -135,6 +140,17 @@ export function ReviewPublishStep({
       : "custom-range")
   );
   const offlineChannels = selectedChannels.filter((c) => c.status === "offline");
+  const geometryFit = useMemo(
+    () => summarizeGeometryFit(channels, channelIds, aspectRatio),
+    [channels, channelIds, aspectRatio],
+  );
+
+  // Every selected Device's reported geometry, duplicates kept — the preview groups and counts
+  // them into the shapes the operator can preview in.
+  const deviceResolutions = useMemo(
+    () => channels.filter((channel) => channelIds.includes(channel.id)).flatMap((channel) => channel.devices.map((device) => device.resolution)),
+    [channels, channelIds],
+  );
 
   const assetFilename = selectedAsset?.file?.original_filename ?? selectedAsset?.title;
   const assetDimensions =
@@ -169,7 +185,10 @@ export function ReviewPublishStep({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div className="flex flex-col gap-4 lg:col-span-2">
           <Card className="p-5">
-            <h2 className="mb-3 text-sm font-semibold text-zinc-900">Content Preview</h2>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-zinc-900">Content Preview</h2>
+              <PublicationPlaybackPreviewButton assets={assets} conflictCount={conflicts.length} deviceResolutions={deviceResolutions} />
+            </div>
             <div className="flex gap-4">
               <div className="flex aspect-square w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
                 <MediaThumb
@@ -337,12 +356,16 @@ export function ReviewPublishStep({
                     />
                     <div>
                       <p className={`text-xs font-medium ${priorityConflicts.hasBlockingConflict ? "text-red-700" : "text-zinc-900"}`}>
-                        {priorityConflicts.hasBlockingConflict
+                        {priorityConflicts.blockingOverlapCount > 0
+                          ? `Publish blocked (${priorityConflicts.blockingOverlapCount} equal-priority layout overlap${priorityConflicts.blockingOverlapCount > 1 ? "s" : ""})`
+                          : priorityConflicts.hasBlockingConflict
                           ? `Publish blocked (${priorityConflicts.higherPriorityCount} higher-priority conflict(s))`
                           : `Priority warning (${conflicts.length})`}
                       </p>
                       <p className="text-[11px] text-zinc-500">
-                        {priorityConflicts.hasBlockingConflict
+                        {priorityConflicts.blockingOverlapCount > 0
+                          ? "Publication นี้กับอีกรายการ Priority เท่ากันอยู่บนจอเดียวกัน และมีฝั่งใดฝั่งหนึ่งเป็น Composition — เปลี่ยน Priority, ตารางเวลา หรือ Target"
+                          : priorityConflicts.hasBlockingConflict
                           ? "Publication นี้จะถูกกดทับอย่างน้อยหนึ่งช่วงเวลา"
                           : "Publish ได้ โดยระบบจะกดทับรายการที่ Priority ต่ำกว่า และรวมรายการ Priority เท่ากันเข้า loop"}
                       </p>
@@ -354,7 +377,9 @@ export function ReviewPublishStep({
                               className="font-medium text-zinc-700 underline decoration-zinc-400 underline-offset-2 hover:decoration-zinc-700"
                             >
                               {conflict.name}
-                            </Link> ({conflict.priority}) — {conflict.would_be_suppressed
+                            </Link> ({conflict.priority}) — {conflict.blocks
+                              ? "same priority + layout; blocks Publish"
+                              : conflict.would_be_suppressed
                               ? "higher priority; blocks Publish"
                               : conflict.would_suppress
                               ? "lower priority; will be suppressed"
@@ -391,6 +416,42 @@ export function ReviewPublishStep({
                     <div>
                       <p className="text-xs font-medium text-zinc-900">No Device Issues</p>
                       <p className="text-[11px] text-zinc-400">อุปกรณ์ทั้งหมดพร้อมใช้งาน</p>
+                    </div>
+                  </div>
+                )}
+                {fitCheckFailed && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <p className="text-xs font-medium text-zinc-900">
+                      Could not check whether these screens fit the Layout.
+                    </p>
+                  </div>
+                )}
+                {geometryFit.unfitting.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <div>
+                      <p className="text-xs font-medium text-zinc-900">
+                        Layout shape mismatch ({geometryFit.unfitting.length})
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        These screens do not match this Layout&apos;s shape and will show it distorted or
+                        rotated: {geometryFit.unfitting.join(", ")}. You can still publish.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {geometryFit.unprofiled.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+                    <div>
+                      <p className="text-xs font-medium text-zinc-900">
+                        Screen size unknown ({geometryFit.unprofiled.length})
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        These screens have not reported their size yet, so their fit is unknown:{" "}
+                        {geometryFit.unprofiled.join(", ")}. You can still publish.
+                      </p>
                     </div>
                   </div>
                 )}

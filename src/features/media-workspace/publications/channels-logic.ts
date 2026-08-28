@@ -1,5 +1,6 @@
 import type { ChannelCategory as ChannelDomainCategory, ChannelListItem } from "../channels/types";
 import { channelCategories, type ChannelCategory, type ChannelItem, type ChannelStatus } from "./mock-data.ts";
+import { deviceFit } from "../layouts/geometry.ts";
 
 /** The Channel domain and this wizard spell the same categories differently
  * (`in_store` vs `in-store`), and the wizard carries an extra `others` bucket
@@ -90,4 +91,30 @@ export function computeStatusCounts(channels: ChannelItem[]): StatusCounts {
 
 export function statusPercent(count: number, total: number): number {
   return total === 0 ? 0 : Math.round((count / total) * 100);
+}
+
+/** Which selected Devices to warn about at steps 3 and 5 (ADR 0055 — advisory, never a block).
+ *  A null aspectRatio means no Composition is selected, so there is nothing to fit against. */
+export function summarizeGeometryFit(
+  channels: readonly ChannelListItem[],
+  channelIds: readonly string[],
+  aspectRatio: string | null,
+): { unfitting: string[]; unprofiled: string[] } {
+  const unfitting = new Set<string>();
+  const unprofiled = new Set<string>();
+  if (!aspectRatio) return { unfitting: [], unprofiled: [] };
+
+  const selected = new Set(channelIds);
+  for (const channel of channels) {
+    if (!selected.has(channel.id)) continue;
+    for (const device of channel.devices) {
+      const fit = deviceFit(device.resolution, aspectRatio);
+      if (fit === "unknown") unprofiled.add(device.name);
+      else if (fit !== "fits") unfitting.add(device.name);
+    }
+  }
+  return {
+    unfitting: [...unfitting].sort(),
+    unprofiled: [...unprofiled].sort(),
+  };
 }

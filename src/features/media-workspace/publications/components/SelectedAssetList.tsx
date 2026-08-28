@@ -5,7 +5,18 @@ import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
-import type { MediaAsset } from "../types";
+import type { DraftAssetItem, MediaAsset } from "../types";
+
+/** Lets a caller outside the Publication wizard (the Composition Zone editor) reuse this
+ *  list against its own state instead of the wizard's store — falls back to the store
+ *  when omitted. */
+type SelectionOverride = {
+  assetItems: DraftAssetItem[];
+  toggleAssetItem: (asset: { id: string; isImage: boolean }) => void;
+  setAssetDuration: (mediaAssetId: string, seconds: number | null) => void;
+  setAssetTransition?: (mediaAssetId: string, transition: "cut" | "fade") => void;
+  moveAssetItem: (mediaAssetId: string, direction: -1 | 1) => void;
+};
 
 function toPositiveInt(raw: string): number {
   const parsed = parseInt(raw, 10);
@@ -15,14 +26,21 @@ function toPositiveInt(raw: string): number {
 export function SelectedAssetList({
   assets,
   previews,
+  selection,
 }: {
   assets: MediaAsset[];
   previews: Record<string, string | undefined>;
+  selection?: SelectionOverride;
 }) {
-  const assetItems = usePublicationDraftStore((s) => s.assetItems);
-  const toggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
-  const setAssetDuration = usePublicationDraftStore((s) => s.setAssetDuration);
-  const moveAssetItem = usePublicationDraftStore((s) => s.moveAssetItem);
+  const storeAssetItems = usePublicationDraftStore((s) => s.assetItems);
+  const storeToggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
+  const storeSetAssetDuration = usePublicationDraftStore((s) => s.setAssetDuration);
+  const storeMoveAssetItem = usePublicationDraftStore((s) => s.moveAssetItem);
+  const assetItems = selection?.assetItems ?? storeAssetItems;
+  const toggleAssetItem = selection?.toggleAssetItem ?? storeToggleAssetItem;
+  const setAssetDuration = selection?.setAssetDuration ?? storeSetAssetDuration;
+  const moveAssetItem = selection?.moveAssetItem ?? storeMoveAssetItem;
+  const setAssetTransition = selection?.setAssetTransition;
 
   if (assetItems.length === 0) return null;
 
@@ -76,6 +94,18 @@ export function SelectedAssetList({
                   />
                   <span className="text-xs text-zinc-400">วิ</span>
                 </div>
+              )}
+
+              {setAssetTransition && (
+                <select
+                  value={item.transition ?? "cut"}
+                  onChange={(event) => setAssetTransition(item.media_asset_id, event.target.value as "cut" | "fade")}
+                  aria-label={`Transition for ${filename}`}
+                  className="shrink-0 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 outline-none focus:border-indigo-500"
+                >
+                  <option value="cut">Cut</option>
+                  <option value="fade">Fade</option>
+                </select>
               )}
 
               {assetItems.length > 1 && (
