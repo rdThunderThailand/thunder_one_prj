@@ -9,7 +9,12 @@ Template management. The sidebar gains its first working entry for any of this.
 
 **Blocked by:** 14 — `layouts.kind`
 
-**Status:** in progress (2026-08-27)
+**Status:** shipped, checklist not maintained — re-verified against the working tree 2026-08-28:
+`/media-workspace/compositions/*` are redirect stubs to `/media-workspace/layouts/*`, the nav lists
+`Layouts` and no `Compositions` (`src/config/nav/media-workspace.tsx:31`), and `TemplateRail.tsx`,
+`LayoutCanvas.tsx`, `CompositionEditorPage.tsx` and the `layouts/templates/*` routes all exist. The
+unticked boxes below were never ticked; treat the code, not the boxes, as the record. Tickets 19 and
+20 build on this baseline.
 
 **Frontend only. No migration, no RPC** — ticket 14 carries every backend change this needs,
 including `media_composition_fork_layout` (ADR 0052 §8).

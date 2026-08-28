@@ -12,7 +12,15 @@ reshaping an airing screen. Screens do not receive the new shape yet; that is ti
 
 **Blocked by:** 04 — A Publication can be of type `composition`
 
-**Status:** ready-for-agent
+**Status:** shipped — applied to **production** (`sfiefevtxalqjizdkcsw`), re-verified against prod
+2026-08-28: `media_publication_activate` is one overload, writes `publication_snapshot_zones`, and
+refuses a composition Publication with no Layout (`'has no layout'`). The table holds 110 Zone rows
+across 110 snapshots — all from `image` / `playlist` / `video` Publications (one Zone each), none
+from a composition, because production has none. Screens still do not receive `zones[]`; that stays
+ticket 10.
+
+The paragraph below described the pre-implementation state and is kept as the record of why the
+guard exists.
 
 **R0 — this rewrites an activation function already live in production. Rehearse on `develop` first.**
 

@@ -10,7 +10,14 @@ built for the superseded model.
 
 **Blocked by:** 02 — Composition entity: schema and RPCs
 
-**Status:** ready-for-agent
+**Status:** shipped — migration applied to **production** (`sfiefevtxalqjizdkcsw`), re-verified
+against prod 2026-08-28: `publications.composition_id` exists, the `publication_type` CHECK reads
+`('image','video','playlist','html','dynamic','composition')`, `media_publication_upsert` carries
+`p_composition_id`, and `media_publication_upsert` / `_activate` / `_duplicate` / `_set_content` each
+have **exactly one overload** — the ambiguity trap this ticket warned about did not happen. Frontend
+branches are live: `step-validation.ts:67`, `publish-eligibility.ts:70`, `content-selection.ts`.
+Production holds **0 composition Publications**, so the operator path is shipped but never yet
+exercised on real data.
 
 **The migration part is R0 — it rewrites a CHECK on a live table and drops a live function signature.
 Rehearse on `develop` first.**

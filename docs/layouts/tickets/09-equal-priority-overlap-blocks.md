@@ -19,7 +19,7 @@ advisory shape, `media_publication_activate` raise + rollback all verified) · f
 (`sfiefevtxalqjizdkcsw`, 2026-08-27, R0 approved): `media_schedule_conflicts` and
 `media_publication_activate` each one overload, `blocks` field and the activation guard present;
 production has 0 composition Publications so the blocking path is inert until one is published ·
-**frontend not yet committed** · see `.docs/SESSIONLOG-ticket09-overlap-block-2026-08-27.md` and
+frontend committed as `4b6d9d7` and the working tree is clean (verified 2026-08-28) · see `.docs/SESSIONLOG-ticket09-overlap-block-2026-08-27.md` and
 `docs/layouts/plan-overlap-block.md`
 
 - [ ] `media_schedule_conflicts` returns a blocking outcome, distinct from its existing advisory one,
