@@ -145,6 +145,13 @@ export function ReviewPublishStep({
     [channels, channelIds, aspectRatio],
   );
 
+  // Every selected Device's reported geometry, duplicates kept — the preview groups and counts
+  // them into the shapes the operator can preview in.
+  const deviceResolutions = useMemo(
+    () => channels.filter((channel) => channelIds.includes(channel.id)).flatMap((channel) => channel.devices.map((device) => device.resolution)),
+    [channels, channelIds],
+  );
+
   const assetFilename = selectedAsset?.file?.original_filename ?? selectedAsset?.title;
   const assetDimensions =
     selectedAsset?.width && selectedAsset?.height
@@ -180,7 +187,7 @@ export function ReviewPublishStep({
           <Card className="p-5">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-zinc-900">Content Preview</h2>
-              <PublicationPlaybackPreviewButton assets={assets} conflictCount={conflicts.length} />
+              <PublicationPlaybackPreviewButton assets={assets} conflictCount={conflicts.length} deviceResolutions={deviceResolutions} />
             </div>
             <div className="flex gap-4">
               <div className="flex aspect-square w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
