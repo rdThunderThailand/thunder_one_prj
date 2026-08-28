@@ -118,7 +118,7 @@ export function LayoutsListPage() {
 
   const handleAction = (action: RowAction, layout: LayoutListItem) => {
     if (action === "edit") {
-      router.push(`/media-workspace/layouts/${layout.id}`);
+      router.push(`/media-workspace/layouts/templates/${layout.id}`);
       return;
     }
     if (action === "archive") {
@@ -156,7 +156,7 @@ export function LayoutsListPage() {
         title="Layouts"
         subtitle="Design multi-zone screen compositions to use in your publications."
         actions={
-          <Link href="/media-workspace/layouts/create" className={buttonClasses("primary")}>
+          <Link href="/media-workspace/layouts/templates/create" className={buttonClasses("primary")}>
             + New Layout
           </Link>
         }
