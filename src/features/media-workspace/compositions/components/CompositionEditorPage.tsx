@@ -323,6 +323,7 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
         layoutId: persistedLayoutId,
         name: layout.name,
         aspectRatio: layout.aspect_ratio,
+        referenceResolution: layout.reference_resolution ?? null,
         background: layout.background,
         status: layout.status,
         zones: editedZones.map((zone) => ({
@@ -344,6 +345,9 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
       const created = await upsertLayout({
         name: name.trim() || "Untitled Layout",
         aspectRatio: "16:9",
+        // ponytail: blank inline Layouts have no LayoutSettingsStep to pick a resolution
+        // from, so they stay legacy (no pixel ruler) — set one later via the Layout editor.
+        referenceResolution: null,
         background: "#000000",
         status: "active",
         zones: blankZones.map(({ name: zoneName, x, y, width, height }) => ({ name: zoneName, x, y, width, height })),
