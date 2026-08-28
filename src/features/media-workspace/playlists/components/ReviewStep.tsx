@@ -126,6 +126,7 @@ export function ReviewStep({
         zones={previewZones}
         assets={assets}
         aspectRatio={previewAspectRatio}
+        referenceResolution={resolution ? `${resolution.width}x${resolution.height}` : null}
         previewUrls={previews.urls}
       />
 

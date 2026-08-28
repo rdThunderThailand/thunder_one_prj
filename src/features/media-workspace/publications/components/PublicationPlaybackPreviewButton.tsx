@@ -1,15 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { fetchLayout } from "@/features/media-workspace/layouts/services/layouts-api";
 import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
+import { groupDeviceGeometries } from "@/features/media-workspace/preview/preview-geometry";
 import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
 import { fetchComposition } from "@/features/media-workspace/compositions/services/compositions-api";
 import type { MediaAsset, PlaylistItem } from "@/types/domain";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
-export function PublicationPlaybackPreviewButton({ assets, className = "", conflictCount = 0 }: { assets: MediaAsset[]; className?: string; conflictCount?: number }) {
+export function PublicationPlaybackPreviewButton({
+  assets,
+  className = "",
+  conflictCount = 0,
+  deviceResolutions = [],
+}: {
+  assets: MediaAsset[];
+  className?: string;
+  conflictCount?: number;
+  /** Every selected target's reported `WxH`, duplicates included — the stage groups and counts
+   *  them. `null` entries are Devices reporting no geometry. */
+  deviceResolutions?: (string | null)[];
+}) {
   const basicInfo = usePublicationDraftStore((state) => state.basicInfo);
   const assetItems = usePublicationDraftStore((state) => state.assetItems);
   const playlistId = usePublicationDraftStore((state) => state.playlistId);
@@ -19,6 +32,8 @@ export function PublicationPlaybackPreviewButton({ assets, className = "", confl
   const [error, setError] = useState<string | null>(null);
   const [zones, setZones] = useState<PlaybackPreviewZone[]>([]);
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [referenceResolution, setReferenceResolution] = useState<string | null>(null);
+  const geometryOptions = useMemo(() => groupDeviceGeometries(deviceResolutions), [deviceResolutions]);
 
   const hasContent = basicInfo.publicationType === "composition"
     ? !!compositionId
@@ -61,6 +76,7 @@ export function PublicationPlaybackPreviewButton({ assets, className = "", confl
           })),
         })));
         setAspectRatio(layout.aspect_ratio);
+        setReferenceResolution(layout.reference_resolution ?? null);
       } else if (basicInfo.publicationType === "playlist" && playlistId) {
         const playlist = await fetchPlaylist(playlistId);
         const playback = decodeMetadata(playlist.metadata).playback;
@@ -84,6 +100,7 @@ export function PublicationPlaybackPreviewButton({ assets, className = "", confl
           })),
         }]);
         setAspectRatio("16:9");
+        setReferenceResolution(null);
       } else {
         setZones([{
           id: "publication-assets",
@@ -99,6 +116,7 @@ export function PublicationPlaybackPreviewButton({ assets, className = "", confl
           })),
         }]);
         setAspectRatio("16:9");
+        setReferenceResolution(null);
       }
       setOpen(true);
     } catch {
@@ -114,7 +132,7 @@ export function PublicationPlaybackPreviewButton({ assets, className = "", confl
         {loading ? "Loading preview…" : "Preview playback"}
       </Button>
       {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
-      <PlaybackPreviewModal open={open} onClose={() => setOpen(false)} zones={zones} assets={assets} aspectRatio={aspectRatio} conflictCount={conflictCount} />
+      <PlaybackPreviewModal open={open} onClose={() => setOpen(false)} zones={zones} assets={assets} aspectRatio={aspectRatio} conflictCount={conflictCount} geometryOptions={geometryOptions} referenceResolution={referenceResolution} />
     </>
   );
 }

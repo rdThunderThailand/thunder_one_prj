@@ -16,6 +16,7 @@ import type { PlaylistListItem } from "@/features/media-workspace/playlists";
 import { setPlaylistItems, upsertPlaylist } from "@/features/media-workspace/playlists/services/playlists-api";
 import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
 import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
+import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
 import type { MediaAsset, PlaylistItem } from "@/types/domain";
 import {
   fetchComposition,
@@ -531,6 +532,8 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
         assets={assets}
         aspectRatio={layout?.aspect_ratio}
         previewUrls={previews}
+        geometryOptions={editorGeometryOptions(layout?.reference_resolution)}
+        referenceResolution={layout?.reference_resolution ?? null}
       />
 
       {saveError && (
