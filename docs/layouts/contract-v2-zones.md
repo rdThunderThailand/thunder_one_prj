@@ -198,26 +198,66 @@ backend deploy.
 - **`NULL`, an absent `capabilities` object, or a missing `max_video_zones` key blocks no publish.**
   Every Device receives a zoned payload for a composition Publication regardless of what it has or
   has not reported.
-- `media_heartbeat`'s `profile_required` flag does fire when `player_capabilities` is null, so a
-  Device that has never reported is flagged on every heartbeat.
-  > **Correction, 2026-08-27.** An earlier version of this bullet said "players should keep
-  > honouring `profile_required`". **No build honours it, and none ever has** — Windows reduces the
-  > heartbeat response to a `bool` and Android to an HTTP status. Both **do** re-send
-  > `device-profile`, but only on their own triggers — Windows at start, on a settings change and on
-  > a display change; Android on entering the player shell — and never in response to a heartbeat.
-  > The flag is written by the server and read by nobody.
-  >
-  > It is also **permanently `true`** on every real Device as the contract stands today: it fires on
-  > `player_capabilities IS NULL`, and neither `DeviceInfo` (Windows) nor `PlayerDeviceProfile`
-  > (Android) has a `capabilities` field to fill it with. **Do not write a player that loops until
-  > the flag clears until ticket 18 has shipped** — it never will before then.
-  >
-  > **Ticket 18 changes the flag's meaning** (ADR 0055 §9) to *"something you can supply is
-  > missing"*: identity or geometry, with the capabilities clause removed, so it reaches `false`
-  > once a build reports what it has. Capability prompting comes back with ticket 08. Treat that as
-  > the contract to write players against.
 - **Enforcement is deferred** (ADR 0054) until there is a player implementation that reports and a
   hardware validation of the number. Turning it on is a new ADR and ticket, not a config change.
+
+## `profile_required` — shipped 2026-08-28, server half only (ticket 18)
+
+> **Status: on `develop` only. Not yet on production.** The contract below is final and safe to
+> build against, but no player build reads it yet — that is the work this section hands off.
+
+The heartbeat response (`POST /api/core/v1/media/player/heartbeat` →
+`public.media_heartbeat`) wraps the RPC result the same way every route does:
+`{ "success": true, "data": { ... } }`. **The flag is `data.profile_required`, not top-level.**
+
+```jsonc
+// POST /api/core/v1/media/player/heartbeat response
+{
+  "success": true,
+  "data": {
+    "device_id": "…",
+    "received_at": "2026-08-28T09:00:00Z",
+    "profile_required": true,
+    "telemetry": { /* unchanged — app_version, storage, sync_phase_error_ms, … */ }
+  }
+}
+```
+
+`profile_required` is `true` when any of these four fields is missing on the server's stored Device
+record: `os_version`, `machine_name`, `screen_width`, `screen_height`. It is `false` once all four
+are present — **every shipped build can satisfy all four today**, so `false` is a reachable, real
+target, not a permanent `true` as the previous (superseded) version of this flag was.
+
+**`player_capabilities` is deliberately not part of this flag.** No shipped build sends
+`capabilities` (see the section above), so including it made the flag permanently stuck at `true`.
+Capability prompting returns with ticket 08, alongside a build that can answer it — do not read
+`profile_required` as a signal about capabilities in the meantime.
+
+### What a player build must do
+
+- Parse the heartbeat response body and read `data.profile_required`. Today's builds discard it
+  entirely — Windows reduces the response to a `bool`, Android to an HTTP status code. Both must
+  start reading the body.
+- `data.profile_required === true` → send `device-profile` (`POST …/device-profile` →
+  `media_device_profile_set`). The call is idempotent by contract; a redundant send is harmless.
+- **Rate-limit the send.** The heartbeat runs every ~60 seconds; a Device that genuinely cannot
+  determine one of the four fields must not turn that into a `device-profile` call every minute.
+  Back off, or send at most once per session per prompt. This is a backstop, not the mechanism — the
+  flag reaching `false` is what stops the loop for every build that *can* fill the fields.
+- **Keep every existing profile trigger.** Windows' start / settings-change / display-change,
+  Android's player-shell entry. This flag adds one more, server-triggered, path — it replaces none
+  of the ones that already work.
+- Send whatever the build can determine, even if one field is unknown. A build that cannot read
+  `screen_width` must still send the fields it has, or the flag never clears and it is prompted
+  forever.
+
+### Verified so far (SQL layer, `develop` only)
+
+`pg_get_functiondef` diff, single overload, `service_role`-only grant, and a 6-case probe over
+identity/geometry combinations — full detail in `docs/layouts/tickets/18-player-reports-on-demand.md`.
+**Not yet verified:** a real player build actually reading the flag and the following heartbeat
+returning `false` — that is the acceptance criterion this hand-off exists to satisfy, and production
+will not receive this change until it has been.
 
 ## Known prerequisites on the player side
 
