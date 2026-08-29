@@ -18,7 +18,8 @@ import { rejectUploadReason } from "@/features/media-workspace/publications/uplo
  *  happens after — refetching their asset list, auto-selecting the new asset, etc.
  *  — via `onUploaded`, since that behavior differs per wizard. */
 export function useAssetUpload(
-  onUploaded: (asset: MediaAsset | null, isVideo: boolean) => void | Promise<void>
+  onUploaded: (asset: MediaAsset | null, isVideo: boolean) => void | Promise<void>,
+  folderId?: string | null
 ) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
@@ -61,6 +62,7 @@ export function useAssetUpload(
         ...(duration ? { duration_seconds: duration } : {}),
         ...(thumbnail_storage_key ? { thumbnail_storage_key } : {}),
         ...(dimensions ?? {}),
+        ...(folderId ? { folder_id: folderId } : {}),
       });
       await onUploaded(asset ?? null, isVideoFile);
     } catch (err) {
