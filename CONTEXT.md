@@ -56,6 +56,10 @@ _Avoid_: Tag (many-to-many, a different question and not built), shared content 
 A virtual collection of soft-deleted Assets, Playlists or operator-facing Layouts, separate within each feature and never a Folder row. Restoring returns an item to its former Folder when possible or to `Uncategorized`; permanent deletion is an explicit, dependency-checked action available only from Trash. `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: Archive, Trash Folder
 
+**Media Detail**:
+The read view for one Communication Asset, opened from its Media Library preview or title. It presents persisted Asset/File facts and supported actions only; Usage, Asset Tags, Versions and Activity History remain unavailable until their own tenant-scoped contracts exist. `docs/adr/0056-nested-feature-folders-and-trash.md`.
+_Avoid_: fabricated usage counts, inferred technical metadata
+
 **Playlist**:
 An ordered sequence of Assets, with per-item duration and transition settings. Has no scheduling or targeting responsibility of its own. Item duration and transition reach the screen together with the Playlist's play mode, repeat behavior and start position (ADR 0031); media fit, volume and failure handling remain stored intent that no player reads yet (ADR 0010). It carries a **Cover**, which is a reference to one of the Assets already in the Playlist (never a separately uploaded file) and falls back to the first item when none is picked, and a **creator**, recorded once at creation and never reassigned by later edits. Active/inactive remains its operational lifecycle; removing it from the library is the separate, reversible move to Trash.
 _Avoid_: Schedule, rotation, Cover image (implies an uploaded file — a Cover is a pointer to a member Asset)

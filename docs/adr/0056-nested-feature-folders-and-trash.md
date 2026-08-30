@@ -16,6 +16,7 @@ Communication content uses tenant-wide, feature-scoped Folder trees rather than 
 - Restore returns an item to its former Folder if that Folder still exists, otherwise to `Uncategorized`. Permanent deletion is manual, one item at a time from Trash, and remains blocked by live references or immutable snapshots. There is no bulk Empty Trash or automatic retention purge.
 - Media listing, Folder filtering, subtree counts, search, status/type filters, sorting and pagination are server-side. Upload registration accepts the selected `folder_id` atomically.
 - The first UI adoption is Media Library. Backend contracts cover all three scopes, while Playlist and Layout UI adoption remains separate work.
+- Media Detail lives at `/media-workspace/assets/[assetId]` and reads one tenant-scoped Asset contract. Its first slice exposes only persisted Asset/File fields, signed preview/download, Folder path, Move and Move to Trash. Usage, Asset Tags, Versions, Activity History, multiple thumbnails, rename, replace, duplicate and publish remain visibly disabled until dedicated contracts exist; the UI never invents placeholder counts or metadata.
 
 ## Considered options
 

@@ -90,6 +90,10 @@ export async function fetchMediaAssets(): Promise<MediaAsset[]> {
   return Array.isArray(data) ? data : [];
 }
 
+export async function fetchMediaAsset(id: string): Promise<MediaAsset> {
+  return requestApi<MediaAsset>("GET", `/media/videos/${id}`);
+}
+
 export async function fetchMediaAssetPage(params: {
   search?: string;
   kind?: "image" | "video";

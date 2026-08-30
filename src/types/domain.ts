@@ -55,6 +55,9 @@ export type MediaAsset = {
   folder_id?: string | null;
   thumbnail_storage_key?: string | null;
   created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+  created_by?: Creator;
   file?: {
     id?: string;
     original_filename?: string;
