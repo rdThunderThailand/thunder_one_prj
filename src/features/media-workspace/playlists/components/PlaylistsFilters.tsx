@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { SearchIcon } from "@/components/ui/icons";
 import type { Campaign } from "@/types/domain";
 import { PLAYLIST_TYPES, type PlaylistStatus, type PlaylistType } from "../types";
@@ -25,12 +26,17 @@ export function PlaylistsFilters({
   value,
   campaigns,
   onChange,
+  onClearAll,
 }: {
   value: FilterState;
   /** Empty while campaigns are loading or after that call failed — the dropdown then
    *  offers "All Campaigns" alone rather than blocking the rest of the filters. */
   campaigns: Campaign[];
   onChange: (next: FilterState) => void;
+  /** Omitted when the whole list state is already at its default, which is also exactly
+   *  when the URL carries no query string — so the button appears only when it would do
+   *  something. Resets the tab, sort and paging too, not just the filters shown here. */
+  onClearAll?: () => void;
 }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -84,6 +90,12 @@ export function PlaylistsFilters({
           </option>
         ))}
       </select>
+
+      {onClearAll ? (
+        <Button variant="ghost" onClick={onClearAll}>
+          Clear all
+        </Button>
+      ) : null}
     </div>
   );
 }

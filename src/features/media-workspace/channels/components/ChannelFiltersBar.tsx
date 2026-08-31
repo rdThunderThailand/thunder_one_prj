@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { SearchIcon } from "@/components/ui/icons";
 import type { ChannelFilters } from "../types";
 
@@ -9,9 +10,14 @@ const selectClasses =
 export function ChannelFiltersBar({
   value,
   onChange,
+  onClearAll,
 }: {
   value: ChannelFilters;
   onChange: (next: ChannelFilters) => void;
+  /** Omitted when the whole list state is already at its default, which is also exactly
+   *  when the URL carries no query string — so the button appears only when it would do
+   *  something. Resets sort and paging too, not just the filters shown here. */
+  onClearAll?: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2.5 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
@@ -54,6 +60,11 @@ export function ChannelFiltersBar({
         <option value="inactive">Inactive</option>
       </select>
 
+      {onClearAll ? (
+        <Button variant="ghost" onClick={onClearAll} className="h-9 px-3 py-0">
+          Clear all
+        </Button>
+      ) : null}
     </div>
   );
 }

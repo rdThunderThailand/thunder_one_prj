@@ -28,6 +28,7 @@ export const mediaWorkspaceNav: NavConfig = {
         { label: "Calendar" },
         { label: "Campaigns" },
         { label: "Playlists", href: "/media-workspace/playlists" },
+        { label: "Layouts", href: "/media-workspace/layouts" },
       ],
     },
     {

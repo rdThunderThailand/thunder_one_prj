@@ -37,5 +37,13 @@ export function describeDeleteError(message: string): string {
   if (message.includes("belongs to a publication")) {
     return "ลบไม่ได้ — playlist นี้ถูกสร้างโดย publication ให้ลบที่ publication แทน";
   }
+  // media_video_delete (ADR 0045 §10) raises "Already in use: ..." when the wrapper
+  // playlist's video Asset can't be hard-deleted — reachable via the kind='single' cascade.
+  if (message.startsWith("Already in use:")) {
+    if (message.includes("referenced by a playlist")) {
+      return "ลบไม่ได้ — วิดีโอนี้ยังถูกใช้อยู่ใน playlist กรุณานำออกจาก playlist ก่อน";
+    }
+    return "ลบไม่ได้ — วิดีโอนี้เคย publish ไปแล้วจึงลบถาวรไม่ได้ ใช้ Archive แทน";
+  }
   return "ลบ playlist ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
 }

@@ -38,6 +38,8 @@ export interface DraftFields {
   basicInfo: BasicInfoState;
   assetItems: DraftAssetItem[];
   playlistId: string | null;
+  /** Set only for publication_type = 'composition' (ADR 0049 §5). */
+  compositionId: string | null;
   channelIds: string[];
   scheduleForm: ScheduleForm;
 }
@@ -50,13 +52,14 @@ function getDefaultDraft(): DraftFields {
     basicInfo: defaultBasicInfo,
     assetItems: [],
     playlistId: null,
+    compositionId: null,
     channelIds: [],
     scheduleForm: makeDefaultScheduleForm(),
   };
 }
 
-function serializeDraftFields(f: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "channelIds" | "scheduleForm">): string {
-  return JSON.stringify({ basicInfo: f.basicInfo, assetItems: f.assetItems, playlistId: f.playlistId, channelIds: f.channelIds, scheduleForm: f.scheduleForm });
+function serializeDraftFields(f: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "compositionId" | "channelIds" | "scheduleForm">): string {
+  return JSON.stringify({ basicInfo: f.basicInfo, assetItems: f.assetItems, playlistId: f.playlistId, compositionId: f.compositionId, channelIds: f.channelIds, scheduleForm: f.scheduleForm });
 }
 
 interface PublicationDraftStore extends DraftFields {
@@ -71,6 +74,7 @@ interface PublicationDraftStore extends DraftFields {
   setRevision: (revision: number | null) => void;
   setPublicationId: (id: string | null) => void;
   setPlaylistId: (id: string | null) => void;
+  setCompositionId: (id: string | null) => void;
   /** Re-mints the create-request key. Used when a stale draft id is being
    * abandoned for a fresh create POST — reusing the old key would resolve
    * back to the dead row instead of creating a new one. */
@@ -105,6 +109,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       setRevision: (revision) => set({ revision }),
       setPublicationId: (publicationId) => set({ publicationId }),
       setPlaylistId: (playlistId) => set({ playlistId }),
+      setCompositionId: (compositionId) => set({ compositionId }),
       resetIdempotencyKey: () => set({ idempotencyKey: crypto.randomUUID() }),
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
@@ -119,6 +124,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
           basicInfo,
           assetItems: typeChanged ? [] : s.assetItems,
           playlistId: typeChanged ? null : s.playlistId,
+          compositionId: typeChanged ? null : s.compositionId,
         };
       }),
       setAssetItems: (assetItems) => set({ assetItems }),
@@ -130,7 +136,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
         return {
           assetItems: [
             ...s.assetItems,
-            { media_asset_id: id, duration_seconds: isImage ? DEFAULT_IMAGE_DURATION_SECONDS : null },
+            { media_asset_id: id, duration_seconds: isImage ? DEFAULT_IMAGE_DURATION_SECONDS : null, transition: "cut" },
           ],
         };
       }),
@@ -172,7 +178,13 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // v7: `channelIds` moved from Media Device ids to Channel ids (ADR 0037). A v6
       // draft rehydrated here would send device ids as channel targets and be
       // rejected with "channel not found".
-      name: "thunderone.publications.create-draft.v7",
+      // v8: Layout mode adds per-Zone bindings. Older drafts cannot describe
+      // which content belongs to which Zone, so they are intentionally dropped.
+      // v9: Layout mode (contentMode/layoutId/layoutZoneIds/zoneBindings/zoneClearPending) is
+      // replaced by a single compositionId, per ADR 0049 §5 and ADR 0052 — a Publication now
+      // picks one Composition exactly as it picks one Playlist, with no per-Zone binding UI in
+      // the wizard. A v8 draft's shape has no compositionId and is dropped, not migrated.
+      name: "thunderone.publications.create-draft.v9",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

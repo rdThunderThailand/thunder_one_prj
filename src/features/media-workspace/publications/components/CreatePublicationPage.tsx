@@ -13,6 +13,7 @@ import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "
 import { hasDraftContent, shouldShowResumePrompt } from "../resume-prompt";
 import { Modal } from "@/components/ui/Modal";
 import { usePublishDraft } from "../hooks/usePublishDraft";
+import { useLayoutAspectRatio } from "../hooks/useLayoutAspectRatio";
 import { deletePublication, fetchPublication } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { detailToDraft } from "../detail-mapping";
@@ -48,6 +49,8 @@ export function CreatePublicationPage() {
   const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
   const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
   const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
+  const compositionId = usePublicationDraftStore((s) => s.compositionId);
+  const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
 
   const [resumedId, setResumedId] = useState<string | null>(null);
   const [resumeError, setResumeError] = useState<string | null>(null);
@@ -96,6 +99,7 @@ export function CreatePublicationPage() {
       setAssetItems(draft.assetItems);
       setChannelIds(draft.channelIds);
       setScheduleForm(draft.scheduleForm);
+      usePublicationDraftStore.getState().setCompositionId(draft.compositionId);
       setPublicationId(detail.id);
       usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
       usePublicationDraftStore.getState().markSaved();
@@ -441,14 +445,20 @@ export function CreatePublicationPage() {
             <BasicInfoForm campaigns={campaigns} workspaceTags={tags} showErrors={showFieldErrors} />
           </div>
           <div>
-            <PreviewPanel campaigns={campaigns} />
+            <PreviewPanel campaigns={campaigns} assets={assets} />
           </div>
         </div>
       )}
 
       {step === 2 && <ContentStep campaigns={campaigns} />}
       {step === 3 && (
-        <ChannelsStep channels={channels} loadingChannels={loadingRefs} channelsError={channelsError} />
+        <ChannelsStep
+          channels={channels}
+          loadingChannels={loadingRefs}
+          channelsError={channelsError}
+          aspectRatio={layoutAspectRatio}
+          fitCheckFailed={fitCheckFailed}
+        />
       )}
       {step === 4 && (
         <ScheduleStep
@@ -470,6 +480,8 @@ export function CreatePublicationPage() {
           checkingConflicts={checkingConflicts}
           conflictsError={conflictsError}
           eligibilityChecks={eligibilityChecks}
+          aspectRatio={layoutAspectRatio}
+          fitCheckFailed={fitCheckFailed}
         />
       )}
 

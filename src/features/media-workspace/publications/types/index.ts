@@ -4,6 +4,7 @@ export const PUBLICATION_TYPES = [
   "playlist",
   "html",
   "dynamic",
+  "composition",
 ] as const;
 
 export type PublicationType = (typeof PUBLICATION_TYPES)[number];
@@ -16,6 +17,7 @@ export type Priority = (typeof PRIORITIES)[number];
 export type { Campaign, MediaAsset, Tag, PlaylistItem, PlaylistDetail } from "@/types/domain";
 export type { PublishJobStatus } from "@/types/domain";
 import type { PublishJobStatus } from "@/types/domain";
+import type { PublicationDriftCheck } from "../publication-drift";
 
 export type BasicInfoForm = {
   name: string;
@@ -26,6 +28,7 @@ export type BasicInfoForm = {
   language?: string;
   tags?: string[];
   playlist_id?: string;
+  composition_id?: string;
 };
 
 export type Publication = {
@@ -39,6 +42,7 @@ export type Publication = {
   language?: string;
   tags?: string[];
   playlist_id?: string;
+  composition_id?: string;
   status?: string;
   revision?: number;
   created_at?: string;
@@ -59,6 +63,8 @@ export type PublicationListItem = {
   campaign_id?: string;
   campaign_name?: string;
   playlist_id?: string;
+  composition_id?: string;
+  composition_name?: string;
   item_count: number;
   tags: string[];
   /** Who created the draft — null for rows created before this field existed. */
@@ -126,6 +132,11 @@ export type PublicationDetail = {
   /** Optimistic-lock counter — bumped on every draft write (docs/adr/0003). */
   revision?: number;
   playlist?: { id: string; name: string } | null;
+  /** Set only for publication_type = 'composition' (ADR 0049 §5, §12). */
+  composition?: { id: string; name: string; status: string } | null;
+  /** Recorded-vs-live revisions of the airing snapshot; null for a flat Publication and for
+   *  one never activated. Compare with `publicationDrift` (ADR 0049 §11). */
+  drift_check?: PublicationDriftCheck | null;
   tags: string[];
   created_at?: string;
   activated_at?: string;
@@ -214,6 +225,11 @@ export type ScheduleConflict = {
   would_suppress: boolean;
   /** If this draft is published, is it the one suppressed for the overlap (override loses)? */
   would_be_suppressed: boolean;
+  /**
+   * Equal priority, shared Media Device, and either side carries a Composition — the two cannot
+   * share a screen, so publishing is refused rather than merged (ticket 09, ADR 0044 §8).
+   */
+  blocks: boolean;
 };
 
 export type DraftAssetItem = {
@@ -221,4 +237,5 @@ export type DraftAssetItem = {
   /** Seconds on screen. Images default to 10 and are user-editable; videos stay null
    *  so the backend falls back to the file's own duration. */
   duration_seconds: number | null;
+  transition?: "cut" | "fade";
 };

@@ -17,6 +17,8 @@ export interface PriorityConflictSummary {
   higherPriorityCount: number;
   lowerPriorityCount: number;
   equalPriorityCount: number;
+  /** Equal-priority overlaps where either side is a Composition — these block publish (ticket 09). */
+  blockingOverlapCount: number;
   hasBlockingConflict: boolean;
 }
 
@@ -24,8 +26,12 @@ export function summarizePriorityConflicts(conflicts: ScheduleConflict[]): Prior
   let higherPriorityCount = 0;
   let lowerPriorityCount = 0;
   let equalPriorityCount = 0;
+  let blockingOverlapCount = 0;
 
   for (const conflict of conflicts) {
+    if (conflict.blocks) {
+      blockingOverlapCount += 1;
+    }
     if (conflict.would_be_suppressed) {
       higherPriorityCount += 1;
     } else if (conflict.would_suppress) {
@@ -39,7 +45,8 @@ export function summarizePriorityConflicts(conflicts: ScheduleConflict[]): Prior
     higherPriorityCount,
     lowerPriorityCount,
     equalPriorityCount,
-    hasBlockingConflict: higherPriorityCount > 0,
+    blockingOverlapCount,
+    hasBlockingConflict: higherPriorityCount > 0 || blockingOverlapCount > 0,
   };
 }
 
@@ -60,6 +67,11 @@ export function computeEligibility(params: {
   let contentCheckStatus: EligibilityStatus;
   if (draft.basicInfo.publicationType === "playlist") {
     contentCheckStatus = draft.playlistId ? "pass" : "fail";
+  } else if (draft.basicInfo.publicationType === "composition") {
+    // Without this branch the else below reads a composition draft's empty assetItems as
+    // "no content" and marks it ineligible — its content lives on the Composition, not here
+    // (ADR 0049 §5).
+    contentCheckStatus = draft.compositionId ? "pass" : "fail";
   } else if (draft.assetItems.length === 0) {
     contentCheckStatus = "fail";
   } else {

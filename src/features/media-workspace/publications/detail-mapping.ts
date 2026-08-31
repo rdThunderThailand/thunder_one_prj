@@ -1,17 +1,18 @@
 import type { PlaylistDetail, PublicationDetail, ScheduleForm, DraftAssetItem } from "./types";
 import type { BasicInfoState } from "./components/BasicInfoForm";
-import { scheduleToForm } from "./schedule";
+import { scheduleToForm } from "./schedule.ts";
 
 export type ResumedDraft = {
   basicInfo: BasicInfoState;
   assetItems: DraftAssetItem[];
   channelIds: string[];
   scheduleForm: ScheduleForm;
+  compositionId: string | null;
 };
 
 export function detailToDraft(
   detail: PublicationDetail,
-  playlist?: PlaylistDetail | null
+  playlist?: PlaylistDetail | null,
 ): ResumedDraft {
   const basicInfo: BasicInfoState = {
     campaignId: detail.campaign_id ?? "",
@@ -28,6 +29,7 @@ export function detailToDraft(
     .map((item) => ({
       media_asset_id: item.media_asset_id,
       duration_seconds: item.duration_seconds ?? null,
+      transition: item.transition ?? "cut",
     }));
 
   // Only Channel targets rehydrate into the wizard. A draft saved before ADR 0037
@@ -45,5 +47,6 @@ export function detailToDraft(
     assetItems,
     channelIds,
     scheduleForm,
+    compositionId: detail.composition?.id ?? null,
   };
 }

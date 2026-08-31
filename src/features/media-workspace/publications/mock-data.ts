@@ -1,7 +1,7 @@
 // R&D placeholder data for the Create Publication wizard — no backend exists yet.
 // Replace with real data fetching once the `campaigns`/`publications` services are implemented.
 
-export type PublicationTypeId = "image" | "video" | "playlist" | "html" | "dynamic";
+export type PublicationTypeId = "image" | "video" | "playlist" | "html" | "dynamic" | "composition";
 
 export interface PublicationTypeOption {
   id: PublicationTypeId;
@@ -15,6 +15,9 @@ export const publicationTypes: PublicationTypeOption[] = [
   { id: "playlist", label: "Playlist", sublabel: "Media playlist" },
   { id: "html", label: "HTML / Web", sublabel: "Website / HTML" },
   { id: "dynamic", label: "Dynamic", sublabel: "Data-driven" },
+  // Contract word is "composition" (ADR 0049 §5); labelled "Layout" for operators, who do not
+  // distinguish it from the geometry-only entity underneath (ADR 0052 §1).
+  { id: "composition", label: "Layout", sublabel: "Split-screen layout" },
 ];
 
 export type PriorityId = "low" | "normal" | "high" | "urgent";

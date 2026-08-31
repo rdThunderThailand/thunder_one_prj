@@ -1,4 +1,4 @@
-import { DynamicIcon, GlobeIcon, ImageIcon, LayoutIcon, VideoIcon } from "@/components/ui/icons";
+import { DynamicIcon, GlobeIcon, GridIcon, ImageIcon, LayoutIcon, VideoIcon } from "@/components/ui/icons";
 import type { PublicationTypeId } from "../mock-data";
 import type { ReactNode } from "react";
 
@@ -8,4 +8,5 @@ export const publicationTypeIcons: Record<PublicationTypeId, ReactNode> = {
   playlist: <LayoutIcon />,
   html: <GlobeIcon />,
   dynamic: <DynamicIcon />,
+  composition: <GridIcon />,
 };

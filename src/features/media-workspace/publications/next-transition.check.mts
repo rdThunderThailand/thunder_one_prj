@@ -28,6 +28,7 @@ const validStep1: DraftFields = {
   },
   assetItems: [],
   playlistId: null,
+  compositionId: null,
   channelIds: [],
   scheduleForm: makeDefaultScheduleForm(),
 };
@@ -77,6 +78,20 @@ assert.deepEqual(await attemptNext(1, validStep1, ok), { kind: "saved" });
 assert.equal((await attemptNext(2, validStep1, ok)).kind, "invalid"); // no assets
 assert.equal((await attemptNext(3, validStep1, ok)).kind, "invalid"); // no channels
 assert.equal((await attemptNext(4, validStep1, ok)).kind, "saved"); // "now" is valid
+
+// A composition draft with no Layout picked yet is invalid at step 2, same as an empty
+// asset selection; picking one is enough to advance (ADR 0049 §5).
+const compositionDraftNoPick = {
+  ...validStep1,
+  basicInfo: { ...validStep1.basicInfo, publicationType: "composition" as const },
+};
+assert.equal((await attemptNext(2, compositionDraftNoPick, ok)).kind, "invalid");
+
+const compositionDraftPicked = {
+  ...compositionDraftNoPick,
+  compositionId: "composition-1",
+};
+assert.equal((await attemptNext(2, compositionDraftPicked, ok)).kind, "saved");
 
 // Resume guard: pending only while a ?id= is present and neither the finished
 // fetch nor the store has caught up to it. Getting this wrong either flashes

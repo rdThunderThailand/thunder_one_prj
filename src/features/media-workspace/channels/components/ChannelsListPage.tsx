@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -57,9 +58,15 @@ export function ChannelsListPage() {
     return readListState(new URLSearchParams());
   });
 
-  useEffect(() => {
-    window.history.replaceState(null, "", "?" + writeListState(state));
-  }, [state]);
+  const restore = useCallback(() => {
+    setState(readListState(new URLSearchParams(window.location.search)));
+  }, []);
+  // An empty query string is exactly the "everything is at its default" signal, so it
+  // doubles as the test for whether "Clear all" would do anything. Resetting the whole
+  // ListState at once is the entire handler here — this page already holds it as one object.
+  const qs = writeListState(state);
+  useListUrlState(qs, restore);
+  const handleClearAll = () => setState(DEFAULT_STATE);
 
   useEffect(() => {
     let alive = true;
@@ -150,6 +157,7 @@ export function ChannelsListPage() {
 
             <ChannelFiltersBar
               value={state.filters}
+              onClearAll={qs === "" ? undefined : handleClearAll}
               onChange={(filters) => setState({ ...state, filters, page: 1 })}
             />
 
@@ -157,9 +165,7 @@ export function ChannelsListPage() {
               <ListEmpty
                 isEmpty={channels!.length === 0}
                 hasFilters={hasFilters}
-                onClearFilters={() =>
-                  setState({ ...state, filters: DEFAULT_STATE.filters, page: 1 })
-                }
+                onClearFilters={handleClearAll}
               />
             ) : (
               <>

@@ -57,6 +57,7 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const toggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
+  const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const setPlaylistId = usePublicationDraftStore((s) => s.setPlaylistId);
   const publicationType = basicInfo.publicationType;
@@ -124,6 +125,7 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
     async (asset, isVideoFile) => {
       await loadAssets();
       if (asset?.id && acceptedAssetKind(publicationType) === (isVideoFile ? "video" : "image")) {
+        if (playlistId) setPlaylistId(null);
         toggleAssetItem({ id: asset.id, isImage: !isVideoFile });
       }
     }
@@ -298,6 +300,7 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
                   selected={assetItems.some((i) => i.media_asset_id === asset.id)}
                   onSelect={() => {
                     if (selectable) {
+                      if (playlistId) setPlaylistId(null);
                       toggleAssetItem({ id: asset.id, isImage: isImageAsset(asset) });
                     }
                   }}
@@ -317,7 +320,10 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
                   thumbnailUrl={playlist.cover_asset_id ? previews.thumbnailUrls[playlist.cover_asset_id] : undefined}
                   selected={selected}
                   onSelect={() => {
-                    if (selectable) setPlaylistId(selected ? null : playlist.id);
+                    if (selectable) {
+                      if (!selected) setAssetItems([]);
+                      setPlaylistId(selected ? null : playlist.id);
+                    }
                   }}
                   disabled={!selectable}
                 />
