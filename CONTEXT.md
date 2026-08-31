@@ -114,6 +114,10 @@ _Avoid_: Campaign (Campaign is a later, larger grouping of Publications — not 
 The precedence tier that decides airtime when Publications overlap: `urgent` > `high` > `normal` > `low`. A higher tier fully suppresses lower tiers during the overlap, while Publications at the same tier share the playback loop.
 _Avoid_: Urgency, display order
 
+**Now & Next**:
+A read-only, Channel-first operational view of effective playout at one server timestamp. It keeps Schedule intent separate from playback evidence: `Scheduled Now` means the resolved Schedule occurrence is open, while `Playback Confirmed` additionally requires an effective Publish Job Target at `playing` and a fresh Media Device heartbeat; an old acknowledgement is `Playback stale`. Higher-priority Publications suppress lower ones, and equal-priority flat Publications appear as one expandable merged loop, matching player resolution. Direct Media Device targets remain visible as device rows rather than being assigned to a synthetic Channel. The view owns no lifecycle mutations and does not infer current Playlist item position without player telemetry. `docs/adr/0057-channel-first-now-and-next.md`.
+_Avoid_: Program Guide, Screen Timeline, Schedule List, Live (without playback evidence)
+
 **Schedule Conflict**:
 An overlap where Publications target at least one of the same Media Devices during the same Schedule window. It is a warning when the new Publication has equal or higher Publication Priority, and a publish blocker when any overlapping Publication has higher priority.
 _Avoid_: Revision conflict, visual overlay
