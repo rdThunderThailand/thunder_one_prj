@@ -263,12 +263,12 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
         }`}
       >
         <span className="text-5xl font-black italic leading-none tracking-normal text-slate-950">
-          T1
+          T<span className="text-[#026ffd]">1</span>
         </span>
         {!collapsed && (
           <div className="leading-tight">
             <p className="text-xl font-bold text-slate-950">
-              Thunder<span className="text-indigo-600 dark:text-indigo-400">One</span>
+              Thunder<span className="text-[#026ffd]">One</span>
             </p>
             <p className="text-[11px] font-bold uppercase text-slate-500">
               {activeApp?.tagline ?? SHELL_TAGLINE}

@@ -36,6 +36,7 @@ type CoreLibraryPage = {
 };
 
 function mapLibraryItem(raw: Record<string, unknown>): CompositionLibraryItem {
+  const createdBy = raw.createdBy && typeof raw.createdBy === "object" ? raw.createdBy as Record<string, unknown> : null;
   return {
     id: String(raw.id), name: String(raw.name), layout_id: String(raw.layoutId), layout_name: String(raw.layoutName),
     status: raw.status as CompositionStatus, revision: Number(raw.revision), zone_count: Number(raw.zoneCount), bound_count: Number(raw.boundCount),
@@ -45,7 +46,9 @@ function mapLibraryItem(raw: Record<string, unknown>): CompositionLibraryItem {
     usageCount: Number(raw.usageCount), previewZones: Array.isArray(raw.previewZones) ? raw.previewZones.map((zone) => ({
       position: Number((zone as Record<string, unknown>).position), x: Number((zone as Record<string, unknown>).x), y: Number((zone as Record<string, unknown>).y),
       width: Number((zone as Record<string, unknown>).width), height: Number((zone as Record<string, unknown>).height), firstAssetId: typeof (zone as Record<string, unknown>).firstAssetId === "string" ? (zone as Record<string, unknown>).firstAssetId as string : null,
-    })) : [],
+    })) : [], createdBy: createdBy ? {
+      id: String(createdBy.id), displayName: String(createdBy.displayName), avatarUrl: typeof createdBy.avatarUrl === "string" ? createdBy.avatarUrl : null,
+    } : null,
   };
 }
 
@@ -120,6 +123,26 @@ export async function setCompositionStatus(
   status: CompositionStatus,
 ): Promise<{ composition_id: string; status: CompositionStatus }> {
   return requestApi("PUT", `/media/compositions/${id}/status`, { status });
+}
+
+export async function moveComposition(id: string, folderId: string | null): Promise<void> {
+  await requestApi("PATCH", `/media/compositions/${id}`, { folder_id: folderId });
+}
+
+export async function trashComposition(
+  id: string,
+): Promise<{ draft: number; scheduled: number; active: number }> {
+  return requestApi("DELETE", `/media/compositions/${id}`);
+}
+
+export async function restoreComposition(id: string): Promise<void> {
+  await requestApi("POST", `/media/compositions/${id}/restore`);
+}
+
+export async function permanentlyDeleteComposition(
+  id: string,
+): Promise<{ deleted: boolean; blockers: string[] }> {
+  return requestApi("DELETE", `/media/compositions/${id}/permanent-delete`);
 }
 
 export async function duplicateComposition(

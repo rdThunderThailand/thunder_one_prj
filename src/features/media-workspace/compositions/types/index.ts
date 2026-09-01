@@ -36,6 +36,7 @@ export type CompositionLibraryItem = CompositionListItem & {
   deletedAt?: string | null;
   usageCount?: number;
   previewZones?: CompositionLibraryPreviewZone[];
+  createdBy?: { id: string; displayName: string; avatarUrl?: string | null } | null;
 };
 
 export type CompositionLibraryPage = {

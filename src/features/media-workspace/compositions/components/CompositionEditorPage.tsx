@@ -39,7 +39,7 @@ import {
 import { ZoneContentPicker, defaultBinding } from "./ZoneContentPicker";
 import { TemplateReferenceRail } from "./TemplateReferenceRail";
 
-export function CompositionEditorPage({ compositionId }: { compositionId?: string | null }) {
+export function CompositionEditorPage({ compositionId, initialPreview = false }: { compositionId?: string | null; initialPreview?: boolean }) {
   const router = useRouter();
   const [id, setId] = useState<string | null>(compositionId ?? null);
   const [name, setName] = useState("");
@@ -61,7 +61,7 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
   const [previewThumbnails, setPreviewThumbnails] = useState<Record<string, string | undefined>>({});
   const [playlistPreviewAssetIds, setPlaylistPreviewAssetIds] = useState<Record<string, string>>({});
   const [playlistItemsById, setPlaylistItemsById] = useState<Record<string, PlaylistItem[]>>({});
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(initialPreview);
 
   const [loading, setLoading] = useState(!!compositionId);
   const [loadError, setLoadError] = useState<ClassifiedError | null>(null);

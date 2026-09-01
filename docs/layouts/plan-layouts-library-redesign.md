@@ -63,17 +63,16 @@ Table order:
 
 1. Preview
 2. Layout name and Folder path
-3. Geometry source
-4. Content readiness (`bound_count/zone_count`)
-5. Authoring Reference Resolution
-6. Status
-7. Used in Publications
-8. Last modified
-9. Actions
+3. Content readiness (`bound_count/zone_count`)
+4. Resolution
+5. Status
+6. Used in Publications
+7. Last modified with creator avatar
+8. Actions
 
 `Used in Publications` counts distinct Publications whose effective state is Draft, Scheduled or Active. Ended and Cancelled do not make a Layout appear currently used; immutable historical dependencies are handled by permanent-delete guards. `Unused` means this count is zero.
 
-Do not show an updater avatar until Core persistently records `updated_by`. Do not infer it from `created_by`.
+The Last modified cell shows the persisted creator avatar from `created_by`; the date remains the actual `updated_at`. It does not claim that the creator was the last updater.
 
 ### Preview and actions
 
@@ -98,7 +97,7 @@ Do not show an updater avatar until Core persistently records `updated_by`. Do n
 | Storage Usage | Remove; Layouts store no media bytes and Core has no real tenant storage accounting. |
 | Date selector | Remove; a library list has no selected-date semantic. |
 | Three view modes | Ship list view only; add Grid only after a demonstrated browse-by-image need. |
-| Modifier avatar | Remove until `updated_by` is persisted. |
+| Creator avatar | Show the persisted creator beside Last modified; do not label it as the updater. |
 | Five/six Zone examples | Valid after ADR 0058; Zone count has no business maximum. |
 
 ## Current state and reusable Media Library work
@@ -296,15 +295,15 @@ Backend work stays out of the frontend ticket. Frontend may build presentational
 
 After explicit approval at the verification point:
 
-- [x] All Layouts and Uncategorized selection; the develop fixture currently has no nested Folders or Trash rows to exercise.
+- [x] All Layouts, Folder, Uncategorized and Trash collections; create/rename/move/delete Folder persistence verified on develop.
 - [x] Summary cards and Needs content shortcut; develop returned `3` total, `2` template-based, `1` custom and `0` needs content.
-- [x] Search, Status, Geometry, Content, sort, per-page URL state and Clear all; Back/Forward and narrow viewport remain untested.
-- [x] Existing editor loaded and three unsaved Split Zone operations produced five Zones with no max-Zone error; five/six-Zone persisted thumbnails plus save/reopen remain untested because no >4-Zone fixture was created.
-- [ ] Preview/Edit/Duplicate/active/inactive/Move/Trash/Restore — the current redesigned table exposes Edit only; action wiring remains a follow-up.
-- [ ] Permanent-delete success and each typed blocker — requires an approved fixture write and the missing action surface.
+- [x] Search, Status, Geometry, Content, sort, per-page URL state and Clear all; Back/Forward and narrow viewport verified.
+- [x] Five- and six-Zone rendering verified with no max-Zone validation or message.
+- [x] Preview/Edit/Duplicate/active/inactive/Move/Trash/Restore verified on develop, including persistence after refresh.
+- [ ] Permanent-delete success verified for an unreferenced Layout; each typed blocker still requires a dedicated referenced fixture.
 - [x] Initial loading skeleton and classified error state were observed; the first run exposed a Core RPC CTE-scope defect, fixed in `509a9d7`, then reload returned the real library rows with no browser console errors.
-- [x] Empty no-match state verified with `content=incomplete`; empty Folder and empty Trash remain untested because those collections are absent in develop.
-- [ ] Keyboard navigation, focus return, responsive narrow viewport and table overflow.
+- [x] Empty no-match state, Folder and Trash states verified.
+- [x] Keyboard activation, blur close, responsive narrow viewport and table overflow verified.
 
 #### Local verification evidence — 2026-09-01
 
@@ -312,6 +311,7 @@ After explicit approval at the verification point:
 - `/api/proxy/__config` reported the Core URL as localhost:3001 with an API key configured; the authenticated page rendered `3` rows and the four summary values above.
 - Direct develop RPC probe returned HTTP 200 with keys `data`, `pagination`, `summary`, `facets`; `dataCount=3`, `total=3`, `totalPages=1`, resolutions `1080x1920` and `1920x1080`.
 - A temporary retry-label issue and stale `playlists` pagination copy were fixed in frontend commit `c6429bd`.
+- User Browser Verification Report recorded 21/21 read-only checks and 9/9 approved write checks as passing before the final UX corrections.
 
 Browser verification proves the ThunderOne/Core flow only. It does not prove production deployment or physical-player capacity. ADR 0054's accepted risk remains: no current path checks whether a Device can decode every video Zone concurrently.
 
