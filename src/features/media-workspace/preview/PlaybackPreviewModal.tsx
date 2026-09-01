@@ -35,7 +35,7 @@ export function PlaybackPreviewModal({
       open={open}
       onClose={onClose}
       title="Layout preview"
-      className="max-w-6xl"
+      size="xl"
       footer={<Button variant="secondary" onClick={onClose}>Close preview</Button>}
     >
       <PreviewStage
