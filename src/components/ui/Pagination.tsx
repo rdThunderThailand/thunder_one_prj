@@ -26,6 +26,7 @@ export function Pagination({
   totalItems,
   rangeStart,
   rangeEnd,
+  itemLabel = "playlists",
   onPageChange,
   onPerPageChange,
 }: {
@@ -35,6 +36,7 @@ export function Pagination({
   totalItems: number;
   rangeStart: number;
   rangeEnd: number;
+  itemLabel?: string;
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
 }) {
@@ -44,7 +46,7 @@ export function Pagination({
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
       <p className="text-zinc-500 dark:text-zinc-400">
-        Showing {rangeStart} to {rangeEnd} of {totalItems} playlists
+        Showing {rangeStart} to {rangeEnd} of {totalItems} {itemLabel}
       </p>
 
       <div className="flex items-center gap-2">
