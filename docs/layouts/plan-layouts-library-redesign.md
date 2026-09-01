@@ -296,14 +296,22 @@ Backend work stays out of the frontend ticket. Frontend may build presentational
 
 After explicit approval at the verification point:
 
-- All Layouts, nested Folder, Uncategorized and Trash selection;
-- summary scoping and card-to-filter behaviour;
-- search/filter/sort/per-page URL history, Back/Forward, refresh and Clear all;
-- five- and six-Zone thumbnails, editor load, Split Zone, save and reopen;
-- Preview/Edit/Duplicate/active/inactive/Move/Trash/Restore;
-- permanent-delete success and each typed blocker;
-- loading, partial failure, empty library, empty Folder, no-match and empty Trash;
-- keyboard navigation, focus return, labels, narrow viewport and table overflow.
+- [x] All Layouts and Uncategorized selection; the develop fixture currently has no nested Folders or Trash rows to exercise.
+- [x] Summary cards and Needs content shortcut; develop returned `3` total, `2` template-based, `1` custom and `0` needs content.
+- [x] Search, Status, Geometry, Content, sort, per-page URL state and Clear all; Back/Forward and narrow viewport remain untested.
+- [ ] Five- and six-Zone thumbnails, editor load, Split Zone, save and reopen — no >4-Zone fixture was created during this read-only run.
+- [ ] Preview/Edit/Duplicate/active/inactive/Move/Trash/Restore — the current redesigned table exposes Edit only; action wiring remains a follow-up.
+- [ ] Permanent-delete success and each typed blocker — requires an approved fixture write and the missing action surface.
+- [x] Initial loading skeleton and classified error state were observed; the first run exposed a Core RPC CTE-scope defect, fixed in `509a9d7`, then reload returned the real library rows with no browser console errors.
+- [x] Empty no-match state verified with `content=incomplete`; empty Folder and empty Trash remain untested because those collections are absent in develop.
+- [ ] Keyboard navigation, focus return, responsive narrow viewport and table overflow.
+
+#### Local verification evidence — 2026-09-01
+
+- ThunderOne `http://localhost:3000` → Layouts loaded from ThunderCore `http://localhost:3001` after the develop RPC correction.
+- `/api/proxy/__config` reported the Core URL as localhost:3001 with an API key configured; the authenticated page rendered `3` rows and the four summary values above.
+- Direct develop RPC probe returned HTTP 200 with keys `data`, `pagination`, `summary`, `facets`; `dataCount=3`, `total=3`, `totalPages=1`, resolutions `1080x1920` and `1920x1080`.
+- A temporary retry-label issue and stale `playlists` pagination copy were fixed in frontend commit `c6429bd`.
 
 Browser verification proves the ThunderOne/Core flow only. It does not prove production deployment or physical-player capacity. ADR 0054's accepted risk remains: no current path checks whether a Device can decode every video Zone concurrently.
 
