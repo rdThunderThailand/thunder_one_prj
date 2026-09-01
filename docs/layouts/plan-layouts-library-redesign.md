@@ -300,7 +300,7 @@ After explicit approval at the verification point:
 - [x] Search, Status, Geometry, Content, sort, per-page URL state and Clear all; Back/Forward and narrow viewport verified.
 - [x] Five- and six-Zone rendering verified with no max-Zone validation or message.
 - [x] Preview/Edit/Duplicate/active/inactive/Move/Trash/Restore verified on develop, including persistence after refresh.
-- [ ] Permanent-delete success verified for an unreferenced Layout; each typed blocker still requires a dedicated referenced fixture.
+- [x] Permanent-delete success verified for an unreferenced Layout; a referenced develop Composition returned both typed blockers (`publications`, `snapshots`) and was restored immediately.
 - [x] Initial loading skeleton and classified error state were observed; the first run exposed a Core RPC CTE-scope defect, fixed in `509a9d7`, then reload returned the real library rows with no browser console errors.
 - [x] Empty no-match state, Folder and Trash states verified.
 - [x] Keyboard activation, blur close, responsive narrow viewport and table overflow verified.
@@ -315,6 +315,7 @@ After explicit approval at the verification point:
 - Creator metadata migration `20260901043600` was applied to develop on 2026-09-01. Post-restart Browser regression returned three creator initials (`P`); those users have no `avatar_url`, so the Avatar correctly used its initials fallback.
 - Post-UX Browser regression confirmed six video Zone previews at `1920x1080`, a table width equal to its container (`1229px`), no body overflow at a `1769px` viewport, visible row-action menus, and Enter/Space menu toggling.
 - Final user Live Browser verification recorded 12/12 UX checks passing: video thumbnails, compact columns, creator fallback Avatar, icon actions, no horizontal overflow, unclipped keyboard-accessible menus, full-height workspace, classified errors, filters, pagination and row actions.
+- Optional lifecycle regression temporarily trashed `af896984-b213-49a0-9218-2a3ae58ee667`: Trash reported three Draft references, permanent delete returned `deleted=false` with `publications` and `snapshots`, and post-restore read-back confirmed Active, Uncategorized, `deletedAt=null`, usage `3`, revision `4`.
 
 Browser verification proves the ThunderOne/Core flow only. It does not prove production deployment or physical-player capacity. ADR 0054's accepted risk remains: no current path checks whether a Device can decode every video Zone concurrently.
 
