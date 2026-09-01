@@ -3,16 +3,25 @@
 // ponytail: native <dialog> — swap to a portal + animation library only if entry/exit transitions are ever needed
 import { useEffect, useRef, type ReactNode } from "react";
 
+type ModalSize = "md" | "lg";
+
+const sizeClasses: Record<ModalSize, string> = {
+  md: "max-w-md",
+  lg: "max-w-2xl",
+};
+
 interface ModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
   footer: ReactNode;
-  className?: string;
+  /** "lg" for multi-step wizards that need room for a step form — every
+   *  existing caller keeps the original "md" width by omitting this. */
+  size?: ModalSize;
 }
 
-export function Modal({ open, onClose, title, children, footer, className = "" }: ModalProps) {
+export function Modal({ open, onClose, title, children, footer, size = "md" }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -38,7 +47,7 @@ export function Modal({ open, onClose, title, children, footer, className = "" }
       ref={ref}
       onClose={onClose}
       onClick={handleBackdropClick}
-      className={`m-auto w-[calc(100%-2rem)] max-w-md rounded-lg p-0 backdrop:bg-black/40 ${className}`}
+      className={`m-auto w-[calc(100%-2rem)] ${sizeClasses[size]} rounded-lg p-0 backdrop:bg-black/40`}
     >
       <div className="w-full rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>

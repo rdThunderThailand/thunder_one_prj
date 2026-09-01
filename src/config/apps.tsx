@@ -9,7 +9,7 @@
 // /my-work, /work-space, /intelligence, /governance), and Sidebar falls back
 // to config/nav/shell.tsx's nav in that case.
 import type { ReactNode } from "react";
-import { BoxIcon, GridIcon, PhoneIcon } from "@/components/ui/icons";
+import { BoxIcon, GridIcon, PhoneIcon, UsersIcon } from "@/components/ui/icons";
 
 export interface AppConfig {
   id: string;
@@ -40,6 +40,13 @@ export const APPS: AppConfig[] = [
     tagline: "Service OS",
     icon: <PhoneIcon className="h-4 w-4" />,
     basePath: "/thunder-care",
+  },
+  {
+    id: "people",
+    label: "People",
+    tagline: "People Workspace",
+    icon: <UsersIcon className="h-4 w-4" />,
+    basePath: "/people",
   },
 ];
 

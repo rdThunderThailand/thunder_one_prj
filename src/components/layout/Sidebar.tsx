@@ -6,6 +6,7 @@ import { useState } from "react";
 import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
+import { peopleNav } from "@/config/nav/people";
 import { shellNavItems } from "@/config/nav/shell";
 import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
@@ -21,6 +22,7 @@ const SHELL_TAGLINE = "Thunder One Shell";
 function resolveAppNavConfig(appId: string, pathname: string): NavConfig {
   if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
   if (appId === "thunder-care") return resolveThunderCareNav(pathname);
+  if (appId === "people") return peopleNav;
   return mediaWorkspaceNav;
 }
 

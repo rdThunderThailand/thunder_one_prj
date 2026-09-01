@@ -10,10 +10,7 @@ interface PlaceholderTile {
 
 // Apps not built yet — rendered inert (no href), same convention as an
 // unbuilt NavItem elsewhere in the sidebar.
-const PLACEHOLDER_TILES: PlaceholderTile[] = [
-  { label: "CRM", icon: <UsersIcon /> },
-  { label: "People", icon: <UsersIcon /> },
-];
+const PLACEHOLDER_TILES: PlaceholderTile[] = [{ label: "CRM", icon: <UsersIcon /> }];
 
 export function WorkspacesRow() {
   return (
