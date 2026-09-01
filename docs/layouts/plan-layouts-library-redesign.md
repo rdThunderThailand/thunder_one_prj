@@ -299,7 +299,7 @@ After explicit approval at the verification point:
 - [x] All Layouts and Uncategorized selection; the develop fixture currently has no nested Folders or Trash rows to exercise.
 - [x] Summary cards and Needs content shortcut; develop returned `3` total, `2` template-based, `1` custom and `0` needs content.
 - [x] Search, Status, Geometry, Content, sort, per-page URL state and Clear all; Back/Forward and narrow viewport remain untested.
-- [ ] Five- and six-Zone thumbnails, editor load, Split Zone, save and reopen — no >4-Zone fixture was created during this read-only run.
+- [x] Existing editor loaded and three unsaved Split Zone operations produced five Zones with no max-Zone error; five/six-Zone persisted thumbnails plus save/reopen remain untested because no >4-Zone fixture was created.
 - [ ] Preview/Edit/Duplicate/active/inactive/Move/Trash/Restore — the current redesigned table exposes Edit only; action wiring remains a follow-up.
 - [ ] Permanent-delete success and each typed blocker — requires an approved fixture write and the missing action surface.
 - [x] Initial loading skeleton and classified error state were observed; the first run exposed a Core RPC CTE-scope defect, fixed in `509a9d7`, then reload returned the real library rows with no browser console errors.
