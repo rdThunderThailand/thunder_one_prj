@@ -315,7 +315,7 @@ After explicit approval at the verification point:
 - Creator metadata migration `20260901043600` was applied to develop on 2026-09-01. Post-restart Browser regression returned three creator initials (`P`); those users have no `avatar_url`, so the Avatar correctly used its initials fallback.
 - Post-UX Browser regression confirmed six video Zone previews at `1920x1080`, a table width equal to its container (`1229px`), no body overflow at a `1769px` viewport, visible row-action menus, and Enter/Space menu toggling.
 - Final user Live Browser verification recorded 12/12 UX checks passing: video thumbnails, compact columns, creator fallback Avatar, icon actions, no horizontal overflow, unclipped keyboard-accessible menus, full-height workspace, classified errors, filters, pagination and row actions.
-- Optional lifecycle regression temporarily trashed `af896984-b213-49a0-9218-2a3ae58ee667`: Trash reported three Draft references, permanent delete returned `deleted=false` with `publications` and `snapshots`, and post-restore read-back confirmed Active, Uncategorized, `deletedAt=null`, usage `3`, revision `4`.
+- Optional lifecycle regression temporarily trashed `af896984-b213-49a0-9218-2a3ae58ee667`: Trash reported three Draft references, permanent delete returned `deleted=false` with `publications` and `snapshots`, and final SQL read-back confirmed the exact original Active/Uncategorized state, null Trash fields, revision `4` and `updated_at=2026-08-28T06:56:27.790477+00:00`.
 
 Browser verification proves the ThunderOne/Core flow only. It does not prove production deployment or physical-player capacity. ADR 0054's accepted risk remains: no current path checks whether a Device can decode every video Zone concurrently.
 
