@@ -17,7 +17,7 @@ import {
   trashMediaAsset,
 } from "@/lib/api/media-api";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
-import { folderPath } from "./folder-tree";
+import { folderPath } from "../content-library/folder-tree";
 
 function formatBytes(bytes?: number) {
   if (bytes == null) return "—";

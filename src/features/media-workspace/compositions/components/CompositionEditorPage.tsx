@@ -677,7 +677,6 @@ export function CompositionEditorPage({ compositionId }: { compositionId?: strin
             {activeZoneId && (
               <Button
                 variant="secondary"
-                disabled={layout.zones.length >= 4}
                 onClick={() => {
                   const next = splitZone(layout.zones, layout.zones.findIndex((zone) => zone.id === activeZoneId));
                   if (next) {

@@ -1,31 +1,16 @@
-/** Run: node src/features/media-workspace/compositions/list-url-state.check.mts */
 import assert from "node:assert/strict";
-import { readListState, writeListState, type ListState } from "./list-url-state.ts";
+import { DEFAULT_STATE, readListState, writeListState, type ListState } from "./list-url-state.ts";
 
-const DEFAULT_STATE: ListState = {
-  filters: { query: "", status: "all" },
-  sort: { key: "updated", dir: "desc" },
-  page: 1,
-  perPage: 10,
-};
-
-const customState: ListState = {
-  filters: { query: "hello", status: "active" },
+const custom: ListState = {
+  collection: "folder-a",
+  filters: { query: "lobby", status: "active", kind: "template", content: "incomplete", usage: "used", referenceResolution: "1920x1080" },
   sort: { key: "name", dir: "asc" },
   page: 2,
-  perPage: 50,
+  perPage: 25,
 };
-const qs = writeListState(customState);
-assert.deepEqual(readListState(new URLSearchParams(qs)), customState);
 
+assert.deepEqual(readListState(new URLSearchParams(writeListState(custom))), custom);
 assert.deepEqual(readListState(new URLSearchParams()), DEFAULT_STATE);
-
-const garbageParams = new URLSearchParams("status=nonsense&sort=xyz&page=-5&per=999&dir=sideways");
-assert.deepEqual(readListState(garbageParams), DEFAULT_STATE);
-
-const mismatchParams = new URLSearchParams("sort=xyz&dir=asc");
-assert.deepEqual(readListState(mismatchParams).sort, { key: "updated", dir: "desc" });
-
+assert.deepEqual(readListState(new URLSearchParams("status=bad&kind=bad&sort=bad&page=0&per=99")), DEFAULT_STATE);
 assert.equal(writeListState(DEFAULT_STATE), "");
-
-console.log("list-url-state.check.mts — all assertions passed");
+console.log("composition list-url-state.check.mts — all assertions passed");

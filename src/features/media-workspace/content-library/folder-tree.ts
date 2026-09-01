@@ -18,3 +18,13 @@ export function folderPath(folders: readonly ContentFolder[], folderId?: string 
   }
   return names.length ? names.join(" / ") : "Uncategorized";
 }
+
+export function isDescendant(folders: readonly ContentFolder[], ancestorId: string, candidateId: string): boolean {
+  const byId = new Map(folders.map((folder) => [folder.id, folder]));
+  let parentId = byId.get(candidateId)?.parent_id ?? null;
+  while (parentId) {
+    if (parentId === ancestorId) return true;
+    parentId = byId.get(parentId)?.parent_id ?? null;
+  }
+  return false;
+}

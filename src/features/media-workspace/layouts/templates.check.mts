@@ -1,7 +1,7 @@
 /** Run: node src/features/media-workspace/layouts/templates.check.mts */
 import assert from "node:assert/strict";
 import { BLANK_ZONES, LAYOUT_TEMPLATES } from "./templates.ts";
-import { MAX_ZONES, validateZones } from "./geometry.ts";
+import { validateZones } from "./geometry.ts";
 
 assert.equal(LAYOUT_TEMPLATES.length, 7);
 assert.equal(new Set(LAYOUT_TEMPLATES.map((t) => t.key)).size, 7);
@@ -11,7 +11,7 @@ assert.equal(new Set(LAYOUT_TEMPLATES.map((t) => t.key)).size, 7);
 for (const template of LAYOUT_TEMPLATES) {
   assert.deepEqual(validateZones(template.zones), [], `template ${template.key} has invalid geometry`);
   assert.ok(
-    template.zones.length >= 1 && template.zones.length <= MAX_ZONES,
+    template.zones.length >= 1,
     `template ${template.key} has ${template.zones.length} zones`
   );
   assert.deepEqual(

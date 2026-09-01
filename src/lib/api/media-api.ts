@@ -113,8 +113,8 @@ export async function fetchContentFolders(scope: "asset" | "playlist" | "composi
   return requestApi<ContentFolder[]>("GET", `/media/folders?scope=${scope}`);
 }
 
-export async function createContentFolder(input: { name: string; parent_id?: string | null }): Promise<ContentFolder> {
-  return requestApi<ContentFolder>("POST", "/media/folders", { scope: "asset", ...input });
+export async function createContentFolder(scope: "asset" | "playlist" | "composition", input: { name: string; parent_id?: string | null }): Promise<ContentFolder> {
+  return requestApi<ContentFolder>("POST", "/media/folders", { scope, ...input });
 }
 
 export async function renameContentFolder(id: string, name: string): Promise<void> {
