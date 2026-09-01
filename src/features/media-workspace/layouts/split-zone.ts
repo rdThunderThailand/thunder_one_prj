@@ -1,4 +1,4 @@
-import { MAX_ZONES, evenSplitPercents, roundPercent } from "./geometry.ts";
+import { evenSplitPercents, roundPercent } from "./geometry.ts";
 import type { LayoutZone } from "./types/index.ts";
 
 /** Replaces the whole frame with `count` equal-width, full-height columns — the seam
@@ -16,7 +16,7 @@ export function evenSplitColumns(count: number): LayoutZone[] {
 
 export function splitZone(zones: LayoutZone[], index: number): LayoutZone[] | null {
   const source = zones[index];
-  if (!source || zones.length >= MAX_ZONES) return null;
+  if (!source) return null;
   const x = source.x ?? 0;
   const y = source.y ?? 0;
   const width = source.width ?? 0;

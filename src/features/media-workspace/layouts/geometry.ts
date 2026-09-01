@@ -5,8 +5,6 @@
 
 import type { ZoneRect } from "./types";
 
-export const MAX_ZONES = 4;
-
 /** Percentages carry three decimal places (docs/layouts/contract-v2-zones.md) — enough for
  *  three equal columns across three monitors to land exactly on the bezels. Comparing them
  *  as thousandths keeps every check on integers, so 33.333 + 33.333 + 33.334 lands on
@@ -32,7 +30,6 @@ export function rectsOverlap(a: ZoneRect, b: ZoneRect): boolean {
 
 export type GeometryError =
   | { kind: "no-zones" }
-  | { kind: "too-many-zones"; count: number }
   | { kind: "non-positive"; index: number }
   | { kind: "out-of-bounds"; index: number }
   | { kind: "overlap"; a: number; b: number };
@@ -40,7 +37,6 @@ export type GeometryError =
 export function validateZones(zones: ZoneRect[]): GeometryError[] {
   const errors: GeometryError[] = [];
   if (zones.length === 0) errors.push({ kind: "no-zones" });
-  if (zones.length > MAX_ZONES) errors.push({ kind: "too-many-zones", count: zones.length });
 
   zones.forEach((zone, index) => {
     // A zero-area Zone fails on its own terms; reporting it as out-of-bounds too would
@@ -59,8 +55,8 @@ export function validateZones(zones: ZoneRect[]): GeometryError[] {
     }
   });
 
-  // At most four Zones means at most six comparisons.
-  // ponytail: O(n²) over a hard cap of 4 — switch to a sweep line only if the cap rises.
+  // ponytail: O(n²) is sufficient under the platform's request-size and timeout limits.
+  // Move to a sweep line only if a measured large-layout workload needs it.
   for (let a = 0; a < zones.length - 1; a += 1) {
     for (let b = a + 1; b < zones.length; b += 1) {
       if (rectsOverlap(zones[a], zones[b])) errors.push({ kind: "overlap", a, b });

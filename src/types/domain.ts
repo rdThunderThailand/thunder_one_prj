@@ -52,7 +52,12 @@ export type MediaAsset = {
   width?: number;
   height?: number;
   codec?: string;
+  folder_id?: string | null;
+  thumbnail_storage_key?: string | null;
   created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+  created_by?: Creator;
   file?: {
     id?: string;
     original_filename?: string;
@@ -60,6 +65,21 @@ export type MediaAsset = {
     file_size_bytes?: number;
     checksum?: string;
   };
+};
+
+export type ContentFolder = {
+  id: string;
+  parent_id: string | null;
+  name: string;
+  created_at?: string;
+};
+
+export type MediaAssetPage = {
+  items: MediaAsset[];
+  total: number;
+  page: number;
+  page_size: number;
+  stats: { total: number; images: number; videos: number };
 };
 
 // Playlist read shapes — moved here from features/playlists so

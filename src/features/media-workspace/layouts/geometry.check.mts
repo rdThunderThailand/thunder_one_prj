@@ -26,10 +26,13 @@ assert.equal(rectsOverlap(left, right), false);
 assert.equal(rectsOverlap(full, left), true);
 
 assert.deepEqual(validateZones([]), [{ kind: "no-zones" }]);
-assert.deepEqual(
-  validateZones([full, full, full, full, full]).filter((e) => e.kind === "too-many-zones"),
-  [{ kind: "too-many-zones", count: 5 }]
-);
+assert.deepEqual(validateZones([
+  { x: 0, y: 0, width: 20, height: 100 },
+  { x: 20, y: 0, width: 20, height: 100 },
+  { x: 40, y: 0, width: 20, height: 100 },
+  { x: 60, y: 0, width: 20, height: 100 },
+  { x: 80, y: 0, width: 20, height: 100 },
+]), []);
 
 assert.deepEqual(validateZones([{ x: 0, y: 0, width: 0, height: 50 }]), [
   { kind: "non-positive", index: 0 },

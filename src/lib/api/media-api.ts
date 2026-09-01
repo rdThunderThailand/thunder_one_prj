@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/api-error";
-import type { Campaign, MediaAsset, PlaylistDetail, PlaylistListItem, Tag } from "@/types/domain";
+import type { Campaign, ContentFolder, MediaAsset, MediaAssetPage, PlaylistDetail, PlaylistListItem, Tag } from "@/types/domain";
 
 /**
  * Shared transport for every `/api/proxy/media/*` call. Feature services build
@@ -88,6 +88,61 @@ export async function fetchTags(): Promise<Tag[]> {
 export async function fetchMediaAssets(): Promise<MediaAsset[]> {
   const data = await requestApi<MediaAsset[]>("GET", "/media/videos");
   return Array.isArray(data) ? data : [];
+}
+
+export async function fetchMediaAsset(id: string): Promise<MediaAsset> {
+  return requestApi<MediaAsset>("GET", `/media/videos/${id}`);
+}
+
+export async function fetchMediaAssetPage(params: {
+  search?: string;
+  kind?: "image" | "video";
+  folderId?: string;
+  page?: number;
+  trash?: boolean;
+}): Promise<MediaAssetPage> {
+  const query = new URLSearchParams({ page: String(params.page ?? 1), page_size: "24" });
+  if (params.search) query.set("search", params.search);
+  if (params.kind) query.set("kind", params.kind);
+  if (params.folderId) query.set("folder_id", params.folderId);
+  if (params.trash) query.set("trash", "true");
+  return requestApi<MediaAssetPage>("GET", `/media/videos?${query}`);
+}
+
+export async function fetchContentFolders(scope: "asset" | "playlist" | "composition"): Promise<ContentFolder[]> {
+  return requestApi<ContentFolder[]>("GET", `/media/folders?scope=${scope}`);
+}
+
+export async function createContentFolder(scope: "asset" | "playlist" | "composition", input: { name: string; parent_id?: string | null }): Promise<ContentFolder> {
+  return requestApi<ContentFolder>("POST", "/media/folders", { scope, ...input });
+}
+
+export async function renameContentFolder(id: string, name: string): Promise<void> {
+  await requestApi("PATCH", `/media/folders/${id}`, { name });
+}
+
+export async function moveContentFolder(id: string, parentId: string | null): Promise<void> {
+  await requestApi("PATCH", `/media/folders/${id}/move`, { parent_id: parentId });
+}
+
+export async function deleteContentFolder(id: string): Promise<void> {
+  await requestApi("DELETE", `/media/folders/${id}`);
+}
+
+export async function trashMediaAsset(id: string): Promise<void> {
+  await requestApi("DELETE", `/media/videos/${id}`);
+}
+
+export async function restoreMediaAsset(id: string): Promise<void> {
+  await requestApi("POST", `/media/videos/${id}/restore`);
+}
+
+export async function permanentlyDeleteMediaAsset(id: string): Promise<void> {
+  await requestApi("DELETE", `/media/videos/${id}/permanent`);
+}
+
+export async function moveMediaAsset(id: string, folderId: string | null): Promise<void> {
+  await requestApi("PATCH", `/media/videos/${id}`, { folder_id: folderId });
 }
 
 // Playlist reads — shared by publications and playlists (docs/adr/0020). Writes

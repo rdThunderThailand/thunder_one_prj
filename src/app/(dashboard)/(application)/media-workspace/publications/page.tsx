@@ -1,5 +1,5 @@
-import { PublicationsListPage } from "@/features/media-workspace/publications";
+import { NowNextPage } from "@/features/media-workspace/publications/components/NowNextPage";
 
 export default function Page() {
-  return <PublicationsListPage />;
+  return <NowNextPage />;
 }
