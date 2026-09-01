@@ -5,7 +5,20 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get("to_at")?.value;
   const { pathname } = request.nextUrl;
 
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  // /set-password: where Supabase's invite email (Add Employee flow) lands
+  // an invitee who, by definition, has no session cookie yet — see
+  // src/features/auth/components/SetPasswordForm.tsx.
+  // /invites/accept: Core's other (pre-existing) invite mechanism — also
+  // needs to stay reachable *with* a session (unlike /login/register),
+  // since a logged-in visitor accepting-as-themselves or hitting the
+  // wrong-account message is a valid, expected case — so it's only added
+  // to the "let unauthenticated traffic through" check below, never to the
+  // "redirect a token-holder away" one.
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/set-password" ||
+    pathname === "/invites/accept";
 
   if (!token && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", request.url));

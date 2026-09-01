@@ -25,6 +25,8 @@ export const peopleNav: NavConfig = {
       items: [
         { label: "บุคลากร", href: "/people/personnel" },
         { label: "โครงสร้างองค์กร", href: "/people/org-structure" },
+        { label: "ตำแหน่งงาน", href: "/people/positions" },
+        { label: "ผู้ปฏิบัติงานภายนอก (Contractor)", href: "/people/contractors" },
         { label: "เข้าใหม่", href: "/people/new-hires" },
         { label: "การเปลี่ยนแปลง", href: "/people/changes" },
         { label: "ออกจากองค์กร", href: "/people/departures" },

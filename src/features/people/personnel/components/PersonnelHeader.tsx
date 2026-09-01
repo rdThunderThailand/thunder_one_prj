@@ -1,9 +1,11 @@
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
+import { buttonClasses } from "@/components/ui/Button";
 import { PlusIcon, UploadIcon } from "@/components/ui/icons";
 
-// Export/Import stay inert (no backend) — "เพิ่มบุคลากร" is real, opening
-// AddPersonModal (see PersonnelPage).
-export function PersonnelHeader({ onAddPerson }: { onAddPerson: () => void }) {
+// Export/Import stay inert (no backend) — "เพิ่มบุคลากร" is real, linking to
+// people/add-person's type-picker page (/people/add) — replaced
+// AddPersonModal, which used to open in place here.
+export function PersonnelHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
@@ -25,10 +27,10 @@ export function PersonnelHeader({ onAddPerson }: { onAddPerson: () => void }) {
           <UploadIcon className="h-4 w-4" />
           นำเข้า (Import)
         </span>
-        <Button variant="primary" onClick={onAddPerson}>
+        <Link href="/people/add" className={buttonClasses("primary")}>
           <PlusIcon className="h-4 w-4" />
           เพิ่มบุคลากร
-        </Button>
+        </Link>
       </div>
     </div>
   );

@@ -1,6 +1,10 @@
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
+import { Button, buttonClasses } from "@/components/ui/Button";
 import { ClipboardIcon, PlusIcon, UploadIcon } from "@/components/ui/icons";
 
+// "เพิ่มคน / เชิญคน" is real, linking to people/add-person's type-picker
+// page (/people/add) — the entry point the FigJam board's own breadcrumb
+// starts from. รายงาน/Export stay inert (no backend).
 export function OverviewHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -17,10 +21,10 @@ export function OverviewHeader() {
           <UploadIcon className="h-4 w-4" />
           Export
         </Button>
-        <Button variant="primary">
+        <Link href="/people/add" className={buttonClasses("primary")}>
           <PlusIcon className="h-4 w-4" />
           เพิ่มคน / เชิญคน
-        </Button>
+        </Link>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -9,6 +9,7 @@ import { login } from "../services/auth.service";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +21,12 @@ export function LoginForm() {
     setPending(true);
     try {
       await login({ email, password });
-      router.push("/");
+      // Only ever follow a same-origin relative path — `next` comes from a
+      // URL query string, so treating it as a trusted redirect target
+      // (e.g. accepting an absolute or protocol-relative URL) would be an
+      // open-redirect hole.
+      const next = searchParams.get("next");
+      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
     } catch {
       setError("Invalid email or password.");
     } finally {
