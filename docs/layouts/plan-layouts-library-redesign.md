@@ -312,6 +312,8 @@ After explicit approval at the verification point:
 - Direct develop RPC probe returned HTTP 200 with keys `data`, `pagination`, `summary`, `facets`; `dataCount=3`, `total=3`, `totalPages=1`, resolutions `1080x1920` and `1920x1080`.
 - A temporary retry-label issue and stale `playlists` pagination copy were fixed in frontend commit `c6429bd`.
 - User Browser Verification Report recorded 21/21 read-only checks and 9/9 approved write checks as passing before the final UX corrections.
+- Creator metadata migration `20260901043600` was applied to develop on 2026-09-01. Post-restart Browser regression returned three creator initials (`P`); those users have no `avatar_url`, so the Avatar correctly used its initials fallback.
+- Post-UX Browser regression confirmed six video Zone previews at `1920x1080`, a table width equal to its container (`1229px`), no body overflow at a `1769px` viewport, visible row-action menus, and Enter/Space menu toggling.
 
 Browser verification proves the ThunderOne/Core flow only. It does not prove production deployment or physical-player capacity. ADR 0054's accepted risk remains: no current path checks whether a Device can decode every video Zone concurrently.
 
