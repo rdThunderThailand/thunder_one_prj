@@ -85,9 +85,17 @@ export async function fetchTags(): Promise<Tag[]> {
   return [];
 }
 
+/** The list endpoint is paginated; callers that need the whole library page through it. */
+const ASSET_PAGE_SIZE = 200;
+
 export async function fetchMediaAssets(): Promise<MediaAsset[]> {
-  const data = await requestApi<MediaAsset[]>("GET", "/media/videos");
-  return Array.isArray(data) ? data : [];
+  const assets: MediaAsset[] = [];
+  for (let page = 1; ; page += 1) {
+    const data = await requestApi<MediaAssetPage>("GET", `/media/videos?page=${page}&page_size=${ASSET_PAGE_SIZE}`);
+    const items = Array.isArray(data?.items) ? data.items : [];
+    assets.push(...items);
+    if (items.length < ASSET_PAGE_SIZE) return assets;
+  }
 }
 
 export async function fetchMediaAsset(id: string): Promise<MediaAsset> {
