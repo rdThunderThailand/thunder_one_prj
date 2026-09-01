@@ -3,3 +3,5 @@
 export * from "./domain.ts";
 export { ChannelEditorPage } from "./components/ChannelEditorPage";
 export { ChannelsListPage } from "./components/ChannelsListPage";
+export { fetchChannels } from "./services/channels-api";
+export type { ChannelListItem } from "./types";

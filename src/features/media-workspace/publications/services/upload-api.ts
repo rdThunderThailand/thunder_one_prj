@@ -42,6 +42,7 @@ export async function registerVideo(payload: {
   thumbnail_storage_key?: string;
   width?: number;
   height?: number;
+  folder_id?: string | null;
 }): Promise<MediaAsset> {
   return requestApi<MediaAsset>("POST", "/media/videos", payload);
 }

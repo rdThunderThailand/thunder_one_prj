@@ -1,186 +1,86 @@
-"use client";
-
+import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { MediaThumb } from "@/components/ui/MediaThumb";
-import { MoreIcon } from "@/components/ui/icons";
-import type { Sort, SortKey } from "../list-filtering";
+import { Avatar } from "@/components/ui/Avatar";
+import { EditIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
+import { actionsForComposition, type CompositionLibraryAction } from "../library-actions";
+import type { CompositionLibraryItem } from "../types";
+import type { SortKey } from "../list-url-state";
 import { statusBadge } from "../status-display";
-import type { CompositionListItem } from "../types";
+import { CompositionLibraryPreview } from "./CompositionLibraryPreview";
 
-function formatUpdatedAt(iso?: string): string {
-  if (!iso) return "—";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "—";
-  return `${date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })} ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
+function formatDate(value?: string) {
+  return value
+    ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
+    : "—";
 }
 
-export type RowAction = "edit" | "duplicate" | "deactivate" | "activate";
-export type CompositionContentPreview = { url: string; thumbnailUrl?: string };
-
-export function CompositionsTable({
-  rows,
-  contentPreviews,
-  busyId,
-  sort,
-  onAction,
-  onSortChange,
-}: {
-  rows: CompositionListItem[];
-  contentPreviews: Record<string, CompositionContentPreview | undefined>;
-  busyId: string | null;
-  sort: Sort;
-  onAction: (action: RowAction, composition: CompositionListItem) => void;
-  onSortChange: (key: SortKey) => void;
-}) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-            <th className="py-2 pl-1">Content</th>
-            <SortHeader label="Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2 pl-1" />
-            <SortHeader label="Layout" sortKey="layout" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Zones bound" sortKey="zones" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Last Updated" sortKey="updated" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <th className="py-2 pr-1 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((composition) => {
-            const badge = statusBadge(composition.status);
-            const preview = contentPreviews[composition.id];
-            return (
-              <tr
-                key={composition.id}
-                className="border-b border-zinc-100 last:border-0 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-              >
-                <td className="py-3 pl-1">
-                  {preview ? (
-                    <MediaThumb
-                      url={preview.url}
-                      thumbnailUrl={preview.thumbnailUrl}
-                      alt={`${composition.name} content`}
-                      className="h-10 w-16"
-                    />
-                  ) : (
-                    <div className="flex h-10 w-16 items-center justify-center rounded bg-zinc-100 text-[10px] text-zinc-400 dark:bg-zinc-800">—</div>
-                  )}
-                </td>
-                <td className="py-3 pl-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">{composition.name}</td>
-                <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">{composition.layout_name}</td>
-                <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">
-                  {composition.bound_count}/{composition.zone_count}
-                </td>
-                <td className="py-3">
-                  <Badge color={badge.color} variant="pill">
-                    {badge.label}
-                  </Badge>
-                </td>
-                <td className="py-3 text-sm text-zinc-500 dark:text-zinc-400">
-                  {formatUpdatedAt(composition.updated_at ?? composition.created_at)}
-                </td>
-                <td className="py-3 pr-1 text-right">
-                  <RowActions
-                    status={composition.status}
-                    disabled={busyId === composition.id}
-                    onAction={(action) => onAction(action, composition)}
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function SortHeader({
-  label,
-  sortKey,
-  sort,
-  onSortChange,
-  className,
-}: {
+function SortHeader({ label, sortKey, sort, onSort }: {
   label: string;
   sortKey: SortKey;
-  sort: Sort;
-  onSortChange: (key: SortKey) => void;
-  className?: string;
+  sort: { key: SortKey; dir: "asc" | "desc" };
+  onSort: (key: SortKey) => void;
 }) {
   const active = sort.key === sortKey;
-  return (
-    <th className={className} aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
-      <button
-        type="button"
-        onClick={() => onSortChange(sortKey)}
-        className="inline-flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-200"
-      >
-        {label}
-        {active && <span aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span>}
-      </button>
-    </th>
-  );
+  return <th className="py-2" aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+    <button type="button" onClick={() => onSort(sortKey)}>{label}{active ? ` ${sort.dir === "asc" ? "▲" : "▼"}` : ""}</button>
+  </th>;
 }
 
-// ponytail: native <details> menu, same as LayoutsTable's RowActions — no outside-click
-// dismiss, no positioning library.
-function RowActions({
-  status,
-  disabled,
-  onAction,
-}: {
-  status: CompositionListItem["status"];
-  disabled: boolean;
-  onAction: (action: RowAction) => void;
-}) {
-  const item =
-    "block w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800";
+const labels: Record<CompositionLibraryAction, string> = {
+  duplicate: "Duplicate",
+  activate: "Set active",
+  deactivate: "Set inactive",
+  move: "Move",
+  trash: "Move to Trash",
+  restore: "Restore",
+  "delete-forever": "Delete forever",
+};
 
-  return (
-    <details
-      className="relative inline-block text-left"
-      onClick={(e) => e.stopPropagation()}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          e.currentTarget.removeAttribute("open");
-        }
-      }}
-    >
+function RowActions({ item, inTrash, disabled, onAction }: {
+  item: CompositionLibraryItem;
+  inTrash: boolean;
+  disabled: boolean;
+  onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
+}) {
+  const actions = actionsForComposition(item, inTrash);
+  if (inTrash) return <div className="flex justify-end gap-2">{actions.map((action) =>
+    <button key={action} type="button" disabled={disabled} onClick={() => onAction(action, item)} className={action === "delete-forever" ? "text-red-600 hover:underline" : "text-indigo-600 hover:underline"}>{labels[action]}</button>
+  )}</div>;
+
+  const itemClass = "block w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800";
+  return <div className="flex items-center justify-end gap-2">
+    <Link href={`/media-workspace/layouts/${item.id}?preview=1`} aria-label={`Preview ${item.name}`} title="Preview" className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50"><PlayIcon /></Link>
+    <Link href={`/media-workspace/layouts/${item.id}`} aria-label={`Edit ${item.name}`} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50"><EditIcon /></Link>
+    <details className="relative" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.removeAttribute("open"); }}>
       <summary
-        aria-label="Actions"
+        aria-label={`More actions for ${item.name}`}
+        role="button"
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          const details = event.currentTarget.parentElement as HTMLDetailsElement | null;
+          if (details) details.open = !details.open;
+        }}
         className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
-      >
-        <MoreIcon />
-      </summary>
-      <div className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-        <button type="button" className={item} onClick={() => onAction("edit")}>
-          Edit
-        </button>
-        <button type="button" className={item} disabled={disabled} onClick={() => onAction("duplicate")}>
-          Duplicate
-        </button>
-        {status === "active" && (
-          <button
-            type="button"
-            className={`${item} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10`}
-            disabled={disabled}
-            onClick={() => onAction("deactivate")}
-          >
-            Set inactive
-          </button>
-        )}
-        {status === "inactive" && (
-          <button type="button" className={item} disabled={disabled} onClick={() => onAction("activate")}>
-            Set active
-          </button>
-        )}
+      ><MoreIcon /></summary>
+      <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+        {actions.map((action) => <button key={action} type="button" disabled={disabled} onClick={() => onAction(action, item)} className={`${itemClass} ${action === "trash" ? "text-red-600 dark:text-red-400" : ""}`}>{labels[action]}</button>)}
       </div>
     </details>
-  );
+  </div>;
+}
+
+export function CompositionsTable({ rows, sort, inTrash, busyId, onSort, onAction }: {
+  rows: CompositionLibraryItem[];
+  sort: { key: SortKey; dir: "asc" | "desc" };
+  inTrash: boolean;
+  busyId: string | null;
+  onSort: (key: SortKey) => void;
+  onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
+}) {
+  return <div><table className="w-full table-fixed text-left text-sm"><thead><tr className="border-b border-zinc-100 text-xs text-zinc-500 dark:border-zinc-800">
+    <th className="w-[72px] py-2 pl-1">Preview</th><SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort}/><th className="w-[64px] py-2">Content</th><th className="w-[92px] py-2">Resolution</th><SortHeader label="Status" sortKey="status" sort={sort} onSort={onSort}/><SortHeader label="Used in" sortKey="usage" sort={sort} onSort={onSort}/><SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort}/><th className="w-[132px] py-2 pr-1 text-right">Actions</th>
+  </tr></thead><tbody>{rows.map((item) => { const badge = statusBadge(item.status); return <tr key={item.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+    <td className="py-3 pl-1"><CompositionLibraryPreview zones={item.previewZones} /></td><td className="truncate py-3 pr-2 font-medium"><p className="truncate">{item.name}</p><p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p></td><td className="py-3">{item.bound_count}/{item.zone_count}</td><td className="py-3">{item.referenceResolution ?? "—"}</td><td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td><td className="py-3">{item.usageCount ?? "—"}</td><td className="py-3 text-zinc-500"><div className="flex items-center gap-2"><Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} /><span className="truncate">{formatDate(item.updated_at ?? item.created_at)}</span></div></td><td className="py-3 pr-1 text-right"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} onAction={onAction} /></td>
+  </tr>; })}</tbody></table></div>;
 }

@@ -1,7 +1,7 @@
-// R&D placeholder data for the Overview dashboard — no backend exists yet.
-// Replace with real data fetching once `assets`/`channels`/`playlists`
-// services are implemented.
-import type { DonutSegment } from "@/components/ui/DonutChart";
+// Overview data status:
+// - `NowNextPublicationsCard` reads the existing publications API.
+// - Everything exported here remains an R&D placeholder until the corresponding
+//   monitoring/read-side endpoint exists. Do not present it as live telemetry.
 
 export interface StatCardData {
   id: string;
@@ -18,43 +18,40 @@ export interface StatCardData {
 
 export const statCards: StatCardData[] = [
   {
-    id: "active-channels",
-    label: "Active Channels",
-    value: "186",
-    total: "206",
-    delta: "12",
+    id: "total-channels",
+    label: "Total Channels",
+    value: "206",
+    delta: "",
     trend: [40, 42, 38, 45, 50, 48, 55, 60, 58, 62, 65, 63],
     color: "indigo",
     icon: "monitor",
   },
   {
-    id: "live-publications",
-    label: "Live Publications",
-    value: "253",
-    delta: "18",
+    id: "online-channels",
+    label: "Online",
+    value: "186",
+    delta: "90.3% of total",
     trend: [30, 35, 33, 40, 45, 42, 48, 50, 55, 52, 58, 60],
     color: "blue",
     icon: "paperPlane",
   },
   {
-    id: "scheduled-today",
-    label: "Scheduled Today",
-    value: "128",
-    delta: "7",
+    id: "warning-channels",
+    label: "Warning",
+    value: "12",
+    delta: "5.8% of total",
     trend: [20, 25, 22, 28, 30, 27, 32, 35, 33, 38, 36, 40],
     color: "amber",
     icon: "calendar",
   },
   {
-    id: "delivery-success-rate",
-    label: "Delivery Success Rate",
-    value: "98.6%",
-    delta: "1.2%",
+    id: "offline-channels",
+    label: "Offline",
+    value: "8",
+    delta: "3.9% of total",
     trend: [96, 97, 95, 98, 97, 99, 98, 97, 99, 98, 99, 98.6],
-    color: "emerald",
-    icon: "checkCircle",
-    failedLabel: "Failed 3 (1.4%)",
-    failedProgress: 98.6,
+    color: "amber",
+    icon: "calendar",
   },
 ];
 
@@ -64,6 +61,7 @@ export interface AlertItemData {
   title: string;
   subtitle: string;
   timeAgo: string;
+  category: "Screen" | "TV" | "Kiosk" | "PA";
 }
 
 export const recentAlerts: AlertItemData[] = [
@@ -73,41 +71,48 @@ export const recentAlerts: AlertItemData[] = [
     title: "Central World - LED Screen 3",
     subtitle: "Connection lost",
     timeAgo: "5m ago",
+    category: "Screen",
   },
   {
     id: "2",
     severity: "yellow",
     title: "Siam Square Branch",
     subtitle: "Player offline",
-    timeAgo: "18m ago",
+    timeAgo: "10m ago",
+    category: "TV",
   },
   {
     id: "3",
     severity: "yellow",
     title: "Paragon - LED Pillar 02",
     subtitle: "Low brightness",
-    timeAgo: "32m ago",
+    timeAgo: "15m ago",
+    category: "Screen",
   },
   {
     id: "4",
     severity: "blue",
     title: "Website Banner",
     subtitle: "Asset expired soon",
-    timeAgo: "50m ago",
+    timeAgo: "30m ago",
+    category: "Kiosk",
+  },
+  {
+    id: "5",
+    severity: "blue",
+    title: "PA Zone 03 - No Heartbeat",
+    subtitle: "Device not responding",
+    timeAgo: "35m ago",
+    category: "PA",
   },
 ];
 
-// Colors are a validated categorical palette (see dataviz skill's
-// validate_palette.js) — the original indigo/blue pair failed CVD
-// separation (ΔE 7.2, indistinguishable to most colorblind and even some
-// normal-vision viewers) and gray "Other" fell below the chroma floor.
-export const channelDistribution: DonutSegment[] = [
-  { label: "DOOH", value: 78, color: "#2a78d6" },
-  { label: "In-Store", value: 56, color: "#eb6834" },
-  { label: "Online", value: 34, color: "#1baf7a" },
-  { label: "Social", value: 24, color: "#eda100" },
-  { label: "Other", value: 14, color: "#e87ba4" },
-];
+export const channelTypes = [
+  { label: "Screens", count: 82, online: 80, issues: 2, icon: "monitor" },
+  { label: "TV", count: 24, online: 24, issues: 0, icon: "broadcast" },
+  { label: "PA / Audio", count: 28, online: 27, issues: 1, icon: "megaphone" },
+  { label: "Kiosks", count: 8, online: 7, issues: 1, icon: "layout" },
+] as const;
 
 export interface StatusRow {
   label: string;
@@ -158,9 +163,9 @@ export interface QuickActionData {
 
 export const quickActions: QuickActionData[] = [
   { label: "Create Publication", icon: "publication", color: "indigo", href: "/media-workspace/publications/create" },
-  { label: "Create Playlist", icon: "playlist", color: "blue" },
-  { label: "Upload Media", icon: "upload", color: "emerald" },
+  { label: "Create Playlist", icon: "playlist", color: "blue", href: "/media-workspace/playlists/create" },
+  { label: "Upload Media", icon: "upload", color: "emerald", href: "/media-workspace/assets" },
   { label: "Create Campaign", icon: "campaign", color: "amber" },
   { label: "Schedule Publication", icon: "schedule", color: "violet" },
-  { label: "Add Channel", icon: "channel", color: "teal" },
+  { label: "Add Channel", icon: "channel", color: "teal", href: "/media-workspace/channels/create" },
 ];

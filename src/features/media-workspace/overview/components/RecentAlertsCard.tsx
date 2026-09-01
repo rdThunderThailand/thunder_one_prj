@@ -1,12 +1,6 @@
 import { Card } from "@/components/ui/Card";
-import { MonitorIcon, SettingsIcon, WarningTriangleIcon } from "@/components/ui/icons";
+import { ArrowRightIcon, MonitorIcon, SettingsIcon, XIcon } from "@/components/ui/icons";
 import { recentAlerts } from "../mock-data";
-
-const dotColor: Record<(typeof recentAlerts)[number]["severity"], string> = {
-  red: "bg-red-500",
-  yellow: "bg-amber-500",
-  blue: "bg-blue-500",
-};
 
 const badgeColor: Record<(typeof recentAlerts)[number]["severity"], string> = {
   red: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400",
@@ -15,7 +9,7 @@ const badgeColor: Record<(typeof recentAlerts)[number]["severity"], string> = {
 };
 
 const iconFor: Record<(typeof recentAlerts)[number]["severity"], React.ReactNode> = {
-  red: <WarningTriangleIcon />,
+  red: <XIcon />,
   yellow: <SettingsIcon />,
   blue: <MonitorIcon />,
 };
@@ -24,15 +18,14 @@ export function RecentAlertsCard() {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Recent Alerts</h2>
-        <button className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
-          View all
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Needs Attention</h2>
+        <button disabled title="Alerts page is not built yet" className="flex items-center gap-1 text-xs font-medium text-indigo-600 disabled:cursor-not-allowed disabled:opacity-45">
+          View all alerts <ArrowRightIcon />
         </button>
       </div>
-      <ul className="flex flex-1 flex-col gap-3">
+      <ul className="flex flex-1 flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
         {recentAlerts.map((alert) => (
-          <li key={alert.id} className="flex items-center gap-2.5">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor[alert.severity]}`} />
+          <li key={alert.id} className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${badgeColor[alert.severity]}`}
             >
@@ -47,6 +40,7 @@ export function RecentAlertsCard() {
               </p>
             </div>
             <span className="shrink-0 text-xs text-zinc-400">{alert.timeAgo}</span>
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{alert.category}</span>
           </li>
         ))}
       </ul>

@@ -261,7 +261,6 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
               {selectedIndex !== null && (
                 <Button
                   variant="secondary"
-                  disabled={draft.zones.length >= 4}
                   onClick={() => {
                     const next = splitZone(draft.zones, selectedIndex);
                     if (!next) return;

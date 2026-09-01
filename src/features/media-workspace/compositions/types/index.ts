@@ -18,6 +18,35 @@ export type CompositionListItem = {
   updated_at?: string;
 };
 
+export type CompositionGeometryKind = "template" | "inline";
+
+export type CompositionLibraryPreviewZone = {
+  position: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  firstAssetId: string | null;
+};
+
+export type CompositionLibraryItem = CompositionListItem & {
+  layoutKind?: CompositionGeometryKind;
+  referenceResolution?: string | null;
+  folderId?: string | null;
+  deletedAt?: string | null;
+  usageCount?: number;
+  previewZones?: CompositionLibraryPreviewZone[];
+  createdBy?: { id: string; displayName: string; avatarUrl?: string | null } | null;
+};
+
+export type CompositionLibraryPage = {
+  data: CompositionLibraryItem[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number } | null;
+  summary: { total: number; templateBased: number; custom: number; needsContent: number } | null;
+  facets: { referenceResolutions: string[] };
+  isLegacyResponse: boolean;
+};
+
 export type CompositionZonePlayback = {
   play_mode: "sequential" | "shuffle";
   repeat: "loop" | "once";

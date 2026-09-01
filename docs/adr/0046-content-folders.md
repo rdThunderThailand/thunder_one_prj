@@ -1,6 +1,6 @@
 # Content folders
 
-**Status:** accepted (2026-08-25)
+**Status:** superseded by ADR-0056 (2026-08-29)
 
 One flat, tenant-scoped folder namespace shared by every media content type — Layouts, Playlists and
 Assets — plus one reusable frontend component that renders it. A content item belongs to at most one
