@@ -11,8 +11,9 @@ onboarding, org changes, and departures at a glance. Nests under `people/` per
 - `components/`
   - `OverviewPage` — composes everything below, same shape as `asset-intelligence/departments`'s
     `ManagerMissionControlPage`
-  - `OverviewHeader` — greeting + Report/Export/Add-person actions (all three inert — no
-    export/report backend yet)
+  - `OverviewHeader` — greeting + Report/Export (inert — no export/report backend yet) +
+    **real** "เพิ่มคน / เชิญคน", a `Link` to `/people/add` (`people/add-person`'s type picker,
+    2026-09-01 — see that feature's README)
   - `StatTilesRow` — 5 plain metric tiles + a Workforce Health ring tile (reuses `DonutChart` with a
     score/remainder 2-segment pie rather than a bespoke ring SVG)
   - `AttentionListCard` — "งานที่ต้องให้ความสนใจ", one row per person with a status badge and due date

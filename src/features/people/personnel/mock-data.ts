@@ -2,28 +2,32 @@
 // — the full org roster. No backend yet, same "R&D placeholder" discipline as
 // people/overview's mock-data.ts.
 //
-// Tab/stat-tile counts (128/112/9/4/3/6) are the org-wide totals from the
-// mockup, matching people/overview's totalHeadcount/personnelBreakdown so the
-// two pages don't disagree. `personnelRows` below is a small, hand-picked
-// sample (not all 128) — same "scaled up to read like a real org" gap as
+// `personnelRows` below is a small, hand-picked sample (not the full real
+// count) — same "scaled up to read like a real org" gap as
 // asset-intelligence/departments's mock-data.ts, just without the multiplier
 // arithmetic since there's no smaller real dataset here to scale from.
 export type PersonnelType = "employee" | "contractor" | "partner" | "guest" | "inactive";
 export type WorkStatus = "active" | "on-leave" | "invited" | "inactive";
 
-export interface PersonnelTab {
-  id: PersonnelType | "all";
+// 2026-09-01: redesigned from type-filter tabs (ทั้งหมด/พนักงาน/ผู้รับเหมา/…)
+// into the mockup's 5 view tabs — a different axis (how the roster is
+// grouped/displayed) rather than a row filter. Only "roster" has any mockup
+// content (today's real table); the other 4 render the same "ยังไม่มีข้อมูล
+// สำหรับแท็บนี้" placeholder people/org-structure's OrgStructurePage already
+// uses for its own unbuilt tabs.
+export type PersonnelViewTab = "roster" | "by-unit" | "by-position" | "by-employment-status" | "probation";
+
+export interface PersonnelViewTabItem {
+  id: PersonnelViewTab;
   label: string;
-  count: number;
 }
 
-export const personnelTabs: PersonnelTab[] = [
-  { id: "all", label: "ทั้งหมด", count: 128 },
-  { id: "employee", label: "พนักงาน", count: 112 },
-  { id: "contractor", label: "ผู้รับเหมา", count: 9 },
-  { id: "partner", label: "พันธมิตร", count: 4 },
-  { id: "guest", label: "แขก", count: 3 },
-  { id: "inactive", label: "พ้นสภาพ/ไม่ใช้งาน", count: 6 },
+export const personnelViewTabs: PersonnelViewTabItem[] = [
+  { id: "roster", label: "รายชื่อบุคลากร" },
+  { id: "by-unit", label: "พนักงานตามหน่วยงาน" },
+  { id: "by-position", label: "พนักงานตามตำแหน่ง" },
+  { id: "by-employment-status", label: "สถานะการจ้างงาน" },
+  { id: "probation", label: "พนักงานทดลองงาน" },
 ];
 
 export interface PersonnelStatTile {
@@ -31,17 +35,21 @@ export interface PersonnelStatTile {
   label: string;
   value: string;
   sublabel: string;
-  color: "indigo" | "emerald" | "blue" | "purple" | "amber" | "red";
 }
 
+// 2026-09-01: redesigned from 6 per-type tiles into the mockup's 5 —
+// "พนักงานทั้งหมด" is real (PersonnelPage passes Core's actual `totalCount`
+// through instead of this mock string); the other 4 (contractor headcount,
+// this month's new-hire/departure counts, retention rate) have no Core
+// aggregate endpoint yet and stay mock, same discipline as
+// people/overview's own stat tiles.
 export const personnelStatTiles: PersonnelStatTile[] = [
-  { id: "total", label: "บุคลากรทั้งหมด", value: "128", sublabel: "↑ 3 จากเดือนที่แล้ว", color: "indigo" },
-  { id: "employee", label: "พนักงาน (Employee)", value: "112", sublabel: "87.5%", color: "emerald" },
-  { id: "contractor", label: "ผู้รับเหมา (Contractor)", value: "9", sublabel: "7.0%", color: "blue" },
-  { id: "partner", label: "พันธมิตร (Partner)", value: "4", sublabel: "3.1%", color: "purple" },
-  { id: "guest", label: "แขก (Guest)", value: "3", sublabel: "2.4%", color: "amber" },
-  { id: "inactive", label: "พ้นสภาพ/ไม่ใช้งาน", value: "6", sublabel: "จากทั้งหมด", color: "red" },
+  { id: "contractors", label: "ผู้ปฏิบัติงานภายนอก", value: "9", sublabel: "คน" },
+  { id: "new-this-month", label: "เข้าใหม่ (เดือนนี้)", value: "7", sublabel: "คน" },
+  { id: "left-this-month", label: "ออกจากองค์กร (เดือนนี้)", value: "2", sublabel: "คน" },
 ];
+
+export const personnelRetentionRate = 94.1;
 
 export interface PersonnelRow {
   id: string;

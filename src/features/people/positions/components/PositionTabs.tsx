@@ -1,15 +1,17 @@
-import { newHireTabs, type NewHireTab } from "../mock-data";
+import { positionTabs, type PositionTab } from "../mock-data";
 
-interface NewHiresTabsProps {
-  active: NewHireTab["id"];
-  onChange: (id: NewHireTab["id"]) => void;
+interface PositionTabsProps {
+  active: PositionTab["id"];
+  onChange: (id: PositionTab["id"]) => void;
 }
 
-// Real, client-side — same pattern as people/personnel's PersonnelTabs.
-export function NewHiresTabs({ active, onChange }: NewHiresTabsProps) {
+// Real, client-side filtering of `positionRows` by status — same pattern as
+// people/personnel's PersonnelTabs. Counts shown are the mockup's own
+// header numbers (see mock-data.ts), not derived from the filtered rows.
+export function PositionTabs({ active, onChange }: PositionTabsProps) {
   return (
     <div className="flex flex-wrap items-center gap-1 border-b border-zinc-200 dark:border-zinc-800">
-      {newHireTabs.map((tab) => (
+      {positionTabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
