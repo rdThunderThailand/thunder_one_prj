@@ -1,39 +1,85 @@
-import { apiClient } from "@/lib/api/client";
 import { requestApi } from "@/lib/api/media-api";
-import type { MediaAsset } from "../types";
+import { resolveUploadMimeType } from "../upload-limits";
+import { Upload } from "tus-js-client";
 
-type UploadUrlResponse = {
+/** Everything the browser needs to upload; every field is chosen by Core (ADR-0059).
+ *  `storage_key` already carries the authenticated tenant's prefix. Core also returns the
+ *  legacy signed-PUT `upload_url`/`token`, which the resumable path does not use. */
+export type UploadTarget = {
   file_id: string;
   storage_key: string;
-  upload_url: string;
-  token?: string;
+  bucket: string;
+  upload_endpoint: string;
+  storage_api_key: string;
+  max_file_size_bytes: number;
 };
 
-export async function fetchUploadUrl(file: File): Promise<UploadUrlResponse> {
-  return requestApi<UploadUrlResponse>("POST", "/media/videos/upload-url", {
+/** The resumable endpoint talks to Storage directly, past /api/proxy, so it needs the user's
+ *  own access token rather than the httpOnly cookie the proxy forwards. */
+async function fetchStorageAccessToken(): Promise<string> {
+  const response = await fetch("/api/auth/storage-token", { cache: "no-store" });
+  if (!response.ok) throw new Error("เซสชันหมดอายุ — กรุณาเข้าสู่ระบบใหม่ก่อนอัปโหลด");
+  const { access_token } = (await response.json()) as { access_token: string };
+  return access_token;
+}
+
+export async function fetchUploadUrl(file: File): Promise<UploadTarget> {
+  return requestApi<UploadTarget>("POST", "/media/videos/upload-url", {
     filename: file.name,
-    mime_type: file.type || "application/octet-stream",
+    mime_type: resolveUploadMimeType(file),
     file_size_bytes: file.size,
   });
 }
 
+/** Supabase's TUS chunk size is fixed at 6 MB — the server rejects anything else. */
+const TUS_CHUNK_SIZE = 6 * 1024 * 1024;
+
+/** Resumable upload straight to the Storage hostname, bypassing /api/proxy: a 5 GB file
+ *  cannot survive a single non-resumable PUT through a serverless proxy. `objectName` comes
+ *  from Core and Storage's own RLS policy refuses any key outside the caller's tenant prefix,
+ *  so a tampered value is rejected at the server, not merely unused. */
 export async function uploadToStorage(
-  uploadUrl: string,
+  target: UploadTarget,
   file: File,
   onProgress: (pct: number) => void
 ): Promise<void> {
-  // uploadUrl is an ABSOLUTE Supabase signed-upload URL — this is the one request in the
-  // codebase that legitimately bypasses /api/proxy. Both options below are load-bearing:
-  // the Content-Type header overrides apiClient's application/json default, and
-  // transformRequest stops axios from serialising the File object.
-  await apiClient.put(uploadUrl, file, {
-    headers: { "Content-Type": file.type },
-    transformRequest: [(d) => d],
-    onUploadProgress: (evt) => {
-      if (evt.total) onProgress(Math.round((evt.loaded * 100) / evt.total));
-    },
+  const accessToken = await fetchStorageAccessToken();
+
+  return new Promise((resolve, reject) => {
+    const upload = new Upload(file, {
+      endpoint: target.upload_endpoint,
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        apikey: target.storage_api_key,
+      },
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      chunkSize: TUS_CHUNK_SIZE,
+      metadata: {
+        bucketName: target.bucket,
+        objectName: target.storage_key,
+        // The bucket's allowed_mime_types is checked against this, so it has to be the same
+        // value Core validated rather than a possibly-empty File.type.
+        contentType: resolveUploadMimeType(file),
+      },
+      onProgress: (uploaded, total) => {
+        if (total) onProgress(Math.round((uploaded * 100) / total));
+      },
+      onError: reject,
+      onSuccess: () => resolve(),
+    });
+
+    upload.findPreviousUploads().then((previous) => {
+      if (previous.length) upload.resumeFromPreviousUpload(previous[0]);
+      upload.start();
+    }, reject);
   });
 }
+
+/** Registration is idempotent per `file_id` and returns only these two fields — it is
+ *  not the Asset. Callers that need the Asset fetch it by `media_asset_id`. */
+export type RegisteredVideo = { media_asset_id: string; status: string };
 
 export async function registerVideo(payload: {
   file_id: string;
@@ -43,8 +89,8 @@ export async function registerVideo(payload: {
   width?: number;
   height?: number;
   folder_id?: string | null;
-}): Promise<MediaAsset> {
-  return requestApi<MediaAsset>("POST", "/media/videos", payload);
+}): Promise<RegisteredVideo> {
+  return requestApi<RegisteredVideo>("POST", "/media/videos", payload);
 }
 
 // ponytail: the browser has already decoded the file by the time it reports these, so the
