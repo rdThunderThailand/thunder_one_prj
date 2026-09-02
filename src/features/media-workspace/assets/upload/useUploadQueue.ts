@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ContentFolder } from "@/types/domain";
-import { fetchContentFolders } from "@/lib/api/media-api";
+import type { ContentFolder, Tag } from "@/types/domain";
+import { fetchContentFolders, fetchTags } from "@/lib/api/media-api";
 import {
   EXPIRED_UPLOAD_ERROR,
   cancelUploadReservation,
@@ -15,6 +15,7 @@ import {
   nextToStart,
   reservationToRelease,
   retryPlan,
+  startItems,
   stageFiles,
   summarize,
   type UploadItem,
@@ -27,7 +28,9 @@ export function useUploadQueue() {
   const [items, setItems] = useState<UploadItem[]>([]);
   const [rejections, setRejections] = useState<string[]>([]);
   const [folders, setFolders] = useState<ContentFolder[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [folderId, setFolderId] = useState<string | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [started, setStarted] = useState(false);
 
   // Ids already handed to a worker — guards the reconcile effect from double-starting a
@@ -38,6 +41,7 @@ export function useUploadQueue() {
 
   useEffect(() => {
     fetchContentFolders("asset").then(setFolders).catch(() => setFolders([]));
+    fetchTags().then(setTags).catch(() => setTags([]));
   }, []);
 
   const addFiles = useCallback((files: File[]) => {
@@ -73,6 +77,7 @@ export function useUploadQueue() {
         patchItem(id, (item) => ({ ...item, state: "uploading", pct: entry.target ? item.pct : 0 }));
         return uploadAndRegisterAsset(entry.file as File, {
           folderId,
+          tagIds: entry.tagIds,
           signal: controller.signal,
           // Present only on a retry that may resume; the first attempt authorizes here and
           // reports the target back so a later retry has something to resume against.
@@ -129,8 +134,8 @@ export function useUploadQueue() {
 
   const startUpload = useCallback(() => {
     setStarted(true);
-    setItems((current) => current.map((item) => (item.state === "staged" ? { ...item, state: "waiting" } : item)));
-  }, []);
+    setItems((current) => startItems(current, selectedTagIds));
+  }, [selectedTagIds]);
 
   // Cancelling releases the reservation server-side, so a file abandoned mid-upload leaves no
   // Asset and no waiting Storage object. `isReservationDead` is set in the same update: the
@@ -194,8 +199,11 @@ export function useUploadQueue() {
     items,
     rejections,
     folders,
+    tags,
     folderId,
     setFolderId,
+    selectedTagIds,
+    setSelectedTagIds,
     started,
     summary: summarize(items),
     aggregateAction: aggregateAction(items),

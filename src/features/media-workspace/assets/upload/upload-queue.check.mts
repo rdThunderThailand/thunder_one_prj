@@ -9,6 +9,7 @@ import {
   nextToStart,
   reservationToRelease,
   retryPlan,
+  startItems,
   stageFiles,
   summarize,
   type UploadItem,
@@ -61,6 +62,15 @@ const item = (id: string, state: UploadItem["state"], name = `${id}.mp4`): Uploa
 }
 
 // --- aggregateAction ---
+
+{
+  const selected = ["tag-2", "tag-1", "tag-2"];
+  const started = startItems([item("1", "staged"), item("2", "completed")], selected);
+  selected.push("tag-3");
+  assert.equal(started[0].state, "waiting", "staged rows start");
+  assert.deepEqual(started[0].tagIds, ["tag-2", "tag-1"], "Tag selection is deduplicated and snapshotted");
+  assert.equal(started[1].tagIds, undefined, "terminal rows keep their original settings");
+}
 
 assert.equal(aggregateAction([]), null, "empty queue has no aggregate action");
 assert.equal(aggregateAction([item("1", "staged")]), "clear-queue");

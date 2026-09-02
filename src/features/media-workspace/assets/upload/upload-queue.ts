@@ -20,12 +20,22 @@ export type UploadItem = {
    *  the operator cancelled and Core released it. The stored `target` is then dead weight: the
    *  file has to be re-authorized rather than resumed. */
   isReservationDead?: boolean;
+  /** Immutable selection captured when this row starts. Retries reuse the same IDs. */
+  tagIds?: string[];
 };
 
 export const MAX_QUEUE_FILES = 10;
 export const MAX_WORKERS = 2;
 
 const ACTIVE_STATES: UploadItemState[] = ["waiting", "uploading"];
+
+/** Starts every staged row with one deduplicated Tag selection snapshot. */
+export function startItems(items: UploadItem[], tagIds: string[]): UploadItem[] {
+  const snapshot = [...new Set(tagIds)];
+  return items.map((item) =>
+    item.state === "staged" ? { ...item, state: "waiting", tagIds: snapshot } : item
+  );
+}
 
 /** Stages `incoming` onto `items`, rejecting per-file for size/type (ADR-0059 limits,
  *  shared with the single-file picker), duplicates already in the queue, and overflow

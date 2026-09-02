@@ -39,6 +39,12 @@ export function UploadQueuePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queue = useUploadQueue();
   const canStart = queue.items.some((item) => item.state === "staged") && queue.folderId !== null;
+  const settingsLocked = queue.items.some((item) => item.state === "waiting" || item.state === "uploading");
+
+  const addTag = (tagId: string) => {
+    if (!tagId || queue.selectedTagIds.includes(tagId)) return;
+    queue.setSelectedTagIds([...queue.selectedTagIds, tagId]);
+  };
 
   const onFilesPicked = (fileList: FileList | null) => {
     if (fileList) queue.addFiles(Array.from(fileList));
@@ -134,9 +140,21 @@ export function UploadQueuePage() {
           <Card className="p-4">
             <h2 className="text-sm font-semibold text-zinc-950 dark:text-white">Upload to</h2>
             <label className="mt-4 block text-xs font-medium text-zinc-600 dark:text-zinc-300" htmlFor="upload-folder">Select folder</label>
-            <select id="upload-folder" value={queue.folderId ?? ""} onChange={(event) => queue.setFolderId(event.target.value || null)} className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"><option value="" disabled>Select a Folder</option>{queue.folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select>
-            <div className="mt-4 flex items-center justify-between"><span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Tags (optional)</span><span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800">Coming in Phase 2</span></div>
-            <button disabled title="Coming in Phase 2" className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left text-sm text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800/60">Tag assignment unavailable</button>
+            <select id="upload-folder" value={queue.folderId ?? ""} disabled={settingsLocked} onChange={(event) => queue.setFolderId(event.target.value || null)} className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:disabled:bg-zinc-800/60"><option value="" disabled>Select a Folder</option>{queue.folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select>
+            <label className="mt-4 block text-xs font-medium text-zinc-600 dark:text-zinc-300" htmlFor="upload-tag">Tags (optional)</label>
+            <div className="mt-1.5 rounded-lg border border-zinc-200 bg-white p-2 dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="flex flex-wrap gap-2">
+                {queue.selectedTagIds.map((id) => {
+                  const tag = queue.tags.find((candidate) => candidate.id === id);
+                  if (!tag) return null;
+                  return <span key={id} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">{tag.name}<button type="button" disabled={settingsLocked} onClick={() => queue.setSelectedTagIds(queue.selectedTagIds.filter((tagId) => tagId !== id))} aria-label={`Remove ${tag.name}`} className="disabled:cursor-not-allowed disabled:opacity-50">×</button></span>;
+                })}
+              </div>
+              <select id="upload-tag" value="" disabled={settingsLocked || queue.tags.length === queue.selectedTagIds.length} onChange={(event) => addTag(event.target.value)} className="mt-2 w-full bg-transparent px-1 py-1 text-sm text-zinc-600 outline-none disabled:cursor-not-allowed disabled:text-zinc-400 dark:text-zinc-300">
+                <option value="">{queue.tags.length ? "Add a Tag" : "No tags available"}</option>
+                {queue.tags.filter((tag) => !queue.selectedTagIds.includes(tag.id)).map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
+              </select>
+            </div>
           </Card>
 
           <Card className="p-4">

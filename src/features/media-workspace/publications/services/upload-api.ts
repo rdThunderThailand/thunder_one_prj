@@ -131,13 +131,14 @@ export async function uploadAndRegisterAsset(
   file: File,
   options: {
     folderId?: string | null;
+    tagIds?: string[];
     onProgress?: (pct: number) => void;
     signal?: AbortSignal;
     target?: UploadTarget;
     onTarget?: (target: UploadTarget) => void;
   } = {}
 ): Promise<RegisteredVideo> {
-  const { folderId, onProgress = () => {}, signal, onTarget } = options;
+  const { folderId, tagIds, onProgress = () => {}, signal, onTarget } = options;
   const isVideoFile = file.type.startsWith("video/");
   const duration = isVideoFile ? await readVideoDuration(file) : null;
   const dimensions = await readMediaDimensions(file);
@@ -167,6 +168,7 @@ export async function uploadAndRegisterAsset(
     ...(thumbnail_storage_key ? { thumbnail_storage_key } : {}),
     ...(dimensions ?? {}),
     ...(folderId ? { folder_id: folderId } : {}),
+    ...(tagIds?.length ? { tag_ids: tagIds } : {}),
   });
 }
 
@@ -182,6 +184,7 @@ export async function registerVideo(payload: {
   width?: number;
   height?: number;
   folder_id?: string | null;
+  tag_ids?: string[];
 }): Promise<RegisteredVideo> {
   return requestApi<RegisteredVideo>("POST", "/media/videos", payload);
 }

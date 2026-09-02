@@ -54,6 +54,7 @@ export type MediaAsset = {
   codec?: string;
   folder_id?: string | null;
   thumbnail_storage_key?: string | null;
+  tags?: Tag[];
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;
