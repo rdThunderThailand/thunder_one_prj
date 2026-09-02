@@ -1,39 +1,180 @@
-import { apiClient } from "@/lib/api/client";
 import { requestApi } from "@/lib/api/media-api";
-import type { MediaAsset } from "../types";
+import { resolveUploadMimeType } from "../upload-limits";
+import { Upload } from "tus-js-client";
 
-type UploadUrlResponse = {
+/** Everything the browser needs to upload; every field is chosen by Core (ADR-0059).
+ *  `storage_key` already carries the authenticated tenant's prefix. Core also returns the
+ *  legacy signed-PUT `upload_url`/`token`, which the resumable path does not use. */
+export type UploadTarget = {
   file_id: string;
   storage_key: string;
-  upload_url: string;
-  token?: string;
+  bucket: string;
+  upload_endpoint: string;
+  storage_api_key: string;
+  max_file_size_bytes: number;
 };
 
-export async function fetchUploadUrl(file: File): Promise<UploadUrlResponse> {
-  return requestApi<UploadUrlResponse>("POST", "/media/videos/upload-url", {
+/** The resumable endpoint talks to Storage directly, past /api/proxy, so it needs the user's
+ *  own access token rather than the httpOnly cookie the proxy forwards. */
+async function fetchStorageAccessToken(): Promise<string> {
+  const response = await fetch("/api/auth/storage-token", { cache: "no-store" });
+  if (!response.ok) throw new Error("เซสชันหมดอายุ — กรุณาเข้าสู่ระบบใหม่ก่อนอัปโหลด");
+  const { access_token } = (await response.json()) as { access_token: string };
+  return access_token;
+}
+
+export async function fetchUploadUrl(file: File): Promise<UploadTarget> {
+  return requestApi<UploadTarget>("POST", "/media/videos/upload-url", {
     filename: file.name,
-    mime_type: file.type || "application/octet-stream",
+    mime_type: resolveUploadMimeType(file),
     file_size_bytes: file.size,
   });
 }
 
+/** Releases a reservation the browser will never finish, so its Storage object and `files` row
+ *  do not wait for the nightly sweep. Core refuses a file_id that already became an Asset. */
+export async function cancelUploadReservation(fileId: string): Promise<void> {
+  await requestApi("POST", "/media/uploads/cancel", { file_id: fileId });
+}
+
+/** Supabase's TUS chunk size is fixed at 6 MB — the server rejects anything else. */
+const TUS_CHUNK_SIZE = 6 * 1024 * 1024;
+
+/** A resumed upload whose reservation no longer exists — swept, canceled, or past the TUS
+ *  URL's lifetime. Named so the queue can tell "resume this" from "re-authorize this". */
+export const EXPIRED_UPLOAD_ERROR = "ExpiredUploadError";
+
+function isReservationGone(error: unknown): boolean {
+  const status = (error as { originalResponse?: { getStatus?: () => number } })?.originalResponse?.getStatus?.();
+  return status === 401 || status === 403 || status === 404 || status === 410;
+}
+
+/** Resumable upload straight to the Storage hostname, bypassing /api/proxy: a 5 GB file
+ *  cannot survive a single non-resumable PUT through a serverless proxy. `objectName` comes
+ *  from Core and Storage's own RLS policy refuses any key outside the caller's tenant prefix,
+ *  so a tampered value is rejected at the server, not merely unused. */
 export async function uploadToStorage(
-  uploadUrl: string,
+  target: UploadTarget,
   file: File,
-  onProgress: (pct: number) => void
+  onProgress: (pct: number) => void,
+  signal?: AbortSignal,
+  shouldResume = false
 ): Promise<void> {
-  // uploadUrl is an ABSOLUTE Supabase signed-upload URL — this is the one request in the
-  // codebase that legitimately bypasses /api/proxy. Both options below are load-bearing:
-  // the Content-Type header overrides apiClient's application/json default, and
-  // transformRequest stops axios from serialising the File object.
-  await apiClient.put(uploadUrl, file, {
-    headers: { "Content-Type": file.type },
-    transformRequest: [(d) => d],
-    onUploadProgress: (evt) => {
-      if (evt.total) onProgress(Math.round((evt.loaded * 100) / evt.total));
-    },
+  const accessToken = await fetchStorageAccessToken();
+
+  return new Promise((resolve, reject) => {
+    const upload = new Upload(file, {
+      endpoint: target.upload_endpoint,
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        apikey: target.storage_api_key,
+      },
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      chunkSize: TUS_CHUNK_SIZE,
+      metadata: {
+        bucketName: target.bucket,
+        objectName: target.storage_key,
+        // The bucket's allowed_mime_types is checked against this, so it has to be the same
+        // value Core validated rather than a possibly-empty File.type.
+        contentType: resolveUploadMimeType(file),
+      },
+      onProgress: (uploaded, total) => {
+        if (total) onProgress(Math.round((uploaded * 100) / total));
+      },
+      onError: (error) => {
+        if (!isReservationGone(error)) return reject(error);
+        const expired = new Error("การอนุญาตอัปโหลดหมดอายุ — ระบบจะเริ่มไฟล์นี้ใหม่");
+        expired.name = EXPIRED_UPLOAD_ERROR;
+        reject(expired);
+      },
+      onSuccess: () => resolve(),
+    });
+
+    // Distinguishable from a real upload failure so callers (the queue) can mark the
+    // row `canceled` instead of `failed`.
+    signal?.addEventListener("abort", () => {
+      upload.abort();
+      const abortError = new Error("Upload canceled");
+      abortError.name = "AbortError";
+      reject(abortError);
+    });
+
+    // The stored upload URL is only safe to resume against the reservation it was created for.
+    // tus fingerprints a file as `tus-br-{name}-{type}-{size}-{lastModified}-{endpoint}` —
+    // `objectName` is not part of it — so a previous attempt's entry matches even when this
+    // call holds a brand-new reservation. Resuming then would append bytes to the old object
+    // while registration recorded the new key. Only the caller knows which it holds, so it
+    // decides: `shouldResume` is set exactly when it passed the same `target` back in.
+    if (!shouldResume) {
+      upload.start();
+      return;
+    }
+    upload.findPreviousUploads().then((previous) => {
+      if (previous.length) upload.resumeFromPreviousUpload(previous[0]);
+      upload.start();
+    }, reject);
   });
 }
+
+/** The full per-file pipeline shared by the single-file picker (`useAssetUpload`) and
+ *  the staged queue: read metadata → resumable upload → (video only) thumbnail upload →
+ *  register. One copy so the two callers cannot drift.
+ *
+ *  Pass `target` to retry against a prior attempt's authorization. Resuming and re-authorizing
+ *  are mutually exclusive: tus would happily resume a stored upload URL against a fresh
+ *  reservation, writing bytes to the old object while registration recorded the new key, so a
+ *  retry either keeps the whole reservation or takes a whole new one. `onTarget` reports the
+ *  one actually used, for the next retry or for release on cancel. */
+export async function uploadAndRegisterAsset(
+  file: File,
+  options: {
+    folderId?: string | null;
+    tagIds?: string[];
+    onProgress?: (pct: number) => void;
+    signal?: AbortSignal;
+    target?: UploadTarget;
+    onTarget?: (target: UploadTarget) => void;
+  } = {}
+): Promise<RegisteredVideo> {
+  const { folderId, tagIds, onProgress = () => {}, signal, onTarget } = options;
+  const isVideoFile = file.type.startsWith("video/");
+  const duration = isVideoFile ? await readVideoDuration(file) : null;
+  const dimensions = await readMediaDimensions(file);
+  const thumbnailBlob = isVideoFile ? await captureVideoThumbnail(file) : undefined;
+  const shouldResume = Boolean(options.target);
+  const target = options.target ?? (await fetchUploadUrl(file));
+  onTarget?.(target);
+  await uploadToStorage(target, file, onProgress, signal, shouldResume);
+
+  // ponytail: the queue tracks only the original file's reservation. A retry that reaches this
+  // point takes a fresh thumbnail reservation, and a cancel between here and registration
+  // releases the original but not the thumbnail — both leave one small object for the nightly
+  // sweep. Carry a second stored target here if that ever becomes real backlog rather than a
+  // handful of thumbnails a day.
+  let thumbnail_storage_key: string | undefined;
+  if (thumbnailBlob) {
+    const thumbFile = new File([thumbnailBlob], `${file.name}.thumb.jpg`, { type: "image/jpeg" });
+    const thumbTarget = await fetchUploadUrl(thumbFile);
+    await uploadToStorage(thumbTarget, thumbFile, () => {}, signal);
+    thumbnail_storage_key = thumbTarget.storage_key;
+  }
+
+  return registerVideo({
+    file_id: target.file_id,
+    title: file.name,
+    ...(duration ? { duration_seconds: duration } : {}),
+    ...(thumbnail_storage_key ? { thumbnail_storage_key } : {}),
+    ...(dimensions ?? {}),
+    ...(folderId ? { folder_id: folderId } : {}),
+    ...(tagIds?.length ? { tag_ids: tagIds } : {}),
+  });
+}
+
+/** Registration is idempotent per `file_id` and returns only these two fields — it is
+ *  not the Asset. Callers that need the Asset fetch it by `media_asset_id`. */
+export type RegisteredVideo = { media_asset_id: string; status: string };
 
 export async function registerVideo(payload: {
   file_id: string;
@@ -43,8 +184,9 @@ export async function registerVideo(payload: {
   width?: number;
   height?: number;
   folder_id?: string | null;
-}): Promise<MediaAsset> {
-  return requestApi<MediaAsset>("POST", "/media/videos", payload);
+  tag_ids?: string[];
+}): Promise<RegisteredVideo> {
+  return requestApi<RegisteredVideo>("POST", "/media/videos", payload);
 }
 
 // ponytail: the browser has already decoded the file by the time it reports these, so the

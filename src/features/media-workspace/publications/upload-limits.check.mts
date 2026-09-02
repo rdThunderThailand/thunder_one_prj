@@ -9,7 +9,7 @@
  * empty-`File.type` fallback that made the bad file slip through in the first place.
  */
 import assert from "node:assert/strict";
-import { rejectUploadReason } from "./upload-limits.ts";
+import { MAX_UPLOAD_SIZE_BYTES, rejectUploadReason } from "./upload-limits.ts";
 
 const file = (name: string, type: string) => ({ name, type });
 
@@ -36,5 +36,19 @@ assert.ok(!pdfReason.includes("แปลงไฟล์"), "pdf should not get t
 assert.equal(rejectUploadReason(file("clip.MP4", "")), null, "extension fallback should accept mp4");
 assert.ok(rejectUploadReason(file("clip.mov", "")), "extension fallback should reject mov");
 assert.ok(rejectUploadReason(file("noextension", "")), "unknown file should be rejected");
+
+// The 5 GB ceiling holds at the boundary, and size is checked before format so an
+// oversized MP4 is refused for its size rather than waved through as an accepted type.
+const sized = (name: string, type: string, size: number) => ({ name, type, size });
+assert.equal(
+  rejectUploadReason(sized("big.mp4", "video/mp4", MAX_UPLOAD_SIZE_BYTES)),
+  null,
+  "exactly 5 GB should be accepted"
+);
+assert.ok(
+  rejectUploadReason(sized("big.mp4", "video/mp4", MAX_UPLOAD_SIZE_BYTES + 1))?.includes("5 GB"),
+  "over 5 GB should be rejected for size"
+);
+assert.ok(rejectUploadReason(sized("empty.mp4", "video/mp4", 0)), "empty file should be rejected");
 
 console.log("upload-limits: all checks passed");

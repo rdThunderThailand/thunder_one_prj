@@ -24,10 +24,30 @@ export const UPLOAD_ACCEPT_ATTR = ".mp4,.png,.jpg,.jpeg,.webp";
 
 export const UPLOAD_ACCEPT_LABEL = "รองรับ MP4, PNG, JPG, WebP";
 
-/** Returns a user-facing reason to refuse the file, or null when it is acceptable. */
-export function rejectUploadReason(file: { name: string; type: string }): string | null {
+/** Matches the ceiling Core and the `media` bucket enforce (ADR-0059); the browser check
+ *  only exists to fail a 6 GB file before it wastes an authorization round trip. */
+export const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024 * 1024;
+
+export const MAX_UPLOAD_SIZE_LABEL = "5 GB";
+
+/** The MIME type to claim for a file, falling back to its extension when the browser
+ *  reports none. Core validates `mime_type` against the extension and rejects anything it
+ *  does not recognise, so the picker and the upload request have to agree on this value. */
+export function resolveUploadMimeType(file: { name: string; type: string }): string {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const mimeType = file.type || EXTENSION_MIME_TYPES[extension] || "";
+  return file.type || EXTENSION_MIME_TYPES[extension] || "";
+}
+
+/** Returns a user-facing reason to refuse the file, or null when it is acceptable. */
+export function rejectUploadReason(file: { name: string; type: string; size?: number }): string | null {
+  const mimeType = resolveUploadMimeType(file);
+
+  if (file.size !== undefined && file.size > MAX_UPLOAD_SIZE_BYTES) {
+    return `ไฟล์ใหญ่เกิน ${MAX_UPLOAD_SIZE_LABEL} — กรุณาลดขนาดก่อนอัปโหลด`;
+  }
+  if (file.size === 0) {
+    return "ไฟล์ว่าง — ไม่สามารถอัปโหลดได้";
+  }
 
   if ((ACCEPTED_MIME_TYPES as readonly string[]).includes(mimeType)) return null;
 
