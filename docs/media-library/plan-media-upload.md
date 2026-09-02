@@ -102,8 +102,8 @@ GitHub Issues are the status source of truth. `Open — ready` means the ticket 
 
 | Local ID | Delivery slice | Phase | Status | Blocked by | GitHub issue |
 |---|---|---|---|---|---|
-| MU-01 | Upload one tenant-scoped 5 GB Asset through TUS | 1 | Open — ready | None | [#25](https://github.com/rdThunderThailand/thunder_one_prj/issues/25) |
-| MU-02 | Stage and process a 10-file, two-worker Upload Queue | 1 | Open — blocked | MU-01 / #25 | [#26](https://github.com/rdThunderThailand/thunder_one_prj/issues/26) |
+| MU-01 | Upload one tenant-scoped 5 GB Asset through TUS | 1 | Closed | None | [#25](https://github.com/rdThunderThailand/thunder_one_prj/issues/25) |
+| MU-02 | Stage and process a 10-file, two-worker Upload Queue | 1 | Open — ready | None (MU-01 done) | [#26](https://github.com/rdThunderThailand/thunder_one_prj/issues/26) |
 | MU-03 | Cancel, retry and recover uploads without orphaned files | 1 | Open — blocked | MU-02 / #26 | [#27](https://github.com/rdThunderThailand/thunder_one_prj/issues/27) |
 | MU-04 | Complete the Figma-guided page and Recent Uploads | 1 | Open — blocked | MU-02 / #26 | [#28](https://github.com/rdThunderThailand/thunder_one_prj/issues/28) |
 | MU-05 | Assign Tags while uploading Assets | 2 | Open — blocked | MU-04 / #28 | [#29](https://github.com/rdThunderThailand/thunder_one_prj/issues/29) |
