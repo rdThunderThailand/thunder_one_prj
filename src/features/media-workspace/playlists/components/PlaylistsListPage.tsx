@@ -12,7 +12,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { fetchCampaigns } from "@/lib/api/media-api";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { Campaign } from "@/types/domain";
-import { deletePlaylist, duplicatePlaylist, fetchPlaylists } from "../services/playlists-api";
+import { deletePlaylist, duplicatePlaylist, fetchPlaylists, upsertPlaylist } from "../services/playlists-api";
 import { copyName, filterPlaylists, paginate, playlistCampaignId, sortPlaylists, summarize } from "../list-filtering";
 import { describeDeleteError } from "../status-display";
 import { readListState, writeListState, DEFAULT_STATE } from "../list-url-state";
@@ -70,6 +70,8 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
   // One dataset feeds the cards, both tab counts, the filters and the page slice — the
   // list RPC already returns one row per playlist (Thunder_Core migration 087), so
   // nothing here has to guard against the same playlist arriving twice.
+  // ponytail: search/filter/sort/pagination run client-side over this one fetch — fine
+  // at today's scale (86 playlists on prod, 2026-09-02); move server-side past ~1,000.
   useEffect(() => {
     let alive = true;
     fetchPlaylists(true)
@@ -162,6 +164,10 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
         if (!itemsCopied) {
           setActionError("คัดลอก playlist แล้ว แต่ยังคัดลอกเนื้อหาไม่สำเร็จ — เปิดฉบับร่างเพื่อเพิ่มสื่อเอง");
         }
+      } else if (action === "mark-ready") {
+        // The one stored status transition (ADR 0060 §3, §6) — badge derives Inactive
+        // from publication_count next reload, never Active from this call alone.
+        await upsertPlaylist({ playlistId: playlist.id, name: playlist.name, status: "active" });
       } else {
         await deletePlaylist(playlist.id);
         setSelectedId((id) => (id === playlist.id ? null : id));
@@ -169,10 +175,10 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
       await reload();
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
+      const fallback =
+        action === "mark-ready" ? "ตั้งให้ playlist พร้อมใช้งานไม่สำเร็จ" : "คัดลอก playlist ไม่สำเร็จ";
       setActionError(
-        action === "delete"
-          ? describeDeleteError(message)
-          : classifyApiError(err, "คัดลอก playlist ไม่สำเร็จ").message
+        action === "delete" ? describeDeleteError(message) : classifyApiError(err, fallback).message
       );
     } finally {
       setBusyId(null);
@@ -204,9 +210,9 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total Playlists" value={stats.total} />
+          <StatCard label="Draft" value={stats.draft} />
           <StatCard label="Active" value={stats.active} />
           <StatCard label="Inactive" value={stats.inactive} />
-          <StatCard label="Draft" value={stats.draft} />
         </div>
       )}
 

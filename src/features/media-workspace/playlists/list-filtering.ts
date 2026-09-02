@@ -8,13 +8,18 @@ import type { PlaylistListItem, PlaylistStatus, PlaylistType } from "./types";
 
 export type OwnershipTab = "all" | "mine";
 
+/** What the list's Type column and filter show — distinct from `PlaylistType`
+ *  (standard/dynamic, an unrelated metadata concept the create wizard still owns). */
+export const CONTENT_TYPES = ["video", "image", "mixed"] as const;
+export type ContentType = (typeof CONTENT_TYPES)[number];
+
 export type ListFilters = {
   tab: OwnershipTab;
   /** Null while the session hasn't resolved — "My Playlists" then matches nothing. */
   currentUserId: string | null;
   query: string;
   status: PlaylistStatus | "all";
-  type: PlaylistType | "all";
+  type: ContentType | "all";
   campaignId: string | "all";
 };
 
@@ -22,6 +27,16 @@ export type ListFilters = {
  *  table has always displayed, so the filter can never hide a row the column shows. */
 export function playlistType(playlist: PlaylistListItem): PlaylistType {
   return decodeMetadata(playlist.metadata).info.playlistType ?? "standard";
+}
+
+/** Video / Image / Mixed, derived from the distinct asset kinds the playlist's items
+ *  hold (Thunder_Core migration 20260902160000) — null for a playlist with no items or
+ *  for a row a stale backend hasn't caught up to yet, rendered as "—". */
+export function playlistContentType(playlist: PlaylistListItem): ContentType | null {
+  const kinds = new Set(playlist.item_kinds ?? []);
+  if (kinds.size === 0) return null;
+  if (kinds.size > 1) return "mixed";
+  return kinds.has("video") ? "video" : "image";
 }
 
 export function playlistCampaignId(playlist: PlaylistListItem): string | undefined {
@@ -36,7 +51,7 @@ export function filterPlaylists(
   return playlists.filter((p) => {
     if (filters.tab === "mine" && p.created_by?.id !== filters.currentUserId) return false;
     if (filters.status !== "all" && playlistDisplayStatus(p) !== filters.status) return false;
-    if (filters.type !== "all" && playlistType(p) !== filters.type) return false;
+    if (filters.type !== "all" && playlistContentType(p) !== filters.type) return false;
     if (filters.campaignId !== "all" && playlistCampaignId(p) !== filters.campaignId) return false;
     if (needle && !p.name.toLowerCase().includes(needle)) return false;
     return true;
@@ -96,7 +111,7 @@ function sortValue(
     case "name":
       return playlist.name;
     case "type":
-      return playlistType(playlist);
+      return playlistContentType(playlist);
     case "campaign":
       return campaignNames[playlistCampaignId(playlist) ?? ""] || null;
     case "duration":

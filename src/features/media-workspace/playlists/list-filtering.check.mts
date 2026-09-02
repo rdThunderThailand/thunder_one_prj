@@ -1,6 +1,6 @@
 /** Run: node src/features/playlists/list-filtering.check.mts */
 import assert from "node:assert/strict";
-import { copyName, filterPlaylists, paginate, playlistType, summarize } from "./list-filtering.ts";
+import { copyName, filterPlaylists, paginate, playlistContentType, playlistType, summarize } from "./list-filtering.ts";
 import type { PlaylistListItem } from "../../../types/domain.ts";
 
 const meta = (info: Record<string, unknown>) => ({ v: 1, info });
@@ -19,6 +19,7 @@ const playlists: PlaylistListItem[] = [
     publication_count: 2,
     created_by: { id: "u-1", display_name: "Kantida" },
     metadata: meta({ playlist_type: "standard", campaign_id: "c-1" }),
+    item_kinds: ["video"],
   }),
   row({
     id: "coffee",
@@ -27,6 +28,7 @@ const playlists: PlaylistListItem[] = [
     publication_count: 1,
     created_by: { id: "u-2", display_name: "Nattapong" },
     metadata: meta({ playlist_type: "loop", campaign_id: "c-2" }),
+    item_kinds: ["video", "image"],
   }),
   row({
     id: "legacy",
@@ -34,6 +36,8 @@ const playlists: PlaylistListItem[] = [
     status: "active",
     publication_count: 0,
     created_by: { id: "u-1", display_name: "Kantida" },
+    // No item_kinds — either an empty playlist or a row a stale backend hasn't caught up
+    // to yet. Either way the Type column reads "—", not a guessed value.
   }),
 ];
 
@@ -44,9 +48,18 @@ assert.equal(filterPlaylists(playlists, all).length, 3);
 // A row with no metadata counts as standard, so the Type filter can never hide a row
 // whose Type column reads "standard".
 assert.equal(playlistType(playlists[2]!), "standard");
+
+// Type column/filter: derived from item_kinds, not the unrelated metadata playlistType.
+assert.equal(playlistContentType(playlists[0]!), "video");
+assert.equal(playlistContentType(playlists[1]!), "mixed");
+assert.equal(playlistContentType(playlists[2]!), null);
 assert.deepEqual(
-  filterPlaylists(playlists, { ...all, type: "standard" }).map((p) => p.id),
-  ["kfc", "legacy"]
+  filterPlaylists(playlists, { ...all, type: "video" }).map((p) => p.id),
+  ["kfc"]
+);
+assert.deepEqual(
+  filterPlaylists(playlists, { ...all, type: "mixed" }).map((p) => p.id),
+  ["coffee"]
 );
 
 // Ownership tab.

@@ -3,14 +3,17 @@
 import { Button } from "@/components/ui/Button";
 import { SearchIcon } from "@/components/ui/icons";
 import type { Campaign } from "@/types/domain";
-import { PLAYLIST_TYPES, type PlaylistStatus, type PlaylistType } from "../types";
+import { CONTENT_TYPES, type ContentType } from "../list-filtering";
+import type { PlaylistStatus } from "../types";
 
 export type FilterState = {
   query: string;
   status: PlaylistStatus | "all";
-  type: PlaylistType | "all";
+  type: ContentType | "all";
   campaignId: string | "all";
 };
+
+const TYPE_LABELS: Record<ContentType, string> = { video: "Video", image: "Image", mixed: "Mixed" };
 
 const STATUS_OPTIONS: { value: PlaylistStatus | "all"; label: string }[] = [
   { value: "all", label: "All Status" },
@@ -70,9 +73,9 @@ export function PlaylistsFilters({
         className={selectClasses}
       >
         <option value="all">All Types</option>
-        {PLAYLIST_TYPES.map((t) => (
+        {CONTENT_TYPES.map((t) => (
           <option key={t} value={t}>
-            {t}
+            {TYPE_LABELS[t]}
           </option>
         ))}
       </select>

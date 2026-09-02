@@ -2,8 +2,16 @@
 // string so refresh, back/forward and copy-paste all reproduce the same view — see
 // docs/adr/0027-playlist-list-url-state.md. Kept pure so it's checkable without React.
 
-import { PLAYLIST_STATUSES, PLAYLIST_TYPES, type PlaylistStatus, type PlaylistType } from "./types/index.ts";
-import { SORT_KEYS, DEFAULT_SORT, type OwnershipTab, type Sort, type SortKey } from "./list-filtering.ts";
+import { PLAYLIST_STATUSES, type PlaylistStatus } from "./types/index.ts";
+import {
+  CONTENT_TYPES,
+  SORT_KEYS,
+  DEFAULT_SORT,
+  type ContentType,
+  type OwnershipTab,
+  type Sort,
+  type SortKey,
+} from "./list-filtering.ts";
 import type { FilterState } from "./components/PlaylistsFilters.tsx";
 
 export const PER_PAGE_OPTIONS = [10, 25, 50] as const;
@@ -32,7 +40,7 @@ export function readListState(params: URLSearchParams): ListState {
   const tab: OwnershipTab = params.get("tab") === "mine" ? "mine" : "all";
   const query = params.get("q") ?? "";
   const status = oneOf<PlaylistStatus>(PLAYLIST_STATUSES, params.get("status")) ?? "all";
-  const type = oneOf<PlaylistType>(PLAYLIST_TYPES, params.get("type")) ?? "all";
+  const type = oneOf<ContentType>(CONTENT_TYPES, params.get("type")) ?? "all";
   const campaignId = params.get("campaign") || "all";
 
   // Key and dir travel together: an unrecognised (or absent) key resets dir too, so a

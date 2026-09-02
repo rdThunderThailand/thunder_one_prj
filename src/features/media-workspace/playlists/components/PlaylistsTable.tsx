@@ -7,7 +7,7 @@ import { MoreIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";
 import { formatDuration } from "../duration";
-import { playlistType, type Sort, type SortKey } from "../list-filtering";
+import { playlistContentType, type Sort, type SortKey } from "../list-filtering";
 import { playlistDisplayStatus, statusBadge } from "../status-display";
 import type { PlaylistListItem } from "../types";
 
@@ -28,7 +28,13 @@ function coverAssetId(playlist: PlaylistListItem): string | undefined {
   return playlist.cover_asset_id ?? decodeMetadata(playlist.metadata).info.coverAssetId;
 }
 
-export type RowAction = "edit" | "duplicate" | "delete";
+export type RowAction = "edit" | "duplicate" | "delete" | "mark-ready";
+
+const TYPE_LABELS: Record<"video" | "image" | "mixed", string> = {
+  video: "Video",
+  image: "Image",
+  mixed: "Mixed",
+};
 
 export function PlaylistsTable({
   rows,
@@ -105,8 +111,11 @@ export function PlaylistsTable({
                     </div>
                   </div>
                 </td>
-                <td className="py-3 text-sm capitalize text-zinc-600 dark:text-zinc-300">
-                  {playlistType(playlist)}
+                <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">
+                  {(() => {
+                    const type = playlistContentType(playlist);
+                    return type ? TYPE_LABELS[type] : "—";
+                  })()}
                 </td>
                 <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">
                   {(campaignId && campaignNames[campaignId]) || "—"}
@@ -126,6 +135,7 @@ export function PlaylistsTable({
                 </td>
                 <td className="py-3 pr-1 text-right">
                   <RowActions
+                    isDraft={playlist.status === "draft"}
                     disabled={busyId === playlist.id}
                     onAction={(action) => onAction(action, playlist)}
                   />
@@ -170,9 +180,11 @@ function SortHeader({
 // ponytail: native <details> menu — no outside-click dismiss, no positioning library.
 // Swap to the popover API if the open menu ever gets in the way.
 function RowActions({
+  isDraft,
   disabled,
   onAction,
 }: {
+  isDraft: boolean;
   disabled: boolean;
   onAction: (action: RowAction) => void;
 }) {
@@ -196,6 +208,13 @@ function RowActions({
         <MoreIcon />
       </summary>
       <div className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+        {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
+            moves the badge to Inactive, not Active, until a publication references it. */}
+        {isDraft && (
+          <button type="button" className={item} disabled={disabled} onClick={() => onAction("mark-ready")}>
+            Mark as ready
+          </button>
+        )}
         <button type="button" className={item} onClick={() => onAction("edit")}>
           Edit
         </button>

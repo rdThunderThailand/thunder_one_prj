@@ -12,7 +12,7 @@ const DEFAULT_STATE: ListState = {
 // Round-trip
 const customState: ListState = {
   tab: "mine",
-  filters: { query: "hello", status: "active", type: "dynamic", campaignId: "c-123" },
+  filters: { query: "hello", status: "active", type: "video", campaignId: "c-123" },
   sort: { key: "name", dir: "asc" },
   page: 2,
   perPage: 50,

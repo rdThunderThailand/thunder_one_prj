@@ -8,7 +8,7 @@ const defaultFilters = { query: "", status: "all" as const, type: "all" as const
 assert.equal(hasActiveFilters(defaultFilters), false, "default filters should not be active");
 assert.equal(hasActiveFilters({ ...defaultFilters, query: "foo" }), true, "non-empty query → active");
 assert.equal(hasActiveFilters({ ...defaultFilters, status: "active" }), true, "non-default status → active");
-assert.equal(hasActiveFilters({ ...defaultFilters, type: "standard" }), true, "non-default type → active");
+assert.equal(hasActiveFilters({ ...defaultFilters, type: "video" }), true, "non-default type → active");
 assert.equal(hasActiveFilters({ ...defaultFilters, campaignId: "c-1" }), true, "non-default campaignId → active");
 
 // -- emptyCause --
