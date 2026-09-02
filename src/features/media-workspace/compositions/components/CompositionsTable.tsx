@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
+import { Card } from "@/components/ui/Card";
 import { EditIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
 import { actionsForComposition, type CompositionLibraryAction } from "../library-actions";
 import type { CompositionLibraryItem } from "../types";
@@ -83,4 +84,26 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, onSort, onActio
   </tr></thead><tbody>{rows.map((item) => { const badge = statusBadge(item.status); return <tr key={item.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
     <td className="py-3 pl-1"><CompositionLibraryPreview zones={item.previewZones} /></td><td className="truncate py-3 pr-2 font-medium"><p className="truncate">{item.name}</p><p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p></td><td className="py-3">{item.bound_count}/{item.zone_count}</td><td className="py-3">{item.referenceResolution ?? "—"}</td><td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td><td className="py-3">{item.usageCount ?? "—"}</td><td className="py-3 text-zinc-500"><div className="flex items-center gap-2"><Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} /><span className="truncate">{formatDate(item.updated_at ?? item.created_at)}</span></div></td><td className="py-3 pr-1 text-right"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} onAction={onAction} /></td>
   </tr>; })}</tbody></table></div>;
+}
+
+export function CompositionsGrid({ rows, inTrash, busyId, onAction }: {
+  rows: CompositionLibraryItem[];
+  inTrash: boolean;
+  busyId: string | null;
+  onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
+}) {
+  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{rows.map((item) => {
+    const badge = statusBadge(item.status);
+    return <Card key={item.id} className="overflow-hidden p-4">
+      <CompositionLibraryPreview zones={item.previewZones} />
+      <div className="mt-3 space-y-2">
+        <div className="min-w-0">
+          <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-sm font-semibold text-zinc-900 hover:text-indigo-600 dark:text-zinc-100">{item.name}</Link>
+          <p className="truncate text-xs text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p>
+        </div>
+        <div className="flex items-center justify-between text-xs text-zinc-500"><span>{item.bound_count}/{item.zone_count} content</span><span>{item.referenceResolution ?? "—"}</span></div>
+        <div className="flex items-center justify-between"><Badge color={badge.color} variant="pill">{badge.label}</Badge><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} onAction={onAction} /></div>
+      </div>
+    </Card>;
+  })}</div>;
 }

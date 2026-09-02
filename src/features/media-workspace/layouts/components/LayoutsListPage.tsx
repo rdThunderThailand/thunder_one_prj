@@ -172,42 +172,41 @@ export function LayoutsListPage() {
         </div>
       )}
 
-      <Card className="p-5">
-        <div className="mb-4 flex items-center gap-1">
+      <Card className="flex h-[calc(100vh-345px)] min-h-[420px] flex-col overflow-hidden">
+        <div className="shrink-0 border-b border-zinc-200 p-5 dark:border-zinc-800">
+          <LayoutsFilters
+            value={filters}
+            onClearAll={qs === "" ? undefined : handleClearAll}
+            onChange={(next) => {
+              setFilters(next);
+              setPage(1);
+            }}
+          />
           {/* กำลังรีเฟรช… shown only during a background reload, not initial load */}
           {refreshing && layouts !== null && (
-            <span className="ml-auto text-xs text-zinc-400">กำลังรีเฟรช…</span>
+            <p className="text-right text-xs text-zinc-400">กำลังรีเฟรช…</p>
           )}
         </div>
 
-        <LayoutsFilters
-          value={filters}
-          onClearAll={qs === "" ? undefined : handleClearAll}
-          onChange={(next) => {
-            setFilters(next);
-            setPage(1);
-          }}
-        />
+        <div className="min-h-0 flex-1 overflow-auto p-5">
+          {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
 
-        {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+          {error && layouts !== null && (
+            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
+              <p className="text-sm text-red-500">{error.message}</p>
+            </div>
+          )}
 
-        {error && layouts !== null && (
-          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
-            <p className="text-sm text-red-500">{error.message}</p>
-          </div>
-        )}
-
-        {layouts === null && !error ? (
-          <ListSkeleton />
-        ) : layouts === null && error ? (
-          <ListError message={error.message} onRetry={reload} retrying={refreshing} />
-        ) : rows.length === 0 ? (
-          <ListEmpty
-            cause={layouts!.length === 0 ? "no-layouts" : "no-match"}
-            onClearFilters={handleClearAll}
-          />
-        ) : (
-          <>
+          {layouts === null && !error ? (
+            <ListSkeleton />
+          ) : layouts === null && error ? (
+            <ListError message={error.message} onRetry={reload} retrying={refreshing} />
+          ) : rows.length === 0 ? (
+            <ListEmpty
+              cause={layouts!.length === 0 ? "no-layouts" : "no-match"}
+              onClearFilters={handleClearAll}
+            />
+          ) : (
             <LayoutsTable
               rows={rows}
               busyId={busyId}
@@ -215,6 +214,11 @@ export function LayoutsListPage() {
               onAction={handleAction}
               onSortChange={handleSortChange}
             />
+          )}
+        </div>
+
+        {rows.length > 0 && (
+          <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0">
             <Pagination
               page={currentPage}
               totalPages={totalPages}
@@ -222,13 +226,14 @@ export function LayoutsListPage() {
               totalItems={sorted.length}
               rangeStart={(currentPage - 1) * perPage + 1}
               rangeEnd={Math.min(currentPage * perPage, sorted.length)}
+              itemLabel="layouts"
               onPageChange={setPage}
               onPerPageChange={(next) => {
                 setPerPage(next);
                 setPage(1);
               }}
             />
-          </>
+          </div>
         )}
       </Card>
 
