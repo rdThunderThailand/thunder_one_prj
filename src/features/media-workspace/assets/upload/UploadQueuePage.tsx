@@ -128,7 +128,14 @@ export function UploadQueuePage() {
               : `${queue.summary.completed}/${queue.summary.total} completed · ${queue.summary.uploading} uploading · ${queue.summary.waiting} waiting`}
           </div>
           {queue.aggregateAction && (
-            <Button variant="secondary" onClick={queue.runAggregateAction}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (queue.aggregateAction === "clear-queue" || window.confirm(`${AGGREGATE_LABEL[queue.aggregateAction!]}? Uploaded data for in-progress files will be deleted.`)) {
+                  queue.runAggregateAction();
+                }
+              }}
+            >
               {AGGREGATE_LABEL[queue.aggregateAction]}
             </Button>
           )}
@@ -155,7 +162,12 @@ export function UploadQueuePage() {
                     </button>
                   )}
                   {(item.state === "waiting" || item.state === "uploading") && (
-                    <button className="text-zinc-500 hover:text-red-600" onClick={() => queue.cancelItem(item.id)}>
+                    <button
+                      className="text-zinc-500 hover:text-red-600"
+                      onClick={() => {
+                        if (window.confirm(`Cancel uploading ${item.file.name}? The uploaded data will be deleted.`)) queue.cancelItem(item.id);
+                      }}
+                    >
                       Cancel
                     </button>
                   )}
@@ -164,7 +176,12 @@ export function UploadQueuePage() {
                       <button className="font-medium text-indigo-600" onClick={() => queue.retryItem(item.id)}>
                         Retry
                       </button>
-                      <button className="text-zinc-500" onClick={() => queue.removeItem(item.id)}>
+                      <button
+                        className="text-zinc-500"
+                        onClick={() => {
+                          if (window.confirm(`Dismiss ${item.file.name}? Any uploaded data will be deleted.`)) queue.removeItem(item.id);
+                        }}
+                      >
                         Dismiss
                       </button>
                     </>
