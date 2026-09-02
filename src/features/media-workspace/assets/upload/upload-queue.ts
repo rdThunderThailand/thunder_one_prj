@@ -102,6 +102,7 @@ export function summarize(items: UploadItem[]) {
   const byState = (state: UploadItemState) => items.filter((item) => item.state === state).length;
   return {
     total: items.length,
+    totalBytes: items.reduce((sum, item) => sum + item.file.size, 0),
     staged: byState("staged"),
     waiting: byState("waiting"),
     uploading: byState("uploading"),

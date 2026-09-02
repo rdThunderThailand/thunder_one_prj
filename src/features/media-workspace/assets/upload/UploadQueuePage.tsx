@@ -4,18 +4,29 @@ import { useRef, type DragEvent } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { UploadIcon } from "@/components/ui/icons";
-import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL, MAX_UPLOAD_SIZE_LABEL } from "@/features/media-workspace/publications/upload-limits";
+import { CheckCircleIcon, LightbulbIcon, UploadIcon } from "@/components/ui/icons";
+import { formatBytes } from "@/features/media-workspace/playlists/totals";
+import { MAX_UPLOAD_SIZE_LABEL, UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "@/features/media-workspace/publications/upload-limits";
 import { MAX_QUEUE_FILES, type UploadItemState } from "./upload-queue";
+import { RecentUploadsCard } from "./RecentUploadsCard";
 import { useUploadQueue } from "./useUploadQueue";
 
 const STATE_LABEL: Record<UploadItemState, string> = {
-  staged: "Staged",
+  staged: "Ready",
   waiting: "Waiting",
   uploading: "Uploading",
   completed: "Completed",
   failed: "Failed",
   canceled: "Canceled",
+};
+
+const STATE_TONE: Record<UploadItemState, string> = {
+  staged: "text-zinc-500",
+  waiting: "text-amber-600 dark:text-amber-400",
+  uploading: "text-indigo-600 dark:text-indigo-400",
+  completed: "text-emerald-600 dark:text-emerald-400",
+  failed: "text-red-600 dark:text-red-400",
+  canceled: "text-zinc-500",
 };
 
 const AGGREGATE_LABEL = {
@@ -27,10 +38,10 @@ const AGGREGATE_LABEL = {
 export function UploadQueuePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queue = useUploadQueue();
+  const canStart = queue.items.some((item) => item.state === "staged") && queue.folderId !== null;
 
   const onFilesPicked = (fileList: FileList | null) => {
-    if (!fileList) return;
-    queue.addFiles(Array.from(fileList));
+    if (fileList) queue.addFiles(Array.from(fileList));
   };
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -38,165 +49,104 @@ export function UploadQueuePage() {
     onFilesPicked(event.dataTransfer.files);
   };
 
-  const canStart = queue.items.some((item) => item.state === "staged") && queue.folderId !== null;
+  const runAggregateAction = () => {
+    const action = queue.aggregateAction;
+    if (!action) return;
+    if (action === "clear-queue" || window.confirm(`${AGGREGATE_LABEL[action]}? Uploaded data for in-progress files will be deleted.`)) queue.runAggregateAction();
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">Upload Assets</h1>
-          <p className="mt-1 text-sm text-zinc-500">Stage up to {MAX_QUEUE_FILES} files, assign a Folder, then start.</p>
+          <div className="mb-2 flex items-center gap-2 text-xs text-zinc-500"><Link href="/media-workspace/assets" className="hover:text-indigo-600">Media Library</Link><span aria-hidden="true">/</span><span>Upload Media</span></div>
+          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">Upload Media</h1>
+          <p className="mt-1 text-sm text-zinc-500">Upload and manage your media assets.</p>
         </div>
-        <Link href="/media-workspace/assets" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-          Back to Media Library
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" disabled title="Coming in Phase 2">Add from Source · Phase 2</Button>
+          <Button disabled={!canStart} onClick={queue.startUpload}><UploadIcon /> Start Upload</Button>
+        </div>
       </div>
 
-      <Card className="p-5">
-        <div className="grid gap-4 md:grid-cols-[1fr_260px]">
-          <div
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={onDrop}
-            className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-6 text-center dark:border-zinc-700"
-          >
-            <UploadIcon className="h-6 w-6 text-zinc-400" />
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">Drag files here, or</p>
-            <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
-              Choose Files
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept={UPLOAD_ACCEPT_ATTR}
-              className="hidden"
-              onChange={(event) => {
-                onFilesPicked(event.target.files);
-                event.target.value = "";
-              }}
-            />
-            <p className="text-xs text-zinc-400">
-              {UPLOAD_ACCEPT_LABEL} · up to {MAX_UPLOAD_SIZE_LABEL} · up to {MAX_QUEUE_FILES} files
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500">Folder</label>
-              <select
-                value={queue.folderId ?? ""}
-                onChange={(event) => queue.setFolderId(event.target.value || null)}
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-              >
-                <option value="" disabled>
-                  Select a Folder
-                </option>
-                {queue.folders.map((folder) => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Button className="w-full" disabled={!canStart} onClick={queue.startUpload}>
-              Start Upload
-            </Button>
-            <button
-              disabled
-              title="Coming in Phase 2"
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-700"
-            >
-              Add from Source · Coming in Phase 2
-            </button>
-          </div>
-        </div>
-      </Card>
-
       {queue.rejections.length > 0 && (
-        <div className="space-y-1 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-          {queue.rejections.map((reason) => (
-            <p key={reason}>{reason}</p>
-          ))}
+        <div className="space-y-1 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300" role="alert">
+          {queue.rejections.map((reason) => <p key={reason}>{reason}</p>)}
         </div>
       )}
 
-      <Card className="overflow-hidden">
-        <div className="flex items-center justify-between border-b border-zinc-200 p-4 dark:border-zinc-800">
-          <div className="text-sm text-zinc-500">
-            {queue.summary.total === 0
-              ? "No files staged"
-              : `${queue.summary.completed}/${queue.summary.total} completed · ${queue.summary.uploading} uploading · ${queue.summary.waiting} waiting`}
-          </div>
-          {queue.aggregateAction && (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (queue.aggregateAction === "clear-queue" || window.confirm(`${AGGREGATE_LABEL[queue.aggregateAction!]}? Uploaded data for in-progress files will be deleted.`)) {
-                  queue.runAggregateAction();
-                }
-              }}
-            >
-              {AGGREGATE_LABEL[queue.aggregateAction]}
-            </Button>
-          )}
-        </div>
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <main className="min-w-0 space-y-5">
+          <Card className="p-4">
+            <div onDragOver={(event) => event.preventDefault()} onDrop={onDrop} className="flex min-h-60 flex-col items-center justify-center rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/30 p-6 text-center transition-colors hover:border-indigo-400 dark:border-indigo-800 dark:bg-indigo-950/10">
+              <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-indigo-600 shadow-sm ring-1 ring-indigo-100 dark:bg-zinc-900 dark:ring-indigo-900"><UploadIcon className="h-6 w-6" /></span>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-white">Drag &amp; Drop files here</p>
+              <p className="my-2 text-xs text-zinc-400">or</p>
+              <Button onClick={() => fileInputRef.current?.click()}>Choose Files</Button>
+              <input ref={fileInputRef} type="file" multiple accept={UPLOAD_ACCEPT_ATTR} className="hidden" onChange={(event) => { onFilesPicked(event.target.files); event.target.value = ""; }} />
+              <p className="mt-4 max-w-xl text-xs leading-5 text-zinc-500">{UPLOAD_ACCEPT_LABEL} · Max {MAX_UPLOAD_SIZE_LABEL} per file · Up to {MAX_QUEUE_FILES} files</p>
+            </div>
+          </Card>
 
-        {queue.items.length === 0 ? (
-          <p className="py-16 text-center text-sm text-zinc-500">Choose or drop files to stage them.</p>
-        ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {queue.items.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-4 p-4">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{item.file.name}</p>
-                  <p className="text-xs text-zinc-500">
-                    {STATE_LABEL[item.state]}
-                    {item.state === "uploading" && ` · ${item.pct}%`}
-                    {item.error && ` · ${item.error}`}
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2 text-sm">
-                  {item.state === "staged" && (
-                    <button className="text-zinc-500 hover:text-red-600" onClick={() => queue.removeItem(item.id)}>
-                      Remove
-                    </button>
-                  )}
-                  {(item.state === "waiting" || item.state === "uploading") && (
-                    <button
-                      className="text-zinc-500 hover:text-red-600"
-                      onClick={() => {
-                        if (window.confirm(`Cancel uploading ${item.file.name}? The uploaded data will be deleted.`)) queue.cancelItem(item.id);
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  {(item.state === "failed" || item.state === "canceled") && (
-                    <>
-                      <button className="font-medium text-indigo-600" onClick={() => queue.retryItem(item.id)}>
-                        Retry
-                      </button>
-                      <button
-                        className="text-zinc-500"
-                        onClick={() => {
-                          if (window.confirm(`Dismiss ${item.file.name}? Any uploaded data will be deleted.`)) queue.removeItem(item.id);
-                        }}
-                      >
-                        Dismiss
-                      </button>
-                    </>
-                  )}
-                  {item.state === "completed" && (
-                    <button className="text-zinc-500" onClick={() => queue.removeItem(item.id)}>
-                      Dismiss
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+          <Card className="overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 p-4 dark:border-zinc-800">
+              <div><h2 className="text-sm font-semibold text-zinc-950 dark:text-white">Upload Queue ({queue.summary.total} files)</h2><p className="mt-0.5 text-xs text-zinc-500">Two files upload at a time.</p></div>
+              {queue.aggregateAction && <Button variant="secondary" onClick={runAggregateAction}>{AGGREGATE_LABEL[queue.aggregateAction]}</Button>}
+            </div>
+
+            {queue.items.length === 0 ? (
+              <div className="flex min-h-48 flex-col items-center justify-center px-4 text-center"><UploadIcon className="h-7 w-7 text-zinc-300" /><p className="mt-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">Your upload queue is empty</p><p className="mt-1 text-xs text-zinc-500">Choose or drop files above to stage them.</p></div>
+            ) : (
+              <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {queue.items.map((item) => (
+                  <li key={item.id} className="flex items-center gap-3 p-4 sm:gap-4">
+                    <div className="flex h-14 w-16 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-[10px] font-semibold uppercase text-zinc-500 dark:bg-zinc-800">{item.file.name.split(".").pop() ?? "file"}</div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{item.file.name}</p>
+                      <p className="mt-0.5 text-xs text-zinc-500">{item.file.type || "Unknown type"} · {formatBytes(item.file.size)}</p>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800" role="progressbar" aria-label={`${item.file.name} upload progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={item.pct}>
+                        <div className={`h-full rounded-full transition-[width] ${item.state === "failed" ? "bg-red-500" : item.state === "completed" ? "bg-emerald-500" : "bg-indigo-600"}`} style={{ width: `${item.pct}%` }} />
+                      </div>
+                      {item.error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{item.error}</p>}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3 text-xs">
+                      <span className={`min-w-16 text-right font-medium ${STATE_TONE[item.state]}`}>{STATE_LABEL[item.state]}{item.state === "uploading" && ` ${item.pct}%`}</span>
+                      {item.state === "staged" && <button className="text-zinc-500 hover:text-red-600" onClick={() => queue.removeItem(item.id)}>Remove</button>}
+                      {(item.state === "waiting" || item.state === "uploading") && <button className="text-zinc-500 hover:text-red-600" onClick={() => { if (window.confirm(`Cancel uploading ${item.file.name}? The uploaded data will be deleted.`)) queue.cancelItem(item.id); }}>Cancel</button>}
+                      {(item.state === "failed" || item.state === "canceled") && <><button className="font-medium text-indigo-600" onClick={() => queue.retryItem(item.id)}>Retry</button><button className="text-zinc-500" onClick={() => { if (window.confirm(`Dismiss ${item.file.name}? Any uploaded data will be deleted.`)) queue.removeItem(item.id); }}>Dismiss</button></>}
+                      {item.state === "completed" && <button className="text-zinc-500" onClick={() => queue.removeItem(item.id)}>Dismiss</button>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800"><UploadIcon className="h-4 w-4 shrink-0 text-indigo-600" /><h2 className="text-sm font-semibold text-zinc-950 dark:text-white">Upload Summary</h2></div>
+            <dl className="grid grid-cols-2 divide-x divide-y divide-zinc-200 dark:divide-zinc-800 sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
+              {[["Files in queue", queue.summary.total], ["Total size", formatBytes(queue.summary.totalBytes)], ["Completed", queue.summary.completed], ["Uploading", queue.summary.uploading], ["Waiting", queue.summary.staged + queue.summary.waiting], ["Failed", queue.summary.failed]].map(([label, value]) => <div key={label} className="p-4 text-center"><dd className="text-lg font-semibold text-zinc-900 dark:text-white">{value}</dd><dt className="mt-1 text-[11px] text-zinc-500">{label}</dt></div>)}
+            </dl>
+          </Card>
+        </main>
+
+        <aside className="space-y-5">
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold text-zinc-950 dark:text-white">Upload to</h2>
+            <label className="mt-4 block text-xs font-medium text-zinc-600 dark:text-zinc-300" htmlFor="upload-folder">Select folder</label>
+            <select id="upload-folder" value={queue.folderId ?? ""} onChange={(event) => queue.setFolderId(event.target.value || null)} className="mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"><option value="" disabled>Select a Folder</option>{queue.folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select>
+            <div className="mt-4 flex items-center justify-between"><span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Tags (optional)</span><span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800">Coming in Phase 2</span></div>
+            <button disabled title="Coming in Phase 2" className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left text-sm text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800/60">Tag assignment unavailable</button>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center gap-2"><LightbulbIcon className="h-4 w-4 shrink-0 text-indigo-600" /><h2 className="text-sm font-semibold text-zinc-950 dark:text-white">Upload Tips</h2></div>
+            <ul className="mt-4 space-y-3 text-xs text-zinc-600 dark:text-zinc-300">{[`Use only ${UPLOAD_ACCEPT_LABEL}`, `Keep each file at or below ${MAX_UPLOAD_SIZE_LABEL}`, `Add up to ${MAX_QUEUE_FILES} files; two upload at a time`].map((tip) => <li key={tip} className="flex gap-2"><CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-500" /><span>{tip}</span></li>)}</ul>
+          </Card>
+
+          <RecentUploadsCard completedCount={queue.summary.completed} />
+        </aside>
+      </div>
     </div>
   );
 }

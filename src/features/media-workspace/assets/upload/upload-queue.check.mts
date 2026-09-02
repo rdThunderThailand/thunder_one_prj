@@ -101,6 +101,7 @@ assert.equal(aggregateAction([item("1", "completed"), item("2", "failed")]), "cl
   const mixed = [item("1", "staged"), item("2", "uploading"), item("3", "completed"), item("4", "failed")];
   const summary = summarize(mixed);
   assert.equal(summary.total, 4);
+  assert.equal(summary.totalBytes, 4096);
   assert.equal(summary.staged, 1);
   assert.equal(summary.uploading, 1);
   assert.equal(summary.completed, 1);
