@@ -20,15 +20,32 @@ Media Upload is a dedicated workflow at `/media-workspace/assets/upload`. The Fi
 - `Recent Uploads` shows the tenant's three newest Assets and links to Media Detail and the full Media Library.
 - `Add from Source` and `Tags` remain visible but disabled as Phase 2 affordances. `Pause All`, the `Start Upload` dropdown and Storage Usage remain hidden until they have complete contracts. Upload Tips show only rules the system enforces.
 - New object keys use `videos/{tenant_code}/{uuid}.{ext}` inside the `media` bucket. `tenant_code` is the existing immutable, unique, name-derived tenant identifier; `tenant.name` is not used directly.
-- The object-key prefix is organizational, not an authorization boundary. Upload authorization and registration continue to derive and check `tenant_id` from the authenticated membership.
+- The TUS client authenticates to Storage with the signed-in operator's own Supabase access token, and the tenant prefix is enforced by an RLS policy on `storage.objects`. See the amendment below.
+- The object-key prefix is not the only authorization boundary. Upload authorization and registration continue to derive and check `tenant_id` from the authenticated membership; the RLS policy is a second, server-side check that a tampered `objectName` cannot pass.
 - Existing objects retain their current `videos/{uuid}.{ext}` keys. Moving production objects is not part of this decision.
 - Upload reservation, completion and cancellation must clean up database and Storage state. A scheduled sweep removes abandoned reservations that a closed browser cannot cancel.
 - Asset registration is idempotent and returns its actual contract `{ media_asset_id, status }`.
+
+## Amendment — TUS authentication (2026-09-02, during MU-01)
+
+The original decision assumed the TUS client would authenticate with the presigned upload token Core issues, the same way the signed PUT path did.
+
+**Supabase Storage 1.71.0 ignores `x-signature` on `/upload/resumable`** — verified empirically against both the develop (`ftfmokgphewzyxzwjitv`) and production (`sfiefevtxalqjizdkcsw`) projects. The request falls back to the anon role and fails RLS, so a presigned-token TUS upload cannot work on this Storage version at all.
+
+The shipped design instead:
+
+- serves the operator's own Supabase access token from `src/app/api/auth/storage-token/route.ts`, reading the httpOnly `to_at` cookie the browser cannot; the TUS client sends it as `Authorization: Bearer` plus the publishable key as `apikey`.
+- enforces the tenant prefix with an RLS policy on `storage.objects` that compares `split_part(name, '/', 2)` against the caller's `tenant_code`. Segment equality, not `LIKE` — `LIKE 'videos/' || tenant_code || '/%'` treats the `_` in `THUNDER_001` as a wildcard and lets `videos/THUNDERX001/…` through.
+
+This moves prefix enforcement from "Core chooses the key and the client is trusted to use it" to "Storage itself refuses any key outside the caller's tenant", which is strictly stronger. Core still derives `tenant_code` server-side and never accepts a client-supplied prefix.
+
+Revisit if Storage gains working presigned resumable uploads: the token path would let uploads work without exposing an access token to the page.
 
 ## Considered options
 
 - Auto-start was rejected because it makes the selected Folder and `Start Upload` control race with active work.
 - Ten simultaneous uploads were rejected because large files would compete for bandwidth and make progress estimates unstable.
+- Presigned-token TUS upload was rejected because Storage 1.71.0 does not honour `x-signature` on the resumable endpoint (see the amendment above), not because the design was wrong.
 - Standard signed PUT was rejected for the 5 GB promise because interruption restarts the entire file; Supabase recommends TUS for files larger than 6 MB.
 - `tenant.name` as the Storage prefix was rejected because names are mutable, non-unique and require unsafe path normalization.
 - Tenant UUID alone was rejected because `tenant_code` provides the requested human-readable grouping while remaining unique and immutable.

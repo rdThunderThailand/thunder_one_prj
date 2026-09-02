@@ -41,7 +41,8 @@ const TUS_CHUNK_SIZE = 6 * 1024 * 1024;
 export async function uploadToStorage(
   target: UploadTarget,
   file: File,
-  onProgress: (pct: number) => void
+  onProgress: (pct: number) => void,
+  signal?: AbortSignal
 ): Promise<void> {
   const accessToken = await fetchStorageAccessToken();
 
@@ -70,10 +71,52 @@ export async function uploadToStorage(
       onSuccess: () => resolve(),
     });
 
+    // Distinguishable from a real upload failure so callers (the queue) can mark the
+    // row `canceled` instead of `failed`.
+    signal?.addEventListener("abort", () => {
+      upload.abort();
+      const abortError = new Error("Upload canceled");
+      abortError.name = "AbortError";
+      reject(abortError);
+    });
+
     upload.findPreviousUploads().then((previous) => {
       if (previous.length) upload.resumeFromPreviousUpload(previous[0]);
       upload.start();
     }, reject);
+  });
+}
+
+/** The full per-file pipeline shared by the single-file picker (`useAssetUpload`) and
+ *  the staged queue: read metadata → resumable upload → (video only) thumbnail upload →
+ *  register. One copy so the two callers cannot drift. */
+export async function uploadAndRegisterAsset(
+  file: File,
+  options: { folderId?: string | null; onProgress?: (pct: number) => void; signal?: AbortSignal } = {}
+): Promise<RegisteredVideo> {
+  const { folderId, onProgress = () => {}, signal } = options;
+  const isVideoFile = file.type.startsWith("video/");
+  const duration = isVideoFile ? await readVideoDuration(file) : null;
+  const dimensions = await readMediaDimensions(file);
+  const thumbnailBlob = isVideoFile ? await captureVideoThumbnail(file) : undefined;
+  const target = await fetchUploadUrl(file);
+  await uploadToStorage(target, file, onProgress, signal);
+
+  let thumbnail_storage_key: string | undefined;
+  if (thumbnailBlob) {
+    const thumbFile = new File([thumbnailBlob], `${file.name}.thumb.jpg`, { type: "image/jpeg" });
+    const thumbTarget = await fetchUploadUrl(thumbFile);
+    await uploadToStorage(thumbTarget, thumbFile, () => {}, signal);
+    thumbnail_storage_key = thumbTarget.storage_key;
+  }
+
+  return registerVideo({
+    file_id: target.file_id,
+    title: file.name,
+    ...(duration ? { duration_seconds: duration } : {}),
+    ...(thumbnail_storage_key ? { thumbnail_storage_key } : {}),
+    ...(dimensions ?? {}),
+    ...(folderId ? { folder_id: folderId } : {}),
   });
 }
 
