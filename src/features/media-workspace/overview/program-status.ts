@@ -4,6 +4,7 @@ export type PlaybackCandidate = {
   publication_type: string;
   targets?: Array<{ status?: string | null }>;
   publication_targets?: Array<{ target_type: "channel" | "device" }>;
+  playlist?: { id: string; name: string } | null;
   playback_window?: { state?: "before" | "open" | "between" | "ended"; next_opens_at: string | null } | null;
 };
 
