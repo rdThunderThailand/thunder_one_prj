@@ -31,8 +31,23 @@ export async function fetchUploadUrl(file: File): Promise<UploadTarget> {
   });
 }
 
+/** Releases a reservation the browser will never finish, so its Storage object and `files` row
+ *  do not wait for the nightly sweep. Core refuses a file_id that already became an Asset. */
+export async function cancelUploadReservation(fileId: string): Promise<void> {
+  await requestApi("POST", "/media/uploads/cancel", { file_id: fileId });
+}
+
 /** Supabase's TUS chunk size is fixed at 6 MB — the server rejects anything else. */
 const TUS_CHUNK_SIZE = 6 * 1024 * 1024;
+
+/** A resumed upload whose reservation no longer exists — swept, canceled, or past the TUS
+ *  URL's lifetime. Named so the queue can tell "resume this" from "re-authorize this". */
+export const EXPIRED_UPLOAD_ERROR = "ExpiredUploadError";
+
+function isReservationGone(error: unknown): boolean {
+  const status = (error as { originalResponse?: { getStatus?: () => number } })?.originalResponse?.getStatus?.();
+  return status === 401 || status === 403 || status === 404 || status === 410;
+}
 
 /** Resumable upload straight to the Storage hostname, bypassing /api/proxy: a 5 GB file
  *  cannot survive a single non-resumable PUT through a serverless proxy. `objectName` comes
@@ -42,7 +57,8 @@ export async function uploadToStorage(
   target: UploadTarget,
   file: File,
   onProgress: (pct: number) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  shouldResume = false
 ): Promise<void> {
   const accessToken = await fetchStorageAccessToken();
 
@@ -67,7 +83,12 @@ export async function uploadToStorage(
       onProgress: (uploaded, total) => {
         if (total) onProgress(Math.round((uploaded * 100) / total));
       },
-      onError: reject,
+      onError: (error) => {
+        if (!isReservationGone(error)) return reject(error);
+        const expired = new Error("การอนุญาตอัปโหลดหมดอายุ — ระบบจะเริ่มไฟล์นี้ใหม่");
+        expired.name = EXPIRED_UPLOAD_ERROR;
+        reject(expired);
+      },
       onSuccess: () => resolve(),
     });
 
@@ -80,6 +101,16 @@ export async function uploadToStorage(
       reject(abortError);
     });
 
+    // The stored upload URL is only safe to resume against the reservation it was created for.
+    // tus fingerprints a file as `tus-br-{name}-{type}-{size}-{lastModified}-{endpoint}` —
+    // `objectName` is not part of it — so a previous attempt's entry matches even when this
+    // call holds a brand-new reservation. Resuming then would append bytes to the old object
+    // while registration recorded the new key. Only the caller knows which it holds, so it
+    // decides: `shouldResume` is set exactly when it passed the same `target` back in.
+    if (!shouldResume) {
+      upload.start();
+      return;
+    }
     upload.findPreviousUploads().then((previous) => {
       if (previous.length) upload.resumeFromPreviousUpload(previous[0]);
       upload.start();
@@ -89,19 +120,38 @@ export async function uploadToStorage(
 
 /** The full per-file pipeline shared by the single-file picker (`useAssetUpload`) and
  *  the staged queue: read metadata → resumable upload → (video only) thumbnail upload →
- *  register. One copy so the two callers cannot drift. */
+ *  register. One copy so the two callers cannot drift.
+ *
+ *  Pass `target` to retry against a prior attempt's authorization. Resuming and re-authorizing
+ *  are mutually exclusive: tus would happily resume a stored upload URL against a fresh
+ *  reservation, writing bytes to the old object while registration recorded the new key, so a
+ *  retry either keeps the whole reservation or takes a whole new one. `onTarget` reports the
+ *  one actually used, for the next retry or for release on cancel. */
 export async function uploadAndRegisterAsset(
   file: File,
-  options: { folderId?: string | null; onProgress?: (pct: number) => void; signal?: AbortSignal } = {}
+  options: {
+    folderId?: string | null;
+    onProgress?: (pct: number) => void;
+    signal?: AbortSignal;
+    target?: UploadTarget;
+    onTarget?: (target: UploadTarget) => void;
+  } = {}
 ): Promise<RegisteredVideo> {
-  const { folderId, onProgress = () => {}, signal } = options;
+  const { folderId, onProgress = () => {}, signal, onTarget } = options;
   const isVideoFile = file.type.startsWith("video/");
   const duration = isVideoFile ? await readVideoDuration(file) : null;
   const dimensions = await readMediaDimensions(file);
   const thumbnailBlob = isVideoFile ? await captureVideoThumbnail(file) : undefined;
-  const target = await fetchUploadUrl(file);
-  await uploadToStorage(target, file, onProgress, signal);
+  const shouldResume = Boolean(options.target);
+  const target = options.target ?? (await fetchUploadUrl(file));
+  onTarget?.(target);
+  await uploadToStorage(target, file, onProgress, signal, shouldResume);
 
+  // ponytail: the queue tracks only the original file's reservation. A retry that reaches this
+  // point takes a fresh thumbnail reservation, and a cancel between here and registration
+  // releases the original but not the thumbnail — both leave one small object for the nightly
+  // sweep. Carry a second stored target here if that ever becomes real backlog rather than a
+  // handful of thumbnails a day.
   let thumbnail_storage_key: string | undefined;
   if (thumbnailBlob) {
     const thumbFile = new File([thumbnailBlob], `${file.name}.thumb.jpg`, { type: "image/jpeg" });

@@ -7,10 +7,13 @@ import assert from "node:assert/strict";
 import {
   aggregateAction,
   nextToStart,
+  reservationToRelease,
+  retryPlan,
   stageFiles,
   summarize,
   type UploadItem,
 } from "./upload-queue.ts";
+import type { UploadTarget } from "../../publications/services/upload-api.ts";
 
 const file = (name: string, size = 1024) => ({
   name,
@@ -103,5 +106,48 @@ assert.equal(aggregateAction([item("1", "completed"), item("2", "failed")]), "cl
   assert.equal(summary.completed, 1);
   assert.equal(summary.failed, 1);
 }
+
+// --- retryPlan / reservationToRelease ---
+
+const target = { file_id: "f-1" } as UploadTarget;
+
+{
+  const plan = retryPlan({ ...item("1", "failed"), target });
+  assert.equal(plan.shouldResume, true, "a live reservation is resumed, not re-authorized");
+  assert.equal(plan.release, undefined, "resuming releases nothing");
+}
+
+{
+  const plan = retryPlan({ ...item("1", "failed"), target, isReservationDead: true });
+  assert.equal(plan.shouldResume, false, "an expired reservation forces a restart");
+  assert.equal(plan.release, target, "the dead reservation is handed back for cancellation");
+}
+
+{
+  const plan = retryPlan(item("1", "failed"));
+  assert.equal(plan.shouldResume, false, "a file that never authorized restarts");
+  assert.equal(plan.release, undefined, "nothing to release when nothing was reserved");
+}
+
+assert.equal(
+  reservationToRelease({ ...item("1", "uploading"), target }),
+  target,
+  "cancelling mid-upload releases the reservation"
+);
+assert.equal(
+  reservationToRelease({ ...item("1", "completed"), target }),
+  undefined,
+  "a registered file's reservation belongs to its Asset and is never cancelled"
+);
+assert.equal(
+  reservationToRelease({ ...item("1", "failed"), target, isReservationDead: true }),
+  target,
+  "an expired Storage session still owns its files row, so dismissing it releases that row"
+);
+assert.equal(
+  reservationToRelease({ ...item("1", "canceled"), isReservationDead: true }),
+  undefined,
+  "a cancel already dropped its target, so nothing is cancelled twice"
+);
 
 console.log("upload-queue: all checks passed");
