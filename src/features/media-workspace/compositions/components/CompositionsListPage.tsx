@@ -21,7 +21,7 @@ import { CompositionLibraryDialogs, type CompositionDialogAction } from "./Compo
 import { CompositionFolderRail } from "./CompositionFolderRail";
 import { CompositionsFilters } from "./CompositionsFilters";
 import { ListError, ListSkeleton, SummarySkeleton } from "./CompositionsListStates";
-import { CompositionsTable } from "./CompositionsTable";
+import { CompositionsGrid, CompositionsTable } from "./CompositionsTable";
 
 export function CompositionsListPage() {
   const searchParams = useSearchParams();
@@ -37,6 +37,7 @@ export function CompositionsListPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [retryVersion, setRetryVersion] = useState(0);
+  const [isGrid, setIsGrid] = useState(false);
   const [dialogAction, setDialogAction] = useState<CompositionDialogAction | null>(null);
   const [dialogTarget, setDialogTarget] = useState<CompositionLibraryItem | null>(null);
 
@@ -59,7 +60,6 @@ export function CompositionsListPage() {
 
   useEffect(() => {
     let alive = true;
-    setError(null);
     fetchCompositionLibrary({
       search: filters.query || undefined,
       status: filters.status === "all" ? undefined : filters.status,
@@ -74,7 +74,11 @@ export function CompositionsListPage() {
       dir: sort.dir,
       page,
       pageSize: perPage,
-    }).then((data) => alive && setLibrary(data)).catch((reason) => alive && setError(classifyApiError(reason, "โหลด Layouts ไม่สำเร็จ")));
+    }).then((data) => {
+      if (!alive) return;
+      setLibrary(data);
+      setError(null);
+    }).catch((reason) => alive && setError(classifyApiError(reason, "โหลด Layouts ไม่สำเร็จ")));
     return () => { alive = false; };
   }, [collection, filters, page, perPage, retryVersion, sort]);
 
@@ -129,15 +133,17 @@ export function CompositionsListPage() {
   return <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-6">
     <PageHeader title="Layouts" subtitle="Create, organize, and manage screen layouts for your displays." actions={<><Link href="/media-workspace/layouts/templates" className={buttonClasses("secondary")}>Manage Templates</Link><Link href="/media-workspace/layouts/create" className={buttonClasses("primary")}>+ New Layout</Link></>} />
     {summary ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatTile label="Total Layouts" value={String(summary.total)} /><StatTile label="Template-based" value={String(summary.templateBased)} /><StatTile label="Custom" value={String(summary.custom)} /><button type="button" onClick={() => changeFilters({ ...filters, content: "incomplete" })}><StatTile label="Needs content" value={String(summary.needsContent)} /></button></div> : <SummarySkeleton />}
-    <Card className="flex-1"><div className="grid h-full min-h-[520px] md:grid-cols-[210px_minmax(0,1fr)]">
-      <aside className="border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r"><p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Folders</p><CompositionFolderRail folders={folders} selected={collection} onSelect={changeCollection} onRefresh={reload} onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)} /></aside>
-      <main className="min-w-0 p-5"><CompositionsFilters value={filters} referenceResolutions={library?.facets.referenceResolutions ?? []} onChange={changeFilters} onClearAll={qs ? reset : undefined} />
+    <Card className="flex flex-1 flex-col overflow-hidden"><div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
+      <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r"><p className="mb-2 shrink-0 px-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Folders</p><CompositionFolderRail folders={folders} selected={collection} isLoading={!library && folders.length === 0} onSelect={changeCollection} onRefresh={reload} onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)} /></aside>
+      <main className="flex min-h-0 min-w-0 flex-col p-5"><CompositionsFilters value={filters} referenceResolutions={library?.facets.referenceResolutions ?? []} isGrid={isGrid} onViewChange={setIsGrid} onChange={changeFilters} onClearAll={qs ? reset : undefined} />
         {library?.isLegacyResponse && <p className="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Layouts Library filters and summary need the Core read-model rollout.</p>}
         {actionError && <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
         {error && <ListError message={error.message} onRetry={reload} retrying={false} />}
-        {!library ? (error ? null : <ListSkeleton />) : library.data.length === 0 ? <p className="py-10 text-center text-sm text-zinc-500">No layouts found.</p> : <><CompositionsTable rows={library.data} sort={sort} inTrash={collection === "trash"} busyId={busyId} onSort={changeSort} onAction={handleAction} />{pagination && <Pagination page={pagination.page} totalPages={pagination.totalPages} perPage={perPage} totalItems={pagination.total} rangeStart={(pagination.page - 1) * perPage + 1} rangeEnd={Math.min(pagination.page * perPage, pagination.total)} itemLabel="layouts" onPageChange={setPage} onPerPageChange={(next) => { setPerPage(next); setPage(1); }} />}</>}
+        <div className="min-h-0 flex-1 overflow-auto">
+          {!library ? (error ? null : <ListSkeleton />) : library.data.length === 0 ? <p className="py-10 text-center text-sm text-zinc-500">No layouts found.</p> : isGrid ? <CompositionsGrid rows={library.data} inTrash={collection === "trash"} busyId={busyId} onAction={handleAction} /> : <CompositionsTable rows={library.data} sort={sort} inTrash={collection === "trash"} busyId={busyId} onSort={changeSort} onAction={handleAction} />}
+        </div>
       </main>
-    </div></Card>
+    </div>{pagination && <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0"><Pagination page={pagination.page} totalPages={pagination.totalPages} perPage={perPage} totalItems={pagination.total} rangeStart={(pagination.page - 1) * perPage + 1} rangeEnd={Math.min(pagination.page * perPage, pagination.total)} itemLabel="layouts" onPageChange={setPage} onPerPageChange={(next) => { setPerPage(next); setPage(1); }} /></div>}</Card>
     <CompositionLibraryDialogs action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
   </div>;
 }

@@ -21,9 +21,11 @@ export function CompositionFolderRail({
   onSelect,
   onRefresh,
   onError,
+  isLoading = false,
 }: {
   folders: ContentFolder[];
   selected: FolderCollection;
+  isLoading?: boolean;
   onSelect: (collection: FolderCollection) => void;
   onRefresh: () => void;
   onError: (error: unknown) => void;
@@ -66,8 +68,7 @@ export function CompositionFolderRail({
   };
 
   return <>
-    <ContentFolderRail folders={folders} selected={selected} labels={{ all: "All Layouts", uncategorized: "Uncategorized", trash: "Trash" }} onSelect={onSelect} onRename={(folder) => openAction("rename", folder)} onMove={(folder) => openAction("move", folder)} onDelete={(folder) => openAction("delete", folder)} />
-    <Button type="button" variant="secondary" className="mt-3 w-full py-2" onClick={() => { setValue(""); setCreateOpen(true); }}>+ New Folder</Button>
+    <ContentFolderRail folders={folders} selected={selected} labels={{ all: "All Layouts", uncategorized: "Uncategorized", trash: "Trash" }} onSelect={onSelect} onRename={(folder) => openAction("rename", folder)} onMove={(folder) => openAction("move", folder)} onDelete={(folder) => openAction("delete", folder)} isLoading={isLoading} footer={<Button type="button" variant="secondary" className="mt-2 w-full py-2" onClick={() => { setValue(""); setCreateOpen(true); }}>+ New Folder</Button>} />
     <Modal open={createOpen} onClose={close} title="Create Folder" footer={<><Button type="button" variant="secondary" disabled={busy} onClick={close}>Cancel</Button><Button type="button" disabled={busy || !value.trim()} onClick={() => void create()}>{busy ? "Creating…" : "Create"}</Button></>}>
       <label className="space-y-1"><span>Folder name</span><input autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900" /></label>
     </Modal>

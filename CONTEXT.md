@@ -41,7 +41,7 @@ Can create/manage Assets, Playlists, Publications, and Channels, assign existing
 Read-only across content and Monitoring. Cannot see the Audit Log.
 
 **Asset** (Communication):
-A reusable media file (image or video) stored in the central repository; MVP formats are JPG, PNG, and MP4 (H.264). Removing one sends it to Trash and hides it from new selections without breaking existing playback; permanent deletion is allowed only from Trash and remains blocked while a live reference or any Publish Job snapshot requires it. `docs/adr/0056-nested-feature-folders-and-trash.md`.
+A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG, WebP and MP4. Removing one sends it to Trash and hides it from new selections without breaking existing playback; permanent deletion is allowed only from Trash and remains blocked while a live reference or any Publish Job snapshot requires it. `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: Video, media file, content (when a specific entity is meant)
 _Note_: Another App in this repo, Asset Intelligence, also has an entity called `Asset` with a different meaning — see the Asset Intelligence glossary entry below and `docs/adr/0023-asset-intelligence-feature-namespacing.md` for why neither was renamed.
 
@@ -59,6 +59,10 @@ _Avoid_: Archive, Trash Folder
 **Media Detail**:
 The read view for one Communication Asset, opened from its Media Library preview or title. It presents persisted Asset/File facts and supported actions only; Usage, Asset Tags, Versions and Activity History remain unavailable until their own tenant-scoped contracts exist. `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: fabricated usage counts, inferred technical metadata
+
+**Upload Queue**:
+A temporary staged collection of local files waiting to become Communication Assets. Clearing or dismissing queue entries never removes an Asset that has already been registered. `docs/adr/0059-staged-resumable-media-upload.md`.
+_Avoid_: Media Library, upload history
 
 **Playlist**:
 An ordered sequence of Assets, with per-item duration and transition settings. Has no scheduling or targeting responsibility of its own. Item duration and transition reach the screen together with the Playlist's play mode, repeat behavior and start position (ADR 0031); media fit, volume and failure handling remain stored intent that no player reads yet (ADR 0010). It carries a **Cover**, which is a reference to one of the Assets already in the Playlist (never a separately uploaded file) and falls back to the first item when none is picked, and a **creator**, recorded once at creation and never reassigned by later edits. Active/inactive remains its operational lifecycle; removing it from the library is the separate, reversible move to Trash.

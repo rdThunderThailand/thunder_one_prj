@@ -107,9 +107,10 @@ export async function fetchMediaAssetPage(params: {
   kind?: "image" | "video";
   folderId?: string;
   page?: number;
+  pageSize?: number;
   trash?: boolean;
 }): Promise<MediaAssetPage> {
-  const query = new URLSearchParams({ page: String(params.page ?? 1), page_size: "24" });
+  const query = new URLSearchParams({ page: String(params.page ?? 1), page_size: String(params.pageSize ?? 24) });
   if (params.search) query.set("search", params.search);
   if (params.kind) query.set("kind", params.kind);
   if (params.folderId) query.set("folder_id", params.folderId);
