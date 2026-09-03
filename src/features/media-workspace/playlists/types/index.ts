@@ -91,4 +91,9 @@ export type DraftItem = {
   /** Null lets the backend fall back to the asset's own duration (videos). */
   durationSeconds: number | null;
   transition: Transition;
+  /** Per-item overrides — #37 (ADR 0060 §5a). Undefined means inherit the playlist default. */
+  transitionDurationSeconds?: number;
+  fit?: MediaFit;
+  backgroundColor?: string;
+  notes?: string;
 };

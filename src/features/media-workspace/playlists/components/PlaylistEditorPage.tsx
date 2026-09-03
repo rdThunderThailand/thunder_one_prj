@@ -198,6 +198,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           selectedItem={selectedItem}
           asset={selectedItem ? assets.find((a) => a.id === selectedItem.mediaAssetId) : undefined}
           info={info}
+          playback={present.playback}
           onItemPatch={(patch) => selectedItem && patchItem(selectedItem.mediaAssetId, patch)}
           onItemRemove={() => selectedItem && removeItem(selectedItem.mediaAssetId)}
           onInfoChange={(patch) => setInfo((c) => ({ ...c, ...patch }))}

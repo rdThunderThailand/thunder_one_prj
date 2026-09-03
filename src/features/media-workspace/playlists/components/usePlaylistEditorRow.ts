@@ -90,6 +90,12 @@ export function usePlaylistEditorRow({
           position: index,
           ...(item.durationSeconds != null ? { duration_seconds: item.durationSeconds } : {}),
           transition: item.transition,
+          ...(item.transitionDurationSeconds != null
+            ? { transition_duration_seconds: item.transitionDurationSeconds }
+            : {}),
+          ...(item.fit ? { fit: item.fit } : {}),
+          ...(item.backgroundColor ? { background_color: item.backgroundColor } : {}),
+          ...(item.notes ? { notes: item.notes } : {}),
         })),
       );
       setRevision(itemsRes.revision ?? upserted.revision);

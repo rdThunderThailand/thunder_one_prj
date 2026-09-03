@@ -106,6 +106,32 @@ silently, because the poll reads snapshots and never `playlist_items`. Whether t
 Android players act on them is their own repository's work, tracked through
 `docs/layouts/contract-v2-zones.md`.
 
+**5a. What the four columns resolve to when nobody set them** (settled 2026-09-03, implementing §5).
+Only two of the four inherit, because only two have a playlist-level counterpart. `fit` and
+`transition_duration_seconds` resolve through `metadata.playback` and land `NOT NULL` in the
+snapshot; `background_color` and `notes` are per-item and stay nullable there, because a `NULL`
+background means *paint none* — a real value the Layout's own `background` already answers — not a
+default the player is missing. Forcing them `NOT NULL` would paint black behind every existing slot.
+
+With nothing set anywhere, a `fade` resolves to **1 second** and `fit` resolves to **`fit`**. The
+`1` mirrors `duration.ts` (`transition === "cut" ? 0 : transitionDuration ?? 1`), the number the
+editor already counts into the loop length shown on screen; choosing `0` would open a new
+screen-versus-player gap on the same day this ADR closes the old one. `fit` is the only fit value
+that neither crops nor distorts, and cropping must always be something someone chose.
+
+Inheritance resolves against `playlists.metadata.playback` on **both** activation paths. §3b is
+about the Zone's `playback` object, whose three keys a Composition Zone genuinely overrides; it
+says nothing about per-item inheritance, and `duration_seconds` already COALESCEs identically on
+both paths. Resolving differently would make one Playlist look different depending on whether a
+Composition happened to contain it.
+
+`notes` reaches the snapshot but **not the poll payload**: no player acts on an authoring
+annotation, and every device would carry it every poll. `playlist_items.transition` also stays as
+it is — `NOT NULL DEFAULT 'cut'`, seeded from `default_transition` when the item is added, never
+re-resolved. One table thus holds two inheritance rules; that is a deliberate stopping point, not
+an oversight. Unifying it means migrating production rows while guessing which `cut` was chosen and
+which was merely the default.
+
 `lock_duration` from the design is not built — it has no meaning until a Composition constrains a
 Zone's length. The transition vocabulary stays `cut` and `fade`: a new value is a player effect, not
 an enum entry, and shipping one without the effect yields a control that silently does nothing.

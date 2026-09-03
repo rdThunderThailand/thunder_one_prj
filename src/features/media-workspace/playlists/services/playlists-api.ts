@@ -1,5 +1,5 @@
 import { fetchPlaylist, requestApi } from "@/lib/api/media-api";
-import type { PlaylistStatus, Transition } from "../types";
+import type { MediaFit, PlaylistStatus, Transition } from "../types";
 
 // Reads (fetchPlaylist, fetchPlaylists) live in src/lib/api/media-api.ts — see
 // docs/adr/0020 — since publications reads playlists too and a feature service
@@ -39,13 +39,17 @@ export async function upsertPlaylist(
   return requestApi("POST", "/media/playlists", body);
 }
 
-/** What `PUT /{id}/items` accepts — `duration_seconds` is omitted (not null) to let the
- *  backend fall back to the asset's own duration. */
+/** What `PUT /{id}/items` accepts — `duration_seconds` and the four #37 override fields are
+ *  omitted (not null) to let the backend fall back to the playlist default / asset duration. */
 export type PlaylistItemPayload = {
   media_asset_id: string;
   position: number;
   duration_seconds?: number;
   transition?: Transition;
+  transition_duration_seconds?: number;
+  fit?: MediaFit;
+  background_color?: string;
+  notes?: string;
 };
 
 /**
@@ -77,9 +81,15 @@ export async function duplicatePlaylist(
           media_asset_id: item.media_asset_id,
           position: index,
           // Omitted, not null: that is how the backend is told to fall back to the
-          // asset's own duration.
+          // asset's own duration / playlist defaults.
           ...(item.duration_seconds != null ? { duration_seconds: item.duration_seconds } : {}),
           transition: item.transition,
+          ...(item.transition_duration_seconds != null
+            ? { transition_duration_seconds: item.transition_duration_seconds }
+            : {}),
+          ...(item.fit ? { fit: item.fit } : {}),
+          ...(item.background_color ? { background_color: item.background_color } : {}),
+          ...(item.notes ? { notes: item.notes } : {}),
         }))
     );
     return { playlistId: playlist_id, itemsCopied: true };

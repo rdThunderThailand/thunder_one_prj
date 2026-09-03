@@ -4,19 +4,26 @@ import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { MediaAsset } from "@/types/domain";
-import { MEDIA_FITS, TRANSITIONS, type DraftItem, type PlaylistInfo, type Transition } from "../types";
+import {
+  MEDIA_FITS,
+  TRANSITIONS,
+  type DraftItem,
+  type PlaylistInfo,
+  type PlaylistPlayback,
+  type Transition,
+} from "../types";
 import { Field, Select, TextArea } from "./form";
 
 type Tab = "item" | "playlist";
 
-/** #33 right pane. The Item tab carries only what the schema supports today (duration,
- *  transition, remove) — fit / background / notes / transition-duration land with #37. */
+/** #33 right pane. */
 export function PlaylistPropertiesPane({
   tab,
   onTab,
   selectedItem,
   asset,
   info,
+  playback,
   onItemPatch,
   onItemRemove,
   onInfoChange,
@@ -26,6 +33,7 @@ export function PlaylistPropertiesPane({
   selectedItem: DraftItem | null;
   asset: MediaAsset | undefined;
   info: PlaylistInfo;
+  playback: PlaylistPlayback;
   onItemPatch: (patch: Partial<DraftItem>) => void;
   onItemRemove: () => void;
   onInfoChange: (patch: Partial<PlaylistInfo>) => void;
@@ -94,30 +102,63 @@ export function PlaylistPropertiesPane({
               />
             </Field>
 
+            <Field label="Transition duration (seconds)" optional hint="Empty = inherit playlist default.">
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                value={selectedItem.transitionDurationSeconds ?? ""}
+                placeholder={String(
+                  playback.transitionDuration ?? (selectedItem.transition === "fade" ? 1 : 0)
+                )}
+                onChange={(e) =>
+                  onItemPatch({
+                    transitionDurationSeconds: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)),
+                  })
+                }
+                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
+              />
+            </Field>
+
             <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
               <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 Display Options
               </h3>
               <div className="flex flex-col gap-3">
-                <Field label="Fit">
+                <Field label="Fit" optional hint="Empty = inherit playlist default.">
                   <Select
-                    disabled
-                    value=""
-                    placeholder="Playlist default"
+                    value={selectedItem.fit ?? ""}
+                    placeholder={`Playlist default (${playback.mediaFit ?? "fit"})`}
                     options={MEDIA_FITS.map((fit) => ({ value: fit, label: fit }))}
-                    onChange={() => undefined}
+                    onChange={(e) => onItemPatch({ fit: (e.target.value || undefined) as typeof selectedItem.fit })}
                   />
                 </Field>
-                <Field label="Background">
-                  <input
-                    type="color"
-                    disabled
-                    value="#000000"
-                    className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-2 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
-                  />
+                <Field label="Background" optional hint="No override paints nothing.">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={selectedItem.backgroundColor ?? "#000000"}
+                      onChange={(e) => onItemPatch({ backgroundColor: e.target.value })}
+                      className="h-10 w-14 rounded-lg border border-zinc-200 bg-white px-1 dark:border-zinc-700 dark:bg-zinc-900"
+                    />
+                    {selectedItem.backgroundColor && (
+                      <button
+                        type="button"
+                        onClick={() => onItemPatch({ backgroundColor: undefined })}
+                        className="text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </Field>
-                <Field label="Notes" optional hint="Available with item display fields (#37).">
-                  <TextArea disabled rows={3} value="" placeholder="Notes..." />
+                <Field label="Notes" optional>
+                  <TextArea
+                    rows={3}
+                    value={selectedItem.notes ?? ""}
+                    placeholder="Notes..."
+                    onChange={(e) => onItemPatch({ notes: e.target.value || undefined })}
+                  />
                 </Field>
               </div>
             </div>

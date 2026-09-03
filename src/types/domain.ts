@@ -106,6 +106,11 @@ export type PlaylistItem = {
   position: number;
   duration_seconds?: number | null;
   transition?: Transition;
+  /** Per-item overrides — #37. Null/absent means inherit the playlist default. */
+  transition_duration_seconds?: number | null;
+  fit?: "fit" | "fill" | "stretch" | null;
+  background_color?: string | null;
+  notes?: string | null;
 };
 
 export type PlaylistListItem = {
