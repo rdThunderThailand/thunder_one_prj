@@ -160,6 +160,8 @@ function PlaylistFullPreview({
 }) {
   const zone = preview.zones[0];
   const total = formatDuration(zoneLoopDurationSeconds(items));
+  // ADR 0061 §2: a Playlist has no geometry of its own, so the operator picks the frame.
+  const [previewMode, setPreviewMode] = useState("16:9");
   return (
     <main className="min-h-full bg-white p-4 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50 sm:p-6">
       <div className="w-full">
@@ -192,7 +194,7 @@ function PlaylistFullPreview({
               <PreviewStage
                 zones={preview.zones}
                 assets={assets}
-                aspectRatio={preview.aspectRatio}
+                aspectRatio={previewMode}
                 referenceResolution={null}
                 geometryOptions={[]}
                 allowActualSize={false}
@@ -214,6 +216,8 @@ function PlaylistFullPreview({
             frame={frame}
             assets={assets}
             tone="light"
+            previewMode={previewMode}
+            onPreviewMode={setPreviewMode}
           />
         </div>
       </div>

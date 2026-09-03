@@ -16,6 +16,8 @@ export function PlaylistPreviewPanel({
   frame,
   assets = [],
   tone = "dark",
+  previewMode = "16:9",
+  onPreviewMode,
 }: {
   name: string;
   items: PlaybackPreviewItem[];
@@ -23,6 +25,8 @@ export function PlaylistPreviewPanel({
   frame: ZonePreviewFrame | null;
   assets?: MediaAsset[];
   tone?: "light" | "dark";
+  previewMode?: string;
+  onPreviewMode?: (mode: string) => void;
 }) {
   const totalSeconds = zoneLoopDurationSeconds(items);
   const nowPlaying = frame?.item ?? null;
@@ -93,11 +97,12 @@ export function PlaylistPreviewPanel({
             <button
               key={mode}
               type="button"
-              disabled={mode !== "16:9"}
+              aria-pressed={mode === previewMode}
+              onClick={() => onPreviewMode?.(mode)}
               className={`rounded-lg border px-2 py-3 text-center text-xs font-medium ${
-                mode === "16:9"
+                mode === previewMode
                   ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
-                  : "border-zinc-200 text-zinc-400 dark:border-zinc-700"
+                  : "border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400"
               }`}
             >
               {mode}

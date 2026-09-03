@@ -127,8 +127,11 @@ Open by clicking `Preview` from the editor.
 - [ ] `Now Playing` card shows current item thumbnail, name, type, duration, and position.
 - [ ] `Playlist Information` card shows playlist name, item count, total duration, play mode, repeat, start from, transition, fit, and background color where available.
 - [ ] `Preview Mode` choices are visible.
-- [ ] `16:9` mode is enabled by default.
-- [ ] `9:16` and `4:3` are disabled or clearly unavailable if not implemented.
+- [ ] `16:9` mode is selected by default.
+- [ ] Clicking `9:16` reframes the preview stage to a tall frame and marks `9:16` selected.
+- [ ] Clicking `4:3` reframes the stage to a 4:3 frame and marks `4:3` selected.
+- [ ] Clicking back to `16:9` restores the wide frame.
+- [ ] Reframing does not restart playback position or blank the media.
 - [ ] Full preview has the same persistent YouTube-style footer controls inside the preview frame.
 - [ ] `Unmute` and `Full screen` button text is white on the overlay.
 - [ ] Timeline strip is visible under the preview and clicking an item seeks to that item.
