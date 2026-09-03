@@ -74,6 +74,49 @@ FE-8 preview panel  ← เดินขนานได้ตลอด ไม่�
 | **X-1** | ลบ `metadata.info.tags` ออกจาก type/โค้ดฝั่ง frontend หลัง BE-5 backfill เสร็จ | BE-5, FE-6 |
 | **X-2** | verify ผ่าน browser ตามเงื่อนไข "เสร็จ" ด้านบน + SESSIONLOG | ทุกใบ |
 
+## ความคืบหน้า / การแก้กลับ (2026-09-03)
+
+commit `6ce2a48` บน `fix/playlist` อ้างว่าปิด **#33 + #39** แต่ที่ส่งจริง:
+
+- **FE-1 (#33)** ส่งเป็น editor **2 คอลัมน์** (ซ้าย = library browser + ตาราง item รวมกัน · ขวา 320px =
+  name + playback fields) — **ไม่ใช่ 3 คอลัมน์** ตาม `design-guideline-playlist-editor.md` และ ADR 0060 §1
+- **FE-2 (#35)** ยังไม่ทำ — เพิ่ม item ผ่าน library browser inline ไม่ใช่ Add Item drawer
+- **FE-4 (#36)** ยังไม่ทำ — playback settings อยู่ใน right pane ไม่มี timeline / ไม่มี center pane
+- **FE-8 (#39)** ส่งครบ verify ผ่าน (Gemini A–E)
+
+### รอบแก้: reshape editor ให้ตรง Figma — ปิด #33 + #35 + #36 ใน PR เดียว
+
+ข้อเท็จจริงที่ยืนยันแล้ว — อย่า re-derive:
+
+- `media_core.playlist_items` **ไม่มี** `transition_duration_seconds` / `fit` / `background_color` /
+  `notes` ทั้ง prod (`sfiefevtxalqjizdkcsw`) และ develop (`ftfmokgphewzyxzwjitv`) — ตรวจ 2026-09-03
+- `PreviewStage` (`preview/PreviewStage.tsx`) เป็น component ครบตัว: fetch preview URL เอง, clock/
+  scrub/play/speed/fullscreen ในตัว, รับ `geometryOptions={[]}` = ไม่มี shape selector, มี
+  `allowActualSize` + `onFrameChange` props แล้ว (Phase A #39 เพิ่มไว้)
+- `playlistPreviewStage()` (`preview/playlist-preview.ts`) คืน `StagePreview` 1 zone เต็มจอ — ป้อน
+  `stage.zones` เข้า `PreviewStage` ตรงๆ ได้
+- `MediaAsset` มี `kind` / `folder_id` / `tags` ครบ — Add Item filter ทำ client-side ได้
+- `AssetPicker.tsx` = grid multi-select ที่ใช้ได้ (ตอนนี้กรอง type อย่างเดียว)
+
+การตัดสินใจ (grilling 2026-09-03, ผู้ใช้เคาะทุกข้อ):
+
+| # | เคาะ |
+|---|---|
+| ขอบเขต | reshape frontend เท่านั้น · per-item 4 คอลัมน์ = **#37** (backend) ยัง deferred · Item pane รอบนี้มีแค่ Duration + Transition + Remove |
+| center pane | ฝัง `<PreviewStage>` inline เล่นจริง · `geometryOptions={[]}` · `allowActualSize={false}` · fixed 16:9 · control box ของมันเอง = scrubber (ไม่สร้างซ้อน) |
+| Zones tab | ไม่มี tab strip · หัวเขียน "Timeline" เฉยๆ |
+| right pane | เพิ่ม `selectedItemId` · แท็บ Item / Playlist · default Playlist tab |
+| ซ้าย | "Playlist Items" list + "+ Add Item" เปิด drawer (#35) · ตัด library browser inline |
+| playhead ↔ selection | `onFrameChange` → `nowPlayingItemId` (ไฮไลต์เท่านั้น) · คลิก filmstrip/row → select ไม่ seek · `ponytail:` two independent clocks (inline + popout) |
+| "…" menu | เว้นไว้ (compositions create ยังไม่รับ `?playlist=`) |
+| ชื่อ Playlist | editable H1 ที่หัวหน้า (ปุ่มดินสอ) |
+| filmstrip | thumbnail กว้างเท่ากัน + label duration · `ponytail:` ไม่ทำ proportional width |
+
+โครงไฟล์: `PlaylistEditorPage.tsx` → shell บาง + `PlaylistItemsPane` / `PlaylistTimelinePane` /
+`PlaylistPlaybackSettings` (rework `PlaylistPlaybackFields`) / `PlaylistPropertiesPane` /
+`AddItemDrawer` · ลบ `PlaylistContentLibrary` · `PlaylistItemsTable` เป็น dead code ตั้งแต่ลบ
+`PlaylistDetailPage` — ลบทิ้งด้วย · ทุกไฟล์ ≤300 บรรทัด
+
 ## ลำดับ merge ที่บังคับ
 
 **FE-7 ต้องเข้าก่อนหรือพร้อม FE-1** — ไม่ใช่แค่ "เริ่มพร้อมกันได้" · วันนี้ status ถูกตั้งที่เดียวคือ

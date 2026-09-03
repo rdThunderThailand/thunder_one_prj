@@ -51,6 +51,36 @@ export function totalItemsDurationSeconds(items: DraftItem[], assets: MediaAsset
   return items.reduce((sum, item) => sum + Math.max(0, item.durationSeconds ?? byId.get(item.mediaAssetId) ?? 0), 0);
 }
 
+export function itemStartSeconds(items: DraftItem[], assets: MediaAsset[]): number[] {
+  const byId = new Map(assets.map((a) => [a.id, a.duration_seconds]));
+  return items.reduce<{ starts: number[]; cursor: number }>((acc, item) => {
+    const seconds = Math.max(0, item.durationSeconds ?? byId.get(item.mediaAssetId) ?? 0);
+    return { starts: [...acc.starts, acc.cursor], cursor: acc.cursor + seconds };
+  }, { starts: [], cursor: 0 }).starts;
+}
+
+/** #35: assets picked in the Add Item drawer land at the end, in selection order, skipping
+ *  any already present. A video's per-item duration starts `null` (inherit the clip length);
+ *  an image starts from the playlist's default image duration. */
+export function appendItems(
+  items: DraftItem[],
+  picked: { id: string; title?: string; kind?: "video" | "image" }[],
+  playback: PlaylistPlayback,
+): DraftItem[] {
+  const have = new Set(items.map((i) => i.mediaAssetId));
+  const additions = picked
+    .filter((a) => !have.has(a.id))
+    .map((a): DraftItem => ({
+      mediaAssetId: a.id,
+      title: a.title,
+      kind: a.kind,
+      durationSeconds:
+        a.kind === "video" ? null : (playback.defaultImageDuration ?? DEFAULT_IMAGE_DURATION_SECONDS),
+      transition: playback.defaultTransition ?? "fade",
+    }));
+  return additions.length ? [...items, ...additions] : items;
+}
+
 /** Move an item within the list, no-op on an out-of-range target. */
 export function moveItem(items: DraftItem[], from: number, to: number): DraftItem[] {
   if (from === to || to < 0 || to >= items.length || from < 0 || from >= items.length) return items;

@@ -9,10 +9,12 @@ the four-step wizard it replaced is gone (ADR 0060). See
 `docs/adr/0010-playlist-settings-in-metadata.md` for why some playback settings write fields no
 player reads yet.
 
-- `components/` — `PlaylistsListPage` (overview + detail panel), `PlaylistEditorPage` with
-  `PlaylistContentLibrary` / `SelectedItems` / `PlaylistPlaybackFields`, `form.tsx` (shared
-  field primitives). The editor holds its working copy in memory; the row is created on the
-  first Save Draft, not on page entry (ADR 0060 §1).
+- `components/` — `PlaylistsListPage` (overview + detail panel), `PlaylistEditorPage` (a thin
+  3-pane shell) with `PlaylistItemsPane` (left) / `PlaylistTimelinePane` + `PlaylistPlaybackSettings`
+  (centre) / `PlaylistPropertiesPane` (right Item|Playlist tabs) / `AddItemDrawer` (#35),
+  `form.tsx` (shared field primitives). The editor holds its working copy in memory; the row
+  is created on the first Save Draft, not on page entry (ADR 0060 §1). The centre pane embeds
+  the shared `preview/PreviewStage` live (ADR 0061 one-Zone case).
 - `use-undoable-state.ts` / `playlist-editor-state.ts` / `use-playlist-preview-handoff.ts` —
   the editor's undo/redo, pure state helpers, and the `BroadcastChannel` handoff that opens
   the full-screen preview (ADR 0061)

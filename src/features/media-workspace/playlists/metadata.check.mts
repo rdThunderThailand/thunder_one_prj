@@ -15,6 +15,9 @@ const full: PlaylistMetadata = {
     tags: ["t-1", "t-2"],
     playlistType: "standard",
     resolution: "1920x1080",
+    // width/height are derived from resolution on decode (ADR 0032), so the round trip adds them back.
+    width: 1920,
+    height: 1080,
     frameRate: 30,
     coverAssetId: "a-9",
   },

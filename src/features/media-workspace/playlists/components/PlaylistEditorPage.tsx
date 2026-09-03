@@ -1,71 +1,57 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { classifyApiError, isConflict, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
-import { fetchPlaylist, setPlaylistItems, upsertPlaylist } from "../services/playlists-api";
-import { encodeMetadata } from "../metadata";
-import { resolveDraftStatus } from "../resolve-draft-status";
-import { formatDuration } from "../duration";
+import type { ZonePreviewFrame } from "@/features/media-workspace/preview/preview-clock";
 import { useUndoableState } from "../use-undoable-state";
 import { usePlaylistPreviewHandoff } from "../use-playlist-preview-handoff";
 import {
-  DEFAULT_IMAGE_DURATION_SECONDS,
-  editorSnapshot,
-  editorStateFromDetail,
+  appendItems,
   emptyEditorState,
   moveItem,
   savedStateLabel,
-  totalItemsDurationSeconds,
   type EditorState,
 } from "../playlist-editor-state";
 import type { DraftItem, PlaylistInfo, PlaylistPlayback } from "../types";
-import { PlaylistContentLibrary } from "./PlaylistContentLibrary";
-import { SelectedItems } from "./SelectedItems";
-import { PlaylistPlaybackFields } from "./PlaylistPlaybackFields";
+import { AddItemDrawer } from "./AddItemDrawer";
+import { PlaylistEditorHeader } from "./PlaylistEditorHeader";
+import { PlaylistItemsPane } from "./PlaylistItemsPane";
+import { PlaylistTimelinePane } from "./PlaylistTimelinePane";
+import { PlaylistPlaybackSettings } from "./PlaylistPlaybackSettings";
+import { PlaylistPropertiesPane } from "./PlaylistPropertiesPane";
 import { RevisionConflictCard } from "./RevisionConflictCard";
 import { UnsavedLeaveConfirm } from "./UnsavedLeaveConfirm";
+import { usePlaylistEditorRow } from "./usePlaylistEditorRow";
 
 const LIST_PATH = "/media-workspace/playlists";
 
 export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null }) {
   const router = useRouter();
-  const idempotencyKey = useRef<string | null>(null);
   const history = useUndoableState<EditorState>(emptyEditorState());
   const { present } = history;
 
-  const [serverId, setServerId] = useState<string | null>(playlistId ?? null);
-  const [revision, setRevision] = useState<number | null>(null);
   const [info, setInfo] = useState<PlaylistInfo>({ playlistType: "standard" });
-  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(
-    playlistId ? null : editorSnapshot(emptyEditorState()),
-  );
-  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(true);
-  const [loading, setLoading] = useState(!!playlistId);
-  const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [conflict, setConflict] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [nowPlayingItemId, setNowPlayingItemId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [propTab, setPropTab] = useState<"item" | "playlist">("playlist");
+  const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
 
-  const isDirty = savedSnapshot !== null && editorSnapshot(present) !== savedSnapshot;
+  const row = usePlaylistEditorRow({ playlistId, history, info, setInfo });
 
-  // Sidebar / browser-back can't be caught with a React modal — the native prompt covers them
-  // while dirty; the in-page Cancel button uses UnsavedLeaveConfirm.
   useEffect(() => {
-    if (!isDirty) return;
+    if (!row.isDirty) return;
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [isDirty]);
+  }, [row.isDirty]);
 
   useEffect(() => {
     let alive = true;
@@ -78,141 +64,52 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     };
   }, []);
 
-  useEffect(() => {
-    if (!playlistId) return;
-    let alive = true;
-    fetchPlaylist(playlistId)
-      .then((detail) => {
-        if (!alive) return;
-        const { state, revision: rev, info: loadedInfo } = editorStateFromDetail(detail);
-        history.reset(state);
-        setSavedSnapshot(editorSnapshot(state));
-        setServerId(detail.id);
-        setRevision(rev);
-        setInfo(loadedInfo);
-      })
-      .catch((err) => alive && setLoadError(classifyApiError(err, "โหลด Playlist ไม่สำเร็จ")))
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playlistId]);
-
   const setName = (name: string) => history.commit((s) => ({ ...s, name }));
   const setPlayback = (patch: Partial<PlaylistPlayback>) =>
     history.commit((s) => ({ ...s, playback: { ...s.playback, ...patch } }));
-  const addAsset = (asset: MediaAsset) =>
-    history.commit((s) => {
-      // Already in the list: no-op. Removal is the explicit X in SelectedItems so a stray
-      // click in the picker can't silently drop an item's per-item duration/transition edits.
-      if (s.items.some((i) => i.mediaAssetId === asset.id)) return s;
-      const item: DraftItem = {
-        mediaAssetId: asset.id,
-        title: asset.title,
-        kind: asset.kind,
-        durationSeconds: asset.kind === "video" ? null : (s.playback.defaultImageDuration ?? DEFAULT_IMAGE_DURATION_SECONDS),
-        transition: s.playback.defaultTransition ?? "fade",
-      };
-      return { ...s, items: [...s.items, item] };
-    });
-
-  const handleUploaded = async (asset: MediaAsset | null) => {
-    const fresh = await fetchMediaAssets().catch(() => assets);
-    setAssets(fresh);
-    if (asset) addAsset(fresh.find((a) => a.id === asset.id) ?? asset);
+  const patchItem = (assetId: string, patch: Partial<DraftItem>) =>
+    history.commit((s) => ({
+      ...s,
+      items: s.items.map((i) => (i.mediaAssetId === assetId ? { ...i, ...patch } : i)),
+    }));
+  const removeItem = (assetId: string) => {
+    history.commit((s) => ({ ...s, items: s.items.filter((i) => i.mediaAssetId !== assetId) }));
+    setSelectedItemId((current) => (current === assetId ? null : current));
   };
 
-  // ADR 0061 §4: the handoff carries only the assets its items reference.
+  const addAssets = (picked: MediaAsset[]) =>
+    history.commit((s) => ({ ...s, items: appendItems(s.items, picked, s.playback) }));
+
+  const selectItem = (assetId: string) => {
+    setSelectedItemId(assetId);
+    setPropTab("item");
+  };
+
   const referencedAssets = useMemo(() => {
     const ids = new Set(present.items.map((i) => i.mediaAssetId));
     return assets.filter((a) => ids.has(a.id));
   }, [assets, present.items]);
   const { openPreview } = usePlaylistPreviewHandoff(() => ({
-    id: serverId,
+    id: row.serverId,
     name: present.name,
     items: present.items,
     playback: present.playback,
     assets: referencedAssets,
   }));
 
-  const persist = async () => {
-    const existingId = serverId ?? playlistId ?? null;
-    const metadata = encodeMetadata({ info, playback: present.playback });
-    const upserted = await upsertPlaylist({
-      name: present.name.trim(),
-      status: resolveDraftStatus(existingId, false),
-      metadata,
-      playlistId: existingId,
-      expectedRevision: revision,
-      idempotencyKey: (idempotencyKey.current ??= crypto.randomUUID()),
-    });
-    const itemsRes = await setPlaylistItems(
-      upserted.playlist_id,
-      present.items.map((item, index) => ({
-        media_asset_id: item.mediaAssetId,
-        position: index,
-        ...(item.durationSeconds != null ? { duration_seconds: item.durationSeconds } : {}),
-        transition: item.transition,
-      })),
-    );
-    setRevision(itemsRes.revision ?? upserted.revision);
-    if (!existingId) {
-      // ADR 0060 §1: the URL catches up to the row without a full navigation.
-      window.history.replaceState(null, "", `${LIST_PATH}/${upserted.playlist_id}`);
-    }
-    setServerId(upserted.playlist_id);
-    setSavedSnapshot(editorSnapshot(present));
-    setLastSavedAt(new Date());
-  };
-
-  const handleSave = async () => {
-    if (!present.name.trim()) {
-      setSaveError("กรุณากรอกชื่อ Playlist ก่อนบันทึก");
-      return;
-    }
-    setSaveError(null);
-    setConflict(null);
-    setSaving(true);
-    try {
-      await persist();
-      toast.success("บันทึกแล้ว");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      if (isConflict(message)) {
-        setConflict(classifyApiError(err, "มีการแก้ไข Playlist นี้จากที่อื่นหลังจากคุณเปิดหน้านี้ — กด โหลดใหม่ เพื่อดูเวอร์ชันล่าสุด").message);
-      } else {
-        setSaveError(classifyApiError(err, "บันทึก Playlist ไม่สำเร็จ").message);
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const reloadFromServer = async () => {
-    const id = serverId ?? playlistId;
-    if (!id) return;
-    const { state, revision: rev, info: loadedInfo } = editorStateFromDetail(await fetchPlaylist(id));
-    history.reset(state);
-    setSavedSnapshot(JSON.stringify(state));
-    setRevision(rev);
-    setInfo(loadedInfo);
-    setConflict(null);
-  };
-
   const goBack = () => {
-    if (isDirty) {
+    if (row.isDirty) {
       setConfirmLeave(true);
       return;
     }
     router.push(LIST_PATH);
   };
 
-  if (loading) return <p className="p-6 text-sm text-zinc-400">กำลังโหลด...</p>;
-  if (loadError) {
+  if (row.loading) return <p className="p-6 text-sm text-zinc-400">กำลังโหลด...</p>;
+  if (row.loadError) {
     return (
       <Card className="p-6">
-        <p className="text-sm text-red-500">{loadError.message}</p>
+        <p className="text-sm text-red-500">{row.loadError.message}</p>
         <Button className="mt-4" variant="secondary" onClick={() => router.push(LIST_PATH)}>
           กลับไป Playlists
         </Button>
@@ -220,81 +117,85 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     );
   }
 
-  const savedLabel = savedStateLabel(isDirty, lastSavedAt, !!serverId);
+  const savedLabel = savedStateLabel(row.isDirty, row.lastSavedAt, !!row.serverId);
+  const selectedItem = present.items.find((i) => i.mediaAssetId === selectedItemId) ?? null;
+  const onFrame = (frame: ZonePreviewFrame | null) =>
+    setNowPlayingItemId(frame?.item?.mediaAssetId ?? null);
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title={serverId ? "Edit Playlist" : "New Playlist"}
-        subtitle={`${present.items.length} items · ${formatDuration(totalItemsDurationSeconds(present.items, assets))} · ${savedLabel}`}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={goBack}>Cancel</Button>
-            <Button variant="secondary" onClick={history.undo} disabled={!history.canUndo}>Undo</Button>
-            <Button variant="secondary" onClick={history.redo} disabled={!history.canRedo}>Redo</Button>
-            <Button
-              variant="secondary"
-              onClick={openPreview}
-              disabled={present.items.length === 0}
-              title={present.items.length === 0 ? "เพิ่ม media ก่อนดู preview" : undefined}
-            >
-              Preview
-            </Button>
-            <Button onClick={handleSave} disabled={saving || !present.name.trim()}>
-              {saving ? "กำลังบันทึก..." : "Save Draft"}
-            </Button>
-          </div>
-        }
+    <div className="flex h-[calc(100dvh-9rem)] min-h-0 flex-col gap-4 overflow-hidden">
+      <PlaylistEditorHeader
+        name={present.name}
+        savedLabel={savedLabel}
+        lastUpdatedAt={row.lastSavedAt}
+        hasItems={present.items.length > 0}
+        saving={row.saving}
+        onName={setName}
+        onCancel={goBack}
+        onPreview={openPreview}
+        onSave={row.save}
       />
 
       {confirmLeave && (
         <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />
       )}
-      {saveError && (
+      {row.saveError && (
         <Card className="border-red-200 p-4 dark:border-red-900">
-          <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{row.saveError}</p>
         </Card>
       )}
-      {conflict && <RevisionConflictCard message={conflict} onReload={reloadFromServer} />}
+      {row.conflict && <RevisionConflictCard message={row.conflict} onReload={row.reloadFromServer} />}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]">
-        <div className="flex flex-col gap-4">
-          <PlaylistContentLibrary
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-[340px_minmax(0,1fr)_340px]">
+        <PlaylistItemsPane
+          items={present.items}
+          assets={assets}
+          selectedId={selectedItemId}
+          nowPlayingId={nowPlayingItemId}
+          onSelect={selectItem}
+          onMove={(from, to) => history.commit((s) => ({ ...s, items: moveItem(s.items, from, to) }))}
+          onRemove={removeItem}
+          onSeek={(seconds) => setSeekRequest((current) => ({ seconds, id: (current?.id ?? 0) + 1 }))}
+          onAddItem={() => setDrawerOpen(true)}
+        />
+
+        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
+          <PlaylistTimelinePane
+            name={present.name}
+            items={present.items}
+            playback={present.playback}
             assets={assets}
-            loading={assetsLoading}
-            selectedIds={present.items.map((i) => i.mediaAssetId)}
-            onToggle={addAsset}
-            onUploaded={handleUploaded}
+            selectedId={selectedItemId}
+            nowPlayingId={nowPlayingItemId}
+            onSelect={selectItem}
+            onFrame={onFrame}
+            seekRequest={seekRequest}
+            onSeek={(seconds) => setSeekRequest((current) => ({ seconds, id: (current?.id ?? 0) + 1 }))}
           />
-
-          <Card className="p-5">
-            <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              Selected for Playlist ({present.items.length})
-            </h2>
-            <SelectedItems
-              items={present.items}
-              assets={assets}
-              onMove={(from, to) => history.commit((s) => ({ ...s, items: moveItem(s.items, from, to) }))}
-              onRemove={(assetId) =>
-                history.commit((s) => ({ ...s, items: s.items.filter((i) => i.mediaAssetId !== assetId) }))
-              }
-              onPatch={(assetId, patch) =>
-                history.commit((s) => ({
-                  ...s,
-                  items: s.items.map((i) => (i.mediaAssetId === assetId ? { ...i, ...patch } : i)),
-                }))
-              }
-            />
-          </Card>
+          <PlaylistPlaybackSettings playback={present.playback} onPlayback={setPlayback} />
         </div>
 
-        <PlaylistPlaybackFields
-          name={present.name}
-          playback={present.playback}
-          onName={setName}
-          onPlayback={setPlayback}
+        <PlaylistPropertiesPane
+          tab={propTab}
+          onTab={setPropTab}
+          selectedItem={selectedItem}
+          asset={selectedItem ? assets.find((a) => a.id === selectedItem.mediaAssetId) : undefined}
+          info={info}
+          onItemPatch={(patch) => selectedItem && patchItem(selectedItem.mediaAssetId, patch)}
+          onItemRemove={() => selectedItem && removeItem(selectedItem.mediaAssetId)}
+          onInfoChange={(patch) => setInfo((c) => ({ ...c, ...patch }))}
         />
       </div>
+
+      {drawerOpen && (
+        <AddItemDrawer
+          assets={assets}
+          loading={assetsLoading}
+          alreadyInPlaylist={present.items.map((i) => i.mediaAssetId)}
+          onAdd={addAssets}
+          onClose={() => setDrawerOpen(false)}
+        />
+      )}
     </div>
   );
 }

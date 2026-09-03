@@ -2,14 +2,17 @@
 
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { MediaThumb } from "@/components/ui/MediaThumb";
+import { XIcon } from "@/components/ui/icons";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import { fetchPublication } from "@/features/media-workspace/publications";
+import { formatDuration } from "@/features/media-workspace/playlists/duration";
 import { loadCompositionPreview, type StagePreview } from "./composition-preview";
-import { playlistGeometryOptions } from "./playlist-preview";
 import { PlaylistPreviewPanel } from "./PlaylistPreviewPanel";
 import { PreviewStage } from "./PreviewStage";
-import type { ZonePreviewFrame } from "./preview-clock";
+import { zoneLoopDurationSeconds, type PlaybackPreviewItem, type ZonePreviewFrame } from "./preview-clock";
 import { initialPreviewSession, reducePreviewSession } from "./preview-session";
 
 export type PreviewSource = "composition" | "publication" | "playlist";
@@ -38,6 +41,7 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [frame, setFrame] = useState<ZonePreviewFrame | null>(null);
+  const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
 
   useEffect(() => {
     if (!channelName) return;
@@ -111,30 +115,161 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
   if (error) return <p className="p-6 text-sm text-red-600" role="alert">{error}</p>;
   if (!loadedPreview) return <p className="p-6 text-sm text-zinc-400">Loading preview…</p>;
 
+  if (isPlaylist && playlistZone) {
+    return (
+      <PlaylistFullPreview
+        preview={loadedPreview}
+        assets={loadedAssets}
+        items={panelItems}
+        frame={frame}
+        seekRequest={seekRequest}
+        onFrame={setFrame}
+        onSeek={(seconds) => setSeekRequest((current) => ({ seconds, id: (current?.id ?? 0) + 1 }))}
+      />
+    );
+  }
+
   return (
     <main className="min-h-full bg-zinc-950 p-4 sm:p-6">
-      <div className={isPlaylist ? "flex flex-col gap-4 lg:flex-row lg:items-start" : undefined}>
-        <div className={isPlaylist ? "min-w-0 flex-1" : undefined}>
-          <PreviewStage
-            zones={loadedPreview.zones}
-            assets={loadedAssets}
-            aspectRatio={loadedPreview.aspectRatio}
-            referenceResolution={isPlaylist ? null : loadedPreview.referenceResolution}
-            geometryOptions={isPlaylist ? playlistGeometryOptions : undefined}
-            allowActualSize={!isPlaylist}
-            onFrameChange={isPlaylist ? setFrame : undefined}
+      <PreviewStage
+        zones={loadedPreview.zones}
+        assets={loadedAssets}
+        aspectRatio={loadedPreview.aspectRatio}
+        referenceResolution={loadedPreview.referenceResolution}
+      />
+    </main>
+  );
+}
+
+function PlaylistFullPreview({
+  preview,
+  assets,
+  items,
+  frame,
+  seekRequest,
+  onFrame,
+  onSeek,
+}: {
+  preview: StagePreview;
+  assets: MediaAsset[];
+  items: PlaybackPreviewItem[];
+  frame: ZonePreviewFrame | null;
+  seekRequest: { seconds: number; id: number } | null;
+  onFrame: (frame: ZonePreviewFrame | null) => void;
+  onSeek: (seconds: number) => void;
+}) {
+  const zone = preview.zones[0];
+  const total = formatDuration(zoneLoopDurationSeconds(items));
+  return (
+    <main className="min-h-full bg-white p-4 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50 sm:p-6">
+      <div className="w-full">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-4 dark:border-zinc-800">
+          <div className="flex min-w-0 items-center gap-4">
+            <button
+              type="button"
+              onClick={() => window.close()}
+              aria-label="Close preview"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+            >
+              <XIcon className="h-5 w-5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-semibold">Preview Playlist</h1>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                {zone.name} · {items.length} items · Total duration {total}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => window.close()}>Edit Playlist</Button>
+            <Button disabled title="Publish from Playlist editor">Publish</Button>
+          </div>
+        </header>
+
+        <div className="grid gap-5 pt-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <section className="min-w-0">
+            <div>
+              <PreviewStage
+                zones={preview.zones}
+                assets={assets}
+                aspectRatio={preview.aspectRatio}
+                referenceResolution={null}
+                geometryOptions={[]}
+                allowActualSize={false}
+                controlsPlacement="overlay"
+                seekRequest={seekRequest}
+                onFrameChange={onFrame}
+              />
+            </div>
+            <PlaylistTimelineStrip items={items} assets={assets} frame={frame} onSeek={onSeek} />
+            <p className="mx-auto mt-5 max-w-3xl rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              This is a preview only. Actual playback may vary slightly depending on your screen and network.
+            </p>
+          </section>
+
+          <PlaylistPreviewPanel
+            name={zone.name}
+            items={items}
+            playback={zone.playback}
+            frame={frame}
+            assets={assets}
+            tone="light"
           />
         </div>
-        {isPlaylist && playlistZone && (
-          <PlaylistPreviewPanel
-            name={playlistZone.name}
-            items={panelItems}
-            playback={playlistZone.playback}
-            frame={frame}
-          />
-        )}
       </div>
     </main>
+  );
+}
+
+function PlaylistTimelineStrip({
+  items,
+  assets,
+  frame,
+  onSeek,
+}: {
+  items: PlaybackPreviewItem[];
+  assets: MediaAsset[];
+  frame: ZonePreviewFrame | null;
+  onSeek: (seconds: number) => void;
+}) {
+  const previews = usePreviewUrls(useMemo(() => items.map((item) => item.mediaAssetId), [items]));
+  const assetById = useMemo(() => Object.fromEntries(assets.map((asset) => [asset.id, asset])), [assets]);
+  const starts = useMemo(
+    () => items.reduce<{ starts: number[]; cursor: number }>((acc, item) => {
+      const asset = assetById[item.mediaAssetId];
+      const seconds = Math.max(0, item.durationSeconds ?? asset?.duration_seconds ?? 0);
+      return { starts: [...acc.starts, acc.cursor], cursor: acc.cursor + seconds };
+    }, { starts: [], cursor: 0 }).starts,
+    [assetById, items],
+  );
+  return (
+    <section className="mt-5">
+      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        Playlist Timeline <span className="font-normal text-zinc-500">(Total {formatDuration(zoneLoopDurationSeconds(items))})</span>
+      </h2>
+      <div className="mt-3 flex gap-4 overflow-x-auto pb-2">
+        {items.map((item, index) => {
+          const asset = assetById[item.mediaAssetId];
+          const seconds = item.durationSeconds ?? asset?.duration_seconds ?? null;
+          const active = frame?.item?.mediaAssetId === item.mediaAssetId;
+          return (
+            <button
+              key={item.mediaAssetId}
+              type="button"
+              onClick={() => onSeek(starts[index] ?? 0)}
+              className="w-48 shrink-0 text-left"
+            >
+              <span className={`relative block overflow-hidden rounded-lg border-2 ${active ? "border-indigo-600" : "border-transparent hover:border-zinc-300"}`}>
+                <MediaThumb url={previews.urls[item.mediaAssetId]} kind={asset?.kind} alt={item.label ?? ""} className="h-24 w-full rounded-none" />
+                <span className="absolute left-2 top-2 rounded-md bg-zinc-950/70 px-2 py-0.5 text-xs font-semibold text-white">{index + 1}</span>
+              </span>
+              <span className="mt-2 block truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{item.label ?? "Untitled item"}</span>
+              <span className="text-xs text-zinc-500">{asset?.kind === "video" ? "Video" : "Image"} · {seconds != null ? formatDuration(seconds) : "—"}</span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

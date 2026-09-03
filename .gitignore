@@ -45,3 +45,8 @@ next-env.d.ts
 # pre-migration row dumps from production — keep local, never in history
 .backups
 2026-08-18-112038-command-messageverify-ticket-workcommand-mess.txt
+
+# Claude Desktop (Electron) renderer bundles dumped into CWD — not project files
+/index.js
+/mainView.js
+/mainWindow.js

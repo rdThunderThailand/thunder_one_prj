@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { SearchIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import type { MediaAsset } from "@/types/domain";
+import type { ContentFolder, MediaAsset, Tag } from "@/types/domain";
 import { formatDuration } from "../duration";
 import { Select, inputClasses } from "./form";
 
@@ -20,23 +20,33 @@ export function AssetPicker({
   loading,
   selectedIds,
   onToggle,
+  folders,
+  tags,
 }: {
   assets: MediaAsset[];
   loading: boolean;
   selectedIds: string[];
   onToggle: (asset: MediaAsset) => void;
+  /** When passed, a Folder filter is shown. */
+  folders?: ContentFolder[];
+  /** When passed, a Tag filter is shown. */
+  tags?: Tag[];
 }) {
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState("");
+  const [folderId, setFolderId] = useState("");
+  const [tagId, setTagId] = useState("");
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return assets.filter((a) => {
       if (kind && a.kind !== kind) return false;
+      if (folderId && (a.folder_id ?? "") !== folderId) return false;
+      if (tagId && !(a.tags ?? []).some((t) => t.id === tagId)) return false;
       if (!needle) return true;
       return (a.title ?? a.file?.original_filename ?? "").toLowerCase().includes(needle);
     });
-  }, [assets, kind, query]);
+  }, [assets, kind, folderId, tagId, query]);
 
   const visibleIds = useMemo(() => filtered.map((a) => a.id), [filtered]);
   const previews = usePreviewUrls(visibleIds);
@@ -53,12 +63,28 @@ export function AssetPicker({
             className={`${inputClasses} pl-9`}
           />
         </div>
-        <div className="w-40">
+        <div className="w-36">
           <Select value={kind} options={KIND_OPTIONS} onChange={(e) => setKind(e.target.value)} />
         </div>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-          เลือกแล้ว {selectedIds.length} ชิ้น
-        </span>
+        {folders && (
+          <div className="w-40">
+            <Select
+              value={folderId}
+              options={[{ value: "", label: "All Folders" }, ...folders.map((f) => ({ value: f.id, label: f.name }))]}
+              onChange={(e) => setFolderId(e.target.value)}
+            />
+          </div>
+        )}
+        {tags && (
+          <div className="w-36">
+            <Select
+              value={tagId}
+              options={[{ value: "", label: "All Tags" }, ...tags.map((t) => ({ value: t.id, label: t.name }))]}
+              onChange={(e) => setTagId(e.target.value)}
+            />
+          </div>
+        )}
+        <span className="text-sm text-zinc-500 dark:text-zinc-400">เลือกแล้ว {selectedIds.length} ชิ้น</span>
       </div>
 
       {loading ? (
@@ -98,9 +124,7 @@ export function AssetPicker({
                     </span>
                   )}
                 </div>
-                <span className="truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">
-                  {label}
-                </span>
+                <span className="truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">{label}</span>
                 <span className="flex items-center gap-2">
                   <Badge color={asset.kind === "video" ? "blue" : "indigo"} variant="pill">
                     {asset.kind ?? "file"}

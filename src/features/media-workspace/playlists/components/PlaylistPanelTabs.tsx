@@ -83,8 +83,8 @@ export function DetailsTab({
   );
 }
 
-/** Compact enough for a 380px column — the detail page's PlaylistItemsTable carries
- *  resolution and file size columns that have nowhere to go here. */
+/** Compact enough for a 380px column — resolution and file-size columns have nowhere
+ *  to go here. */
 export function ContentTab({ detail }: { detail: PlaylistDetail }) {
   const items = useMemo(
     () => [...detail.items].sort((a, b) => a.position - b.position),
