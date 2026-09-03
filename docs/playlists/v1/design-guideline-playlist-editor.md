@@ -111,7 +111,7 @@ Reports, Analytics) — ถือเป็นภาพอนาคตของ n
 | หน้า preview เต็มจอ + timeline ล่าง | **ต่อยอด `FullPreviewPage`** — ไม่ใช่แค่ "เติม panel" | `preview-clock` / `preview-geometry` เป็นส่วนที่ยากและถูกทดสอบแล้ว เขียนใหม่ = ได้ตัวจับเวลาที่สองที่เพี้ยนคนละแบบ · **แต่ playlist ยังไม่ใช่ source ที่รองรับ**: `source: "composition" \| "publication"` เท่านั้น, route มีแค่ `/preview/composition/[id]` กับ `/preview/publication/[id]`, และ payload เป็น `CompositionPreview` (zones + aspectRatio) ⇒ ต้องมี **route ใหม่ + adapter ที่สังเคราะห์ zone เต็มจอ 1 ตัวจาก playlist + ขยาย union ของ `source`/handoff** |
 | ทางเข้า preview ของ playlist วันนี้ | **ต้องย้ายมาพร้อมกัน** | อยู่ใน `ReviewStep.tsx` ผ่าน `PlaybackPreviewModal` ซึ่งเป็นไฟล์ที่ถูกลบพร้อม wizard — ถ้า editor ใหม่เข้าก่อน preview ของ playlist จะหายไปเลย |
 | panel ขวา: Now Playing + Playlist Information | **เติมเข้าไปใหม่** | |
-| **Preview Mode 16:9 / 9:16 / 4:3** | **ทำ** | Playlist ไม่มี geometry ของตัวเอง ผู้ใช้จึงต้องเลือกกรอบเอง — และเป็นค่าที่ adapter ใช้สร้าง zone เต็มจอ |
+| **Preview Mode 16:9 / 9:16 / 4:3** | **ทำ** | Playlist ไม่มี geometry ของตัวเอง ผู้ใช้จึงต้องเลือกกรอบเอง — ส่งเข้า `PreviewStage` เป็น `geometryOptions` สังเคราะห์ 3 ตัว ไม่ใช่ input ของ adapter: zone เป็น `0/0/100/100` ทุก ratio (ADR 0061 §1, §5) |
 | ปุ่ม Publish | **ไม่ต้องตัด — ไม่มีอยู่จริง** | `src/features/media-workspace/preview/` ไม่มีปุ่ม Publish · แค่อย่าเพิ่มเข้าไปใหม่ตาม Figma |
 
 ---
