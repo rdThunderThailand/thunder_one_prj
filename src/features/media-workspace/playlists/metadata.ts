@@ -10,7 +10,9 @@ import type {
   PlaylistMetadata,
   PlaylistPlayback,
 } from "./types";
-import { PLAY_MODES, PLAYLIST_TYPES, REPEAT_MODES, START_FROMS } from "./types";
+// Explicit file, not the folder: a bare `node *.check.mts` run has no directory-index
+// resolution, and several checks import this module transitively.
+import { PLAY_MODES, PLAYLIST_TYPES, REPEAT_MODES, START_FROMS } from "./types/index.ts";
 import { parseResolution } from "./output-profile.ts";
 
 export const METADATA_VERSION = 1;

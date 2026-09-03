@@ -4,14 +4,16 @@ import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import type { PlaylistItem } from "@/types/domain";
 import type { PlaybackPreviewZone } from "./preview-clock";
 
-export type CompositionPreview = {
+/** One preview payload shape for all three sources (ADR 0061 §1). A Playlist reduces to a single
+ *  full-frame Zone rather than a second payload type. */
+export type StagePreview = {
   zones: PlaybackPreviewZone[];
   aspectRatio: string;
   referenceResolution: string | null;
 };
 
 /** Loads a Composition's Layout plus each Zone Playlist. A Layout alone has geometry but no items. */
-export async function loadCompositionPreview(compositionId: string): Promise<CompositionPreview> {
+export async function loadCompositionPreview(compositionId: string): Promise<StagePreview> {
   const composition = await fetchComposition(compositionId);
   const layout = await fetchLayout(composition.layout_id);
   const playlists = await Promise.all(

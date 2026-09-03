@@ -149,7 +149,7 @@ export function PlaylistsListPage({ currentUserId }: { currentUserId: string | n
 
   const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
     if (action === "edit") {
-      router.push(`/media-workspace/playlists/create?id=${playlist.id}`);
+      router.push(`/media-workspace/playlists/${playlist.id}`);
       return;
     }
 

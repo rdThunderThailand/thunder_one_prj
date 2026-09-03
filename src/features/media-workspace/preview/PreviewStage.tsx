@@ -6,7 +6,7 @@ import { deviceFit, parseAspectRatio } from "@/features/media-workspace/layouts/
 import { fetchPreviewUrls } from "@/lib/api/media-api";
 import { isVideoUrl } from "@/lib/media-kind";
 import type { MediaAsset } from "@/types/domain";
-import { previewFrameAt, zoneLoopDurationSeconds, type PlaybackPreviewItem, type PlaybackPreviewZone } from "./preview-clock";
+import { previewFrameAt, zoneLoopDurationSeconds, type PlaybackPreviewItem, type PlaybackPreviewZone, type ZonePreviewFrame } from "./preview-clock";
 import { defaultGeometry, resolveFrameAspectRatio, resolveFramePixels, type GeometryOption } from "./preview-geometry";
 
 export type { PlaybackPreviewItem, PlaybackPreviewSettings, PlaybackPreviewZone } from "./preview-clock";
@@ -23,6 +23,8 @@ export function PreviewStage({
   active = true,
   geometryOptions = EMPTY_GEOMETRY_OPTIONS,
   referenceResolution = null,
+  allowActualSize = true,
+  onFrameChange,
 }: {
   zones: PlaybackPreviewZone[];
   assets: MediaAsset[];
@@ -37,6 +39,12 @@ export function PreviewStage({
   /** The Layout's Authoring Reference Resolution, used to shape the frame when the chosen
    *  target reports no geometry of its own. `null` on a legacy Layout (ADR 0050). */
   referenceResolution?: string | null;
+  /** ADR 0061 §5: a Playlist has no pixels, so its host passes `false` to hide the
+   *  "Actual size" control rather than assert a resolution the Playlist does not have. */
+  allowActualSize?: boolean;
+  /** ADR 0061 §6: fires when the displayed frame's identity or metadata changes — never on
+   *  `offsetSeconds` alone. `null` unless the preview holds exactly one Zone. */
+  onFrameChange?: (frame: ZonePreviewFrame | null) => void;
 }) {
   const [timeSeconds, setTimeSeconds] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -63,6 +71,12 @@ export function PreviewStage({
     [resolvedZones],
   );
   const timelineSeconds = Math.max(1, ...resolvedZones.map((zone) => zoneLoopDurationSeconds(zone.items)));
+
+  // ADR 0061 §6: the panels are a sibling fed this frame; the stage keeps the only clock.
+  const singleZoneFrame = resolvedZones.length === 1 ? previewFrameAt(resolvedZones[0].items, timeSeconds) : null;
+  const singleZoneFrameKey = singleZoneFrame
+    ? JSON.stringify({ index: singleZoneFrame.itemIndex, item: singleZoneFrame.item })
+    : null;
 
   // Derived, never an effect: the option list arrives asynchronously in every host, and resetting
   // the selection from an effect is both a cascading render and a flash of the wrong frame.
@@ -129,6 +143,13 @@ export function PreviewStage({
   useEffect(() => {
     if (timeSeconds >= timelineSeconds && playing) Promise.resolve().then(() => setPlaying(false));
   }, [playing, timeSeconds, timelineSeconds]);
+
+  // ponytail: same deferred-call pattern as above — onFrameChange sets state in the host.
+  useEffect(() => {
+    if (!onFrameChange) return;
+    Promise.resolve().then(() => onFrameChange(singleZoneFrame));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [singleZoneFrameKey, onFrameChange]);
 
   useEffect(() => {
     const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
@@ -253,7 +274,7 @@ export function PreviewStage({
               {option}×
             </Button>
           ))}
-          {framePixels && (
+          {allowActualSize && framePixels && (
             <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setFitToWindow((current) => !current)}>
               {fitToWindow ? `Actual size (${framePixels[0]}×${framePixels[1]})` : "Fit to window"}
             </Button>

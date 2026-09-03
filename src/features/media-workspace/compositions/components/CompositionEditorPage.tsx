@@ -17,7 +17,7 @@ import { setPlaylistItems, upsertPlaylist } from "@/features/media-workspace/pla
 import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
 import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
-import type { CompositionPreview } from "@/features/media-workspace/preview/composition-preview";
+import type { StagePreview } from "@/features/media-workspace/preview/composition-preview";
 import type { MediaAsset, PlaylistItem } from "@/types/domain";
 import {
   fetchComposition,
@@ -275,11 +275,12 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
       };
     });
   }, [assets, bindings, layout, playlistItemsById]);
-  const previewHandoff = useMemo<CompositionPreview & { compositionId: string; assets: MediaAsset[] } | null>(() => {
+  const previewHandoff = useMemo<StagePreview & { source: "composition"; id: string; assets: MediaAsset[] } | null>(() => {
     if (!id || !layout) return null;
     const assetIds = new Set(playbackPreviewZones.flatMap((zone) => zone.items.map((item) => item.mediaAssetId)));
     return {
-      compositionId: id,
+      source: "composition",
+      id,
       zones: playbackPreviewZones,
       assets: assets.filter((asset) => assetIds.has(asset.id)),
       aspectRatio: layout.aspect_ratio,
