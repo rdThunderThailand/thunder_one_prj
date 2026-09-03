@@ -156,8 +156,24 @@ Run this section only after explicit owner approval. `Save Draft` writes playlis
 - [ ] Verify title, item order, added item, and playback setting persisted.
 - [ ] If a conflict or save error appears, capture the exact message and do not retry blindly.
 
+## K. Stale Revision Conflict (two tabs)
+
+Run this only after explicit owner approval — every step saves to the backend.
+Needs one existing saved playlist opened in two browser tabs.
+
+- [ ] Tab A: open `/media-workspace/playlists/<playlistId>`, leave it idle (do not save).
+- [ ] Tab B: open the same playlist, change the title, click `Save Draft`, confirm it saves.
+- [ ] Tab A: now change the title (a different value) and click `Save Draft`.
+- [ ] Tab A shows a revision-conflict card, not a generic save error, with wording about the
+      playlist being changed elsewhere and a reload action.
+- [ ] Tab A stays on the same URL; the unsaved edit is not lost and nothing is overwritten on the server.
+- [ ] Click the reload action in the conflict card.
+- [ ] Tab A re-loads the latest server state (Tab B's title) and the conflict card disappears.
+- [ ] After reload, `Save Draft` in Tab A succeeds (no conflict) if a fresh edit is made.
+- [ ] Capture the exact conflict message text and a screenshot of the card.
+
 ## Completion Criteria
 
 - Mark the checklist complete only when sections A-I pass.
-- Section J is optional and must be reported separately as `not run`, `passed`, or `failed`.
+- Sections J and K are approval-gated writes; report each separately as `not run`, `passed`, or `failed`.
 - Any browser console error, blank preview frame, clipped panel, or real publish capability from preview page is a blocker.
