@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { CheckIcon, EditIcon } from "@/components/ui/icons";
+import { CheckIcon, EditIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 
 /** The editor's title bar: editable name (Figma H1), the save-state line, and the only
  *  controls the page carries — no Publish (ADR 0060 §3). */
@@ -12,7 +12,11 @@ export function PlaylistEditorHeader({
   lastUpdatedAt,
   hasItems,
   saving,
+  canUndo,
+  canRedo,
   onName,
+  onUndo,
+  onRedo,
   onCancel,
   onPreview,
   onSave,
@@ -22,7 +26,11 @@ export function PlaylistEditorHeader({
   lastUpdatedAt: Date | null;
   hasItems: boolean;
   saving: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
   onName: (name: string) => void;
+  onUndo: () => void;
+  onRedo: () => void;
   onCancel: () => void;
   onPreview: () => void;
   onSave: () => void;
@@ -93,6 +101,26 @@ export function PlaylistEditorHeader({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={!canUndo}
+          aria-label="ย้อนกลับ (⌘Z)"
+          title="ย้อนกลับ (⌘Z)"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:pointer-events-none disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        >
+          <UndoIcon className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onRedo}
+          disabled={!canRedo}
+          aria-label="ทำซ้ำ (⇧⌘Z)"
+          title="ทำซ้ำ (⇧⌘Z)"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:pointer-events-none disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        >
+          <RedoIcon className="h-4 w-4" />
+        </button>
         <Button variant="secondary" onClick={onCancel}>Cancel</Button>
         <Button
           variant="secondary"

@@ -35,7 +35,11 @@ For each item, report `PASS`, `FAIL`, or `SKIPPED`, with:
 - [ ] Header shows a capsule status badge, for example `saved` or `unsaved changes`.
 - [ ] Header shows latest updated time text.
 - [ ] Header does not show separate `items` count or total duration pills.
-- [ ] `Undo` and `Redo` buttons are not visible.
+- [ ] Small `Undo` and `Redo` icon buttons appear left of `Cancel`.
+- [ ] `Undo`/`Redo` are disabled when there is no history in that direction.
+- [ ] After an edit (reorder / rename / add item), clicking `Undo` restores the prior state; `Redo` re-applies it.
+- [ ] `Cmd+Z` undoes and `Shift+Cmd+Z` redoes when focus is not in a text field.
+- [ ] `Cmd+Z` inside the title input edits the input text, not the playlist history.
 
 ## B. Playlist Items Pane
 

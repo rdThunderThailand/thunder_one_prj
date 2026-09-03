@@ -47,6 +47,19 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const row = usePlaylistEditorRow({ playlistId, history, info, setInfo });
 
   useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      event.preventDefault();
+      if (event.shiftKey) history.redo();
+      else history.undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [history]);
+
+  useEffect(() => {
     if (!row.isDirty) return;
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener("beforeunload", warn);
@@ -130,7 +143,11 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         lastUpdatedAt={row.lastSavedAt}
         hasItems={present.items.length > 0}
         saving={row.saving}
+        canUndo={history.canUndo}
+        canRedo={history.canRedo}
         onName={setName}
+        onUndo={history.undo}
+        onRedo={history.redo}
         onCancel={goBack}
         onPreview={openPreview}
         onSave={row.save}
