@@ -1,316 +1,351 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { buttonClasses } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Pagination } from "@/components/ui/Pagination";
-import { fetchCampaigns } from "@/lib/api/media-api";
-import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import type { Campaign } from "@/types/domain";
-import { deletePlaylist, duplicatePlaylist, fetchPlaylists } from "../services/playlists-api";
-import { copyName, filterPlaylists, paginate, playlistCampaignId, sortPlaylists, summarize } from "../list-filtering";
-import { describeDeleteError } from "../status-display";
-import { readListState, writeListState, DEFAULT_STATE } from "../list-url-state";
-import type { OwnershipTab, Sort, SortKey } from "../list-filtering";
+import { classifyApiError } from "@/lib/api/api-error";
+import { permanentlyDeletePlaylist, restorePlaylist } from "@/lib/api/media-api";
+import { FeatureFolderRail } from "../../content-library/FeatureFolderRail";
+import { duplicatePlaylist, upsertPlaylist } from "../services/playlists-api";
+import { copyName, filterPlaylists, paginate, sortPlaylists, summarize } from "../list-filtering";
+import { filterByCollection, folderCounts } from "../folder-filtering";
+import { filterByTag, tagCounts } from "../tag-filtering";
+import { readListState, writeListState, DEFAULT_STATE, type Collection } from "../list-url-state";
+import type { Sort, SortKey } from "../list-filtering";
 import type { PlaylistListItem } from "../types";
+import { usePlaylistsListData } from "../use-playlists-list-data";
 import { PlaylistsFilters, type FilterState } from "./PlaylistsFilters";
 import { PlaylistsTable, type RowAction } from "./PlaylistsTable";
-import { PlaylistSidePanel } from "./PlaylistSidePanel";
+import { PlaylistsListDialogs, type PlaylistDialogAction } from "./PlaylistsListDialogs";
+import { PlaylistTagsDialog } from "./PlaylistTagsDialog";
+import { CreatePlaylistDialog } from "./CreatePlaylistDialog";
+import { TagsRail } from "./TagsRail";
 import { emptyCause, hasActiveFilters } from "../list-empty-state";
-import { ListEmpty, ListError, ListSkeleton, StatCard, SummarySkeleton, TabButton } from "./PlaylistsListStates";
+import { ListEmpty, ListError, ListSkeleton, StatCard, SummarySkeleton } from "./PlaylistsListStates";
 
-export function PlaylistsListPage({ currentUserId }: { currentUserId: string | null }) {
+const RAIL_LABELS = { all: "All", uncategorized: "Uncategorized", trash: "Trash" };
+const railTabClass = (active: boolean) =>
+  `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${
+    active ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+  }`;
+
+export function PlaylistsListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Read once on mount — the URL is the initial value, not a live subscription, so
-  // typing in the search box doesn't fight with the effect that writes it back below.
+  // Read once on mount — the URL is the initial value, not a live subscription.
   const [initial] = useState(() => readListState(new URLSearchParams(searchParams.toString())));
-  const [playlists, setPlaylists] = useState<PlaylistListItem[] | null>(null);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [error, setError] = useState<ClassifiedError | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [tab, setTab] = useState<OwnershipTab>(initial.tab);
+  const [collection, setCollection] = useState<Collection>(initial.collection);
+  const [tagId, setTagId] = useState<string | null>(initial.tagId);
+  const [railTab, setRailTab] = useState<"folders" | "tags">(initial.tagId ? "tags" : "folders");
   const [filters, setFilters] = useState<FilterState>(initial.filters);
   const [sort, setSort] = useState<Sort>(initial.sort);
   const [page, setPage] = useState(initial.page);
   const [perPage, setPerPage] = useState(initial.perPage);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ action: PlaylistDialogAction; target: PlaylistListItem } | null>(null);
+  const [tagsTarget, setTagsTarget] = useState<PlaylistListItem | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
+  const [emptyTrashBusy, setEmptyTrashBusy] = useState(false);
 
-  // Keeps the URL in sync with the view (push/replace decided by useListUrlState — a
-  // search-typing run collapses into one history step) and restores tab/filters/sort/page
-  // from window.location on Back/Forward.
+  const inTrash = collection === "trash";
+  const { playlists, trashed, folders, error, refreshing, reload } = usePlaylistsListData(inTrash);
+
   const restore = useCallback(() => {
     const s = readListState(new URLSearchParams(window.location.search));
-    setTab(s.tab);
+    setCollection(s.collection);
+    setTagId(s.tagId);
+    setRailTab(s.tagId ? "tags" : "folders");
     setFilters(s.filters);
     setSort(s.sort);
     setPage(s.page);
     setPerPage(s.perPage);
   }, []);
-  // An empty query string is exactly the "everything is at its default" signal, so it
-  // doubles as the test for whether "Clear all" would do anything.
-  const qs = writeListState({ tab, filters, sort, page, perPage });
+  const qs = writeListState({ collection, tagId, filters, sort, page, perPage });
   useListUrlState(qs, restore);
 
   const handleSortChange = (key: SortKey) => {
-    setSort((current) => {
-      if (current.key === key) return { key, dir: current.dir === "asc" ? "desc" : "asc" };
-      return { key, dir: key === "updated" || key === "duration" ? "desc" : "asc" };
-    });
+    setSort((current) =>
+      current.key === key
+        ? { key, dir: current.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: key === "updated" || key === "duration" ? "desc" : "asc" }
+    );
     setPage(1);
   };
 
-  // One dataset feeds the cards, both tab counts, the filters and the page slice — the
-  // list RPC already returns one row per playlist (Thunder_Core migration 087), so
-  // nothing here has to guard against the same playlist arriving twice.
-  useEffect(() => {
-    let alive = true;
-    fetchPlaylists(true)
-      .then((data) => alive && setPlaylists(data))
-      .catch(
-        (err) => alive && setError(classifyApiError(err, "โหลด playlists ไม่สำเร็จ"))
-      );
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const counts = useMemo(() => folderCounts(playlists ?? [], folders), [playlists, folders]);
+  const tags = useMemo(() => tagCounts(playlists ?? []), [playlists]);
 
-  // Filter options load beside the dataset: a failure here leaves the Campaign dropdown
-  // with "All Campaigns" alone rather than blocking the table.
-  useEffect(() => {
-    let alive = true;
-    fetchCampaigns()
-      .then((data) => alive && setCampaigns(data))
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  // Keeps current rows on failure — retry preserves filters/sort/tab/page since
-  // they live in component state reload() never touches.
-  const reload = () => {
-    setRefreshing(true);
-    return fetchPlaylists(true)
-      .then((data) => {
-        setPlaylists(data);
-        setError(null);
-        setRefreshing(false);
-      })
-      .catch((err) => {
-        setError(classifyApiError(err, "โหลด playlists ไม่สำเร็จ"));
-        setRefreshing(false);
-      });
-  };
-
-  const campaignNames = useMemo(
-    () => Object.fromEntries(campaigns.map((c) => [c.id, c.name])),
-    [campaigns]
-  );
-
-  const mineCount = useMemo(
-    () => (playlists ?? []).filter((p) => p.created_by?.id === currentUserId).length,
-    [playlists, currentUserId]
-  );
-
+  // In Trash the rail's own dataset feeds the table; a tag selection and a folder
+  // selection are mutually exclusive (#41), so at most one narrows the active dataset.
+  const base = useMemo(() => {
+    if (inTrash) return trashed ?? [];
+    if (tagId) return filterByTag(playlists ?? [], tagId);
+    return filterByCollection(playlists ?? [], collection, folders);
+  }, [inTrash, trashed, playlists, tagId, collection, folders]);
   const filtered = useMemo(
-    () => filterPlaylists(playlists ?? [], { ...filters, tab, currentUserId }),
-    [playlists, filters, tab, currentUserId]
+    () => filterPlaylists(base, filters),
+    [base, filters]
   );
-
-  const sorted = useMemo(
-    () => sortPlaylists(filtered, sort, campaignNames),
-    [filtered, sort, campaignNames]
-  );
-
-  // paginate() clamps the page itself, so narrowing a filter can never strand the view.
+  const sorted = useMemo(() => sortPlaylists(filtered, sort), [filtered, sort]);
   const { rows, page: currentPage, totalPages } = paginate(sorted, page, perPage);
-  const selected = filtered.find((p) => p.id === selectedId) ?? null;
+  const emptyTrashTargets = useMemo(
+    () => (inTrash ? (trashed ?? []).filter((playlist) => (playlist.publication_count ?? 0) === 0) : []),
+    [inTrash, trashed]
+  );
+  const emptyTrashLocked = inTrash ? (trashed?.length ?? 0) - emptyTrashTargets.length : 0;
 
-  // Clear Filters resets filters to defaults and page to 1.
-  // Resets the tab, sort and paging alongside the filters: the button says "Clear all",
-  // and its promise is that the view — and the URL — come back to their pristine state.
+  // Selecting a folder (or Trash) clears any tag selection, and vice versa — the rail's
+  // two tabs are mutually exclusive (#41 AC).
+  const changeCollection = (next: Collection) => {
+    setTagId(null);
+    setCollection(next);
+    setPage(1);
+  };
+  const changeTag = (next: string | null) => {
+    setCollection(DEFAULT_STATE.collection);
+    setTagId(next);
+    setPage(1);
+  };
   const handleClearAll = () => {
-    setTab(DEFAULT_STATE.tab);
+    setCollection(DEFAULT_STATE.collection);
+    setTagId(DEFAULT_STATE.tagId);
     setFilters(DEFAULT_STATE.filters);
     setSort(DEFAULT_STATE.sort);
     setPage(DEFAULT_STATE.page);
     setPerPage(DEFAULT_STATE.perPage);
   };
 
-  const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
-    if (action === "edit") {
-      router.push(`/media-workspace/playlists/create?id=${playlist.id}`);
-      return;
-    }
-
+  const runImmediate = async (playlist: PlaylistListItem, run: () => Promise<unknown>, fallback: string) => {
     setActionError(null);
     setBusyId(playlist.id);
     try {
-      if (action === "duplicate") {
-        const { itemsCopied } = await duplicatePlaylist(
-          playlist.id,
-          copyName(playlist.name, (playlists ?? []).map((p) => p.name))
-        );
-        if (!itemsCopied) {
-          setActionError("คัดลอก playlist แล้ว แต่ยังคัดลอกเนื้อหาไม่สำเร็จ — เปิดฉบับร่างเพื่อเพิ่มสื่อเอง");
-        }
-      } else {
-        await deletePlaylist(playlist.id);
-        setSelectedId((id) => (id === playlist.id ? null : id));
-      }
+      await run();
       await reload();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      setActionError(
-        action === "delete"
-          ? describeDeleteError(message)
-          : classifyApiError(err, "คัดลอก playlist ไม่สำเร็จ").message
-      );
+      setActionError(classifyApiError(err, fallback).message);
     } finally {
       setBusyId(null);
     }
   };
 
-  if (error?.kind === "forbidden") {
-    return <NoAccess />;
-  }
+  const handleEmptyTrash = async () => {
+    setEmptyTrashBusy(true);
+    setActionError(null);
+    try {
+      const results = await Promise.allSettled(emptyTrashTargets.map((playlist) => permanentlyDeletePlaylist(playlist.id)));
+      const deleted = results.filter((result) => result.status === "fulfilled" && result.value.deleted).length;
+      const skipped = emptyTrashLocked + results.filter((result) => result.status === "fulfilled" && !result.value.deleted).length;
+      const failed = results.filter((result) => result.status === "rejected").length;
+      await reload();
+      setEmptyTrashOpen(false);
+      if (skipped || failed) {
+        setActionError(`ลบถาวรแล้ว ${deleted} playlist; ข้าม ${skipped} playlist ที่ถูกล็อก${failed ? `; ล้มเหลว ${failed} playlist` : ""}`);
+      }
+    } catch (err) {
+      setActionError(classifyApiError(err, "ล้างถังขยะไม่สำเร็จ").message);
+    } finally {
+      setEmptyTrashBusy(false);
+    }
+  };
 
-  // Stats are derived only when data is available — never show 0/0/0/0 during load.
+  const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
+    if (action === "restore") return void runImmediate(playlist, () => restorePlaylist(playlist.id), "กู้คืน playlist ไม่สำเร็จ");
+    if (action === "move") return setDialog({ action: "move", target: playlist });
+    if (action === "tags") return setTagsTarget(playlist);
+    if (action === "delete") return setDialog({ action: "trash", target: playlist });
+    if (action === "permanent-delete") return setDialog({ action: "permanent-delete", target: playlist });
+    if (action === "duplicate") {
+      return void runImmediate(
+        playlist,
+        async () => {
+          const { itemsCopied } = await duplicatePlaylist(playlist.id, copyName(playlist.name, (playlists ?? []).map((p) => p.name)));
+          if (!itemsCopied) setActionError("คัดลอก playlist แล้ว แต่ยังคัดลอกเนื้อหาไม่สำเร็จ — เปิดฉบับร่างเพื่อเพิ่มสื่อเอง");
+        },
+        "คัดลอก playlist ไม่สำเร็จ"
+      );
+    }
+    // mark-ready — the one stored status transition (ADR 0060 §3, §6).
+    void runImmediate(
+      playlist,
+      () => upsertPlaylist({ playlistId: playlist.id, name: playlist.name, status: "active" }),
+      "ตั้งให้ playlist พร้อมใช้งานไม่สำเร็จ"
+    );
+  };
+
+  if (error?.kind === "forbidden" && !playlists) return <NoAccess />;
+
   const stats = playlists !== null ? summarize(playlists) : null;
+  const loading = inTrash ? trashed === null : playlists === null;
+  const cause = inTrash
+    ? "trash-empty"
+    : tagId && !hasActiveFilters(filters)
+      ? "tag-empty"
+      : collection !== "all" && collection !== "uncategorized" && !hasActiveFilters(filters)
+        ? "folder-empty"
+        : emptyCause({ totalCount: (playlists ?? []).length, hasActiveFilters: hasActiveFilters(filters) });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-6">
       <PageHeader
         title="Playlists"
         subtitle="Create and manage playlists for your campaigns and channels."
         actions={
-          <Link href="/media-workspace/playlists/create" className={buttonClasses("primary")}>
+          <Button type="button" onClick={() => setCreateOpen(true)}>
             + Create Playlist
-          </Link>
+          </Button>
         }
       />
 
-      {/* Summary row: skeleton during initial load, real cards once data arrives */}
       {stats === null ? (
         <SummarySkeleton />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total Playlists" value={stats.total} />
+          <StatCard label="Draft" value={stats.draft} />
           <StatCard label="Active" value={stats.active} />
           <StatCard label="Inactive" value={stats.inactive} />
-          <StatCard label="Draft" value={stats.draft} />
         </div>
       )}
 
-      <div className={selected ? "grid gap-6 lg:grid-cols-[1fr_380px]" : ""}>
-        <Card className="p-5">
-          <div
-            role="tablist"
-            className="mb-4 flex items-center gap-1 border-b border-zinc-100 dark:border-zinc-800"
-          >
-            <TabButton
-              active={tab === "all"}
-              label="All Playlists"
-              count={playlists?.length ?? 0}
-              onClick={() => setTab("all")}
-            />
-            <TabButton
-              active={tab === "mine"}
-              label="My Playlists"
-              count={mineCount}
-              onClick={() => setTab("mine")}
-            />
-            {/* กำลังรีเฟรช… shown only during a background reload, not initial load */}
-            {refreshing && playlists !== null && (
-              <span className="ml-auto text-xs text-zinc-400">กำลังรีเฟรช…</span>
-            )}
-          </div>
-
-          <PlaylistsFilters
-            onClearAll={qs === "" ? undefined : handleClearAll}
-            value={filters}
-            campaigns={campaigns}
-            onChange={(next) => {
-              setFilters(next);
-              setPage(1);
-            }}
-          />
-
-          {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
-
-          {/* Error card shown above the table when a background refresh failed */}
-          {error && playlists !== null && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
-              <p className="text-sm text-red-500">{error.message}</p>
+      <Card className="flex flex-1 flex-col overflow-hidden">
+        <div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
+          <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r">
+            <div className="mb-2 flex shrink-0 gap-1 px-1">
+              <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>
+                Folders
+              </button>
+              <button type="button" className={railTabClass(railTab === "tags")} onClick={() => setRailTab("tags")}>
+                Tags
+              </button>
             </div>
-          )}
+            {railTab === "folders" ? (
+              <FeatureFolderRail
+                scope="playlist"
+                labels={RAIL_LABELS}
+                folders={folders}
+                selected={collection}
+                counts={counts}
+                isLoading={playlists === null && folders.length === 0}
+                onSelect={changeCollection}
+                onRefresh={reload}
+                onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)}
+              />
+            ) : (
+              <TagsRail tags={tags} selected={tagId} onSelect={changeTag} />
+            )}
+          </aside>
 
-          {playlists === null && !error ? (
-            // Initial load — no data yet, no error: show skeletons
-            <ListSkeleton />
-          ) : playlists === null && error ? (
-            // Initial load failed — no data at all: show full-page error with Retry, no spinner
-            <ListError message={error.message} onRetry={reload} retrying={refreshing} />
-          ) : rows.length === 0 ? (
-            // Data loaded but this view is empty: show cause-specific message
-            <ListEmpty
-              cause={emptyCause({
-                totalCount: playlists!.length,
-                mineCount,
-                tab,
-                hasActiveFilters: hasActiveFilters(filters),
-              })}
-              onClearFilters={handleClearAll}
+          <main className="flex min-h-0 min-w-0 flex-col p-5">
+            {refreshing && playlists !== null && <span className="mb-3 self-end text-xs text-zinc-400">กำลังรีเฟรช…</span>}
+
+            <PlaylistsFilters
+              onClearAll={!inTrash && qs !== "" ? handleClearAll : undefined}
+              value={filters}
+              onChange={(next) => { setFilters(next); setPage(1); }}
+              tailAction={inTrash ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={emptyTrashTargets.length === 0 || emptyTrashBusy}
+                  onClick={() => setEmptyTrashOpen(true)}
+                  className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                >
+                  Empty Trash
+                </Button>
+              ) : undefined}
             />
-          ) : (
-            <>
-              <PlaylistsTable
-                rows={rows}
-                campaignNames={campaignNames}
-                selectedId={selectedId}
-                busyId={busyId}
-                sort={sort}
-                onSelect={(playlist) => setSelectedId(playlist.id)}
-                onAction={handleAction}
-                onSortChange={handleSortChange}
-              />
-              <Pagination
-                page={currentPage}
-                totalPages={totalPages}
-                perPage={perPage}
-                totalItems={sorted.length}
-                rangeStart={(currentPage - 1) * perPage + 1}
-                rangeEnd={Math.min(currentPage * perPage, sorted.length)}
-                onPageChange={setPage}
-                onPerPageChange={(next) => {
-                  setPerPage(next);
-                  setPage(1);
-                }}
-              />
-            </>
-          )}
-        </Card>
 
-        {selected && (
-          <PlaylistSidePanel
-            key={selected.id}
-            playlist={selected}
-            campaignName={campaignNames[playlistCampaignId(selected) ?? ""]}
-            busy={busyId === selected.id}
-            onClose={() => setSelectedId(null)}
-            onDuplicate={() => handleAction("duplicate", selected)}
-            onDelete={() => handleAction("delete", selected)}
-          />
+            {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+            {error && playlists !== null && (
+              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
+                <p className="text-sm text-red-500">{error.message}</p>
+              </div>
+            )}
+
+            <div className="min-h-0 flex-1 overflow-auto">
+              {loading && !error ? (
+                <ListSkeleton />
+              ) : playlists === null && error ? (
+                <ListError message={error.message} onRetry={reload} retrying={refreshing} />
+              ) : rows.length === 0 ? (
+                <ListEmpty cause={cause} onClearFilters={handleClearAll} />
+              ) : (
+                <PlaylistsTable
+                  rows={rows}
+                  busyId={busyId}
+                  sort={sort}
+                  inTrash={inTrash}
+                  onAction={handleAction}
+                  onSortChange={handleSortChange}
+                />
+              )}
+            </div>
+          </main>
+        </div>
+        {!loading && rows.length > 0 && (
+          <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0">
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              perPage={perPage}
+              totalItems={sorted.length}
+              rangeStart={(currentPage - 1) * perPage + 1}
+              rangeEnd={Math.min(currentPage * perPage, sorted.length)}
+              itemLabel="playlists"
+              onPageChange={setPage}
+              onPerPageChange={(next) => { setPerPage(next); setPage(1); }}
+            />
+          </div>
         )}
-      </div>
+      </Card>
+
+      <PlaylistsListDialogs
+        key={dialog ? `${dialog.action}:${dialog.target.id}` : "none"}
+        action={dialog?.action ?? null}
+        target={dialog?.target ?? null}
+        folders={folders}
+        onClose={() => setDialog(null)}
+        onDone={() => { setDialog(null); void reload(); }}
+        onError={(message) => { setActionError(message); setDialog(null); }}
+      />
+      <PlaylistTagsDialog
+        key={tagsTarget ? `tags:${tagsTarget.id}` : "tags:none"}
+        target={tagsTarget}
+        onClose={() => setTagsTarget(null)}
+        onDone={() => { setTagsTarget(null); void reload(); }}
+        onError={(message) => { setActionError(message); setTagsTarget(null); }}
+      />
+      <CreatePlaylistDialog
+        key={createOpen ? `create:${collection}` : "create:closed"}
+        open={createOpen}
+        folders={folders}
+        initialFolderId={collection !== "all" && collection !== "uncategorized" && collection !== "trash" ? collection : ""}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(playlistId) => router.push(`/media-workspace/playlists/${playlistId}`)}
+        onError={(message) => { setActionError(message); setCreateOpen(false); }}
+      />
+      <Modal
+        open={emptyTrashOpen}
+        onClose={() => { if (!emptyTrashBusy) setEmptyTrashOpen(false); }}
+        title="Empty Trash?"
+        footer={<>
+          <Button type="button" variant="secondary" disabled={emptyTrashBusy} onClick={() => setEmptyTrashOpen(false)}>Cancel</Button>
+          <Button type="button" disabled={emptyTrashBusy || emptyTrashTargets.length === 0} onClick={() => void handleEmptyTrash()} className="bg-red-600 hover:bg-red-500">
+            {emptyTrashBusy ? "กำลังลบ…" : "Empty Trash"}
+          </Button>
+        </>}
+      >
+        <p>Permanently delete {emptyTrashTargets.length} playlist{emptyTrashTargets.length === 1 ? "" : "s"} from Trash? This cannot be undone.</p>
+        {emptyTrashLocked > 0 && <p>{emptyTrashLocked} playlist{emptyTrashLocked === 1 ? "" : "s"} will be skipped because they have been published.</p>}
+      </Modal>
     </div>
   );
 }

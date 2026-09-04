@@ -45,7 +45,6 @@ export type FailureHandling = (typeof FAILURE_HANDLINGS)[number];
 export type PlaylistInfo = {
   description?: string;
   campaignId?: string;
-  tags?: string[];
   playlistType?: PlaylistType;
   /** Canonical selector value, e.g. "1920x1080". `width`/`height` are derived from it at encode
    *  time so the stored profile carries real numbers (ADR 0032). */
@@ -91,4 +90,9 @@ export type DraftItem = {
   /** Null lets the backend fall back to the asset's own duration (videos). */
   durationSeconds: number | null;
   transition: Transition;
+  /** Per-item overrides — #37 (ADR 0060 §5a). Undefined means inherit the playlist default. */
+  transitionDurationSeconds?: number;
+  fit?: MediaFit;
+  backgroundColor?: string;
+  notes?: string;
 };

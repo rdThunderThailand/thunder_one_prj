@@ -9,6 +9,10 @@ export type PlaybackPreviewSettings = {
   playMode?: "sequential" | "shuffle";
   repeat?: "loop" | "once";
   startFrom?: "first" | "resume";
+  // ADR 0061 §2: Playlist-level defaults carried through to Playlist Information. Types only —
+  // previewFrameAt() does not read them; making them play is #42.
+  defaultTransition?: string | null;
+  transitionDurationSeconds?: number | null;
 };
 
 export type PlaybackPreviewZone = {

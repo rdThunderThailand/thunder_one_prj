@@ -154,23 +154,59 @@ export async function moveMediaAsset(id: string, folderId: string | null): Promi
   await requestApi("PATCH", `/media/videos/${id}`, { folder_id: folderId });
 }
 
+/** Move a playlist into a folder, or to Uncategorized (`null`) — Thunder_Core #38 / BE-3.
+ *  Separate sub-route so the editor's `PATCH /media/playlists/{id}` save path is untouched. */
+export async function movePlaylist(id: string, folderId: string | null): Promise<void> {
+  await requestApi("PATCH", `/media/playlists/${id}/move`, { folder_id: folderId });
+}
+
+/** Replaces a playlist's tags wholesale against the tenant's shared vocabulary —
+ *  Thunder_Core #41 / ADR 0060 §8a. Names, not ids: the backend creates what does not
+ *  exist yet and reuses the existing spelling for what does. Returns the stored set so
+ *  the caller renders the canonical casing rather than what was typed. */
+export async function setPlaylistTags(id: string, tags: string[]): Promise<Tag[]> {
+  const data = await requestApi<{ tags?: Tag[] }>("PUT", `/media/playlists/${id}/tags`, { tags });
+  return data.tags ?? [];
+}
+
 // Playlist reads — shared by publications and playlists (docs/adr/0020). Writes
 // (`upsertPlaylist`, `setPlaylistItems`) stay in features/playlists/services.
 
 /** `includeDrafts` defaults to `false` so a caller that forgets to opt in never
  *  leaks drafts into the publication content picker — an unfinished playlist
  *  must never be selectable for scheduling. */
-export async function fetchPlaylists(includeDrafts = false): Promise<PlaylistListItem[]> {
-  const path = includeDrafts ? "/media/playlists?include_drafts=true" : "/media/playlists";
+export async function fetchPlaylists(
+  includeDrafts = false,
+  trash = false
+): Promise<PlaylistListItem[]> {
+  const query = new URLSearchParams();
+  if (includeDrafts) query.set("include_drafts", "true");
+  if (trash) query.set("trash", "true");
+  const suffix = query.toString();
   const data = await requestApi<{ playlists?: PlaylistListItem[] } | PlaylistListItem[]>(
     "GET",
-    path
+    suffix ? `/media/playlists?${suffix}` : "/media/playlists"
   );
   if (Array.isArray(data)) return data;
   if (data && typeof data === "object" && Array.isArray(data.playlists)) {
     return data.playlists;
   }
   return [];
+}
+
+/** Restore a soft-deleted playlist — to its former folder, or Uncategorized if that
+ *  folder is gone (Thunder_Core #40). */
+export async function restorePlaylist(id: string): Promise<void> {
+  await requestApi("POST", `/media/playlists/${id}/restore`);
+}
+
+/** Permanently delete a trashed playlist. Resolves to `{ deleted: false, reason: "published" }`
+ *  — not an error — when the playlist has ever been published (`publications.playlist_id`
+ *  is `ON DELETE RESTRICT`); the caller explains that instead of retrying. */
+export async function permanentlyDeletePlaylist(
+  id: string
+): Promise<{ deleted: boolean; reason?: string }> {
+  return requestApi("DELETE", `/media/playlists/${id}/permanent`);
 }
 
 export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {

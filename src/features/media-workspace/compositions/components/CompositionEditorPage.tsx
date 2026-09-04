@@ -17,7 +17,7 @@ import { setPlaylistItems, upsertPlaylist } from "@/features/media-workspace/pla
 import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
 import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
-import type { CompositionPreview } from "@/features/media-workspace/preview/composition-preview";
+import type { StagePreview } from "@/features/media-workspace/preview/composition-preview";
 import type { MediaAsset, PlaylistItem } from "@/types/domain";
 import {
   fetchComposition,
@@ -275,11 +275,12 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
       };
     });
   }, [assets, bindings, layout, playlistItemsById]);
-  const previewHandoff = useMemo<CompositionPreview & { compositionId: string; assets: MediaAsset[] } | null>(() => {
+  const previewHandoff = useMemo<StagePreview & { source: "composition"; id: string; assets: MediaAsset[] } | null>(() => {
     if (!id || !layout) return null;
     const assetIds = new Set(playbackPreviewZones.flatMap((zone) => zone.items.map((item) => item.mediaAssetId)));
     return {
-      compositionId: id,
+      source: "composition",
+      id,
       zones: playbackPreviewZones,
       assets: assets.filter((asset) => assetIds.has(asset.id)),
       aspectRatio: layout.aspect_ratio,
@@ -520,11 +521,15 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
     }
   };
 
-  const handleGeometryChange = (zones: LayoutZone[]) => {
+  const confirmGeometryChange = () => {
     if (layout?.kind === "template" && (layout.usage_count ?? 0) > 1 && !sharedGeometryApproved) {
-      if (!window.confirm(`This Template is used by ${layout.usage_count} Layouts. Changing the Zones affects all of them.`)) return;
+      if (!window.confirm(`This Template is used by ${layout.usage_count} Layouts. Changing the Zones affects all of them.`)) return false;
       setSharedGeometryApproved(true);
     }
+    return true;
+  };
+
+  const handleGeometryChange = (zones: LayoutZone[]) => {
     setEditedZones(zones);
   };
 
@@ -672,12 +677,14 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
               zonePreviews={zonePreviews}
               selectedIndex={layout.zones.findIndex((zone) => zone.id === activeZoneId)}
               onSelectIndex={(index) => setSelectedZoneId(index === null ? null : (layout.zones[index]?.id ?? null))}
+              onChangeStart={confirmGeometryChange}
               onChange={handleGeometryChange}
             />
             {activeZoneId && (
               <Button
                 variant="secondary"
                 onClick={() => {
+                  if (!confirmGeometryChange()) return;
                   const next = splitZone(layout.zones, layout.zones.findIndex((zone) => zone.id === activeZoneId));
                   if (next) {
                     const splitSource = layout.zones.findIndex((zone) => zone.id === activeZoneId);

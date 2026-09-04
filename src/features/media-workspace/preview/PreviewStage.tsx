@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/Button";
 import { deviceFit, parseAspectRatio } from "@/features/media-workspace/layouts/geometry";
 import { fetchPreviewUrls } from "@/lib/api/media-api";
-import { isVideoUrl } from "@/lib/media-kind";
 import type { MediaAsset } from "@/types/domain";
-import { previewFrameAt, zoneLoopDurationSeconds, type PlaybackPreviewItem, type PlaybackPreviewZone } from "./preview-clock";
+import { PreviewControls } from "./PreviewControls";
+import { PreviewSurface } from "./PreviewSurface";
+import { previewFrameAt, zoneLoopDurationSeconds, type PlaybackPreviewZone, type ZonePreviewFrame } from "./preview-clock";
 import { defaultGeometry, resolveFrameAspectRatio, resolveFramePixels, type GeometryOption } from "./preview-geometry";
 
 export type { PlaybackPreviewItem, PlaybackPreviewSettings, PlaybackPreviewZone } from "./preview-clock";
@@ -23,6 +23,11 @@ export function PreviewStage({
   active = true,
   geometryOptions = EMPTY_GEOMETRY_OPTIONS,
   referenceResolution = null,
+  allowActualSize = true,
+  onFrameChange,
+  seekRequest,
+  controlsPlacement = "panel",
+  frameViewportHeight = "70vh",
 }: {
   zones: PlaybackPreviewZone[];
   assets: MediaAsset[];
@@ -37,9 +42,20 @@ export function PreviewStage({
   /** The Layout's Authoring Reference Resolution, used to shape the frame when the chosen
    *  target reports no geometry of its own. `null` on a legacy Layout (ADR 0050). */
   referenceResolution?: string | null;
+  /** ADR 0061 §5: a Playlist has no pixels, so its host passes `false` to hide the
+   *  "Actual size" control rather than assert a resolution the Playlist does not have. */
+  allowActualSize?: boolean;
+  /** ADR 0061 §6: fires when the displayed frame's identity or metadata changes — never on
+   *  `offsetSeconds` alone. `null` unless the preview holds exactly one Zone. */
+  onFrameChange?: (frame: ZonePreviewFrame | null) => void;
+  /** External scrubber target, used by Playlist filmstrip clicks to jump to an item's start. */
+  seekRequest?: { seconds: number; id: number } | null;
+  controlsPlacement?: "panel" | "overlay";
+  frameViewportHeight?: string;
 }) {
   const [timeSeconds, setTimeSeconds] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [geometryId, setGeometryId] = useState<string | null>(null);
   const [fitToWindow, setFitToWindow] = useState(true);
@@ -49,6 +65,7 @@ export function PreviewStage({
   const [previewLoadState, setPreviewLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const startedAt = useRef<number | null>(null);
   const initialTime = useRef(0);
+  const lastSeekRequestId = useRef(seekRequest?.id);
 
   const assetsById = useMemo(() => Object.fromEntries(assets.map((asset) => [asset.id, asset])), [assets]);
   const resolvedZones = useMemo(
@@ -64,6 +81,12 @@ export function PreviewStage({
   );
   const timelineSeconds = Math.max(1, ...resolvedZones.map((zone) => zoneLoopDurationSeconds(zone.items)));
 
+  // ADR 0061 §6: the panels are a sibling fed this frame; the stage keeps the only clock.
+  const singleZoneFrame = resolvedZones.length === 1 ? previewFrameAt(resolvedZones[0].items, timeSeconds) : null;
+  const singleZoneFrameKey = singleZoneFrame
+    ? JSON.stringify({ index: singleZoneFrame.itemIndex, item: singleZoneFrame.item })
+    : null;
+
   // Derived, never an effect: the option list arrives asynchronously in every host, and resetting
   // the selection from an effect is both a cascading render and a flash of the wrong frame.
   const selectedGeometry = geometryOptions.find((option) => option.id === geometryId) ?? defaultGeometry(geometryOptions);
@@ -77,7 +100,7 @@ export function PreviewStage({
   // positioned, so in the full-screen flex column it would otherwise collapse to nothing. Fitting
   // derives the width from the height budget so the aspect ratio survives the clamp.
   const frameWidth = fitToWindow || !framePixels
-    ? `min(100%, calc(${isFullscreen ? "82vh" : "70vh"} * ${ratioWidth} / ${ratioHeight}))`
+    ? `min(100%, calc(${isFullscreen ? "82vh" : frameViewportHeight} * ${ratioWidth} / ${ratioHeight}))`
     : `${framePixels[0]}px`;
 
   // ponytail: promise chain, not a direct call — react-hooks/set-state-in-effect flags any
@@ -124,11 +147,29 @@ export function PreviewStage({
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, speed, timelineSeconds]);
 
   useEffect(() => {
     if (timeSeconds >= timelineSeconds && playing) Promise.resolve().then(() => setPlaying(false));
   }, [playing, timeSeconds, timelineSeconds]);
+
+  useEffect(() => {
+    if (!seekRequest || seekRequest.id === lastSeekRequestId.current) return;
+    lastSeekRequestId.current = seekRequest.id;
+    Promise.resolve().then(() => {
+      setTimeSeconds(seekRequest.seconds);
+      initialTime.current = seekRequest.seconds;
+      startedAt.current = performance.now();
+    });
+  }, [seekRequest]);
+
+  // ponytail: same deferred-call pattern as above — onFrameChange sets state in the host.
+  useEffect(() => {
+    if (!onFrameChange) return;
+    Promise.resolve().then(() => onFrameChange(singleZoneFrame));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [singleZoneFrameKey, onFrameChange]);
 
   useEffect(() => {
     const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
@@ -146,6 +187,59 @@ export function PreviewStage({
     initialTime.current = next;
     startedAt.current = performance.now();
   };
+  const geometryControls = geometryOptions.length > 0 ? (
+    <div className="mb-3 space-y-2">
+      <label className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+        <span>Preview shape</span>
+        <select
+          value={selectedGeometry?.id ?? ""}
+          onChange={(event) => setGeometryId(event.target.value)}
+          className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+        >
+          {geometryOptions.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
+        <span>· frame {frameAspectRatio}</span>
+      </label>
+      {geometryFit === "unknown" && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800" role="status">
+          These targets report no screen geometry. Previewing at {frameAspectRatio} from the Layout instead.
+        </p>
+      )}
+      {(geometryFit === "orientation-mismatch" || geometryFit === "aspect-mismatch") && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800" role="status">
+          This target is a different shape from the Layout ({aspectRatio}). Zones stretch to fill it — check the framing before publishing.
+        </p>
+      )}
+    </div>
+  ) : null;
+
+  const controls = (
+    <PreviewControls
+      conflictCount={conflictCount}
+      geometryControls={geometryControls}
+      timeSeconds={timeSeconds}
+      timelineSeconds={timelineSeconds}
+      muted={muted}
+      playing={playing}
+      speed={speed}
+      allowActualSize={allowActualSize}
+      framePixels={framePixels}
+      fitToWindow={fitToWindow}
+      isFullscreen={isFullscreen}
+      placement={controlsPlacement}
+      onTimeline={setTimelineTime}
+      onPlaying={(next) => {
+        if (next && timeSeconds >= timelineSeconds) setTimelineTime(0);
+        setPlaying(next);
+      }}
+      onSpeed={setSpeed}
+      onMuted={setMuted}
+      onFitToWindow={setFitToWindow}
+      onFullscreen={toggleFullscreen}
+    />
+  );
 
   return (
     <div ref={stageRef} className={isFullscreen ? "flex h-screen flex-col justify-center gap-4 bg-black p-4" : "space-y-4"}>
@@ -170,6 +264,7 @@ export function PreviewStage({
                   url={frame.item ? urls[frame.item.mediaAssetId] : undefined}
                   playing={playing}
                   speed={speed}
+                  muted={muted}
                   offsetSeconds={frame.offsetSeconds}
                   loadState={previewLoadState}
                 />
@@ -181,134 +276,12 @@ export function PreviewStage({
             );
           })}
           {resolvedZones.length === 0 && <div className="flex h-full items-center justify-center text-sm text-zinc-400">No Zones to preview</div>}
+          {controlsPlacement === "overlay" && controls}
           </div>
         </div>
       </div>
 
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
-        {conflictCount > 0 && (
-          <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800" role="status">
-            Preview shows this draft alone. {conflictCount} other publication{conflictCount === 1 ? "" : "s"} may merge on the same screen.
-          </p>
-        )}
-        {geometryOptions.length > 0 && (
-          <div className="mb-3 space-y-2">
-            <label className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-              <span>Preview shape</span>
-              <select
-                value={selectedGeometry?.id ?? ""}
-                onChange={(event) => setGeometryId(event.target.value)}
-                className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-              >
-                {geometryOptions.map((option) => (
-                  <option key={option.id} value={option.id}>{option.label}</option>
-                ))}
-              </select>
-              <span>· frame {frameAspectRatio}</span>
-            </label>
-            {geometryFit === "unknown" && (
-              <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800" role="status">
-                These targets report no screen geometry. Previewing at {frameAspectRatio} from the Layout instead.
-              </p>
-            )}
-            {(geometryFit === "orientation-mismatch" || geometryFit === "aspect-mismatch") && (
-              <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800" role="status">
-                This target is a different shape from the Layout ({aspectRatio}). Zones stretch to fill it — check the framing before publishing.
-              </p>
-            )}
-          </div>
-        )}
-        <div className="mb-2 flex items-center justify-between gap-3 text-xs text-zinc-500">
-          <span>Shared timeline · all Zones start at 0s</span>
-          <span>{timeSeconds.toFixed(1)}s / {timelineSeconds}s · muted</span>
-        </div>
-        <input
-          aria-label="Preview timeline"
-          type="range"
-          min="0"
-          max={timelineSeconds}
-          step="0.1"
-          value={timeSeconds}
-          onChange={(event) => setTimelineTime(Number(event.target.value))}
-          className="w-full accent-indigo-600"
-        />
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button
-            variant="primary"
-            className="px-3 py-1.5 text-xs"
-            onClick={() => {
-              if (!playing && timeSeconds >= timelineSeconds) setTimelineTime(0);
-              setPlaying((current) => !current);
-            }}
-          >
-            {playing ? "Pause" : "Play"}
-          </Button>
-          {[1, 2, 4].map((option) => (
-            <Button
-              key={option}
-              variant={speed === option ? "primary" : "secondary"}
-              className="px-3 py-1.5 text-xs"
-              onClick={() => setSpeed(option)}
-            >
-              {option}×
-            </Button>
-          ))}
-          {framePixels && (
-            <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setFitToWindow((current) => !current)}>
-              {fitToWindow ? `Actual size (${framePixels[0]}×${framePixels[1]})` : "Fit to window"}
-            </Button>
-          )}
-          <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={toggleFullscreen}>
-            {isFullscreen ? "Exit full screen" : "Full screen"}
-          </Button>
-        </div>
-      </div>
+      {controlsPlacement === "panel" && controls}
     </div>
   );
-}
-
-function PreviewSurface({
-  item,
-  asset,
-  url,
-  playing,
-  speed,
-  offsetSeconds,
-  loadState,
-}: {
-  item: PlaybackPreviewItem | null;
-  asset: MediaAsset | undefined;
-  url: string | undefined;
-  playing: boolean;
-  speed: number;
-  offsetSeconds: number;
-  loadState: "idle" | "loading" | "ready" | "error";
-}) {
-  if (!item) return <Placeholder label="Unbound Zone" />;
-  if (!asset) return <Placeholder label={item.label ?? "Missing asset"} />;
-  if (!url) return <Placeholder label={loadState === "loading" ? "Loading preview…" : "Preview unavailable"} />;
-
-  const isVideo = asset.kind === "video" || asset.file?.mime_type?.startsWith("video/") || isVideoUrl(url);
-  if (isVideo) return <PreviewVideo key={item.mediaAssetId} src={url} playing={playing} speed={speed} offsetSeconds={offsetSeconds} />;
-  return <img src={url} alt={asset.title ?? asset.file?.original_filename ?? item.label ?? "Preview asset"} className="h-full w-full object-cover" />;
-}
-
-function PreviewVideo({ src, playing, speed, offsetSeconds }: { src: string; playing: boolean; speed: number; offsetSeconds: number }) {
-  const ref = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    video.playbackRate = speed;
-    if (playing) void video.play().catch(() => undefined);
-    else video.pause();
-  }, [playing, speed, src]);
-  useEffect(() => {
-    const video = ref.current;
-    if (video && (!playing || Math.abs(video.currentTime - offsetSeconds) > 0.35)) video.currentTime = offsetSeconds;
-  }, [offsetSeconds, playing, src]);
-  return <video ref={ref} src={src} muted playsInline className="h-full w-full object-cover" />;
-}
-
-function Placeholder({ label }: { label: string }) {
-  return <div className="flex h-full w-full items-center justify-center bg-zinc-900 p-3 text-center text-xs text-amber-200">{label}</div>;
 }

@@ -106,6 +106,11 @@ export type PlaylistItem = {
   position: number;
   duration_seconds?: number | null;
   transition?: Transition;
+  /** Per-item overrides — #37. Null/absent means inherit the playlist default. */
+  transition_duration_seconds?: number | null;
+  fit?: "fit" | "fill" | "stretch" | null;
+  background_color?: string | null;
+  notes?: string | null;
 };
 
 export type PlaylistListItem = {
@@ -113,6 +118,10 @@ export type PlaylistListItem = {
   name: string;
   status: PlaylistStatus;
   item_count: number;
+  /** The playlist's folder, or `null`/absent for Uncategorized — Thunder_Core #38.
+   *  Optional for deploy ordering: absent renders as Uncategorized. */
+  folder_id?: string | null;
+  deleted_at?: string | null;
   created_at?: string;
   metadata?: Record<string, unknown>;
   cover_asset_id?: string | null;
@@ -125,6 +134,14 @@ export type PlaylistListItem = {
    *  Optional for the same deploy-ordering reason as the fields above; when it is
    *  missing the display status falls back to the stored `status`. */
   publication_count?: number;
+  /** Distinct `media_assets.kind` values held by the playlist's items — Thunder_Core
+   *  migration 20260902160000. Optional for the same deploy-ordering reason; absent or
+   *  empty renders the list's Type column as "—". */
+  item_kinds?: ("video" | "image")[];
+  /** Against the tenant's one shared vocabulary (`media_core.tags`), not
+   *  `metadata.info.tags` — Thunder_Core #41 / ADR 0060 §8. Optional for the same
+   *  deploy-ordering reason; absent renders as no chips. */
+  tags?: Tag[];
 };
 
 export type PlaylistDetail = {

@@ -109,6 +109,25 @@ different play modes — a looping main Zone beside a play-once ticker.
 `PlayerTimelineSlot` (C#) and `PlayerTimelineSlot` (Kotlin) need no change; only their container
 does.
 
+### Per-item playback overrides — shipped 2026-09-03, server + editor (thunder_one_prj #37)
+
+Three extra keys sit **flat on the slot object**, beside `transition` — not inside `playback`
+(that object is Zone-level state, ADR 0031). They are resolved at snapshot materialization
+(ADR 0060 §5a): an item-level override wins, else the Playlist's `metadata.playback` value, else
+the fallback below. The player never sees a NULL for the first two.
+
+| Field | Type | Notes |
+|---|---|---|
+| `transition_duration_seconds` | number ≥ 0 | length of the `transition` effect, in seconds. Always present. Fallback when nothing is set: `1` for a `fade`, `0` for a `cut` |
+| `fit` | `"fit"` \| `"fill"` \| `"stretch"` | how the media is scaled into the slot rectangle. Always present. Fallback: `"fit"` (letterbox — never crops or distorts) |
+| `background_color` | string (`#rrggbb`) or `null` | paint behind the media where `fit` leaves the rectangle uncovered. `null` = paint nothing (the Layout's own `background` already shows through) |
+
+**A player may ignore any of the three.** A build that does not implement `fade` ignores
+`transition_duration_seconds`; one that only letterboxes ignores `fit` and `background_color`.
+Ignoring a key must not break playback — treat each as advisory.
+
+`notes` is an authoring annotation and is **not** in the payload by design.
+
 ## Synchronization
 
 Per ADR 0043, evaluated **per Zone** with that Zone's own duration and the shared top-level anchor:

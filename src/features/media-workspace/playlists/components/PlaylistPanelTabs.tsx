@@ -60,20 +60,6 @@ export function DetailsTab({
       />
       <Row label="Resolution" value={resolutionLabel(metadata.info.resolution)} />
       <Row label="Created By" value={detail.created_by?.display_name ?? "—"} />
-      {metadata.info.tags && metadata.info.tags.length > 0 && (
-        <Row
-          label="Tags"
-          value={
-            <span className="flex flex-wrap justify-end gap-1">
-              {metadata.info.tags.map((tag) => (
-                <Badge key={tag} color="zinc" variant="pill">
-                  {tag}
-                </Badge>
-              ))}
-            </span>
-          }
-        />
-      )}
       {metadata.info.description && (
         <p className="pt-3 text-sm text-zinc-600 dark:text-zinc-300">
           {metadata.info.description}
@@ -83,8 +69,8 @@ export function DetailsTab({
   );
 }
 
-/** Compact enough for a 380px column — the detail page's PlaylistItemsTable carries
- *  resolution and file size columns that have nowhere to go here. */
+/** Compact enough for a 380px column — resolution and file-size columns have nowhere
+ *  to go here. */
 export function ContentTab({ detail }: { detail: PlaylistDetail }) {
   const items = useMemo(
     () => [...detail.items].sort((a, b) => a.position - b.position),

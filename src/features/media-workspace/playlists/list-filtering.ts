@@ -1,27 +1,36 @@
-// Everything the playlists list page derives from one dataset: the ownership tab, the
-// filter row, the summary cards and the page slice. Kept out of the component so the
-// whole lot is checkable without React — see list-filtering.check.mts.
+// Everything the playlists list page derives from one dataset: the filter row,
+// summary cards and page slice. Kept out of the component so the whole lot is
+// checkable without React — see list-filtering.check.mts.
 
 import { decodeMetadata } from "./metadata.ts";
 import { playlistDisplayStatus } from "./status-display.ts";
 import type { PlaylistListItem, PlaylistStatus, PlaylistType } from "./types";
 
-export type OwnershipTab = "all" | "mine";
+/** What the list's Type column and filter show — distinct from `PlaylistType`
+ *  (standard/dynamic, an unrelated metadata concept the create wizard still owns). */
+export const CONTENT_TYPES = ["video", "image", "mixed"] as const;
+export type ContentType = (typeof CONTENT_TYPES)[number];
 
 export type ListFilters = {
-  tab: OwnershipTab;
-  /** Null while the session hasn't resolved — "My Playlists" then matches nothing. */
-  currentUserId: string | null;
   query: string;
   status: PlaylistStatus | "all";
-  type: PlaylistType | "all";
-  campaignId: string | "all";
+  type: ContentType | "all";
 };
 
 /** Rows written before the wizard stored a type read as standard — same default the
  *  table has always displayed, so the filter can never hide a row the column shows. */
 export function playlistType(playlist: PlaylistListItem): PlaylistType {
   return decodeMetadata(playlist.metadata).info.playlistType ?? "standard";
+}
+
+/** Video / Image / Mixed, derived from the distinct asset kinds the playlist's items
+ *  hold (Thunder_Core migration 20260902160000) — null for a playlist with no items or
+ *  for a row a stale backend hasn't caught up to yet, rendered as "—". */
+export function playlistContentType(playlist: PlaylistListItem): ContentType | null {
+  const kinds = new Set(playlist.item_kinds ?? []);
+  if (kinds.size === 0) return null;
+  if (kinds.size > 1) return "mixed";
+  return kinds.has("video") ? "video" : "image";
 }
 
 export function playlistCampaignId(playlist: PlaylistListItem): string | undefined {
@@ -34,10 +43,8 @@ export function filterPlaylists(
 ): PlaylistListItem[] {
   const needle = filters.query.trim().toLowerCase();
   return playlists.filter((p) => {
-    if (filters.tab === "mine" && p.created_by?.id !== filters.currentUserId) return false;
     if (filters.status !== "all" && playlistDisplayStatus(p) !== filters.status) return false;
-    if (filters.type !== "all" && playlistType(p) !== filters.type) return false;
-    if (filters.campaignId !== "all" && playlistCampaignId(p) !== filters.campaignId) return false;
+    if (filters.type !== "all" && playlistContentType(p) !== filters.type) return false;
     if (needle && !p.name.toLowerCase().includes(needle)) return false;
     return true;
   });
@@ -77,7 +84,7 @@ export function copyName(base: string, existingNames: string[]): string {
   return `${stem} (Copy ${Date.now()})`;
 }
 
-export const SORT_KEYS = ["name", "type", "campaign", "duration", "status", "updated"] as const;
+export const SORT_KEYS = ["name", "type", "duration", "status", "updated"] as const;
 export type SortKey = (typeof SORT_KEYS)[number];
 export type SortDir = "asc" | "desc";
 export type Sort = { key: SortKey; dir: SortDir };
@@ -89,16 +96,13 @@ const STATUS_ORDER: Record<PlaylistStatus, number> = { active: 0, inactive: 1, d
  *  regardless of direction, instead of letting them flip to the top on desc. */
 function sortValue(
   playlist: PlaylistListItem,
-  key: SortKey,
-  campaignNames: Record<string, string>
+  key: SortKey
 ): string | number | null {
   switch (key) {
     case "name":
       return playlist.name;
     case "type":
-      return playlistType(playlist);
-    case "campaign":
-      return campaignNames[playlistCampaignId(playlist) ?? ""] || null;
+      return playlistContentType(playlist);
     case "duration":
       return playlist.total_duration_seconds ?? null;
     case "status":
@@ -122,15 +126,14 @@ function compareValues(a: string | number | null, b: string | number | null, dir
 
 export function sortPlaylists(
   playlists: PlaylistListItem[],
-  sort: Sort,
-  campaignNames: Record<string, string>
+  sort: Sort
 ): PlaylistListItem[] {
   const dirMultiplier = sort.dir === "asc" ? 1 : -1;
 
   return [...playlists].sort((a, b) => {
     const cmp = compareValues(
-      sortValue(a, sort.key, campaignNames),
-      sortValue(b, sort.key, campaignNames),
+      sortValue(a, sort.key),
+      sortValue(b, sort.key),
       dirMultiplier
     );
     if (cmp !== 0) return cmp;

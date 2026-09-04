@@ -70,6 +70,7 @@ export function LayoutCanvas({
   zonePreviews = {},
   selectedIndex,
   onSelectIndex,
+  onChangeStart,
   onChange,
 }: {
   zones: LayoutZone[];
@@ -79,6 +80,7 @@ export function LayoutCanvas({
   zonePreviews?: Record<string, { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string }>;
   selectedIndex: number | null;
   onSelectIndex: (index: number | null) => void;
+  onChangeStart?: () => boolean;
   onChange: (zones: LayoutZone[]) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -117,6 +119,7 @@ export function LayoutCanvas({
   const startDrag = (index: number, handle: Handle) => (e: React.PointerEvent) => {
     e.stopPropagation();
     onSelectIndex(index);
+    if (onChangeStart && !onChangeStart()) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     drag.current = {
