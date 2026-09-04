@@ -61,7 +61,6 @@ export function encodeMetadata(metadata: PlaylistMetadata): Json {
   const info: Json = {};
   put(info, "description", metadata.info.description);
   put(info, "campaign_id", metadata.info.campaignId);
-  put(info, "tags", metadata.info.tags);
   put(info, "playlist_type", metadata.info.playlistType);
   put(info, "resolution", metadata.info.resolution);
   // width/height are derived from resolution, not a second thing the caller can set — one
@@ -106,12 +105,10 @@ export function decodeMetadata(raw: unknown): PlaylistMetadata {
 
   const rawInfo = obj(source, "info");
   const rawPlayback = obj(source, "playback");
-  const tags = rawInfo.tags;
 
   const info: PlaylistInfo = {
     description: str(rawInfo, "description"),
     campaignId: str(rawInfo, "campaign_id"),
-    tags: Array.isArray(tags) ? tags.filter((t): t is string => typeof t === "string") : undefined,
     playlistType: oneOf(rawInfo, "playlist_type", PLAYLIST_TYPES),
     resolution: str(rawInfo, "resolution"),
     // Prefer the stored numbers; fall back to parsing resolution for rows written before

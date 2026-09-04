@@ -60,20 +60,6 @@ export function DetailsTab({
       />
       <Row label="Resolution" value={resolutionLabel(metadata.info.resolution)} />
       <Row label="Created By" value={detail.created_by?.display_name ?? "—"} />
-      {metadata.info.tags && metadata.info.tags.length > 0 && (
-        <Row
-          label="Tags"
-          value={
-            <span className="flex flex-wrap justify-end gap-1">
-              {metadata.info.tags.map((tag) => (
-                <Badge key={tag} color="zinc" variant="pill">
-                  {tag}
-                </Badge>
-              ))}
-            </span>
-          }
-        />
-      )}
       {metadata.info.description && (
         <p className="pt-3 text-sm text-zinc-600 dark:text-zinc-300">
           {metadata.info.description}

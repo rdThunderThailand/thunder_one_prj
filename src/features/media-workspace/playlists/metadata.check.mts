@@ -12,7 +12,6 @@ const full: PlaylistMetadata = {
   info: {
     description: "Weekly promo",
     campaignId: "c-1",
-    tags: ["t-1", "t-2"],
     playlistType: "standard",
     resolution: "1920x1080",
     // width/height are derived from resolution on decode (ADR 0032), so the round trip adds them back.
