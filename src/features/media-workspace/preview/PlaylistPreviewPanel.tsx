@@ -76,7 +76,7 @@ export function PlaylistPreviewPanel({
           <Row label="Total duration" value={formatDuration(totalSeconds)} labelClass={labelClass} valueClass={valueClass} />
           <Row label="Play mode" value={playback?.playMode === "shuffle" ? "Shuffle" : "Sequential"} labelClass={labelClass} valueClass={valueClass} />
           <Row label="Repeat" value={playback?.repeat === "once" ? "Once" : "Repeat All"} labelClass={labelClass} valueClass={valueClass} />
-          <Row label="Start from" value={playback?.startFrom === "resume" ? "Resume" : "First item"} labelClass={labelClass} valueClass={valueClass} />
+          <Row label="Start from" value={playback?.startFrom === "resume" ? "Resume · previews from first" : "First item"} labelClass={labelClass} valueClass={valueClass} />
           <Row
             label="Transition"
             value={
