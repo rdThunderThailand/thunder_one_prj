@@ -521,11 +521,15 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
     }
   };
 
-  const handleGeometryChange = (zones: LayoutZone[]) => {
+  const confirmGeometryChange = () => {
     if (layout?.kind === "template" && (layout.usage_count ?? 0) > 1 && !sharedGeometryApproved) {
-      if (!window.confirm(`This Template is used by ${layout.usage_count} Layouts. Changing the Zones affects all of them.`)) return;
+      if (!window.confirm(`This Template is used by ${layout.usage_count} Layouts. Changing the Zones affects all of them.`)) return false;
       setSharedGeometryApproved(true);
     }
+    return true;
+  };
+
+  const handleGeometryChange = (zones: LayoutZone[]) => {
     setEditedZones(zones);
   };
 
@@ -673,12 +677,14 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
               zonePreviews={zonePreviews}
               selectedIndex={layout.zones.findIndex((zone) => zone.id === activeZoneId)}
               onSelectIndex={(index) => setSelectedZoneId(index === null ? null : (layout.zones[index]?.id ?? null))}
+              onChangeStart={confirmGeometryChange}
               onChange={handleGeometryChange}
             />
             {activeZoneId && (
               <Button
                 variant="secondary"
                 onClick={() => {
+                  if (!confirmGeometryChange()) return;
                   const next = splitZone(layout.zones, layout.zones.findIndex((zone) => zone.id === activeZoneId));
                   if (next) {
                     const splitSource = layout.zones.findIndex((zone) => zone.id === activeZoneId);
