@@ -263,11 +263,22 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
   );
   const playbackPreviewZones = useMemo<PlaybackPreviewZone[]>(() => {
     if (!layout) return [];
+    const assetsById = Object.fromEntries(assets.map((asset) => [asset.id, asset]));
     return layout.zones.map((zone) => {
       const zoneBinding = zone.id ? bindings.find((candidate) => candidate.layoutZoneId === zone.id) : undefined;
-      const items = zoneBinding?.source === "assets"
+      const bound = zoneBinding?.source === "assets"
         ? zoneBinding.assetItems
         : zoneBinding?.playlistId ? playlistItemsById[zoneBinding.playlistId] ?? [] : [];
+      /** An item with no override plays for as long as its asset lasts, and is named after it.
+       *  The shared converter only sees the item, so resolve both against the assets here. */
+      const items = bound.map((item) => {
+        const asset = assetsById[item.media_asset_id];
+        return {
+          ...item,
+          title: ("title" in item ? item.title : undefined) ?? asset?.title ?? asset?.file?.original_filename,
+          duration_seconds: item.duration_seconds ?? asset?.duration_seconds ?? null,
+        };
+      });
       const playlistPlayback = zoneBinding?.playlistId ? playlistPlaybackById[zoneBinding.playlistId] : undefined;
       return compositionZonePreview(
         { id: zone.id ?? `zone-${zone.position}`, name: zone.name, x: zone.x, y: zone.y, width: zone.width, height: zone.height, playback: zoneBinding?.playback },
@@ -275,7 +286,7 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
         playlistPlayback,
       );
     });
-  }, [bindings, layout, playlistItemsById, playlistPlaybackById]);
+  }, [assets, bindings, layout, playlistItemsById, playlistPlaybackById]);
   const previewHandoff = useMemo<StagePreview & { source: "composition"; id: string; assets: MediaAsset[] } | null>(() => {
     if (!id || !layout) return null;
     const assetIds = new Set(playbackPreviewZones.flatMap((zone) => zone.items.map((item) => item.mediaAssetId)));

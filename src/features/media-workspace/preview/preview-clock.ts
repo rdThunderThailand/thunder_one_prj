@@ -92,10 +92,6 @@ function seededShuffle(indexes: number[], seed: string): number[] {
   return result;
 }
 
-export function zoneLoopDurationSeconds(items: PlaybackPreviewItem[]): number {
-  return items.reduce((total, item) => total + duration(item), 0);
-}
-
 /**
  * One cycle's worth of playback order and timing, a pure function of `(items, playback, seed)`.
  * `seed` is the Zone id: shuffle must reproduce the same order for the same Zone on every render,
