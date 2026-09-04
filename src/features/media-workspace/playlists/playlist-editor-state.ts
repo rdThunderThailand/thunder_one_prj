@@ -5,6 +5,11 @@ import type { MediaAsset } from "../../../types/domain.ts";
 import type { PlaylistDetail } from "./types";
 import type { DraftItem, PlaylistInfo, PlaylistPlayback } from "./types";
 import { playlistDetailToDraftFields } from "./draft-from-detail.ts";
+import { zoneSchedule } from "../preview/preview-clock.ts";
+
+/** Same seed the editor's own live preview uses (`playlist-preview.ts`'s Zone id) — the header's
+ *  numbers and the embedded PreviewStage must agree on the schedule, not just the model (ADR 0062 §1/§5). */
+const EDITOR_SCHEDULE_SEED = "playlist-preview";
 
 export type EditorState = { name: string; items: DraftItem[]; playback: PlaylistPlayback };
 
@@ -45,18 +50,38 @@ export function savedStateLabel(isDirty: boolean, lastSavedAt: Date | null, hasR
   return hasRow ? "saved" : "not saved yet";
 }
 
-/** Loop length for the header, resolving each item's duration against its asset (ADR 0051 §3). */
-export function totalItemsDurationSeconds(items: DraftItem[], assets: MediaAsset[]): number {
+function toScheduleItems(items: DraftItem[], assets: MediaAsset[]) {
   const byId = new Map(assets.map((a) => [a.id, a.duration_seconds]));
-  return items.reduce((sum, item) => sum + Math.max(0, item.durationSeconds ?? byId.get(item.mediaAssetId) ?? 0), 0);
+  return items.map((item) => ({
+    mediaAssetId: item.mediaAssetId,
+    durationSeconds: item.durationSeconds ?? byId.get(item.mediaAssetId) ?? 0,
+    transition: item.transition,
+    transitionDurationSeconds: item.transitionDurationSeconds ?? null,
+  }));
 }
 
-export function itemStartSeconds(items: DraftItem[], assets: MediaAsset[]): number[] {
-  const byId = new Map(assets.map((a) => [a.id, a.duration_seconds]));
-  return items.reduce<{ starts: number[]; cursor: number }>((acc, item) => {
-    const seconds = Math.max(0, item.durationSeconds ?? byId.get(item.mediaAssetId) ?? 0);
-    return { starts: [...acc.starts, acc.cursor], cursor: acc.cursor + seconds };
-  }, { starts: [], cursor: 0 }).starts;
+function toScheduleSettings(playback: PlaylistPlayback) {
+  return {
+    playMode: playback.playMode,
+    repeat: playback.repeat,
+    defaultTransition: playback.defaultTransition,
+    transitionDurationSeconds: playback.transitionDuration,
+  };
+}
+
+/** Loop length for the header — media plus transitions, the same rule `zoneSchedule()` gives the
+ *  preview (ADR 0062 §1/§5). */
+export function totalItemsDurationSeconds(items: DraftItem[], assets: MediaAsset[], playback: PlaylistPlayback): number {
+  return zoneSchedule(toScheduleItems(items, assets), toScheduleSettings(playback), EDITOR_SCHEDULE_SEED).totalSeconds;
+}
+
+/** Start second of each item, indexed by **authored** order (§1: "the filmstrip seeks with
+ *  `schedule.starts[schedule.order.indexOf(authoredIndex)]`"). */
+export function itemStartSeconds(items: DraftItem[], assets: MediaAsset[], playback: PlaylistPlayback): number[] {
+  const schedule = zoneSchedule(toScheduleItems(items, assets), toScheduleSettings(playback), EDITOR_SCHEDULE_SEED);
+  const starts = new Array<number>(items.length);
+  schedule.order.forEach((authoredIndex, k) => { starts[authoredIndex] = schedule.starts[k]; });
+  return starts;
 }
 
 /** #35: assets picked in the Add Item drawer land at the end, in selection order, skipping

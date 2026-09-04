@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { MediaAsset } from "@/types/domain";
-import { playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
+import { draftItemToPreview, playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
 import type { DraftItem, PlaylistPlayback } from "./types";
 
 export type PlaylistPreviewSnapshot = {
@@ -50,12 +50,7 @@ export function usePlaylistPreviewHandoff(getSnapshot: () => PlaylistPreviewSnap
       const current = snapshotRef.current();
       const stage = playlistPreviewStage({
         name: current.name,
-        items: current.items.map((item) => ({
-          mediaAssetId: item.mediaAssetId,
-          title: item.title,
-          durationSeconds: item.durationSeconds,
-          transition: item.transition,
-        })),
+        items: current.items.map(draftItemToPreview),
         playback: current.playback,
       });
       const handoff = { ...stage, source: "playlist" as const, id: handoffId, assets: current.assets };

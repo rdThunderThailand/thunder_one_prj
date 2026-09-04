@@ -17,7 +17,8 @@ import { setPlaylistItems, upsertPlaylist } from "@/features/media-workspace/pla
 import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
 import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
-import type { StagePreview } from "@/features/media-workspace/preview/composition-preview";
+import { compositionZonePreview, type StagePreview } from "@/features/media-workspace/preview/composition-preview";
+import type { PlaylistPreviewPlayback } from "@/features/media-workspace/preview/playlist-preview";
 import type { MediaAsset, PlaylistItem } from "@/types/domain";
 import {
   fetchComposition,
@@ -61,6 +62,9 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
   const [previewThumbnails, setPreviewThumbnails] = useState<Record<string, string | undefined>>({});
   const [playlistPreviewAssetIds, setPlaylistPreviewAssetIds] = useState<Record<string, string>>({});
   const [playlistItemsById, setPlaylistItemsById] = useState<Record<string, PlaylistItem[]>>({});
+  /** ADR 0062 §7: `default_transition`/`transition_duration`/`media_fit` for the preview come from
+   *  the bound Playlist, never the Zone binding — decoded alongside the items already fetched. */
+  const [playlistPlaybackById, setPlaylistPlaybackById] = useState<Record<string, PlaylistPreviewPlayback>>({});
   const [previewOpen, setPreviewOpen] = useState(initialPreview);
 
   const [loading, setLoading] = useState(!!compositionId);
@@ -92,7 +96,7 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
             try {
               const detail = await fetchPlaylist(playlist.id);
               const assetId = firstPlaylistAssetId(detail.items);
-              return { playlistId: playlist.id, assetId, items: detail.items };
+              return { playlistId: playlist.id, assetId, items: detail.items, playback: decodeMetadata(detail.metadata).playback };
             } catch {
               return null;
             }
@@ -106,6 +110,10 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
           setPlaylistItemsById((current) => ({
             ...current,
             ...Object.fromEntries(entries.flatMap((entry) => entry ? [[entry.playlistId, entry.items]] : [])),
+          }));
+          setPlaylistPlaybackById((current) => ({
+            ...current,
+            ...Object.fromEntries(entries.flatMap((entry) => entry ? [[entry.playlistId, entry.playback]] : [])),
           }));
         });
       })
@@ -143,6 +151,7 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
                 binding: { ...binding, playlistName: playlistDetail.name },
                 firstAssetId: firstPlaylistAssetId(playlistDetail.items),
                 items: playlistDetail.items,
+                playback: decodeMetadata(playlistDetail.metadata).playback,
               };
             } catch {
               return { binding };
@@ -161,6 +170,10 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
         setPlaylistItemsById((current) => ({
           ...current,
           ...Object.fromEntries(named.flatMap((entry) => entry.binding.playlistId && entry.items ? [[entry.binding.playlistId, entry.items]] : [])),
+        }));
+        setPlaylistPlaybackById((current) => ({
+          ...current,
+          ...Object.fromEntries(named.flatMap((entry) => entry.binding.playlistId && entry.playback ? [[entry.binding.playlistId, entry.playback]] : [])),
         }));
         setInitialSnapshot(JSON.stringify({ name: detail.name, layoutId: detail.layout_id, bindings: namedBindings }));
       })
@@ -211,6 +224,7 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
             setPlaylistPreviewAssetIds((current) => ({ ...current, [next.playlistId as string]: firstAssetId }));
           }
           setPlaylistItemsById((current) => ({ ...current, [next.playlistId as string]: detail.items }));
+          setPlaylistPlaybackById((current) => ({ ...current, [next.playlistId as string]: decodeMetadata(detail.metadata).playback }));
         })
         .catch(() => undefined);
     }
@@ -249,32 +263,19 @@ export function CompositionEditorPage({ compositionId, initialPreview = false }:
   );
   const playbackPreviewZones = useMemo<PlaybackPreviewZone[]>(() => {
     if (!layout) return [];
-    const assetsById = Object.fromEntries(assets.map((asset) => [asset.id, asset]));
     return layout.zones.map((zone) => {
       const zoneBinding = zone.id ? bindings.find((candidate) => candidate.layoutZoneId === zone.id) : undefined;
       const items = zoneBinding?.source === "assets"
         ? zoneBinding.assetItems
         : zoneBinding?.playlistId ? playlistItemsById[zoneBinding.playlistId] ?? [] : [];
-      return {
-        id: zone.id ?? `zone-${zone.position}`,
-        name: zone.name,
-        x: zone.x,
-        y: zone.y,
-        width: zone.width,
-        height: zone.height,
-        playback: zoneBinding?.playback,
-        items: items.map((item) => {
-          const asset = assetsById[item.media_asset_id];
-          return {
-            mediaAssetId: item.media_asset_id,
-            label: asset?.title ?? asset?.file?.original_filename,
-            durationSeconds: item.duration_seconds ?? asset?.duration_seconds,
-            transition: item.transition,
-          };
-        }),
-      };
+      const playlistPlayback = zoneBinding?.playlistId ? playlistPlaybackById[zoneBinding.playlistId] : undefined;
+      return compositionZonePreview(
+        { id: zone.id ?? `zone-${zone.position}`, name: zone.name, x: zone.x, y: zone.y, width: zone.width, height: zone.height, playback: zoneBinding?.playback },
+        items,
+        playlistPlayback,
+      );
     });
-  }, [assets, bindings, layout, playlistItemsById]);
+  }, [bindings, layout, playlistItemsById, playlistPlaybackById]);
   const previewHandoff = useMemo<StagePreview & { source: "composition"; id: string; assets: MediaAsset[] } | null>(() => {
     if (!id || !layout) return null;
     const assetIds = new Set(playbackPreviewZones.flatMap((zone) => zone.items.map((item) => item.mediaAssetId)));

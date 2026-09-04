@@ -166,6 +166,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-[340px_minmax(0,1fr)_340px]">
         <PlaylistItemsPane
           items={present.items}
+          playback={present.playback}
           assets={assets}
           selectedId={selectedItemId}
           nowPlayingId={nowPlayingItemId}
