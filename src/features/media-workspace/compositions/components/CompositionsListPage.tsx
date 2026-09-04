@@ -144,6 +144,6 @@ export function CompositionsListPage() {
         </div>
       </main>
     </div>{pagination && <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0"><Pagination page={pagination.page} totalPages={pagination.totalPages} perPage={perPage} totalItems={pagination.total} rangeStart={(pagination.page - 1) * perPage + 1} rangeEnd={Math.min(pagination.page * perPage, pagination.total)} itemLabel="layouts" onPageChange={setPage} onPerPageChange={(next) => { setPerPage(next); setPage(1); }} /></div>}</Card>
-    <CompositionLibraryDialogs action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
+    <CompositionLibraryDialogs key={`${dialogAction}:${dialogTarget?.id ?? ""}`} action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
   </div>;
 }
