@@ -19,6 +19,18 @@ export function folderPath(folders: readonly ContentFolder[], folderId?: string 
   return names.length ? names.join(" / ") : "Uncategorized";
 }
 
+/** A folder plus every folder nested under it, for subtree-inclusive filtering and counts. */
+export function folderSubtreeIds(folders: readonly ContentFolder[], rootId: string): Set<string> {
+  const children = foldersByParent(folders);
+  const ids = new Set<string>();
+  const walk = (id: string) => {
+    ids.add(id);
+    for (const child of children.get(id) ?? []) walk(child.id);
+  };
+  walk(rootId);
+  return ids;
+}
+
 export function isDescendant(folders: readonly ContentFolder[], ancestorId: string, candidateId: string): boolean {
   const byId = new Map(folders.map((folder) => [folder.id, folder]));
   let parentId = byId.get(candidateId)?.parent_id ?? null;

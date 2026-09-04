@@ -99,8 +99,9 @@ export async function duplicatePlaylist(
 }
 
 /**
- * Hard delete (Thunder_Core migration 097). The RPC refuses while any publication still
- * points at the playlist, so a caller must surface that message — see `describeDeleteError`.
+ * Move to Trash — soft delete (Thunder_Core #40). The RPC refuses while a `draft` or
+ * `active` publication points at the playlist, naming it, so a caller must surface that
+ * message — see `describeDeleteError`. Reversible via `restorePlaylist`.
  */
 export async function deletePlaylist(id: string): Promise<void> {
   await requestApi<unknown>("DELETE", `/media/playlists/${id}`);

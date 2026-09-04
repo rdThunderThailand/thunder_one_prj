@@ -41,7 +41,7 @@ const playlists: PlaylistListItem[] = [
   }),
 ];
 
-const all = { tab: "all", currentUserId: "u-1", query: "", status: "all", type: "all", campaignId: "all" } as const;
+const all = { query: "", status: "all", type: "all" } as const;
 
 assert.equal(filterPlaylists(playlists, all).length, 3);
 
@@ -62,19 +62,11 @@ assert.deepEqual(
   ["coffee"]
 );
 
-// Ownership tab.
-assert.deepEqual(filterPlaylists(playlists, { ...all, tab: "mine" }).map((p) => p.id), ["kfc", "legacy"]);
-// Session not resolved yet: "mine" matches nothing rather than everything.
-assert.equal(filterPlaylists(playlists, { ...all, tab: "mine", currentUserId: null }).length, 0);
-
 // Filters stack, and search is case-insensitive on a substring.
 assert.deepEqual(
-  filterPlaylists(playlists, { ...all, tab: "mine", status: "active", query: "wednes" }).map((p) => p.id),
+  filterPlaylists(playlists, { ...all, status: "active", query: "wednes" }).map((p) => p.id),
   ["kfc"]
 );
-assert.equal(filterPlaylists(playlists, { ...all, tab: "mine", campaignId: "c-2" }).length, 0);
-assert.deepEqual(filterPlaylists(playlists, { ...all, campaignId: "c-2" }).map((p) => p.id), ["coffee"]);
-
 // Pagination clamps instead of stranding the view on an empty page.
 assert.deepEqual(paginate([1, 2, 3, 4, 5], 2, 2), { rows: [3, 4], page: 2, totalPages: 3 });
 assert.deepEqual(paginate([1, 2, 3, 4, 5], 9, 2), { rows: [5], page: 3, totalPages: 3 });
@@ -107,7 +99,6 @@ assert.ok(copyName("x".repeat(400), []).length <= 200);
 // Sorting
 import { sortPlaylists } from "./list-filtering.ts";
 
-const campaignNames = { "c-1": "Beta Campaign", "c-2": "Alpha Campaign" };
 // Update playlists list to be more comprehensive for sorting tests
 const p1 = row({
   id: "p1",
@@ -146,48 +137,42 @@ const p4 = row({
 const sortInput = [p1, p2, p3, p4];
 // name asc -> A (p2), B (p1), C (p3), C (p4)
 assert.deepEqual(
-  sortPlaylists(sortInput, { key: "name", dir: "asc" }, campaignNames).map(p => p.id),
+  sortPlaylists(sortInput, { key: "name", dir: "asc" }).map(p => p.id),
   ["p2", "p1", "p3", "p4"]
 );
 // name desc -> C (p3), C (p4), B (p1), A (p2)
 assert.deepEqual(
-  sortPlaylists(sortInput, { key: "name", dir: "desc" }, campaignNames).map(p => p.id),
+  sortPlaylists(sortInput, { key: "name", dir: "desc" }).map(p => p.id),
   ["p3", "p4", "p1", "p2"]
 );
 
 // duration asc -> 50 (p2), 100 (p1), empty (p3, p4)
 assert.deepEqual(
-  sortPlaylists(sortInput, { key: "duration", dir: "asc" }, campaignNames).map(p => p.id),
+  sortPlaylists(sortInput, { key: "duration", dir: "asc" }).map(p => p.id),
   ["p2", "p1", "p3", "p4"] // tiebreak: p3 < p4 in id
 );
 // duration desc -> 100 (p1), 50 (p2), empty (p3, p4)
 assert.deepEqual(
-  sortPlaylists(sortInput, { key: "duration", dir: "desc" }, campaignNames).map(p => p.id),
+  sortPlaylists(sortInput, { key: "duration", dir: "desc" }).map(p => p.id),
   ["p1", "p2", "p3", "p4"]
 );
 
 // status asc -> active (p1, p4), inactive (p3), draft (p2) — p3 is stored "active",
 // so this only holds if the sort derives the status the badge shows.
 assert.deepEqual(
-  sortPlaylists(sortInput, { key: "status", dir: "asc" }, campaignNames).map(p => p.id),
+  sortPlaylists(sortInput, { key: "status", dir: "asc" }).map(p => p.id),
   ["p1", "p4", "p3", "p2"] // p1 and p4 tiebreak on name B vs C
-);
-
-// campaign asc -> Alpha (p2), Beta (p1), empty (p3, p4)
-assert.deepEqual(
-  sortPlaylists(sortInput, { key: "campaign", dir: "asc" }, campaignNames).map(p => p.id),
-  ["p2", "p1", "p3", "p4"]
 );
 
 // updated desc -> 2024-01-02 (p1), 2024-01-01 (p2), empty (p3, p4)
 assert.deepEqual(
-  sortPlaylists(sortInput, { key: "updated", dir: "desc" }, campaignNames).map(p => p.id),
+  sortPlaylists(sortInput, { key: "updated", dir: "desc" }).map(p => p.id),
   ["p1", "p2", "p3", "p4"]
 );
 
 // stable sort and non-mutating
 const orig = [...sortInput];
-sortPlaylists(sortInput, { key: "name", dir: "asc" }, campaignNames);
+sortPlaylists(sortInput, { key: "name", dir: "asc" });
 assert.deepEqual(sortInput, orig, "sortPlaylists mutated its input");
 
 console.log("list-filtering.check.mts — all assertions passed");

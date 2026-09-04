@@ -45,7 +45,6 @@ export type FailureHandling = (typeof FAILURE_HANDLINGS)[number];
 export type PlaylistInfo = {
   description?: string;
   campaignId?: string;
-  tags?: string[];
   playlistType?: PlaylistType;
   /** Canonical selector value, e.g. "1920x1080". `width`/`height` are derived from it at encode
    *  time so the stored profile carries real numbers (ADR 0032). */

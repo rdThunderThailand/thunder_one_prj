@@ -25,11 +25,17 @@ export function statusBadge(status: PlaylistStatus): { color: BadgeColor; label:
 }
 
 /**
- * `media_playlist_delete` (Thunder_Core migration 097) refuses with the raw wording
- * "Invalid input: playlist is used by 3 publication(s)". The count is the only useful
- * part; the rest must not reach the user.
+ * `media_playlist_delete` (Thunder_Core #40) refuses "Move to Trash" while a `draft` or
+ * `active` publication points at the playlist, with the raw wording
+ * "Invalid input: playlist is used by an active or draft publication: Name A, Name B".
+ * The names are the useful part; the prefix must not reach the user.
  */
 export function describeDeleteError(message: string): string {
+  const named = /used by an active or draft publication: (.+)$/.exec(message);
+  if (named) {
+    return `ย้ายลงถังไม่ได้ — playlist นี้ถูกใช้อยู่ใน publication ที่ active หรือ draft: ${named[1]} กรุณายกเลิก publication เหล่านั้นก่อน`;
+  }
+  // Legacy wording, kept until every environment is on the #40 backend.
   const used = /used by (\d+) publication/.exec(message);
   if (used) {
     return `ลบไม่ได้ — playlist นี้ถูกใช้อยู่ใน ${used[1]} publication กรุณาลบหรือยกเลิก publication เหล่านั้นก่อน`;

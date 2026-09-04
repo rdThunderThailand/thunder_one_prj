@@ -28,7 +28,7 @@ const detail: PlaylistDetail = {
   ],
   metadata: {
     v: 1,
-    info: { description: "Lobby screen", campaign_id: "c-1", tags: ["t-1"] },
+    info: { description: "Lobby screen", campaign_id: "c-1" },
     playback: { play_mode: "shuffle", audio_enabled: false },
   },
 };
@@ -57,7 +57,6 @@ assert.equal(fields.items[1].fit, undefined);
 // The bug: metadata must decode into both halves, not be dropped.
 assert.equal(fields.info.description, "Lobby screen");
 assert.equal(fields.info.campaignId, "c-1");
-assert.deepEqual(fields.info.tags, ["t-1"]);
 assert.equal(fields.playback.playMode, "shuffle");
 assert.equal(fields.playback.audioEnabled, false);
 

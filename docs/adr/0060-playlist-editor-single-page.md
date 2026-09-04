@@ -176,6 +176,36 @@ is not made here. The UI states the restriction rather than offering an action t
 the wizard wrote is backfilled into that table and the key removed, so one concept does not live in
 two places.
 
+**8a. How that join is written and read, and why there is nothing to backfill** (settled 2026-09-03,
+implementing §8).
+
+The two existing joins disagree on their write shape, so one had to be chosen. `playlist_tags` takes
+tag **names** (`text[]`) and creates what does not exist yet, following
+`media_core.sync_publication_tags`, rather than `media_asset_tags`' ids-must-already-exist rule.
+`idx_tags_tenant_name_lower` is what actually prevents duplicates — `News` and `news` cannot both
+become tags — so the stricter shape buys no correctness, and it would require a tag-management
+surface that #41 does not ask for. The write returns the stored set, so an existing `News` wins over
+a freshly typed `news` and the client never has to guess the canonical spelling.
+
+Tags are written by a standalone `media_playlist_set_tags`, not by a `p_tags` argument on
+`media_playlist_upsert`. Tagging is a filing action taken from the list, like moving a Playlist into
+a folder, and `media_playlist_move` already exists for that reason: neither should have to load a
+revision and pass §2's optimistic lock to reclassify a row nobody is editing. This also keeps
+`media_playlist_upsert`'s nine-argument signature — and its grants — untouched.
+
+The Tags tab's per-tag counts are derived client-side from the `tags` array that
+`media_playlists_list` now returns per row, the way `folderCounts` already derives folder counts.
+Counting server-side would mean extending `media_tags_list`, whose `usage_count` is
+publication-scoped and shared with the Publication editor and the Asset picker. The consequence is
+that a tag no Playlist uses does not appear in the rail — unlike an empty folder, which does. For a
+rail whose only job is filtering, a zero-count entry is an entry that shows nothing; and counts
+derived from the same rows the list filters can never disagree with the list.
+
+**There is no backfill.** `metadata.info.tags` was written only by the wizard this ADR removed, and
+holds **0 rows on both develop and prod** as of 2026-09-03. §8's backfill is therefore satisfied by
+deleting the key from the frontend types and the `metadata.ts` whitelist; a production data migration
+that touches nothing would still demand review and per-environment approval to buy that nothing.
+
 ## Considered options
 
 - **Keeping the wizard and restyling it** was rejected because it leaves Playlist as the only content

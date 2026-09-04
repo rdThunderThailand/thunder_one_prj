@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { MoreIcon } from "@/components/ui/icons";
+import { EditIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";
 import { formatDuration } from "../duration";
@@ -28,7 +29,7 @@ function coverAssetId(playlist: PlaylistListItem): string | undefined {
   return playlist.cover_asset_id ?? decodeMetadata(playlist.metadata).info.coverAssetId;
 }
 
-export type RowAction = "edit" | "duplicate" | "delete" | "mark-ready";
+export type RowAction = "duplicate" | "delete" | "mark-ready" | "move" | "tags" | "restore" | "permanent-delete";
 
 const TYPE_LABELS: Record<"video" | "image" | "mixed", string> = {
   video: "Video",
@@ -38,20 +39,16 @@ const TYPE_LABELS: Record<"video" | "image" | "mixed", string> = {
 
 export function PlaylistsTable({
   rows,
-  campaignNames,
-  selectedId,
   busyId,
   sort,
-  onSelect,
+  inTrash = false,
   onAction,
   onSortChange,
 }: {
   rows: PlaylistListItem[];
-  campaignNames: Record<string, string>;
-  selectedId: string | null;
   busyId: string | null;
   sort: Sort;
-  onSelect: (playlist: PlaylistListItem) => void;
+  inTrash?: boolean;
   onAction: (action: RowAction, playlist: PlaylistListItem) => void;
   onSortChange: (key: SortKey) => void;
 }) {
@@ -69,7 +66,6 @@ export function PlaylistsTable({
           <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
             <SortHeader label="Playlist Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2 pl-1" />
             <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Campaign" sortKey="campaign" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Duration" sortKey="duration" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Last Updated" sortKey="updated" sort={sort} onSortChange={onSortChange} className="py-2" />
@@ -79,18 +75,12 @@ export function PlaylistsTable({
         <tbody>
           {rows.map((playlist) => {
             const cover = coverAssetId(playlist);
-            const campaignId = decodeMetadata(playlist.metadata).info.campaignId;
             const badge = statusBadge(playlistDisplayStatus(playlist));
 
             return (
               <tr
                 key={playlist.id}
-                onClick={() => onSelect(playlist)}
-                className={`cursor-pointer border-b border-zinc-100 last:border-0 dark:border-zinc-800 ${
-                  playlist.id === selectedId
-                    ? "bg-indigo-50/70 dark:bg-indigo-500/10"
-                    : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-                }`}
+                className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
               >
                 <td className="py-3 pl-1">
                   <div className="flex items-center gap-3">
@@ -108,6 +98,15 @@ export function PlaylistsTable({
                           By {playlist.created_by.display_name}
                         </p>
                       )}
+                      {playlist.tags && playlist.tags.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {playlist.tags.map((tag) => (
+                            <Badge key={tag.id} color="zinc" variant="pill">
+                              {tag.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -116,9 +115,6 @@ export function PlaylistsTable({
                     const type = playlistContentType(playlist);
                     return type ? TYPE_LABELS[type] : "—";
                   })()}
-                </td>
-                <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">
-                  {(campaignId && campaignNames[campaignId]) || "—"}
                 </td>
                 <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">
                   {playlist.total_duration_seconds == null
@@ -135,7 +131,10 @@ export function PlaylistsTable({
                 </td>
                 <td className="py-3 pr-1 text-right">
                   <RowActions
+                    playlist={playlist}
                     isDraft={playlist.status === "draft"}
+                    inTrash={inTrash}
+                    canPermanentDelete={(playlist.publication_count ?? 0) === 0}
                     disabled={busyId === playlist.id}
                     onAction={(action) => onAction(action, playlist)}
                   />
@@ -180,56 +179,112 @@ function SortHeader({
 // ponytail: native <details> menu — no outside-click dismiss, no positioning library.
 // Swap to the popover API if the open menu ever gets in the way.
 function RowActions({
+  playlist,
   isDraft,
+  inTrash,
+  canPermanentDelete,
   disabled,
   onAction,
 }: {
+  playlist: PlaylistListItem;
   isDraft: boolean;
+  inTrash: boolean;
+  canPermanentDelete: boolean;
   disabled: boolean;
   onAction: (action: RowAction) => void;
 }) {
   const item =
     "block w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800";
+  const danger = `${item} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10`;
 
   return (
-    <details
-      className="relative inline-block text-left"
-      onClick={(e) => e.stopPropagation()}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          e.currentTarget.removeAttribute("open");
-        }
-      }}
-    >
-      <summary
-        aria-label="Actions"
-        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+    <div className="flex items-center justify-end gap-2">
+      {!inTrash && (
+        <>
+          <Link
+            href={`/media-workspace/preview/playlist/${playlist.id}`}
+            aria-label={`Preview ${playlist.name}`}
+            title="Preview"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
+          >
+            <PlayIcon />
+          </Link>
+          <Link
+            href={`/media-workspace/playlists/${playlist.id}`}
+            aria-label={`Edit ${playlist.name}`}
+            title="Edit"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
+          >
+            <EditIcon />
+          </Link>
+        </>
+      )}
+      <details
+        className="relative inline-block text-left"
+        onClick={(e) => e.stopPropagation()}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            e.currentTarget.removeAttribute("open");
+          }
+        }}
       >
-        <MoreIcon />
-      </summary>
-      <div className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-        {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
-            moves the badge to Inactive, not Active, until a publication references it. */}
-        {isDraft && (
-          <button type="button" className={item} disabled={disabled} onClick={() => onAction("mark-ready")}>
-            Mark as ready
-          </button>
-        )}
-        <button type="button" className={item} onClick={() => onAction("edit")}>
-          Edit
-        </button>
-        <button type="button" className={item} disabled={disabled} onClick={() => onAction("duplicate")}>
-          Duplicate
-        </button>
-        <button
-          type="button"
-          className={`${item} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10`}
-          disabled={disabled}
-          onClick={() => onAction("delete")}
+        <summary
+          aria-label={`More actions for ${playlist.name}`}
+          role="button"
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            const details = event.currentTarget.parentElement as HTMLDetailsElement | null;
+            if (details) details.open = !details.open;
+          }}
+          className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
         >
-          Delete
-        </button>
-      </div>
-    </details>
+          <MoreIcon />
+        </summary>
+        <div className="absolute right-0 z-10 mt-1 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+        {inTrash ? (
+          <>
+            <button type="button" className={item} disabled={disabled} onClick={() => onAction("restore")}>
+              Restore
+            </button>
+            {/* #40: a playlist that has ever been published can never be permanently
+                deleted (publications.playlist_id is ON DELETE RESTRICT) — explain it
+                rather than offer a button that always fails. */}
+            {canPermanentDelete ? (
+              <button type="button" className={danger} disabled={disabled} onClick={() => onAction("permanent-delete")}>
+                Delete permanently
+              </button>
+            ) : (
+              <p className="px-3 py-1.5 text-xs text-zinc-400">
+                Can&rsquo;t delete permanently — this playlist has been published.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
+                moves the badge to Inactive, not Active, until a publication references it. */}
+            {isDraft && (
+              <button type="button" className={item} disabled={disabled} onClick={() => onAction("mark-ready")}>
+                Mark as ready
+              </button>
+            )}
+            <button type="button" className={item} disabled={disabled} onClick={() => onAction("duplicate")}>
+              Duplicate
+            </button>
+            <button type="button" className={item} disabled={disabled} onClick={() => onAction("move")}>
+              Move to folder…
+            </button>
+            <button type="button" className={item} disabled={disabled} onClick={() => onAction("tags")}>
+              Edit tags…
+            </button>
+            <button type="button" className={danger} disabled={disabled} onClick={() => onAction("delete")}>
+              Move to Trash
+            </button>
+          </>
+        )}
+        </div>
+      </details>
+    </div>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { SearchIcon } from "@/components/ui/icons";
-import type { Campaign } from "@/types/domain";
 import { CONTENT_TYPES, type ContentType } from "../list-filtering";
 import type { PlaylistStatus } from "../types";
 
@@ -10,7 +10,6 @@ export type FilterState = {
   query: string;
   status: PlaylistStatus | "all";
   type: ContentType | "all";
-  campaignId: string | "all";
 };
 
 const TYPE_LABELS: Record<ContentType, string> = { video: "Video", image: "Image", mixed: "Mixed" };
@@ -27,19 +26,17 @@ const selectClasses =
 
 export function PlaylistsFilters({
   value,
-  campaigns,
   onChange,
   onClearAll,
+  tailAction,
 }: {
   value: FilterState;
-  /** Empty while campaigns are loading or after that call failed — the dropdown then
-   *  offers "All Campaigns" alone rather than blocking the rest of the filters. */
-  campaigns: Campaign[];
   onChange: (next: FilterState) => void;
   /** Omitted when the whole list state is already at its default, which is also exactly
    *  when the URL carries no query string — so the button appears only when it would do
-   *  something. Resets the tab, sort and paging too, not just the filters shown here. */
+   *  something. Resets folder, sort and paging too, not just the filters shown here. */
   onClearAll?: () => void;
+  tailAction?: ReactNode;
 }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -80,25 +77,12 @@ export function PlaylistsFilters({
         ))}
       </select>
 
-      <select
-        aria-label="Campaign"
-        value={value.campaignId}
-        onChange={(e) => onChange({ ...value, campaignId: e.target.value })}
-        className={selectClasses}
-      >
-        <option value="all">All Campaigns</option>
-        {campaigns.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-
       {onClearAll ? (
         <Button variant="ghost" onClick={onClearAll}>
-          Clear all
+          Clear filters
         </Button>
       ) : null}
+      {tailAction}
     </div>
   );
 }
