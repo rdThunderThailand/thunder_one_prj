@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import { loadCompositionPreview } from "@/features/media-workspace/preview/composition-preview";
+import { playlistItemToPreview, playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
 import { groupDeviceGeometries } from "@/features/media-workspace/preview/preview-geometry";
 import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
 import type { MediaAsset } from "@/types/domain";
@@ -52,27 +53,14 @@ export function PublicationPlaybackPreviewButton({
       } else if (basicInfo.publicationType === "playlist" && playlistId) {
         const playlist = await fetchPlaylist(playlistId);
         const playback = decodeMetadata(playlist.metadata).playback;
-        setZones([{
-          id: playlist.id,
+        const stage = playlistPreviewStage({
           name: playlist.name,
-          x: 0,
-          y: 0,
-          width: 100,
-          height: 100,
-          playback: {
-            playMode: playback.playMode,
-            repeat: playback.repeat,
-            startFrom: playback.startFrom,
-          },
-          items: playlist.items.map((item) => ({
-            mediaAssetId: item.media_asset_id,
-            label: item.title,
-            durationSeconds: item.duration_seconds,
-            transition: item.transition,
-          })),
-        }]);
-        setAspectRatio("16:9");
-        setReferenceResolution(null);
+          items: playlist.items.map(playlistItemToPreview),
+          playback,
+        });
+        setZones(stage.zones);
+        setAspectRatio(stage.aspectRatio);
+        setReferenceResolution(stage.referenceResolution);
       } else {
         setZones([{
           id: "publication-assets",

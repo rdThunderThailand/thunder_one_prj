@@ -10,6 +10,9 @@ export type PlaylistPreviewItem = {
   title?: string | null;
   durationSeconds?: number | null;
   transition?: string | null;
+  /** Per-item override — undefined inherits the Playlist default (ADR 0062 §5). */
+  transitionDurationSeconds?: number | null;
+  mediaFit?: string | null;
 };
 
 /** Playlist-level playback, `metadata.playback` in the editor. `transitionDuration` is counted in
@@ -20,7 +23,48 @@ export type PlaylistPreviewPlayback = {
   startFrom?: "first" | "resume";
   defaultTransition?: string | null;
   transitionDuration?: number | null;
+  mediaFit?: string | null;
 };
+
+/** ADR 0062 §7: the editor's working-list shape (camelCase) → the canonical preview item. Every
+ *  `DraftItem` projection becomes a call to this, so no caller hand-rebuilds the item and drops
+ *  `mediaFit`/`transitionDurationSeconds` on the way. */
+export function draftItemToPreview(item: {
+  mediaAssetId: string;
+  title?: string;
+  durationSeconds: number | null;
+  transition?: string | null;
+  transitionDurationSeconds?: number | null;
+  fit?: string | null;
+}): PlaylistPreviewItem {
+  return {
+    mediaAssetId: item.mediaAssetId,
+    title: item.title ?? null,
+    durationSeconds: item.durationSeconds,
+    transition: item.transition ?? null,
+    transitionDurationSeconds: item.transitionDurationSeconds ?? null,
+    mediaFit: item.fit ?? null,
+  };
+}
+
+/** ADR 0062 §7: the backend read shape (snake_case) → the canonical preview item. */
+export function playlistItemToPreview(item: {
+  media_asset_id: string;
+  title?: string;
+  duration_seconds?: number | null;
+  transition?: string | null;
+  transition_duration_seconds?: number | null;
+  fit?: string | null;
+}): PlaylistPreviewItem {
+  return {
+    mediaAssetId: item.media_asset_id,
+    title: item.title ?? null,
+    durationSeconds: item.duration_seconds ?? null,
+    transition: item.transition ?? null,
+    transitionDurationSeconds: item.transition_duration_seconds ?? null,
+    mediaFit: item.fit ?? null,
+  };
+}
 
 /** ADR 0061 §5: a Playlist has no geometry, so the operator picks the frame. Representative
  *  resolutions state a ratio only — `allowActualSize={false}` keeps them off the pixel control.
@@ -58,6 +102,7 @@ export function playlistPreviewStage({
               startFrom: playback.startFrom,
               defaultTransition: playback.defaultTransition ?? null,
               transitionDurationSeconds: playback.transitionDuration ?? null,
+              mediaFit: playback.mediaFit ?? null,
             }
           : undefined,
         items: items.map((item) => ({
@@ -65,6 +110,8 @@ export function playlistPreviewStage({
           label: item.title ?? undefined,
           durationSeconds: item.durationSeconds ?? null,
           transition: item.transition ?? null,
+          transitionDurationSeconds: item.transitionDurationSeconds ?? null,
+          mediaFit: item.mediaFit ?? null,
         })),
       },
     ],

@@ -6,7 +6,7 @@ import { fetchPreviewUrls } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import { PreviewControls } from "./PreviewControls";
 import { PreviewSurface } from "./PreviewSurface";
-import { previewFrameAt, zoneLoopDurationSeconds, type PlaybackPreviewZone, type ZonePreviewFrame } from "./preview-clock";
+import { previewFrameAt, zoneSchedule, type PlaybackPreviewZone, type ZonePreviewFrame, type ZoneSchedule } from "./preview-clock";
 import { defaultGeometry, resolveFrameAspectRatio, resolveFramePixels, type GeometryOption } from "./preview-geometry";
 
 export type { PlaybackPreviewItem, PlaybackPreviewSettings, PlaybackPreviewZone } from "./preview-clock";
@@ -79,12 +79,28 @@ export function PreviewStage({
     () => [...new Set(resolvedZones.flatMap((zone) => zone.items.map((item) => item.mediaAssetId)))],
     [resolvedZones],
   );
-  const timelineSeconds = Math.max(1, ...resolvedZones.map((zone) => zoneLoopDurationSeconds(zone.items)));
+  // ADR 0062 §1: one schedule per Zone, computed once and read by the clock, the frames and the
+  // corner badge alike. Seeded by the Zone id so shuffle reproduces identically (§2).
+  const schedules: ZoneSchedule[] = useMemo(
+    () => resolvedZones.map((zone) => zoneSchedule(zone.items, zone.playback, zone.id)),
+    [resolvedZones],
+  );
+  const timelineSeconds = Math.max(1, ...schedules.map((schedule) => schedule.totalSeconds));
+  // ADR 0062 §3: the clock wraps when ANY Zone is `loop` — a single-Zone Playlist on `loop` must
+  // keep playing, not stop after one cycle. Every Zone being `once` is the only case that stops.
+  const anyZoneLoops = schedules.some((schedule) => schedule.repeat === "loop");
 
   // ADR 0061 §6: the panels are a sibling fed this frame; the stage keeps the only clock.
-  const singleZoneFrame = resolvedZones.length === 1 ? previewFrameAt(resolvedZones[0].items, timeSeconds) : null;
+  const singleZoneFrame = resolvedZones.length === 1 ? previewFrameAt(schedules[0], resolvedZones[0].items, timeSeconds) : null;
+  // `transition.progress` advances every animation frame and must never enter this key, or
+  // onFrameChange re-renders the host ~60x/second (ADR 0061 §6).
   const singleZoneFrameKey = singleZoneFrame
-    ? JSON.stringify({ index: singleZoneFrame.itemIndex, item: singleZoneFrame.item })
+    ? JSON.stringify({
+        index: singleZoneFrame.itemIndex,
+        item: singleZoneFrame.item,
+        ended: singleZoneFrame.ended,
+        outgoingIndex: singleZoneFrame.transition?.outgoingIndex ?? null,
+      })
     : null;
 
   // Derived, never an effect: the option list arrives asynchronously in every host, and resetting
@@ -93,7 +109,7 @@ export function PreviewStage({
   const frameAspectRatio = resolveFrameAspectRatio(selectedGeometry, referenceResolution, aspectRatio);
   const [ratioWidth, ratioHeight] = parseAspectRatio(frameAspectRatio) ?? [16, 9];
   // Advisory only, never a block (ADR 0055): the frame takes the target's shape and percentage
-  // Zones stretch into it, with each Zone's own media_fit governing the content inside.
+  // Zones stretch into it; PreviewSurface resolves each item's own media_fit inside that box.
   const geometryFit = selectedGeometry ? deviceFit(selectedGeometry.resolution, aspectRatio) : "fits";
   const framePixels = resolveFramePixels(selectedGeometry, referenceResolution);
   // An explicit width, never a stretched one: the frame's only in-flow content is absolutely
@@ -142,17 +158,18 @@ export function PreviewStage({
     startedAt.current = performance.now();
     let frame = 0;
     const tick = (now: number) => {
-      setTimeSeconds(Math.min(timelineSeconds, initialTime.current + ((now - (startedAt.current ?? now)) / 1000) * speed));
+      const raw = initialTime.current + ((now - (startedAt.current ?? now)) / 1000) * speed;
+      setTimeSeconds(anyZoneLoops && timelineSeconds > 0 ? raw % timelineSeconds : Math.min(timelineSeconds, raw));
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, speed, timelineSeconds]);
+  }, [playing, speed, timelineSeconds, anyZoneLoops]);
 
   useEffect(() => {
-    if (timeSeconds >= timelineSeconds && playing) Promise.resolve().then(() => setPlaying(false));
-  }, [playing, timeSeconds, timelineSeconds]);
+    if (!anyZoneLoops && timeSeconds >= timelineSeconds && playing) Promise.resolve().then(() => setPlaying(false));
+  }, [anyZoneLoops, playing, timeSeconds, timelineSeconds]);
 
   useEffect(() => {
     if (!seekRequest || seekRequest.id === lastSeekRequestId.current) return;
@@ -249,28 +266,62 @@ export function PreviewStage({
           style={{ aspectRatio: `${ratioWidth} / ${ratioHeight}`, width: frameWidth }}
         >
         <div className="relative h-full w-full">
-          {resolvedZones.map((zone) => {
-            const frame = previewFrameAt(zone.items, timeSeconds);
-            const zoneTimeSeconds = frame.loopDurationSeconds > 0 ? timeSeconds % frame.loopDurationSeconds : 0;
+          {resolvedZones.map((zone, zoneIndex) => {
+            const frame = previewFrameAt(schedules[zoneIndex], zone.items, timeSeconds);
+            const zoneTimeSeconds = frame.ended
+              ? frame.loopDurationSeconds
+              : frame.loopDurationSeconds > 0
+                ? timeSeconds % frame.loopDurationSeconds
+                : 0;
+            const transition = frame.transition;
             return (
               <div
                 key={zone.id}
                 className="absolute overflow-hidden border border-white/25 bg-zinc-950"
                 style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
               >
-                <PreviewSurface
-                  item={frame.item}
-                  asset={frame.item ? assetsById[frame.item.mediaAssetId] : undefined}
-                  url={frame.item ? urls[frame.item.mediaAssetId] : undefined}
-                  playing={playing}
-                  speed={speed}
-                  muted={muted}
-                  offsetSeconds={frame.offsetSeconds}
-                  loadState={previewLoadState}
-                />
+                <div className="relative h-full w-full">
+                  {/* ADR 0062 §5: both surfaces mount for the width of the fade, opacity a pure
+                     function of `frame.transition.progress` — never a CSS mount animation. The
+                     outgoing surface never plays; it holds its frozen last frame. */}
+                  {transition && (
+                    <PreviewSurface
+                      key={`out-${transition.outgoingIndex}`}
+                      item={transition.outgoingItem}
+                      asset={assetsById[transition.outgoingItem.mediaAssetId]}
+                      url={urls[transition.outgoingItem.mediaAssetId]}
+                      playing={false}
+                      speed={speed}
+                      muted={muted}
+                      offsetSeconds={transition.outgoingOffsetSeconds}
+                      loadState={previewLoadState}
+                      defaultMediaFit={zone.playback?.mediaFit}
+                      style={{ position: "absolute", inset: 0, opacity: 1 - transition.progress }}
+                    />
+                  )}
+                  <PreviewSurface
+                    key={frame.itemIndex ?? "empty"}
+                    item={frame.item}
+                    asset={frame.item ? assetsById[frame.item.mediaAssetId] : undefined}
+                    url={frame.item ? urls[frame.item.mediaAssetId] : undefined}
+                    playing={transition ? false : playing}
+                    speed={speed}
+                    muted={muted}
+                    offsetSeconds={frame.offsetSeconds}
+                    loadState={previewLoadState}
+                    defaultMediaFit={zone.playback?.mediaFit}
+                    style={transition ? { position: "absolute", inset: 0, opacity: transition.progress } : undefined}
+                  />
+                </div>
                 <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent px-2 py-1 text-[10px] font-medium text-white">
                   <span>{zone.name}</span>
-                  <span>{frame.loopDurationSeconds ? `${Math.floor(zoneTimeSeconds)}s / ${Math.floor(frame.loopDurationSeconds)}s` : "Needs duration"}</span>
+                  <span>
+                    {frame.ended
+                      ? "Ended"
+                      : frame.loopDurationSeconds
+                        ? `${Math.floor(zoneTimeSeconds)}s / ${Math.floor(frame.loopDurationSeconds)}s`
+                        : "Needs duration"}
+                  </span>
                 </div>
               </div>
             );

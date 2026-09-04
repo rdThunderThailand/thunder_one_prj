@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
-import { playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
+import { draftItemToPreview, playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
 import type { ZonePreviewFrame } from "@/features/media-workspace/preview/preview-clock";
 import type { MediaAsset } from "@/types/domain";
 import { formatDuration } from "../duration";
@@ -43,20 +43,15 @@ export function PlaylistTimelinePane({
     () =>
       playlistPreviewStage({
         name,
-        items: items.map((i) => ({
-          mediaAssetId: i.mediaAssetId,
-          title: i.title,
-          durationSeconds: i.durationSeconds,
-          transition: i.transition,
-        })),
+        items: items.map(draftItemToPreview),
         playback,
       }),
     [name, items, playback],
   );
   const previews = usePreviewUrls(useMemo(() => items.map((i) => i.mediaAssetId), [items]));
   const assetById = useMemo(() => Object.fromEntries(assets.map((a) => [a.id, a])), [assets]);
-  const total = formatDuration(totalItemsDurationSeconds(items, assets));
-  const startSeconds = useMemo(() => itemStartSeconds(items, assets), [assets, items]);
+  const total = formatDuration(totalItemsDurationSeconds(items, assets, playback));
+  const startSeconds = useMemo(() => itemStartSeconds(items, assets, playback), [assets, items, playback]);
 
   return (
     <Card className="flex flex-none flex-col p-5">

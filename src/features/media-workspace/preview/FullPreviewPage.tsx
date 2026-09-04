@@ -10,7 +10,7 @@ import type { MediaAsset } from "@/types/domain";
 import { fetchPublication } from "@/features/media-workspace/publications";
 import { decodeMetadata, fetchPlaylist, formatDuration } from "@/features/media-workspace/playlists";
 import { loadCompositionPreview, type StagePreview } from "./composition-preview";
-import { playlistPreviewStage } from "./playlist-preview";
+import { playlistItemToPreview, playlistPreviewStage } from "./playlist-preview";
 import { PlaylistPreviewPanel } from "./PlaylistPreviewPanel";
 import { PreviewStage } from "./PreviewStage";
 import { zoneLoopDurationSeconds, type PlaybackPreviewItem, type ZonePreviewFrame } from "./preview-clock";
@@ -151,12 +151,7 @@ async function loadPlaylistPreview(id: string): Promise<StagePreview> {
   const { playback } = decodeMetadata(playlist.metadata);
   return playlistPreviewStage({
     name: playlist.name,
-    items: playlist.items.map((item) => ({
-      mediaAssetId: item.media_asset_id,
-      title: item.title,
-      durationSeconds: item.duration_seconds,
-      transition: item.transition,
-    })),
+    items: playlist.items.map(playlistItemToPreview),
     playback,
   });
 }

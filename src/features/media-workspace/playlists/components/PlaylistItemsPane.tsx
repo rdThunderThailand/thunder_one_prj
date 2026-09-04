@@ -9,11 +9,12 @@ import type { MediaAsset } from "@/types/domain";
 import { formatDuration } from "../duration";
 import { itemStartSeconds, totalItemsDurationSeconds } from "../playlist-editor-state";
 import { inputClasses } from "./form";
-import type { DraftItem } from "../types";
+import type { DraftItem, PlaylistPlayback } from "../types";
 
 /** #33 left pane: the items that are in this Playlist, nothing else. Adding is the drawer. */
 export function PlaylistItemsPane({
   items,
+  playback,
   assets,
   selectedId,
   nowPlayingId,
@@ -24,6 +25,7 @@ export function PlaylistItemsPane({
   onAddItem,
 }: {
   items: DraftItem[];
+  playback: PlaylistPlayback;
   assets: MediaAsset[];
   selectedId: string | null;
   nowPlayingId: string | null;
@@ -38,8 +40,8 @@ export function PlaylistItemsPane({
   const [dropId, setDropId] = useState<string | null>(null);
   const previews = usePreviewUrls(useMemo(() => items.map((i) => i.mediaAssetId), [items]));
   const assetById = useMemo(() => Object.fromEntries(assets.map((a) => [a.id, a])), [assets]);
-  const startSeconds = useMemo(() => itemStartSeconds(items, assets), [assets, items]);
-  const total = formatDuration(totalItemsDurationSeconds(items, assets));
+  const startSeconds = useMemo(() => itemStartSeconds(items, assets, playback), [assets, items, playback]);
+  const total = formatDuration(totalItemsDurationSeconds(items, assets, playback));
 
   const needle = query.trim().toLowerCase();
   const visible = needle
