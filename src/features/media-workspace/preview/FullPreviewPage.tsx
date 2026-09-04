@@ -8,8 +8,9 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import { fetchPublication } from "@/features/media-workspace/publications";
-import { formatDuration } from "@/features/media-workspace/playlists/duration";
+import { decodeMetadata, fetchPlaylist, formatDuration } from "@/features/media-workspace/playlists";
 import { loadCompositionPreview, type StagePreview } from "./composition-preview";
+import { playlistPreviewStage } from "./playlist-preview";
 import { PlaylistPreviewPanel } from "./PlaylistPreviewPanel";
 import { PreviewStage } from "./PreviewStage";
 import { zoneLoopDurationSeconds, type PlaybackPreviewItem, type ZonePreviewFrame } from "./preview-clock";
@@ -69,17 +70,13 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
   }, [channelName, id, source]);
 
   useEffect(() => {
-    // ADR 0061 §4: a Playlist has no by-id loader — it opens from the live editor only, so the
-    // channel handoff is the sole way in. Without a session there is nothing to show.
-    if (handoff || channelName || source === "playlist") return;
+    if (handoff || channelName) return;
     let alive = true;
     const load = async () => {
       try {
-        const compositionId = source === "composition"
-          ? id
-          : (await fetchPublication(id)).composition?.id;
-        if (!compositionId) throw new Error("Publication นี้ไม่มี Composition สำหรับ preview");
-        const loaded = await loadCompositionPreview(compositionId);
+        const loaded = source === "playlist"
+          ? await loadPlaylistPreview(id)
+          : await loadCompositionOrPublicationPreview(source, id);
         const assetIds = new Set(loaded.zones.flatMap((zone) => zone.items.map((item) => item.mediaAssetId)));
         const allAssets = await fetchMediaAssets();
         if (!alive) return;
@@ -108,10 +105,9 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
     }));
   }, [loadedAssets, playlistZone]);
 
-  if ((channelName || isPlaylist) && (session.status === "expired" || session.status === "closed")) {
+  if (channelName && (session.status === "expired" || session.status === "closed")) {
     return <PreviewExpired />;
   }
-  if (isPlaylist && !channelName && !handoff) return <PreviewExpired />;
   if (error) return <p className="p-6 text-sm text-red-600" role="alert">{error}</p>;
   if (!loadedPreview) return <p className="p-6 text-sm text-zinc-400">Loading preview…</p>;
 
@@ -139,6 +135,30 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
       />
     </main>
   );
+}
+
+async function loadCompositionOrPublicationPreview(source: Exclude<PreviewSource, "playlist">, id: string): Promise<StagePreview> {
+  const compositionId = source === "composition"
+    ? id
+    : (await fetchPublication(id)).composition?.id;
+  if (!compositionId) throw new Error("Publication นี้ไม่มี Composition สำหรับ preview");
+  return loadCompositionPreview(compositionId);
+}
+
+async function loadPlaylistPreview(id: string): Promise<StagePreview> {
+  if (id === "new") throw new Error("Playlist นี้ยังไม่ได้บันทึก");
+  const playlist = await fetchPlaylist(id);
+  const { playback } = decodeMetadata(playlist.metadata);
+  return playlistPreviewStage({
+    name: playlist.name,
+    items: playlist.items.map((item) => ({
+      mediaAssetId: item.media_asset_id,
+      title: item.title,
+      durationSeconds: item.duration_seconds,
+      transition: item.transition,
+    })),
+    playback,
+  });
 }
 
 function PlaylistFullPreview({
