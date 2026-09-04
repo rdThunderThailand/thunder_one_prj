@@ -4,7 +4,7 @@ import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { formatDuration } from "@/features/media-workspace/playlists/duration";
 import type { MediaAsset } from "@/types/domain";
-import { zoneLoopDurationSeconds, type PlaybackPreviewItem, type PlaybackPreviewSettings, type ZonePreviewFrame } from "./preview-clock";
+import { type PlaybackPreviewItem, type PlaybackPreviewSettings, type ZonePreviewFrame } from "./preview-clock";
 
 /** ADR 0061 §6: a sibling of the stage, fed the current frame through `onFrameChange`. It keeps
  *  no clock of its own and has no per-frame progress readout. §7: the values the preview cannot
@@ -13,6 +13,7 @@ export function PlaylistPreviewPanel({
   name,
   items,
   playback,
+  totalSeconds,
   frame,
   assets = [],
   tone = "dark",
@@ -22,13 +23,14 @@ export function PlaylistPreviewPanel({
   name: string;
   items: PlaybackPreviewItem[];
   playback?: PlaybackPreviewSettings;
+  /** ADR 0062 §1: the Zone's schedule owns this, so the panel is told rather than re-summing. */
+  totalSeconds: number;
   frame: ZonePreviewFrame | null;
   assets?: MediaAsset[];
   tone?: "light" | "dark";
   previewMode?: string;
   onPreviewMode?: (mode: string) => void;
 }) {
-  const totalSeconds = zoneLoopDurationSeconds(items);
   const nowPlaying = frame?.item ?? null;
   const position = frame?.itemIndex != null ? frame.itemIndex + 1 : null;
   const asset = nowPlaying ? assets.find((item) => item.id === nowPlaying.mediaAssetId) : undefined;
@@ -76,7 +78,7 @@ export function PlaylistPreviewPanel({
           <Row label="Total duration" value={formatDuration(totalSeconds)} labelClass={labelClass} valueClass={valueClass} />
           <Row label="Play mode" value={playback?.playMode === "shuffle" ? "Shuffle" : "Sequential"} labelClass={labelClass} valueClass={valueClass} />
           <Row label="Repeat" value={playback?.repeat === "once" ? "Once" : "Repeat All"} labelClass={labelClass} valueClass={valueClass} />
-          <Row label="Start from" value={playback?.startFrom === "resume" ? "Resume" : "First item"} labelClass={labelClass} valueClass={valueClass} />
+          <Row label="Start from" value={playback?.startFrom === "resume" ? "Resume · previews from first" : "First item"} labelClass={labelClass} valueClass={valueClass} />
           <Row
             label="Transition"
             value={

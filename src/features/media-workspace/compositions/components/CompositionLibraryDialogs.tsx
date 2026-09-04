@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import type { ContentFolder } from "@/types/domain";
@@ -33,12 +33,9 @@ export function CompositionLibraryDialogs({
   onDone: () => void;
   onError: (error: unknown) => void;
 }) {
-  const [value, setValue] = useState("");
+  // Keyed by action+target at the call site, so a fresh dialog starts from a fresh state.
+  const [value, setValue] = useState(() => action === "duplicate" && target ? `${target.name} copy` : "");
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    setValue(action === "duplicate" && target ? `${target.name} copy` : "");
-  }, [action, target]);
 
   const submit = async () => {
     if (!action || !target) return;

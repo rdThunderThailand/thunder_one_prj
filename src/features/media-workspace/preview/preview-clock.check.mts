@@ -1,11 +1,5 @@
 import assert from "node:assert/strict";
-import { previewFrameAt, zoneLoopDurationSeconds, zoneSchedule } from "./preview-clock.ts";
-
-const main = [
-  { mediaAssetId: "a", durationSeconds: 12 },
-  { mediaAssetId: "b", durationSeconds: 18 },
-];
-assert.equal(zoneLoopDurationSeconds(main), 30);
+import { previewFrameAt, zoneSchedule } from "./preview-clock.ts";
 
 // Two items, default transition (fade/1s), repeat: loop. fades = [1, 1]; totalSeconds = 10+10+1+1 = 22.
 const loopItems = [

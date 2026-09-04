@@ -13,7 +13,7 @@ import { loadCompositionPreview, type StagePreview } from "./composition-preview
 import { playlistItemToPreview, playlistPreviewStage } from "./playlist-preview";
 import { PlaylistPreviewPanel } from "./PlaylistPreviewPanel";
 import { PreviewStage } from "./PreviewStage";
-import { zoneLoopDurationSeconds, type PlaybackPreviewItem, type ZonePreviewFrame } from "./preview-clock";
+import { zoneSchedule, type PlaybackPreviewItem, type ZonePreviewFrame, type ZoneSchedule } from "./preview-clock";
 import { initialPreviewSession, reducePreviewSession } from "./preview-session";
 
 export type PreviewSource = "composition" | "publication" | "playlist";
@@ -174,7 +174,9 @@ function PlaylistFullPreview({
   onSeek: (seconds: number) => void;
 }) {
   const zone = preview.zones[0];
-  const total = formatDuration(zoneLoopDurationSeconds(items));
+  // ADR 0062 §1: one schedule per Zone, memoised here and read by everything below it.
+  const schedule = useMemo(() => zoneSchedule(items, zone.playback, zone.id), [items, zone.playback, zone.id]);
+  const total = formatDuration(schedule.totalSeconds);
   // ADR 0061 §2: a Playlist has no geometry of its own, so the operator picks the frame.
   const [previewMode, setPreviewMode] = useState("16:9");
   return (
@@ -218,7 +220,7 @@ function PlaylistFullPreview({
                 onFrameChange={onFrame}
               />
             </div>
-            <PlaylistTimelineStrip items={items} assets={assets} frame={frame} onSeek={onSeek} />
+            <PlaylistTimelineStrip items={items} assets={assets} schedule={schedule} frame={frame} onSeek={onSeek} />
             <p className="mx-auto mt-5 max-w-3xl rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
               This is a preview only. Actual playback may vary slightly depending on your screen and network.
             </p>
@@ -228,6 +230,7 @@ function PlaylistFullPreview({
             name={zone.name}
             items={items}
             playback={zone.playback}
+            totalSeconds={schedule.totalSeconds}
             frame={frame}
             assets={assets}
             tone="light"
@@ -243,28 +246,22 @@ function PlaylistFullPreview({
 function PlaylistTimelineStrip({
   items,
   assets,
+  schedule,
   frame,
   onSeek,
 }: {
   items: PlaybackPreviewItem[];
   assets: MediaAsset[];
+  schedule: ZoneSchedule;
   frame: ZonePreviewFrame | null;
   onSeek: (seconds: number) => void;
 }) {
   const previews = usePreviewUrls(useMemo(() => items.map((item) => item.mediaAssetId), [items]));
   const assetById = useMemo(() => Object.fromEntries(assets.map((asset) => [asset.id, asset])), [assets]);
-  const starts = useMemo(
-    () => items.reduce<{ starts: number[]; cursor: number }>((acc, item) => {
-      const asset = assetById[item.mediaAssetId];
-      const seconds = Math.max(0, item.durationSeconds ?? asset?.duration_seconds ?? 0);
-      return { starts: [...acc.starts, acc.cursor], cursor: acc.cursor + seconds };
-    }, { starts: [], cursor: 0 }).starts,
-    [assetById, items],
-  );
   return (
     <section className="mt-5">
       <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-        Playlist Timeline <span className="font-normal text-zinc-500">(Total {formatDuration(zoneLoopDurationSeconds(items))})</span>
+        Playlist Timeline <span className="font-normal text-zinc-500">(Total {formatDuration(schedule.totalSeconds)})</span>
       </h2>
       <div className="mt-3 flex gap-4 overflow-x-auto pb-2">
         {items.map((item, index) => {
@@ -275,7 +272,7 @@ function PlaylistTimelineStrip({
             <button
               key={item.mediaAssetId}
               type="button"
-              onClick={() => onSeek(starts[index] ?? 0)}
+              onClick={() => onSeek(schedule.starts[schedule.order.indexOf(index)] ?? 0)}
               className="w-48 shrink-0 text-left"
             >
               <span className={`relative block overflow-hidden rounded-lg border-2 ${active ? "border-indigo-600" : "border-transparent hover:border-zinc-300"}`}>
