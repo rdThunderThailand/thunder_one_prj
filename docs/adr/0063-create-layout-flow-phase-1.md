@@ -209,6 +209,37 @@ to make yet; both live in the Properties panel.
 
 `Category` stays out. Nothing distinguishes it from a Tag.
 
+#### Amendment, 2026-09-06 — the Tags rail filters server-side
+
+Ticket 29 was written telling the rail to compute per-tag counts and filter "client-side from the
+rows, exactly as the Playlist rail does it". That instruction was wrong here, and this ADR did not
+catch it.
+
+`PlaylistsListPage` holds its whole list in memory, so its rail can count and filter in the browser.
+`CompositionsListPage` does not: `media_compositions_library_list` is **server-paginated** and clamps
+`p_page_size` to 100. Counting tags from the loaded page understates the collection, and filtering
+client-side hides every match on the other pages. §3's "Filtering is client-side" sentence belongs to
+the Template Picker, which fetches its whole list in one call; it was never a rule for §4's rails.
+
+So the rail uses the pattern this page already uses for every other filter — a facet computed
+server-side over the collection, paired with a filter parameter, exactly how
+`facets.referenceResolutions` pairs with `p_reference_resolution`, and how `p_folder_id` already
+works:
+
+- `media_compositions_library_list` gains `p_tag_id uuid DEFAULT NULL` and
+  `facets.tags` = `[{id, name, count}]`, counted over the `base` CTE — the same scope as `summary`
+  and `referenceResolutions`, so selecting one tag leaves the other counts intact.
+- Migration `20260906120000_composition_tag_filter_and_facet.sql`. Adding a parameter means
+  `CREATE OR REPLACE` would build a second overload and make every existing 14-argument call
+  ambiguous, so the old signature is dropped first and the REVOKE/GRANT pair re-applied.
+
+Rejected: loading the whole Composition library into the browser to match the Playlist rail exactly.
+With the page size capped at 100 that is a fetch loop on every list load, and it throws away the
+server-side sort, filter and pagination this page was built on.
+
+Rejected: counting and filtering over the current page only. Cheap, and wrong in a way an operator
+would not be able to see — the counts simply read low.
+
 ### 5. The editor's toolbar — three taken, five still refused
 
 ADR 0052 §7 deferred the whole toolbar. Taken now:
