@@ -9,7 +9,7 @@
 import { fetchLayout } from "@/features/media-workspace/layouts/services/layouts-api";
 import { LAYOUT_TEMPLATES } from "@/features/media-workspace/layouts/templates";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
-import { takeCreateSeed } from "@/features/media-workspace/layouts/create-seed";
+import type { CreateSeed } from "@/features/media-workspace/layouts/create-seed";
 import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
 import { firstPlaylistAssetId } from "./content-preview";
 import { fetchComposition } from "./services/compositions-api";
@@ -86,10 +86,12 @@ export type ResolvedSeed =
 const fullScreenZone = (): LayoutZone =>
   ({ id: crypto.randomUUID(), position: 0, name: "Main", x: 0, y: 0, width: 100, height: 100 });
 
-/** Consumes the seed — a reload of the editor must not re-apply it. Returns null when there
- *  was none, which is how a direct navigation to /create still works. */
-export async function resolveCreateSeed(): Promise<ResolvedSeed | null> {
-  const seed = takeCreateSeed();
+/** Turns the Template Picker's seed into geometry. The caller consumes the seed once (via a
+ *  lazy `useState` initializer) and passes it in — resolving it here instead would be run
+ *  twice by Strict Mode's double-invoked effect, and the second pass would find it already
+ *  gone. Returns null when there was none, which is how a direct navigation to /create still
+ *  works. */
+export async function resolveCreateSeed(seed: CreateSeed | null): Promise<ResolvedSeed | null> {
   if (!seed) return null;
   if (seed.kind === "scratch") return { kind: "zones", zones: [fullScreenZone()] };
   if (seed.kind === "preset") {

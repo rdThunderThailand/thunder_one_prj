@@ -30,17 +30,20 @@ export function useEditorLayout({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
 
   // The not-yet-created case is shaped as a full LayoutListItem rather than a partial, so
-  // every reader treats "geometry that does not exist yet" like geometry that does.
+  // every reader treats "geometry that does not exist yet" like geometry that does. It is the
+  // fallback rather than an early return for two reasons: a save that created the layouts row
+  // but died before finishing leaves a `layoutId` the list has not seen yet, and `editedZones`
+  // has to win on this path too — otherwise every canvas edit made before the first save is
+  // discarded on screen as well as in what gets written (ticket 28).
   const layout = useMemo<LayoutListItem | null>(() => {
-    if (!layoutId && blankZones) {
-      return {
+    const base = layouts.find((candidate) => candidate.id === layoutId)
+      ?? (blankZones && {
         id: "", name: name.trim() || "Blank Layout", aspect_ratio: "16:9", background: DEFAULT_BACKGROUND,
         status: "active", kind: "inline", usage_count: 0, reference_resolution: null,
         zone_count: blankZones.length, zones: blankZones,
-      };
-    }
-    const stored = layouts.find((candidate) => candidate.id === layoutId) ?? null;
-    return stored && editedZones ? { ...stored, zones: editedZones, zone_count: editedZones.length } : stored;
+      } satisfies LayoutListItem);
+    if (!base) return null;
+    return editedZones ? { ...base, zones: editedZones, zone_count: editedZones.length } : base;
   }, [blankZones, editedZones, layoutId, layouts, name]);
 
   const layoutZoneIds = useMemo(() => layout?.zones.flatMap((zone) => (zone.id ? [zone.id] : [])) ?? [], [layout]);

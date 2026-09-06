@@ -27,6 +27,10 @@ export type ZoneBindingDraft = {
   source: "playlist" | "assets";
   /** Existing Playlist id, or the implicit Playlist id after picked assets are first saved. */
   playlistId: string | null;
+  /** ADR 0063 §2 3b: minted into the draft *before* `media_playlist_upsert` runs and kept
+   *  across a failed save, so a re-clicked Save re-sends the same key instead of a fresh one
+   *  and the RPC returns the Playlist it already made. Absent until a Zone needs one. */
+  idempotencyKey?: string;
   /** Carried for display so a bound draft stays legible without a second lookup. */
   playlistName?: string;
   assetItems: CompositionAssetItem[];
@@ -58,6 +62,22 @@ export function applyPlaybackToAll(
     const existing = bindings.find((binding) => binding.layoutZoneId === zoneId);
     return existing ? { ...existing, playback } : { ...defaultBinding(zoneId), playback };
   });
+}
+
+/** A Zone whose picked assets still have to become an inline Playlist on the next save. */
+function needsInlinePlaylist(binding: ZoneBindingDraft): boolean {
+  return binding.source === "assets" && binding.assetItems.length > 0 && !binding.playlistId;
+}
+
+/** ADR 0063 §2 3b: every Zone that will need an inline Playlist is given its idempotency key
+ *  *before* the first write, so a re-clicked Save after a partial failure re-sends the same
+ *  key and `media_playlist_upsert` hands back the row it already made instead of a second one.
+ *  Returns the input untouched when every key is already there, so the caller can skip a
+ *  pointless state update. */
+export function withIdempotencyKeys(bindings: ZoneBindingDraft[]): ZoneBindingDraft[] {
+  const missing = (binding: ZoneBindingDraft) => needsInlinePlaylist(binding) && !binding.idempotencyKey;
+  if (!bindings.some(missing)) return bindings;
+  return bindings.map((binding) => (missing(binding) ? { ...binding, idempotencyKey: crypto.randomUUID() } : binding));
 }
 
 export type SetZonesPayload = {

@@ -1,5 +1,4 @@
-// The merged editor's write sequence, lifted out of CompositionEditorPage so ticket 28 can
-// rework it (first-save recovery) without colliding with tickets 26 and 27.
+// The merged editor's write sequence, lifted out of CompositionEditorPage.
 //
 // ADR 0063 §2 spells the order out. Geometry must exist before the Composition that points
 // at it, and every inline Playlist must exist before the bindings that name it:
@@ -16,7 +15,7 @@ import { fetchLayout, setLayoutKind, upsertLayout } from "@/features/media-works
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
 import { setPlaylistItems, upsertPlaylist } from "@/features/media-workspace/playlists/services/playlists-api";
 import { fetchComposition, forkCompositionLayout, moveComposition, setCompositionTags, setCompositionZones, upsertComposition } from "./services/compositions-api";
-import { bindingsFromCompositionZones, remapZoneBindings, toSetZonesPayload, type ZoneBindingDraft } from "./zone-bindings";
+import { bindingsFromCompositionZones, remapZoneBindings, toSetZonesPayload, withIdempotencyKeys, type ZoneBindingDraft } from "./zone-bindings";
 
 /** Resolution, aspect ratio and background live on the `layouts` row, not the Composition —
  *  which is why editing them can interrupt with ADR 0052 §3's shared-Template warning. */
@@ -45,6 +44,19 @@ export type PersistInput = {
   folderId?: string | null;
   /** `undefined` leaves tags alone. An empty array clears them. */
   tags?: string[];
+  /** Ticket 28's recovery seams. Each hands a partial result back to the draft the moment it
+   *  exists, so a save that dies partway leaves the editor holding what the failed attempt
+   *  already earned — the `layouts` row id, the `compositions` row id, and each Zone's
+   *  idempotency key and Playlist id. Without them a retry restarts from step 1 and mints
+   *  duplicates (ADR 0063 §2) — and the second `compositions` insert fails outright, since an
+   *  inline Layout may belong to only one Composition. */
+  onLayoutCreated?: (layoutId: string) => void;
+  onCompositionCreated?: (compositionId: string) => void;
+  onBindingsChanged?: (bindings: ZoneBindingDraft[]) => void;
+  /** Geometry as the RPC now holds it, with its own Zone ids. Handed over as soon as it is
+   *  read so a later failure leaves the canvas showing real ids rather than the client-minted
+   *  ones the bindings have already been remapped off. */
+  onLayoutSaved?: (layout: LayoutListItem) => void;
 };
 
 export type PersistResult = {
@@ -61,12 +73,16 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
   const { layout, layoutSettings, editedZones, blankZones } = input;
   let layoutId = input.layoutId;
   let zoneIds = input.layoutZoneIds;
-  let bindings = input.bindings;
   let refreshedLayout: LayoutListItem | null = null;
+
+  // Before any write: every Zone that will need an inline Playlist gets its idempotency key,
+  // handed straight back to the draft so a failed save leaves it there (ADR 0063 §2 3b).
+  let bindings = withIdempotencyKeys(input.bindings);
+  if (bindings !== input.bindings) input.onBindingsChanged?.(bindings);
 
   // Existing geometry, changed here: rewrite the layouts row. Zones the RPC has never seen
   // are sent without an id so it inserts them.
-  if (layoutId && layout && (editedZones || layoutSettings)) {
+  if (layoutId && !blankZones && layout && (editedZones || layoutSettings)) {
     const zones = editedZones ?? layout.zones;
     await upsertLayout({
       layoutId,
@@ -85,25 +101,42 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
       })),
     });
     refreshedLayout = await fetchLayout(layoutId);
+    input.onLayoutSaved?.(refreshedLayout);
     bindings = remapZoneBindings(bindings, zones, refreshedLayout.zones);
     zoneIds = refreshedLayout.zones.flatMap((zone) => (zone.id ? [zone.id] : []));
   }
 
   // No geometry yet — a blank canvas or a copied preset. Created as a template so the row
   // has an id, then flipped to private `inline` geometry (ADR 0063 §2 steps 1–2).
-  if (!layoutId && blankZones) {
-    const created = await upsertLayout({
-      name: input.name.trim() || "Untitled Layout",
-      aspectRatio: layoutSettings?.aspectRatio ?? "16:9",
-      referenceResolution: layoutSettings?.referenceResolution ?? null,
-      background: layoutSettings?.background ?? "#000000",
-      status: "active",
-      zones: blankZones.map(({ name, x, y, width, height }) => ({ name, x, y, width, height })),
-    });
-    layoutId = created.layout_id;
+  //
+  // `editedZones` wins over `blankZones`: on this path the canvas edits (drag, Split, align,
+  // duplicate) are made against the client-minted seed, so ignoring them here would discard
+  // every geometry change made before the first save.
+  if (blankZones) {
+    const zones = editedZones ?? blankZones;
+    if (!layoutId) {
+      const created = await upsertLayout({
+        name: input.name.trim() || "Untitled Layout",
+        aspectRatio: layoutSettings?.aspectRatio ?? "16:9",
+        referenceResolution: layoutSettings?.referenceResolution ?? null,
+        background: layoutSettings?.background ?? "#000000",
+        status: "active",
+        zones: zones.map(({ name, x, y, width, height }) => ({ name, x, y, width, height })),
+      });
+      layoutId = created.layout_id;
+      // Step 1's id, banked before step 2 can fail: the retry arrives holding it and resumes
+      // at step 2 instead of leaving a second orphan `kind='template'` row behind.
+      input.onLayoutCreated?.(layoutId);
+    }
+    // ponytail: a resume skips the write above, so geometry edited between the failed attempt
+    // and the retry rides on the next save rather than this one — harmless while the Zone
+    // count is unchanged, since the remap below is positional. Rewriting on resume needs the
+    // server's Zone ids, which only exist after the fetch that follows.
     await setLayoutKind(layoutId, "inline");
     refreshedLayout = await fetchLayout(layoutId);
-    bindings = remapZoneBindings(bindings, blankZones, refreshedLayout.zones);
+    input.onLayoutSaved?.(refreshedLayout);
+    bindings = remapZoneBindings(bindings, zones, refreshedLayout.zones);
+    input.onBindingsChanged?.(bindings);
     zoneIds = refreshedLayout.zones.flatMap((zone) => (zone.id ? [zone.id] : []));
   }
 
@@ -115,11 +148,17 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
     layoutId,
     expectedRevision: input.revision,
   });
+  // Banked before the Playlist loop can fail: the layout row already points here, so a retry
+  // that re-inserts would hit "an inline Layout may belong to only one Composition".
+  if (!input.compositionId) input.onCompositionCreated?.(upserted.composition_id);
 
-  // ADR 0063 §2 3b. KNOWN GAP, ticket 28: the ids earned here only reach the caller if the
-  // whole loop completes, so a failure partway leaves orphan `kind='inline'` Playlists and
-  // the next attempt makes more. Fixing that is ticket 28's job — it needs the id and the
-  // idempotency key to become draft state, written the moment they exist.
+  // ADR 0063 §2 3b. Every id is banked into the draft the moment it exists, never after the
+  // loop: a failure on a later Zone must not cost the earlier ones their Playlist ids, or the
+  // retry mints a second set of invisible `kind='inline'` rows. The `if (!playlistId)` guard
+  // below is what makes that retry a no-op for the Zones that already succeeded, and the
+  // idempotency key covers the one that did not — it was minted before the call, so re-sending
+  // it returns the same row rather than another one.
+  const zoneNames = refreshedLayout ?? layout;
   const resolved: ZoneBindingDraft[] = [];
   for (const binding of bindings) {
     if (binding.source === "playlist" || binding.assetItems.length === 0) {
@@ -128,14 +167,18 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
     }
     let playlistId = binding.playlistId;
     if (!playlistId) {
-      const zoneName = layout?.zones.find((zone) => zone.id === binding.layoutZoneId)?.name ?? "Zone";
+      const zoneName = zoneNames?.zones.find((zone) => zone.id === binding.layoutZoneId)?.name ?? "Zone";
       const created = await upsertPlaylist({
         name: `${input.name.trim() || "Composition"} · ${zoneName}`,
         kind: "inline",
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: binding.idempotencyKey ?? crypto.randomUUID(),
       });
       playlistId = created.playlist_id;
     }
+    resolved.push({ ...binding, playlistId });
+    // Before set_items, not after: the Playlist exists from here on, so a failure filling it
+    // must still leave the draft pointing at it.
+    input.onBindingsChanged?.([...resolved, ...bindings.slice(resolved.length)]);
     await setPlaylistItems(
       playlistId,
       binding.assetItems.map((item, index) => ({
@@ -145,7 +188,6 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
         transition: item.transition ?? "cut",
       })),
     );
-    resolved.push({ ...binding, playlistId });
   }
 
   const zonesResult = await setCompositionZones(upserted.composition_id, toSetZonesPayload(zoneIds, resolved), upserted.revision);

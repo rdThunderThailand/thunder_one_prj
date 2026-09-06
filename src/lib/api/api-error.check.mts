@@ -72,6 +72,16 @@ assert.equal(classifyApiError(new Error("Network Error"), FALLBACK).kind, "retry
 assert.equal(classifyApiError("something", FALLBACK).kind, "retryable");
 assert.equal(classifyApiError(undefined, FALLBACK).kind, "retryable");
 
+// A request that never got a response (axios "Network Error" / ERR_NETWORK /
+// timeout) must not reach the operator in English — the Thai retryable line
+// replaces it. A plain thrown Error with any other message still passes through.
+const offline = classifyApiError(Object.assign(new Error("Network Error"), { code: "ERR_NETWORK" }), FALLBACK);
+assert.equal(offline.kind, "retryable");
+assert.ok(offline.message.includes("เชื่อมต่อ"), "network failure should surface in Thai");
+assert.ok(!offline.message.includes("Network Error"));
+assert.equal(classifyApiError(Object.assign(new Error("timeout of 0ms exceeded"), { code: "ECONNABORTED" }), FALLBACK).message, offline.message);
+assert.equal(classifyApiError(new Error("อะไรบางอย่างพัง"), FALLBACK).message, "อะไรบางอย่างพัง");
+
 // The fallback fills in only when there is no message to show.
 assert.equal(classifyApiError(undefined, FALLBACK).message, FALLBACK);
 assert.equal(classifyApiError(new Error(""), FALLBACK).message, FALLBACK);

@@ -11,6 +11,7 @@ import {
   toCompositionUpsertPayload,
   toSetZonesPayload,
   totalZoneDurationSeconds,
+  withIdempotencyKeys,
   type ZoneBindingDraft,
 } from "./zone-bindings.ts";
 import type { CompositionZone } from "./types/index.ts";
@@ -195,3 +196,30 @@ assert.deepEqual(placeholder, { ...defaultBinding("zone-unbound"), playback: new
 assert.deepEqual(toSetZonesPayload(["zone-main", "zone-unbound"], withUnbound).zones.map((z) => z.layout_zone_id), ["zone-main"]);
 
 console.log("zone-bindings.check.mts — applyPlaybackToAll assertions passed");
+
+// --- withIdempotencyKeys — ticket 28's retry safety -------------------------
+
+const picked: ZoneBindingDraft = {
+  ...defaultBinding("zone-main"), source: "assets",
+  assetItems: [{ media_asset_id: "a1", duration_seconds: 10, transition: "cut" }],
+};
+const alreadySaved: ZoneBindingDraft = { ...picked, playlistId: "p1" };
+const empty: ZoneBindingDraft = { ...defaultBinding("zone-side"), source: "assets" };
+
+// Only a Zone whose picked assets still have to become a Playlist gets a key.
+const keyed = withIdempotencyKeys([picked, alreadySaved, empty]);
+assert.equal(typeof keyed[0]!.idempotencyKey, "string");
+assert.equal(keyed[1]!.idempotencyKey, undefined);
+assert.equal(keyed[2]!.idempotencyKey, undefined);
+
+// The key survives a second pass, which is the whole point: a re-clicked Save after a partial
+// failure must re-send the key the failed attempt used, not a fresh one.
+const again = withIdempotencyKeys(keyed);
+assert.equal(again, keyed, "nothing left to mint — the same array comes back, so no state churn");
+assert.equal(again[0]!.idempotencyKey, keyed[0]!.idempotencyKey);
+
+// Nothing to do at all is also identity.
+const nothingToMint = [alreadySaved, empty];
+assert.equal(withIdempotencyKeys(nothingToMint), nothingToMint);
+
+console.log("zone-bindings.check.mts — withIdempotencyKeys assertions passed");

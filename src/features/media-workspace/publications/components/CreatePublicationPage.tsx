@@ -35,6 +35,8 @@ export function CreatePublicationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const idParam = searchParams.get("id");
+  // ADR 0063 §7: the editor's `Use in Program →` hands a Layout over rather than publishing it.
+  const seedCompositionId = searchParams.get("compositionId");
 
   const hasHydrated = useHasHydratedDraft();
   const isDirty = useIsDraftDirty();
@@ -139,6 +141,20 @@ export function CreatePublicationPage() {
       alive = false;
     };
   }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
+
+  // `Use in Program →` pre-fills type and Layout on whatever draft is already here rather than
+  // replacing it: the operator asked for a Publication *of this Layout*, not for their
+  // half-written draft to be thrown away. Applied once — changing the type back must stick.
+  const seededCompositionRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!hasHydrated || !seedCompositionId || idParam) return;
+    if (seededCompositionRef.current === seedCompositionId) return;
+    seededCompositionRef.current = seedCompositionId;
+    // Order matters: setBasicInfo clears compositionId whenever the type changes.
+    setBasicInfo({ ...usePublicationDraftStore.getState().basicInfo, publicationType: "composition" });
+    usePublicationDraftStore.getState().setCompositionId(seedCompositionId);
+    setStep(1);
+  }, [hasHydrated, seedCompositionId, idParam, setBasicInfo, setStep]);
 
   const [retrying, setRetrying] = useState(false);
 

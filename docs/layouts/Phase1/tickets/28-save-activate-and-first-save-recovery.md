@@ -6,7 +6,7 @@
 **Plan:** `docs/layouts/Phase1/plan-create-layout-flow.md` FE-5
 **Design:** `docs/layouts/Phase1/Layout Editor.png` (header)
 **Blocked by:** 25 (the file split)
-**Status:** not started
+**Status:** implemented — browser verification pending
 
 **This is the riskiest ticket in the phase.** It closes two recovery holes in the shipped save path.
 
@@ -57,22 +57,24 @@
 
 ## Checklist
 
-- [ ] `Save Layout` split button: primary saves at the current status; menu has `Save as draft` and
+- [x] `Save Layout` split button: primary saves at the current status; menu has `Save as draft` and
       `Save & Activate`
-- [ ] `Save & Activate` is disabled while any Zone is unbound, and states how many
-- [ ] **No autosave**, and no timer that writes
-- [ ] Step 1's `layout_id` is held in state; a failure at step 2 resumes at step 2
-- [ ] Each Zone's idempotency key is minted and stored in draft state **before**
+- [x] `Save & Activate` is disabled while any Zone is unbound, and states how many
+- [x] **No autosave**, and no timer that writes
+- [x] Step 1's `layout_id` is held in state; a failure at step 2 resumes at step 2
+- [x] Each Zone's idempotency key is minted and stored in draft state **before**
       `media_playlist_upsert` is called
-- [ ] Each Zone's `playlistId` is stored **as soon as the call returns**, not after the loop
-- [ ] The existing `if (!playlistId)` branch then makes a retry a no-op for Zones that already
+- [x] Each Zone's `playlistId` is stored **as soon as the call returns**, not after the loop
+- [x] The existing `if (!playlistId)` branch then makes a retry a no-op for Zones that already
       succeeded — verify it, do not rewrite it
-- [ ] Draft state kept in `localStorage` must have its **key version bumped** if its shape changes;
-      an old draft that rehydrates into the new shape crashes (`CLAUDE.md` §6)
-- [ ] `Save as Template` calls `media_layout_set_kind` and names the row
-- [ ] `Use in Program →` opens the Publication wizard pre-filled. **Not** labelled `Publish`
-- [ ] No `Import Layout` button
-- [ ] A `revision` conflict surfaces to the operator as a readable message, not a raw DB error
+- [x] Draft state kept in `localStorage` must have its **key version bumped** if its shape changes;
+      an old draft that rehydrates into the new shape crashes (`CLAUDE.md` §6) — **N/A**: the
+      editor's draft is React state only. The one persisted thing (`layouts/create-seed.ts`,
+      sessionStorage) carries `LayoutZone[]` / a layout id, neither of which changed shape.
+- [x] `Save as Template` calls `media_layout_set_kind` and names the row
+- [x] `Use in Program →` opens the Publication wizard pre-filled. **Not** labelled `Publish`
+- [x] No `Import Layout` button
+- [x] A `revision` conflict surfaces to the operator as a readable message, not a raw DB error
 
 ## Verification
 
