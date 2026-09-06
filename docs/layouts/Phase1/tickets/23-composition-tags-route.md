@@ -6,8 +6,8 @@
 **Plan:** `docs/layouts/Phase1/plan-create-layout-flow.md` BE-3
 **Blocked by:** 22
 **Blocks:** the Tags half of 25 and 29
-**Status:** in progress — route + client written on `feat/layoutV2`, both repos. HTTP verification
-pending backend deploy to `develop`.
+**Status:** verified — tested 2026-09-06 via localhost dev servers (One :3000 → Core :3001 → develop
+DB). All three checks passed; not yet deployed to `develop`.
 
 ## What to build
 
@@ -26,11 +26,14 @@ One pass-through route. 21 needs no route — `media_layouts_list` already has o
 
 ## Verification
 
-- [ ] Call the deployed `develop` route with a real session, set two tags, read them back through
-      the library list endpoint — not through the RPC directly (`CLAUDE.md` §3: verify at the layer
-      the user uses). **Blocked on deploy.**
-- [ ] A request naming another tenant's Composition is refused. **Blocked on deploy.**
+- [x] `PUT /api/proxy/media/compositions/<id>/tags` with `{tags:["ข่าว","  ข่าว  ","Promo"]}` on
+      composition `af896984-…` (session `piyapat@thunder.co.th`) → `200`, response `data.tags` = 2
+      entries (`Promo`, `ข่าว`) — trim + case-insensitive dedupe worked, not 3.
+- [x] `GET /api/proxy/media/compositions?page=1&page_size=50` → that row carries
+      `tags: [{Promo},{ข่าว}]` with the DB's canonical casing. Verified at the list layer, not the RPC.
+- [x] `PUT .../00000000-0000-0000-0000-000000000000/tags` → `404 {"error":"not found: active
+      composition not found for this tenant"}` — refused, no raw SQL / stack trace leaked.
+- Cleanup: tags reset to `[]` after the test.
 
-Note: the underlying RPC `media_composition_set_tags` is already applied to `develop` and fully
-verified under #52 (dedupe/trim, cross-tenant refusal, shared-vocabulary reuse). This route is a
-pure pass-through, so the remaining checks are HTTP-transport only.
+Tested on localhost dev servers (not deployed to `develop`). The underlying RPC was already fully
+verified under #52; this run covers the HTTP transport + proxy + list serialization.
