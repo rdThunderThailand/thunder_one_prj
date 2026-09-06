@@ -17,7 +17,7 @@ depends on, so it can be worked without reading the whole ADR first.
 | 25 | [#55](https://github.com/rdThunderThailand/thunder_one_prj/issues/55) | [Layout Properties panel + file split](25-layout-properties-panel.md) | One + **Core**⁴ | 24, 23 | verified (localhost → develop DB) |
 | 26 | [#56](https://github.com/rdThunderThailand/thunder_one_prj/issues/56) | [Canvas tools](26-canvas-tools.md) | One | 25 | verified (localhost) |
 | 27 | [#57](https://github.com/rdThunderThailand/thunder_one_prj/issues/57) | [Zone Properties tabs](27-zone-properties-tabs.md) | One | 25 | verified (localhost) |
-| 28 | [#58](https://github.com/rdThunderThailand/thunder_one_prj/issues/58) | [Save / Activate / first-save recovery](28-save-activate-and-first-save-recovery.md) | One | 25 | implemented — verification pending |
+| 28 | [#58](https://github.com/rdThunderThailand/thunder_one_prj/issues/58) | [Save / Activate / first-save recovery](28-save-activate-and-first-save-recovery.md) | One | 25 | verified (localhost → develop DB)³ |
 | 29 | [#59](https://github.com/rdThunderThailand/thunder_one_prj/issues/59) | [List page rails](29-list-page-rails.md) | One + **Core**² | 23 | verified (localhost → develop DB) |
 
 ¹ 24 needs 21 only for its *Recently Used* group; the rest of the picker can be built first.
@@ -26,6 +26,10 @@ depends on, so it can be worked without reading the whole ADR first.
 `20260906120000_composition_tag_filter_and_facet.sql`, applied to `develop` 2026-09-06. The ticket
 assumed the Playlist page's client-side rail; this list is server-paginated. ADR 0063 §4 carries the
 amendment and the rejected alternatives.
+
+³ 28's `Save as Template` shipped flipping the row to `template` without naming it, leaving a
+`comp:<uuid>` row in the Templates list. ADR 0052 §4 wants both — rename, then widen kind. Fixed
+2026-09-07 (`promoteLayoutToTemplate`, commit `c0e7773`); the in-place flip itself was correct.
 
 ⁴ 25 also acquired a Core migration — `20260906133000_composition_get_folder_and_tags.sql`, applied
 to `develop` 2026-09-06. `media_composition_get` returned neither field, so the Properties panel had
@@ -47,10 +51,11 @@ per `CLAUDE.md` §3) → `shipped`. Edit the row and the ticket's own **Status**
 - **21 ‖ 22** — different objects, one branch, no shared function.
 - **24 ‖ 29** — different pages; 29 only needs the backend.
 - **26 ‖ 27 ‖ 28** — all three edit the editor, so **25 must land first**. Done: the 734-line
-  `CompositionEditorPage.tsx` is now 300, and each of the three has a file of its own —
+  `CompositionEditorPage.tsx` is back at 300, and each of the three has a file of its own —
   26 → `CompositionCanvasPane.tsx` (+ `align-zones.ts`, `hooks/useZoneEditGuard.ts`/
   `useZoneHistory.ts`), 27 → `ZonePropertiesPanel.tsx` (wraps `ZoneContentPicker.tsx`),
-  28 → `save-composition.ts` + `hooks/useCompositionSave.ts` + `CompositionEditorHeader.tsx`.
+  28 → `save-composition.ts` + `hooks/useCompositionSave.ts` + `CompositionEditorHeader.tsx`
+  + `SaveAsTemplateDialog.tsx` / `CompositionEditorOverlays.tsx` (28's dialog work, 2026-09-07).
   26 and 27 are both done and verified 2026-09-06.
 
 ## Ship order

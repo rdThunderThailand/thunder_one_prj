@@ -6,7 +6,7 @@
 **Plan:** `docs/layouts/Phase1/plan-create-layout-flow.md` FE-5
 **Design:** `docs/layouts/Phase1/Layout Editor.png` (header)
 **Blocked by:** 25 (the file split)
-**Status:** implemented — browser verification pending
+**Status:** verified (localhost → develop DB)
 
 **This is the riskiest ticket in the phase.** It closes two recovery holes in the shipped save path.
 
@@ -78,10 +78,20 @@
 
 ## Verification
 
-- [ ] **The recovery case, deliberately:** bind three Zones by picking assets, force a failure on the
-      third (offline, or a rejected request), re-save, and confirm
-      `media_core.playlists WHERE kind = 'inline'` gained **three** rows in total — not five
-- [ ] Force a failure at step 2 and re-save; confirm `media_core.layouts` gained **one** row, not two
-- [ ] `Save & Activate` on a Layout with an unbound Zone is disabled and says so; binding it enables
-- [ ] Save as Template, then open the Templates list and find the row named
-- [ ] Delete every scratch row afterwards
+Ran against develop (`ftfmokgphewzyxzwjitv`) via `CORE_API_URL=http://localhost:3001`, two
+sessions: the recovery/activate cases 2026-09-06, `Save as Template` naming 2026-09-07 (the
+in-place `inline → template` flip was correct by ADR 0052 §4 — the real defect was that the row
+was never named; fixed in `promoteLayoutToTemplate`, commit `c0e7773`).
+
+- [x] **The recovery case, deliberately:** three Zones bound, failure forced on `POST /media/playlists`
+      attempt 2 → `zz-t28-crec2` had **exactly 3** `kind='inline'` playlists, the first-attempt
+      "Left" reused, not re-minted (2026-09-06)
+- [x] Failure forced at step 2 (`PATCH /media/layouts/{id}/kind`), re-saved → `zz-t28-d` gained
+      **one** `layouts` row + one composition, no dupes (2026-09-06)
+- [x] `Save & Activate` disabled with an unbound Zone and states the count; binding enables it
+      (2026-09-06)
+- [x] `Save as Template` on a bound Composition → Templates list row named `zz-e1-tpl-3col` /
+      `zz-e1-tpl-bound`, **not** `comp:<uuid>`; `composition_zones` `layout_zone_id` round-tripped,
+      no Zones silently unbound (2026-09-07)
+- [x] `revision` conflict surfaces as a readable message (E4, 2026-09-06)
+- [x] Every scratch row deleted — 55 rows across 6 tables, one transaction, 2026-09-07
