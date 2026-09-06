@@ -15,8 +15,8 @@ depends on, so it can be worked without reading the whole ADR first.
 | 23 | [#53](https://github.com/rdThunderThailand/thunder_one_prj/issues/53) | [API route for `set_tags`](23-composition-tags-route.md) | Core | 22 | verified (localhost → develop DB) |
 | 24 | [#54](https://github.com/rdThunderThailand/thunder_one_prj/issues/54) | [Template Picker](24-template-picker.md) | One | 21¹ | verified (localhost → develop DB) |
 | 25 | [#55](https://github.com/rdThunderThailand/thunder_one_prj/issues/55) | [Layout Properties panel + file split](25-layout-properties-panel.md) | One + **Core**⁴ | 24, 23 | verified (localhost → develop DB) |
-| 26 | [#56](https://github.com/rdThunderThailand/thunder_one_prj/issues/56) | [Canvas tools](26-canvas-tools.md) | One | 25 | verified (localhost → develop DB) |
-| 27 | [#57](https://github.com/rdThunderThailand/thunder_one_prj/issues/57) | [Zone Properties tabs](27-zone-properties-tabs.md) | One | 25 | verified (localhost → develop DB) |
+| 26 | [#56](https://github.com/rdThunderThailand/thunder_one_prj/issues/56) | [Canvas tools](26-canvas-tools.md) | One | 25 | verified (localhost) |
+| 27 | [#57](https://github.com/rdThunderThailand/thunder_one_prj/issues/57) | [Zone Properties tabs](27-zone-properties-tabs.md) | One | 25 | verified (localhost) |
 | 28 | [#58](https://github.com/rdThunderThailand/thunder_one_prj/issues/58) | [Save / Activate / first-save recovery](28-save-activate-and-first-save-recovery.md) | One | 25 | not started |
 | 29 | [#59](https://github.com/rdThunderThailand/thunder_one_prj/issues/59) | [List page rails](29-list-page-rails.md) | One + **Core**² | 23 | verified (localhost → develop DB) |
 
