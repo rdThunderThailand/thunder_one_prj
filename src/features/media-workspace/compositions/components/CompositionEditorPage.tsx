@@ -1,11 +1,8 @@
 "use client";
 
-// The merged editor (ADR 0052, ADR 0063). This file is the composition root only: it owns the
-// draft and wires the pieces together. Everything else lives beside it — loading and preview
-// shapes in hooks/useCompositionEditorData and hooks/useCompositionPreview, the write path in
-// save-composition.ts, what is shown in hooks/useEditorLayout, the Zone edit gate (undo/redo
-// plus the shared-Template confirm) in hooks/useZoneEditGuard, and the canvas, the two panels
-// and the header in components of their own. The 300-line ceiling is what keeps it that way.
+// The merged editor (ADR 0052, ADR 0063). Composition root only: it owns the draft and wires
+// the pieces together — the hooks (useComposition*), the write path (save-composition.ts), and
+// the canvas/panels/header/overlays each in a file of their own. The 300-line ceiling keeps it so.
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -15,14 +12,13 @@ import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchLayout, promoteLayoutToTemplate } from "@/features/media-workspace/layouts/services/layouts-api";
 import { takeCreateSeed } from "@/features/media-workspace/layouts/create-seed";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
-import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
 import { PlaybackPreviewModal } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
 import { setCompositionStatus } from "../services/compositions-api";
 import { forkLayoutForComposition, type LayoutSettingsDraft } from "../save-composition";
 import { draftSnapshot, loadCompositionDraft, resolveCreateSeed } from "../load-composition-draft";
 import type { CompositionStatus } from "../types";
-import { applyPlaybackToAll, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
+import { applyPlaybackToAll, upsertBinding, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
 import { useCompositionEditorData } from "../hooks/useCompositionEditorData";
 import { useCompositionPreview } from "../hooks/useCompositionPreview";
 import { useCompositionSave } from "../hooks/useCompositionSave";
@@ -30,8 +26,8 @@ import { useEditorLayout } from "../hooks/useEditorLayout";
 import { useZoneEditGuard } from "../hooks/useZoneEditGuard";
 import { CompositionCanvasPane } from "./CompositionCanvasPane";
 import { CompositionEditorHeader } from "./CompositionEditorHeader";
+import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
-import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
 
 const LIST_PATH = "/media-workspace/layouts";
@@ -59,8 +55,7 @@ export function CompositionEditorPage({
   const [revision, setRevision] = useState<number | null>(null);
   const [bindings, setBindings] = useState<ZoneBindingDraft[]>([]);
   const [initialSnapshot, setInitialSnapshot] = useState("");
-  /** ADR 0063 §2: `Unsaved` until the first write, `Last saved HH:MM` after — never
-   *  "Saved just now" on a canvas nothing has ever been written for. */
+  // ADR 0063 §2: `Unsaved` until the first write, `Last saved HH:MM` after — never "Saved just now".
   const [savedAt, setSavedAt] = useState<Date | null>(null);
 
   const [previewOpen, setPreviewOpen] = useState(initialPreview);
@@ -74,9 +69,8 @@ export function CompositionEditorPage({
   });
   const { layout, settings, sharedTemplateUsage } = view;
 
-  // ADR 0063 §2: the Template Picker seeds the choice as client state and navigates here.
-  // Consumed once, here, so Strict Mode's double-invoked effect below can't lose it on the
-  // second pass (the first pass reads it, the second would find sessionStorage already clear).
+  // ADR 0063 §2: Template Picker seeds the choice in sessionStorage; read once into state so
+  // Strict Mode's second effect pass can't find it already cleared.
   const [createSeed] = useState(() => (compositionId ? null : takeCreateSeed()));
   useEffect(() => {
     if (compositionId) return;
@@ -129,21 +123,19 @@ export function CompositionEditorPage({
 
   const setBinding = (next: ZoneBindingDraft) => {
     if (next.playlistId && !data.playlistPreviewAssetIds[next.playlistId]) data.hydratePlaylist(next.playlistId);
-    setBindings((prev) => prev.some((b) => b.layoutZoneId === next.layoutZoneId)
-      ? prev.map((b) => (b.layoutZoneId === next.layoutZoneId ? next : b)) : [...prev, next]);
+    setBindings((prev) => upsertBinding(prev, next));
   };
 
-  // Every Zone edit — canvas or ticket 27's Layout tab — goes through this one gate.
+  // Every Zone edit — canvas or the Layout tab — goes through this one gate.
   const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, canUndo, canRedo } =
     useZoneEditGuard(layout?.zones ?? [], sharedTemplateUsage, setEditedZones);
 
   const applyPlaybackToAllZones = (playback: ZonePlayback) =>
     setBindings((prev) => applyPlaybackToAll(view.layoutZoneIds, prev, playback));
 
-  /** Geometry the RPC has just confirmed, swapped in for whatever the draft was holding — the
-   *  client-minted Zone ids are gone from here on, bindings included. Called mid-save as well
-   *  as after it, so a save that dies later resumes against real ids instead of replaying
-   *  step 1. `saved` is null only when nothing wrote geometry this time round. */
+  /** Swap RPC-confirmed geometry in for the draft's client-minted Zone ids. Called mid-save as
+   *  well as after, so a save that dies later resumes on real ids. `saved` null = no geometry
+   *  written this round. */
   const absorbLayout = (saved: LayoutListItem | null, savedId = saved?.id) => {
     if (saved) data.setLayouts((current) => [...current.filter((c) => c.id !== saved.id), saved]);
     if (savedId) setLayoutId(savedId);
@@ -183,6 +175,15 @@ export function CompositionEditorPage({
     }, "สร้าง Layout ส่วนตัวไม่สำเร็จ");
   };
 
+  // Dialog closed before the save runs: a failure must reach the header slot a modal would hide.
+  const saveAsTemplate = (templateName: string) => {
+    setNamingTemplate(false);
+    void save(async (result) => {
+      await promoteLayoutToTemplate(result.layoutId, templateName);
+      router.push("/media-workspace/layouts/templates");
+    }, "บันทึกเป็น Template ไม่สำเร็จ");
+  };
+
   if (loading) return <p className="p-6 text-sm text-zinc-400">กำลังโหลด...</p>;
 
   const fatal = loadError ?? data.loadError;
@@ -220,24 +221,20 @@ export function CompositionEditorPage({
         }, "เปิดใช้งาน Composition ไม่สำเร็จ")}
       />
 
-      {confirmLeave && <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />}
-
-      {namingTemplate && (
-        <SaveAsTemplateDialog
-          defaultName={name}
-          takenNames={data.layouts.flatMap((c) => (c.kind === "template" ? [c.name] : []))}
-          onClose={() => setNamingTemplate(false)}
-          // Closed before the save runs, not after it: a failure has to reach the header's
-          // error slot, which a modal on top of it would hide.
-          onConfirm={(templateName) => {
-            setNamingTemplate(false);
-            void save(async (result) => {
-              await promoteLayoutToTemplate(result.layoutId, templateName);
-              router.push("/media-workspace/layouts/templates");
-            }, "บันทึกเป็น Template ไม่สำเร็จ");
-          }}
-        />
-      )}
+      <CompositionEditorOverlays
+        confirmLeave={confirmLeave}
+        onStay={() => setConfirmLeave(false)}
+        onLeave={() => router.push(LIST_PATH)}
+        namingTemplate={namingTemplate}
+        templateDefaultName={name}
+        takenTemplateNames={data.layouts.flatMap((c) => (c.kind === "template" ? [c.name] : []))}
+        onCloseNaming={() => setNamingTemplate(false)}
+        onConfirmTemplate={saveAsTemplate}
+        saveError={saveError}
+        sharedTemplateUsage={sharedTemplateUsage}
+        saving={saving}
+        onForkLayout={handleForkLayout}
+      />
 
       <PlaybackPreviewModal
         open={previewOpen}
@@ -249,21 +246,6 @@ export function CompositionEditorPage({
         geometryOptions={editorGeometryOptions(layout?.reference_resolution)}
         referenceResolution={layout?.reference_resolution ?? null}
       />
-
-      {saveError && (
-        <Card className="border-red-200 p-4 dark:border-red-900">
-          <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
-        </Card>
-      )}
-
-      {sharedTemplateUsage > 1 && (
-        <Card className="flex flex-wrap items-center justify-between gap-3 border-amber-200 p-4 dark:border-amber-800">
-          <p className="text-sm text-amber-800 dark:text-amber-200">
-            This Template is used by {sharedTemplateUsage} Layouts. Changing the Zones affects all of them.
-          </p>
-          <Button variant="secondary" disabled={saving} onClick={handleForkLayout}>Make this Layout its own copy</Button>
-        </Card>
-      )}
 
       <Card className="grid gap-6 p-4 lg:grid-cols-[1fr_260px]">
         {layout ? (

@@ -64,6 +64,12 @@ export function applyPlaybackToAll(
   });
 }
 
+/** Replace the draft for `next`'s Zone, or append it if that Zone has none yet. */
+export const upsertBinding = (prev: ZoneBindingDraft[], next: ZoneBindingDraft): ZoneBindingDraft[] =>
+  prev.some((b) => b.layoutZoneId === next.layoutZoneId)
+    ? prev.map((b) => (b.layoutZoneId === next.layoutZoneId ? next : b))
+    : [...prev, next];
+
 /** A Zone whose picked assets still have to become an inline Playlist on the next save. */
 function needsInlinePlaylist(binding: ZoneBindingDraft): boolean {
   return binding.source === "assets" && binding.assetItems.length > 0 && !binding.playlistId;
