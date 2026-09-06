@@ -1,6 +1,7 @@
 import { requestApi } from "@/lib/api/media-api";
 import type { CompositionDetail, CompositionLibraryItem, CompositionLibraryPage, CompositionListItem, CompositionStatus } from "../types";
 import type { SetZonesPayload } from "../zone-bindings";
+import type { Tag } from "@/types/domain";
 
 export async function fetchCompositions(): Promise<CompositionListItem[]> {
   const data = await requestApi<{ data?: CompositionListItem[] } | CompositionListItem[]>(
@@ -155,6 +156,15 @@ export async function duplicateComposition(
     { name: name.trim() },
   );
   return { compositionId: composition_id };
+}
+
+/** Replaces a composition's tags wholesale against the tenant's shared vocabulary —
+ *  Thunder_Core #52 / ADR 0063 §4. Names, not ids: the backend creates what does not
+ *  exist yet and reuses the existing spelling for what does. Returns the stored set so
+ *  the caller renders the canonical casing rather than what was typed. */
+export async function setCompositionTags(id: string, tags: string[]): Promise<Tag[]> {
+  const data = await requestApi<{ tags?: Tag[] }>("PUT", `/media/compositions/${id}/tags`, { tags });
+  return data.tags ?? [];
 }
 
 export async function forkCompositionLayout(
