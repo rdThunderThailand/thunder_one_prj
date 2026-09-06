@@ -10,8 +10,8 @@ depends on, so it can be worked without reading the whole ADR first.
 
 | # | Issue | Ticket | Repo | Blocked by | Status |
 |---|---|---|---|---|---|
-| 21 | [#51](https://github.com/rdThunderThailand/thunder_one_prj/issues/51) | [`last_used_at` on `media_layouts_list`](21-layout-last-used-at.md) | Core | — | not started |
-| 22 | [#52](https://github.com/rdThunderThailand/thunder_one_prj/issues/52) | [Composition tags](22-composition-tags.md) | Core | — | not started |
+| 21 | [#51](https://github.com/rdThunderThailand/thunder_one_prj/issues/51) | [`last_used_at` on `media_layouts_list`](21-layout-last-used-at.md) | Core | — | verified (develop) |
+| 22 | [#52](https://github.com/rdThunderThailand/thunder_one_prj/issues/52) | [Composition tags](22-composition-tags.md) | Core | — | verified (develop) |
 | 23 | [#53](https://github.com/rdThunderThailand/thunder_one_prj/issues/53) | [API route for `set_tags`](23-composition-tags-route.md) | Core | 22 | not started |
 | 24 | [#54](https://github.com/rdThunderThailand/thunder_one_prj/issues/54) | [Template Picker](24-template-picker.md) | One | 21¹ | not started |
 | 25 | [#55](https://github.com/rdThunderThailand/thunder_one_prj/issues/55) | [Layout Properties panel + file split](25-layout-properties-panel.md) | One | 24, 23 | not started |
