@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { fetchLayout, setLayoutKind } from "@/features/media-workspace/layouts/services/layouts-api";
+import { fetchLayout, promoteLayoutToTemplate } from "@/features/media-workspace/layouts/services/layouts-api";
 import { takeCreateSeed } from "@/features/media-workspace/layouts/create-seed";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
 import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
@@ -31,6 +31,7 @@ import { useZoneEditGuard } from "../hooks/useZoneEditGuard";
 import { CompositionCanvasPane } from "./CompositionCanvasPane";
 import { CompositionEditorHeader } from "./CompositionEditorHeader";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
+import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
 
 const LIST_PATH = "/media-workspace/layouts";
@@ -66,6 +67,7 @@ export function CompositionEditorPage({
   const [loading, setLoading] = useState(!!compositionId);
   const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [namingTemplate, setNamingTemplate] = useState(false);
 
   const view = useEditorLayout({
     layouts: data.layouts, layoutId, name, blankZones, editedZones, layoutSettings, bindings,
@@ -211,10 +213,7 @@ export function CompositionEditorPage({
         onFullPreview={() => preview.openFullPreview(isDirty)}
         onUseInProgram={() => router.push(`/media-workspace/publications/create?compositionId=${id}`)}
         onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Composition ไม่สำเร็จ")}
-        onSaveAsTemplate={() => void save(async (result) => {
-          await setLayoutKind(result.layoutId, "template");
-          router.push("/media-workspace/layouts/templates");
-        }, "บันทึกเป็น Template ไม่สำเร็จ")}
+        onSaveAsTemplate={() => setNamingTemplate(true)}
         onActivate={() => void save(async (result) => {
           await setCompositionStatus(result.compositionId, "active");
           router.push(LIST_PATH);
@@ -222,6 +221,23 @@ export function CompositionEditorPage({
       />
 
       {confirmLeave && <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />}
+
+      {namingTemplate && (
+        <SaveAsTemplateDialog
+          defaultName={name}
+          takenNames={data.layouts.flatMap((c) => (c.kind === "template" ? [c.name] : []))}
+          onClose={() => setNamingTemplate(false)}
+          // Closed before the save runs, not after it: a failure has to reach the header's
+          // error slot, which a modal on top of it would hide.
+          onConfirm={(templateName) => {
+            setNamingTemplate(false);
+            void save(async (result) => {
+              await promoteLayoutToTemplate(result.layoutId, templateName);
+              router.push("/media-workspace/layouts/templates");
+            }, "บันทึกเป็น Template ไม่สำเร็จ");
+          }}
+        />
+      )}
 
       <PlaybackPreviewModal
         open={previewOpen}

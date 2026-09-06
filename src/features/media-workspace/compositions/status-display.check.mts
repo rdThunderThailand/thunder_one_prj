@@ -10,6 +10,16 @@ assert.equal(
   describeSaveError('Already exists: a composition named "Menu" exists'),
   "บันทึกไม่ได้ — มี Composition ชื่อนี้อยู่แล้ว",
 );
+// A name collision on the `layouts` row is not the Composition's name — it is a Template's.
+// Both arrive through the same save, so only the RPC's own noun tells them apart.
+assert.equal(
+  describeSaveError('Already exists: a layout named "T25 Layout" exists'),
+  "บันทึกไม่ได้ — มี Template ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น",
+);
+assert.equal(
+  describeActivateError('Already exists: a layout named "T25 Layout" exists'),
+  "บันทึกไม่ได้ — มี Template ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น",
+);
 assert.equal(
   describeSaveError("Already modified: composition was changed elsewhere"),
   "Composition นี้ถูกแก้ไขจากที่อื่น กรุณาโหลดใหม่แล้วลองอีกครั้ง",

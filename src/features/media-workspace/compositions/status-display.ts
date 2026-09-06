@@ -12,8 +12,20 @@ export function statusBadge(status: CompositionStatus): { color: BadgeColor; lab
  * `media_composition_upsert` / `media_composition_set_zones` / `media_composition_set_status`
  * raise the exact wordings below (Thunder_Core migration 20260826120000). Anything unrecognised
  * degrades to a generic retry message rather than leaking the raw RPC/Postgres text (CLAUDE.md §8).
+ *
+ * `media_layout_upsert` reaches here too, because the editor's save writes geometry before it
+ * writes the Composition — a first save names the `layouts` row after the Composition, and
+ * `Save as Template` names it whatever the operator chose. Both collide against the same
+ * `UNIQUE (tenant_id, name)`, and both raise "a layout named …" rather than "a composition
+ * named …", which is the only thing separating the two collisions.
  */
 export function describeSaveError(message: string): string {
+  // Checked before the generic case below, which would otherwise blame the Composition for a
+  // name the operator gave a Template. Every `layouts` row an operator can name is a Template:
+  // private geometry is named `comp:<uuid>` and cannot collide with anything typed.
+  if (message.includes("a layout named")) {
+    return "บันทึกไม่ได้ — มี Template ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น";
+  }
   if (message.includes("Already exists") || /duplicate key|unique constraint/i.test(message)) {
     return "บันทึกไม่ได้ — มี Composition ชื่อนี้อยู่แล้ว";
   }

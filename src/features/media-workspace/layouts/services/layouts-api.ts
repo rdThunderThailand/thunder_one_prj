@@ -75,6 +75,35 @@ export async function setLayoutKind(
 }
 
 /**
+ * ADR 0052 §4: *Save as Template* names the row and flips it to `template`. Two calls,
+ * because `media_layout_set_kind` renames in one direction only — it stamps `comp:<uuid>`
+ * on the way to `inline` and deliberately leaves the name alone on the way back, so the
+ * operator's name has to arrive through the upsert. That means resending the geometry:
+ * `PATCH /media/layouts/:id` reads a body without `zones` as a status change, so there is
+ * no name-only shape to send. Zone ids are round-tripped, which is what makes it an update
+ * rather than a second set of Zones the Composition's bindings would no longer point at.
+ *
+ * Renaming *before* the flip is the deliberate order: a failure then leaves the row still
+ * private and invisible, so a retry is clean. Flipping first and failing to rename leaves a
+ * `comp:<uuid>` row sitting in the operator's Templates list — which is the bug this fixes.
+ */
+export async function promoteLayoutToTemplate(layoutId: string, name: string): Promise<void> {
+  const layout = await fetchLayout(layoutId);
+  await upsertLayout({
+    layoutId,
+    name,
+    aspectRatio: layout.aspect_ratio,
+    referenceResolution: layout.reference_resolution ?? null,
+    background: layout.background,
+    status: layout.status,
+    zones: layout.zones.map((zone) => ({
+      id: zone.id, name: zone.name, x: zone.x, y: zone.y, width: zone.width, height: zone.height,
+    })),
+  });
+  await setLayoutKind(layoutId, "template");
+}
+
+/**
  * There is no duplicate endpoint for Layouts — the copy is composed from a read plus an
  * upsert, following `duplicatePlaylist`'s precedent
  * (src/features/media-workspace/playlists/services/playlists-api.ts).
