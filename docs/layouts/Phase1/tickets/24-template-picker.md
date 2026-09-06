@@ -7,7 +7,15 @@
 **Design:** `docs/layouts/Phase1/Create Modal.png`, `Template Picker.png`
 **Blocked by:** 21 (for the *Recently Used* group only — the rest can be built against today's list)
 **Runs in parallel with:** 29
-**Status:** not started
+**Status:** verified — browser-checked on localhost 2026-09-06 (see Verification). Files:
+`layouts/templates.ts` (14 presets, `description`/`use_cases`/`orientation`/`aspectRatio`),
+`layouts/template-picker.ts` (+`.check.mts`, pure merge/filter/group),
+`layouts/create-seed.ts` (sessionStorage one-shot handoff),
+`layouts/components/LayoutTemplatePicker.tsx` (the modal, 263 lines),
+`CompositionsListPage.tsx` (`+ New Layout` opens the modal),
+`CompositionEditorPage.tsx` (reads the seed on mount).
+`TemplateRail.tsx` kept — still the starting-geometry rail for the *Templates* editor
+(`LayoutEditorPage`), which is out of this ticket's scope; it now lists 14 tiles.
 
 ## What to build
 
@@ -73,9 +81,21 @@ Templates, and hands the choice to the editor as client state.
 
 ## Verification
 
-- [ ] Browser: open the picker, filter by portrait, by 3 zones, and by a use case; search by
-      description; confirm the counts match what is on screen
-- [ ] Pick a preset → the editor opens with those Zones drawn and nothing written to the API
-      (check the network tab)
-- [ ] Pick an operator Template → the editor opens pointing at it
-- [ ] *Recently Used* reflects a Composition created moments earlier
+Browser, localhost dev servers (One :3000 → Core :3001 → `develop` DB), 2026-09-06 — all passed:
+
+- [x] `+ New Layout` opens **one** modal titled *Choose a starting point*, with all four group tabs.
+      No navigation to `/create`, no second modal
+- [x] Recommended shows **14** preset cards, every one badged `Copied`
+- [x] Filters over the merged list: Portrait → 7 · `4+ zones` → 2 (4 Grid L+P) · use case
+      `Menu board` → 2 (3 Column, 3 Row)
+- [x] Free-text `quadrant` matches 4 Grid — i.e. search reaches `description`, not just `name`
+- [x] My Templates lists the tenant's Templates, every one badged `Shared`
+- [x] Details panel: wireframe, name, aspect ratio, orientation, zone count, `On use`
+      (*Copied to this Layout* / *Shared reference*), chips, description
+- [x] Pick a preset → editor opens with those Zones drawn, **network tab shows no POST/PUT/PATCH**.
+      The modal writes nothing (ADR 0063 §2)
+- [x] `Create from Scratch` → editor opens on a single full-screen `Main` Zone, still no write
+- [x] Pick an operator Template → editor opens pointing at that `layout_id`, not a copy
+
+*Recently Used* ordering exercised in the browser 2026-09-06: using a Template puts it at the top
+of the group on the next open, matching `template-picker.check.mts`'s `last_used_at` assertion.
