@@ -15,8 +15,8 @@ depends on, so it can be worked without reading the whole ADR first.
 | 23 | [#53](https://github.com/rdThunderThailand/thunder_one_prj/issues/53) | [API route for `set_tags`](23-composition-tags-route.md) | Core | 22 | verified (localhost → develop DB) |
 | 24 | [#54](https://github.com/rdThunderThailand/thunder_one_prj/issues/54) | [Template Picker](24-template-picker.md) | One | 21¹ | verified (localhost → develop DB) |
 | 25 | [#55](https://github.com/rdThunderThailand/thunder_one_prj/issues/55) | [Layout Properties panel + file split](25-layout-properties-panel.md) | One + **Core**⁴ | 24, 23 | verified (localhost → develop DB) |
-| 26 | [#56](https://github.com/rdThunderThailand/thunder_one_prj/issues/56) | [Canvas tools](26-canvas-tools.md) | One | 25 | not started |
-| 27 | [#57](https://github.com/rdThunderThailand/thunder_one_prj/issues/57) | [Zone Properties tabs](27-zone-properties-tabs.md) | One | 25 | not started |
+| 26 | [#56](https://github.com/rdThunderThailand/thunder_one_prj/issues/56) | [Canvas tools](26-canvas-tools.md) | One | 25 | verified (localhost → develop DB) |
+| 27 | [#57](https://github.com/rdThunderThailand/thunder_one_prj/issues/57) | [Zone Properties tabs](27-zone-properties-tabs.md) | One | 25 | verified (localhost → develop DB) |
 | 28 | [#58](https://github.com/rdThunderThailand/thunder_one_prj/issues/58) | [Save / Activate / first-save recovery](28-save-activate-and-first-save-recovery.md) | One | 25 | not started |
 | 29 | [#59](https://github.com/rdThunderThailand/thunder_one_prj/issues/59) | [List page rails](29-list-page-rails.md) | One + **Core**² | 23 | verified (localhost → develop DB) |
 
@@ -48,8 +48,10 @@ per `CLAUDE.md` §3) → `shipped`. Edit the row and the ticket's own **Status**
 - **24 ‖ 29** — different pages; 29 only needs the backend.
 - **26 ‖ 27 ‖ 28** — all three edit the editor, so **25 must land first**. Done: the 734-line
   `CompositionEditorPage.tsx` is now 300, and each of the three has a file of its own —
-  26 → `CompositionCanvasPane.tsx`, 27 → `ZoneContentPicker.tsx`,
+  26 → `CompositionCanvasPane.tsx` (+ `align-zones.ts`, `hooks/useZoneEditGuard.ts`/
+  `useZoneHistory.ts`), 27 → `ZonePropertiesPanel.tsx` (wraps `ZoneContentPicker.tsx`),
   28 → `save-composition.ts` + `hooks/useCompositionSave.ts` + `CompositionEditorHeader.tsx`.
+  26 and 27 are both done and verified 2026-09-06.
 
 ## Ship order
 

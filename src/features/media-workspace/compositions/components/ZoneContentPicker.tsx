@@ -8,15 +8,17 @@ import { AssetCard } from "@/features/media-workspace/publications/components/As
 import { SelectedAssetList } from "@/features/media-workspace/publications/components/SelectedAssetList";
 import type { MediaAsset } from "@/types/domain";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";
-import { DEFAULT_ZONE_PLAYBACK, totalZoneDurationSeconds, type ZoneBindingDraft } from "../zone-bindings";
+import { totalZoneDurationSeconds, type ZoneBindingDraft } from "../zone-bindings";
 
 const tabClasses = (active: boolean) =>
   `flex-1 rounded-lg px-3 py-1.5 text-sm font-medium ${active ? "bg-white text-indigo-700 shadow-sm" : "text-zinc-500"}`;
 
 /**
- * The content picker for one Composition Zone — an existing Playlist, or a set of picked
+ * The Content tab of Zone Properties (ticket 27) — an existing Playlist, or a set of picked
  * assets with per-asset duration/transition (ADR 0049 §3). No upload/AI-suggest chrome: that
- * belongs to the Publication wizard's full asset library, not this scoped picker.
+ * belongs to the Publication wizard's full asset library, not this scoped picker. Playback
+ * (`play_mode` / `repeat` / `start_from`) lives in the Behavior tab instead — see
+ * `ZonePropertiesPanel.tsx`.
  */
 export function ZoneContentPicker({
   zoneName,
@@ -90,42 +92,6 @@ export function ZoneContentPicker({
         <button type="button" className={tabClasses(binding.source === "assets")} onClick={() => onChange({ ...binding, source: "assets" })}>
           Pick assets
         </button>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <label className="text-xs text-zinc-500">
-          Play mode
-          <select
-            value={binding.playback.playMode}
-            onChange={(e) => onChange({ ...binding, playback: { ...binding.playback, playMode: e.target.value as ZoneBindingDraft["playback"]["playMode"] } })}
-            className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-          >
-            <option value="sequential">Sequential</option>
-            <option value="shuffle">Shuffle</option>
-          </select>
-        </label>
-        <label className="text-xs text-zinc-500">
-          Repeat
-          <select
-            value={binding.playback.repeat}
-            onChange={(e) => onChange({ ...binding, playback: { ...binding.playback, repeat: e.target.value as ZoneBindingDraft["playback"]["repeat"] } })}
-            className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-          >
-            <option value="loop">Loop</option>
-            <option value="once">Once</option>
-          </select>
-        </label>
-        <label className="text-xs text-zinc-500">
-          Start from
-          <select
-            value={binding.playback.startFrom}
-            onChange={(e) => onChange({ ...binding, playback: { ...binding.playback, startFrom: e.target.value as ZoneBindingDraft["playback"]["startFrom"] } })}
-            className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-          >
-            <option value="first">First item</option>
-            <option value="resume">Resume</option>
-          </select>
-        </label>
       </div>
 
       <div className="relative">
@@ -207,14 +173,4 @@ export function ZoneContentPicker({
       )}
     </Card>
   );
-}
-
-export function defaultBinding(layoutZoneId: string): ZoneBindingDraft {
-  return {
-    layoutZoneId,
-    source: "playlist",
-    playlistId: null,
-    assetItems: [],
-    playback: { ...DEFAULT_ZONE_PLAYBACK },
-  };
 }

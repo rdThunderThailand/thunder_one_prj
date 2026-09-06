@@ -7,8 +7,10 @@
 //   the write path → save-composition.ts   (ticket 28's territory)
 //   the canvas     → CompositionCanvasPane (ticket 26's)
 //   the panel      → LayoutPropertiesPanel
+//   the Zone panel → ZonePropertiesPanel   (ticket 27's — wraps ZoneContentPicker)
 //   the header     → CompositionEditorHeader (ticket 28's too)
 //   what is shown  → hooks/useEditorLayout
+//   Zone edit gate → hooks/useZoneEditGuard (ticket 26 — undo/redo + shared-Template confirm)
 // so that tickets 26, 27 and 28 edit three different files instead of three copies of this one.
 
 import { useEffect, useState } from "react";
@@ -25,15 +27,16 @@ import { setCompositionStatus } from "../services/compositions-api";
 import { forkLayoutForComposition, type LayoutSettingsDraft } from "../save-composition";
 import { draftSnapshot, loadCompositionDraft, resolveCreateSeed } from "../load-composition-draft";
 import type { CompositionStatus } from "../types";
-import type { ZoneBindingDraft } from "../zone-bindings";
+import { applyPlaybackToAll, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
 import { useCompositionEditorData } from "../hooks/useCompositionEditorData";
 import { useCompositionPreview } from "../hooks/useCompositionPreview";
 import { useCompositionSave } from "../hooks/useCompositionSave";
 import { useEditorLayout } from "../hooks/useEditorLayout";
+import { useZoneEditGuard } from "../hooks/useZoneEditGuard";
 import { CompositionCanvasPane } from "./CompositionCanvasPane";
 import { CompositionEditorHeader } from "./CompositionEditorHeader";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
-import { ZoneContentPicker } from "./ZoneContentPicker";
+import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
 
 const LIST_PATH = "/media-workspace/layouts";
 
@@ -56,7 +59,6 @@ export function CompositionEditorPage({
   // `undefined` = untouched and unknown, so persist leaves filing alone (see PersistInput).
   const [folderId, setFolderId] = useState<string | null | undefined>(undefined);
   const [tags, setTags] = useState<string[] | undefined>(undefined);
-  const [sharedGeometryApproved, setSharedGeometryApproved] = useState(false);
   const [status, setStatus] = useState<CompositionStatus>("draft");
   const [revision, setRevision] = useState<number | null>(null);
   const [bindings, setBindings] = useState<ZoneBindingDraft[]>([]);
@@ -135,15 +137,12 @@ export function CompositionEditorPage({
       ? prev.map((b) => (b.layoutZoneId === next.layoutZoneId ? next : b)) : [...prev, next]);
   };
 
-  /** ADR 0052 §3: geometry on a Template several Layouts point at is shared, so the first
-   *  edit of a session asks before it travels. */
-  const confirmGeometryChange = () => {
-    if (sharedTemplateUsage > 1 && !sharedGeometryApproved) {
-      if (!window.confirm(`This Template is used by ${sharedTemplateUsage} Layouts. Changing it affects all of them.`)) return false;
-      setSharedGeometryApproved(true);
-    }
-    return true;
-  };
+  // Every Zone edit — canvas or ticket 27's Layout tab — goes through this one gate.
+  const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, canUndo, canRedo } =
+    useZoneEditGuard(layout?.zones ?? [], sharedTemplateUsage, setEditedZones);
+
+  const applyPlaybackToAllZones = (playback: ZonePlayback) =>
+    setBindings((prev) => applyPlaybackToAll(view.layoutZoneIds, prev, playback));
 
   const { save, run, saving, saveError } = useCompositionSave(
     () => ({
@@ -177,7 +176,7 @@ export function CompositionEditorPage({
       view.setSelectedZoneId(forked.layout.zones[0]?.id ?? null);
       setEditedZones(null);
       setLayoutSettings(null);
-      setSharedGeometryApproved(false);
+      resetApproval();
     }, "สร้าง Layout ส่วนตัวไม่สำเร็จ");
   };
 
@@ -259,8 +258,10 @@ export function CompositionEditorPage({
             unboundZoneIds={view.unboundZoneIds}
             activeZoneId={view.selectedZoneId}
             onSelectZone={view.setSelectedZoneId}
-            onChangeStart={confirmGeometryChange}
+            onChangeStart={beginZoneEdit}
             onChange={setEditedZones}
+            canUndo={canUndo} canRedo={canRedo}
+            onUndo={undo} onRedo={redo}
           />
         ) : (
           <div className="flex min-h-40 items-center justify-center rounded-lg bg-zinc-100 text-sm text-zinc-400 dark:bg-zinc-800">
@@ -284,14 +285,13 @@ export function CompositionEditorPage({
       </Card>
 
       {view.binding && view.activeZone && (
-        <ZoneContentPicker
-          zoneName={view.activeZone.name}
-          binding={view.binding}
-          onChange={setBinding}
-          assets={data.assets}
-          playlists={data.playlists}
-          previews={data.previews}
-          playlistPreviews={preview.playlistPreviews}
+        <ZonePropertiesPanel
+          zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null}
+          onZoneChange={(next) => beginZoneEdit() && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))}
+          binding={view.binding} onBindingChange={setBinding}
+          onApplyPlaybackToAllZones={applyPlaybackToAllZones}
+          assets={data.assets} playlists={data.playlists}
+          previews={data.previews} playlistPreviews={preview.playlistPreviews}
           playlistDurations={data.playlistDurations}
         />
       )}

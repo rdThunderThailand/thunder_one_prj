@@ -33,6 +33,33 @@ export type ZoneBindingDraft = {
   playback: ZonePlayback;
 };
 
+/** Moved here from `ZoneContentPicker.tsx` (ticket 27) — a plain factory has no reason to
+ *  live in a "use client" component file, and ticket 27's `applyPlaybackToAll` needs it too. */
+export function defaultBinding(layoutZoneId: string): ZoneBindingDraft {
+  return {
+    layoutZoneId,
+    source: "playlist",
+    playlistId: null,
+    assetItems: [],
+    playback: { ...DEFAULT_ZONE_PLAYBACK },
+  };
+}
+
+/** Ticket 27's "Apply to All Zones": sets `playback` on every Zone's binding, replacing no
+ *  content. A Zone with no binding yet gets a placeholder — no `playlistId`, so it changes
+ *  nothing on save — but the playback sticks once the operator does bind it, since binding
+ *  a Zone always spreads its existing draft (see ZoneContentPicker's `onSelect`). */
+export function applyPlaybackToAll(
+  layoutZoneIds: string[],
+  bindings: ZoneBindingDraft[],
+  playback: ZonePlayback,
+): ZoneBindingDraft[] {
+  return layoutZoneIds.map((zoneId) => {
+    const existing = bindings.find((binding) => binding.layoutZoneId === zoneId);
+    return existing ? { ...existing, playback } : { ...defaultBinding(zoneId), playback };
+  });
+}
+
 export type SetZonesPayload = {
   zones: Array<{
     layout_zone_id: string;

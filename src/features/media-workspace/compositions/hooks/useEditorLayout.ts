@@ -8,8 +8,7 @@ import { useMemo, useState } from "react";
 import { DEFAULT_BACKGROUND } from "@/features/media-workspace/layouts/types";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
 import type { LayoutSettingsDraft } from "../save-composition";
-import { findUnboundZoneIds, isComplete, type ZoneBindingDraft } from "../zone-bindings";
-import { defaultBinding } from "../components/ZoneContentPicker";
+import { defaultBinding, findUnboundZoneIds, isComplete, type ZoneBindingDraft } from "../zone-bindings";
 
 export function useEditorLayout({
   layouts,

@@ -2,7 +2,9 @@
 import assert from "node:assert/strict";
 import {
   DEFAULT_ZONE_PLAYBACK,
+  applyPlaybackToAll,
   bindingsFromCompositionZones,
+  defaultBinding,
   findUnboundZoneIds,
   isComplete,
   remapZoneBindings,
@@ -169,3 +171,27 @@ const bound: ZoneBindingDraft = { ...draft("client-a"), source: "playlist", play
 assert.deepEqual(remapZoneBindings([bound], clientZones, savedZones)[0], { ...bound, layoutZoneId: "db-a" });
 
 console.log("zone-bindings.check.mts — remap assertions passed");
+
+// --- applyPlaybackToAll — ticket 27's "Apply to All Zones" -------------------
+
+const newPlayback = { playMode: "shuffle", repeat: "once", startFrom: "resume" } as const;
+
+// An already-bound Zone keeps its content, only playback changes.
+const applied = applyPlaybackToAll(zones, bindings, newPlayback);
+assert.deepEqual(
+  applied.find((b) => b.layoutZoneId === "zone-main"),
+  { ...bindings[0], playback: newPlayback },
+);
+assert.deepEqual(
+  applied.find((b) => b.layoutZoneId === "zone-side"),
+  { ...bindings[1], playback: newPlayback },
+);
+
+// A Zone with no binding yet gets a placeholder carrying the playback and no content —
+// `toSetZonesPayload` must still drop it, so applying does not fabricate a bound Zone.
+const withUnbound = applyPlaybackToAll(["zone-main", "zone-unbound"], [bindings[0]!], newPlayback);
+const placeholder = withUnbound.find((b) => b.layoutZoneId === "zone-unbound")!;
+assert.deepEqual(placeholder, { ...defaultBinding("zone-unbound"), playback: newPlayback });
+assert.deepEqual(toSetZonesPayload(["zone-main", "zone-unbound"], withUnbound).zones.map((z) => z.layout_zone_id), ["zone-main"]);
+
+console.log("zone-bindings.check.mts — applyPlaybackToAll assertions passed");

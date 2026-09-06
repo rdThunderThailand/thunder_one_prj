@@ -7,7 +7,12 @@
 **Design:** `docs/layouts/Phase1/Layout Editor With Content.png`
 **Blocked by:** 25 (the file split)
 **Runs in parallel with:** 26
-**Status:** not started
+**Status:** verified (localhost, 2026-09-06).
+
+`ZonePropertiesPanel.tsx` is the new wrapper; `ZoneContentPicker.tsx` lost its playback
+selects (moved to the Behavior tab). `defaultBinding` and the new `applyPlaybackToAll` moved
+into/live in `zone-bindings.ts` — a plain factory has no reason to sit in a "use client"
+component file, and `applyPlaybackToAll` needed it too.
 
 ## What to build
 
@@ -31,20 +36,20 @@ Three tabs on the right-hand Zone panel, showing only what the player actually r
 
 ## Checklist
 
-- [ ] Content tab: the existing `ZoneContentPicker` — Playlist or picked assets
-- [ ] Layout tab: the Zone's x / y / width / height as percentages, with the pixel readout beside them
+- [x] Content tab: the existing `ZoneContentPicker` — Playlist or picked assets
+- [x] Layout tab: the Zone's x / y / width / height as percentages, with the pixel readout beside them
       when `reference_resolution` is known (`geometry.ts`)
-- [ ] Behavior tab: `play_mode`, `repeat`, `start_from`. **Nothing else**
-- [ ] Duration is read-only, from `totalZoneDurationSeconds`
-- [ ] `Apply to All Zones` is labelled with its scope, e.g. *Apply playback settings to all Zones*
-- [ ] No Fill Mode control, no Mute toggle, no editable Duration
-- [ ] Zone Overview under the canvas reports each Zone's **actual** bound source — Playlist, Media, or
+- [x] Behavior tab: `play_mode`, `repeat`, `start_from`. **Nothing else**
+- [x] Duration is read-only, from `totalZoneDurationSeconds`
+- [x] `Apply to All Zones` is labelled with its scope, e.g. *Apply playback settings to all Zones*
+- [x] No Fill Mode control, no Mute toggle, no editable Duration
+- [x] Zone Overview under the canvas reports each Zone's **actual** bound source — Playlist, Media, or
       unbound. The frames label a widget-rendered Zone as `Media`; with Widgets deferred there is no
       such case
 
 ## Verification
 
-- [ ] Browser: set a Zone to shuffle + once, save, reload, preview — the preview plays it that way
+- [x] Browser: set a Zone to shuffle + once, save, reload, preview — the preview plays it that way
       (ADR 0062 is the contract the preview follows)
-- [ ] `Apply to All Zones` changes playback on every Zone and changes no binding
-- [ ] A Zone bound to a Playlist shows that Playlist's summed duration and offers no way to edit it
+- [x] `Apply to All Zones` changes playback on every Zone and changes no binding
+- [x] A Zone bound to a Playlist shows that Playlist's summed duration and offers no way to edit it
