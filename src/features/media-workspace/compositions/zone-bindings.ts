@@ -7,6 +7,7 @@
 // ids, wrong in both directions under ADR 0049 §9's stable ids; drift is ticket 06, a revision
 // comparison, not a client-side computation (ADR 0049 §7, §11).
 
+import type { LayoutZone } from "../layouts/types";
 import type { CompositionAssetItem, CompositionZone } from "./types";
 
 export type ZonePlayback = {
@@ -131,4 +132,25 @@ export function bindingsFromCompositionZones(zones: CompositionZone[]): ZoneBind
           }
         : { ...DEFAULT_ZONE_PLAYBACK },
     }));
+}
+
+/** Re-points bindings from the Zone ids the editor was holding onto the ids the save just
+ *  assigned. Positional, because a fresh insert gives no other correspondence: a blank
+ *  canvas or a copied preset carries client-minted ids until `media_layout_upsert` has run.
+ *  A source id with no counterpart is left as it is rather than dropped — losing one here
+ *  silently unbinds a Zone the operator had already filled. */
+export function remapZoneBindings(
+  bindings: ZoneBindingDraft[],
+  sourceZones: LayoutZone[],
+  targetZones: LayoutZone[],
+): ZoneBindingDraft[] {
+  const idsBySourceId = new Map<string, string>();
+  sourceZones.forEach((zone, index) => {
+    const targetId = targetZones[index]?.id;
+    if (zone.id && targetId) idsBySourceId.set(zone.id, targetId);
+  });
+  return bindings.map((binding) => ({
+    ...binding,
+    layoutZoneId: idsBySourceId.get(binding.layoutZoneId) ?? binding.layoutZoneId,
+  }));
 }

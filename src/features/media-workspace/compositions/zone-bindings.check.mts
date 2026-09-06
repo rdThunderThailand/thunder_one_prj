@@ -1,9 +1,11 @@
 /** Run: node src/features/media-workspace/compositions/zone-bindings.check.mts */
 import assert from "node:assert/strict";
 import {
+  DEFAULT_ZONE_PLAYBACK,
   bindingsFromCompositionZones,
   findUnboundZoneIds,
   isComplete,
+  remapZoneBindings,
   toCompositionUpsertPayload,
   toSetZonesPayload,
   totalZoneDurationSeconds,
@@ -131,3 +133,39 @@ assert.deepEqual(bindingsFromCompositionZones(serverZones), [
 assert.deepEqual(findUnboundZoneIds(["zone-main", "zone-side"], bindingsFromCompositionZones(serverZones)), ["zone-side"]);
 
 console.log("zone-bindings.check.mts — all assertions passed");
+
+// remapZoneBindings — ticket 25. A blank canvas or a copied preset holds client-minted Zone
+// ids until media_layout_upsert has run; losing this remap silently unbinds every Zone the
+// operator just filled, and nothing else in the save path would notice.
+const lz = (id: string | undefined, position: number) =>
+  ({ id, position, name: `Zone ${position}`, x: 0, y: position * 10, width: 100, height: 10 });
+const draft = (layoutZoneId: string): ZoneBindingDraft => ({
+  layoutZoneId, source: "assets", playlistId: null, assetItems: [], playback: { ...DEFAULT_ZONE_PLAYBACK },
+});
+const clientZones = [lz("client-a", 0), lz("client-b", 1)];
+const savedZones = [lz("db-a", 0), lz("db-b", 1)];
+
+assert.deepEqual(
+  remapZoneBindings([draft("client-a"), draft("client-b")], clientZones, savedZones).map((b) => b.layoutZoneId),
+  ["db-a", "db-b"],
+);
+// An id with no positional counterpart is left alone, not dropped or blanked.
+assert.deepEqual(
+  remapZoneBindings([draft("unknown")], clientZones, savedZones).map((b) => b.layoutZoneId),
+  ["unknown"],
+);
+// Fewer targets than sources: the unmatched binding must not steal a neighbour's id.
+assert.deepEqual(
+  remapZoneBindings([draft("client-a"), draft("client-b")], clientZones, [lz("db-a", 0)]).map((b) => b.layoutZoneId),
+  ["db-a", "client-b"],
+);
+// A source Zone with no id of its own contributes no mapping.
+assert.deepEqual(
+  remapZoneBindings([draft("db-b")], [lz(undefined, 0), lz("client-b", 1)], savedZones).map((b) => b.layoutZoneId),
+  ["db-b"],
+);
+// Everything except layoutZoneId survives untouched.
+const bound: ZoneBindingDraft = { ...draft("client-a"), source: "playlist", playlistId: "p1", playlistName: "News" };
+assert.deepEqual(remapZoneBindings([bound], clientZones, savedZones)[0], { ...bound, layoutZoneId: "db-a" });
+
+console.log("zone-bindings.check.mts — remap assertions passed");
