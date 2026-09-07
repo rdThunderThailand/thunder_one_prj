@@ -6,8 +6,11 @@
 **Plan:** `docs/layouts/Phase1/plan-create-layout-flow.md` FE-5
 **Design:** `docs/layouts/Phase1/Layout Editor.png` (header)
 **Blocked by:** 25 (the file split)
-**Status:** verified (localhost → develop DB), **except `Save as Template`** — redesigned
-2026-09-07 (ADR 0052 §4 amendment: copy, not promote); the copy path is not browser-checked yet
+**Status:** verified (localhost → develop DB), including `Save as Template` on its redesigned copy
+path (ADR 0052 §4 amendment, 2026-09-07: copy, not promote). Browser runs:
+`.docs/CHECKLIST-layout-uiux-2026-09-07.md` §E — SQL on develop shows the source Layout's own row
+still `kind='inline'`, named `comp:<uuid>`, while each Save as Template minted a separate `template`
+row — and `.docs/CHECKLIST-tags-persist-2026-09-08.md` §C for the duplicate-name guard
 
 **This is the riskiest ticket in the phase.** It closes two recovery holes in the shipped save path.
 

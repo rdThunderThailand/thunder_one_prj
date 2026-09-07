@@ -17,17 +17,31 @@ depends on, so it can be worked without reading the whole ADR first.
 | 25 | [#55](https://github.com/rdThunderThailand/thunder_one_prj/issues/55) | [Layout Properties panel + file split](25-layout-properties-panel.md) | One + **Core**⁴ | 24, 23 | verified (localhost → develop DB) |
 | 26 | [#56](https://github.com/rdThunderThailand/thunder_one_prj/issues/56) | [Canvas tools](26-canvas-tools.md) | One | 25 | verified (localhost) |
 | 27 | [#57](https://github.com/rdThunderThailand/thunder_one_prj/issues/57) | [Zone Properties tabs](27-zone-properties-tabs.md) | One | 25 | verified (localhost) |
-| 28 | [#58](https://github.com/rdThunderThailand/thunder_one_prj/issues/58) | [Save / Activate / first-save recovery](28-save-activate-and-first-save-recovery.md) | One | 25 | verified except `Save as Template`³ |
+| 28 | [#58](https://github.com/rdThunderThailand/thunder_one_prj/issues/58) | [Save / Activate / first-save recovery](28-save-activate-and-first-save-recovery.md) | One | 25 | verified (localhost → develop DB)³ |
 | 29 | [#59](https://github.com/rdThunderThailand/thunder_one_prj/issues/59) | [List page rails](29-list-page-rails.md) | One + **Core**² | 23 | verified (localhost → develop DB) |
 
-> **The 2026-09-07 UI/UX rework sits on top of every row above and is not browser-verified.**
-> Three-column editor (staged content shelf · canvas · switchable Layout/Zone properties), Zone
-> Overview moved below, header metadata badges with click-to-edit name, a new `New Layout` start
-> step (`create-layout-start-step.tsx`), a rewritten Template Picker, and *Save as Template* as a
-> copy. It landed after each ticket was signed off, so the per-row statuses describe the code as it
-> was reviewed, not as it now stands. Gates only so far: `tsc` exit 0, `eslint` 0 errors, every
-> `*.check.mts` passes. Design intent: `../plan-insert-to-layout-panel.md`. Both PRs stay Draft
-> until `.docs/CHECKLIST-layout-uiux-2026-09-07.md` comes back.
+> **The 2026-09-07 UI/UX rework sits on top of every row above and is browser-verified as of
+> 2026-09-08.** Three-column editor (staged content shelf · canvas · switchable Layout/Zone
+> properties), Zone Overview moved below, header metadata badges with click-to-edit name, a new
+> `New Layout` start step (`create-layout-start-step.tsx`), a rewritten Template Picker, and
+> *Save as Template* as a copy. Design intent: `../plan-insert-to-layout-panel.md`.
+>
+> `.docs/CHECKLIST-layout-uiux-2026-09-07.md` — A–F pass, with B4 not run (no tenant template with
+> zones at the time), C2 flagged for design sign-off (the right panel is a manual Zone/Layout toggle
+> defaulting to Zone) and F4 undo/redo untested (needs a real mouse drag). It surfaced two bugs, both
+> fixed and re-verified:
+>
+> - every save aborted on `PUT /media/compositions/:id/tags`. The route was never missing — the local
+>   Core server was serving a checkout parked on `hotfix/poll-payload-ms`. Folder-move and tags are
+>   now non-fatal (`PersistResult.warnings` + a `toast.warning`) so an older backend cannot cost an
+>   operator their edit; prod is exactly that case until #50's migrations are applied.
+> - *Save as Template*'s duplicate-name guard only knew the name saved immediately before it, so a
+>   collision came back as a silent `409`. The new row is now folded into `data.layouts`.
+>
+> `.docs/CHECKLIST-tags-persist-2026-09-08.md` — 16/16 pass against the corrected backend: tags
+> persist, case-insensitive dedupe holds, the rail filters, and no 404 appears anywhere in the run.
+>
+> Gates: `tsc` exit 0 · `eslint` 0 errors · every `*.check.mts` passes.
 
 ¹ 24 needs 21 only for its *Recently Used* group; the rest of the picker can be built first.
 
@@ -41,7 +55,9 @@ amendment and the rejected alternatives.
 (`promoteLayoutToTemplate`, `c0e7773`) and browser-verified. **Superseded later the same day:**
 ADR 0052 §4's amendment makes *Save as Template* a copy — a new `template` row from the current
 geometry, the Layout's own `inline` row untouched — so promotion, and the verification of it, are
-both gone. The copy path is not browser-checked; see `.docs/CHECKLIST-layout-uiux-2026-09-07.md`.
+both gone. The copy path is browser-verified (2026-09-07, `.docs/CHECKLIST-layout-uiux-2026-09-07.md`
+§E): SQL on develop shows the source Layout's own row still `kind='inline'`, named `comp:<uuid>`,
+while Save as Template minted separate `template` rows — repeatably.
 
 ⁴ 25 also acquired a Core migration — `20260906133000_composition_get_folder_and_tags.sql`, applied
 to `develop` 2026-09-06. `media_composition_get` returned neither field, so the Properties panel had
