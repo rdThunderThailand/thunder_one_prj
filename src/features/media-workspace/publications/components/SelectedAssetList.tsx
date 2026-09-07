@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, XIcon } from "@/components/ui/icons";
-import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
@@ -27,10 +27,12 @@ export function SelectedAssetList({
   assets,
   previews,
   selection,
+  bare = false,
 }: {
   assets: MediaAsset[];
   previews: Record<string, string | undefined>;
   selection?: SelectionOverride;
+  bare?: boolean;
 }) {
   const storeAssetItems = usePublicationDraftStore((s) => s.assetItems);
   const storeToggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
@@ -45,7 +47,7 @@ export function SelectedAssetList({
   if (assetItems.length === 0) return null;
 
   return (
-    <Card className="p-4">
+    <div className={bare ? "" : "rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"}>
       <p className="mb-2 text-sm font-semibold text-zinc-900">{`${assetItems.length} Asset${assetItems.length > 1 ? "s" : ""} Selected`}</p>
       <div className="flex flex-col gap-2">
         {assetItems.map((item, index) => {
@@ -58,8 +60,8 @@ export function SelectedAssetList({
           const kindLabel = isImage ? "Image" : "Video";
 
           return (
-            <div key={item.media_asset_id} className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2">
-              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+            <div key={item.media_asset_id} className="grid grid-cols-[48px_minmax(0,1fr)_auto] items-start gap-2 rounded-lg border border-zinc-200 p-2">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-zinc-100">
                 <MediaThumb
                   url={previews[asset.id]}
                   kind={asset.kind}
@@ -68,15 +70,17 @@ export function SelectedAssetList({
                   className="h-full w-full"
                 />
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-zinc-900">{filename}</p>
-                <p className="text-xs text-zinc-400">
-                  {kindLabel} · {dimensions}
-                </p>
+                <span className="mt-1 flex flex-wrap items-center gap-1.5"><Badge color={isImage ? "green" : "blue"} variant="pill">{kindLabel}</Badge><span className="text-xs text-zinc-400">{dimensions}</span></span>
               </div>
 
+              <button type="button" onClick={() => toggleAssetItem({ id: asset.id, isImage })} aria-label="Remove selected asset" className="shrink-0 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"><XIcon className="h-4 w-4" /></button>
+
+              <div className="col-span-2 col-start-2 flex min-w-0 flex-wrap items-center gap-2">
+
               {isImage && (
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex shrink-0 items-center gap-1.5">
                   <input
                     type="number"
                     min={1}
@@ -109,7 +113,7 @@ export function SelectedAssetList({
               )}
 
               {assetItems.length > 1 && (
-                <div className="flex flex-col gap-0.5 shrink-0 ml-2">
+                <div className="flex shrink-0 items-center gap-0.5">
                   <button
                     type="button"
                     onClick={() => moveAssetItem(item.media_asset_id, -1)}
@@ -131,18 +135,11 @@ export function SelectedAssetList({
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => toggleAssetItem({ id: asset.id, isImage })}
-                aria-label="Remove selected asset"
-                className="shrink-0 text-zinc-400 hover:text-zinc-700 ml-2"
-              >
-                <XIcon className="h-4 w-4" />
-              </button>
+              </div>
             </div>
           );
         })}
       </div>
-    </Card>
+    </div>
   );
 }

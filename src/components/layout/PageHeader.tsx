@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 
 interface PageHeaderProps {
-  title: string;
+  /** ReactNode so a page can put an inline rename input in the heading slot. */
+  title: ReactNode;
   subtitle?: string;
   actions?: ReactNode;
 }

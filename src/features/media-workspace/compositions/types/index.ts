@@ -37,13 +37,20 @@ export type CompositionLibraryItem = CompositionListItem & {
   usageCount?: number;
   previewZones?: CompositionLibraryPreviewZone[];
   createdBy?: { id: string; displayName: string; avatarUrl?: string | null } | null;
+  /** Ticket 22. Absent only while the deployed Core predates that migration. */
+  tags?: { id: string; name: string }[];
 };
+
+/** One entry of the Tags rail. Counted server-side over the whole collection, not over the
+ *  page — `media_compositions_library_list` is paginated, so a count taken from the loaded
+ *  rows would understate it (ticket 29). */
+export type CompositionTagCount = { id: string; name: string; count: number };
 
 export type CompositionLibraryPage = {
   data: CompositionLibraryItem[];
   pagination: { page: number; pageSize: number; total: number; totalPages: number } | null;
   summary: { total: number; templateBased: number; custom: number; needsContent: number } | null;
-  facets: { referenceResolutions: string[] };
+  facets: { referenceResolutions: string[]; tags: CompositionTagCount[] };
   isLegacyResponse: boolean;
 };
 
@@ -76,6 +83,10 @@ export type CompositionDetail = {
   metadata?: Record<string, unknown>;
   created_at?: string;
   updated_at?: string;
+  /** Ticket 25. `null` is Uncategorized; absent only while the deployed Core predates the
+   *  migration that added it, in which case the panel opens on Uncategorized. */
+  folder_id?: string | null;
+  tags?: { id: string; name: string }[];
   zones: CompositionZone[];
 };
 

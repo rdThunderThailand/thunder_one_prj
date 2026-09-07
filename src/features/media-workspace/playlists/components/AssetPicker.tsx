@@ -118,7 +118,7 @@ export function AssetPicker({
                     alt={label}
                     className="h-28 w-full rounded-lg"
                   />
-                  {asset.duration_seconds != null && (
+                  {asset.kind === "video" && asset.duration_seconds != null && (
                     <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
                       {formatDuration(asset.duration_seconds)}
                     </span>
@@ -126,11 +126,11 @@ export function AssetPicker({
                 </div>
                 <span className="truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">{label}</span>
                 <span className="flex items-center gap-2">
-                  <Badge color={asset.kind === "video" ? "blue" : "indigo"} variant="pill">
+                  <Badge color={asset.kind === "video" ? "blue" : asset.kind === "image" ? "green" : "zinc"} variant="pill">
                     {asset.kind ?? "file"}
                   </Badge>
                   {selected && (
-                    <Badge color="green" variant="pill">
+                    <Badge color="indigo" variant="pill">
                       Selected
                     </Badge>
                   )}

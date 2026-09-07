@@ -153,11 +153,11 @@ export function LayoutsListPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Layouts"
-        subtitle="Design multi-zone screen compositions to use in your publications."
+        title="Templates"
+        subtitle="Create and manage reusable Zone geometry for Layouts."
         actions={
           <Link href="/media-workspace/layouts/templates/create" className={buttonClasses("primary")}>
-            + New Layout
+            + New Template
           </Link>
         }
       />

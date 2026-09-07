@@ -34,6 +34,9 @@ export type LayoutListItem = {
   created_at?: string;
   updated_at?: string;
   created_by?: { id: string; display_name: string } | null;
+  /** Newest Composition created against this Layout, tenant-wide. Null when unused;
+   *  absent only while the deployed Core has not yet applied Ticket 21's migration. */
+  last_used_at?: string | null;
 };
 
 /** What the editor holds while working and sends on save. */

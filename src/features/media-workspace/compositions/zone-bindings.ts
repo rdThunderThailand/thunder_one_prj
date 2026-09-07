@@ -7,6 +7,7 @@
 // ids, wrong in both directions under ADR 0049 §9's stable ids; drift is ticket 06, a revision
 // comparison, not a client-side computation (ADR 0049 §7, §11).
 
+import type { LayoutZone } from "../layouts/types";
 import type { CompositionAssetItem, CompositionZone } from "./types";
 
 export type ZonePlayback = {
@@ -26,11 +27,91 @@ export type ZoneBindingDraft = {
   source: "playlist" | "assets";
   /** Existing Playlist id, or the implicit Playlist id after picked assets are first saved. */
   playlistId: string | null;
+  /** ADR 0063 §2 3b: minted into the draft *before* `media_playlist_upsert` runs and kept
+   *  across a failed save, so a re-clicked Save re-sends the same key instead of a fresh one
+   *  and the RPC returns the Playlist it already made. Absent until a Zone needs one. */
+  idempotencyKey?: string;
   /** Carried for display so a bound draft stays legible without a second lookup. */
   playlistName?: string;
   assetItems: CompositionAssetItem[];
   playback: ZonePlayback;
 };
+
+/** Moved here from `ZoneContentPicker.tsx` (ticket 27) — a plain factory has no reason to
+ *  live in a "use client" component file, and ticket 27's `applyPlaybackToAll` needs it too. */
+export function defaultBinding(layoutZoneId: string): ZoneBindingDraft {
+  return {
+    layoutZoneId,
+    source: "playlist",
+    playlistId: null,
+    assetItems: [],
+    playback: { ...DEFAULT_ZONE_PLAYBACK },
+  };
+}
+
+/** Ticket 27's "Apply to All Zones": sets `playback` on every Zone's binding, replacing no
+ *  content. A Zone with no binding yet gets a placeholder — no `playlistId`, so it changes
+ *  nothing on save — but the playback sticks once the operator does bind it, since binding
+ *  a Zone always spreads its existing draft (see ZoneContentPicker's `onSelect`). */
+export function applyPlaybackToAll(
+  layoutZoneIds: string[],
+  bindings: ZoneBindingDraft[],
+  playback: ZonePlayback,
+): ZoneBindingDraft[] {
+  return layoutZoneIds.map((zoneId) => {
+    const existing = bindings.find((binding) => binding.layoutZoneId === zoneId);
+    return existing ? { ...existing, playback } : { ...defaultBinding(zoneId), playback };
+  });
+}
+
+/** Replace the draft for `next`'s Zone, or append it if that Zone has none yet. */
+export const upsertBinding = (prev: ZoneBindingDraft[], next: ZoneBindingDraft): ZoneBindingDraft[] =>
+  prev.some((b) => b.layoutZoneId === next.layoutZoneId)
+    ? prev.map((b) => (b.layoutZoneId === next.layoutZoneId ? next : b))
+    : [...prev, next];
+
+/** Adds the drawer's staged selection without duplicating assets already in this Zone. */
+export function appendPickedAssets(
+  binding: ZoneBindingDraft,
+  picked: { id: string; isImage: boolean }[],
+): ZoneBindingDraft {
+  const selectedIds = new Set(binding.assetItems.map((item) => item.media_asset_id));
+  const additions = picked.flatMap((asset) => {
+    if (selectedIds.has(asset.id)) return [];
+    selectedIds.add(asset.id);
+    return [{
+      media_asset_id: asset.id,
+      duration_seconds: asset.isImage ? 10 : null,
+      transition: "cut" as const,
+    }];
+  });
+  return {
+    ...binding,
+    source: "assets",
+    playlistId: null,
+    playlistName: undefined,
+    assetItems: [
+      ...binding.assetItems,
+      ...additions,
+    ],
+  };
+}
+
+/** A Zone whose picked assets still have to become an inline Playlist on the next save. */
+function needsInlinePlaylist(binding: ZoneBindingDraft): boolean {
+  return binding.source === "assets" && binding.assetItems.length > 0 && !binding.playlistId;
+}
+
+/** ADR 0063 §2 3b: every Zone that will need an inline Playlist is given its idempotency key
+ *  *before* the first write, so a re-clicked Save after a partial failure re-sends the same
+ *  key and `media_playlist_upsert` hands back the row it already made instead of a second one.
+ *  Returns the input untouched when every key is already there, so the caller can skip a
+ *  pointless state update. */
+export function withIdempotencyKeys(bindings: ZoneBindingDraft[]): ZoneBindingDraft[] {
+  const missing = (binding: ZoneBindingDraft) => needsInlinePlaylist(binding) && !binding.idempotencyKey;
+  if (!bindings.some(missing)) return bindings;
+  return bindings.map((binding) => (missing(binding) ? { ...binding, idempotencyKey: crypto.randomUUID() } : binding));
+}
 
 export type SetZonesPayload = {
   zones: Array<{
@@ -50,10 +131,10 @@ function hasContent(binding: ZoneBindingDraft | undefined): boolean {
   return binding.assetItems.length > 0;
 }
 
-/** A Zone is bound once it resolves to a Playlist id — `source: "assets"` with items still
- *  picked but not yet saved as an inline Playlist counts as unbound (nothing to send yet). */
+/** The editor treats selected content as bound immediately. Asset selections receive their
+ *  inline Playlist id during the save sequence before the binding payload is written. */
 function isBound(binding: ZoneBindingDraft | undefined): boolean {
-  return Boolean(binding?.playlistId);
+  return hasContent(binding);
 }
 
 export function findUnboundZoneIds(
@@ -131,4 +212,25 @@ export function bindingsFromCompositionZones(zones: CompositionZone[]): ZoneBind
           }
         : { ...DEFAULT_ZONE_PLAYBACK },
     }));
+}
+
+/** Re-points bindings from the Zone ids the editor was holding onto the ids the save just
+ *  assigned. Positional, because a fresh insert gives no other correspondence: a blank
+ *  canvas or a copied preset carries client-minted ids until `media_layout_upsert` has run.
+ *  A source id with no counterpart is left as it is rather than dropped — losing one here
+ *  silently unbinds a Zone the operator had already filled. */
+export function remapZoneBindings(
+  bindings: ZoneBindingDraft[],
+  sourceZones: LayoutZone[],
+  targetZones: LayoutZone[],
+): ZoneBindingDraft[] {
+  const idsBySourceId = new Map<string, string>();
+  sourceZones.forEach((zone, index) => {
+    const targetId = targetZones[index]?.id;
+    if (zone.id && targetId) idsBySourceId.set(zone.id, targetId);
+  });
+  return bindings.map((binding) => ({
+    ...binding,
+    layoutZoneId: idsBySourceId.get(binding.layoutZoneId) ?? binding.layoutZoneId,
+  }));
 }

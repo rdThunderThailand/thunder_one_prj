@@ -169,7 +169,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={draft.id ? "Edit Layout" : "New Layout"}
+        title={draft.id ? "Edit Template" : "New Template"}
         subtitle={step === 1 ? "Choose a template and arrange the Zones." : "Name, aspect ratio, background and status."}
         actions={
           <div className="flex items-center gap-2">

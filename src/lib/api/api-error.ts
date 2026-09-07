@@ -72,6 +72,19 @@ function isUnapprovedAsset(message: string): boolean {
   return message.includes("media asset(s) are not approved");
 }
 
+/**
+ * A request that never got a response — the browser is offline, the host is
+ * unreachable, or it timed out. Axios reports it as `code: "ERR_NETWORK"` (or
+ * `"ECONNABORTED"` on timeout) with the bare English `message` "Network Error",
+ * none of which an operator should see: the retryable Thai line says the same
+ * thing and names the next action.
+ */
+function isTransportFailure(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const code = (err as { code?: string }).code;
+  return code === "ERR_NETWORK" || code === "ECONNABORTED" || err.message === "Network Error";
+}
+
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
   const message = err instanceof Error && err.message ? err.message : fallback;
 
@@ -126,6 +139,12 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
   // Without a status we can't tell a rejection from an outage, and guessing
   // "retryable" on a rejected command invites the user to hammer a dead request.
   if (!(err instanceof ApiError)) {
+    if (isTransportFailure(err)) {
+      return {
+        kind: "retryable",
+        message: "เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง",
+      };
+    }
     return { kind: "retryable", message };
   }
 

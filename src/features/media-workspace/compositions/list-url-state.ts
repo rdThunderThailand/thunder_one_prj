@@ -16,6 +16,9 @@ export type ListFilters = {
 
 export type ListState = {
   collection: Collection;
+  /** The Tags rail's selection (ticket 29). Mutually exclusive with `collection` — the
+   *  rail's two tabs never narrow the list at the same time, as on the Playlists page. */
+  tagId: string | null;
   filters: ListFilters;
   sort: { key: SortKey; dir: "asc" | "desc" };
   page: number;
@@ -24,6 +27,7 @@ export type ListState = {
 
 export const DEFAULT_STATE: ListState = {
   collection: "all",
+  tagId: null,
   filters: { query: "", status: "all", kind: "all", content: "all", usage: "all", referenceResolution: "" },
   sort: { key: "updated", dir: "desc" },
   page: 1,
@@ -48,6 +52,7 @@ export function readListState(params: URLSearchParams): ListState {
 
   return {
     collection,
+    tagId: params.get("tag") || null,
     filters: { query: params.get("q") ?? "", status, kind, content, usage, referenceResolution: params.get("reference_resolution") ?? "" },
     sort: { key: sortKey, dir },
     page: Number.isInteger(pageRaw) && pageRaw >= 1 ? pageRaw : 1,
@@ -58,6 +63,7 @@ export function readListState(params: URLSearchParams): ListState {
 export function writeListState(state: ListState): string {
   const params = new URLSearchParams();
   if (state.collection !== "all") params.set("collection", state.collection);
+  if (state.tagId) params.set("tag", state.tagId);
   if (state.filters.query) params.set("q", state.filters.query);
   if (state.filters.status !== "all") params.set("status", state.filters.status);
   if (state.filters.kind !== "all") params.set("kind", state.filters.kind);

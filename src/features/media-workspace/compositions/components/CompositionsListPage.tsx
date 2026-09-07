@@ -18,15 +18,27 @@ import { DEFAULT_STATE, readListState, writeListState, type ListFilters, type So
 import { fetchCompositionLibrary, restoreComposition, setCompositionStatus } from "../services/compositions-api";
 import type { CompositionLibraryItem, CompositionLibraryPage } from "../types";
 import { CompositionLibraryDialogs, type CompositionDialogAction } from "./CompositionLibraryDialogs";
+import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/components/LayoutTemplatePicker";
+// Reused rather than re-written, following UnsavedLeaveConfirm's precedent — the rail is
+// presentational and takes {id, name, count}[].
+// ponytail: move to content-library/ alongside FeatureFolderRail if a third page wants it.
+import { TagsRail } from "@/features/media-workspace/playlists/components/TagsRail";
 import { CompositionFolderRail } from "./CompositionFolderRail";
 import { CompositionsFilters } from "./CompositionsFilters";
 import { ListError, ListSkeleton, SummarySkeleton } from "./CompositionsListStates";
 import { CompositionsGrid, CompositionsTable } from "./CompositionsTable";
 
+const railTabClass = (active: boolean) =>
+  `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${
+    active ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+  }`;
+
 export function CompositionsListPage() {
   const searchParams = useSearchParams();
   const [initial] = useState(() => readListState(new URLSearchParams(searchParams.toString())));
   const [collection, setCollection] = useState(initial.collection);
+  const [tagId, setTagId] = useState(initial.tagId);
+  const [railTab, setRailTab] = useState<"folders" | "tags">(initial.tagId ? "tags" : "folders");
   const [filters, setFilters] = useState(initial.filters);
   const [sort, setSort] = useState(initial.sort);
   const [page, setPage] = useState(initial.page);
@@ -40,16 +52,19 @@ export function CompositionsListPage() {
   const [isGrid, setIsGrid] = useState(false);
   const [dialogAction, setDialogAction] = useState<CompositionDialogAction | null>(null);
   const [dialogTarget, setDialogTarget] = useState<CompositionLibraryItem | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const restoreUrlState = useCallback(() => {
     const next = readListState(new URLSearchParams(window.location.search));
     setCollection(next.collection);
+    setTagId(next.tagId);
+    setRailTab(next.tagId ? "tags" : "folders");
     setFilters(next.filters);
     setSort(next.sort);
     setPage(next.page);
     setPerPage(next.perPage);
   }, []);
-  const qs = writeListState({ collection, filters, sort, page, perPage });
+  const qs = writeListState({ collection, tagId, filters, sort, page, perPage });
   useListUrlState(qs, restoreUrlState);
 
   useEffect(() => {
@@ -70,6 +85,7 @@ export function CompositionsListPage() {
       content: filters.content === "all" ? undefined : filters.content,
       usage: filters.usage === "all" ? undefined : filters.usage,
       referenceResolution: filters.referenceResolution || undefined,
+      tagId: tagId ?? undefined,
       sort: sort.key,
       dir: sort.dir,
       page,
@@ -80,18 +96,23 @@ export function CompositionsListPage() {
       setError(null);
     }).catch((reason) => alive && setError(classifyApiError(reason, "โหลด Layouts ไม่สำเร็จ")));
     return () => { alive = false; };
-  }, [collection, filters, page, perPage, retryVersion, sort]);
+  }, [collection, filters, page, perPage, retryVersion, sort, tagId]);
 
   const reload = () => setRetryVersion((value) => value + 1);
   const reset = () => {
     setCollection(DEFAULT_STATE.collection);
+    setTagId(DEFAULT_STATE.tagId);
+    setRailTab("folders");
     setFilters(DEFAULT_STATE.filters);
     setSort(DEFAULT_STATE.sort);
     setPage(1);
     setPerPage(DEFAULT_STATE.perPage);
   };
   const changeFilters = (next: ListFilters) => { setFilters(next); setPage(1); };
-  const changeCollection = (next: string) => { setCollection(next); setPage(1); };
+  // A folder selection and a tag selection are mutually exclusive: picking one clears the
+  // other, so at most one narrows the collection the RPC counts its facets over.
+  const changeCollection = (next: string) => { setTagId(null); setCollection(next); setPage(1); };
+  const changeTag = (next: string | null) => { setCollection("all"); setTagId(next); setPage(1); };
   const changeSort = (key: SortKey) => {
     setSort((current) => current.key === key
       ? { key, dir: current.dir === "asc" ? "desc" : "asc" }
@@ -131,10 +152,18 @@ export function CompositionsListPage() {
   if (error?.kind === "forbidden" && !library) return <NoAccess />;
 
   return <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-6">
-    <PageHeader title="Layouts" subtitle="Create, organize, and manage screen layouts for your displays." actions={<><Link href="/media-workspace/layouts/templates" className={buttonClasses("secondary")}>Manage Templates</Link><Link href="/media-workspace/layouts/create" className={buttonClasses("primary")}>+ New Layout</Link></>} />
+    <PageHeader title="Layouts" subtitle="Create, organize, and manage screen layouts for your displays." actions={<><Link href="/media-workspace/layouts/templates" className={buttonClasses("secondary")}>Manage Templates</Link><button type="button" onClick={() => setPickerOpen(true)} className={buttonClasses("primary")}>+ New Layout</button></>} />
     {summary ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatTile label="Total Layouts" value={String(summary.total)} /><StatTile label="Template-based" value={String(summary.templateBased)} /><StatTile label="Custom" value={String(summary.custom)} /><button type="button" onClick={() => changeFilters({ ...filters, content: "incomplete" })}><StatTile label="Needs content" value={String(summary.needsContent)} /></button></div> : <SummarySkeleton />}
     <Card className="flex flex-1 flex-col overflow-hidden"><div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
-      <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r"><p className="mb-2 shrink-0 px-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Folders</p><CompositionFolderRail folders={folders} selected={collection} isLoading={!library && folders.length === 0} onSelect={changeCollection} onRefresh={reload} onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)} /></aside>
+      <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r">
+        <div className="mb-2 flex shrink-0 gap-1 px-1">
+          <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>Folders</button>
+          <button type="button" className={railTabClass(railTab === "tags")} onClick={() => setRailTab("tags")}>Tags</button>
+        </div>
+        {railTab === "folders"
+          ? <CompositionFolderRail folders={folders} selected={collection} isLoading={!library && folders.length === 0} onSelect={changeCollection} onRefresh={reload} onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)} />
+          : <TagsRail tags={library?.facets.tags ?? []} selected={tagId} onSelect={changeTag} />}
+      </aside>
       <main className="flex min-h-0 min-w-0 flex-col p-5"><CompositionsFilters value={filters} referenceResolutions={library?.facets.referenceResolutions ?? []} isGrid={isGrid} onViewChange={setIsGrid} onChange={changeFilters} onClearAll={qs ? reset : undefined} />
         {library?.isLegacyResponse && <p className="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Layouts Library filters and summary need the Core read-model rollout.</p>}
         {actionError && <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
@@ -144,6 +173,12 @@ export function CompositionsListPage() {
         </div>
       </main>
     </div>{pagination && <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0"><Pagination page={pagination.page} totalPages={pagination.totalPages} perPage={perPage} totalItems={pagination.total} rangeStart={(pagination.page - 1) * perPage + 1} rangeEnd={Math.min(pagination.page * perPage, pagination.total)} itemLabel="layouts" onPageChange={setPage} onPerPageChange={(next) => { setPerPage(next); setPage(1); }} /></div>}</Card>
+    <LayoutTemplatePicker
+      open={pickerOpen}
+      folders={folders}
+      tagNames={library?.facets.tags.map((tag) => tag.name) ?? []}
+      onClose={() => setPickerOpen(false)}
+    />
     <CompositionLibraryDialogs key={`${dialogAction}:${dialogTarget?.id ?? ""}`} action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
   </div>;
 }
