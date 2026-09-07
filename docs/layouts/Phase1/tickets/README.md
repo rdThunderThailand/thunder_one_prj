@@ -17,8 +17,17 @@ depends on, so it can be worked without reading the whole ADR first.
 | 25 | [#55](https://github.com/rdThunderThailand/thunder_one_prj/issues/55) | [Layout Properties panel + file split](25-layout-properties-panel.md) | One + **Core**⁴ | 24, 23 | verified (localhost → develop DB) |
 | 26 | [#56](https://github.com/rdThunderThailand/thunder_one_prj/issues/56) | [Canvas tools](26-canvas-tools.md) | One | 25 | verified (localhost) |
 | 27 | [#57](https://github.com/rdThunderThailand/thunder_one_prj/issues/57) | [Zone Properties tabs](27-zone-properties-tabs.md) | One | 25 | verified (localhost) |
-| 28 | [#58](https://github.com/rdThunderThailand/thunder_one_prj/issues/58) | [Save / Activate / first-save recovery](28-save-activate-and-first-save-recovery.md) | One | 25 | verified (localhost → develop DB)³ |
+| 28 | [#58](https://github.com/rdThunderThailand/thunder_one_prj/issues/58) | [Save / Activate / first-save recovery](28-save-activate-and-first-save-recovery.md) | One | 25 | verified except `Save as Template`³ |
 | 29 | [#59](https://github.com/rdThunderThailand/thunder_one_prj/issues/59) | [List page rails](29-list-page-rails.md) | One + **Core**² | 23 | verified (localhost → develop DB) |
+
+> **The 2026-09-07 UI/UX rework sits on top of every row above and is not browser-verified.**
+> Three-column editor (staged content shelf · canvas · switchable Layout/Zone properties), Zone
+> Overview moved below, header metadata badges with click-to-edit name, a new `New Layout` start
+> step (`create-layout-start-step.tsx`), a rewritten Template Picker, and *Save as Template* as a
+> copy. It landed after each ticket was signed off, so the per-row statuses describe the code as it
+> was reviewed, not as it now stands. Gates only so far: `tsc` exit 0, `eslint` 0 errors, every
+> `*.check.mts` passes. Design intent: `../plan-insert-to-layout-panel.md`. Both PRs stay Draft
+> until `.docs/CHECKLIST-layout-uiux-2026-09-07.md` comes back.
 
 ¹ 24 needs 21 only for its *Recently Used* group; the rest of the picker can be built first.
 
@@ -28,8 +37,11 @@ assumed the Playlist page's client-side rail; this list is server-paginated. ADR
 amendment and the rejected alternatives.
 
 ³ 28's `Save as Template` shipped flipping the row to `template` without naming it, leaving a
-`comp:<uuid>` row in the Templates list. ADR 0052 §4 wants both — rename, then widen kind. Fixed
-2026-09-07 (`promoteLayoutToTemplate`, commit `c0e7773`); the in-place flip itself was correct.
+`comp:<uuid>` row in the Templates list. Fixed 2026-09-07 by naming before the flip
+(`promoteLayoutToTemplate`, `c0e7773`) and browser-verified. **Superseded later the same day:**
+ADR 0052 §4's amendment makes *Save as Template* a copy — a new `template` row from the current
+geometry, the Layout's own `inline` row untouched — so promotion, and the verification of it, are
+both gone. The copy path is not browser-checked; see `.docs/CHECKLIST-layout-uiux-2026-09-07.md`.
 
 ⁴ 25 also acquired a Core migration — `20260906133000_composition_get_folder_and_tags.sql`, applied
 to `develop` 2026-09-06. `media_composition_get` returned neither field, so the Properties panel had
@@ -51,7 +63,7 @@ per `CLAUDE.md` §3) → `shipped`. Edit the row and the ticket's own **Status**
 - **21 ‖ 22** — different objects, one branch, no shared function.
 - **24 ‖ 29** — different pages; 29 only needs the backend.
 - **26 ‖ 27 ‖ 28** — all three edit the editor, so **25 must land first**. Done: the 734-line
-  `CompositionEditorPage.tsx` is back at 300, and each of the three has a file of its own —
+  `CompositionEditorPage.tsx` is at 300, and each of the three has a file of its own —
   26 → `CompositionCanvasPane.tsx` (+ `align-zones.ts`, `hooks/useZoneEditGuard.ts`/
   `useZoneHistory.ts`), 27 → `ZonePropertiesPanel.tsx` (wraps `ZoneContentPicker.tsx`),
   28 → `save-composition.ts` + `hooks/useCompositionSave.ts` + `CompositionEditorHeader.tsx`

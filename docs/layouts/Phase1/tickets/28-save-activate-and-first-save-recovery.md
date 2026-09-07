@@ -6,7 +6,8 @@
 **Plan:** `docs/layouts/Phase1/plan-create-layout-flow.md` FE-5
 **Design:** `docs/layouts/Phase1/Layout Editor.png` (header)
 **Blocked by:** 25 (the file split)
-**Status:** verified (localhost → develop DB)
+**Status:** verified (localhost → develop DB), **except `Save as Template`** — redesigned
+2026-09-07 (ADR 0052 §4 amendment: copy, not promote); the copy path is not browser-checked yet
 
 **This is the riskiest ticket in the phase.** It closes two recovery holes in the shipped save path.
 
@@ -71,7 +72,9 @@
       an old draft that rehydrates into the new shape crashes (`CLAUDE.md` §6) — **N/A**: the
       editor's draft is React state only. The one persisted thing (`layouts/create-seed.ts`,
       sessionStorage) carries `LayoutZone[]` / a layout id, neither of which changed shape.
-- [x] `Save as Template` calls `media_layout_set_kind` and names the row
+- [x] `Save as Template` produces a named `template` row — **now by copy, not by promotion**
+      (ADR 0052 §4 amendment 2026-09-07): `media_layout_upsert` with no `layout_id`, Zone ids
+      dropped, the Layout's own `inline` row untouched, no `media_layout_set_kind` call
 - [x] `Use in Program →` opens the Publication wizard pre-filled. **Not** labelled `Publish`
 - [x] No `Import Layout` button
 - [x] A `revision` conflict surfaces to the operator as a readable message, not a raw DB error
@@ -90,8 +93,11 @@ was never named; fixed in `promoteLayoutToTemplate`, commit `c0e7773`).
       **one** `layouts` row + one composition, no dupes (2026-09-06)
 - [x] `Save & Activate` disabled with an unbound Zone and states the count; binding enables it
       (2026-09-06)
-- [x] `Save as Template` on a bound Composition → Templates list row named `zz-e1-tpl-3col` /
-      `zz-e1-tpl-bound`, **not** `comp:<uuid>`; `composition_zones` `layout_zone_id` round-tripped,
-      no Zones silently unbound (2026-09-07)
+- [ ] ~~`Save as Template` promotes in place → Templates list row named, not `comp:<uuid>`;
+      `layout_zone_id` round-tripped~~ — **verified 2026-09-07 against the promote-in-place
+      implementation, which no longer exists.** ADR 0052 §4's amendment replaced it with a copy
+      later the same day. The round-trip risk this checked is gone with it (a copy drops Zone ids
+      on purpose and never touches `composition_zones`), but the copy path itself is **unverified**
+      — carried into `.docs/CHECKLIST-layout-uiux-2026-09-07.md`
 - [x] `revision` conflict surfaces as a readable message (E4, 2026-09-06)
 - [x] Every scratch row deleted — 55 rows across 6 tables, one transaction, 2026-09-07
