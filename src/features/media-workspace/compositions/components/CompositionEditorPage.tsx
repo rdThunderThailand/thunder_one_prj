@@ -183,8 +183,13 @@ export function CompositionEditorPage({
     setNamingTemplate(false);
     if (!layout) return;
     void run(async () => {
-      await upsertLayout({ name: templateName, aspectRatio: settings.aspectRatio, referenceResolution: settings.referenceResolution,
+      const { layout_id } = await upsertLayout({ name: templateName, aspectRatio: settings.aspectRatio, referenceResolution: settings.referenceResolution,
         background: settings.background, status: "active", zones: layout.zones.map(({ name, x, y, width, height }) => ({ name, x, y, width, height })) });
+      // Fold the new Template into the in-memory list so a second Save as Template this session
+      // sees its name — otherwise the duplicate-name guard only knows the one saved just before
+      // it and the collision comes back as a silent 409 from upsertLayout.
+      const created = await fetchLayout(layout_id);
+      data.setLayouts((current) => [...current.filter((c) => c.id !== created.id), created]);
       setTemplateSavedName(templateName);
     }, "บันทึกเป็น Template ไม่สำเร็จ");
   };
