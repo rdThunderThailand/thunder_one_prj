@@ -70,6 +70,33 @@ export const upsertBinding = (prev: ZoneBindingDraft[], next: ZoneBindingDraft):
     ? prev.map((b) => (b.layoutZoneId === next.layoutZoneId ? next : b))
     : [...prev, next];
 
+/** Adds the drawer's staged selection without duplicating assets already in this Zone. */
+export function appendPickedAssets(
+  binding: ZoneBindingDraft,
+  picked: { id: string; isImage: boolean }[],
+): ZoneBindingDraft {
+  const selectedIds = new Set(binding.assetItems.map((item) => item.media_asset_id));
+  const additions = picked.flatMap((asset) => {
+    if (selectedIds.has(asset.id)) return [];
+    selectedIds.add(asset.id);
+    return [{
+      media_asset_id: asset.id,
+      duration_seconds: asset.isImage ? 10 : null,
+      transition: "cut" as const,
+    }];
+  });
+  return {
+    ...binding,
+    source: "assets",
+    playlistId: null,
+    playlistName: undefined,
+    assetItems: [
+      ...binding.assetItems,
+      ...additions,
+    ],
+  };
+}
+
 /** A Zone whose picked assets still have to become an inline Playlist on the next save. */
 function needsInlinePlaylist(binding: ZoneBindingDraft): boolean {
   return binding.source === "assets" && binding.assetItems.length > 0 && !binding.playlistId;
@@ -104,10 +131,10 @@ function hasContent(binding: ZoneBindingDraft | undefined): boolean {
   return binding.assetItems.length > 0;
 }
 
-/** A Zone is bound once it resolves to a Playlist id — `source: "assets"` with items still
- *  picked but not yet saved as an inline Playlist counts as unbound (nothing to send yet). */
+/** The editor treats selected content as bound immediately. Asset selections receive their
+ *  inline Playlist id during the save sequence before the binding payload is written. */
 function isBound(binding: ZoneBindingDraft | undefined): boolean {
-  return Boolean(binding?.playlistId);
+  return hasContent(binding);
 }
 
 export function findUnboundZoneIds(

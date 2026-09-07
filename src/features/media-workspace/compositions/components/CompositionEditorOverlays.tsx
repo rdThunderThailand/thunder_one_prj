@@ -19,6 +19,7 @@ export function CompositionEditorOverlays({
   takenTemplateNames,
   onCloseNaming,
   onConfirmTemplate,
+  templateSavedName,
   saveError,
   sharedTemplateUsage,
   saving,
@@ -32,6 +33,7 @@ export function CompositionEditorOverlays({
   takenTemplateNames: string[];
   onCloseNaming: () => void;
   onConfirmTemplate: (name: string) => void;
+  templateSavedName: string | null;
   saveError: string | null;
   sharedTemplateUsage: number;
   saving: boolean;
@@ -54,6 +56,12 @@ export function CompositionEditorOverlays({
         <Card className="border-red-200 p-4 dark:border-red-900">
           <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
         </Card>
+      )}
+
+      {templateSavedName && (
+        <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
+          Added “{templateSavedName}” to My Templates.
+        </p>
       )}
 
       {sharedTemplateUsage > 1 && (

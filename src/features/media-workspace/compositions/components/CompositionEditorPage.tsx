@@ -1,16 +1,14 @@
 "use client";
-
-// The merged editor (ADR 0052, ADR 0063). Composition root only: it owns the draft and wires
-// the pieces together — the hooks (useComposition*), the write path (save-composition.ts), and
-// the canvas/panels/header/overlays each in a file of their own. The 300-line ceiling keeps it so.
-
+// ADR 0052/0063 Composition root: draft state and wiring only; UI stays in child components.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { fetchLayout, promoteLayoutToTemplate } from "@/features/media-workspace/layouts/services/layouts-api";
-import { takeCreateSeed } from "@/features/media-workspace/layouts/create-seed";
+import { fetchLayout, upsertLayout } from "@/features/media-workspace/layouts/services/layouts-api";
+import { seedCanvasSettings, takeCreateSeed } from "@/features/media-workspace/layouts/create-seed";
+import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/components/LayoutTemplatePicker";
+import { deriveAspectRatio, parseResolution } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
 import { PlaybackPreviewModal } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
@@ -24,14 +22,13 @@ import { useCompositionPreview } from "../hooks/useCompositionPreview";
 import { useCompositionSave } from "../hooks/useCompositionSave";
 import { useEditorLayout } from "../hooks/useEditorLayout";
 import { useZoneEditGuard } from "../hooks/useZoneEditGuard";
-import { CompositionCanvasPane } from "./CompositionCanvasPane";
+import { CompositionCanvasPane, ZoneOverview } from "./CompositionCanvasPane";
 import { CompositionEditorHeader } from "./CompositionEditorHeader";
 import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
+import { ZoneContentPicker } from "./ZoneContentPicker";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
-
 const LIST_PATH = "/media-workspace/layouts";
-
 export function CompositionEditorPage({
   compositionId,
   initialPreview = false,
@@ -41,7 +38,6 @@ export function CompositionEditorPage({
 }) {
   const router = useRouter();
   const data = useCompositionEditorData();
-
   const [id, setId] = useState<string | null>(compositionId ?? null);
   const [name, setName] = useState("");
   const [layoutId, setLayoutId] = useState<string | null>(null);
@@ -57,18 +53,17 @@ export function CompositionEditorPage({
   const [initialSnapshot, setInitialSnapshot] = useState("");
   // ADR 0063 §2: `Unsaved` until the first write, `Last saved HH:MM` after — never "Saved just now".
   const [savedAt, setSavedAt] = useState<Date | null>(null);
-
   const [previewOpen, setPreviewOpen] = useState(initialPreview);
   const [loading, setLoading] = useState(!!compositionId);
   const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [namingTemplate, setNamingTemplate] = useState(false);
-
+  const [templateSavedName, setTemplateSavedName] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const view = useEditorLayout({
     layouts: data.layouts, layoutId, name, blankZones, editedZones, layoutSettings, bindings,
   });
   const { layout, settings, sharedTemplateUsage } = view;
-
   // ADR 0063 §2: Template Picker seeds the choice in sessionStorage; read once into state so
   // Strict Mode's second effect pass can't find it already cleared.
   const [createSeed] = useState(() => (compositionId ? null : takeCreateSeed()));
@@ -77,6 +72,18 @@ export function CompositionEditorPage({
     let alive = true;
     void resolveCreateSeed(createSeed).then((seed) => {
       if (!alive || !seed) return;
+      const seededSettings = seedCanvasSettings(createSeed); if (seededSettings) setLayoutSettings(seededSettings);
+      if (createSeed?.kind === "scratch" && createSeed.details) {
+        const resolution = parseResolution(createSeed.details.referenceResolution);
+        setName(createSeed.details.name);
+        setFolderId(createSeed.details.folderId);
+        setTags(createSeed.details.tags);
+        setLayoutSettings({
+          aspectRatio: resolution ? deriveAspectRatio(resolution[0], resolution[1]) : "16:9",
+          referenceResolution: createSeed.details.referenceResolution,
+          background: createSeed.details.background,
+        });
+      }
       if (seed.kind === "zones") {
         setBlankZones(seed.zones);
         return;
@@ -89,7 +96,6 @@ export function CompositionEditorPage({
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [compositionId]);
-
   useEffect(() => {
     if (!compositionId) return;
     let alive = true;
@@ -118,9 +124,7 @@ export function CompositionEditorPage({
   }, [compositionId]);
 
   const preview = useCompositionPreview({ compositionId: id, layout, bindings, ...data });
-
   const isDirty = draftSnapshot({ name, layoutId, bindings, folderId, tags }) !== initialSnapshot;
-
   const setBinding = (next: ZoneBindingDraft) => {
     if (next.playlistId && !data.playlistPreviewAssetIds[next.playlistId]) data.hydratePlaylist(next.playlistId);
     setBindings((prev) => upsertBinding(prev, next));
@@ -174,18 +178,17 @@ export function CompositionEditorPage({
       resetApproval();
     }, "สร้าง Layout ส่วนตัวไม่สำเร็จ");
   };
-
   // Dialog closed before the save runs: a failure must reach the header slot a modal would hide.
   const saveAsTemplate = (templateName: string) => {
     setNamingTemplate(false);
-    void save(async (result) => {
-      await promoteLayoutToTemplate(result.layoutId, templateName);
-      router.push("/media-workspace/layouts/templates");
+    if (!layout) return;
+    void run(async () => {
+      await upsertLayout({ name: templateName, aspectRatio: settings.aspectRatio, referenceResolution: settings.referenceResolution,
+        background: settings.background, status: "active", zones: layout.zones.map(({ name, x, y, width, height }) => ({ name, x, y, width, height })) });
+      setTemplateSavedName(templateName);
     }, "บันทึกเป็น Template ไม่สำเร็จ");
   };
-
   if (loading) return <p className="p-6 text-sm text-zinc-400">กำลังโหลด...</p>;
-
   const fatal = loadError ?? data.loadError;
   if (fatal) return (
     <Card className="p-6">
@@ -204,8 +207,9 @@ export function CompositionEditorPage({
         saving={saving}
         canPreview={!!layout}
         canFullPreview={!!id && !!layout}
-        canSaveAsTemplate={!!layoutId && layout?.kind === "inline"}
         status={status}
+        referenceResolution={settings.referenceResolution} aspectRatio={settings.aspectRatio}
+        zoneCount={layout?.zones.length ?? 0}
         hasLayout={!!layout}
         isComplete={view.complete}
         unboundZoneNames={view.unboundZoneNames}
@@ -214,7 +218,7 @@ export function CompositionEditorPage({
         onFullPreview={() => preview.openFullPreview(isDirty)}
         onUseInProgram={() => router.push(`/media-workspace/publications/create?compositionId=${id}`)}
         onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Composition ไม่สำเร็จ")}
-        onSaveAsTemplate={() => setNamingTemplate(true)}
+        onSaveAsTemplate={() => { setTemplateSavedName(null); setNamingTemplate(true); }}
         onActivate={() => void save(async (result) => {
           await setCompositionStatus(result.compositionId, "active");
           router.push(LIST_PATH);
@@ -225,75 +229,71 @@ export function CompositionEditorPage({
         confirmLeave={confirmLeave}
         onStay={() => setConfirmLeave(false)}
         onLeave={() => router.push(LIST_PATH)}
-        namingTemplate={namingTemplate}
-        templateDefaultName={name}
-        takenTemplateNames={data.layouts.flatMap((c) => (c.kind === "template" ? [c.name] : []))}
+        namingTemplate={namingTemplate} templateDefaultName={name}
+        takenTemplateNames={data.layouts.flatMap((c) => (c.kind === "template" ? [c.name] : [])).concat(templateSavedName ?? [])}
         onCloseNaming={() => setNamingTemplate(false)}
         onConfirmTemplate={saveAsTemplate}
-        saveError={saveError}
-        sharedTemplateUsage={sharedTemplateUsage}
-        saving={saving}
+        templateSavedName={templateSavedName}
+        saveError={saveError} sharedTemplateUsage={sharedTemplateUsage} saving={saving}
         onForkLayout={handleForkLayout}
       />
 
       <PlaybackPreviewModal
-        open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        zones={preview.playbackPreviewZones}
-        assets={data.assets}
-        aspectRatio={layout?.aspect_ratio}
-        previewUrls={data.previews}
+        open={previewOpen} onClose={() => setPreviewOpen(false)}
+        zones={preview.playbackPreviewZones} assets={data.assets}
+        aspectRatio={layout?.aspect_ratio} previewUrls={data.previews}
         geometryOptions={editorGeometryOptions(layout?.reference_resolution)}
         referenceResolution={layout?.reference_resolution ?? null}
       />
+      <LayoutTemplatePicker open={pickerOpen} folders={data.folders} tagNames={tags ?? []} hasUnsavedChanges={isDirty} onClose={() => setPickerOpen(false)} onStarted={() => window.location.reload()} />
 
-      <Card className="grid gap-6 p-4 lg:grid-cols-[1fr_260px]">
+      <Card className="grid items-stretch gap-6 p-4 xl:h-[50rem] xl:grid-cols-[340px_minmax(0,1fr)_300px]">
+        {view.binding && view.activeZone ? (
+          <ZoneContentPicker
+            zoneName={view.activeZone.name} binding={view.binding} onChange={setBinding}
+            assets={data.assets} playlists={data.playlists} previews={data.previews}
+            playlistPreviews={preview.playlistPreviews} playlistDurations={data.playlistDurations}
+          />
+        ) : (
+          <section className="border-b border-zinc-200 pb-4 dark:border-zinc-700 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-6">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Insert to Layout</p><p className="mt-2 text-sm text-zinc-400">Select a Zone to add content.</p>
+          </section>
+        )}
+
         {layout ? (
           <CompositionCanvasPane
-            zones={layout.zones}
-            background={settings.background}
-            aspectRatio={settings.aspectRatio}
-            zonePreviews={preview.zonePreviews}
-            bindings={bindings}
-            unboundZoneIds={view.unboundZoneIds}
-            activeZoneId={view.selectedZoneId}
-            onSelectZone={view.setSelectedZoneId}
-            onChangeStart={beginZoneEdit}
-            onChange={setEditedZones}
+            zones={layout.zones} background={settings.background} aspectRatio={settings.aspectRatio}
+            referenceResolution={settings.referenceResolution} zonePreviews={preview.zonePreviews}
+            activeZoneId={view.selectedZoneId} onSelectZone={view.setSelectedZoneId}
+            onChangeStart={beginZoneEdit} onChange={setEditedZones}
             canUndo={canUndo} canRedo={canRedo}
             onUndo={undo} onRedo={redo}
           />
         ) : (
-          <div className="flex min-h-40 items-center justify-center rounded-lg bg-zinc-100 text-sm text-zinc-400 dark:bg-zinc-800">
-            Start from the Template Picker to see Zones here
+          <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg bg-zinc-100 text-sm text-zinc-500 dark:bg-zinc-800">
+            <p>Start from the Template Picker to see Zones here</p>
+            <Button onClick={() => setPickerOpen(true)}>+ New Layout</Button>
           </div>
         )}
-
-        <LayoutPropertiesPanel
-          name={name}
-          onNameChange={setName}
-          folders={data.folders}
-          folderId={folderId ?? null}
-          onFolderChange={setFolderId}
-          tags={tags ?? []}
-          onTagsChange={setTags}
-          settings={settings}
+        <LayoutPropertiesPanel selectedZoneId={view.selectedZoneId}
+          name={name} onNameChange={setName} folders={data.folders}
+          folderId={folderId ?? null} onFolderChange={setFolderId}
+          tags={tags ?? []} onTagsChange={setTags} settings={settings}
           onSettingsChange={(next) => confirmGeometryChange() && setLayoutSettings(next)}
-          sharedTemplateUsage={sharedTemplateUsage}
-          disabled={saving}
+          sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
+          zoneProperties={view.binding && view.activeZone ? <ZonePropertiesPanel
+            zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null} binding={view.binding}
+            onZoneChange={(next) => beginZoneEdit() && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
+            onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} playlistDurations={data.playlistDurations} canDelete={(layout?.zones.length ?? 0) > 1}
+            onDelete={() => { if (!layout || layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
+          /> : undefined}
         />
       </Card>
 
-      {view.binding && view.activeZone && (
-        <ZonePropertiesPanel
-          zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null}
-          onZoneChange={(next) => beginZoneEdit() && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))}
-          binding={view.binding} onBindingChange={setBinding}
-          onApplyPlaybackToAllZones={applyPlaybackToAllZones}
-          assets={data.assets} playlists={data.playlists}
-          previews={data.previews} playlistPreviews={preview.playlistPreviews}
-          playlistDurations={data.playlistDurations}
-        />
+      {layout && (
+        <Card className="p-4">
+          <ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} onSelectZone={view.setSelectedZoneId} />
+        </Card>
       )}
     </div>
   );

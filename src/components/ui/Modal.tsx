@@ -20,9 +20,10 @@ interface ModalProps {
   /** "lg" for multi-step wizards that need room for a step form — every
    *  existing caller keeps the original "md" width by omitting this. */
   size?: ModalSize;
+  showCloseButton?: boolean;
 }
 
-export function Modal({ open, onClose, title, children, footer, size = "md" }: ModalProps) {
+export function Modal({ open, onClose, title, children, footer, size = "md", showCloseButton = false }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -50,8 +51,18 @@ export function Modal({ open, onClose, title, children, footer, size = "md" }: M
       onClick={handleBackdropClick}
       className={`m-auto w-[calc(100%-2rem)] ${sizeClasses[size]} rounded-lg p-0 backdrop:bg-black/40`}
     >
-      <div className="w-full rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
+      <div className="relative w-full rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-3 pr-8 text-base font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
+        {showCloseButton && (
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-xl text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          >
+            ×
+          </button>
+        )}
         <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-300">{children}</div>
         <div className="mt-4 flex justify-end gap-2">{footer}</div>
       </div>

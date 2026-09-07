@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import {
   DEFAULT_ZONE_PLAYBACK,
+  appendPickedAssets,
   applyPlaybackToAll,
   bindingsFromCompositionZones,
   defaultBinding,
@@ -45,7 +46,7 @@ assert.equal(isComplete(zones, bindings), true);
 assert.equal(isComplete(zones, bindings.slice(0, 1)), false);
 assert.equal(isComplete([], []), false, "an empty Layout is never 'complete'");
 
-// A "assets" binding with no playlistId yet (picked but not saved) is still unbound.
+// Picked assets count as bound in the editor; Save resolves their inline Playlist id before payload.
 const unsavedAssetsBinding: ZoneBindingDraft = {
   layoutZoneId: "zone-side",
   source: "assets",
@@ -53,7 +54,29 @@ const unsavedAssetsBinding: ZoneBindingDraft = {
   assetItems: [{ media_asset_id: "image-1", duration_seconds: 10, transition: "cut" }],
   playback: { playMode: "sequential", repeat: "loop", startFrom: "first" },
 };
-assert.deepEqual(findUnboundZoneIds(zones, [bindings[0]!, unsavedAssetsBinding]), ["zone-side"]);
+assert.deepEqual(findUnboundZoneIds(zones, [bindings[0]!, unsavedAssetsBinding]), []);
+
+// The media drawer appends in selection order, skips an existing asset, and switches source.
+assert.deepEqual(
+  appendPickedAssets({
+    ...bindings[0]!,
+    assetItems: [{ media_asset_id: "image-1", duration_seconds: 10, transition: "cut" }],
+  }, [
+    { id: "image-1", isImage: true },
+    { id: "image-1", isImage: true },
+    { id: "video-1", isImage: false },
+  ]),
+  {
+    ...bindings[0],
+    source: "assets",
+    playlistId: null,
+    playlistName: undefined,
+    assetItems: [
+      { media_asset_id: "image-1", duration_seconds: 10, transition: "cut" },
+      { media_asset_id: "video-1", duration_seconds: null, transition: "cut" },
+    ],
+  },
+);
 
 // --- totalZoneDurationSeconds ----------------------------------------------
 

@@ -1,17 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card } from "@/components/ui/Card";
-import { SearchIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/Button";
+import { MediaThumb } from "@/components/ui/MediaThumb";
+import { ImageIcon, PlusIcon, XIcon } from "@/components/ui/icons";
 import { isApprovedAsset, isImageAsset } from "@/features/media-workspace/publications/draft-mapping";
-import { AssetCard } from "@/features/media-workspace/publications/components/AssetCard";
 import { SelectedAssetList } from "@/features/media-workspace/publications/components/SelectedAssetList";
+import { AddItemDrawer } from "@/features/media-workspace/playlists/components/AddItemDrawer";
 import type { MediaAsset } from "@/types/domain";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";
-import { totalZoneDurationSeconds, type ZoneBindingDraft } from "../zone-bindings";
-
-const tabClasses = (active: boolean) =>
-  `flex-1 rounded-lg px-3 py-1.5 text-sm font-medium ${active ? "bg-white text-indigo-700 shadow-sm" : "text-zinc-500"}`;
+import { appendPickedAssets, totalZoneDurationSeconds, type ZoneBindingDraft } from "../zone-bindings";
 
 /**
  * The Content tab of Zone Properties (ticket 27) — an existing Playlist, or a set of picked
@@ -39,36 +37,18 @@ export function ZoneContentPicker({
   playlistPreviews: Record<string, { url?: string; thumbnailUrl?: string }>;
   playlistDurations: Record<string, number | undefined>;
 }) {
-  const [query, setQuery] = useState("");
+  const [isAssetPickerOpen, setIsAssetPickerOpen] = useState(false);
+  const [stagedAssets, setStagedAssets] = useState<MediaAsset[]>([]);
+  const [stagedPlaylist, setStagedPlaylist] = useState<PlaylistListItem | null>(null);
 
   const assetDurations = useMemo(
     () => Object.fromEntries(assets.map((a) => [a.id, a.duration_seconds ?? undefined])),
     [assets],
   );
   const durationSeconds = totalZoneDurationSeconds(binding, assetDurations, playlistDurations);
-
-  const filteredAssets = useMemo(() => {
-    if (!query.trim()) return assets;
-    const q = query.toLowerCase();
-    return assets.filter((asset) => {
-      const filename = asset.file?.original_filename ?? "";
-      const title = asset.title ?? "";
-      return filename.toLowerCase().includes(q) || title.toLowerCase().includes(q);
-    });
-  }, [assets, query]);
-
-  const filteredPlaylists = useMemo(() => {
-    let list = playlists;
-    if (binding.playlistId && binding.source === "playlist" && !list.some((p) => p.id === binding.playlistId)) {
-      list = [
-        ...list,
-        { id: binding.playlistId, name: binding.playlistName ?? "Bound Playlist", status: "draft", item_count: 0 },
-      ];
-    }
-    if (!query.trim()) return list;
-    const q = query.toLowerCase();
-    return list.filter((p) => p.name.toLowerCase().includes(q));
-  }, [playlists, binding, query]);
+  const boundPlaylist = binding.playlistId ? playlists.find((playlist) => playlist.id === binding.playlistId) : null;
+  const hasBoundContent = binding.source === "playlist" ? !!binding.playlistId : binding.assetItems.length > 0;
+  const hasStagedContent = !!stagedPlaylist || stagedAssets.length > 0;
 
   const toggleAssetItem = ({ id, isImage }: { id: string; isImage: boolean }) => {
     const isSelected = binding.assetItems.some((item) => item.media_asset_id === id);
@@ -78,72 +58,38 @@ export function ZoneContentPicker({
     onChange({ ...binding, source: "assets", playlistId: null, playlistName: undefined, assetItems });
   };
 
+  const insertStaged = () => {
+    if (stagedPlaylist) {
+      onChange({ ...binding, source: "playlist", playlistId: stagedPlaylist.id, playlistName: stagedPlaylist.name, assetItems: [] });
+    } else if (stagedAssets.length > 0) {
+      onChange(appendPickedAssets(binding, stagedAssets.map((asset) => ({ id: asset.id, isImage: isImageAsset(asset) }))));
+    }
+    setStagedAssets([]);
+    setStagedPlaylist(null);
+  };
+
   return (
-    <Card className="flex flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Zone: {zoneName}</p>
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">Total {durationSeconds}s</span>
-      </div>
-
-      <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
-        <button type="button" className={tabClasses(binding.source === "playlist")} onClick={() => onChange({ ...binding, source: "playlist" })}>
-          Existing Playlist
-        </button>
-        <button type="button" className={tabClasses(binding.source === "assets")} onClick={() => onChange({ ...binding, source: "assets" })}>
-          Pick assets
-        </button>
-      </div>
-
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={binding.source === "playlist" ? "Search playlists..." : "Search assets..."}
-          className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900"
-        />
-      </div>
-
-      {binding.source === "playlist" ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {filteredPlaylists.map((playlist) => {
-            const selected = binding.playlistId === playlist.id;
-            const preview = playlistPreviews[playlist.id];
-            return (
-              <AssetCard
-                key={playlist.id}
-                kind="playlist"
-                playlist={playlist}
-                previewUrl={preview?.url}
-                thumbnailUrl={preview?.thumbnailUrl}
-                selected={selected}
-                onSelect={() => onChange({ ...binding, source: "playlist", playlistId: selected ? null : playlist.id, playlistName: playlist.name, assetItems: [] })}
-              />
-            );
-          })}
-          {filteredPlaylists.length === 0 && <p className="col-span-full text-sm text-zinc-400">ไม่พบ Playlist</p>}
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {filteredAssets.map((asset) => {
-              const approved = isApprovedAsset(asset);
-              return (
-                <AssetCard
-                  key={asset.id}
-                  kind="asset"
-                  asset={asset}
-                  previewUrl={previews[asset.id]}
-                  selected={binding.assetItems.some((i) => i.media_asset_id === asset.id)}
-                  onSelect={() => approved && toggleAssetItem({ id: asset.id, isImage: isImageAsset(asset) })}
-                  disabled={!approved}
-                />
-              );
-            })}
-            {filteredAssets.length === 0 && <p className="col-span-full text-sm text-zinc-400">ไม่พบ Asset</p>}
+    <>
+      <section className="flex h-full min-h-0 min-w-0 flex-col gap-4 border-b border-zinc-200 pb-4 dark:border-zinc-700 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Insert to Layout</p>
+            <p className="text-xs text-zinc-400">Zone: {zoneName}</p>
           </div>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">Total {durationSeconds}s</span>
+        </div>
 
+        {!hasBoundContent && !hasStagedContent ? (
+          <button type="button" onClick={() => setIsAssetPickerOpen(true)} className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 p-6 text-center text-zinc-500 transition hover:border-indigo-400 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800/40">
+            <ImageIcon className="h-8 w-8" />
+            <span className="font-medium text-zinc-700 dark:text-zinc-200">Pick Media Assets</span>
+            <span className="max-w-52 text-xs">Choose media or a Playlist for {zoneName}</span>
+          </button>
+        ) : <>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+          {hasBoundContent && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">In this Zone</p>
           <SelectedAssetList
+            bare
             assets={assets}
             previews={previews}
             selection={{
@@ -169,8 +115,38 @@ export function ZoneContentPicker({
               },
             }}
           />
-        </>
+          {binding.source === "playlist" && binding.playlistId && <ShelfItem label={binding.playlistName ?? boundPlaylist?.name ?? "Playlist"} meta={`${boundPlaylist?.item_count ?? 0} items · ${boundPlaylist?.status ?? "bound"}`} url={playlistPreviews[binding.playlistId]?.url} thumbnailUrl={playlistPreviews[binding.playlistId]?.thumbnailUrl} onRemove={() => onChange({ ...binding, playlistId: null, playlistName: undefined, assetItems: [] })} />}
+          </div>}
+          {hasStagedContent && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-indigo-600">Ready to add</p><div className="space-y-2">
+            {stagedPlaylist && <ShelfItem label={stagedPlaylist.name} meta={`${stagedPlaylist.item_count} items · ${stagedPlaylist.status}`} url={playlistPreviews[stagedPlaylist.id]?.url} thumbnailUrl={playlistPreviews[stagedPlaylist.id]?.thumbnailUrl} onRemove={() => setStagedPlaylist(null)} />}
+            {stagedAssets.map((asset) => <ShelfItem key={asset.id} label={asset.file?.original_filename ?? asset.title ?? asset.id} meta={`${asset.kind ?? "File"}${asset.width && asset.height ? ` · ${asset.width}×${asset.height}` : ""}`} url={previews[asset.id]} onRemove={() => setStagedAssets((current) => current.filter((item) => item.id !== asset.id))} />)}
+          </div></div>}
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+          <Button variant="secondary" onClick={() => setIsAssetPickerOpen(true)}><PlusIcon /> Add Media or Playlist</Button>
+          {hasStagedContent && <Button onClick={insertStaged}>Add to {zoneName}</Button>}
+        </div>
+        </>}
+      </section>
+
+      {isAssetPickerOpen && (
+        <AddItemDrawer
+          assets={assets.filter(isApprovedAsset)}
+          loading={false}
+          alreadyInPlaylist={binding.assetItems.map((item) => item.media_asset_id)}
+          onAdd={(picked) => { setStagedAssets(picked); setStagedPlaylist(null); }}
+          onClose={() => setIsAssetPickerOpen(false)}
+          purpose="layout"
+          side="right"
+          playlists={playlists}
+          playlistPreviews={playlistPreviews}
+          onSelectPlaylist={(playlist) => { setStagedPlaylist(playlist); setStagedAssets([]); }}
+        />
       )}
-    </Card>
+    </>
   );
+}
+
+function ShelfItem({ label, meta, url, thumbnailUrl, onRemove }: { label: string; meta: string; url?: string; thumbnailUrl?: string; onRemove: () => void }) {
+  return <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-2 text-left dark:border-zinc-700 dark:bg-zinc-900"><MediaThumb url={url} thumbnailUrl={thumbnailUrl} alt={`${label} thumbnail`} className="h-14 w-20" /><span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{label}</span><span className="block truncate text-xs text-zinc-500">{meta}</span></span><button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="shrink-0 rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"><XIcon /></button></div>;
 }

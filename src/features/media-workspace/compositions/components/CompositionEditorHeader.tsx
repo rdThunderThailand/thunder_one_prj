@@ -4,8 +4,11 @@
 // 28 owns Save / Activate / Save as Template and their disabled reasons — it should not have
 // to reach into the page component to change them.
 
-import { PageHeader } from "@/components/layout/PageHeader";
+import { useRef, useState } from "react";
+import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
+import { CheckIcon, EditIcon } from "@/components/ui/icons";
+import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
 
 /** One row of the split button's menu. Closes the `<details>` it lives in on the way out, so
@@ -42,8 +45,10 @@ export function CompositionEditorHeader({
   saving,
   canPreview,
   canFullPreview,
-  canSaveAsTemplate,
   status,
+  referenceResolution,
+  aspectRatio,
+  zoneCount,
   hasLayout,
   isComplete,
   unboundZoneNames,
@@ -64,10 +69,12 @@ export function CompositionEditorHeader({
   saving: boolean;
   canPreview: boolean;
   canFullPreview: boolean;
-  canSaveAsTemplate: boolean;
   /** Drives both the primary action's meaning ("keep the current status") and whether
    *  `Save & Activate` is offered at all. */
   status: CompositionStatus;
+  referenceResolution: string | null;
+  aspectRatio: string;
+  zoneCount: number;
   hasLayout: boolean;
   isComplete: boolean;
   unboundZoneNames: string[];
@@ -81,6 +88,8 @@ export function CompositionEditorHeader({
   onSaveAsTemplate: () => void;
   onActivate: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   // ADR 0063 §2: `Unsaved` until the first write, `Last saved HH:MM` after. The frames'
   // "Saved just now" on a never-saved blank canvas is a claim the editor cannot make.
   // The buttons own the reasons they are off, so the page does not have to restate them.
@@ -91,27 +100,36 @@ export function CompositionEditorHeader({
   // which the frames' single button had no room to say.
   const activateDisabledReason = saveDisabledReason
     ?? (!isComplete ? `ยังไม่ได้ผูก Content ให้ ${unboundZoneNames.length} Zone: ${unboundZoneNames.join(", ")}` : null);
-  const draftDisabledReason = saveDisabledReason
-    ?? (status !== "draft" ? "Composition นี้เปิดใช้งานแล้ว ย้อนกลับเป็น Draft ไม่ได้" : null);
+  const saveState = saveAction(status);
 
-  const badge = savedAt
-    ? `Last saved ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-    : "Unsaved";
+  const commitName = () => {
+    onNameChange(inputRef.current?.value ?? name);
+    setEditing(false);
+  };
+  const updatedLabel = savedAt ? `Updated ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Not saved";
+  const statusColor: Record<CompositionStatus, BadgeColor> = { draft: "yellow", active: "green", inactive: "zinc" };
 
   return (
-    <PageHeader
-      title={
-        <input
-          value={name}
-          onChange={(event) => onNameChange(event.target.value)}
-          aria-label="Layout name"
-          placeholder={isExisting ? "Edit Layout" : "New Layout"}
-          className="w-full max-w-md rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-2xl font-semibold text-zinc-900 outline-none hover:border-zinc-200 focus:border-indigo-500 dark:text-zinc-50 dark:hover:border-zinc-700"
-        />
-      }
-      subtitle={badge}
-      actions={
-        <div className="flex items-center gap-2">
+    <div className="flex shrink-0 flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-2">
+          {editing ? <>
+            <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-indigo-500 bg-transparent text-2xl font-semibold text-zinc-900 outline-none dark:text-zinc-50" />
+            <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400"><CheckIcon /></button>
+          </> : <>
+            <h1 className="min-w-0 break-words text-2xl font-semibold leading-tight text-zinc-900 dark:text-zinc-50">{name.trim() || "Untitled Layout"}</h1>
+            <button type="button" onClick={() => setEditing(true)} aria-label="แก้ไขชื่อ Layout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"><EditIcon /></button>
+          </>}
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <Badge variant="pill">{referenceResolution ?? "Custom"}</Badge>
+          <Badge variant="pill">{aspectRatio}</Badge>
+          <Badge variant="pill">{zoneCount} {zoneCount === 1 ? "Zone" : "Zones"}</Badge>
+          <Badge variant="pill" color={savedAt ? "blue" : "zinc"}>{updatedLabel}</Badge>
+          <Badge variant="pill" color={statusColor[status]}>{status[0].toUpperCase() + status.slice(1)}</Badge>
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={onCancel}>Cancel</Button>
           <Button variant="secondary" onClick={onPreview} disabled={!canPreview}>Preview</Button>
           <Button
@@ -130,29 +148,20 @@ export function CompositionEditorHeader({
           >
             Use in Program →
           </Button>
-          {canSaveAsTemplate && (
-            <Button
-              variant="secondary"
-              onClick={onSaveAsTemplate}
-              disabled={saving || !!saveDisabledReason}
-              title={saveDisabledReason ?? undefined}
-            >
-              Save as Template
-            </Button>
-          )}
+          <Button variant="secondary" onClick={onSaveAsTemplate} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>
+            Save as Template
+          </Button>
 
-          {/* ADR 0063 §8's split button. Native <details> rather than a popover component the
-              repo does not have — it opens, closes on Escape, and closes on blur below. */}
           <div className="flex">
             <Button
-              className="rounded-r-none"
+              className={saveState.canActivate ? "rounded-r-none" : undefined}
               onClick={onSaveDraft}
               disabled={saving || !!saveDisabledReason}
               title={saveDisabledReason ?? undefined}
             >
-              {saving ? "กำลังบันทึก..." : "Save Layout"}
+              {saving ? "กำลังบันทึก..." : saveState.label}
             </Button>
-            <details
+            {saveState.canActivate && <details
               className="relative"
               onBlur={(event) => {
                 if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
@@ -165,13 +174,11 @@ export function CompositionEditorHeader({
                 ▾
               </summary>
               <div className="absolute right-0 z-10 mt-1 flex w-56 flex-col rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-                <MenuItem label="Save as draft" reason={draftDisabledReason} disabled={saving} onSelect={onSaveDraft} />
                 <MenuItem label="Save & Activate" reason={activateDisabledReason} disabled={saving} onSelect={onActivate} />
               </div>
-            </details>
+            </details>}
           </div>
-        </div>
-      }
-    />
+      </div>
+    </div>
   );
 }

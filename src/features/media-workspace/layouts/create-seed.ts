@@ -1,12 +1,26 @@
-// One-shot handoff from the Template Picker to the editor. ADR 0063 §2: the modal "seeds
-// client draft state" and "writes nothing" — so the choice crosses the navigation to
-// `/media-workspace/layouts/create` as client state, not a query parameter. sessionStorage
-// (not localStorage) because it is read once, on the next editor mount, and cleared.
+// One-shot handoff from the New Layout flow to the editor. The modal writes nothing to the
+// backend: its starting geometry and optional blank-layout details cross the navigation as
+// client state, not query parameters. sessionStorage (not localStorage) because it is read
+// once, on the next editor mount, and cleared.
 
 export type CreateSeed =
-  | { kind: "scratch" }
-  | { kind: "preset"; presetKey: string }
+  | {
+      kind: "scratch";
+      details?: {
+        name: string;
+        folderId: string | null;
+        tags: string[];
+        referenceResolution: string;
+        background: string;
+      };
+    }
+  | { kind: "preset"; presetKey: string; aspectRatio: string; referenceResolution: string }
   | { kind: "template"; layoutId: string };
+
+export function seedCanvasSettings(seed: CreateSeed | null) {
+  if (seed?.kind !== "preset") return null;
+  return { aspectRatio: seed.aspectRatio, referenceResolution: seed.referenceResolution, background: "#000000" };
+}
 
 const KEY = "thunder-one:layout-create-seed:v1";
 

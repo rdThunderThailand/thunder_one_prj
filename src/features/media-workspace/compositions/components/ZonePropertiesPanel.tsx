@@ -1,7 +1,7 @@
 "use client";
 
-// Zone Properties (ticket 27, ADR 0063 §6): three tabs showing only what the player
-// actually reads. Content is the existing ZoneContentPicker; Layout and Behavior are new.
+// Zone Properties (ticket 27, ADR 0063 §6): geometry and playback controls. Content lives
+// in the `Insert to Layout` column beside the canvas, matching the editor's visual hierarchy.
 //
 // No Fill Mode, no Mute, no editable Duration — the schema has nowhere for the first two
 // (`media_fit` lives on Playlist metadata, `mute` exists nowhere) and Duration is always the
@@ -9,13 +9,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { TrashIcon } from "@/components/ui/icons";
 import { parseResolution, referencePixels, roundPercent } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
-import type { PlaylistListItem } from "@/features/media-workspace/playlists";
 import type { MediaAsset } from "@/types/domain";
 import { totalZoneDurationSeconds, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
-import { ZoneContentPicker } from "./ZoneContentPicker";
 
 const tabClasses = (active: boolean) =>
   `flex-1 rounded-lg px-3 py-1.5 text-sm font-medium ${active ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300" : "text-zinc-500"}`;
@@ -33,10 +31,9 @@ export function ZonePropertiesPanel({
   onBindingChange,
   onApplyPlaybackToAllZones,
   assets,
-  playlists,
-  previews,
-  playlistPreviews,
   playlistDurations,
+  canDelete,
+  onDelete,
 }: {
   zone: LayoutZone;
   referenceResolution: string | null;
@@ -47,40 +44,25 @@ export function ZonePropertiesPanel({
   onBindingChange: (next: ZoneBindingDraft) => void;
   onApplyPlaybackToAllZones: (playback: ZonePlayback) => void;
   assets: MediaAsset[];
-  playlists: PlaylistListItem[];
-  previews: Record<string, string | undefined>;
-  playlistPreviews: Record<string, { url?: string; thumbnailUrl?: string }>;
   playlistDurations: Record<string, number | undefined>;
+  canDelete: boolean;
+  onDelete: () => void;
 }) {
-  const [tab, setTab] = useState<"content" | "layout" | "behavior">("content");
+  const [tab, setTab] = useState<"layout" | "behavior">("layout");
   const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   const assetDurations = Object.fromEntries(assets.map((a) => [a.id, a.duration_seconds ?? undefined]));
   const durationSeconds = totalZoneDurationSeconds(binding, assetDurations, playlistDurations);
 
   return (
-    <Card className="flex flex-col gap-4 p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Zone: {zone.name}</p>
       </div>
 
       <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
-        <button type="button" className={tabClasses(tab === "content")} onClick={() => setTab("content")}>Content</button>
-        <button type="button" className={tabClasses(tab === "layout")} onClick={() => setTab("layout")}>Layout</button>
+        <button type="button" className={tabClasses(tab === "layout")} onClick={() => setTab("layout")}>Geometry</button>
         <button type="button" className={tabClasses(tab === "behavior")} onClick={() => setTab("behavior")}>Behavior</button>
       </div>
-
-      {tab === "content" && (
-        <ZoneContentPicker
-          zoneName={zone.name}
-          binding={binding}
-          onChange={onBindingChange}
-          assets={assets}
-          playlists={playlists}
-          previews={previews}
-          playlistPreviews={playlistPreviews}
-          playlistDurations={playlistDurations}
-        />
-      )}
 
       {tab === "layout" && (
         <div className="grid grid-cols-2 gap-3">
@@ -158,6 +140,12 @@ export function ZonePropertiesPanel({
           </Button>
         </div>
       )}
-    </Card>
+
+      <div className="mt-auto border-t border-zinc-200 pt-4 dark:border-zinc-700">
+        <Button variant="secondary" disabled={!canDelete} onClick={onDelete} title={canDelete ? "Delete this Zone" : "A Layout must have at least one Zone"} className="w-full justify-center text-red-600 dark:text-red-400">
+          <TrashIcon /> Delete Zone
+        </Button>
+      </div>
+    </div>
   );
 }

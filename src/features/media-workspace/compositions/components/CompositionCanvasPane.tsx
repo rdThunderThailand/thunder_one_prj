@@ -10,8 +10,9 @@
 // here goes through the `onChangeStart` gate the page passes down (it checkpoints, then
 // applies ADR 0052 §3's shared-Template confirm) rather than keeping a second one locally.
 
-import { ALIGN_EDGES, alignZone, duplicateZone } from "@/features/media-workspace/layouts/align-zones";
+import { ALIGN_EDGES, alignZone, duplicateZone, type AlignEdge } from "@/features/media-workspace/layouts/align-zones";
 import { Button } from "@/components/ui/Button";
+import { ArrowLeftIcon, ArrowRightIcon, ClipboardIcon, LayoutIcon, MinusIcon, RedoIcon, TargetIcon, UndoIcon } from "@/components/ui/icons";
 import { LayoutCanvas } from "@/features/media-workspace/layouts/components/LayoutCanvas";
 import { splitZone } from "@/features/media-workspace/layouts/split-zone";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
@@ -23,9 +24,8 @@ export function CompositionCanvasPane({
   zones,
   background,
   aspectRatio,
+  referenceResolution,
   zonePreviews,
-  bindings,
-  unboundZoneIds,
   activeZoneId,
   onSelectZone,
   onChangeStart,
@@ -38,9 +38,8 @@ export function CompositionCanvasPane({
   zones: LayoutZone[];
   background: string;
   aspectRatio: string;
+  referenceResolution: string | null;
   zonePreviews: Record<string, ZonePreview>;
-  bindings: ZoneBindingDraft[];
-  unboundZoneIds: string[];
   activeZoneId: string | null;
   onSelectZone: (zoneId: string | null) => void;
   /** Returns false to cancel the edit — the shared-Template interruption said no. On true,
@@ -81,23 +80,25 @@ export function CompositionCanvasPane({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
-      <div className="flex flex-col gap-2">
+      <div className="flex h-full min-h-0 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" disabled={!canUndo} onClick={onUndo} title="Undo (Ctrl/Cmd+Z)">
-            Undo
+            <UndoIcon /> Undo
           </Button>
           <Button variant="secondary" disabled={!canRedo} onClick={onRedo} title="Redo (Ctrl/Cmd+Shift+Z)">
-            Redo
+            <RedoIcon /> Redo
           </Button>
           <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
           {ALIGN_EDGES.map(({ edge, label }) => (
             <Button key={edge} variant="secondary" disabled={activeIndex < 0} onClick={() => align(edge)}>
-              {label}
+              <AlignIcon edge={edge} /> {label}
             </Button>
           ))}
           <Button variant="secondary" disabled={activeIndex < 0} onClick={duplicate}>
-            Duplicate Zone
+            <ClipboardIcon /> Duplicate Zone
+          </Button>
+          <Button variant="secondary" disabled={!activeZoneId} onClick={split}>
+            <LayoutIcon /> Split Zone
           </Button>
         </div>
 
@@ -105,19 +106,34 @@ export function CompositionCanvasPane({
           zones={zones}
           background={background}
           aspectRatio={aspectRatio}
+          referenceResolution={referenceResolution}
+          fillAvailable
           zonePreviews={zonePreviews}
           selectedIndex={activeIndex}
           onSelectIndex={(index) => onSelectZone(index === null ? null : (zones[index]?.id ?? null))}
           onChangeStart={onChangeStart}
           onChange={onChange}
         />
-        {activeZoneId && (
-          <Button variant="secondary" onClick={split}>
-            Split Zone
-          </Button>
-        )}
       </div>
+  );
+}
 
+function AlignIcon({ edge }: { edge: AlignEdge }) {
+  if (edge === "left") return <ArrowLeftIcon />;
+  if (edge === "right") return <ArrowRightIcon />;
+  if (edge === "top") return <TargetIcon className="h-4 w-4 rotate-90" />;
+  if (edge === "middle-v") return <MinusIcon />;
+  return <TargetIcon />;
+}
+
+export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, onSelectZone }: {
+  zones: LayoutZone[];
+  bindings: ZoneBindingDraft[];
+  unboundZoneIds: string[];
+  activeZoneId: string | null;
+  onSelectZone: (zoneId: string | null) => void;
+}) {
+  return (
       <div className="flex flex-col gap-1.5">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Zone Overview</p>
         {zones.map((zone) => {
@@ -152,6 +168,5 @@ export function CompositionCanvasPane({
           );
         })}
       </div>
-    </div>
   );
 }

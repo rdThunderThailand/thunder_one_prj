@@ -161,6 +161,7 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
   const zoneNames = refreshedLayout ?? layout;
   const resolved: ZoneBindingDraft[] = [];
   for (const binding of bindings) {
+    if (!zoneIds.includes(binding.layoutZoneId)) continue;
     if (binding.source === "playlist" || binding.assetItems.length === 0) {
       resolved.push(binding);
       continue;

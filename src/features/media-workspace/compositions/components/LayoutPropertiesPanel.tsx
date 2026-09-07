@@ -1,15 +1,13 @@
 "use client";
 
-// ADR 0063 §1 and §4: everything the Create modal used to ask for lives here instead. The
-// modal picks a starting geometry and nothing else — resolution and background belong next
-// to the canvas they reshape, and filing (Folder, Tags) is a decision an operator has not
-// made yet when they are choosing a layout.
+// New-layout details can be seeded by the Create modal; they remain editable here beside the
+// canvas they affect. Existing Layouts also use this panel as their single edit surface.
 //
 // Presentational on purpose. Resolution and background sit on the shared `layouts` row, so
 // changing them can need ADR 0052 §3's interruption — the page owns that guard and hands
 // this panel an `onSettingsChange` that has already asked.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { XIcon } from "@/components/ui/icons";
 import { fetchTags } from "@/lib/api/media-api";
 import { deriveAspectRatio, parseResolution } from "@/features/media-workspace/layouts/geometry";
@@ -32,6 +30,8 @@ export function LayoutPropertiesPanel({
   settings,
   onSettingsChange,
   sharedTemplateUsage,
+  zoneProperties,
+  selectedZoneId,
   disabled = false,
 }: {
   name: string;
@@ -47,8 +47,13 @@ export function LayoutPropertiesPanel({
   onSettingsChange: (next: LayoutSettingsDraft) => void;
   /** How many Layouts share this geometry; > 1 means an edit here travels. */
   sharedTemplateUsage: number;
+  zoneProperties?: ReactNode;
+  selectedZoneId?: string | null;
   disabled?: boolean;
 }) {
+  const [panelChoice, setPanelChoice] = useState<{ panel: "layout" | "zone"; zoneId?: string | null }>({ panel: "zone", zoneId: selectedZoneId });
+  const panel = selectedZoneId && selectedZoneId !== panelChoice.zoneId ? "zone" : panelChoice.panel;
+  const selectPanel = (next: "layout" | "zone") => setPanelChoice({ panel: next, zoneId: selectedZoneId });
   const [vocabulary, setVocabulary] = useState<Tag[]>([]);
   const [draftTag, setDraftTag] = useState("");
   // "Custom" is a mode the operator picks, not a fact derived from whether the stored value
@@ -87,8 +92,14 @@ export function LayoutPropertiesPanel({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Layout Properties</p>
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
+      <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Properties</p>
+      <div className="flex rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+        <button type="button" disabled={!zoneProperties} onClick={() => selectPanel("zone")} className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-40 ${panel === "zone" ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300" : "text-zinc-500"}`}>Zone</button>
+        <button type="button" onClick={() => selectPanel("layout")} className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium ${panel === "layout" ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300" : "text-zinc-500"}`}>Layout</button>
+      </div>
+
+      {panel === "zone" && zoneProperties ? zoneProperties : <>
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClasses}>Layout name</span>
@@ -205,6 +216,7 @@ export function LayoutPropertiesPanel({
           className="h-10 w-full rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900"
         />
       </label>
+      </>}
     </div>
   );
 }

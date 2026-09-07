@@ -37,6 +37,8 @@ assert.ok(entries.filter((e) => e.source === "template").every((e) => e.behaviou
 // Orientation derived from aspect_ratio for a Template.
 assert.equal(entries.find((e) => e.id === "t1")?.orientation, "portrait");
 assert.equal(entries.find((e) => e.id === "t2")?.orientation, "landscape");
+assert.equal(entries.find((e) => e.id === "70-30-portrait")?.referenceResolution, "1080x1920");
+assert.equal(entries.find((e) => e.id === "t1")?.referenceResolution, null);
 
 const groups = groupEntries(entries);
 assert.equal(groups.recommended.length, 14);

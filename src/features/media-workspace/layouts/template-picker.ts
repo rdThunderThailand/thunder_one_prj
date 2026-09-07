@@ -17,6 +17,7 @@ export type PickerEntry = {
   name: string;
   orientation: TemplateOrientation;
   aspectRatio: string;
+  referenceResolution: string | null;
   zones: LayoutZone[];
   zoneCount: number;
   /** Presets only; an operator Template carries no description (§3). */
@@ -58,6 +59,7 @@ export function presetEntry(template: LayoutTemplate): PickerEntry {
     name: template.name,
     orientation: template.orientation,
     aspectRatio: template.aspectRatio,
+    referenceResolution: template.orientation === "portrait" ? "1080x1920" : "1920x1080",
     zones: template.zones,
     zoneCount: template.zones.length,
     description: template.description,
@@ -74,6 +76,7 @@ export function templateEntry(layout: LayoutListItem): PickerEntry {
     name: layout.name,
     orientation: orientationOf(layout.aspect_ratio),
     aspectRatio: layout.aspect_ratio,
+    referenceResolution: layout.reference_resolution ?? null,
     zones: layout.zones,
     zoneCount: layout.zone_count || layout.zones.length,
     description: null,

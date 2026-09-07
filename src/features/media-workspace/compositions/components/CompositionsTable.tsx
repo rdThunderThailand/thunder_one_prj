@@ -15,14 +15,15 @@ function formatDate(value?: string) {
     : "—";
 }
 
-function SortHeader({ label, sortKey, sort, onSort }: {
+function SortHeader({ label, sortKey, sort, onSort, className = "" }: {
   label: string;
   sortKey: SortKey;
   sort: { key: SortKey; dir: "asc" | "desc" };
   onSort: (key: SortKey) => void;
+  className?: string;
 }) {
   const active = sort.key === sortKey;
-  return <th className="py-2" aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+  return <th className={`${className} py-2`} aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
     <button type="button" onClick={() => onSort(sortKey)}>{label}{active ? ` ${sort.dir === "asc" ? "▲" : "▼"}` : ""}</button>
   </th>;
 }
@@ -80,7 +81,7 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, onSort, onActio
   onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
 }) {
   return <div><table className="w-full table-fixed text-left text-sm"><thead><tr className="border-b border-zinc-100 text-xs text-zinc-500 dark:border-zinc-800">
-    <th className="w-[72px] py-2 pl-1">Preview</th><SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort}/><th className="w-[64px] py-2">Content</th><th className="w-[92px] py-2">Resolution</th><SortHeader label="Status" sortKey="status" sort={sort} onSort={onSort}/><SortHeader label="Used in" sortKey="usage" sort={sort} onSort={onSort}/><SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort}/><th className="w-[132px] py-2 pr-1 text-right">Actions</th>
+    <th className="w-[72px] py-2 pl-1">Preview</th><SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort}/><th className="w-[64px] py-2">Content</th><th className="w-[130px] py-2">Resolution</th><SortHeader className="w-[135px]" label="Status" sortKey="status" sort={sort} onSort={onSort}/><SortHeader className="w-[100px]" label="Used in" sortKey="usage" sort={sort} onSort={onSort}/><SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort}/><th className="w-[132px] py-2 pr-1 text-right">Actions</th>
   </tr></thead><tbody>{rows.map((item) => { const badge = statusBadge(item.status); return <tr key={item.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
     <td className="py-3 pl-1"><CompositionLibraryPreview zones={item.previewZones} /></td><td className="truncate py-3 pr-2 font-medium"><p className="truncate">{item.name}</p><p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p></td><td className="py-3">{item.bound_count}/{item.zone_count}</td><td className="py-3">{item.referenceResolution ?? "—"}</td><td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td><td className="py-3">{item.usageCount ?? "—"}</td><td className="py-3 text-zinc-500"><div className="flex items-center gap-2"><Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} /><span className="truncate">{formatDate(item.updated_at ?? item.created_at)}</span></div></td><td className="py-3 pr-1 text-right"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} onAction={onAction} /></td>
   </tr>; })}</tbody></table></div>;

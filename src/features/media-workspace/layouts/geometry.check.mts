@@ -9,6 +9,7 @@ import {
   parseResolution,
   rectsOverlap,
   referencePixels,
+  fitCanvasSize,
   roundPercent,
   sameRatio,
   validateZones,
@@ -127,6 +128,10 @@ assert.equal(sameRatio([1920, 1080], [1080, 1920]), false);
 assert.equal(referencePixels(50, 1920), 960);
 assert.equal(referencePixels(33.333, 5760), 1920); // lands exactly on one monitor
 assert.equal(referencePixels(100, 1080), 1080);
+
+// The editor fills whichever viewport axis is limiting without distorting the resolution.
+assert.deepEqual(fitCanvasSize(800, 600, 16, 9), { width: 800, height: 450 });
+assert.deepEqual(fitCanvasSize(800, 600, 9, 16), { width: 337.5, height: 600 });
 
 // Ticket 19 — even split into N columns, remainder on exactly one column.
 assert.deepEqual(evenSplitPercents(2), [50, 50]);

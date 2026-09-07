@@ -8,6 +8,10 @@ export function statusBadge(status: CompositionStatus): { color: BadgeColor; lab
   return { color: "zinc", label: "Inactive" };
 }
 
+export function saveAction(status: CompositionStatus): { label: "Save Layout" | "Save"; canActivate: boolean } {
+  return status === "draft" ? { label: "Save Layout", canActivate: true } : { label: "Save", canActivate: false };
+}
+
 /**
  * `media_composition_upsert` / `media_composition_set_zones` / `media_composition_set_status`
  * raise the exact wordings below (Thunder_Core migration 20260826120000). Anything unrecognised

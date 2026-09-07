@@ -125,6 +125,12 @@ export function referencePixels(percent: number, dimension: number): number {
   return Math.round((percent / 100) * dimension);
 }
 
+/** Largest rectangle with the requested ratio that fits inside a canvas viewport. */
+export function fitCanvasSize(width: number, height: number, ratioWidth: number, ratioHeight: number) {
+  const scale = Math.min(width / ratioWidth, height / ratioHeight);
+  return { width: Math.max(1, ratioWidth * scale), height: Math.max(1, ratioHeight * scale) };
+}
+
 /** Divides 100% into `count` equal columns, remainder on the last one rather than a leftover
  *  strip of background (e.g. 3 → 33.333/33.333/33.334). Pure math shared by "even split" and
  *  the seam guides it produces, which land exactly on the resulting Zone edges. */
