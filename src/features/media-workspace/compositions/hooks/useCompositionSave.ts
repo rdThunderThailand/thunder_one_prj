@@ -7,6 +7,7 @@
 // in files of its own.
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { classifyApiError } from "@/lib/api/api-error";
 import { describeActivateError } from "../status-display";
 import { persistComposition, type PersistInput, type PersistResult } from "../save-composition";
@@ -37,6 +38,10 @@ export function useCompositionSave(buildInput: () => PersistInput, applyResult: 
     run(async () => {
       const result = await persistComposition(buildInput());
       applyResult(result);
+      // The core save succeeded — `applyResult` has marked the editor saved. A filing step
+      // (folder move, tags) that failed rides in `warnings`: a toast survives the navigation
+      // `after` may do, where the header's error slot would not.
+      if (result.warnings.length > 0) toast.warning(result.warnings.join(" · "));
       await after(result);
     }, fallback);
 

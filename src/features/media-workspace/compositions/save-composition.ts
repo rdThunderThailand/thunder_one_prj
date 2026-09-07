@@ -67,6 +67,11 @@ export type PersistResult = {
   refreshedLayout: LayoutListItem | null;
   /** The binding set with every inline Playlist id resolved. */
   bindings: ZoneBindingDraft[];
+  /** Non-fatal filing failures (§4): the core save — geometry, Composition, Zones, bindings —
+   *  already landed, so these are surfaced as a warning rather than discarding the result. Both
+   *  filing endpoints ship with ADR 0063 §4 (Thunder_Core `feat/layoutV2`); a deployment whose
+   *  backend is older answers them 404 without that costing the operator their edit. */
+  warnings: string[];
 };
 
 export async function persistComposition(input: PersistInput): Promise<PersistResult> {
@@ -193,9 +198,24 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
 
   const zonesResult = await setCompositionZones(upserted.composition_id, toSetZonesPayload(zoneIds, resolved), upserted.revision);
 
-  // Filing, last: both need the Composition to exist and both replace wholesale.
-  if (input.folderId !== undefined) await moveComposition(upserted.composition_id, input.folderId);
-  if (input.tags !== undefined) await setCompositionTags(upserted.composition_id, input.tags);
+  // Filing, last: both need the Composition to exist and both replace wholesale. A failure here
+  // leaves the core save intact, so it downgrades to a warning instead of throwing away a
+  // PersistResult the editor needs to mark itself saved.
+  const warnings: string[] = [];
+  if (input.folderId !== undefined) {
+    try {
+      await moveComposition(upserted.composition_id, input.folderId);
+    } catch {
+      warnings.push("ย้าย Layout เข้าโฟลเดอร์ไม่สำเร็จ");
+    }
+  }
+  if (input.tags !== undefined) {
+    try {
+      await setCompositionTags(upserted.composition_id, input.tags);
+    } catch {
+      warnings.push("บันทึก tags ไม่สำเร็จ — ส่วนอื่นของ Layout ถูกบันทึกแล้ว");
+    }
+  }
 
   return {
     compositionId: upserted.composition_id,
@@ -203,6 +223,7 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
     layoutId,
     refreshedLayout,
     bindings: resolved,
+    warnings,
   };
 }
 
