@@ -137,7 +137,12 @@ export function CompositionEditorPage({
   const preview = useCompositionPreview({ compositionId: id, layout, bindings, ...data });
   const isDirty = draftSnapshot({ name, layoutId, bindings, folderId, tags }) !== initialSnapshot;
   const setBinding = (next: ZoneBindingDraft) => {
-    if (next.playlistId && !data.playlistPreviewAssetIds[next.playlistId]) data.hydratePlaylist(next.playlistId);
+    // Guard on the detail map, not the preview-asset map: the list load seeds a
+    // cover_asset_id for nearly every Playlist, so the old guard would skip hydration
+    // (items + playback) for almost every newly bound Zone once the bulk read is gone.
+    if (next.playlistId && !Object.hasOwn(data.playlistItemsById, next.playlistId)) {
+      data.hydratePlaylist(next.playlistId);
+    }
     setBindings((prev) => upsertBinding(prev, next));
   };
 

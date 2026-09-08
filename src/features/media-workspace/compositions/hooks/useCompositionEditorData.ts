@@ -7,7 +7,7 @@
 // Split out of CompositionEditorPage by ticket 25. It is a loader, not a policy — nothing in
 // here knows about saving, geometry or bindings.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchContentFolders, fetchMediaAssets, fetchPreviewUrls } from "@/lib/api/media-api";
 import { fetchLayouts } from "@/features/media-workspace/layouts/services/layouts-api";
@@ -57,8 +57,15 @@ export function useCompositionEditorData() {
     }));
   };
 
+  // Playlists a hydratePlaylist call has already been fired for. Kept for the life of the
+  // hook, not cleared on failure: fetchPlaylist swallows its own error without writing a
+  // detail key, so the setBinding guard would otherwise re-fire it on every later bind.
+  const hydratedRef = useRef<Set<string>>(new Set());
+
   /** Reads one Playlist and folds it into the three maps. Used when a Zone is newly bound. */
   const hydratePlaylist = (playlistId: string) => {
+    if (hydratedRef.current.has(playlistId)) return;
+    hydratedRef.current.add(playlistId);
     void fetchPlaylist(playlistId)
       .then((detail) => absorbPlaylistDetails([{
         playlistId,
@@ -79,7 +86,9 @@ export function useCompositionEditorData() {
         setPlaylists(allPlaylists);
         setFolders(allFolders);
         setPlaylistDurations(Object.fromEntries(allPlaylists.map((p) => [p.id, p.total_duration_seconds] as const)));
-        // An explicit cover wins immediately; the per-Playlist reads below fill in the rest.
+        // The cover seeds every row's canvas thumbnail up front; a Zone actually bound to a
+        // Playlist reads its full detail on demand (loadCompositionDraft on open, or
+        // hydratePlaylist on a fresh bind). Reading every Playlist here was the N+1.
         setPlaylistPreviewAssetIds((current) => ({
           ...current,
           ...Object.fromEntries(allPlaylists.flatMap((playlist) => {
@@ -87,22 +96,6 @@ export function useCompositionEditorData() {
             return assetId ? [[playlist.id, assetId]] : [];
           })),
         }));
-        return Promise.all(allPlaylists.map(async (playlist): Promise<PlaylistDetailSlice | null> => {
-          try {
-            const detail = await fetchPlaylist(playlist.id);
-            return {
-              playlistId: playlist.id,
-              firstAssetId: firstPlaylistAssetId(detail.items),
-              items: detail.items,
-              playback: decodeMetadata(detail.metadata).playback,
-            };
-          } catch {
-            return null;
-          }
-        }));
-      })
-      .then((slices) => {
-        if (alive && slices) absorbPlaylistDetails(slices);
       })
       .catch((err) => alive && setLoadError(classifyApiError(err, "โหลดข้อมูลไม่สำเร็จ")));
     return () => {
