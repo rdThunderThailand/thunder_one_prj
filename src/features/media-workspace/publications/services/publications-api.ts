@@ -85,11 +85,15 @@ export async function saveBasicInfo(
 }
 
 export async function fetchPublications(
-  status: "draft" | "active" | "cancelled"
+  status?: "draft" | "active" | "cancelled"
 ): Promise<PublicationListItem[]> {
+  // The RPC takes a null status and returns every row (media_publications_list,
+  // predicate `pub.status = p_status OR p_status IS NULL`), so a status-less call
+  // is one request the caller can filter client-side by `status`.
+  const query = status ? `?status=${status}` : "";
   const data = await requestApi<
     { publications?: PublicationListItem[] } | PublicationListItem[]
-  >("GET", `/media/publications?status=${status}`);
+  >("GET", `/media/publications${query}`);
   if (Array.isArray(data)) {
     return data;
   }
