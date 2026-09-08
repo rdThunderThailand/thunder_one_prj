@@ -102,6 +102,7 @@ export function LayoutTemplatePicker({
   const [group, setGroup] = useState<GroupKey>("recommended");
   const [filters, setFilters] = useState(DEFAULT_PICKER_FILTERS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pickedTemplate, setPickedTemplate] = useState<PickerEntry | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -121,8 +122,7 @@ export function LayoutTemplatePicker({
   const visible = useMemo(() => groupEntries(filterEntries(entries, filters))[group], [entries, filters, group]);
   const selected = visible.find((entry) => entry.id === selectedId) ?? visible[0] ?? null;
   const canCreate = details.name.trim().length > 0
-    && Number(details.width) >= 100
-    && Number(details.height) >= 100;
+    && (choice === "template" || (Number(details.width) >= 100 && Number(details.height) >= 100));
 
   const resetAndClose = () => {
     setStep("start");
@@ -131,6 +131,7 @@ export function LayoutTemplatePicker({
     setGroup("recommended");
     setFilters(DEFAULT_PICKER_FILTERS);
     setSelectedId(null);
+    setPickedTemplate(null);
     onClose();
   };
 
@@ -141,22 +142,30 @@ export function LayoutTemplatePicker({
     else router.push("/media-workspace/layouts/create");
   };
 
-  const createBlank = () => start({
-    kind: "scratch",
-    details: {
+  const createLayout = () => {
+    const seedDetails = {
       name: details.name.trim(),
       folderId: details.folderId || null,
       tags: splitTags(details.tags),
-      referenceResolution: `${details.width}x${details.height}`,
+      referenceResolution: details.width && details.height ? `${details.width}x${details.height}` : null,
       background: details.background,
-    },
-  });
+    };
+    if (choice === "blank") {
+      start({ kind: "scratch", details: seedDetails });
+      return;
+    }
+    if (!pickedTemplate) return;
+    start(pickedTemplate.source === "preset"
+      ? { kind: "preset", presetKey: pickedTemplate.id, aspectRatio: pickedTemplate.aspectRatio, referenceResolution: pickedTemplate.referenceResolution!, details: seedDetails }
+      : { kind: "template", layoutId: pickedTemplate.id, details: seedDetails });
+  };
 
   const useSelected = () => {
     if (!selected) return;
-    start(selected.source === "preset"
-      ? { kind: "preset", presetKey: selected.id, aspectRatio: selected.aspectRatio, referenceResolution: selected.referenceResolution! }
-      : { kind: "template", layoutId: selected.id });
+    const [width = "", height = ""] = selected.referenceResolution?.split("x") ?? [];
+    setPickedTemplate(selected);
+    setDetails((current) => ({ ...current, width, height, background: selected.background }));
+    setStep("start");
   };
 
   const createTemplate = () => {
@@ -169,10 +178,10 @@ export function LayoutTemplatePicker({
     <>
       <Button variant="secondary" onClick={resetAndClose}>Cancel</Button>
       <Button
-        onClick={() => choice === "blank" ? createBlank() : setStep("templates")}
-        disabled={choice === "blank" && !canCreate}
+        onClick={() => choice === "template" && !pickedTemplate ? setStep("templates") : createLayout()}
+        disabled={(choice === "blank" || !!pickedTemplate) && !canCreate}
       >
-        {choice === "blank" ? "Create Layout" : "Next"} <span aria-hidden="true">→</span>
+        {choice === "template" && !pickedTemplate ? "Next" : "Create Layout"} <span aria-hidden="true">→</span>
       </Button>
     </>
   ) : (
@@ -203,6 +212,9 @@ export function LayoutTemplatePicker({
           details={details}
           folders={folders}
           tagNames={tagNames}
+          selectedTemplate={pickedTemplate}
+          resolutionLocked={choice === "template" && !!pickedTemplate}
+          onTemplateChange={() => setStep("templates")}
           onChoiceChange={setChoice}
           onDetailsChange={setDetails}
         />

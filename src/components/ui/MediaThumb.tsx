@@ -12,11 +12,22 @@ type MediaThumbProps = {
   mimeType?: string;
   alt: string;
   className?: string;
+  /** ADR 0064: a Composition Zone's own `media_fit` (`fit` = contain, `fill` = crop, `stretch` =
+   *  distort) — same vocabulary as `PreviewSurface`'s `FIT_CLASS`. Defaults to `fill`, matching
+   *  every other caller's existing `object-cover` crop. */
+  fit?: "fit" | "fill" | "stretch";
 };
 
-export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className }: MediaThumbProps) {
+const FIT_CLASS: Record<NonNullable<MediaThumbProps["fit"]>, string> = {
+  fit: "object-contain",
+  fill: "object-cover",
+  stretch: "object-fill",
+};
+
+export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className, fit = "fill" }: MediaThumbProps) {
   const box = className ?? "h-14 w-14";
   const base = `shrink-0 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800 ${box}`;
+  const fitClass = FIT_CLASS[fit];
   // Callers that know the asset pass kind/mimeType. Playlist covers know only a
   // cover_asset_id, so for them the URL's extension is the only signal available — without
   // it a video cover reaches next/image and the optimizer 500s on the undecodable bytes.
@@ -46,14 +57,14 @@ export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className }
           alt={alt}
           fill
           sizes="128px"
-          className="object-cover"
+          className={fitClass}
           onError={() => setImgFailed(true)}
         />
       </div>
     );
   }
   if (isVideo) {
-    return <LazyVideo src={url} className={`${base} object-cover`} />;
+    return <LazyVideo src={url} className={`${base} ${fitClass}`} />;
   }
   // url present and not detected as video: an image, or an unrecognised extension (default to
   // image — a broken image degrades gracefully, where next/image on a video does not).
@@ -64,7 +75,7 @@ export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className }
         alt={alt}
         fill
         sizes="128px"
-        className="object-cover"
+        className={fitClass}
         onError={() => setImgFailed(true)}
       />
     </div>

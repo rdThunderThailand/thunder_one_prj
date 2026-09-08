@@ -13,10 +13,12 @@ export type StagePreview = {
   referenceResolution: string | null;
 };
 
-/** ADR 0062 §7: one shared mapper for both Composition preview sites. A Zone binding carries
- *  `play_mode`/`repeat`/`start_from` only — those three win when the binding sets them (a
- *  Composition overrides the Playlist deliberately); `defaultTransition`, `transitionDuration` and
- *  `mediaFit` always come from the bound Playlist, since the binding never carries them. */
+/** ADR 0062 §7 (fit/mute overrides added by ADR 0064 §1/§7): one shared mapper for both
+ *  Composition preview sites. A Zone binding carries `play_mode`/`repeat`/`start_from`,
+ *  `media_fit` and `muted` — the first three win when the binding sets them (a Composition
+ *  overrides the Playlist deliberately), and the latter two win outright over the bound
+ *  Playlist's own fit and any per-item override; `defaultTransition` and `transitionDuration`
+ *  always come from the bound Playlist, since the binding never carries them. */
 export function compositionZonePreview(
   zone: {
     id: string;
@@ -25,7 +27,13 @@ export function compositionZonePreview(
     y: number;
     width: number;
     height: number;
-    playback?: { playMode?: "sequential" | "shuffle"; repeat?: "loop" | "once"; startFrom?: "first" | "resume" } | null;
+    playback?: {
+      playMode?: "sequential" | "shuffle";
+      repeat?: "loop" | "once";
+      startFrom?: "first" | "resume";
+      mediaFit?: "fit" | "fill" | "stretch";
+      muted?: boolean;
+    } | null;
   },
   items: Parameters<typeof playlistItemToPreview>[0][],
   playlistPlayback?: PlaylistPreviewPlayback,
@@ -44,6 +52,8 @@ export function compositionZonePreview(
       defaultTransition: playlistPlayback?.defaultTransition ?? null,
       transitionDurationSeconds: playlistPlayback?.transitionDuration ?? null,
       mediaFit: playlistPlayback?.mediaFit ?? null,
+      zoneMediaFitOverride: zone.playback?.mediaFit ?? null,
+      zoneMuted: zone.playback?.muted ?? false,
     },
     items: items.map(playlistItemToPreview),
   };
@@ -75,7 +85,13 @@ export async function loadCompositionPreview(compositionId: string): Promise<Sta
           width: zone.width,
           height: zone.height,
           playback: zone.playback
-            ? { playMode: zone.playback.play_mode, repeat: zone.playback.repeat, startFrom: zone.playback.start_from }
+            ? {
+                playMode: zone.playback.play_mode,
+                repeat: zone.playback.repeat,
+                startFrom: zone.playback.start_from,
+                mediaFit: zone.playback.media_fit,
+                muted: zone.playback.muted,
+              }
             : null,
         },
         byZoneId[zone.layout_zone_id]?.items ?? [],

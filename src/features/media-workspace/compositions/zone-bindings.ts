@@ -14,12 +14,22 @@ export type ZonePlayback = {
   playMode: "sequential" | "shuffle";
   repeat: "loop" | "once";
   startFrom: "first" | "resume";
+  /** ADR 0064: Zone-owned, overrides the bound Playlist/item's own fit outright — the Zone is
+   *  the only party that knows the frame's shape. */
+  mediaFit: "fit" | "fill" | "stretch";
+  /** ADR 0064: `true` forces silence; `false` leaves the existing item/Playlist/device audio
+   *  policy in charge. A newly created Zone binding starts muted (see `defaultBinding`) — a
+   *  Composition hydrated from an older save defaults to `false` instead (see
+   *  `bindingsFromCompositionZones`), so opening and re-saving one never silences it. */
+  muted: boolean;
 };
 
 export const DEFAULT_ZONE_PLAYBACK: ZonePlayback = {
   playMode: "sequential",
   repeat: "loop",
   startFrom: "first",
+  mediaFit: "fit",
+  muted: true,
 };
 
 export type ZoneBindingDraft = {
@@ -97,6 +107,19 @@ export function appendPickedAssets(
   };
 }
 
+export function reorderAssetItem(
+  binding: ZoneBindingDraft,
+  mediaAssetId: string,
+  targetIndex: number,
+): ZoneBindingDraft {
+  const sourceIndex = binding.assetItems.findIndex((item) => item.media_asset_id === mediaAssetId);
+  if (sourceIndex < 0 || targetIndex < 0 || targetIndex >= binding.assetItems.length || sourceIndex === targetIndex) return binding;
+  const assetItems = [...binding.assetItems];
+  const [item] = assetItems.splice(sourceIndex, 1);
+  assetItems.splice(targetIndex, 0, item!);
+  return { ...binding, assetItems };
+}
+
 /** A Zone whose picked assets still have to become an inline Playlist on the next save. */
 function needsInlinePlaylist(binding: ZoneBindingDraft): boolean {
   return binding.source === "assets" && binding.assetItems.length > 0 && !binding.playlistId;
@@ -121,6 +144,8 @@ export type SetZonesPayload = {
       play_mode: ZonePlayback["playMode"];
       repeat: ZonePlayback["repeat"];
       start_from: ZonePlayback["startFrom"];
+      media_fit: ZonePlayback["mediaFit"];
+      muted: ZonePlayback["muted"];
     };
   }>;
 };
@@ -184,6 +209,8 @@ export function toSetZonesPayload(
           play_mode: binding.playback.playMode,
           repeat: binding.playback.repeat,
           start_from: binding.playback.startFrom,
+          media_fit: binding.playback.mediaFit,
+          muted: binding.playback.muted,
         },
       })),
   };
@@ -204,13 +231,18 @@ export function bindingsFromCompositionZones(zones: CompositionZone[]): ZoneBind
       source: "playlist",
       playlistId: zone.playlist_id,
       assetItems: [],
+      // ADR 0064 §6: a saved Zone hydrates `muted: false` regardless of `DEFAULT_ZONE_PLAYBACK`'s
+      // `true` — that default is for a Zone bound for the first time in this session, not for
+      // one already saved. Re-saving a Composition made before this change must not silence it.
       playback: zone.playback
         ? {
             playMode: zone.playback.play_mode,
             repeat: zone.playback.repeat,
             startFrom: zone.playback.start_from,
+            mediaFit: zone.playback.media_fit ?? "fit",
+            muted: zone.playback.muted ?? false,
           }
-        : { ...DEFAULT_ZONE_PLAYBACK },
+        : { ...DEFAULT_ZONE_PLAYBACK, muted: false },
     }));
 }
 

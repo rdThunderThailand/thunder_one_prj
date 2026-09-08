@@ -73,22 +73,33 @@ export function CompositionEditorPage({
     void resolveCreateSeed(createSeed).then((seed) => {
       if (!alive || !seed) return;
       const seededSettings = seedCanvasSettings(createSeed); if (seededSettings) setLayoutSettings(seededSettings);
-      if (createSeed?.kind === "scratch" && createSeed.details) {
-        const resolution = parseResolution(createSeed.details.referenceResolution);
+      if (createSeed?.details) {
+        const resolution = createSeed.details.referenceResolution
+          ? parseResolution(createSeed.details.referenceResolution)
+          : null;
         setName(createSeed.details.name);
         setFolderId(createSeed.details.folderId);
         setTags(createSeed.details.tags);
-        setLayoutSettings({
-          aspectRatio: resolution ? deriveAspectRatio(resolution[0], resolution[1]) : "16:9",
-          referenceResolution: createSeed.details.referenceResolution,
-          background: createSeed.details.background,
-        });
+        if (createSeed.kind === "scratch") {
+          setLayoutSettings({
+            aspectRatio: resolution ? deriveAspectRatio(resolution[0], resolution[1]) : "16:9",
+            referenceResolution: createSeed.details.referenceResolution,
+            background: createSeed.details.background,
+          });
+        }
       }
       if (seed.kind === "zones") {
         setBlankZones(seed.zones);
         return;
       }
       const { layout: seeded } = seed;
+      if (createSeed?.details) {
+        setLayoutSettings({
+          aspectRatio: seeded.aspect_ratio,
+          referenceResolution: createSeed.details.referenceResolution,
+          background: createSeed.details.background,
+        });
+      }
       data.setLayouts((current) => [...current.filter((candidate) => candidate.id !== seeded.id), seeded]);
       setLayoutId(seeded.id);
       view.setSelectedZoneId(seeded.zones[0]?.id ?? null);

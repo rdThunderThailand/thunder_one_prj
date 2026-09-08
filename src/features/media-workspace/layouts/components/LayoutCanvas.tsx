@@ -79,7 +79,7 @@ export function LayoutCanvas({
   background: string;
   aspectRatio: string;
   referenceResolution?: string | null;
-  zonePreviews?: Record<string, { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string }>;
+  zonePreviews?: Record<string, { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string; mediaFit?: "fit" | "fill" | "stretch" }>;
   selectedIndex: number | null;
   onSelectIndex: (index: number | null) => void;
   onChangeStart?: () => boolean;
@@ -230,6 +230,7 @@ export function LayoutCanvas({
                 thumbnailUrl={zonePreviews[zone.id].thumbnailUrl}
                 kind={zonePreviews[zone.id].kind}
                 mimeType={zonePreviews[zone.id].mimeType}
+                fit={zonePreviews[zone.id].mediaFit}
                 alt={`${zone.name} content`}
                 className="pointer-events-none absolute inset-0 h-full w-full rounded-none"
               />

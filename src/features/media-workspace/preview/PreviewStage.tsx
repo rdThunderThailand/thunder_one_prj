@@ -296,6 +296,7 @@ export function PreviewStage({
                       offsetSeconds={transition.outgoingOffsetSeconds}
                       loadState={previewLoadState}
                       defaultMediaFit={zone.playback?.mediaFit}
+                      zoneMediaFit={zone.playback?.zoneMediaFitOverride}
                       style={{ position: "absolute", inset: 0, opacity: 1 - transition.progress }}
                     />
                   )}
@@ -310,11 +311,17 @@ export function PreviewStage({
                     offsetSeconds={frame.offsetSeconds}
                     loadState={previewLoadState}
                     defaultMediaFit={zone.playback?.mediaFit}
+                    zoneMediaFit={zone.playback?.zoneMediaFitOverride}
                     style={transition ? { position: "absolute", inset: 0, opacity: transition.progress } : undefined}
                   />
                 </div>
                 <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent px-2 py-1 text-[10px] font-medium text-white">
-                  <span>{zone.name}</span>
+                  <span className="flex items-center gap-1">
+                    {zone.name}
+                    {/* ADR 0064 §7: a state label only — the preview stays silent regardless of
+                       this setting (browser autoplay policy), so it is never wired to audio. */}
+                    {zone.playback?.zoneMuted && <span title="This Zone is set to mute">🔇</span>}
+                  </span>
                   <span>
                     {frame.ended
                       ? "Ended"

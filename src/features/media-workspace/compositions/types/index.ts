@@ -58,6 +58,12 @@ export type CompositionZonePlayback = {
   play_mode: "sequential" | "shuffle";
   repeat: "loop" | "once";
   start_from: "first" | "resume";
+  /** ADR 0064: Zone-owned, overrides the bound Playlist/item's own fit for a zoned payload.
+   *  Absent on a row saved before that change. */
+  media_fit?: "fit" | "fill" | "stretch";
+  /** ADR 0064: `true` forces silence, `false` leaves the item/Playlist/device audio policy in
+   *  charge. Absent on a row saved before that change. */
+  muted?: boolean;
 };
 
 /** One row per Zone of the Composition's Layout, LEFT JOINed — an unbound Zone still

@@ -18,7 +18,7 @@ import { splitZone } from "@/features/media-workspace/layouts/split-zone";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
 import type { ZoneBindingDraft } from "../zone-bindings";
 
-type ZonePreview = { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string };
+type ZonePreview = { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string; mediaFit?: "fit" | "fill" | "stretch" };
 
 export function CompositionCanvasPane({
   zones,

@@ -1,11 +1,11 @@
 "use client";
 
-// Zone Properties (ticket 27, ADR 0063 §6): geometry and playback controls. Content lives
-// in the `Insert to Layout` column beside the canvas, matching the editor's visual hierarchy.
+// Zone Properties (ticket 27, ADR 0063 §6; media fit/mute added by ADR 0064): geometry and
+// playback controls. Content lives in the `Insert to Layout` column beside the canvas,
+// matching the editor's visual hierarchy.
 //
-// No Fill Mode, no Mute, no editable Duration — the schema has nowhere for the first two
-// (`media_fit` lives on Playlist metadata, `mute` exists nowhere) and Duration is always the
-// sum of the bound Playlist's items, never a Zone-level number.
+// No editable Duration — it is always the sum of the bound Playlist's items, never a
+// Zone-level number.
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -48,7 +48,7 @@ export function ZonePropertiesPanel({
   canDelete: boolean;
   onDelete: () => void;
 }) {
-  const [tab, setTab] = useState<"layout" | "behavior">("layout");
+  const [tab, setTab] = useState<"layout" | "content">("layout");
   const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   const assetDurations = Object.fromEntries(assets.map((a) => [a.id, a.duration_seconds ?? undefined]));
   const durationSeconds = totalZoneDurationSeconds(binding, assetDurations, playlistDurations);
@@ -61,7 +61,7 @@ export function ZonePropertiesPanel({
 
       <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
         <button type="button" className={tabClasses(tab === "layout")} onClick={() => setTab("layout")}>Geometry</button>
-        <button type="button" className={tabClasses(tab === "behavior")} onClick={() => setTab("behavior")}>Behavior</button>
+        <button type="button" className={tabClasses(tab === "content")} onClick={() => setTab("content")}>Content</button>
       </div>
 
       {tab === "layout" && (
@@ -92,9 +92,9 @@ export function ZonePropertiesPanel({
         </div>
       )}
 
-      {tab === "behavior" && (
+      {tab === "content" && (
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <label className="text-xs text-zinc-500">
               Play mode
               <select
@@ -128,7 +128,29 @@ export function ZonePropertiesPanel({
                 <option value="resume">Resume</option>
               </select>
             </label>
+            <label className="text-xs text-zinc-500">
+              Media fit
+              <select
+                value={binding.playback.mediaFit}
+                onChange={(e) => onBindingChange({ ...binding, playback: { ...binding.playback, mediaFit: e.target.value as ZonePlayback["mediaFit"] } })}
+                className={selectClasses}
+              >
+                <option value="fit">Fit (contain)</option>
+                <option value="fill">Fill (crop)</option>
+                <option value="stretch">Stretch</option>
+              </select>
+            </label>
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <input
+              type="checkbox"
+              checked={binding.playback.muted}
+              onChange={(e) => onBindingChange({ ...binding, playback: { ...binding.playback, muted: e.target.checked } })}
+              className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600"
+            />
+            Mute this Zone
+          </label>
 
           <div className="flex items-center justify-between text-sm">
             <span className="text-zinc-500 dark:text-zinc-400">Duration</span>
@@ -136,7 +158,7 @@ export function ZonePropertiesPanel({
           </div>
 
           <Button variant="secondary" onClick={() => onApplyPlaybackToAllZones(binding.playback)}>
-            Apply playback settings to all Zones
+            Apply content settings to all Zones
           </Button>
         </div>
       )}

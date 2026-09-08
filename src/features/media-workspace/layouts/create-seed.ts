@@ -3,23 +3,29 @@
 // client state, not query parameters. sessionStorage (not localStorage) because it is read
 // once, on the next editor mount, and cleared.
 
+export type CreateSeedDetails = {
+  name: string;
+  folderId: string | null;
+  tags: string[];
+  referenceResolution: string | null;
+  background: string;
+};
+
 export type CreateSeed =
   | {
       kind: "scratch";
-      details?: {
-        name: string;
-        folderId: string | null;
-        tags: string[];
-        referenceResolution: string;
-        background: string;
-      };
+      details?: CreateSeedDetails;
     }
-  | { kind: "preset"; presetKey: string; aspectRatio: string; referenceResolution: string }
-  | { kind: "template"; layoutId: string };
+  | { kind: "preset"; presetKey: string; aspectRatio: string; referenceResolution: string; details?: CreateSeedDetails }
+  | { kind: "template"; layoutId: string; details?: CreateSeedDetails };
 
 export function seedCanvasSettings(seed: CreateSeed | null) {
   if (seed?.kind !== "preset") return null;
-  return { aspectRatio: seed.aspectRatio, referenceResolution: seed.referenceResolution, background: "#000000" };
+  return {
+    aspectRatio: seed.aspectRatio,
+    referenceResolution: seed.details?.referenceResolution ?? seed.referenceResolution,
+    background: seed.details?.background ?? "#000000",
+  };
 }
 
 const KEY = "thunder-one:layout-create-seed:v1";
