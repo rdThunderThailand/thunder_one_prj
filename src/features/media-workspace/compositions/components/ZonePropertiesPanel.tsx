@@ -48,7 +48,7 @@ export function ZonePropertiesPanel({
   canDelete: boolean;
   onDelete: () => void;
 }) {
-  const [tab, setTab] = useState<"layout" | "content">("layout");
+  const [tab, setTab] = useState<"layout" | "content">("content");
   const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   const assetDurations = Object.fromEntries(assets.map((a) => [a.id, a.duration_seconds ?? undefined]));
   const durationSeconds = totalZoneDurationSeconds(binding, assetDurations, playlistDurations);
@@ -60,8 +60,8 @@ export function ZonePropertiesPanel({
       </div>
 
       <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
-        <button type="button" className={tabClasses(tab === "layout")} onClick={() => setTab("layout")}>Geometry</button>
         <button type="button" className={tabClasses(tab === "content")} onClick={() => setTab("content")}>Content</button>
+        <button type="button" className={tabClasses(tab === "layout")} onClick={() => setTab("layout")}>Geometry</button>
       </div>
 
       {tab === "layout" && (
