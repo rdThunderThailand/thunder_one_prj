@@ -3,12 +3,13 @@
 // ponytail: native <dialog> — swap to a portal + animation library only if entry/exit transitions are ever needed
 import { useEffect, useRef, type ReactNode } from "react";
 
-type ModalSize = "md" | "lg" | "xl";
+type ModalSize = "md" | "lg" | "xl" | "preview";
 
 const sizeClasses: Record<ModalSize, string> = {
   md: "max-w-md",
   lg: "max-w-2xl",
   xl: "max-w-6xl",
+  preview: "max-w-[90rem]",
 };
 
 interface ModalProps {
@@ -21,9 +22,10 @@ interface ModalProps {
    *  existing caller keeps the original "md" width by omitting this. */
   size?: ModalSize;
   showCloseButton?: boolean;
+  hideTitle?: boolean;
 }
 
-export function Modal({ open, onClose, title, children, footer, size = "md", showCloseButton = false }: ModalProps) {
+export function Modal({ open, onClose, title, children, footer, size = "md", showCloseButton = false, hideTitle = false }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export function Modal({ open, onClose, title, children, footer, size = "md", sho
           invisible, unreachable by keyboard, and still found by document.querySelector. */}
       {open && (
         <div className="relative w-full rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="mb-3 pr-8 text-base font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
+          <h2 className={hideTitle ? "sr-only" : "mb-3 pr-8 text-base font-semibold text-zinc-900 dark:text-zinc-100"}>{title}</h2>
           {showCloseButton && (
             <button
               type="button"
