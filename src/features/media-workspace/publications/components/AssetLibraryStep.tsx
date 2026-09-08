@@ -18,10 +18,9 @@ import { AssetCard } from "./AssetCard";
 import { SelectedAssetList } from "./SelectedAssetList";
 import { ContentSummaryPanel } from "./ContentSummaryPanel";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import { fetchMediaAssets } from "../services/publications-api";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { Campaign, MediaAsset } from "../types";
-import { dropUnapprovedItems, isImageAsset } from "../draft-mapping";
+import { isImageAsset } from "../draft-mapping";
 import { acceptedAssetKind, canSelectAsset, canSelectPlaylist } from "../content-selection.ts";
 import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "../upload-limits";
 import { fetchPlaylists } from "@/features/media-workspace/playlists";
@@ -53,7 +52,19 @@ function ToggleSwitch({
   );
 }
 
-export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
+export function AssetLibraryStep({
+  campaigns = [],
+  assets,
+  reloadAssets,
+  assetsLoading,
+  assetsError,
+}: {
+  campaigns?: Campaign[];
+  assets: MediaAsset[];
+  reloadAssets: () => Promise<MediaAsset[]>;
+  assetsLoading: boolean;
+  assetsError: string | null;
+}) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const toggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
@@ -64,10 +75,6 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
 
   const [aiSuggest, setAiSuggest] = useState(true);
   const [view, setView] = useState<"grid" | "list">("grid");
-
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [playlists, setPlaylists] = useState<PlaylistListItem[]>([]);
   const [playlistsError, setPlaylistsError] = useState<string | null>(null);
@@ -81,27 +88,6 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
 
   // ponytail: promise chain, not async/await — react-hooks/set-state-in-effect follows an
   // async callee into its body and flags the setState calls even though they're post-await.
-  const loadAssets = useCallback(
-    () =>
-      fetchMediaAssets()
-        .then((data) => {
-          setAssets(data);
-          setError(null);
-          // Drafts saved before unapproved assets became unpickable still hold one,
-          // and every save retries the RPC that refuses it — drop them on sight so
-          // the wizard cannot stay stuck on a selection the user can no longer see.
-          const store = usePublicationDraftStore.getState();
-          const kept = dropUnapprovedItems(store.assetItems, data);
-          if (kept.length !== store.assetItems.length) store.setAssetItems(kept);
-        })
-        .catch((err) => {
-          setAssets([]);
-          setError(err instanceof Error ? err.message : "Failed to load assets");
-        })
-        .finally(() => setLoading(false)),
-    []
-  );
-
   const loadPlaylists = useCallback(
     () =>
       fetchPlaylists()
@@ -117,13 +103,12 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
   );
 
   useEffect(() => {
-    void loadAssets();
     void loadPlaylists();
-  }, [loadAssets, loadPlaylists]);
+  }, [loadPlaylists]);
 
   const { fileInputRef, uploadPct, uploadError, handleFilePicked } = useAssetUpload(
     async (asset, isVideoFile) => {
-      await loadAssets();
+      await reloadAssets();
       if (asset?.id && acceptedAssetKind(publicationType) === (isVideoFile ? "video" : "image")) {
         if (playlistId) setPlaylistId(null);
         toggleAssetItem({ id: asset.id, isImage: !isVideoFile });
@@ -278,12 +263,12 @@ export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] })
           </div>
 
           <p className={`mb-3 text-xs ${uploadError ? "text-red-500" : "text-zinc-400"}`}>
-            {loading
+            {assetsLoading
               ? "Loading assets…"
               : uploadError
                 ? uploadError
-                : error || playlistsError
-                  ? error || playlistsError
+                : assetsError || playlistsError
+                  ? assetsError || playlistsError
                   : `${filteredAssets.length + filteredPlaylists.length} items found · ${UPLOAD_ACCEPT_LABEL}`}
           </p>
 

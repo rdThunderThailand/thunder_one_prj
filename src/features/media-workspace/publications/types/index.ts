@@ -57,6 +57,14 @@ export type PublicationListItem = {
   /** Clock-aware lifecycle for display: adds scheduled | ended. Read this to
    * answer "what phase is this in"; read `status` for "was it activated". */
   effective_status?: string;
+  /** The latest Schedule's window and zone — null when the Publication has no Schedule.
+   * `timezone` is what "today" must be evaluated in (docs/adr/0065 §3). */
+  starts_at?: string | null;
+  ends_at?: string | null;
+  timezone?: string | null;
+  /** Targets split by kind, so a row reads `X Channels · Y Devices` rather than
+   * counting Devices as Channels. Absent only against a backend older than ADR 0065 §3. */
+  target_summary?: { channels: number; devices: number };
   publication_type: PublicationType;
   priority: Priority;
   language?: string;

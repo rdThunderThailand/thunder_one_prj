@@ -178,6 +178,9 @@ export function CreatePublicationPage() {
     campaigns,
     tags,
     assets,
+    reloadAssets,
+    assetsLoading,
+    assetsError,
     loadingRefs,
     saving,
     error,
@@ -466,7 +469,15 @@ export function CreatePublicationPage() {
         </div>
       )}
 
-      {step === 2 && <ContentStep campaigns={campaigns} />}
+      {step === 2 && (
+        <ContentStep
+          campaigns={campaigns}
+          assets={assets}
+          reloadAssets={reloadAssets}
+          assetsLoading={assetsLoading}
+          assetsError={assetsError}
+        />
+      )}
       {step === 3 && (
         <ChannelsStep
           channels={channels}

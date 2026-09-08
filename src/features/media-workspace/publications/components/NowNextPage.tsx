@@ -8,18 +8,12 @@ import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { requestApi } from "@/lib/api/media-api";
 import { getDemoNowNext } from "../now-next-demo";
 import { timelinePosition, timelineTicks, timelineWindow } from "../now-next-layout";
+import { fetchNowNext } from "../now-next";
 import type { NowNextOccurrence, NowNextResponse, NowNextRow } from "../now-next";
 
 const emptySummary = { scheduled_now_channels: 0, playback_confirmed_channels: 0, upcoming_60m_channels: 0, upcoming_3h_channels: 0, total_active_channels: 0 };
-
-function fetchNowNext(horizon: 60 | 180, includeIdle: boolean, query: string) {
-  const params = new URLSearchParams({ horizon_minutes: String(horizon), include_idle: String(includeIdle) });
-  if (query.trim()) params.set("q", query.trim());
-  return requestApi<NowNextResponse>("GET", `/media/now-next?${params}`);
-}
 
 function formatTime(value: string | null | undefined, timezone: string) {
   if (!value) return "—";

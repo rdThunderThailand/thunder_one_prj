@@ -118,14 +118,10 @@ function usePlaylistPublications(playlistId: string) {
 
   useEffect(() => {
     let alive = true;
-    Promise.all([
-      fetchPublications("draft"),
-      fetchPublications("active"),
-      fetchPublications("cancelled"),
-    ])
-      .then((lists) => {
+    fetchPublications()
+      .then((all) => {
         if (!alive) return;
-        setPublications(lists.flat().filter((p) => p.playlist_id === playlistId));
+        setPublications(all.filter((p) => p.playlist_id === playlistId));
       })
       .catch(() => alive && setFailed(true));
     return () => {

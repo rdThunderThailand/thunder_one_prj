@@ -130,20 +130,19 @@ export function ZoneContentPicker({
         </>}
       </section>
 
-      {isAssetPickerOpen && (
-        <AddItemDrawer
-          assets={assets.filter(isApprovedAsset)}
-          loading={false}
-          alreadyInPlaylist={binding.assetItems.map((item) => item.media_asset_id)}
-          onAdd={(picked) => { setStagedAssets(picked); setStagedPlaylist(null); }}
-          onClose={() => setIsAssetPickerOpen(false)}
-          purpose="layout"
-          side="right"
-          playlists={playlists}
-          playlistPreviews={playlistPreviews}
-          onSelectPlaylist={(playlist) => { setStagedPlaylist(playlist); setStagedAssets([]); }}
-        />
-      )}
+      <AddItemDrawer
+        open={isAssetPickerOpen}
+        assets={assets.filter(isApprovedAsset)}
+        loading={false}
+        alreadyInPlaylist={binding.assetItems.map((item) => item.media_asset_id)}
+        onAdd={(picked) => { setStagedAssets(picked); setStagedPlaylist(null); }}
+        onClose={() => setIsAssetPickerOpen(false)}
+        purpose="layout"
+        side="right"
+        playlists={playlists}
+        playlistPreviews={playlistPreviews}
+        onSelectPlaylist={(playlist) => { setStagedPlaylist(playlist); setStagedAssets([]); }}
+      />
     </>
   );
 }

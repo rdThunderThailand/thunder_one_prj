@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   draftItemsToContentItems,
   basicInfoToForm,
   channelIdsToTargets,
+  dropUnapprovedItems,
 } from "../draft-mapping";
 import { isScheduleFormValid, scheduleFormToPayload } from "../schedule";
 import {
@@ -45,6 +46,10 @@ export function usePublishDraft() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
+  // Assets load on their own track from the other refs: the wizard owns the single
+  // read, and AssetLibraryStep's post-upload callback needs to re-run just this one.
+  const [assetsLoading, setAssetsLoading] = useState(true);
+  const [assetsError, setAssetsError] = useState<string | null>(null);
   const [loadingRefs, setLoadingRefs] = useState(true);
   const [channelsError, setChannelsError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -75,11 +80,36 @@ export function usePublishDraft() {
     assets,
     conflicts,
     conflictsError,
-    loadingRefs,
+    // Assets not being in yet must read as "not ready to publish", the same as the
+    // other refs — otherwise a held assetItem briefly shows as unverifiable.
+    loadingRefs: loadingRefs || assetsLoading,
     checkingConflicts,
   });
   const canPublish = eligibility.canPublish;
   const eligibilityChecks = eligibility.checks;
+
+  // The wizard's single Asset-library read. Returns the fresh list so the upload
+  // callback in AssetLibraryStep can await it before selecting the new Asset, and
+  // reconciles held items the RPC would now refuse (unapproved) on every load.
+  const reloadAssets = useCallback(
+    (): Promise<MediaAsset[]> =>
+      fetchMediaAssets()
+        .then((data) => {
+          setAssets(data);
+          setAssetsError(null);
+          const store = usePublicationDraftStore.getState();
+          const kept = dropUnapprovedItems(store.assetItems, data);
+          if (kept.length !== store.assetItems.length) store.setAssetItems(kept);
+          return data;
+        })
+        .catch((err) => {
+          setAssets([]);
+          setAssetsError(err instanceof Error ? err.message : "Failed to load assets.");
+          return [];
+        })
+        .finally(() => setAssetsLoading(false)),
+    []
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -92,13 +122,11 @@ export function usePublishDraft() {
         return [];
       }),
       fetchCampaigns().catch(() => []),
-      fetchMediaAssets().catch(() => []),
       fetchTags().catch(() => []),
-    ]).then(([fetchedChannels, fetchedCampaigns, fetchedAssets, fetchedTags]) => {
+    ]).then(([fetchedChannels, fetchedCampaigns, fetchedTags]) => {
       if (isMounted) {
         setChannels(fetchedChannels);
         setCampaigns(fetchedCampaigns);
-        setAssets(fetchedAssets);
         setTags(fetchedTags);
         setLoadingRefs(false);
       }
@@ -108,6 +136,10 @@ export function usePublishDraft() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    void reloadAssets();
+  }, [reloadAssets]);
 
   const channelIdsStr = channelIds.join(",");
   const daysStr = scheduleForm.days.join(",");
@@ -324,6 +356,9 @@ export function usePublishDraft() {
     campaigns,
     tags,
     assets,
+    reloadAssets,
+    assetsLoading,
+    assetsError,
     loadingRefs,
     saving,
     error,

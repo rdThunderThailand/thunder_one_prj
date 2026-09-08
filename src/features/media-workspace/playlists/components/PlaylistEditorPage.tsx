@@ -206,15 +206,14 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         />
       </div>
 
-      {drawerOpen && (
-        <AddItemDrawer
-          assets={assets}
-          loading={assetsLoading}
-          alreadyInPlaylist={present.items.map((i) => i.mediaAssetId)}
-          onAdd={addAssets}
-          onClose={() => setDrawerOpen(false)}
-        />
-      )}
+      <AddItemDrawer
+        open={drawerOpen}
+        assets={assets}
+        loading={assetsLoading}
+        alreadyInPlaylist={present.items.map((i) => i.mediaAssetId)}
+        onAdd={addAssets}
+        onClose={() => setDrawerOpen(false)}
+      />
     </div>
   );
 }

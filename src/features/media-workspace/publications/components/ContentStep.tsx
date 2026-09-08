@@ -1,12 +1,24 @@
 "use client";
 
 import { contentTabs } from "../mock-data";
-import type { Campaign } from "../types";
+import type { Campaign, MediaAsset } from "../types";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { AssetLibraryStep } from "./AssetLibraryStep";
 import { CompositionPicker } from "./CompositionPicker";
 
-export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
+export function ContentStep({
+  campaigns = [],
+  assets,
+  reloadAssets,
+  assetsLoading,
+  assetsError,
+}: {
+  campaigns?: Campaign[];
+  assets: MediaAsset[];
+  reloadAssets: () => Promise<MediaAsset[]>;
+  assetsLoading: boolean;
+  assetsError: string | null;
+}) {
   const publicationType = usePublicationDraftStore((state) => state.basicInfo.publicationType);
 
   return (
@@ -41,7 +53,13 @@ export function ContentStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
             ))}
           </div>
 
-          <AssetLibraryStep campaigns={campaigns} />
+          <AssetLibraryStep
+            campaigns={campaigns}
+            assets={assets}
+            reloadAssets={reloadAssets}
+            assetsLoading={assetsLoading}
+            assetsError={assetsError}
+          />
         </>
       )}
     </div>

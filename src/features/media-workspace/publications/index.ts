@@ -11,3 +11,6 @@ export { fetchPublication, fetchPublications } from "./services/publications-api
 export { classifyPublicationAiring, formatScheduleStart } from "./schedule";
 export type { AiringState } from "./schedule";
 export type { PublicationDetail, PublicationListItem } from "./types";
+// Now & Next answers "what is on screen right now" for Overview's Program cards too (ADR 0065 §2).
+export { fetchNowNext } from "./now-next";
+export type { NowNextOccurrence, NowNextResponse, NowNextRow } from "./now-next";

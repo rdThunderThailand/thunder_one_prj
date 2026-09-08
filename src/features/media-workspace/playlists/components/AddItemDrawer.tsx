@@ -11,8 +11,14 @@ import type { ContentFolder, MediaAsset, Tag } from "@/types/domain";
 import { AssetPicker } from "./AssetPicker";
 
 /** #35: the editor's one way to add content. A staged selection is committed with one
- *  "Add N Items" action; upload is a link out so a slow upload never locks the editor. */
+ *  "Add N Items" action; upload is a link out so a slow upload never locks the editor.
+ *
+ *  Closing hides the drawer rather than unmounting it, so the search, folder and tag filters
+ *  survive a close/reopen and the folder + tag reads happen once per editor session instead of
+ *  once per open. The first open is what mounts it: `AssetPicker` resolves preview URLs for
+ *  everything it lists, and mounting eagerly would pay for that on editors nobody adds to. */
 export function AddItemDrawer({
+  open,
   assets,
   loading,
   alreadyInPlaylist,
@@ -24,6 +30,7 @@ export function AddItemDrawer({
   playlistPreviews = {},
   onSelectPlaylist,
 }: {
+  open: boolean;
   assets: MediaAsset[];
   loading: boolean;
   alreadyInPlaylist: string[];
@@ -41,11 +48,16 @@ export function AddItemDrawer({
   const [playlistQuery, setPlaylistQuery] = useState("");
   const [folders, setFolders] = useState<ContentFolder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  // Latched on the first open. Adjusting state during render is React's own answer to
+  // "derive from a prop change" — an effect here would trip the no-sync-setState rule.
+  const [hasOpened, setHasOpened] = useState(open);
+  if (open && !hasOpened) setHasOpened(true);
 
   useEffect(() => {
+    if (!hasOpened) return;
     fetchContentFolders("asset").then(setFolders).catch(() => undefined);
     fetchTags().then(setTags).catch(() => undefined);
-  }, []);
+  }, [hasOpened]);
 
   // Assets already in the Playlist are off the table — re-adding one would be a silent no-op.
   const pickable = useMemo(
@@ -56,28 +68,42 @@ export function AddItemDrawer({
   const toggle = (asset: MediaAsset) =>
     setStaged((s) => (s.includes(asset.id) ? s.filter((id) => id !== asset.id) : [...s, asset.id]));
 
+  // Only the staged selection is dropped on close — keeping it would re-offer assets the
+  // commit just added. The filters around it are the part worth remembering.
+  const close = () => {
+    setStaged([]);
+    setPlaylistId(null);
+    onClose();
+  };
+
   const commit = () => {
     if (source === "playlists") {
       const playlist = playlists.find((candidate) => candidate.id === playlistId);
       if (playlist) onSelectPlaylist?.(playlist);
-      onClose();
+      close();
       return;
     }
     const byId = new Map(assets.map((a) => [a.id, a]));
     // Selection order, not list order (guideline: "adds them all in one action").
     onAdd(staged.map((id) => byId.get(id)).filter((a): a is MediaAsset => !!a));
-    onClose();
+    close();
   };
 
   const isLayout = purpose === "layout";
 
+  if (!hasOpened) return null;
+
   return (
-    <div className={`fixed inset-0 z-50 flex bg-black/30 ${side === "left" ? "justify-start" : "justify-end"}`} onClick={onClose}>
+    <div
+      className={`fixed inset-0 z-50 flex bg-black/30 transition-opacity duration-200 ${side === "left" ? "justify-start" : "justify-end"} ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
+      onClick={close}
+      inert={!open}
+    >
       <aside
         role="dialog"
         aria-modal="true"
         aria-labelledby="asset-picker-title"
-        className="flex h-full w-full max-w-2xl flex-col bg-white shadow-xl dark:bg-zinc-900"
+        className={`flex h-full w-full max-w-2xl flex-col bg-white shadow-xl transition-transform duration-200 dark:bg-zinc-900 ${open ? "translate-x-0" : side === "left" ? "-translate-x-full" : "translate-x-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-zinc-100 p-5 dark:border-zinc-800">
@@ -90,7 +116,7 @@ export function AddItemDrawer({
               <Link href="/media-workspace/assets/upload" target="_blank" className="text-indigo-600 hover:underline dark:text-indigo-400">Upload new media ↗</Link>
             </p>
           </div>
-          <button type="button" aria-label="ปิด" onClick={onClose} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+          <button type="button" aria-label="ปิด" onClick={close} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
             <XIcon />
           </button>
         </div>
@@ -133,7 +159,7 @@ export function AddItemDrawer({
             )}
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={onClose}>
+            <Button variant="secondary" onClick={close}>
               Cancel
             </Button>
             <Button onClick={commit} disabled={source === "playlists" ? !playlistId : staged.length === 0}>
