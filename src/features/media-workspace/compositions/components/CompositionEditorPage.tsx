@@ -222,16 +222,14 @@ export function CompositionEditorPage({
         savedAt={savedAt}
         saving={saving}
         canPreview={!!layout}
-        canFullPreview={!!id && !!layout}
         status={status}
         referenceResolution={settings.referenceResolution} aspectRatio={settings.aspectRatio}
         zoneCount={layout?.zones.length ?? 0}
         hasLayout={!!layout}
         isComplete={view.complete}
         unboundZoneNames={view.unboundZoneNames}
-        onCancel={() => (isDirty ? setConfirmLeave(true) : router.push(LIST_PATH))}
+        onBack={() => (isDirty ? setConfirmLeave(true) : router.push(LIST_PATH))}
         onPreview={() => setPreviewOpen(true)}
-        onFullPreview={() => preview.openFullPreview(isDirty)}
         onUseInProgram={() => router.push(`/media-workspace/publications/create?compositionId=${id}`)}
         onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Composition ไม่สำเร็จ")}
         onSaveAsTemplate={() => { setTemplateSavedName(null); setNamingTemplate(true); }}
@@ -260,6 +258,9 @@ export function CompositionEditorPage({
         aspectRatio={layout?.aspect_ratio} previewUrls={data.previews}
         geometryOptions={editorGeometryOptions(layout?.reference_resolution)}
         referenceResolution={layout?.reference_resolution ?? null}
+        layoutName={name}
+        canOpenFullPreview={!!id && !!layout}
+        onOpenFullPreview={() => preview.openFullPreview(isDirty)}
       />
       <LayoutTemplatePicker open={pickerOpen} folders={data.folders} tagNames={tags ?? []} hasUnsavedChanges={isDirty} onClose={() => setPickerOpen(false)} onStarted={() => window.location.reload()} />
 

@@ -84,6 +84,10 @@ export function ZoneContentPicker({
             <ImageIcon className="h-8 w-8" />
             <span className="font-medium text-zinc-700 dark:text-zinc-200">Pick Media Assets</span>
             <span className="max-w-52 text-xs">Choose media or a Playlist for {zoneName}</span>
+            <span className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm">
+              <PlusIcon className="h-4 w-4" />
+              Add Media
+            </span>
           </button>
         ) : <>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">

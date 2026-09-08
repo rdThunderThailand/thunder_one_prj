@@ -47,11 +47,14 @@ export function PreviewControls({
 }) {
   const isOverlay = placement === "overlay";
   const secondaryOverlay = isOverlay ? "border-white/20 bg-white/10 !text-white hover:bg-white/20" : "";
+  const overlayVisibility = playing
+    ? "translate-y-2 opacity-0 hover:translate-y-0 hover:opacity-100 focus-within:translate-y-0 focus-within:opacity-100"
+    : "translate-y-0 opacity-100";
   return (
     <div
       className={
         isOverlay
-          ? "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/70 to-transparent px-3 pb-3 pt-8 text-white"
+          ? `absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/70 to-transparent px-3 pb-3 pt-8 text-white transition duration-200 motion-reduce:transition-none ${overlayVisibility}`
           : "rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800"
       }
     >

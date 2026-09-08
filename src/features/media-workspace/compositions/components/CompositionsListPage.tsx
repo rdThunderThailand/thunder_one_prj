@@ -11,8 +11,11 @@ import { Pagination } from "@/components/ui/Pagination";
 import { StatTile } from "@/components/ui/StatTile";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { fetchContentFolders } from "@/lib/api/media-api";
-import type { ContentFolder } from "@/types/domain";
+import { fetchContentFolders, fetchMediaAssets } from "@/lib/api/media-api";
+import type { ContentFolder, MediaAsset } from "@/types/domain";
+import { PlaybackPreviewModal } from "@/features/media-workspace/preview/PlaybackPreviewModal";
+import { loadCompositionPreview, type StagePreview } from "@/features/media-workspace/preview/composition-preview";
+import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
 import type { CompositionLibraryAction } from "../library-actions";
 import { DEFAULT_STATE, readListState, writeListState, type ListFilters, type SortKey } from "../list-url-state";
 import { fetchCompositionLibrary, restoreComposition, setCompositionStatus } from "../services/compositions-api";
@@ -53,6 +56,10 @@ export function CompositionsListPage() {
   const [dialogAction, setDialogAction] = useState<CompositionDialogAction | null>(null);
   const [dialogTarget, setDialogTarget] = useState<CompositionLibraryItem | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [previewTarget, setPreviewTarget] = useState<CompositionLibraryItem | null>(null);
+  const [preview, setPreview] = useState<StagePreview | null>(null);
+  const [previewAssets, setPreviewAssets] = useState<MediaAsset[]>([]);
+  const [previewBusyId, setPreviewBusyId] = useState<string | null>(null);
 
   const restoreUrlState = useCallback(() => {
     const next = readListState(new URLSearchParams(window.location.search));
@@ -146,6 +153,23 @@ export function CompositionsListPage() {
     setDialogTarget(item);
   };
 
+  const openPreview = async (item: CompositionLibraryItem) => {
+    setActionError(null);
+    setPreviewBusyId(item.id);
+    try {
+      const [loadedPreview, assets] = await Promise.all([loadCompositionPreview(item.id), fetchMediaAssets()]);
+      setPreview(loadedPreview);
+      setPreviewAssets(assets);
+      setPreviewTarget(item);
+    } catch (reason) {
+      setActionError(classifyApiError(reason, "โหลด Preview ไม่สำเร็จ").message);
+    } finally {
+      setPreviewBusyId(null);
+    }
+  };
+
+  const closePreview = () => { setPreviewTarget(null); setPreview(null); setPreviewAssets([]); };
+
   const closeDialog = () => { setDialogAction(null); setDialogTarget(null); };
   const summary = library?.summary;
   const pagination = library?.pagination;
@@ -169,7 +193,7 @@ export function CompositionsListPage() {
         {actionError && <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
         {error && <ListError message={error.message} onRetry={reload} retrying={false} />}
         <div className="min-h-0 flex-1 overflow-auto">
-          {!library ? (error ? null : <ListSkeleton />) : library.data.length === 0 ? <p className="py-10 text-center text-sm text-zinc-500">No layouts found.</p> : isGrid ? <CompositionsGrid rows={library.data} inTrash={collection === "trash"} busyId={busyId} onAction={handleAction} /> : <CompositionsTable rows={library.data} sort={sort} inTrash={collection === "trash"} busyId={busyId} onSort={changeSort} onAction={handleAction} />}
+          {!library ? (error ? null : <ListSkeleton />) : library.data.length === 0 ? <p className="py-10 text-center text-sm text-zinc-500">No layouts found.</p> : isGrid ? <CompositionsGrid rows={library.data} inTrash={collection === "trash"} busyId={busyId} previewBusyId={previewBusyId} onPreview={(item) => void openPreview(item)} onAction={handleAction} /> : <CompositionsTable rows={library.data} sort={sort} inTrash={collection === "trash"} busyId={busyId} previewBusyId={previewBusyId} onSort={changeSort} onPreview={(item) => void openPreview(item)} onAction={handleAction} />}
         </div>
       </main>
     </div>{pagination && <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0"><Pagination page={pagination.page} totalPages={pagination.totalPages} perPage={perPage} totalItems={pagination.total} rangeStart={(pagination.page - 1) * perPage + 1} rangeEnd={Math.min(pagination.page * perPage, pagination.total)} itemLabel="layouts" onPageChange={setPage} onPerPageChange={(next) => { setPerPage(next); setPage(1); }} /></div>}</Card>
@@ -179,6 +203,21 @@ export function CompositionsListPage() {
       tagNames={library?.facets.tags.map((tag) => tag.name) ?? []}
       onClose={() => setPickerOpen(false)}
     />
+    {previewTarget && preview && (
+      <PlaybackPreviewModal
+        open
+        onClose={closePreview}
+        zones={preview.zones}
+        assets={previewAssets}
+        aspectRatio={preview.aspectRatio}
+        geometryOptions={editorGeometryOptions(preview.referenceResolution)}
+        referenceResolution={preview.referenceResolution}
+        layoutName={previewTarget.name}
+        editHref={`/media-workspace/layouts/${encodeURIComponent(previewTarget.id)}`}
+        canOpenFullPreview
+        onOpenFullPreview={() => window.open(`/media-workspace/preview/composition/${encodeURIComponent(previewTarget.id)}`, "_blank", "noopener")}
+      />
+    )}
     <CompositionLibraryDialogs key={`${dialogAction}:${dialogTarget?.id ?? ""}`} action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
   </div>;
 }

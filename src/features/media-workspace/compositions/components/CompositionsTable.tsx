@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
-import { EditIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
+import { EditIcon, MoreIcon, PlayIcon, TrashIcon, UndoIcon } from "@/components/ui/icons";
 import { actionsForComposition, type CompositionLibraryAction } from "../library-actions";
 import type { CompositionLibraryItem } from "../types";
 import type { SortKey } from "../list-url-state";
@@ -38,20 +38,32 @@ const labels: Record<CompositionLibraryAction, string> = {
   "delete-forever": "Delete forever",
 };
 
-function RowActions({ item, inTrash, disabled, onAction }: {
+function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }: {
   item: CompositionLibraryItem;
   inTrash: boolean;
   disabled: boolean;
+  previewing: boolean;
+  onPreview: (item: CompositionLibraryItem) => void;
   onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
 }) {
   const actions = actionsForComposition(item, inTrash);
-  if (inTrash) return <div className="flex justify-end gap-2">{actions.map((action) =>
-    <button key={action} type="button" disabled={disabled} onClick={() => onAction(action, item)} className={action === "delete-forever" ? "text-red-600 hover:underline" : "text-indigo-600 hover:underline"}>{labels[action]}</button>
-  )}</div>;
+  if (inTrash) return <div className="flex justify-end gap-1">{actions.map((action) => (
+    <button
+      key={action}
+      type="button"
+      disabled={disabled}
+      onClick={() => onAction(action, item)}
+      aria-label={`${labels[action]} ${item.name}`}
+      title={labels[action]}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-40 ${action === "delete-forever" ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" : "text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"}`}
+    >
+      {action === "restore" ? <UndoIcon /> : <TrashIcon />}
+    </button>
+  ))}</div>;
 
   const itemClass = "block w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800";
   return <div className="flex items-center justify-end gap-2">
-    <Link href={`/media-workspace/layouts/${item.id}?preview=1`} aria-label={`Preview ${item.name}`} title="Preview" className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50"><PlayIcon /></Link>
+    <button type="button" disabled={previewing} onClick={() => onPreview(item)} aria-label={`Preview ${item.name}`} title={previewing ? "Loading preview…" : "Preview"} className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 disabled:cursor-wait disabled:text-indigo-300"><PlayIcon /></button>
     <Link href={`/media-workspace/layouts/${item.id}`} aria-label={`Edit ${item.name}`} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50"><EditIcon /></Link>
     <details className="relative" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.removeAttribute("open"); }}>
       <summary
@@ -72,25 +84,29 @@ function RowActions({ item, inTrash, disabled, onAction }: {
   </div>;
 }
 
-export function CompositionsTable({ rows, sort, inTrash, busyId, onSort, onAction }: {
+export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, onSort, onPreview, onAction }: {
   rows: CompositionLibraryItem[];
   sort: { key: SortKey; dir: "asc" | "desc" };
   inTrash: boolean;
   busyId: string | null;
+  previewBusyId: string | null;
   onSort: (key: SortKey) => void;
+  onPreview: (item: CompositionLibraryItem) => void;
   onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
 }) {
   return <div><table className="w-full table-fixed text-left text-sm"><thead><tr className="border-b border-zinc-100 text-xs text-zinc-500 dark:border-zinc-800">
     <th className="w-[72px] py-2 pl-1">Preview</th><SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort}/><th className="w-[64px] py-2">Content</th><th className="w-[130px] py-2">Resolution</th><SortHeader className="w-[135px]" label="Status" sortKey="status" sort={sort} onSort={onSort}/><SortHeader className="w-[100px]" label="Used in" sortKey="usage" sort={sort} onSort={onSort}/><SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort}/><th className="w-[132px] py-2 pr-1 text-right">Actions</th>
   </tr></thead><tbody>{rows.map((item) => { const badge = statusBadge(item.status); return <tr key={item.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
-    <td className="py-3 pl-1"><CompositionLibraryPreview zones={item.previewZones} /></td><td className="truncate py-3 pr-2 font-medium"><p className="truncate">{item.name}</p><p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p></td><td className="py-3">{item.bound_count}/{item.zone_count}</td><td className="py-3">{item.referenceResolution ?? "—"}</td><td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td><td className="py-3">{item.usageCount ?? "—"}</td><td className="py-3 text-zinc-500"><div className="flex items-center gap-2"><Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} /><span className="truncate">{formatDate(item.updated_at ?? item.created_at)}</span></div></td><td className="py-3 pr-1 text-right"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} onAction={onAction} /></td>
+    <td className="py-3 pl-1"><CompositionLibraryPreview zones={item.previewZones} /></td><td className="truncate py-3 pr-2 font-medium"><p className="truncate">{item.name}</p><p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p></td><td className="py-3">{item.bound_count}/{item.zone_count}</td><td className="py-3">{item.referenceResolution ?? "—"}</td><td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td><td className="py-3">{item.usageCount ?? "—"}</td><td className="py-3 text-zinc-500"><div className="flex min-w-0 items-center gap-2"><Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} /><span className="min-w-0"><span className="block truncate text-zinc-700">{item.createdBy?.displayName ?? "Unknown user"}</span><span className="block truncate text-xs">{formatDate(item.updated_at ?? item.created_at)}</span></span></div></td><td className="py-3 pr-1 text-right"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></td>
   </tr>; })}</tbody></table></div>;
 }
 
-export function CompositionsGrid({ rows, inTrash, busyId, onAction }: {
+export function CompositionsGrid({ rows, inTrash, busyId, previewBusyId, onPreview, onAction }: {
   rows: CompositionLibraryItem[];
   inTrash: boolean;
   busyId: string | null;
+  previewBusyId: string | null;
+  onPreview: (item: CompositionLibraryItem) => void;
   onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
 }) {
   return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{rows.map((item) => {
@@ -103,7 +119,7 @@ export function CompositionsGrid({ rows, inTrash, busyId, onAction }: {
           <p className="truncate text-xs text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p>
         </div>
         <div className="flex items-center justify-between text-xs text-zinc-500"><span>{item.bound_count}/{item.zone_count} content</span><span>{item.referenceResolution ?? "—"}</span></div>
-        <div className="flex items-center justify-between"><Badge color={badge.color} variant="pill">{badge.label}</Badge><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} onAction={onAction} /></div>
+        <div className="flex items-center justify-between"><Badge color={badge.color} variant="pill">{badge.label}</Badge><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></div>
       </div>
     </Card>;
   })}</div>;

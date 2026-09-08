@@ -7,7 +7,7 @@
 import { useRef, useState } from "react";
 import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
-import { CheckIcon, EditIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon } from "@/components/ui/icons";
 import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
 
@@ -44,7 +44,6 @@ export function CompositionEditorHeader({
   savedAt,
   saving,
   canPreview,
-  canFullPreview,
   status,
   referenceResolution,
   aspectRatio,
@@ -52,9 +51,8 @@ export function CompositionEditorHeader({
   hasLayout,
   isComplete,
   unboundZoneNames,
-  onCancel,
+  onBack,
   onPreview,
-  onFullPreview,
   onUseInProgram,
   onSaveDraft,
   onSaveAsTemplate,
@@ -68,7 +66,6 @@ export function CompositionEditorHeader({
   savedAt: Date | null;
   saving: boolean;
   canPreview: boolean;
-  canFullPreview: boolean;
   /** Drives both the primary action's meaning ("keep the current status") and whether
    *  `Save & Activate` is offered at all. */
   status: CompositionStatus;
@@ -78,9 +75,8 @@ export function CompositionEditorHeader({
   hasLayout: boolean;
   isComplete: boolean;
   unboundZoneNames: string[];
-  onCancel: () => void;
+  onBack: () => void;
   onPreview: () => void;
-  onFullPreview: () => void;
   /** ADR 0063 §7: the frames' `Publish` button, relabelled — the editor has no schedule and
    *  no target field, so it hands off to the Publication wizard instead of publishing. */
   onUseInProgram: () => void;
@@ -111,8 +107,18 @@ export function CompositionEditorHeader({
 
   return (
     <div className="flex shrink-0 flex-wrap items-start justify-between gap-4">
-      <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 flex-1 items-start gap-2">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Back to Layouts"
+          title="Back to Layouts"
+          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        >
+          <ArrowLeftIcon />
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
           {editing ? <>
             <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-indigo-500 bg-transparent text-2xl font-semibold text-zinc-900 outline-none dark:text-zinc-50" />
             <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400"><CheckIcon /></button>
@@ -120,26 +126,18 @@ export function CompositionEditorHeader({
             <h1 className="min-w-0 break-words text-2xl font-semibold leading-tight text-zinc-900 dark:text-zinc-50">{name.trim() || "Untitled Layout"}</h1>
             <button type="button" onClick={() => setEditing(true)} aria-label="แก้ไขชื่อ Layout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"><EditIcon /></button>
           </>}
-        </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Badge variant="pill">{referenceResolution ?? "Custom"}</Badge>
-          <Badge variant="pill">{aspectRatio}</Badge>
-          <Badge variant="pill">{zoneCount} {zoneCount === 1 ? "Zone" : "Zones"}</Badge>
-          <Badge variant="pill" color={savedAt ? "blue" : "zinc"}>{updatedLabel}</Badge>
-          <Badge variant="pill" color={statusColor[status]}>{status[0].toUpperCase() + status.slice(1)}</Badge>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge variant="pill">{referenceResolution ?? "Custom"}</Badge>
+            <Badge variant="pill">{aspectRatio}</Badge>
+            <Badge variant="pill">{zoneCount} {zoneCount === 1 ? "Zone" : "Zones"}</Badge>
+            <Badge variant="pill" color={savedAt ? "blue" : "zinc"}>{updatedLabel}</Badge>
+            <Badge variant="pill" color={statusColor[status]}>{status[0].toUpperCase() + status.slice(1)}</Badge>
+          </div>
         </div>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-          <Button variant="secondary" onClick={onPreview} disabled={!canPreview}>Preview</Button>
-          <Button
-            variant="secondary"
-            onClick={onFullPreview}
-            disabled={!canFullPreview}
-            title={!isExisting ? "บันทึก Draft ก่อนเปิด preview เต็มจอ" : undefined}
-          >
-            Open full preview
-          </Button>
+          <Button variant="secondary" onClick={onPreview} disabled={!canPreview}><EyeIcon /> Preview</Button>
           <Button
             variant="secondary"
             onClick={onUseInProgram}

@@ -12,7 +12,7 @@
 
 import { ALIGN_EDGES, alignZone, duplicateZone, type AlignEdge } from "@/features/media-workspace/layouts/align-zones";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeftIcon, ArrowRightIcon, ClipboardIcon, LayoutIcon, MinusIcon, RedoIcon, TargetIcon, UndoIcon } from "@/components/ui/icons";
+import { ClipboardIcon, LayoutIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { LayoutCanvas } from "@/features/media-workspace/layouts/components/LayoutCanvas";
 import { splitZone } from "@/features/media-workspace/layouts/split-zone";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
@@ -89,11 +89,21 @@ export function CompositionCanvasPane({
             <RedoIcon /> Redo
           </Button>
           <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
-          {ALIGN_EDGES.map(({ edge, label }) => (
-            <Button key={edge} variant="secondary" disabled={activeIndex < 0} onClick={() => align(edge)}>
-              <AlignIcon edge={edge} /> {label}
-            </Button>
-          ))}
+          <div role="group" aria-label="Align selected Zone" className="flex overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            {ALIGN_EDGES.map(({ edge, label }) => (
+              <button
+                key={edge}
+                type="button"
+                disabled={activeIndex < 0}
+                onClick={() => align(edge)}
+                aria-label={label}
+                title={label}
+                className="flex h-10 w-10 items-center justify-center border-r border-zinc-200 text-zinc-600 transition last:border-r-0 hover:bg-zinc-50 hover:text-indigo-600 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:text-zinc-300 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-indigo-300 dark:disabled:text-zinc-600"
+              >
+                <AlignIcon edge={edge} />
+              </button>
+            ))}
+          </div>
           <Button variant="secondary" disabled={activeIndex < 0} onClick={duplicate}>
             <ClipboardIcon /> Duplicate Zone
           </Button>
@@ -119,11 +129,33 @@ export function CompositionCanvasPane({
 }
 
 function AlignIcon({ edge }: { edge: AlignEdge }) {
-  if (edge === "left") return <ArrowLeftIcon />;
-  if (edge === "right") return <ArrowRightIcon />;
-  if (edge === "top") return <TargetIcon className="h-4 w-4 rotate-90" />;
-  if (edge === "middle-v") return <MinusIcon />;
-  return <TargetIcon />;
+  const horizontal = edge === "left" || edge === "center-h" || edge === "right";
+  const guide = edge === "left" || edge === "top" ? 5 : edge === "right" ? 19 : 12;
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+      {horizontal ? (
+        <>
+          <path d={`M${guide} 3v18`} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          <path
+            d={edge === "left" ? "M8 7h8M8 12h11M8 17h6" : edge === "right" ? "M8 7h8M5 12h11M10 17h6" : "M8 7h8M5.5 12h13M9 17h6"}
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </>
+      ) : (
+        <>
+          <path d={`M3 ${guide}h18`} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          <path
+            d={edge === "top" ? "M7 8v8M12 8v11M17 8v6" : "M7 8v8M12 5.5v13M17 9v6"}
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </>
+      )}
+    </svg>
+  );
 }
 
 export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, onSelectZone }: {
