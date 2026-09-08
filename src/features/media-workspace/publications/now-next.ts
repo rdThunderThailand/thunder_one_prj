@@ -1,3 +1,5 @@
+import { requestApi } from "@/lib/api/media-api";
+
 export type NowNextPriority = "urgent" | "high" | "normal" | "low";
 
 export type NowNextOccurrence = {
@@ -31,3 +33,9 @@ export type NowNextResponse = {
   summary: { scheduled_now_channels: number; playback_confirmed_channels: number; upcoming_60m_channels: number; upcoming_3h_channels: number; total_active_channels: number };
   rows: NowNextRow[];
 };
+
+export function fetchNowNext(horizon: 60 | 180, includeIdle: boolean, query = "") {
+  const params = new URLSearchParams({ horizon_minutes: String(horizon), include_idle: String(includeIdle) });
+  if (query.trim()) params.set("q", query.trim());
+  return requestApi<NowNextResponse>("GET", `/media/now-next?${params}`);
+}
