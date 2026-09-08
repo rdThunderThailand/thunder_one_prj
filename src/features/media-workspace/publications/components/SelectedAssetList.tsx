@@ -16,6 +16,7 @@ type SelectionOverride = {
   setAssetDuration: (mediaAssetId: string, seconds: number | null) => void;
   setAssetTransition?: (mediaAssetId: string, transition: "cut" | "fade") => void;
   moveAssetItem: (mediaAssetId: string, direction: -1 | 1) => void;
+  moveAssetItemTo?: (mediaAssetId: string, targetIndex: number) => void;
 };
 
 function toPositiveInt(raw: string): number {
@@ -43,6 +44,7 @@ export function SelectedAssetList({
   const setAssetDuration = selection?.setAssetDuration ?? storeSetAssetDuration;
   const moveAssetItem = selection?.moveAssetItem ?? storeMoveAssetItem;
   const setAssetTransition = selection?.setAssetTransition;
+  const moveAssetItemTo = selection?.moveAssetItemTo;
 
   if (assetItems.length === 0) return null;
 
@@ -60,7 +62,28 @@ export function SelectedAssetList({
           const kindLabel = isImage ? "Image" : "Video";
 
           return (
-            <div key={item.media_asset_id} className="grid grid-cols-[48px_minmax(0,1fr)_auto] items-start gap-2 rounded-lg border border-zinc-200 p-2">
+            <div
+              key={item.media_asset_id}
+              draggable={!!moveAssetItemTo}
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", item.media_asset_id);
+                event.currentTarget.classList.add("opacity-50");
+              }}
+              onDragEnd={(event) => event.currentTarget.classList.remove("opacity-50")}
+              onDragOver={(event) => {
+                if (!moveAssetItemTo) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+              }}
+              onDrop={(event) => {
+                if (!moveAssetItemTo) return;
+                event.preventDefault();
+                moveAssetItemTo(event.dataTransfer.getData("text/plain"), index);
+              }}
+              title={moveAssetItemTo ? "Drag to reorder" : undefined}
+              className={`grid grid-cols-[48px_minmax(0,1fr)_auto] items-start gap-2 rounded-lg border border-zinc-200 p-2 transition ${moveAssetItemTo ? "cursor-grab active:cursor-grabbing" : ""}`}
+            >
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-zinc-100">
                 <MediaThumb
                   url={previews[asset.id]}

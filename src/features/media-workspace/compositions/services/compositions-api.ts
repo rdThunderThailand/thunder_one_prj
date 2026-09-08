@@ -137,9 +137,21 @@ export async function moveComposition(id: string, folderId: string | null): Prom
   await requestApi("PATCH", `/media/compositions/${id}`, { folder_id: folderId });
 }
 
+export type CompositionProgramUsage = {
+  id: string;
+  name: string;
+  status: "draft" | "scheduled" | "active";
+  startsAt: string | null;
+  endsAt: string | null;
+};
+
+export async function fetchCompositionPrograms(id: string): Promise<CompositionProgramUsage[]> {
+  return requestApi("GET", `/media/compositions/${id}/programs`);
+}
+
 export async function trashComposition(
   id: string,
-): Promise<{ draft: number; scheduled: number; active: number }> {
+): Promise<{ trashed: boolean; programs: CompositionProgramUsage[] }> {
   return requestApi("DELETE", `/media/compositions/${id}`);
 }
 

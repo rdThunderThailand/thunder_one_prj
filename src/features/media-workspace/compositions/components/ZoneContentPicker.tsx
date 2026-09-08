@@ -9,13 +9,13 @@ import { SelectedAssetList } from "@/features/media-workspace/publications/compo
 import { AddItemDrawer } from "@/features/media-workspace/playlists/components/AddItemDrawer";
 import type { MediaAsset } from "@/types/domain";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";
-import { appendPickedAssets, totalZoneDurationSeconds, type ZoneBindingDraft } from "../zone-bindings";
+import { appendPickedAssets, reorderAssetItem, totalZoneDurationSeconds, type ZoneBindingDraft } from "../zone-bindings";
 
 /**
  * The Content tab of Zone Properties (ticket 27) — an existing Playlist, or a set of picked
  * assets with per-asset duration/transition (ADR 0049 §3). No upload/AI-suggest chrome: that
  * belongs to the Publication wizard's full asset library, not this scoped picker. Playback
- * (`play_mode` / `repeat` / `start_from`) lives in the Behavior tab instead — see
+ * (`play_mode` / `repeat` / `start_from`) lives in the Content tab instead — see
  * `ZonePropertiesPanel.tsx`.
  */
 export function ZoneContentPicker({
@@ -107,12 +107,9 @@ export function ZoneContentPicker({
                 }),
               moveAssetItem: (mediaAssetId, direction) => {
                 const index = binding.assetItems.findIndex((item) => item.media_asset_id === mediaAssetId);
-                const nextIndex = index + direction;
-                if (index < 0 || nextIndex < 0 || nextIndex >= binding.assetItems.length) return;
-                const assetItems = [...binding.assetItems];
-                [assetItems[index], assetItems[nextIndex]] = [assetItems[nextIndex], assetItems[index]];
-                onChange({ ...binding, assetItems });
+                onChange(reorderAssetItem(binding, mediaAssetId, index + direction));
               },
+              moveAssetItemTo: (mediaAssetId, targetIndex) => onChange(reorderAssetItem(binding, mediaAssetId, targetIndex)),
             }}
           />
           {binding.source === "playlist" && binding.playlistId && <ShelfItem label={binding.playlistName ?? boundPlaylist?.name ?? "Playlist"} meta={`${boundPlaylist?.item_count ?? 0} items · ${boundPlaylist?.status ?? "bound"}`} url={playlistPreviews[binding.playlistId]?.url} thumbnailUrl={playlistPreviews[binding.playlistId]?.thumbnailUrl} onRemove={() => onChange({ ...binding, playlistId: null, playlistName: undefined, assetItems: [] })} />}

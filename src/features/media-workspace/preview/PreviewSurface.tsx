@@ -18,6 +18,7 @@ export function PreviewSurface({
   offsetSeconds,
   loadState,
   defaultMediaFit,
+  zoneMediaFit,
   style,
 }: {
   item: PlaybackPreviewItem | null;
@@ -30,9 +31,13 @@ export function PreviewSurface({
   loadState: "idle" | "loading" | "ready" | "error";
   /** Playlist-level fallback (ADR 0062 §6): item override → this → "fit". */
   defaultMediaFit?: string | null;
+  /** ADR 0064 §1: the Composition Zone's own `media_fit`, when set. Wins outright over both
+   *  `item.mediaFit` and `defaultMediaFit` — unset (flat Playlist preview) leaves the existing
+   *  item → Playlist → "fit" chain untouched. */
+  zoneMediaFit?: string | null;
   style?: CSSProperties;
 }) {
-  const fitClass = FIT_CLASS[item?.mediaFit ?? defaultMediaFit ?? "fit"] ?? FIT_CLASS.fit;
+  const fitClass = FIT_CLASS[zoneMediaFit ?? item?.mediaFit ?? defaultMediaFit ?? "fit"] ?? FIT_CLASS.fit;
 
   if (!item) return <Placeholder label="Unbound Zone" style={style} />;
   if (!asset) return <Placeholder label={item.label ?? "Missing asset"} style={style} />;

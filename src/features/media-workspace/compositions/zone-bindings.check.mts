@@ -9,6 +9,7 @@ import {
   findUnboundZoneIds,
   isComplete,
   remapZoneBindings,
+  reorderAssetItem,
   toCompositionUpsertPayload,
   toSetZonesPayload,
   totalZoneDurationSeconds,
@@ -24,7 +25,7 @@ const bindings: ZoneBindingDraft[] = [
     source: "playlist",
     playlistId: "playlist-main",
     assetItems: [],
-    playback: { playMode: "sequential", repeat: "loop", startFrom: "first" },
+    playback: { playMode: "sequential", repeat: "loop", startFrom: "first", mediaFit: "fit", muted: false },
   },
   {
     layoutZoneId: "zone-side",
@@ -34,7 +35,7 @@ const bindings: ZoneBindingDraft[] = [
       { media_asset_id: "image-1", duration_seconds: 10, transition: "fade" },
       { media_asset_id: "video-1", duration_seconds: null, transition: "cut" },
     ],
-    playback: { playMode: "shuffle", repeat: "once", startFrom: "resume" },
+    playback: { playMode: "shuffle", repeat: "once", startFrom: "resume", mediaFit: "fill", muted: true },
   },
 ];
 
@@ -52,7 +53,7 @@ const unsavedAssetsBinding: ZoneBindingDraft = {
   source: "assets",
   playlistId: null,
   assetItems: [{ media_asset_id: "image-1", duration_seconds: 10, transition: "cut" }],
-  playback: { playMode: "sequential", repeat: "loop", startFrom: "first" },
+  playback: { playMode: "sequential", repeat: "loop", startFrom: "first", mediaFit: "fit", muted: false },
 };
 assert.deepEqual(findUnboundZoneIds(zones, [bindings[0]!, unsavedAssetsBinding]), []);
 
@@ -78,6 +79,10 @@ assert.deepEqual(
   },
 );
 
+const reordered = reorderAssetItem(bindings[1]!, "video-1", 0);
+assert.deepEqual(reordered.assetItems.map((item) => item.media_asset_id), ["video-1", "image-1"]);
+assert.equal(reorderAssetItem(reordered, "video-1", 0), reordered, "dropping in place keeps the same draft");
+
 // --- totalZoneDurationSeconds ----------------------------------------------
 
 assert.equal(totalZoneDurationSeconds(bindings[1]!, { "video-1": 42 }, {}), 52);
@@ -91,12 +96,12 @@ assert.deepEqual(toSetZonesPayload(zones, bindings), {
     {
       layout_zone_id: "zone-main",
       playlist_id: "playlist-main",
-      playback: { play_mode: "sequential", repeat: "loop", start_from: "first" },
+      playback: { play_mode: "sequential", repeat: "loop", start_from: "first", media_fit: "fit", muted: false },
     },
     {
       layout_zone_id: "zone-side",
       playlist_id: "playlist-side-implicit",
-      playback: { play_mode: "shuffle", repeat: "once", start_from: "resume" },
+      playback: { play_mode: "shuffle", repeat: "once", start_from: "resume", media_fit: "fill", muted: true },
     },
   ],
 });
@@ -107,7 +112,7 @@ assert.deepEqual(toSetZonesPayload(zones, bindings.slice(0, 1)), {
     {
       layout_zone_id: "zone-main",
       playlist_id: "playlist-main",
-      playback: { play_mode: "sequential", repeat: "loop", start_from: "first" },
+      playback: { play_mode: "sequential", repeat: "loop", start_from: "first", media_fit: "fit", muted: false },
     },
   ],
 });
@@ -132,6 +137,7 @@ const serverZones: CompositionZone[] = [
     width: 100,
     height: 100,
     playlist_id: "playlist-main",
+    // ADR 0064 §6: saved before the migration — no media_fit/muted key at all.
     playback: { play_mode: "shuffle", repeat: "once", start_from: "resume" },
   },
   {
@@ -147,16 +153,27 @@ const serverZones: CompositionZone[] = [
   },
 ];
 
+// A pre-ADR-0064 row hydrates media_fit "fit" and — deliberately unlike a brand-new Zone's
+// `true` — muted false, so opening and re-saving an old Composition never silences it.
 assert.deepEqual(bindingsFromCompositionZones(serverZones), [
   {
     layoutZoneId: "zone-main",
     source: "playlist",
     playlistId: "playlist-main",
     assetItems: [],
-    playback: { playMode: "shuffle", repeat: "once", startFrom: "resume" },
+    playback: { playMode: "shuffle", repeat: "once", startFrom: "resume", mediaFit: "fit", muted: false },
   },
 ]);
 assert.deepEqual(findUnboundZoneIds(["zone-main", "zone-side"], bindingsFromCompositionZones(serverZones)), ["zone-side"]);
+
+// A row saved after the migration hydrates its own explicit media_fit/muted instead of the legacy default.
+const serverZoneWithFit: CompositionZone[] = [{
+  ...serverZones[0]!,
+  playback: { play_mode: "shuffle", repeat: "once", start_from: "resume", media_fit: "fill", muted: true },
+}];
+assert.deepEqual(bindingsFromCompositionZones(serverZoneWithFit)[0]!.playback, {
+  playMode: "shuffle", repeat: "once", startFrom: "resume", mediaFit: "fill", muted: true,
+});
 
 console.log("zone-bindings.check.mts — all assertions passed");
 
@@ -198,7 +215,7 @@ console.log("zone-bindings.check.mts — remap assertions passed");
 
 // --- applyPlaybackToAll — ticket 27's "Apply to All Zones" -------------------
 
-const newPlayback = { playMode: "shuffle", repeat: "once", startFrom: "resume" } as const;
+const newPlayback = { playMode: "shuffle", repeat: "once", startFrom: "resume", mediaFit: "stretch", muted: true } as const;
 
 // An already-bound Zone keeps its content, only playback changes.
 const applied = applyPlaybackToAll(zones, bindings, newPlayback);

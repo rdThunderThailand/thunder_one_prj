@@ -31,11 +31,21 @@ const portraitPreset: CreateSeed = {
   presetKey: "70-30-portrait",
   aspectRatio: "9:16",
   referenceResolution: "1080x1920",
+  details: {
+    name: "Portrait menu",
+    folderId: null,
+    tags: [],
+    referenceResolution: "1080x1920",
+    background: "#123456",
+  },
 };
 assert.deepEqual(seedCanvasSettings(portraitPreset), {
   aspectRatio: "9:16",
   referenceResolution: "1080x1920",
-  background: "#000000",
+  background: "#123456",
 });
+
+writeCreateSeed(portraitPreset);
+assert.deepEqual(takeCreateSeed(), portraitPreset);
 
 console.log("create-seed.check.mts — all assertions passed");

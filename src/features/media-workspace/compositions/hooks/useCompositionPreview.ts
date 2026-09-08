@@ -16,7 +16,7 @@ import type { PlaylistPreviewPlayback } from "@/features/media-workspace/preview
 import type { MediaAsset, PlaylistItem } from "@/types/domain";
 import type { ZoneBindingDraft } from "../zone-bindings";
 
-type ZonePreview = { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string };
+type ZonePreview = { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string; mediaFit?: "fit" | "fill" | "stretch" };
 
 export type CompositionPreviewHandoff = StagePreview & {
   source: "composition";
@@ -64,6 +64,9 @@ export function useCompositionPreview({
         thumbnailUrl: previewThumbnails[assetId],
         kind: asset?.kind,
         mimeType: asset?.file?.mime_type,
+        // ADR 0064 §1: the editing canvas is a still, but it should still show the crop the
+        // Zone will actually play with, not always a generic cover crop.
+        mediaFit: binding.playback.mediaFit,
       };
     }
     return next;

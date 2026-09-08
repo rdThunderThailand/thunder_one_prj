@@ -15,6 +15,12 @@ export type PlaybackPreviewSettings = {
   defaultTransition?: string | null;
   transitionDurationSeconds?: number | null;
   mediaFit?: string | null;
+  /** ADR 0064 §1: set only for a Composition Zone's own `media_fit`, which wins outright over
+   *  both the item's and the Playlist's — never present for a flat Playlist preview. */
+  zoneMediaFitOverride?: string | null;
+  /** ADR 0064 §7: a state label only — the preview stays silent regardless (browser autoplay
+   *  policy), so this is never wired to actual playback audio. */
+  zoneMuted?: boolean;
 };
 
 export type PlaybackPreviewZone = {
