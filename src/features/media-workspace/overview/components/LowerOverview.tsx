@@ -12,18 +12,12 @@ import {
   MonitorIcon,
 } from "@/components/ui/icons";
 import { fetchChannels, type ChannelListItem } from "@/features/media-workspace/channels";
-import { fetchPublication, fetchPublications, type PublicationDetail, type PublicationListItem } from "@/features/media-workspace/publications";
+import { fetchPublications, type PublicationListItem } from "@/features/media-workspace/publications";
+import { scheduleTime, targetSummary, todaysSchedule } from "../todays-schedule";
 import { QuickActionsCard } from "./QuickActionsCard";
-
-type LoadedPublication = { list: PublicationListItem; detail: PublicationDetail };
 
 function formatTime(iso: string, timeZone = "Asia/Bangkok") {
   return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone }).format(new Date(iso));
-}
-
-function isToday(iso: string, timeZone: string) {
-  const format = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
-  return format.format(new Date(iso)) === format.format(new Date());
 }
 
 function typeIcon(name: string) {
@@ -44,16 +38,15 @@ function ActivitySkeleton() {
 
 export function LowerOverview() {
   const [channels, setChannels] = useState<ChannelListItem[] | null>(null);
-  const [publications, setPublications] = useState<LoadedPublication[] | null>(null);
+  const [publications, setPublications] = useState<PublicationListItem[] | null>(null);
 
   useEffect(() => {
     let active = true;
     Promise.all([fetchChannels(), fetchPublications("active")])
-      .then(async ([channelRows, publicationRows]) => {
-        const details = await Promise.allSettled(publicationRows.map((row) => fetchPublication(row.id)));
+      .then(([channelRows, publicationRows]) => {
         if (!active) return;
         setChannels(channelRows);
-        setPublications(details.flatMap((result, index) => result.status === "fulfilled" ? [{ list: publicationRows[index], detail: result.value }] : []));
+        setPublications(publicationRows);
       })
       .catch(() => {
         if (!active) return;
@@ -73,13 +66,10 @@ export function LowerOverview() {
       const label = channel.channel_type?.name ?? "Unclassified";
       types.set(label, (types.get(label) ?? 0) + 1);
     });
-    const schedule = (publications ?? [])
-      .filter(({ detail }) => detail.schedule && isToday(detail.schedule.starts_at, detail.schedule.timezone))
-      .sort((a, b) => Date.parse(a.detail.schedule!.starts_at) - Date.parse(b.detail.schedule!.starts_at))
-      .slice(0, 6);
+    const schedule = todaysSchedule(publications ?? []);
     const activity = [
       ...(channels ?? []).map((channel) => ({ label: `Channel “${channel.name}” updated`, at: channel.updated_at, icon: MonitorIcon, color: "text-indigo-500" })),
-      ...(publications ?? []).map(({ list }) => ({ label: `Publication “${list.name}” updated`, at: list.updated_at ?? list.created_at ?? "", icon: CheckCircleIcon, color: "text-emerald-500" })),
+      ...(publications ?? []).map((row) => ({ label: `Publication “${row.name}” updated`, at: row.updated_at ?? row.created_at ?? "", icon: CheckCircleIcon, color: "text-emerald-500" })),
     ].filter((item) => item.at).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 4);
     return { health, total, types: [...types.entries()].slice(0, 4), schedule, activity };
   }, [channels, publications]);
@@ -96,7 +86,7 @@ export function LowerOverview() {
       <Card className="min-h-88 xl:col-span-5 p-4">
         <div className="mb-4 flex items-center justify-between"><h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Today&apos;s Schedule</h2><span className="text-xs text-zinc-400">Live data</span></div>
         {isLoading ? <ScheduleSkeleton /> : data.schedule.length === 0 ? <p className="py-10 text-center text-sm text-zinc-400">No scheduled publications for today</p> : <ol className="space-y-3">
-          {data.schedule.map(({ list, detail }) => <li key={list.id} className="grid grid-cols-[8px_48px_minmax(0,1fr)_auto] items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full bg-blue-500" /><time className="font-semibold text-zinc-700 dark:text-zinc-200">{formatTime(detail.schedule!.starts_at, detail.schedule!.timezone)}</time><span className="truncate font-medium text-zinc-800 dark:text-zinc-100">{list.name}</span><span className="text-zinc-400">{detail.publication_targets?.length ?? 0} Channels</span></li>)}
+          {data.schedule.map((row) => <li key={row.id} className="grid grid-cols-[8px_48px_minmax(0,1fr)_auto] items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full bg-blue-500" /><time className="font-semibold text-zinc-700 dark:text-zinc-200">{scheduleTime(row)}</time><span className="truncate font-medium text-zinc-800 dark:text-zinc-100">{row.name}</span><span className="text-zinc-400">{targetSummary(row.target_summary)}</span></li>)}
         </ol>}
       </Card>
 
