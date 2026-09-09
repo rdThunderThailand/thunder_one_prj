@@ -102,14 +102,14 @@ export function countOnlineDevices(devices: readonly Pick<ChannelDevice, "health
 export function summarizeChannels(channels: readonly ChannelListItem[]) {
   const summary = {
     lifecycle: { total: channels.length, draft: 0, active: 0, inactive: 0 },
-    devices: { total: 0, online: 0 },
+    devices: { total: 0, online: 0, warning: 0, offline: 0 },
     unassigned: 0,
   };
 
   for (const channel of channels) {
     summary.lifecycle[channel.lifecycle] += 1;
     summary.devices.total += channel.devices.length;
-    summary.devices.online += countOnlineDevices(channel.devices);
+    channel.devices.forEach((device) => { summary.devices[device.health] += 1; });
     if (channel.devices.length === 0) summary.unassigned += 1;
   }
 
@@ -129,13 +129,21 @@ export function filterChannels(
       channel.location?.name.toLowerCase().includes(search) ||
       channel.devices.some(
         (device) =>
-          device.name.toLowerCase().includes(search) || device.code.toLowerCase().includes(search),
+          device.name.toLowerCase().includes(search) || device.code.toLowerCase().includes(search)
+          || device.health.includes(search) || (search === "attention" && device.health !== "online"),
       );
     const matchesCategory = filters.category === "all" || channel.category === filters.category;
     const matchesLifecycle = filters.lifecycle === "all" || channel.lifecycle === filters.lifecycle;
 
     return matchesSearch && matchesCategory && matchesLifecycle;
   });
+}
+
+export function findChannelAttention(channels: readonly ChannelListItem[]) {
+  return channels.flatMap((channel) => channel.devices
+    .filter((device) => device.health !== "online")
+    .map((device) => ({ channel, device })))
+    .sort((a, b) => Number(a.device.health === "warning") - Number(b.device.health === "warning"));
 }
 
 export function formatChannelLastSeen(iso: string | null | undefined, now = Date.now()): string {
