@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import Link from "next/link";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
@@ -8,6 +10,21 @@ import type { CompositionLibraryItem } from "../types";
 import type { SortKey } from "../list-url-state";
 import { statusBadge } from "../status-display";
 import { CompositionLibraryPreview } from "./CompositionLibraryPreview";
+
+// One signing call for every zone thumbnail on the page, not one per row (ADR 0067).
+function useRowPreviews(rows: CompositionLibraryItem[]) {
+  const ids = useMemo(
+    () => [
+      ...new Set(
+        rows.flatMap((item) =>
+          item.previewZones?.flatMap((zone) => (zone.firstAssetId ? [zone.firstAssetId] : [])) ?? []
+        )
+      ),
+    ],
+    [rows]
+  );
+  return usePreviewUrls(ids);
+}
 
 function formatDate(value?: string) {
   return value
@@ -94,10 +111,11 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
   onPreview: (item: CompositionLibraryItem) => void;
   onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
 }) {
+  const previews = useRowPreviews(rows);
   return <div><table className="w-full table-fixed text-left text-sm"><thead><tr className="border-b border-zinc-100 text-xs text-zinc-500 dark:border-zinc-800">
     <th className="w-[72px] py-2 pl-1">Preview</th><SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort}/><th className="w-[64px] py-2">Content</th><th className="w-[130px] py-2">Resolution</th><SortHeader className="w-[135px]" label="Status" sortKey="status" sort={sort} onSort={onSort}/><SortHeader className="w-[100px]" label="Used in" sortKey="usage" sort={sort} onSort={onSort}/><SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort}/><th className="w-[132px] py-2 pr-1 text-right">Actions</th>
   </tr></thead><tbody>{rows.map((item) => { const badge = statusBadge(item.status); return <tr key={item.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
-    <td className="py-3 pl-1"><CompositionLibraryPreview zones={item.previewZones} /></td><td className="truncate py-3 pr-2 font-medium"><p className="truncate">{item.name}</p><p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p></td><td className="py-3">{item.bound_count}/{item.zone_count}</td><td className="py-3">{item.referenceResolution ?? "—"}</td><td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td><td className="py-3">{item.usageCount ?? "—"}</td><td className="py-3 text-zinc-500"><div className="flex min-w-0 items-center gap-2"><Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} /><span className="min-w-0"><span className="block truncate text-zinc-700">{item.createdBy?.displayName ?? "Unknown user"}</span><span className="block truncate text-xs">{formatDate(item.updated_at ?? item.created_at)}</span></span></div></td><td className="py-3 pr-1 text-right"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></td>
+    <td className="py-3 pl-1"><CompositionLibraryPreview zones={item.previewZones} previews={previews} /></td><td className="truncate py-3 pr-2 font-medium"><p className="truncate">{item.name}</p><p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p></td><td className="py-3">{item.bound_count}/{item.zone_count}</td><td className="py-3">{item.referenceResolution ?? "—"}</td><td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td><td className="py-3">{item.usageCount ?? "—"}</td><td className="py-3 text-zinc-500"><div className="flex min-w-0 items-center gap-2"><Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} /><span className="min-w-0"><span className="block truncate text-zinc-700">{item.createdBy?.displayName ?? "Unknown user"}</span><span className="block truncate text-xs">{formatDate(item.updated_at ?? item.created_at)}</span></span></div></td><td className="py-3 pr-1 text-right"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></td>
   </tr>; })}</tbody></table></div>;
 }
 
@@ -109,10 +127,11 @@ export function CompositionsGrid({ rows, inTrash, busyId, previewBusyId, onPrevi
   onPreview: (item: CompositionLibraryItem) => void;
   onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
 }) {
+  const previews = useRowPreviews(rows);
   return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{rows.map((item) => {
     const badge = statusBadge(item.status);
     return <Card key={item.id} className="overflow-hidden p-4">
-      <CompositionLibraryPreview zones={item.previewZones} />
+      <CompositionLibraryPreview zones={item.previewZones} previews={previews} />
       <div className="mt-3 space-y-2">
         <div className="min-w-0">
           <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-sm font-semibold text-zinc-900 hover:text-indigo-600 dark:text-zinc-100">{item.name}</Link>

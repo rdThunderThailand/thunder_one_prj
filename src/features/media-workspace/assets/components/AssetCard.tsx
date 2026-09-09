@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { TrashIcon } from "@/components/ui/icons";
-import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import {
   moveMediaAsset,
   permanentlyDeleteMediaAsset,
@@ -24,13 +23,17 @@ export function AssetCard({
   trash,
   folders,
   onRefresh,
+  previewUrl,
+  thumbnailUrl,
 }: {
   asset: MediaAsset;
   trash: boolean;
   folders: ContentFolder[];
   onRefresh: () => void;
+  // Signed once for the whole page by the list that owns these cards (ADR 0067).
+  previewUrl?: string;
+  thumbnailUrl?: string;
 }) {
-  const previews = usePreviewUrls([asset.id]);
   const [moving, setMoving] = useState(false);
   const label = asset.title ?? asset.file?.original_filename ?? "Untitled asset";
 
@@ -48,8 +51,8 @@ export function AssetCard({
     <Card className="overflow-hidden">
       <Link href={`/media-workspace/assets/${asset.id}`} aria-label={`View ${label}`}>
         <MediaThumb
-          url={previews.urls[asset.id]}
-          thumbnailUrl={previews.thumbnailUrls[asset.id]}
+          url={previewUrl}
+          thumbnailUrl={thumbnailUrl}
           kind={asset.kind}
           mimeType={asset.file?.mime_type}
           alt={label}

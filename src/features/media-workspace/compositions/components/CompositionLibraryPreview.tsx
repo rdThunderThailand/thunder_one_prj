@@ -1,12 +1,10 @@
 "use client";
 
-import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { ImageIcon } from "@/components/ui/icons";
+import type { PreviewUrls } from "@/lib/api/media-api";
 import type { CompositionLibraryPreviewZone } from "../types";
 
-export function CompositionLibraryPreview({ zones }: { zones?: CompositionLibraryPreviewZone[] }) {
-  const assetIds = zones?.flatMap((zone) => zone.firstAssetId ? [zone.firstAssetId] : []) ?? [];
-  const previews = usePreviewUrls(assetIds);
+export function CompositionLibraryPreview({ zones, previews }: { zones?: CompositionLibraryPreviewZone[]; previews: PreviewUrls }) {
   return <div className="relative flex h-10 w-16 items-center justify-center overflow-hidden rounded bg-zinc-100 text-zinc-400 dark:bg-zinc-800"><ImageIcon />{zones?.map((zone) => {
     const url = zone.firstAssetId ? previews.thumbnailUrls[zone.firstAssetId] ?? previews.urls[zone.firstAssetId] : undefined;
     const isVideo = url ? /\.(mp4|mov|webm)(?:\?|$)/i.test(url) : false;

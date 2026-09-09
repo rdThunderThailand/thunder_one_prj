@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -14,6 +14,7 @@ import {
   moveContentFolder,
   renameContentFolder,
 } from "@/lib/api/media-api";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { ContentFolderRail, type FolderCollection } from "../content-library/ContentFolderRail";
 import { isDescendant } from "../content-library/folder-tree";
 import type { ContentFolder, MediaAssetPage } from "@/types/domain";
@@ -83,6 +84,13 @@ export function MediaLibraryPage() {
   const [createBusy, setCreateBusy] = useState(false);
 
   const folderId = collection !== "all" && collection !== "uncategorized" && collection !== "trash" ? collection : undefined;
+
+  // One signing call for every card on the page, not one per card (ADR 0067).
+  const previewIds = useMemo(
+    () => [...new Set(assets.items.map((asset) => asset.id))],
+    [assets.items]
+  );
+  const previews = usePreviewUrls(previewIds);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -236,7 +244,7 @@ export function MediaLibraryPage() {
               ) : (
                 <div className={isGrid ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-4" : "space-y-3"}>
                   {assets.items.map((asset) => (
-                    <AssetCard key={asset.id} asset={asset} trash={collection === "trash"} folders={folders} onRefresh={() => void refresh()} />
+                    <AssetCard key={asset.id} asset={asset} trash={collection === "trash"} folders={folders} onRefresh={() => void refresh()} previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} />
                   ))}
                 </div>
               )}
