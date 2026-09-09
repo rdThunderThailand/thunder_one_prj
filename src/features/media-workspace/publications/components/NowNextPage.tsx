@@ -130,9 +130,18 @@ export function NowNextPage() {
         setError("Now & Next backend read model is not available yet");
       }
     });
+    // The mount fetch always runs, even for a tab opened in the background — only the
+    // recurring poll pauses while hidden, so a tab left open all day stops burning it.
     load();
-    const timer = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(timer); };
+    const poll = () => { if (!document.hidden) load(); };
+    const timer = setInterval(poll, 60_000);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [horizon, includeIdle, query]);
 
   const summary = data?.summary ?? emptySummary;
