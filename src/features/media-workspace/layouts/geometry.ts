@@ -112,6 +112,17 @@ export function deriveAspectRatio(width: number, height: number): string {
   return `${width / g}:${height / g}`;
 }
 
+/** Returns the paired custom-resolution dimension while its aspect ratio is locked. */
+export function pairedResolutionDimension(
+  value: number,
+  changed: "width" | "height",
+  aspectRatio: string,
+): number | null {
+  const ratio = parseAspectRatio(aspectRatio);
+  if (!ratio || !Number.isFinite(value) || value <= 0) return null;
+  return Math.round(changed === "width" ? value * ratio[1] / ratio[0] : value * ratio[0] / ratio[1]);
+}
+
 /** Compares two ratios numerically (cross-multiplication), never as strings — `16:9` and
  *  `32:18` must read as the same ratio even though nothing here ever produces the latter. */
 export function sameRatio(a: [number, number], b: [number, number]): boolean {

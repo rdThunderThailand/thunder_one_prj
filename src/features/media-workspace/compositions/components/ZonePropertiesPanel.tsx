@@ -9,7 +9,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { TrashIcon } from "@/components/ui/icons";
 import { parseResolution, referencePixels, roundPercent } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
 import type { MediaAsset } from "@/types/domain";
@@ -32,8 +31,6 @@ export function ZonePropertiesPanel({
   onApplyPlaybackToAllZones,
   assets,
   playlistDurations,
-  canDelete,
-  onDelete,
 }: {
   zone: LayoutZone;
   referenceResolution: string | null;
@@ -45,8 +42,6 @@ export function ZonePropertiesPanel({
   onApplyPlaybackToAllZones: (playback: ZonePlayback) => void;
   assets: MediaAsset[];
   playlistDurations: Record<string, number | undefined>;
-  canDelete: boolean;
-  onDelete: () => void;
 }) {
   const [tab, setTab] = useState<"layout" | "content">("content");
   const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
@@ -55,9 +50,26 @@ export function ZonePropertiesPanel({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Zone: {zone.name}</p>
-      </div>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Zone name</span>
+        <input
+          key={zone.id ?? zone.position}
+          defaultValue={zone.name}
+          aria-label="Zone name"
+          onBlur={(event) => {
+            const name = event.currentTarget.value.trim();
+            if (!name) {
+              event.currentTarget.value = zone.name;
+              return;
+            }
+            if (name !== zone.name) onZoneChange({ ...zone, name });
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.currentTarget.blur();
+          }}
+          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </label>
 
       <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
         <button type="button" className={tabClasses(tab === "content")} onClick={() => setTab("content")}>Content</button>
@@ -163,11 +175,6 @@ export function ZonePropertiesPanel({
         </div>
       )}
 
-      <div className="mt-auto border-t border-zinc-200 pt-4 dark:border-zinc-700">
-        <Button variant="secondary" disabled={!canDelete} onClick={onDelete} title={canDelete ? "Delete this Zone" : "A Layout must have at least one Zone"} className="w-full justify-center text-red-600 dark:text-red-400">
-          <TrashIcon /> Delete Zone
-        </Button>
-      </div>
     </div>
   );
 }

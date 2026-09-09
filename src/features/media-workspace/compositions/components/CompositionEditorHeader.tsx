@@ -7,7 +7,7 @@
 import { useRef, useState } from "react";
 import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
-import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
 
@@ -53,6 +53,10 @@ export function CompositionEditorHeader({
   unboundZoneNames,
   onBack,
   onPreview,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
   onUseInProgram,
   onSaveDraft,
   onSaveAsTemplate,
@@ -77,6 +81,10 @@ export function CompositionEditorHeader({
   unboundZoneNames: string[];
   onBack: () => void;
   onPreview: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
   /** ADR 0063 §7: the frames' `Publish` button, relabelled — the editor has no schedule and
    *  no target field, so it hands off to the Publication wizard instead of publishing. */
   onUseInProgram: () => void;
@@ -137,6 +145,10 @@ export function CompositionEditorHeader({
         </div>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div role="group" aria-label="Edit history" className="flex overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <button type="button" disabled={!canUndo} onClick={onUndo} aria-label="Undo" title="Undo (Ctrl/Cmd+Z)" className="grid h-10 w-10 place-items-center border-r border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:text-zinc-300 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600"><UndoIcon /></button>
+            <button type="button" disabled={!canRedo} onClick={onRedo} aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)" className="grid h-10 w-10 place-items-center text-zinc-600 hover:bg-zinc-50 disabled:text-zinc-300 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600"><RedoIcon /></button>
+          </div>
           <Button variant="secondary" onClick={onPreview} disabled={!canPreview}><EyeIcon /> Preview</Button>
           <Button
             variant="secondary"

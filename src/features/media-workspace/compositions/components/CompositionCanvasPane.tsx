@@ -10,10 +10,12 @@
 // here goes through the `onChangeStart` gate the page passes down (it checkpoints, then
 // applies ADR 0052 §3's shared-Template confirm) rather than keeping a second one locally.
 
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { ALIGN_EDGES, alignZone, duplicateZone, type AlignEdge } from "@/features/media-workspace/layouts/align-zones";
 import { Button } from "@/components/ui/Button";
-import { ClipboardIcon, LayoutIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
+import { ClipboardIcon, EyeIcon, LayoutIcon, LockIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { LayoutCanvas } from "@/features/media-workspace/layouts/components/LayoutCanvas";
+import { parseResolution, referencePixels } from "@/features/media-workspace/layouts/geometry";
 import { splitZone } from "@/features/media-workspace/layouts/split-zone";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
 import type { ZoneBindingDraft } from "../zone-bindings";
@@ -30,10 +32,8 @@ export function CompositionCanvasPane({
   onSelectZone,
   onChangeStart,
   onChange,
-  canUndo,
-  canRedo,
-  onUndo,
-  onRedo,
+  canDelete,
+  onDelete,
 }: {
   zones: LayoutZone[];
   background: string;
@@ -46,15 +46,39 @@ export function CompositionCanvasPane({
    *  the caller has already taken an undo checkpoint of the Zones as they are right now. */
   onChangeStart: () => boolean;
   onChange: (zones: LayoutZone[]) => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  onUndo: () => void;
-  onRedo: () => void;
+  canDelete: boolean;
+  onDelete: () => void;
 }) {
   const activeIndex = zones.findIndex((zone) => zone.id === activeZoneId);
+  const [lockedZoneIds, setLockedZoneIds] = useState<Set<string>>(() => new Set());
+  const [hiddenZoneIds, setHiddenZoneIds] = useState<Set<string>>(() => new Set());
+  const activeZone = activeIndex < 0 ? null : zones[activeIndex];
+  const isActiveLocked = !!activeZone?.id && lockedZoneIds.has(activeZone.id);
+  const isActiveHidden = !!activeZone?.id && hiddenZoneIds.has(activeZone.id);
+
+  const toggleZoneState = (setter: Dispatch<SetStateAction<Set<string>>>) => {
+    if (!activeZone?.id) return;
+    setter((current) => {
+      const next = new Set(current);
+      if (next.has(activeZone.id!)) next.delete(activeZone.id!);
+      else next.add(activeZone.id!);
+      return next;
+    });
+  };
+
+  const add = () => {
+    if (!onChangeStart() || zones.length === 0) return;
+    const sourceIndex = activeIndex < 0 ? zones.length - 1 : activeIndex;
+    const next = duplicateZone(zones, sourceIndex);
+    if (!next) return;
+    const createdIndex = sourceIndex + 1;
+    next[createdIndex] = { ...next[createdIndex]!, id: crypto.randomUUID(), name: `Zone ${zones.length + 1}` };
+    onChange(next);
+    onSelectZone(next[createdIndex]?.id ?? null);
+  };
 
   const split = () => {
-    if (!onChangeStart() || activeIndex < 0) return;
+    if (activeIndex < 0 || isActiveLocked || !onChangeStart()) return;
     const next = splitZone(zones, activeIndex);
     if (!next) return;
     // The Zone the split created has no id yet; the canvas keys and binds by id, so it needs
@@ -65,7 +89,7 @@ export function CompositionCanvasPane({
   };
 
   const align = (edge: (typeof ALIGN_EDGES)[number]["edge"]) => {
-    if (!onChangeStart() || activeIndex < 0) return;
+    if (activeIndex < 0 || isActiveLocked || !onChangeStart()) return;
     onChange(zones.map((zone, index) => (index === activeIndex ? alignZone(zone, edge) : zone)));
   };
 
@@ -82,19 +106,15 @@ export function CompositionCanvasPane({
   return (
       <div className="flex h-full min-h-0 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" disabled={!canUndo} onClick={onUndo} title="Undo (Ctrl/Cmd+Z)">
-            <UndoIcon /> Undo
-          </Button>
-          <Button variant="secondary" disabled={!canRedo} onClick={onRedo} title="Redo (Ctrl/Cmd+Shift+Z)">
-            <RedoIcon /> Redo
-          </Button>
-          <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={add}><PlusIcon /> Add Zone</Button>
+          <Button variant="secondary" disabled={!activeZoneId || isActiveLocked} onClick={split}><LayoutIcon /> Split Zone</Button>
           <div role="group" aria-label="Align selected Zone" className="flex overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             {ALIGN_EDGES.map(({ edge, label }) => (
               <button
                 key={edge}
                 type="button"
-                disabled={activeIndex < 0}
+                disabled={activeIndex < 0 || isActiveLocked}
                 onClick={() => align(edge)}
                 aria-label={label}
                 title={label}
@@ -104,12 +124,14 @@ export function CompositionCanvasPane({
               </button>
             ))}
           </div>
-          <Button variant="secondary" disabled={activeIndex < 0} onClick={duplicate}>
-            <ClipboardIcon /> Duplicate Zone
-          </Button>
-          <Button variant="secondary" disabled={!activeZoneId} onClick={split}>
-            <LayoutIcon /> Split Zone
-          </Button>
+          <div role="group" aria-label="Selected Zone actions" className="flex items-center gap-1">
+            <button type="button" disabled={activeIndex < 0} onClick={() => toggleZoneState(setLockedZoneIds)} aria-label={isActiveLocked ? "Unlock Zone" : "Lock Zone"} aria-pressed={isActiveLocked} title={isActiveLocked ? "Unlock Zone" : "Lock Zone"} className={`grid h-10 w-10 place-items-center rounded-lg border disabled:text-zinc-300 ${isActiveLocked ? "border-indigo-300 bg-indigo-50 text-indigo-600" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}><LockIcon /></button>
+            <button type="button" disabled={activeIndex < 0} onClick={() => toggleZoneState(setHiddenZoneIds)} aria-label={isActiveHidden ? "Show Zone" : "Hide Zone"} aria-pressed={isActiveHidden} title={isActiveHidden ? "Show Zone" : "Hide Zone"} className={`relative grid h-10 w-10 place-items-center rounded-lg border disabled:text-zinc-300 ${isActiveHidden ? "border-indigo-300 bg-indigo-50 text-indigo-600" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}><EyeIcon />{isActiveHidden && <span className="absolute h-px w-5 -rotate-45 bg-current" />}</button>
+            <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+            <button type="button" disabled={activeIndex < 0} onClick={duplicate} aria-label="Duplicate Zone" title="Duplicate Zone" className="grid h-10 w-10 place-items-center rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:text-zinc-300"><ClipboardIcon /></button>
+          </div>
+          </div>
+          <button type="button" disabled={!canDelete || activeIndex < 0} onClick={onDelete} title={canDelete ? "Delete Zone" : "A Layout must have at least one Zone"} className="ml-auto flex h-10 shrink-0 items-center gap-2 rounded-lg border border-red-200 px-3 text-sm font-medium text-red-600 hover:bg-red-50 disabled:border-zinc-200 disabled:text-zinc-300"><TrashIcon /> Delete Zone</button>
         </div>
 
         <LayoutCanvas
@@ -120,6 +142,8 @@ export function CompositionCanvasPane({
           fillAvailable
           zonePreviews={zonePreviews}
           selectedIndex={activeIndex}
+          lockedZoneIds={lockedZoneIds}
+          hiddenZoneIds={hiddenZoneIds}
           onSelectIndex={(index) => onSelectZone(index === null ? null : (zones[index]?.id ?? null))}
           onChangeStart={onChangeStart}
           onChange={onChange}
@@ -158,44 +182,52 @@ function AlignIcon({ edge }: { edge: AlignEdge }) {
   );
 }
 
-export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, onSelectZone }: {
+const zoneBadgeClasses = ["bg-violet-600", "bg-blue-600", "bg-emerald-600"];
+
+export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, referenceResolution, onSelectZone }: {
   zones: LayoutZone[];
   bindings: ZoneBindingDraft[];
   unboundZoneIds: string[];
   activeZoneId: string | null;
+  referenceResolution: string | null;
   onSelectZone: (zoneId: string | null) => void;
 }) {
+  const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   return (
-      <div className="flex flex-col gap-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Zone Overview</p>
-        {zones.map((zone) => {
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Zone Overview</p>
+        {zones.map((zone, index) => {
           const isUnbound = !zone.id || unboundZoneIds.includes(zone.id);
           const binding = zone.id ? bindings.find((candidate) => candidate.layoutZoneId === zone.id) : undefined;
           // Ticket 27: report the Zone's actual bound source — Playlist, Media, or unbound.
           // "Media" rather than "Assets" matches the frames' label for a Zone bound to
           // picked assets; a widget-rendered Zone would be "Media" too, but Widgets are
           // deferred (docs/layouts/Phase1/tickets/README.md) so that case does not exist yet.
-          const sourceLabel = isUnbound ? "Unbound" : binding?.source === "assets" ? "Media" : (binding?.playlistName ?? "Playlist");
+          const sourceLabel = isUnbound ? "Unbound" : binding?.source === "assets" ? "Media" : "Playlist";
           return (
             <button
               key={zone.id ?? zone.position}
               type="button"
               onClick={() => zone.id && onSelectZone(zone.id)}
-              className={`flex items-center justify-between rounded-md px-2 py-1.5 text-left text-xs ${
+              className={`grid grid-cols-[28px_minmax(0,1fr)_auto_auto_8px] items-center gap-2 rounded-lg px-2 py-2 text-left text-xs ${
                 zone.id === activeZoneId
                   ? "bg-indigo-50 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300"
                   : "bg-zinc-50 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
               }`}
             >
-              <span>
-                <span className="block font-medium">{zone.name}</span>
-                <span className="block text-[11px] text-zinc-500">
-                  {zone.width}×{zone.height}% · {sourceLabel}
-                </span>
+              <span className={`grid h-7 w-7 place-items-center rounded-md font-semibold text-white ${zoneBadgeClasses[index % zoneBadgeClasses.length]}`}>
+                {String.fromCharCode(65 + index)}
               </span>
-              <span className={isUnbound ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
-                {isUnbound ? "Unbound" : "Bound"}
+              <span className="truncate font-medium">{zone.name}</span>
+              <span className="whitespace-nowrap text-zinc-500">
+                {resolution ? `${referencePixels(zone.width, resolution[0])} × ${referencePixels(zone.height, resolution[1])}` : `${zone.width} × ${zone.height}%`}
               </span>
+              <span className="max-w-24 truncate text-zinc-500">{sourceLabel}</span>
+              <span
+                aria-label={isUnbound ? "Unbound" : "Bound"}
+                title={isUnbound ? "Unbound" : "Bound"}
+                className={`h-2 w-2 rounded-full ${isUnbound ? "bg-amber-500" : "bg-emerald-500"}`}
+              />
             </button>
           );
         })}

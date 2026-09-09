@@ -195,7 +195,7 @@ export function LayoutTemplatePicker({
     <Modal
       open={open}
       onClose={resetAndClose}
-      size={step === "start" ? "lg" : "xl"}
+      size={step === "start" ? "form" : "xl"}
       title={step === "start" ? "New Layout" : "Template Picker"}
       showCloseButton
       footer={footer}
