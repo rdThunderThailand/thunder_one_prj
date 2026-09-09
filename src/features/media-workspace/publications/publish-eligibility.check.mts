@@ -3,9 +3,10 @@
  *
  *     node src/features/media-workspace/publications/publish-eligibility.check.mts
  *
- * Covers priority-aware schedule conflicts, invalid schedules, and conflict-
- * service failures that must block Publish as "unknown" rather than being
- * silently read as "no conflict".
+ * ADR 0068: a schedule overlap warns, it never refuses. Publish is gated only on
+ * content, schedule and channels — conflicts (index 4) are advisory, so they can
+ * be "fail" or "unknown" while canPublish stays true. Covers the conflict
+ * buckets summarizePriorityConflicts must produce for the warning copy.
  */
 import assert from "node:assert/strict";
 import { computeEligibility, summarizePriorityConflicts } from "./publish-eligibility.ts";
@@ -47,15 +48,15 @@ const base = {
 // Everything passing is the only combination that should allow Publish.
 assert.equal(computeEligibility(base).canPublish, true);
 
-// --- conflict-service-failure: must block, and must not read as "no conflict" ---
+// --- conflict-service-failure: advisory only (ADR 0068) — flags "unknown" but never blocks ---
 const conflictFailure = computeEligibility({ ...base, conflictsError: "Network Error" });
 assert.equal(conflictFailure.checks[4].status, "unknown"); // conflicts is index 4
-assert.equal(conflictFailure.canPublish, false);
+assert.equal(conflictFailure.canPublish, true);
 
-// Still in flight is the same as failed for gating purposes — no answer yet.
+// Still in flight is also advisory — Publish no longer waits on a conflict result.
 const stillChecking = computeEligibility({ ...base, checkingConflicts: true });
 assert.equal(stillChecking.checks[4].status, "unknown");
-assert.equal(stillChecking.canPublish, false);
+assert.equal(stillChecking.canPublish, true);
 
 const samePriorityConflict: ScheduleConflict = {
   publication_id: "pub-2",
@@ -70,10 +71,10 @@ const samePriorityConflict: ScheduleConflict = {
   blocks: false,
 };
 
-// Same-tier publications append to the playback loop, so the overlap is advisory.
+// Same-tier publications append to the playback loop — overlap is advisory, Publish allowed.
 const withSamePriority = computeEligibility({ ...base, conflicts: [samePriorityConflict] });
-assert.equal(withSamePriority.checks[4].status, "pass");
-assert.equal(withSamePriority.canPublish, true);
+assert.equal(withSamePriority.checks[4].status, "fail"); // conflicts exist → checklist flags it
+assert.equal(withSamePriority.canPublish, true); // but it never blocks
 
 // A higher-priority draft suppresses the lower tier and is allowed to publish.
 const lowerPriorityConflict: ScheduleConflict = {
@@ -84,10 +85,11 @@ const lowerPriorityConflict: ScheduleConflict = {
   would_suppress: true,
 };
 const withLowerPriority = computeEligibility({ ...base, conflicts: [lowerPriorityConflict] });
-assert.equal(withLowerPriority.checks[4].status, "pass");
+assert.equal(withLowerPriority.checks[4].status, "fail");
 assert.equal(withLowerPriority.canPublish, true);
 
-// A draft that would be suppressed by a higher tier must remain blocked.
+// ADR 0068: a draft that would be suppressed by a higher tier still publishes — it just
+// will not air during those windows (the higher-priority override behaviour is unchanged).
 const higherPriorityConflict: ScheduleConflict = {
   ...samePriorityConflict,
   publication_id: "pub-high",
@@ -97,53 +99,44 @@ const higherPriorityConflict: ScheduleConflict = {
 };
 const withHigherPriority = computeEligibility({ ...base, conflicts: [higherPriorityConflict] });
 assert.equal(withHigherPriority.checks[4].status, "fail");
-assert.equal(withHigherPriority.canPublish, false);
+assert.equal(withHigherPriority.canPublish, true);
 
-// Any losing conflict blocks the draft, even when it also wins or ties elsewhere.
+// Mixed priorities: still advisory, still publishable.
 const withMixedPriorities = computeEligibility({
   ...base,
   conflicts: [lowerPriorityConflict, samePriorityConflict, higherPriorityConflict],
 });
 assert.equal(withMixedPriorities.checks[4].status, "fail");
-assert.equal(withMixedPriorities.canPublish, false);
+assert.equal(withMixedPriorities.canPublish, true);
 assert.deepEqual(
   summarizePriorityConflicts([lowerPriorityConflict, samePriorityConflict, higherPriorityConflict]),
   {
     higherPriorityCount: 1,
     lowerPriorityCount: 1,
     equalPriorityCount: 1,
-    blockingOverlapCount: 0,
-    hasBlockingConflict: true,
+    exclusiveOverlapCount: 0,
   }
 );
 
-// --- ticket 09: equal-priority overlap where either side is a Composition blocks Publish ---
-const blockingOverlap: ScheduleConflict = {
+// --- ADR 0068: equal-priority overlap where either side is a Composition still publishes,
+// but only the most recently activated publication airs for the overlap ---
+const exclusiveOverlap: ScheduleConflict = {
   ...samePriorityConflict,
   publication_id: "pub-layout",
   name: "Menu board",
   blocks: true,
 };
 
-// On its own: same priority (so no suppress flags), but `blocks` still fails the gate.
-const withBlockingOverlap = computeEligibility({ ...base, conflicts: [blockingOverlap] });
-assert.equal(withBlockingOverlap.checks[4].status, "fail");
-assert.equal(withBlockingOverlap.canPublish, false);
+const withExclusiveOverlap = computeEligibility({ ...base, conflicts: [exclusiveOverlap] });
+assert.equal(withExclusiveOverlap.checks[4].status, "fail");
+assert.equal(withExclusiveOverlap.canPublish, true);
 
-// A plain equal-priority overlap alongside a blocking one still fails.
-const withBlockingAndAdvisory = computeEligibility({
-  ...base,
-  conflicts: [samePriorityConflict, blockingOverlap],
-});
-assert.equal(withBlockingAndAdvisory.checks[4].status, "fail");
-assert.equal(withBlockingAndAdvisory.canPublish, false);
-
-assert.deepEqual(summarizePriorityConflicts([samePriorityConflict, blockingOverlap]), {
+// `blocks` is counted on its own axis and does not stop the equal-priority tally.
+assert.deepEqual(summarizePriorityConflicts([samePriorityConflict, exclusiveOverlap]), {
   higherPriorityCount: 0,
   lowerPriorityCount: 0,
   equalPriorityCount: 2,
-  blockingOverlapCount: 1,
-  hasBlockingConflict: true,
+  exclusiveOverlapCount: 1,
 });
 
 // --- invalid schedule: index 1 is the schedule check ---
