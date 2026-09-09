@@ -81,9 +81,18 @@ export function ProgramStatusCards() {
       // Never the demo data NowNextPage falls back to in development: Overview's headline is
       // not a place to show invented programmes, so a failure says so instead (ADR 0065 §2).
       .catch(() => { if (active) setState({ kind: "failed" }); });
+    // The mount fetch always runs, even for a tab opened in the background — only the
+    // recurring poll pauses while hidden, so a tab left open all day stops burning it.
     load();
-    const interval = setInterval(load, 60_000);
-    return () => { active = false; clearInterval(interval); };
+    const poll = () => { if (!document.hidden) load(); };
+    const interval = setInterval(poll, 60_000);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   if (state.kind === "loading") return <div className="grid h-full gap-4 lg:grid-cols-2"><ProgramCardSkeleton /><ProgramCardSkeleton /></div>;
