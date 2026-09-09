@@ -25,7 +25,7 @@ import { PlaylistsTable, type RowAction } from "./PlaylistsTable";
 import { PlaylistsListDialogs, type PlaylistDialogAction } from "./PlaylistsListDialogs";
 import { PlaylistTagsDialog } from "./PlaylistTagsDialog";
 import { CreatePlaylistDialog } from "./CreatePlaylistDialog";
-import { TagsRail } from "./TagsRail";
+import { TagsRail } from "../../content-library/TagsRail";
 import { emptyCause, hasActiveFilters } from "../list-empty-state";
 import { ListEmpty, ListError, ListSkeleton, StatCard, SummarySkeleton } from "./PlaylistsListStates";
 

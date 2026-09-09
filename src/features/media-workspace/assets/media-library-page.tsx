@@ -2,29 +2,30 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ImageIcon, UploadIcon, VideoIcon } from "@/components/ui/icons";
 import {
-  createContentFolder,
-  deleteContentFolder,
   fetchContentFolders,
-  fetchMediaAssetPage,
-  moveContentFolder,
-  renameContentFolder,
+  fetchMediaAssets,
+  moveMediaAsset,
 } from "@/lib/api/media-api";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { ContentFolderRail, type FolderCollection } from "../content-library/ContentFolderRail";
-import { isDescendant } from "../content-library/folder-tree";
-import type { ContentFolder, MediaAssetPage } from "@/types/domain";
+import { FeatureFolderRail } from "../content-library/FeatureFolderRail";
+import { TagsRail } from "../content-library/TagsRail";
+import { filterByTag, tagCounts } from "../content-library/tag-filtering";
+import type { FolderCollection } from "../content-library/ContentFolderRail";
+import type { ContentFolder, MediaAsset } from "@/types/domain";
 import { AssetCard } from "./components/AssetCard";
-import { CreateFolderModal } from "./components/CreateFolderModal";
-import { FolderActionModal } from "./components/FolderActionModal";
+import { AssetTable } from "./components/AssetTable";
 import { LibraryToolbar } from "./components/LibraryToolbar";
 
 type Collection = FolderCollection;
-const EMPTY_PAGE: MediaAssetPage = { items: [], total: 0, page: 1, page_size: 12, stats: { total: 0, images: 0, videos: 0 } };
+const PAGE_SIZE = 12;
+const railTabClass = (active: boolean) =>
+  `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${active ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"}`;
 
 function StatTilesSkeleton() {
   return (
@@ -71,24 +72,36 @@ export function MediaLibraryPage() {
   const [kind, setKind] = useState<"" | "image" | "video">("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [assets, setAssets] = useState<MediaAssetPage>(EMPTY_PAGE);
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<ContentFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGrid, setIsGrid] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [folderName, setFolderName] = useState("");
-  const [folderAction, setFolderAction] = useState<{ kind: "rename" | "move"; folder: ContentFolder } | null>(null);
-  const [folderActionValue, setFolderActionValue] = useState("");
-  const [folderActionBusy, setFolderActionBusy] = useState(false);
-  const [createBusy, setCreateBusy] = useState(false);
+  const [railTab, setRailTab] = useState<"folders" | "tags">("folders");
+  const [tagId, setTagId] = useState<string | null>(null);
 
   const folderId = collection !== "all" && collection !== "uncategorized" && collection !== "trash" ? collection : undefined;
+  const tags = useMemo(() => tagCounts(assets), [assets]);
+  const filteredAssets = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    let result = assets.filter((asset) => {
+      if (collection === "uncategorized" && asset.folder_id) return false;
+      if (folderId && asset.folder_id !== folderId) return false;
+      if (kind && asset.kind !== kind) return false;
+      if (!query) return true;
+      return `${asset.title ?? ""} ${asset.file?.original_filename ?? ""}`.toLocaleLowerCase().includes(query);
+    });
+    if (tagId) result = filterByTag(result, tagId);
+    return result;
+  }, [assets, collection, folderId, kind, search, tagId]);
+  const totalPages = Math.max(1, Math.ceil(filteredAssets.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const visibleAssets = filteredAssets.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   // One signing call for every card on the page, not one per card (ADR 0067).
   const previewIds = useMemo(
-    () => [...new Set(assets.items.map((asset) => asset.id))],
-    [assets.items]
+    () => [...new Set(visibleAssets.map((asset) => asset.id))],
+    [visibleAssets]
   );
   const previews = usePreviewUrls(previewIds);
 
@@ -97,96 +110,45 @@ export function MediaLibraryPage() {
     setError(null);
     try {
       const [nextAssets, nextFolders] = await Promise.all([
-        fetchMediaAssetPage({ search, kind: kind || undefined, folderId, page, pageSize: 12, trash: collection === "trash" }),
+        fetchMediaAssets({ trash: collection === "trash" }),
         fetchContentFolders("asset"),
       ]);
-      setAssets(collection === "uncategorized" ? { ...nextAssets, items: nextAssets.items.filter((asset) => !asset.folder_id) } : nextAssets);
+      setAssets(nextAssets);
       setFolders(nextFolders);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to load Media Library");
     } finally {
       setLoading(false);
     }
-  }, [collection, folderId, kind, page, search]);
+  }, [collection]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void refresh(), 250);
+    const timer = window.setTimeout(() => void refresh(), 0);
     return () => window.clearTimeout(timer);
   }, [refresh]);
 
-  const selectedFolder = folderId ?? null;
-  const selectCollection = (next: Collection) => { setCollection(next); setPage(1); };
+  const selectCollection = (next: Collection) => { setCollection(next); setTagId(null); setPage(1); };
+  const selectTag = (next: string | null) => { setTagId(next); setCollection("all"); setPage(1); };
   const handleSearch = (value: string) => { setSearch(value); setPage(1); };
   const handleKind = (value: "" | "image" | "video") => { setKind(value); setPage(1); };
 
-  const createFolder = async () => {
-    if (!folderName.trim()) return;
-    setCreateBusy(true);
-    try {
-      await createContentFolder("asset", { name: folderName, parent_id: selectedFolder });
-      setFolderName("");
-      setCreateOpen(false);
-      await refresh();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to create folder");
-    } finally {
-      setCreateBusy(false);
-    }
-  };
-
-  const openRename = (folder: ContentFolder) => { setFolderAction({ kind: "rename", folder }); setFolderActionValue(folder.name); };
-  const openMove = (folder: ContentFolder) => { setFolderAction({ kind: "move", folder }); setFolderActionValue(""); };
-
-  const deleteFolder = async (folder: ContentFolder) => {
-    if (!window.confirm(`Delete folder ${folder.name}? It must be empty.`)) return;
-    try {
-      await deleteContentFolder(folder.id);
-      if (collection === folder.id) selectCollection("all");
-      await refresh();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to delete folder");
-    }
-  };
-
-  const submitFolderAction = async () => {
-    if (!folderAction || (folderAction.kind === "rename" && !folderActionValue.trim())) return;
-    setFolderActionBusy(true);
-    try {
-      if (folderAction.kind === "rename") await renameContentFolder(folderAction.folder.id, folderActionValue);
-      else await moveContentFolder(folderAction.folder.id, folderActionValue || null);
-      setFolderAction(null);
-      setFolderActionValue("");
-      await refresh();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to update folder");
-    } finally {
-      setFolderActionBusy(false);
-    }
-  };
-
-  const moveTargets = folderAction?.kind === "move"
-    ? folders.filter((folder) => folder.id !== folderAction.folder.id && !isDescendant(folders, folderAction.folder.id, folder.id))
-    : [];
-
   const statTiles = [
-    { label: "Total files", value: assets.stats.total, icon: "◫" },
-    { label: "Images", value: assets.stats.images, icon: <ImageIcon /> },
-    { label: "Videos", value: assets.stats.videos, icon: <VideoIcon /> },
+    { label: "Total files", value: assets.length, icon: "◫" },
+    { label: "Images", value: assets.filter((asset) => asset.kind === "image").length, icon: <ImageIcon /> },
+    { label: "Videos", value: assets.filter((asset) => asset.kind === "video").length, icon: <VideoIcon /> },
     { label: "Audio", value: "—", icon: "♪", disabled: true },
     { label: "Documents", value: "—", icon: "▤", disabled: true },
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">Media Library</h1>
-          <p className="mt-1 text-sm text-zinc-500">Manage and organize your media assets.</p>
-        </div>
-        <Link href="/media-workspace/assets/upload" className={buttonClasses()}><UploadIcon /> Upload</Link>
-      </div>
+    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-6">
+      <PageHeader
+        title="Media Library"
+        subtitle="Manage and organize your media assets."
+        actions={<Link href="/media-workspace/assets/upload" className={buttonClasses()}><UploadIcon /> Upload</Link>}
+      />
 
-      {loading && assets.items.length === 0 ? (
+      {loading && assets.length === 0 ? (
         <StatTilesSkeleton />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -203,33 +165,38 @@ export function MediaLibraryPage() {
         </div>
       )}
 
-      <Card className="flex h-[calc(100vh-345px)] min-h-[420px] flex-col overflow-hidden">
-        <LibraryToolbar search={search} onSearch={handleSearch} kind={kind} onKind={handleKind} isGrid={isGrid} onIsGrid={setIsGrid} />
-
-        <div className="grid min-h-0 flex-1 md:grid-cols-[230px_1fr]">
+      <Card className="flex min-h-[420px] flex-1 flex-col overflow-hidden">
+        <div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
           <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r">
-            <p className="mb-2 shrink-0 px-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Folders</p>
-            <ContentFolderRail
+            <div className="mb-2 flex shrink-0 gap-1 px-1">
+              <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>Folders</button>
+              <button type="button" className={railTabClass(railTab === "tags")} onClick={() => setRailTab("tags")}>Tags</button>
+            </div>
+            {railTab === "folders" ? <FeatureFolderRail
+              scope="asset"
               folders={folders}
               selected={collection}
               labels={{ all: "All Media", uncategorized: "Uncategorized", trash: "Trash" }}
               onSelect={selectCollection}
-              onRename={openRename}
-              onMove={openMove}
-              onDelete={(folder) => void deleteFolder(folder)}
+              onRefresh={() => void refresh()}
+              onError={(reason) => setError(reason instanceof Error ? reason.message : "Unable to update folder")}
+              deleteFolderItems={{
+                loadIds: async (targetFolderId) => (await fetchMediaAssets({ folderId: targetFolderId })).map((asset) => asset.id),
+                move: moveMediaAsset,
+              }}
               isLoading={loading && folders.length === 0}
-              footer={<Button type="button" variant="secondary" className="mt-2 w-full" onClick={() => setCreateOpen(true)}>Create Folder</Button>}
-            />
+            /> : <TagsRail tags={tags} selected={tagId} onSelect={selectTag} />}
           </aside>
 
           <main className="flex min-h-0 flex-col p-5">
+            <LibraryToolbar search={search} onSearch={handleSearch} kind={kind} onKind={handleKind} isGrid={isGrid} onIsGrid={setIsGrid} />
             <div className="mb-4 flex shrink-0 items-baseline justify-between">
               <div>
                 <h2 className="font-semibold">{collection === "trash" ? "Trash" : "All Media"}</h2>
-                {loading && assets.items.length === 0 ? (
+                {loading && assets.length === 0 ? (
                   <Skeleton className="mt-2 h-4 w-16" />
                 ) : (
-                  <p className="text-sm text-zinc-500">{assets.total.toLocaleString()} items</p>
+                  <p className="text-sm text-zinc-500">{filteredAssets.length.toLocaleString()} items</p>
                 )}
               </div>
             </div>
@@ -237,48 +204,32 @@ export function MediaLibraryPage() {
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
               {error ? (
                 <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
-              ) : loading && assets.items.length === 0 ? (
+              ) : loading && assets.length === 0 ? (
                 <AssetListSkeleton isGrid={isGrid} />
-              ) : assets.items.length === 0 ? (
+              ) : visibleAssets.length === 0 ? (
                 <p className="py-20 text-center text-sm text-zinc-500">No media found.</p>
-              ) : (
+              ) : isGrid ? (
                 <div className={isGrid ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-4" : "space-y-3"}>
-                  {assets.items.map((asset) => (
+                  {visibleAssets.map((asset) => (
                     <AssetCard key={asset.id} asset={asset} trash={collection === "trash"} folders={folders} onRefresh={() => void refresh()} previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} />
                   ))}
                 </div>
+              ) : (
+                <AssetTable assets={visibleAssets} trash={collection === "trash"} folders={folders} onRefresh={() => void refresh()} previewUrls={previews.urls} thumbnailUrls={previews.thumbnailUrls} />
               )}
             </div>
 
-            <div className="mt-4 flex shrink-0 items-center justify-between border-t border-zinc-200 pt-4 text-sm dark:border-zinc-800">
-              <span>Page {assets.page} of {Math.max(1, Math.ceil(assets.total / assets.page_size))}</span>
-              <div className="flex gap-2">
-                <Button variant="secondary" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</Button>
-                <Button variant="secondary" disabled={page * assets.page_size >= assets.total} onClick={() => setPage((value) => value + 1)}>Next</Button>
-              </div>
-            </div>
           </main>
+        </div>
+        <div className="flex shrink-0 items-center justify-between border-t border-zinc-200 px-5 py-4 text-sm dark:border-zinc-800">
+          <span>Page {currentPage} of {totalPages}</span>
+          <div className="flex gap-2">
+            <Button variant="secondary" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</Button>
+            <Button variant="secondary" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Next</Button>
+          </div>
         </div>
       </Card>
 
-      <CreateFolderModal
-        open={createOpen}
-        name={folderName}
-        busy={createBusy}
-        onNameChange={setFolderName}
-        onCancel={() => setCreateOpen(false)}
-        onCreate={() => void createFolder()}
-      />
-
-      <FolderActionModal
-        action={folderAction}
-        value={folderActionValue}
-        busy={folderActionBusy}
-        moveTargets={moveTargets}
-        onValueChange={setFolderActionValue}
-        onCancel={() => setFolderAction(null)}
-        onSubmit={() => void submitFolderAction()}
-      />
     </div>
   );
 }
