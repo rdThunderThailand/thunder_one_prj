@@ -3,11 +3,12 @@
 // ponytail: native <dialog> — swap to a portal + animation library only if entry/exit transitions are ever needed
 import { useEffect, useRef, type ReactNode } from "react";
 
-type ModalSize = "md" | "lg" | "xl" | "preview";
+type ModalSize = "md" | "lg" | "form" | "xl" | "preview";
 
 const sizeClasses: Record<ModalSize, string> = {
   md: "max-w-md",
   lg: "max-w-2xl",
+  form: "max-w-3xl",
   xl: "max-w-6xl",
   preview: "max-w-[90rem]",
 };

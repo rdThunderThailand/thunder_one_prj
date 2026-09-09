@@ -1,4 +1,9 @@
+"use client";
+
+import { useState } from "react";
+import { LockIcon } from "@/components/ui/icons";
 import type { ContentFolder } from "@/types/domain";
+import { deriveAspectRatio, pairedResolutionDimension, parseResolution } from "../geometry";
 import type { PickerEntry } from "../template-picker";
 import { LayoutWireframe } from "./LayoutWireframe";
 
@@ -14,7 +19,9 @@ export type StartDetails = {
 };
 
 const inputClasses =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-800";
+  "h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-800";
+
+const canvasLabelClasses = "grid grid-rows-[20px_40px] gap-1.5";
 
 function ChoiceIcon({ kind }: { kind: StartChoice }) {
   return kind === "blank" ? (
@@ -126,6 +133,23 @@ export function CreateLayoutStartStep({
   onDetailsChange: (details: StartDetails) => void;
 }) {
   const set = (patch: Partial<StartDetails>) => onDetailsChange({ ...details, ...patch });
+  const initialResolution = parseResolution(`${details.width}x${details.height}`);
+  const [isAspectLocked, setIsAspectLocked] = useState(true);
+  const [lockedAspectRatio, setLockedAspectRatio] = useState(
+    initialResolution ? deriveAspectRatio(initialResolution[0], initialResolution[1]) : "16:9",
+  );
+  const resolution = `${details.width}x${details.height}`;
+  const presets = ["1920x1080", "1080x1920", "3840x2160"];
+  const isPreset = presets.includes(resolution);
+
+  const setDimension = (value: string, changed: "width" | "height") => {
+    const patch: Partial<StartDetails> = { [changed]: value };
+    if (isAspectLocked) {
+      const paired = pairedResolutionDimension(Number(value), changed, lockedAspectRatio);
+      if (paired !== null) patch[changed === "width" ? "height" : "width"] = String(paired);
+    }
+    set(patch);
+  };
 
   return (
     <div className="space-y-6">
@@ -170,7 +194,7 @@ export function CreateLayoutStartStep({
               <span className="block text-right text-xs text-zinc-400">{details.name.length}/100</span>
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-1.5">
+              <label className={canvasLabelClasses}>
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Folder <span className="font-normal text-zinc-400">(Optional)</span></span>
                 <select value={details.folderId} onChange={(event) => set({ folderId: event.target.value })} className={inputClasses}>
                   <option value="">Uncategorized</option>
@@ -193,40 +217,57 @@ export function CreateLayoutStartStep({
 
           <fieldset>
             <legend className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">3. Canvas settings</legend>
-            <div className="grid gap-3 sm:grid-cols-[1.25fr_1fr_1fr_1fr]">
+            <div className="grid gap-3 sm:grid-cols-4">
               <label className="space-y-1.5">
                 <span className="flex items-center justify-between gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Resolution
-                  {resolutionLocked && <span className="text-xs font-normal text-zinc-400">Locked by template</span>}
+                  {resolutionLocked && <span className="whitespace-nowrap text-xs font-normal text-zinc-400">Locked</span>}
                 </span>
                 <select
-                  value={`${details.width}x${details.height}`}
+                  value={isPreset ? resolution : "custom"}
                   disabled={resolutionLocked}
                   onChange={(event) => {
+                    if (event.target.value === "custom") return;
                     const [width, height] = event.target.value.split("x");
+                    setLockedAspectRatio(deriveAspectRatio(Number(width), Number(height)));
                     set({ width, height });
                   }}
                   className={inputClasses}
                 >
-                  {resolutionLocked && !["1920x1080", "1080x1920", "3840x2160"].includes(`${details.width}x${details.height}`) && (
-                    <option value={`${details.width}x${details.height}`}>
-                      {details.width && details.height ? `${details.width} × ${details.height}` : "Not set"}
-                    </option>
-                  )}
                   <option value="1920x1080">1920 × 1080 (16:9)</option>
                   <option value="1080x1920">1080 × 1920 (9:16)</option>
                   <option value="3840x2160">3840 × 2160 (16:9)</option>
+                  <option value="custom">Custom</option>
                 </select>
               </label>
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Width</span>
-                <input type="number" min={100} max={99999} value={details.width} disabled={resolutionLocked} onChange={(event) => set({ width: event.target.value })} className={inputClasses} />
-              </label>
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Height</span>
-                <input type="number" min={100} max={99999} value={details.height} disabled={resolutionLocked} onChange={(event) => set({ height: event.target.value })} className={inputClasses} />
-              </label>
-              <label className="space-y-1.5">
+              <div className="grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)] items-end gap-2 sm:col-span-2">
+                <label className={canvasLabelClasses}>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Width</span>
+                  <input type="number" min={100} max={99999} value={details.width} disabled={resolutionLocked} onChange={(event) => setDimension(event.target.value, "width")} className={inputClasses} />
+                </label>
+                <button
+                  type="button"
+                  aria-label={isAspectLocked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                  aria-pressed={isAspectLocked}
+                  title={isAspectLocked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                  disabled={resolutionLocked}
+                  onClick={() => {
+                    if (!isAspectLocked) {
+                      const current = parseResolution(resolution);
+                      if (current) setLockedAspectRatio(deriveAspectRatio(current[0], current[1]));
+                    }
+                    setIsAspectLocked((current) => !current);
+                  }}
+                  className={`mb-1 grid h-8 w-8 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isAspectLocked ? "border-indigo-200 bg-indigo-50 text-indigo-600" : "border-zinc-200 bg-white text-zinc-400 hover:text-zinc-700"}`}
+                >
+                  <LockIcon className="h-3.5 w-3.5" />
+                </button>
+                <label className={canvasLabelClasses}>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Height</span>
+                  <input type="number" min={100} max={99999} value={details.height} disabled={resolutionLocked} onChange={(event) => setDimension(event.target.value, "height")} className={inputClasses} />
+                </label>
+              </div>
+              <label className={canvasLabelClasses}>
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Background</span>
                 <span className={`${inputClasses} flex items-center gap-2`}>
                   <input type="color" value={details.background} onChange={(event) => set({ background: event.target.value })} className="h-5 w-6 cursor-pointer border-0 bg-transparent p-0" />

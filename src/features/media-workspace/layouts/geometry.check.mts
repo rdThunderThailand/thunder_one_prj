@@ -7,6 +7,7 @@ import {
   evenSplitPercents,
   parseAspectRatio,
   parseResolution,
+  pairedResolutionDimension,
   rectsOverlap,
   referencePixels,
   fitCanvasSize,
@@ -118,6 +119,10 @@ assert.equal(deriveAspectRatio(1080, 1920), "9:16");
 assert.equal(deriveAspectRatio(3840, 2160), "16:9");
 assert.equal(deriveAspectRatio(3000, 2000), "3:2");
 assert.equal(deriveAspectRatio(5760, 1080), "16:3");
+
+assert.equal(pairedResolutionDimension(1920, "width", "16:9"), 1080);
+assert.equal(pairedResolutionDimension(1080, "height", "16:9"), 1920);
+assert.equal(pairedResolutionDimension(1920, "width", "invalid"), null);
 
 // Ticket 19 — numeric same-ratio comparison, never string comparison.
 assert.equal(sameRatio([1920, 1080], [3840, 2160]), true);

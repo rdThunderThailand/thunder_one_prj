@@ -70,6 +70,8 @@ export function LayoutCanvas({
   referenceResolution = null,
   zonePreviews = {},
   selectedIndex,
+  lockedZoneIds = new Set(),
+  hiddenZoneIds = new Set(),
   onSelectIndex,
   onChangeStart,
   onChange,
@@ -81,6 +83,8 @@ export function LayoutCanvas({
   referenceResolution?: string | null;
   zonePreviews?: Record<string, { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string; mediaFit?: "fit" | "fill" | "stretch" }>;
   selectedIndex: number | null;
+  lockedZoneIds?: ReadonlySet<string>;
+  hiddenZoneIds?: ReadonlySet<string>;
   onSelectIndex: (index: number | null) => void;
   onChangeStart?: () => boolean;
   onChange: (zones: LayoutZone[]) => void;
@@ -139,6 +143,7 @@ export function LayoutCanvas({
   const startDrag = (index: number, handle: Handle) => (e: React.PointerEvent) => {
     e.stopPropagation();
     onSelectIndex(index);
+    if (zones[index]?.id && lockedZoneIds.has(zones[index].id)) return;
     if (onChangeStart && !onChangeStart()) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -206,7 +211,7 @@ export function LayoutCanvas({
           backgroundSize: snap ? "10% 10%" : undefined,
         }}
       >
-        {zones.map((zone, index) => (
+        {zones.map((zone, index) => hiddenZoneIds.has(zone.id ?? "") ? null : (
           <div
             key={zone.id ?? index}
             onPointerDown={startDrag(index, "move")}
@@ -214,7 +219,7 @@ export function LayoutCanvas({
               e.stopPropagation();
               onSelectIndex(index);
             }}
-            className={`absolute cursor-move border-2 ${ZONE_FILL[index % ZONE_FILL.length]} ${
+            className={`absolute border-2 ${zone.id && lockedZoneIds.has(zone.id) ? "cursor-default" : "cursor-move"} ${ZONE_FILL[index % ZONE_FILL.length]} ${
               overlapping.has(index) ? "outline outline-2 outline-red-500" : ""
             } ${selectedIndex === index ? "ring-2 ring-offset-1 ring-indigo-500" : ""}`}
             style={{
@@ -240,7 +245,7 @@ export function LayoutCanvas({
                 ? `${referencePixels(zone.width, resolution[0])}×${referencePixels(zone.height, resolution[1])}px`
                 : `${zone.width.toFixed(3)}×${zone.height.toFixed(3)}%`}
             </span>
-            {selectedIndex === index &&
+            {selectedIndex === index && !(zone.id && lockedZoneIds.has(zone.id)) &&
               RESIZE_HANDLES.map((h) => (
                 <div
                   key={h.handle}

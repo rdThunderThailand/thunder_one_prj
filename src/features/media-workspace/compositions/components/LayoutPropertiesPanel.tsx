@@ -7,10 +7,10 @@
 // changing them can need ADR 0052 §3's interruption — the page owns that guard and hands
 // this panel an `onSettingsChange` that has already asked.
 
-import { useEffect, useState, type ReactNode } from "react";
-import { XIcon } from "@/components/ui/icons";
+import { useEffect, useState } from "react";
+import { LockIcon, XIcon } from "@/components/ui/icons";
 import { fetchTags } from "@/lib/api/media-api";
-import { deriveAspectRatio, parseResolution } from "@/features/media-workspace/layouts/geometry";
+import { deriveAspectRatio, pairedResolutionDimension, parseResolution } from "@/features/media-workspace/layouts/geometry";
 import { RESOLUTION_PRESETS } from "@/features/media-workspace/layouts/types";
 import type { ContentFolder, Tag } from "@/types/domain";
 import type { LayoutSettingsDraft } from "../save-composition";
@@ -30,8 +30,6 @@ export function LayoutPropertiesPanel({
   settings,
   onSettingsChange,
   sharedTemplateUsage,
-  zoneProperties,
-  selectedZoneId,
   disabled = false,
 }: {
   name: string;
@@ -47,13 +45,8 @@ export function LayoutPropertiesPanel({
   onSettingsChange: (next: LayoutSettingsDraft) => void;
   /** How many Layouts share this geometry; > 1 means an edit here travels. */
   sharedTemplateUsage: number;
-  zoneProperties?: ReactNode;
-  selectedZoneId?: string | null;
   disabled?: boolean;
 }) {
-  const [panelChoice, setPanelChoice] = useState<{ panel: "layout" | "zone"; zoneId?: string | null }>({ panel: "zone", zoneId: selectedZoneId });
-  const panel = selectedZoneId && selectedZoneId !== panelChoice.zoneId ? "zone" : panelChoice.panel;
-  const selectPanel = (next: "layout" | "zone") => setPanelChoice({ panel: next, zoneId: selectedZoneId });
   const [vocabulary, setVocabulary] = useState<Tag[]>([]);
   const [draftTag, setDraftTag] = useState("");
   // "Custom" is a mode the operator picks, not a fact derived from whether the stored value
@@ -93,13 +86,8 @@ export function LayoutPropertiesPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
-      <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Properties</p>
-      <div className="flex rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
-        <button type="button" disabled={!zoneProperties} onClick={() => selectPanel("zone")} className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-40 ${panel === "zone" ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300" : "text-zinc-500"}`}>Zone</button>
-        <button type="button" onClick={() => selectPanel("layout")} className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium ${panel === "layout" ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300" : "text-zinc-500"}`}>Layout</button>
-      </div>
-
-      {panel === "zone" && zoneProperties ? zoneProperties : <>
+      <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Layout Properties</p>
+      <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClasses}>Layout name</span>
@@ -171,7 +159,7 @@ export function LayoutPropertiesPanel({
       </div>
 
       {sharedTemplateUsage > 1 && (
-        <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-200 md:col-span-2 xl:col-span-3">
           Resolution and background come from a Template used by {sharedTemplateUsage} Layouts.
           Changing them here changes all of them.
         </p>
@@ -202,7 +190,7 @@ export function LayoutPropertiesPanel({
           ))}
           <option value="custom">Custom</option>
         </select>
-        {customMode && <CustomResolution disabled={disabled} onCommit={setResolution} />}
+        {customMode && <CustomResolution disabled={disabled} aspectRatio={settings.aspectRatio} onCommit={setResolution} />}
         <p className="text-xs text-zinc-400">Aspect ratio: {settings.aspectRatio}</p>
       </div>
 
@@ -216,20 +204,23 @@ export function LayoutPropertiesPanel({
           className="h-10 w-full rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900"
         />
       </label>
-      </>}
+      </div>
     </div>
   );
 }
 
 function CustomResolution({
   disabled,
+  aspectRatio,
   onCommit,
 }: {
   disabled: boolean;
+  aspectRatio: string;
   onCommit: (resolution: string) => void;
 }) {
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
+  const [locked, setLocked] = useState(true);
   const valid = parseResolution(`${width}x${height}`) !== null;
   const commit = () => valid && onCommit(`${width}x${height}`);
 
@@ -238,12 +229,32 @@ function CustomResolution({
       <div className="flex items-center gap-2">
         <input
           type="number" step={1} min={100} max={99999} placeholder="Width" value={width} disabled={disabled}
-          onChange={(event) => setWidth(event.target.value)} onBlur={commit} className={inputClasses}
+          onChange={(event) => {
+            setWidth(event.target.value);
+            if (!locked) return;
+            const paired = pairedResolutionDimension(Number(event.target.value), "width", aspectRatio);
+            if (paired !== null) setHeight(String(paired));
+          }} onBlur={commit} className={inputClasses}
         />
-        <span className="text-zinc-400">×</span>
+        <button
+          type="button"
+          aria-label={locked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+          aria-pressed={locked}
+          title={locked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+          disabled={disabled}
+          onClick={() => setLocked((current) => !current)}
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border transition-colors ${locked ? "border-indigo-200 bg-indigo-50 text-indigo-600" : "border-zinc-200 bg-white text-zinc-400 hover:text-zinc-700"}`}
+        >
+          <LockIcon className="h-3.5 w-3.5" />
+        </button>
         <input
           type="number" step={1} min={100} max={99999} placeholder="Height" value={height} disabled={disabled}
-          onChange={(event) => setHeight(event.target.value)} onBlur={commit} className={inputClasses}
+          onChange={(event) => {
+            setHeight(event.target.value);
+            if (!locked) return;
+            const paired = pairedResolutionDimension(Number(event.target.value), "height", aspectRatio);
+            if (paired !== null) setWidth(String(paired));
+          }} onBlur={commit} className={inputClasses}
         />
       </div>
       {!valid && (width || height) && (
