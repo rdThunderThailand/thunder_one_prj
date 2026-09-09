@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TrashIcon } from "@/components/ui/icons";
+import { FolderIcon, TrashIcon } from "@/components/ui/icons";
 import type { ContentFolder } from "@/types/domain";
 import { foldersByParent } from "./folder-tree";
 
@@ -41,7 +41,7 @@ export function ContentFolderRail({ folders, selected, labels, onSelect, onRenam
             className={`min-w-0 flex-1 rounded-lg px-2 py-2 text-left text-sm ${selected === folder.id ? selectedClass : itemClass}`}
             style={{ paddingLeft: `${8 + depth * 16}px` }}
           >
-            <span aria-hidden>▱</span>{folder.name}{countLabel(counts, folder.id)}
+            <span className="flex min-w-0 items-center gap-1.5"><FolderIcon className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{folder.name}</span>{countLabel(counts, folder.id)}</span>
           </button>
           {onRename && onMove && onDelete && <details className="relative shrink-0">
             <summary

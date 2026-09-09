@@ -24,8 +24,7 @@ import { CompositionLibraryDialogs, type CompositionDialogAction } from "./Compo
 import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/components/LayoutTemplatePicker";
 // Reused rather than re-written, following UnsavedLeaveConfirm's precedent — the rail is
 // presentational and takes {id, name, count}[].
-// ponytail: move to content-library/ alongside FeatureFolderRail if a third page wants it.
-import { TagsRail } from "@/features/media-workspace/playlists/components/TagsRail";
+import { TagsRail } from "@/features/media-workspace/content-library/TagsRail";
 import { CompositionFolderRail } from "./CompositionFolderRail";
 import { CompositionsFilters } from "./CompositionsFilters";
 import { ListError, ListSkeleton, SummarySkeleton } from "./CompositionsListStates";

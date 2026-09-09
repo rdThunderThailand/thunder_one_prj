@@ -130,6 +130,7 @@ export async function uploadToStorage(
 export async function uploadAndRegisterAsset(
   file: File,
   options: {
+    title?: string;
     folderId?: string | null;
     tagIds?: string[];
     onProgress?: (pct: number) => void;
@@ -138,7 +139,7 @@ export async function uploadAndRegisterAsset(
     onTarget?: (target: UploadTarget) => void;
   } = {}
 ): Promise<RegisteredVideo> {
-  const { folderId, tagIds, onProgress = () => {}, signal, onTarget } = options;
+  const { title, folderId, tagIds, onProgress = () => {}, signal, onTarget } = options;
   const isVideoFile = file.type.startsWith("video/");
   const duration = isVideoFile ? await readVideoDuration(file) : null;
   const dimensions = await readMediaDimensions(file);
@@ -163,7 +164,7 @@ export async function uploadAndRegisterAsset(
 
   return registerVideo({
     file_id: target.file_id,
-    title: file.name,
+    title: title?.trim() || file.name,
     ...(duration ? { duration_seconds: duration } : {}),
     ...(thumbnail_storage_key ? { thumbnail_storage_key } : {}),
     ...(dimensions ?? {}),

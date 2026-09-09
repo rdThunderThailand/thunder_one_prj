@@ -88,10 +88,15 @@ export async function fetchTags(): Promise<Tag[]> {
 /** The list endpoint is paginated; callers that need the whole library page through it. */
 const ASSET_PAGE_SIZE = 200;
 
-export async function fetchMediaAssets(): Promise<MediaAsset[]> {
+export async function fetchMediaAssets(params: {
+  search?: string;
+  kind?: "image" | "video";
+  folderId?: string;
+  trash?: boolean;
+} = {}): Promise<MediaAsset[]> {
   const assets: MediaAsset[] = [];
   for (let page = 1; ; page += 1) {
-    const data = await requestApi<MediaAssetPage>("GET", `/media/videos?page=${page}&page_size=${ASSET_PAGE_SIZE}`);
+    const data = await fetchMediaAssetPage({ ...params, page, pageSize: ASSET_PAGE_SIZE });
     const items = Array.isArray(data?.items) ? data.items : [];
     assets.push(...items);
     if (items.length < ASSET_PAGE_SIZE) return assets;
@@ -152,6 +157,10 @@ export async function permanentlyDeleteMediaAsset(id: string): Promise<void> {
 
 export async function moveMediaAsset(id: string, folderId: string | null): Promise<void> {
   await requestApi("PATCH", `/media/videos/${id}`, { folder_id: folderId });
+}
+
+export async function renameMediaAsset(id: string, title: string): Promise<void> {
+  await requestApi("PATCH", `/media/videos/${id}`, { title });
 }
 
 /** Move a playlist into a folder, or to Uncategorized (`null`) — Thunder_Core #38 / BE-3.

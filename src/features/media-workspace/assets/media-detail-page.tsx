@@ -8,12 +8,14 @@ import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { NoAccess } from "@/components/ui/NoAccess";
+import { EditIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import {
   fetchContentFolders,
   fetchMediaAsset,
   moveMediaAsset,
+  renameMediaAsset,
   trashMediaAsset,
 } from "@/lib/api/media-api";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
@@ -64,6 +66,9 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   const [folders, setFolders] = useState<ContentFolder[]>([]);
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [isMoving, setIsMoving] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [renameError, setRenameError] = useState("");
   const previews = usePreviewUrls([assetId]);
 
   useEffect(() => {
@@ -109,6 +114,23 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
     router.push("/media-workspace/assets");
   };
 
+  const rename = async () => {
+    const title = draftTitle.trim();
+    if (!title || title.length > 200 || title === label) {
+      if (title === label) setIsRenaming(false);
+      else setRenameError(title ? "Name must be 200 characters or fewer." : "Name is required.");
+      return;
+    }
+    setRenameError("");
+    try {
+      await renameMediaAsset(asset.id, title);
+      setAsset({ ...asset, title, updated_at: new Date().toISOString() });
+      setIsRenaming(false);
+    } catch (reason) {
+      setRenameError(classifyApiError(reason, "Unable to rename media").message);
+    }
+  };
+
   return <div className="space-y-4">
     <div className="text-xs text-zinc-500"><Link href="/media-workspace/assets" className="hover:text-indigo-600">Media Library</Link><span className="mx-2">/</span>{label}</div>
     <PageHeader title="Media Detail" subtitle={label} actions={<div className="flex flex-wrap gap-2">{previewUrl ? <a href={previewUrl} download={asset.file?.original_filename} className={buttonClasses("secondary")}>Download</a> : <Button variant="secondary" disabled>Download</Button>}<ComingSoon label="More" /></div>} />
@@ -120,7 +142,21 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
             {asset.kind === "video" && previewUrl ? <video src={previewUrl} controls poster={thumbnailUrl} className="h-full w-full object-contain" /> : <MediaThumb url={previewUrl} thumbnailUrl={thumbnailUrl} kind={asset.kind} mimeType={asset.file?.mime_type} alt={label} className="h-full w-full rounded-none object-contain" />}
           </div>
           <div className="space-y-5 p-5">
-            <div><div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-semibold text-zinc-950 dark:text-white">{label}</h2><span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium capitalize text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">{asset.status ?? "ready"}</span></div><p className="mt-2 text-sm text-zinc-500">{asset.kind?.toUpperCase() ?? "FILE"} · {asset.file?.mime_type ?? "Unknown type"}</p></div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                {isRenaming ? <form className="flex min-w-0 flex-1 items-center gap-2" onSubmit={(event) => { event.preventDefault(); void rename(); }}>
+                  <input autoFocus aria-label="Media name" value={draftTitle} maxLength={200} onChange={(event) => { setDraftTitle(event.target.value); setRenameError(""); }} onKeyDown={(event) => { if (event.key === "Escape") { setIsRenaming(false); setRenameError(""); } }} className="min-w-0 flex-1 rounded-lg border border-indigo-500 bg-white px-3 py-2 text-base font-semibold outline-none ring-2 ring-indigo-100 dark:bg-zinc-900" />
+                  <Button type="submit" className="px-3 py-2">Save</Button>
+                  <Button type="button" variant="secondary" className="px-3 py-2" onClick={() => { setIsRenaming(false); setRenameError(""); }}>Cancel</Button>
+                </form> : <>
+                  <h2 className="min-w-0 break-words text-xl font-semibold text-zinc-950 dark:text-white">{label}</h2>
+                  <button type="button" aria-label="Rename media" title="Rename media" onClick={() => { setDraftTitle(label); setIsRenaming(true); setRenameError(""); }} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800"><EditIcon /></button>
+                </>}
+                <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium capitalize text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">{asset.status ?? "ready"}</span>
+              </div>
+              {renameError && <p role="alert" className="mt-2 text-sm text-red-600">{renameError}</p>}
+              <p className="mt-2 text-sm text-zinc-500">{asset.kind?.toUpperCase() ?? "FILE"} · {asset.file?.mime_type ?? "Unknown type"}</p>
+            </div>
             <dl><Fact label="Uploaded by" value={asset.created_by?.display_name ?? "—"} /><Fact label="Uploaded on" value={formatDate(asset.created_at)} /><Fact label="Dimensions" value={dimensions} /><Fact label="Duration" value={formatDuration(asset.duration_seconds)} /><Fact label="Folder" value={folderPath(folders, asset.folder_id)} /><Fact label="File ID" value={asset.file?.id ?? "—"} /><Fact label="Source" value="Uploaded" /></dl>
           </div>
         </Card>

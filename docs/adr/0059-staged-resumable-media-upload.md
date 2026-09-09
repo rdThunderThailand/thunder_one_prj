@@ -8,15 +8,17 @@ Media Upload is a dedicated workflow at `/media-workspace/assets/upload`. The Fi
 
 ## Decision
 
-- Files enter a staged Upload Queue and do not start until the operator selects one Folder for the batch and presses `Start Upload`.
-- One queue accepts at most 10 files. At most two files upload concurrently; the remainder stay `Waiting`.
+- Files enter a staged Upload Queue and do not start until the operator presses `Start Upload`. Selecting a Folder is optional; an unselected batch registers into `Uncategorized`.
+- Each queued file carries an editable display title, defaulting to its filename. The title is what registration stores on the Asset; the physical object key and `original_filename` are never renamed.
+- One queue has no application-level file-count limit. At most two files upload concurrently; the remainder stay `Waiting`.
+- Newly registered uploads are immediately `approved`; they can be selected in Playlist, Layout, and Publication authoring without a separate approval step.
 - Each file is limited to 5 GB. Phase 1 therefore uses Supabase TUS resumable upload against the direct Storage hostname rather than the existing non-resumable signed PUT. Size and MIME rules are enforced by both Core and Storage, not only by the browser.
 - Phase 1 accepts MP4, PNG, JPG/JPEG and WebP. Audio, PDF, MOV, AVI, MKV and other formats are not advertised.
 - A failure affects only its file. Other files continue, and `Retry` resumes the TUS upload when its session remains valid or obtains new authorization and restarts that file when it does not.
 - Aggregate queue actions follow queue state: `Clear Queue` removes staged files, `Cancel All` cancels active and waiting work, and `Clear All` dismisses terminal rows. These actions never delete registered Assets.
 - A completed row may be dismissed. Asset deletion remains a Media Library operation.
 - Leaving while work is active requires confirmation. The queue is not restored after refresh in Phase 1.
-- One Folder applies to every file in the queue. Per-file Folder overrides are out.
+- One Folder applies to every file in the queue. Per-file Folder overrides are out. Renaming an existing Asset is a Media Detail operation and changes only its display title.
 - `Recent Uploads` shows the tenant's three newest Assets and links to Media Detail and the full Media Library.
 - `Add from Source` and `Tags` remain visible but disabled as Phase 2 affordances. `Pause All`, the `Start Upload` dropdown and Storage Usage remain hidden until they have complete contracts. Upload Tips show only rules the system enforces.
 - New object keys use `videos/{tenant_code}/{uuid}.{ext}` inside the `media` bucket. `tenant_code` is the existing immutable, unique, name-derived tenant identifier; `tenant.name` is not used directly.

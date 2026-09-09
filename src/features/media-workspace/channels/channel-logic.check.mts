@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   countOnlineDevices,
   filterChannels,
+  findChannelAttention,
   formatChannelLastSeen,
   getDeviceCompatibility,
   mergeChannelDeviceCandidates,
@@ -142,7 +143,10 @@ assert.deepEqual(summary.lifecycle, { total: 4, draft: 1, active: 2, inactive: 1
 assert.equal(summary.unassigned, 1); // the Channel with no devices assigned
 // Rolled up across every fixture Channel, so the tile counts devices and not Channels:
 // four assigned in total, one of them offline.
-assert.deepEqual(summary.devices, { total: 4, online: 3 });
+assert.deepEqual(summary.devices, { total: 4, online: 3, warning: 0, offline: 1 });
+assert.deepEqual(findChannelAttention(fixtures).map(({ device }) => device.id), ["device-siam-south"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "offline" }).map((channel) => channel.id), ["channel-active-dooh"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "attention" }).map((channel) => channel.id), ["channel-active-dooh"]);
 
 assert.deepEqual(
   filterChannels(fixtures, {
