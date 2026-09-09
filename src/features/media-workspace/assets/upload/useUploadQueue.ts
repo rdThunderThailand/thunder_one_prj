@@ -76,6 +76,7 @@ export function useUploadQueue() {
       .then(() => {
         patchItem(id, (item) => ({ ...item, state: "uploading", pct: entry.target ? item.pct : 0 }));
         return uploadAndRegisterAsset(entry.file as File, {
+          title: entry.title,
           folderId,
           tagIds: entry.tagIds,
           signal: controller.signal,
@@ -179,6 +180,10 @@ export function useUploadQueue() {
     setItems((current) => current.filter((entry) => entry.id !== id));
   }, [items, releaseReservation]);
 
+  const renameItem = useCallback((id: string, title: string) => {
+    patchItem(id, (item) => ({ ...item, title: title.slice(0, 200) }));
+  }, [patchItem]);
+
   const runAggregateAction = useCallback(() => {
     const action = aggregateAction(items);
     if (action === "clear-queue") {
@@ -212,6 +217,7 @@ export function useUploadQueue() {
     cancelItem,
     retryItem,
     removeItem,
+    renameItem,
     runAggregateAction,
   };
 }

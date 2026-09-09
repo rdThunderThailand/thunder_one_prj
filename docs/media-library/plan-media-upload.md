@@ -5,7 +5,7 @@
 
 ## Goal
 
-Build `/media-workspace/assets/upload` as a staged, tenant-scoped queue for up to 10 MP4/image files, with two concurrent TUS uploads, one destination Folder, per-file recovery and an honest 5 GB per-file limit.
+Build `/media-workspace/assets/upload` as a staged, tenant-scoped queue for MP4/image files, with two concurrent TUS uploads, one optional destination Folder, per-file recovery and an honest 5 GB per-file limit.
 
 ## Design reference
 
@@ -16,7 +16,7 @@ The image above is the visual direction for hierarchy, density, queue-row compos
 | Area in the reference | Implementation guidance |
 |---|---|
 | Header actions | Keep `Cancel` and one `Start Upload`; show `Add from Source` disabled for Phase 2 and remove the unused dropdown arrow. |
-| Drop zone | Preserve the visual emphasis; advertise only MP4, PNG, JPG/JPEG and WebP, 5 GB per file and 10 files per queue. |
+| Drop zone | Preserve the visual emphasis; advertise only MP4, PNG, JPG/JPEG and WebP, 5 GB per file and no application-level queue limit. |
 | Upload destination | Keep one Folder selector for the whole queue; show Tags disabled for Phase 2. |
 | Queue rows | Preserve thumbnail, facts, progress and status hierarchy; actions follow the explicit state table below. |
 | Queue toolbar | Use `Clear Queue`, `Cancel All` or `Clear All` according to state. Do not show `Pause All`. |
@@ -67,21 +67,22 @@ Steps 1-10 below are delivered by MU-02 and MU-04. The implementation slice for 
 | `failed` | Retry or dismiss | `Clear All` when all rows are terminal |
 | `canceled` | Retry or dismiss | `Clear All` when all rows are terminal |
 
-4. Reject duplicate selections within the queue, unsupported types, files over 5 GB and additions beyond 10 before authorization.
+4. Reject duplicate selections within the queue, unsupported types, and files over 5 GB before authorization.
 5. Use a two-worker scheduler. A failed/canceled item releases its slot and does not stop the other worker.
 6. Read image/video dimensions, video duration and thumbnail using the existing helpers; register only after the original upload and required thumbnail work complete.
-7. Apply one selected `folder_id` to every registration in the batch.
-8. Confirm navigation while any row is `waiting` or `uploading`. Do not promise queue restoration after refresh.
-9. Refetch the tenant's newest three Assets after a completion and render them in Recent Uploads. Link each item to Media Detail.
-10. Show an upload summary derived from queue state; never maintain separate counters that can disagree with rows.
+7. Apply the optional selected `folder_id` to every registration in the batch; omit it for `Uncategorized`.
+8. Register new Assets as `approved` so they are immediately selectable for playback authoring.
+9. Confirm navigation while any row is `waiting` or `uploading`. Do not promise queue restoration after refresh.
+10. Refetch the tenant's newest three Assets after a completion and render them in Recent Uploads. Link each item to Media Detail.
+11. Show an upload summary derived from queue state; never maintain separate counters that can disagree with rows.
 
 ## Control matrix
 
 | Control/section | Phase 1 behavior |
 |---|---|
 | Drag & Drop / Choose Files | Enabled |
-| Folder | Enabled; one value per queue |
-| Start Upload | Enabled when queue and Folder are valid; no dropdown |
+| Folder | Enabled and optional; one value per queue, defaulting to `Uncategorized` |
+| Start Upload | Enabled when the queue has valid display names; no dropdown |
 | Clear Queue / Cancel All / Clear All | Label and behavior follow queue state |
 | Recent Uploads | Enabled; latest three tenant Assets |
 | Upload Tips | Visible; only enforced formats, count and size |

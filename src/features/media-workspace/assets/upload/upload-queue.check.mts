@@ -24,6 +24,7 @@ const file = (name: string, size = 1024) => ({
 const item = (id: string, state: UploadItem["state"], name = `${id}.mp4`): UploadItem => ({
   id,
   file: file(name),
+  title: name,
   state,
   pct: 0,
 });
@@ -34,6 +35,7 @@ const item = (id: string, state: UploadItem["state"], name = `${id}.mp4`): Uploa
   const { items, rejections } = stageFiles([], [{ id: "1", file: file("a.mp4") }]);
   assert.equal(items.length, 1, "accepted file stages");
   assert.equal(items[0].state, "staged");
+  assert.equal(items[0].title, "a.mp4", "display name starts from the original filename");
   assert.equal(rejections.length, 0);
 }
 
@@ -55,10 +57,10 @@ const item = (id: string, state: UploadItem["state"], name = `${id}.mp4`): Uploa
 }
 
 {
-  const ten = Array.from({ length: 10 }, (_, i) => item(String(i), "staged"));
-  const { items, rejections } = stageFiles(ten, [{ id: "11", file: file("eleventh.mp4") }]);
-  assert.equal(items.length, 10, "11th file does not enter the queue");
-  assert.ok(rejections[0]?.includes("คิวเต็มแล้ว"));
+  const hundred = Array.from({ length: 100 }, (_, i) => item(String(i), "staged"));
+  const { items, rejections } = stageFiles(hundred, [{ id: "101", file: file("extra.mp4") }]);
+  assert.equal(items.length, 101, "the queue has no artificial file-count ceiling");
+  assert.equal(rejections.length, 0);
 }
 
 // --- aggregateAction ---

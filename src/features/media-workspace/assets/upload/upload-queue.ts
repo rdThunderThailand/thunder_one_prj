@@ -10,6 +10,7 @@ export type UploadItemState = "staged" | "waiting" | "uploading" | "completed" |
 export type UploadItem = {
   id: string;
   file: QueuedFile;
+  title: string;
   state: UploadItemState;
   pct: number;
   error?: string;
@@ -24,7 +25,6 @@ export type UploadItem = {
   tagIds?: string[];
 };
 
-export const MAX_QUEUE_FILES = 10;
 export const MAX_WORKERS = 2;
 
 const ACTIVE_STATES: UploadItemState[] = ["waiting", "uploading"];
@@ -38,8 +38,8 @@ export function startItems(items: UploadItem[], tagIds: string[]): UploadItem[] 
 }
 
 /** Stages `incoming` onto `items`, rejecting per-file for size/type (ADR-0059 limits,
- *  shared with the single-file picker), duplicates already in the queue, and overflow
- *  past `MAX_QUEUE_FILES`. Order of `items` is preserved; accepted files append as `staged`. */
+ *  shared with the single-file picker) and duplicates already in the queue.
+ *  Order of `items` is preserved; accepted files append as `staged`. */
 export function stageFiles(
   items: UploadItem[],
   incoming: { id: string; file: QueuedFile }[]
@@ -58,11 +58,7 @@ export function stageFiles(
       rejections.push(`${file.name}: ไฟล์นี้อยู่ในคิวแล้ว`);
       continue;
     }
-    if (next.length >= MAX_QUEUE_FILES) {
-      rejections.push(`${file.name}: คิวเต็มแล้ว (สูงสุด ${MAX_QUEUE_FILES} ไฟล์)`);
-      continue;
-    }
-    next.push({ id, file, state: "staged", pct: 0 });
+    next.push({ id, file, title: file.name, state: "staged", pct: 0 });
   }
 
   return { items: next, rejections };
