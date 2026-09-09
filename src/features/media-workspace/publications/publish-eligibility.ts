@@ -17,20 +17,20 @@ export interface PriorityConflictSummary {
   higherPriorityCount: number;
   lowerPriorityCount: number;
   equalPriorityCount: number;
-  /** Equal-priority overlaps where either side is a Composition — these block publish (ticket 09). */
-  blockingOverlapCount: number;
-  hasBlockingConflict: boolean;
+  /** Equal-priority overlaps where either side is a Composition — one screen cannot show both,
+   *  so only the most recently activated Publication airs for the overlap (ADR 0068). */
+  exclusiveOverlapCount: number;
 }
 
 export function summarizePriorityConflicts(conflicts: ScheduleConflict[]): PriorityConflictSummary {
   let higherPriorityCount = 0;
   let lowerPriorityCount = 0;
   let equalPriorityCount = 0;
-  let blockingOverlapCount = 0;
+  let exclusiveOverlapCount = 0;
 
   for (const conflict of conflicts) {
     if (conflict.blocks) {
-      blockingOverlapCount += 1;
+      exclusiveOverlapCount += 1;
     }
     if (conflict.would_be_suppressed) {
       higherPriorityCount += 1;
@@ -45,13 +45,12 @@ export function summarizePriorityConflicts(conflicts: ScheduleConflict[]): Prior
     higherPriorityCount,
     lowerPriorityCount,
     equalPriorityCount,
-    blockingOverlapCount,
-    hasBlockingConflict: higherPriorityCount > 0 || blockingOverlapCount > 0,
+    exclusiveOverlapCount,
   };
 }
 
 export function isAllGatingPassed(checks: EligibilityCheck[]): boolean {
-  return [0, 1, 2, 4].every((idx) => checks[idx]?.status === "pass");
+  return [0, 1, 2].every((idx) => checks[idx]?.status === "pass");
 }
 
 export function computeEligibility(params: {
@@ -101,13 +100,10 @@ export function computeEligibility(params: {
   const scheduleCheckStatus: EligibilityStatus = validateStep(4, draft).valid ? "pass" : "fail";
   const channelsCheckStatus: EligibilityStatus = validateStep(3, draft).valid ? "pass" : "fail";
   const policyCheckStatus: EligibilityStatus = "unknown";
-  const priorityConflicts = summarizePriorityConflicts(conflicts);
+  // ADR 0068: an overlap warns, it never refuses. The check still flags that conflicts exist so
+  // the checklist shows it, but it is read as advice rather than a gate.
   const conflictsCheckStatus: EligibilityStatus =
-    checkingConflicts || conflictsError
-      ? "unknown"
-      : priorityConflicts.hasBlockingConflict
-      ? "fail"
-      : "pass";
+    checkingConflicts || conflictsError ? "unknown" : conflicts.length > 0 ? "fail" : "pass";
 
   const checks: EligibilityCheck[] = [
     { status: contentCheckStatus },
@@ -118,7 +114,9 @@ export function computeEligibility(params: {
   ];
 
   const basicInfoOk = validateStep(1, draft).valid;
-  const gateChecks = [checks[0], checks[1], checks[2], checks[4]];
+  // Content, schedule and channels only — conflicts are advisory (ADR 0068), so the button no
+  // longer waits on a result that cannot block anything.
+  const gateChecks = [checks[0], checks[1], checks[2]];
   const canPublish = basicInfoOk && !loadingRefs && gateChecks.every((c) => c.status === "pass");
 
   return {

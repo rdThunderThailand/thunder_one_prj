@@ -512,44 +512,34 @@ export function ScheduleStep({
           {!checkingConflicts && conflictsError && (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
               <h4 className="text-sm font-semibold text-red-800">⚠ Unable to verify schedule conflicts</h4>
-              <p className="mt-0.5 text-[11px] text-red-700">{conflictsError} — Publish is blocked until this resolves.</p>
+              <p className="mt-0.5 text-[11px] text-red-700">{conflictsError} — publishing still works, but overlaps cannot be listed.</p>
             </div>
           )}
 
-          {conflicts.length > 0 && (() => {
-            const isBlocked = priorityConflicts.hasBlockingConflict;
-            return (
-              <div
-                className={`mt-4 rounded-xl border p-4 ${
-                  isBlocked
-                    ? "border-red-200 bg-red-50"
-                    : "border-amber-200 bg-amber-50"
-                }`}
-              >
-                <h4 className={`text-sm font-semibold ${isBlocked ? "text-red-800" : "text-amber-800"}`}>
-                  {isBlocked
-                    ? `⛔ Publish blocked — ${priorityConflicts.higherPriorityCount} higher-priority publication(s) overlap`
-                    : `⚠ Priority overlap — ${conflicts.length} publication(s)`}
+          {conflicts.length > 0 && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <h4 className="text-sm font-semibold text-amber-800">
+                  {`⚠ Priority overlap — ${conflicts.length} publication(s)`}
                 </h4>
-                <p className={`mt-0.5 text-[11px] ${isBlocked ? "text-red-700" : "text-amber-700"}`}>
-                  {isBlocked
-                    ? "This publication would be suppressed during at least one overlap. Raise its priority or change the schedule."
+                <p className="mt-0.5 text-[11px] text-amber-700">
+                  {priorityConflicts.exclusiveOverlapCount > 0
+                    ? `${priorityConflicts.exclusiveOverlapCount} overlap(s) at the same priority involve a Composition — one screen cannot show both, so only the most recently published one airs until the overlap ends. Publishing is allowed.`
+                    : priorityConflicts.higherPriorityCount > 0
+                    ? `${priorityConflicts.higherPriorityCount} higher-priority publication(s) overlap — this publication will not air during those windows. Publishing is allowed.`
                     : priorityConflicts.lowerPriorityCount > 0 && priorityConflicts.equalPriorityCount > 0
                     ? `This publication will suppress ${priorityConflicts.lowerPriorityCount} lower-priority publication(s) and append with ${priorityConflicts.equalPriorityCount} at the same priority — publishing is allowed.`
                     : priorityConflicts.lowerPriorityCount > 0
                     ? `This publication will suppress ${priorityConflicts.lowerPriorityCount} lower-priority publication(s) during the overlap — publishing is allowed.`
                     : "Publications at the same priority will append to the playback loop — publishing is allowed."}
                 </p>
-                <div className={`mt-3 space-y-2 text-xs ${isBlocked ? "text-red-900" : "text-amber-900"}`}>
+                <div className="mt-3 space-y-2 text-xs text-amber-900">
                   {conflicts.map((c) => {
                     const startStr = new Date(c.starts_at).toLocaleString();
                     const endStr = c.ends_at ? new Date(c.ends_at).toLocaleString() : "no end";
                     return (
                       <div
                         key={c.publication_id}
-                        className={`border-t pt-2 first:border-0 first:pt-0 ${
-                          isBlocked ? "border-red-200/60" : "border-amber-200/60"
-                        }`}
+                        className="border-t border-amber-200/60 pt-2 first:border-0 first:pt-0"
                       >
                         <div className="font-medium">
                           <Link
@@ -561,13 +551,17 @@ export function ScheduleStep({
                           <span className="ml-1.5 font-normal opacity-70">({c.priority})</span>
                         </div>
                         {c.would_be_suppressed && (
-                          <div className="text-[11px] font-medium">Higher priority: this publication would be suppressed — Publish blocked</div>
+                          <div className="text-[11px] font-medium">Higher priority: this publication will not air during the overlap</div>
                         )}
                         {c.would_suppress && (
                           <div className="text-[11px] font-medium opacity-90">Lower priority: this publication will suppress {c.name} during the overlap</div>
                         )}
                         {!c.would_be_suppressed && !c.would_suppress && (
-                          <div className="text-[11px] font-medium opacity-90">Same priority: both publications will append to the playback loop</div>
+                          <div className="text-[11px] font-medium opacity-90">
+                            {c.blocks
+                              ? `Same priority with a Composition: only the most recently published one airs — ${c.name} and this publication cannot share the screen`
+                              : "Same priority: both publications will append to the playback loop"}
+                          </div>
                         )}
                         <div className="text-[11px] opacity-90">
                           Window: {startStr} – {endStr}
@@ -581,9 +575,8 @@ export function ScheduleStep({
                     );
                   })}
                 </div>
-              </div>
-            );
-          })()}
+            </div>
+          )}
         </Card>
 
         <Card className="p-5">

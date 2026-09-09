@@ -339,34 +339,28 @@ export function ReviewPublishStep({
               <div className="flex flex-col gap-3">
                 {checkingConflicts || conflictsError ? (
                   <div className="flex items-start gap-2">
-                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-red-500" />
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
                     <div>
-                      <p className="text-xs font-medium text-red-700">Unable to verify priority conflicts</p>
+                      <p className="text-xs font-medium text-zinc-900">Unable to verify priority conflicts</p>
                       <p className="text-[11px] text-zinc-500">
                         {checkingConflicts
-                          ? "กำลังตรวจสอบ — Publish จะเปิดเมื่อได้ผลลัพธ์แล้ว"
-                          : "ตรวจสอบไม่สำเร็จ — Publish ถูกบล็อกจนกว่าจะลองใหม่สำเร็จ"}
+                          ? "กำลังตรวจสอบ — ยังกด Publish ได้ตามปกติ"
+                          : "ตรวจสอบไม่สำเร็จ — ยัง Publish ได้ แต่จะไม่รู้ว่ามีรายการทับซ้อนหรือไม่"}
                       </p>
                     </div>
                   </div>
                 ) : conflicts.length > 0 ? (
                   <div className="flex items-start gap-2">
-                    <WarningTriangleIcon
-                      className={`h-4 w-4 shrink-0 ${priorityConflicts.hasBlockingConflict ? "text-red-500" : "text-amber-500"}`}
-                    />
+                    <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
                     <div>
-                      <p className={`text-xs font-medium ${priorityConflicts.hasBlockingConflict ? "text-red-700" : "text-zinc-900"}`}>
-                        {priorityConflicts.blockingOverlapCount > 0
-                          ? `Publish blocked (${priorityConflicts.blockingOverlapCount} equal-priority layout overlap${priorityConflicts.blockingOverlapCount > 1 ? "s" : ""})`
-                          : priorityConflicts.hasBlockingConflict
-                          ? `Publish blocked (${priorityConflicts.higherPriorityCount} higher-priority conflict(s))`
-                          : `Priority warning (${conflicts.length})`}
+                      <p className="text-xs font-medium text-zinc-900">
+                        {`Priority warning (${conflicts.length})`}
                       </p>
                       <p className="text-[11px] text-zinc-500">
-                        {priorityConflicts.blockingOverlapCount > 0
-                          ? "Publication นี้กับอีกรายการ Priority เท่ากันอยู่บนจอเดียวกัน และมีฝั่งใดฝั่งหนึ่งเป็น Composition — เปลี่ยน Priority, ตารางเวลา หรือ Target"
-                          : priorityConflicts.hasBlockingConflict
-                          ? "Publication นี้จะถูกกดทับอย่างน้อยหนึ่งช่วงเวลา"
+                        {priorityConflicts.exclusiveOverlapCount > 0
+                          ? "Priority เท่ากันบนจอเดียวกัน และมีฝั่งใดฝั่งหนึ่งเป็น Composition — จอจะแสดงรายการที่ publish ล่าสุดเท่านั้น อีกรายการจะไม่ออกอากาศจนกว่าจะพ้นช่วงที่ทับกัน"
+                          : priorityConflicts.higherPriorityCount > 0
+                          ? "มีรายการ Priority สูงกว่ากดทับอยู่ — Publish ได้ แต่รายการนี้จะยังไม่ออกอากาศในช่วงที่ทับกัน"
                           : "Publish ได้ โดยระบบจะกดทับรายการที่ Priority ต่ำกว่า และรวมรายการ Priority เท่ากันเข้า loop"}
                       </p>
                       <ul className="mt-1.5 space-y-1 text-[11px] text-zinc-500">
@@ -378,9 +372,9 @@ export function ReviewPublishStep({
                             >
                               {conflict.name}
                             </Link> ({conflict.priority}) — {conflict.blocks
-                              ? "same priority + layout; blocks Publish"
+                              ? "same priority + layout; only the latest publish airs"
                               : conflict.would_be_suppressed
-                              ? "higher priority; blocks Publish"
+                              ? "higher priority; this will not air during the overlap"
                               : conflict.would_suppress
                               ? "lower priority; will be suppressed"
                               : "same priority; appends to loop"}
