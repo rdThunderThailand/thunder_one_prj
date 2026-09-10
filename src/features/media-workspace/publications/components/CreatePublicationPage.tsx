@@ -22,10 +22,9 @@ import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
 import { resolveSeed, type SeedChoice } from "../seed-resolver";
 import { type WizardStepId } from "../step-validation";
-import { BasicInfoForm } from "./BasicInfoForm";
 import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
-import { PreviewPanel } from "./PreviewPanel";
+import { PrepareContentStep } from "./PrepareContentStep";
 import { PublicationStepper } from "./PublicationStepper";
 import { ReviewPublishStep } from "./ReviewPublishStep";
 import { ScheduleStep } from "./ScheduleStep";
@@ -483,16 +482,7 @@ export function CreatePublicationPage() {
       )}
 
       {/* Step 2 — Prepare Content */}
-      {step === 2 && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <BasicInfoForm workspaceTags={tags} showErrors={showFieldErrors} />
-          </div>
-          <div>
-            <PreviewPanel assets={assets} />
-          </div>
-        </div>
-      )}
+      {step === 2 && <PrepareContentStep assets={assets} tags={tags} showFieldErrors={showFieldErrors} />}
 
       {/* Step 3 — Program: targeting + schedule (the ver02 layout is #84; this stacks the
           existing steps so the boundary and its validation exist first) */}
