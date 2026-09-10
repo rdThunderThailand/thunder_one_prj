@@ -1,6 +1,7 @@
 import type { DraftFields } from "./store/usePublicationDraftStore";
 import type { MediaAsset, ScheduleConflict } from "./types";
 import { validateStep } from "./step-validation.ts";
+import { isScheduleFormValid } from "./schedule.ts";
 
 export type EligibilityStatus = "pass" | "fail" | "unknown";
 
@@ -97,8 +98,10 @@ export function computeEligibility(params: {
     }
   }
 
-  const scheduleCheckStatus: EligibilityStatus = validateStep(4, draft).valid ? "pass" : "fail";
-  const channelsCheckStatus: EligibilityStatus = validateStep(3, draft).valid ? "pass" : "fail";
+  // The ver02 Program step (3) gates channels and schedule together; the checklist still
+  // reports them as separate rows, so each reads its own primitive rather than the step.
+  const scheduleCheckStatus: EligibilityStatus = isScheduleFormValid(draft.scheduleForm) ? "pass" : "fail";
+  const channelsCheckStatus: EligibilityStatus = draft.channelIds.length > 0 ? "pass" : "fail";
   const policyCheckStatus: EligibilityStatus = "unknown";
   // ADR 0068: an overlap warns, it never refuses. The check still flags that conflicts exist so
   // the checklist shows it, but it is read as advice rather than a gate.
@@ -113,7 +116,8 @@ export function computeEligibility(params: {
     { status: conflictsCheckStatus },
   ];
 
-  const basicInfoOk = validateStep(1, draft).valid;
+  // Step 2 (Prepare Content) owns the name/type gate after the ver02 re-cut (ADR 0072 §2).
+  const basicInfoOk = validateStep(2, draft).valid;
   // Content, schedule and channels only — conflicts are advisory (ADR 0068), so the button no
   // longer waits on a result that cannot block anything.
   const gateChecks = [checks[0], checks[1], checks[2]];

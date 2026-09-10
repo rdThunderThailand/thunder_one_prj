@@ -15,12 +15,10 @@ export function detailToDraft(
   playlist?: PlaylistDetail | null,
 ): ResumedDraft {
   const basicInfo: BasicInfoState = {
-    campaignId: detail.campaign_id ?? "",
     publicationType: detail.publication_type,
     name: detail.name,
     description: detail.description ?? "",
     priorityId: detail.priority,
-    language: detail.language ?? "th",
     tags: detail.tags ?? [],
   };
 

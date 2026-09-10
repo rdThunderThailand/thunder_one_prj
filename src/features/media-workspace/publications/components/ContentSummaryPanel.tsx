@@ -6,16 +6,14 @@ import { EyeIcon } from "@/components/ui/icons";
 import { priorities, publicationTypes } from "../mock-data";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import type { Campaign, MediaAsset } from "../types";
+import type { MediaAsset } from "../types";
 
 export function ContentSummaryPanel({
   assets,
   previews,
-  campaigns,
 }: {
   assets: MediaAsset[];
   previews: Record<string, string | undefined>;
-  campaigns: Campaign[];
 }) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -34,7 +32,6 @@ export function ContentSummaryPanel({
 
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
-  const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
 
   return (
     <Card className="p-5">
@@ -83,15 +80,11 @@ export function ContentSummaryPanel({
           </div>
         )}
         <div className="flex items-center justify-between">
-          <dt className="text-zinc-500">Campaign</dt>
-          <dd className="font-medium text-zinc-900">{campaign?.name}</dd>
-        </div>
-        <div className="flex items-center justify-between">
-          <dt className="text-zinc-500">Publication Name</dt>
+          <dt className="text-zinc-500">Program Name</dt>
           <dd className="truncate pl-4 text-right font-medium text-zinc-900">{basicInfo.name}</dd>
         </div>
         <div className="flex items-center justify-between">
-          <dt className="text-zinc-500">Publication Type</dt>
+          <dt className="text-zinc-500">Content Type</dt>
           <dd className="flex items-center gap-1.5 font-medium text-zinc-900">
             <span className="h-4 w-4 text-zinc-500">{type && publicationTypeIcons[type.id]}</span>
             {type?.label}

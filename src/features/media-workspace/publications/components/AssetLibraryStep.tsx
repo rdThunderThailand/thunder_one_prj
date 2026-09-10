@@ -19,7 +19,7 @@ import { SelectedAssetList } from "./SelectedAssetList";
 import { ContentSummaryPanel } from "./ContentSummaryPanel";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import type { Campaign, MediaAsset } from "../types";
+import type { MediaAsset } from "../types";
 import { isImageAsset } from "../draft-mapping";
 import { acceptedAssetKind, canSelectAsset, canSelectPlaylist } from "../content-selection.ts";
 import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "../upload-limits";
@@ -53,13 +53,11 @@ function ToggleSwitch({
 }
 
 export function AssetLibraryStep({
-  campaigns = [],
   assets,
   reloadAssets,
   assetsLoading,
   assetsError,
 }: {
-  campaigns?: Campaign[];
   assets: MediaAsset[];
   reloadAssets: () => Promise<MediaAsset[]>;
   assetsLoading: boolean;
@@ -320,7 +318,7 @@ export function AssetLibraryStep({
         <SelectedAssetList assets={assets} previews={previews.urls} />
       </div>
 
-      <ContentSummaryPanel assets={assets} previews={previews.urls} campaigns={campaigns} />
+      <ContentSummaryPanel assets={assets} previews={previews.urls} />
     </div>
   );
 }

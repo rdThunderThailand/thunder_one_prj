@@ -13,7 +13,6 @@ import { isScheduleFormValid, scheduleFormToPayload } from "../schedule";
 import {
   activatePublication,
   checkScheduleConflicts,
-  fetchCampaigns,
   fetchMediaAssets,
   fetchPublication,
   fetchTags,
@@ -27,7 +26,7 @@ import { selectedChannelDeviceIds } from "../channels-logic";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
 import { classifyApiError, isConflict } from "@/lib/api/api-error";
-import type { Campaign, MediaAsset, Priority, ScheduleConflict, Tag } from "../types";
+import type { MediaAsset, Priority, ScheduleConflict, Tag } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
  * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
@@ -43,7 +42,6 @@ function isStaleDraftError(err: unknown): boolean {
 export function usePublishDraft() {
   const router = useRouter();
   const [channels, setChannels] = useState<ChannelListItem[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   // Assets load on their own track from the other refs: the wizard owns the single
@@ -121,12 +119,10 @@ export function usePublishDraft() {
         }
         return [];
       }),
-      fetchCampaigns().catch(() => []),
       fetchTags().catch(() => []),
-    ]).then(([fetchedChannels, fetchedCampaigns, fetchedTags]) => {
+    ]).then(([fetchedChannels, fetchedTags]) => {
       if (isMounted) {
         setChannels(fetchedChannels);
-        setCampaigns(fetchedCampaigns);
         setTags(fetchedTags);
         setLoadingRefs(false);
       }
@@ -228,6 +224,13 @@ export function usePublishDraft() {
     // Playlist. Publishing still requires it; that guard stays.
     if (forPublish && state.basicInfo.publicationType === "composition" && !state.compositionId) {
       throw new Error("กรุณาเลือก Layout ก่อนบันทึก");
+    }
+    // ver02 (ADR 0072 §2) runs Choose Content (step 1) before Prepare Content (step 2), where
+    // the name is entered. `media_publication_upsert` refuses an empty name, so a draft with no
+    // name yet has nothing to persist server-side — the selection lives in the localStorage
+    // draft until step 2. Mirrors the same guard in `saveDraft`.
+    if (!forPublish && !state.basicInfo.name.trim()) {
+      return state.publicationId;
     }
     const targets =
       forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, channels) : undefined;
@@ -353,7 +356,6 @@ export function usePublishDraft() {
   return {
     channels,
     channelsError,
-    campaigns,
     tags,
     assets,
     reloadAssets,

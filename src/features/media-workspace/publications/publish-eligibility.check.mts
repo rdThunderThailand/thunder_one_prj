@@ -19,12 +19,10 @@ const validDraft: DraftFields = {
   idempotencyKey: "idem-key-1",
   step: 4,
   basicInfo: {
-    campaignId: "camp-1",
     publicationType: "image",
     name: "Summer promo",
     description: "",
     priorityId: "normal",
-    language: "th",
     tags: [],
   },
   assetItems: [{ media_asset_id: "asset-1", duration_seconds: 10 }],

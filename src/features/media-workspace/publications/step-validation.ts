@@ -5,45 +5,32 @@ import { validateScheduleForm } from "./schedule.ts";
 import { PUBLICATION_LIMITS } from "../../../config/limits.ts";
 import { publicationTypes } from "./mock-data.ts";
 
-export type WizardStepId = 1 | 2 | 3 | 4;
+// The five ver02 Create steps (ADR 0072 §2). 4 (Review) and 5 (Publish) carry no
+// gate of their own — everything they show has already been validated by step 3.
+export type WizardStepId = 1 | 2 | 3 | 4 | 5;
 
 export interface StepValidationResult {
   valid: boolean;
   errors: string[];
 }
 
-export type BasicInfoFieldId = "campaignId" | "name" | "publicationType" | "description";
-
-export interface Step1Context {
-  /** Ids of the campaigns actually loaded from the API. Omit to skip the availability check. */
-  campaignIds?: string[];
-}
+export type BasicInfoFieldId = "name" | "publicationType" | "description";
 
 export type BasicInfoErrors = Partial<Record<BasicInfoFieldId, string>>;
 
-export function validateBasicInfo(
-  basicInfo: DraftFields["basicInfo"],
-  ctx?: Step1Context
-): BasicInfoErrors {
+export function validateBasicInfo(basicInfo: DraftFields["basicInfo"]): BasicInfoErrors {
   const errors: BasicInfoErrors = {};
 
-  // Campaign: required, and if provided must still exist in the loaded list
-  if (!basicInfo.campaignId.trim()) {
-    errors.campaignId = "กรุณาเลือก Campaign";
-  } else if (ctx?.campaignIds !== undefined && !ctx.campaignIds.includes(basicInfo.campaignId)) {
-    errors.campaignId = "Campaign ที่เลือกไว้ไม่มีอยู่แล้ว กรุณาเลือกใหม่";
-  }
-
-  // Publication name: required, and must not exceed the limit
+  // Program name: required, and must not exceed the limit
   if (!basicInfo.name.trim()) {
-    errors.name = "กรุณากรอกชื่อ Publication";
+    errors.name = "กรุณากรอกชื่อ Program";
   } else if (basicInfo.name.length > PUBLICATION_LIMITS.nameMaxLength) {
-    errors.name = `ชื่อ Publication ยาวเกิน ${PUBLICATION_LIMITS.nameMaxLength} ตัวอักษร`;
+    errors.name = `ชื่อ Program ยาวเกิน ${PUBLICATION_LIMITS.nameMaxLength} ตัวอักษร`;
   }
 
   // Publication type must be one of the known types
   if (!publicationTypes.some((t) => t.id === basicInfo.publicationType)) {
-    errors.publicationType = "กรุณาเลือกประเภท Publication";
+    errors.publicationType = "กรุณาเลือกประเภทคอนเทนต์";
   }
 
   // Description over-limit (unchanged from today)
@@ -54,37 +41,33 @@ export function validateBasicInfo(
   return errors;
 }
 
-export function validateStep(
-  step: WizardStepId,
-  state: DraftFields,
-  ctx?: Step1Context
-): StepValidationResult {
+function validateContentSelection(state: DraftFields): string[] {
+  const errors: string[] = [];
+  if (state.basicInfo.publicationType === "composition") {
+    // Contract word is "composition"; the operator-facing error still says "Layout" (ADR 0052 §1).
+    if (!state.compositionId) errors.push("กรุณาเลือก Layout");
+  } else if (state.basicInfo.publicationType === "playlist") {
+    if (!state.playlistId) errors.push("กรุณาเลือก Playlist");
+  } else if (state.assetItems.length === 0) {
+    errors.push("กรุณาเลือกสื่ออย่างน้อย 1 รายการ");
+  }
+  return errors;
+}
+
+export function validateStep(step: WizardStepId, state: DraftFields): StepValidationResult {
   const errors: string[] = [];
 
   if (step === 1) {
-    errors.push(...Object.values(validateBasicInfo(state.basicInfo, ctx)));
+    errors.push(...validateContentSelection(state));
   } else if (step === 2) {
-    if (state.basicInfo.publicationType === "composition") {
-      // Contract word is "composition"; the operator-facing error still says "Layout" (ADR 0052 §1).
-      if (!state.compositionId) {
-        errors.push("กรุณาเลือก Layout");
-      }
-    } else if (state.basicInfo.publicationType === "playlist") {
-      if (!state.playlistId) {
-        errors.push("กรุณาเลือก Playlist");
-      }
-    } else {
-      if (state.assetItems.length === 0) {
-        errors.push("กรุณาเลือกสื่ออย่างน้อย 1 รายการ");
-      }
-    }
+    errors.push(...Object.values(validateBasicInfo(state.basicInfo)));
   } else if (step === 3) {
     if (state.channelIds.length === 0) {
       errors.push("กรุณาเลือกช่องทางอย่างน้อย 1 ช่องทาง");
     }
-  } else if (step === 4) {
     errors.push(...Object.values(validateScheduleForm(state.scheduleForm)));
   }
+  // steps 4 and 5: no gate.
 
   return {
     valid: errors.length === 0,

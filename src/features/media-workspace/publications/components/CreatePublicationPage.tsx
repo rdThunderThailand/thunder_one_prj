@@ -20,6 +20,7 @@ import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
+import { resolveSeed, type SeedChoice } from "../seed-resolver";
 import { type WizardStepId } from "../step-validation";
 import { BasicInfoForm } from "./BasicInfoForm";
 import { ChannelsStep } from "./ChannelsStep";
@@ -29,6 +30,8 @@ import { PublicationStepper } from "./PublicationStepper";
 import { ReviewPublishStep } from "./ReviewPublishStep";
 import { ScheduleStep } from "./ScheduleStep";
 
+// The five ver02 Create steps (ADR 0072 §2):
+//   1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish
 const MAX_BUILT_STEP = 5;
 
 export function CreatePublicationPage() {
@@ -41,6 +44,7 @@ export function CreatePublicationPage() {
   const hasHydrated = useHasHydratedDraft();
   const isDirty = useIsDraftDirty();
   const step = usePublicationDraftStore((s) => s.step);
+  const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
   const goBack = usePublicationDraftStore((s) => s.goBack);
@@ -142,19 +146,31 @@ export function CreatePublicationPage() {
     };
   }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
 
-  // `Use in Program →` pre-fills type and Layout on whatever draft is already here rather than
-  // replacing it: the operator asked for a Publication *of this Layout*, not for their
-  // half-written draft to be thrown away. Applied once — changing the type back must stick.
-  const seededCompositionRef = useRef<string | null>(null);
+  // `Use in Program →` from the Playlist / Composition editor arrives with `?compositionId=`.
+  // The seed is held pending until the resume choice is made, so a draft the operator chooses
+  // to *continue* is never mutated under them (ADR 0072 §3). Once resolved the query param is
+  // stripped, so a refresh does not re-seed.
+  const [seedChoice, setSeedChoice] = useState<SeedChoice>(null);
+  const seedResolvedRef = useRef(false);
   useEffect(() => {
-    if (!hasHydrated || !seedCompositionId || idParam) return;
-    if (seededCompositionRef.current === seedCompositionId) return;
-    seededCompositionRef.current = seedCompositionId;
-    // Order matters: setBasicInfo clears compositionId whenever the type changes.
-    setBasicInfo({ ...usePublicationDraftStore.getState().basicInfo, publicationType: "composition" });
-    usePublicationDraftStore.getState().setCompositionId(seedCompositionId);
-    setStep(1);
-  }, [hasHydrated, seedCompositionId, idParam, setBasicInfo, setStep]);
+    if (!hasHydrated || seedResolvedRef.current) return;
+    const resolution = resolveSeed({
+      seedPresent: Boolean(seedCompositionId),
+      isEditMode: Boolean(idParam),
+      draftHasContent: hadContentAtHydration,
+      choice: seedChoice,
+    });
+    if (resolution === "wait") return;
+    seedResolvedRef.current = true;
+    if (resolution === "apply" && seedCompositionId) {
+      // Start-fresh path: the resume prompt already ran cancelDraft(). Order matters —
+      // setBasicInfo clears compositionId whenever the type changes.
+      setBasicInfo({ ...usePublicationDraftStore.getState().basicInfo, publicationType: "composition" });
+      usePublicationDraftStore.getState().setCompositionId(seedCompositionId);
+      setStep(2);
+    }
+    if (seedCompositionId) router.replace("/media-workspace/publications/create");
+  }, [hasHydrated, seedCompositionId, idParam, hadContentAtHydration, seedChoice, setBasicInfo, setStep, router]);
 
   const [retrying, setRetrying] = useState(false);
 
@@ -175,7 +191,6 @@ export function CreatePublicationPage() {
   const {
     channels,
     channelsError,
-    campaigns,
     tags,
     assets,
     reloadAssets,
@@ -270,15 +285,13 @@ export function CreatePublicationPage() {
         setSavingNext(true);
         setSaveStatus("saving");
         return persistDraft(false);
-      },
-      // Empty means the campaign list has not loaded — skip the availability check
-      // rather than flag a valid campaignId as gone.
-      campaigns.length > 0 ? { campaignIds: campaigns.map((c) => c.id) } : undefined
+      }
     );
 
     if (outcome.kind === "invalid") {
       setValidationErrors(outcome.errors);
-      if (step === 1 || step === 4) setShowFieldErrors(true);
+      // Prepare Content (name) and Program (schedule) show their errors inline.
+      if (step === 2 || step === 3) setShowFieldErrors(true);
       return;
     }
     setSavingNext(false);
@@ -385,14 +398,14 @@ export function CreatePublicationPage() {
 
       <Modal
         open={showResumePrompt}
-        onClose={() => setDismissedResume(true)}
+        onClose={() => { setSeedChoice("continue"); setDismissedResume(true); }}
         title="มี draft ที่ทำค้างไว้"
         footer={
           <>
-            <Button variant="ghost" onClick={() => { usePublicationDraftStore.getState().cancelDraft(); setDismissedResume(true); }}>
+            <Button variant="ghost" onClick={() => { usePublicationDraftStore.getState().cancelDraft(); setSeedChoice("fresh"); setDismissedResume(true); }}>
               เริ่มใหม่
             </Button>
-            <Button variant="primary" onClick={() => setDismissedResume(true)}>
+            <Button variant="primary" onClick={() => { setSeedChoice("continue"); setDismissedResume(true); }}>
               ทำต่อ
             </Button>
           </>
@@ -403,10 +416,10 @@ export function CreatePublicationPage() {
       </Modal>
 
       <Modal
-        open={(step === 2 || step === 3) && validationErrors.length > 0}
+        open={(step === 1 || step === 3) && validationErrors.length > 0}
         onClose={() => setValidationErrors([])}
-        title={step === 2 ? "ยังไม่ได้เลือกสื่อ" : "ยังไม่ได้เลือกช่องทาง"}
-        footer={<Button variant="primary" onClick={() => setValidationErrors([])}>{step === 2 ? "เลือกสื่อ" : "เลือกช่องทาง"}</Button>}
+        title={step === 1 ? "ยังไม่ได้เลือกคอนเทนต์" : "ข้อมูล Program ยังไม่ครบ"}
+        footer={<Button variant="primary" onClick={() => setValidationErrors([])}>ตกลง</Button>}
       >
         {validationErrors.map((err, idx) => (<p key={idx}>{err}</p>))}
       </Modal>
@@ -455,52 +468,56 @@ export function CreatePublicationPage() {
       )}
 
       <Card className="p-5">
-        <PublicationStepper currentStep={step} />
+        <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={setStep} />
       </Card>
 
+      {/* Step 1 — Choose Content */}
       {step === 1 && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <BasicInfoForm campaigns={campaigns} workspaceTags={tags} showErrors={showFieldErrors} />
-          </div>
-          <div>
-            <PreviewPanel campaigns={campaigns} assets={assets} />
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
         <ContentStep
-          campaigns={campaigns}
           assets={assets}
           reloadAssets={reloadAssets}
           assetsLoading={assetsLoading}
           assetsError={assetsError}
         />
       )}
+
+      {/* Step 2 — Prepare Content */}
+      {step === 2 && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <BasicInfoForm workspaceTags={tags} showErrors={showFieldErrors} />
+          </div>
+          <div>
+            <PreviewPanel assets={assets} />
+          </div>
+        </div>
+      )}
+
+      {/* Step 3 — Program: targeting + schedule (the ver02 layout is #84; this stacks the
+          existing steps so the boundary and its validation exist first) */}
       {step === 3 && (
-        <ChannelsStep
-          channels={channels}
-          loadingChannels={loadingRefs}
-          channelsError={channelsError}
-          aspectRatio={layoutAspectRatio}
-          fitCheckFailed={fitCheckFailed}
-        />
+        <div className="flex flex-col gap-6">
+          <ChannelsStep
+            channels={channels}
+            loadingChannels={loadingRefs}
+            channelsError={channelsError}
+            aspectRatio={layoutAspectRatio}
+            fitCheckFailed={fitCheckFailed}
+          />
+          <ScheduleStep
+            channels={channels}
+            assets={assets}
+            conflicts={conflicts}
+            checkingConflicts={checkingConflicts}
+            conflictsError={conflictsError}
+            showErrors={showFieldErrors}
+          />
+        </div>
       )}
-      {step === 4 && (
-        <ScheduleStep
-          campaigns={campaigns}
-          channels={channels}
-          assets={assets}
-          conflicts={conflicts}
-          checkingConflicts={checkingConflicts}
-          conflictsError={conflictsError}
-          showErrors={showFieldErrors}
-        />
-      )}
-      {step === 5 && (
+
+      {/* Steps 4 & 5 — Review / Publish. The visual split of ReviewPublishStep is #85/#86. */}
+      {(step === 4 || step === 5) && (
         <ReviewPublishStep
-          campaigns={campaigns}
           channels={channels}
           assets={assets}
           conflicts={conflicts}

@@ -4,10 +4,8 @@ import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ChevronDownIcon, PlusIcon, XIcon } from "@/components/ui/icons";
-import type { Campaign, Tag } from "../types";
+import type { Tag } from "../types";
 import {
-  languageCode,
-  languageOptions,
   priorities,
   publicationTypes,
   type PublicationTypeId,
@@ -20,25 +18,22 @@ import { FieldWrapper, DerivedField } from "./basic-info-fields";
 import { validateBasicInfo } from "../step-validation";
 
 export interface BasicInfoState {
-  campaignId: string;
   publicationType: PublicationTypeId;
   name: string;
   description: string;
   priorityId: string;
-  language: string;
   tags: string[];
 }
 
 export interface BasicInfoFormProps {
-  campaigns?: Campaign[];
   workspaceTags?: Tag[];
   showErrors?: boolean;
 }
 
-export function BasicInfoForm({ campaigns = [], workspaceTags = [], showErrors = false }: BasicInfoFormProps) {
+export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicInfoFormProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
-  const { campaignId, publicationType, name, description, priorityId, language, tags } = basicInfo;
+  const { publicationType, name, description, priorityId, tags } = basicInfo;
 
   const [tagDraft, setTagDraft] = useState("");
   const [addingTag, setAddingTag] = useState(false);
@@ -65,15 +60,10 @@ export function BasicInfoForm({ campaigns = [], workspaceTags = [], showErrors =
     patch({ tags: tags.filter((t) => t !== tag) });
   };
 
-  const selectedLanguage = languageCode(language);
-
   const isDescriptionOverLimit = description.length > PUBLICATION_LIMITS.descriptionMaxLength;
 
   // Recompute on every render so a field's error disappears the instant it becomes valid.
-  // An empty list means "not loaded yet" (or the fetch failed), not "no campaign exists" —
-  // passing it would flag a perfectly good campaignId as unavailable.
-  const campaignCtx = campaigns.length > 0 ? { campaignIds: campaigns.map((c) => c.id) } : undefined;
-  const fieldErrors = showErrors ? validateBasicInfo(basicInfo, campaignCtx) : {};
+  const fieldErrors = showErrors ? validateBasicInfo(basicInfo) : {};
 
   return (
     <Card className="p-5">
@@ -81,26 +71,7 @@ export function BasicInfoForm({ campaigns = [], workspaceTags = [], showErrors =
 
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <FieldWrapper label="Campaign" required error={fieldErrors.campaignId}>
-            <div className="relative">
-              <select
-                value={campaignId}
-                onChange={(e) => patch({ campaignId: e.target.value })}
-                aria-invalid={!!fieldErrors.campaignId}
-                className={`w-full appearance-none rounded-lg border ${fieldErrors.campaignId ? "border-red-400" : "border-zinc-200"} bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-              >
-                <option value="">— Select campaign —</option>
-                {campaigns.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-            </div>
-          </FieldWrapper>
-
-          <FieldWrapper label="Publication Name" required error={fieldErrors.name}>
+          <FieldWrapper label="Program Name" required error={fieldErrors.name}>
             <div className="relative">
               <input
                 placeholder="เช่น แคมเปญลดราคาหน้าร้อน 2024"
@@ -150,45 +121,27 @@ export function BasicInfoForm({ campaigns = [], workspaceTags = [], showErrors =
             )}
           </FieldWrapper>
 
-          <div className="grid grid-cols-2 gap-3">
-            <FieldWrapper label="Priority">
-              <div className="relative">
-                <span
-                  className={`pointer-events-none absolute left-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
-                    priorities.find((p) => p.id === priorityId)?.color ?? "bg-emerald-500"
-                  }`}
-                />
-                <select
-                  value={priorityId}
-                  onChange={(e) => patch({ priorityId: e.target.value })}
-                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-7 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                >
-                  {priorities.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              </div>
-            </FieldWrapper>
-            <FieldWrapper label="Language">
-              <div className="relative">
-                <select
-                  value={selectedLanguage}
-                  onChange={(e) => patch({ language: e.target.value })}
-                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-3.5 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                >
-                  {languageOptions.map((l) => (
-                    <option key={l.code} value={l.code}>
-                      {l.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              </div>
-            </FieldWrapper>
-          </div>
+          <FieldWrapper label="Priority">
+            <div className="relative">
+              <span
+                className={`pointer-events-none absolute left-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
+                  priorities.find((p) => p.id === priorityId)?.color ?? "bg-emerald-500"
+                }`}
+              />
+              <select
+                value={priorityId}
+                onChange={(e) => patch({ priorityId: e.target.value })}
+                className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-7 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+              >
+                {priorities.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            </div>
+          </FieldWrapper>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -241,14 +194,9 @@ export function BasicInfoForm({ campaigns = [], workspaceTags = [], showErrors =
             )}
           </FieldWrapper>
 
-          <div className="grid grid-cols-2 gap-3">
-            <FieldWrapper label="Format">
-              <DerivedField value={publicationTypes.find((t) => t.id === publicationType)?.label} />
-            </FieldWrapper>
-            <FieldWrapper label="Brand">
-              <DerivedField value={campaigns.find((c) => c.id === campaignId)?.brand_name} />
-            </FieldWrapper>
-          </div>
+          <FieldWrapper label="Format">
+            <DerivedField value={publicationTypes.find((t) => t.id === publicationType)?.label} />
+          </FieldWrapper>
         </div>
       </div>
 
