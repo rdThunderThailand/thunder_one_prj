@@ -20,6 +20,7 @@ import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
+import { resolveSeed, type SeedChoice } from "../seed-resolver";
 import { type WizardStepId } from "../step-validation";
 import { BasicInfoForm } from "./BasicInfoForm";
 import { ChannelsStep } from "./ChannelsStep";
@@ -145,19 +146,31 @@ export function CreatePublicationPage() {
     };
   }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
 
-  // `Use in Program →` pre-fills type and Layout on whatever draft is already here rather than
-  // replacing it: the operator asked for a Publication *of this Layout*, not for their
-  // half-written draft to be thrown away. Applied once — changing the type back must stick.
-  const seededCompositionRef = useRef<string | null>(null);
+  // `Use in Program →` from the Playlist / Composition editor arrives with `?compositionId=`.
+  // The seed is held pending until the resume choice is made, so a draft the operator chooses
+  // to *continue* is never mutated under them (ADR 0072 §3). Once resolved the query param is
+  // stripped, so a refresh does not re-seed.
+  const [seedChoice, setSeedChoice] = useState<SeedChoice>(null);
+  const seedResolvedRef = useRef(false);
   useEffect(() => {
-    if (!hasHydrated || !seedCompositionId || idParam) return;
-    if (seededCompositionRef.current === seedCompositionId) return;
-    seededCompositionRef.current = seedCompositionId;
-    // Order matters: setBasicInfo clears compositionId whenever the type changes.
-    setBasicInfo({ ...usePublicationDraftStore.getState().basicInfo, publicationType: "composition" });
-    usePublicationDraftStore.getState().setCompositionId(seedCompositionId);
-    setStep(1);
-  }, [hasHydrated, seedCompositionId, idParam, setBasicInfo, setStep]);
+    if (!hasHydrated || seedResolvedRef.current) return;
+    const resolution = resolveSeed({
+      seedPresent: Boolean(seedCompositionId),
+      isEditMode: Boolean(idParam),
+      draftHasContent: hadContentAtHydration,
+      choice: seedChoice,
+    });
+    if (resolution === "wait") return;
+    seedResolvedRef.current = true;
+    if (resolution === "apply" && seedCompositionId) {
+      // Start-fresh path: the resume prompt already ran cancelDraft(). Order matters —
+      // setBasicInfo clears compositionId whenever the type changes.
+      setBasicInfo({ ...usePublicationDraftStore.getState().basicInfo, publicationType: "composition" });
+      usePublicationDraftStore.getState().setCompositionId(seedCompositionId);
+      setStep(2);
+    }
+    if (seedCompositionId) router.replace("/media-workspace/publications/create");
+  }, [hasHydrated, seedCompositionId, idParam, hadContentAtHydration, seedChoice, setBasicInfo, setStep, router]);
 
   const [retrying, setRetrying] = useState(false);
 
@@ -385,14 +398,14 @@ export function CreatePublicationPage() {
 
       <Modal
         open={showResumePrompt}
-        onClose={() => setDismissedResume(true)}
+        onClose={() => { setSeedChoice("continue"); setDismissedResume(true); }}
         title="มี draft ที่ทำค้างไว้"
         footer={
           <>
-            <Button variant="ghost" onClick={() => { usePublicationDraftStore.getState().cancelDraft(); setDismissedResume(true); }}>
+            <Button variant="ghost" onClick={() => { usePublicationDraftStore.getState().cancelDraft(); setSeedChoice("fresh"); setDismissedResume(true); }}>
               เริ่มใหม่
             </Button>
-            <Button variant="primary" onClick={() => setDismissedResume(true)}>
+            <Button variant="primary" onClick={() => { setSeedChoice("continue"); setDismissedResume(true); }}>
               ทำต่อ
             </Button>
           </>
