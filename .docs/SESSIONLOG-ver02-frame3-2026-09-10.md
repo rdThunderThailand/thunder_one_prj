@@ -98,9 +98,19 @@ refactor test"** draft (image type, 2 assets). No console errors at any point.
 | 8 | Rail live-updates — recurring added Days/Daily rows; selecting a channel added it under "WHERE TO PLAY"; "Publish now" vs a date under "WHEN TO PLAY" | **PASS** |
 | 9 | Where: Channels tab only, dead All-Types/Status/Locations selects gone, no grid/list toggle, status donut kept | **PASS** |
 
+**Playlist branch — browser-verified** (new draft, picked an existing playlist):
+- How to Play shows "การเล่นเป็นไปตามที่ตั้งค่าไว้ใน Playlist นี้" then READ-ONLY
+  Play Mode `Sequential` / Repeat `Loop` / Start From `First` / Transition `Fade` /
+  Transition duration `1 Sec` — from `decodeMetadata`, no new fetch.
+- "แก้ไขใน Playlist editor ↗" → `/media-workspace/playlists/{uuid}` ✓
+- Rail "HOW TO PLAY → Playback → ตามการตั้งค่าของ Playlist" ✓. No console errors.
+
+**Composition branch — browser-verified** (new draft, picked an existing layout):
+- How to Play shows "การเล่นของแต่ละโซนเป็นไปตามที่ตั้งค่าไว้ใน Layout นี้" +
+  "แก้ไขใน Layout editor ↗" → `/media-workspace/layouts/{uuid}` ✓
+- Rail "HOW TO PLAY → Playback → ตามการตั้งค่าของ Layout" ✓. No console errors.
+
 **NOT browser-verified:**
-- **Playlist** and **Composition** branches of How to Play (would need a playlist /
-  layout draft; the code path is `usePlaylistPreview` + `decodeMetadata`, read-only).
 - Step 4 Review still showing the Priority value (Priority store field is untouched,
   so low-risk, but not clicked through).
 - Narrow-column Play Mode cards are cramped (5 cards, 2-col grid, "Schedule Later"
