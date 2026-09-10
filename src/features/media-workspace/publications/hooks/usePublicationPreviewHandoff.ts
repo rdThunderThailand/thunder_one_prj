@@ -38,6 +38,7 @@ export function usePublicationPreviewHandoff(getHandoff: () => { preview: StageP
     channelRef.current?.close();
     const channelName = `thunder-one-preview:${crypto.randomUUID()}`;
     const channel = new BroadcastChannel(channelName);
+    let lastSent = "";
     channel.onmessage = ({ data }: MessageEvent<{ type?: string }>) => {
       if (data?.type !== "connect" && data?.type !== "heartbeat") return;
       const current = getHandoffRef.current();
@@ -49,7 +50,13 @@ export function usePublicationPreviewHandoff(getHandoff: () => { preview: StageP
         id: current.publicationId ?? "draft",
         assets: current.assets.filter((asset) => referenced.has(asset.id)),
       };
-      channel.postMessage({ type: "handoff", handoff });
+      // Re-post only when the payload actually changed — a `connect` always sends, but an
+      // unchanged heartbeat must not hand the stage a fresh `zones` array every 2s.
+      const fingerprint = JSON.stringify(handoff);
+      if (data.type === "connect" || fingerprint !== lastSent) {
+        lastSent = fingerprint;
+        channel.postMessage({ type: "handoff", handoff });
+      }
       channel.postMessage({ type: "heartbeat-reply" });
     };
     channelRef.current = channel;
