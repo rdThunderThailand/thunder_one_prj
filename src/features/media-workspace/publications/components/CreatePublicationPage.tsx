@@ -43,6 +43,7 @@ export function CreatePublicationPage() {
   const hasHydrated = useHasHydratedDraft();
   const isDirty = useIsDraftDirty();
   const step = usePublicationDraftStore((s) => s.step);
+  const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
   const goBack = usePublicationDraftStore((s) => s.goBack);
@@ -454,7 +455,7 @@ export function CreatePublicationPage() {
       )}
 
       <Card className="p-5">
-        <PublicationStepper currentStep={step} />
+        <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={setStep} />
       </Card>
 
       {/* Step 1 — Choose Content */}

@@ -32,6 +32,10 @@ export interface DraftFields {
    * a null key and mint their own. */
   idempotencyKey: string;
   step: number;
+  /** Furthest step the operator has advanced to via `goNext`. Lets the stepper
+   * keep an already-validated step clickable after they jump back to an earlier
+   * one. Persisted, so a reload on step 4 still shows 1–3 as reachable. */
+  furthestStep: number;
   basicInfo: BasicInfoState;
   assetItems: DraftAssetItem[];
   playlistId: string | null;
@@ -46,6 +50,7 @@ function getDefaultDraft(): DraftFields {
     publicationId: null,
     idempotencyKey: crypto.randomUUID(),
     step: 1,
+    furthestStep: 1,
     basicInfo: defaultBasicInfo,
     assetItems: [],
     playlistId: null,
@@ -109,7 +114,10 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       setCompositionId: (compositionId) => set({ compositionId }),
       resetIdempotencyKey: () => set({ idempotencyKey: crypto.randomUUID() }),
       setStep: (step) => set({ step }),
-      goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
+      goNext: (maxStep) => set((s) => {
+        const step = Math.min(s.step + 1, maxStep);
+        return { step, furthestStep: Math.max(s.furthestStep, step) };
+      }),
       goBack: () => set((s) => ({ step: Math.max(s.step - 1, 1) })),
       setBasicInfo: (basicInfo) => set((s) => {
         // ponytail: switching to playlist clears assetItems; switching to image/video clears playlistId
@@ -184,6 +192,9 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // v10: the ver02 Create re-cut (ADR 0072). `campaignId` and `language` are gone from
       // basicInfo, and `step` now indexes the five ver02 steps, not the old ones — a v9 draft
       // would land the operator on the wrong step with a stale shape, so it is dropped.
+      // `furthestStep` (added after v10) is absent from an older v10 draft and shallow-merges
+      // to its default of 1 — the stepper just re-unlocks steps as the operator clicks Next,
+      // no migration needed.
       name: "thunderone.publications.create-draft.v10",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
