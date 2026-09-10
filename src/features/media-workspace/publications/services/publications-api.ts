@@ -31,9 +31,6 @@ function cleanBasicInfoBody(
   if (form.description?.trim()) {
     body.description = form.description.trim();
   }
-  if (form.campaign_id?.trim()) {
-    body.campaign_id = form.campaign_id.trim();
-  }
   if (form.publication_type) {
     body.publication_type = form.publication_type;
   }
@@ -45,9 +42,6 @@ function cleanBasicInfoBody(
   }
   if (form.priority) {
     body.priority = form.priority;
-  }
-  if (form.language?.trim()) {
-    body.language = form.language.trim();
   }
   // Always sent, even when empty: the backend treats a missing `tags` as
   // "leave untouched", so an empty array is the only way to clear them.

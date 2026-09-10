@@ -8,7 +8,6 @@ export function hasDraftContent(
   // current date/time, so it would make every draft look non-empty (docs/adr/0014).
   return Boolean(
     d.basicInfo.name.trim() ||
-      d.basicInfo.campaignId ||
       d.basicInfo.description.trim() ||
       d.basicInfo.tags.length ||
       d.assetItems.length ||

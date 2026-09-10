@@ -1,4 +1,4 @@
-import { languageCode, type ScheduleTypeId } from "./mock-data.ts";
+import { type ScheduleTypeId } from "./mock-data.ts";
 import type {
   BasicInfoForm,
   ContentItem,
@@ -34,10 +34,8 @@ export function basicInfoToForm(
   const form: BasicInfoForm = {
     name: basicInfo.name.trim(),
     description: basicInfo.description || undefined,
-    campaign_id: basicInfo.campaignId || undefined,
     publication_type: basicInfo.publicationType as PublicationType,
     priority: basicInfo.priorityId as Priority,
-    language: languageCode(basicInfo.language),
     tags: basicInfo.tags ?? [],
   };
   if (playlistId?.trim()) {

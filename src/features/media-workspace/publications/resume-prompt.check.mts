@@ -13,12 +13,10 @@ const baseDraft: DraftFields = {
   idempotencyKey: "idem-key-1",
   step: 1,
   basicInfo: {
-    campaignId: "",
     publicationType: "image",
     name: "",
     description: "",
     priorityId: "normal",
-    language: "th",
     tags: [],
   },
   assetItems: [],
@@ -37,8 +35,8 @@ assert.equal(hasDraftContent({ ...baseDraft, basicInfo: { ...baseDraft.basicInfo
 // 3. basicInfo.name: "   " (whitespace only) → false
 assert.equal(hasDraftContent({ ...baseDraft, basicInfo: { ...baseDraft.basicInfo, name: "   " } }), false);
 
-// 4. basicInfo.campaignId: "camp-1" → true
-assert.equal(hasDraftContent({ ...baseDraft, basicInfo: { ...baseDraft.basicInfo, campaignId: "camp-1" } }), true);
+// 4. basicInfo.tags: ["promo"] → true
+assert.equal(hasDraftContent({ ...baseDraft, basicInfo: { ...baseDraft.basicInfo, tags: ["promo"] } }), true);
 
 // 5. step: 2 → true
 assert.equal(hasDraftContent({ ...baseDraft, step: 2 }), true);

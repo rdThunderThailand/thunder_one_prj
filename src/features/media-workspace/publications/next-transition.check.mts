@@ -13,29 +13,31 @@ import { attemptNext, isResumePending } from "./next-transition.ts";
 import { makeDefaultScheduleForm } from "./schedule.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 
-const validStep1: DraftFields = {
+// Step map (ADR 0072 §2): 1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish.
+const validDraft: DraftFields = {
   publicationId: null,
   idempotencyKey: "idem-key-1",
   step: 1,
   basicInfo: {
-    campaignId: "camp-1",
     publicationType: "image",
     name: "Summer promo",
     description: "",
     priorityId: "normal",
-    language: "th",
     tags: [],
   },
-  assetItems: [],
+  assetItems: [{ media_asset_id: "asset-1", duration_seconds: 10, transition: "cut" }],
   playlistId: null,
   compositionId: null,
-  channelIds: [],
+  channelIds: ["ch-1"],
   scheduleForm: makeDefaultScheduleForm(),
 };
 
-const invalidStep1: DraftFields = {
-  ...validStep1,
-  basicInfo: { ...validStep1.basicInfo, name: "   " },
+// Step 1 (Choose Content) is invalid with nothing selected.
+const noContent: DraftFields = { ...validDraft, assetItems: [] };
+// Step 2 (Prepare Content) is invalid with a blank name.
+const noName: DraftFields = {
+  ...validDraft,
+  basicInfo: { ...validDraft.basicInfo, name: "   " },
 };
 
 const ok = async () => undefined;
@@ -50,48 +52,44 @@ const counted = async () => {
   persistCalls += 1;
 };
 
-const invalid = await attemptNext(1, invalidStep1, counted);
+const invalid = await attemptNext(1, noContent, counted);
 assert.equal(invalid.kind, "invalid");
-assert.deepEqual(invalid.kind === "invalid" && invalid.errors, ["กรุณากรอกชื่อ Publication"]);
 assert.equal(persistCalls, 0);
 
 // The happy path is the only outcome the caller may advance on.
-assert.deepEqual(await attemptNext(1, validStep1, ok), { kind: "saved" });
+assert.deepEqual(await attemptNext(1, validDraft, ok), { kind: "saved" });
 
 // A save failure stays a failure — this is the regression that matters most:
 // if this ever comes back "saved", the wizard advances past unsaved work.
-const failed = await attemptNext(1, validStep1, boom);
+const failed = await attemptNext(1, validDraft, boom);
 assert.equal(failed.kind, "failed");
 assert.equal(failed.kind === "failed" && failed.message, "network down");
 
 // Non-Error throws still produce a usable message rather than "[object Object]".
-const thrownString = await attemptNext(1, validStep1, async () => {
+const thrownString = await attemptNext(1, validDraft, async () => {
   throw "nope";
 });
 assert.equal(thrownString.kind === "failed" && thrownString.message, "Failed to save draft.");
 
-// Retry after a failure: same inputs, working backend, resolves clean. The
-// Retry button reuses handleNext, so this is literally the retry path.
-assert.deepEqual(await attemptNext(1, validStep1, ok), { kind: "saved" });
+// Retry after a failure: same inputs, working backend, resolves clean.
+assert.deepEqual(await attemptNext(1, validDraft, ok), { kind: "saved" });
 
-// Later steps gate on their own fields, not step 1's.
-assert.equal((await attemptNext(2, validStep1, ok)).kind, "invalid"); // no assets
-assert.equal((await attemptNext(3, validStep1, ok)).kind, "invalid"); // no channels
-assert.equal((await attemptNext(4, validStep1, ok)).kind, "saved"); // "now" is valid
+// Each step gates on its own fields.
+const blankName = await attemptNext(2, noName, ok);
+assert.equal(blankName.kind, "invalid");
+assert.deepEqual(blankName.kind === "invalid" && blankName.errors, ["กรุณากรอกชื่อ Program"]);
+assert.equal((await attemptNext(3, { ...validDraft, channelIds: [] }, ok)).kind, "invalid"); // no channels
+assert.equal((await attemptNext(3, validDraft, ok)).kind, "saved"); // channel + "now" schedule
+assert.equal((await attemptNext(4, noContent, ok)).kind, "saved"); // Review has no gate
 
-// A composition draft with no Layout picked yet is invalid at step 2, same as an empty
-// asset selection; picking one is enough to advance (ADR 0049 §5).
-const compositionDraftNoPick = {
-  ...validStep1,
-  basicInfo: { ...validStep1.basicInfo, publicationType: "composition" as const },
+// A composition draft with no Layout picked yet is invalid at step 1 (ADR 0049 §5).
+const compositionNoPick = {
+  ...validDraft,
+  basicInfo: { ...validDraft.basicInfo, publicationType: "composition" as const },
+  assetItems: [],
 };
-assert.equal((await attemptNext(2, compositionDraftNoPick, ok)).kind, "invalid");
-
-const compositionDraftPicked = {
-  ...compositionDraftNoPick,
-  compositionId: "composition-1",
-};
-assert.equal((await attemptNext(2, compositionDraftPicked, ok)).kind, "saved");
+assert.equal((await attemptNext(1, compositionNoPick, ok)).kind, "invalid");
+assert.equal((await attemptNext(1, { ...compositionNoPick, compositionId: "composition-1" }, ok)).kind, "saved");
 
 // Resume guard: pending only while a ?id= is present and neither the finished
 // fetch nor the store has caught up to it. Getting this wrong either flashes

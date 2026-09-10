@@ -12,7 +12,7 @@ import {
   validateScheduleForm,
   utcToZonedParts,
 } from "../schedule";
-import type { Campaign, MediaAsset, ScheduleConflict } from "../types";
+import type { MediaAsset, ScheduleConflict } from "../types";
 import type { ChannelListItem } from "../../channels/types";
 import {
   delayUnits,
@@ -62,7 +62,6 @@ function formatShortDate(iso: string) {
 }
 
 export interface ScheduleStepProps {
-  campaigns?: Campaign[];
   channels?: ChannelListItem[];
   assets?: MediaAsset[];
   conflicts?: ScheduleConflict[];
@@ -72,7 +71,6 @@ export interface ScheduleStepProps {
 }
 
 export function ScheduleStep({
-  campaigns = [],
   channels = [],
   assets = [],
   conflicts = [],
@@ -119,7 +117,6 @@ export function ScheduleStep({
     channels.length > 0
       ? channels.filter((c) => channelIds.includes(c.id)).length
       : channelIds.length;
-  const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
   const priorityConflicts = summarizePriorityConflicts(conflicts);
@@ -608,10 +605,6 @@ export function ScheduleStep({
           )}
 
           <dl className="mt-5 space-y-3 border-t border-zinc-100 pt-4 text-sm">
-            <div className="flex items-center justify-between">
-              <dt className="text-zinc-500">Campaign</dt>
-              <dd className="font-medium text-zinc-900">{campaign?.name ?? "—"}</dd>
-            </div>
             <div>
               <div className="flex items-center justify-between">
                 <dt className="text-zinc-500">Publication Type</dt>
@@ -688,10 +681,6 @@ export function ScheduleStep({
               <dd className="text-right font-medium text-zinc-900">
                 {basicInfo.tags.join(", ") || "—"}
               </dd>
-            </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-zinc-500">Language</dt>
-              <dd className="font-medium text-zinc-900">{basicInfo.language}</dd>
             </div>
           </dl>
         </Card>

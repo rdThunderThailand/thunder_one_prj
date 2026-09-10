@@ -16,13 +16,10 @@ import { priorities } from "../mock-data";
 import type { BasicInfoState } from "../components/BasicInfoForm";
 
 const defaultBasicInfo: BasicInfoState = {
-  // Campaigns come from the API now, so there is no id to preselect.
-  campaignId: "",
   publicationType: "image",
   name: "",
   description: "",
   priorityId: priorities[1].id,
-  language: "th",
   tags: [],
 };
 
@@ -184,7 +181,10 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // replaced by a single compositionId, per ADR 0049 §5 and ADR 0052 — a Publication now
       // picks one Composition exactly as it picks one Playlist, with no per-Zone binding UI in
       // the wizard. A v8 draft's shape has no compositionId and is dropped, not migrated.
-      name: "thunderone.publications.create-draft.v9",
+      // v10: the ver02 Create re-cut (ADR 0072). `campaignId` and `language` are gone from
+      // basicInfo, and `step` now indexes the five ver02 steps, not the old ones — a v9 draft
+      // would land the operator on the wrong step with a stale shape, so it is dropped.
+      name: "thunderone.publications.create-draft.v10",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

@@ -22,10 +22,8 @@ import type { PublicationDriftCheck } from "../publication-drift";
 export type BasicInfoForm = {
   name: string;
   description?: string;
-  campaign_id?: string;
   publication_type?: PublicationType;
   priority?: Priority;
-  language?: string;
   tags?: string[];
   playlist_id?: string;
   composition_id?: string;

@@ -12,7 +12,7 @@ import { playlistDisplayStatus, statusBadge } from "@/features/media-workspace/p
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { fetchPublication } from "../services/publications-api";
 import { utcToZonedParts } from "../schedule";
-import type { Campaign, MediaAsset, ScheduleConflict } from "../types";
+import type { MediaAsset, ScheduleConflict } from "../types";
 import type { ChannelListItem } from "../../channels/types";
 import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
 import {
@@ -64,7 +64,6 @@ function formatLongDate(iso: string) {
 }
 
 export interface ReviewPublishStepProps {
-  campaigns?: Campaign[];
   channels?: ChannelListItem[];
   assets?: MediaAsset[];
   conflicts?: ScheduleConflict[];
@@ -76,7 +75,6 @@ export interface ReviewPublishStepProps {
 }
 
 export function ReviewPublishStep({
-  campaigns = [],
   channels = [],
   assets = [],
   conflicts = [],
@@ -127,7 +125,6 @@ export function ReviewPublishStep({
   const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
   const thumbnailUrl = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
 
-  const campaign = campaigns.find((c) => c.id === basicInfo.campaignId);
   const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
   const priority = priorities.find((p) => p.id === basicInfo.priorityId);
   const scheduleType = scheduleTypes.find(
@@ -208,10 +205,6 @@ export function ReviewPublishStep({
                   </span>
                 </p>
                 <dl className="mt-2 space-y-1.5 text-xs">
-                  <div className="flex gap-2">
-                    <dt className="w-20 shrink-0 text-zinc-400">Campaign</dt>
-                    <dd className="text-zinc-700">{campaign?.name ?? "—"}</dd>
-                  </div>
                   <div className="flex gap-2">
                     <dt className="w-20 shrink-0 text-zinc-400">Content Type</dt>
                     <dd className="flex items-center gap-1 text-zinc-700">
@@ -536,14 +529,10 @@ export function ReviewPublishStep({
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-4 text-sm font-semibold text-zinc-900">Publication Summary</h2>
+            <h2 className="mb-4 text-sm font-semibold text-zinc-900">Program Summary</h2>
             <dl className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <dt className="text-zinc-500">Campaign</dt>
-                <dd className="font-medium text-zinc-900">{campaign?.name ?? "—"}</dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-zinc-500">Publication Type</dt>
+                <dt className="text-zinc-500">Content Type</dt>
                 <dd className="flex items-center gap-1.5 font-medium text-zinc-900">
                   <span className="h-4 w-4 text-zinc-500">
                     {type && publicationTypeIcons[type.id]}
@@ -589,10 +578,6 @@ export function ReviewPublishStep({
                 <dd className="text-right font-medium text-zinc-900">
                   {basicInfo.tags.join(", ") || "—"}
                 </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-zinc-500">Language</dt>
-                <dd className="font-medium text-zinc-900">{basicInfo.language}</dd>
               </div>
             </dl>
           </Card>
