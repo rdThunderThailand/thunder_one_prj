@@ -2,7 +2,7 @@
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 
-const PER_PAGE_OPTIONS = [10, 25, 50];
+const DEFAULT_PER_PAGE_OPTIONS = [10, 25, 50];
 
 /** Windowed page numbers with "…" for the gaps — 1 … 4 5 6 … 12. Always shows the first
  *  and last page so the ends stay reachable in one click. */
@@ -27,6 +27,7 @@ export function Pagination({
   rangeStart,
   rangeEnd,
   itemLabel = "playlists",
+  perPageOptions = DEFAULT_PER_PAGE_OPTIONS,
   onPageChange,
   onPerPageChange,
 }: {
@@ -37,6 +38,7 @@ export function Pagination({
   rangeStart: number;
   rangeEnd: number;
   itemLabel?: string;
+  perPageOptions?: number[];
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
 }) {
@@ -98,7 +100,7 @@ export function Pagination({
           onChange={(e) => onPerPageChange(Number(e.target.value))}
           className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
         >
-          {PER_PAGE_OPTIONS.map((n) => (
+          {perPageOptions.map((n) => (
             <option key={n} value={n}>
               {n} / page
             </option>

@@ -475,6 +475,7 @@ export function CreatePublicationPage() {
       {step === 1 && (
         <ContentStep
           assets={assets}
+          tags={tags}
           reloadAssets={reloadAssets}
           assetsLoading={assetsLoading}
           assetsError={assetsError}

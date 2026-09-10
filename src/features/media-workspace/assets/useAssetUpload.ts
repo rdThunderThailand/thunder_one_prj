@@ -19,10 +19,7 @@ export function useAssetUpload(
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
+  async function uploadFile(file: File) {
 
     const rejection = rejectUploadReason(file);
     if (rejection) {
@@ -48,5 +45,11 @@ export function useAssetUpload(
     }
   }
 
-  return { fileInputRef, uploadPct, uploadError, handleFilePicked };
+  function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) void uploadFile(file);
+  }
+
+  return { fileInputRef, uploadPct, uploadError, handleFilePicked, uploadFile };
 }

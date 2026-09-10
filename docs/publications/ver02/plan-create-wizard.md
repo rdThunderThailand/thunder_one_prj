@@ -55,7 +55,7 @@ describing this program is SHIP, anything that would write to the Asset is DROP*
 | Status filter (Active / Draft / Archived / Expired) | SHIP | asset status | NEW — no picker has it |
 | Resolution filter, duration min/max filter | SHIP | asset metadata | NEW |
 | Pagination | SHIP | picker-local | ADAPT `ui/Pagination.tsx` (list-page only today) |
-| Selected-item detail panel + usage stats | READ-ONLY | asset metadata | ADAPT `SelectedAssetList.tsx` via `selection` override; usage stats (Programs / Screens / Play time) → **DROP**, no such aggregate exists |
+| Selected-item detail panel + usage stats | READ-ONLY | asset metadata | NEW read-only detail panel; `SelectedAssetList.tsx` remains the picked-item editor for Frame 2. Usage stats (Programs / Screens / Play time) → **DROP**, no such aggregate exists |
 | Tags on the detail panel | READ-ONLY | asset tags | REUSE — editing them here would write the Asset |
 | Open Media Library ↗ | SHIP | new tab | NEW (link) |
 
