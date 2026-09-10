@@ -6,12 +6,15 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, ChevronDownIcon, InfoIcon, LightningIcon, RepeatIcon } from "@/components/ui/icons";
 import { CARD_BY_SCHEDULE_TYPE, SCHEDULE_TYPE_BY_CARD } from "../draft-mapping";
+import { validateScheduleForm, utcToZonedParts } from "../schedule";
 import {
-  TIMEZONES,
-  WEEKDAYS,
-  validateScheduleForm,
-  utcToZonedParts,
-} from "../schedule";
+  DateRangeField,
+  DateTimeInputs,
+  FieldError,
+  TimeWindowField,
+  TimezoneSelect,
+  WeekdayChips,
+} from "./schedule-fields";
 import type { MediaAsset, ScheduleConflict } from "../types";
 import type { ChannelListItem } from "../../channels/types";
 import {
@@ -29,11 +32,8 @@ import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { summarizePriorityConflicts } from "../publish-eligibility";
 
-// ponytail: this file is well over the 300-line house limit — split the right-hand summary column out next time it is touched
-
-function FieldError({ message }: { message?: string }) {
-  return message ? <p className="mt-1 text-xs font-medium text-red-600">{message}</p> : null;
-}
+// ponytail: still over the 300-line house limit — the right-hand Preview and Summary
+// cards are the next split when this file is touched again.
 
 const scheduleTypeIcon: Record<ScheduleTypeId, ReactNode> = {
   "publish-now": <LightningIcon />,
@@ -191,164 +191,49 @@ export function ScheduleStep({
             </label>
             {scheduleForm.schedule_type === "now" ? (
               <>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <input
-                    type="date"
-                    disabled
-                    value={nowZoned.date}
-                    className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-400 outline-none cursor-not-allowed"
-                  />
-                  <input
-                    type="time"
-                    disabled
-                    value={nowZoned.time}
-                    className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-400 outline-none cursor-not-allowed"
-                  />
-                </div>
+                <DateTimeInputs date={nowZoned.date} time={nowZoned.time} disabled />
                 <p className="mt-1.5 text-xs text-zinc-500">Publishes immediately once activated.</p>
               </>
             ) : (
-              <div className="grid grid-cols-2 gap-2.5">
-                <input
-                  type="date"
-                  value={scheduleForm.start_date}
-                  onChange={(e) => patch({ start_date: e.target.value })}
-                  aria-invalid={!!fieldErrors.start_date}
-                  className={`rounded-lg border ${fieldErrors.start_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-                />
-                <input
-                  type="time"
-                  value={scheduleForm.start_time}
-                  onChange={(e) => patch({ start_time: e.target.value })}
-                  aria-invalid={!!fieldErrors.start_time}
-                  className={`rounded-lg border ${fieldErrors.start_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-                />
-              </div>
+              <DateTimeInputs
+                date={scheduleForm.start_date}
+                time={scheduleForm.start_time}
+                onDateChange={(v) => patch({ start_date: v })}
+                onTimeChange={(v) => patch({ start_time: v })}
+                dateError={fieldErrors.start_date}
+                timeError={fieldErrors.start_time}
+              />
             )}
             <FieldError message={fieldErrors.start_date} />
             <FieldError message={fieldErrors.start_time} />
           </div>
 
-          {scheduleForm.schedule_type === "range" && (
-            <div className="mt-4">
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                End Date &amp; Time
-              </label>
-              <div className="grid grid-cols-2 gap-2.5">
-                <input
-                  type="date"
-                  value={scheduleForm.end_date}
-                  onChange={(e) => patch({ end_date: e.target.value })}
-                  aria-invalid={!!fieldErrors.end_date}
-                  className={`rounded-lg border ${fieldErrors.end_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-                />
-                <input
-                  type="time"
-                  value={scheduleForm.end_time}
-                  onChange={(e) => patch({ end_time: e.target.value })}
-                  aria-invalid={!!fieldErrors.end_time}
-                  className={`rounded-lg border ${fieldErrors.end_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-                />
-              </div>
-              <FieldError message={fieldErrors.end_date} />
-              <FieldError message={fieldErrors.end_time} />
-            </div>
+          {(scheduleForm.schedule_type === "range" || scheduleForm.schedule_type === "recurring") && (
+            <DateRangeField
+              date={scheduleForm.end_date}
+              time={scheduleForm.end_time}
+              onDateChange={(v) => patch({ end_date: v })}
+              onTimeChange={(v) => patch({ end_time: v })}
+              dateError={fieldErrors.end_date}
+              timeError={fieldErrors.end_time}
+            />
           )}
 
           {scheduleForm.schedule_type === "recurring" && (
             <>
-              <div className="mt-4">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                  End Date &amp; Time
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <input
-                    type="date"
-                    value={scheduleForm.end_date}
-                    onChange={(e) => patch({ end_date: e.target.value })}
-                    aria-invalid={!!fieldErrors.end_date}
-                    className={`rounded-lg border ${fieldErrors.end_date ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-                  />
-                  <input
-                    type="time"
-                    value={scheduleForm.end_time}
-                    onChange={(e) => patch({ end_time: e.target.value })}
-                    aria-invalid={!!fieldErrors.end_time}
-                    className={`rounded-lg border ${fieldErrors.end_time ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-                  />
-                </div>
-                <FieldError message={fieldErrors.end_date} />
-                <FieldError message={fieldErrors.end_time} />
-              </div>
-
-              <div className="mt-4">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Repeat On</label>
-                <div className="flex flex-wrap gap-2">
-                  {WEEKDAYS.map((w) => {
-                    const isSelected = scheduleForm.days.includes(w.value);
-                    return (
-                      <button
-                        key={w.value}
-                        type="button"
-                        onClick={() => toggleDay(w.value)}
-                        className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                          isSelected
-                            ? "border-indigo-500 bg-indigo-50 text-indigo-600"
-                            : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
-                        }`}
-                      >
-                        {w.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <FieldError message={fieldErrors.days} />
-              </div>
-
-              <div className="mt-4">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Daily Window</label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <input
-                    type="time"
-                    value={scheduleForm.daily_start}
-                    onChange={(e) => patch({ daily_start: e.target.value })}
-                    aria-invalid={!!fieldErrors.daily_start}
-                    className={`rounded-lg border ${fieldErrors.daily_start ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-                  />
-                  <input
-                    type="time"
-                    value={scheduleForm.daily_end}
-                    onChange={(e) => patch({ daily_end: e.target.value })}
-                    aria-invalid={!!fieldErrors.daily_end}
-                    className={`rounded-lg border ${fieldErrors.daily_end ? "border-red-400" : "border-zinc-200"} px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
-                  />
-                </div>
-                <FieldError message={fieldErrors.daily_start} />
-                <FieldError message={fieldErrors.daily_end} />
-                <p className="mt-1.5 text-xs text-zinc-500">
-                  Plays on the selected weekdays, within this daily time window, across the date range above.
-                </p>
-              </div>
+              <WeekdayChips selected={scheduleForm.days} onToggle={toggleDay} error={fieldErrors.days} />
+              <TimeWindowField
+                start={scheduleForm.daily_start}
+                end={scheduleForm.daily_end}
+                onStartChange={(v) => patch({ daily_start: v })}
+                onEndChange={(v) => patch({ daily_end: v })}
+                startError={fieldErrors.daily_start}
+                endError={fieldErrors.daily_end}
+              />
             </>
           )}
 
-          <div className="mt-4">
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Time Zone</label>
-            <div className="relative">
-              <select
-                value={scheduleForm.timezone}
-                onChange={(e) => patch({ timezone: e.target.value })}
-                className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-              >
-                {TIMEZONES.map((tz) => (
-                  <option key={tz.id} value={tz.id}>
-                    {tz.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-            </div>
-          </div>
+          <TimezoneSelect value={scheduleForm.timezone} onChange={(v) => patch({ timezone: v })} />
 
           {(scheduleForm.schedule_type === "now" || scheduleForm.schedule_type === "later") && (
             <div className="mt-4">
@@ -361,22 +246,13 @@ export function ScheduleStep({
                 />
                 Expiration <span className="text-zinc-400">(Optional)</span>
               </label>
-              <div className="grid grid-cols-2 gap-2.5">
-                <input
-                  type="date"
-                  disabled={!hasExpiration}
-                  value={scheduleForm.end_date}
-                  onChange={(e) => patch({ end_date: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
-                />
-                <input
-                  type="time"
-                  disabled={!hasExpiration}
-                  value={scheduleForm.end_time}
-                  onChange={(e) => patch({ end_time: e.target.value })}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
-                />
-              </div>
+              <DateTimeInputs
+                date={scheduleForm.end_date}
+                time={scheduleForm.end_time}
+                onDateChange={(v) => patch({ end_date: v })}
+                onTimeChange={(v) => patch({ end_time: v })}
+                disabled={!hasExpiration}
+              />
             </div>
           )}
 
