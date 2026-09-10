@@ -26,7 +26,8 @@ import { ContentStep } from "./ContentStep";
 import { PrepareContentStep } from "./PrepareContentStep";
 import { ProgramStep } from "./ProgramStep";
 import { PublicationStepper } from "./PublicationStepper";
-import { ReviewPublishStep } from "./ReviewPublishStep";
+import { PublishStep } from "./PublishStep";
+import { ReviewStep } from "./ReviewStep";
 
 // The five ver02 Create steps (ADR 0072 §2):
 //   1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish
@@ -499,9 +500,8 @@ export function CreatePublicationPage() {
         />
       )}
 
-      {/* Steps 4 & 5 — Review / Publish. The visual split of ReviewPublishStep is #85/#86. */}
-      {(step === 4 || step === 5) && (
-        <ReviewPublishStep
+      {step === 4 && (
+        <ReviewStep
           channels={channels}
           assets={assets}
           conflicts={conflicts}
@@ -510,8 +510,11 @@ export function CreatePublicationPage() {
           eligibilityChecks={eligibilityChecks}
           aspectRatio={layoutAspectRatio}
           fitCheckFailed={fitCheckFailed}
+          onEditProgram={() => setStep(3)}
         />
       )}
+
+      {step === 5 && <PublishStep channels={channels} assets={assets} canPublish={canPublish} />}
 
       <Card className="flex flex-col gap-3 p-4">
         <div className="flex items-center gap-4">
