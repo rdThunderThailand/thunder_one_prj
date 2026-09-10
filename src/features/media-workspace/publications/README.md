@@ -4,5 +4,5 @@ A publishable package that binds an Asset or Playlist snapshot to Channels and a
 
 > R&D placeholder — the "Create Publication" wizard (step 1: Basic Info) is built as UI only. `Campaign` reflects the full product mockup (Phase 2+), not Phase 1 MVP scope, same tradeoff as `features/overview` — see `docs/adr/` for phasing.
 
-- `components/` — wizard step components (`PublicationStepper`, `BasicInfoForm`, `PreviewPanel`) composed by `CreatePublicationPage`
+- `components/` — wizard step components (`PublicationStepper`, `BasicInfoForm`, `PrepareContentStep`) composed by `CreatePublicationPage`
 - `mock-data.ts` — placeholder data (campaigns, publication types, priorities), no backend yet

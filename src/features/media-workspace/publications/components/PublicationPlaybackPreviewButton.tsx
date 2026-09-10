@@ -2,19 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { PlaybackPreviewModal, type PlaybackPreviewZone } from "@/features/media-workspace/preview/PlaybackPreviewModal";
-import { loadCompositionPreview } from "@/features/media-workspace/preview/composition-preview";
-import { playlistItemToPreview, playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
+import { PlaybackPreviewModal } from "@/features/media-workspace/preview/PlaybackPreviewModal";
 import { groupDeviceGeometries } from "@/features/media-workspace/preview/preview-geometry";
-import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
+import type { StagePreview } from "@/features/media-workspace/preview/composition-preview";
 import type { MediaAsset } from "@/types/domain";
-import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
 
 export function PublicationPlaybackPreviewButton({
   assets,
   className = "",
   conflictCount = 0,
   deviceResolutions = [],
+  preview: previewProp,
 }: {
   assets: MediaAsset[];
   className?: string;
@@ -22,77 +21,40 @@ export function PublicationPlaybackPreviewButton({
   /** Every selected target's reported `WxH`, duplicates included — the stage groups and counts
    *  them. `null` entries are Devices reporting no geometry. */
   deviceResolutions?: (string | null)[];
+  /** Passed by the Prepare Content frame, which already holds the projected stage — avoids a
+   *  second fetch of the same Playlist/Composition. Omitted elsewhere, so the hook loads it. */
+  preview?: StagePreview | null;
 }) {
-  const basicInfo = usePublicationDraftStore((state) => state.basicInfo);
-  const assetItems = usePublicationDraftStore((state) => state.assetItems);
-  const playlistId = usePublicationDraftStore((state) => state.playlistId);
-  const compositionId = usePublicationDraftStore((state) => state.compositionId);
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [zones, setZones] = useState<PlaybackPreviewZone[]>([]);
-  const [aspectRatio, setAspectRatio] = useState("16:9");
-  const [referenceResolution, setReferenceResolution] = useState<string | null>(null);
+  const hook = usePublicationStagePreview(previewProp === undefined);
+  const preview = previewProp ?? hook.preview;
+  const loading = previewProp === undefined && hook.loading;
+  const hasContent = previewProp !== undefined ? Boolean(previewProp) : hook.hasContent;
   const geometryOptions = useMemo(() => groupDeviceGeometries(deviceResolutions), [deviceResolutions]);
-
-  const hasContent = basicInfo.publicationType === "composition"
-    ? !!compositionId
-    : basicInfo.publicationType === "playlist"
-    ? !!playlistId
-    : assetItems.length > 0;
-
-  const openPreview = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (basicInfo.publicationType === "composition" && compositionId) {
-        const preview = await loadCompositionPreview(compositionId);
-        setZones(preview.zones);
-        setAspectRatio(preview.aspectRatio);
-        setReferenceResolution(preview.referenceResolution);
-      } else if (basicInfo.publicationType === "playlist" && playlistId) {
-        const playlist = await fetchPlaylist(playlistId);
-        const playback = decodeMetadata(playlist.metadata).playback;
-        const stage = playlistPreviewStage({
-          name: playlist.name,
-          items: playlist.items.map(playlistItemToPreview),
-          playback,
-        });
-        setZones(stage.zones);
-        setAspectRatio(stage.aspectRatio);
-        setReferenceResolution(stage.referenceResolution);
-      } else {
-        setZones([{
-          id: "publication-assets",
-          name: basicInfo.name || "Publication",
-          x: 0,
-          y: 0,
-          width: 100,
-          height: 100,
-          items: assetItems.map((item) => ({
-            mediaAssetId: item.media_asset_id,
-            durationSeconds: item.duration_seconds,
-            transition: item.transition,
-          })),
-        }]);
-        setAspectRatio("16:9");
-        setReferenceResolution(null);
-      }
-      setOpen(true);
-    } catch {
-      setError("โหลด Content สำหรับ preview ไม่สำเร็จ");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <>
-      <Button variant="secondary" className={`px-3 py-1.5 text-xs ${className}`} onClick={openPreview} disabled={!hasContent || loading}>
+      <Button
+        variant="secondary"
+        className={`px-3 py-1.5 text-xs ${className}`}
+        onClick={() => setOpen(true)}
+        disabled={!hasContent || loading || !preview}
+      >
         {loading ? "Loading preview…" : "Preview playback"}
       </Button>
-      {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
-      <PlaybackPreviewModal open={open} onClose={() => setOpen(false)} zones={zones} assets={assets} aspectRatio={aspectRatio} conflictCount={conflictCount} geometryOptions={geometryOptions} referenceResolution={referenceResolution} />
+      {hook.error && <p className="text-xs text-red-600" role="alert">โหลด Content สำหรับ preview ไม่สำเร็จ</p>}
+      {preview && (
+        <PlaybackPreviewModal
+          open={open}
+          onClose={() => setOpen(false)}
+          zones={preview.zones}
+          assets={assets}
+          aspectRatio={preview.aspectRatio}
+          conflictCount={conflictCount}
+          geometryOptions={geometryOptions}
+          referenceResolution={preview.referenceResolution}
+        />
+      )}
     </>
   );
 }
