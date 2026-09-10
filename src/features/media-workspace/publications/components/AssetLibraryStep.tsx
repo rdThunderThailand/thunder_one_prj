@@ -10,6 +10,7 @@ import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { Dropzone } from "./Dropzone";
 import { MediaPickerModal } from "./MediaPickerModal";
 import { PlaylistPickerModal } from "./PlaylistPickerModal";
+import { CompositionPickerModal } from "./CompositionPickerModal";
 
 type Branch = "media" | "playlist" | "composition";
 
@@ -39,8 +40,10 @@ export function AssetLibraryStep({
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
   const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
   const setPlaylistId = usePublicationDraftStore((s) => s.setPlaylistId);
+  const setCompositionId = usePublicationDraftStore((s) => s.setCompositionId);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [playlistPickerOpen, setPlaylistPickerOpen] = useState(false);
+  const [compositionPickerOpen, setCompositionPickerOpen] = useState(false);
   const publicationType = basicInfo.publicationType;
 
   const { fileInputRef, uploadPct, uploadError, uploadFile } = useAssetUpload(async (asset, isVideoFile) => {
@@ -56,8 +59,7 @@ export function AssetLibraryStep({
 
   const selectedBranch: Branch = publicationType === "playlist" ? "playlist" : publicationType === "composition" ? "composition" : "media";
   const changeBranch = (branch: Branch) => {
-    if (branch === "composition") return false;
-    const nextType = branch === "playlist" ? "playlist" : publicationType === "video" ? "video" : "image";
+    const nextType = branch === "playlist" ? "playlist" : branch === "composition" ? "composition" : publicationType === "video" ? "video" : "image";
     if (nextType === publicationType) return true;
     if ((assetItems.length || playlistId || compositionId) && !window.confirm("Changing content type clears selected content. Schedule and Channels stay. Continue?")) return false;
     setBasicInfo({ ...basicInfo, publicationType: nextType });
@@ -81,13 +83,14 @@ export function AssetLibraryStep({
         {(Object.keys(branchCopy) as Branch[]).map((branch) => {
           const copy = branchCopy[branch];
           const selected = selectedBranch === branch;
-          return <div key={branch} className={`rounded-xl border-2 p-4 ${copy.tone} ${selected ? "ring-2 ring-indigo-500/25" : ""}`}><button type="button" onClick={() => changeBranch(branch)} disabled={branch === "composition"} className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"><p className="text-base font-semibold text-zinc-900">{copy.title}</p><p className="mt-1 min-h-10 text-sm text-zinc-500">{copy.description}</p></button>{branch === "media" ? <div className="mt-4 space-y-3"><Dropzone fileInputRef={fileInputRef} onFileSelected={(file) => void uploadFile(file)} disabled={uploadPct !== null} progress={uploadPct} error={uploadError} /><button type="button" onClick={() => setPickerOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><UploadIcon className="h-4 w-4" />เลือกจาก Media Library</button></div> : branch === "playlist" ? <div className="mt-4 space-y-3"><button type="button" onClick={() => { if (changeBranch("playlist")) setPlaylistPickerOpen(true); }} className="w-full rounded-lg border border-zinc-200 px-3 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50">{playlistId ? "เปลี่ยน Playlist" : "เลือก Playlist ที่มีอยู่"}</button><a href="/media-workspace/playlists/create" target="_blank" className="block w-full rounded-lg border border-zinc-200 px-3 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50">สร้าง Playlist ใหม่ ↗</a></div> : <div className="mt-4 space-y-3"><button type="button" disabled className="w-full rounded-lg border border-zinc-200 px-3 py-3 text-left text-sm font-medium text-zinc-400">เลือก Layout ที่มีอยู่ · #81</button><button type="button" disabled className="w-full rounded-lg border border-zinc-200 px-3 py-3 text-left text-sm font-medium text-zinc-400">สร้างใหม่ · #81</button></div>}</div>;
+          return <div key={branch} className={`rounded-xl border-2 p-4 ${copy.tone} ${selected ? "ring-2 ring-indigo-500/25" : ""}`}><button type="button" onClick={() => changeBranch(branch)} className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><p className="text-base font-semibold text-zinc-900">{copy.title}</p><p className="mt-1 min-h-10 text-sm text-zinc-500">{copy.description}</p></button>{branch === "media" ? <div className="mt-4 space-y-3"><Dropzone fileInputRef={fileInputRef} onFileSelected={(file) => void uploadFile(file)} disabled={uploadPct !== null} progress={uploadPct} error={uploadError} /><button type="button" onClick={() => setPickerOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><UploadIcon className="h-4 w-4" />เลือกจาก Media Library</button></div> : branch === "playlist" ? <div className="mt-4 space-y-3"><button type="button" onClick={() => { if (changeBranch("playlist")) setPlaylistPickerOpen(true); }} className="w-full rounded-lg border border-zinc-200 px-3 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50">{playlistId ? "เปลี่ยน Playlist" : "เลือก Playlist ที่มีอยู่"}</button><a href="/media-workspace/playlists/create" target="_blank" className="block w-full rounded-lg border border-zinc-200 px-3 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50">สร้าง Playlist ใหม่ ↗</a></div> : <div className="mt-4 space-y-3"><button type="button" onClick={() => { if (changeBranch("composition")) setCompositionPickerOpen(true); }} className="w-full rounded-lg border border-zinc-200 px-3 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50">{compositionId ? "เปลี่ยน Layout" : "เลือก Layout ที่มีอยู่"}</button><a href="/media-workspace/layouts/create" target="_blank" className="block w-full rounded-lg border border-zinc-200 px-3 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50">สร้าง Layout ใหม่ ↗</a></div>}</div>;
         })}
         <aside className="rounded-xl border border-zinc-200 p-4"><h2 className="font-semibold text-zinc-900">ไม่แน่ใจว่าเลือกอะไร?</h2><p className="mt-2 text-sm text-zinc-600">เลือก Media สำหรับไฟล์เดี่ยว, Playlist สำหรับลำดับรายการ, และ Layout สำหรับหลายโซน</p><div className="mt-5 border-t border-zinc-200 pt-4"><p className="text-sm font-medium text-zinc-800">เรียนรู้เพิ่มเติม</p><a href="#" className="mt-2 inline-block text-sm font-medium text-indigo-600">ดูคู่มือการใช้งาน ↗</a></div></aside>
       </div>
       <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"><LightbulbIcon className="h-4 w-4 shrink-0" />Tip: คุณสามารถเปลี่ยนประเภทเนื้อหาได้ในขั้นตอนถัดไป</div>
       {pickerOpen && <MediaPickerModal assets={assets} tags={tags} publicationType={publicationType} selectedIds={assetItems.map((item) => item.media_asset_id)} loading={assetsLoading} error={assetsError} onClose={() => setPickerOpen(false)} onSelect={commitMedia} onUpload={() => fileInputRef.current?.click()} />}
       {playlistPickerOpen && <PlaylistPickerModal selectedId={playlistId} onClose={() => setPlaylistPickerOpen(false)} onSelect={(id) => { setPlaylistId(id); setPlaylistPickerOpen(false); }} />}
+      {compositionPickerOpen && <CompositionPickerModal selectedId={compositionId} onClose={() => setCompositionPickerOpen(false)} onSelect={(id) => { setCompositionId(id); setCompositionPickerOpen(false); }} />}
     </section>
   );
 }
