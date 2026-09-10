@@ -491,7 +491,6 @@ export function CreatePublicationPage() {
           channelsError={channelsError}
           aspectRatio={layoutAspectRatio}
           fitCheckFailed={fitCheckFailed}
-          assets={assets}
           conflicts={conflicts}
           checkingConflicts={checkingConflicts}
           conflictsError={conflictsError}

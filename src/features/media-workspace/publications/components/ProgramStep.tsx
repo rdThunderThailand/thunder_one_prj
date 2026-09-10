@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
 import { ChevronDownIcon } from "@/components/ui/icons";
-import type { MediaAsset, ScheduleConflict } from "../types";
+import type { ScheduleConflict } from "../types";
 import type { ChannelListItem } from "../../channels/types";
 import { priorities } from "../mock-data";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
@@ -20,7 +20,6 @@ export interface ProgramStepProps {
   channelsError: string | null;
   aspectRatio: string | null;
   fitCheckFailed: boolean;
-  assets: MediaAsset[];
   conflicts: ScheduleConflict[];
   checkingConflicts: boolean;
   conflictsError: string | null;
@@ -33,7 +32,6 @@ export function ProgramStep({
   channelsError,
   aspectRatio,
   fitCheckFailed,
-  assets,
   conflicts,
   checkingConflicts,
   conflictsError,
@@ -62,8 +60,6 @@ export function ProgramStep({
 
         <ProgramColumn index={2} title="When to Play" subtitle="กำหนดช่วงเวลา">
           <ScheduleStep
-            channels={channels}
-            assets={assets}
             conflicts={conflicts}
             checkingConflicts={checkingConflicts}
             conflictsError={conflictsError}
