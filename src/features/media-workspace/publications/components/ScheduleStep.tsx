@@ -88,7 +88,7 @@ export function ScheduleStep({
     <div className="flex flex-col gap-4">
       <div>
         <p className="mb-2 text-sm font-medium text-zinc-700">Play Mode</p>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 gap-2.5 xl:grid-cols-2">
           {scheduleTypes.map((option) => {
             const active = activeCardId === option.id;
             return (

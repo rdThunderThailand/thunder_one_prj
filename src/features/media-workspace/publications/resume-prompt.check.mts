@@ -12,6 +12,7 @@ const baseDraft: DraftFields = {
   publicationId: null,
   idempotencyKey: "idem-key-1",
   step: 1,
+  furthestStep: 1,
   basicInfo: {
     publicationType: "image",
     name: "",
