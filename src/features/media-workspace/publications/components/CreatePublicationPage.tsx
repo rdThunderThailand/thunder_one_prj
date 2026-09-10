@@ -22,12 +22,11 @@ import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
 import { resolveSeed, type SeedChoice } from "../seed-resolver";
 import { type WizardStepId } from "../step-validation";
-import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
 import { PrepareContentStep } from "./PrepareContentStep";
+import { ProgramStep } from "./ProgramStep";
 import { PublicationStepper } from "./PublicationStepper";
 import { ReviewPublishStep } from "./ReviewPublishStep";
-import { ScheduleStep } from "./ScheduleStep";
 
 // The five ver02 Create steps (ADR 0072 §2):
 //   1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish
@@ -484,26 +483,20 @@ export function CreatePublicationPage() {
       {/* Step 2 — Prepare Content */}
       {step === 2 && <PrepareContentStep assets={assets} tags={tags} showFieldErrors={showFieldErrors} />}
 
-      {/* Step 3 — Program: targeting + schedule (the ver02 layout is #84; this stacks the
-          existing steps so the boundary and its validation exist first) */}
+      {/* Step 3 — Program: Where / When / How + Additional Settings (ver02 Frame 3, #84) */}
       {step === 3 && (
-        <div className="flex flex-col gap-6">
-          <ChannelsStep
-            channels={channels}
-            loadingChannels={loadingRefs}
-            channelsError={channelsError}
-            aspectRatio={layoutAspectRatio}
-            fitCheckFailed={fitCheckFailed}
-          />
-          <ScheduleStep
-            channels={channels}
-            assets={assets}
-            conflicts={conflicts}
-            checkingConflicts={checkingConflicts}
-            conflictsError={conflictsError}
-            showErrors={showFieldErrors}
-          />
-        </div>
+        <ProgramStep
+          channels={channels}
+          loadingChannels={loadingRefs}
+          channelsError={channelsError}
+          aspectRatio={layoutAspectRatio}
+          fitCheckFailed={fitCheckFailed}
+          assets={assets}
+          conflicts={conflicts}
+          checkingConflicts={checkingConflicts}
+          conflictsError={conflictsError}
+          showFieldErrors={showFieldErrors}
+        />
       )}
 
       {/* Steps 4 & 5 — Review / Publish. The visual split of ReviewPublishStep is #85/#86. */}

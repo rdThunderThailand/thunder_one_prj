@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/Card";
-import { ChevronDownIcon, PlusIcon, XIcon } from "@/components/ui/icons";
+import { PlusIcon, XIcon } from "@/components/ui/icons";
 import type { Tag } from "../types";
-import { priorities, type PublicationTypeId } from "../mock-data";
+import { type PublicationTypeId } from "../mock-data";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { PUBLICATION_LIMITS } from "@/config/limits";
 import { stripHtmlTags } from "../sanitize";
@@ -29,7 +29,7 @@ export interface BasicInfoFormProps {
 export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicInfoFormProps) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
-  const { name, description, priorityId, tags } = basicInfo;
+  const { name, description, tags } = basicInfo;
 
   const [tagDraft, setTagDraft] = useState("");
   const [addingTag, setAddingTag] = useState(false);
@@ -101,26 +101,6 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
               คำอธิบายยาวเกิน {PUBLICATION_LIMITS.descriptionMaxLength} ตัวอักษร
             </p>
           )}
-        </FieldWrapper>
-
-        <FieldWrapper label="Priority">
-          <div className="relative">
-            <span
-              className={`pointer-events-none absolute left-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
-                priorities.find((p) => p.id === priorityId)?.color ?? "bg-emerald-500"
-              }`}
-            />
-            <select
-              value={priorityId}
-              onChange={(e) => patch({ priorityId: e.target.value })}
-              className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-7 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-            >
-              {priorities.map((p) => (
-                <option key={p.id} value={p.id}>{p.label}</option>
-              ))}
-            </select>
-            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          </div>
         </FieldWrapper>
 
         <FieldWrapper label="Tags" optional>
