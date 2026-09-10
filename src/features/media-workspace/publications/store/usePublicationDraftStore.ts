@@ -90,6 +90,8 @@ interface PublicationDraftStore extends DraftFields {
   toggleAssetItem: (asset: { id: string; isImage: boolean }) => void;
   /** Only meaningful for images; ignored when the id isn't selected. */
   setAssetDuration: (mediaAssetId: string, seconds: number | null) => void;
+  /** Per-item transition into the next item. Ignored when the id isn't selected. */
+  setAssetTransition: (mediaAssetId: string, transition: "cut" | "fade") => void;
   /** Moves one item by ±1. Out-of-range moves are a no-op. */
   moveAssetItem: (mediaAssetId: string, direction: -1 | 1) => void;
   setChannelIds: (channelIds: string[]) => void;
@@ -147,6 +149,9 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       }),
       setAssetDuration: (mediaAssetId, seconds) => set((s) => ({
         assetItems: s.assetItems.map(i => i.media_asset_id === mediaAssetId ? { ...i, duration_seconds: seconds } : i)
+      })),
+      setAssetTransition: (mediaAssetId, transition) => set((s) => ({
+        assetItems: s.assetItems.map(i => i.media_asset_id === mediaAssetId ? { ...i, transition } : i)
       })),
       moveAssetItem: (mediaAssetId, direction) => set((s) => {
         const index = s.assetItems.findIndex(i => i.media_asset_id === mediaAssetId);
