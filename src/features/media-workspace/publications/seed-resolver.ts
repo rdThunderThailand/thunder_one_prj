@@ -7,6 +7,22 @@
 
 export type SeedChoice = "continue" | "fresh" | null;
 
+export type PublicationSeed = {
+  kind: "asset" | "playlist" | "composition";
+  id: string;
+};
+
+export function publicationSeedFromParams(params: {
+  assetId: string | null;
+  playlistId: string | null;
+  compositionId: string | null;
+}): PublicationSeed | null {
+  if (params.compositionId) return { kind: "composition", id: params.compositionId };
+  if (params.playlistId) return { kind: "playlist", id: params.playlistId };
+  if (params.assetId) return { kind: "asset", id: params.assetId };
+  return null;
+}
+
 /** `apply` = write the seed onto the draft and jump to step 2.
  *  `discard` = drop the seed, leave the draft as-is.
  *  `wait`    = the resume prompt is still open; ask again once it closes. */

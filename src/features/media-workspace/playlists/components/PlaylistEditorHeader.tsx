@@ -4,8 +4,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CheckIcon, EditIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 
-/** The editor's title bar: editable name (Figma H1), the save-state line, and the only
- *  controls the page carries — no Publish (ADR 0060 §3). */
+/** The editor's title bar: editable name, save state, preview, and the Publication-wizard handoff. */
 export function PlaylistEditorHeader({
   name,
   savedLabel,
@@ -19,6 +18,8 @@ export function PlaylistEditorHeader({
   onRedo,
   onCancel,
   onPreview,
+  onPublish,
+  publishDisabledReason,
   onSave,
 }: {
   name: string;
@@ -33,6 +34,8 @@ export function PlaylistEditorHeader({
   onRedo: () => void;
   onCancel: () => void;
   onPreview: () => void;
+  onPublish: () => void;
+  publishDisabledReason: string | null;
   onSave: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -129,6 +132,14 @@ export function PlaylistEditorHeader({
           title={!hasItems ? "เพิ่ม media ก่อนดู preview" : undefined}
         >
           Preview
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={onPublish}
+          disabled={saving || !!publishDisabledReason}
+          title={publishDisabledReason ?? undefined}
+        >
+          Publish →
         </Button>
         <Button onClick={onSave} disabled={saving || name.trim() === ""}>
           {saving ? "กำลังบันทึก..." : "Save Draft"}
