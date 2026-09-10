@@ -66,6 +66,7 @@ export function usePublishDraft() {
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const idempotencyKey = usePublicationDraftStore((s) => s.idempotencyKey);
   const step = usePublicationDraftStore((s) => s.step);
+  const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
@@ -74,7 +75,7 @@ export function usePublishDraft() {
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
 
   const eligibility = computeEligibility({
-    draft: { publicationId, idempotencyKey, step, basicInfo, assetItems, playlistId, compositionId, channelIds, scheduleForm },
+    draft: { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, scheduleForm },
     assets,
     conflicts,
     conflictsError,
