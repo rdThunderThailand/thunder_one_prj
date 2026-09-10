@@ -3,16 +3,15 @@
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
 import { ChevronDownIcon } from "@/components/ui/icons";
-import type { ScheduleConflict } from "../types";
+import type { MediaAsset, ScheduleConflict } from "../types";
 import type { ChannelListItem } from "../../channels/types";
 import { priorities } from "../mock-data";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { HowToPlayPanel } from "./HowToPlayPanel";
 import { ScheduleStep } from "./ScheduleStep";
 import { WhereToPlayPanel } from "./WhereToPlayPanel";
 
-// ponytail: Task 2 ships two content columns (Where, When) + Additional Settings. The third
-// column ("3. How to Play") lands in Task 5 and the Program Summary rail in Task 6 — the grid
-// widens to `…_19rem` then rather than carry stub cards now.
+// ponytail: the Program Summary rail lands in Task 6 — the grid widens to `…_19rem` then.
 
 export interface ProgramStepProps {
   channels: ChannelListItem[];
@@ -20,6 +19,7 @@ export interface ProgramStepProps {
   channelsError: string | null;
   aspectRatio: string | null;
   fitCheckFailed: boolean;
+  assets: MediaAsset[];
   conflicts: ScheduleConflict[];
   checkingConflicts: boolean;
   conflictsError: string | null;
@@ -32,6 +32,7 @@ export function ProgramStep({
   channelsError,
   aspectRatio,
   fitCheckFailed,
+  assets,
   conflicts,
   checkingConflicts,
   conflictsError,
@@ -47,7 +48,7 @@ export function ProgramStep({
         <DisabledControl label="Load from Template" />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <ProgramColumn index={1} title="Where to Play" subtitle="เลือกช่องทาง / หน้าจอ">
           <WhereToPlayPanel
             channels={channels}
@@ -65,6 +66,10 @@ export function ProgramStep({
             conflictsError={conflictsError}
             showErrors={showFieldErrors}
           />
+        </ProgramColumn>
+
+        <ProgramColumn index={3} title="How to Play" subtitle="ตั้งค่าการเล่น">
+          <HowToPlayPanel assets={assets} />
         </ProgramColumn>
       </div>
 
