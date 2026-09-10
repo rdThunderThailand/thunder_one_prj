@@ -27,9 +27,13 @@ function formatShortDate(iso: string) {
 export function ProgramSummaryRail({
   channels,
   assets,
+  title = "Program Summary",
+  subtitle = "สรุปการตั้งค่าโปรแกรม",
 }: {
   channels: ChannelListItem[];
   assets: MediaAsset[];
+  title?: string;
+  subtitle?: string;
 }) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -90,8 +94,8 @@ export function ProgramSummaryRail({
 
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <h2 className="text-base font-semibold text-zinc-900">Program Summary</h2>
-      <p className="-mt-3 text-xs text-zinc-400">สรุปการตั้งค่าโปรแกรม</p>
+      <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+      <p className="-mt-3 text-xs text-zinc-400">{subtitle}</p>
 
       {previewUrl ? (
         <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">

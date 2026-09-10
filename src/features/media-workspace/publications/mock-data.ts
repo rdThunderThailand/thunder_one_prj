@@ -101,11 +101,3 @@ export const scheduleTypes: ScheduleTypeOption[] = [
 ];
 
 export const delayUnits = ["seconds", "minutes", "hours"];
-
-export const prePublishChecklist = [
-  "ไฟล์สื่อผ่านการตรวจสอบแล้ว",
-  "กำหนดวันและเวลาถูกต้อง",
-  "เลือกช่องทางและอุปกรณ์ครบถ้วน",
-  "เนื้อหาไม่ขัดต่อนโยบายการเผยแพร่",
-  "ไม่มี Publication ที่ Priority สูงกว่ากดทับ",
-];

@@ -5,7 +5,10 @@ import { isScheduleFormValid } from "./schedule.ts";
 
 export type EligibilityStatus = "pass" | "fail" | "unknown";
 
+export type EligibilityCheckId = "content" | "targets" | "schedule" | "policy" | "conflicts";
+
 export interface EligibilityCheck {
+  id: EligibilityCheckId;
   status: EligibilityStatus;
 }
 
@@ -51,7 +54,9 @@ export function summarizePriorityConflicts(conflicts: ScheduleConflict[]): Prior
 }
 
 export function isAllGatingPassed(checks: EligibilityCheck[]): boolean {
-  return [0, 1, 2].every((idx) => checks[idx]?.status === "pass");
+  return ["content", "targets", "schedule"].every(
+    (id) => checks.find((check) => check.id === id)?.status === "pass",
+  );
 }
 
 export function computeEligibility(params: {
@@ -106,22 +111,25 @@ export function computeEligibility(params: {
   // ADR 0068: an overlap warns, it never refuses. The check still flags that conflicts exist so
   // the checklist shows it, but it is read as advice rather than a gate.
   const conflictsCheckStatus: EligibilityStatus =
-    checkingConflicts || conflictsError ? "unknown" : conflicts.length > 0 ? "fail" : "pass";
+    checkingConflicts || conflictsError
+      ? "unknown"
+      : conflicts.some((conflict) => conflict.would_be_suppressed)
+        ? "fail"
+        : "pass";
 
   const checks: EligibilityCheck[] = [
-    { status: contentCheckStatus },
-    { status: scheduleCheckStatus },
-    { status: channelsCheckStatus },
-    { status: policyCheckStatus },
-    { status: conflictsCheckStatus },
+    { id: "content", status: contentCheckStatus },
+    { id: "targets", status: channelsCheckStatus },
+    { id: "schedule", status: scheduleCheckStatus },
+    { id: "policy", status: policyCheckStatus },
+    { id: "conflicts", status: conflictsCheckStatus },
   ];
 
   // Step 2 (Prepare Content) owns the name/type gate after the ver02 re-cut (ADR 0072 §2).
   const basicInfoOk = validateStep(2, draft).valid;
   // Content, schedule and channels only — conflicts are advisory (ADR 0068), so the button no
   // longer waits on a result that cannot block anything.
-  const gateChecks = [checks[0], checks[1], checks[2]];
-  const canPublish = basicInfoOk && !loadingRefs && gateChecks.every((c) => c.status === "pass");
+  const canPublish = basicInfoOk && !loadingRefs && isAllGatingPassed(checks);
 
   return {
     checks,
