@@ -14,6 +14,7 @@ type AssetCardBaseProps = {
   selected: boolean;
   onSelect: () => void;
   disabled?: boolean;
+  aspect?: "square" | "video";
 };
 
 type AssetCardProps =
@@ -21,7 +22,7 @@ type AssetCardProps =
   | (AssetCardBaseProps & { kind: "playlist"; playlist: PlaylistListItem });
 
 export function AssetCard(props: AssetCardProps) {
-  const { previewUrl, thumbnailUrl, selected, onSelect, disabled } = props;
+  const { previewUrl, thumbnailUrl, selected, onSelect, disabled, aspect = "square" } = props;
 
   if (props.kind === "playlist") {
     const { playlist } = props;
@@ -37,7 +38,7 @@ export function AssetCard(props: AssetCardProps) {
             : "border-zinc-200 hover:border-zinc-300"
         } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
-        <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
+        <div className={`relative w-full overflow-hidden bg-zinc-100 flex items-center justify-center ${aspect === "video" ? "aspect-video" : "aspect-square"}`}>
           {thumbnailUrl ? (
             // Captured poster (ADR 0016) — skips the video decode entirely.
             <Image
@@ -120,7 +121,7 @@ export function AssetCard(props: AssetCardProps) {
           : "border-zinc-200 hover:border-zinc-300"
       } ${(!approved || disabled) ? "cursor-not-allowed opacity-50" : ""}`}
     >
-      <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
+      <div className={`relative w-full overflow-hidden bg-zinc-100 flex items-center justify-center ${aspect === "video" ? "aspect-video" : "aspect-square"}`}>
         {isVideo && thumbnailUrl ? (
           // Captured poster (ADR 0016) — skips the video decode entirely. Videos
           // uploaded before capture existed have no thumbnail yet and fall through
