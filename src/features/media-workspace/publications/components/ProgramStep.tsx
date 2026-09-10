@@ -8,10 +8,9 @@ import type { ChannelListItem } from "../../channels/types";
 import { priorities } from "../mock-data";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { HowToPlayPanel } from "./HowToPlayPanel";
+import { ProgramSummaryRail } from "./ProgramSummaryRail";
 import { ScheduleStep } from "./ScheduleStep";
 import { WhereToPlayPanel } from "./WhereToPlayPanel";
-
-// ponytail: the Program Summary rail lands in Task 6 — the grid widens to `…_19rem` then.
 
 export interface ProgramStepProps {
   channels: ChannelListItem[];
@@ -48,32 +47,38 @@ export function ProgramStep({
         <DisabledControl label="Load from Template" />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <ProgramColumn index={1} title="Where to Play" subtitle="เลือกช่องทาง / หน้าจอ">
-          <WhereToPlayPanel
-            channels={channels}
-            loadingChannels={loadingChannels}
-            channelsError={channelsError}
-            aspectRatio={aspectRatio}
-            fitCheckFailed={fitCheckFailed}
-          />
-        </ProgramColumn>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <ProgramColumn index={1} title="Where to Play" subtitle="เลือกช่องทาง / หน้าจอ">
+              <WhereToPlayPanel
+                channels={channels}
+                loadingChannels={loadingChannels}
+                channelsError={channelsError}
+                aspectRatio={aspectRatio}
+                fitCheckFailed={fitCheckFailed}
+              />
+            </ProgramColumn>
 
-        <ProgramColumn index={2} title="When to Play" subtitle="กำหนดช่วงเวลา">
-          <ScheduleStep
-            conflicts={conflicts}
-            checkingConflicts={checkingConflicts}
-            conflictsError={conflictsError}
-            showErrors={showFieldErrors}
-          />
-        </ProgramColumn>
+            <ProgramColumn index={2} title="When to Play" subtitle="กำหนดช่วงเวลา">
+              <ScheduleStep
+                conflicts={conflicts}
+                checkingConflicts={checkingConflicts}
+                conflictsError={conflictsError}
+                showErrors={showFieldErrors}
+              />
+            </ProgramColumn>
 
-        <ProgramColumn index={3} title="How to Play" subtitle="ตั้งค่าการเล่น">
-          <HowToPlayPanel assets={assets} />
-        </ProgramColumn>
+            <ProgramColumn index={3} title="How to Play" subtitle="ตั้งค่าการเล่น">
+              <HowToPlayPanel assets={assets} />
+            </ProgramColumn>
+          </div>
+
+          <AdditionalSettings />
+        </div>
+
+        <ProgramSummaryRail channels={channels} assets={assets} />
       </div>
-
-      <AdditionalSettings />
     </div>
   );
 }
