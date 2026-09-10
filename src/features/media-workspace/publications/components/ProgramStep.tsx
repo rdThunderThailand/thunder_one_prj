@@ -7,8 +7,8 @@ import type { ScheduleConflict } from "../types";
 import type { ChannelListItem } from "../../channels/types";
 import { priorities } from "../mock-data";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import { ChannelsStep } from "./ChannelsStep";
 import { ScheduleStep } from "./ScheduleStep";
+import { WhereToPlayPanel } from "./WhereToPlayPanel";
 
 // ponytail: Task 2 ships two content columns (Where, When) + Additional Settings. The third
 // column ("3. How to Play") lands in Task 5 and the Program Summary rail in Task 6 — the grid
@@ -49,7 +49,7 @@ export function ProgramStep({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ProgramColumn index={1} title="Where to Play" subtitle="เลือกช่องทาง / หน้าจอ">
-          <ChannelsStep
+          <WhereToPlayPanel
             channels={channels}
             loadingChannels={loadingChannels}
             channelsError={channelsError}
