@@ -1,6 +1,6 @@
 // Run: node src/features/media-workspace/publications/seed-resolver.check.mts
 import assert from "node:assert/strict";
-import { resolveSeed } from "./seed-resolver.ts";
+import { publicationSeedFromParams, resolveSeed } from "./seed-resolver.ts";
 
 // The four rows from ticket #78 / plan Phase 0 item 4.
 
@@ -38,6 +38,19 @@ assert.equal(
 assert.equal(
   resolveSeed({ seedPresent: false, isEditMode: false, draftHasContent: true, choice: null }),
   "discard",
+);
+
+assert.deepEqual(
+  publicationSeedFromParams({ assetId: null, playlistId: "playlist-1", compositionId: null }),
+  { kind: "playlist", id: "playlist-1" },
+);
+assert.deepEqual(
+  publicationSeedFromParams({ assetId: null, playlistId: null, compositionId: "composition-1" }),
+  { kind: "composition", id: "composition-1" },
+);
+assert.deepEqual(
+  publicationSeedFromParams({ assetId: "asset-1", playlistId: null, compositionId: null }),
+  { kind: "asset", id: "asset-1" },
 );
 
 console.log("ok");

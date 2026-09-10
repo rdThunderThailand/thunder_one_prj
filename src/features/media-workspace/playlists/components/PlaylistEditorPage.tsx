@@ -150,6 +150,14 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         onRedo={history.redo}
         onCancel={goBack}
         onPreview={openPreview}
+        onPublish={() => router.push(`/media-workspace/publications/create?playlistId=${row.serverId}`)}
+        publishDisabledReason={
+          !row.serverId
+            ? "บันทึก Playlist ก่อนเผยแพร่"
+            : row.isDirty
+              ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
+              : null
+        }
         onSave={row.save}
       />
 

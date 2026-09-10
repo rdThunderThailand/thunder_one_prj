@@ -57,7 +57,8 @@ export function CompositionEditorHeader({
   canRedo,
   onUndo,
   onRedo,
-  onUseInProgram,
+  hasUnsavedChanges,
+  onPublish,
   onSaveDraft,
   onSaveAsTemplate,
   onActivate,
@@ -85,9 +86,9 @@ export function CompositionEditorHeader({
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
-  /** ADR 0063 §7: the frames' `Publish` button, relabelled — the editor has no schedule and
-   *  no target field, so it hands off to the Publication wizard instead of publishing. */
-  onUseInProgram: () => void;
+  hasUnsavedChanges: boolean;
+  /** The editor has no schedule or target fields, so Publish hands the saved Composition to the wizard. */
+  onPublish: () => void;
   onSaveDraft: () => void;
   onSaveAsTemplate: () => void;
   onActivate: () => void;
@@ -105,6 +106,11 @@ export function CompositionEditorHeader({
   const activateDisabledReason = saveDisabledReason
     ?? (!isComplete ? `ยังไม่ได้ผูก Content ให้ ${unboundZoneNames.length} Zone: ${unboundZoneNames.join(", ")}` : null);
   const saveState = saveAction(status);
+  const publishDisabledReason = !isExisting
+    ? "บันทึก Layout ก่อนเผยแพร่"
+    : hasUnsavedChanges
+      ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
+      : null;
 
   const commitName = () => {
     onNameChange(inputRef.current?.value ?? name);
@@ -152,11 +158,11 @@ export function CompositionEditorHeader({
           <Button variant="secondary" onClick={onPreview} disabled={!canPreview}><EyeIcon /> Preview</Button>
           <Button
             variant="secondary"
-            onClick={onUseInProgram}
-            disabled={!isExisting}
-            title={!isExisting ? "บันทึก Layout ก่อนนำไปใช้ใน Program" : undefined}
+            onClick={onPublish}
+            disabled={saving || !!publishDisabledReason}
+            title={publishDisabledReason ?? undefined}
           >
-            Use in Program →
+            Publish →
           </Button>
           <Button variant="secondary" onClick={onSaveAsTemplate} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>
             Save as Template

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -20,7 +20,8 @@ import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
-import { resolveSeed, type SeedChoice } from "../seed-resolver";
+import { publicationSeedFromParams, resolveSeed, type SeedChoice } from "../seed-resolver";
+import { DEFAULT_IMAGE_DURATION_SECONDS } from "../draft-mapping";
 import { type WizardStepId } from "../step-validation";
 import { ContentStep } from "./ContentStep";
 import { PrepareContentStep } from "./PrepareContentStep";
@@ -37,8 +38,14 @@ export function CreatePublicationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const idParam = searchParams.get("id");
-  // ADR 0063 §7: the editor's `Use in Program →` hands a Layout over rather than publishing it.
-  const seedCompositionId = searchParams.get("compositionId");
+  const seed = useMemo(
+    () => publicationSeedFromParams({
+      assetId: searchParams.get("assetId"),
+      playlistId: searchParams.get("playlistId"),
+      compositionId: searchParams.get("compositionId"),
+    }),
+    [searchParams],
+  );
 
   const hasHydrated = useHasHydratedDraft();
   const isDirty = useIsDraftDirty();
@@ -145,31 +152,8 @@ export function CreatePublicationPage() {
     };
   }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
 
-  // `Use in Program →` from the Playlist / Composition editor arrives with `?compositionId=`.
-  // The seed is held pending until the resume choice is made, so a draft the operator chooses
-  // to *continue* is never mutated under them (ADR 0072 §3). Once resolved the query param is
-  // stripped, so a refresh does not re-seed.
   const [seedChoice, setSeedChoice] = useState<SeedChoice>(null);
   const seedResolvedRef = useRef(false);
-  useEffect(() => {
-    if (!hasHydrated || seedResolvedRef.current) return;
-    const resolution = resolveSeed({
-      seedPresent: Boolean(seedCompositionId),
-      isEditMode: Boolean(idParam),
-      draftHasContent: hadContentAtHydration,
-      choice: seedChoice,
-    });
-    if (resolution === "wait") return;
-    seedResolvedRef.current = true;
-    if (resolution === "apply" && seedCompositionId) {
-      // Start-fresh path: the resume prompt already ran cancelDraft(). Order matters —
-      // setBasicInfo clears compositionId whenever the type changes.
-      setBasicInfo({ ...usePublicationDraftStore.getState().basicInfo, publicationType: "composition" });
-      usePublicationDraftStore.getState().setCompositionId(seedCompositionId);
-      setStep(2);
-    }
-    if (seedCompositionId) router.replace("/media-workspace/publications/create");
-  }, [hasHydrated, seedCompositionId, idParam, hadContentAtHydration, seedChoice, setBasicInfo, setStep, router]);
 
   const [retrying, setRetrying] = useState(false);
 
@@ -215,6 +199,49 @@ export function CreatePublicationPage() {
     savingNext,
     setSavingNext,
   } = usePublishDraft();
+
+  // Editor Publish actions hand one saved content id to the wizard. Hold it pending until the
+  // resume choice is made so Continue never mutates an existing draft (ADR 0072 §3).
+  useEffect(() => {
+    if (!hasHydrated || seedResolvedRef.current) return;
+    if (seed?.kind === "asset" && assetsLoading) return;
+
+    const resolution = resolveSeed({
+      seedPresent: Boolean(seed),
+      isEditMode: Boolean(idParam),
+      draftHasContent: hadContentAtHydration,
+      choice: seedChoice,
+    });
+    if (resolution === "wait") return;
+
+    const selectedAsset = seed?.kind === "asset" ? assets.find((asset) => asset.id === seed.id) : null;
+    if (resolution === "apply" && seed?.kind === "asset" && !selectedAsset) return;
+
+    seedResolvedRef.current = true;
+    if (resolution === "apply" && seed) {
+      const store = usePublicationDraftStore.getState();
+      const publicationType =
+        seed.kind === "composition"
+          ? "composition"
+          : seed.kind === "playlist"
+            ? "playlist"
+            : selectedAsset?.kind === "video"
+              ? "video"
+              : "image";
+      setBasicInfo({ ...store.basicInfo, publicationType });
+      if (seed.kind === "composition") store.setCompositionId(seed.id);
+      if (seed.kind === "playlist") store.setPlaylistId(seed.id);
+      if (seed.kind === "asset") {
+        setAssetItems([{
+          media_asset_id: seed.id,
+          duration_seconds: publicationType === "image" ? DEFAULT_IMAGE_DURATION_SECONDS : null,
+          transition: "cut",
+        }]);
+      }
+      setStep(2);
+    }
+    if (seed) router.replace("/media-workspace/publications/create");
+  }, [assets, assetsLoading, hadContentAtHydration, hasHydrated, idParam, router, seed, seedChoice, setAssetItems, setBasicInfo, setStep]);
 
   const [conflictBusy, setConflictBusy] = useState(false);
 

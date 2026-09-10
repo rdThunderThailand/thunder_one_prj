@@ -236,7 +236,8 @@ export function CompositionEditorPage({
         onBack={() => (isDirty ? setConfirmLeave(true) : router.push(LIST_PATH))}
         onPreview={() => setPreviewOpen(true)}
         canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo}
-        onUseInProgram={() => router.push(`/media-workspace/publications/create?compositionId=${id}`)}
+        hasUnsavedChanges={isDirty}
+        onPublish={() => router.push(`/media-workspace/publications/create?compositionId=${id}`)}
         onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Composition ไม่สำเร็จ")}
         onSaveAsTemplate={() => { setTemplateSavedName(null); setNamingTemplate(true); }}
         onActivate={() => void save(async (result) => {
