@@ -28,6 +28,13 @@ Measured on production (Supabase project `sfiefevtxalqjizdkcsw`, the default `ma
 `p_codec`, but nothing has ever sent it. Every statement anyone can make today about how much media
 is broken is a guess.
 
+> **Correction — 2026-09-10.** Re-checked the same day: prod (`sfiefevtxalqjizdkcsw`,
+> `media_core.media_assets`) holds **0 rows** — no `files`, no `publications`, one `tenant`. The
+> `develop` branch project (`ftfmokgphewzyxzwjitv`) holds 22 assets (13 image, 9 video), not
+> 34/15. The `49 — 34 video / 15 image` figure above does not match either environment as they
+> stand now; it was likely taken from a project or point in time that has since been reset. ADR
+> 0070 and 0071 must not size quarantine or transcode off it — re-run the probe first.
+
 That is why the two ADRs that follow are hard to scope. Quarantine is proportionate at forty broken
 Assets and heavy-handed at two; transcoding is obviously worth building at forty and arguably
 premature at two. Neither decision improves by being made blind, and the measurement costs a

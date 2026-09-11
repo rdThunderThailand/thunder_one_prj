@@ -7,7 +7,6 @@ import {
   draftItemsToContentItems,
   basicInfoToForm,
   channelIdsToTargets,
-  dropUnapprovedItems,
 } from "../draft-mapping";
 import { isScheduleFormValid, scheduleFormToPayload } from "../schedule";
 import {
@@ -88,17 +87,13 @@ export function usePublishDraft() {
   const eligibilityChecks = eligibility.checks;
 
   // The wizard's single Asset-library read. Returns the fresh list so the upload
-  // callback in AssetLibraryStep can await it before selecting the new Asset, and
-  // reconciles held items the RPC would now refuse (unapproved) on every load.
+  // callback in AssetLibraryStep can await it before selecting the new Asset.
   const reloadAssets = useCallback(
     (): Promise<MediaAsset[]> =>
       fetchMediaAssets()
         .then((data) => {
           setAssets(data);
           setAssetsError(null);
-          const store = usePublicationDraftStore.getState();
-          const kept = dropUnapprovedItems(store.assetItems, data);
-          if (kept.length !== store.assetItems.length) store.setAssetItems(kept);
           return data;
         })
         .catch((err) => {

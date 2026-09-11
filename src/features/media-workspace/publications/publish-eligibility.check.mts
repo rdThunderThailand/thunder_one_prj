@@ -161,12 +161,13 @@ const unresolvedAsset = computeEligibility({ ...base, assets: [] }); // asset-1 
 assert.equal(statusOf(unresolvedAsset, "content"), "unknown");
 assert.equal(unresolvedAsset.canPublish, false);
 
+// Approval is no longer a content gate (ADR 0073) — a resolvable asset passes regardless of status.
 const unapprovedAsset = computeEligibility({
   ...base,
   assets: [{ id: "asset-1", approval_status: "pending" }],
 });
-assert.equal(statusOf(unapprovedAsset, "content"), "fail");
-assert.equal(unapprovedAsset.canPublish, false);
+assert.equal(statusOf(unapprovedAsset, "content"), "pass");
+assert.equal(unapprovedAsset.canPublish, true);
 
 // --- composition content gate: without this branch the assets fallthrough marks a
 // composition draft ineligible even though its content lives on the Composition (ADR 0049 §5) ---

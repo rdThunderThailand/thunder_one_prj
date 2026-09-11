@@ -1,6 +1,7 @@
 # Publication Media Picker is local before it is shared
 
-**Status:** accepted · 2026-09-10
+**Status:** accepted · 2026-09-10 — revised later the same day (see Revision below): the approval
+gate is dropped and the picker's kind is derived from the first staged Asset
 **Extends:** `0072-the-create-wizard-reshapes-the-steps-not-the-publication.md` §3 and Consequences
 
 ## Context
@@ -45,3 +46,44 @@ Option 3 is chosen.
   absent because neither has a supported contract in this wizard.
 - A later shared shell must preserve the Publication approval boundary rather than inheriting the
   Playlist picker behavior.
+
+
+## Revision — 2026-09-10 (later the same day)
+
+Two things the original Decision got wrong surfaced the moment an operator used the picker.
+
+### The approval gate is dropped, not preserved
+
+The original text reuses `AssetCard` specifically so "the Publication approval gate remains at the
+selection boundary". In practice `media_assets.approval_status` defaults to `'approved'` NOT NULL
+(`20260909081713_auto_approve_uploaded_media.sql`) and nothing in the product ever sets it
+otherwise — there is no approve/reject UI anywhere. The gate only ever fired on a few rows left at
+`'draft'` from before that default, and its single visible effect was a Publication draft that
+could not be saved for no operator-legible reason.
+
+Removed at every layer:
+
+- `media_publication_set_content` — migration `20260910232248_drop_publication_approval_gate.sql`
+  drops the `v_unapproved_assets` block. `kind` / tenant / playlist-ownership / draft-only guards
+  stay. Applied to `develop` and prod 2026-09-10; both bodies dumped and compared.
+- FE — `isApprovedAsset` and `dropUnapprovedItems` deleted from `draft-mapping.ts`;
+  `computeEligibility` no longer reads `approval_status`; `AssetCard` drops the disabled-when-
+  unapproved state and the Approved / รออนุมัติ badge; `ZoneContentPicker` stops filtering the
+  Composition zone list by it.
+
+`approval_status` the column is left in place (default `'approved'`, unread) — dropping it is an
+irreversible change to buy nothing, and a future moderation feature would want it back.
+
+### The Media branch derives its kind from the first staged Asset
+
+A Publication still holds images or videos, never both (`media_publication_set_content` still
+enforces `ma.kind = v_pub_type`). The original picker took `publicationType` as a fixed prop, and
+the Media branch card in `AssetLibraryStep` had no path that ever set it to `video` — so every new
+draft was locked to `image` and the picker disabled every video, and an uploaded video was dropped
+from the selection silently.
+
+Now: `MediaPickerModal` takes no `publicationType` prop. The first staged Asset locks the picker to
+its kind; the other kind is disabled with a reason and a **Clear all** control in the footer
+unlocks it. On Select, `AssetLibraryStep` derives `publicationType` from the first committed Asset.
+An upload of the wrong kind into a non-empty selection is refused with a message instead of
+dropped.

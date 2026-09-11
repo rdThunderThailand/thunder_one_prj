@@ -189,7 +189,6 @@ export function CreatePublicationPage() {
     conflictsError,
     revisionConflict,
     setRevisionConflict,
-    saveDraft,
     publishNow,
     canPublish,
     eligibilityChecks,
@@ -393,33 +392,6 @@ export function CreatePublicationPage() {
       <PageHeader
         title="Create Publication"
         subtitle="สร้างและเผยแพร่สื่อไปยังทุกช่องทางของคุณ"
-        actions={
-          isLastStep ? (
-            <>
-              <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>
-                Cancel
-              </Button>
-              <Button variant="secondary" onClick={goBack}>
-                <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
-              </Button>
-              <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish}>
-                <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>
-                Cancel
-              </Button>
-              <Button variant="secondary" onClick={saveDraft} disabled={saving}>
-                {saving ? "Saving…" : "Save as Draft"}
-              </Button>
-              <Button variant="primary" onClick={handleNext} disabled={savingNext || step >= MAX_BUILT_STEP}>
-                {nextButtonContent}
-              </Button>
-            </>
-          )
-        }
       />
 
       <Modal
@@ -505,6 +477,7 @@ export function CreatePublicationPage() {
           reloadAssets={reloadAssets}
           assetsLoading={assetsLoading}
           assetsError={assetsError}
+          onContentSelected={() => goNextAction(MAX_BUILT_STEP)}
         />
       )}
 
@@ -550,7 +523,7 @@ export function CreatePublicationPage() {
               <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
             </Button>
           ) : (
-            <span />
+            <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>Cancel</Button>
           )}
           <div className="flex flex-1 items-center gap-3">
             <span className="whitespace-nowrap text-xs text-zinc-500">

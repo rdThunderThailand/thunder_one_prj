@@ -80,27 +80,12 @@ export function computeEligibility(params: {
   } else if (draft.assetItems.length === 0) {
     contentCheckStatus = "fail";
   } else {
-    let allFound = true;
-    let allApproved = true;
-
-    for (const item of draft.assetItems) {
-      const found = assets.find((a) => a.id === item.media_asset_id);
-      if (!found) {
-        allFound = false;
-        break;
-      }
-      if (found.approval_status !== "approved") {
-        allApproved = false;
-      }
-    }
-
-    if (!allFound) {
-      contentCheckStatus = "unknown";
-    } else if (allApproved) {
-      contentCheckStatus = "pass";
-    } else {
-      contentCheckStatus = "fail";
-    }
+    // Every held item must resolve against the loaded library; an unresolved one reads as
+    // "unknown" until the library load finishes. Approval is no longer a gate (ADR 0073).
+    const allFound = draft.assetItems.every((item) =>
+      assets.some((a) => a.id === item.media_asset_id),
+    );
+    contentCheckStatus = allFound ? "pass" : "unknown";
   }
 
   // The ver02 Program step (3) gates channels and schedule together; the checklist still

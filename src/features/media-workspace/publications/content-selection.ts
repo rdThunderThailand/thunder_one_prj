@@ -25,8 +25,8 @@ export function canSelectPlaylist(type: PublicationType): boolean {
 }
 
 /** Drops items whose asset no longer matches the publication type. Items whose asset
- *  is absent from `assets` are KEPT — mirrors dropUnapprovedItems, so a short or
- *  failed library load never silently wipes a valid selection. */
+ *  is absent from `assets` are KEPT, so a short or failed library load never
+ *  silently wipes a valid selection. */
 export function dropMismatchedItems(
   type: PublicationType,
   items: DraftAssetItem[],
