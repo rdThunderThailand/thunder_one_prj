@@ -26,7 +26,7 @@ export function PublicationPlaybackPreviewButton({
   preview?: StagePreview | null;
 }) {
   const [open, setOpen] = useState(false);
-  const hook = usePublicationStagePreview(previewProp === undefined);
+  const hook = usePublicationStagePreview(assets, previewProp === undefined);
   const preview = previewProp ?? hook.preview;
   const loading = previewProp === undefined && hook.loading;
   const hasContent = previewProp !== undefined ? Boolean(previewProp) : hook.hasContent;

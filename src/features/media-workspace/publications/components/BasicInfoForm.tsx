@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/Card";
-import { PlusIcon, XIcon } from "@/components/ui/icons";
+import { PlusIcon, SettingsIcon, XIcon } from "@/components/ui/icons";
 import type { Tag } from "../types";
 import { type PublicationTypeId } from "../mock-data";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
@@ -51,13 +51,19 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
 
   return (
     <Card className="p-5">
-      <h2 className="mb-4 text-base font-semibold text-zinc-900">Basic Information</h2>
+      <div className="mb-5 flex items-start gap-3">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><SettingsIcon className="h-4 w-4" /></span>
+        <div>
+          <h2 className="text-base font-semibold text-zinc-900">Basic Settings</h2>
+          <p className="mt-0.5 text-xs text-zinc-500">ข้อมูลพื้นฐานของเนื้อหา</p>
+        </div>
+      </div>
 
       <div className="flex flex-col gap-4">
-        <FieldWrapper label="Program Name" required error={fieldErrors.name}>
+        <FieldWrapper label="Content Name" required error={fieldErrors.name}>
           <div className="relative">
             <input
-              placeholder="เช่น แคมเปญลดราคาหน้าร้อน 2024"
+              placeholder="เช่น Summer Promotion"
               maxLength={PUBLICATION_LIMITS.nameMaxLength}
               value={name}
               onChange={(e) => patch({ name: e.target.value })}
@@ -73,8 +79,8 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
         <FieldWrapper label="Description" optional>
           <div className="relative">
             <textarea
-              placeholder="เพิ่มคำอธิบายสั้นๆ เกี่ยวกับ publication นี้..."
-              rows={3}
+              placeholder="เพิ่มคำอธิบายเกี่ยวกับเนื้อหานี้..."
+              rows={5}
               value={description}
               onChange={(e) => patch({ description: e.target.value })}
               onPaste={(e) => {
@@ -108,7 +114,7 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700"
+                className="flex items-center gap-1.5 rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700"
               >
                 {tag}
                 <button
@@ -145,7 +151,7 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
               <button
                 type="button"
                 onClick={() => setAddingTag(true)}
-                className="flex items-center gap-1 rounded-full border border-dashed border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-600 hover:border-indigo-300 hover:text-indigo-600"
+                className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600"
               >
                 <PlusIcon className="h-3 w-3" /> Add tag
               </button>

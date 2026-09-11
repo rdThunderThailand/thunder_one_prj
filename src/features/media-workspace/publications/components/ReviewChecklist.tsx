@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { CheckCircleIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import type { ScheduleConflict } from "../types";
 import type { EligibilityCheck, EligibilityStatus } from "../publish-eligibility";
-import { isAllGatingPassed, summarizePriorityConflicts } from "../publish-eligibility";
+import { summarizePriorityConflicts } from "../publish-eligibility";
 
 const ROWS: { id: EligibilityCheck["id"]; label: string }[] = [
   { id: "content", label: "Content is ready to play" },
@@ -36,17 +36,14 @@ export function ReviewChecklist({
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="p-5">
-        <div className="mb-4 flex items-center justify-between gap-2">
+      <Card className="p-4">
+        <div className="mb-3">
           <div>
             <h2 className="text-sm font-semibold text-zinc-900">Checklist</h2>
             <p className="text-xs text-zinc-400">รายการตรวจสอบก่อนเผยแพร่</p>
           </div>
-          <span className={`rounded-full px-2 py-1 text-[10px] font-medium ${isAllGatingPassed(checks) ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-            {isAllGatingPassed(checks) ? "Required checks passed" : "Review required"}
-          </span>
         </div>
-        <ul className="space-y-3">
+        <ul className="space-y-2.5">
           {ROWS.map((row) => (
             <CheckRow
               key={row.id}
@@ -58,7 +55,7 @@ export function ReviewChecklist({
         </ul>
       </Card>
 
-      <Card className="p-5">
+      <Card className="border-amber-200 bg-amber-50 p-4 xl:min-h-[162px]">
         <h2 className="text-sm font-semibold text-zinc-900">Conflicts &amp; warnings</h2>
         <div className="mt-3 space-y-3 text-xs">
           {checkingConflicts || conflictsError ? (

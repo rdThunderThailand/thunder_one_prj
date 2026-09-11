@@ -2,12 +2,15 @@
 
 import { ImageIcon } from "@/components/ui/icons";
 import type { PreviewUrls } from "@/lib/api/media-api";
+import { isVideoUrl } from "@/lib/media-kind";
+import { parseResolution } from "../../layouts/geometry";
 import type { CompositionLibraryPreviewZone } from "../types";
 
-export function CompositionLibraryPreview({ zones, previews }: { zones?: CompositionLibraryPreviewZone[]; previews: PreviewUrls }) {
-  return <div className="relative flex h-10 w-16 items-center justify-center overflow-hidden rounded bg-zinc-100 text-zinc-400 dark:bg-zinc-800"><ImageIcon />{zones?.map((zone) => {
+export function CompositionLibraryPreview({ zones, previews, referenceResolution, className = "h-10 w-16" }: { zones?: CompositionLibraryPreviewZone[]; previews: PreviewUrls; referenceResolution?: string | null; className?: string }) {
+  const ratio = referenceResolution ? parseResolution(referenceResolution) : null;
+  return <div className={`relative flex items-center justify-center overflow-hidden rounded bg-zinc-100 text-zinc-400 dark:bg-zinc-800 ${className}`} style={{ aspectRatio: ratio ? `${ratio[0]} / ${ratio[1]}` : "16 / 9" }}><ImageIcon />{zones?.map((zone) => {
     const url = zone.firstAssetId ? previews.thumbnailUrls[zone.firstAssetId] ?? previews.urls[zone.firstAssetId] : undefined;
-    const isVideo = url ? /\.(mp4|mov|webm)(?:\?|$)/i.test(url) : false;
+    const isVideo = url ? isVideoUrl(url) : false;
     return <div key={zone.position} className="absolute overflow-hidden border border-white/70 bg-zinc-200/70 dark:bg-zinc-700/70" style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}>{url && (isVideo
       ? <video src={url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
       : <img src={url} alt="" onError={(event) => { event.currentTarget.hidden = true; }} className="h-full w-full object-cover" />)}</div>;

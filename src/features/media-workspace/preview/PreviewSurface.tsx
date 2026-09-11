@@ -12,6 +12,7 @@ export function PreviewSurface({
   item,
   asset,
   url,
+  posterUrl,
   playing,
   speed,
   muted,
@@ -24,6 +25,7 @@ export function PreviewSurface({
   item: PlaybackPreviewItem | null;
   asset: MediaAsset | undefined;
   url: string | undefined;
+  posterUrl?: string;
   playing: boolean;
   speed: number;
   muted: boolean;
@@ -49,6 +51,7 @@ export function PreviewSurface({
       <PreviewVideo
         key={item.mediaAssetId}
         src={url}
+        posterUrl={posterUrl}
         playing={playing}
         speed={speed}
         muted={muted}
@@ -72,6 +75,7 @@ export function PreviewSurface({
 
 function PreviewVideo({
   src,
+  posterUrl,
   playing,
   speed,
   muted,
@@ -80,6 +84,7 @@ function PreviewVideo({
   style,
 }: {
   src: string;
+  posterUrl?: string;
   playing: boolean;
   speed: number;
   muted: boolean;
@@ -97,9 +102,10 @@ function PreviewVideo({
   }, [playing, speed, src]);
   useEffect(() => {
     const video = ref.current;
-    if (video && (!playing || Math.abs(video.currentTime - offsetSeconds) > 0.35)) video.currentTime = offsetSeconds;
+    const previewOffset = !playing && offsetSeconds === 0 ? 0.1 : offsetSeconds;
+    if (video && (!playing || Math.abs(video.currentTime - previewOffset) > 0.35)) video.currentTime = previewOffset;
   }, [offsetSeconds, playing, src]);
-  return <video ref={ref} src={src} muted={muted} playsInline className={`h-full w-full ${fitClass}`} style={style} />;
+  return <video ref={ref} src={posterUrl ? src : `${src}#t=0.1`} poster={posterUrl} muted={muted} playsInline preload="metadata" className={`h-full w-full ${fitClass}`} style={style} />;
 }
 
 function Placeholder({ label, style }: { label: string; style?: CSSProperties }) {

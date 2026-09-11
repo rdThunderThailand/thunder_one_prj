@@ -62,6 +62,7 @@ export function PreviewStage({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const [urls, setUrls] = useState<Record<string, string | undefined>>({});
+  const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string | undefined>>({});
   const [previewLoadState, setPreviewLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const startedAt = useRef<number | null>(null);
   const initialTime = useRef(0);
@@ -144,6 +145,7 @@ export function PreviewStage({
       .then((result) => {
         if (!alive) return;
         setUrls((current) => ({ ...current, ...result.urls }));
+        setThumbnailUrls((current) => ({ ...current, ...result.thumbnailUrls }));
         setPreviewLoadState("ready");
       })
       .catch(() => alive && setPreviewLoadState("error"));
@@ -265,7 +267,7 @@ export function PreviewStage({
           className="mx-auto overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-inner"
           style={{ aspectRatio: `${ratioWidth} / ${ratioHeight}`, width: frameWidth }}
         >
-        <div className="relative h-full w-full">
+        <div className="group relative h-full w-full">
           {resolvedZones.map((zone, zoneIndex) => {
             const frame = previewFrameAt(schedules[zoneIndex], zone.items, timeSeconds);
             const zoneTimeSeconds = frame.ended
@@ -290,6 +292,7 @@ export function PreviewStage({
                       item={transition.outgoingItem}
                       asset={assetsById[transition.outgoingItem.mediaAssetId]}
                       url={urls[transition.outgoingItem.mediaAssetId]}
+                      posterUrl={thumbnailUrls[transition.outgoingItem.mediaAssetId]}
                       playing={false}
                       speed={speed}
                       muted={muted}
@@ -305,6 +308,7 @@ export function PreviewStage({
                     item={frame.item}
                     asset={frame.item ? assetsById[frame.item.mediaAssetId] : undefined}
                     url={frame.item ? urls[frame.item.mediaAssetId] : undefined}
+                    posterUrl={frame.item ? thumbnailUrls[frame.item.mediaAssetId] : undefined}
                     playing={transition ? false : playing}
                     speed={speed}
                     muted={muted}

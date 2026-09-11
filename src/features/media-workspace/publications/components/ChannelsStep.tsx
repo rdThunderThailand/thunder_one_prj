@@ -1,20 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card } from "@/components/ui/Card";
-import { DonutChart } from "@/components/ui/DonutChart";
-import { SearchIcon, WarningTriangleIcon, XIcon } from "@/components/ui/icons";
+import { SearchIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import type { ChannelListItem } from "../../channels/types";
 import { channelCategories, type ChannelCategoryId, type ChannelItem } from "../mock-data";
 import {
   computeCategoryCounts,
-  computeStatusCounts,
   filterBySearch,
-  statusPercent as computeStatusPercent,
   summarizeGeometryFit,
   toChannelItems,
 } from "../channels-logic";
-import { ChannelCard, categoryBadgeColor, categoryIcon } from "./ChannelCard";
+import { ChannelCard } from "./ChannelCard";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 const VISIBLE_COUNT = 4;
@@ -38,8 +34,6 @@ export function ChannelsStep({
 }: ChannelsStepProps) {
   const selectedIds = usePublicationDraftStore((s) => s.channelIds);
   const toggleChannel = usePublicationDraftStore((s) => s.toggleChannelId);
-  const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
-  const clearAll = () => setChannelIds([]);
   const [activeTab, setActiveTab] = useState<"all" | ChannelCategoryId>("all");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -47,15 +41,12 @@ export function ChannelsStep({
   const channels: ChannelItem[] = useMemo(() => toChannelItems(source), [source]);
   const filtered = useMemo(() => filterBySearch(channels, search), [channels, search]);
   const categoryCounts = useMemo(() => computeCategoryCounts(channels), [channels]);
-  const statusCounts = useMemo(() => computeStatusCounts(channels), [channels]);
-  const statusPercent = (count: number) => computeStatusPercent(count, statusCounts.total);
   const geometryFit = useMemo(
     () => summarizeGeometryFit(source, selectedIds, aspectRatio),
     [source, selectedIds, aspectRatio],
   );
 
   const groups = channelCategories.filter((cat) => activeTab === "all" || activeTab === cat.id);
-  const selectedChannels = channels.filter((c) => selectedIds.includes(c.id));
 
   return (
     <div className="flex flex-col gap-4">
@@ -150,66 +141,6 @@ export function ChannelsStep({
         );
       })}
 
-      <div className="border-t border-zinc-100 pt-3">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-zinc-900">
-            {selectedChannels.length} channel{selectedChannels.length === 1 ? "" : "s"} selected
-          </h3>
-          {selectedChannels.length > 0 && (
-            <button onClick={clearAll} className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
-              Clear
-            </button>
-          )}
-        </div>
-        {selectedChannels.length === 0 ? (
-          <p className="text-xs text-zinc-400">No channels selected yet.</p>
-        ) : (
-          <ul className="flex flex-col gap-2.5">
-            {selectedChannels.map((channel) => (
-              <li key={channel.id} className="flex items-start gap-2.5">
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${categoryBadgeColor[channel.category]}`}>
-                  <span className="h-4 w-4">{categoryIcon[channel.category]}</span>
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900">{channel.name}</p>
-                  <p className="truncate text-xs text-zinc-400">{channel.subLabel}</p>
-                </div>
-                <button
-                  onClick={() => toggleChannel(channel.id)}
-                  aria-label={`Remove ${channel.name}`}
-                  className="shrink-0 text-zinc-400 hover:text-zinc-700"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-900">Channel Status</h3>
-        <div className="flex items-center gap-4">
-          <DonutChart
-            size={96}
-            strokeWidth={14}
-            segments={[
-              { label: "Online", value: statusCounts.online, color: "#10b981" },
-              { label: "Warning", value: statusCounts.warning, color: "#f59e0b" },
-              { label: "Offline", value: statusCounts.offline, color: "#ef4444" },
-            ]}
-          />
-          <ul className="flex-1 space-y-1.5 text-xs">
-            <StatusRow label="Online" dot="bg-emerald-500" count={statusCounts.online} pct={statusPercent(statusCounts.online)} />
-            <StatusRow label="Warning" dot="bg-amber-500" count={statusCounts.warning} pct={statusPercent(statusCounts.warning)} />
-            <StatusRow label="Offline" dot="bg-red-500" count={statusCounts.offline} pct={statusPercent(statusCounts.offline)} />
-            <li className="mt-1 flex items-center justify-between border-t border-zinc-100 pt-1.5">
-              <span className="text-zinc-500">Total</span>
-              <span className="font-semibold text-zinc-900">{statusCounts.total}</span>
-            </li>
-          </ul>
-        </div>
-      </Card>
     </div>
   );
 }
@@ -223,16 +154,5 @@ function FitWarning({ text, detail }: { text: string; detail?: string }) {
         {detail && <p className="text-[11px] text-zinc-400">{detail}</p>}
       </div>
     </div>
-  );
-}
-
-function StatusRow({ label, dot, count, pct }: { label: string; dot: string; count: number; pct: number }) {
-  return (
-    <li className="flex items-center justify-between">
-      <span className="flex items-center gap-1.5 text-zinc-600">
-        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} /> {label}
-      </span>
-      <span className="font-medium text-zinc-900">{count} ({pct}%)</span>
-    </li>
   );
 }

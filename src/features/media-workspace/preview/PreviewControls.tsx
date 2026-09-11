@@ -48,7 +48,7 @@ export function PreviewControls({
   const isOverlay = placement === "overlay";
   const secondaryOverlay = isOverlay ? "border-white/20 bg-white/10 !text-white hover:bg-white/20" : "";
   const overlayVisibility = playing
-    ? "translate-y-2 opacity-0 hover:translate-y-0 hover:opacity-100 focus-within:translate-y-0 focus-within:opacity-100"
+    ? "translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
     : "translate-y-0 opacity-100";
   return (
     <div

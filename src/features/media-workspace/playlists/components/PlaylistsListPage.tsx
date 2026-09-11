@@ -12,7 +12,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { classifyApiError } from "@/lib/api/api-error";
 import { permanentlyDeletePlaylist, restorePlaylist } from "@/lib/api/media-api";
 import { FeatureFolderRail } from "../../content-library/FeatureFolderRail";
-import { duplicatePlaylist, upsertPlaylist } from "../services/playlists-api";
+import { deletePlaylist, duplicatePlaylist, upsertPlaylist } from "../services/playlists-api";
 import { copyName, filterPlaylists, paginate, sortPlaylists, summarize } from "../list-filtering";
 import { filterByCollection, folderCounts } from "../folder-filtering";
 import { filterByTag, tagCounts } from "../tag-filtering";
@@ -54,6 +54,7 @@ export function PlaylistsListPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
   const [emptyTrashBusy, setEmptyTrashBusy] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const inTrash = collection === "trash";
   const { playlists, trashed, folders, error, refreshing, reload } = usePlaylistsListData(inTrash);
@@ -108,6 +109,7 @@ export function PlaylistsListPage() {
     setTagId(null);
     setCollection(next);
     setPage(1);
+    setSelectedIds(new Set());
   };
   const changeTag = (next: string | null) => {
     setCollection(DEFAULT_STATE.collection);
@@ -154,6 +156,24 @@ export function PlaylistsListPage() {
     } finally {
       setEmptyTrashBusy(false);
     }
+  };
+
+  const runBatch = async (mode: "trash" | "restore" | "delete", ids: string[]) => {
+    if (!ids.length) return;
+    const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
+    if (!window.confirm(`${verb} ${ids.length} playlist${ids.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
+    setEmptyTrashBusy(true);
+    const action = mode === "trash" ? deletePlaylist : mode === "restore" ? restorePlaylist : permanentlyDeletePlaylist;
+    const results = await Promise.allSettled(ids.map((id) => action(id)));
+    const failed = results.filter(
+      (result) =>
+        result.status === "rejected" ||
+        (result.status === "fulfilled" && typeof result.value === "object" && result.value !== null && "deleted" in result.value && !result.value.deleted),
+    ).length;
+    setSelectedIds(new Set());
+    if (failed) setActionError(`${failed} playlist${failed === 1 ? "" : "s"} could not be updated.`);
+    await reload();
+    setEmptyTrashBusy(false);
   };
 
   const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
@@ -250,18 +270,46 @@ export function PlaylistsListPage() {
               onClearAll={!inTrash && qs !== "" ? handleClearAll : undefined}
               value={filters}
               onChange={(next) => { setFilters(next); setPage(1); }}
-              tailAction={inTrash ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={emptyTrashTargets.length === 0 || emptyTrashBusy}
-                  onClick={() => setEmptyTrashOpen(true)}
-                  className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
-                >
-                  Empty Trash
-                </Button>
-              ) : undefined}
+              tailAction={
+                inTrash ? (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={(trashed?.length ?? 0) === 0 || emptyTrashBusy}
+                      onClick={() => void runBatch("restore", (trashed ?? []).map((playlist) => playlist.id))}
+                    >
+                      Recover All
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={emptyTrashTargets.length === 0 || emptyTrashBusy}
+                      onClick={() => setEmptyTrashOpen(true)}
+                      className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                    >
+                      Delete All
+                    </Button>
+                  </div>
+                ) : undefined
+              }
             />
+
+            {selectedIds.size > 0 && (
+              <div className="mb-3 flex items-center justify-between rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+                <span>{selectedIds.size} selected</span>
+                <div className="flex gap-2">
+                  {inTrash ? (
+                    <>
+                      <Button variant="secondary" disabled={emptyTrashBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button>
+                      <Button disabled={emptyTrashBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button>
+                    </>
+                  ) : (
+                    <Button disabled={emptyTrashBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("trash", [...selectedIds])}>Move to Trash</Button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
             {error && playlists !== null && (
@@ -285,6 +333,8 @@ export function PlaylistsListPage() {
                   inTrash={inTrash}
                   onAction={handleAction}
                   onSortChange={handleSortChange}
+                  selectedIds={selectedIds}
+                  onSelectionChange={setSelectedIds}
                 />
               )}
             </div>

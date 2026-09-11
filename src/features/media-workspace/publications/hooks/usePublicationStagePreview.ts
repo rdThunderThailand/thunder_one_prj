@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { loadCompositionPreview, type StagePreview } from "@/features/media-workspace/preview/composition-preview";
 import { playlistItemToPreview, playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
 import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
+import type { MediaAsset } from "@/types/domain";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 export type PreviewBranch = "media" | "playlist" | "composition";
@@ -20,9 +21,8 @@ const LOOSE_MEDIA_ASPECT = "16:9";
  * Shared by the Prepare Content frame (inline stage + Content Info rail) and the
  * "Preview playback" button so the record is fetched once.
  */
-export function usePublicationStagePreview(enabled = true) {
+export function usePublicationStagePreview(assets: MediaAsset[], enabled = true) {
   const publicationType = usePublicationDraftStore((s) => s.basicInfo.publicationType);
-  const name = usePublicationDraftStore((s) => s.basicInfo.name);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
@@ -40,17 +40,20 @@ export function usePublicationStagePreview(enabled = true) {
 
   const localPreview = useMemo<StagePreview | null>(() => {
     if (!enabled || branch !== "media" || assetItems.length === 0) return null;
+    const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
+    const label = (id: string) => assetsById.get(id)?.title ?? assetsById.get(id)?.file?.original_filename;
     return {
       zones: [
         {
           id: "publication-assets",
-          name: name || "Publication",
+          name: label(assetItems[0].media_asset_id) || "Media",
           x: 0,
           y: 0,
           width: 100,
           height: 100,
           items: assetItems.map((item) => ({
             mediaAssetId: item.media_asset_id,
+            label: label(item.media_asset_id),
             durationSeconds: item.duration_seconds,
             transition: item.transition,
           })),
@@ -59,8 +62,7 @@ export function usePublicationStagePreview(enabled = true) {
       aspectRatio: LOOSE_MEDIA_ASPECT,
       referenceResolution: null,
     };
-    // `name` only labels the corner badge — cheap to recompute, no refetch.
-  }, [enabled, branch, name, assetItems]);
+  }, [enabled, branch, assetItems, assets]);
 
   useEffect(() => {
     if (!enabled || branch === "media" || !key) return;

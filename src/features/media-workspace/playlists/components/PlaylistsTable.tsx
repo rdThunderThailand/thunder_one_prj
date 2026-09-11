@@ -44,6 +44,8 @@ export function PlaylistsTable({
   inTrash = false,
   onAction,
   onSortChange,
+  selectedIds,
+  onSelectionChange,
 }: {
   rows: PlaylistListItem[];
   busyId: string | null;
@@ -51,6 +53,8 @@ export function PlaylistsTable({
   inTrash?: boolean;
   onAction: (action: RowAction, playlist: PlaylistListItem) => void;
   onSortChange: (key: SortKey) => void;
+  selectedIds: Set<string>;
+  onSelectionChange: (ids: Set<string>) => void;
 }) {
   // One signing call for every cover on the page, not one per row.
   const coverIds = useMemo(
@@ -58,13 +62,15 @@ export function PlaylistsTable({
     [rows]
   );
   const previews = usePreviewUrls(coverIds);
+  const isAllSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-            <SortHeader label="Playlist Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2 pl-1" />
+            <th className="w-10 py-2 pl-1"><input type="checkbox" aria-label="Select all playlists on this page" checked={isAllSelected} onChange={(event) => onSelectionChange(event.target.checked ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
+            <SortHeader label="Playlist Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Duration" sortKey="duration" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="py-2" />
@@ -82,7 +88,8 @@ export function PlaylistsTable({
                 key={playlist.id}
                 className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
               >
-                <td className="py-3 pl-1">
+                <td className="py-3 pl-1"><input type="checkbox" aria-label={`Select ${playlist.name}`} checked={selectedIds.has(playlist.id)} onChange={(event) => { const next = new Set(selectedIds); if (event.target.checked) next.add(playlist.id); else next.delete(playlist.id); onSelectionChange(next); }} /></td>
+                <td className="py-3">
                   <div className="flex items-center gap-3">
                     <MediaThumb
                       url={cover ? previews.urls[cover] : undefined}
