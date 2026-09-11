@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ExternalLinkIcon, GridIcon, ImageIcon, ListIcon, PlayIcon, SearchIcon } from "@/components/ui/icons";
+import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
@@ -47,7 +48,7 @@ function AssetDetail({ asset, previewUrl, thumbnailUrl }: { asset?: MediaAsset; 
   </div>;
 }
 
-export function MediaPickerModal({ assets, tags, selectedIds, loading, error, onClose, onSelect, onUpload }: { assets: MediaAsset[]; tags: Tag[]; selectedIds: string[]; loading: boolean; error: string | null; onClose: () => void; onSelect: (ids: string[]) => void; onUpload: () => void }) {
+export function MediaPickerModal({ assets, tags, selectedIds, loading, error, onClose, onSelect }: { assets: MediaAsset[]; tags: Tag[]; selectedIds: string[]; loading: boolean; error: string | null; onClose: () => void; onSelect: (ids: string[]) => void }) {
   // ponytail: keep this wizard-local until #80/#81 prove a common picker contract.
   const [filters, setFilters] = useState<AssetPickerFilters>(defaultAssetPickerFilters);
   const [stagedIds, setStagedIds] = useState(selectedIds);
@@ -55,7 +56,7 @@ export function MediaPickerModal({ assets, tags, selectedIds, loading, error, on
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(PER_PAGE_OPTIONS[0]);
   const [sort, setSort] = useState("newest");
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list">("list");
 
   const filtered = useMemo(() => filterAssets(assets, filters), [assets, filters]);
   const visible = useMemo(() => [...filtered].sort((a, b) => sort === "oldest" ? (a.created_at ?? "").localeCompare(b.created_at ?? "") : sort === "name" ? (a.title ?? a.file?.original_filename ?? "").localeCompare(b.title ?? b.file?.original_filename ?? "") : (b.created_at ?? "").localeCompare(a.created_at ?? "")), [filtered, sort]);
@@ -91,8 +92,6 @@ export function MediaPickerModal({ assets, tags, selectedIds, loading, error, on
       <select aria-label="Media type" value={filters.kind} onChange={(event) => update({ kind: event.target.value as AssetPickerFilters["kind"] })} className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"><option value="all">All Types</option><option value="image">Image</option><option value="video">Video</option></select>
       <select aria-label="Status" value={filters.status} onChange={(event) => update({ status: event.target.value })} className="rounded-lg border border-zinc-200 px-3 py-2 text-sm">{STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
       <select aria-label="Resolution" value={filters.resolution} onChange={(event) => update({ resolution: event.target.value })} className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"><option value="all">Any Resolution</option>{resolutions.map((resolution) => <option key={resolution} value={resolution}>{resolution}</option>)}</select>
-      <button type="button" onClick={() => document.getElementById("media-picker-filters")?.focus()} className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">More Filters</button>
-      <button type="button" onClick={onUpload} className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Upload</button>
       <Link href="/media-workspace/assets" target="_blank" className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-indigo-700">Media Library <ExternalLinkIcon /></Link>
     </div>
     <div className="grid h-[min(42rem,calc(100vh-15rem))] min-h-[30rem] grid-cols-[11rem_minmax(0,1fr)_16rem] overflow-hidden border-b border-zinc-200">
@@ -112,11 +111,78 @@ export function MediaPickerModal({ assets, tags, selectedIds, loading, error, on
         <p className="mb-2 mt-4 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Tags</p>
         <select aria-label="Tag" value={filters.tagId ?? ""} onChange={(event) => update({ tagId: event.target.value || null })} className="w-full rounded-lg border border-zinc-200 px-2 py-2 text-xs"><option value="">Select or type tags</option>{tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}</select>
       </aside>
-      <section className="min-w-0 overflow-y-auto p-4">
+      <section className="flex min-w-0 flex-col overflow-hidden p-4">
         <div className="mb-3 flex items-center justify-between gap-3"><p className="text-xs font-medium text-zinc-700">{loading ? "Loading media…" : error ?? `${visible.length} items found`}{lockedKind && <span className="ml-2 font-normal text-zinc-500">· {lockedKind === "video" ? "วิดีโอ" : "รูปภาพ"}เท่านั้น — กด Clear all เพื่อสลับชนิด</span>}</p><div className="flex items-center gap-2"><select aria-label="Sort media" value={sort} onChange={(event) => setSort(event.target.value)} className="rounded-lg border border-zinc-200 px-2 py-1.5 text-xs"><option value="newest">Sort by: Newest</option><option value="oldest">Sort by: Oldest</option><option value="name">Sort by: Name</option></select><div className="flex rounded-lg border border-zinc-200 p-0.5"><button type="button" onClick={() => setView("grid")} aria-label="Grid view" className={`rounded p-1.5 ${view === "grid" ? "bg-indigo-50 text-indigo-600" : "text-zinc-400"}`}><GridIcon /></button><button type="button" onClick={() => setView("list")} aria-label="List view" className={`rounded p-1.5 ${view === "list" ? "bg-indigo-50 text-indigo-600" : "text-zinc-400"}`}><ListIcon /></button></div></div></div>
-        {view === "grid" ? <div className="grid grid-cols-3 gap-3">{pageAssets.map((asset) => <AssetCard key={asset.id} kind="asset" asset={asset} aspect="video" previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} selected={stagedIds.includes(asset.id)} onSelect={() => toggle(asset)} disabled={!canStage(asset)} />)}</div> : <div className="space-y-2">{pageAssets.map((asset) => <button key={asset.id} type="button" disabled={!canStage(asset)} onClick={() => toggle(asset)} className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-xs ${stagedIds.includes(asset.id) ? "border-indigo-500 bg-indigo-50" : "border-zinc-200"} disabled:opacity-50`}><span className="truncate font-medium">{asset.file?.original_filename ?? asset.title ?? asset.id}</span><span className="ml-3 shrink-0 text-zinc-500">{assetKind(asset)} · {asset.width && asset.height ? `${asset.width} × ${asset.height}` : "—"}</span></button>)}</div>}
-        {!loading && !error && !pageAssets.length && <p className="py-12 text-center text-sm text-zinc-500">No media matches these filters.</p>}
-        <Pagination page={currentPage} totalPages={totalPages} perPage={perPage} perPageOptions={PER_PAGE_OPTIONS} totalItems={visible.length} rangeStart={visible.length ? (currentPage - 1) * perPage + 1 : 0} rangeEnd={Math.min(currentPage * perPage, visible.length)} itemLabel="media" onPageChange={setPage} onPerPageChange={(next) => { setPerPage(next); setPage(1); }} />
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          {view === "grid" ? (
+            <div className="grid grid-cols-3 gap-3">
+              {pageAssets.map((asset) => (
+                <AssetCard
+                  key={asset.id}
+                  kind="asset"
+                  asset={asset}
+                  aspect="video"
+                  previewUrl={previews.urls[asset.id]}
+                  thumbnailUrl={previews.thumbnailUrls[asset.id]}
+                  selected={stagedIds.includes(asset.id)}
+                  onSelect={() => toggle(asset)}
+                  disabled={!canStage(asset)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {pageAssets.map((asset) => {
+                const isSelected = stagedIds.includes(asset.id);
+                const label = asset.title ?? asset.file?.original_filename ?? asset.id;
+                const status = asset.status === "ready" ? "Active" : asset.status ?? "—";
+                return (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    disabled={!canStage(asset)}
+                    onClick={() => toggle(asset)}
+                    className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${isSelected ? "border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-100" : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"} disabled:opacity-50`}
+                  >
+                    <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-zinc-300 bg-white"}`}>
+                      {isSelected ? "✓" : ""}
+                    </span>
+                    <MediaThumb
+                      url={previews.urls[asset.id]}
+                      thumbnailUrl={previews.thumbnailUrls[asset.id]}
+                      kind={asset.kind}
+                      mimeType={asset.file?.mime_type}
+                      alt={label}
+                      className="aspect-video h-12 w-20 rounded-lg"
+                    />
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-sm font-semibold text-zinc-900">{label}</span>
+                        {asset.tags?.[0] && <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600">{asset.tags[0].name}</span>}
+                      </span>
+                      <span className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500">
+                        <span>{assetKind(asset)}</span>
+                        <span>{asset.width && asset.height ? `${asset.width} × ${asset.height}` : "No resolution"}</span>
+                        <span>{asset.duration_seconds ? `${Math.round(asset.duration_seconds)}s` : "Still image"}</span>
+                        <span>
+                          {asset.updated_at || asset.created_at
+                            ? `Updated ${new Date(asset.updated_at ?? asset.created_at!).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+                            : ""}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="text-right">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-600"}`}>{status}</span>
+                      <span className="mt-1 block truncate text-[10px] text-zinc-500">{asset.created_by?.display_name ?? "—"}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {!loading && !error && !pageAssets.length && <p className="py-12 text-center text-sm text-zinc-500">No media matches these filters.</p>}
+        </div>
+        <div className="shrink-0 border-t border-zinc-100 bg-white"><Pagination page={currentPage} totalPages={totalPages} perPage={perPage} perPageOptions={PER_PAGE_OPTIONS} totalItems={visible.length} rangeStart={visible.length ? (currentPage - 1) * perPage + 1 : 0} rangeEnd={Math.min(currentPage * perPage, visible.length)} itemLabel="media" onPageChange={setPage} onPerPageChange={(next) => { setPerPage(next); setPage(1); }} /></div>
       </section>
       <aside className="overflow-y-auto border-l border-zinc-200"><p className="border-b border-zinc-200 px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Selected item</p><AssetDetail asset={detailAsset} previewUrl={detailAsset ? previews.urls[detailAsset.id] : undefined} thumbnailUrl={detailAsset ? previews.thumbnailUrls[detailAsset.id] : undefined} /></aside>
     </div>

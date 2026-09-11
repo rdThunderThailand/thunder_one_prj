@@ -388,7 +388,7 @@ export function CreatePublicationPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-6">
       <PageHeader
         title="Create Publication"
         subtitle="สร้างและเผยแพร่สื่อไปยังทุกช่องทางของคุณ"
@@ -516,7 +516,7 @@ export function CreatePublicationPage() {
 
       {step === 5 && <PublishStep channels={channels} assets={assets} canPublish={canPublish} />}
 
-      <Card className="flex flex-col gap-3 p-4">
+      <Card className="mt-auto flex flex-col gap-3 p-4">
         <div className="flex items-center gap-4">
           {step > 1 ? (
             <Button variant="secondary" onClick={goBack}>

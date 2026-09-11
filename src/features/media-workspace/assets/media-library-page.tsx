@@ -11,6 +11,9 @@ import {
   fetchContentFolders,
   fetchMediaAssets,
   moveMediaAsset,
+  permanentlyDeleteMediaAsset,
+  restoreMediaAsset,
+  trashMediaAsset,
 } from "@/lib/api/media-api";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { FeatureFolderRail } from "../content-library/FeatureFolderRail";
@@ -79,6 +82,8 @@ export function MediaLibraryPage() {
   const [isGrid, setIsGrid] = useState(true);
   const [railTab, setRailTab] = useState<"folders" | "tags">("folders");
   const [tagId, setTagId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const folderId = collection !== "all" && collection !== "uncategorized" && collection !== "trash" ? collection : undefined;
   const tags = useMemo(() => tagCounts(assets), [assets]);
@@ -127,10 +132,23 @@ export function MediaLibraryPage() {
     return () => window.clearTimeout(timer);
   }, [refresh]);
 
-  const selectCollection = (next: Collection) => { setCollection(next); setTagId(null); setPage(1); };
+  const selectCollection = (next: Collection) => { setCollection(next); setTagId(null); setSelectedIds(new Set()); setPage(1); };
   const selectTag = (next: string | null) => { setTagId(next); setCollection("all"); setPage(1); };
   const handleSearch = (value: string) => { setSearch(value); setPage(1); };
   const handleKind = (value: "" | "image" | "video") => { setKind(value); setPage(1); };
+  const runBatch = async (mode: "trash" | "restore" | "delete", ids: string[]) => {
+    if (!ids.length) return;
+    const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
+    if (!window.confirm(`${verb} ${ids.length} media item${ids.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
+    setBatchBusy(true);
+    const action = mode === "trash" ? trashMediaAsset : mode === "restore" ? restoreMediaAsset : permanentlyDeleteMediaAsset;
+    const results = await Promise.allSettled(ids.map(action));
+    const failed = results.filter((result) => result.status === "rejected").length;
+    setSelectedIds(new Set());
+    setError(failed ? `${failed} media item${failed === 1 ? "" : "s"} could not be updated.` : null);
+    await refresh();
+    setBatchBusy(false);
+  };
 
   const statTiles = [
     { label: "Total files", value: assets.length, icon: "◫" },
@@ -199,6 +217,13 @@ export function MediaLibraryPage() {
                   <p className="text-sm text-zinc-500">{filteredAssets.length.toLocaleString()} items</p>
                 )}
               </div>
+              <div className="flex gap-2">
+                {collection === "trash" ? <>
+                  <Button variant="secondary" disabled={batchBusy || assets.length === 0} onClick={() => void runBatch("restore", assets.map((asset) => asset.id))}>Recover All</Button>
+                  <Button disabled={batchBusy || assets.length === 0} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", assets.map((asset) => asset.id))}>Delete All</Button>
+                </> : selectedIds.size > 0 ? <Button disabled={batchBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("trash", [...selectedIds])}>Move {selectedIds.size} to Trash</Button> : null}
+                {collection === "trash" && selectedIds.size > 0 && <><Button variant="secondary" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button><Button disabled={batchBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button></>}
+              </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
@@ -215,7 +240,7 @@ export function MediaLibraryPage() {
                   ))}
                 </div>
               ) : (
-                <AssetTable assets={visibleAssets} trash={collection === "trash"} folders={folders} onRefresh={() => void refresh()} previewUrls={previews.urls} thumbnailUrls={previews.thumbnailUrls} />
+                <AssetTable assets={visibleAssets} trash={collection === "trash"} folders={folders} onRefresh={() => void refresh()} previewUrls={previews.urls} thumbnailUrls={previews.thumbnailUrls} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
               )}
             </div>
 

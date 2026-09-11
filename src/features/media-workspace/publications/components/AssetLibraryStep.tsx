@@ -66,6 +66,7 @@ export function AssetLibraryStep({
       duration_seconds: isVideoFile ? null : DEFAULT_IMAGE_DURATION_SECONDS,
       transition: "cut",
     }]);
+    onContentSelected();
   });
 
   const selectedBranch: Branch = publicationType === "playlist" ? "playlist" : publicationType === "composition" ? "composition" : "media";
@@ -110,7 +111,7 @@ export function AssetLibraryStep({
         <aside className="rounded-xl border border-zinc-200 p-5"><h2 className="text-lg font-semibold text-zinc-900">ไม่แน่ใจว่าจะเลือกอะไร?</h2><p className="mt-1 text-sm text-zinc-500">นี่คือแนวทางการเลือกประเภทเนื้อหา</p><div className="mt-5 space-y-5"><Guide icon={ImageIcon} tone="text-emerald-600 bg-emerald-50" title="เลือก Media เมื่อ" items={["คุณมีไฟล์เดียวที่ต้องการแสดงผล", "ต้องการใช้ไฟล์ใน Playlist หรือ Layout", "ต้องการอัปโหลดไฟล์เก็บไว้ในคลังสื่อ"]} /><Guide icon={ListIcon} tone="text-blue-600 bg-blue-50" title="เลือก Playlist เมื่อ" items={["ต้องการเล่นสื่อหลายชิ้นต่อกัน", "ต้องการกำหนดเวลา / ระยะเวลาแต่ละชิ้น", "ต้องการบริหารลำดับสื่อ"]} /><Guide icon={GridIcon} tone="text-violet-600 bg-violet-50" title="เลือก Layout เมื่อ" items={["ต้องการแบ่งหน้าจอเป็นหลายส่วน", "ต้องการแสดงสื่อหลายประเภทพร้อมกัน", "เช่น ข่าว + สภาพอากาศ + โฆษณา"]} /></div><div className="mt-5 border-t border-zinc-200 pt-4"><p className="text-sm font-medium text-zinc-800">เรียนรู้เพิ่มเติม</p><a href="#" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-indigo-600">ดูคู่มือการใช้งาน <ExternalLinkIcon /></a></div></aside>
       </div>
       <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"><LightbulbIcon className="h-4 w-4 shrink-0" />Tip: คุณสามารถเปลี่ยนประเภทเนื้อหาได้ในขั้นตอนถัดไป</div>
-      {pickerOpen && <MediaPickerModal assets={assets} tags={tags} selectedIds={assetItems.map((item) => item.media_asset_id)} loading={assetsLoading} error={assetsError} onClose={() => setPickerOpen(false)} onSelect={commitMedia} onUpload={() => fileInputRef.current?.click()} />}
+      {pickerOpen && <MediaPickerModal assets={assets} tags={tags} selectedIds={assetItems.map((item) => item.media_asset_id)} loading={assetsLoading} error={assetsError} onClose={() => setPickerOpen(false)} onSelect={commitMedia} />}
       {playlistPickerOpen && <PlaylistPickerModal selectedId={playlistId} onClose={() => setPlaylistPickerOpen(false)} onSelect={(id) => { setPlaylistId(id); setPlaylistPickerOpen(false); onContentSelected(); }} />}
       {compositionPickerOpen && <CompositionPickerModal selectedId={compositionId} onClose={() => setCompositionPickerOpen(false)} onSelect={(id) => { setCompositionId(id); setCompositionPickerOpen(false); onContentSelected(); }} />}
     </section>

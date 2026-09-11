@@ -101,7 +101,7 @@ function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }
   </div>;
 }
 
-export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, onSort, onPreview, onAction }: {
+export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, onSort, onPreview, onAction, selectedIds, onSelectionChange }: {
   rows: CompositionLibraryItem[];
   sort: { key: SortKey; dir: "asc" | "desc" };
   inTrash: boolean;
@@ -110,13 +110,80 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
   onSort: (key: SortKey) => void;
   onPreview: (item: CompositionLibraryItem) => void;
   onAction: (action: CompositionLibraryAction, item: CompositionLibraryItem) => void;
+  selectedIds: Set<string>;
+  onSelectionChange: (ids: Set<string>) => void;
 }) {
   const previews = useRowPreviews(rows);
-  return <div><table className="w-full table-fixed text-left text-sm"><thead><tr className="border-b border-zinc-100 text-xs text-zinc-500 dark:border-zinc-800">
-    <th className="w-[72px] py-2 pl-1">Preview</th><SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort}/><th className="w-[64px] py-2">Content</th><th className="w-[130px] py-2">Resolution</th><SortHeader className="w-[135px]" label="Status" sortKey="status" sort={sort} onSort={onSort}/><SortHeader className="w-[100px]" label="Used in" sortKey="usage" sort={sort} onSort={onSort}/><SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort}/><th className="w-[132px] py-2 pr-1 text-right">Actions</th>
-  </tr></thead><tbody>{rows.map((item) => { const badge = statusBadge(item.status); return <tr key={item.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
-    <td className="py-3 pl-1"><CompositionLibraryPreview zones={item.previewZones} previews={previews} /></td><td className="truncate py-3 pr-2 font-medium"><p className="truncate">{item.name}</p><p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p></td><td className="py-3">{item.bound_count}/{item.zone_count}</td><td className="py-3">{item.referenceResolution ?? "—"}</td><td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td><td className="py-3">{item.usageCount ?? "—"}</td><td className="py-3 text-zinc-500"><div className="flex min-w-0 items-center gap-2"><Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} /><span className="min-w-0"><span className="block truncate text-zinc-700">{item.createdBy?.displayName ?? "Unknown user"}</span><span className="block truncate text-xs">{formatDate(item.updated_at ?? item.created_at)}</span></span></div></td><td className="py-3 pr-1 text-right"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></td>
-  </tr>; })}</tbody></table></div>;
+  const isAllSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
+  return (
+    <div>
+      <table className="w-full table-fixed text-left text-sm">
+        <thead>
+          <tr className="border-b border-zinc-100 text-xs text-zinc-500 dark:border-zinc-800">
+            <th className="w-10 py-2 pl-1">
+              <input
+                type="checkbox"
+                aria-label="Select all layouts on this page"
+                checked={isAllSelected}
+                onChange={(event) => onSelectionChange(event.target.checked ? new Set(rows.map((row) => row.id)) : new Set())}
+              />
+            </th>
+            <th className="w-[72px] py-2">Preview</th>
+            <SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort} />
+            <th className="w-[64px] py-2">Content</th>
+            <th className="w-[130px] py-2">Resolution</th>
+            <SortHeader className="w-[135px]" label="Status" sortKey="status" sort={sort} onSort={onSort} />
+            <SortHeader className="w-[100px]" label="Used in" sortKey="usage" sort={sort} onSort={onSort} />
+            <SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort} />
+            <th className="w-[132px] py-2 pr-1 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((item) => {
+            const badge = statusBadge(item.status);
+            return (
+              <tr key={item.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+                <td className="py-3 pl-1">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${item.name}`}
+                    checked={selectedIds.has(item.id)}
+                    onChange={(event) => {
+                      const next = new Set(selectedIds);
+                      if (event.target.checked) next.add(item.id);
+                      else next.delete(item.id);
+                      onSelectionChange(next);
+                    }}
+                  />
+                </td>
+                <td className="py-3"><CompositionLibraryPreview zones={item.previewZones} previews={previews} /></td>
+                <td className="truncate py-3 pr-2 font-medium">
+                  <p className="truncate">{item.name}</p>
+                  <p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p>
+                </td>
+                <td className="py-3">{item.bound_count}/{item.zone_count}</td>
+                <td className="py-3">{item.referenceResolution ?? "—"}</td>
+                <td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td>
+                <td className="py-3">{item.usageCount ?? "—"}</td>
+                <td className="py-3 text-zinc-500">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} />
+                    <span className="min-w-0">
+                      <span className="block truncate text-zinc-700">{item.createdBy?.displayName ?? "Unknown user"}</span>
+                      <span className="block truncate text-xs">{formatDate(item.updated_at ?? item.created_at)}</span>
+                    </span>
+                  </div>
+                </td>
+                <td className="py-3 pr-1 text-right">
+                  <RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function CompositionsGrid({ rows, inTrash, busyId, previewBusyId, onPreview, onAction }: {

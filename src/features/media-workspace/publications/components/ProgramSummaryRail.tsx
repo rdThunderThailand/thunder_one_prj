@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Card } from "@/components/ui/Card";
+import { CalendarIcon, MonitorIcon, PlayIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
@@ -29,11 +30,13 @@ export function ProgramSummaryRail({
   assets,
   title = "Program Summary",
   subtitle = "สรุปการตั้งค่าโปรแกรม",
+  variant = "default",
 }: {
   channels: ChannelListItem[];
   assets: MediaAsset[];
   title?: string;
   subtitle?: string;
+  variant?: "default" | "review";
 }) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -46,7 +49,7 @@ export function ProgramSummaryRail({
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const previewAssetId = isPlaylist ? coverAssetId : selectedAsset?.id;
-  const previews = usePreviewUrls(previewAssetId ? [previewAssetId] : []);
+  const previews = usePreviewUrls(previewAssetId && variant === "default" ? [previewAssetId] : []);
   const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
   const previewPoster = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
   const previewAsset = assets.find((a) => a.id === previewAssetId);
@@ -91,6 +94,35 @@ export function ProgramSummaryRail({
     scheduleForm.schedule_type === "recurring" && scheduleForm.days.length > 0
       ? WEEKDAYS.filter((d) => scheduleForm.days.includes(d.value)).map((d) => d.label).join(", ")
       : null;
+
+  if (variant === "review") {
+    const scheduleLabel = scheduleForm.schedule_type === "now"
+      ? "Every day · 00:00–23:59"
+      : `${startLabel}${scheduleForm.end_date ? ` – ${endLabel}` : " · No end date"}`;
+    const playbackLabel = isPlaylist
+      ? "ตามการตั้งค่าของ Playlist"
+      : basicInfo.publicationType === "composition"
+        ? "ตามการตั้งค่าของ Layout"
+        : "Play in Order · Repeat All";
+
+    return (
+      <Card className="p-5">
+        <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+        <p className="mt-0.5 text-xs text-zinc-400">{subtitle}</p>
+        <dl className="mt-4 grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
+          <dt className="text-zinc-500">Program Name</dt><dd className="font-medium text-zinc-900">{basicInfo.name || "—"}</dd>
+          <dt className="text-zinc-500">Content Type</dt><dd className="font-medium text-zinc-900">{type?.label ?? "—"}</dd>
+          <dt className="text-zinc-500">Priority</dt><dd className="font-medium text-zinc-900">{priority?.label ?? "—"}</dd>
+        </dl>
+        <div className="mt-4 space-y-3 border-t border-zinc-100 pt-4">
+          <ReviewFact icon={<span className="h-4 w-4">{type && publicationTypeIcons[type.id]}</span>} label="Content" value={contentLabel} />
+          <ReviewFact icon={<MonitorIcon />} label="Where to Play" value={channelSummary} />
+          <ReviewFact icon={<CalendarIcon />} label="When to Play" value={scheduleLabel} />
+          <ReviewFact icon={<PlayIcon />} label="How to Play" value={playbackLabel} />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="flex flex-col gap-4 p-5">
@@ -162,6 +194,16 @@ export function ProgramSummaryRail({
         <Row label="Tags">{basicInfo.tags.join(", ") || "—"}</Row>
       </Section>
     </Card>
+  );
+}
+
+function ReviewFact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[2rem_5.75rem_minmax(0,1fr)] items-start gap-2 text-xs">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">{icon}</span>
+      <span className="pt-2 font-medium text-zinc-600">{label}</span>
+      <span className="pt-2 text-right font-medium leading-4 text-zinc-900">{value}</span>
+    </div>
   );
 }
 
