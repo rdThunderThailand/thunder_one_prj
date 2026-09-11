@@ -9,12 +9,14 @@ export function ContentStep({
   reloadAssets,
   assetsLoading,
   assetsError,
+  onContentSelected,
 }: {
   assets: MediaAsset[];
   tags: Tag[];
   reloadAssets: () => Promise<MediaAsset[]>;
   assetsLoading: boolean;
   assetsError: string | null;
+  onContentSelected: () => void;
 }) {
-  return <AssetLibraryStep assets={assets} tags={tags} reloadAssets={reloadAssets} assetsLoading={assetsLoading} assetsError={assetsError} />;
+  return <AssetLibraryStep assets={assets} tags={tags} reloadAssets={reloadAssets} assetsLoading={assetsLoading} assetsError={assetsError} onContentSelected={onContentSelected} />;
 }

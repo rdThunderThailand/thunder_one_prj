@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { ImageIcon, PlusIcon, XIcon } from "@/components/ui/icons";
-import { isApprovedAsset, isImageAsset } from "@/features/media-workspace/publications/draft-mapping";
+import { isImageAsset } from "@/features/media-workspace/publications/draft-mapping";
 import { SelectedAssetList } from "@/features/media-workspace/publications/components/SelectedAssetList";
 import { AddItemDrawer } from "@/features/media-workspace/playlists/components/AddItemDrawer";
 import type { MediaAsset } from "@/types/domain";
@@ -132,7 +132,7 @@ export function ZoneContentPicker({
 
       <AddItemDrawer
         open={isAssetPickerOpen}
-        assets={assets.filter(isApprovedAsset)}
+        assets={assets}
         loading={false}
         alreadyInPlaylist={binding.assetItems.map((item) => item.media_asset_id)}
         onAdd={(picked) => { setStagedAssets(picked); setStagedPlaylist(null); }}
