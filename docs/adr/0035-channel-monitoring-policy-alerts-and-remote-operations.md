@@ -1,4 +1,6 @@
 # 0035 — Channel monitoring extends the existing sweep, alert and notification stacks rather than adding a second one
+> **Amended (2026-09-11)** by `0074-channel-one-player-and-channel-group.md`: Channel Health `Degraded` no longer exists — a Channel has one Device, so its status is that Device's health.
+
 
 Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and concurrency), 0039
 (display expectation and target snapshot), this ADR.
