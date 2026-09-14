@@ -2,32 +2,54 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { WizardSteps } from "@/components/ui/WizardSteps";
 import { CheckCircleIcon, ChevronRightIcon, ImageIcon, InfoIcon } from "@/components/ui/icons";
 import { ApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
-import { createMember, isPendingInvite, personnelRows, type CoreRole } from "@/features/people/personnel";
+import {
+  createEmployee,
+  createMember,
+  isPendingInvite,
+  personnelRows,
+  type CoreEmployeeResult,
+  type CoreInviteResult,
+  type CoreMemberRow,
+  type CoreRole,
+} from "@/features/people/personnel";
 import type { OrgUnitNode } from "@/features/people/org-structure";
 // Deep import (bypassing people/new-hires's index.ts) so this file doesn't
 // pull in NewHiresPage — which itself imports this feature's handoff.ts —
 // and create a barrel-file import cycle between add-person and new-hires.
 import { buildStepsFromDoneIndices, type NewHireRow } from "@/features/people/new-hires/mock-data";
 import { NEW_HIRE_HANDOFF_KEY } from "../handoff";
+import { employeeStep0Schema, employeeStep1Schema, pickDefaultRoleCode, zodErrorsToFieldMap } from "../schemas";
+import { clearFieldError, ErrorText, fieldClasses, inputClasses, labelClasses } from "../form-field";
 
 const POSITION_OPTIONS = Array.from(new Set(personnelRows.map((row) => row.position))).sort((a, b) =>
   a.localeCompare(b)
 );
 
-const MANAGER_OPTIONS = Array.from(
-  new Map(
-    personnelRows
-      .filter((row) => row.managerName)
-      .map((row) => [row.managerName as string, { name: row.managerName as string, role: row.managerRole ?? "" }])
-  ).values()
-);
-
 const WORK_LOCATION_OPTIONS = ["สำนักงานใหญ่ (Bangkok Office)", "สาขาเชียงใหม่", "สาขาขอนแก่น", "ทำงานทางไกล (Remote)"];
+
+// Real columns on `memberships` since the 2026-09-01 employment-fields
+// migration (see members-api.ts's CreateMemberInput) — maps this page's
+// English option labels onto Core's closed enums.
+const JOB_TYPE_BY_LABEL: Record<string, "full_time" | "part_time"> = {
+  "Full-time": "full_time",
+  "Part-time": "part_time",
+};
+const WORK_ARRANGEMENT_BY_LABEL: Record<string, "on_site" | "hybrid" | "remote"> = {
+  "On-site": "on_site",
+  Hybrid: "hybrid",
+  Remote: "remote",
+};
+const GENDER_BY_LABEL: Record<string, "male" | "female" | "unspecified"> = {
+  ชาย: "male",
+  หญิง: "female",
+  ไม่ระบุ: "unspecified",
+};
 
 // 2026-09-01: Core's response (docs/api/add-employee-integration-guide.md,
 // per the artifact the user forwarded) confirmed the design guideline's
@@ -77,10 +99,6 @@ const WIZARD_STEP_LABELS = ["ข้อมูลส่วนบุคคล", "�
 // on; see that component's history for why it was ever indexed by step.
 const DONE_INDICES_ON_SUBMIT = [0, 1, 2, 3, 4, 5, 6, 7];
 
-const inputClasses =
-  "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
-const labelClasses = "flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400";
-
 // Fields with no backing at all in Core's schema (docs/people/add-employee-flow-design-guideline.md's
 // "group E" — decided 2026-09-01: label instead of remove, so HR doesn't
 // mistake them for saved data, but keep them since Product hasn't signed
@@ -91,8 +109,8 @@ const referenceOnlyNote = (
 
 // Visual counterpart to each field's `required` attribute — closes the gap
 // Core's integration doc flagged (a field marked required in markup with no
-// visible indicator and no enforcement). Only on fields that are both
-// marked `required` AND gated in canProceedStep0/canProceedStep1 below.
+// visible indicator and no enforcement). Only on fields that are both marked
+// `required` AND covered by employeeStep0Schema/employeeStep1Schema (../schemas.ts).
 const requiredMark = <span className="text-red-500">*</span>;
 
 function randomEmployeeCode(): string {
@@ -142,15 +160,42 @@ interface AddEmployeeWizardPageProps {
 
 // "เพิ่มพนักงานใหม่" — full-page 3-step successor to the old
 // AddEmployeeModal (people/new-hires), reached via people/add's type picker
-// or directly from New Hires'/Personnel's headers. Real Core integration is
-// unchanged: submitting still calls Core's actual
-// `POST /tenants/:id/members` (people/personnel's createMember) with exactly
-// the same 5 fields the old modal sent — email, role_code, employee_code,
-// job_title (ตำแหน่งงาน), default_department_id (หน่วยงาน), start_date
-// (วันที่เริ่มงาน). Every other field on this page is a richer cosmetic
-// intake form than the old modal had, matching the FigJam "People Workspace"
-// board's screens — kept in local state for the review step only, never
-// sent to Core.
+// or directly from New Hires'/Personnel's headers.
+//
+// Real Core integration (docs/api/add-employee-integration-guide.md):
+// submitting tries `POST /tenants/:id/employees` first (people/personnel's
+// createEmployee) — the direct-account-creation endpoint that actually
+// writes `users` + `memberships` in one call, so Step 1's personal-info
+// fields land somewhere real instead of being discarded. Confirmed live
+// 2026-09-05 (code merged via PR #44 to `origin/develop`, backing
+// migrations applied to the real ThunderCore Supabase project — a
+// Core-side session's first read said this was still unpushed/unreleased;
+// that was wrong, corrected the same day). On a 409 (`email` already has an
+// account) it falls back to the older `POST /tenants/:id/members`
+// (createMember) — that path can't write personal-info fields since the
+// account, and its name, already exist.
+//
+// Real fields sent on the `/employees` path: email, role_code,
+// employee_code, member_type, job_type, work_arrangement,
+// probation_end_date, notes (two "หมายเหตุ" boxes joined, since Core has
+// one column), job_title (ตำแหน่งงาน), start_date (วันที่เริ่มงาน),
+// default_department_id (หน่วยงาน), first/last name (TH + EN), title
+// prefix, เลขบัตรประชาชน/เลขหนังสือเดินทาง, เพศ, สัญชาติ, เชื้อชาติ, วันเกิด,
+// เบอร์โทรศัพท์, ที่อยู่. On the `/members` fallback path, only the first
+// group (everything up through default_department_id) is sent — the
+// personal-info fields have no endpoint that accepts them once the account
+// already exists.
+//
+// Still cosmetic either way: title-prefix-as-separate-from-name display
+// choices aside, ทีม, ผู้บังคับบัญชา(รอง), สถานที่ทำงาน (still a static
+// list, not a real `default_location_id` lookup — this app has no
+// locations API yet), ระยะเวลาทดลองงาน (superseded by the real
+// probation_end_date above but kept as a free-text label), photo upload,
+// and every compensation field (ระดับ/กลุ่มเงินเดือน/เงินเดือนเริ่มต้น/
+// ประเภทสัญญาจ้าง — a deliberately separate super_admin-only flow, not
+// this wizard's job) — kept in local state for the review step only,
+// never sent to Core. See thunder_core_API's docs/api/*-triage-response.md
+// for why each one specifically.
 export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWizardPageProps) {
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -182,9 +227,6 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
   const [position, setPosition] = useState("");
   const [unitId, setUnitId] = useState("");
   const [team, setTeam] = useState("");
-  const [managerName, setManagerName] = useState("");
-  const [managerRole, setManagerRole] = useState("");
-  const [secondaryManagerName, setSecondaryManagerName] = useState("");
   const [workLocation, setWorkLocation] = useState(WORK_LOCATION_OPTIONS[0]);
   const [subLocation, setSubLocation] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -195,13 +237,12 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
   const [salaryBand, setSalaryBand] = useState(SALARY_BAND_OPTIONS[3]);
   const [startingSalary, setStartingSalary] = useState("");
   const [notes, setNotes] = useState("");
-  const [roleCode, setRoleCode] = useState(
-    () => roles?.find((r) => r.code === "operator_technician")?.code ?? roles?.[0]?.code ?? ""
-  );
+  const [roleCode, setRoleCode] = useState(() => pickDefaultRoleCode(roles));
 
   const [createdRow, setCreatedRow] = useState<NewHireRow | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const fullName = `${firstNameTh} ${lastNameTh}`.trim();
   const unitOptions = Object.values(units ?? {}).sort((a, b) => a.name.localeCompare(b.name));
@@ -212,12 +253,26 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
   // contract requires start_date (still optional on the currently-deployed
   // /members, but tightening the UI now avoids a second round of user
   // confusion once the new endpoint ships).
-  const canProceedStep0 =
-    firstNameTh.trim().length > 0 &&
-    lastNameTh.trim().length > 0 &&
-    idCardNumber.trim().length > 0 &&
-    email.trim().length > 0;
-  const canProceedStep1 = position.trim().length > 0 && roleCode.length > 0 && startDate.trim().length > 0;
+  function validateStep(index: 0 | 1): boolean {
+    const schema = index === 0 ? employeeStep0Schema : employeeStep1Schema;
+    const data =
+      index === 0
+        ? { firstNameTh, lastNameTh, idCardNumber, email, phone }
+        : { position, roleCode, startDate };
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      setErrors(zodErrorsToFieldMap(result.error));
+      toast.error("กรุณาตรวจสอบข้อมูลที่กรอกให้ครบถ้วนและถูกต้อง");
+      return false;
+    }
+    setErrors({});
+    return true;
+  }
+
+  function handleNext() {
+    if (!validateStep(stepIndex === 0 ? 0 : 1)) return;
+    setStepIndex((i) => Math.min(i + 1, 2));
+  }
 
   function resetForNext() {
     setStepIndex(0);
@@ -238,66 +293,139 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
     setPosition("");
     setUnitId("");
     setTeam("");
-    setManagerName("");
-    setManagerRole("");
-    setSecondaryManagerName("");
     setSubLocation("");
     setStartDate("");
     setProbationEndDate("");
     setGrade("");
     setStartingSalary("");
     setNotes("");
-    setRoleCode(roles?.find((r) => r.code === "operator_technician")?.code ?? roles?.[0]?.code ?? "");
+    setRoleCode(pickDefaultRoleCode(roles));
     setCreatedRow(null);
     setSubmitError(null);
+    setErrors({});
   }
 
   async function handleSubmit() {
+    // Belt-and-suspenders re-check — the wizard already validates each step
+    // before advancing, but a user can navigate back via WizardSteps/EditLink
+    // and leave a field invalid, so re-validate both steps right before the
+    // real Core call and jump back to whichever step still has errors.
+    if (!validateStep(0)) {
+      setStepIndex(0);
+      toast.error("กรุณาตรวจสอบข้อมูลส่วนบุคคลให้ครบถ้วนและถูกต้อง");
+      return;
+    }
+    if (!validateStep(1)) {
+      setStepIndex(1);
+      toast.error("กรุณาตรวจสอบข้อมูลการจ้างงานให้ครบถ้วนและถูกต้อง");
+      return;
+    }
     if (!tenantId) {
       setSubmitError("ไม่พบข้อมูล Tenant ของผู้ใช้ปัจจุบัน กรุณาโหลดหน้านี้ใหม่แล้วลองอีกครั้ง");
+      toast.error("ไม่พบข้อมูล Tenant ของผู้ใช้ปัจจุบัน กรุณาโหลดหน้านี้ใหม่แล้วลองอีกครั้ง");
       return;
     }
     if (!roleCode) {
       setSubmitError("ไม่พบบทบาท (Role) ที่ใช้ได้ในองค์กรนี้ ไม่สามารถสร้างพนักงานใหม่ได้ในขณะนี้");
+      toast.error("ไม่พบบทบาท (Role) ที่ใช้ได้ในองค์กรนี้ ไม่สามารถสร้างพนักงานใหม่ได้ในขณะนี้");
       return;
     }
 
     setSubmitError(null);
     setSubmitting(true);
     try {
-      const result = await createMember(tenantId, {
+      const combinedNotes = [additionalNote.trim(), notes.trim()].filter(Boolean).join("\n\n");
+      const sharedFields = {
         email: email.trim(),
         role_code: roleCode,
         employee_code: employeeCode,
-        job_title: position.trim() || undefined,
         default_department_id: unitId || undefined,
-        start_date: startDate || undefined,
-      });
+        member_type: "employee" as const,
+        job_type: JOB_TYPE_BY_LABEL[jobType],
+        work_arrangement: WORK_ARRANGEMENT_BY_LABEL[workArrangement],
+        probation_end_date: probationEndDate || undefined,
+        notes: combinedNotes || undefined,
+      };
+
+      let result: CoreEmployeeResult | CoreMemberRow | CoreInviteResult;
+      try {
+        // Primary path: creates `users` + `memberships` in one call, so
+        // Step 1's personal-info fields actually land somewhere — see this
+        // component's header comment for why `/members` alone can't do
+        // this. Guide's own recommendation: always try this first, only
+        // fall back on 409.
+        result = await createEmployee(tenantId, {
+          ...sharedFields,
+          first_name: firstNameTh.trim(),
+          last_name: lastNameTh.trim(),
+          job_title: position.trim(),
+          start_date: startDate,
+          title_prefix: titlePrefix || undefined,
+          first_name_en: firstNameEn.trim() || undefined,
+          last_name_en: lastNameEn.trim() || undefined,
+          gender: GENDER_BY_LABEL[gender],
+          national_id: idCardNumber.replace(/\D/g, "") || undefined,
+          passport_no: passportNumber.trim() || undefined,
+          nationality: nationality.trim() || undefined,
+          ethnicity: ethnicity.trim() || undefined,
+          date_of_birth: birthDate || undefined,
+          phone: phone.trim() || undefined,
+          address: address.trim() || undefined,
+        });
+      } catch (err) {
+        if (!(err instanceof ApiError) || err.status !== 409) throw err;
+        // `email` already has an account — `/employees` refuses to touch an
+        // existing `users` row (its whole point is creating one). Fall back
+        // to the older endpoint, which just attaches a membership; the
+        // personal-info fields above have nowhere to go on this path since
+        // the account (and its name) already exists.
+        result = await createMember(tenantId, {
+          ...sharedFields,
+          job_title: position.trim() || undefined,
+          start_date: startDate || undefined,
+        });
+      }
 
       const pending = isPendingInvite(result);
       const steps = buildStepsFromDoneIndices(pending ? [] : DONE_INDICES_ON_SUBMIT);
       const doneCount = steps.filter((s) => s.done).length;
 
+      // Narrowing `result` (now a 3-way union across CoreEmployeeResult/
+      // CoreMemberRow/CoreInviteResult) via a plain `pending` boolean stops
+      // working once a third member joins the union — call the type guard
+      // directly in each branch instead of reusing the boolean.
       // `status`/`steps`/`progress` below are invented client-side, not read
       // from `result` — see this component's header comment. Only
       // `id`/`name`/`employeeCode` (and `inviteUrl`) actually come from
       // Core's response.
+      const identity = isPendingInvite(result)
+        ? { id: result.invitation_id, name: email.trim(), employeeCode: employeeCode, inviteUrl: result.invite_url }
+        : {
+            id: result.id,
+            name: result.user.full_name,
+            employeeCode: result.employee_code ?? employeeCode,
+            inviteUrl: undefined as string | undefined,
+          };
       const row: NewHireRow = {
-        id: pending ? result.invitation_id : result.id,
-        name: pending ? email.trim() : result.user.full_name,
-        employeeCode: pending ? employeeCode : (result.employee_code ?? employeeCode),
+        id: identity.id,
+        name: identity.name,
+        employeeCode: identity.employeeCode,
         position: position.trim() || "-",
         unit: unitId ? unitLabel(unitId, units ?? {}) : "-",
         startDateLabel: startDate ? formatThaiDate(startDate) : "-",
         daysLeftLabel: startDate ? formatDaysUntilThai(startDate) : "-",
         progress: Math.round((doneCount / steps.length) * 100),
         status: pending ? "pre-boarding" : "ready-to-work",
-        managerName: managerName.trim() || null,
-        managerRole: managerName.trim() ? managerRole.trim() || "ผู้จัดการ" : null,
+        // Reporting-to field removed from the UI (mock roster names, no real
+        // Core column to back it — see docs/people/add-contractor-and-bulk-
+        // field-requirements.md's ผู้บังคับบัญชา entry).
+        managerName: null,
+        managerRole: null,
         steps,
-        inviteUrl: pending ? result.invite_url : undefined,
+        inviteUrl: identity.inviteUrl,
       };
       setCreatedRow(row);
+      toast.success(pending ? `ส่งคำเชิญไปที่ ${email.trim()} แล้ว` : `เพิ่ม ${row.name} เป็นพนักงานใหม่แล้ว`);
       try {
         sessionStorage.setItem(NEW_HIRE_HANDOFF_KEY, JSON.stringify(row));
       } catch {
@@ -305,9 +433,9 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
         // just won't show up pre-prepended on /people/new-hires; not fatal.
       }
     } catch (err) {
-      setSubmitError(
-        err instanceof ApiError ? err.message : "ไม่สามารถสร้างพนักงานใหม่ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง"
-      );
+      const message = err instanceof ApiError ? err.message : "ไม่สามารถสร้างพนักงานใหม่ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -347,11 +475,29 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
               </label>
               <label className={labelClasses}>
                 <span>ชื่อ (ภาษาไทย) {requiredMark}</span>
-                <input required value={firstNameTh} onChange={(e) => setFirstNameTh(e.target.value)} className={inputClasses} />
+                <input
+                  required
+                  value={firstNameTh}
+                  onChange={(e) => {
+                    setFirstNameTh(e.target.value);
+                    clearFieldError(setErrors, "firstNameTh");
+                  }}
+                  className={fieldClasses(!!errors.firstNameTh)}
+                />
+                <ErrorText message={errors.firstNameTh} />
               </label>
               <label className={labelClasses}>
                 <span>นามสกุล (ภาษาไทย) {requiredMark}</span>
-                <input required value={lastNameTh} onChange={(e) => setLastNameTh(e.target.value)} className={inputClasses} />
+                <input
+                  required
+                  value={lastNameTh}
+                  onChange={(e) => {
+                    setLastNameTh(e.target.value);
+                    clearFieldError(setErrors, "lastNameTh");
+                  }}
+                  className={fieldClasses(!!errors.lastNameTh)}
+                />
+                <ErrorText message={errors.lastNameTh} />
               </label>
               <label className={labelClasses}>
                 ชื่อ (ภาษาอังกฤษ)
@@ -370,8 +516,16 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                 </select>
               </label>
               <label className={labelClasses}>
-                <span>เลขบัตรประชาชน {requiredMark}</span>
-                <input required value={idCardNumber} onChange={(e) => setIdCardNumber(e.target.value)} className={inputClasses} />
+                <span>เลขบัตรประชาชน</span>
+                <input
+                  value={idCardNumber}
+                  onChange={(e) => {
+                    setIdCardNumber(e.target.value);
+                    clearFieldError(setErrors, "idCardNumber");
+                  }}
+                  className={fieldClasses(!!errors.idCardNumber)}
+                />
+                <ErrorText message={errors.idCardNumber} />
               </label>
               <label className={labelClasses}>
                 เลขหนังสือเดินทาง (ถ้ามี)
@@ -395,13 +549,25 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                   required
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputClasses}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearFieldError(setErrors, "email");
+                  }}
+                  className={fieldClasses(!!errors.email)}
                 />
+                <ErrorText message={errors.email} />
               </label>
               <label className={labelClasses}>
                 เบอร์โทรศัพท์มือถือ
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} />
+                <input
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    clearFieldError(setErrors, "phone");
+                  }}
+                  className={fieldClasses(!!errors.phone)}
+                />
+                <ErrorText message={errors.phone} />
               </label>
             </div>
             <label className={labelClasses}>
@@ -422,6 +588,11 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                 หมายเหตุ
                 <textarea
                   rows={2}
+                  // Sent joined with step 2's own "หมายเหตุ" (maxLength=200
+                  // there) into Core's single ≤2000-char `notes` column —
+                  // 1798 = 2000 − 200 − len("\n\n"), so the combined string
+                  // can never exceed Core's limit and fail only at submit.
+                  maxLength={1798}
                   value={additionalNote}
                   onChange={(e) => setAdditionalNote(e.target.value)}
                   className={inputClasses}
@@ -497,12 +668,22 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                 </label>
                 <label className={labelClasses}>
                   <span>วันที่เริ่มงาน {requiredMark}</span>
-                  <input required type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClasses} />
+                  <input
+                    required
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      clearFieldError(setErrors, "startDate");
+                    }}
+                    className={fieldClasses(!!errors.startDate)}
+                  />
                   {startDate && (
                     <span className="text-[11px] font-normal text-zinc-400">
                       {formatThaiDate(startDate)} ({formatDaysUntilThai(startDate)})
                     </span>
                   )}
+                  <ErrorText message={errors.startDate} />
                 </label>
                 <label className={labelClasses}>
                   วันสิ้นสุดทดลองงาน (คาดการณ์)
@@ -529,15 +710,19 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                     required
                     list="position-options"
                     value={position}
-                    onChange={(e) => setPosition(e.target.value)}
+                    onChange={(e) => {
+                      setPosition(e.target.value);
+                      clearFieldError(setErrors, "position");
+                    }}
                     placeholder="พิมพ์เพื่อค้นหา หรือระบุตำแหน่งใหม่"
-                    className={inputClasses}
+                    className={fieldClasses(!!errors.position)}
                   />
                   <datalist id="position-options">
                     {POSITION_OPTIONS.map((option) => (
                       <option key={option} value={option} />
                     ))}
                   </datalist>
+                  <ErrorText message={errors.position} />
                 </label>
                 <label className={labelClasses}>
                   หน่วยงาน
@@ -568,6 +753,11 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                   <span>บทบาท / สิทธิ์การเข้าถึง (Role) {requiredMark}</span>
                   {roles && roles.length > 0 ? (
                     <select required value={roleCode} onChange={(e) => setRoleCode(e.target.value)} className={inputClasses}>
+                      {!roleCode && (
+                        <option value="" disabled>
+                          -- เลือกบทบาท --
+                        </option>
+                      )}
                       {roles.map((role) => (
                         <option key={role.id} value={role.code}>
                           {role.name} ({role.code})
@@ -580,37 +770,12 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                     </span>
                   )}
                 </label>
-                <label className={labelClasses}>
-                  ผู้บังคับบัญชา (Reporting To)
-                  <select
-                    value={managerName}
-                    onChange={(e) => {
-                      setManagerName(e.target.value);
-                      setManagerRole(MANAGER_OPTIONS.find((m) => m.name === e.target.value)?.role ?? "");
-                    }}
-                    className={inputClasses}
-                  >
-                    <option value="">ไม่ระบุ</option>
-                    {MANAGER_OPTIONS.map((manager) => (
-                      <option key={manager.name} value={manager.name}>
-                        {manager.name} — {manager.role}
-                      </option>
-                    ))}
-                  </select>
-                  {referenceOnlyNote}
-                </label>
-                <label className={labelClasses}>
-                  ผู้บังคับบัญชารอง (ถ้ามี)
-                  <select value={secondaryManagerName} onChange={(e) => setSecondaryManagerName(e.target.value)} className={inputClasses}>
-                    <option value="">เลือกผู้บังคับบัญชา</option>
-                    {MANAGER_OPTIONS.map((manager) => (
-                      <option key={manager.name} value={manager.name}>
-                        {manager.name} — {manager.role}
-                      </option>
-                    ))}
-                  </select>
-                  {referenceOnlyNote}
-                </label>
+                {/* ผู้บังคับบัญชา (Reporting To / รอง) removed — was backed by
+                    a mock personnel roster, not real tenant members, and
+                    Core has no manager_id/reports_to column to wire it to
+                    anyway (see docs/people/add-contractor-and-bulk-field-
+                    requirements.md). Showing it invited HR to pick a fake
+                    "real" manager. */}
                 <label className={labelClasses}>
                   สถานที่ทำงาน
                   <select value={workLocation} onChange={(e) => setWorkLocation(e.target.value)} className={inputClasses}>
@@ -678,7 +843,6 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
               <SummaryRow label="ประเภทการจ้างงาน" value={employmentType} />
               <SummaryRow label="ตำแหน่ง" value={position} />
               <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />
-              <SummaryRow label="ผู้บังคับบัญชา" value={managerName} />
               <SummaryRow label="วันที่เริ่มงาน" value={startDate ? formatThaiDate(startDate) : ""} />
             </div>
             <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 text-xs text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
@@ -718,7 +882,6 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
               <SummaryRow label="ประเภทการจ้างงาน" value={employmentType} />
               <SummaryRow label="ตำแหน่งงาน" value={position} />
               <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />
-              <SummaryRow label="ผู้บังคับบัญชา" value={managerName} />
               <SummaryRow label="สถานที่ทำงาน" value={workLocation} />
               <SummaryRow label="วันที่เริ่มงาน" value={startDate ? formatThaiDate(startDate) : ""} />
               <SummaryRow label="บทบาท (Role)" value={roles?.find((r) => r.code === roleCode)?.name ?? roleCode} />
@@ -806,11 +969,7 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
             </Button>
           )}
           {stepIndex < 2 ? (
-            <Button
-              variant="primary"
-              onClick={() => setStepIndex((i) => Math.min(i + 1, 2))}
-              disabled={stepIndex === 0 ? !canProceedStep0 : !canProceedStep1}
-            >
+            <Button variant="primary" onClick={handleNext}>
               ถัดไป
             </Button>
           ) : (

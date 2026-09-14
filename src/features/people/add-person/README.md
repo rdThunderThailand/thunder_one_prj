@@ -69,23 +69,32 @@ these (Member Type is flagged as a known future gap in the doc above), this loca
   `status: "not-started"` ("Pre-boarding") — not Employee's 8/9 "in-progress". Uses the same
   `NEW_HIRE_HANDOFF_KEY` sessionStorage handoff to `people/new-hires` on success.
 - `components/AddBulkWizardPage.tsx` (`/people/add/bulk`) — the Bulk sibling, built 2026-09-01 once
-  its own FigJam screens were provided. **Deliberately fully mock/demo, by explicit product
-  decision** (asked the user directly, given this is the first people/* intake flow capable of
-  creating many records from one click, and this repo has no CSV/Excel parsing dependency) — see
-  the component's own header comment for the full reasoning. Concretely:
-  - The file picker (step 1, drag-and-drop or click) is real and shows the chosen filename, but
-    never reads the file's contents — selecting **any** file just populates `BULK_MOCK_PEOPLE`, a
-    fixed list matching the mockup's own 8 example rows.
-  - "ยืนยันและส่งคำเชิญ" (step 3) never calls Core — it only flips to a local success panel.
-  - Unlike Employee/Contractor, nothing here uses `NEW_HIRE_HANDOFF_KEY` — stashing fabricated rows
-    into `people/new-hires`'s roster would misrepresent them as real Core records the way a genuine
-    Employee/Contractor creation's handoff does.
-  - Every field in step 2 (bulk-applied employment details: หน่วยงาน, ตำแหน่งงาน, contract terms,
-    work location, etc.) is cosmetic — there's no `createMember` call anywhere in this file to send
-    them to.
-  - If real bulk creation is wanted later, file parsing and real per-row Core submission need
-    building **together** — parsing a real file into rows that still don't get created would be a
-    worse, more confusing half-measure than today's fully-simulated version.
+  its own FigJam screens were provided, made real 2026-09-10 (both halves landed together, per the
+  original "either both or neither" call below). Takes `tenantId`/`roles`/`units` as props, same
+  shape as `AddEmployeeWizardPage`. Concretely:
+  - The file picker (step 1) accepts real `.csv` only — no `.xlsx` support (a binary Excel parser
+    wasn't worth a new dependency for this pass; selecting one is rejected with a message asking
+    for CSV). `../bulk-csv.ts`'s `parseBulkCsvText` does real RFC4180 parsing: header-row column
+    mapping when "ข้ามแถวแรก" is checked, positional mapping when it's not, per-row validation
+    (required columns, email format/dedup, Thai mobile format, optional date/national-ID format).
+    Invalid rows are dropped and listed, not silently included.
+  - "ยืนยันและส่งคำเชิญ" (step 3, `handleConfirm`) really does call Core — once per valid row,
+    sequentially (not `Promise.all`, both to avoid bursting a real invite-email send per row and to
+    keep a meaningful "i / N" progress counter). No bulk-create endpoint exists
+    (`docs/people/add-contractor-and-bulk-field-requirements.md`'s "What Core would need to build"),
+    so each row calls `createEmployee` first, falling back to `createMember` on a 409 — the same
+    fallback `AddEmployeeWizardPage.handleSubmit` uses. Since Core has no batch response to relay,
+    this function builds its own per-row success/failure list and shows it on the confirmation
+    screen, rather than reporting one overall pass/fail for the whole batch.
+  - Uses `NEW_HIRE_HANDOFF_KEY` same as Employee/Contractor, but stashes an **array** of created
+    rows (one create call per CSV row) instead of a single object — `NewHiresPage.readHandoff()`
+    accepts either shape under the same key. Only successfully created/invited rows go in; failed
+    rows stay in the confirmation screen's own list, never faked into the roster.
+  - Of step 2's bulk-applied fields, หน่วยงาน/ตำแหน่งงาน/ประเภทการจ้างงาน/ลักษณะการทำงาน/
+    วันที่เริ่มงาน/หมายเหตุ map onto real columns (`default_department_id`/`job_title`/`member_type`/
+    `work_arrangement`/`start_date`/`notes`); the contract-specific fields (ทีม, สัญญา, วงเงิน,
+    ระยะเวลา, ผู้บังคับบัญชา, สถานที่ทำงาน) stay cosmetic — same "not in Core's schema" story as
+    `AddContractorWizardPage`'s own step 2.
 - `handoff.ts` — just the `NEW_HIRE_HANDOFF_KEY` constant, deliberately **not** re-exported from
   `index.ts`. Both this feature and `people/new-hires` import it from this standalone file directly
   — importing it via either feature's barrel (`index.ts`) would pull in that feature's page
@@ -93,7 +102,38 @@ these (Member Type is flagged as a known future gap in the doc above), this loca
   `buildStepsFromDoneIndices`/`NewHireRow`; `NewHiresPage` needs this key), creating a real
   barrel-file import cycle between the two features. See the comment at each import site.
 
-**Not built yet**: real file parsing + real bulk Core submission for `AddBulkWizardPage` (currently
-fully mock, by design — see above), the other three "related actions" on the type picker, any Core
-schema change to make the cosmetic fields above real (including `member_type`, which would let
-Contractor stop reusing Employee's exact same Core call).
+**Not built yet**: `.xlsx` support on `AddBulkWizardPage` (CSV only for now — see above), a real
+bulk-create endpoint on Core (bulk still loops N single-row calls client-side, with the rate-limit
+and dry-run caveats `docs/people/add-contractor-and-bulk-field-requirements.md` raises), the other
+three "related actions" on the type picker, any Core schema change to make the cosmetic fields
+above real (including `member_type`, which would let Contractor stop reusing Employee's exact same
+Core call).
+
+## 2026-09-14 fixes (found QA-testing against a real tenant, "Thunder Enterprise")
+
+- **Role default could silently land on an admin role.** All three wizards' `roleCode` initializer
+  used to be `roles?.find(r => r.code === "operator_technician")?.code ?? roles?.[0]?.code ?? ""`
+  — for a tenant whose `GET /tenants/:id/roles` doesn't include `operator_technician` at all (only
+  `super_admin`/`company_admin`, observed on "Thunder Enterprise"), the `roles?.[0]?.code` fallback
+  picked whatever role Core happened to list first, with zero privilege-awareness. Replaced with
+  `pickDefaultRoleCode()` (`../schemas.ts`): still prefers `operator_technician`, but returns `""`
+  (forcing an explicit, visible choice — Employee/Contractor's Role `<select>` shows a disabled
+  "-- เลือกบทบาท --" placeholder; Bulk has no role picker at all, so it now blocks submission via
+  its existing "ไม่พบบทบาท" toast) instead of ever auto-picking an unrelated role.
+- **ผู้บังคับบัญชา (Reporting To / รอง) removed from all three wizards.** Was sourced from
+  `personnelRows` (`people/personnel/mock-data.ts`) — a static mock roster, not this tenant's real
+  members — so the dropdown showed names like "Jane Smith — Marketing Manager" that don't exist in
+  the org. Already cosmetic (no real `manager_id`/`reports_to` column anywhere, see Part A's
+  ผู้บังคับบัญชา entry in `docs/people/add-contractor-and-bulk-field-requirements.md`), but showing a
+  dropdown of fake names for a real field HR might assume is being saved was actively misleading —
+  hidden until there's a real member-backed picker and a Core column to send it to.
+  `contractorStep1Schema`/`bulkStep1Schema` no longer require `managerName`.
+- **เลขบัตรประชาชน (Employee) / เลขบัตรประชาชน-เลขที่หนังสือเดินทาง (Contractor) no longer required.**
+  A real batch of hires can have some people without their ID document ready at intake time. Format
+  is still validated (Thai checksum / passport pattern) when something is typed in, same as Bulk's
+  CSV `id_card` column already worked.
+- **Bulk's `date_of_birth` column now also accepts an Excel/Sheets date-serial number** (e.g.
+  `37065`), not just `YYYY-MM-DD` — hit for real during onboarding testing (a spreadsheet's date
+  formatting doesn't always survive a CSV export, so the raw day-count serial lands in the file
+  instead). `bulk-csv.ts`'s `excelSerialToIsoDate()` converts it; previously the entire row was
+  rejected outright for this.

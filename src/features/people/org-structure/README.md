@@ -27,12 +27,16 @@ Nests under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
   unit's), same arithmetic the mock data always used.
 - `components/`
   - `OrgStructurePage` — now takes `units`/`rootUnitId` as props (fetched server-side by
-    `app/.../people/org-structure/page.tsx`) instead of importing mock data directly; either being
-    `null` (Core fetch failed, or no session/tenant resolved) renders an explicit error message
-    rather than silently falling back to mock content — same discipline as
-    `asset-intelligence/assets`'s `AllAssetsPage`. Still owns `activeView` (which of the 3 top
-    tabs) and `selectedId` (which chart node is open in the detail panel) state, now defaulting
-    `selectedId` to the real `rootUnitId` instead of the mockup's hardcoded `"sales"`.
+    `app/.../people/org-structure/page.tsx`) instead of importing mock data directly; no silent
+    fallback to mock content either way — same discipline as `asset-intelligence/assets`'s
+    `AllAssetsPage`. **Fixed 2026-09-14**: `units === null` (the Core fetch itself failed, or no
+    session/tenant resolved) and a real-but-empty result (`units: {}`, tenant has zero departments
+    configured in Core yet) used to render the identical generic "โหลดไม่สำเร็จ" message —
+    indistinguishable from the outside. Now split into two states: a real load-failure message
+    only when `units` is actually `null`, and a separate "ยังไม่มีการตั้งค่าหน่วยงาน" message when
+    the fetch succeeded but returned nothing. Still owns `activeView` (which of the 3 top tabs) and
+    `selectedId` (which chart node is open in the detail panel) state, now defaulting `selectedId`
+    to the real `rootUnitId` instead of the mockup's hardcoded `"sales"`.
   - `OrgStructureHeader` — title + `OrgViewTabs` (real) + Export/Add-unit actions (inert)
   - `OrgViewTabs` — the 3-way pill switch (แผนผังองค์กร / รายชื่อหน่วยงาน / ตำแหน่งงาน). **Real** —
     only แผนผังองค์กร has content; the other two render the same "no data for this tab" placeholder
@@ -40,8 +44,13 @@ Nests under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
     show. `people/personnel`'s roster table and `asset-intelligence/assets`'s `LocationTree` are
     both candidates to reuse if รายชื่อหน่วยงาน gets built later — a flat table and an expandable
     tree respectively.
-  - `OrgStatTilesRow` — 5 numeric tiles + a "last changed" tile — still mock/decorative; none of
-    Core's `organizations`/`members` responses back these numbers today
+  - `OrgStatTilesRow` — **fixed 2026-09-14**: used to be 5 hardcoded mock tiles + a fake "last
+    changed by May HR" tile with zero relationship to whatever tenant was being viewed. Now takes
+    `units`/`rootUnitId` as props and computes real tiles (total units, sub-units with a parent,
+    total employees via the root's cumulative `employeeCount`); ตำแหน่งงาน/อัตราบรรจุ show
+    "ไม่มีข้อมูล" honestly instead of a fabricated number, since Core has no positions/fill-rate
+    concept at all (see `core-mapper.ts`'s header comment). The "last changed" tile was dropped —
+    Core's organizations response has no `updated_at`/`updated_by` to back it.
   - `OrgChartCanvas` — now takes `units`/`rootUnitId` as props (passed through to `OrgChartNode`).
     Decorative zoom/fullscreen controls (the tree is a fixed CSS layout, not a real pan/zoom
     canvas), and the line-style legend, both unchanged.
@@ -55,8 +64,9 @@ Nests under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
     clears `selectedId`, showing an empty-state prompt.
 - `mock-data.ts` — still the fallback shape reference and the source `people/new-hires`'s
   `AddEmployeeModal` (re-exported via `index.ts`) reads its หน่วยงาน picker options from — that
-  consumer wasn't repointed at real data this round. `orgStatTiles` and the other mock export
-  detail is unchanged from before real data landed — see git history if needed.
+  consumer wasn't repointed at real data this round. `orgStatTiles`/`orgStructureUpdatedLabel`/
+  `orgStructureUpdatedBy` were removed 2026-09-14 once `OrgStatTilesRow` started computing real
+  tiles — see git history if needed.
 
 **Not built yet**: รายชื่อหน่วยงาน and ตำแหน่งงาน tab content, real pan/zoom/fullscreen on the
 chart, the detail panel's ทีม/พนักงาน/ตำแหน่งงาน/ข้อมูลเพิ่มเติม tabs, Export, and a real

@@ -13,10 +13,13 @@ import { NewHireSidebar } from "./NewHireSidebar";
 import { NewHiresFilterBar } from "./NewHiresFilterBar";
 import { NewHiresHeader } from "./NewHiresHeader";
 
-/** Reads (and consumes) a just-created hire the add-person wizards stashed
+/** Reads (and consumes) just-created hire(s) the add-person wizards stashed
  *  in sessionStorage before redirecting here — see this file's header
- *  comment. Called once, from a useState lazy initializer (not an effect):
- *  this is seeding initial state from an external source at mount, not
+ *  comment. Employee/Contractor stash a single `NewHireRow` object;
+ *  AddBulkWizardPage stashes an array (one create call per CSV row) — both
+ *  shapes land under the same key, so this normalizes either into a list.
+ *  Called once, from a useState lazy initializer (not an effect): this is
+ *  seeding initial state from an external source at mount, not
  *  synchronizing with one over time, so it doesn't need an effect + setState
  *  (and the react-hooks lint rule agrees — see set-state-in-effect). */
 function readHandoff(): NewHireRow[] {
@@ -25,7 +28,8 @@ function readHandoff(): NewHireRow[] {
     const raw = sessionStorage.getItem(NEW_HIRE_HANDOFF_KEY);
     if (!raw) return [];
     sessionStorage.removeItem(NEW_HIRE_HANDOFF_KEY);
-    return [JSON.parse(raw) as NewHireRow];
+    const parsed = JSON.parse(raw) as NewHireRow | NewHireRow[];
+    return Array.isArray(parsed) ? parsed : [parsed];
   } catch {
     return [];
   }

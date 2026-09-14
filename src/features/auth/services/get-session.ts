@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
@@ -98,8 +99,15 @@ function isKnownRoleType(value: string): value is RoleType {
  * an explicit 403, and each tenant-scoped request enforces the boundary again
  * on its own, so nothing is trusted to this check alone. Role resolution here
  * is a courtesy for picking a landing page, not a permission gate.
+ *
+ * ครอบด้วย `React.cache()` (ดูท้ายไฟล์) — (dashboard)/layout.tsx เรียกฟังก์ชัน
+ * นี้ทุกหน้าอยู่แล้วเพื่อ gate การเข้าถึง แล้วเกือบทุก page.tsx ใน People
+ * Workspace (add/employee, add/contractor, add/bulk, personnel,
+ * org-structure ฯลฯ) ก็เรียกซ้ำอีกรอบเพื่อเอา tenantId — ถ้าไม่ cache จะยิง
+ * `/session` + `/me/memberships` สองรอบไปที่ Core ทุกครั้งที่โหลดหน้า โดยได้
+ * ผลลัพธ์เดิมเป๊ะทั้งสองรอบ (cookie เดียวกันภายใน request เดียวกัน).
  */
-export async function getSession(): Promise<SessionResult> {
+async function getSessionUncached(): Promise<SessionResult> {
   const token = (await cookies()).get("to_at")?.value;
   if (!token) {
     redirect("/login");
@@ -146,6 +154,14 @@ export async function getSession(): Promise<SessionResult> {
   const userId = typeof user.id === "string" ? user.id : null;
   return { userName: resolveUserName(user), userId, tenantName, tenantId, ...role };
 }
+
+/** Public entry point — memoized per request via `React.cache()`. See
+ *  `getSessionUncached`'s docstring above for why. `redirect()` inside the
+ *  wrapped function still works correctly: it throws to interrupt rendering
+ *  rather than returning a value, so there's nothing for `cache()` to
+ *  memoize on that path, and in practice it only ever fires from the
+ *  layout's call — the one that runs first in any request. */
+export const getSession = cache(getSessionUncached);
 
 /** Same `to_at` cookie `getSession()` reads, exposed for pages that need to
  *  make an additional tenant-scoped Core call beyond session/membership
