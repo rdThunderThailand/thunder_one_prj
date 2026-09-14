@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
@@ -103,7 +104,17 @@ function ScheduleTimeline({ rows, asOf, horizon, timezone }: { rows: NowNextRow[
 export function NowNextPage() {
   const [horizon, setHorizon] = useState<60 | 180>(60);
   const [includeIdle, setIncludeIdle] = useState(false);
-  const [query, setQuery] = useState("");
+  const urlQuery = useSearchParams().get("q") ?? "";
+  const [query, setQuery] = useState(urlQuery);
+  // A "View Programs →" link only changes the `q` search param on an already-mounted route —
+  // Next.js does not remount the page for that, so a mount-time initial value alone would miss
+  // it. Adjusting state during render (React's documented pattern for this, in place of an
+  // Effect) picks up the new value the moment `urlQuery` itself changes.
+  const [syncedUrlQuery, setSyncedUrlQuery] = useState(urlQuery);
+  if (urlQuery !== syncedUrlQuery) {
+    setSyncedUrlQuery(urlQuery);
+    if (urlQuery) setQuery(urlQuery);
+  }
   const [data, setData] = useState<NowNextResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [demoReason, setDemoReason] = useState<string | null>(null);

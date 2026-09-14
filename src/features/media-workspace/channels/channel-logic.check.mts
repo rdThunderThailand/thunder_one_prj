@@ -1,6 +1,9 @@
 /** Run: node src/features/channels/channel-logic.check.mts */
 import assert from "node:assert/strict";
 import {
+  channelStatus,
+  channelTypeKey,
+  channelTypeLabel,
   countOnlineDevices,
   filterChannels,
   findChannelAttention,
@@ -36,6 +39,10 @@ const fixtures: ChannelListItem[] = [
         sync_loop_duration_seconds: null,
       },
     ],
+    player: null,
+    health: "online",
+    output_kind: "kiosk",
+    display_config: null,
     expected_orientation: "landscape",
     expected_resolution: "1920x1080",
     default_playlist: null,
@@ -76,6 +83,12 @@ const fixtures: ChannelListItem[] = [
         sync_loop_duration_seconds: null,
       },
     ],
+    // Legacy 2-device fixture (pre-M1b shape); ADR 0074 §7 says the frontend must read this from
+    // `devices[]`, never treat one as the Player.
+    player: null,
+    health: "warning",
+    output_kind: "screen",
+    display_config: null,
     expected_orientation: "landscape",
     expected_resolution: "3840x2160",
     default_playlist: null,
@@ -105,6 +118,17 @@ const fixtures: ChannelListItem[] = [
         sync_loop_duration_seconds: null,
       },
     ],
+    player: null,
+    health: "online",
+    output_kind: "screen",
+    display_config: {
+      mode: "multi",
+      arrangement: "1x2",
+      screens: [
+        { index: 0, resolution: "1080x1920", output: "HDMI 1" },
+        { index: 1, resolution: "1080x1920", output: "HDMI 2" },
+      ],
+    },
     expected_orientation: "portrait",
     expected_resolution: "1080x1920",
     default_playlist: null,
@@ -122,6 +146,10 @@ const fixtures: ChannelListItem[] = [
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: null,
     devices: [],
+    player: null,
+    health: null,
+    output_kind: "screen",
+    display_config: null,
     expected_orientation: null,
     expected_resolution: null,
     default_playlist: null,
@@ -132,26 +160,36 @@ const fixtures: ChannelListItem[] = [
   },
 ];
 
-const allFilters = { search: "", category: "all", lifecycle: "all" } as const;
+const allFilters = { search: "", type: "all", status: "all", lifecycle: "all" } as const;
 
 assert.equal(countOnlineDevices([]), 0);
 assert.equal(countOnlineDevices([{ health: "online" }, { health: "offline" }]), 1);
 assert.equal(countOnlineDevices([{ health: "warning" }]), 0);
 
+// channelStatus / channelTypeKey / channelTypeLabel — ADR 0074 §4/§3.
+assert.equal(channelStatus(fixtures[0]!), "online");
+assert.equal(channelStatus(fixtures[3]!), "no_player"); // no devices, health: null
+assert.equal(channelTypeKey(fixtures[0]!), "kiosk");
+assert.equal(channelTypeKey(fixtures[2]!), "multi"); // display_config.mode wins over output_kind
+assert.equal(channelTypeLabel(fixtures[0]!), "Kiosk");
+assert.equal(channelTypeLabel(fixtures[1]!), "Screen");
+assert.equal(channelTypeLabel(fixtures[2]!), "Multi-screen");
+
 const summary = summarizeChannels(fixtures);
-assert.deepEqual(summary.lifecycle, { total: 4, draft: 1, active: 2, inactive: 1 });
-assert.equal(summary.unassigned, 1); // the Channel with no devices assigned
-// Rolled up across every fixture Channel, so the tile counts devices and not Channels:
-// four assigned in total, one of them offline.
-assert.deepEqual(summary.devices, { total: 4, online: 3, warning: 0, offline: 1 });
+// health: online, warning, online, null — a Player-less Draft counts only in `total`.
+assert.deepEqual(summary, { total: 4, online: 2, warning: 1, offline: 0 });
 assert.deepEqual(findChannelAttention(fixtures).map(({ device }) => device.id), ["device-siam-south"]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "offline" }).map((channel) => channel.id), ["channel-active-dooh"]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "attention" }).map((channel) => channel.id), ["channel-active-dooh"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, status: "no_player" }).map((channel) => channel.id), ["channel-inactive-in-store"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "multi" }).map((channel) => channel.id), ["channel-draft-dooh"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "kiosk" }).map((channel) => channel.id), ["channel-active-in-store"]);
 
 assert.deepEqual(
   filterChannels(fixtures, {
     search: "central world",
-    category: "in_store",
+    type: "kiosk",
+    status: "all",
     lifecycle: "active",
   }).map((channel) => channel.id),
   ["channel-active-in-store"],
@@ -168,11 +206,11 @@ assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "ENTRANCE SCR
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "cw-entrance" }).map((channel) => channel.id), [
   "channel-active-in-store",
 ]);
-assert.deepEqual(filterChannels(fixtures, { ...allFilters, category: "social" }).map((channel) => channel.id), [
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "tv" }).map((channel) => channel.id), [
 ]);
-assert.deepEqual(filterChannels(fixtures, { ...allFilters, category: "dooh" }).map((channel) => channel.id), [
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "screen" }).map((channel) => channel.id), [
   "channel-active-dooh",
-  "channel-draft-dooh",
+  "channel-inactive-in-store",
 ]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, lifecycle: "draft" }).map((channel) => channel.id), [
   "channel-draft-dooh",

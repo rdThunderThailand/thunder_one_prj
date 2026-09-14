@@ -3,12 +3,16 @@ import type {
   ChannelDetail,
   ChannelDevice,
   ChannelDeviceCandidate,
+  ChannelDisplayConfig,
+  ChannelDisplayConfigScreen,
   ChannelDraftInput,
   ChannelGroupSummary,
+  ChannelHealth,
   ChannelLifecycle,
   ChannelListItem,
   ChannelLocationOption,
   ChannelOrientation,
+  ChannelOutputKind,
   ChannelReferenceData,
   ChannelTypeOption,
 } from "../types/index.ts";
@@ -94,6 +98,10 @@ function isPositiveSafeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 }
 
+function isNonNegativeSafeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
 function assertExpectedRevision(expectedRevision: number): void {
   if (!isPositiveSafeInteger(expectedRevision)) {
     throw new TypeError("Channel expected_revision must be a positive safe integer");
@@ -176,6 +184,36 @@ function parseChannelGroup(value: unknown): ChannelGroupSummary {
   return { id: value.id, name: value.name, playback_mode: value.playback_mode };
 }
 
+function parseChannelDisplayConfigScreen(value: unknown): ChannelDisplayConfigScreen {
+  if (
+    !isRecord(value) ||
+    !isNonNegativeSafeInteger(value.index) ||
+    !isResolution(value.resolution) ||
+    !isString(value.output)
+  ) {
+    throw new TypeError("Channel display_config screen data is malformed");
+  }
+  return { index: value.index as number, resolution: value.resolution, output: value.output };
+}
+
+/** ADR 0074 §3. `null` on a single-screen Channel. */
+function parseChannelDisplayConfig(value: unknown): ChannelDisplayConfig | null {
+  if (value === null || value === undefined) return null;
+  if (
+    !isRecord(value) ||
+    !isOneOf(value.mode, ["single", "multi"]) ||
+    !isString(value.arrangement) ||
+    !Array.isArray(value.screens)
+  ) {
+    throw new TypeError("Channel display_config is malformed");
+  }
+  return {
+    mode: value.mode,
+    arrangement: value.arrangement,
+    screens: value.screens.map(parseChannelDisplayConfigScreen),
+  };
+}
+
 function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
   if (
     !isRecord(value) ||
@@ -222,6 +260,9 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !(value.channel_type === null || isRecord(value.channel_type)) ||
     !(value.location === null || isRecord(value.location)) ||
     !Array.isArray(value.devices) ||
+    !(value.output_kind === undefined || isOneOf(value.output_kind, ["screen", "tv", "kiosk"])) ||
+    !(value.health === undefined || value.health === null || isOneOf(value.health, ["online", "warning", "offline"])) ||
+    !(value.player === undefined || value.player === null || isRecord(value.player)) ||
     !(value.expected_orientation === null || isOneOf(value.expected_orientation, ["landscape", "portrait"])) ||
     !(value.expected_resolution === null || isDisplayResolution(value.expected_resolution)) ||
     !(value.default_playlist === null || isRecord(value.default_playlist)) ||
@@ -249,6 +290,19 @@ function parseChannelListItem(value: unknown): ChannelListItem {
   }
   const groups = (value.groups ?? []).map(parseChannelGroup);
 
+  // Core v2 sends `player` directly; a payload that predates ticket 02 has only `devices[]`, so
+  // a single Device there is the best available reading — never the first of several (ADR 0074 §7).
+  const player: ChannelDevice | null =
+    value.player === undefined
+      ? devices.length === 1
+        ? (devices[0] ?? null)
+        : null
+      : value.player === null
+        ? null
+        : parseChannelDevice(value.player);
+
+  const displayConfig = parseChannelDisplayConfig(value.display_config);
+
   return {
     id: value.id,
     name: value.name,
@@ -258,6 +312,10 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     channel_type: channelType,
     location,
     devices,
+    player,
+    health: (value.health as ChannelHealth | null | undefined) ?? null,
+    output_kind: (value.output_kind as ChannelOutputKind | undefined) ?? "screen",
+    display_config: displayConfig,
     ...(value.groups === undefined ? {} : { groups }),
     expected_orientation: value.expected_orientation,
     expected_resolution: value.expected_resolution,

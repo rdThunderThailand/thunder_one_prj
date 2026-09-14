@@ -9,6 +9,12 @@ export type ChannelLifecycle = "draft" | "active" | "inactive";
 export type ChannelCategory = "dooh" | "in_store" | "online" | "social";
 export type ChannelOrientation = "landscape" | "portrait";
 
+/** ADR 0074 §2: Output Kind replaces Channel Category as the wizard's type choice. */
+export type ChannelOutputKind = "screen" | "tv" | "kiosk";
+
+/** ADR 0074 §4: Channel health is the Player's health; `Degraded` no longer exists. */
+export type ChannelHealth = "online" | "warning" | "offline";
+
 export interface ChannelDeviceCandidate {
   id: string;
   name: string;
@@ -53,6 +59,19 @@ export interface ChannelGroupSummary {
   playback_mode: "synchronized" | "independent";
 }
 
+/** ADR 0074 §3. `NULL` on a single-screen Channel. */
+export interface ChannelDisplayConfigScreen {
+  index: number;
+  resolution: string;
+  output: string;
+}
+
+export interface ChannelDisplayConfig {
+  mode: "single" | "multi";
+  arrangement: string;
+  screens: ChannelDisplayConfigScreen[];
+}
+
 /** Reference rows owned by the future Channel API. Device and playlist choices
  * deliberately stay on their existing read endpoints until those contracts move. */
 export interface ChannelReferenceData {
@@ -68,7 +87,14 @@ export interface ChannelListItem {
   category: ChannelCategory;
   channel_type: ChannelTypeOption | null;
   location: { id: string; name: string } | null;
+  /** @deprecated Core v2 shape is `player` (one Device). Kept for a compatibility read only. */
   devices: ChannelDevice[];
+  /** Core v2: `null` on a Player-less Draft. Falls back to `devices[0]` when the API omits it. */
+  player: ChannelDevice | null;
+  /** Core v2: the Player's health, or `null` on a Player-less Draft ("No player" in the UI). */
+  health: ChannelHealth | null;
+  output_kind: ChannelOutputKind;
+  display_config: ChannelDisplayConfig | null;
   /** Core v2 group memberships. Optional while the compatibility UI can still read older payloads. */
   groups?: ChannelGroupSummary[];
   expected_orientation: ChannelOrientation | null;
@@ -111,8 +137,15 @@ export interface ChannelDraftInput {
   sync_enabled: boolean;
 }
 
+/** "multi" is a Channel whose `display_config.mode` is `"multi"`, independent of its Output Kind. */
+export type ChannelTypeFilter = ChannelOutputKind | "multi";
+/** "no_player" is a Player-less Draft (`health === null`). ADR 0074 §4 — status is the Player's
+ *  health; `Degraded` does not exist as a filter value. */
+export type ChannelStatusFilter = ChannelHealth | "no_player";
+
 export interface ChannelFilters {
   search: string;
-  category: ChannelCategory | "all";
+  type: ChannelTypeFilter | "all";
+  status: ChannelStatusFilter | "all";
   lifecycle: ChannelLifecycle | "all";
 }

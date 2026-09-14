@@ -2,34 +2,6 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { ClassifiedError } from "@/lib/api/api-error";
 
-export function TabButton({
-  active,
-  label,
-  count,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  count: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`border-b-2 px-3 py-3 text-sm font-semibold transition-colors ${
-        active
-          ? "border-indigo-600 text-indigo-700 dark:text-indigo-400"
-          : "border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
-      }`}
-    >
-      {label} ({count})
-    </button>
-  );
-}
-
 export function TableSkeleton() {
   return (
     <Card className="overflow-hidden">

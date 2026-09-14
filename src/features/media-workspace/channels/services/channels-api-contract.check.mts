@@ -225,7 +225,65 @@ assert.equal(parsedList.length, 1);
 assert.equal(parsedList[0]?.id, "channel-1");
 assert.equal(parsedList[0]?.revision, 7);
 assert.equal("created_at" in parsedList[0]!, false);
-assert.deepEqual(parseChannelDetail({ data: channel }), channel);
+// A legacy (pre-ticket-02) payload has no `output_kind` / `health` / `player` / `display_config`
+// at all — the parser must still produce a usable row, not throw.
+assert.equal(parsedList[0]?.output_kind, "screen");
+assert.equal(parsedList[0]?.health, null);
+assert.deepEqual(parsedList[0]?.player, channel.devices[0]);
+assert.equal(parsedList[0]?.display_config, null);
+assert.deepEqual(parseChannelDetail({ data: channel }), {
+  ...channel,
+  player: channel.devices[0],
+  health: null,
+  output_kind: "screen",
+  display_config: null,
+});
+
+// Core v2 payload: `player`/`health`/`output_kind`/`display_config` present, single-screen.
+const v2SingleChannel = {
+  ...channel,
+  id: "channel-v2-single",
+  output_kind: "kiosk",
+  health: "warning",
+  player: channel.devices[0],
+  display_config: null,
+};
+const v2Single = parseChannelDetail({ data: v2SingleChannel });
+assert.equal(v2Single.output_kind, "kiosk");
+assert.equal(v2Single.health, "warning");
+assert.deepEqual(v2Single.player, channel.devices[0]);
+assert.equal(v2Single.display_config, null);
+
+// Core v2 payload: multi-screen Channel, Player-less Draft (`player`/`health` both null).
+const v2MultiDraft = {
+  ...channel,
+  id: "channel-v2-multi",
+  devices: [],
+  output_kind: "screen",
+  health: null,
+  player: null,
+  display_config: {
+    mode: "multi",
+    arrangement: "1x2",
+    screens: [
+      { index: 0, resolution: "1920x1080", output: "HDMI 1" },
+      { index: 1, resolution: "1920x1080", output: "HDMI 2" },
+    ],
+  },
+};
+const v2Multi = parseChannelDetail({ data: v2MultiDraft });
+assert.equal(v2Multi.player, null);
+assert.equal(v2Multi.health, null);
+assert.deepEqual(v2Multi.display_config, v2MultiDraft.display_config);
+assert.equal(v2Multi.display_config?.screens.length, 2);
+
+// A `health` outside online/warning/offline (e.g. the pre-M1b transitional `degraded`) is a parse
+// error, not a silently-rendered status — ADR 0074 §4, ticket 07: Degraded is nowhere in the types.
+assert.throws(() => parseChannelDetail({ data: { ...channel, health: "degraded" } }));
+assert.throws(() => parseChannelDetail({ data: { ...channel, output_kind: "audio" } }));
+assert.throws(() => parseChannelDetail({
+  data: { ...channel, display_config: { mode: "wide", arrangement: "1x1", screens: [] } },
+}));
 assert.deepEqual(parseChannelDeviceCandidates({
   screens: [{
     id: "screen-1",

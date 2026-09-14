@@ -5,8 +5,36 @@ import type {
   ChannelFilters,
   ChannelListItem,
   ChannelOrientation,
+  ChannelStatusFilter,
+  ChannelTypeFilter,
   ChannelTypeOption,
 } from "./types/index.ts";
+
+const OUTPUT_KIND_LABEL: Record<ChannelListItem["output_kind"], string> = {
+  screen: "Screen",
+  tv: "TV",
+  kiosk: "Kiosk",
+};
+
+/** ADR 0074 §4: status is the Player's health; a Player-less Draft is "No player", never
+ *  "Degraded" (ADR 0035's aggregate leaves the model with one-Player-per-Channel). */
+export function channelStatus(channel: Pick<ChannelListItem, "health">): ChannelStatusFilter {
+  return channel.health ?? "no_player";
+}
+
+/** "multi" wins over Output Kind — ADR 0074 §3, D1's Type column shows "Multi-screen"
+ *  regardless of which Output Kind a multi-screen Channel has. */
+export function channelTypeKey(
+  channel: Pick<ChannelListItem, "output_kind" | "display_config">,
+): ChannelTypeFilter {
+  return channel.display_config?.mode === "multi" ? "multi" : channel.output_kind;
+}
+
+export function channelTypeLabel(
+  channel: Pick<ChannelListItem, "output_kind" | "display_config">,
+): string {
+  return channelTypeKey(channel) === "multi" ? "Multi-screen" : OUTPUT_KIND_LABEL[channel.output_kind];
+}
 
 export type DeviceCompatibility =
   | "compatible"
@@ -99,20 +127,13 @@ export function countOnlineDevices(devices: readonly Pick<ChannelDevice, "health
   return devices.filter((device) => device.health === "online").length;
 }
 
+/** D1's tiles: Total / Online / Warning / Offline. A Player-less Draft counts only in `total`
+ *  (ADR 0074 §4 — there is nothing to report health for). */
 export function summarizeChannels(channels: readonly ChannelListItem[]) {
-  const summary = {
-    lifecycle: { total: channels.length, draft: 0, active: 0, inactive: 0 },
-    devices: { total: 0, online: 0, warning: 0, offline: 0 },
-    unassigned: 0,
-  };
-
+  const summary = { total: channels.length, online: 0, warning: 0, offline: 0 };
   for (const channel of channels) {
-    summary.lifecycle[channel.lifecycle] += 1;
-    summary.devices.total += channel.devices.length;
-    channel.devices.forEach((device) => { summary.devices[device.health] += 1; });
-    if (channel.devices.length === 0) summary.unassigned += 1;
+    if (channel.health !== null) summary[channel.health] += 1;
   }
-
   return summary;
 }
 
@@ -123,6 +144,7 @@ export function filterChannels(
   const search = filters.search.trim().toLowerCase();
 
   return channels.filter((channel) => {
+    const status = channelStatus(channel);
     const matchesSearch =
       search.length === 0 ||
       channel.name.toLowerCase().includes(search) ||
@@ -132,10 +154,11 @@ export function filterChannels(
           device.name.toLowerCase().includes(search) || device.code.toLowerCase().includes(search)
           || device.health.includes(search) || (search === "attention" && device.health !== "online"),
       );
-    const matchesCategory = filters.category === "all" || channel.category === filters.category;
+    const matchesType = filters.type === "all" || channelTypeKey(channel) === filters.type;
+    const matchesStatus = filters.status === "all" || status === filters.status;
     const matchesLifecycle = filters.lifecycle === "all" || channel.lifecycle === filters.lifecycle;
 
-    return matchesSearch && matchesCategory && matchesLifecycle;
+    return matchesSearch && matchesType && matchesStatus && matchesLifecycle;
   });
 }
 
