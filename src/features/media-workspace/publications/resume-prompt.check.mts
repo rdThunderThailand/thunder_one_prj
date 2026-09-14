@@ -24,6 +24,8 @@ const baseDraft: DraftFields = {
   playlistId: null,
   compositionId: null,
   channelIds: [],
+  groupIds: [],
+  groupNamesById: {},
   scheduleForm: makeDefaultScheduleForm(),
 };
 
@@ -44,6 +46,7 @@ assert.equal(hasDraftContent({ ...baseDraft, step: 2 }), true);
 
 // 6. channelIds: ["ch-1"] → true
 assert.equal(hasDraftContent({ ...baseDraft, channelIds: ["ch-1"] }), true);
+assert.equal(hasDraftContent({ ...baseDraft, groupIds: ["group-1"] }), true);
 
 // 7. playlistId: "pl-1" → true
 assert.equal(hasDraftContent({ ...baseDraft, playlistId: "pl-1" }), true);

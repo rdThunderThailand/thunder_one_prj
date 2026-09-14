@@ -47,11 +47,13 @@ export function basicInfoToForm(
   return form;
 }
 
-export function channelIdsToTargets(
+export function targetsFromSelection(
   channelIds: string[],
+  groupIds: string[],
+  groupNamesById: Record<string, string>,
   channels: ChannelListItem[],
 ): PublicationTarget[] {
-  return channelIds.map((id) => {
+  const channelTargets: PublicationTarget[] = channelIds.map((id) => {
     const channel = channels.find((c) => c.id === id);
     return {
       target_type: "channel",
@@ -59,6 +61,15 @@ export function channelIdsToTargets(
       name: channel ? channel.name : null,
     };
   });
+  const groupTargets: PublicationTarget[] = groupIds.map((id) => {
+    const group = channels.flatMap((channel) => channel.groups ?? []).find((item) => item.id === id);
+    return {
+      target_type: "group",
+      group_id: id,
+      name: groupNamesById[id] ?? group?.name ?? null,
+    };
+  });
+  return [...channelTargets, ...groupTargets];
 }
 
 export function draftItemsToContentItems(items: DraftAssetItem[]): ContentItem[] {

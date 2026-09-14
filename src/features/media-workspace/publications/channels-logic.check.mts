@@ -9,12 +9,12 @@ import {
   computeStatusCounts,
   filterBySearch,
   formatDeviceSummary,
+  selectedGroupItems,
   selectedChannelDeviceIds,
   statusPercent,
   summarizeGeometryFit,
   toChannelItems,
 } from "./channels-logic.ts";
-import { channelIdsToTargets } from "./draft-mapping.ts";
 import type { ChannelDevice, ChannelListItem } from "../channels/types/index.ts";
 
 function device(id: string, health: ChannelDevice["health"]): ChannelDevice {
@@ -49,8 +49,8 @@ assert.equal(formatDeviceSummary([device("a", "warning")]), "0/1 devices online"
 assert.deepEqual(toChannelItems([]), []);
 
 const channels: ChannelListItem[] = [
-  channel({ id: "c1", name: "Lobby", devices: [device("d1", "online")], expected_resolution: "1920x1080" }),
-  channel({ id: "c2", name: "Foyer", category: "in_store", devices: [device("d2", "offline"), device("d3", "online")] }),
+  channel({ id: "c1", name: "Lobby", devices: [device("d1", "online")], groups: [{ id: "g1", name: "All Screens", playback_mode: "independent" }], expected_resolution: "1920x1080" }),
+  channel({ id: "c2", name: "Foyer", category: "in_store", devices: [device("d2", "offline"), device("d3", "online")], groups: [{ id: "g1", name: "All Screens", playback_mode: "independent" }] }),
   channel({ id: "c3", name: "Staged", lifecycle: "draft" }),
   channel({ id: "c4", name: "Empty" }),
 ];
@@ -69,14 +69,11 @@ assert.equal(items[2].status, "offline"); // no devices, no liveness to report
 assert.deepEqual(selectedChannelDeviceIds(channels, []), []);
 assert.deepEqual(selectedChannelDeviceIds(channels, ["c1", "c2"]), ["d1", "d2", "d3"]);
 assert.deepEqual(selectedChannelDeviceIds(channels, ["c4"]), []); // channel with no devices
-
-// --- channelIdsToTargets: the whole point of this round ---
-assert.deepEqual(channelIdsToTargets(["c1"], channels), [
-  { target_type: "channel", channel_id: "c1", name: "Lobby" },
+assert.deepEqual(selectedGroupItems(channels, ["g1"], {}), [
+  { id: "g1", name: "All Screens", channelCount: 2 },
 ]);
-// An id the reference load never returned still has to produce a valid target.
-assert.deepEqual(channelIdsToTargets(["gone"], channels), [
-  { target_type: "channel", channel_id: "gone", name: null },
+assert.deepEqual(selectedGroupItems(channels, ["gone"], { gone: "Saved Group" }), [
+  { id: "gone", name: "Saved Group", channelCount: 0 },
 ]);
 
 // --- filterBySearch ---

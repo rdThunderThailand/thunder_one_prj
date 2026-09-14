@@ -6,6 +6,8 @@ export type ResumedDraft = {
   basicInfo: BasicInfoState;
   assetItems: DraftAssetItem[];
   channelIds: string[];
+  groupIds: string[];
+  groupNamesById: Record<string, string>;
   scheduleForm: ScheduleForm;
   compositionId: string | null;
 };
@@ -30,13 +32,21 @@ export function detailToDraft(
       transition: item.transition ?? "cut",
     }));
 
-  // Only Channel targets rehydrate into the wizard. A draft saved before ADR 0037
-  // holds device targets, which step 3 can no longer express — it resumes with an
-  // empty selection so the operator re-picks Channels rather than silently
-  // publishing to a set the UI cannot show.
-  const channelIds = (detail.publication_targets ?? [])
+  // Channel and Group intent rehydrate into the wizard. A draft saved before ADR 0037
+  // can still hold device targets, which step 3 cannot express — those stay dropped so
+  // the operator re-picks Channels rather than silently publishing to hidden Devices.
+  const targets = detail.publication_targets ?? [];
+  const channelIds = targets
     .filter((t) => t.target_type === "channel" && Boolean(t.channel_id))
     .map((t) => t.channel_id as string);
+  const groupIds = targets
+    .filter((t) => t.target_type === "group" && Boolean(t.group_id))
+    .map((t) => t.group_id as string);
+  const groupNamesById = Object.fromEntries(
+    targets
+      .filter((t) => t.target_type === "group" && Boolean(t.group_id) && Boolean(t.name))
+      .map((t) => [t.group_id as string, t.name as string]),
+  );
 
   const scheduleForm = scheduleToForm(detail.schedule);
 
@@ -44,6 +54,8 @@ export function detailToDraft(
     basicInfo,
     assetItems,
     channelIds,
+    groupIds,
+    groupNamesById,
     scheduleForm,
     compositionId: detail.composition?.id ?? null,
   };
