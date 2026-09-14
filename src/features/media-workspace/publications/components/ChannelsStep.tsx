@@ -7,6 +7,7 @@ import { channelCategories, type ChannelCategoryId, type ChannelItem } from "../
 import {
   computeCategoryCounts,
   filterBySearch,
+  selectedGroupItems,
   summarizeGeometryFit,
   toChannelItems,
 } from "../channels-logic";
@@ -34,6 +35,9 @@ export function ChannelsStep({
 }: ChannelsStepProps) {
   const selectedIds = usePublicationDraftStore((s) => s.channelIds);
   const toggleChannel = usePublicationDraftStore((s) => s.toggleChannelId);
+  const groupIds = usePublicationDraftStore((s) => s.groupIds);
+  const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
+  const setGroupIds = usePublicationDraftStore((s) => s.setGroupIds);
   const [activeTab, setActiveTab] = useState<"all" | ChannelCategoryId>("all");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -45,11 +49,36 @@ export function ChannelsStep({
     () => summarizeGeometryFit(source, selectedIds, aspectRatio),
     [source, selectedIds, aspectRatio],
   );
+  const selectedGroups = useMemo(
+    () => selectedGroupItems(source, groupIds, groupNamesById),
+    [source, groupIds, groupNamesById],
+  );
 
   const groups = channelCategories.filter((cat) => activeTab === "all" || activeTab === cat.id);
 
   return (
     <div className="flex flex-col gap-4">
+      {selectedGroups.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedGroups.map((group) => (
+            <div
+              key={group.id}
+              className="flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm text-indigo-800"
+            >
+              <span>{group.name} · {group.channelCount} channels</span>
+              <button
+                type="button"
+                aria-label={`Remove ${group.name}`}
+                onClick={() => setGroupIds(groupIds.filter((id) => id !== group.id))}
+                className="text-indigo-500 hover:text-indigo-800"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {loadingChannels && <p className="text-xs text-zinc-400">Loading channels...</p>}
       {!loadingChannels && channelsError && <p className="text-xs text-red-600">{channelsError}</p>}
       {!loadingChannels && !channelsError && channels.length === 0 && (

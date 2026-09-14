@@ -4,6 +4,7 @@ import type {
   ChannelDevice,
   ChannelDeviceCandidate,
   ChannelDraftInput,
+  ChannelGroupSummary,
   ChannelLifecycle,
   ChannelListItem,
   ChannelLocationOption,
@@ -163,6 +164,18 @@ function parseChannelDevice(value: unknown): ChannelDevice {
   };
 }
 
+function parseChannelGroup(value: unknown): ChannelGroupSummary {
+  if (
+    !isRecord(value) ||
+    !isString(value.id) ||
+    !isString(value.name) ||
+    !isOneOf(value.playback_mode, ["synchronized", "independent"])
+  ) {
+    throw new TypeError("Channel group data is malformed");
+  }
+  return { id: value.id, name: value.name, playback_mode: value.playback_mode };
+}
+
 function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
   if (
     !isRecord(value) ||
@@ -231,6 +244,10 @@ function parseChannelListItem(value: unknown): ChannelListItem {
       : parseChannelLocation(value.default_playlist);
 
   const devices = value.devices.map(parseChannelDevice);
+  if (value.groups !== undefined && !Array.isArray(value.groups)) {
+    throw new TypeError("Channel groups data is malformed");
+  }
+  const groups = (value.groups ?? []).map(parseChannelGroup);
 
   return {
     id: value.id,
@@ -241,6 +258,7 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     channel_type: channelType,
     location,
     devices,
+    ...(value.groups === undefined ? {} : { groups }),
     expected_orientation: value.expected_orientation,
     expected_resolution: value.expected_resolution,
     default_playlist: defaultPlaylist,

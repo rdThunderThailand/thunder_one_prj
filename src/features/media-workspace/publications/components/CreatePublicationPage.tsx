@@ -60,6 +60,8 @@ export function CreatePublicationPage() {
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
   const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
   const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
+  const setGroupIds = usePublicationDraftStore((s) => s.setGroupIds);
+  const setGroupNamesById = usePublicationDraftStore((s) => s.setGroupNamesById);
   const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
   const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
@@ -110,6 +112,8 @@ export function CreatePublicationPage() {
       setBasicInfo(draft.basicInfo);
       setAssetItems(draft.assetItems);
       setChannelIds(draft.channelIds);
+      setGroupIds(draft.groupIds);
+      setGroupNamesById(draft.groupNamesById);
       setScheduleForm(draft.scheduleForm);
       usePublicationDraftStore.getState().setCompositionId(draft.compositionId);
       setPublicationId(detail.id);
@@ -117,7 +121,7 @@ export function CreatePublicationPage() {
       usePublicationDraftStore.getState().markSaved();
       usePublicationDraftStore.getState().setExplicitlySaved(true);
     },
-    [setBasicInfo, setAssetItems, setChannelIds, setScheduleForm, setPublicationId]
+    [setBasicInfo, setAssetItems, setChannelIds, setGroupIds, setGroupNamesById, setScheduleForm, setPublicationId]
   );
 
   useEffect(() => {

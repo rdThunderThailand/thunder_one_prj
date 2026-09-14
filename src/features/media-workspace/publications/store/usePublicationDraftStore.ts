@@ -42,6 +42,8 @@ export interface DraftFields {
   /** Set only for publication_type = 'composition' (ADR 0049 §5). */
   compositionId: string | null;
   channelIds: string[];
+  groupIds: string[];
+  groupNamesById: Record<string, string>;
   scheduleForm: ScheduleForm;
 }
 
@@ -56,12 +58,14 @@ function getDefaultDraft(): DraftFields {
     playlistId: null,
     compositionId: null,
     channelIds: [],
+    groupIds: [],
+    groupNamesById: {},
     scheduleForm: makeDefaultScheduleForm(),
   };
 }
 
-function serializeDraftFields(f: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "compositionId" | "channelIds" | "scheduleForm">): string {
-  return JSON.stringify({ basicInfo: f.basicInfo, assetItems: f.assetItems, playlistId: f.playlistId, compositionId: f.compositionId, channelIds: f.channelIds, scheduleForm: f.scheduleForm });
+function serializeDraftFields(draft: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "compositionId" | "channelIds" | "groupIds" | "groupNamesById" | "scheduleForm">): string {
+  return JSON.stringify({ basicInfo: draft.basicInfo, assetItems: draft.assetItems, playlistId: draft.playlistId, compositionId: draft.compositionId, channelIds: draft.channelIds, groupIds: draft.groupIds, groupNamesById: draft.groupNamesById, scheduleForm: draft.scheduleForm });
 }
 
 interface PublicationDraftStore extends DraftFields {
@@ -95,6 +99,8 @@ interface PublicationDraftStore extends DraftFields {
   /** Moves one item by ±1. Out-of-range moves are a no-op. */
   moveAssetItem: (mediaAssetId: string, direction: -1 | 1) => void;
   setChannelIds: (channelIds: string[]) => void;
+  setGroupIds: (groupIds: string[]) => void;
+  setGroupNamesById: (groupNamesById: Record<string, string>) => void;
   toggleChannelId: (id: string) => void;
   setScheduleForm: (scheduleForm: ScheduleForm) => void;
   /** Resets in-memory state and wipes the persisted draft — used by Cancel. */
@@ -165,6 +171,8 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
         return { assetItems: nextItems };
       }),
       setChannelIds: (channelIds) => set({ channelIds }),
+      setGroupIds: (groupIds) => set({ groupIds }),
+      setGroupNamesById: (groupNamesById) => set({ groupNamesById }),
       toggleChannelId: (id) => {
         const { channelIds } = get();
         const next = channelIds.includes(id) ? channelIds.filter((c) => c !== id) : [...channelIds, id];
@@ -200,7 +208,8 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // `furthestStep` (added after v10) is absent from an older v10 draft and shallow-merges
       // to its default of 1 — the stepper just re-unlocks steps as the operator clicks Next,
       // no migration needed.
-      name: "thunderone.publications.create-draft.v10",
+      // v11: Group target intent is now persisted alongside Channel ids.
+      name: "thunderone.publications.create-draft.v11",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

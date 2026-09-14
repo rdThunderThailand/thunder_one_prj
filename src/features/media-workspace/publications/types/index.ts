@@ -165,9 +165,10 @@ export type PublicationDetail = {
 };
 
 export type PublicationTarget = {
-  target_type: "channel" | "device";
+  target_type: "channel" | "device" | "group";
   channel_id?: string | null;
   device_id?: string | null;
+  group_id?: string | null;
   name?: string | null;
 };
 

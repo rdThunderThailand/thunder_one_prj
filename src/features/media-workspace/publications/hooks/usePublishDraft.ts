@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   draftItemsToContentItems,
   basicInfoToForm,
-  channelIdsToTargets,
+  targetsFromSelection,
 } from "../draft-mapping";
 import { isScheduleFormValid, scheduleFormToPayload } from "../schedule";
 import {
@@ -69,12 +69,14 @@ export function usePublishDraft() {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
+  const groupIds = usePublicationDraftStore((s) => s.groupIds);
+  const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
 
   const eligibility = computeEligibility({
-    draft: { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, scheduleForm },
+    draft: { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, groupIds, groupNamesById, scheduleForm },
     assets,
     conflicts,
     conflictsError,
@@ -229,7 +231,9 @@ export function usePublishDraft() {
       return state.publicationId;
     }
     const targets =
-      forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, channels) : undefined;
+      forPublish || state.step >= 3
+        ? targetsFromSelection(state.channelIds, state.groupIds, state.groupNamesById, channels)
+        : undefined;
 
     const basicForm = basicInfoToForm(state.basicInfo, state.playlistId, state.compositionId);
     let res;

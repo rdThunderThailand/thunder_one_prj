@@ -1,4 +1,6 @@
 # 0030 — Channel membership is a flat set of equal Media Devices, exclusive to one Active Channel
+> **Partially superseded (2026-09-11)** by `0074-channel-one-player-and-channel-group.md`: a Channel now has exactly one Media Device (its Player). The reservation table and the Channel *Type* axis survive; the one-or-more equal-members model and Channel *Category* as an input do not.
+
 
 Supersedes the single-file draft `0030-channel-endpoints-and-monitoring.md`, which bundled
 membership, lifecycle, snapshot and monitoring into one undivided decision. That draft is replaced

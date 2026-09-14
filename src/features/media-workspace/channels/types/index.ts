@@ -47,6 +47,12 @@ export interface ChannelLocationOption {
   name: string;
 }
 
+export interface ChannelGroupSummary {
+  id: string;
+  name: string;
+  playback_mode: "synchronized" | "independent";
+}
+
 /** Reference rows owned by the future Channel API. Device and playlist choices
  * deliberately stay on their existing read endpoints until those contracts move. */
 export interface ChannelReferenceData {
@@ -63,6 +69,8 @@ export interface ChannelListItem {
   channel_type: ChannelTypeOption | null;
   location: { id: string; name: string } | null;
   devices: ChannelDevice[];
+  /** Core v2 group memberships. Optional while the compatibility UI can still read older payloads. */
+  groups?: ChannelGroupSummary[];
   expected_orientation: ChannelOrientation | null;
   expected_resolution: string | null;
   default_playlist: { id: string; name: string } | null;

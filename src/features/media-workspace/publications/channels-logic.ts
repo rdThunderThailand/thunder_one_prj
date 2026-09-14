@@ -59,6 +59,18 @@ export function selectedChannelDeviceIds(
   return [...ids];
 }
 
+export function selectedGroupItems(
+  channels: ChannelListItem[],
+  groupIds: readonly string[],
+  groupNamesById: Readonly<Record<string, string>>,
+) {
+  return groupIds.map((id) => {
+    const members = channels.filter((channel) => channel.groups?.some((group) => group.id === id));
+    const group = members.flatMap((channel) => channel.groups ?? []).find((item) => item.id === id);
+    return { id, name: groupNamesById[id] ?? group?.name ?? id, channelCount: members.length };
+  });
+}
+
 export function filterBySearch(channels: ChannelItem[], search: string): ChannelItem[] {
   const term = search.trim().toLowerCase();
   return channels.filter((c) => c.name.toLowerCase().includes(term));

@@ -11,9 +11,9 @@ const TABS: { id: TabId; label: string; enabled: boolean }[] = [
   { id: "groups", label: "Groups", enabled: false },
 ];
 
-/** Frame 3 "1. Where to Play". Only the Channels tab is reachable — Screens
- *  (target_type "device" is typed but never emitted) and Groups (no such entity)
- *  render DISABLED. */
+/** Frame 3 "1. Where to Play". Only the Channels picker is reachable. Screens
+ *  and Groups stay disabled; saved Group intent is shown as removable chips in
+ *  ChannelsStep until the Phase 5 picker ships. */
 export function WhereToPlayPanel(props: ChannelsStepProps) {
   const [tab, setTab] = useState<TabId>("channels");
 

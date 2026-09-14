@@ -1,4 +1,6 @@
 # 0039 — Channel Display Expectation is an assignment gate; the Publication Target Snapshot stays frozen
+> **Partially superseded (2026-09-11)** by `0074-channel-one-player-and-channel-group.md`: `expected_resolution` accepts any `WxH` and orientation is derived from it; the orientation refusal remains for single-screen Channels and is not applied to multi-screen ones.
+
 
 Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and concurrency), this
 ADR, 0035 (monitoring, alerts, notifications).

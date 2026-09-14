@@ -35,6 +35,8 @@ const baseDraft: DraftFields = {
   playlistId: null,
   compositionId: null,
   channelIds: [],
+  groupIds: [],
+  groupNamesById: {},
   scheduleForm: makeDefaultScheduleForm(),
 };
 
