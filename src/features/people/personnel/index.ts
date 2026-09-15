@@ -11,6 +11,7 @@ export { personnelRows } from "./mock-data";
 // new-hires's AddEmployeeModal calls `createMember`/`getRoles` for its real
 // "invite a new employee" flow.
 export {
+  checkEmailTaken,
   createEmployee,
   createMember,
   getMembers,

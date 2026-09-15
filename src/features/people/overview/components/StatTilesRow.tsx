@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
+import { ArrowRightIcon } from "@/components/ui/icons";
 import { workforceHealth, type StatTileColor } from "../mock-data";
 
 const valueColor: Record<StatTileColor, string> = {
@@ -16,6 +18,10 @@ interface StatTile {
   value: string;
   sublabel?: string;
   color: StatTileColor;
+  /** Where "ดูรายละเอียด" takes you — same sub-link pattern
+   *  `people/personnel`'s own `PersonnelStatTilesRow` uses, added 2026-09-15
+   *  once UAT (PP01-004) flagged these cards as dead ends. */
+  href: string;
 }
 
 interface StatTilesRowProps {
@@ -41,16 +47,42 @@ interface StatTilesRowProps {
 // this codebase's chart usage.
 export function StatTilesRow({ totalHeadcount, newHiresThisMonth, onboardingCount }: StatTilesRowProps) {
   const statTiles: StatTile[] = [
-    { id: "headcount", label: "จำนวนบุคลากรทั้งหมด", value: String(totalHeadcount), color: "indigo" },
-    { id: "new-hires", label: "เข้าใหม่ (เดือนนี้)", value: String(newHiresThisMonth), color: "emerald" },
-    { id: "onboarding", label: "กำลัง Onboarding", value: String(onboardingCount), color: "amber" },
-    { id: "changes", label: "การเปลี่ยนแปลง", value: "3", sublabel: "รออนุมัติ 2 รายการ", color: "blue" },
+    {
+      id: "headcount",
+      label: "จำนวนบุคลากรทั้งหมด",
+      value: String(totalHeadcount),
+      color: "indigo",
+      href: "/people/personnel",
+    },
+    {
+      id: "new-hires",
+      label: "เข้าใหม่ (เดือนนี้)",
+      value: String(newHiresThisMonth),
+      color: "emerald",
+      href: "/people/new-hires",
+    },
+    {
+      id: "onboarding",
+      label: "กำลัง Onboarding",
+      value: String(onboardingCount),
+      color: "amber",
+      href: "/people/new-hires",
+    },
+    {
+      id: "changes",
+      label: "การเปลี่ยนแปลง",
+      value: "3",
+      sublabel: "รออนุมัติ 2 รายการ",
+      color: "blue",
+      href: "/people/changes",
+    },
     {
       id: "departures",
       label: "ออกจากองค์กร (เดือนนี้)",
       value: "2",
       sublabel: "รอ Clearance 1 รายการ",
       color: "red",
+      href: "/people/departures",
     },
   ];
 
@@ -61,6 +93,13 @@ export function StatTilesRow({ totalHeadcount, newHiresThisMonth, onboardingCoun
           <p className="text-xs text-zinc-500 dark:text-zinc-400">{tile.label}</p>
           <span className={`text-2xl font-semibold ${valueColor[tile.color]}`}>{tile.value}</span>
           {tile.sublabel && <p className="text-xs text-zinc-400">{tile.sublabel}</p>}
+          <Link
+            href={tile.href}
+            className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+          >
+            ดูรายละเอียด
+            <ArrowRightIcon className="h-3 w-3" />
+          </Link>
         </Card>
       ))}
 

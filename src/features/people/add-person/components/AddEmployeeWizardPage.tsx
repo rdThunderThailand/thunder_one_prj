@@ -9,6 +9,7 @@ import { CheckCircleIcon, ChevronRightIcon, ImageIcon, InfoIcon } from "@/compon
 import { ApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
 import {
+  checkEmailTaken,
   createEmployee,
   createMember,
   isPendingInvite,
@@ -113,10 +114,6 @@ const referenceOnlyNote = (
 // `required` AND covered by employeeStep0Schema/employeeStep1Schema (../schemas.ts).
 const requiredMark = <span className="text-red-500">*</span>;
 
-function randomEmployeeCode(): string {
-  return `EMP-0${String(Math.floor(100 + Math.random() * 900))}`;
-}
-
 function Breadcrumb() {
   return (
     <nav className="flex items-center gap-1.5 text-xs text-zinc-400">
@@ -220,7 +217,12 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
 
   // Step 2 — employment & position. position/unitId/startDate/roleCode are
   // real (see REAL_FIELDS); the rest stays local/cosmetic.
-  const [employeeCode] = useState(randomEmployeeCode);
+  // Was `useState(randomEmployeeCode)` — a fake code generated client-side
+  // and sent to Core as if real (fixed 2026-09-15, UAT PP03-013). Someone
+  // with no real employee ID (e.g. bulk-imported from an Excel sheet with a
+  // blank column) now stays blank — sent as `undefined`, not a made-up
+  // string — rather than getting a fabricated "EMP-0740" no one assigned.
+  const [employeeCode, setEmployeeCode] = useState("");
   const [employmentType, setEmploymentType] = useState(EMPLOYMENT_TYPE_OPTIONS[0]);
   const [jobType, setJobType] = useState("Full-time");
   const [workArrangement, setWorkArrangement] = useState("On-site");
@@ -243,6 +245,8 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Real since 2026-09-15 (UAT PP02-009) — see handleNext below.
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const fullName = `${firstNameTh} ${lastNameTh}`.trim();
   const unitOptions = Object.values(units ?? {}).sort((a, b) => a.name.localeCompare(b.name));
@@ -269,8 +273,30 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
     return true;
   }
 
-  function handleNext() {
+  // UAT PP02-009: the "already a member" error only used to surface from
+  // Core's 409 at the very last (`handleSubmit`) step, well after the user
+  // had already filled in steps 2/3. Checking here — on "ถัดไป" out of step
+  // 0, the minimum bar UAT asked for — catches it right after the email is
+  // typed instead. Fails open (lets the user proceed) on a network/API
+  // error rather than blocking the whole wizard on this one check; the
+  // final `handleSubmit` 409 is still there as the real backstop.
+  async function handleNext() {
     if (!validateStep(stepIndex === 0 ? 0 : 1)) return;
+    if (stepIndex === 0 && tenantId) {
+      setCheckingEmail(true);
+      try {
+        const taken = await checkEmailTaken(tenantId, email);
+        if (taken) {
+          setErrors((prev) => ({ ...prev, email: "อีเมลนี้เป็นสมาชิกขององค์กรอยู่แล้ว" }));
+          toast.error("อีเมลนี้เป็นสมาชิกขององค์กรอยู่แล้ว");
+          return;
+        }
+      } catch {
+        // fail open — see comment above
+      } finally {
+        setCheckingEmail(false);
+      }
+    }
     setStepIndex((i) => Math.min(i + 1, 2));
   }
 
@@ -290,6 +316,7 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
     setAddress("");
     setAdditionalNote("");
     setEmploymentType(EMPLOYMENT_TYPE_OPTIONS[0]);
+    setEmployeeCode("");
     setPosition("");
     setUnitId("");
     setTeam("");
@@ -338,7 +365,7 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
       const sharedFields = {
         email: email.trim(),
         role_code: roleCode,
-        employee_code: employeeCode,
+        employee_code: employeeCode.trim() || undefined,
         default_department_id: unitId || undefined,
         member_type: "employee" as const,
         job_type: JOB_TYPE_BY_LABEL[jobType],
@@ -399,11 +426,16 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
       // `id`/`name`/`employeeCode` (and `inviteUrl`) actually come from
       // Core's response.
       const identity = isPendingInvite(result)
-        ? { id: result.invitation_id, name: email.trim(), employeeCode: employeeCode, inviteUrl: result.invite_url }
+        ? {
+            id: result.invitation_id,
+            name: email.trim(),
+            employeeCode: employeeCode.trim() || "-",
+            inviteUrl: result.invite_url,
+          }
         : {
             id: result.id,
             name: result.user.full_name,
-            employeeCode: result.employee_code ?? employeeCode,
+            employeeCode: result.employee_code || employeeCode.trim() || "-",
             inviteUrl: undefined as string | undefined,
           };
       const row: NewHireRow = {
@@ -648,8 +680,13 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                 </label>
                 <label className={labelClasses}>
                   รหัสพนักงาน (Employee ID)
-                  <input readOnly value={employeeCode} className={`${inputClasses} cursor-not-allowed opacity-70`} />
-                  <span className="text-[11px] font-normal text-zinc-400">ระบบจะสร้างอัตโนมัติหลังบันทึก</span>
+                  <input
+                    value={employeeCode}
+                    onChange={(e) => setEmployeeCode(e.target.value)}
+                    placeholder="เช่น EMP-0001"
+                    className={inputClasses}
+                  />
+                  <span className="text-[11px] font-normal text-zinc-400">เว้นว่างได้หากยังไม่มีรหัสพนักงาน</span>
                 </label>
                 <label className={labelClasses}>
                   ประเภทงาน (Job Type)
@@ -969,8 +1006,8 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
             </Button>
           )}
           {stepIndex < 2 ? (
-            <Button variant="primary" onClick={handleNext}>
-              ถัดไป
+            <Button variant="primary" onClick={handleNext} disabled={checkingEmail}>
+              {checkingEmail ? "กำลังตรวจสอบ..." : "ถัดไป"}
             </Button>
           ) : (
             <Button variant="primary" onClick={handleSubmit} disabled={submitting}>

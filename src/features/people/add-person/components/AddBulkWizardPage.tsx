@@ -68,10 +68,6 @@ const WORK_ARRANGEMENT_CODE: Record<string, "on_site" | "hybrid" | "remote"> = {
   Remote: "remote",
 };
 
-function randomCode(prefix: "EMP" | "CON"): string {
-  return `${prefix}-0${String(Math.floor(100 + Math.random() * 900))}`;
-}
-
 interface BulkSubmitResult {
   row: BulkCsvRow;
   name: string;
@@ -304,11 +300,14 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
 
     for (const row of rows) {
       const name = `${row.firstName} ${row.lastName}`;
-      const employeeCode = randomCode(memberType === "contractor" ? "CON" : "EMP");
+      // Was `randomCode(...)` — a fake "EMP-0xxx"/"CON-0xxx" code fabricated
+      // for every row and sent to Core as if real (fixed 2026-09-15, UAT
+      // PP03-013). REQUIRED_COLUMNS has no employee_code column at all, so
+      // there was never a real value to send here — omitted entirely now,
+      // same as AddEmployeeWizardPage/AddContractorWizardPage's own fix.
       const sharedFields = {
         email: row.email,
         role_code: roleCode,
-        employee_code: employeeCode,
         default_department_id: unitId || undefined,
         member_type: memberType,
         work_arrangement: workArrangementCode,
@@ -345,11 +344,11 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
         // comment: narrowing a 3-way union through a plain boolean stops
         // working once a third member (CoreEmployeeResult) joins it.
         const identity = isPendingInvite(result)
-          ? { id: result.invitation_id, name: row.email, employeeCode, inviteUrl: result.invite_url as string | undefined }
+          ? { id: result.invitation_id, name: row.email, employeeCode: "-", inviteUrl: result.invite_url as string | undefined }
           : {
               id: result.id,
               name: result.user.full_name,
-              employeeCode: result.employee_code ?? employeeCode,
+              employeeCode: result.employee_code || "-",
               inviteUrl: undefined as string | undefined,
             };
         const pending = isPendingInvite(result);

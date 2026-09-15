@@ -186,6 +186,25 @@ export async function createMember(
 }
 
 /**
+ * Real since 2026-09-15 (UAT PP02-009) — lets the Add Employee/Contractor
+ * wizards flag a duplicate email before the final submit, instead of only
+ * finding out from `createEmployee`/`createMember`'s 409 at the very end.
+ * Client-safe (goes through `/api/proxy`, like `createMember` above), reusing
+ * the same `?search=` filter `getMembers` uses server-side — that's a
+ * substring match across email/first_name/last_name/display_name, so the
+ * rows it returns are checked for an exact (case-insensitive) email match
+ * here rather than trusting `count > 0` on its own.
+ */
+export async function checkEmailTaken(tenantId: string, email: string): Promise<boolean> {
+  const result = await requestApi<{ data: CoreMemberRow[]; count: number }>(
+    "GET",
+    `/tenants/${tenantId}/members?search=${encodeURIComponent(email)}&limit=10`
+  );
+  const target = email.trim().toLowerCase();
+  return result.data.some((row) => row.user.email.toLowerCase() === target);
+}
+
+/**
  * `POST /tenants/:id/employees` (docs/api/add-employee-integration-guide.md
  * §2) — the "this person has no Thunder Core account yet" fast path: writes
  * `users` + `memberships` in one call and has Supabase email the invite

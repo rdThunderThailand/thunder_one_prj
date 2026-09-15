@@ -8,7 +8,14 @@ import { WizardSteps } from "@/components/ui/WizardSteps";
 import { CheckCircleIcon, ChevronRightIcon, ImageIcon, InfoIcon, ShieldIcon } from "@/components/ui/icons";
 import { ApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
-import { createMember, isPendingInvite, personnelRows, updateMemberContract, type CoreRole } from "@/features/people/personnel";
+import {
+  checkEmailTaken,
+  createMember,
+  isPendingInvite,
+  personnelRows,
+  updateMemberContract,
+  type CoreRole,
+} from "@/features/people/personnel";
 import type { OrgUnitNode } from "@/features/people/org-structure";
 // Deep import (bypassing people/new-hires's index.ts) — see
 // AddEmployeeWizardPage's identical comment for why (avoids a barrel-file
@@ -76,10 +83,6 @@ const WIZARD_STEP_LABELS = ["ข้อมูลส่วนบุคคล", "�
 // as AddEmployeeWizardPage's requiredMark. Only on fields covered by
 // contractorStep0Schema/contractorStep1Schema (../schemas.ts).
 const requiredMark = <span className="text-red-500">*</span>;
-
-function randomContractorCode(): string {
-  return `CON-0${String(Math.floor(100 + Math.random() * 900))}`;
-}
 
 function Breadcrumb() {
   return (
@@ -194,7 +197,11 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
 
   // Step 2 — employment & contract. position/unitId/startDate/roleCode are
   // real; the rest stays local/cosmetic.
-  const [employeeCode] = useState(randomContractorCode);
+  // Was `useState(randomContractorCode)` — a fake "CON-0xxx" code generated
+  // client-side and sent to Core as if real (fixed 2026-09-15, same UAT
+  // PP03-013 gap as AddEmployeeWizardPage's own employeeCode field). Stays
+  // blank (sent as `undefined`) unless someone actually has a real code.
+  const [employeeCode, setEmployeeCode] = useState("");
   const [position, setPosition] = useState("");
   const [unitId, setUnitId] = useState("");
   const [team, setTeam] = useState("");
@@ -218,6 +225,8 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Real since 2026-09-15 (UAT PP02-009) — see handleNext below.
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const fullName = `${firstNameTh} ${lastNameTh}`.trim();
   const unitOptions = Object.values(units ?? {}).sort((a, b) => a.name.localeCompare(b.name));
@@ -238,8 +247,26 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
     return true;
   }
 
-  function handleNext() {
+  // Same "check the duplicate before the last step, not only from Core's
+  // 409" fix as AddEmployeeWizardPage.handleNext — see that component's own
+  // comment. Fails open on a network/API error.
+  async function handleNext() {
     if (!validateStep(stepIndex === 0 ? 0 : 1)) return;
+    if (stepIndex === 0 && tenantId) {
+      setCheckingEmail(true);
+      try {
+        const taken = await checkEmailTaken(tenantId, email);
+        if (taken) {
+          setErrors((prev) => ({ ...prev, email: "อีเมลนี้เป็นสมาชิกขององค์กรอยู่แล้ว" }));
+          toast.error("อีเมลนี้เป็นสมาชิกขององค์กรอยู่แล้ว");
+          return;
+        }
+      } catch {
+        // fail open — see comment above
+      } finally {
+        setCheckingEmail(false);
+      }
+    }
     setStepIndex((i) => Math.min(i + 1, 2));
   }
 
@@ -260,6 +287,7 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
     setLineId("");
     setOtherContact("");
     setAdditionalNote("");
+    setEmployeeCode("");
     setPosition("");
     setUnitId("");
     setTeam("");
@@ -308,7 +336,7 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
       const result = await createMember(tenantId, {
         email: email.trim(),
         role_code: roleCode,
-        employee_code: employeeCode,
+        employee_code: employeeCode.trim() || undefined,
         job_title: position.trim() || undefined,
         default_department_id: unitId || undefined,
         start_date: startDate || undefined,
@@ -346,7 +374,7 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
       const row: NewHireRow = {
         id: pending ? result.invitation_id : result.id,
         name: pending ? email.trim() : result.user.full_name,
-        employeeCode: pending ? employeeCode : (result.employee_code ?? employeeCode),
+        employeeCode: pending ? employeeCode.trim() || "-" : result.employee_code || employeeCode.trim() || "-",
         position: position.trim() || "-",
         unit: unitId ? unitLabel(unitId, units ?? {}) : "-",
         startDateLabel: startDate ? formatThaiDate(startDate) : "-",
@@ -984,8 +1012,8 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
             </Button>
           )}
           {stepIndex < 2 ? (
-            <Button variant="primary" onClick={handleNext}>
-              ถัดไป
+            <Button variant="primary" onClick={handleNext} disabled={checkingEmail}>
+              {checkingEmail ? "กำลังตรวจสอบ..." : "ถัดไป"}
             </Button>
           ) : (
             <div className="flex flex-col items-end gap-1">
