@@ -40,10 +40,8 @@ under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
   - `NewHiresHeader` — retitled "เข้าใหม่ / Onboarding"; คู่มือการใช้งาน/ส่งออก stay inert,
     **real** "เพิ่มพนักงานใหม่" links to `/people/add/employee`.
   - `NewHireFunnelRow` — the 4-stage funnel header strip (Pre-boarding/Onboarding/Ready to
-    Work/Active counts + subtitle + inert "ดูรายละเอียด"). Counts are `mock-data.ts`'s
-    `newHireFunnelStats` — the mockup's own static header numbers, **not** derived from
-    `newHireRows` (12 rows here vs. 32+6+3+18=59 in the header) — same "mockup number vs. small
-    sample" gap this feature's mock data already carried before this redesign.
+    Work/Active counts + subtitle + inert "ดูรายละเอียด"). **Real** — counts computed from the
+    fetched `rows`, same roster the Kanban board renders (not a separate mock header number).
   - `NewHiresFilterBar` — unchanged, still fully decorative (search + 4 filters), just re-placed
     above the Kanban board instead of a table.
   - `NewHireKanbanBoard` — the 4 columns, each showing up to 4 person cards (name, position, and
@@ -51,9 +49,11 @@ under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
     "ดูเพิ่ม N คน" link when a column has more rows than shown. Cards are **static** — this
     redesign has no per-row detail view (the old `NewHireDetailPanel` is gone; the sidebar is now a
     fixed dashboard, not a click-to-select panel).
-  - `NewHireSidebar` — the 3 static right-column cards: สรุปภาพรวม (`newHireSummaryStats`),
-    งานที่ต้องดำเนินการ (`newHireActionItems`), เอกสารและแหล่งข้อมูล (`newHireResources`, all inert
-    links). All figures are static mock data, same discipline as the funnel row.
+  - `NewHireSidebar` — **real since 2026-09-15**, one card (สรุปภาพรวม), computed from the fetched
+    roster. **2026-09-16**: the other 2 cards this sidebar used to show (งานที่ต้องดำเนินการ,
+    fabricated task counts; เอกสารและแหล่งข้อมูล, fabricated document names with no real target)
+    were removed entirely — no real task/document concept exists in Core for either, and a
+    mock-data audit found them displaying fake numbers/names as if real.
 - `mock-data.ts` — `newHireRows`'s original 8 rows keep their existing `progress`/`steps` (incl.
   row `"p-1"`'s mockup-verified 1/2/3/6/8 checklist example) and were only reassigned a new
   `status` by that existing progress (0 → pre-boarding, 1–88 → onboarding). 4 new rows
@@ -64,5 +64,3 @@ under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
 
 **Not built yet**: every dropdown filter/search on `NewHiresFilterBar`, "ดูรายละเอียด"/"ดูเพิ่ม N
 คน" links, คู่มือการใช้งาน/ส่งออก, and any per-hire detail view (none exists in this redesign).
-`NewHireFunnelRow`'s header counts and `NewHireSidebar`'s summary cards are still mock, independent
-of the now-real roster (see this feature's own components above for the exact split).

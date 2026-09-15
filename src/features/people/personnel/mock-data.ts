@@ -33,9 +33,11 @@ export const personnelViewTabs: PersonnelViewTabItem[] = [
 // `PersonnelStatTile`/`personnelStatTiles` (the old 3-tile mock) removed
 // 2026-09-15 — พนักงานทั้งหมด/ผู้ปฏิบัติงานภายนอก/เข้าใหม่ (เดือนนี้) are all
 // real now (computed in PersonnelPage from the fetched roster).
-// ออกจากองค์กร (เดือนนี้)/อัตราการคงอยู่ stay mock below — no offboarding
-// entity exists in Core at all, same gap as /people/departures.
-export const personnelRetentionRate = 94.1;
+// `personnelRetentionRate` (a synthetic 94.1%, "อัตราการคงอยู่") removed
+// 2026-09-16 — no offboarding/departure entity exists in Core at all to
+// compute a real retention rate from (same gap as /people/departures);
+// PersonnelStatTilesRow dropped the tile entirely rather than keep showing
+// a fabricated number.
 
 export interface PersonnelRow {
   id: string;

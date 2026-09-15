@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { DonutChart } from "@/components/ui/DonutChart";
 import { ArrowRightIcon } from "@/components/ui/icons";
-import { workforceHealth, type StatTileColor } from "../mock-data";
+import type { StatTileColor } from "../mock-data";
 
 const valueColor: Record<StatTileColor, string> = {
   indigo: "text-indigo-600 dark:text-indigo-400",
@@ -26,25 +25,26 @@ interface StatTile {
 
 interface StatTilesRowProps {
   /** Real since 2026-09-15: headcount/new-hires-this-month/onboarding-count
-   *  from the same roster fetch every other real overview card uses.
-   *  การเปลี่ยนแปลง/ออกจากองค์กร stay mock — no change-request or offboarding
-   *  concept exists in Core at all yet (see people/changes, people/
-   *  departures — both still fully mock, unrelated Core work). Workforce
-   *  Health stays mock too — a synthetic composite score with no real
-   *  metric behind it in this design. No `deltaLabel` ("↑ 3 จากเดือนที่แล้ว")
-   *  on the real tiles either: a real trend needs a historical snapshot to
-   *  compare against, which Core has no mechanism for — showing one would
-   *  be a fabricated number dressed up as precise. */
+   *  from the same roster fetch every other real overview card uses. No
+   *  `deltaLabel` ("↑ 3 จากเดือนที่แล้ว") on any tile — a real trend needs a
+   *  historical snapshot to compare against, which Core has no mechanism
+   *  for yet (proposed separately — a daily `tenant_metrics_daily`-style
+   *  snapshot table); showing one would be a fabricated number dressed up
+   *  as precise. */
   totalHeadcount: number;
   newHiresThisMonth: number;
   onboardingCount: number;
 }
 
-// Six tiles across — matching the mockup layout, now a mix of real and mock
-// (see props doc above for exactly which). The Workforce Health ring reuses
-// DonutChart (2 segments: score/remainder) rather than a one-off SVG, same
-// "no second chart primitive for the same shape" discipline as the rest of
-// this codebase's chart usage.
+// **2026-09-16**: dropped 2 fabricated tiles and the Workforce Health ring
+// entirely (audit found them showing hardcoded "3"/"2" and a synthetic 92%
+// score as if real — see git history for the before state). "การเปลี่ยนแปลง"/
+// "ออกจากองค์กร" have no real backend at all yet (no change-request or
+// offboarding entity exists in Core — see people/changes, people/departures,
+// both still fully mock, proposed separately as new Core entities).
+// Workforce Health was a synthetic composite score with no real metric
+// design behind it, not just missing data — removing it rather than
+// inventing a formula. Now 3 tiles, all real.
 export function StatTilesRow({ totalHeadcount, newHiresThisMonth, onboardingCount }: StatTilesRowProps) {
   const statTiles: StatTile[] = [
     {
@@ -68,26 +68,10 @@ export function StatTilesRow({ totalHeadcount, newHiresThisMonth, onboardingCoun
       color: "amber",
       href: "/people/new-hires",
     },
-    {
-      id: "changes",
-      label: "การเปลี่ยนแปลง",
-      value: "3",
-      sublabel: "รออนุมัติ 2 รายการ",
-      color: "blue",
-      href: "/people/changes",
-    },
-    {
-      id: "departures",
-      label: "ออกจากองค์กร (เดือนนี้)",
-      value: "2",
-      sublabel: "รอ Clearance 1 รายการ",
-      color: "red",
-      href: "/people/departures",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {statTiles.map((tile) => (
         <Card key={tile.id} className="flex flex-col gap-1 p-4">
           <p className="text-xs text-zinc-500 dark:text-zinc-400">{tile.label}</p>
@@ -102,27 +86,6 @@ export function StatTilesRow({ totalHeadcount, newHiresThisMonth, onboardingCoun
           </Link>
         </Card>
       ))}
-
-      <Card className="flex items-center gap-3 p-4">
-        <div className="relative shrink-0" style={{ width: 56, height: 56 }}>
-          <DonutChart
-            size={56}
-            strokeWidth={7}
-            segments={[
-              { label: "Workforce Health", value: workforceHealth.score, color: "#6366f1" },
-              { label: "Remaining", value: 100 - workforceHealth.score, color: "#e4e4e7" },
-            ]}
-          />
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-zinc-900 dark:text-zinc-50">
-            {workforceHealth.score}%
-          </span>
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Workforce Health</p>
-          <p className="text-xs font-medium text-emerald-500">{workforceHealth.deltaLabel}</p>
-          <p className="truncate text-[11px] text-zinc-400">{workforceHealth.previousLabel}</p>
-        </div>
-      </Card>
     </div>
   );
 }

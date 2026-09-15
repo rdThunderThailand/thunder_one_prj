@@ -1,24 +1,27 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { DonutChart } from "@/components/ui/DonutChart";
 import { ArrowRightIcon } from "@/components/ui/icons";
-import { personnelRetentionRate } from "../mock-data";
 
 interface PersonnelStatTilesRowProps {
   totalCount: number;
   /** Real since 2026-09-15 — computed from the fetched roster (`member_type
    *  === "contractor"` / real start_date in the current month), same as
-   *  overview's StatTilesRow. "ออกจากองค์กร (เดือนนี้)" and "อัตราการคงอยู่"
-   *  stay mock — no offboarding/departure entity exists in Core at all
-   *  (same gap as /people/departures and overview's own two blocked
-   *  tiles). */
+   *  overview's StatTilesRow. "ออกจากองค์กร (เดือนนี้)" shows an honest "-" —
+   *  no offboarding/departure entity exists in Core at all (same gap as
+   *  /people/departures). "อัตราการคงอยู่" was dropped entirely 2026-09-16 —
+   *  see this component's own header comment. */
   contractorCount: number;
   newHiresThisMonth: number;
 }
 
+// **2026-09-16**: dropped the 5th tile ("อัตราการคงอยู่", a synthetic 94.1%
+// retention-rate donut) — a mock-data audit found it showing a fabricated
+// number with no real formula behind it. Real retention needs departure
+// dates, which need the Offboarding entity proposed separately (see
+// ../README.md). Now 4 tiles, matching this component's own grid.
 export function PersonnelStatTilesRow({ totalCount, contractorCount, newHiresThisMonth }: PersonnelStatTilesRowProps) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
       <Card className="flex flex-col gap-1 p-4">
         <p className="text-xs text-zinc-500 dark:text-zinc-400">พนักงานทั้งหมด</p>
         <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{totalCount}</span>
@@ -56,26 +59,6 @@ export function PersonnelStatTilesRow({ totalCount, contractorCount, newHiresThi
           ดูรายละเอียด
           <ArrowRightIcon className="h-3 w-3" />
         </Link>
-      </Card>
-
-      <Card className="flex items-center gap-3 p-4">
-        <div className="relative shrink-0" style={{ width: 56, height: 56 }}>
-          <DonutChart
-            size={56}
-            strokeWidth={7}
-            segments={[
-              { label: "อัตราการคงอยู่", value: personnelRetentionRate, color: "#6366f1" },
-              { label: "Remaining", value: 100 - personnelRetentionRate, color: "#e4e4e7" },
-            ]}
-          />
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-zinc-900 dark:text-zinc-50">
-            {personnelRetentionRate}%
-          </span>
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">อัตราการคงอยู่</p>
-          <p className="text-xs text-zinc-400">เป้าหมาย 90%</p>
-        </div>
       </Card>
     </div>
   );

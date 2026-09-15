@@ -41,10 +41,13 @@ the roster/management view of contractors already in the org, not the flow that 
   - `ContractorsHeader` — breadcrumb (หน้าหลัก › ผู้ปฏิบัติงานภายนอก, matching the mockup's own) +
     **real** "+ เพิ่มผู้ปฏิบัติงานภายนอก", a `Link` to `/people/add/contractor`
     (`people/add-person`'s already-built wizard).
-  - `ContractorStatTilesRow` — 5 plain tiles, still all mock (out of this round's scope).
+  - `ContractorStatTilesRow` — **real**, 5 tiles computed from the fetched roster (not the old static
+    mock numbers 48/32/6/10/11). "ใกล้หมดสัญญา" will always read 0 — `core-mapper.ts`'s
+    `deriveStatus()` never returns "expiring-soon" since Core has no contract-end-date at list level
+    to derive it from (same gap the intro above documents).
   - `ContractorTabs` — real client-side filtering of the fetched rows by (derived) `ContractorStatus`,
-    same pattern as `people/personnel`'s `PersonnelTabs`. Tab counts are still the mockup's own
-    numbers, not derived from the filtered rows.
+    same pattern as `people/personnel`'s `PersonnelTabs`. Tab counts are real too, computed from the
+    fetched rows.
   - `ContractorTable` — the roster table (person, company, role/unit, internal coordinator,
     contract dates, status badge, inert view/more actions) — unchanged markup, now rendering "-"
     for the fields `core-mapper.ts` leaves `null`.

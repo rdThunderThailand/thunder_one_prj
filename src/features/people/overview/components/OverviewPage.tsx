@@ -1,6 +1,5 @@
 import type { OverviewStats } from "../core-mapper";
 import type { CoreRecentLog } from "../services/dashboard-api";
-import { AttentionListCard } from "./AttentionListCard";
 import { OnboardingStatusCard } from "./OnboardingStatusCard";
 import { OrgStructureCard } from "./OrgStructureCard";
 import { OverviewHeader } from "./OverviewHeader";
@@ -14,11 +13,9 @@ interface OverviewPageProps {
   /** Real since 2026-09-15 (`TodayActivityCard`'s own header comment). */
   todayLogs: CoreRecentLog[] | null;
   /** Real since 2026-09-15 (`../core-mapper.ts`'s `computeOverviewStats`) —
-   *  backs StatTilesRow (3 of 5 tiles)/OnboardingStatusCard/OrgStructureCard/
+   *  backs StatTilesRow/OnboardingStatusCard/OrgStructureCard/
    *  PersonnelBreakdownCard/TenureDistributionCard. `null` when the Core
-   *  fetch failed or no tenant/session was resolved, same as `todayLogs`.
-   *  AttentionListCard stays fully mock — no "attention items"/task concept
-   *  exists in Core at all. */
+   *  fetch failed or no tenant/session was resolved, same as `todayLogs`. */
   stats: OverviewStats | null;
 }
 
@@ -40,8 +37,7 @@ export function OverviewPage({ todayLogs, stats }: OverviewPageProps) {
             onboardingCount={stats.onboardingCount}
           />
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <AttentionListCard />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <OnboardingStatusCard summary={stats.onboardingSummary} rows={stats.onboardingRows} />
             <TodayActivityCard logs={todayLogs} />
           </div>

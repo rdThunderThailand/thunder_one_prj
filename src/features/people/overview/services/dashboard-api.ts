@@ -1,9 +1,7 @@
 // Real Thunder_Core integration for OverviewPage's "กิจกรรมวันนี้" card —
 // server-only, same shape as org-structure/personnel's services. Wired
-// 2026-09-15, scoped to just this one card (see this feature's README for
-// what's still mock: StatTilesRow, AttentionListCard, OnboardingStatusCard,
-// OrgStructureCard, PersonnelBreakdownCard, TenureDistributionCard all stay
-// mock until Core has something to back them).
+// 2026-09-15 (see this feature's README for what else is real vs. still
+// blocked on new Core entities, as of the 2026-09-16 mock-data audit).
 //
 // `GET /tenants/:id/dashboard` is a tenant-wide platform dashboard (also
 // used by asset/device features) — its `recentLogs` come from

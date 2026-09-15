@@ -8,126 +8,22 @@ import type { DonutSegment } from "@/components/ui/DonutChart";
 
 export type StatTileColor = "indigo" | "emerald" | "amber" | "blue" | "red";
 
-export interface StatTileData {
-  id: string;
-  label: string;
-  value: string;
-  sublabel?: string;
-  deltaLabel?: string;
-  color: StatTileColor;
-}
+// `StatTileData`/`statTiles` (the old 5-tile mock, including a hardcoded
+// "3"/"2" for การเปลี่ยนแปลง/ออกจากองค์กร) and `WorkforceHealthData`/
+// `workforceHealth` (a synthetic 92% score) removed 2026-09-16 — a mock-data
+// audit found `StatTilesRow` showing both as if real. Neither has anything
+// to back it in Core yet: การเปลี่ยนแปลง/ออกจากองค์กร need the
+// Change/Offboarding entities proposed separately; Workforce Health was a
+// composite score with no real formula design at all, not just missing
+// data. `StatTilesRow` now renders 3 real tiles only — see that component's
+// own header comment.
 
-export const statTiles: StatTileData[] = [
-  {
-    id: "headcount",
-    label: "จำนวนบุคลากรทั้งหมด",
-    value: "128",
-    deltaLabel: "↑ 3 จากเดือนที่แล้ว",
-    color: "indigo",
-  },
-  {
-    id: "new-hires",
-    label: "เข้าใหม่ (เดือนนี้)",
-    value: "8",
-    deltaLabel: "↑ 2 จากเดือนที่แล้ว",
-    color: "emerald",
-  },
-  {
-    id: "onboarding",
-    label: "กำลัง Onboarding",
-    value: "5",
-    sublabel: "3 คนใกล้ครบกำหนด",
-    color: "amber",
-  },
-  {
-    id: "changes",
-    label: "การเปลี่ยนแปลง",
-    value: "3",
-    sublabel: "รออนุมัติ 2 รายการ",
-    color: "blue",
-  },
-  {
-    id: "departures",
-    label: "ออกจากองค์กร (เดือนนี้)",
-    value: "2",
-    sublabel: "รอ Clearance 1 รายการ",
-    color: "red",
-  },
-];
-
-export interface WorkforceHealthData {
-  score: number;
-  deltaLabel: string;
-  previousLabel: string;
-}
-
-export const workforceHealth: WorkforceHealthData = {
-  score: 92,
-  deltaLabel: "↑ 4%",
-  previousLabel: "ดีขึ้นจากที่แล้ว 88%",
-};
-
-export type AttentionStatus = "pending" | "awaiting-approval" | "awaiting-response" | "overdue";
-
-export interface AttentionItem {
-  id: string;
-  name: string;
-  description: string;
-  status: AttentionStatus;
-  dateLabel: string;
-  dueLabel: string;
-  dueUrgent: boolean;
-}
-
-export const attentionItems: AttentionItem[] = [
-  {
-    id: "att-1",
-    name: "สมชาย วงศ์ดี",
-    description: "เริ่มงานพรุ่งนี้",
-    status: "pending",
-    dateLabel: "13 พ.ค. 2569",
-    dueLabel: "พรุ่งนี้",
-    dueUrgent: true,
-  },
-  {
-    id: "att-2",
-    name: "ณิชา รัตนกุล",
-    description: "คำขอเปลี่ยนผู้จัดการ",
-    status: "awaiting-approval",
-    dateLabel: "14 พ.ค. 2569",
-    dueLabel: "อีก 2 วัน",
-    dueUrgent: false,
-  },
-  {
-    id: "att-3",
-    name: "Peter Wilson",
-    description: "คำเชิญเข้าร่วมองค์กร",
-    status: "awaiting-response",
-    dateLabel: "16 พ.ค. 2569",
-    dueLabel: "อีก 4 วัน",
-    dueUrgent: false,
-  },
-  {
-    id: "att-4",
-    name: "Tom K.",
-    description: "สิ้นสุดสัญญาจ้าง",
-    status: "pending",
-    dateLabel: "31 พ.ค. 2569",
-    dueLabel: "อีก 19 วัน",
-    dueUrgent: false,
-  },
-  {
-    id: "att-5",
-    name: "Ann Supaporn",
-    description: "เอกสารนโยบายค้างอ่าน",
-    status: "overdue",
-    dateLabel: "-",
-    dueLabel: "เกินกำหนด 3 วัน",
-    dueUrgent: true,
-  },
-];
-
-export const attentionTotalCount = 12;
+// `AttentionStatus`/`AttentionItem`/`attentionItems`/`attentionTotalCount`
+// (backed `AttentionListCard`, "งานที่ต้องให้ความสนใจ") removed 2026-09-16 —
+// same mock-data audit as StatTilesRow above. Every row was fabricated
+// person data (names, descriptions, due dates) with no real "attention
+// items"/cross-App task concept in Core to back any of it — the whole card
+// was removed from `OverviewPage` rather than kept showing fake people.
 
 export interface OnboardingSummary {
   total: number;

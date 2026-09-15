@@ -7,11 +7,13 @@ import { getRecentLogs } from "@/features/people/overview/services/dashboard-api
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 
 // HR Manager — People Workspace's landing page (requirement mockup's
-// "ภาพรวม"). Real since 2026-09-15 for "กิจกรรมวันนี้" plus StatTilesRow (3
-// of 5 tiles)/OnboardingStatusCard/OrgStructureCard/PersonnelBreakdownCard/
+// "ภาพรวม"). Real since 2026-09-15 for "กิจกรรมวันนี้" plus StatTilesRow/
+// OnboardingStatusCard/OrgStructureCard/PersonnelBreakdownCard/
 // TenureDistributionCard (see overview/core-mapper.ts's computeOverviewStats
-// for exactly what's derived from what) — AttentionListCard and part of
-// StatTilesRow/Workforce Health stay mock, see this feature's README.
+// for exactly what's derived from what). **2026-09-16**: AttentionListCard
+// and StatTilesRow's fabricated tiles (การเปลี่ยนแปลง/ออกจากองค์กร/Workforce
+// Health) were removed rather than left showing mock data — see this
+// feature's README for what's still blocked on new Core entities.
 export default async function PeoplePage() {
   const session = await getSession();
   const token = await getAuthToken();
