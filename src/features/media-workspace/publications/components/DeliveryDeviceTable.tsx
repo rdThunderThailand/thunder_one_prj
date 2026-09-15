@@ -145,6 +145,11 @@ export function DeliveryDeviceTable({
                   >
                     <td className="py-2.5 pr-3 font-medium text-zinc-900 dark:text-zinc-100">
                       {target.device_name ?? target.device_id}
+                      {target.via_groups && target.via_groups.length > 0 && (
+                        <p className="mt-0.5 text-[11px] font-normal text-zinc-400">
+                          via {target.via_groups.join(", ")}
+                        </p>
+                      )}
                     </td>
                     <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">{progress.stage2}</td>
                     <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">{progress.stage3}</td>

@@ -81,8 +81,13 @@ assert.deepEqual(await attemptNext(1, validDraft, ok), { kind: "saved" });
 const blankName = await attemptNext(2, noName, ok);
 assert.equal(blankName.kind, "invalid");
 assert.deepEqual(blankName.kind === "invalid" && blankName.errors, ["กรุณากรอกชื่อ Program"]);
-assert.equal((await attemptNext(3, { ...validDraft, channelIds: [] }, ok)).kind, "invalid"); // no channels
+assert.equal((await attemptNext(3, { ...validDraft, channelIds: [] }, ok)).kind, "invalid"); // no channels, no groups
 assert.equal((await attemptNext(3, validDraft, ok)).kind, "saved"); // channel + "now" schedule
+// A Group-only target is a complete selection too (ADR 0074 §6) — no direct Channel needed.
+assert.equal(
+  (await attemptNext(3, { ...validDraft, channelIds: [], groupIds: ["g-1"] }, ok)).kind,
+  "saved",
+);
 assert.equal((await attemptNext(4, noContent, ok)).kind, "saved"); // Review has no gate
 
 // A composition draft with no Layout picked yet is invalid at step 1 (ADR 0049 §5).

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { buttonClasses } from "@/components/ui/Button";
@@ -17,23 +16,24 @@ import { fetchChannels } from "../services/channels-api";
 import { fetchChannelGroupsCount } from "../services/channel-groups-api";
 import { paginate, sortChannels } from "../list-filtering";
 import { DEFAULT_STATE, readListState, writeListState } from "../list-url-state";
-import type { ChannelListItem } from "../types";
+import type { ChannelDetail, ChannelListItem } from "../types";
 import { ChannelDetailPanel } from "./ChannelDetailPanel";
 import { ChannelFiltersBar } from "./ChannelFiltersBar";
 import { ChannelSummaryTiles } from "./ChannelSummaryTiles";
 import { ChannelTable } from "./ChannelTable";
 import { ListEmpty, LoadError, TableSkeleton } from "./ChannelsListStates";
+import { CreateChannelModal } from "./create-wizard/CreateChannelModal";
 
-function ChannelsHeader() {
+function ChannelsHeader({ onCreate }: { onCreate: () => void }) {
   return (
     <PageHeader
       title="All Channels"
       subtitle="Manage and monitor all your channels, grouped by type, location, and purpose."
       actions={
-        <Link href="/media-workspace/channels/create" className={buttonClasses("primary")}>
+        <button type="button" onClick={onCreate} className={buttonClasses("primary")}>
           <PlusIcon />
           Create Channel
-        </Link>
+        </button>
       }
     />
   );
@@ -44,6 +44,7 @@ export function ChannelsListPage() {
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   // Independent of `channels`/`error` above: Now Playing and the Channel Groups tile degrade on
@@ -127,6 +128,10 @@ export function ChannelsListPage() {
     setChannels((current) => current?.map((c) => (c.id === updated.id ? updated : c)) ?? current);
   };
 
+  const handleCreated = (created: ChannelDetail) => {
+    setChannels((current) => (current ? [created, ...current] : current));
+  };
+
   if (error?.kind === "forbidden") {
     return (
       <div data-testid="channels-list">
@@ -137,7 +142,7 @@ export function ChannelsListPage() {
 
   return (
     <div data-testid="channels-list" className="flex flex-col gap-5">
-      <ChannelsHeader />
+      <ChannelsHeader onCreate={() => setIsCreateOpen(true)} />
       {!(channels === null && error !== null) && (
         <ChannelSummaryTiles summary={summary} groupCount={groupCount} />
       )}
@@ -219,6 +224,14 @@ export function ChannelsListPage() {
             />
           )}
         </div>
+      )}
+
+      {isCreateOpen && (
+        <CreateChannelModal
+          onClose={() => setIsCreateOpen(false)}
+          onCreated={handleCreated}
+          onViewChannel={(channelId) => setSelectedId(channelId)}
+        />
       )}
     </div>
   );

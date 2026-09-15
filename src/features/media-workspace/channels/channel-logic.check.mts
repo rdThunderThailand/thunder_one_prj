@@ -4,16 +4,10 @@ import {
   channelStatus,
   channelTypeKey,
   channelTypeLabel,
-  countOnlineDevices,
   filterChannels,
   findChannelAttention,
   formatChannelLastSeen,
-  getDeviceCompatibility,
-  mergeChannelDeviceCandidates,
-  mergeChannelTypeOptions,
-  shouldConfirmResolutionMismatch,
   summarizeChannels,
-  validateChannelDraft,
 } from "./domain.ts";
 import type { ChannelListItem } from "./domain.ts";
 
@@ -123,7 +117,7 @@ const fixtures: ChannelListItem[] = [
     output_kind: "screen",
     display_config: {
       mode: "multi",
-      arrangement: "1x2",
+      arrangement: { rows: 1, cols: 2 },
       screens: [
         { index: 0, resolution: "1080x1920", output: "HDMI 1" },
         { index: 1, resolution: "1080x1920", output: "HDMI 2" },
@@ -161,10 +155,6 @@ const fixtures: ChannelListItem[] = [
 ];
 
 const allFilters = { search: "", type: "all", status: "all", lifecycle: "all" } as const;
-
-assert.equal(countOnlineDevices([]), 0);
-assert.equal(countOnlineDevices([{ health: "online" }, { health: "offline" }]), 1);
-assert.equal(countOnlineDevices([{ health: "warning" }]), 0);
 
 // channelStatus / channelTypeKey / channelTypeLabel — ADR 0074 §4/§3.
 assert.equal(channelStatus(fixtures[0]!), "online");
@@ -215,150 +205,6 @@ assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "screen" }).map
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, lifecycle: "draft" }).map((channel) => channel.id), [
   "channel-draft-dooh",
 ]);
-
-assert.deepEqual(
-  validateChannelDraft({
-    name: "",
-    category: "in_store",
-    channel_type_id: "",
-    device_ids: [],
-    confirm_mismatch: false,
-    as_draft: true,
-    sync_enabled: false,
-  }),
-  { name: "กรุณาระบุชื่อ Channel", channel_type_id: "กรุณาเลือก Channel Type" },
-);
-
-const partialProfileDevice = {
-  id: "device-partial",
-  name: "Partial Profile Screen",
-  code: null,
-  health: "online" as const,
-  last_heartbeat_at: null,
-  orientation: "portrait" as const,
-  resolution: null,
-  sync_phase_error_ms: null,
-  sync_loop_duration_seconds: null,
-};
-
-assert.equal(
-  getDeviceCompatibility(partialProfileDevice, "landscape", "1920x1080"),
-  "orientation-mismatch",
-);
-assert.equal(
-  getDeviceCompatibility(
-    { ...partialProfileDevice, orientation: null, resolution: "1280x720" },
-    "landscape",
-    "1920x1080",
-  ),
-  "resolution-mismatch",
-);
-assert.equal(
-  getDeviceCompatibility(
-    { ...partialProfileDevice, resolution: "1280x720" },
-    "landscape",
-    "1920x1080",
-  ),
-  "orientation-mismatch",
-);
-assert.equal(
-  getDeviceCompatibility(
-    { ...partialProfileDevice, orientation: "landscape", resolution: null },
-    "landscape",
-    "1920x1080",
-  ),
-  "profile-unavailable",
-);
-assert.equal(
-  getDeviceCompatibility(
-    { ...partialProfileDevice, orientation: "landscape", resolution: "1920x1080" },
-    "landscape",
-    "1920x1080",
-  ),
-  "compatible",
-);
-assert.equal(getDeviceCompatibility(partialProfileDevice, null, null), "not-checked");
-assert.equal(
-  shouldConfirmResolutionMismatch(
-    [{ ...partialProfileDevice, orientation: null, resolution: "1280x720" }],
-    "1920x1080",
-    new Set(["device-partial"]),
-  ),
-  true,
-);
-assert.equal(
-  shouldConfirmResolutionMismatch(
-    [{ ...partialProfileDevice, orientation: null, resolution: "1280x720" }],
-    "1920x1080",
-    new Set(),
-  ),
-  false,
-);
-assert.equal(
-  shouldConfirmResolutionMismatch(
-    [{ ...partialProfileDevice, orientation: "landscape", resolution: "1920x1080" }],
-    "1920x1080",
-    new Set(),
-  ),
-  false,
-);
-
-assert.deepEqual(
-  mergeChannelDeviceCandidates(
-    [
-      {
-        id: "device-assigned",
-        name: "Live Screen Name",
-        code: null,
-        health: "warning",
-        last_heartbeat_at: "2026-08-20T03:00:00.000Z",
-        orientation: null,
-        resolution: null,
-      },
-    ],
-    [
-      {
-        id: "device-assigned",
-        name: "Assigned Screen Name",
-        code: "CW-01",
-        health: "offline",
-        last_heartbeat_at: "2026-08-19T03:00:00.000Z",
-        orientation: "landscape",
-        resolution: "1920x1080",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-    ],
-  ),
-  [
-    {
-      id: "device-assigned",
-      name: "Live Screen Name",
-      code: "CW-01",
-      health: "warning",
-      last_heartbeat_at: "2026-08-20T03:00:00.000Z",
-      orientation: "landscape",
-      resolution: "1920x1080",
-    },
-  ],
-);
-
-const currentInactiveType = {
-  id: "type-current-inactive",
-  code: "legacy_menu_board",
-  name: "Legacy Menu Board",
-  channel_category: "in_store" as const,
-};
-assert.deepEqual(mergeChannelTypeOptions([], currentInactiveType), [
-  { ...currentInactiveType, is_active: false },
-]);
-assert.deepEqual(
-  mergeChannelTypeOptions(
-    [{ ...currentInactiveType, name: "Current Reference Name", is_active: false }],
-    currentInactiveType,
-  ),
-  [{ ...currentInactiveType, name: "Current Reference Name", is_active: false }],
-);
 
 assert.equal(formatChannelLastSeen(null), "Never connected");
 assert.equal(

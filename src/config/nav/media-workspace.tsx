@@ -14,6 +14,7 @@ import {
   MonitorIcon,
   ShareNodesIcon,
   UploadIcon,
+  UsersIcon,
   WarningTriangleIcon,
 } from "@/components/ui/icons";
 import type { NavConfig, NavItem } from "./types";
@@ -46,6 +47,7 @@ export const mediaWorkspaceNav: NavConfig = {
       label: "Channels",
       items: [
         { label: "All Channels", href: "/media-workspace/channels", icon: <MonitorIcon /> },
+        { label: "Channel Groups", href: "/media-workspace/channel-groups", icon: <UsersIcon /> },
         { label: "Screens", icon: <ShareNodesIcon /> },
         { label: "TV", icon: <MonitorIcon /> },
         { label: "PA / Audio", icon: <BroadcastIcon /> },

@@ -13,6 +13,7 @@ import { fetchChannel } from "../services/channels-api";
 import type { NowNextOccurrence } from "../../publications/now-next";
 import { fetchPublication } from "../../publications/services/publications-api";
 import type { ChannelLifecycle, ChannelListItem, ChannelStatusFilter } from "../types";
+import { ChannelGroupsPickerModal } from "./ChannelGroupsPickerModal";
 import { ChannelRowActionsMenu } from "./ChannelRowActionsMenu";
 import { ChannelStructureTree } from "./ChannelStructureTree";
 
@@ -71,6 +72,7 @@ export function ChannelDetailPanel({
   // under a new one — the alternative, resetting state at the top of the effect, is a
   // synchronous setState-in-effect the lint config here forbids.
   const [viaGroupsResult, setViaGroupsResult] = useState<{ key: string; groups: string[] } | null>(null);
+  const [managingGroups, setManagingGroups] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -228,9 +230,8 @@ export function ChannelDetailPanel({
           </h3>
           <button
             type="button"
-            disabled
-            title="Manage Groups — not available yet"
-            className="text-xs font-medium text-zinc-300 dark:text-zinc-600"
+            onClick={() => setManagingGroups(true)}
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
           >
             Manage →
           </button>
@@ -245,6 +246,17 @@ export function ChannelDetailPanel({
           </div>
         )}
       </div>
+
+      {managingGroups && (
+        <ChannelGroupsPickerModal
+          channel={channel}
+          onClose={() => setManagingGroups(false)}
+          onSaved={(updated) => {
+            setManagingGroups(false);
+            onChanged(updated);
+          }}
+        />
+      )}
 
       <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">

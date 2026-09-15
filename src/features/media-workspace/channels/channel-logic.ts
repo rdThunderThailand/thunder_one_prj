@@ -1,13 +1,8 @@
 import type {
-  ChannelDevice,
-  ChannelDeviceCandidate,
-  ChannelDraftInput,
   ChannelFilters,
   ChannelListItem,
-  ChannelOrientation,
   ChannelStatusFilter,
   ChannelTypeFilter,
-  ChannelTypeOption,
 } from "./types/index.ts";
 
 const OUTPUT_KIND_LABEL: Record<ChannelListItem["output_kind"], string> = {
@@ -34,97 +29,6 @@ export function channelTypeLabel(
   channel: Pick<ChannelListItem, "output_kind" | "display_config">,
 ): string {
   return channelTypeKey(channel) === "multi" ? "Multi-screen" : OUTPUT_KIND_LABEL[channel.output_kind];
-}
-
-export type DeviceCompatibility =
-  | "compatible"
-  | "orientation-mismatch"
-  | "resolution-mismatch"
-  | "profile-unavailable"
-  | "not-checked";
-
-export function getDeviceCompatibility(
-  device: ChannelDeviceCandidate,
-  expectedOrientation: ChannelOrientation | null,
-  expectedResolution: string | null,
-): DeviceCompatibility {
-  if (!expectedOrientation && !expectedResolution) return "not-checked";
-  if (
-    expectedOrientation &&
-    device.orientation !== null &&
-    device.orientation !== expectedOrientation
-  ) {
-    return "orientation-mismatch";
-  }
-  if (
-    expectedResolution &&
-    device.resolution !== null &&
-    device.resolution !== expectedResolution
-  ) {
-    return "resolution-mismatch";
-  }
-  if (
-    (expectedOrientation && device.orientation === null) ||
-    (expectedResolution && device.resolution === null)
-  ) {
-    return "profile-unavailable";
-  }
-  return "compatible";
-}
-
-export function shouldConfirmResolutionMismatch(
-  selectedDevices: readonly ChannelDeviceCandidate[],
-  expectedResolution: string | null,
-  confirmedDeviceIds: ReadonlySet<string>,
-): boolean {
-  if (!expectedResolution) return false;
-  const mismatches = selectedDevices.filter(
-    (device) => device.resolution !== null && device.resolution !== expectedResolution,
-  );
-  return (
-    mismatches.length > 0 &&
-    mismatches.every((device) => confirmedDeviceIds.has(device.id))
-  );
-}
-
-export function mergeChannelDeviceCandidates(
-  candidates: readonly ChannelDeviceCandidate[],
-  assignedDevices: readonly ChannelDevice[],
-): ChannelDeviceCandidate[] {
-  const assignedById = new Map(assignedDevices.map((device) => [device.id, device]));
-  const candidateIds = new Set(candidates.map((device) => device.id));
-  const merged = candidates.map((candidate) => {
-    const assigned = assignedById.get(candidate.id);
-    if (!assigned) return candidate;
-    return {
-      ...candidate,
-      code: assigned.code ?? candidate.code,
-      orientation: assigned.orientation ?? candidate.orientation,
-      resolution: assigned.resolution ?? candidate.resolution,
-    };
-  });
-  return [
-    ...merged,
-    ...assignedDevices
-      .filter((device) => !candidateIds.has(device.id))
-      .map((device) => ({ ...device })),
-  ];
-}
-
-export function mergeChannelTypeOptions(
-  referenceTypes: readonly ChannelTypeOption[],
-  currentType: ChannelTypeOption | null,
-): ChannelTypeOption[] {
-  if (!currentType || referenceTypes.some((option) => option.id === currentType.id)) {
-    return [...referenceTypes];
-  }
-  return [...referenceTypes, { ...currentType, is_active: false }];
-}
-
-/** How much of a Channel is actually up. ADR 0037 replaced the channel-level health value
- * with this count, so "Active" and "2/3 online" are two separate facts on the row. */
-export function countOnlineDevices(devices: readonly Pick<ChannelDevice, "health">[]): number {
-  return devices.filter((device) => device.health === "online").length;
 }
 
 /** D1's tiles: Total / Online / Warning / Offline. A Player-less Draft counts only in `total`
@@ -177,11 +81,4 @@ export function formatChannelLastSeen(iso: string | null | undefined, now = Date
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `Last seen ${hours}h ago`;
   return `Last seen ${Math.floor(hours / 24)}d ago`;
-}
-
-export function validateChannelDraft(input: ChannelDraftInput): Partial<Record<"name" | "channel_type_id", string>> {
-  const errors: Partial<Record<"name" | "channel_type_id", string>> = {};
-  if (!input.name.trim()) errors.name = "กรุณาระบุชื่อ Channel";
-  if (!input.channel_type_id) errors.channel_type_id = "กรุณาเลือก Channel Type";
-  return errors;
 }

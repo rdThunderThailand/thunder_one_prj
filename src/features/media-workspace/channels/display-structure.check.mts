@@ -41,7 +41,7 @@ const multi = structureNodes({
   health: "warning",
   display_config: {
     mode: "multi",
-    arrangement: "3x1",
+    arrangement: { rows: 1, cols: 3 },
     screens: [
       { index: 1, resolution: "1920x1080", output: "HDMI 1" },
       { index: 2, resolution: "1920x1080", output: "HDMI 2" },

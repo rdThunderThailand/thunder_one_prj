@@ -123,4 +123,28 @@ assert.deepEqual(summarizeGeometryFit(geometryChannels, ["c1"], null),
 assert.deepEqual(summarizeGeometryFit(geometryChannels, [], "16:9"),
   { unfitting: [], unprofiled: [] });
 
+// Canvas set (ADR 0074 §3): every device of that Channel is checked against the declared canvas,
+// not its own reported resolution — a canvas that fits clears devices that would individually
+// have read as unfitting/unprofiled.
+const canvasSetChannels = [
+  { id: "c1", expected_resolution: "1920x1080", devices: [
+    { id: "d1", name: "Screen 01", resolution: "1024x768" },
+    { id: "d2", name: "Screen 02", resolution: null },
+  ] },
+] as unknown as ChannelListItem[];
+assert.deepEqual(summarizeGeometryFit(canvasSetChannels, ["c1"], "16:9"), { unfitting: [], unprofiled: [] });
+
+// Canvas set, one-Player model (post-M1b `player`, no `devices[]`): the Player is the sole target,
+// checked against the canvas.
+const canvasSetPlayerChannel = [
+  { id: "c2", expected_resolution: "1920x1080", player: { id: "p1", name: "Player 01", resolution: "1024x768" }, devices: [] },
+] as unknown as ChannelListItem[];
+assert.deepEqual(summarizeGeometryFit(canvasSetPlayerChannel, ["c2"], "16:9"), { unfitting: [], unprofiled: [] });
+
+// Canvas unset, one-Player model: falls back to the Player's own reported resolution.
+const noCanvasPlayerChannel = [
+  { id: "c3", expected_resolution: null, player: { id: "p2", name: "Player 02", resolution: "1024x768" }, devices: [] },
+] as unknown as ChannelListItem[];
+assert.deepEqual(summarizeGeometryFit(noCanvasPlayerChannel, ["c3"], "16:9"), { unfitting: ["Player 02"], unprofiled: [] });
+
 console.log("channels-logic.check.mts — all assertions passed");

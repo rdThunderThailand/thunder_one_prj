@@ -119,10 +119,15 @@ export function summarizeGeometryFit(
   const selected = new Set(channelIds);
   for (const channel of channels) {
     if (!selected.has(channel.id)) continue;
-    for (const device of channel.devices) {
-      const fit = deviceFit(device.resolution, aspectRatio);
-      if (fit === "unknown") unprofiled.add(device.name);
-      else if (fit !== "fits") unfitting.add(device.name);
+    // ADR 0074 §3: the Channel's own declared canvas is the geometry source of truth when set —
+    // every screen behind it shares that one canvas. The Player's own reported resolution is only
+    // the fallback for a Channel with no canvas declared; `unknown` remains the label for neither.
+    const canvas = channel.expected_resolution;
+    const targets = channel.player ? [channel.player] : channel.devices;
+    for (const target of targets) {
+      const fit = deviceFit(canvas ?? target.resolution, aspectRatio);
+      if (fit === "unknown") unprofiled.add(target.name);
+      else if (fit !== "fits") unfitting.add(target.name);
     }
   }
   return {

@@ -63,6 +63,19 @@ export function isDuplicateName(message: string): boolean {
 }
 
 /**
+ * `media_publication_activate`'s first-activation guard (ADR 0074 §5) — an incomplete
+ * synchronized Group, or a direct `device` target inside one. Both already name the Group and
+ * the missing/conflicting Channels in the raw text, so it is shown as-is rather than routed
+ * through the generic "Invalid input:" bucket below, which would otherwise swallow those names.
+ */
+function isIncompleteSyncGroupTarget(message: string): boolean {
+  return (
+    message.includes("synchronized group target is incomplete") ||
+    message.includes("cannot activate a direct device target inside a synchronized group")
+  );
+}
+
+/**
  * `media_publication_set_content` raises this when any item points at an asset that
  * is not `approved`. The UI blocks picking one, so reaching here means the asset lost
  * its approval after it was chosen — the raw wording names neither the asset nor the
@@ -111,6 +124,10 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
       kind: "rejected",
       message: "ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่นแล้วลองใหม่",
     };
+  }
+
+  if (isIncompleteSyncGroupTarget(message)) {
+    return { kind: "rejected", message };
   }
 
   // Everything the API rejects on shape — zod schema failures and the remaining

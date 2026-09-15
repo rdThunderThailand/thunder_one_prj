@@ -202,6 +202,14 @@ const noChannels = computeEligibility({ ...base, draft: { ...validDraft, channel
 assert.equal(statusOf(noChannels, "targets"), "fail");
 assert.equal(noChannels.canPublish, false);
 
+// A Group-only target is a complete selection too (ADR 0074 §6) — no direct Channel needed.
+const groupOnly = computeEligibility({
+  ...base,
+  draft: { ...validDraft, channelIds: [], groupIds: ["g-1"] },
+});
+assert.equal(statusOf(groupOnly, "targets"), "pass");
+assert.equal(groupOnly.canPublish, true);
+
 // --- policy row is deliberately neutral in Phase 1 (no Approval Workflow) ---
 assert.equal(statusOf(computeEligibility(base), "policy"), "unknown");
 
