@@ -73,7 +73,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
   const dailyStart = schedule.schedule_type === "now" ? "00:00" : schedule.daily_start;
   const dailyEnd = schedule.schedule_type === "now" ? "23:59" : schedule.daily_end;
   const resolutions = [
-    ...new Set(channels.filter((channel) => channelIds.includes(channel.id)).flatMap((channel) => channel.devices.map((device) => device.resolution).filter(Boolean))),
+    ...new Set(channels.filter((channel) => channelIds.includes(channel.id)).map((channel) => channel.player?.resolution).filter(Boolean)),
   ];
 
   return (

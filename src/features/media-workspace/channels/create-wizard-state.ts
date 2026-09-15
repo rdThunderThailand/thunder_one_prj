@@ -55,10 +55,8 @@ export interface CreateChannelPayload {
   output_kind: ChannelOutputKind;
   expected_resolution: string | null;
   display_config: ReturnType<typeof buildDisplayConfig> | null;
-  // `channelCreateSchema` (Thunder_Core) declares these `.nullable()` but not `.optional()` — the
-  // key must be present, `null` or not, or zod 400s. Orientation is always derived server-side
-  // now (ADR 0074 §3) and a default playlist has no place in this wizard, so both are always null.
-  expected_orientation: null;
+  // `channelCreateSchema` (Thunder_Core) declares this `.nullable()` but not `.optional()` — the
+  // key must be present or zod 400s. A default playlist has no place in this wizard.
   default_playlist_id: null;
 }
 
@@ -75,7 +73,6 @@ export function toCreateChannelPayload(draft: CreateChannelDraft): CreateChannel
     output_kind: draft.outputKind,
     expected_resolution: draft.displayMode === "single" ? draft.screenResolution : null,
     display_config: draft.displayMode === "multi" ? buildDisplayConfig(arrangement, draft.screens) : null,
-    expected_orientation: null,
     default_playlist_id: null,
   };
 }

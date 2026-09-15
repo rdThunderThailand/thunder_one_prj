@@ -20,30 +20,26 @@ const fixtures: ChannelListItem[] = [
     category: "in_store",
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: { id: "location-central-world", name: "Central World" },
-    devices: [
-      {
-        id: "device-central-world",
-        name: "Entrance Screen",
-        code: "CW-ENTRANCE",
-        health: "online",
-        last_heartbeat_at: "2026-08-20T00:00:00.000Z",
-        orientation: "landscape",
-        resolution: "1920x1080",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-    ],
-    player: null,
+    player: {
+      id: "device-central-world",
+      name: "Entrance Screen",
+      code: "CW-ENTRANCE",
+      health: "online",
+      last_heartbeat_at: "2026-08-20T00:00:00.000Z",
+      orientation: "landscape",
+      resolution: "1920x1080",
+      sync_phase_error_ms: null,
+      sync_loop_duration_seconds: null,
+    },
     health: "online",
     output_kind: "kiosk",
     display_config: null,
+    groups: [],
     expected_orientation: "landscape",
     expected_resolution: "1920x1080",
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
-    sync_enabled: false,
-    direct_target_conflicts: [],
   },
   {
     id: "channel-active-dooh",
@@ -53,43 +49,26 @@ const fixtures: ChannelListItem[] = [
     category: "dooh",
     channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
     location: { id: "location-siam", name: "Siam Square" },
-    devices: [
-      {
-        id: "device-siam-north",
-        name: "North LED Screen",
-        code: "SS-LED-NORTH",
-        health: "online",
-        last_heartbeat_at: "2026-08-20T00:00:00.000Z",
-        orientation: "landscape",
-        resolution: "3840x2160",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-      {
-        id: "device-siam-south",
-        name: "South LED Screen",
-        code: "SS-LED-SOUTH",
-        health: "offline",
-        last_heartbeat_at: "2026-08-19T22:00:00.000Z",
-        orientation: "landscape",
-        resolution: "1920x1080",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-    ],
-    // Legacy 2-device fixture (pre-M1b shape); ADR 0074 §7 says the frontend must read this from
-    // `devices[]`, never treat one as the Player.
-    player: null,
-    health: "warning",
+    player: {
+      id: "device-siam-south",
+      name: "South LED Screen",
+      code: "SS-LED-SOUTH",
+      health: "offline",
+      last_heartbeat_at: "2026-08-19T22:00:00.000Z",
+      orientation: "landscape",
+      resolution: "1920x1080",
+      sync_phase_error_ms: null,
+      sync_loop_duration_seconds: null,
+    },
+    health: "offline",
     output_kind: "screen",
     display_config: null,
+    groups: [{ id: "group-siam", name: "Siam Square", playback_mode: "synchronized" }],
     expected_orientation: "landscape",
     expected_resolution: "3840x2160",
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
-    sync_enabled: false,
-    direct_target_conflicts: [],
   },
   {
     id: "channel-draft-dooh",
@@ -99,20 +78,17 @@ const fixtures: ChannelListItem[] = [
     category: "dooh",
     channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
     location: { id: "location-rama-nine", name: "Rama Nine" },
-    devices: [
-      {
-        id: "device-rama-nine",
-        name: "West LED Screen",
-        code: "RN-LED-01",
-        health: "online",
-        last_heartbeat_at: "2026-08-20T00:00:00.000Z",
-        orientation: "portrait",
-        resolution: "1080x1920",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-    ],
-    player: null,
+    player: {
+      id: "device-rama-nine",
+      name: "West LED Screen",
+      code: "RN-LED-01",
+      health: "online",
+      last_heartbeat_at: "2026-08-20T00:00:00.000Z",
+      orientation: "portrait",
+      resolution: "1080x1920",
+      sync_phase_error_ms: null,
+      sync_loop_duration_seconds: null,
+    },
     health: "online",
     output_kind: "screen",
     display_config: {
@@ -123,13 +99,12 @@ const fixtures: ChannelListItem[] = [
         { index: 1, resolution: "1080x1920", output: "HDMI 2" },
       ],
     },
+    groups: [],
     expected_orientation: "portrait",
     expected_resolution: "1080x1920",
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
-    sync_enabled: false,
-    direct_target_conflicts: [],
   },
   {
     id: "channel-inactive-in-store",
@@ -139,18 +114,16 @@ const fixtures: ChannelListItem[] = [
     category: "in_store",
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: null,
-    devices: [],
     player: null,
     health: null,
     output_kind: "screen",
     display_config: null,
+    groups: [],
     expected_orientation: null,
     expected_resolution: null,
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
-    sync_enabled: false,
-    direct_target_conflicts: [],
   },
 ];
 
@@ -158,7 +131,7 @@ const allFilters = { search: "", type: "all", status: "all", lifecycle: "all" } 
 
 // channelStatus / channelTypeKey / channelTypeLabel — ADR 0074 §4/§3.
 assert.equal(channelStatus(fixtures[0]!), "online");
-assert.equal(channelStatus(fixtures[3]!), "no_player"); // no devices, health: null
+assert.equal(channelStatus(fixtures[3]!), "no_player"); // no Player, health: null
 assert.equal(channelTypeKey(fixtures[0]!), "kiosk");
 assert.equal(channelTypeKey(fixtures[2]!), "multi"); // display_config.mode wins over output_kind
 assert.equal(channelTypeLabel(fixtures[0]!), "Kiosk");
@@ -166,8 +139,8 @@ assert.equal(channelTypeLabel(fixtures[1]!), "Screen");
 assert.equal(channelTypeLabel(fixtures[2]!), "Multi-screen");
 
 const summary = summarizeChannels(fixtures);
-// health: online, warning, online, null — a Player-less Draft counts only in `total`.
-assert.deepEqual(summary, { total: 4, online: 2, warning: 1, offline: 0 });
+// health: online, offline, online, null — a Player-less Draft counts only in `total`.
+assert.deepEqual(summary, { total: 4, online: 2, warning: 0, offline: 1 });
 assert.deepEqual(findChannelAttention(fixtures).map(({ device }) => device.id), ["device-siam-south"]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "offline" }).map((channel) => channel.id), ["channel-active-dooh"]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "attention" }).map((channel) => channel.id), ["channel-active-dooh"]);
@@ -208,11 +181,11 @@ assert.deepEqual(filterChannels(fixtures, { ...allFilters, lifecycle: "draft" })
 
 assert.equal(formatChannelLastSeen(null), "Never connected");
 assert.equal(
-  formatChannelLastSeen(fixtures[0]!.devices[0]!.last_heartbeat_at, Date.parse("2026-08-20T00:00:00.000Z")),
+  formatChannelLastSeen(fixtures[0]!.player!.last_heartbeat_at, Date.parse("2026-08-20T00:00:00.000Z")),
   "Last seen just now",
 );
 assert.equal(
-  formatChannelLastSeen(fixtures[0]!.devices[0]!.last_heartbeat_at, Date.parse("2026-08-20T00:01:00.000Z")),
+  formatChannelLastSeen(fixtures[0]!.player!.last_heartbeat_at, Date.parse("2026-08-20T00:01:00.000Z")),
   "Last seen 1m ago",
 );
 

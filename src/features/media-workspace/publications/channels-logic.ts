@@ -1,5 +1,5 @@
 import type { ChannelCategory as ChannelDomainCategory, ChannelListItem } from "../channels/types";
-import { channelCategories, type ChannelCategory, type ChannelItem, type ChannelStatus } from "./mock-data.ts";
+import { channelCategories, type ChannelCategory, type ChannelItem } from "./mock-data.ts";
 import { deviceFit } from "../layouts/geometry.ts";
 
 /** The Channel domain and this wizard spell the same categories differently
@@ -12,20 +12,10 @@ const CATEGORY_ID: Record<ChannelDomainCategory, ChannelItem["category"]> = {
   social: "social",
 };
 
-/** ADR 0037 dropped the channel-level health value; the card's dot is rolled up from the
- * devices instead. A Channel with none assigned has no liveness to report and reads offline. */
-function toCardStatus(devices: ChannelListItem["devices"]): ChannelStatus {
-  if (devices.length === 0) return "offline";
-  if (devices.every((device) => device.health === "online")) return "online";
-  if (devices.every((device) => device.health === "offline")) return "offline";
-  return "warning";
-}
-
-/** Secondary line on a channel card: how much of the Channel is actually up. */
-export function formatDeviceSummary(devices: ChannelListItem["devices"]): string {
-  if (devices.length === 0) return "No devices assigned";
-  const online = devices.filter((device) => device.health === "online").length;
-  return `${online}/${devices.length} devices online`;
+/** Secondary line on a channel card: the Player and whether it is up (ADR 0074 §4). */
+export function formatPlayerSummary(player: ChannelListItem["player"]): string {
+  if (player === null) return "No player assigned";
+  return `${player.name} · ${player.health}`;
 }
 
 /**
@@ -39,13 +29,14 @@ export function toChannelItems(channels: ChannelListItem[]): ChannelItem[] {
       id: channel.id,
       name: channel.name,
       category: CATEGORY_ID[channel.category],
-      subLabel: formatDeviceSummary(channel.devices),
-      status: toCardStatus(channel.devices),
+      subLabel: formatPlayerSummary(channel.player),
+      // A Player-less Channel has no liveness to report and reads offline.
+      status: channel.player?.health ?? "offline",
       resolution: channel.expected_resolution ?? undefined,
     }));
 }
 
-/** Every device behind the selected Channels. `media_schedule_conflicts` is still
+/** The Player behind each selected Channel. `media_schedule_conflicts` is still
  * device-level, so the Channel selection has to be flattened before it is asked. */
 export function selectedChannelDeviceIds(
   channels: ChannelListItem[],
@@ -53,8 +44,7 @@ export function selectedChannelDeviceIds(
 ): string[] {
   const ids = new Set<string>();
   for (const channel of channels) {
-    if (!selectedIds.includes(channel.id)) continue;
-    for (const device of channel.devices) ids.add(device.id);
+    if (selectedIds.includes(channel.id) && channel.player !== null) ids.add(channel.player.id);
   }
   return [...ids];
 }
@@ -122,13 +112,10 @@ export function summarizeGeometryFit(
     // ADR 0074 §3: the Channel's own declared canvas is the geometry source of truth when set —
     // every screen behind it shares that one canvas. The Player's own reported resolution is only
     // the fallback for a Channel with no canvas declared; `unknown` remains the label for neither.
-    const canvas = channel.expected_resolution;
-    const targets = channel.player ? [channel.player] : channel.devices;
-    for (const target of targets) {
-      const fit = deviceFit(canvas ?? target.resolution, aspectRatio);
-      if (fit === "unknown") unprofiled.add(target.name);
-      else if (fit !== "fits") unfitting.add(target.name);
-    }
+    if (channel.player === null) continue;
+    const fit = deviceFit(channel.expected_resolution ?? channel.player.resolution, aspectRatio);
+    if (fit === "unknown") unprofiled.add(channel.player.name);
+    else if (fit !== "fits") unfitting.add(channel.player.name);
   }
   return {
     unfitting: [...unfitting].sort(),

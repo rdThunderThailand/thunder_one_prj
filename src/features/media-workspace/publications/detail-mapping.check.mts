@@ -33,7 +33,6 @@ const channel = {
   category: "dooh",
   channel_type: null,
   location: null,
-  devices: [],
   player: null,
   health: null,
   output_kind: "screen",
@@ -44,8 +43,6 @@ const channel = {
   default_playlist: null,
   revision: 1,
   updated_at: "2026-09-14T00:00:00Z",
-  sync_enabled: false,
-  direct_target_conflicts: [],
 } satisfies ChannelListItem;
 
 const publicationWithEveryTarget = {
