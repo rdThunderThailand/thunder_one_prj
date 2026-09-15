@@ -57,7 +57,7 @@ export function LowerOverview() {
   }, []);
 
   const data = useMemo(() => {
-    const devices = channels?.flatMap((channel) => channel.devices) ?? [];
+    const devices = channels?.flatMap((channel) => (channel.player === null ? [] : [channel.player])) ?? [];
     const health = { online: 0, warning: 0, offline: 0 };
     devices.forEach((device) => { health[device.health] += 1; });
     const total = devices.length;

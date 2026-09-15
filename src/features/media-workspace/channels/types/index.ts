@@ -84,30 +84,19 @@ export interface ChannelListItem {
   category: ChannelCategory;
   channel_type: ChannelTypeOption | null;
   location: { id: string; name: string } | null;
-  /** @deprecated Core v2 shape is `player` (one Device). Kept for a compatibility read only. */
-  devices: ChannelDevice[];
-  /** Core v2: `null` on a Player-less Draft. Falls back to `devices[0]` when the API omits it. */
+  /** ADR 0074 §1: one Device; `null` on a Player-less Draft. */
   player: ChannelDevice | null;
-  /** Core v2: the Player's health, or `null` on a Player-less Draft ("No player" in the UI). */
+  /** The Player's health, or `null` on a Player-less Draft ("No player" in the UI). */
   health: ChannelHealth | null;
   output_kind: ChannelOutputKind;
   display_config: ChannelDisplayConfig | null;
-  /** Core v2 group memberships. Optional while the compatibility UI can still read older payloads. */
-  groups?: ChannelGroupSummary[];
+  groups: ChannelGroupSummary[];
+  /** Derived server-side from the canvas (ADR 0074 §3); read-only. */
   expected_orientation: ChannelOrientation | null;
   expected_resolution: string | null;
   default_playlist: { id: string; name: string } | null;
   revision: number;
   updated_at: string;
-  /** ADR 0042. Off by default; nothing about lifecycle or device membership depends on it. */
-  sync_enabled: boolean;
-  /**
-   * Names of active/scheduled Publications that target one of this Channel's Devices directly,
-   * bypassing the Channel. Non-empty here is exactly what would newly be blocked by the
-   * direct-target guard going forward — existing rows are grandfathered, not broken. Shown as a
-   * warning when `sync_enabled` is on; never blocks saving (ADR 0042 decision Q6, option b).
-   */
-  direct_target_conflicts: string[];
 }
 
 export interface ChannelDetail extends ChannelListItem {

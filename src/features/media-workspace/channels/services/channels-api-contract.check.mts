@@ -48,6 +48,20 @@ assert.deepEqual(buildDeactivateChannelRequest("channel-1", 6), {
 assert.throws(() => buildDeleteDraftChannelRequest("channel-1", 0));
 assert.throws(() => buildDeactivateChannelRequest("channel-1", -1));
 
+const player = {
+  id: "screen-1",
+  name: "Entrance Screen",
+  code: "CW-ENT-01",
+  health: "online",
+  last_heartbeat_at: "2026-08-20T00:00:00.000Z",
+  orientation: "landscape",
+  resolution: "1920x1080",
+  sync_phase_error_ms: null,
+  sync_loop_duration_seconds: null,
+};
+
+// The post-M2 channel_rows shape (ticket 13): one `player`, no devices[] / sync_enabled /
+// direct_target_conflicts. An extra `publication_count` from the RPC is ignored, not rejected.
 const channel = {
   id: "channel-1",
   name: "Central World Menu Boards",
@@ -61,27 +75,18 @@ const channel = {
     channel_category: "in_store",
   },
   location: { id: "location-central-world", name: "Central World" },
-  devices: [
-    {
-      id: "screen-1",
-      name: "Entrance Screen",
-      code: "CW-ENT-01",
-      health: "online",
-      last_heartbeat_at: "2026-08-20T00:00:00.000Z",
-      orientation: "landscape",
-      resolution: "1920x1080",
-      sync_phase_error_ms: null,
-      sync_loop_duration_seconds: null,
-    },
-  ],
+  player,
+  health: "online",
+  output_kind: "kiosk",
+  display_config: null,
+  groups: [{ id: "group-1", name: "Central World", playback_mode: "synchronized" }],
   expected_orientation: "landscape",
   expected_resolution: "1920x1080",
   default_playlist: { id: "playlist-1", name: "Lunch Menu" },
   revision: 7,
   updated_at: "2026-08-20T00:00:00.000Z",
   created_at: "2026-08-19T00:00:00.000Z",
-  sync_enabled: false,
-  direct_target_conflicts: [],
+  publication_count: 3,
 };
 
 const parsedList = parseChannelList({ channels: [channel] });
@@ -89,40 +94,17 @@ assert.equal(parsedList.length, 1);
 assert.equal(parsedList[0]?.id, "channel-1");
 assert.equal(parsedList[0]?.revision, 7);
 assert.equal("created_at" in parsedList[0]!, false);
-// A legacy (pre-ticket-02) payload has no `output_kind` / `health` / `player` / `display_config`
-// at all — the parser must still produce a usable row, not throw.
-assert.equal(parsedList[0]?.output_kind, "screen");
-assert.equal(parsedList[0]?.health, null);
-assert.deepEqual(parsedList[0]?.player, channel.devices[0]);
-assert.equal(parsedList[0]?.display_config, null);
-assert.deepEqual(parseChannelDetail({ data: channel }), {
-  ...channel,
-  player: channel.devices[0],
-  health: null,
-  output_kind: "screen",
-  display_config: null,
-});
+assert.equal("publication_count" in parsedList[0]!, false);
+assert.deepEqual(parsedList[0]?.player, player);
+assert.deepEqual(parsedList[0]?.groups, channel.groups);
+const expectedDetail = { ...channel, publication_count: undefined };
+delete expectedDetail.publication_count;
+assert.deepEqual(parseChannelDetail({ data: channel }), expectedDetail);
 
-// Core v2 payload: `player`/`health`/`output_kind`/`display_config` present, single-screen.
-const v2SingleChannel = {
+// Multi-screen Channel, Player-less Draft (`player`/`health` both null).
+const multiDraft = {
   ...channel,
-  id: "channel-v2-single",
-  output_kind: "kiosk",
-  health: "warning",
-  player: channel.devices[0],
-  display_config: null,
-};
-const v2Single = parseChannelDetail({ data: v2SingleChannel });
-assert.equal(v2Single.output_kind, "kiosk");
-assert.equal(v2Single.health, "warning");
-assert.deepEqual(v2Single.player, channel.devices[0]);
-assert.equal(v2Single.display_config, null);
-
-// Core v2 payload: multi-screen Channel, Player-less Draft (`player`/`health` both null).
-const v2MultiDraft = {
-  ...channel,
-  id: "channel-v2-multi",
-  devices: [],
+  id: "channel-multi",
   output_kind: "screen",
   health: null,
   player: null,
@@ -135,11 +117,18 @@ const v2MultiDraft = {
     ],
   },
 };
-const v2Multi = parseChannelDetail({ data: v2MultiDraft });
-assert.equal(v2Multi.player, null);
-assert.equal(v2Multi.health, null);
-assert.deepEqual(v2Multi.display_config, v2MultiDraft.display_config);
-assert.equal(v2Multi.display_config?.screens.length, 2);
+const multi = parseChannelDetail({ data: multiDraft });
+assert.equal(multi.player, null);
+assert.equal(multi.health, null);
+assert.deepEqual(multi.display_config, multiDraft.display_config);
+assert.equal(multi.display_config?.screens.length, 2);
+
+// The compatibility read is gone: a payload without the Core v2 fields is malformed, never a
+// silently-defaulted row.
+assert.throws(() => parseChannelDetail({ data: { ...channel, player: undefined } }));
+assert.throws(() => parseChannelDetail({ data: { ...channel, health: undefined } }));
+assert.throws(() => parseChannelDetail({ data: { ...channel, output_kind: undefined } }));
+assert.throws(() => parseChannelDetail({ data: { ...channel, groups: undefined } }));
 
 // A `health` outside online/warning/offline (e.g. the pre-M1b transitional `degraded`) is a parse
 // error, not a silently-rendered status — ADR 0074 §4, ticket 07: Degraded is nowhere in the types.
@@ -162,11 +151,7 @@ assert.throws(() => parseChannelDetail({
   ...channel,
   category: "dooh",
 }));
-// ADR 0037 moved the Active/Inactive decision into channel_rows, so the parser reads `lifecycle`
-// and asks no questions. An extra `publication_count` from the RPC is ignored, not rejected — which
-// is also what lets this parser keep working against a backend that has not taken 103 yet.
 assert.equal(parseChannelDetail({ ...channel, lifecycle: "active" }).lifecycle, "active");
-assert.equal("publication_count" in parseChannelDetail({ ...channel, publication_count: 3 }), false);
 assert.throws(() => parseChannelDetail({ ...channel, lifecycle: "retired" }));
 assert.throws(() => parseChannelDetail({
   ...channel,
@@ -178,21 +163,14 @@ assert.throws(() => parseChannelDetail({
 }));
 assert.throws(() => parseChannelDetail({
   ...channel,
-  devices: [{ ...channel.devices[0], resolution: "full-hd" }],
+  player: { ...player, resolution: "full-hd" },
 }));
 assert.equal(
   parseChannelDetail({
     ...channel,
-    devices: [{ ...channel.devices[0], resolution: "1600x900" }],
-  }).devices[0]?.resolution,
+    player: { ...player, resolution: "1600x900" },
+  }).player?.resolution,
   "1600x900",
-);
-assert.throws(() => parseChannelDetail({ ...channel, sync_enabled: "yes" }));
-assert.throws(() => parseChannelDetail({ ...channel, direct_target_conflicts: "not-an-array" }));
-assert.deepEqual(
-  parseChannelDetail({ ...channel, sync_enabled: true, direct_target_conflicts: ["BOEtest"] })
-    .direct_target_conflicts,
-  ["BOEtest"],
 );
 assert.throws(() => parseChannelReferenceData({ channel_types: [], locations: "bad" }));
 assert.throws(() => parseChannelReferenceData({

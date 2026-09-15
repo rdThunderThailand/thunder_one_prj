@@ -6,11 +6,9 @@ import type {
   ChannelDisplayConfig,
   ChannelDisplayConfigScreen,
   ChannelGroupSummary,
-  ChannelHealth,
   ChannelLifecycle,
   ChannelListItem,
   ChannelLocationOption,
-  ChannelOutputKind,
   ChannelReferenceData,
   ChannelTypeOption,
 } from "../types/index.ts";
@@ -43,10 +41,6 @@ function isString(value: unknown): value is string {
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || isString(value);
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
 function isResolution(value: unknown): value is string {
@@ -203,17 +197,15 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !isOneOf(value.category, ["dooh", "in_store", "online", "social"]) ||
     !(value.channel_type === null || isRecord(value.channel_type)) ||
     !(value.location === null || isRecord(value.location)) ||
-    !Array.isArray(value.devices) ||
-    !(value.output_kind === undefined || isOneOf(value.output_kind, ["screen", "tv", "kiosk"])) ||
-    !(value.health === undefined || value.health === null || isOneOf(value.health, ["online", "warning", "offline"])) ||
-    !(value.player === undefined || value.player === null || isRecord(value.player)) ||
+    !isOneOf(value.output_kind, ["screen", "tv", "kiosk"]) ||
+    !(value.health === null || isOneOf(value.health, ["online", "warning", "offline"])) ||
+    !(value.player === null || isRecord(value.player)) ||
+    !Array.isArray(value.groups) ||
     !(value.expected_orientation === null || isOneOf(value.expected_orientation, ["landscape", "portrait"])) ||
     !(value.expected_resolution === null || isDisplayResolution(value.expected_resolution)) ||
     !(value.default_playlist === null || isRecord(value.default_playlist)) ||
     !isPositiveSafeInteger(value.revision) ||
-    !isTimestamp(value.updated_at) ||
-    typeof value.sync_enabled !== "boolean" ||
-    !isStringArray(value.direct_target_conflicts)
+    !isTimestamp(value.updated_at)
   ) {
     throw new TypeError("Channel data is malformed");
   }
@@ -228,25 +220,6 @@ function parseChannelListItem(value: unknown): ChannelListItem {
       ? null
       : parseChannelLocation(value.default_playlist);
 
-  const devices = value.devices.map(parseChannelDevice);
-  if (value.groups !== undefined && !Array.isArray(value.groups)) {
-    throw new TypeError("Channel groups data is malformed");
-  }
-  const groups = (value.groups ?? []).map(parseChannelGroup);
-
-  // Core v2 sends `player` directly; a payload that predates ticket 02 has only `devices[]`, so
-  // a single Device there is the best available reading — never the first of several (ADR 0074 §7).
-  const player: ChannelDevice | null =
-    value.player === undefined
-      ? devices.length === 1
-        ? (devices[0] ?? null)
-        : null
-      : value.player === null
-        ? null
-        : parseChannelDevice(value.player);
-
-  const displayConfig = parseChannelDisplayConfig(value.display_config);
-
   return {
     id: value.id,
     name: value.name,
@@ -255,19 +228,16 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     category: value.category,
     channel_type: channelType,
     location,
-    devices,
-    player,
-    health: (value.health as ChannelHealth | null | undefined) ?? null,
-    output_kind: (value.output_kind as ChannelOutputKind | undefined) ?? "screen",
-    display_config: displayConfig,
-    ...(value.groups === undefined ? {} : { groups }),
+    player: value.player === null ? null : parseChannelDevice(value.player),
+    health: value.health,
+    output_kind: value.output_kind,
+    display_config: parseChannelDisplayConfig(value.display_config),
+    groups: value.groups.map(parseChannelGroup),
     expected_orientation: value.expected_orientation,
     expected_resolution: value.expected_resolution,
     default_playlist: defaultPlaylist,
     revision: value.revision,
     updated_at: value.updated_at,
-    sync_enabled: value.sync_enabled,
-    direct_target_conflicts: value.direct_target_conflicts,
   };
 }
 

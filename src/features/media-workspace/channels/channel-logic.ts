@@ -53,11 +53,9 @@ export function filterChannels(
       search.length === 0 ||
       channel.name.toLowerCase().includes(search) ||
       channel.location?.name.toLowerCase().includes(search) ||
-      channel.devices.some(
-        (device) =>
-          device.name.toLowerCase().includes(search) || device.code.toLowerCase().includes(search)
-          || device.health.includes(search) || (search === "attention" && device.health !== "online"),
-      );
+      (channel.player !== null &&
+        (channel.player.name.toLowerCase().includes(search) || channel.player.code.toLowerCase().includes(search)
+          || channel.player.health.includes(search) || (search === "attention" && channel.player.health !== "online")));
     const matchesType = filters.type === "all" || channelTypeKey(channel) === filters.type;
     const matchesStatus = filters.status === "all" || status === filters.status;
     const matchesLifecycle = filters.lifecycle === "all" || channel.lifecycle === filters.lifecycle;
@@ -67,9 +65,8 @@ export function filterChannels(
 }
 
 export function findChannelAttention(channels: readonly ChannelListItem[]) {
-  return channels.flatMap((channel) => channel.devices
-    .filter((device) => device.health !== "online")
-    .map((device) => ({ channel, device })))
+  return channels.flatMap((channel) =>
+    channel.player !== null && channel.player.health !== "online" ? [{ channel, device: channel.player }] : [])
     .sort((a, b) => Number(a.device.health === "warning") - Number(b.device.health === "warning"));
 }
 
