@@ -52,11 +52,18 @@ Nests under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
     concept at all (see `core-mapper.ts`'s header comment). The "last changed" tile was dropped —
     Core's organizations response has no `updated_at`/`updated_by` to back it.
   - `OrgChartCanvas` — now takes `units`/`rootUnitId` as props (passed through to `OrgChartNode`).
-    Decorative zoom/fullscreen controls (the tree is a fixed CSS layout, not a real pan/zoom
-    canvas), and the line-style legend, both unchanged.
+    **Zoom is real since 2026-09-15** (50%-150%, a CSS `transform: scale()` on the tree, `useState`
+    in this component — no drag/pan, just scale) — tested live via browser automation, the +/-/reset
+    buttons and displayed percentage all work. "Fullscreen" stays decorative — a real fullscreen API
+    call is separate, bigger scope. The line-style legend is unchanged.
   - `OrgChartNode` — recursive, one call per tree level, now taking `units` as a prop instead of
     importing `mock-data` directly; **real** click-to-select (calls `onSelect(unitId)`, doesn't
-    navigate). Connector lines are plain CSS, unchanged — see the component's own comment.
+    navigate). **Collapse/expand per node is real since 2026-09-15** — each node owns its own
+    `collapsed` `useState` (a pure per-node UI concern, not lifted to a shared Set), a toggle button
+    beneath the card hides/shows its children subtree and shows a "+N หน่วยงานย่อย (M คน)" summary
+    instead — tested live (Product & Technology collapsed correctly, hid Software Engineering/
+    Product Design, chevron rotated). Connector lines are plain CSS, unchanged — see the
+    component's own comment.
   - `OrgDetailPanel` — now takes `units` as a prop. Header (icon, name, head, Active badge) + 5 tabs
     (ภาพรวม real; the other 4 share the "no data for this tab" placeholder) + detail rows (head
     name/positions/fill-rate render "-" when Core hasn't supplied them — see `core-mapper.ts`

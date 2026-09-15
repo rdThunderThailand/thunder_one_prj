@@ -10,6 +10,7 @@
 // uses on a Core fetch failure. Nothing special to handle once Core ships
 // it — this file already expects the final shape.
 import { coreGet } from "@/lib/core/core-get";
+import { requestApi } from "@/lib/api/media-api";
 import type { CoreMemberRow } from "@/features/people/personnel";
 
 export interface CoreOnboardingRow extends CoreMemberRow {
@@ -22,4 +23,29 @@ export async function getOnboardingRoster(token: string, tenantId: string): Prom
     token
   );
   return data ? data.data : null;
+}
+
+interface OnboardingStepResult {
+  step_index: number;
+  done: boolean;
+  pending_label: string | null;
+  completed_at: string | null;
+}
+
+/** `PATCH /tenants/:id/members/:memberId/onboarding` — real, confirmed by
+ *  reading `thunder_core_API`'s route directly (not proposed — this one
+ *  already existed before today). Client-safe (`requestApi`, via
+ *  `/api/proxy`), for the Kanban's drag-and-drop: moving a card to a new
+ *  column fires one call per step index that needs to flip — see
+ *  `NewHiresPage.tsx`'s `handleMoveStage` for exactly which indices. */
+export async function updateOnboardingStep(
+  tenantId: string,
+  memberId: string,
+  stepIndex: number,
+  done: boolean
+): Promise<OnboardingStepResult> {
+  return requestApi<OnboardingStepResult>("PATCH", `/tenants/${tenantId}/members/${memberId}/onboarding`, {
+    step_index: stepIndex,
+    done,
+  });
 }

@@ -17,7 +17,7 @@ export default async function PeopleNewHiresPage() {
   const tenantId = session !== "forbidden" ? session.tenantId : null;
 
   if (!token || !tenantId) {
-    return <NewHiresPage rows={null} />;
+    return <NewHiresPage rows={null} tenantId={null} />;
   }
 
   const [onboardingRows, orgTree] = await Promise.all([
@@ -26,9 +26,9 @@ export default async function PeopleNewHiresPage() {
   ]);
 
   if (!onboardingRows) {
-    return <NewHiresPage rows={null} />;
+    return <NewHiresPage rows={null} tenantId={tenantId} />;
   }
 
   const { units } = mapCoreOrgTree(orgTree ?? [], []);
-  return <NewHiresPage rows={mapOnboardingRoster(onboardingRows, units)} />;
+  return <NewHiresPage rows={mapOnboardingRoster(onboardingRows, units)} tenantId={tenantId} />;
 }

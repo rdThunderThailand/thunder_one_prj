@@ -85,6 +85,22 @@ export interface NewHireRow {
    *  Core's `invite_url`, shown in the Kanban card / handoff so HR can
    *  copy/resend it. */
   inviteUrl?: string;
+  /** Raw onboarding checklist counts — only set on rows from the real
+   *  roster fetch (`../core-mapper.ts`), not mock rows or the add-person
+   *  wizards' handoff (added 2026-09-15 for drag-and-drop's real
+   *  `PATCH .../members/:memberId/onboarding` calls, which need to know
+   *  exactly which step indices to toggle, not just the rounded `progress`
+   *  percentage). Drag-and-drop is disabled on a card until these are
+   *  present. */
+  onboardingDone?: number;
+  onboardingTotal?: number;
+  /** Raw "YYYY-MM-DD" (Core's `start_date`), alongside the already-formatted
+   *  `startDateLabel` — added 2026-09-15 for real date-range filtering and
+   *  NewHireSidebar's "พร้อมเริ่มงานใน 7 วัน"/"เริ่มแล้ว (เดือนนี้)" tiles,
+   *  neither of which a formatted Thai label string can be parsed back out
+   *  of reliably. Only set on real roster rows, same as onboardingDone/
+   *  Total. */
+  startDate?: string | null;
 }
 
 // The original 8 rows, reassigned from the old 4-status model to the new

@@ -58,6 +58,11 @@ export interface PersonnelRow {
   employeeCode: string;
   position: string;
   unit: string;
+  /** Raw `default_department_id`, for pre-selecting the right option in
+   *  EditPersonnelModal's department dropdown — `unit` above is already a
+   *  resolved display label ("Parent / Child"), not usable as a form value.
+   *  Omitted (not `null`) on mock rows, which never had a real id to carry. */
+  departmentId?: string | null;
   type: PersonnelType;
   workStatus: WorkStatus;
   startDateLabel: string;

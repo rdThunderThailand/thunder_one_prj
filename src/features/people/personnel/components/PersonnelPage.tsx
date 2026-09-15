@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { OrgUnitNode } from "@/features/people/org-structure";
 import type { PersonnelRow, PersonnelViewTab } from "../mock-data";
+import { EditPersonnelModal } from "./EditPersonnelModal";
 import { PersonnelFilterBar } from "./PersonnelFilterBar";
 import { PersonnelHeader } from "./PersonnelHeader";
 import { PersonnelStatTilesRow } from "./PersonnelStatTilesRow";
@@ -16,6 +18,11 @@ interface PersonnelPageProps {
    *  discipline as asset-intelligence/assets's AllAssetsPage. */
   rows: PersonnelRow[] | null;
   totalCount: number;
+  /** For EditPersonnelModal's department dropdown + the `updateMember()`
+   *  call it fires on save. `null` disables the row-action edit button
+   *  (same "no tenant/session resolved" case as `rows: null` above). */
+  tenantId: string | null;
+  units: Record<string, OrgUnitNode>;
 }
 
 // HR Manager — the full personnel roster (`/people/personnel`), reading real
@@ -28,8 +35,9 @@ interface PersonnelPageProps {
 // page (/people/add) instead of opening an in-page modal — see that
 // feature's own README for what's real vs. cosmetic in the flows it leads
 // to.
-export function PersonnelPage({ rows: fetchedRows, totalCount }: PersonnelPageProps) {
+export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }: PersonnelPageProps) {
   const [activeTab, setActiveTab] = useState<PersonnelViewTab>("roster");
+  const [editingRow, setEditingRow] = useState<PersonnelRow | null>(null);
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,10 +59,19 @@ export function PersonnelPage({ rows: fetchedRows, totalCount }: PersonnelPagePr
           ) : (
             <>
               <PersonnelTableControls shownCount={fetchedRows.length} totalCount={totalCount} />
-              <PersonnelTable rows={fetchedRows} />
+              <PersonnelTable rows={fetchedRows} onEditRow={setEditingRow} />
             </>
           )}
         </>
+      )}
+
+      {editingRow && tenantId && (
+        <EditPersonnelModal
+          row={editingRow}
+          tenantId={tenantId}
+          units={units}
+          onClose={() => setEditingRow(null)}
+        />
       )}
     </div>
   );

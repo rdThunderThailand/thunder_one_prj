@@ -16,15 +16,26 @@ function unitLabel(departmentId: string | null, units: Record<string, OrgUnitNod
  * stage/lifecycle column (never built, see docs/people/new-hires-onboarding-
  * roster-field-requirements.md), only `onboarding.done`/`total` (the
  * checklist) and `status` (account state: invited/active/suspended/removed/
- * archived). Reasoning: 0 done = hasn't started; some done = in progress;
- * all done but the invite hasn't been accepted yet = checklist finished but
- * not actually working yet; all done and active = actually working.
+ * archived).
+ *
+ * **Fixed 2026-09-15**: `status` must be checked *first*, not last — a
+ * member who's already `active` (e.g. a seed/pre-existing account like the
+ * tenant admin, or anyone whose account predates this checklist ever being
+ * populated) can genuinely have `onboarding.done === 0` despite already
+ * being fully active and working. The original version checked `done === 0`
+ * before `status`, so every already-active member with an empty checklist
+ * landed in "pre-boarding" regardless of their real account state — caught
+ * live when `admin@thunder.co.th` (status: active) showed up there instead
+ * of "active". `status: "active"` is the stronger, more authoritative
+ * signal and should short-circuit the checklist-based reasoning entirely;
+ * checklist progress only matters for members who haven't gone active yet.
  */
 function deriveStatus(row: CoreOnboardingRow): NewHireStatus {
+  if (row.status === "active") return "active";
   const { done, total } = row.onboarding;
   if (done === 0) return "pre-boarding";
   if (done < total) return "onboarding";
-  return row.status === "active" ? "active" : "ready-to-work";
+  return "ready-to-work";
 }
 
 export function mapOnboardingRoster(rows: CoreOnboardingRow[], units: Record<string, OrgUnitNode>): NewHireRow[] {
@@ -48,6 +59,9 @@ export function mapOnboardingRoster(rows: CoreOnboardingRow[], units: Record<str
       // the per-member GET .../onboarding does, so there's nothing real to
       // put here yet. Empty, not fabricated.
       steps: [],
+      onboardingDone: done,
+      onboardingTotal: total,
+      startDate: row.start_date,
     };
   });
 }

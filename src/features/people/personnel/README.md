@@ -58,12 +58,20 @@ Workspace's Overview (`people/overview`). Nests under `people/` per
     not wired to these buttons
   - `PersonnelTable` — the roster table (person, employee code, position, unit, type badge, status
     dot, start date, manager, actions) — unchanged, since `core-mapper.ts` maps into the exact shape
-    it already rendered
+    it already rendered. **The row action ("...") button is real as of 2026-09-14** — opens
+    `EditPersonnelModal` (department + job_title, the two fields blocking real onboarding — see
+    `docs/people/edit-member-department-job-title-field-requirements.md`) via a new
+    `updateMember()` call. Built ahead of Core shipping the endpoint, same "404 gracefully until
+    it lands" pattern as `asset-intelligence/assets`'s `EditAssetModal`/`updateAsset` — check
+    whether Core's `PATCH /tenants/:id/members/:memberId` actually exists yet before assuming this
+    works end-to-end. `PersonnelRow` gained a `departmentId` field (raw
+    `default_department_id`, alongside the existing resolved `unit` label) so the modal's dropdown
+    can pre-select the current value.
 - `mock-data.ts` — `personnelViewTabs`/`personnelStatTiles`/`personnelRetentionRate` carry the
   mockup's own numbers for the 4 mock tiles above; `personnelRows` is (re-exported via `index.ts`)
-  also `people/add-person`'s source for its ตำแหน่งงาน/ผู้บังคับบัญชา picker options.
+  also `people/add-person`'s source for its ตำแหน่งงาน picker options.
 
-**Not built yet**: every dropdown filter except search, sort, real pagination, row actions
-(view/edit/more), Export/Import. Contractor/Partner/Guest intake has no flow at all since
-`AddPersonModal` was retired — no FigJam mockup exists for those yet (see `people/add-person`'s
-README). Reachable from `config/nav/people.tsx`'s บุคลากร item, a live link.
+**Not built yet**: every dropdown filter except search, sort, real pagination, view/more row
+actions (edit is real now — see above), Export/Import. Contractor/Partner/Guest intake has no flow
+at all since `AddPersonModal` was retired — no FigJam mockup exists for those yet (see
+`people/add-person`'s README). Reachable from `config/nav/people.tsx`'s บุคลากร item, a live link.

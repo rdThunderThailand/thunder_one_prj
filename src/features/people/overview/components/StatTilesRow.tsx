@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
-import { statTiles, workforceHealth, type StatTileColor } from "../mock-data";
+import { workforceHealth, type StatTileColor } from "../mock-data";
 
 const valueColor: Record<StatTileColor, string> = {
   indigo: "text-indigo-600 dark:text-indigo-400",
@@ -10,19 +10,50 @@ const valueColor: Record<StatTileColor, string> = {
   red: "text-red-600 dark:text-red-400",
 };
 
-const deltaColor: Record<StatTileColor, string> = {
-  indigo: "text-zinc-400",
-  emerald: "text-emerald-500",
-  amber: "text-zinc-400",
-  blue: "text-zinc-400",
-  red: "text-red-500",
-};
+interface StatTile {
+  id: string;
+  label: string;
+  value: string;
+  sublabel?: string;
+  color: StatTileColor;
+}
 
-// Six tiles across — five plain metrics plus a Workforce Health ring, matching
-// the mockup exactly. The ring reuses DonutChart (2 segments: score/remainder)
-// rather than a one-off SVG, same "no second chart primitive for the same
-// shape" discipline as the rest of this codebase's chart usage.
-export function StatTilesRow() {
+interface StatTilesRowProps {
+  /** Real since 2026-09-15: headcount/new-hires-this-month/onboarding-count
+   *  from the same roster fetch every other real overview card uses.
+   *  การเปลี่ยนแปลง/ออกจากองค์กร stay mock — no change-request or offboarding
+   *  concept exists in Core at all yet (see people/changes, people/
+   *  departures — both still fully mock, unrelated Core work). Workforce
+   *  Health stays mock too — a synthetic composite score with no real
+   *  metric behind it in this design. No `deltaLabel` ("↑ 3 จากเดือนที่แล้ว")
+   *  on the real tiles either: a real trend needs a historical snapshot to
+   *  compare against, which Core has no mechanism for — showing one would
+   *  be a fabricated number dressed up as precise. */
+  totalHeadcount: number;
+  newHiresThisMonth: number;
+  onboardingCount: number;
+}
+
+// Six tiles across — matching the mockup layout, now a mix of real and mock
+// (see props doc above for exactly which). The Workforce Health ring reuses
+// DonutChart (2 segments: score/remainder) rather than a one-off SVG, same
+// "no second chart primitive for the same shape" discipline as the rest of
+// this codebase's chart usage.
+export function StatTilesRow({ totalHeadcount, newHiresThisMonth, onboardingCount }: StatTilesRowProps) {
+  const statTiles: StatTile[] = [
+    { id: "headcount", label: "จำนวนบุคลากรทั้งหมด", value: String(totalHeadcount), color: "indigo" },
+    { id: "new-hires", label: "เข้าใหม่ (เดือนนี้)", value: String(newHiresThisMonth), color: "emerald" },
+    { id: "onboarding", label: "กำลัง Onboarding", value: String(onboardingCount), color: "amber" },
+    { id: "changes", label: "การเปลี่ยนแปลง", value: "3", sublabel: "รออนุมัติ 2 รายการ", color: "blue" },
+    {
+      id: "departures",
+      label: "ออกจากองค์กร (เดือนนี้)",
+      value: "2",
+      sublabel: "รอ Clearance 1 รายการ",
+      color: "red",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
       {statTiles.map((tile) => (
@@ -30,7 +61,6 @@ export function StatTilesRow() {
           <p className="text-xs text-zinc-500 dark:text-zinc-400">{tile.label}</p>
           <span className={`text-2xl font-semibold ${valueColor[tile.color]}`}>{tile.value}</span>
           {tile.sublabel && <p className="text-xs text-zinc-400">{tile.sublabel}</p>}
-          {tile.deltaLabel && <p className={`text-xs font-medium ${deltaColor[tile.color]}`}>{tile.deltaLabel}</p>}
         </Card>
       ))}
 

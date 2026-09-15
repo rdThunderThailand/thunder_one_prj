@@ -15,6 +15,7 @@ export {
   createMember,
   getMembers,
   isPendingInvite,
+  updateMember,
   updateMemberContract,
   type CoreEmployeeResult,
   type CoreInviteResult,
@@ -23,5 +24,6 @@ export {
   type CreateMemberInput,
   type MemberContract,
   type UpdateMemberContractInput,
+  type UpdateMemberInput,
 } from "./services/members-api";
 export { getRoles, type CoreRole } from "./services/roles-api";

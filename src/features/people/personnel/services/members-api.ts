@@ -228,7 +228,6 @@ export interface CreateEmployeeInput
  *  `false` (safe to still call — it just won't match). */
 export interface CoreEmployeeResult extends CoreMemberRow {
   default_location_id: string | null;
-  member_type: string | null;
   lifecycle_stage: string | null;
   job_type: string | null;
   work_arrangement: string | null;

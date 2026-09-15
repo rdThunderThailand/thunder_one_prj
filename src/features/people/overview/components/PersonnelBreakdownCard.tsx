@@ -1,8 +1,14 @@
 import { Card } from "@/components/ui/Card";
-import { DonutChart } from "@/components/ui/DonutChart";
-import { personnelBreakdown, totalHeadcount } from "../mock-data";
+import { DonutChart, type DonutSegment } from "@/components/ui/DonutChart";
 
-export function PersonnelBreakdownCard() {
+interface PersonnelBreakdownCardProps {
+  /** Real since 2026-09-15 — grouped by real `member_type` from the same
+   *  roster fetch TodayActivityCard/OnboardingStatusCard use. */
+  personnelBreakdown: DonutSegment[];
+  totalHeadcount: number;
+}
+
+export function PersonnelBreakdownCard({ personnelBreakdown, totalHeadcount }: PersonnelBreakdownCardProps) {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
@@ -21,7 +27,7 @@ export function PersonnelBreakdownCard() {
         </div>
         <ul className="min-w-0 flex-1 space-y-2">
           {personnelBreakdown.map((segment) => {
-            const percent = ((segment.value / totalHeadcount) * 100).toFixed(1);
+            const percent = totalHeadcount > 0 ? ((segment.value / totalHeadcount) * 100).toFixed(1) : "0.0";
             return (
               <li key={segment.label} className="flex items-center gap-2 text-xs">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: segment.color }} />

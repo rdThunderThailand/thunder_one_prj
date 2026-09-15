@@ -19,7 +19,12 @@ const statusDot: Record<WorkStatus, { label: string; color: BadgeColor }> = {
   inactive: { label: "พ้นสภาพ", color: "red" },
 };
 
-export function PersonnelTable({ rows }: { rows: PersonnelRow[] }) {
+interface PersonnelTableProps {
+  rows: PersonnelRow[];
+  onEditRow: (row: PersonnelRow) => void;
+}
+
+export function PersonnelTable({ rows, onEditRow }: PersonnelTableProps) {
   if (rows.length === 0) {
     return <Card className="p-10 text-center text-sm text-zinc-400">ไม่พบบุคลากรตามเงื่อนไขที่เลือก</Card>;
   }
@@ -86,7 +91,12 @@ export function PersonnelTable({ rows }: { rows: PersonnelRow[] }) {
                 )}
               </td>
               <td className="px-4 py-3">
-                <button type="button" title="Not built yet" className="cursor-not-allowed text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                <button
+                  type="button"
+                  title="แก้ไขข้อมูล"
+                  onClick={() => onEditRow(row)}
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                >
                   <MoreIcon className="h-4 w-4" />
                 </button>
               </td>
