@@ -91,7 +91,10 @@ export function computeEligibility(params: {
   // The ver02 Program step (3) gates channels and schedule together; the checklist still
   // reports them as separate rows, so each reads its own primitive rather than the step.
   const scheduleCheckStatus: EligibilityStatus = isScheduleFormValid(draft.scheduleForm) ? "pass" : "fail";
-  const channelsCheckStatus: EligibilityStatus = draft.channelIds.length > 0 ? "pass" : "fail";
+  // A Channel picked directly and one reached through a Channel Group are independent
+  // intents (ADR 0074 §6) — either alone is a complete target selection.
+  const channelsCheckStatus: EligibilityStatus =
+    draft.channelIds.length > 0 || draft.groupIds.length > 0 ? "pass" : "fail";
   const policyCheckStatus: EligibilityStatus = "unknown";
   // ADR 0068: an overlap warns, it never refuses. The check still flags that conflicts exist so
   // the checklist shows it, but it is read as advice rather than a gate.

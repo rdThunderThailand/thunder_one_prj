@@ -2,19 +2,21 @@ import type {
   ChannelCategory,
   ChannelDetail,
   ChannelDevice,
-  ChannelDeviceCandidate,
-  ChannelDraftInput,
+  ChannelDisplayArrangement,
+  ChannelDisplayConfig,
+  ChannelDisplayConfigScreen,
   ChannelGroupSummary,
+  ChannelHealth,
   ChannelLifecycle,
   ChannelListItem,
   ChannelLocationOption,
-  ChannelOrientation,
+  ChannelOutputKind,
   ChannelReferenceData,
   ChannelTypeOption,
 } from "../types/index.ts";
 import { isDisplayResolution } from "../../../../lib/display-resolution.ts";
 
-type ChannelRequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
+type ChannelRequestMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
 export interface ChannelRequestDescriptor {
   method: ChannelRequestMethod;
@@ -25,28 +27,6 @@ export interface ChannelRequestDescriptor {
 export interface ChannelListQuery {
   category?: ChannelCategory;
   lifecycle?: ChannelLifecycle;
-}
-
-export interface CreateChannelBody {
-  name: string;
-  description: string | null;
-  channel_category: ChannelCategory;
-  channel_type_id: string;
-  location_id: string | null;
-  device_ids: string[];
-  expected_orientation: ChannelOrientation | null;
-  expected_resolution: string | null;
-  default_playlist_id: string | null;
-  confirm_mismatch: boolean;
-  as_draft: boolean;
-  sync_enabled: boolean;
-}
-
-export interface UpdateChannelBody extends Omit<CreateChannelBody, "as_draft"> {
-  /** Sent only when a Draft is being committed. Absent on an ordinary edit. */
-  as_draft?: boolean;
-  expected_revision: number;
-  overwrite: boolean;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -92,6 +72,10 @@ function unwrapData(data: unknown): unknown {
 
 function isPositiveSafeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+}
+
+function isNonNegativeSafeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 }
 
 function assertExpectedRevision(expectedRevision: number): void {
@@ -176,38 +160,36 @@ function parseChannelGroup(value: unknown): ChannelGroupSummary {
   return { id: value.id, name: value.name, playback_mode: value.playback_mode };
 }
 
-function parseChannelDeviceCandidate(value: unknown): ChannelDeviceCandidate {
+function parseChannelDisplayConfigScreen(value: unknown): ChannelDisplayConfigScreen {
   if (
     !isRecord(value) ||
-    !isString(value.id) ||
-    !isString(value.name) ||
-    !(value.status_level === undefined || isOneOf(value.status_level, ["online", "warning", "offline"])) ||
-    !(
-      value.last_heartbeat_at === undefined ||
-      value.last_heartbeat_at === null ||
-      isTimestamp(value.last_heartbeat_at)
-    ) ||
-    !(
-      value.orientation === undefined ||
-      value.orientation === null ||
-      isOneOf(value.orientation, ["landscape", "portrait"])
-    ) ||
-    !(
-      value.resolution === undefined ||
-      value.resolution === null ||
-      isResolution(value.resolution)
-    )
+    !isNonNegativeSafeInteger(value.index) ||
+    !isResolution(value.resolution) ||
+    !isString(value.output)
   ) {
-    throw new TypeError("Channel device candidate data is malformed");
+    throw new TypeError("Channel display_config screen data is malformed");
+  }
+  return { index: value.index as number, resolution: value.resolution, output: value.output };
+}
+
+/** `media_core.channel_canvas` stores `arrangement` as `{rows, cols}` — not a string. */
+function parseChannelDisplayArrangement(value: unknown): ChannelDisplayArrangement {
+  if (!isRecord(value) || !isPositiveSafeInteger(value.rows) || !isPositiveSafeInteger(value.cols)) {
+    throw new TypeError("Channel display_config arrangement is malformed");
+  }
+  return { rows: value.rows, cols: value.cols };
+}
+
+/** ADR 0074 §3. `null` on a single-screen Channel. */
+function parseChannelDisplayConfig(value: unknown): ChannelDisplayConfig | null {
+  if (value === null || value === undefined) return null;
+  if (!isRecord(value) || !isOneOf(value.mode, ["single", "multi"]) || !Array.isArray(value.screens)) {
+    throw new TypeError("Channel display_config is malformed");
   }
   return {
-    id: value.id,
-    name: value.name,
-    code: null,
-    health: value.status_level ?? "offline",
-    last_heartbeat_at: value.last_heartbeat_at ?? null,
-    orientation: value.orientation ?? null,
-    resolution: value.resolution ?? null,
+    mode: value.mode,
+    arrangement: parseChannelDisplayArrangement(value.arrangement),
+    screens: value.screens.map(parseChannelDisplayConfigScreen),
   };
 }
 
@@ -222,6 +204,9 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !(value.channel_type === null || isRecord(value.channel_type)) ||
     !(value.location === null || isRecord(value.location)) ||
     !Array.isArray(value.devices) ||
+    !(value.output_kind === undefined || isOneOf(value.output_kind, ["screen", "tv", "kiosk"])) ||
+    !(value.health === undefined || value.health === null || isOneOf(value.health, ["online", "warning", "offline"])) ||
+    !(value.player === undefined || value.player === null || isRecord(value.player)) ||
     !(value.expected_orientation === null || isOneOf(value.expected_orientation, ["landscape", "portrait"])) ||
     !(value.expected_resolution === null || isDisplayResolution(value.expected_resolution)) ||
     !(value.default_playlist === null || isRecord(value.default_playlist)) ||
@@ -249,6 +234,19 @@ function parseChannelListItem(value: unknown): ChannelListItem {
   }
   const groups = (value.groups ?? []).map(parseChannelGroup);
 
+  // Core v2 sends `player` directly; a payload that predates ticket 02 has only `devices[]`, so
+  // a single Device there is the best available reading — never the first of several (ADR 0074 §7).
+  const player: ChannelDevice | null =
+    value.player === undefined
+      ? devices.length === 1
+        ? (devices[0] ?? null)
+        : null
+      : value.player === null
+        ? null
+        : parseChannelDevice(value.player);
+
+  const displayConfig = parseChannelDisplayConfig(value.display_config);
+
   return {
     id: value.id,
     name: value.name,
@@ -258,6 +256,10 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     channel_type: channelType,
     location,
     devices,
+    player,
+    health: (value.health as ChannelHealth | null | undefined) ?? null,
+    output_kind: (value.output_kind as ChannelOutputKind | undefined) ?? "screen",
+    display_config: displayConfig,
     ...(value.groups === undefined ? {} : { groups }),
     expected_orientation: value.expected_orientation,
     expected_resolution: value.expected_resolution,
@@ -283,37 +285,6 @@ export function buildChannelListPath(query: ChannelListQuery = {}): string {
   return suffix ? `/media/channels?${suffix}` : "/media/channels";
 }
 
-export function buildCreateChannelBody(draft: ChannelDraftInput): CreateChannelBody {
-  return {
-    name: draft.name,
-    description: draft.description ?? null,
-    channel_category: draft.category,
-    channel_type_id: draft.channel_type_id,
-    location_id: draft.location_id ?? null,
-    device_ids: draft.device_ids,
-    expected_orientation: draft.expected_orientation ?? null,
-    expected_resolution: draft.expected_resolution ?? null,
-    default_playlist_id: draft.default_playlist_id ?? null,
-    confirm_mismatch: draft.confirm_mismatch,
-    // A create has to pick a side; `null` is an update-only value, so it falls back to the
-    // side that reserves nothing.
-    as_draft: draft.as_draft ?? true,
-    sync_enabled: draft.sync_enabled,
-  };
-}
-
-export function buildUpdateChannelBody(
-  draft: ChannelDraftInput,
-  expectedRevision: number,
-  overwrite: boolean,
-): UpdateChannelBody {
-  assertExpectedRevision(expectedRevision);
-  const { as_draft, ...rest } = buildCreateChannelBody(draft);
-  const body: UpdateChannelBody = { ...rest, expected_revision: expectedRevision, overwrite };
-  if (draft.as_draft !== null) body.as_draft = as_draft;
-  return body;
-}
-
 export function buildFetchChannelsRequest(
   query: ChannelListQuery = {},
 ): ChannelRequestDescriptor {
@@ -328,27 +299,6 @@ export function buildChannelReferenceDataRequest(): ChannelRequestDescriptor {
   return { method: "GET", path: "/media/channels/reference-data" };
 }
 
-export function buildCreateChannelRequest(draft: ChannelDraftInput): ChannelRequestDescriptor {
-  return {
-    method: "POST",
-    path: "/media/channels",
-    body: buildCreateChannelBody(draft),
-  };
-}
-
-export function buildUpdateChannelRequest(
-  id: string,
-  draft: ChannelDraftInput,
-  expectedRevision: number,
-  overwrite: boolean,
-): ChannelRequestDescriptor {
-  return {
-    method: "PATCH",
-    path: `/media/channels/${id}`,
-    body: buildUpdateChannelBody(draft, expectedRevision, overwrite),
-  };
-}
-
 export function buildDeleteDraftChannelRequest(
   id: string,
   expectedRevision: number,
@@ -361,6 +311,14 @@ export function buildDeleteDraftChannelRequest(
   };
 }
 
+export function buildChannelGroupOptionsRequest(): ChannelRequestDescriptor {
+  return { method: "GET", path: "/media/channel-groups" };
+}
+
+export function buildSetChannelGroupsRequest(id: string, groupIds: string[]): ChannelRequestDescriptor {
+  return { method: "PUT", path: `/media/channels/${id}/groups`, body: { group_ids: groupIds } };
+}
+
 export function buildDeactivateChannelRequest(
   id: string,
   expectedRevision: number,
@@ -371,10 +329,6 @@ export function buildDeactivateChannelRequest(
     path: `/media/channels/${id}/deactivate`,
     body: { expected_revision: expectedRevision },
   };
-}
-
-export function buildChannelDeviceCandidatesRequest(): ChannelRequestDescriptor {
-  return { method: "GET", path: "/media/screens" };
 }
 
 export function parseChannelList(data: unknown): ChannelListItem[] {
@@ -414,19 +368,6 @@ export function parseChannelReferenceData(data: unknown): ChannelReferenceData {
   };
 }
 
-export function parseChannelDeviceCandidates(data: unknown): ChannelDeviceCandidate[] {
-  const unwrapped = unwrapData(data);
-  const candidates = Array.isArray(unwrapped)
-    ? unwrapped
-    : isRecord(unwrapped) && Array.isArray(unwrapped.screens)
-      ? unwrapped.screens
-      : null;
-  if (candidates === null) {
-    throw new TypeError("Channel device candidate data must be an array or { screens: [] }");
-  }
-  return candidates.map(parseChannelDeviceCandidate);
-}
-
 export async function fetchChannels(
   query: ChannelListQuery = {},
 ): Promise<ChannelListItem[]> {
@@ -446,32 +387,6 @@ export async function fetchChannelReferenceData(): Promise<ChannelReferenceData>
   );
 }
 
-/** Reads Physical Device candidates only; the result is never interpreted as Channel rows. */
-export async function fetchChannelDeviceCandidates(): Promise<ChannelDeviceCandidate[]> {
-  return parseChannelDeviceCandidates(
-    await requestChannelApi<unknown>(buildChannelDeviceCandidatesRequest()),
-  );
-}
-
-export async function createChannel(draft: ChannelDraftInput): Promise<ChannelDetail> {
-  return parseChannelDetail(
-    await requestChannelApi<unknown>(buildCreateChannelRequest(draft)),
-  );
-}
-
-export async function updateChannel(
-  id: string,
-  draft: ChannelDraftInput,
-  expectedRevision: number,
-  overwrite: boolean,
-): Promise<ChannelDetail> {
-  return parseChannelDetail(
-    await requestChannelApi<unknown>(
-      buildUpdateChannelRequest(id, draft, expectedRevision, overwrite),
-    ),
-  );
-}
-
 export async function deleteDraftChannel(id: string, expectedRevision: number): Promise<void> {
   await requestChannelApi<unknown>(buildDeleteDraftChannelRequest(id, expectedRevision));
 }
@@ -480,4 +395,30 @@ export async function deactivateChannel(id: string, expectedRevision: number): P
   return parseChannelDetail(
     await requestChannelApi<unknown>(buildDeactivateChannelRequest(id, expectedRevision)),
   );
+}
+
+export function parseChannelGroupOptions(data: unknown): ChannelGroupSummary[] {
+  const unwrapped = unwrapData(data);
+  if (!Array.isArray(unwrapped)) {
+    throw new TypeError("Channel group options data must be an array");
+  }
+  return unwrapped.map(parseChannelGroup);
+}
+
+/** D9: every Channel Group, for the "which Groups is this Channel in" checklist. */
+export async function fetchChannelGroupOptions(): Promise<ChannelGroupSummary[]> {
+  return parseChannelGroupOptions(await requestChannelApi<unknown>(buildChannelGroupOptionsRequest()));
+}
+
+/** `media_channel_set_groups` (ADR 0074 §5) — replaces the whole Group set for one Channel. */
+export async function setChannelGroups(id: string, groupIds: string[]): Promise<ChannelDetail> {
+  return parseChannelDetail(
+    await requestChannelApi<unknown>(buildSetChannelGroupsRequest(id, groupIds)),
+  );
+}
+
+/** Same partial-unique-index text as `media_channel_groups_set_members` on the other side of
+ *  this many-to-many (ADR 0074 §5) — shown as-is rather than the generic "Invalid input:" text. */
+export function isChannelGroupSyncConflict(message: string): boolean {
+  return message.includes("already in another synchronized group") || message.includes("only one synchronized group");
 }

@@ -39,6 +39,8 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
   const playlistId = usePublicationDraftStore((state) => state.playlistId);
   const compositionId = usePublicationDraftStore((state) => state.compositionId);
   const channelIds = usePublicationDraftStore((state) => state.channelIds);
+  const groupIds = usePublicationDraftStore((state) => state.groupIds);
+  const groupNamesById = usePublicationDraftStore((state) => state.groupNamesById);
   const schedule = usePublicationDraftStore((state) => state.scheduleForm);
   const { preview, loading: previewLoading, branch } = usePublicationStagePreview(assets);
   const isPlaylist = basicInfo.publicationType === "playlist";
@@ -111,8 +113,16 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
               <div className="flex items-start gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><MonitorIcon /></span>
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-zinc-900">{selectedChannels.map((channel) => channel.name).join(", ") || "No channel selected"}</p>
-                  <p className="mt-1 text-[10px] text-zinc-500">{selectedChannels.length} channel{selectedChannels.length === 1 ? "" : "s"} selected</p>
+                  <p className="truncate text-xs font-semibold text-zinc-900">
+                    {[
+                      ...selectedChannels.map((channel) => channel.name),
+                      ...groupIds.map((id) => groupNamesById[id] ?? id),
+                    ].join(", ") || "No channel selected"}
+                  </p>
+                  <p className="mt-1 text-[10px] text-zinc-500">
+                    {selectedChannels.length} channel{selectedChannels.length === 1 ? "" : "s"}
+                    {groupIds.length > 0 && `, ${groupIds.length} channel group${groupIds.length === 1 ? "" : "s"}`} selected
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">

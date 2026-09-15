@@ -1,5 +1,5 @@
 import * as assert from "node:assert";
-import { paginate, sortChannels, groupByCategory } from "./list-filtering.ts";
+import { paginate, sortChannels } from "./list-filtering.ts";
 import type { ChannelListItem } from "./types/index.ts";
 
 const createChannel = (id: string, overrides: Partial<ChannelListItem>): ChannelListItem => ({
@@ -11,6 +11,10 @@ const createChannel = (id: string, overrides: Partial<ChannelListItem>): Channel
   channel_type: null,
   location: null,
   devices: [],
+  player: null,
+  health: null,
+  output_kind: "screen",
+  display_config: null,
   expected_orientation: null,
   expected_resolution: null,
   default_playlist: null,
@@ -32,26 +36,29 @@ const channels = [c2, c1];
 assert.deepStrictEqual(sortChannels(channels, { key: "name", dir: "asc" }).map(c => c.id), ["A", "B"]);
 assert.deepStrictEqual(sortChannels(channels, { key: "name", dir: "desc" }).map(c => c.id), ["B", "A"]);
 
-// lastSeen puts null last in both directions
-const cNull = createChannel("C", { devices: [] }); // null lastSeen
-const cOld = createChannel("D", { devices: [{ id: "d1", name: "", code: "", health: "online", last_heartbeat_at: "2020-01-01T00:00:00Z", orientation: null, resolution: null, sync_phase_error_ms: null, sync_loop_duration_seconds: null }] });
-const cNew = createChannel("E", { devices: [{ id: "e1", name: "", code: "", health: "online", last_heartbeat_at: "2024-01-01T00:00:00Z", orientation: null, resolution: null, sync_phase_error_ms: null, sync_loop_duration_seconds: null }] });
+// location sorts alphabetically, null last (ADR 0074 D1's Location column)
+const cNoLocation = createChannel("C", { location: null });
+const cAlpha = createChannel("D", { location: { id: "l1", name: "Alpha Mall" } });
+const cBeta = createChannel("E", { location: { id: "l2", name: "Beta Mall" } });
 
-const withSeen = [cNull, cNew, cOld];
-assert.deepStrictEqual(sortChannels(withSeen, { key: "lastSeen", dir: "asc" }).map(c => c.id), ["D", "E", "C"]);
-assert.deepStrictEqual(sortChannels(withSeen, { key: "lastSeen", dir: "desc" }).map(c => c.id), ["E", "D", "C"]);
+const withLocation = [cNoLocation, cBeta, cAlpha];
+assert.deepStrictEqual(sortChannels(withLocation, { key: "location", dir: "asc" }).map(c => c.id), ["D", "E", "C"]);
+assert.deepStrictEqual(sortChannels(withLocation, { key: "location", dir: "desc" }).map(c => c.id), ["E", "D", "C"]);
 
-// groupByCategory keeps fixed order and drops empty
-const toGroup = [
-  createChannel("s1", { category: "social" }),
-  createChannel("d1", { category: "dooh" }),
-  createChannel("d2", { category: "dooh" }),
-];
-const grouped = groupByCategory(toGroup);
-assert.strictEqual(grouped.length, 2);
-assert.strictEqual(grouped[0].category, "dooh");
-assert.deepStrictEqual(grouped[0].rows.map(c => c.id), ["d1", "d2"]); // preserves incoming order
-assert.strictEqual(grouped[1].category, "social");
-assert.deepStrictEqual(grouped[1].rows.map(c => c.id), ["s1"]);
+// status sorts best-health first (online < warning < offline < no_player) — ADR 0074 §4
+const cOnline = createChannel("F", { health: "online" });
+const cWarning = createChannel("G", { health: "warning" });
+const cOffline = createChannel("H", { health: "offline" });
+const cNoPlayer = createChannel("I", { health: null });
+
+const withStatus = [cNoPlayer, cOffline, cOnline, cWarning];
+assert.deepStrictEqual(
+  sortChannels(withStatus, { key: "status", dir: "asc" }).map(c => c.id),
+  ["F", "G", "H", "I"],
+);
+assert.deepStrictEqual(
+  sortChannels(withStatus, { key: "status", dir: "desc" }).map(c => c.id),
+  ["I", "H", "G", "F"],
+);
 
 console.log("src/features/channels/list-filtering.check.mts — all assertions passed");

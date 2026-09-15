@@ -42,6 +42,8 @@ export function ProgramSummaryRail({
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
+  const groupIds = usePublicationDraftStore((s) => s.groupIds);
+  const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
 
   const isPlaylist = basicInfo.publicationType === "playlist";
@@ -67,11 +69,18 @@ export function ProgramSummaryRail({
     channels.length > 0
       ? channels.filter((c) => channelIds.includes(c.id)).map((c) => c.name)
       : [];
+  const selectedGroupNames = groupIds.map((id) => groupNamesById[id] ?? id);
+  const selectedNames = [...selectedChannelNames, ...selectedGroupNames];
   const channelSummary =
-    selectedChannelNames.length > 0
-      ? selectedChannelNames.join(", ")
-      : channelIds.length > 0
-      ? `${channelIds.length} channel(s)`
+    selectedNames.length > 0
+      ? selectedNames.join(", ")
+      : channelIds.length > 0 || groupIds.length > 0
+      ? [
+          channelIds.length > 0 ? `${channelIds.length} channel(s)` : null,
+          groupIds.length > 0 ? `${groupIds.length} group(s)` : null,
+        ]
+          .filter(Boolean)
+          .join(", ")
       : "—";
 
   const contentLabel = isPlaylist

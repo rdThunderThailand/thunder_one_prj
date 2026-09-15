@@ -4,8 +4,16 @@ import { publicationDrift, type PublicationDriftCheck } from "./publication-drif
 
 const PUBLISHED_AT = "2026-08-27T09:00:00.000Z";
 
+/** A composition Publication's drift check always has non-null composition/layout objects —
+ *  narrower than `PublicationDriftCheck` so the mutation-based tests below don't need null
+ *  assertions on every line. */
+type SettledDrift = PublicationDriftCheck & {
+  composition_revision: NonNullable<PublicationDriftCheck["composition_revision"]>;
+  layout_updated_at: NonNullable<PublicationDriftCheck["layout_updated_at"]>;
+};
+
 /** What a Publication published a moment ago looks like: every recorded value equals its live one. */
-function settled(): PublicationDriftCheck {
+function settled(): SettledDrift {
   return {
     composition_revision: { recorded: 3, live: 3 },
     layout_updated_at: { recorded: PUBLISHED_AT, live: PUBLISHED_AT },
@@ -75,5 +83,45 @@ legacySnapshot.zones = [
   { zone_name: "Main", playlist_name: "Promos", recorded_revision: null, live_revision: 7 },
 ];
 assert.deepEqual(publicationDrift({ status: "active", drift_check: legacySnapshot }), []);
+
+// --- group membership drift (ADR 0074 §6) ------------------------------------
+
+// The backend only lists a Group here when it actually changed — every entry is drift.
+const groupAdded = settled();
+groupAdded.groups = [
+  { group_id: "g1", name: "All Restaurant Screens", added: [{ channel_id: "c3", name: "CH-003" }], removed: [] },
+];
+assert.deepEqual(publicationDrift({ status: "active", drift_check: groupAdded }), [
+  { level: "group", groupName: "All Restaurant Screens", added: ["CH-003"], removed: [] },
+]);
+
+const groupRemoved = settled();
+groupRemoved.groups = [
+  { group_id: "g1", name: "All Restaurant Screens", added: [], removed: [{ channel_id: "c1", name: "CH-001" }] },
+];
+assert.deepEqual(publicationDrift({ status: "active", drift_check: groupRemoved }), [
+  { level: "group", groupName: "All Restaurant Screens", added: [], removed: ["CH-001"] },
+]);
+
+// A flat Publication's snapshot carries `composition_revision`/`layout_updated_at` as `null`
+// outright (not `{recorded: null, live: null}` — the SQL only builds that object when the
+// Publication has a Composition), but can still drift on Group membership alone (ADR 0074 §6 —
+// `drift_check` is non-null when the snapshot has Group provenance rows even with no
+// Composition). A prior version of this function crashed here reading `.recorded` off `null`
+// (caught by browser verification of ticket 12, not by a stale test using the wrong shape).
+const flatWithGroupDrift: PublicationDriftCheck = {
+  composition_revision: null,
+  layout_updated_at: null,
+  zones: [],
+  groups: [
+    { group_id: "g2", name: "Bangkok F&B", added: [{ channel_id: "c9", name: "CH-009" }], removed: [] },
+  ],
+};
+assert.deepEqual(publicationDrift({ status: "active", drift_check: flatWithGroupDrift }), [
+  { level: "group", groupName: "Bangkok F&B", added: ["CH-009"], removed: [] },
+]);
+
+// No `groups` key at all (a Publication with no Group intent) is not drift.
+assert.deepEqual(publicationDrift({ status: "active", drift_check: settled() }), []);
 
 console.log("publication-drift.check.mts OK");

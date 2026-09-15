@@ -120,6 +120,9 @@ export type PublicationDeliveryTarget = {
   last_retried_at?: string | null;
   last_heartbeat_at?: string | null;
   status_level?: "online" | "warning" | "offline";
+  /** Group name(s) this target was reached through, frozen at activation (ADR 0074 §6).
+   *  Absent/empty means the Publication targeted this device directly. */
+  via_groups?: string[];
 };
 
 export type PublicationDetail = {

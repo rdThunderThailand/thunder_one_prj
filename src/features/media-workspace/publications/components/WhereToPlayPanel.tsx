@@ -2,18 +2,21 @@
 
 import { useState } from "react";
 import { ChannelsStep, type ChannelsStepProps } from "./ChannelsStep";
+import { GroupsStep } from "./GroupsStep";
 
 type TabId = "screens" | "channels" | "groups";
 
 const TABS: { id: TabId; label: string; enabled: boolean }[] = [
   { id: "screens", label: "Screens", enabled: false },
   { id: "channels", label: "Channels", enabled: true },
-  { id: "groups", label: "Groups", enabled: false },
+  { id: "groups", label: "Channel Groups", enabled: true },
 ];
 
-/** Frame 3 "1. Where to Play". Only the Channels picker is reachable. Screens
- *  and Groups stay disabled; saved Group intent is shown as removable chips in
- *  ChannelsStep until the Phase 5 picker ships. */
+/** Frame 3 "1. Where to Play" (D11 modal A: "Channels / Channel Groups / All Channels").
+ *  Screens (direct device targeting) stays disabled — out of this epic's scope. Channels and
+ *  Channel Groups are both reachable; ChannelsStep still shows saved Group intent as removable
+ *  chips above its own list, since a Channel picked directly and one reached through a Group
+ *  are independent intents (ADR 0074 §6). */
 export function WhereToPlayPanel(props: ChannelsStepProps) {
   const [tab, setTab] = useState<TabId>("channels");
 
@@ -40,7 +43,7 @@ export function WhereToPlayPanel(props: ChannelsStepProps) {
         ))}
       </div>
 
-      <ChannelsStep {...props} />
+      {tab === "groups" ? <GroupsStep /> : <ChannelsStep {...props} />}
     </div>
   );
 }

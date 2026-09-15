@@ -62,7 +62,9 @@ export function validateStep(step: WizardStepId, state: DraftFields): StepValida
   } else if (step === 2) {
     errors.push(...Object.values(validateBasicInfo(state.basicInfo)));
   } else if (step === 3) {
-    if (state.channelIds.length === 0) {
+    // A Channel picked directly and one reached through a Channel Group are independent
+    // intents (ADR 0074 §6) — either alone is a complete target selection.
+    if (state.channelIds.length === 0 && state.groupIds.length === 0) {
       errors.push("กรุณาเลือกช่องทางอย่างน้อย 1 ช่องทาง");
     }
     errors.push(...Object.values(validateScheduleForm(state.scheduleForm)));

@@ -32,6 +32,13 @@ function describeDrift(finding: DriftFinding): string {
       return finding.zoneName
         ? `Playlist "${finding.playlistName}" ในโซน "${finding.zoneName}" ถูกแก้ไขหลังเผยแพร่`
         : `Playlist "${finding.playlistName}" ถูกแก้ไขหลังเผยแพร่`;
+    case "group": {
+      const changes = [
+        finding.added.length > 0 ? `+${finding.added.join(", ")}` : null,
+        finding.removed.length > 0 ? `−${finding.removed.join(", ")}` : null,
+      ].filter(Boolean);
+      return `Group "${finding.groupName}" เปลี่ยนสมาชิกหลังเผยแพร่: ${changes.join(" / ")}`;
+    }
   }
 }
 

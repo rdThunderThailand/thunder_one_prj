@@ -50,6 +50,26 @@ assert.equal(classifyApiError(new ApiError("Already in use: video is still refer
 assert.equal(classifyApiError(new ApiError("row version mismatch", 409), FALLBACK).kind, "rejected");
 assert.equal(isConflict("Already in use: video is still referenced by a playlist"), false);
 
+// ADR 0074 §5 activation guard: unlike the generic "Invalid input:" catch-all below, these two
+// name the Group and the missing/conflicting Channels — they must reach the operator verbatim,
+// not get swallowed into the generic Thai "ข้อมูลที่กรอกยังไม่ครบ" message.
+const incompleteGroup = classifyApiError(
+  new ApiError("Invalid input: synchronized group target is incomplete — S (missing: C2)", 400),
+  FALLBACK,
+);
+assert.equal(incompleteGroup.kind, "rejected");
+assert.equal(incompleteGroup.message, "Invalid input: synchronized group target is incomplete — S (missing: C2)");
+
+const directInGroup = classifyApiError(
+  new ApiError(
+    "Invalid input: cannot activate a direct device target inside a synchronized group — Screen 01 (channel: CH-01; group: S)",
+    400,
+  ),
+  FALLBACK,
+);
+assert.equal(directInGroup.kind, "rejected");
+assert.ok(directInGroup.message.includes("group: S"));
+
 // 4xx means the request itself was refused — retrying it unchanged is pointless.
 assert.equal(classifyApiError(new ApiError("Invalid input: name required", 400), FALLBACK).kind, "rejected");
 assert.equal(classifyApiError(new ApiError("nope", 499), FALLBACK).kind, "rejected");
