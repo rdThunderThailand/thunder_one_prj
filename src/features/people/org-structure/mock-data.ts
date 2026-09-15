@@ -26,6 +26,14 @@ export interface OrgUnitNode {
   name: string;
   headName: string | null;
   headTitle: string | null;
+  /** Added 2026-09-15, alongside headEmail — same real `manager_id`
+   *  resolution headName/headTitle already use, just two more fields off
+   *  the same resolved member row (`user.avatar_url`/`user.email`). Not new
+   *  Core work, just not surfaced in the detail panel before now. Optional
+   *  (not `| null`) so the 22 existing mock entries below don't all need
+   *  touching — real rows (`core-mapper.ts`) always set them explicitly. */
+  headAvatarUrl?: string | null;
+  headEmail?: string | null;
   employeeCount: number;
   unitCode: string;
   unitType: string;

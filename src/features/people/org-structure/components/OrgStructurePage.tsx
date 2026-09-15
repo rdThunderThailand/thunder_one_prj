@@ -6,6 +6,7 @@ import { OrgChartCanvas } from "./OrgChartCanvas";
 import { OrgDetailPanel } from "./OrgDetailPanel";
 import { OrgStatTilesRow } from "./OrgStatTilesRow";
 import { OrgStructureHeader } from "./OrgStructureHeader";
+import { OrgUnitListView } from "./OrgUnitListView";
 
 interface OrgStructurePageProps {
   /** `null` only when the Core fetch itself failed (network/HTTP/shape
@@ -30,10 +31,18 @@ export function OrgStructurePage({ units, rootUnitId }: OrgStructurePageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <OrgStructureHeader activeView={activeView} onChangeView={setActiveView} />
+      <OrgStructureHeader activeView={activeView} onChangeView={setActiveView} units={units} rootUnitId={rootUnitId} />
       {units && <OrgStatTilesRow units={units} rootUnitId={rootUnitId ?? Object.keys(units)[0] ?? ""} />}
 
-      {activeView !== "chart" ? (
+      {activeView === "list" ? (
+        units ? (
+          <OrgUnitListView units={units} onSelect={setSelectedId} />
+        ) : (
+          <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
+            ไม่สามารถโหลดโครงสร้างองค์กรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
+          </p>
+        )
+      ) : activeView !== "chart" ? (
         <div className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
           ยังไม่มีข้อมูลสำหรับแท็บนี้
         </div>

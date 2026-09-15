@@ -157,6 +157,12 @@ export async function updateMemberContract(
 export interface UpdateMemberInput {
   default_department_id?: string | null;
   job_title?: string | null;
+  /** Proposed 2026-09-15 — same `memberships.start_date` column the
+   *  create-time flows already write, just no way to fix it after the fact
+   *  until now. "YYYY-MM-DD". Not yet confirmed live on Core's side — see
+   *  this file's own updateMember() comment for the "build ahead, 404
+   *  gracefully" pattern. */
+  start_date?: string | null;
 }
 
 export async function updateMember(

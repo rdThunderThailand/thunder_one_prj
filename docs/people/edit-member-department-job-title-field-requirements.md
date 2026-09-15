@@ -63,3 +63,10 @@ members-api.ts`, wired into a new edit modal on `PersonnelTable`'s row action) �
 frontend against a proposed contract, 404 gracefully until Core ships it" pattern already used by
 `asset-intelligence/assets`'s `EditAssetModal`. If the actual shape ends up different, the frontend
 side is a small, contained diff to adjust.
+
+**Resolved 2026-09-15**: `PATCH /tenants/:id/members/:memberId` shipped exactly as proposed above
+(`default_department_id`/`job_title`), confirmed live end-to-end. Same day, extended with a third
+field, `start_date` (also on `memberships`, "YYYY-MM-DD", same partial-update semantics) — real
+need: HR wants to fix an existing member's start date after bulk-import used a placeholder, not
+just set it once at creation. Also confirmed live end-to-end (tested against a real record, set →
+change → revert).

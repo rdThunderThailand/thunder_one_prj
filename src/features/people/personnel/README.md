@@ -60,13 +60,17 @@ Workspace's Overview (`people/overview`). Nests under `people/` per
     dot, start date, manager, actions) — unchanged, since `core-mapper.ts` maps into the exact shape
     it already rendered. **The row action ("...") button is real as of 2026-09-14** — opens
     `EditPersonnelModal` (department + job_title, the two fields blocking real onboarding — see
-    `docs/people/edit-member-department-job-title-field-requirements.md`) via a new
-    `updateMember()` call. Built ahead of Core shipping the endpoint, same "404 gracefully until
-    it lands" pattern as `asset-intelligence/assets`'s `EditAssetModal`/`updateAsset` — check
-    whether Core's `PATCH /tenants/:id/members/:memberId` actually exists yet before assuming this
-    works end-to-end. `PersonnelRow` gained a `departmentId` field (raw
-    `default_department_id`, alongside the existing resolved `unit` label) so the modal's dropdown
-    can pre-select the current value.
+    `docs/people/edit-member-department-job-title-field-requirements.md`; **วันที่เริ่มงาน added
+    2026-09-15** once it turned out to be the same `memberships` table, confirmed live end-to-end
+    against real data) via `updateMember()`. `PATCH /tenants/:id/members/:memberId` (all three
+    fields) is confirmed live on Core's side now — no longer a "build ahead, 404 gracefully" case.
+    `PersonnelRow` gained `departmentId`/`startDate` (raw `default_department_id`/`start_date`,
+    alongside the existing resolved `unit`/`startDateLabel` display strings) so the modal's
+    controls can pre-populate real current values.
+  - `PersonnelPage` — **real `?department=<unitId>` filter as of 2026-09-15** (`useSearchParams`,
+    client-side against the already-fetched roster) — followed from
+    `people/org-structure`'s "ดูบุคลากรในหน่วยงานนี้" action. Exact department match, not
+    including sub-departments.
 - `mock-data.ts` — `personnelViewTabs`/`personnelStatTiles`/`personnelRetentionRate` carry the
   mockup's own numbers for the 4 mock tiles above; `personnelRows` is (re-exported via `index.ts`)
   also `people/add-person`'s source for its ตำแหน่งงาน picker options.

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ChevronDownIcon, UsersIcon } from "@/components/ui/icons";
+import { BuildingIcon, ChevronDownIcon, MoreIcon, UsersIcon } from "@/components/ui/icons";
 import type { OrgUnitNode } from "../mock-data";
+import { unitTypeColorClasses } from "../unit-colors";
 
 interface OrgChartNodeProps {
   unitId: string;
@@ -32,26 +33,48 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
   return (
     <div className="flex flex-col items-center">
       <div className="relative">
-        <button
-          type="button"
-          onClick={() => onSelect(unitId)}
-          className={`flex min-w-[168px] items-center gap-2.5 rounded-xl border p-3 text-left transition-colors ${
+        <div
+          className={`flex min-w-[188px] items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${
             selected
               ? "border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-500/10"
               : "border-zinc-200 bg-white hover:border-indigo-200 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-indigo-800"
           }`}
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
-            <UsersIcon className="h-4 w-4" />
-          </span>
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">{unit.name}</span>
-            {unit.headTitle && (
-              <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{unit.headTitle}</span>
-            )}
-            <span className="block text-xs text-zinc-400">{unit.employeeCount}</span>
-          </span>
-        </button>
+          <button type="button" onClick={() => onSelect(unitId)} className="flex min-w-0 flex-1 items-start gap-2.5">
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${unitTypeColorClasses(unit.unitType)}`}
+            >
+              <UsersIcon className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                {unit.name}
+              </span>
+              {unit.headTitle && (
+                <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{unit.headTitle}</span>
+              )}
+              <span className="mt-1 flex items-center gap-2.5 text-xs text-zinc-400">
+                <span className="flex items-center gap-1">
+                  <UsersIcon className="h-3 w-3" />
+                  {unit.employeeCount} คน
+                </span>
+                {unit.teamsCount > 0 && (
+                  <span className="flex items-center gap-1">
+                    <BuildingIcon className="h-3 w-3" />
+                    {unit.teamsCount} หน่วยงาน
+                  </span>
+                )}
+              </span>
+            </span>
+          </button>
+          <button
+            type="button"
+            title="ยังไม่เปิดใช้งาน"
+            className="shrink-0 cursor-not-allowed text-zinc-300 hover:text-zinc-400 dark:text-zinc-600"
+          >
+            <MoreIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
         {hasChildren && (
           <button
             type="button"

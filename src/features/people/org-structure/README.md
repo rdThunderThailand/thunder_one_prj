@@ -54,8 +54,10 @@ Nests under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
   - `OrgChartCanvas` — now takes `units`/`rootUnitId` as props (passed through to `OrgChartNode`).
     **Zoom is real since 2026-09-15** (50%-150%, a CSS `transform: scale()` on the tree, `useState`
     in this component — no drag/pan, just scale) — tested live via browser automation, the +/-/reset
-    buttons and displayed percentage all work. "Fullscreen" stays decorative — a real fullscreen API
-    call is separate, bigger scope. The line-style legend is unchanged.
+    buttons and displayed percentage all work. **Fullscreen is real too, same day** — the browser
+    Fullscreen API on a wrapper div (`Card` isn't a forwardRef component, so the ref lives one level
+    up), a `fullscreenchange` listener keeps the button's icon/title correct even if the user exits
+    via Esc instead of clicking it again. The line-style legend is unchanged.
   - `OrgChartNode` — recursive, one call per tree level, now taking `units` as a prop instead of
     importing `mock-data` directly; **real** click-to-select (calls `onSelect(unitId)`, doesn't
     navigate). **Collapse/expand per node is real since 2026-09-15** — each node owns its own
@@ -64,18 +66,37 @@ Nests under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
     instead — tested live (Product & Technology collapsed correctly, hid Software Engineering/
     Product Design, chevron rotated). Connector lines are plain CSS, unchanged — see the
     component's own comment.
-  - `OrgDetailPanel` — now takes `units` as a prop. Header (icon, name, head, Active badge) + 5 tabs
-    (ภาพรวม real; the other 4 share the "no data for this tab" placeholder) + detail rows (head
-    name/positions/fill-rate render "-" when Core hasn't supplied them — see `core-mapper.ts`
-    above) + a real "หน่วยงานย่อย" sub-unit list + inert Edit/Delete actions. The close (×) button
-    clears `selectedId`, showing an empty-state prompt.
+  - `OrgDetailPanel` — now takes `units` as a prop. **Redesigned 2026-09-15**: down to 2 tabs
+    (ภาพรวม/รายละเอียด — the old 5-tab set had 4 permanent placeholders, the mockup this round only
+    asked for 2). ภาพรวม now shows หัวหน้าหน่วยงาน with avatar+email (`headAvatarUrl`/`headEmail`,
+    real — same `manager_id` resolution `headName`/`headTitle` already had, just not surfaced
+    before; still often blank in practice since no department in this tenant has a manager assigned
+    yet) + real "การดำเนินการ" buttons: **เพิ่มคนในหน่วยงานนี้** (links to `/people/add/employee`, no
+    department pre-fill), **ดูบุคลากรในหน่วยงานนี้** (links to `/people/personnel?department=<id>` —
+    exact department match, not including sub-departments), **Export โครงสร้างนี้** (real CSV of
+    this unit's own subtree, `../export-csv.ts`). รายละเอียด holds รหัส/ประเภท/ตำแหน่งงาน
+    (positions — always "-", no entity in Core)/อัตราการครองอัตรา (always "-", same positions gap).
+    Icon color now keys off real `unitType` (`../unit-colors.ts`) — Edit/Delete stay inert.
+- `unit-colors.ts` — new, 2026-09-15. Colors a unit's icon by real `unitType`
+  (`department_type` — confirmed real values in this tenant: `organization`/`function`/`team`, each
+  pinned to a distinct color; anything else gets a deterministic hash-based color from the same
+  6-color palette). Not a per-department-name taxonomy like the mockup implied — Core has no such
+  field, this keys off what's actually there.
+- `export-csv.ts` — new, 2026-09-15. Real client-side CSV export (Blob + temporary `<a download>`,
+  no dependency) — `exportOrgTreeCsv()` (header's "Export", whole tree) and
+  `exportUnitSubtreeCsv()` (detail panel's "Export โครงสร้างนี้", one unit's own subtree). Same six
+  columns either way.
+- `OrgUnitListView.tsx` — new, 2026-09-15. รายชื่อหน่วยงาน tab is real now (was a permanent
+  placeholder) — a flat, depth-indented table of the same real units the chart renders, click a row
+  to select it (opens the same detail panel).
 - `mock-data.ts` — still the fallback shape reference and the source `people/new-hires`'s
   `AddEmployeeModal` (re-exported via `index.ts`) reads its หน่วยงาน picker options from — that
   consumer wasn't repointed at real data this round. `orgStatTiles`/`orgStructureUpdatedLabel`/
   `orgStructureUpdatedBy` were removed 2026-09-14 once `OrgStatTilesRow` started computing real
-  tiles — see git history if needed.
+  tiles — see git history if needed. `OrgUnitNode` gained `headAvatarUrl`/`headEmail` (optional, so
+  the ~22 existing mock entries didn't all need touching).
 
-**Not built yet**: รายชื่อหน่วยงาน and ตำแหน่งงาน tab content, real pan/zoom/fullscreen on the
-chart, the detail panel's ทีม/พนักงาน/ตำแหน่งงาน/ข้อมูลเพิ่มเติม tabs, Export, and a real
-Add/Edit/Delete Unit (Core's `POST`/`PATCH`/`DELETE /organizations` all exist per its response doc,
-just not wired to these buttons yet).
+**Not built yet**: ตำแหน่งงาน tab content (blocked — no position entity in Core at all, the
+same gap flagged across every people/* audit), the detail panel's real Edit/Delete Unit (Core's
+`PATCH`/`DELETE /organizations` exist per its response doc, just not wired to these buttons yet),
+and Add Unit.

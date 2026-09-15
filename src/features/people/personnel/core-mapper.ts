@@ -57,6 +57,7 @@ export function mapCoreMember(row: CoreMemberRow, units: Record<string, OrgUnitN
     type: resolveType(row),
     workStatus: STATUS_MAP[row.status],
     startDateLabel: row.start_date ? formatThaiDate(row.start_date) : "-",
+    startDate: row.start_date,
     managerName: null,
     managerRole: null,
   };

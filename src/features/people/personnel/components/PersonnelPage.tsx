@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import type { OrgUnitNode } from "@/features/people/org-structure";
 import type { PersonnelRow, PersonnelViewTab } from "../mock-data";
 import { EditPersonnelModal } from "./EditPersonnelModal";
@@ -38,6 +40,18 @@ interface PersonnelPageProps {
 export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }: PersonnelPageProps) {
   const [activeTab, setActiveTab] = useState<PersonnelViewTab>("roster");
   const [editingRow, setEditingRow] = useState<PersonnelRow | null>(null);
+  // Real since 2026-09-15 — ?department=<unitId>, followed from
+  // org-structure's "ดูบุคลากรในหน่วยงานนี้" action. Client-side against the
+  // already-fetched roster, same reasoning as new-hires/contractors'
+  // filters: the whole page's rows are already in memory.
+  const searchParams = useSearchParams();
+  const departmentFilter = searchParams.get("department");
+  const departmentName = departmentFilter ? (units[departmentFilter]?.name ?? departmentFilter) : null;
+
+  const displayedRows = useMemo(() => {
+    if (!fetchedRows || !departmentFilter) return fetchedRows;
+    return fetchedRows.filter((row) => row.departmentId === departmentFilter);
+  }, [fetchedRows, departmentFilter]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,14 +66,22 @@ export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }
       ) : (
         <>
           <PersonnelFilterBar />
-          {fetchedRows === null ? (
+          {departmentName && (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              กรองตามหน่วยงาน: <span className="font-medium text-zinc-900 dark:text-zinc-50">{departmentName}</span>{" "}
+              <Link href="/people/personnel" className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+                ล้างตัวกรอง
+              </Link>
+            </p>
+          )}
+          {displayedRows === null ? (
             <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
               ไม่สามารถโหลดรายชื่อบุคลากรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
             </p>
           ) : (
             <>
-              <PersonnelTableControls shownCount={fetchedRows.length} totalCount={totalCount} />
-              <PersonnelTable rows={fetchedRows} onEditRow={setEditingRow} />
+              <PersonnelTableControls shownCount={displayedRows.length} totalCount={totalCount} />
+              <PersonnelTable rows={displayedRows} onEditRow={setEditingRow} />
             </>
           )}
         </>

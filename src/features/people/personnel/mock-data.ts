@@ -66,6 +66,11 @@ export interface PersonnelRow {
   type: PersonnelType;
   workStatus: WorkStatus;
   startDateLabel: string;
+  /** Raw `start_date` ("YYYY-MM-DD"), alongside the formatted
+   *  `startDateLabel` — added 2026-09-15 so EditPersonnelModal's date input
+   *  can be pre-populated with a real value, not just displayed. Same
+   *  optional-not-null reasoning as departmentId above. */
+  startDate?: string | null;
   managerName: string | null;
   managerRole: string | null;
 }

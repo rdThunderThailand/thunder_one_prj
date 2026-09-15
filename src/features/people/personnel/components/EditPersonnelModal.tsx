@@ -34,21 +34,23 @@ interface EditPersonnelModalProps {
 
 /**
  * Opened from PersonnelTable's row-action ("...") button — previously a
- * disabled "Not built yet" stub. Scoped to the two fields blocking real
- * onboarding (see docs/people/edit-member-department-job-title-field-
- * requirements.md): a bulk-created member's placeholder department/
- * job_title need fixing per-person afterward. Calls `updateMember()`
- * (services/members-api.ts), which 404s until Core ships the proposed
- * `PATCH /tenants/:id/members/:memberId` — same "build ahead of Core,
- * degrade gracefully" pattern as asset-intelligence/assets's
- * `EditAssetModal`/`updateAsset`. `router.refresh()` on success re-runs
- * the Server Component fetch in people/personnel/page.tsx so the edited
- * row reflects immediately.
+ * disabled "Not built yet" stub. Originally scoped to department/job_title
+ * (see docs/people/edit-member-department-job-title-field-requirements.md);
+ * วันที่เริ่มงาน (start_date) added 2026-09-15 on the same endpoint once it
+ * turned out to be the same `memberships` column the other two fields
+ * already live on. Calls `updateMember()` (services/members-api.ts), which
+ * 404s until Core ships the proposed `PATCH /tenants/:id/members/:memberId`
+ * (department/job_title) or its start_date extension — same "build ahead of
+ * Core, degrade gracefully" pattern as asset-intelligence/assets's
+ * `EditAssetModal`/`updateAsset`. `router.refresh()` on success re-runs the
+ * Server Component fetch in people/personnel/page.tsx so the edited row
+ * reflects immediately.
  */
 export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPersonnelModalProps) {
   const router = useRouter();
   const [departmentId, setDepartmentId] = useState(row.departmentId ?? "");
   const [jobTitle, setJobTitle] = useState(row.position === "-" ? "" : row.position);
+  const [startDate, setStartDate] = useState(row.startDate ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -62,6 +64,7 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
       await updateMember(tenantId, row.id, {
         default_department_id: departmentId || null,
         job_title: jobTitle.trim() || null,
+        start_date: startDate || null,
       });
       router.refresh();
       onClose();
@@ -103,6 +106,15 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           ตำแหน่งงาน
           <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inputClasses} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          วันที่เริ่มงาน
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className={inputClasses}
+          />
         </label>
         {error && <p className="text-xs text-red-500">{error}</p>}
       </form>
