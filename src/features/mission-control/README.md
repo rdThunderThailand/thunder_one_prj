@@ -1,19 +1,21 @@
 # mission-control
 
-The CEO / Owner's dashboard — organization-wide strategic overview (landing page at `/mission-control`). Composes `components/ui` primitives (`Card`, `Sparkline`, `ProgressBar`).
+The homepage — default landing content for CEO/Executive/company_admin/tenant/system roles (`/mission-control`, routed there via `resolveShellVariant`). Manager/Employee get separate variants from `asset-intelligence/departments`, untouched by this folder.
 
-`mock-data.ts` derives its numbers from `asset-intelligence/assets`'s `getMockAssets()` and `thunder-care/work-orders`'s `getMockWorkOrders()` where possible rather than inventing separate fake data — there's no real cross-App insights backend yet (see requirement doc §4.1 CEO-01..05).
+> **Redesigned 2026-09-16** to match the coordinating session's new homepage mockup, replacing the previous CEO-strategic-brief layout entirely. `mock-data.ts`'s `strategicBrief`/`attentionItems`/`decisionItems`/`askRecommendations`/`todaySchedule`/`nextUpEvents` and their components (`StrategicBriefCard`, `DecisionsCard`, `AskThunderOneCard`, `TodayScheduleCard`, the old `NeedsAttentionCard`, `StrategicHeader`) were all removed — none of that layout exists in the new design. `statCards`/`mockRecommendations` (read by `InsightsPage`/`ApprovalsPage`, both untouched) stay as-is.
 
 - `components/` —
-  - `MissionControlPage` — the landing page, composing everything below (needs `userName` for the greeting — the route fetches it via `getSession()`)
-  - `StrategicHeader` — the "Good morning, {name}" greeting + Customize button; time-of-day text is computed client-side
-  - `StrategicBriefCard` — the five headline metrics (Organization Health, Key Priorities, Financial Snapshot, Engagement, Critical Risks) plus a short summary (CEO-01/CEO-02)
-  - `NeedsAttentionCard` — operational status pings, not decisions (Communication campaign delays, Field Ops workload, critical assets) — a status ping, not a decision with evidence, same distinction the old `RecentAlertsCard` drew
-  - `DecisionsCard` — items that need an explicit approve/reject (CEO-03); every "Review" button routes to the one real Approvals page rather than a per-item detail route — same "list page with inline Approve/Reject" pattern used everywhere else this sprint. The first item reuses `mockRecommendations` (the actual queue `ApprovalsPage` renders); the rest are narrative placeholders that route there too
-  - `AskThunderOneCard` — a static preview of an AI assistant panel; no assistant backend exists, so the input is decorative
-  - `TodayScheduleCard` — a static preview of the day's calendar; no calendar backend exists
-  - `WorkspacesRow` — App tiles (from `config/apps`) plus a few inert "coming soon" tiles for Apps that don't exist yet
-  - `ApprovalsPage` (CEO-04) — the full Approve/Reject queue, real working buttons + a lightweight "approved/rejected by you, just now" audit note, local state only
-  - `InsightsPage` (CEO-05) — trends and cross-department benchmarks (reads `asset-intelligence/assets`'s `mockDepartments`, and `statCards` from this feature's own `mock-data.ts`)
-  - `ReportsPage` (CEO-05) — a cross-department rollup table, no export (same as every other role's un-exportable Reports page) — distinct from `asset-intelligence/assets`'s own category-based Reports page (that's Asset Manager's operational lens, this is the CEO's organizational one)
-- `mock-data.ts` — `statCards` (read by `InsightsPage`), `mockRecommendations`/`getMockRecommendations` (the real Approvals queue), `strategicBrief`, `attentionItems`, `decisionItems`, `askRecommendations`, `todaySchedule` — all derived from `asset-intelligence/assets` and `thunder-care/work-orders` where possible, no backend yet
+  - `MissionControlPage` — composes everything below; takes `userName` (greeting), `stats` (real, see `core-mapper.ts`), `recentLogs` (real, see `services/dashboard-api.ts`) as props from the route.
+  - `HomeHeader` — greeting hero band. No skyline-photo asset exists in this app, so it's a gradient card rather than a literal image.
+  - `BriefTeaserCard` — a static "ThunderOne Brief" teaser; no AI/insights backend exists, same honest-preview treatment the old `AskThunderOneCard` used.
+  - `HomeStatTilesRow` — top 4 stat tiles. Only "บุคลากรเข้าใหม่" is real (`stats.newHiresThisMonth`); the other 3 (`topStatsMock`) stay mock — no "needs attention" asset status exists on a real Core asset, and neither Thunder Care nor Media Workspace has a real Core integration in this app for a request-approval or online-display count.
+  - `WorkspaceCardsRow` — 3 bigger People/Asset/Media cards (real links to each App's `basePath`) plus "ดูทั้งหมด →" to the full `/work-space` launcher. Replaces this page's use of the old compact `WorkspacesRow` tile grid (that component was deleted — confirmed unused anywhere else first).
+  - `OrgOverviewRow` — บุคลากรทั้งหมด/สินทรัพย์ทั้งหมด real (`stats`); จอแสดงผล/คำขอที่เปิดอยู่ mock (`orgOverviewMock`), same gap as above.
+  - `ActivityFeedCard` — real, `GET /tenants/:id/dashboard`'s tenant-wide `recentLogs` (generic `audit_events`, not curated). `null` (fetch failed) and `[]` (loaded, genuinely empty) render distinct states.
+  - `TasksCard` — "งานที่ต้องดำเนินการ", mock (`actionItems`) — no real cross-App task/approval-aggregation backend exists. Same idea the old `NeedsAttentionCard` had, restyled to the new dot+time-ago list.
+  - `NewsCard` — "ข่าวสารและอัปเดต", static mock — no announcements/CMS backend exists anywhere in this app.
+  - `HomeBanner` — the bottom dismissible banner; a real, working dismiss persisted to `localStorage` (not just decorative).
+  - `ApprovalsPage` (CEO-04), `InsightsPage` (CEO-05), `ReportsPage` (CEO-05) — unrelated sub-routes (`/mission-control/{approvals,insights,reports}`), not touched by the 2026-09-16 redesign.
+- `core-mapper.ts` — `computeHomeStats(memberRows, memberCount, totalAssets, now)`, the homepage's only real-data computation (People headcount/new-hires + Asset total). Not exported via `index.ts` (that barrel only exposes page components) — the app route imports it directly, same convention `people/overview`'s own `core-mapper.ts` uses.
+- `services/dashboard-api.ts` — `getRecentLogs`, a second independent copy of `people/overview`'s own function calling the same tenant-wide `GET /tenants/:id/dashboard` endpoint — each feature owns its own `services/*-api.ts` rather than importing another feature's internal service file.
+- `mock-data.ts` — `statCards`/`mockRecommendations` (unrelated, read by Insights/Approvals) plus the homepage's own mock exports (`briefTeaser`, `topStatsMock`, `orgOverviewMock`, `actionItems`, `newsItems`), each documented with exactly why it isn't real yet.

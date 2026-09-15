@@ -10,7 +10,7 @@ import { peopleNav } from "@/config/nav/people";
 import { shellNavItems } from "@/config/nav/shell";
 import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
-import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
 
 const SHELL_TAGLINE = "Thunder One Shell";
 
@@ -286,9 +286,23 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
       )}
 
       <div className="mt-auto px-5 pb-8 pt-3">
-        {!collapsed && (
-          <p className="sr-only">{tenantName ?? "Thunder One"}</p>
-        )}
+        {/* 2026-09-16 shell redesign — tenant name shown for real now (was
+            sr-only-only before); no tenant switcher exists, so this is a
+            static label with a decorative chevron, not a working picker. */}
+        <div
+          className={`mb-1 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-semibold text-slate-700 ${
+            collapsed ? "justify-center" : ""
+          }`}
+          title={collapsed ? (tenantName ?? "Thunder One") : undefined}
+        >
+          <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
+          {!collapsed && (
+            <>
+              <span className="flex-1 truncate">{tenantName ?? "Thunder One"}</span>
+              <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+            </>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -297,7 +311,7 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
           }`}
         >
           {collapsed ? <ArrowRightIcon className="h-4 w-4" /> : <ArrowLeftIcon className="h-4 w-4" />}
-          {!collapsed && "Collapse"}
+          {!collapsed && "ย่อเมนู"}
         </button>
       </div>
     </aside>

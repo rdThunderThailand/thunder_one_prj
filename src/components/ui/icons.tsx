@@ -732,3 +732,34 @@ export function ExpandIcon({ className = "h-4 w-4" }: IconProps) {
     </svg>
   );
 }
+
+// Single-person silhouette — added 2026-09-16 for UserMenu's "โปรไฟล์ของฉัน"
+// item; UsersIcon (plural) reads wrong for a single-profile link.
+export function UserIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M4.5 19.5c0-3.6 3.4-6 7.5-6s7.5 2.4 7.5 6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// Door-with-arrow — added 2026-09-16 for UserMenu's "ออกจากระบบ" item.
+export function LogoutIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M9 4H6a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 6 20h3M15.5 16l4-4-4-4M19 12H9"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

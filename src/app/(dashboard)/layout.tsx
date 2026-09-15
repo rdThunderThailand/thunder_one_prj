@@ -20,18 +20,12 @@ export default async function DashboardLayout({
   }
   const { userName, tenantName } = session;
   const roleLabel = resolveRoleLabel(resolveRole(session));
-  const todayLabel = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
 
   return (
     <div className="flex h-full">
       <Sidebar tenantName={tenantName} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <Topbar userName={userName} todayLabel={todayLabel} roleLabel={roleLabel} />
+        <Topbar userName={userName} roleLabel={roleLabel} />
         <main className="flex-1 overflow-y-auto bg-zinc-50 px-6 py-6 dark:bg-zinc-950">
           {children}
         </main>

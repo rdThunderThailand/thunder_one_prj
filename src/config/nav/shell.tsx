@@ -21,17 +21,20 @@ export interface ShellNavItem {
 
 export const shellNavItems: ShellNavItem[] = [
   {
-    label: "Mission Control",
-    sublabel: "Strategic Overview",
+    // 2026-09-16 shell redesign — label/sublabel relabeled to the mockup's
+    // Thai copy ("หน้าแรก / ภาพรวม"); href unchanged, still Mission Control's
+    // route (this page's own content was redesigned to match, not moved).
+    label: "หน้าแรก",
+    sublabel: "ภาพรวม",
     href: "/mission-control",
     icon: <HomeIcon className="h-4 w-4 shrink-0" />,
   },
   {
-    label: "My Work",
-    sublabel: "Tasks & Approvals",
+    label: "งานของฉัน",
+    sublabel: "งานและการอนุมัติ",
     href: "/my-work",
     icon: <ListIcon className="h-4 w-4 shrink-0" />,
-    badge: 6,
+    badge: 3,
   },
   {
     label: "Intelligence",
@@ -40,8 +43,8 @@ export const shellNavItems: ShellNavItem[] = [
     icon: <SparklesIcon className="h-4 w-4 shrink-0" />,
   },
   {
-    label: "Workspaces",
-    sublabel: "Open specialized apps",
+    label: "พื้นที่ทำงาน",
+    sublabel: "เข้าถึงทุกระบบของคุณ",
     href: "/work-space",
     icon: <GridIcon className="h-4 w-4 shrink-0" />,
     chevron: true,

@@ -1,47 +1,54 @@
-import { AskThunderOneCard } from "./AskThunderOneCard";
-import { DecisionsCard } from "./DecisionsCard";
-import { NeedsAttentionCard } from "./NeedsAttentionCard";
-import { StrategicBriefCard } from "./StrategicBriefCard";
-import { StrategicHeader } from "./StrategicHeader";
-import { TodayScheduleCard } from "./TodayScheduleCard";
-import { WorkspacesRow } from "./WorkspacesRow";
+import { ActivityFeedCard } from "./ActivityFeedCard";
+import { BriefTeaserCard } from "./BriefTeaserCard";
+import { HomeBanner } from "./HomeBanner";
+import { HomeHeader } from "./HomeHeader";
+import { HomeStatTilesRow } from "./HomeStatTilesRow";
+import { NewsCard } from "./NewsCard";
+import { OrgOverviewRow } from "./OrgOverviewRow";
+import { TasksCard } from "./TasksCard";
+import { WorkspaceCardsRow } from "./WorkspaceCardsRow";
+import type { HomeStats } from "../core-mapper";
+import type { CoreRecentLog } from "../services/dashboard-api";
 
-export function MissionControlPage({ userName }: { userName: string }) {
-  const dataAsOf = new Date().toLocaleString("en-US", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+interface MissionControlPageProps {
+  userName: string;
+  /** Real since 2026-09-16 (`../core-mapper.ts`'s `computeHomeStats`) —
+   *  `null` when the underlying People/Asset fetches failed. Backs 3 of the
+   *  8 stat tiles across `HomeStatTilesRow`/`OrgOverviewRow`; the rest stay
+   *  mock (see those components' own doc comments for exactly which and
+   *  why). */
+  stats: HomeStats | null;
+  /** Real since 2026-09-16 (`../services/dashboard-api.ts`) — backs
+   *  `ActivityFeedCard`. `null` means the fetch failed. */
+  recentLogs: CoreRecentLog[] | null;
+}
 
+// The homepage (CEO/Executive/company_admin/tenant/system default landing —
+// Manager/Employee get their own variants from asset-intelligence/
+// departments, untouched here). **Redesigned 2026-09-16** to match the
+// coordinating session's new mockup, replacing the old CEO-strategic-brief
+// layout (StrategicBriefCard/DecisionsCard/AskThunderOneCard/
+// TodayScheduleCard — all retired, see mock-data.ts's own header comment).
+export function MissionControlPage({ userName, stats, recentLogs }: MissionControlPageProps) {
   return (
     <div className="flex flex-col gap-6">
-      <StrategicHeader userName={userName} />
+      <HomeHeader userName={userName} />
+      <BriefTeaserCard />
+      <HomeStatTilesRow stats={stats} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          <StrategicBriefCard />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <NeedsAttentionCard />
-            <DecisionsCard />
-          </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="flex flex-col gap-6 lg:col-span-2">
+          <WorkspaceCardsRow />
+          <OrgOverviewRow stats={stats} />
+          <ActivityFeedCard logs={recentLogs} />
         </div>
-        <div className="flex flex-col gap-4">
-          <AskThunderOneCard />
-          <TodayScheduleCard />
+        <div className="flex flex-col gap-6">
+          <TasksCard />
+          <NewsCard />
         </div>
       </div>
 
-      <WorkspacesRow />
-
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
-        <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          All Systems Operational
-        </span>
-        <span>Data as of {dataAsOf}</span>
-      </div>
+      <HomeBanner />
     </div>
   );
 }
