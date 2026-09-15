@@ -48,6 +48,11 @@ export interface CoreMemberRow {
    *  resolution (docs/people/add-contractor-and-bulk-field-requirements.md).
    *  `null` on rows created before that column existed. */
   member_type: "employee" | "contractor" | "partner" | "guest" | null;
+  /** Same "already in MEMBER_SELECT, frontend type just hadn't caught up"
+   *  story as member_type above — confirmed 2026-09-15. "YYYY-MM-DD" or
+   *  `null`. Used to derive the "พนักงานทดลองงาน" tab/badge: on probation
+   *  when set and not yet passed. */
+  probation_end_date: string | null;
   user: {
     id: string;
     email: string;

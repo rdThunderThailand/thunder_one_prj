@@ -30,25 +30,11 @@ export const personnelViewTabs: PersonnelViewTabItem[] = [
   { id: "probation", label: "พนักงานทดลองงาน" },
 ];
 
-export interface PersonnelStatTile {
-  id: string;
-  label: string;
-  value: string;
-  sublabel: string;
-}
-
-// 2026-09-01: redesigned from 6 per-type tiles into the mockup's 5 —
-// "พนักงานทั้งหมด" is real (PersonnelPage passes Core's actual `totalCount`
-// through instead of this mock string); the other 4 (contractor headcount,
-// this month's new-hire/departure counts, retention rate) have no Core
-// aggregate endpoint yet and stay mock, same discipline as
-// people/overview's own stat tiles.
-export const personnelStatTiles: PersonnelStatTile[] = [
-  { id: "contractors", label: "ผู้ปฏิบัติงานภายนอก", value: "9", sublabel: "คน" },
-  { id: "new-this-month", label: "เข้าใหม่ (เดือนนี้)", value: "7", sublabel: "คน" },
-  { id: "left-this-month", label: "ออกจากองค์กร (เดือนนี้)", value: "2", sublabel: "คน" },
-];
-
+// `PersonnelStatTile`/`personnelStatTiles` (the old 3-tile mock) removed
+// 2026-09-15 — พนักงานทั้งหมด/ผู้ปฏิบัติงานภายนอก/เข้าใหม่ (เดือนนี้) are all
+// real now (computed in PersonnelPage from the fetched roster).
+// ออกจากองค์กร (เดือนนี้)/อัตราการคงอยู่ stay mock below — no offboarding
+// entity exists in Core at all, same gap as /people/departures.
 export const personnelRetentionRate = 94.1;
 
 export interface PersonnelRow {
@@ -71,6 +57,23 @@ export interface PersonnelRow {
    *  can be pre-populated with a real value, not just displayed. Same
    *  optional-not-null reasoning as departmentId above. */
   startDate?: string | null;
+  /** "N ปี M เดือน" duration since startDate, computed once in
+   *  core-mapper.ts rather than re-derived per render. "-" when no
+   *  startDate. Added 2026-09-15 for the redesigned table's "วันที่เริ่มงาน /
+   *  ระยะเวลา" column. */
+  tenureLabel?: string;
+  /** Real `user.avatar_url` — added 2026-09-15. This app has no photo
+   *  upload feature anywhere yet, so this is almost always `null` in
+   *  practice (Avatar falls back to initials) even though the field itself
+   *  is real. */
+  avatarUrl?: string | null;
+  /** Raw `probation_end_date` ("YYYY-MM-DD") — added 2026-09-15, same
+   *  "confirmed already in Core's MEMBER_SELECT, frontend type hadn't
+   *  caught up" story as member_type/start_date before it. "On probation"
+   *  is derived (compare to today), not stored as a separate boolean, so
+   *  there's one source of truth and it can't drift as today's date moves
+   *  forward. */
+  probationEndDate?: string | null;
   managerName: string | null;
   managerRole: string | null;
 }
@@ -208,6 +211,6 @@ export const personnelRows: PersonnelRow[] = [
   },
 ];
 
-export const personnelTotalCount = 128;
-export const personnelPageSize = 10;
-export const personnelTotalPages = 13;
+// `personnelTotalCount`/`personnelPageSize`/`personnelTotalPages` (the old
+// static mock numbers) removed 2026-09-15 once PersonnelTableControls
+// started doing real client-side pagination over the fetched roster.

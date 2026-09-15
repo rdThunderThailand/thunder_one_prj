@@ -31,6 +31,22 @@ function unitLabel(departmentId: string | null, units: Record<string, OrgUnitNod
   return parent && parent.parentId ? `${parent.name} / ${unit.name}` : unit.name;
 }
 
+/** "N ปี M เดือน" (or just "N เดือน"/"N วัน" for a very new hire) since a
+ *  real start_date. Whole-months-and-years, not exact days, matching how
+ *  HR usually talks about tenure ("3 เดือน", not "92 วัน"). */
+function tenureLabel(startDate: string, now: Date): string {
+  const start = new Date(startDate);
+  if (Number.isNaN(start.getTime())) return "-";
+  let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  if (now.getDate() < start.getDate()) months -= 1;
+  if (months < 0) return "-";
+  if (months < 1) return "น้อยกว่า 1 เดือน";
+  const years = Math.floor(months / 12);
+  const remMonths = months % 12;
+  if (years === 0) return `${remMonths} เดือน`;
+  return remMonths === 0 ? `${years} ปี` : `${years} ปี ${remMonths} เดือน`;
+}
+
 /**
  * Maps Core's `GET /tenants/:id/members` row shape to this feature's
  * `PersonnelRow` — the same display shape `PersonnelTable` already renders
@@ -45,7 +61,18 @@ function unitLabel(departmentId: string | null, units: Record<string, OrgUnitNod
  * are still always `null` — `manager_id` isn't in Core's org-units select
  * list yet (see org-structure/services/organizations-api.ts).
  */
+/** Real "อยู่ระหว่างทดลองงาน" (still probationary) vs "ปกติ" (confirmed) —
+ *  derived from `probationEndDate` vs. today, not stored as its own
+ *  boolean/enum, so there's one source of truth for both the table's badge
+ *  and the "พนักงานทดลองงาน" tab's filter. */
+export function isOnProbation(probationEndDate: string | null | undefined, now: Date = new Date()): boolean {
+  if (!probationEndDate) return false;
+  const end = new Date(probationEndDate);
+  return !Number.isNaN(end.getTime()) && end.getTime() >= now.getTime();
+}
+
 export function mapCoreMember(row: CoreMemberRow, units: Record<string, OrgUnitNode>): PersonnelRow {
+  const now = new Date();
   return {
     id: row.id,
     name: row.user.full_name,
@@ -58,6 +85,9 @@ export function mapCoreMember(row: CoreMemberRow, units: Record<string, OrgUnitN
     workStatus: STATUS_MAP[row.status],
     startDateLabel: row.start_date ? formatThaiDate(row.start_date) : "-",
     startDate: row.start_date,
+    tenureLabel: row.start_date ? tenureLabel(row.start_date, now) : "-",
+    avatarUrl: row.user.avatar_url,
+    probationEndDate: row.probation_end_date,
     managerName: null,
     managerRole: null,
   };
