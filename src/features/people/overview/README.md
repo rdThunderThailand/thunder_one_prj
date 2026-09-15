@@ -18,7 +18,13 @@ onboarding, org changes, and departures at a glance. Nests under `people/` per
     score/remainder 2-segment pie rather than a bespoke ring SVG)
   - `AttentionListCard` — "งานที่ต้องให้ความสนใจ", one row per person with a status badge and due date
   - `OnboardingStatusCard` — summary counts + per-person progress bars
-  - `TodayActivityCard` — today's timeline, tagged Onboarding/Change/Meeting/Training/Offboarding
+  - `TodayActivityCard` — **real since 2026-09-15**: `services/dashboard-api.ts`'s `getRecentLogs()`
+    reads Core's `GET /tenants/:id/dashboard` (`recentLogs`, from `audit_events` — a generic
+    tenant-wide system audit trail, also used by asset/device features), filtered to today by
+    `app/.../people/page.tsx`. The old mock's Onboarding/Change/Meeting/Training/Offboarding tag
+    taxonomy didn't carry over — Core has no such concept, so each row now shows a plain
+    action/description pair instead of a fabricated color category. Every other card on this page
+    is still mock (see below).
   - `OrgStructureCard` — department headcount list (a summary of what `people/org-structure`'s org
     chart shows in full — see that feature's own README)
   - `PersonnelBreakdownCard` — Employee/Contractor/Partner/Guest donut, reuses `DonutChart`

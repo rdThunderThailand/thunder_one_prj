@@ -162,23 +162,10 @@ export const onboardingRows: OnboardingRow[] = [
   { id: "ob-5", name: "Krit P.", role: "Support Engineer", startDateLabel: "เริ่ม 15 พ.ค. 2569", progress: 0, dueLabel: "อีก 16 วัน" },
 ];
 
-export type ActivityTag = "onboarding" | "change" | "meeting" | "training" | "offboarding";
-
-export interface TodayActivity {
-  id: string;
-  time: string;
-  title: string;
-  subtitle: string;
-  tag: ActivityTag;
-}
-
-export const todayActivities: TodayActivity[] = [
-  { id: "act-1", time: "09:00", title: "Ann Supaporn", subtitle: "First day", tag: "onboarding" },
-  { id: "act-2", time: "10:30", title: "John P.", subtitle: "Department Transfer", tag: "change" },
-  { id: "act-3", time: "11:00", title: "Team Stand-up", subtitle: "People & Culture", tag: "meeting" },
-  { id: "act-4", time: "14:00", title: "Policy Update Briefing", subtitle: "สำหรับพนักงานใหม่", tag: "training" },
-  { id: "act-5", time: "15:30", title: "Exit Interview", subtitle: "Tom K.", tag: "offboarding" },
-];
+// `ActivityTag`/`TodayActivity`/`todayActivities` (the old mock for
+// TodayActivityCard) removed 2026-09-15 once that card was wired to real
+// data — see `../services/dashboard-api.ts` and the card's own header
+// comment for why the 5-category tag concept didn't carry over.
 
 export interface OrgStructureRow {
   id: string;

@@ -3,8 +3,12 @@
 New hires Kanban board (`/people/new-hires`) — HR Manager's "เข้าใหม่ / Onboarding" page. Nests
 under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
 
-> The roster (`newHireRows`) is still mock — no Lifecycle/onboarding schema exists in Core yet
-> (confirmed 2026-08-28, `docs/people/core-response-people-workspace-api.md`).
+> **Real since 2026-09-15** — the Kanban roster reads `GET /tenants/:id/members?include=onboarding`
+> (proposed in `docs/people/new-hires-onboarding-roster-field-requirements.md`, extending the
+> existing members-list endpoint rather than adding a new Lifecycle/stage column Core never built).
+> `mock-data.ts`'s `newHireRows` is unused now but kept as a shape reference (same discipline as
+> `people/org-structure`'s `mock-data.ts` after its own real-data wiring) — `NewHireFunnelRow`'s
+> header counts and `NewHireSidebar` are still mock, out of this round's scope.
 >
 > **2026-09-01**: redesigned from a table + status-tabs + click-to-select detail panel into a
 > 4-stage Kanban board (**Pre-boarding → Onboarding → Ready to Work → Active**), per the FigJam
@@ -15,14 +19,24 @@ under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
 > The real "add employee" creation flow still lives outside this feature — see
 > `people/add-person`'s own README.
 
+- `services/onboarding-api.ts` / `core-mapper.ts` — real, added 2026-09-15. `getOnboardingRoster()`
+  fetches the roster (server-only, `coreGet`, fails open to `null`); `mapOnboardingRoster()` derives
+  the Kanban's 4-stage `NewHireStatus` from `onboarding.done`/`total` + the existing membership
+  `status` (no stage column exists on Core's side — see the doc referenced above for the exact
+  mapping and why). `steps` on each mapped row is always `[]` — the roster-list endpoint
+  intentionally doesn't return full per-step detail, and nothing in the current Kanban renders it
+  anyway (only `people/add-person`'s wizards build real `steps` arrays, for the handoff).
 - `components/`
-  - `NewHiresPage` — `addedRows` is real, client-local state (prepended ahead of `newHireRows`,
-    never persisted). A one-time `useState` lazy initializer (`readHandoff()`) reads a just-created
-    hire that `people/add-person`'s `AddEmployeeWizardPage`/`AddContractorWizardPage` stashed in
-    `sessionStorage` (`NEW_HIRE_HANDOFF_KEY`, imported via `people/add-person/handoff.ts` directly
-    rather than that feature's `index.ts`, to avoid a barrel-file import cycle between the two
-    features) before its "ไปที่หน้าเข้าใหม่" link brought HR back here — the row shows up in its
-    Kanban column immediately, same as before this redesign.
+  - `NewHiresPage` — takes `rows: NewHireRow[] | null` (fetched server-side by
+    `app/.../people/new-hires/page.tsx`); `null` renders an explicit error message rather than
+    silently falling back to mock content, same discipline as org-structure/personnel. `addedRows`
+    is real, client-local state (prepended ahead of the fetched rows, never persisted). A one-time
+    `useState` lazy initializer (`readHandoff()`) reads a just-created hire that `people/add-person`'s
+    `AddEmployeeWizardPage`/`AddContractorWizardPage` stashed in `sessionStorage`
+    (`NEW_HIRE_HANDOFF_KEY`, imported via `people/add-person/handoff.ts` directly rather than that
+    feature's `index.ts`, to avoid a barrel-file import cycle between the two features) before its
+    "ไปที่หน้าเข้าใหม่" link brought HR back here — the row shows up in its Kanban column
+    immediately, ahead of the next real fetch picking it up too.
   - `NewHiresHeader` — retitled "เข้าใหม่ / Onboarding"; คู่มือการใช้งาน/ส่งออก stay inert,
     **real** "เพิ่มพนักงานใหม่" links to `/people/add/employee`.
   - `NewHireFunnelRow` — the 4-stage funnel header strip (Pre-boarding/Onboarding/Ready to
@@ -49,6 +63,6 @@ under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
   to build a freshly-created hire's checklist.
 
 **Not built yet**: every dropdown filter/search on `NewHiresFilterBar`, "ดูรายละเอียด"/"ดูเพิ่ม N
-คน" links, คู่มือการใช้งาน/ส่งออก, and any per-hire detail view (none exists in this redesign). The
-roster list itself is still mock (no Lifecycle/onboarding schema in Core) — only
-`people/add-person`'s wizard *creation* calls are real; see that feature's README.
+คน" links, คู่มือการใช้งาน/ส่งออก, and any per-hire detail view (none exists in this redesign).
+`NewHireFunnelRow`'s header counts and `NewHireSidebar`'s summary cards are still mock, independent
+of the now-real roster (see this feature's own components above for the exact split).

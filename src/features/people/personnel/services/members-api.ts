@@ -41,6 +41,13 @@ export interface CoreMemberRow {
   start_date: string | null;
   role_code: string | null;
   role_type: string | null;
+  /** Confirmed 2026-09-15 by reading `MEMBER_SELECT` in `thunder_core_API`'s
+   *  `src/lib/core/member-view.ts` directly — this was already real and
+   *  already returned by `GET /tenants/:id/members`; this frontend's own
+   *  type just hadn't been updated to include it since the 2026-08-28
+   *  resolution (docs/people/add-contractor-and-bulk-field-requirements.md).
+   *  `null` on rows created before that column existed. */
+  member_type: "employee" | "contractor" | "partner" | "guest" | null;
   user: {
     id: string;
     email: string;
@@ -136,6 +143,30 @@ export async function updateMemberContract(
  * 201; `requestApi` doesn't distinguish, the caller does via
  * `isPendingInvite`.
  */
+/** `PATCH /tenants/:id/members/:memberId` — proposed 2026-09-14
+ *  (docs/people/edit-member-department-job-title-field-requirements.md),
+ *  scoped to the two fields blocking real onboarding: a bulk-created
+ *  member's placeholder department/job_title need fixing per-person
+ *  afterward, and there was no endpoint at all to do that (Core's
+ *  `members/[memberId]/route.ts` only had `GET`/`DELETE`). Partial —
+ *  omitted fields are left unchanged, same convention as
+ *  `updateMemberContract`. Not yet confirmed live on Core's side; a 404
+ *  here means the endpoint hasn't shipped yet, same "build ahead of Core,
+ *  degrade gracefully" pattern as asset-intelligence/assets's
+ *  `EditAssetModal`/`updateAsset`. */
+export interface UpdateMemberInput {
+  default_department_id?: string | null;
+  job_title?: string | null;
+}
+
+export async function updateMember(
+  tenantId: string,
+  memberId: string,
+  input: UpdateMemberInput
+): Promise<CoreMemberRow> {
+  return requestApi<CoreMemberRow>("PATCH", `/tenants/${tenantId}/members/${memberId}`, input);
+}
+
 export async function createMember(
   tenantId: string,
   input: CreateMemberInput
