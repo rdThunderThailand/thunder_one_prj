@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
-import { ChevronDownIcon } from "@/components/ui/icons";
+import { ChevronDownIcon, LockIcon, LogoutIcon, SettingsIcon, UserIcon } from "@/components/ui/icons";
 
 interface UserMenuProps {
   userName: string;
@@ -34,18 +35,18 @@ export function UserMenu({ userName, roleLabel }: UserMenuProps) {
         onClick={() => setIsOpen((open) => !open)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+        className="flex items-center gap-3 rounded-lg px-1.5 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-900"
       >
-        <Avatar name={userName} />
+        <Avatar name={userName} size={44} className="shadow-sm" />
         <span className="text-left leading-tight">
-          <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <span className="block text-base font-bold text-[#071858] dark:text-zinc-100">
             {userName}
           </span>
           {roleLabel && (
-            <span className="block text-xs text-zinc-500 dark:text-zinc-400">{roleLabel}</span>
+            <span className="block text-[12.8px] text-[#6071a1] dark:text-zinc-400">{roleLabel}</span>
           )}
         </span>
-        <ChevronDownIcon className="h-4 w-4 text-zinc-400" />
+        <ChevronDownIcon className="h-4 w-4 text-[#536999] dark:text-zinc-500" />
       </button>
 
       {isOpen && (
@@ -60,16 +61,47 @@ export function UserMenu({ userName, roleLabel }: UserMenuProps) {
           />
           <div
             role="menu"
-            className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
+            className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
           >
+            <Link
+              href="/profile"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+            >
+              <UserIcon className="h-4 w-4 text-zinc-400" />
+              โปรไฟล์ของฉัน
+            </Link>
+            <Link
+              href="/account-security"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+            >
+              <LockIcon className="h-4 w-4 text-zinc-400" />
+              บัญชีและความปลอดภัย
+            </Link>
+            {/* Deep-links into Profile's own "รูปแบบการแสดงผล" card — Core has
+                no separate app-settings endpoint to back a standalone page. */}
+            <Link
+              href="/profile"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+            >
+              <SettingsIcon className="h-4 w-4 text-zinc-400" />
+              การตั้งค่าส่วนบุคคล
+            </Link>
+            <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
             <button
               type="button"
               role="menuitem"
               onClick={handleLogout}
               disabled={isSigningOut}
-              className="w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 dark:text-zinc-200 dark:hover:bg-zinc-900"
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-500/10"
             >
-              {isSigningOut ? "Signing out..." : "Log out"}
+              <LogoutIcon className="h-4 w-4" />
+              {isSigningOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}
             </button>
           </div>
         </>

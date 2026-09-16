@@ -85,6 +85,22 @@ export interface NewHireRow {
    *  Core's `invite_url`, shown in the Kanban card / handoff so HR can
    *  copy/resend it. */
   inviteUrl?: string;
+  /** Raw onboarding checklist counts — only set on rows from the real
+   *  roster fetch (`../core-mapper.ts`), not mock rows or the add-person
+   *  wizards' handoff (added 2026-09-15 for drag-and-drop's real
+   *  `PATCH .../members/:memberId/onboarding` calls, which need to know
+   *  exactly which step indices to toggle, not just the rounded `progress`
+   *  percentage). Drag-and-drop is disabled on a card until these are
+   *  present. */
+  onboardingDone?: number;
+  onboardingTotal?: number;
+  /** Raw "YYYY-MM-DD" (Core's `start_date`), alongside the already-formatted
+   *  `startDateLabel` — added 2026-09-15 for real date-range filtering and
+   *  NewHireSidebar's "พร้อมเริ่มงานใน 7 วัน"/"เริ่มแล้ว (เดือนนี้)" tiles,
+   *  neither of which a formatted Thai label string can be parsed back out
+   *  of reliably. Only set on real roster rows, same as onboardingDone/
+   *  Total. */
+  startDate?: string | null;
 }
 
 // The original 8 rows, reassigned from the old 4-status model to the new
@@ -266,55 +282,25 @@ export const newHireRows: NewHireRow[] = [
 export interface NewHireFunnelStat {
   id: NewHireStatus;
   label: string;
-  count: number;
   sublabel: string;
 }
 
-// The mockup's own top-of-page funnel header numbers — not derived from
-// `newHireRows` above (12 rows here vs. 32+6+3+18=59 in the mockup's own
-// header). Same documented gap as every other people/* mock-data.ts.
+// Stage metadata (id/label/sublabel) NewHireKanbanBoard iterates to render
+// its 4 columns — each column's actual count is computed live from the
+// fetched `rows` (`stageRows.length`), never read from here. **2026-09-16**:
+// dropped the `count` field this array used to carry (32/6/3/18) — it was
+// already dead (nothing read it; both this board and NewHireFunnelRow
+// compute real counts independently), just misleading to leave sitting next
+// to real stage data.
 export const newHireFunnelStats: NewHireFunnelStat[] = [
-  { id: "pre-boarding", label: "Pre-boarding", count: 32, sublabel: "รอเริ่มงาน / เอกสาร" },
-  { id: "onboarding", label: "Onboarding", count: 6, sublabel: "กำลังดำเนินการ" },
-  { id: "ready-to-work", label: "Ready to Work", count: 3, sublabel: "ให้พร้อมเริ่มงาน" },
-  { id: "active", label: "Active", count: 18, sublabel: "เริ่มงานแล้ว" },
+  { id: "pre-boarding", label: "Pre-boarding", sublabel: "รอเริ่มงาน / เอกสาร" },
+  { id: "onboarding", label: "Onboarding", sublabel: "กำลังดำเนินการ" },
+  { id: "ready-to-work", label: "Ready to Work", sublabel: "ให้พร้อมเริ่มงาน" },
+  { id: "active", label: "Active", sublabel: "เริ่มงานแล้ว" },
 ];
 
-export interface NewHireSummaryStat {
-  id: string;
-  label: string;
-  value: string;
-}
-
-export const newHireSummaryStats: NewHireSummaryStat[] = [
-  { id: "total", label: "พนักงานเข้าใหม่ทั้งหมด", value: "32 คน" },
-  { id: "in-progress", label: "อยู่ระหว่างดำเนินการ", value: "14 คน" },
-  { id: "ready-soon", label: "พร้อมเริ่มงานใน 7 วัน", value: "3 คน" },
-  { id: "started-this-month", label: "เริ่มแล้ว (เดือนนี้)", value: "18 คน" },
-];
-
-export interface NewHireActionItem {
-  id: string;
-  label: string;
-  count: number;
-}
-
-export const newHireActionItems: NewHireActionItem[] = [
-  { id: "sign-documents", label: "รอลงนามเอกสาร", count: 5 },
-  { id: "check-equipment", label: "รอตรวจอุปกรณ์", count: 4 },
-  { id: "verify-documents", label: "รอตรวจสอบเอกสาร", count: 3 },
-  { id: "onboarding-tasks", label: "Tasks Onboarding ค้างอยู่", count: 7 },
-];
-
-export interface NewHireResource {
-  id: string;
-  label: string;
-}
-
-// All inert (no target — same "renders inert, not built yet" convention as
-// every other unbuilt affordance in this app).
-export const newHireResources: NewHireResource[] = [
-  { id: "invite-template", label: "Template จดหมายเชิญ" },
-  { id: "onboarding-checklist", label: "Checklist Onboarding" },
-  { id: "onboarding-flow", label: "Flow การเข้าใหม่" },
-];
+// `NewHireSummaryStat`/`newHireSummaryStats` (dead — NewHireSidebar computes
+// its own real summaryStats from `rows`), `NewHireActionItem`/
+// `newHireActionItems` (fabricated task counts), and `NewHireResource`/
+// `newHireResources` (fabricated document names with no real target) all
+// removed 2026-09-16 — see NewHireSidebar.tsx's own header comment.

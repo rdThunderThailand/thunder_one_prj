@@ -7,13 +7,14 @@ import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import { peopleNav } from "@/config/nav/people";
+import { settingsNavItems } from "@/config/nav/settings";
+import { shellNavItems } from "@/config/nav/shell";
 import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
-import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
-import { ShellNav } from "./shell-sidebar-nav";
 
-const SHELL_TAGLINE = "Thunder One Shell";
+const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
 
 // Media Workspace has one nav for the whole app; Asset Intelligence and
 // ThunderCare each have one nav per persona, resolved from the route (see
@@ -144,6 +145,64 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   );
 }
 
+// Rendered on every shell-level route (no active App) — flat, 5 items, each
+// with a sublabel — config/nav/shell.tsx. Colors/spacing match the Figma
+// shell mockup (node 396:4987) exactly rather than the app's generic
+// indigo scale — icons render bare (no icon-box wrapper) per that design.
+function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolean }) {
+  return (
+    <nav className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
+      {shellNavItems.map((item) => {
+        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            title={collapsed ? item.label : undefined}
+            className={`flex items-center gap-5 rounded-lg px-5 py-3.5 transition-colors ${
+              active
+                ? "bg-[#0860ef] text-white shadow-[0px_10px_7.5px_#bedbff,0px_4px_3px_#bedbff]"
+                : "text-[#071858] hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+            } ${collapsed ? "justify-center" : ""}`}
+          >
+            <span
+              className={`shrink-0 [&>svg]:h-7 [&>svg]:w-7 ${
+                active ? "text-white" : "text-[#071858] dark:text-zinc-200"
+              }`}
+            >
+              {item.icon}
+            </span>
+            {!collapsed && (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-bold">{item.label}</span>
+                  <span
+                    className={`block truncate text-[15px] ${active ? "text-[#dbeafe]" : "text-[#6575a4] dark:text-zinc-400"}`}
+                  >
+                    {item.sublabel}
+                  </span>
+                </span>
+                {item.badge !== undefined && (
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                      active ? "bg-white/20 text-white" : "bg-[#fa1732] text-white"
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+                {item.chevron && (
+                  <ChevronRightIcon className={`h-5 w-5 shrink-0 ${active ? "text-[#dbeafe]" : "text-[#071858] dark:text-zinc-400"}`} />
+                )}
+              </>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 // Rendered on any App route (Media Workspace, Asset Intelligence, ThunderCare)
 // — the existing per-persona sectioned nav, restyled to the light theme.
 function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: string; collapsed: boolean }) {
@@ -205,44 +264,104 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
   );
 }
 
+// A distinct, narrower nav shown only on /profile and /account-security —
+// matches the Figma account-settings mockup, which has its own sidebar
+// (back-link + 3 flat items) rather than the regular shell/app nav. No
+// collapse toggle or tenant switcher here — the mockup doesn't have them,
+// and a 3-item settings menu doesn't need to collapse.
+function SettingsSidebar({ pathname }: { pathname: string }) {
+  return (
+    <aside className="flex h-full w-[300px] shrink-0 flex-col border-r border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <Link
+        href="/"
+        className="flex h-[88px] items-center border-b border-[#e6edf9] px-10 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo; no next/image optimization needed */}
+        <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-9 w-auto dark:hidden" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-9 w-auto dark:block" />
+      </Link>
+      <div className="px-5 py-4">
+        <Link
+          href="/mission-control"
+          className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          กลับไป ThunderOne
+        </Link>
+      </div>
+      {/* Same nav-item tokens as ShellNav below (size/weight/color, active
+          blue + shadow, 28px bare icons) — same design system as the main
+          shell, just without a sublabel/badge/chevron line (Nie,
+          2026-09-16: this sidebar's type/spacing didn't match the shell's). */}
+      <nav className="flex flex-col gap-3 px-5 pt-2">
+        {settingsNavItems.map((item) => {
+          const active = item.id !== "settings" && (pathname === item.href || pathname.startsWith(`${item.href}/`));
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`flex items-center gap-5 rounded-lg px-5 py-3.5 transition-colors ${
+                active
+                  ? "bg-[#0860ef] text-white shadow-[0px_10px_7.5px_#bedbff,0px_4px_3px_#bedbff]"
+                  : "text-[#071858] hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+              }`}
+            >
+              <span className={`shrink-0 [&>svg]:h-7 [&>svg]:w-7 ${active ? "text-white" : "text-[#071858] dark:text-zinc-200"}`}>
+                {item.icon}
+              </span>
+              <span className="text-base font-bold">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+
 export function Sidebar({ tenantName }: { tenantName?: string | null }) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
   const isMediaWorkspace = activeApp?.id === "media-workspace";
   const [collapsed, setCollapsed] = useState(false);
 
+  if (SETTINGS_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    return <SettingsSidebar pathname={pathname} />;
+  }
+
   return (
     <aside
       style={isMediaWorkspace ? { fontFamily: "var(--font-manrope)" } : undefined}
-      className={`flex h-full shrink-0 flex-col border-r border-zinc-200 bg-white transition-[width] duration-150 dark:border-zinc-800 dark:bg-zinc-950 ${
-        collapsed ? (isMediaWorkspace ? "w-17" : "w-[76px]") : isMediaWorkspace ? "w-56" : "w-[240px]"
+      className={`flex h-full shrink-0 flex-col border-r ${
+        isMediaWorkspace ? "border-zinc-200" : "border-[#e6edf9]"
+      } bg-white transition-[width] duration-150 dark:border-zinc-800 dark:bg-zinc-950 ${
+        collapsed ? (isMediaWorkspace ? "w-17" : "w-[76px]") : isMediaWorkspace ? "w-56" : "w-[300px]"
       }`}
     >
       <Link
         href={isMediaWorkspace ? "/media-workspace" : "/"}
         className={`flex items-center hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
           isMediaWorkspace
-            ? "h-17 gap-3 border-b border-[oklch(0.929_0.013_255.508)] px-4"
-            : "gap-2.5 px-8 pb-7 pt-8"
-        } ${collapsed ? "justify-center px-2" : ""}`}
+            ? `h-17 gap-3 border-b border-[oklch(0.929_0.013_255.508)] px-4 ${collapsed ? "justify-center px-2" : ""}`
+            : // Was previously `px-10 ... ${collapsed ? "justify-center px-2" : ""}`
+              // — both px-10 and px-2 ended up in the class list at once when
+              // collapsed, and px-10 (40px) won the cascade over px-2 (8px),
+              // leaving zero content width in the 80px link for the icon to sit
+              // in (it silently flex-shrank to 0). Made mutually exclusive.
+              `h-[88px] border-b border-[#e6edf9] dark:border-zinc-800 ${collapsed ? "justify-center px-2" : "px-10"}`
+        }`}
       >
         {isMediaWorkspace ? (
           <MediaWorkspaceBrand collapsed={collapsed} />
+        ) : collapsed ? (
+          // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
+          <img src="/icon.svg" alt="ThunderOne" className="rounded-[9px]" style={{ width: 40, height: 40 }} />
         ) : (
           <>
-        <span className="text-5xl font-black italic leading-none tracking-normal text-slate-950">
-          T<span className="text-[#026ffd]">1</span>
-        </span>
-        {!collapsed && (
-          <div className="leading-tight">
-            <p className="text-xl font-bold text-slate-950">
-              Thunder<span className="text-[#026ffd]">One</span>
-            </p>
-            <p className={`text-[11px] text-slate-500 ${isMediaWorkspace ? "font-medium" : "font-bold uppercase"}`}>
-              {activeApp?.tagline ?? SHELL_TAGLINE}
-            </p>
-          </div>
-        )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-8 w-auto dark:hidden" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-8 w-auto dark:block" />
           </>
         )}
       </Link>
@@ -253,25 +372,50 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
         <ShellNav pathname={pathname} collapsed={collapsed} />
       )}
 
-      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-[oklch(0.929_0.013_255.508)] p-2" : "px-5 pb-8 pt-3"}`}>
-        {!collapsed && (
-          <p className="sr-only">{tenantName ?? "Thunder One"}</p>
+      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-[oklch(0.929_0.013_255.508)] p-2" : "px-5 pb-5 pt-3"}`}>
+        {isMediaWorkspace ? (
+          !collapsed && <p className="sr-only">{tenantName ?? "Thunder One"}</p>
+        ) : (
+          // 2026-09-16 shell redesign — tenant name shown for real now (was
+          // sr-only-only before); no tenant switcher exists, so this is a
+          // static label with a decorative chevron, not a working picker.
+          <div
+            className={`mb-3 flex h-14 items-center gap-3 rounded-lg border border-[#e6edf9] px-4 text-sm font-bold text-[#071858] dark:border-zinc-800 dark:text-zinc-200 ${
+              collapsed ? "justify-center" : ""
+            }`}
+            title={collapsed ? (tenantName ?? "Thunder One") : undefined}
+          >
+            <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate">{tenantName ?? "Thunder One"}</span>
+                <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              </>
+            )}
+          </div>
         )}
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className={`flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 ${
-            collapsed ? "justify-center" : ""
-          }`}
+          className={
+            isMediaWorkspace
+              ? `flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 ${
+                  collapsed ? "justify-center" : ""
+                }`
+              : "flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-[#e6edf9] text-sm font-bold text-[#61719e] transition-colors hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900"
+          }
         >
           {isMediaWorkspace ? (
-            <MediaWorkspaceCollapseIcon open={collapsed} />
-          ) : collapsed ? (
-            <ArrowRightIcon className="h-4 w-4" />
+            <>
+              <MediaWorkspaceCollapseIcon open={collapsed} />
+              {!collapsed && "Collapse"}
+            </>
           ) : (
-            <ArrowLeftIcon className="h-4 w-4" />
+            <>
+              {collapsed ? <ArrowRightIcon className="h-5 w-5" /> : <ArrowLeftIcon className="h-5 w-5" />}
+              {!collapsed && "ย่อเมนู"}
+            </>
           )}
-          {!collapsed && "Collapse"}
         </button>
       </div>
     </aside>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, type ChangeEvent, type DragEvent } from "react";
+import { toast } from "sonner";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { WizardSteps } from "@/components/ui/WizardSteps";
 import {
@@ -14,19 +15,29 @@ import {
   UploadIcon,
   UsersIcon,
 } from "@/components/ui/icons";
-import { formatThaiDate } from "@/lib/thai-date";
-import { personnelRows } from "@/features/people/personnel";
+import { ApiError } from "@/lib/api/api-error";
+import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
+import {
+  createEmployee,
+  createMember,
+  isPendingInvite,
+  personnelRows,
+  type CoreEmployeeResult,
+  type CoreInviteResult,
+  type CoreMemberRow,
+  type CoreRole,
+} from "@/features/people/personnel";
 import type { OrgUnitNode } from "@/features/people/org-structure";
+// Deep import, same reasoning as AddEmployeeWizardPage/AddContractorWizardPage:
+// avoids a barrel-file import cycle between add-person and new-hires.
+import { buildStepsFromDoneIndices, type NewHireRow } from "@/features/people/new-hires/mock-data";
+import { NEW_HIRE_HANDOFF_KEY } from "../handoff";
+import { parseBulkCsvText, type BulkCsvRow, type BulkCsvRowError } from "../bulk-csv";
+import { bulkStep0Schema, bulkStep1Schema, pickDefaultRoleCode, zodErrorsToFieldMap } from "../schemas";
+import { clearFieldError, ErrorText, fieldClasses, inputClasses, labelClasses } from "../form-field";
 
 const POSITION_OPTIONS = Array.from(new Set(personnelRows.map((row) => row.position))).sort((a, b) =>
   a.localeCompare(b)
-);
-const MANAGER_OPTIONS = Array.from(
-  new Map(
-    personnelRows
-      .filter((row) => row.managerName)
-      .map((row) => [row.managerName as string, { name: row.managerName as string, role: row.managerRole ?? "" }])
-  ).values()
 );
 const WORK_LOCATION_OPTIONS = ["สำนักงานใหญ่ (Bangkok Office)", "สาขาเชียงใหม่", "สาขาขอนแก่น", "ทำงานทางไกล (Remote)"];
 const DURATION_OPTIONS = ["3 เดือน", "6 เดือน", "12 เดือน", "ไม่ระบุ"];
@@ -49,25 +60,26 @@ const REQUIRED_COLUMNS = [
   { en: "id_card", th: "เลขบัตรประชาชน", example: "1-2345-67890-12-3", required: false },
 ];
 
-// The mockup's own example rows (step 2/3's table) — this flow never
-// actually parses the uploaded file (see this component's header comment),
-// so any selected file just populates this fixed list.
-const BULK_MOCK_PEOPLE = [
-  { name: "สมชาย วงศ์ดี", email: "somchai.w@thunderone.co.th" },
-  { name: "วรรณา ใจดี", email: "wanna.j@thunderone.co.th" },
-  { name: "กานต์พงศ์ ศรีสุข", email: "kanp.s@thunderone.co.th" },
-  { name: "นภัสสร มากมี", email: "naphat.m@thunderone.co.th" },
-  { name: "ปริญญา คำดี", email: "parinya.k@thunderone.co.th" },
-  { name: "จิรทรรศน์ ทองคำ", email: "jirapat.t@thunderone.co.th" },
-  { name: "ณัฐชนา ระวี", email: "nutchana.r@thunderone.co.th" },
-  { name: "กิตติพงษ์ พลจันทร์", email: "kittipong.p@thunderone.co.th" },
-];
-
 const ROWS_PER_PAGE = 5;
 
-const inputClasses =
-  "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
-const labelClasses = "flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400";
+const WORK_ARRANGEMENT_CODE: Record<string, "on_site" | "hybrid" | "remote"> = {
+  "On-site": "on_site",
+  Hybrid: "hybrid",
+  Remote: "remote",
+};
+
+interface BulkSubmitResult {
+  row: BulkCsvRow;
+  name: string;
+  outcome: "created" | "invited" | "failed";
+  message?: string;
+  newHireRow?: NewHireRow;
+}
+
+// Visual counterpart to each field's `required` attribute — same convention
+// as AddEmployeeWizardPage's requiredMark. Only on fields covered by
+// bulkStep0Schema/bulkStep1Schema (../schemas.ts).
+const requiredMark = <span className="text-red-500">*</span>;
 
 function Breadcrumb() {
   return (
@@ -86,54 +98,88 @@ function Breadcrumb() {
 }
 
 interface AddBulkWizardPageProps {
-  /** Real org units, for the หน่วยงาน dropdown's options only — cosmetic,
-   *  same as every other field on this page (see header comment: this flow
-   *  never calls Core). `null`/`{}` just means an empty dropdown. */
+  /** `GET /tenants/:id/roles` result — same "disables submission if empty"
+   *  gate as AddEmployeeWizardPage, since `POST /tenants/:id/employees` (and
+   *  its `/members` fallback) both require a `role_code`. This page has no
+   *  role picker of its own; it defaults to `operator_technician` the same
+   *  way AddEmployeeWizardPage does. */
+  roles: CoreRole[] | null;
+  /** Tenant id, for the real `createEmployee`/`createMember` calls on
+   *  confirm. `null` disables submission (see AddEmployeeWizardPage). */
+  tenantId: string | null;
+  /** Real org units, for the หน่วยงาน dropdown — sent as
+   *  `default_department_id` on every row's create call when selected. */
   units: Record<string, OrgUnitNode> | null;
 }
 
 // "เพิ่มหลายคนเข้าองค์กร (Bulk)" — full-page 3-step flow, built 2026-09-01
-// once its own FigJam screens were provided. Reached from people/add's Bulk
-// card (previously inert).
+// once its own FigJam screens were provided, made real 2026-09-10 once a
+// CSV-only parsing + per-row Core submission approach was agreed on (see
+// docs/people/add-contractor-and-bulk-field-requirements.md's "What Core
+// would need to build" — a real `POST /tenants/:id/members/bulk` doesn't
+// exist, so this loops the same single-row `createEmployee`/`createMember`
+// calls AddEmployeeWizardPage uses, once per row, and reports partial
+// success/failure itself since Core has no batch response to relay).
 //
-// Deliberately **fully mock/demo**, by explicit product decision (not an
-// oversight) — unlike Employee/Contractor, this is the first people/*
-// intake flow capable of creating many records from a single click, and
-// this app has no CSV/Excel parsing dependency today. Rather than add one
-// just to parse a file whose rows would then fire N real
-// `POST /tenants/:id/members` invites at fake placeholder emails on every
-// demo run, both halves stay simulated:
-// - The file picker is real (drag-and-drop or click, shows the chosen
-//   filename) but never reads the file's contents — selecting ANY file just
-//   populates BULK_MOCK_PEOPLE (the mockup's own 8 example rows) below.
-// - "ยืนยันและส่งคำเชิญ" never calls Core — it shows a local success state
-//   only. Unlike AddEmployeeWizardPage/AddContractorWizardPage, nothing
-//   here is stashed via the NEW_HIRE_HANDOFF_KEY sessionStorage handoff —
-//   doing so would prepend fabricated rows into people/new-hires's roster
-//   that don't correspond to any real Core record, unlike a genuine
-//   Employee/Contractor creation.
-// If real bulk creation is wanted later, both halves need real
-// implementations together — parsing a real file into rows that don't
-// actually get created would be a worse, more confusing half-measure than
-// today's fully-simulated version.
-export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
+// - The file picker only accepts real `.csv` (not the `.xlsx` the mockup's
+//   copy used to advertise — parsing a binary Excel format isn't worth a new
+//   dependency for this pass; an `.xlsx` selection is rejected with a
+//   message asking for CSV instead). `../bulk-csv.ts`'s `parseBulkCsvText`
+//   does the actual parsing — RFC4180 quoting, header-row column mapping
+//   (`skipFirstRow`) or positional mapping, per-row validation. Rows that
+//   fail validation (bad email, duplicate email in-file, invalid Thai ID,
+//   etc.) are dropped and reported, not silently included.
+// - "ยืนยันและส่งคำเชิญ" (`handleConfirm` below) really does call Core, once
+//   per valid row, sequentially — see this function's own comment for why
+//   sequential, not parallel. Every row gets `createEmployee` first, falling
+//   back to `createMember` on a 409 (email already has an account), same
+//   fallback AddEmployeeWizardPage uses. Step 2's bulk-applied fields
+//   (หน่วยงาน/ตำแหน่งงาน/ประเภทการจ้างงาน/ลักษณะการทำงาน/วันที่เริ่มงาน/หมายเหตุ)
+//   are the ones with a real Core field to land in
+//   (default_department_id/job_title/member_type/work_arrangement/
+//   start_date/notes) — the contract-specific fields (สัญญา, วงเงิน,
+//   ระยะเวลา, ผู้บังคับบัญชา) stay cosmetic, same "not in Core's schema"
+//   story as AddContractorWizardPage's own step 2.
+// - Successfully created/invited rows ARE now stashed via
+//   NEW_HIRE_HANDOFF_KEY (as a JSON array — NewHiresPage's readHandoff()
+//   accepts either a single object or an array under this key), same as
+//   Employee/Contractor. Failed rows are surfaced in the confirmation
+//   screen's own list instead, never faked into the roster.
+export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [tablePage, setTablePage] = useState(1);
 
-  // Step 1 — file + import options. All decorative (see header comment).
+  // Step 1 — file upload. `importMode` stays decorative (see this file's
+  // header comment / the field-requirements doc's open question #2 — Core
+  // has no update/upsert semantics for this endpoint yet). `fileText` is
+  // kept so toggling `skipFirstRow` after upload can re-parse without asking
+  // for the file again.
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileText, setFileText] = useState<string | null>(null);
+  const [rows, setRows] = useState<BulkCsvRow[]>([]);
+  const [parseErrors, setParseErrors] = useState<BulkCsvRowError[]>([]);
+  const [parsing, setParsing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [importMode, setImportMode] = useState<"new" | "update" | "mix">("new");
   const [skipFirstRow, setSkipFirstRow] = useState(true);
 
-  // Step 2 — bulk-applied employment details. All decorative.
+  // Step 2 — bulk-applied employment details, applied to every row in the
+  // batch. unitId/position/workArrangement/notes/startDate below are real
+  // (sent in `sharedFields`); team/employmentType label/workLocation/endDate
+  // stay decorative — this comment previously said "All decorative", which
+  // was stale (fixed 2026-09-16, same mock-data audit as the rest of
+  // People Workspace).
   const [unitId, setUnitId] = useState("");
   const [team, setTeam] = useState("");
+  // Real since 2026-09-16 — memberships.position_code/level_role, round-trip
+  // confirmed against thunder_core_API (commit 489c3b1), applied to every
+  // row in this batch same as position/unitId above.
+  const [positionCode, setPositionCode] = useState("");
+  const [levelRole, setLevelRole] = useState("");
   const [position, setPosition] = useState("");
   const [employmentType, setEmploymentType] = useState("ผู้รับเหมา (Contractor)");
   const [workLocation, setWorkLocation] = useState(WORK_LOCATION_OPTIONS[0]);
   const [workArrangement, setWorkArrangement] = useState("On-site");
-  const [managerName, setManagerName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [duration, setDuration] = useState(DURATION_OPTIONS[2]);
@@ -142,9 +188,18 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
   const [applyToAll, setApplyToAll] = useState(true);
 
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitProgress, setSubmitProgress] = useState(0);
+  const [submitResults, setSubmitResults] = useState<BulkSubmitResult[] | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const roleCode = useMemo(() => pickDefaultRoleCode(roles), [roles]);
 
   const unitOptions = Object.values(units ?? {}).sort((a, b) => a.name.localeCompare(b.name));
-  const people = useMemo(() => (fileName ? BULK_MOCK_PEOPLE : []), [fileName]);
+  const people = useMemo(
+    () => rows.map((row) => ({ name: `${row.firstName} ${row.lastName}`, email: row.email, raw: row })),
+    [rows]
+  );
   const totalCount = people.length;
 
   const pageCount = Math.max(1, Math.ceil(people.length / ROWS_PER_PAGE));
@@ -153,23 +208,214 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
     [people, tablePage]
   );
 
-  const canProceedStep0 = fileName !== null;
-  const canProceedStep1 =
-    unitId.trim().length > 0 && position.trim().length > 0 && managerName.trim().length > 0 && startDate.trim().length > 0;
+  function validateStep(index: 0 | 1): boolean {
+    const schema = index === 0 ? bulkStep0Schema : bulkStep1Schema;
+    const data = index === 0 ? { fileName: fileName ?? "" } : { unitId, position, startDate };
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      setErrors(zodErrorsToFieldMap(result.error));
+      toast.error("กรุณาตรวจสอบข้อมูลที่กรอกให้ครบถ้วนและถูกต้อง");
+      return false;
+    }
+    setErrors({});
+    return true;
+  }
 
-  function handleFile(file: File | null) {
+  function handleNext() {
+    if (!validateStep(stepIndex === 0 ? 0 : 1)) return;
+    if (stepIndex === 0 && rows.length === 0) {
+      toast.error("ไม่มีข้อมูลที่ถูกต้องในไฟล์ กรุณาตรวจสอบไฟล์แล้วลองใหม่");
+      return;
+    }
+    setStepIndex((i) => Math.min(i + 1, 2));
+  }
+
+  function applyParsedFile(text: string, skipHeader: boolean) {
+    const result = parseBulkCsvText(text, skipHeader);
+    setRows(result.rows);
+    setParseErrors(result.errors);
+    setTablePage(1);
+  }
+
+  async function handleFile(file: File | null) {
     if (!file) return;
-    setFileName(file.name);
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setFileName(null);
+      setRows([]);
+      setParseErrors([]);
+      setErrors((prev) => ({
+        ...prev,
+        fileName: "รองรับเฉพาะไฟล์ CSV (.csv) ในขณะนี้ กรุณาบันทึกไฟล์เป็น .csv แล้วลองใหม่",
+      }));
+      return;
+    }
+    setParsing(true);
+    try {
+      const text = await file.text();
+      setFileName(file.name);
+      setFileText(text);
+      applyParsedFile(text, skipFirstRow);
+      clearFieldError(setErrors, "fileName");
+    } catch {
+      setErrors((prev) => ({ ...prev, fileName: "ไม่สามารถอ่านไฟล์นี้ได้ กรุณาลองใหม่อีกครั้ง" }));
+    } finally {
+      setParsing(false);
+    }
   }
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragOver(false);
-    handleFile(e.dataTransfer.files?.[0] ?? null);
+    void handleFile(e.dataTransfer.files?.[0] ?? null);
   }
 
   function handleFileInput(e: ChangeEvent<HTMLInputElement>) {
-    handleFile(e.target.files?.[0] ?? null);
+    void handleFile(e.target.files?.[0] ?? null);
+  }
+
+  /**
+   * Sequential, not `Promise.all` — this fires a real invite email per row
+   * (docs/people/add-contractor-and-bulk-field-requirements.md's open
+   * question #1 about rate limiting), and Core has no batch endpoint to
+   * absorb a burst, so going one at a time is the closest thing to
+   * self-imposed throttling available without a real queue. It also keeps
+   * `submitProgress` meaningful as an "i / N" counter.
+   */
+  async function handleConfirm() {
+    if (!validateStep(1)) {
+      setStepIndex(1);
+      return;
+    }
+    if (!tenantId) {
+      toast.error("ไม่พบข้อมูล Tenant ของผู้ใช้ปัจจุบัน กรุณาโหลดหน้านี้ใหม่แล้วลองอีกครั้ง");
+      return;
+    }
+    if (!roleCode) {
+      toast.error("ไม่พบบทบาท (Role) ที่ใช้ได้ในองค์กรนี้ ไม่สามารถสร้างบุคคลใหม่ได้ในขณะนี้");
+      return;
+    }
+    if (rows.length === 0) {
+      toast.error("ไม่มีข้อมูลที่ถูกต้องให้นำเข้า");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitProgress(0);
+
+    const memberType: "employee" | "contractor" = employmentType.includes("Contractor")
+      ? "contractor"
+      : "employee";
+    const workArrangementCode = WORK_ARRANGEMENT_CODE[workArrangement];
+    const results: BulkSubmitResult[] = [];
+
+    for (const row of rows) {
+      const name = `${row.firstName} ${row.lastName}`;
+      // Was `randomCode(...)` — a fake "EMP-0xxx"/"CON-0xxx" code fabricated
+      // for every row and sent to Core as if real (fixed 2026-09-15, UAT
+      // PP03-013). REQUIRED_COLUMNS has no employee_code column at all, so
+      // there was never a real value to send here — omitted entirely now,
+      // same as AddEmployeeWizardPage/AddContractorWizardPage's own fix.
+      const sharedFields = {
+        email: row.email,
+        role_code: roleCode,
+        default_department_id: unitId || undefined,
+        position_code: positionCode.trim() || undefined,
+        level_role: levelRole.trim() || undefined,
+        member_type: memberType,
+        work_arrangement: workArrangementCode,
+        notes: notes.trim() || undefined,
+      };
+
+      try {
+        let result: CoreEmployeeResult | CoreMemberRow | CoreInviteResult;
+        try {
+          result = await createEmployee(tenantId, {
+            ...sharedFields,
+            first_name: row.firstName,
+            last_name: row.lastName,
+            // Also captured explicitly (real since 2026-09-16) — see
+            // AddEmployeeWizardPage's identical comment. The CSV's
+            // "ชื่อ (ภาษาไทย)" column maps to both; if the source file's own
+            // data is genuinely Thai script, this keeps it recoverable even
+            // if first_name/last_name are ever overwritten downstream.
+            first_name_th: row.firstName,
+            last_name_th: row.lastName,
+            job_title: position.trim(),
+            start_date: startDate,
+            phone: row.mobile,
+            national_id: row.idCard ?? undefined,
+            date_of_birth: row.dateOfBirth ?? undefined,
+          });
+        } catch (err) {
+          // Same 409-means-"email already has an account" fallback
+          // AddEmployeeWizardPage uses — `/employees` can't attach to an
+          // existing `users` row, `/members` just adds the membership.
+          if (!(err instanceof ApiError) || err.status !== 409) throw err;
+          result = await createMember(tenantId, {
+            ...sharedFields,
+            job_title: position.trim() || undefined,
+            start_date: startDate || undefined,
+          });
+        }
+
+        // Calling the type guard directly in each branch, not via a stored
+        // boolean — same reasoning as AddEmployeeWizardPage.handleSubmit's
+        // comment: narrowing a 3-way union through a plain boolean stops
+        // working once a third member (CoreEmployeeResult) joins it.
+        const identity = isPendingInvite(result)
+          ? { id: result.invitation_id, name: row.email, employeeCode: "-", inviteUrl: result.invite_url as string | undefined }
+          : {
+              id: result.id,
+              name: result.user.full_name,
+              employeeCode: result.employee_code || "-",
+              inviteUrl: undefined as string | undefined,
+            };
+        const pending = isPendingInvite(result);
+        const newHireRow: NewHireRow = {
+          id: identity.id,
+          name: identity.name,
+          employeeCode: identity.employeeCode,
+          position: position.trim() || "-",
+          unit: unitId ? unitLabel(unitId, units ?? {}) : "-",
+          startDateLabel: startDate ? formatThaiDate(startDate) : "-",
+          daysLeftLabel: startDate ? formatDaysUntilThai(startDate) : "-",
+          progress: 0,
+          status: "pre-boarding",
+          // Reporting-to field removed from the UI — see AddEmployeeWizardPage's
+          // identical comment.
+          managerName: null,
+          managerRole: null,
+          steps: buildStepsFromDoneIndices([]),
+          inviteUrl: identity.inviteUrl,
+        };
+        results.push({ row, name, outcome: pending ? "invited" : "created", newHireRow });
+      } catch (err) {
+        const message = err instanceof ApiError ? err.message : "สร้างไม่สำเร็จ กรุณาลองใหม่ภายหลัง";
+        results.push({ row, name, outcome: "failed", message });
+      }
+      setSubmitProgress((p) => p + 1);
+    }
+
+    setSubmitResults(results);
+    setSubmitting(false);
+    setConfirmed(true);
+
+    const createdRows = results.map((r) => r.newHireRow).filter((r): r is NewHireRow => r != null);
+    if (createdRows.length > 0) {
+      try {
+        sessionStorage.setItem(NEW_HIRE_HANDOFF_KEY, JSON.stringify(createdRows));
+      } catch {
+        // sessionStorage unavailable (private mode, etc.) — not fatal, same
+        // as AddEmployeeWizardPage's own handoff write.
+      }
+    }
+
+    const failedCount = results.length - createdRows.length;
+    if (failedCount === 0) {
+      toast.success(`สร้างบุคคล ${results.length} คน และส่งคำเชิญ Onboarding เรียบร้อยแล้ว`);
+    } else {
+      toast.error(`สร้างสำเร็จ ${createdRows.length}/${results.length} คน — ${failedCount} คนล้มเหลว ดูรายละเอียดด้านล่าง`);
+    }
   }
 
   return (
@@ -216,19 +462,38 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
                   <span className="text-sm text-zinc-600 dark:text-zinc-300">
                     ลากไฟล์มาวางที่นี่ หรือ <span className="font-medium text-indigo-600 dark:text-indigo-400">คลิกเพื่อเลือกไฟล์</span>
                   </span>
-                  <span className="text-xs text-zinc-400">รองรับไฟล์ Excel (.xlsx) หรือ CSV (.csv)</span>
+                  <span className="text-xs text-zinc-400">รองรับไฟล์ CSV (.csv) เท่านั้นในขณะนี้</span>
                   <span className="text-xs text-zinc-400">ขนาดไฟล์ไม่เกิน 10MB</span>
-                  <input type="file" accept=".xlsx,.csv" className="hidden" onChange={handleFileInput} />
+                  <input type="file" accept=".csv" className="hidden" onChange={handleFileInput} />
                 </label>
-                {fileName && (
+                {parsing && <span className="mt-2 text-xs text-zinc-400">กำลังอ่านไฟล์...</span>}
+                {fileName && !parsing && (
                   <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                     <CheckIcon className="h-3.5 w-3.5" />
                     {fileName}
                   </span>
                 )}
-                <span title="ยังไม่เปิดใช้งาน" className="mt-1 cursor-not-allowed text-xs text-indigo-400">
+                <ErrorText message={errors.fileName} />
+                {parseErrors.length > 0 && (
+                  <div className="mt-2 w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50/60 p-2.5 text-left text-xs text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+                    <p className="mb-1 font-semibold">ข้าม {parseErrors.length} แถวที่ข้อมูลไม่ถูกต้อง:</p>
+                    <ul className="list-inside list-disc space-y-0.5">
+                      {parseErrors.slice(0, 5).map((e, i) => (
+                        <li key={i}>
+                          แถว {e.row}: {e.message}
+                        </li>
+                      ))}
+                    </ul>
+                    {parseErrors.length > 5 && <p className="mt-1">และอีก {parseErrors.length - 5} รายการ</p>}
+                  </div>
+                )}
+                <a
+                  href="/templates/bulk-import-template.csv"
+                  download
+                  className="mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                >
                   ↓ ดาวน์โหลดไฟล์ตัวอย่าง (Template)
-                </span>
+                </a>
               </div>
 
               <div className="rounded-xl border border-zinc-100 p-4 dark:border-zinc-800">
@@ -257,7 +522,15 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
                   ))}
                 </div>
                 <label className="mt-4 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  <input type="checkbox" checked={skipFirstRow} onChange={(e) => setSkipFirstRow(e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={skipFirstRow}
+                    onChange={(e) => {
+                      const next = e.target.checked;
+                      setSkipFirstRow(next);
+                      if (fileText) applyParsedFile(fileText, next);
+                    }}
+                  />
                   ข้ามแถวแรก (ใช้เป็นหัวตาราง)
                 </label>
               </div>
@@ -372,17 +645,28 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
                 <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">2. รายละเอียดการจ้างงาน</h2>
                 <p className="text-xs text-zinc-400">ระบุข้อมูลการจ้างงานสำหรับบุคคลที่เลือก {totalCount} คน</p>
               </div>
-              <span title="ยังไม่เปิดใช้งาน" className="flex cursor-not-allowed items-center gap-1.5 text-xs font-medium text-indigo-400">
+              <a
+                href="/templates/bulk-import-template.csv"
+                download
+                className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+              >
                 <UploadIcon className="h-3.5 w-3.5 rotate-180" />
                 ดาวน์โหลดตัวอย่างไฟล์
-              </span>
+              </a>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <label className={labelClasses}>
-                หน่วยงาน
+                <span>หน่วยงาน {requiredMark}</span>
                 {unitOptions.length > 0 ? (
-                  <select value={unitId} onChange={(e) => setUnitId(e.target.value)} className={inputClasses}>
+                  <select
+                    value={unitId}
+                    onChange={(e) => {
+                      setUnitId(e.target.value);
+                      clearFieldError(setErrors, "unitId");
+                    }}
+                    className={fieldClasses(!!errors.unitId)}
+                  >
                     <option value="">ไม่ระบุ</option>
                     {unitOptions.map((unit) => (
                       <option key={unit.id} value={unit.id}>
@@ -395,26 +679,49 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
                     ไม่พบข้อมูลหน่วยงาน
                   </span>
                 )}
+                <ErrorText message={errors.unitId} />
               </label>
               <label className={labelClasses}>
                 ทีม (Team)
                 <input value={team} onChange={(e) => setTeam(e.target.value)} className={inputClasses} />
               </label>
               <label className={labelClasses}>
-                ตำแหน่งงาน
+                <span>ตำแหน่งงาน {requiredMark}</span>
                 <input
                   required
                   list="bulk-position-options"
                   value={position}
-                  onChange={(e) => setPosition(e.target.value)}
+                  onChange={(e) => {
+                    setPosition(e.target.value);
+                    clearFieldError(setErrors, "position");
+                  }}
                   placeholder="พิมพ์เพื่อค้นหา หรือระบุตำแหน่งใหม่"
-                  className={inputClasses}
+                  className={fieldClasses(!!errors.position)}
                 />
                 <datalist id="bulk-position-options">
                   {POSITION_OPTIONS.map((option) => (
                     <option key={option} value={option} />
                   ))}
                 </datalist>
+                <ErrorText message={errors.position} />
+              </label>
+              <label className={labelClasses}>
+                รหัสตำแหน่ง (Position Code)
+                <input
+                  value={positionCode}
+                  onChange={(e) => setPositionCode(e.target.value)}
+                  placeholder="เช่น POS-CEO"
+                  className={inputClasses}
+                />
+              </label>
+              <label className={labelClasses}>
+                ระดับตำแหน่ง (Level)
+                <input
+                  value={levelRole}
+                  onChange={(e) => setLevelRole(e.target.value)}
+                  placeholder="เช่น Executive, Senior"
+                  className={inputClasses}
+                />
               </label>
               <label className={labelClasses}>
                 ประเภทการจ้างงาน
@@ -439,20 +746,20 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
                   <option>Hybrid</option>
                 </select>
               </label>
+              {/* ผู้บังคับบัญชา (Reporting To) removed — see
+                  AddEmployeeWizardPage's identical comment. */}
               <label className={labelClasses}>
-                ผู้บังคับบัญชา (Reporting To)
-                <select value={managerName} onChange={(e) => setManagerName(e.target.value)} className={inputClasses}>
-                  <option value="">เลือกผู้บังคับบัญชา</option>
-                  {MANAGER_OPTIONS.map((manager) => (
-                    <option key={manager.name} value={manager.name}>
-                      {manager.name} — {manager.role}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className={labelClasses}>
-                วันที่เริ่มงาน
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClasses} />
+                <span>วันที่เริ่มงาน {requiredMark}</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    clearFieldError(setErrors, "startDate");
+                  }}
+                  className={fieldClasses(!!errors.startDate)}
+                />
+                <ErrorText message={errors.startDate} />
               </label>
               <label className={labelClasses}>
                 วันที่สิ้นสุดสัญญา (คาดการณ์)
@@ -581,7 +888,6 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
                   ["ประเภทการจ้างงาน", employmentType],
                   ["ลักษณะการทำงาน", workArrangement],
                   ["สถานที่ทำงานหลัก", workLocation],
-                  ["ผู้บังคับบัญชา", managerName || "-"],
                   ["วันที่เริ่มงาน", startDate ? formatThaiDate(startDate) : "-"],
                   ["วันที่สิ้นสุดสัญญา", endDate ? formatThaiDate(endDate) : "-"],
                   ["ระยะเวลาการจ้าง", duration],
@@ -755,47 +1061,65 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
         </div>
       )}
 
-      {stepIndex === 2 && confirmed && (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <CheckCircleIcon className="h-9 w-9 text-emerald-500" />
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-            สร้างบุคคล {totalCount} คน และส่งคำเชิญ Onboarding เรียบร้อยแล้ว
-          </p>
-          <p className="max-w-sm text-xs text-zinc-400">
-            แต่ละคนจะได้รับอีเมลพร้อมลิงก์ยืนยันเข้าใช้งาน สามารถติดตามสถานะได้ที่หน้า &quot;เข้าใหม่&quot;
-          </p>
-          <div className="mt-1 flex items-center gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setStepIndex(0);
-                setFileName(null);
-                setConfirmed(false);
-                setTablePage(1);
-              }}
-            >
-              นำเข้าไฟล์ถัดไป
-            </Button>
-            <Link href="/people/new-hires" className={buttonClasses("primary")}>
-              ไปที่หน้าเข้าใหม่
-            </Link>
+      {stepIndex === 2 && confirmed && (() => {
+        const results = submitResults ?? [];
+        const failedResults = results.filter((r) => r.outcome === "failed");
+        const successCount = results.length - failedResults.length;
+        return (
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <CheckCircleIcon className="h-9 w-9 text-emerald-500" />
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+              สร้างสำเร็จ {successCount} จาก {results.length} คน
+            </p>
+            <p className="max-w-sm text-xs text-zinc-400">
+              แต่ละคนจะได้รับอีเมลพร้อมลิงก์ยืนยันเข้าใช้งาน สามารถติดตามสถานะได้ที่หน้า &quot;เข้าใหม่&quot;
+            </p>
+            {failedResults.length > 0 && (
+              <div className="w-full max-w-md rounded-xl border border-red-100 bg-red-50/60 p-3 text-left text-xs text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
+                <p className="mb-1 font-semibold">{failedResults.length} รายการล้มเหลว:</p>
+                <ul className="list-inside list-disc space-y-0.5">
+                  {failedResults.map((r) => (
+                    <li key={r.row.email}>
+                      {r.name} ({r.row.email}) — {r.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="mt-1 flex items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setStepIndex(0);
+                  setFileName(null);
+                  setFileText(null);
+                  setRows([]);
+                  setParseErrors([]);
+                  setSubmitResults(null);
+                  setConfirmed(false);
+                  setTablePage(1);
+                  setErrors({});
+                }}
+              >
+                นำเข้าไฟล์ถัดไป
+              </Button>
+              <Link href="/people/new-hires" className={buttonClasses("primary")}>
+                ไปที่หน้าเข้าใหม่
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {!confirmed && (
         <div className="flex justify-end gap-2">
           {stepIndex > 0 && (
-            <Button variant="secondary" onClick={() => setStepIndex((i) => Math.max(i - 1, 0))}>
+            <Button variant="secondary" onClick={() => setStepIndex((i) => Math.max(i - 1, 0))} disabled={submitting}>
               ย้อนกลับ
             </Button>
           )}
           {stepIndex < 2 ? (
-            <Button
-              variant="primary"
-              onClick={() => setStepIndex((i) => Math.min(i + 1, 2))}
-              disabled={stepIndex === 0 ? !canProceedStep0 : !canProceedStep1}
-            >
+            <Button variant="primary" onClick={handleNext}>
               {stepIndex === 0 ? "ถัดไป: รายละเอียดการจ้างงาน" : "ถัดไป: ตรวจสอบและเพิ่ม"}
             </Button>
           ) : (
@@ -804,8 +1128,8 @@ export function AddBulkWizardPage({ units }: AddBulkWizardPageProps) {
                 บันทึกร่าง
               </span>
               <div className="flex flex-col items-end gap-1">
-                <Button variant="primary" onClick={() => setConfirmed(true)}>
-                  ยืนยันและส่งคำเชิญ
+                <Button variant="primary" onClick={handleConfirm} disabled={submitting}>
+                  {submitting ? `กำลังสร้าง... (${submitProgress}/${rows.length})` : "ยืนยันและส่งคำเชิญ"}
                 </Button>
                 <span className="text-[11px] text-zinc-400">จะส่งอีเมลเชิญทันทีหลังยืนยัน</span>
               </div>

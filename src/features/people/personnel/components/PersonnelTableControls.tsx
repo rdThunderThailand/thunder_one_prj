@@ -1,49 +1,79 @@
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
-import { personnelPageSize } from "../mock-data";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 
 interface PersonnelTableControlsProps {
+  /** Rows currently shown on this page (after filtering). */
   shownCount: number;
-  totalCount: number;
+  /** Rows matching the current filters, before pagination slices them —
+   *  used for the "X-Y จาก Z รายการ" label and page-count math. */
+  filteredCount: number;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
-// Page-turning is still decorative (Core's members list is fetched one page
-// of up to 100 at a time server-side — see people/personnel/page.tsx — real
-// pagination isn't wired to these buttons yet). `totalCount`/`shownCount`
-// are real, though — Core's `count` field, not the mockup's static "128".
-export function PersonnelTableControls({ shownCount, totalCount }: PersonnelTableControlsProps) {
+const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+// Real client-side pagination since 2026-09-15 — slices the already-fetched
+// (and filtered) roster rather than re-fetching Core per page. Core's own
+// GET /tenants/:id/members does support real page/limit, but this page
+// already fetches up to 100 rows in one call for the tab/filter views to
+// have the full roster in memory (same reasoning as new-hires/contractors'
+// client-side filters) — re-fetching per page would conflict with that, so
+// pagination here is real (it genuinely slices what's shown) but operates
+// on the client-side dataset, not a fresh Core round-trip per page.
+export function PersonnelTableControls({
+  shownCount,
+  filteredCount,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+}: PersonnelTableControlsProps) {
+  const totalPages = Math.max(1, Math.ceil(filteredCount / pageSize));
+  const from = filteredCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = from + shownCount - 1;
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <span
-        title="Not built yet"
-        className="flex cursor-not-allowed items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400"
-      >
+      <label className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
         แสดง
-        <span className="flex items-center gap-1 rounded-lg border border-zinc-200 px-2 py-1 dark:border-zinc-700">
-          {personnelPageSize}
-          <ChevronDownIcon className="h-3 w-3" />
-        </span>
+        <select
+          value={pageSize}
+          onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          className="cursor-pointer rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+        >
+          {PAGE_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </select>
         รายการ
-      </span>
+      </label>
 
       <div className="flex items-center gap-4">
         <span className="text-sm text-zinc-400">
-          1-{shownCount} จาก {totalCount.toLocaleString()} รายการ
+          {from}-{to} จาก {filteredCount.toLocaleString()} รายการ
         </span>
         <div className="flex items-center gap-1">
           <button
             type="button"
-            title="Not built yet"
-            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 text-zinc-300 dark:border-zinc-700"
+            onClick={() => onPageChange(Math.max(1, page - 1))}
+            disabled={page <= 1}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:text-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             <ChevronLeftIcon className="h-3.5 w-3.5" />
           </button>
-          <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-sm text-white">
-            1
-          </button>
+          <span className="flex h-7 min-w-7 items-center justify-center rounded-lg bg-indigo-600 px-2 text-sm text-white">
+            {page}
+          </span>
+          <span className="text-xs text-zinc-400">/ {totalPages}</span>
           <button
             type="button"
-            title="Not built yet"
-            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 text-zinc-300 dark:border-zinc-700"
+            onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+            disabled={page >= totalPages}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:text-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             <ChevronRightIcon className="h-3.5 w-3.5" />
           </button>

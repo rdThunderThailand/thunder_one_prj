@@ -11,11 +11,20 @@ export { personnelRows } from "./mock-data";
 // new-hires's AddEmployeeModal calls `createMember`/`getRoles` for its real
 // "invite a new employee" flow.
 export {
+  checkEmailTaken,
+  createEmployee,
   createMember,
   getMembers,
   isPendingInvite,
+  updateMember,
+  updateMemberContract,
+  type CoreEmployeeResult,
   type CoreInviteResult,
   type CoreMemberRow,
+  type CreateEmployeeInput,
   type CreateMemberInput,
+  type MemberContract,
+  type UpdateMemberContractInput,
+  type UpdateMemberInput,
 } from "./services/members-api";
 export { getRoles, type CoreRole } from "./services/roles-api";

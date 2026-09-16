@@ -1,24 +1,30 @@
 // R&D placeholder data for People Workspace's new standalone
 // "ผู้ปฏิบัติงานภายนอก (Contractor)" roster page (`/people/contractors`) —
-// built 2026-09-01 from the FigJam "People Workspace" board. Fully mock:
-// Core has neither `member_type` (so real rows can't be reliably filtered
-// to contractors — confirmed, docs/people/core-response-people-workspace-api.md,
-// same limitation people/personnel's core-mapper.ts already documents for
-// its own type badge) nor any of this page's contract-specific fields
-// (contracting company, internal coordinator, contract start/end) at all.
+// built 2026-09-01 from the FigJam "People Workspace" board.
+//
+// **Real since 2026-09-15** (`../core-mapper.ts`) — `member_type` turned
+// out to already be real on Core's side (the note below claiming otherwise
+// was stale, see `people/personnel/core-mapper.ts`'s own 2026-09-15
+// correction), so real rows can now be filtered to contractors reliably.
+// `company`/`coordinatorName`/`coordinatorRole`/`contractStartLabel`/
+// `contractEndLabel` are still genuinely unbacked — no such fields exist
+// anywhere in Core's schema, not even in the separate `membership_contract`
+// table (only `contract_number`/`contract_date`/`contract_value`/
+// `payment_format`/`payment_cycle`, and only per-member, not at list level)
+// — now typed `| null` and rendered "-" rather than guessed at.
 export type ContractorStatus = "active" | "expiring-soon" | "expired" | "pending-approval";
 
 export interface ContractorRow {
   id: string;
   name: string;
   code: string;
-  company: string;
+  company: string | null;
   role: string;
   unit: string;
-  coordinatorName: string;
-  coordinatorRole: string;
-  contractStartLabel: string;
-  contractEndLabel: string;
+  coordinatorName: string | null;
+  coordinatorRole: string | null;
+  contractStartLabel: string | null;
+  contractEndLabel: string | null;
   status: ContractorStatus;
 }
 

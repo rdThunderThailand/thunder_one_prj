@@ -10,7 +10,7 @@
 // follow-up) — it's a raw `public.users.id`, NOT a membership id, so
 // resolving it to a name means matching against a members row's `user_id`
 // field, not `id` (core-mapper.ts does this).
-import { env } from "@/config/env";
+import { coreGet } from "@/lib/core/core-get";
 
 export interface CoreOrgUnit {
   id: string;
@@ -26,26 +26,6 @@ export interface CoreOrgUnit {
    *  `CoreMemberRow.user_id` (not `.id`, the membership id) to resolve a name. */
   manager_id: string | null;
   children: CoreOrgUnit[];
-}
-
-function authHeaders(token: string) {
-  return { "x-api-key": env.coreApiKey, Authorization: `Bearer ${token}` };
-}
-
-/** Fails open (`null`) on any transport/HTTP/shape failure — same philosophy
- *  as asset-intelligence/assets/services/asset-list-api.ts's coreGet. */
-async function coreGet<T>(path: string, token: string): Promise<T | null> {
-  try {
-    const res = await fetch(`${env.coreApiUrl}/api/core/v1${path}`, {
-      headers: authHeaders(token),
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const body = await res.json().catch(() => null);
-    return (body?.data as T) ?? null;
-  } catch {
-    return null;
-  }
 }
 
 export async function getOrganizations(token: string, tenantId: string): Promise<CoreOrgUnit[] | null> {

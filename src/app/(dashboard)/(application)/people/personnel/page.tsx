@@ -28,7 +28,7 @@ export default async function PeoplePersonnelPage({ searchParams }: PeoplePerson
   const tenantId = session !== "forbidden" ? session.tenantId : null;
 
   if (!token || !tenantId) {
-    return <PersonnelPage rows={null} totalCount={0} />;
+    return <PersonnelPage rows={null} totalCount={0} tenantId={null} units={{}} />;
   }
 
   const [memberPage, orgTree] = await Promise.all([
@@ -36,12 +36,13 @@ export default async function PeoplePersonnelPage({ searchParams }: PeoplePerson
     getOrganizations(token, tenantId),
   ]);
 
+  const { units } = mapCoreOrgTree(orgTree ?? [], []);
+
   if (!memberPage) {
-    return <PersonnelPage rows={null} totalCount={0} />;
+    return <PersonnelPage rows={null} totalCount={0} tenantId={tenantId} units={units} />;
   }
 
-  const { units } = mapCoreOrgTree(orgTree ?? [], []);
   const rows = memberPage.rows.map((row) => mapCoreMember(row, units));
 
-  return <PersonnelPage rows={rows} totalCount={memberPage.count} />;
+  return <PersonnelPage rows={rows} totalCount={memberPage.count} tenantId={tenantId} units={units} />;
 }
