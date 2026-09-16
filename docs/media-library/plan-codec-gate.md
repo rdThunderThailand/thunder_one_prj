@@ -23,16 +23,22 @@ Legend: `todo` · `in progress` · `in review` (PR open, Draft until verified) �
 | # | Ticket | Repo | Blocked by | Status | PR | Last touched |
 |---|---|---|---|---|---|---|
 | 1 | [Thunder_Core#63](https://github.com/rdThunderThailand/Thunder_Core/issues/63) MP4 codec parser + fixtures | Thunder_Core | — | in progress (committed, not pushed) | — | 2026-09-16 |
-| 2 | [Thunder_Core#64](https://github.com/rdThunderThailand/Thunder_Core/issues/64) ADR 0069 read-only report | Thunder_Core | #63 | todo | — | 2026-09-16 |
+| 2 | [Thunder_Core#64](https://github.com/rdThunderThailand/Thunder_Core/issues/64) ADR 0069 read-only report | Thunder_Core | #63 | in progress (ran dev+prod, count posted, report not yet handed to player team) | — | 2026-09-16 |
 | 3 | [Thunder_Core#65](https://github.com/rdThunderThailand/Thunder_Core/issues/65) intake admission (2 RPCs + route) | Thunder_Core | #63 | todo | — | 2026-09-16 |
 | 4 | [#120](https://github.com/rdThunderThailand/thunder_one_prj/issues/120) Upload Queue + Media Detail show the refusal | thunder_one_prj | Thunder_Core#65 on `develop` | todo | — | 2026-09-16 |
 | 5 | [Thunder_Core#66](https://github.com/rdThunderThailand/Thunder_Core/issues/66) activation guard | Thunder_Core | Thunder_Core#65 | todo | — | 2026-09-16 |
 | 6 | [Thunder_Core#67](https://github.com/rdThunderThailand/Thunder_Core/issues/67) backfill existing Assets | Thunder_Core | #64, #65, #66 + human "go" | held | — | 2026-09-16 |
 | 7 | [#121](https://github.com/rdThunderThailand/thunder_one_prj/issues/121) close WebP intake | both | human schedules it (prod writes) | held | — | 2026-09-16 |
 
-**Frontier right now:** #63 — parser + fixtures done and committed (`feat/codec-parser-63`,
-branch cut from `develop`) locally in Thunder_Core; only push + Draft PR remain.
+**Frontier right now:** #63 and #64 are code-complete and committed locally in Thunder_Core
+(`feat/codec-parser-63`, `feat/codec-report-64` stacked on it) — neither pushed yet, no PR open.
+#64's headline count is posted on #119; the report file itself still needs to reach the player team.
 **Order:** 63 → (64 ∥ 65) → (120 ∥ 66) → 67 after the #64 count and a "go". 121 is independent.
+
+**#64 count (2026-09-16, both environments read-only, no rows written):** 9 of 32 video Assets are
+refused today — 6 of 9 on `develop`, 3 of 23 on prod — 3 of those 9 are airing (all on `develop`).
+Every refusal is H.264 High profile; no HEVC, no unreadable files in either environment. This is
+the number #67 (backfill) will be sized against once a human says "go".
 
 ## What each ticket delivers, and when it is closed
 
@@ -105,3 +111,4 @@ rediscover in the Facts section above.
 |---|---|---|
 | 2026-09-16 | spec + tickets | #119 written after scrutinize; 7 tickets opened; this plan created |
 | 2026-09-16 | #63 parser | `probe.ts` (box-walk → moov → stsd → avcC), 3 committed MP4 fixtures (ffmpeg-generated, not a Thunder_Core dep), `probe.check.mts` passes; `tsc` clean on `probe.ts`; committed locally, not pushed |
+| 2026-09-16 | #64 report | `scripts/media-codec-report.ts` ran read-only against develop (6/9 refused, 3 airing) and prod (3/23 refused, 0 airing) with the operator's own prod key; headline count posted as [#119 comment](https://github.com/rdThunderThailand/thunder_one_prj/issues/119#issuecomment-5698594585); report JSON handed to the operator, not yet to the player team; committed locally on `feat/codec-report-64`, not pushed |
