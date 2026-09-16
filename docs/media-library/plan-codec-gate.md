@@ -22,7 +22,7 @@ Legend: `todo` · `in progress` · `in review` (PR open, Draft until verified) �
 
 | # | Ticket | Repo | Blocked by | Status | PR | Last touched |
 |---|---|---|---|---|---|---|
-| 1 | [Thunder_Core#63](https://github.com/rdThunderThailand/Thunder_Core/issues/63) MP4 codec parser + fixtures | Thunder_Core | — | todo | — | 2026-09-16 |
+| 1 | [Thunder_Core#63](https://github.com/rdThunderThailand/Thunder_Core/issues/63) MP4 codec parser + fixtures | Thunder_Core | — | in progress (committed, not pushed) | — | 2026-09-16 |
 | 2 | [Thunder_Core#64](https://github.com/rdThunderThailand/Thunder_Core/issues/64) ADR 0069 read-only report | Thunder_Core | #63 | todo | — | 2026-09-16 |
 | 3 | [Thunder_Core#65](https://github.com/rdThunderThailand/Thunder_Core/issues/65) intake admission (2 RPCs + route) | Thunder_Core | #63 | todo | — | 2026-09-16 |
 | 4 | [#120](https://github.com/rdThunderThailand/thunder_one_prj/issues/120) Upload Queue + Media Detail show the refusal | thunder_one_prj | Thunder_Core#65 on `develop` | todo | — | 2026-09-16 |
@@ -30,7 +30,8 @@ Legend: `todo` · `in progress` · `in review` (PR open, Draft until verified) �
 | 6 | [Thunder_Core#67](https://github.com/rdThunderThailand/Thunder_Core/issues/67) backfill existing Assets | Thunder_Core | #64, #65, #66 + human "go" | held | — | 2026-09-16 |
 | 7 | [#121](https://github.com/rdThunderThailand/thunder_one_prj/issues/121) close WebP intake | both | human schedules it (prod writes) | held | — | 2026-09-16 |
 
-**Frontier right now:** #63.
+**Frontier right now:** #63 — parser + fixtures done and committed (`feat/codec-parser-63`,
+branch cut from `develop`) locally in Thunder_Core; only push + Draft PR remain.
 **Order:** 63 → (64 ∥ 65) → (120 ∥ 66) → 67 after the #64 count and a "go". 121 is independent.
 
 ## What each ticket delivers, and when it is closed
@@ -103,3 +104,4 @@ rediscover in the Facts section above.
 | Date | Session | What moved |
 |---|---|---|
 | 2026-09-16 | spec + tickets | #119 written after scrutinize; 7 tickets opened; this plan created |
+| 2026-09-16 | #63 parser | `probe.ts` (box-walk → moov → stsd → avcC), 3 committed MP4 fixtures (ffmpeg-generated, not a Thunder_Core dep), `probe.check.mts` passes; `tsc` clean on `probe.ts`; committed locally, not pushed |
