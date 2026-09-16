@@ -339,7 +339,7 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
       }`}
     >
       <Link
-        href={isMediaWorkspace ? "/media-workspace" : "/"}
+        href="/"
         className={`flex items-center hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
           isMediaWorkspace
             ? `h-17 gap-3 border-b border-[oklch(0.929_0.013_255.508)] px-4 ${collapsed ? "justify-center px-2" : ""}`
