@@ -9,7 +9,7 @@
 // /my-work, /work-space, /intelligence, /governance), and Sidebar falls back
 // to config/nav/shell.tsx's nav in that case.
 import type { ReactNode } from "react";
-import { BoxIcon, GridIcon, PhoneIcon } from "@/components/ui/icons";
+import { BoxIcon, GridIcon, PhoneIcon, UsersIcon } from "@/components/ui/icons";
 
 export interface AppConfig {
   id: string;
@@ -21,16 +21,16 @@ export interface AppConfig {
 
 export const APPS: AppConfig[] = [
   {
-    id: "communication",
-    label: "Communication",
-    tagline: "Communication OS",
+    id: "media-workspace",
+    label: "Media Workspace",
+    tagline: "Media Workspace",
     icon: <GridIcon className="h-4 w-4" />,
-    basePath: "/communication",
+    basePath: "/media-workspace",
   },
   {
     id: "asset-intelligence",
     label: "Asset Intelligence",
-    tagline: "Business OS",
+    tagline: "Asset Workspace",
     icon: <BoxIcon className="h-4 w-4" />,
     basePath: "/asset-intelligence",
   },
@@ -40,6 +40,13 @@ export const APPS: AppConfig[] = [
     tagline: "Service OS",
     icon: <PhoneIcon className="h-4 w-4" />,
     basePath: "/thunder-care",
+  },
+  {
+    id: "people",
+    label: "People",
+    tagline: "People Workspace",
+    icon: <UsersIcon className="h-4 w-4" />,
+    basePath: "/people",
   },
 ];
 

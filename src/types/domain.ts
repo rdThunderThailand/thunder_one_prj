@@ -52,7 +52,13 @@ export type MediaAsset = {
   width?: number;
   height?: number;
   codec?: string;
+  folder_id?: string | null;
+  thumbnail_storage_key?: string | null;
+  tags?: Tag[];
   created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+  created_by?: Creator;
   file?: {
     id?: string;
     original_filename?: string;
@@ -60,6 +66,21 @@ export type MediaAsset = {
     file_size_bytes?: number;
     checksum?: string;
   };
+};
+
+export type ContentFolder = {
+  id: string;
+  parent_id: string | null;
+  name: string;
+  created_at?: string;
+};
+
+export type MediaAssetPage = {
+  items: MediaAsset[];
+  total: number;
+  page: number;
+  page_size: number;
+  stats: { total: number; images: number; videos: number };
 };
 
 // Playlist read shapes — moved here from features/playlists so
@@ -85,6 +106,11 @@ export type PlaylistItem = {
   position: number;
   duration_seconds?: number | null;
   transition?: Transition;
+  /** Per-item overrides — #37. Null/absent means inherit the playlist default. */
+  transition_duration_seconds?: number | null;
+  fit?: "fit" | "fill" | "stretch" | null;
+  background_color?: string | null;
+  notes?: string | null;
 };
 
 export type PlaylistListItem = {
@@ -92,6 +118,10 @@ export type PlaylistListItem = {
   name: string;
   status: PlaylistStatus;
   item_count: number;
+  /** The playlist's folder, or `null`/absent for Uncategorized — Thunder_Core #38.
+   *  Optional for deploy ordering: absent renders as Uncategorized. */
+  folder_id?: string | null;
+  deleted_at?: string | null;
   created_at?: string;
   metadata?: Record<string, unknown>;
   cover_asset_id?: string | null;
@@ -104,6 +134,14 @@ export type PlaylistListItem = {
    *  Optional for the same deploy-ordering reason as the fields above; when it is
    *  missing the display status falls back to the stored `status`. */
   publication_count?: number;
+  /** Distinct `media_assets.kind` values held by the playlist's items — Thunder_Core
+   *  migration 20260902160000. Optional for the same deploy-ordering reason; absent or
+   *  empty renders the list's Type column as "—". */
+  item_kinds?: ("video" | "image")[];
+  /** Against the tenant's one shared vocabulary (`media_core.tags`), not
+   *  `metadata.info.tags` — Thunder_Core #41 / ADR 0060 §8. Optional for the same
+   *  deploy-ordering reason; absent renders as no chips. */
+  tags?: Tag[];
 };
 
 export type PlaylistDetail = {

@@ -50,6 +50,26 @@ assert.equal(classifyApiError(new ApiError("Already in use: video is still refer
 assert.equal(classifyApiError(new ApiError("row version mismatch", 409), FALLBACK).kind, "rejected");
 assert.equal(isConflict("Already in use: video is still referenced by a playlist"), false);
 
+// ADR 0074 §5 activation guard: unlike the generic "Invalid input:" catch-all below, these two
+// name the Group and the missing/conflicting Channels — they must reach the operator verbatim,
+// not get swallowed into the generic Thai "ข้อมูลที่กรอกยังไม่ครบ" message.
+const incompleteGroup = classifyApiError(
+  new ApiError("Invalid input: synchronized group target is incomplete — S (missing: C2)", 400),
+  FALLBACK,
+);
+assert.equal(incompleteGroup.kind, "rejected");
+assert.equal(incompleteGroup.message, "Invalid input: synchronized group target is incomplete — S (missing: C2)");
+
+const directInGroup = classifyApiError(
+  new ApiError(
+    "Invalid input: cannot activate a direct device target inside a synchronized group — Screen 01 (channel: CH-01; group: S)",
+    400,
+  ),
+  FALLBACK,
+);
+assert.equal(directInGroup.kind, "rejected");
+assert.ok(directInGroup.message.includes("group: S"));
+
 // 4xx means the request itself was refused — retrying it unchanged is pointless.
 assert.equal(classifyApiError(new ApiError("Invalid input: name required", 400), FALLBACK).kind, "rejected");
 assert.equal(classifyApiError(new ApiError("nope", 499), FALLBACK).kind, "rejected");
@@ -71,6 +91,16 @@ assert.equal(classifyApiError(new ApiError("gateway", 502), FALLBACK).kind, "ret
 assert.equal(classifyApiError(new Error("Network Error"), FALLBACK).kind, "retryable");
 assert.equal(classifyApiError("something", FALLBACK).kind, "retryable");
 assert.equal(classifyApiError(undefined, FALLBACK).kind, "retryable");
+
+// A request that never got a response (axios "Network Error" / ERR_NETWORK /
+// timeout) must not reach the operator in English — the Thai retryable line
+// replaces it. A plain thrown Error with any other message still passes through.
+const offline = classifyApiError(Object.assign(new Error("Network Error"), { code: "ERR_NETWORK" }), FALLBACK);
+assert.equal(offline.kind, "retryable");
+assert.ok(offline.message.includes("เชื่อมต่อ"), "network failure should surface in Thai");
+assert.ok(!offline.message.includes("Network Error"));
+assert.equal(classifyApiError(Object.assign(new Error("timeout of 0ms exceeded"), { code: "ECONNABORTED" }), FALLBACK).message, offline.message);
+assert.equal(classifyApiError(new Error("อะไรบางอย่างพัง"), FALLBACK).message, "อะไรบางอย่างพัง");
 
 // The fallback fills in only when there is no message to show.
 assert.equal(classifyApiError(undefined, FALLBACK).message, FALLBACK);

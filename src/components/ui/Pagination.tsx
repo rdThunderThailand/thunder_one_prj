@@ -2,7 +2,7 @@
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 
-const PER_PAGE_OPTIONS = [10, 25, 50];
+const DEFAULT_PER_PAGE_OPTIONS = [10, 25, 50];
 
 /** Windowed page numbers with "…" for the gaps — 1 … 4 5 6 … 12. Always shows the first
  *  and last page so the ends stay reachable in one click. */
@@ -26,6 +26,8 @@ export function Pagination({
   totalItems,
   rangeStart,
   rangeEnd,
+  itemLabel = "playlists",
+  perPageOptions = DEFAULT_PER_PAGE_OPTIONS,
   onPageChange,
   onPerPageChange,
 }: {
@@ -35,6 +37,8 @@ export function Pagination({
   totalItems: number;
   rangeStart: number;
   rangeEnd: number;
+  itemLabel?: string;
+  perPageOptions?: number[];
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
 }) {
@@ -44,7 +48,7 @@ export function Pagination({
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
       <p className="text-zinc-500 dark:text-zinc-400">
-        Showing {rangeStart} to {rangeEnd} of {totalItems} playlists
+        Showing {rangeStart} to {rangeEnd} of {totalItems} {itemLabel}
       </p>
 
       <div className="flex items-center gap-2">
@@ -96,7 +100,7 @@ export function Pagination({
           onChange={(e) => onPerPageChange(Number(e.target.value))}
           className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
         >
-          {PER_PAGE_OPTIONS.map((n) => (
+          {perPageOptions.map((n) => (
             <option key={n} value={n}>
               {n} / page
             </option>

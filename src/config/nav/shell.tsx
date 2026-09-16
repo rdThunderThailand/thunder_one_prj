@@ -1,69 +1,64 @@
 // Thunder One's shell-level nav — rendered when the active route belongs to
 // no App (Sidebar.tsx falls back to this when config/apps.tsx's
-// resolveActiveApp returns null). Mission Control gets its own detailed
-// subnav (moved here from Asset Intelligence's former CEO persona — same
-// Insights/Reports/Approvals pages, now shell-level) since it's the one
-// shell destination that's actually built; My Work, Work Space,
-// Intelligence, and Governance are flat links with no subnav of their own
-// yet — docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md.
-import {
-  BoxIcon,
-  ChartIcon,
-  CheckCircleIcon,
-  GridIcon,
-  LightningIcon,
-  ListIcon,
-  SettingsIcon,
-  SparklesIcon,
-} from "@/components/ui/icons";
-import type { NavConfig, NavItem } from "./types";
+// resolveActiveApp returns null). 3 items shown (Intelligence/Governance
+// hidden 2026-09-16, see the commented-out entries below) — docs/adr/0033-
+// thunder-one-shell-launcher-not-dropdown.md.
+import type { ReactNode } from "react";
+// SettingsIcon/SparklesIcon back these two commented-out nav entries —
+// re-import them if Intelligence/Governance come back.
+import { GridIcon, HomeIcon, ListIcon } from "@/components/ui/icons";
 
-const missionControlNav: NavConfig = {
-  overviewItem: {
-    label: "Mission Control",
-    href: "/mission-control",
-    icon: <BoxIcon className="h-4 w-4 shrink-0" />,
-  },
-  sections: [],
-  standaloneLinks: [
-    { label: "Insights", href: "/mission-control/insights" },
-    { label: "Reports", href: "/mission-control/reports" },
-    { label: "Approvals", href: "/mission-control/approvals" },
-    { label: "Settings" },
-  ] satisfies NavItem[],
-  standaloneIcons: [
-    <SparklesIcon key="insights" />,
-    <ChartIcon key="reports" />,
-    <CheckCircleIcon key="approvals" />,
-    <SettingsIcon key="settings" />,
-  ],
-};
-
-const shellHomeNav: NavConfig = {
-  overviewItem: {
-    label: "Home",
-    href: "/",
-    icon: <LightningIcon className="h-4 w-4 shrink-0" />,
-  },
-  sections: [],
-  standaloneLinks: [
-    { label: "Mission Control", href: "/mission-control" },
-    { label: "My Work", href: "/my-work" },
-    { label: "Work Space", href: "/work-space" },
-    { label: "Intelligence", href: "/intelligence" },
-    { label: "Governance", href: "/governance" },
-  ] satisfies NavItem[],
-  standaloneIcons: [
-    <BoxIcon key="mission-control" />,
-    <ListIcon key="my-work" />,
-    <GridIcon key="work-space" />,
-    <SparklesIcon key="intelligence" />,
-    <CheckCircleIcon key="governance" />,
-  ],
-};
-
-export function resolveShellNav(pathname: string): NavConfig {
-  const topSegment = pathname.split("/")[1];
-  if (topSegment === "mission-control") return missionControlNav;
-  return shellHomeNav;
+export interface ShellNavItem {
+  label: string;
+  sublabel: string;
+  href: string;
+  icon: ReactNode;
+  /** Shows a small count pill next to the label. Placeholder — no cross-App
+   * task aggregation exists yet (My Work's own page says as much). */
+  badge?: number;
+  /** Purely decorative affordance for items that lead to a chooser (Workspaces). */
+  chevron?: boolean;
 }
+
+export const shellNavItems: ShellNavItem[] = [
+  {
+    // 2026-09-16 shell redesign — label/sublabel relabeled to the mockup's
+    // Thai copy ("หน้าแรก / ภาพรวม"); href unchanged, still Mission Control's
+    // route (this page's own content was redesigned to match, not moved).
+    label: "หน้าแรก",
+    sublabel: "ภาพรวม",
+    href: "/mission-control",
+    icon: <HomeIcon className="h-4 w-4 shrink-0" />,
+  },
+  {
+    label: "งานของฉัน",
+    sublabel: "งานและการอนุมัติ",
+    href: "/my-work",
+    icon: <ListIcon className="h-4 w-4 shrink-0" />,
+    badge: 3,
+  },
+  {
+    label: "พื้นที่ทำงาน",
+    sublabel: "เข้าถึงทุกระบบของคุณ",
+    href: "/work-space",
+    icon: <GridIcon className="h-4 w-4 shrink-0" />,
+    chevron: true,
+  },
+  // 2026-09-16 — Intelligence/Governance hidden from the shell nav to match
+  // the Figma mockup exactly (it only shows these 3 items). The routes and
+  // pages themselves are untouched; this is a nav-visibility decision only,
+  // easy to restore by uncommenting once there's a call on bringing them
+  // back.
+  // {
+  //   label: "Intelligence",
+  //   sublabel: "Insights & Analytics",
+  //   href: "/intelligence",
+  //   icon: <SparklesIcon className="h-4 w-4 shrink-0" />,
+  // },
+  // {
+  //   label: "Governance",
+  //   sublabel: "Governance & Control",
+  //   href: "/governance",
+  //   icon: <SettingsIcon className="h-4 w-4 shrink-0" />,
+  // },
+];

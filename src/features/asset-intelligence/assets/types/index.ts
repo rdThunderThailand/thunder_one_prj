@@ -60,6 +60,19 @@ export interface Asset {
  * `sync_media`, `cctv_url`, `location_url` — exist server-side with their own
  * defaults but have no form control here yet). `device_name` is the only
  * required field.
+ *
+ * `asset_category`/`owner_name`/`current_value`/`purchase_date` are the four
+ * fields the Asset List page (asset-list-api.ts, matching Thunder_Core's
+ * `asset-list-view.ts`) reads back out — named to match those exact DB
+ * columns for when Core accepts them. As of 2026-08-26 Core's
+ * `assetCreateSchema`/`createTenantAsset` (thunder_core_prj's
+ * src/lib/core/asset-view.ts) does NOT accept or persist any of the four —
+ * zod silently strips them, so sending them today is a no-op, not an error.
+ * Every asset created through this form currently lands in the real list as
+ * category "OTHER", no owner (→ status "Ready"), no value, and
+ * `receivedDate` falling back to `created_at`. Core needs a matching schema
+ * change before these fields actually take effect — see the
+ * asset-admin-real-data-and-rbac-backlog memory.
  */
 export interface CreateAssetDeviceInput {
   device_name: string;
@@ -71,6 +84,15 @@ export interface CreateAssetDeviceInput {
   site?: string;
   zone?: string;
   tags?: string[];
+  /** Not yet accepted by Core — see this interface's header comment. */
+  asset_category?: string;
+  /** Not yet accepted by Core — see this interface's header comment. */
+  owner_name?: string;
+  /** Not yet accepted by Core — see this interface's header comment. */
+  current_value?: number;
+  /** ISO date (yyyy-mm-dd), matching an `<input type="date">`. Not yet
+   *  accepted by Core — see this interface's header comment. */
+  purchase_date?: string;
 }
 
 /** Only the fields this UI reads back — the real row almost certainly carries
@@ -94,4 +116,29 @@ export interface AssetDeviceCredentials {
 export interface CreateAssetDeviceResult {
   asset: CreatedAssetDevice;
   credentials: AssetDeviceCredentials;
+}
+
+/**
+ * Request body for `PATCH /api/core/v1/tenants/{id}/assets/{assetId}` —
+ * editing an existing asset's List-page-visible fields (../components/
+ * EditAssetModal.tsx, opened from a row in AssetRegistryTable). Scoped to
+ * exactly the six fields that page displays, not the device-provisioning
+ * fields CreateAssetDeviceInput also carries (mac_address, site, zone, ...)
+ * — this modal isn't a device re-registration flow.
+ *
+ * As of 2026-08-26 this endpoint does not exist in Thunder_Core — there is
+ * no `[assetId]` route under `tenants/[id]/assets/` at all (no GET-one, no
+ * PATCH, no DELETE), confirmed by reading the route tree directly. Every
+ * field name here matches the real `assets` columns
+ * (services/asset-list-api.ts's `AssetListRow`), so this is the exact
+ * contract to hand Core once they build it — see the
+ * asset-admin-real-data-and-rbac-backlog memory.
+ */
+export interface UpdateAssetInput {
+  name?: string;
+  serial_number?: string;
+  asset_category?: string;
+  owner_name?: string;
+  current_value?: number;
+  purchase_date?: string;
 }

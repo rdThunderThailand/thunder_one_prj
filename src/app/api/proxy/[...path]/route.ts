@@ -42,12 +42,15 @@ async function handle(request: Request, ctx: RouteCtx): Promise<NextResponse> {
     if (userToken) headersToSend["Authorization"] = `Bearer ${userToken}`;
   }
 
-  let body: string | undefined = undefined;
+  // Read as bytes, not text — a `.text()`/UTF-8 round trip corrupts any
+  // non-UTF-8 body (e.g. a multipart/form-data file upload's binary part),
+  // silently mangling uploaded files.
+  let body: ArrayBuffer | undefined = undefined;
   if (request.method !== "GET" && request.method !== "HEAD") {
     try {
-      const text = await request.text();
-      if (text) {
-        body = text;
+      const buf = await request.arrayBuffer();
+      if (buf.byteLength > 0) {
+        body = buf;
         headersToSend["Content-Type"] =
           request.headers.get("content-type") || "application/json";
       }

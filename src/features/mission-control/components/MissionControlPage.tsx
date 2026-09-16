@@ -1,17 +1,85 @@
-import { AssetOutlookCard } from "./AssetOutlookCard";
-import { RecentAlertsCard } from "./RecentAlertsCard";
-import { RequiresAttentionCard } from "./RequiresAttentionCard";
-import { StatCardsRow } from "./StatCardsRow";
+import Image from "next/image";
+import { ActivityFeedCard } from "./ActivityFeedCard";
+import { BriefTeaserCard } from "./BriefTeaserCard";
+import { HomeBanner } from "./HomeBanner";
+import { HomeHeader } from "./HomeHeader";
+import { HomeStatTilesRow } from "./HomeStatTilesRow";
+import { NewsCard } from "./NewsCard";
+import { OrgOverviewRow } from "./OrgOverviewRow";
+import { TasksCard } from "./TasksCard";
+import { WorkspaceCardsRow } from "./WorkspaceCardsRow";
+import type { HomeStats } from "../core-mapper";
+import type { CoreRecentLog } from "../services/dashboard-api";
 
-export function MissionControlPage() {
+interface MissionControlPageProps {
+  userName: string;
+  /** Real since 2026-09-16 (`../core-mapper.ts`'s `computeHomeStats`) —
+   *  `null` when the underlying People/Asset fetches failed. Backs 3 of the
+   *  8 stat tiles across `HomeStatTilesRow`/`OrgOverviewRow`; the rest stay
+   *  mock (see those components' own doc comments for exactly which and
+   *  why). */
+  stats: HomeStats | null;
+  /** Real since 2026-09-16 (`../services/dashboard-api.ts`) — backs
+   *  `ActivityFeedCard`. `null` means the fetch failed. */
+  recentLogs: CoreRecentLog[] | null;
+}
+
+// The homepage (CEO/Executive/company_admin/tenant/system default landing —
+// Manager/Employee get their own variants from asset-intelligence/
+// departments, untouched here). **Redesigned 2026-09-16** to match the
+// coordinating session's new mockup, replacing the old CEO-strategic-brief
+// layout (StrategicBriefCard/DecisionsCard/AskThunderOneCard/
+// TodayScheduleCard — all retired, see mock-data.ts's own header comment).
+export function MissionControlPage({ userName, stats, recentLogs }: MissionControlPageProps) {
   return (
     <div className="flex flex-col gap-6">
-      <StatCardsRow />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <RequiresAttentionCard />
-        <AssetOutlookCard />
+      {/* 2026-09-16 — the skyline photo sits absolutely behind this whole
+          block (header text + the grid below it), not boxed to just the
+          greeting row. Since the header text is shorter than the image's
+          260px height, the top of the Brief card / Tasks panel naturally
+          renders over the tail of the photo — same layered look as the
+          Figma mockup, achieved the same way it does it (one image layer
+          behind a taller content block), no negative margins needed. */}
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[260px] overflow-hidden rounded-2xl">
+          <Image
+            src="/illustrations/hero-skyline.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-right"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/70 via-white/20 to-transparent" />
+        </div>
+
+        <div className="relative z-10">
+          <HomeHeader userName={userName} />
+
+          {/* Widened to a 2/3+1/3 split starting right below the header: the
+              right rail (Tasks + News) runs the full height alongside the
+              Brief card, stat tiles, and workspace cards too, not just the
+              bottom section. */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="flex flex-col gap-6 lg:col-span-2">
+              <BriefTeaserCard />
+              <HomeStatTilesRow stats={stats} />
+              <WorkspaceCardsRow />
+              {/* Side-by-side per the mockup (two ~equal panels), not stacked. */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <OrgOverviewRow stats={stats} />
+                <ActivityFeedCard logs={recentLogs} />
+              </div>
+            </div>
+            <div className="flex flex-col gap-6">
+              <TasksCard />
+              <NewsCard />
+            </div>
+          </div>
+        </div>
       </div>
-      <RecentAlertsCard />
+
+      <HomeBanner />
     </div>
   );
 }

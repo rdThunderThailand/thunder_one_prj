@@ -1,0 +1,105 @@
+// Shapes for the Composition authoring screens (docs/adr/0049-composition-layout-with-content.md).
+// A Composition pairs one Layout with content for each of its Zones — geometry lives on the
+// Layout (src/features/media-workspace/layouts), content lives here.
+
+export const COMPOSITION_STATUSES = ["draft", "active", "inactive"] as const;
+export type CompositionStatus = (typeof COMPOSITION_STATUSES)[number];
+
+export type CompositionListItem = {
+  id: string;
+  name: string;
+  layout_id: string;
+  layout_name: string;
+  status: CompositionStatus;
+  revision: number;
+  zone_count: number;
+  bound_count: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type CompositionGeometryKind = "template" | "inline";
+
+export type CompositionLibraryPreviewZone = {
+  position: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  firstAssetId: string | null;
+};
+
+export type CompositionLibraryItem = CompositionListItem & {
+  layoutKind?: CompositionGeometryKind;
+  referenceResolution?: string | null;
+  folderId?: string | null;
+  deletedAt?: string | null;
+  usageCount?: number;
+  previewZones?: CompositionLibraryPreviewZone[];
+  createdBy?: { id: string; displayName: string; avatarUrl?: string | null } | null;
+  /** Ticket 22. Absent only while the deployed Core predates that migration. */
+  tags?: { id: string; name: string }[];
+};
+
+/** One entry of the Tags rail. Counted server-side over the whole collection, not over the
+ *  page — `media_compositions_library_list` is paginated, so a count taken from the loaded
+ *  rows would understate it (ticket 29). */
+export type CompositionTagCount = { id: string; name: string; count: number };
+
+export type CompositionLibraryPage = {
+  data: CompositionLibraryItem[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number } | null;
+  summary: { total: number; templateBased: number; custom: number; needsContent: number } | null;
+  facets: { referenceResolutions: string[]; tags: CompositionTagCount[] };
+  isLegacyResponse: boolean;
+};
+
+export type CompositionZonePlayback = {
+  play_mode: "sequential" | "shuffle";
+  repeat: "loop" | "once";
+  start_from: "first" | "resume";
+  /** ADR 0064: Zone-owned, overrides the bound Playlist/item's own fit for a zoned payload.
+   *  Absent on a row saved before that change. */
+  media_fit?: "fit" | "fill" | "stretch";
+  /** ADR 0064: `true` forces silence, `false` leaves the item/Playlist/device audio policy in
+   *  charge. Absent on a row saved before that change. */
+  muted?: boolean;
+};
+
+/** One row per Zone of the Composition's Layout, LEFT JOINed — an unbound Zone still
+ *  appears here with `playlist_id: null` (ADR 0049 §1). */
+export type CompositionZone = {
+  layout_zone_id: string;
+  position: number;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  playlist_id: string | null;
+  playback: CompositionZonePlayback | null;
+};
+
+export type CompositionDetail = {
+  id: string;
+  name: string;
+  layout_id: string;
+  status: CompositionStatus;
+  revision: number;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+  /** Ticket 25. `null` is Uncategorized; absent only while the deployed Core predates the
+   *  migration that added it, in which case the panel opens on Uncategorized. */
+  folder_id?: string | null;
+  tags?: { id: string; name: string }[];
+  zones: CompositionZone[];
+};
+
+/** Picked-asset item for a Zone's implicit inline Playlist — same shape Publication's
+ *  wizard already uses (ADR 0049 §3), kept local so this feature has no Publication import. */
+export type CompositionAssetItem = {
+  media_asset_id: string;
+  duration_seconds: number | null;
+  transition?: "cut" | "fade";
+};

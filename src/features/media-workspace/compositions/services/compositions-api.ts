@@ -1,0 +1,195 @@
+import { requestApi } from "@/lib/api/media-api";
+import type { CompositionDetail, CompositionLibraryItem, CompositionLibraryPage, CompositionListItem, CompositionStatus, CompositionTagCount } from "../types";
+import type { SetZonesPayload } from "../zone-bindings";
+import type { Tag } from "@/types/domain";
+
+export async function fetchCompositions(): Promise<CompositionListItem[]> {
+  const data = await requestApi<{ data?: CompositionListItem[] } | CompositionListItem[]>(
+    "GET",
+    "/media/compositions",
+  );
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object" && Array.isArray(data.data)) return data.data;
+  return [];
+}
+
+export type CompositionLibraryQuery = {
+  search?: string;
+  status?: CompositionStatus;
+  kind?: "template" | "inline";
+  folderId?: string;
+  uncategorized?: boolean;
+  trash?: boolean;
+  content?: "complete" | "incomplete";
+  usage?: "used" | "unused";
+  referenceResolution?: string;
+  /** Server-side, like `folderId` — the list is paginated, so a client-side tag filter
+   *  would hide matches on every page but the current one (ticket 29). */
+  tagId?: string;
+  sort?: string;
+  dir?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+};
+
+type CoreLibraryPage = {
+  data?: Array<Record<string, unknown>>;
+  pagination?: { page: number; pageSize: number; total: number; totalPages: number };
+  summary?: CompositionLibraryPage["summary"];
+  facets?: { referenceResolutions?: string[]; tags?: CompositionTagCount[] };
+};
+
+function mapLibraryItem(raw: Record<string, unknown>): CompositionLibraryItem {
+  const createdBy = raw.createdBy && typeof raw.createdBy === "object" ? raw.createdBy as Record<string, unknown> : null;
+  return {
+    id: String(raw.id), name: String(raw.name), layout_id: String(raw.layoutId), layout_name: String(raw.layoutName),
+    status: raw.status as CompositionStatus, revision: Number(raw.revision), zone_count: Number(raw.zoneCount), bound_count: Number(raw.boundCount),
+    created_at: typeof raw.createdAt === "string" ? raw.createdAt : undefined, updated_at: typeof raw.updatedAt === "string" ? raw.updatedAt : undefined,
+    layoutKind: raw.layoutKind === "inline" ? "inline" : "template", referenceResolution: typeof raw.referenceResolution === "string" ? raw.referenceResolution : null,
+    folderId: typeof raw.folderId === "string" ? raw.folderId : null, deletedAt: typeof raw.deletedAt === "string" ? raw.deletedAt : null,
+    tags: Array.isArray(raw.tags) ? raw.tags.map((tag) => ({
+      id: String((tag as Record<string, unknown>).id), name: String((tag as Record<string, unknown>).name),
+    })) : [],
+    usageCount: Number(raw.usageCount), previewZones: Array.isArray(raw.previewZones) ? raw.previewZones.map((zone) => ({
+      position: Number((zone as Record<string, unknown>).position), x: Number((zone as Record<string, unknown>).x), y: Number((zone as Record<string, unknown>).y),
+      width: Number((zone as Record<string, unknown>).width), height: Number((zone as Record<string, unknown>).height), firstAssetId: typeof (zone as Record<string, unknown>).firstAssetId === "string" ? (zone as Record<string, unknown>).firstAssetId as string : null,
+    })) : [], createdBy: createdBy ? {
+      id: String(createdBy.id), displayName: String(createdBy.displayName), avatarUrl: typeof createdBy.avatarUrl === "string" ? createdBy.avatarUrl : null,
+    } : null,
+  };
+}
+
+/** The legacy array adapter deliberately omits summary/facet values: those values must come
+ * from Core because collection-scoped counts and current Publication usage cannot be derived
+ * correctly from a paged client response. */
+export async function fetchCompositionLibrary(queryInput: CompositionLibraryQuery): Promise<CompositionLibraryPage> {
+  const query = new URLSearchParams({
+    page: String(queryInput.page ?? 1),
+    page_size: String(queryInput.pageSize ?? 10),
+  });
+  if (queryInput.search) query.set("search", queryInput.search);
+  if (queryInput.status) query.set("status", queryInput.status);
+  if (queryInput.kind) query.set("kind", queryInput.kind);
+  if (queryInput.folderId) query.set("folder_id", queryInput.folderId);
+  if (queryInput.uncategorized) query.set("uncategorized", "true");
+  if (queryInput.trash) query.set("trash", "true");
+  if (queryInput.content) query.set("content", queryInput.content);
+  if (queryInput.usage) query.set("usage", queryInput.usage);
+  if (queryInput.referenceResolution) query.set("reference_resolution", queryInput.referenceResolution);
+  if (queryInput.tagId) query.set("tag_id", queryInput.tagId);
+  if (queryInput.sort) query.set("sort", queryInput.sort);
+  if (queryInput.dir) query.set("dir", queryInput.dir);
+
+  const raw = await requestApi<CoreLibraryPage | CompositionLibraryItem[]>("GET", `/media/compositions?${query}`);
+  if (Array.isArray(raw)) {
+    return { data: raw, pagination: null, summary: null, facets: { referenceResolutions: [], tags: [] }, isLegacyResponse: true };
+  }
+  return {
+    data: Array.isArray(raw.data) ? raw.data.map(mapLibraryItem) : [],
+    pagination: raw.pagination ?? null,
+    summary: raw.summary ?? null,
+    facets: { referenceResolutions: raw.facets?.referenceResolutions ?? [], tags: raw.facets?.tags ?? [] },
+    isLegacyResponse: !raw.pagination || !raw.summary,
+  };
+}
+
+export async function fetchComposition(id: string): Promise<CompositionDetail> {
+  return requestApi<CompositionDetail>("GET", `/media/compositions/${id}`);
+}
+
+export type UpsertCompositionInput = {
+  compositionId?: string | null;
+  name: string;
+  layoutId: string;
+  expectedRevision?: number | null;
+};
+
+export async function upsertComposition(
+  input: UpsertCompositionInput,
+): Promise<{ composition_id: string; revision: number; status: CompositionStatus }> {
+  const body: Record<string, unknown> = { name: input.name.trim(), layout_id: input.layoutId };
+  if (input.expectedRevision != null) body.expected_revision = input.expectedRevision;
+
+  if (input.compositionId) {
+    return requestApi("PUT", `/media/compositions/${input.compositionId}`, body);
+  }
+  return requestApi("POST", "/media/compositions", body);
+}
+
+export async function setCompositionZones(
+  id: string,
+  payload: SetZonesPayload,
+  expectedRevision?: number | null,
+): Promise<{ composition_id: string; revision: number; bound_count: number }> {
+  const body: Record<string, unknown> = { zones: payload.zones };
+  if (expectedRevision != null) body.expected_revision = expectedRevision;
+  return requestApi("PUT", `/media/compositions/${id}/zones`, body);
+}
+
+export async function setCompositionStatus(
+  id: string,
+  status: CompositionStatus,
+): Promise<{ composition_id: string; status: CompositionStatus }> {
+  return requestApi("PUT", `/media/compositions/${id}/status`, { status });
+}
+
+export async function moveComposition(id: string, folderId: string | null): Promise<void> {
+  await requestApi("PATCH", `/media/compositions/${id}`, { folder_id: folderId });
+}
+
+export type CompositionProgramUsage = {
+  id: string;
+  name: string;
+  status: "draft" | "scheduled" | "active";
+  startsAt: string | null;
+  endsAt: string | null;
+};
+
+export async function fetchCompositionPrograms(id: string): Promise<CompositionProgramUsage[]> {
+  return requestApi("GET", `/media/compositions/${id}/programs`);
+}
+
+export async function trashComposition(
+  id: string,
+): Promise<{ trashed: boolean; programs: CompositionProgramUsage[] }> {
+  return requestApi("DELETE", `/media/compositions/${id}`);
+}
+
+export async function restoreComposition(id: string): Promise<void> {
+  await requestApi("POST", `/media/compositions/${id}/restore`);
+}
+
+export async function permanentlyDeleteComposition(
+  id: string,
+): Promise<{ deleted: boolean; blockers: string[] }> {
+  return requestApi("DELETE", `/media/compositions/${id}/permanent-delete`);
+}
+
+export async function duplicateComposition(
+  sourceId: string,
+  name: string,
+): Promise<{ compositionId: string }> {
+  const { composition_id } = await requestApi<{ composition_id: string }>(
+    "POST",
+    `/media/compositions/${sourceId}/duplicate`,
+    { name: name.trim() },
+  );
+  return { compositionId: composition_id };
+}
+
+/** Replaces a composition's tags wholesale against the tenant's shared vocabulary —
+ *  Thunder_Core #52 / ADR 0063 §4. Names, not ids: the backend creates what does not
+ *  exist yet and reuses the existing spelling for what does. Returns the stored set so
+ *  the caller renders the canonical casing rather than what was typed. */
+export async function setCompositionTags(id: string, tags: string[]): Promise<Tag[]> {
+  const data = await requestApi<{ tags?: Tag[] }>("PUT", `/media/compositions/${id}/tags`, { tags });
+  return data.tags ?? [];
+}
+
+export async function forkCompositionLayout(
+  compositionId: string,
+  expectedRevision?: number | null,
+): Promise<{ layout_id: string; revision: number }> {
+  const body = expectedRevision != null ? { expected_revision: expectedRevision } : {};
+  return requestApi("POST", `/media/compositions/${compositionId}/fork-layout`, body);
+}

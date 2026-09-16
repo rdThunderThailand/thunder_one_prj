@@ -1,5 +1,7 @@
 # 0025 — Playlist delete is hard, and refused while any publication references it
 
+**Status:** superseded by ADR-0056 (2026-08-29)
+
 ## Context
 
 Ticket [86d3xxp90](https://app.clickup.com/t/86d3xxp90) mocks a Delete action on the playlists

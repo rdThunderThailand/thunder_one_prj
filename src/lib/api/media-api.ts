@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/api-error";
-import type { Campaign, MediaAsset, PlaylistDetail, PlaylistListItem, Tag } from "@/types/domain";
+import type { Campaign, ContentFolder, MediaAsset, MediaAssetPage, PlaylistDetail, PlaylistListItem, Tag } from "@/types/domain";
 
 /**
  * Shared transport for every `/api/proxy/media/*` call. Feature services build
@@ -85,9 +85,97 @@ export async function fetchTags(): Promise<Tag[]> {
   return [];
 }
 
-export async function fetchMediaAssets(): Promise<MediaAsset[]> {
-  const data = await requestApi<MediaAsset[]>("GET", "/media/videos");
-  return Array.isArray(data) ? data : [];
+/** The list endpoint is paginated; callers that need the whole library page through it. */
+const ASSET_PAGE_SIZE = 200;
+
+export async function fetchMediaAssets(params: {
+  search?: string;
+  kind?: "image" | "video";
+  folderId?: string;
+  trash?: boolean;
+} = {}): Promise<MediaAsset[]> {
+  const assets: MediaAsset[] = [];
+  for (let page = 1; ; page += 1) {
+    const data = await fetchMediaAssetPage({ ...params, page, pageSize: ASSET_PAGE_SIZE });
+    const items = Array.isArray(data?.items) ? data.items : [];
+    assets.push(...items);
+    if (items.length < ASSET_PAGE_SIZE) return assets;
+  }
+}
+
+export async function fetchMediaAsset(id: string): Promise<MediaAsset> {
+  return requestApi<MediaAsset>("GET", `/media/videos/${id}`);
+}
+
+export async function fetchMediaAssetPage(params: {
+  search?: string;
+  kind?: "image" | "video";
+  folderId?: string;
+  page?: number;
+  pageSize?: number;
+  trash?: boolean;
+}): Promise<MediaAssetPage> {
+  const query = new URLSearchParams({ page: String(params.page ?? 1), page_size: String(params.pageSize ?? 24) });
+  if (params.search) query.set("search", params.search);
+  if (params.kind) query.set("kind", params.kind);
+  if (params.folderId) query.set("folder_id", params.folderId);
+  if (params.trash) query.set("trash", "true");
+  return requestApi<MediaAssetPage>("GET", `/media/videos?${query}`);
+}
+
+export async function fetchContentFolders(scope: "asset" | "playlist" | "composition"): Promise<ContentFolder[]> {
+  return requestApi<ContentFolder[]>("GET", `/media/folders?scope=${scope}`);
+}
+
+export async function createContentFolder(scope: "asset" | "playlist" | "composition", input: { name: string; parent_id?: string | null }): Promise<ContentFolder> {
+  return requestApi<ContentFolder>("POST", "/media/folders", { scope, ...input });
+}
+
+export async function renameContentFolder(id: string, name: string): Promise<void> {
+  await requestApi("PATCH", `/media/folders/${id}`, { name });
+}
+
+export async function moveContentFolder(id: string, parentId: string | null): Promise<void> {
+  await requestApi("PATCH", `/media/folders/${id}/move`, { parent_id: parentId });
+}
+
+export async function deleteContentFolder(id: string): Promise<void> {
+  await requestApi("DELETE", `/media/folders/${id}`);
+}
+
+export async function trashMediaAsset(id: string): Promise<void> {
+  await requestApi("DELETE", `/media/videos/${id}`);
+}
+
+export async function restoreMediaAsset(id: string): Promise<void> {
+  await requestApi("POST", `/media/videos/${id}/restore`);
+}
+
+export async function permanentlyDeleteMediaAsset(id: string): Promise<void> {
+  await requestApi("DELETE", `/media/videos/${id}/permanent`);
+}
+
+export async function moveMediaAsset(id: string, folderId: string | null): Promise<void> {
+  await requestApi("PATCH", `/media/videos/${id}`, { folder_id: folderId });
+}
+
+export async function renameMediaAsset(id: string, title: string): Promise<void> {
+  await requestApi("PATCH", `/media/videos/${id}`, { title });
+}
+
+/** Move a playlist into a folder, or to Uncategorized (`null`) — Thunder_Core #38 / BE-3.
+ *  Separate sub-route so the editor's `PATCH /media/playlists/{id}` save path is untouched. */
+export async function movePlaylist(id: string, folderId: string | null): Promise<void> {
+  await requestApi("PATCH", `/media/playlists/${id}/move`, { folder_id: folderId });
+}
+
+/** Replaces a playlist's tags wholesale against the tenant's shared vocabulary —
+ *  Thunder_Core #41 / ADR 0060 §8a. Names, not ids: the backend creates what does not
+ *  exist yet and reuses the existing spelling for what does. Returns the stored set so
+ *  the caller renders the canonical casing rather than what was typed. */
+export async function setPlaylistTags(id: string, tags: string[]): Promise<Tag[]> {
+  const data = await requestApi<{ tags?: Tag[] }>("PUT", `/media/playlists/${id}/tags`, { tags });
+  return data.tags ?? [];
 }
 
 // Playlist reads — shared by publications and playlists (docs/adr/0020). Writes
@@ -96,17 +184,38 @@ export async function fetchMediaAssets(): Promise<MediaAsset[]> {
 /** `includeDrafts` defaults to `false` so a caller that forgets to opt in never
  *  leaks drafts into the publication content picker — an unfinished playlist
  *  must never be selectable for scheduling. */
-export async function fetchPlaylists(includeDrafts = false): Promise<PlaylistListItem[]> {
-  const path = includeDrafts ? "/media/playlists?include_drafts=true" : "/media/playlists";
+export async function fetchPlaylists(
+  includeDrafts = false,
+  trash = false
+): Promise<PlaylistListItem[]> {
+  const query = new URLSearchParams();
+  if (includeDrafts) query.set("include_drafts", "true");
+  if (trash) query.set("trash", "true");
+  const suffix = query.toString();
   const data = await requestApi<{ playlists?: PlaylistListItem[] } | PlaylistListItem[]>(
     "GET",
-    path
+    suffix ? `/media/playlists?${suffix}` : "/media/playlists"
   );
   if (Array.isArray(data)) return data;
   if (data && typeof data === "object" && Array.isArray(data.playlists)) {
     return data.playlists;
   }
   return [];
+}
+
+/** Restore a soft-deleted playlist — to its former folder, or Uncategorized if that
+ *  folder is gone (Thunder_Core #40). */
+export async function restorePlaylist(id: string): Promise<void> {
+  await requestApi("POST", `/media/playlists/${id}/restore`);
+}
+
+/** Permanently delete a trashed playlist. Resolves to `{ deleted: false, reason: "published" }`
+ *  — not an error — when the playlist has ever been published (`publications.playlist_id`
+ *  is `ON DELETE RESTRICT`); the caller explains that instead of retrying. */
+export async function permanentlyDeletePlaylist(
+  id: string
+): Promise<{ deleted: boolean; reason?: string }> {
+  return requestApi("DELETE", `/media/playlists/${id}/permanent`);
 }
 
 export async function fetchPlaylist(id: string): Promise<PlaylistDetail> {
