@@ -7,10 +7,11 @@ import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import { peopleNav } from "@/config/nav/people";
-import { shellNavItems } from "@/config/nav/shell";
 import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
-import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon } from "@/components/ui/icons";
+import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
+import { ShellNav } from "./shell-sidebar-nav";
 
 const SHELL_TAGLINE = "Thunder One Shell";
 
@@ -48,13 +49,12 @@ function NavBadge({ badge }: { badge?: string }) {
 }
 
 function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
-  const baseClasses =
-    "flex min-h-9 w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-semibold transition-colors";
+  const baseClasses = "flex min-h-9 w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-semibold transition-colors";
   const icon = item.icon ? <span className="h-4 w-4 shrink-0 text-slate-500">{item.icon}</span> : null;
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed text-slate-800`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-slate-50 text-slate-400 opacity-75 dark:bg-zinc-900`} title="Not built yet">
         {icon}
         {item.label}
         <NavBadge badge={item.badge} />
@@ -79,12 +79,11 @@ function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
 }
 
 function SubLink({ item, active }: { item: NavItem; active: boolean }) {
-  const baseClasses =
-    "flex min-h-8 items-center gap-2 rounded-lg py-1.5 pl-8 pr-2.5 text-sm font-semibold transition-colors";
+  const baseClasses = "flex min-h-8 items-center gap-2 rounded-lg py-1.5 pl-8 pr-2.5 text-sm font-semibold transition-colors";
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed text-slate-800`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-slate-50 text-slate-400 opacity-75 dark:bg-zinc-900`} title="Not built yet">
         {item.label}
       </span>
     );
@@ -95,8 +94,8 @@ function SubLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       className={`${baseClasses} ${
         active
-          ? "text-indigo-600"
-          : "text-slate-800 hover:text-indigo-600"
+          ? "bg-indigo-50 text-indigo-600"
+          : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
       }`}
     >
       {item.label}
@@ -121,7 +120,7 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   }
 
   return (
-    <section className="border-b border-slate-100 pb-4">
+    <section className="border-b border-slate-100 pb-4 last:border-b-0">
       <h2 className="mb-2 px-2.5 text-[11px] font-bold uppercase text-slate-500">{section.label}</h2>
       <button
         type="button"
@@ -145,64 +144,17 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   );
 }
 
-// Rendered on every shell-level route (no active App) — flat, 5 items, each
-// with a sublabel — config/nav/shell.tsx.
-function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolean }) {
-  return (
-    <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-      {shellNavItems.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            title={collapsed ? item.label : undefined}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
-              active
-                ? "bg-indigo-600 text-white"
-                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            } ${collapsed ? "justify-center" : ""}`}
-          >
-            <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                active ? "bg-white/15 text-white" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-              }`}
-            >
-              {item.icon}
-            </span>
-            {!collapsed && (
-              <>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold">{item.label}</span>
-                  <span className={`block truncate text-xs ${active ? "text-indigo-100" : "text-zinc-400"}`}>
-                    {item.sublabel}
-                  </span>
-                </span>
-                {item.badge !== undefined && (
-                  <span
-                    className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
-                      active ? "bg-white/20 text-white" : "bg-red-500 text-white"
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-                {item.chevron && (
-                  <ChevronRightIcon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-indigo-100" : "text-zinc-300"}`} />
-                )}
-              </>
-            )}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
 // Rendered on any App route (Media Workspace, Asset Intelligence, ThunderCare)
 // — the existing per-persona sectioned nav, restyled to the light theme.
 function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: string; collapsed: boolean }) {
   const nav = resolveAppNavConfig(appId, pathname);
+  const isMediaWorkspace = appId === "media-workspace";
+
+  if (isMediaWorkspace) {
+    return <MediaWorkspaceNav nav={nav} pathname={pathname} collapsed={collapsed} />;
+  }
+
+  const overviewActive = isActivePath(pathname, nav.overviewItem.href);
 
   if (collapsed) {
     return (
@@ -219,9 +171,15 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
   }
 
   return (
-    <nav className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-4">
+    <nav className="no-scrollbar min-h-0 flex-1 space-y-0 overflow-y-auto px-5 pb-3 tracking-normal">
       <div>
-        <div className="flex min-h-10 items-center gap-3 rounded-md bg-indigo-50 px-2.5 py-2 text-sm font-bold text-indigo-600">
+        <div
+          className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 py-2 text-sm font-bold transition-colors ${
+            overviewActive
+              ? "bg-indigo-50 text-indigo-600"
+              : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
+          }`}
+        >
           <span className="h-4 w-4">{nav.overviewItem.icon}</span>
           <Link href={nav.overviewItem.href!} className="flex-1">
             {nav.overviewItem.label}
@@ -250,20 +208,28 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
 export function Sidebar({ tenantName }: { tenantName?: string | null }) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
+  const isMediaWorkspace = activeApp?.id === "media-workspace";
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <aside
+      style={isMediaWorkspace ? { fontFamily: "var(--font-manrope)" } : undefined}
       className={`flex h-full shrink-0 flex-col border-r border-zinc-200 bg-white transition-[width] duration-150 dark:border-zinc-800 dark:bg-zinc-950 ${
-        collapsed ? "w-[76px]" : "w-[240px]"
+        collapsed ? (isMediaWorkspace ? "w-17" : "w-[76px]") : isMediaWorkspace ? "w-56" : "w-[240px]"
       }`}
     >
       <Link
-        href="/"
-        className={`flex items-center gap-2.5 px-8 pb-7 pt-8 hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
-          collapsed ? "justify-center px-2" : ""
-        }`}
+        href={isMediaWorkspace ? "/media-workspace" : "/"}
+        className={`flex items-center hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
+          isMediaWorkspace
+            ? "h-17 gap-3 border-b border-[oklch(0.929_0.013_255.508)] px-4"
+            : "gap-2.5 px-8 pb-7 pt-8"
+        } ${collapsed ? "justify-center px-2" : ""}`}
       >
+        {isMediaWorkspace ? (
+          <MediaWorkspaceBrand collapsed={collapsed} />
+        ) : (
+          <>
         <span className="text-5xl font-black italic leading-none tracking-normal text-slate-950">
           T<span className="text-[#026ffd]">1</span>
         </span>
@@ -272,10 +238,12 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
             <p className="text-xl font-bold text-slate-950">
               Thunder<span className="text-[#026ffd]">One</span>
             </p>
-            <p className="text-[11px] font-bold uppercase text-slate-500">
+            <p className={`text-[11px] text-slate-500 ${isMediaWorkspace ? "font-medium" : "font-bold uppercase"}`}>
               {activeApp?.tagline ?? SHELL_TAGLINE}
             </p>
           </div>
+        )}
+          </>
         )}
       </Link>
 
@@ -285,18 +253,24 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
         <ShellNav pathname={pathname} collapsed={collapsed} />
       )}
 
-      <div className="mt-auto px-5 pb-8 pt-3">
+      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-[oklch(0.929_0.013_255.508)] p-2" : "px-5 pb-8 pt-3"}`}>
         {!collapsed && (
           <p className="sr-only">{tenantName ?? "Thunder One"}</p>
         )}
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 ${
+          className={`flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 ${
             collapsed ? "justify-center" : ""
           }`}
         >
-          {collapsed ? <ArrowRightIcon className="h-4 w-4" /> : <ArrowLeftIcon className="h-4 w-4" />}
+          {isMediaWorkspace ? (
+            <MediaWorkspaceCollapseIcon open={collapsed} />
+          ) : collapsed ? (
+            <ArrowRightIcon className="h-4 w-4" />
+          ) : (
+            <ArrowLeftIcon className="h-4 w-4" />
+          )}
           {!collapsed && "Collapse"}
         </button>
       </div>

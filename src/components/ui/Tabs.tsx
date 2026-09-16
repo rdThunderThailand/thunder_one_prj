@@ -11,11 +11,19 @@ interface TabItem {
 interface TabsProps {
   items: TabItem[];
   defaultKey?: string;
+  activeKey?: string;
+  onChange?: (key: string) => void;
 }
 
-export function Tabs({ items, defaultKey }: TabsProps) {
+export function Tabs({ items, defaultKey, activeKey, onChange }: TabsProps) {
   const [active, setActive] = useState(defaultKey ?? items[0]?.key);
-  const activeItem = items.find((item) => item.key === active);
+  const currentKey = activeKey ?? active;
+  const activeItem = items.find((item) => item.key === currentKey);
+
+  const selectTab = (key: string) => {
+    if (activeKey === undefined) setActive(key);
+    onChange?.(key);
+  };
 
   return (
     <div>
@@ -27,10 +35,10 @@ export function Tabs({ items, defaultKey }: TabsProps) {
           <button
             key={item.key}
             role="tab"
-            aria-selected={active === item.key}
-            onClick={() => setActive(item.key)}
+            aria-selected={currentKey === item.key}
+            onClick={() => selectTab(item.key)}
             className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-              active === item.key
+              currentKey === item.key
                 ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
                 : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
             }`}

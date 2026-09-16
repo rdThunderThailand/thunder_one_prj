@@ -6,10 +6,9 @@ interface TopbarProps {
   userName: string;
   todayLabel: string;
   roleLabel?: string | null;
-  notificationCount?: number;
 }
 
-export function Topbar({ userName, todayLabel, roleLabel, notificationCount = 13 }: TopbarProps) {
+export function Topbar({ userName, todayLabel, roleLabel }: TopbarProps) {
   return (
     <header className="flex items-center gap-4 border-b border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-950">
       <SearchInput className="max-w-sm" placeholder="Search anything in ThunderOne..." />
@@ -20,15 +19,13 @@ export function Topbar({ userName, todayLabel, roleLabel, notificationCount = 13
           <ChevronDownIcon className="h-3 w-3 text-zinc-400" />
         </span>
         <button
-          className="relative text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
-          aria-label="Notifications"
+          type="button"
+          disabled
+          title="Notifications are not available yet"
+          className="cursor-not-allowed text-zinc-300 dark:text-zinc-700"
+          aria-label="Notifications unavailable"
         >
           <BellIcon />
-          {notificationCount > 0 && (
-            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-              {notificationCount}
-            </span>
-          )}
         </button>
         <button
           className="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"

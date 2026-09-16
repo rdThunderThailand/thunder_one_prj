@@ -6,7 +6,7 @@ import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { BoxIcon, EditIcon, MonitorIcon, PlayIcon, XIcon } from "@/components/ui/icons";
+import { BoxIcon, EditIcon, MonitorIcon, PlayIcon, UsersIcon, XIcon } from "@/components/ui/icons";
 import { channelTypeKey, channelTypeLabel } from "../channel-logic";
 import { nowPlayingAllNames, nowPlayingRemaining, nowPlayingThumbnail, nowPlayingWindow } from "../now-playing";
 import { fetchChannel } from "../services/channels-api";
@@ -14,7 +14,6 @@ import type { NowNextOccurrence } from "../../publications/now-next";
 import { fetchPublication } from "../../publications/services/publications-api";
 import type { ChannelLifecycle, ChannelListItem, ChannelStatusFilter } from "../types";
 import { ChannelGroupsPickerModal } from "./ChannelGroupsPickerModal";
-import { ChannelRowActionsMenu } from "./ChannelRowActionsMenu";
 import { ChannelStructureTree } from "./ChannelStructureTree";
 
 const STATUS_BADGE: Record<ChannelStatusFilter, { label: string; color: BadgeColor }> = {
@@ -58,12 +57,14 @@ export function ChannelDetailPanel({
   channel,
   occurrence,
   displayTimezone,
+  showAddToGroup = false,
   onClose,
   onChanged,
 }: {
   channel: ChannelListItem;
   occurrence: NowNextOccurrence | null | undefined;
   displayTimezone: string;
+  showAddToGroup?: boolean;
   onClose: () => void;
   onChanged: (updated: ChannelListItem) => void;
 }) {
@@ -161,20 +162,33 @@ export function ChannelDetailPanel({
       )}
 
       <div className="mt-4 flex items-center gap-2">
-        <button
-          type="button"
-          disabled
-          title="Open Live View — not available yet"
-          className={buttonClasses("secondary", "flex-1")}
+        {showAddToGroup ? (
+          <button
+            type="button"
+            onClick={() => setManagingGroups(true)}
+            className={buttonClasses("primary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
+          >
+            <UsersIcon />
+            Add to Group
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            title="Open Live View — not available yet"
+            className={buttonClasses("secondary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
+          >
+            <PlayIcon />
+            Open Live View
+          </button>
+        )}
+        <Link
+          href={`/media-workspace/channels/${channel.id}/edit`}
+          className={buttonClasses("secondary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
         >
-          <PlayIcon />
-          Open Live View
-        </button>
-        <Link href={`/media-workspace/channels/${channel.id}/edit`} className={buttonClasses("secondary", "flex-1")}>
           <EditIcon />
           Edit Channel
         </Link>
-        <ChannelRowActionsMenu channel={channel} onChanged={onChanged} />
       </div>
 
       <div className="mt-5 border-t border-zinc-100 pt-4 dark:border-zinc-800">

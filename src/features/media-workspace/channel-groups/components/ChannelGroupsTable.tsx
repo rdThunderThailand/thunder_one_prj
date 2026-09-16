@@ -57,9 +57,13 @@ export function ChannelGroupsTable({
                   <p className="max-w-56 truncate font-semibold text-zinc-950 dark:text-zinc-50">{group.name}</p>
                 </td>
                 <td className="px-3 py-3 text-zinc-600 dark:text-zinc-300">
-                  <span className="inline-flex items-center gap-1.5 capitalize">
-                    <ModeIcon className="h-3.5 w-3.5 text-zinc-400" />
-                    {group.playback_mode}
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
+                    group.playback_mode === "synchronized"
+                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
+                      : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                  }`}>
+                    <ModeIcon className="h-3.5 w-3.5" />
+                    {group.playback_mode === "synchronized" ? "Synchronized" : "Independent"}
                   </span>
                 </td>
                 <td className="px-3 py-3 text-zinc-600 dark:text-zinc-300">{group.member_count}</td>

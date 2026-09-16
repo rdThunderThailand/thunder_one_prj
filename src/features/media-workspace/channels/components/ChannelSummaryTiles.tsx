@@ -12,14 +12,16 @@ function percentHint(count: number, total: number): string | undefined {
 export function ChannelSummaryTiles({
   summary,
   groupCount,
+  className = "",
 }: {
   summary: ChannelSummary | null;
   /** `null` while `/media/channel-groups` is still loading; independent of `summary`'s load state. */
   groupCount: number | null;
+  className?: string;
 }) {
   if (summary === null) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className={`grid gap-4 sm:grid-cols-2 xl:grid-cols-5 ${className}`}>
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="rounded-xl border border-zinc-100 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <Skeleton className="mb-2 h-4 w-24" />
@@ -31,7 +33,7 @@ export function ChannelSummaryTiles({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div className={`grid gap-4 sm:grid-cols-2 xl:grid-cols-5 ${className}`}>
       <StatTile label="Total Channels" value={String(summary.total)} color="indigo" />
       <StatTile
         label="Online"

@@ -3,9 +3,8 @@
 import { useMemo, useState } from "react";
 import { SearchIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import type { ChannelListItem } from "../../channels/types";
-import { channelCategories, type ChannelCategoryId, type ChannelItem } from "../mock-data";
+import type { ChannelItem } from "../mock-data";
 import {
-  computeCategoryCounts,
   filterBySearch,
   selectedGroupItems,
   summarizeGeometryFit,
@@ -13,8 +12,6 @@ import {
 } from "../channels-logic";
 import { ChannelCard } from "./ChannelCard";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-
-const VISIBLE_COUNT = 4;
 
 export interface ChannelsStepProps {
   channels?: ChannelListItem[];
@@ -38,13 +35,10 @@ export function ChannelsStep({
   const groupIds = usePublicationDraftStore((s) => s.groupIds);
   const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
   const setGroupIds = usePublicationDraftStore((s) => s.setGroupIds);
-  const [activeTab, setActiveTab] = useState<"all" | ChannelCategoryId>("all");
   const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const channels: ChannelItem[] = useMemo(() => toChannelItems(source), [source]);
   const filtered = useMemo(() => filterBySearch(channels, search), [channels, search]);
-  const categoryCounts = useMemo(() => computeCategoryCounts(channels), [channels]);
   const geometryFit = useMemo(
     () => summarizeGeometryFit(source, selectedIds, aspectRatio),
     [source, selectedIds, aspectRatio],
@@ -54,10 +48,8 @@ export function ChannelsStep({
     [source, groupIds, groupNamesById],
   );
 
-  const groups = channelCategories.filter((cat) => activeTab === "all" || activeTab === cat.id);
-
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {selectedGroups.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selectedGroups.map((group) => (
@@ -84,28 +76,6 @@ export function ChannelsStep({
       {!loadingChannels && !channelsError && channels.length === 0 && (
         <p className="text-xs text-zinc-400">No Channels available yet — create one first.</p>
       )}
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-zinc-100 pb-2">
-        <button
-          onClick={() => setActiveTab("all")}
-          className={`pb-1 text-sm font-medium ${
-            activeTab === "all" ? "border-b-2 border-indigo-600 text-indigo-600" : "text-zinc-500 hover:text-zinc-900"
-          }`}
-        >
-          All {categoryCounts.all}
-        </button>
-        {channelCategories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveTab(cat.id)}
-            className={`pb-1 text-sm font-medium ${
-              activeTab === cat.id ? "border-b-2 border-indigo-600 text-indigo-600" : "text-zinc-500 hover:text-zinc-900"
-            }`}
-          >
-            {cat.label} {categoryCounts[cat.id]}
-          </button>
-        ))}
-      </div>
 
       <div className="relative">
         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -137,38 +107,16 @@ export function ChannelsStep({
         </div>
       )}
 
-      {groups.map((cat) => {
-        const items = filtered.filter((c) => c.category === cat.id);
-        if (items.length === 0) return null;
-        const isExpanded = expanded[cat.id] ?? false;
-        const visible = isExpanded ? items : items.slice(0, VISIBLE_COUNT);
-
-        return (
-          <div key={cat.id}>
-            <h3 className="mb-2 text-sm font-semibold text-zinc-900">
-              {cat.label} ({items.length})
-            </h3>
-            <div className="flex flex-col gap-2">
-              {visible.map((channel) => (
-                <ChannelCard
-                  key={channel.id}
-                  channel={channel}
-                  selected={selectedIds.includes(channel.id)}
-                  onToggle={() => toggleChannel(channel.id)}
-                />
-              ))}
-            </div>
-            {items.length > VISIBLE_COUNT && (
-              <button
-                onClick={() => setExpanded((prev) => ({ ...prev, [cat.id]: !isExpanded }))}
-                className="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                {isExpanded ? "Show less" : "Show more"}
-              </button>
-            )}
-          </div>
-        );
-      })}
+      <div className="flex flex-col gap-1.5">
+        {filtered.map((channel) => (
+          <ChannelCard
+            key={channel.id}
+            channel={channel}
+            selected={selectedIds.includes(channel.id)}
+            onToggle={() => toggleChannel(channel.id)}
+          />
+        ))}
+      </div>
 
     </div>
   );

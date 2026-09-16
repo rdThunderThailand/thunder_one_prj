@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { CalendarIcon, EditIcon, ImageIcon, InfoIcon, MonitorIcon, PlayIcon } from "@/components/ui/icons";
+import { CalendarIcon, EditIcon, ImageIcon, InfoIcon, PlayIcon } from "@/components/ui/icons";
 import { formatBytes, formatResolution } from "@/features/media-workspace/assets/components/AssetCard";
 import { decodeMetadata, formatDuration } from "@/features/media-workspace/playlists";
 import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
@@ -14,12 +14,13 @@ import type { MediaAsset, ScheduleConflict } from "../types";
 import type { EligibilityCheck, EligibilityStatus } from "../publish-eligibility";
 import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
 import { priorities, publicationTypes } from "../mock-data";
-import { utcToZonedParts, WEEKDAYS } from "../schedule";
+import { formatReviewTimeRange, getDayTimelinePlacement, utcToZonedParts, WEEKDAYS } from "../schedule";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
 import { ProgramSummaryRail } from "./ProgramSummaryRail";
 import { ReviewChecklist } from "./ReviewChecklist";
+import { ReviewTargets } from "./ReviewTargets";
 
 export interface ReviewStepProps {
   channels: ChannelListItem[];
@@ -70,12 +71,21 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
     schedule.schedule_type === "recurring"
       ? WEEKDAYS.filter((day) => schedule.days.includes(day.value)).map((day) => day.label).join(", ")
       : null;
-  const dailyStart = schedule.schedule_type === "now" ? "00:00" : schedule.daily_start;
-  const dailyEnd = schedule.schedule_type === "now" ? "23:59" : schedule.daily_end;
-  const resolutions = [
-    ...new Set(channels.filter((channel) => channelIds.includes(channel.id)).map((channel) => channel.player?.resolution).filter(Boolean)),
-  ];
-
+  const reviewTimeRange = formatReviewTimeRange(schedule, now.time);
+  const scheduleMode = {
+    now: "Publish now",
+    later: "Schedule later",
+    range: "Date range",
+    recurring: "Recurring",
+  }[schedule.schedule_type];
+  const endTime = schedule.end_date ? schedule.end_time || "23:59" : "No end time";
+  const timelineStartTime = schedule.schedule_type === "recurring" ? schedule.daily_start : startTime;
+  const timelineEndTime = schedule.schedule_type === "recurring"
+    ? schedule.daily_end
+    : schedule.end_date === startDate
+      ? schedule.end_time || "23:59"
+      : "24:00";
+  const timelinePlacement = getDayTimelinePlacement(timelineStartTime, timelineEndTime);
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
@@ -109,40 +119,37 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                 <Row label="Uploaded by" value={thumbnailAsset?.created_by?.display_name ?? "—"} />
               </div>
             </SummaryCard>
-            <SummaryCard index={2} title="Where to Play" subtitle="ตำแหน่งที่แสดง" status={statusOf(eligibilityChecks, "targets")} bodyClassName="space-y-4">
-              <div className="flex items-start gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><MonitorIcon /></span>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-zinc-900">
-                    {[
-                      ...selectedChannels.map((channel) => channel.name),
-                      ...groupIds.map((id) => groupNamesById[id] ?? id),
-                    ].join(", ") || "No channel selected"}
-                  </p>
-                  <p className="mt-1 text-[10px] text-zinc-500">
-                    {selectedChannels.length} channel{selectedChannels.length === 1 ? "" : "s"}
-                    {groupIds.length > 0 && `, ${groupIds.length} channel group${groupIds.length === 1 ? "" : "s"}`} selected
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-                <Row label="Resolution" value={resolutions.join(", ") || "Unknown"} />
-                <Row label="Status" value={selectedChannels.every((channel) => channel.status === "online") ? "Online" : "Device warning"} />
-              </div>
+            <SummaryCard index={2} title="Where to Play" subtitle="ตำแหน่งที่แสดง" status={statusOf(eligibilityChecks, "targets")} bodyClassName="space-y-3">
+              <ReviewTargets
+                channels={channels}
+                channelIds={channelIds}
+                groupIds={groupIds}
+                groupNamesById={groupNamesById}
+              />
             </SummaryCard>
-            <SummaryCard index={3} title="When to Play" subtitle="ช่วงเวลาแสดงผล" status={statusOf(eligibilityChecks, "schedule")} bodyClassName="space-y-4">
-              <div className="flex items-start gap-3 rounded-xl border border-zinc-100 p-3">
-                <CalendarIcon className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
-                <div>
-                  <p className="text-xs font-semibold text-zinc-900">{startDate || "—"}</p>
-                  <p className="mt-1 text-[10px] text-zinc-500">{schedule.end_date || "No end date"}</p>
+            <SummaryCard index={3} title="When to Play" subtitle="ช่วงเวลาแสดงผล" status={statusOf(eligibilityChecks, "schedule")} bodyClassName="space-y-3">
+              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700">
+                <span className="grid h-7 w-7 place-items-center rounded-lg bg-indigo-50">
+                  <CalendarIcon className="h-4 w-4" />
+                </span>
+                {scheduleMode}
+              </div>
+              <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50/70">
+                <div className="border-r border-zinc-100 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-normal text-zinc-400">Start</p>
+                  <p className="mt-1 text-xs font-semibold text-zinc-900">{startDate || "—"}</p>
+                  <p className="mt-0.5 text-[11px] text-zinc-500">{startTime || "At activation"}</p>
+                </div>
+                <div className="p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-normal text-zinc-400">End</p>
+                  <p className="mt-1 text-xs font-semibold text-zinc-900">{schedule.end_date || "No end date"}</p>
+                  <p className="mt-0.5 text-[11px] text-zinc-500">{endTime}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-                <Row label="Time" value={`${dailyStart} – ${dailyEnd}`} />
+                <Row label="Play window" value={reviewTimeRange} />
                 <Row label="Timezone" value={schedule.timezone} />
-                {days && <Row label="Days" value={days} />}
-                <Row label="Starts at" value={startTime || "—"} />
+                {days && <Row label="Active days" value={days} />}
               </div>
             </SummaryCard>
             <SummaryCard index={4} title="How to Play" subtitle="วิธีการเล่น" status="unknown" bodyClassName="space-y-4">
@@ -162,8 +169,8 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
             </SummaryCard>
           </div>
 
-          <Card className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[18rem_minmax(0,1fr)] xl:min-h-[347px] xl:grid-cols-[28rem_minmax(0,1fr)]">
-            <div className="xl:pr-4">
+          <Card className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:min-h-[430px]">
+            <div className="lg:pr-2">
               <div className="mb-3">
                 <h2 className="text-sm font-semibold text-zinc-900">Preview on Screen</h2>
                 <p className="text-xs text-zinc-400">ตัวอย่างการแสดงผลบนหน้าจอ</p>
@@ -176,7 +183,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                   referenceResolution={preview.referenceResolution}
                   allowActualSize={branch !== "playlist"}
                   controlsPlacement="overlay"
-                  frameViewportHeight="20vh"
+                  frameViewportHeight="36vh"
                 />
               ) : (
                 <div className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400">
@@ -185,29 +192,41 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                 </div>
               )}
             </div>
-            <div>
+            <div className="flex min-h-full flex-col">
               <h2 className="text-sm font-semibold text-zinc-900">Timeline <span className="font-normal text-zinc-400">(ตัวอย่างลำดับการเล่น)</span></h2>
               <p className="mt-0.5 text-xs text-zinc-400">{startDate || "Schedule date"} · {schedule.timezone}</p>
-              <div className="mt-4 flex justify-between text-[10px] font-medium text-zinc-500">
-                <span>00:00</span>
-                <span>23:59</span>
-              </div>
-              <div className="mt-1 rounded-lg bg-indigo-100 px-3 py-3 text-center text-xs font-semibold text-indigo-800">
-                {basicInfo.name || "Your content"} · {dailyStart}–{dailyEnd}
-              </div>
-              {conflicts.map((conflict) => (
-                <div key={conflict.publication_id} className="mt-2 rounded-lg bg-zinc-100 px-3 py-2 text-center text-xs text-zinc-600">
-                  Other content · {conflict.name}
+              <div className="mt-4 flex flex-1 flex-col rounded-xl border border-zinc-100 bg-zinc-50/70 p-4">
+                <div className="flex justify-between text-[10px] font-medium text-zinc-500">
+                  <span>00:00</span>
+                  <span>23:59</span>
                 </div>
-              ))}
-              <div className="mt-3 flex gap-4 text-[10px] text-zinc-500">
-                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-indigo-200" />Your content</span>
-                <span className="flex items-center gap-1.5 text-zinc-400"><span className="h-2.5 w-2.5 rounded-sm bg-zinc-200" />Other content</span>
+                <div className="relative mt-2 h-12 overflow-hidden rounded-lg bg-zinc-100">
+                  <div
+                    title={`${basicInfo.name || "Your content"} · ${reviewTimeRange}`}
+                    className="absolute inset-y-0 flex min-w-0 items-center justify-center overflow-hidden rounded-md bg-indigo-200 px-2 text-[10px] font-semibold text-indigo-800 ring-1 ring-inset ring-indigo-300"
+                    style={{
+                      left: `${timelinePlacement.leftPercent}%`,
+                      width: `${timelinePlacement.widthPercent}%`,
+                    }}
+                  >
+                    <span className="truncate">{basicInfo.name || "Your content"}</span>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs font-medium text-zinc-700">{basicInfo.name || "Your content"} · {reviewTimeRange}</p>
+                {conflicts.map((conflict) => (
+                  <div key={conflict.publication_id} className="mt-2 rounded-lg bg-zinc-100 px-3 py-3 text-center text-xs text-zinc-600">
+                    Other content · {conflict.name}
+                  </div>
+                ))}
+                <div className="mt-4 flex gap-4 text-[10px] text-zinc-500">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-indigo-200" />Your content</span>
+                  <span className="flex items-center gap-1.5 text-zinc-400"><span className="h-2.5 w-2.5 rounded-sm bg-zinc-200" />Other content</span>
+                </div>
+                <p className="mt-auto flex items-start gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-[11px] leading-5 text-indigo-700">
+                  <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                  ตัวอย่างนี้อ้างอิงการตั้งค่าปัจจุบัน อาจเปลี่ยนแปลงเมื่อแก้ไขการจัดตาราง
+                </p>
               </div>
-              <p className="mt-4 flex items-start gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-[11px] leading-5 text-indigo-700">
-                <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                ตัวอย่างนี้อ้างอิงการตั้งค่าปัจจุบัน อาจเปลี่ยนแปลงเมื่อแก้ไขการจัดตาราง
-              </p>
             </div>
           </Card>
         </div>

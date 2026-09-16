@@ -390,7 +390,6 @@ export function CreatePublicationPage() {
     isEditMode: Boolean(idParam),
     dismissed: dismissedResume,
   });
-
   return (
     <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-6">
       <PageHeader

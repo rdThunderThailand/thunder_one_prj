@@ -15,6 +15,8 @@ import assert from "node:assert/strict";
 // allowImportingTsExtensions in tsconfig, which is safe here (noEmit).
 import {
   classifyPublicationAiring,
+  getDayTimelinePlacement,
+  formatReviewTimeRange,
   formatScheduleStart,
   isScheduleFormValid,
   makeDefaultScheduleForm,
@@ -112,6 +114,26 @@ const recurringBase: ScheduleForm = {
   daily_start: "08:00",
   daily_end: "17:00",
 };
+
+// Review must show a publication's actual expiry; daily_start/end only apply
+// to a recurring schedule.
+assert.equal(
+  formatReviewTimeRange({ ...base, schedule_type: "now", end_date: "2026-09-16", end_time: "16:30" }, "10:15"),
+  "10:15 – 16:30",
+);
+assert.equal(
+  formatReviewTimeRange({ ...rangeBase, end_date: "2026-08-10", end_time: "18:00" }, "09:00"),
+  "09:00 – 18:00",
+);
+assert.equal(formatReviewTimeRange(recurringBase, "09:00"), "08:00 – 17:00");
+assert.deepEqual(getDayTimelinePlacement("16:00", "19:00"), {
+  leftPercent: 66.6667,
+  widthPercent: 12.5,
+});
+assert.deepEqual(getDayTimelinePlacement("22:00", "02:00"), {
+  leftPercent: 91.6667,
+  widthPercent: 8.3333,
+});
 assert.equal(isScheduleFormValid(recurringBase), true);
 assert.equal(isScheduleFormValid({ ...recurringBase, days: [] }), false);
 assert.equal(isScheduleFormValid({ ...recurringBase, daily_start: "", daily_end: "" }), false);

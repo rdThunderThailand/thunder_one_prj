@@ -1,8 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
-import { MoreIcon } from "@/components/ui/icons";
+import { ExpandIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
 
 const SPEED_OPTIONS = [1, 2, 3];
 
@@ -46,7 +45,9 @@ export function PreviewControls({
   onFullscreen: () => void;
 }) {
   const isOverlay = placement === "overlay";
-  const secondaryOverlay = isOverlay ? "border-white/20 bg-white/10 !text-white hover:bg-white/20" : "";
+  const controlClass = `flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+    isOverlay ? "text-white hover:bg-white/15" : "text-zinc-600 hover:bg-zinc-200/70"
+  }`;
   const overlayVisibility = playing
     ? "translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
     : "translate-y-0 opacity-100";
@@ -64,40 +65,43 @@ export function PreviewControls({
         </p>
       )}
       {geometryControls}
-      <div className={`mb-1.5 flex items-center justify-between gap-3 text-xs ${isOverlay ? "text-white/75" : "text-zinc-500"}`}>
-        <span>{isOverlay ? "" : "Shared timeline · all Zones start at 0s"}</span>
-        <span>{timeSeconds.toFixed(1)}s / {timelineSeconds}s · {muted ? "muted" : "unmuted"}</span>
-      </div>
-      <input
-        aria-label="Preview timeline"
-        type="range"
-        min="0"
-        max={timelineSeconds}
-        step="0.1"
-        value={timeSeconds}
-        onChange={(event) => onTimeline(Number(event.target.value))}
-        className="w-full accent-indigo-600"
-      />
-      <div className="mt-2 flex items-center gap-2">
-        <Button
-          variant="primary"
-          className="px-3 py-1.5 text-xs"
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={controlClass}
+          aria-label={playing ? "Pause preview" : "Play preview"}
+          title={playing ? "Pause" : "Play"}
           onClick={() => onPlaying(!playing)}
         >
-          {playing ? "Pause" : "Play"}
-        </Button>
-        <Button
-          variant={muted ? "secondary" : "primary"}
-          className={`px-3 py-1.5 text-xs ${muted ? secondaryOverlay : ""}`}
+          {playing ? <PauseGlyph /> : <PlayIcon className="h-4 w-4" />}
+        </button>
+        <span className={`shrink-0 text-[11px] tabular-nums ${isOverlay ? "text-white/80" : "text-zinc-500"}`}>
+          {Math.floor(timeSeconds)}s / {Math.floor(timelineSeconds)}s
+        </span>
+        <input
+          aria-label="Preview timeline"
+          type="range"
+          min="0"
+          max={timelineSeconds}
+          step="0.1"
+          value={timeSeconds}
+          onChange={(event) => onTimeline(Number(event.target.value))}
+          className="h-1 min-w-20 flex-1 accent-indigo-600"
+        />
+        <button
+          type="button"
+          className={controlClass}
+          aria-label={muted ? "Unmute preview" : "Mute preview"}
+          title={muted ? "Unmute" : "Mute"}
           onClick={() => onMuted(!muted)}
         >
-          {muted ? "Unmute" : "Mute"}
-        </Button>
+          <VolumeGlyph muted={muted} />
+        </button>
         <span className={`text-xs ${isOverlay ? "text-white/75" : "text-zinc-500"}`}>
           {speed}×
         </span>
         <details
-          className="relative ml-auto inline-block text-left"
+          className="relative inline-block shrink-0 text-left"
           onBlur={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node)) {
               event.currentTarget.removeAttribute("open");
@@ -106,15 +110,12 @@ export function PreviewControls({
         >
           <summary
             aria-label="Playback speed"
-            className={`flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg ${
-              isOverlay
-                ? "text-white hover:bg-white/15"
-                : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800"
-            }`}
+            title="Playback options"
+            className={`${controlClass} cursor-pointer list-none`}
           >
             <MoreIcon className="h-4 w-4" />
           </summary>
-          <div className="absolute bottom-full right-0 z-20 mb-2 w-28 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+          <div className="absolute bottom-full right-0 z-20 mb-2 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
             {SPEED_OPTIONS.map((option) => (
               <button
                 key={option}
@@ -127,25 +128,49 @@ export function PreviewControls({
                 {option}×
               </button>
             ))}
+            {allowActualSize && framePixels && (
+              <button
+                type="button"
+                className="block w-full border-t border-zinc-100 px-3 py-2 text-left text-sm hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                onClick={() => onFitToWindow(!fitToWindow)}
+              >
+                {fitToWindow ? `Actual size (${framePixels[0]}×${framePixels[1]})` : "Fit to window"}
+              </button>
+            )}
           </div>
         </details>
-        {allowActualSize && framePixels && (
-          <Button
-            variant="secondary"
-            className={`px-3 py-1.5 text-xs ${secondaryOverlay}`}
-            onClick={() => onFitToWindow(!fitToWindow)}
-          >
-            {fitToWindow ? `Actual size (${framePixels[0]}×${framePixels[1]})` : "Fit to window"}
-          </Button>
-        )}
-        <Button
-          variant="secondary"
-          className={`px-3 py-1.5 text-xs ${secondaryOverlay}`}
+        <button
+          type="button"
+          className={controlClass}
+          aria-label={isFullscreen ? "Exit full screen" : "Full screen"}
+          title={isFullscreen ? "Exit full screen" : "Full screen"}
           onClick={onFullscreen}
         >
-          {isFullscreen ? "Exit full screen" : "Full screen"}
-        </Button>
+          <ExpandIcon className="h-4 w-4" />
+        </button>
       </div>
     </div>
+  );
+}
+
+function PauseGlyph() {
+  return (
+    <span className="flex items-center gap-0.5" aria-hidden="true">
+      <span className="h-3.5 w-1 rounded-sm bg-current" />
+      <span className="h-3.5 w-1 rounded-sm bg-current" />
+    </span>
+  );
+}
+
+function VolumeGlyph({ muted }: { muted: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path d="M4 10v4h4l5 4V6l-5 4H4Z" fill="currentColor" />
+      {muted ? (
+        <path d="m16 9 4 6m0-6-4 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      ) : (
+        <path d="M16 9.5c1.4 1.4 1.4 3.6 0 5m2-7c2.5 2.5 2.5 6.5 0 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      )}
+    </svg>
   );
 }

@@ -165,7 +165,7 @@ export function ChannelTable({
   onChanged: (updated: ChannelListItem) => void;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="min-h-0 flex-1 overflow-auto">
       <table className="w-full min-w-[1080px] text-left text-sm">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-400">

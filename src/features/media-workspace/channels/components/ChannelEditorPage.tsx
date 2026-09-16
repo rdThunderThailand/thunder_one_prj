@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon } from "@/components/ui/icons";
@@ -13,18 +12,11 @@ import { draftFromChannel, step1Valid, step2Valid, toUpdateChannelPayload, type 
 import { fetchChannel, fetchChannelReferenceData } from "../services/channels-api";
 import { updateChannelV2 } from "../services/channel-write-api";
 import { fetchChannelPlayerCandidates } from "../services/player-candidates-api";
-import type { ChannelDetail, ChannelLifecycle, ChannelLocationOption } from "../types";
+import type { ChannelDetail, ChannelLocationOption } from "../types";
 import type { ChannelPlayerCandidate } from "../player-candidates";
-import { Step1ChannelInfo } from "./create-wizard/Step1ChannelInfo";
-import { Step2Setup } from "./create-wizard/Step2Setup";
+import { ChannelEditorForm } from "./ChannelEditorForm";
 import { EditChannelSidebar } from "./EditChannelSidebar";
 import { EditorLoadError, EditorSkeleton } from "./ChannelEditorStates";
-
-const LIFECYCLE_BADGE: Record<ChannelLifecycle, { label: string; color: BadgeColor }> = {
-  draft: { label: "Draft", color: "zinc" },
-  active: { label: "Active", color: "green" },
-  inactive: { label: "Inactive", color: "zinc" },
-};
 
 /** `channel_set_devices` refuses removing the Player while a live Publication targets the
  *  Channel — every other write error goes through `classifyApiError`'s generic path instead. */
@@ -109,25 +101,12 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
         title={
           <span className="inline-flex items-center gap-2">
             Edit Channel
-            {channel && (
-              <Badge color={LIFECYCLE_BADGE[channel.lifecycle].color} variant="pill">
-                {LIFECYCLE_BADGE[channel.lifecycle].label}
-              </Badge>
-            )}
+            <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-sm font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300">
+              {channel?.display_config?.mode === "multi" ? "Multi-screen" : "Single-screen"}
+            </span>
           </span>
         }
-        subtitle="Update identity, Player assignment and display configuration."
-        actions={
-          <>
-            <Link href="/media-workspace/channels" className={buttonClasses("secondary")}>
-              <ArrowLeftIcon />
-              Cancel
-            </Link>
-            <Button type="button" disabled={disabled} onClick={() => void handleSave()}>
-              {saving ? "Saving…" : "Save changes"}
-            </Button>
-          </>
-        }
+        subtitle="Update channel information and screen configuration."
       />
 
       {channel === null && loadError === null ? (
@@ -137,22 +116,32 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
       ) : loadError ? (
         <EditorLoadError error={loadError} retrying={false} onRetry={load} />
       ) : channel && draft ? (
-        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="min-w-0 space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-4">
             {saveError && (
               <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">
                 {saveError}
               </p>
             )}
-            <Step1ChannelInfo draft={draft} locations={locations} nameError={nameError} onChange={setDraft} />
-            <Step2Setup
+            <ChannelEditorForm
               draft={draft}
+              locations={locations}
               candidates={candidates}
               candidatesLoading={candidatesLoading}
+              nameError={nameError}
               excludeChannelId={channelId}
               onChange={setDraft}
               onRefreshCandidates={refreshCandidates}
             />
+            <div className="flex justify-end gap-2 px-1">
+              <Link href="/media-workspace/channels" className={buttonClasses("secondary")}>
+                <ArrowLeftIcon />
+                Cancel
+              </Link>
+              <Button type="button" disabled={disabled} onClick={() => void handleSave()}>
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
+            </div>
           </div>
 
           <EditChannelSidebar

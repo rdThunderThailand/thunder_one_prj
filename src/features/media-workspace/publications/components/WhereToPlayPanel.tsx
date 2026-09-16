@@ -21,8 +21,8 @@ export function WhereToPlayPanel(props: ChannelsStepProps) {
   const [tab, setTab] = useState<TabId>("channels");
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-1 rounded-lg bg-zinc-100 p-0.5">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="grid grid-cols-[0.8fr_1fr_1.35fr] gap-1 rounded-lg bg-zinc-100 p-0.5">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -30,7 +30,7 @@ export function WhereToPlayPanel(props: ChannelsStepProps) {
             disabled={!t.enabled}
             title={t.enabled ? undefined : "ยังไม่เปิดใช้งาน"}
             onClick={() => t.enabled && setTab(t.id)}
-            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`min-w-0 rounded-md px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
               tab === t.id
                 ? "bg-white text-zinc-900 shadow-sm"
                 : t.enabled

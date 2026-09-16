@@ -9,13 +9,18 @@ import {
   BroadcastIcon,
   CalendarIcon,
   ChartIcon,
+  ClockIcon,
+  FolderIcon,
   GridIcon,
+  HeartIcon,
   LayoutIcon,
+  ListIcon,
+  MegaphoneIcon,
   MonitorIcon,
-  ShareNodesIcon,
-  UploadIcon,
+  PlayIcon,
+  TrendUpIcon,
   UsersIcon,
-  WarningTriangleIcon,
+  VideoIcon,
 } from "@/components/ui/icons";
 import type { NavConfig, NavItem } from "./types";
 
@@ -23,50 +28,49 @@ export const mediaWorkspaceNav: NavConfig = {
   overviewItem: {
     label: "Overview",
     href: "/media-workspace",
-    icon: <GridIcon className="h-4 w-4 shrink-0" />,
+    icon: <GridIcon />,
   },
   sections: [
     {
       label: "Content",
       items: [
-        { label: "Media Library", href: "/media-workspace/assets", icon: <UploadIcon /> },
-        { label: "Playlists", href: "/media-workspace/playlists", icon: <BroadcastIcon /> },
-        { label: "Layouts", href: "/media-workspace/layouts", icon: <LayoutIcon />, badge: "NEW" },
+        { label: "Media Library", href: "/media-workspace/assets", icon: <FolderIcon /> },
+        { label: "Playlists", href: "/media-workspace/playlists", icon: <ListIcon /> },
+        { label: "Layouts", href: "/media-workspace/layouts", icon: <LayoutIcon /> },
       ],
     },
     {
       label: "Programming",
-      triggerLabel: "Programs",
-      icon: <MonitorIcon />,
       items: [
-        { label: "Now & Next", href: "/media-workspace/publications" },
+        { label: "Programs", href: "/media-workspace/publications/manage", icon: <PlayIcon /> },
+        { label: "Now & Next", href: "/media-workspace/publications", icon: <ClockIcon /> },
         { label: "Calendar", icon: <CalendarIcon /> },
       ],
     },
     {
       label: "Channels",
       items: [
-        { label: "All Channels", href: "/media-workspace/channels", icon: <MonitorIcon /> },
+        { label: "All Channels", href: "/media-workspace/channels", icon: <BroadcastIcon /> },
         { label: "Channel Groups", href: "/media-workspace/channel-groups", icon: <UsersIcon /> },
-        { label: "Screens", icon: <ShareNodesIcon /> },
-        { label: "TV", icon: <MonitorIcon /> },
-        { label: "PA / Audio", icon: <BroadcastIcon /> },
+        { label: "Screens", icon: <MonitorIcon /> },
+        { label: "TV", icon: <VideoIcon /> },
+        { label: "PA / Audio", icon: <MegaphoneIcon /> },
         { label: "Kiosks", icon: <LayoutIcon /> },
       ],
     },
     {
       label: "Monitoring",
       items: [
-        { label: "Live View", icon: <GridIcon /> },
-        { label: "Alerts", icon: <BellIcon />, badge: "12" },
-        { label: "System Health", icon: <WarningTriangleIcon /> },
+        { label: "Live View", icon: <BroadcastIcon /> },
+        { label: "Alerts", icon: <BellIcon /> },
+        { label: "System Health", icon: <HeartIcon /> },
       ],
     },
     {
       label: "Reports & Analytics",
       items: [
         { label: "Reports", icon: <ChartIcon /> },
-        { label: "Analytics", icon: <ChartIcon /> },
+        { label: "Analytics", icon: <TrendUpIcon /> },
       ],
     },
   ],
