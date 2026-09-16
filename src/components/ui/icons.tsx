@@ -5,6 +5,14 @@ interface IconProps {
   className?: string;
 }
 
+export function FolderIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V6.5Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function SearchIcon({ className = "h-4 w-4" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
@@ -340,6 +348,15 @@ export function ArrowLeftIcon({ className = "h-4 w-4" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path d="M20 12H4M11 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function ExternalLinkIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M14 4h6v6M20 4l-9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -764,6 +781,20 @@ export function LogoutIcon({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+export function UndoIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 // Added 2026-09-16 for AccountSecurityPage's "copy username" button (a real,
 // working clipboard copy — not decorative).
 export function CopyIcon({ className = "h-4 w-4" }: IconProps) {
@@ -772,6 +803,20 @@ export function CopyIcon({ className = "h-4 w-4" }: IconProps) {
       <rect x="8.5" y="8.5" width="11" height="11" rx="1.8" stroke="currentColor" strokeWidth="1.8" />
       <path
         d="M15.5 8.5V6.5A1.8 1.8 0 0 0 13.7 4.7H6.3A1.8 1.8 0 0 0 4.5 6.5v7.4a1.8 1.8 0 0 0 1.8 1.8h2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function RedoIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h4"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"

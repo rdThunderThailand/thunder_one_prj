@@ -2,6 +2,7 @@
 
 **Status:** accepted · 2026-08-26 · amended 2026-08-28
 **Extends:** `0045-publication-snapshot-materialization.md` §1 · `0049-composition-layout-with-content.md` §1
+**Amended by:** ADR 0061 §4 — for `source: "playlist"` the BroadcastChannel handoff is the only entry point; §4's "saved work loads by id first" does not apply, because a Playlist row may not exist yet (ADR 0060 §1).
 
 ## Context
 

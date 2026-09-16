@@ -1,4 +1,4 @@
-import type { ChannelCategory, ChannelFilters, ChannelLifecycle } from "./types/index.ts";
+import type { ChannelFilters, ChannelLifecycle, ChannelStatusFilter, ChannelTypeFilter } from "./types/index.ts";
 import { SORT_KEYS, DEFAULT_SORT, type Sort, type SortKey } from "./list-filtering.ts";
 
 export const PER_PAGE_OPTIONS = [10, 25, 50] as const;
@@ -6,7 +6,7 @@ export const PER_PAGE_OPTIONS = [10, 25, 50] as const;
 export type ListState = { filters: ChannelFilters; sort: Sort; page: number; perPage: number };
 
 export const DEFAULT_STATE: ListState = {
-  filters: { search: "", category: "all", lifecycle: "all" },
+  filters: { search: "", type: "all", status: "all", lifecycle: "all" },
   sort: DEFAULT_SORT,
   page: 1,
   perPage: 10,
@@ -16,12 +16,14 @@ function oneOf<T extends string>(values: readonly T[], raw: string | null): T | 
   return values.includes(raw as T) ? (raw as T) : null;
 }
 
-const CATEGORIES: ChannelCategory[] = ["dooh", "in_store", "online", "social"];
+const TYPES: ChannelTypeFilter[] = ["screen", "tv", "kiosk", "multi"];
+const STATUSES: ChannelStatusFilter[] = ["online", "warning", "offline", "no_player"];
 const LIFECYCLES: ChannelLifecycle[] = ["draft", "active", "inactive"];
 
 export function readListState(params: URLSearchParams): ListState {
   const search = params.get("q") ?? "";
-  const category = oneOf<ChannelCategory>(CATEGORIES, params.get("tab")) ?? "all";
+  const type = oneOf<ChannelTypeFilter>(TYPES, params.get("type")) ?? "all";
+  const status = oneOf<ChannelStatusFilter>(STATUSES, params.get("status")) ?? "all";
   const lifecycle = oneOf<ChannelLifecycle>(LIFECYCLES, params.get("lifecycle")) ?? "all";
 
   // Key and dir travel together: an unrecognised (or absent) key resets dir too, so a
@@ -38,7 +40,7 @@ export function readListState(params: URLSearchParams): ListState {
   const perRaw = Number.parseInt(params.get("per") ?? "", 10);
   const perPage = (PER_PAGE_OPTIONS as readonly number[]).includes(perRaw) ? perRaw : 10;
 
-  return { filters: { search, category, lifecycle }, sort, page, perPage };
+  return { filters: { search, type, status, lifecycle }, sort, page, perPage };
 }
 
 /** Only writes keys that differ from the default, so an untouched list page keeps a
@@ -47,7 +49,8 @@ export function writeListState(state: ListState): string {
   const params = new URLSearchParams();
 
   if (state.filters.search !== DEFAULT_STATE.filters.search) params.set("q", state.filters.search);
-  if (state.filters.category !== DEFAULT_STATE.filters.category) params.set("tab", state.filters.category);
+  if (state.filters.type !== DEFAULT_STATE.filters.type) params.set("type", state.filters.type);
+  if (state.filters.status !== DEFAULT_STATE.filters.status) params.set("status", state.filters.status);
   if (state.filters.lifecycle !== DEFAULT_STATE.filters.lifecycle) params.set("lifecycle", state.filters.lifecycle);
 
   // dir is only meaningful alongside its key (see readListState) — write both together

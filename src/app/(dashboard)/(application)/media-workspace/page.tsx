@@ -12,7 +12,7 @@ export default function OverviewPage() {
         subtitle="Real-time status of your media ecosystem"
         actions={
           <>
-            <Button variant="secondary">
+            <Button variant="secondary" disabled title="Coming soon">
               <SparklesIcon className="h-4 w-4" /> AI Assistant
             </Button>
             <Link href="/media-workspace/publications/create">

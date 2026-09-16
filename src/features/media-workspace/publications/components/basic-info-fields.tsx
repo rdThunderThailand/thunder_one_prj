@@ -20,13 +20,3 @@ export function FieldWrapper({ label, required, optional, error, children }: Fie
     </div>
   );
 }
-
-/** Derived metadata (Brand, Format) — the value follows another field, so it is shown
- * rather than picked. Brand lives on the campaign and Format on the publication type. */
-export function DerivedField({ value }: { value: string | undefined }) {
-  return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-3.5 pr-3.5 text-sm text-zinc-600">
-      {value || <span className="text-zinc-400">—</span>}
-    </div>
-  );
-}

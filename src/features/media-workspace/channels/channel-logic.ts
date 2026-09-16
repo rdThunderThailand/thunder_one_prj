@@ -1,118 +1,43 @@
 import type {
-  ChannelDevice,
-  ChannelDeviceCandidate,
-  ChannelDraftInput,
   ChannelFilters,
   ChannelListItem,
-  ChannelOrientation,
-  ChannelTypeOption,
+  ChannelStatusFilter,
+  ChannelTypeFilter,
 } from "./types/index.ts";
 
-export type DeviceCompatibility =
-  | "compatible"
-  | "orientation-mismatch"
-  | "resolution-mismatch"
-  | "profile-unavailable"
-  | "not-checked";
+const OUTPUT_KIND_LABEL: Record<ChannelListItem["output_kind"], string> = {
+  screen: "Screen",
+  tv: "TV",
+  kiosk: "Kiosk",
+};
 
-export function getDeviceCompatibility(
-  device: ChannelDeviceCandidate,
-  expectedOrientation: ChannelOrientation | null,
-  expectedResolution: string | null,
-): DeviceCompatibility {
-  if (!expectedOrientation && !expectedResolution) return "not-checked";
-  if (
-    expectedOrientation &&
-    device.orientation !== null &&
-    device.orientation !== expectedOrientation
-  ) {
-    return "orientation-mismatch";
-  }
-  if (
-    expectedResolution &&
-    device.resolution !== null &&
-    device.resolution !== expectedResolution
-  ) {
-    return "resolution-mismatch";
-  }
-  if (
-    (expectedOrientation && device.orientation === null) ||
-    (expectedResolution && device.resolution === null)
-  ) {
-    return "profile-unavailable";
-  }
-  return "compatible";
+/** ADR 0074 §4: status is the Player's health; a Player-less Draft is "No player", never
+ *  "Degraded" (ADR 0035's aggregate leaves the model with one-Player-per-Channel). */
+export function channelStatus(channel: Pick<ChannelListItem, "health">): ChannelStatusFilter {
+  return channel.health ?? "no_player";
 }
 
-export function shouldConfirmResolutionMismatch(
-  selectedDevices: readonly ChannelDeviceCandidate[],
-  expectedResolution: string | null,
-  confirmedDeviceIds: ReadonlySet<string>,
-): boolean {
-  if (!expectedResolution) return false;
-  const mismatches = selectedDevices.filter(
-    (device) => device.resolution !== null && device.resolution !== expectedResolution,
-  );
-  return (
-    mismatches.length > 0 &&
-    mismatches.every((device) => confirmedDeviceIds.has(device.id))
-  );
+/** "multi" wins over Output Kind — ADR 0074 §3, D1's Type column shows "Multi-screen"
+ *  regardless of which Output Kind a multi-screen Channel has. */
+export function channelTypeKey(
+  channel: Pick<ChannelListItem, "output_kind" | "display_config">,
+): ChannelTypeFilter {
+  return channel.display_config?.mode === "multi" ? "multi" : channel.output_kind;
 }
 
-export function mergeChannelDeviceCandidates(
-  candidates: readonly ChannelDeviceCandidate[],
-  assignedDevices: readonly ChannelDevice[],
-): ChannelDeviceCandidate[] {
-  const assignedById = new Map(assignedDevices.map((device) => [device.id, device]));
-  const candidateIds = new Set(candidates.map((device) => device.id));
-  const merged = candidates.map((candidate) => {
-    const assigned = assignedById.get(candidate.id);
-    if (!assigned) return candidate;
-    return {
-      ...candidate,
-      code: assigned.code ?? candidate.code,
-      orientation: assigned.orientation ?? candidate.orientation,
-      resolution: assigned.resolution ?? candidate.resolution,
-    };
-  });
-  return [
-    ...merged,
-    ...assignedDevices
-      .filter((device) => !candidateIds.has(device.id))
-      .map((device) => ({ ...device })),
-  ];
+export function channelTypeLabel(
+  channel: Pick<ChannelListItem, "output_kind" | "display_config">,
+): string {
+  return channelTypeKey(channel) === "multi" ? "Multi-screen" : OUTPUT_KIND_LABEL[channel.output_kind];
 }
 
-export function mergeChannelTypeOptions(
-  referenceTypes: readonly ChannelTypeOption[],
-  currentType: ChannelTypeOption | null,
-): ChannelTypeOption[] {
-  if (!currentType || referenceTypes.some((option) => option.id === currentType.id)) {
-    return [...referenceTypes];
-  }
-  return [...referenceTypes, { ...currentType, is_active: false }];
-}
-
-/** How much of a Channel is actually up. ADR 0037 replaced the channel-level health value
- * with this count, so "Active" and "2/3 online" are two separate facts on the row. */
-export function countOnlineDevices(devices: readonly Pick<ChannelDevice, "health">[]): number {
-  return devices.filter((device) => device.health === "online").length;
-}
-
+/** D1's tiles: Total / Online / Warning / Offline. A Player-less Draft counts only in `total`
+ *  (ADR 0074 §4 — there is nothing to report health for). */
 export function summarizeChannels(channels: readonly ChannelListItem[]) {
-  const summary = {
-    lifecycle: { total: channels.length, draft: 0, active: 0, inactive: 0 },
-    devices: { total: 0, online: 0 },
-    unassigned: 0,
-  };
-
+  const summary = { total: channels.length, online: 0, warning: 0, offline: 0 };
   for (const channel of channels) {
-    summary.lifecycle[channel.lifecycle] += 1;
-    summary.devices.total += channel.devices.length;
-    summary.devices.online += countOnlineDevices(channel.devices);
-    if (channel.devices.length === 0) summary.unassigned += 1;
+    if (channel.health !== null) summary[channel.health] += 1;
   }
-
   return summary;
 }
 
@@ -123,19 +48,26 @@ export function filterChannels(
   const search = filters.search.trim().toLowerCase();
 
   return channels.filter((channel) => {
+    const status = channelStatus(channel);
     const matchesSearch =
       search.length === 0 ||
       channel.name.toLowerCase().includes(search) ||
       channel.location?.name.toLowerCase().includes(search) ||
-      channel.devices.some(
-        (device) =>
-          device.name.toLowerCase().includes(search) || device.code.toLowerCase().includes(search),
-      );
-    const matchesCategory = filters.category === "all" || channel.category === filters.category;
+      (channel.player !== null &&
+        (channel.player.name.toLowerCase().includes(search) || channel.player.code.toLowerCase().includes(search)
+          || channel.player.health.includes(search) || (search === "attention" && channel.player.health !== "online")));
+    const matchesType = filters.type === "all" || channelTypeKey(channel) === filters.type;
+    const matchesStatus = filters.status === "all" || status === filters.status;
     const matchesLifecycle = filters.lifecycle === "all" || channel.lifecycle === filters.lifecycle;
 
-    return matchesSearch && matchesCategory && matchesLifecycle;
+    return matchesSearch && matchesType && matchesStatus && matchesLifecycle;
   });
+}
+
+export function findChannelAttention(channels: readonly ChannelListItem[]) {
+  return channels.flatMap((channel) =>
+    channel.player !== null && channel.player.health !== "online" ? [{ channel, device: channel.player }] : [])
+    .sort((a, b) => Number(a.device.health === "warning") - Number(b.device.health === "warning"));
 }
 
 export function formatChannelLastSeen(iso: string | null | undefined, now = Date.now()): string {
@@ -146,11 +78,4 @@ export function formatChannelLastSeen(iso: string | null | undefined, now = Date
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `Last seen ${hours}h ago`;
   return `Last seen ${Math.floor(hours / 24)}d ago`;
-}
-
-export function validateChannelDraft(input: ChannelDraftInput): Partial<Record<"name" | "channel_type_id", string>> {
-  const errors: Partial<Record<"name" | "channel_type_id", string>> = {};
-  if (!input.name.trim()) errors.name = "กรุณาระบุชื่อ Channel";
-  if (!input.channel_type_id) errors.channel_type_id = "กรุณาเลือก Channel Type";
-  return errors;
 }

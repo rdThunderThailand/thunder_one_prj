@@ -16,13 +16,10 @@ import { priorities } from "../mock-data";
 import type { BasicInfoState } from "../components/BasicInfoForm";
 
 const defaultBasicInfo: BasicInfoState = {
-  // Campaigns come from the API now, so there is no id to preselect.
-  campaignId: "",
   publicationType: "image",
   name: "",
   description: "",
   priorityId: priorities[1].id,
-  language: "th",
   tags: [],
 };
 
@@ -35,12 +32,18 @@ export interface DraftFields {
    * a null key and mint their own. */
   idempotencyKey: string;
   step: number;
+  /** Furthest step the operator has advanced to via `goNext`. Lets the stepper
+   * keep an already-validated step clickable after they jump back to an earlier
+   * one. Persisted, so a reload on step 4 still shows 1–3 as reachable. */
+  furthestStep: number;
   basicInfo: BasicInfoState;
   assetItems: DraftAssetItem[];
   playlistId: string | null;
   /** Set only for publication_type = 'composition' (ADR 0049 §5). */
   compositionId: string | null;
   channelIds: string[];
+  groupIds: string[];
+  groupNamesById: Record<string, string>;
   scheduleForm: ScheduleForm;
 }
 
@@ -49,17 +52,20 @@ function getDefaultDraft(): DraftFields {
     publicationId: null,
     idempotencyKey: crypto.randomUUID(),
     step: 1,
+    furthestStep: 1,
     basicInfo: defaultBasicInfo,
     assetItems: [],
     playlistId: null,
     compositionId: null,
     channelIds: [],
+    groupIds: [],
+    groupNamesById: {},
     scheduleForm: makeDefaultScheduleForm(),
   };
 }
 
-function serializeDraftFields(f: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "compositionId" | "channelIds" | "scheduleForm">): string {
-  return JSON.stringify({ basicInfo: f.basicInfo, assetItems: f.assetItems, playlistId: f.playlistId, compositionId: f.compositionId, channelIds: f.channelIds, scheduleForm: f.scheduleForm });
+function serializeDraftFields(draft: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "compositionId" | "channelIds" | "groupIds" | "groupNamesById" | "scheduleForm">): string {
+  return JSON.stringify({ basicInfo: draft.basicInfo, assetItems: draft.assetItems, playlistId: draft.playlistId, compositionId: draft.compositionId, channelIds: draft.channelIds, groupIds: draft.groupIds, groupNamesById: draft.groupNamesById, scheduleForm: draft.scheduleForm });
 }
 
 interface PublicationDraftStore extends DraftFields {
@@ -88,9 +94,13 @@ interface PublicationDraftStore extends DraftFields {
   toggleAssetItem: (asset: { id: string; isImage: boolean }) => void;
   /** Only meaningful for images; ignored when the id isn't selected. */
   setAssetDuration: (mediaAssetId: string, seconds: number | null) => void;
+  /** Per-item transition into the next item. Ignored when the id isn't selected. */
+  setAssetTransition: (mediaAssetId: string, transition: "cut" | "fade") => void;
   /** Moves one item by ±1. Out-of-range moves are a no-op. */
   moveAssetItem: (mediaAssetId: string, direction: -1 | 1) => void;
   setChannelIds: (channelIds: string[]) => void;
+  setGroupIds: (groupIds: string[]) => void;
+  setGroupNamesById: (groupNamesById: Record<string, string>) => void;
   toggleChannelId: (id: string) => void;
   setScheduleForm: (scheduleForm: ScheduleForm) => void;
   /** Resets in-memory state and wipes the persisted draft — used by Cancel. */
@@ -112,7 +122,10 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       setCompositionId: (compositionId) => set({ compositionId }),
       resetIdempotencyKey: () => set({ idempotencyKey: crypto.randomUUID() }),
       setStep: (step) => set({ step }),
-      goNext: (maxStep) => set((s) => ({ step: Math.min(s.step + 1, maxStep) })),
+      goNext: (maxStep) => set((s) => {
+        const step = Math.min(s.step + 1, maxStep);
+        return { step, furthestStep: Math.max(s.furthestStep, step) };
+      }),
       goBack: () => set((s) => ({ step: Math.max(s.step - 1, 1) })),
       setBasicInfo: (basicInfo) => set((s) => {
         // ponytail: switching to playlist clears assetItems; switching to image/video clears playlistId
@@ -143,6 +156,9 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       setAssetDuration: (mediaAssetId, seconds) => set((s) => ({
         assetItems: s.assetItems.map(i => i.media_asset_id === mediaAssetId ? { ...i, duration_seconds: seconds } : i)
       })),
+      setAssetTransition: (mediaAssetId, transition) => set((s) => ({
+        assetItems: s.assetItems.map(i => i.media_asset_id === mediaAssetId ? { ...i, transition } : i)
+      })),
       moveAssetItem: (mediaAssetId, direction) => set((s) => {
         const index = s.assetItems.findIndex(i => i.media_asset_id === mediaAssetId);
         if (index === -1) return { assetItems: s.assetItems };
@@ -155,6 +171,8 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
         return { assetItems: nextItems };
       }),
       setChannelIds: (channelIds) => set({ channelIds }),
+      setGroupIds: (groupIds) => set({ groupIds }),
+      setGroupNamesById: (groupNamesById) => set({ groupNamesById }),
       toggleChannelId: (id) => {
         const { channelIds } = get();
         const next = channelIds.includes(id) ? channelIds.filter((c) => c !== id) : [...channelIds, id];
@@ -184,7 +202,14 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // replaced by a single compositionId, per ADR 0049 §5 and ADR 0052 — a Publication now
       // picks one Composition exactly as it picks one Playlist, with no per-Zone binding UI in
       // the wizard. A v8 draft's shape has no compositionId and is dropped, not migrated.
-      name: "thunderone.publications.create-draft.v9",
+      // v10: the ver02 Create re-cut (ADR 0072). `campaignId` and `language` are gone from
+      // basicInfo, and `step` now indexes the five ver02 steps, not the old ones — a v9 draft
+      // would land the operator on the wrong step with a stale shape, so it is dropped.
+      // `furthestStep` (added after v10) is absent from an older v10 draft and shallow-merges
+      // to its default of 1 — the stepper just re-unlocks steps as the operator clicks Next,
+      // no migration needed.
+      // v11: Group target intent is now persisted alongside Channel ids.
+      name: "thunderone.publications.create-draft.v11",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

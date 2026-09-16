@@ -22,10 +22,8 @@ import type { PublicationDriftCheck } from "../publication-drift";
 export type BasicInfoForm = {
   name: string;
   description?: string;
-  campaign_id?: string;
   publication_type?: PublicationType;
   priority?: Priority;
-  language?: string;
   tags?: string[];
   playlist_id?: string;
   composition_id?: string;
@@ -57,6 +55,14 @@ export type PublicationListItem = {
   /** Clock-aware lifecycle for display: adds scheduled | ended. Read this to
    * answer "what phase is this in"; read `status` for "was it activated". */
   effective_status?: string;
+  /** The latest Schedule's window and zone — null when the Publication has no Schedule.
+   * `timezone` is what "today" must be evaluated in (docs/adr/0065 §3). */
+  starts_at?: string | null;
+  ends_at?: string | null;
+  timezone?: string | null;
+  /** Targets split by kind, so a row reads `X Channels · Y Devices` rather than
+   * counting Devices as Channels. Absent only against a backend older than ADR 0065 §3. */
+  target_summary?: { channels: number; devices: number };
   publication_type: PublicationType;
   priority: Priority;
   language?: string;
@@ -114,6 +120,9 @@ export type PublicationDeliveryTarget = {
   last_retried_at?: string | null;
   last_heartbeat_at?: string | null;
   status_level?: "online" | "warning" | "offline";
+  /** Group name(s) this target was reached through, frozen at activation (ADR 0074 §6).
+   *  Absent/empty means the Publication targeted this device directly. */
+  via_groups?: string[];
 };
 
 export type PublicationDetail = {
@@ -159,9 +168,10 @@ export type PublicationDetail = {
 };
 
 export type PublicationTarget = {
-  target_type: "channel" | "device";
+  target_type: "channel" | "device" | "group";
   channel_id?: string | null;
   device_id?: string | null;
+  group_id?: string | null;
   name?: string | null;
 };
 

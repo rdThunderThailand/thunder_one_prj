@@ -1,17 +1,21 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { SearchIcon } from "@/components/ui/icons";
+import { GridIcon, ListIcon, SearchIcon } from "@/components/ui/icons";
 import { COMPOSITION_STATUSES } from "../types";
 import type { ListFilters } from "../list-url-state";
 
 const selectClasses = "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900";
+const viewButtonClasses = (active: boolean) =>
+  `rounded-lg border p-2 ${active ? "border-indigo-200 bg-indigo-50 text-indigo-600" : "border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"}`;
 
-export function CompositionsFilters({ value, referenceResolutions, onChange, onClearAll }: {
+export function CompositionsFilters({ value, referenceResolutions, isGrid, onChange, onClearAll, onViewChange }: {
   value: ListFilters;
   referenceResolutions: string[];
+  isGrid: boolean;
   onChange: (next: ListFilters) => void;
   onClearAll?: () => void;
+  onViewChange: (next: boolean) => void;
 }) {
   return <div className="mb-4 flex flex-wrap items-center gap-3">
     <label className="relative min-w-56 flex-1">
@@ -22,9 +26,8 @@ export function CompositionsFilters({ value, referenceResolutions, onChange, onC
       <option value="all">All Status</option>
       {COMPOSITION_STATUSES.map((status) => <option key={status} value={status}>{status[0].toUpperCase()}{status.slice(1)}</option>)}
     </select>
-    <select aria-label="Geometry" value={value.kind} onChange={(event) => onChange({ ...value, kind: event.target.value as ListFilters["kind"] })} className={selectClasses}>
-      <option value="all">All geometry</option><option value="template">Template-based</option><option value="inline">Custom</option>
-    </select>
+    <button type="button" aria-label="Grid view" aria-pressed={isGrid} onClick={() => onViewChange(true)} className={viewButtonClasses(isGrid)}><GridIcon /></button>
+    <button type="button" aria-label="List view" aria-pressed={!isGrid} onClick={() => onViewChange(false)} className={viewButtonClasses(!isGrid)}><ListIcon /></button>
     <details className="relative">
       <summary className="cursor-pointer list-none rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:text-zinc-200">More filters</summary>
       <div className="absolute right-0 z-20 mt-2 grid w-56 gap-2 rounded-lg border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">

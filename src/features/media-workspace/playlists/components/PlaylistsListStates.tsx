@@ -14,34 +14,6 @@ export function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function TabButton({
-  active,
-  label,
-  count,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  count: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-        active
-          ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-          : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-      }`}
-    >
-      {label} ({count})
-    </button>
-  );
-}
-
 /** Four StatCard-shaped skeleton boxes shown during the initial data load. */
 export function SummarySkeleton() {
   return (
@@ -70,7 +42,9 @@ export function ListSkeleton() {
 const EMPTY_MESSAGES: Record<EmptyCause, string> = {
   "no-playlists": "ยังไม่มี playlist — กด + Create Playlist เพื่อเริ่มต้น",
   "no-match": "ไม่พบ playlist ที่ตรงกับตัวกรองที่เลือก",
-  "no-mine": "คุณยังไม่มี playlist — กด + Create Playlist เพื่อสร้างรายการแรก",
+  "trash-empty": "ถังขยะว่าง",
+  "folder-empty": "โฟลเดอร์นี้ยังไม่มี playlist",
+  "tag-empty": "แท็กนี้ยังไม่มี playlist",
 };
 
 /** Empty-state message, with a Clear Filters button for the no-match cause only. */

@@ -12,19 +12,20 @@ const baseDraft: DraftFields = {
   publicationId: null,
   idempotencyKey: "idem-key-1",
   step: 1,
+  furthestStep: 1,
   basicInfo: {
-    campaignId: "",
     publicationType: "image",
     name: "",
     description: "",
     priorityId: "normal",
-    language: "th",
     tags: [],
   },
   assetItems: [],
   playlistId: null,
   compositionId: null,
   channelIds: [],
+  groupIds: [],
+  groupNamesById: {},
   scheduleForm: makeDefaultScheduleForm(),
 };
 
@@ -37,14 +38,15 @@ assert.equal(hasDraftContent({ ...baseDraft, basicInfo: { ...baseDraft.basicInfo
 // 3. basicInfo.name: "   " (whitespace only) → false
 assert.equal(hasDraftContent({ ...baseDraft, basicInfo: { ...baseDraft.basicInfo, name: "   " } }), false);
 
-// 4. basicInfo.campaignId: "camp-1" → true
-assert.equal(hasDraftContent({ ...baseDraft, basicInfo: { ...baseDraft.basicInfo, campaignId: "camp-1" } }), true);
+// 4. basicInfo.tags: ["promo"] → true
+assert.equal(hasDraftContent({ ...baseDraft, basicInfo: { ...baseDraft.basicInfo, tags: ["promo"] } }), true);
 
 // 5. step: 2 → true
 assert.equal(hasDraftContent({ ...baseDraft, step: 2 }), true);
 
 // 6. channelIds: ["ch-1"] → true
 assert.equal(hasDraftContent({ ...baseDraft, channelIds: ["ch-1"] }), true);
+assert.equal(hasDraftContent({ ...baseDraft, groupIds: ["group-1"] }), true);
 
 // 7. playlistId: "pl-1" → true
 assert.equal(hasDraftContent({ ...baseDraft, playlistId: "pl-1" }), true);

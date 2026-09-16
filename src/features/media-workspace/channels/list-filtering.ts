@@ -1,9 +1,11 @@
-import type { ChannelCategory, ChannelListItem, ChannelLifecycle } from "./types/index.ts";
-import { filterChannels, summarizeChannels } from "./channel-logic.ts";
+import type { ChannelListItem, ChannelStatusFilter } from "./types/index.ts";
+import { channelStatus, filterChannels, summarizeChannels } from "./channel-logic.ts";
 
-export { filterChannels, summarizeChannels };
+export { channelStatus, filterChannels, summarizeChannels };
 
-export const SORT_KEYS = ["name", "category", "type", "location", "devices", "lifecycle", "lastSeen"] as const;
+// D1's "Sort by" dropdown (Name A-Z / Name Z-A / Location / Status), shared with the table's
+// sortable headers.
+export const SORT_KEYS = ["name", "location", "status"] as const;
 export type SortKey = (typeof SORT_KEYS)[number];
 export type SortDir = "asc" | "desc";
 export type Sort = { key: SortKey; dir: SortDir };
@@ -18,34 +20,22 @@ export function paginate<T>(items: T[], page: number, perPage: number): Page<T> 
   return { rows: items.slice(start, start + perPage), page: current, totalPages };
 }
 
-const LIFECYCLE_ORDER: Record<ChannelLifecycle, number> = { active: 0, inactive: 1, draft: 2 };
-function channelLastSeenMs(channel: ChannelListItem): number | null {
-  let max = -1;
-  for (const device of channel.devices) {
-    if (device.last_heartbeat_at) {
-      const ms = Date.parse(device.last_heartbeat_at);
-      if (!Number.isNaN(ms) && ms > max) max = ms;
-    }
-  }
-  return max === -1 ? null : max;
-}
+// Best health first, matching D1 (Online rows read as "good" before Warning/Offline/No player).
+const STATUS_ORDER: Record<ChannelStatusFilter, number> = {
+  online: 0,
+  warning: 1,
+  offline: 2,
+  no_player: 3,
+};
 
 function sortValue(channel: ChannelListItem, key: SortKey): string | number | null {
   switch (key) {
     case "name":
       return channel.name;
-    case "category":
-      return channel.category;
-    case "type":
-      return channel.channel_type?.name ?? null;
     case "location":
       return channel.location?.name ?? null;
-    case "devices":
-      return channel.devices.length;
-    case "lifecycle":
-      return LIFECYCLE_ORDER[channel.lifecycle];
-    case "lastSeen":
-      return channelLastSeenMs(channel);
+    case "status":
+      return STATUS_ORDER[channelStatus(channel)];
   }
 }
 
@@ -65,23 +55,4 @@ export function sortChannels(channels: readonly ChannelListItem[], sort: Sort): 
     if (cmp !== 0) return cmp;
     return a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
   });
-}
-
-export type CategoryGroup = { category: ChannelCategory; rows: ChannelListItem[] };
-
-const CATEGORY_ORDER: ChannelCategory[] = ["dooh", "in_store", "online", "social"];
-
-export function groupByCategory(channels: readonly ChannelListItem[]): CategoryGroup[] {
-  const groups: Record<string, ChannelListItem[]> = {
-    dooh: [],
-    in_store: [],
-    online: [],
-    social: [],
-  };
-
-  for (const channel of channels) {
-    groups[channel.category].push(channel);
-  }
-
-  return CATEGORY_ORDER.filter(cat => groups[cat].length > 0).map(cat => ({ category: cat, rows: groups[cat] }));
 }

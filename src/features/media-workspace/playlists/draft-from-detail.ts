@@ -24,6 +24,12 @@ function detailToDraftItems(items: PlaylistItem[]): DraftItem[] {
       title: item.title,
       durationSeconds: item.duration_seconds ?? null,
       transition: item.transition === "cut" ? ("cut" as const) : ("fade" as const),
+      ...(item.transition_duration_seconds != null
+        ? { transitionDurationSeconds: item.transition_duration_seconds }
+        : {}),
+      ...(item.fit ? { fit: item.fit } : {}),
+      ...(item.background_color ? { backgroundColor: item.background_color } : {}),
+      ...(item.notes ? { notes: item.notes } : {}),
     }));
 }
 

@@ -1,0 +1,235 @@
+"use client";
+
+import Image from "next/image";
+import { Card } from "@/components/ui/Card";
+import { CalendarIcon, MonitorIcon, PlayIcon } from "@/components/ui/icons";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import type { ChannelListItem } from "../../channels/types";
+import type { MediaAsset } from "../types";
+import { priorities, publicationTypes } from "../mock-data";
+import { WEEKDAYS } from "../schedule";
+import { isVideoPreview } from "../preview-kind";
+import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { publicationTypeIcons } from "./publicationTypeIcons";
+
+function formatShortDate(iso: string) {
+  if (!iso) return "";
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** Frame 3 Program Summary rail — the read-only running total of the draft as the
+ *  operator fills the three columns. Adapted from ScheduleStep's former Publication
+ *  Summary card. */
+export function ProgramSummaryRail({
+  channels,
+  assets,
+  title = "Program Summary",
+  subtitle = "สรุปการตั้งค่าโปรแกรม",
+  variant = "default",
+}: {
+  channels: ChannelListItem[];
+  assets: MediaAsset[];
+  title?: string;
+  subtitle?: string;
+  variant?: "default" | "review";
+}) {
+  const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
+  const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
+  const channelIds = usePublicationDraftStore((s) => s.channelIds);
+  const groupIds = usePublicationDraftStore((s) => s.groupIds);
+  const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
+  const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+
+  const isPlaylist = basicInfo.publicationType === "playlist";
+  const { playlist, coverAssetId, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
+
+  const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
+  const previewAssetId = isPlaylist ? coverAssetId : selectedAsset?.id;
+  const previews = usePreviewUrls(previewAssetId && variant === "default" ? [previewAssetId] : []);
+  const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
+  const previewPoster = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
+  const previewAsset = assets.find((a) => a.id === previewAssetId);
+  const isVideo = isVideoPreview(previewAsset, previewUrl);
+
+  const isMismatch =
+    selectedAsset &&
+    ((basicInfo.publicationType === "image" && isVideo) ||
+      (basicInfo.publicationType === "video" && selectedAsset.kind === "image"));
+
+  const type = publicationTypes.find((t) => t.id === basicInfo.publicationType);
+  const priority = priorities.find((p) => p.id === basicInfo.priorityId);
+
+  const selectedChannelNames =
+    channels.length > 0
+      ? channels.filter((c) => channelIds.includes(c.id)).map((c) => c.name)
+      : [];
+  const selectedGroupNames = groupIds.map((id) => groupNamesById[id] ?? id);
+  const selectedNames = [...selectedChannelNames, ...selectedGroupNames];
+  const channelSummary =
+    selectedNames.length > 0
+      ? selectedNames.join(", ")
+      : channelIds.length > 0 || groupIds.length > 0
+      ? [
+          channelIds.length > 0 ? `${channelIds.length} channel(s)` : null,
+          groupIds.length > 0 ? `${groupIds.length} group(s)` : null,
+        ]
+          .filter(Boolean)
+          .join(", ")
+      : "—";
+
+  const contentLabel = isPlaylist
+    ? playlist
+      ? `${playlist.name}${durationLabel ? ` (${durationLabel})` : ""}`
+      : "—"
+    : selectedAsset
+    ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id
+    : "—";
+
+  const startLabel =
+    scheduleForm.schedule_type === "now"
+      ? "Publish now"
+      : `${formatShortDate(scheduleForm.start_date)}${scheduleForm.start_time ? `, ${scheduleForm.start_time}` : ""}`;
+  const endLabel = scheduleForm.end_date
+    ? `${formatShortDate(scheduleForm.end_date)}${scheduleForm.end_time ? `, ${scheduleForm.end_time}` : ""}`
+    : "No end date";
+  const allDay = scheduleForm.daily_start === "00:00" && scheduleForm.daily_end === "23:59";
+  const weekdayLabel =
+    scheduleForm.schedule_type === "recurring" && scheduleForm.days.length > 0
+      ? WEEKDAYS.filter((d) => scheduleForm.days.includes(d.value)).map((d) => d.label).join(", ")
+      : null;
+
+  if (variant === "review") {
+    const scheduleLabel = scheduleForm.schedule_type === "now"
+      ? "Every day · 00:00–23:59"
+      : `${startLabel}${scheduleForm.end_date ? ` – ${endLabel}` : " · No end date"}`;
+    const playbackLabel = isPlaylist
+      ? "ตามการตั้งค่าของ Playlist"
+      : basicInfo.publicationType === "composition"
+        ? "ตามการตั้งค่าของ Layout"
+        : "Play in Order · Repeat All";
+
+    return (
+      <Card className="p-5">
+        <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+        <p className="mt-0.5 text-xs text-zinc-400">{subtitle}</p>
+        <dl className="mt-4 grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
+          <dt className="text-zinc-500">Program Name</dt><dd className="font-medium text-zinc-900">{basicInfo.name || "—"}</dd>
+          <dt className="text-zinc-500">Content Type</dt><dd className="font-medium text-zinc-900">{type?.label ?? "—"}</dd>
+          <dt className="text-zinc-500">Priority</dt><dd className="font-medium text-zinc-900">{priority?.label ?? "—"}</dd>
+        </dl>
+        <div className="mt-4 space-y-3 border-t border-zinc-100 pt-4">
+          <ReviewFact icon={<span className="h-4 w-4">{type && publicationTypeIcons[type.id]}</span>} label="Content" value={contentLabel} />
+          <ReviewFact icon={<MonitorIcon />} label="Where to Play" value={channelSummary} />
+          <ReviewFact icon={<CalendarIcon />} label="When to Play" value={scheduleLabel} />
+          <ReviewFact icon={<PlayIcon />} label="How to Play" value={playbackLabel} />
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="flex flex-col gap-4 p-5">
+      <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+      <p className="-mt-3 text-xs text-zinc-400">{subtitle}</p>
+
+      {previewUrl ? (
+        <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
+          {isVideo ? (
+            <video src={previewUrl} poster={previewPoster} controls preload="metadata" className="h-full w-full object-contain" />
+          ) : (
+            <Image src={previewUrl} alt={contentLabel} fill sizes="(min-width: 1024px) 300px, 100vw" className="object-cover" />
+          )}
+        </div>
+      ) : (
+        <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400">
+          <p className="text-xs">ตัวอย่างคอนเทนต์จะแสดงที่นี่</p>
+        </div>
+      )}
+
+      <Section title="Content">
+        <Row label="Type">
+          <span className="flex items-center gap-1.5">
+            <span className="h-4 w-4 text-zinc-500">{type && publicationTypeIcons[type.id]}</span>
+            {type?.label}
+          </span>
+        </Row>
+        <Row label="Name">{basicInfo.name || "—"}</Row>
+        <Row label="Content">{contentLabel}</Row>
+        {isMismatch && (
+          <p className="text-right text-[11px] text-amber-600">
+            Selected asset is a {selectedAsset?.kind} while publication type is {basicInfo.publicationType}.
+          </p>
+        )}
+      </Section>
+
+      <Section title="Where to Play">
+        <Row label="Channels">{channelSummary}</Row>
+      </Section>
+
+      <Section title="When to Play">
+        <Row label="Start">{startLabel}</Row>
+        <Row label="End">{endLabel}</Row>
+        {weekdayLabel && <Row label="Days">{weekdayLabel}</Row>}
+        {scheduleForm.schedule_type === "recurring" && (
+          <Row label="Daily">{allDay ? "All day" : `${scheduleForm.daily_start} – ${scheduleForm.daily_end}`}</Row>
+        )}
+        <Row label="Timezone">{scheduleForm.timezone}</Row>
+      </Section>
+
+      <Section title="How to Play">
+        {isPlaylist || basicInfo.publicationType === "composition" ? (
+          <Row label="Playback">ตามการตั้งค่าของ {isPlaylist ? "Playlist" : "Layout"}</Row>
+        ) : (
+          <>
+            <Row label="Play Order">Play in Order</Row>
+            <Row label="Repeat">Repeat All</Row>
+          </>
+        )}
+      </Section>
+
+      <Section title="Other">
+        <Row label="Priority">
+          <span className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${priority?.color}`} />
+            {priority?.label}
+          </span>
+        </Row>
+        <Row label="Tags">{basicInfo.tags.join(", ") || "—"}</Row>
+      </Section>
+    </Card>
+  );
+}
+
+function ReviewFact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[2rem_5.75rem_minmax(0,1fr)] items-start gap-2 text-xs">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">{icon}</span>
+      <span className="pt-2 font-medium text-zinc-600">{label}</span>
+      <span className="pt-2 text-right font-medium leading-4 text-zinc-900">{value}</span>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border-t border-zinc-100 pt-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">{title}</p>
+      <dl className="flex flex-col gap-2 text-sm">{children}</dl>
+    </div>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <dt className="shrink-0 text-zinc-500">{label}</dt>
+      <dd className="text-right font-medium text-zinc-900">{children}</dd>
+    </div>
+  );
+}

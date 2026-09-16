@@ -7,7 +7,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { parseAspectRatio, parseResolution, referencePixels, roundPercent, validateZones } from "../geometry";
+import { ExpandIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
+import { fitCanvasSize, parseAspectRatio, parseResolution, referencePixels, roundPercent, validateZones } from "../geometry";
 import type { LayoutZone } from "../types";
 
 // Zone fill cycles by position — role is gone (ADR 0049 §2), so colour is purely for telling
@@ -69,26 +70,39 @@ export function LayoutCanvas({
   referenceResolution = null,
   zonePreviews = {},
   selectedIndex,
+  lockedZoneIds = new Set(),
+  hiddenZoneIds = new Set(),
   onSelectIndex,
+  onChangeStart,
   onChange,
+  fillAvailable = false,
 }: {
   zones: LayoutZone[];
   background: string;
   aspectRatio: string;
   referenceResolution?: string | null;
-  zonePreviews?: Record<string, { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string }>;
+  zonePreviews?: Record<string, { url: string; thumbnailUrl?: string; kind?: string; mimeType?: string; mediaFit?: "fit" | "fill" | "stretch" }>;
   selectedIndex: number | null;
+  lockedZoneIds?: ReadonlySet<string>;
+  hiddenZoneIds?: ReadonlySet<string>;
   onSelectIndex: (index: number | null) => void;
+  onChangeStart?: () => boolean;
   onChange: (zones: LayoutZone[]) => void;
+  /** Composition editor mode: fill its bounded workspace and expose native zoom controls. */
+  fillAvailable?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const [snap, setSnap] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   // 70vh is a page-layout guess that's wrong once real content (page header, template
   // rail, other cards) sits above the canvas — measure the actual remaining viewport height
   // from where the canvas starts, so a portrait resolution never needs a page scroll to see
   // the whole frame (Ticket 19 item 4, found wrong in browser verification).
   const [maxHeightPx, setMaxHeightPx] = useState<number | null>(null);
   useEffect(() => {
+    if (fillAvailable) return;
     const recompute = () => {
       const top = containerRef.current?.getBoundingClientRect().top ?? 0;
       setMaxHeightPx(Math.max(200, window.innerHeight - top - 24));
@@ -96,7 +110,16 @@ export function LayoutCanvas({
     recompute();
     window.addEventListener("resize", recompute);
     return () => window.removeEventListener("resize", recompute);
-  }, []);
+  }, [fillAvailable]);
+  useEffect(() => {
+    if (!fillAvailable || !viewportRef.current) return;
+    const viewport = viewportRef.current;
+    const recompute = () => setViewportSize({ width: viewport.clientWidth, height: viewport.clientHeight });
+    recompute();
+    const observer = new ResizeObserver(recompute);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [fillAvailable]);
   const drag = useRef<{
     index: number;
     handle: Handle;
@@ -108,6 +131,9 @@ export function LayoutCanvas({
   } | null>(null);
 
   const [ratioW, ratioH] = parseAspectRatio(aspectRatio) ?? [16, 9];
+  const fitted = viewportSize.width && viewportSize.height
+    ? fitCanvasSize(viewportSize.width, viewportSize.height, ratioW, ratioH)
+    : null;
   const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   const errors = validateZones(zones);
   const overlapping = new Set(
@@ -117,6 +143,8 @@ export function LayoutCanvas({
   const startDrag = (index: number, handle: Handle) => (e: React.PointerEvent) => {
     e.stopPropagation();
     onSelectIndex(index);
+    if (zones[index]?.id && lockedZoneIds.has(zones[index].id)) return;
+    if (onChangeStart && !onChangeStart()) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     drag.current = {
@@ -149,33 +177,33 @@ export function LayoutCanvas({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${fillAvailable ? "min-h-0 flex-1" : ""}`}>
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Canvas</p>
-        <button
-          type="button"
-          onClick={() => setSnap((v) => !v)}
-          aria-pressed={snap}
-          className={`rounded-lg border px-3 py-1 text-xs font-medium ${
-            snap
-              ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
-              : "border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
-          }`}
-        >
-          Snap to grid
-        </button>
+        <div className="flex items-center gap-1.5">
+          {fillAvailable && <>
+            <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= 0.25} onClick={() => setZoom((value) => Math.max(0.25, value - 0.25))} className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 disabled:opacity-40 dark:border-zinc-700"><MinusIcon /></button>
+            <span className="min-w-12 text-center text-xs text-zinc-500">{Math.round(zoom * 100)}%</span>
+            <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 disabled:opacity-40 dark:border-zinc-700"><PlusIcon /></button>
+            <button type="button" aria-label="Fit canvas" title="Fit canvas" onClick={() => setZoom(1)} className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 dark:border-zinc-700"><ExpandIcon /></button>
+          </>}
+          <button type="button" onClick={() => setSnap((v) => !v)} aria-pressed={snap} className={`rounded-lg border px-3 py-1 text-xs font-medium ${snap ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"}`}>Snap to grid</button>
+        </div>
       </div>
 
+      <div ref={viewportRef} className={fillAvailable ? "flex min-h-0 flex-1 overflow-auto rounded-xl bg-zinc-50 dark:bg-zinc-950/40" : ""}>
       <div
         ref={containerRef}
         onClick={() => onSelectIndex(null)}
-        className="relative mx-auto w-full select-none overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
+        className="relative m-auto w-full shrink-0 select-none overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
         style={{
           aspectRatio: `${ratioW} / ${ratioH}`,
           // Bounded on both axes: capped at 42rem wide (the old max-w-2xl) OR whatever
           // width keeps the height under the measured remaining viewport space, whichever
           // is smaller — a portrait ratio like 1080x1920 no longer scrolls the page.
-          maxWidth: `min(42rem, calc(${maxHeightPx ?? 500}px * ${ratioW} / ${ratioH}))`,
+          ...(fillAvailable && fitted
+            ? { width: fitted.width * zoom, height: fitted.height * zoom, maxWidth: "none" }
+            : { maxWidth: `min(42rem, calc(${maxHeightPx ?? 500}px * ${ratioW} / ${ratioH}))` }),
           backgroundColor: background,
           backgroundImage: snap
             ? "linear-gradient(to right, rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.15) 1px, transparent 1px)"
@@ -183,7 +211,7 @@ export function LayoutCanvas({
           backgroundSize: snap ? "10% 10%" : undefined,
         }}
       >
-        {zones.map((zone, index) => (
+        {zones.map((zone, index) => hiddenZoneIds.has(zone.id ?? "") ? null : (
           <div
             key={zone.id ?? index}
             onPointerDown={startDrag(index, "move")}
@@ -191,7 +219,7 @@ export function LayoutCanvas({
               e.stopPropagation();
               onSelectIndex(index);
             }}
-            className={`absolute cursor-move border-2 ${ZONE_FILL[index % ZONE_FILL.length]} ${
+            className={`absolute border-2 ${zone.id && lockedZoneIds.has(zone.id) ? "cursor-default" : "cursor-move"} ${ZONE_FILL[index % ZONE_FILL.length]} ${
               overlapping.has(index) ? "outline outline-2 outline-red-500" : ""
             } ${selectedIndex === index ? "ring-2 ring-offset-1 ring-indigo-500" : ""}`}
             style={{
@@ -207,16 +235,17 @@ export function LayoutCanvas({
                 thumbnailUrl={zonePreviews[zone.id].thumbnailUrl}
                 kind={zonePreviews[zone.id].kind}
                 mimeType={zonePreviews[zone.id].mimeType}
+                fit={zonePreviews[zone.id].mediaFit}
                 alt={`${zone.name} content`}
                 className="pointer-events-none absolute inset-0 h-full w-full rounded-none"
               />
             )}
             <span className="absolute left-1 top-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] text-white">
-              {zone.name} · {zone.width.toFixed(3)}×{zone.height.toFixed(3)}%
-              {resolution &&
-                ` — ${referencePixels(zone.width, resolution[0])}×${referencePixels(zone.height, resolution[1])}px`}
+              {zone.name} · {resolution
+                ? `${referencePixels(zone.width, resolution[0])}×${referencePixels(zone.height, resolution[1])}px`
+                : `${zone.width.toFixed(3)}×${zone.height.toFixed(3)}%`}
             </span>
-            {selectedIndex === index &&
+            {selectedIndex === index && !(zone.id && lockedZoneIds.has(zone.id)) &&
               RESIZE_HANDLES.map((h) => (
                 <div
                   key={h.handle}
@@ -226,6 +255,7 @@ export function LayoutCanvas({
               ))}
           </div>
         ))}
+      </div>
       </div>
 
       {overlapping.size > 0 && (

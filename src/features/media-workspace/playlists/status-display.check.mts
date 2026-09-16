@@ -18,7 +18,12 @@ assert.equal(playlistDisplayStatus({ status: "inactive", publication_count: 3 })
 assert.equal(playlistDisplayStatus({ status: "active" }), "active");
 assert.equal(playlistDisplayStatus({ status: "inactive" }), "inactive");
 
-// The count survives; the raw RPC wording does not.
+// #40 wording: the publication names survive, the prefix does not.
+assert.equal(
+  describeDeleteError("Invalid input: playlist is used by an active or draft publication: Summer Sale, Lobby Loop"),
+  "ย้ายลงถังไม่ได้ — playlist นี้ถูกใช้อยู่ใน publication ที่ active หรือ draft: Summer Sale, Lobby Loop กรุณายกเลิก publication เหล่านั้นก่อน"
+);
+// Legacy count wording still handled until every environment is on the #40 backend.
 assert.equal(
   describeDeleteError("Invalid input: playlist is used by 3 publication(s)"),
   "ลบไม่ได้ — playlist นี้ถูกใช้อยู่ใน 3 publication กรุณาลบหรือยกเลิก publication เหล่านั้นก่อน"

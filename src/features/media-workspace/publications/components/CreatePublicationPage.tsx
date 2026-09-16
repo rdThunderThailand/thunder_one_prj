@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -20,25 +20,37 @@ import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending } from "../next-transition";
+import { publicationSeedFromParams, resolveSeed, type SeedChoice } from "../seed-resolver";
+import { DEFAULT_IMAGE_DURATION_SECONDS } from "../draft-mapping";
 import { type WizardStepId } from "../step-validation";
-import { BasicInfoForm } from "./BasicInfoForm";
-import { ChannelsStep } from "./ChannelsStep";
 import { ContentStep } from "./ContentStep";
-import { PreviewPanel } from "./PreviewPanel";
+import { PrepareContentStep } from "./PrepareContentStep";
+import { ProgramStep } from "./ProgramStep";
 import { PublicationStepper } from "./PublicationStepper";
-import { ReviewPublishStep } from "./ReviewPublishStep";
-import { ScheduleStep } from "./ScheduleStep";
+import { PublishStep } from "./PublishStep";
+import { ReviewStep } from "./ReviewStep";
 
+// The five ver02 Create steps (ADR 0072 §2):
+//   1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish
 const MAX_BUILT_STEP = 5;
 
 export function CreatePublicationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const idParam = searchParams.get("id");
+  const seed = useMemo(
+    () => publicationSeedFromParams({
+      assetId: searchParams.get("assetId"),
+      playlistId: searchParams.get("playlistId"),
+      compositionId: searchParams.get("compositionId"),
+    }),
+    [searchParams],
+  );
 
   const hasHydrated = useHasHydratedDraft();
   const isDirty = useIsDraftDirty();
   const step = usePublicationDraftStore((s) => s.step);
+  const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
   const goBack = usePublicationDraftStore((s) => s.goBack);
@@ -48,6 +60,8 @@ export function CreatePublicationPage() {
   const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
   const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
   const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
+  const setGroupIds = usePublicationDraftStore((s) => s.setGroupIds);
+  const setGroupNamesById = usePublicationDraftStore((s) => s.setGroupNamesById);
   const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
   const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
@@ -98,6 +112,8 @@ export function CreatePublicationPage() {
       setBasicInfo(draft.basicInfo);
       setAssetItems(draft.assetItems);
       setChannelIds(draft.channelIds);
+      setGroupIds(draft.groupIds);
+      setGroupNamesById(draft.groupNamesById);
       setScheduleForm(draft.scheduleForm);
       usePublicationDraftStore.getState().setCompositionId(draft.compositionId);
       setPublicationId(detail.id);
@@ -105,7 +121,7 @@ export function CreatePublicationPage() {
       usePublicationDraftStore.getState().markSaved();
       usePublicationDraftStore.getState().setExplicitlySaved(true);
     },
-    [setBasicInfo, setAssetItems, setChannelIds, setScheduleForm, setPublicationId]
+    [setBasicInfo, setAssetItems, setChannelIds, setGroupIds, setGroupNamesById, setScheduleForm, setPublicationId]
   );
 
   useEffect(() => {
@@ -140,6 +156,9 @@ export function CreatePublicationPage() {
     };
   }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
 
+  const [seedChoice, setSeedChoice] = useState<SeedChoice>(null);
+  const seedResolvedRef = useRef(false);
+
   const [retrying, setRetrying] = useState(false);
 
   const handleRetryResume = async () => {
@@ -159,9 +178,11 @@ export function CreatePublicationPage() {
   const {
     channels,
     channelsError,
-    campaigns,
     tags,
     assets,
+    reloadAssets,
+    assetsLoading,
+    assetsError,
     loadingRefs,
     saving,
     error,
@@ -172,7 +193,6 @@ export function CreatePublicationPage() {
     conflictsError,
     revisionConflict,
     setRevisionConflict,
-    saveDraft,
     publishNow,
     canPublish,
     eligibilityChecks,
@@ -182,6 +202,49 @@ export function CreatePublicationPage() {
     savingNext,
     setSavingNext,
   } = usePublishDraft();
+
+  // Editor Publish actions hand one saved content id to the wizard. Hold it pending until the
+  // resume choice is made so Continue never mutates an existing draft (ADR 0072 §3).
+  useEffect(() => {
+    if (!hasHydrated || seedResolvedRef.current) return;
+    if (seed?.kind === "asset" && assetsLoading) return;
+
+    const resolution = resolveSeed({
+      seedPresent: Boolean(seed),
+      isEditMode: Boolean(idParam),
+      draftHasContent: hadContentAtHydration,
+      choice: seedChoice,
+    });
+    if (resolution === "wait") return;
+
+    const selectedAsset = seed?.kind === "asset" ? assets.find((asset) => asset.id === seed.id) : null;
+    if (resolution === "apply" && seed?.kind === "asset" && !selectedAsset) return;
+
+    seedResolvedRef.current = true;
+    if (resolution === "apply" && seed) {
+      const store = usePublicationDraftStore.getState();
+      const publicationType =
+        seed.kind === "composition"
+          ? "composition"
+          : seed.kind === "playlist"
+            ? "playlist"
+            : selectedAsset?.kind === "video"
+              ? "video"
+              : "image";
+      setBasicInfo({ ...store.basicInfo, publicationType });
+      if (seed.kind === "composition") store.setCompositionId(seed.id);
+      if (seed.kind === "playlist") store.setPlaylistId(seed.id);
+      if (seed.kind === "asset") {
+        setAssetItems([{
+          media_asset_id: seed.id,
+          duration_seconds: publicationType === "image" ? DEFAULT_IMAGE_DURATION_SECONDS : null,
+          transition: "cut",
+        }]);
+      }
+      setStep(2);
+    }
+    if (seed) router.replace("/media-workspace/publications/create");
+  }, [assets, assetsLoading, hadContentAtHydration, hasHydrated, idParam, router, seed, seedChoice, setAssetItems, setBasicInfo, setStep]);
 
   const [conflictBusy, setConflictBusy] = useState(false);
 
@@ -251,15 +314,13 @@ export function CreatePublicationPage() {
         setSavingNext(true);
         setSaveStatus("saving");
         return persistDraft(false);
-      },
-      // Empty means the campaign list has not loaded — skip the availability check
-      // rather than flag a valid campaignId as gone.
-      campaigns.length > 0 ? { campaignIds: campaigns.map((c) => c.id) } : undefined
+      }
     );
 
     if (outcome.kind === "invalid") {
       setValidationErrors(outcome.errors);
-      if (step === 1 || step === 4) setShowFieldErrors(true);
+      // Prepare Content (name) and Program (schedule) show their errors inline.
+      if (step === 2 || step === 3) setShowFieldErrors(true);
       return;
     }
     setSavingNext(false);
@@ -331,49 +392,22 @@ export function CreatePublicationPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-6">
       <PageHeader
         title="Create Publication"
         subtitle="สร้างและเผยแพร่สื่อไปยังทุกช่องทางของคุณ"
-        actions={
-          isLastStep ? (
-            <>
-              <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>
-                Cancel
-              </Button>
-              <Button variant="secondary" onClick={goBack}>
-                <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
-              </Button>
-              <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish}>
-                <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>
-                Cancel
-              </Button>
-              <Button variant="secondary" onClick={saveDraft} disabled={saving}>
-                {saving ? "Saving…" : "Save as Draft"}
-              </Button>
-              <Button variant="primary" onClick={handleNext} disabled={savingNext || step >= MAX_BUILT_STEP}>
-                {nextButtonContent}
-              </Button>
-            </>
-          )
-        }
       />
 
       <Modal
         open={showResumePrompt}
-        onClose={() => setDismissedResume(true)}
+        onClose={() => { setSeedChoice("continue"); setDismissedResume(true); }}
         title="มี draft ที่ทำค้างไว้"
         footer={
           <>
-            <Button variant="ghost" onClick={() => { usePublicationDraftStore.getState().cancelDraft(); setDismissedResume(true); }}>
+            <Button variant="ghost" onClick={() => { usePublicationDraftStore.getState().cancelDraft(); setSeedChoice("fresh"); setDismissedResume(true); }}>
               เริ่มใหม่
             </Button>
-            <Button variant="primary" onClick={() => setDismissedResume(true)}>
+            <Button variant="primary" onClick={() => { setSeedChoice("continue"); setDismissedResume(true); }}>
               ทำต่อ
             </Button>
           </>
@@ -384,10 +418,10 @@ export function CreatePublicationPage() {
       </Modal>
 
       <Modal
-        open={(step === 2 || step === 3) && validationErrors.length > 0}
+        open={(step === 1 || step === 3) && validationErrors.length > 0}
         onClose={() => setValidationErrors([])}
-        title={step === 2 ? "ยังไม่ได้เลือกสื่อ" : "ยังไม่ได้เลือกช่องทาง"}
-        footer={<Button variant="primary" onClick={() => setValidationErrors([])}>{step === 2 ? "เลือกสื่อ" : "เลือกช่องทาง"}</Button>}
+        title={step === 1 ? "ยังไม่ได้เลือกคอนเทนต์" : "ข้อมูล Program ยังไม่ครบ"}
+        footer={<Button variant="primary" onClick={() => setValidationErrors([])}>ตกลง</Button>}
       >
         {validationErrors.map((err, idx) => (<p key={idx}>{err}</p>))}
       </Modal>
@@ -436,44 +470,42 @@ export function CreatePublicationPage() {
       )}
 
       <Card className="p-5">
-        <PublicationStepper currentStep={step} />
+        <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={setStep} />
       </Card>
 
+      {/* Step 1 — Choose Content */}
       {step === 1 && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <BasicInfoForm campaigns={campaigns} workspaceTags={tags} showErrors={showFieldErrors} />
-          </div>
-          <div>
-            <PreviewPanel campaigns={campaigns} assets={assets} />
-          </div>
-        </div>
+        <ContentStep
+          assets={assets}
+          tags={tags}
+          reloadAssets={reloadAssets}
+          assetsLoading={assetsLoading}
+          assetsError={assetsError}
+          onContentSelected={() => goNextAction(MAX_BUILT_STEP)}
+        />
       )}
 
-      {step === 2 && <ContentStep campaigns={campaigns} />}
+      {/* Step 2 — Prepare Content */}
+      {step === 2 && <PrepareContentStep assets={assets} tags={tags} showFieldErrors={showFieldErrors} />}
+
+      {/* Step 3 — Program: Where / When / How + Additional Settings (ver02 Frame 3, #84) */}
       {step === 3 && (
-        <ChannelsStep
+        <ProgramStep
           channels={channels}
           loadingChannels={loadingRefs}
           channelsError={channelsError}
           aspectRatio={layoutAspectRatio}
           fitCheckFailed={fitCheckFailed}
-        />
-      )}
-      {step === 4 && (
-        <ScheduleStep
-          campaigns={campaigns}
-          channels={channels}
           assets={assets}
           conflicts={conflicts}
           checkingConflicts={checkingConflicts}
           conflictsError={conflictsError}
-          showErrors={showFieldErrors}
+          showFieldErrors={showFieldErrors}
         />
       )}
-      {step === 5 && (
-        <ReviewPublishStep
-          campaigns={campaigns}
+
+      {step === 4 && (
+        <ReviewStep
           channels={channels}
           assets={assets}
           conflicts={conflicts}
@@ -482,17 +514,20 @@ export function CreatePublicationPage() {
           eligibilityChecks={eligibilityChecks}
           aspectRatio={layoutAspectRatio}
           fitCheckFailed={fitCheckFailed}
+          onEditProgram={() => setStep(3)}
         />
       )}
 
-      <Card className="flex flex-col gap-3 p-4">
+      {step === 5 && <PublishStep channels={channels} assets={assets} canPublish={canPublish} />}
+
+      <Card className="mt-auto flex flex-col gap-3 p-4">
         <div className="flex items-center gap-4">
           {step > 1 ? (
             <Button variant="secondary" onClick={goBack}>
               <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
             </Button>
           ) : (
-            <span />
+            <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>Cancel</Button>
           )}
           <div className="flex flex-1 items-center gap-3">
             <span className="whitespace-nowrap text-xs text-zinc-500">

@@ -2,18 +2,18 @@ import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 
 /** Did the operator actually put anything into this draft? */
 export function hasDraftContent(
-  d: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "channelIds" | "step">
+  d: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "channelIds" | "groupIds" | "step">
 ): boolean {
   // Deliberately blind to scheduleForm: makeDefaultScheduleForm() embeds the
   // current date/time, so it would make every draft look non-empty (docs/adr/0014).
   return Boolean(
     d.basicInfo.name.trim() ||
-      d.basicInfo.campaignId ||
       d.basicInfo.description.trim() ||
       d.basicInfo.tags.length ||
       d.assetItems.length ||
       d.playlistId ||
       d.channelIds.length ||
+      d.groupIds.length ||
       d.step > 1
   );
 }

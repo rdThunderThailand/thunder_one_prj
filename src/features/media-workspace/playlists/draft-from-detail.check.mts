@@ -15,11 +15,20 @@ const detail: PlaylistDetail = {
   revision: 4,
   items: [
     { media_asset_id: "a-2", position: 1, transition: "cut" },
-    { media_asset_id: "a-1", position: 0, transition: "fade", duration_seconds: 5 },
+    {
+      media_asset_id: "a-1",
+      position: 0,
+      transition: "fade",
+      duration_seconds: 5,
+      transition_duration_seconds: 2,
+      fit: "fill",
+      background_color: "#112233",
+      notes: "keep tight",
+    },
   ],
   metadata: {
     v: 1,
-    info: { description: "Lobby screen", campaign_id: "c-1", tags: ["t-1"] },
+    info: { description: "Lobby screen", campaign_id: "c-1" },
     playback: { play_mode: "shuffle", audio_enabled: false },
   },
 };
@@ -37,10 +46,17 @@ assert.deepEqual(
 );
 assert.equal(fields.items[0].durationSeconds, 5);
 
+// #37 per-item overrides carry through; unset on the second item stays undefined (inherit).
+assert.equal(fields.items[0].transitionDurationSeconds, 2);
+assert.equal(fields.items[0].fit, "fill");
+assert.equal(fields.items[0].backgroundColor, "#112233");
+assert.equal(fields.items[0].notes, "keep tight");
+assert.equal(fields.items[1].transitionDurationSeconds, undefined);
+assert.equal(fields.items[1].fit, undefined);
+
 // The bug: metadata must decode into both halves, not be dropped.
 assert.equal(fields.info.description, "Lobby screen");
 assert.equal(fields.info.campaignId, "c-1");
-assert.deepEqual(fields.info.tags, ["t-1"]);
 assert.equal(fields.playback.playMode, "shuffle");
 assert.equal(fields.playback.audioEnabled, false);
 

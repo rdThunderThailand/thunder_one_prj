@@ -15,16 +15,21 @@ const modifiedState = { ...DEFAULT_STATE, page: 2, filters: { ...DEFAULT_STATE.f
 assert.strictEqual(writeListState(modifiedState), "q=foo&page=2");
 assert.strictEqual(roundtrip("q=foo&page=2"), "q=foo&page=2");
 
-// writes category to tab
-const tabState = { ...DEFAULT_STATE, filters: { ...DEFAULT_STATE.filters, category: "dooh" as const } };
-assert.strictEqual(writeListState(tabState), "tab=dooh");
-assert.strictEqual(roundtrip("tab=dooh"), "tab=dooh");
+// writes Output Kind / Multi-screen filter to `type` (ADR 0074 §2 replaces Category here)
+const typeState = { ...DEFAULT_STATE, filters: { ...DEFAULT_STATE.filters, type: "multi" as const } };
+assert.strictEqual(writeListState(typeState), "type=multi");
+assert.strictEqual(roundtrip("type=multi"), "type=multi");
+
+// writes Player-health filter to `status`
+const statusState = { ...DEFAULT_STATE, filters: { ...DEFAULT_STATE.filters, status: "no_player" as const } };
+assert.strictEqual(writeListState(statusState), "status=no_player");
+assert.strictEqual(roundtrip("status=no_player"), "status=no_player");
 
 // bogus sort key drops both sort and dir
 assert.strictEqual(roundtrip("sort=bogus&dir=desc"), "");
 
 // non-default sort keeps both key and dir
-assert.strictEqual(roundtrip("sort=devices&dir=desc"), "sort=devices&dir=desc");
+assert.strictEqual(roundtrip("sort=location&dir=desc"), "sort=location&dir=desc");
 
 // stray dir is dropped without sort
 assert.strictEqual(roundtrip("dir=desc"), "");
@@ -38,7 +43,8 @@ assert.strictEqual(roundtrip("per=25"), "per=25");
 assert.strictEqual(roundtrip("page=0"), "");
 assert.strictEqual(roundtrip("page=abc"), "");
 
-// ADR 0037 removed the health filter. A bookmarked URL still carrying it must not resurrect it.
+// An unrecognised query key (e.g. an old bookmark, or the wrong param name) is ignored, not
+// misread — the Player-health filter's key is `status`, not `health`.
 assert.deepEqual(readListState(new URLSearchParams("health=degraded")).filters, DEFAULT_STATE.filters);
 assert.equal(writeListState({ ...DEFAULT_STATE, filters: { ...DEFAULT_STATE.filters, lifecycle: "draft" } }), "lifecycle=draft");
 

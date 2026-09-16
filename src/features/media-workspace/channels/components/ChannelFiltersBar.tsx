@@ -2,18 +2,37 @@
 
 import { Button } from "@/components/ui/Button";
 import { SearchIcon } from "@/components/ui/icons";
+import type { Sort, SortKey } from "../list-filtering";
 import type { ChannelFilters } from "../types";
 
 const selectClasses =
   "h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200";
 
+// D1's "Sort by" dropdown. Name offers both directions; Location/Status sort ascending only —
+// there is no mockup evidence for a Z-A reading of either.
+const SORT_OPTIONS: { value: string; label: string; key: SortKey; dir: "asc" | "desc" }[] = [
+  { value: "name:asc", label: "Name (A–Z)", key: "name", dir: "asc" },
+  { value: "name:desc", label: "Name (Z–A)", key: "name", dir: "desc" },
+  { value: "location:asc", label: "Location", key: "location", dir: "asc" },
+  { value: "status:asc", label: "Status", key: "status", dir: "asc" },
+];
+
+function sortToValue(sort: Sort): string {
+  const match = SORT_OPTIONS.find((option) => option.key === sort.key && option.dir === sort.dir);
+  return match?.value ?? SORT_OPTIONS[0]!.value;
+}
+
 export function ChannelFiltersBar({
   value,
+  sort,
   onChange,
+  onSortChange,
   onClearAll,
 }: {
   value: ChannelFilters;
+  sort: Sort;
   onChange: (next: ChannelFilters) => void;
+  onSortChange: (sort: Sort) => void;
   /** Omitted when the whole list state is already at its default, which is also exactly
    *  when the URL carries no query string — so the button appears only when it would do
    *  something. Resets sort and paging too, not just the filters shown here. */
@@ -34,16 +53,29 @@ export function ChannelFiltersBar({
       </label>
 
       <select
-        aria-label="Category"
-        value={value.category}
-        onChange={(event) =>
-          onChange({ ...value, category: event.target.value as ChannelFilters["category"] })
-        }
+        aria-label="Type"
+        value={value.type}
+        onChange={(event) => onChange({ ...value, type: event.target.value as ChannelFilters["type"] })}
         className={selectClasses}
       >
-        <option value="all">All categories</option>
-        <option value="dooh">DOOH</option>
-        <option value="in_store">In-store</option>
+        <option value="all">All types</option>
+        <option value="screen">Screen</option>
+        <option value="tv">TV</option>
+        <option value="kiosk">Kiosk</option>
+        <option value="multi">Multi-screen</option>
+      </select>
+
+      <select
+        aria-label="Status"
+        value={value.status}
+        onChange={(event) => onChange({ ...value, status: event.target.value as ChannelFilters["status"] })}
+        className={selectClasses}
+      >
+        <option value="all">All statuses</option>
+        <option value="online">Online</option>
+        <option value="warning">Warning</option>
+        <option value="offline">Offline</option>
+        <option value="no_player">No player</option>
       </select>
 
       <select
@@ -58,6 +90,22 @@ export function ChannelFiltersBar({
         <option value="draft">Draft</option>
         <option value="active">Active</option>
         <option value="inactive">Inactive</option>
+      </select>
+
+      <select
+        aria-label="Sort by"
+        value={sortToValue(sort)}
+        onChange={(event) => {
+          const option = SORT_OPTIONS.find((candidate) => candidate.value === event.target.value);
+          if (option) onSortChange({ key: option.key, dir: option.dir });
+        }}
+        className={selectClasses}
+      >
+        {SORT_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            Sort by: {option.label}
+          </option>
+        ))}
       </select>
 
       {onClearAll ? (
