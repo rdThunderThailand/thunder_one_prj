@@ -67,7 +67,9 @@ export function Step1ChannelInfo({
             onChange={(event) => onChange({ ...draft, name: event.target.value })}
           />
           <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Location <span className="font-normal text-zinc-400">(optional)</span>
+            <span>
+              Location <span className="font-normal text-zinc-400">(optional)</span>
+            </span>
             <select
               value={draft.locationId ?? ""}
               onChange={(event) => onChange({ ...draft, locationId: event.target.value || null })}

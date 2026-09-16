@@ -32,7 +32,7 @@ unless told · SESSIONLOG per session · Design binding in plan §0 wins on layo
 | 10 | [#108](https://github.com/rdThunderThailand/thunder_one_prj/issues/108) | [FE — Channel Groups pages](10-fe-channel-groups-pages.md) | thunder_one_prj | 03, 07 | mid / medium | **shipped (dev)** |
 | 11 | [#109](https://github.com/rdThunderThailand/thunder_one_prj/issues/109) | [FE — Manage Groups from a Channel (D9)](11-fe-manage-groups-from-channel.md) | thunder_one_prj | 10 | mid / low | **shipped (dev)** |
 | 12 | [#110](https://github.com/rdThunderThailand/thunder_one_prj/issues/110) | [FE — Publication targets Channel Groups; via-group and drift](12-fe-publication-group-targeting.md) | thunder_one_prj | 05, 10 | mid / medium | **shipped (dev)** |
-| 13 | [#111](https://github.com/rdThunderThailand/thunder_one_prj/issues/111) | [M2 — cleanup migration and contract contraction](13-m2-cleanup.md) | both | 06, 09, 11, 12 deployed | **frontier / high** | ready-for-agent — 06 shipped, 09/11/12 merged to `dev` but not yet promoted/deployed |
+| 13 | [#111](https://github.com/rdThunderThailand/thunder_one_prj/issues/111) | [M2 — cleanup migration and contract contraction](13-m2-cleanup.md) | both | 06, 09, 11, 12 deployed | execution | **shipped** — migrated (develop and prod), production end-to-end smoke passed, fixtures removed |
 | 14 | [#97](https://github.com/rdThunderThailand/thunder_one_prj/issues/97) | [Live View — parked, needs its own design session](14-live-view-parked.md) | both | 07 + new grill | frontier / high (design) | **parked** — not in this publish |
 
 ## Model tier legend (model-agnostic — pick the equivalent in whatever harness runs the ticket)

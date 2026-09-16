@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { randomUuid } from "@/lib/random-uuid";
 import { makeDefaultScheduleForm } from "../schedule";
 import { DEFAULT_IMAGE_DURATION_SECONDS } from "../draft-mapping";
 import type { ScheduleForm, DraftAssetItem } from "../types";
@@ -50,7 +51,7 @@ export interface DraftFields {
 function getDefaultDraft(): DraftFields {
   return {
     publicationId: null,
-    idempotencyKey: crypto.randomUUID(),
+    idempotencyKey: randomUuid(),
     step: 1,
     furthestStep: 1,
     basicInfo: defaultBasicInfo,
@@ -120,7 +121,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       setPublicationId: (publicationId) => set({ publicationId }),
       setPlaylistId: (playlistId) => set({ playlistId }),
       setCompositionId: (compositionId) => set({ compositionId }),
-      resetIdempotencyKey: () => set({ idempotencyKey: crypto.randomUUID() }),
+      resetIdempotencyKey: () => set({ idempotencyKey: randomUuid() }),
       setStep: (step) => set({ step }),
       goNext: (maxStep) => set((s) => {
         const step = Math.min(s.step + 1, maxStep);

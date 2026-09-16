@@ -106,7 +106,7 @@ export function ProgramSummaryRail({
 
   if (variant === "review") {
     const scheduleLabel = scheduleForm.schedule_type === "now"
-      ? "Every day · 00:00–23:59"
+      ? scheduleForm.end_date ? `Publish now – ${endLabel}` : "Publish now · No end date"
       : `${startLabel}${scheduleForm.end_date ? ` – ${endLabel}` : " · No end date"}`;
     const playbackLabel = isPlaylist
       ? "ตามการตั้งค่าของ Playlist"
@@ -226,10 +226,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  const tooltip = typeof children === "string" ? children : undefined;
+
   return (
     <div className="flex items-start justify-between gap-4">
       <dt className="shrink-0 text-zinc-500">{label}</dt>
-      <dd className="text-right font-medium text-zinc-900">{children}</dd>
+      <dd title={tooltip} className="min-w-0 max-w-[65%] truncate text-right font-medium text-zinc-900">{children}</dd>
     </div>
   );
 }

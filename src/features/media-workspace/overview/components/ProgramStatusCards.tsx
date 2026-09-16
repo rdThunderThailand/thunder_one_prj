@@ -22,13 +22,25 @@ function formatTime(iso: string) {
 
 function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; model: ProgramCardModel | null; isNow?: boolean; emptyMessage: string }) {
   if (model === null) {
-    return <Card className="flex min-h-74 flex-col justify-center p-4 text-center"><h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{label}</h2><p className="mt-2 text-sm text-zinc-400">{emptyMessage}</p></Card>;
+    return (
+      <Card className="flex min-h-[370px] flex-col justify-center p-5 text-center">
+        <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">{label}</h2>
+        <p className="mt-2 text-sm text-zinc-400">{emptyMessage}</p>
+      </Card>
+    );
   }
 
   return (
-    <Card className="flex min-h-74 flex-col p-4">
-      <div className="mb-5 flex items-center gap-2"><h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{label}</h2>{isNow && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">LIVE</span>}</div>
-      <div className="mb-5 flex items-center gap-4">
+    <Card className="flex min-h-[370px] flex-col p-5">
+      <div className="mb-5 flex items-center gap-2">
+        <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">{label}</h2>
+        {isNow && (
+          <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+            LIVE
+          </span>
+        )}
+      </div>
+      <div className="mb-5 flex items-start gap-4">
         {model.thumbnailUrl ? (
           // MediaThumb sniffs the extension off the signed URL, so a video cover renders
           // as a poster/preview instead of reaching next/image (see lib/media-kind).
@@ -36,7 +48,9 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
         ) : isNow ? (
           <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-cyan-100"><BroadcastIcon className="h-9 w-9" /></div>
         ) : (
-          <time className="border-r border-zinc-100 pr-5 text-2xl font-semibold text-zinc-900 dark:border-zinc-800 dark:text-zinc-50">{model.opensAt ? formatTime(model.opensAt) : "—"}</time>
+          <time className="border-r border-zinc-100 pr-5 text-2xl font-semibold text-zinc-900 dark:border-zinc-800 dark:text-zinc-50">
+            {model.opensAt ? formatTime(model.opensAt) : "—"}
+          </time>
         )}
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
@@ -49,15 +63,27 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
           <p className="mt-3 text-xl font-semibold text-zinc-900 dark:text-zinc-50">{targetSummary(model)}</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 pt-4 text-xs dark:border-zinc-800"><span className="flex items-center gap-1 text-zinc-500"><MonitorIcon className="h-3.5 w-3.5" />{model.channelRows} Channels</span><span className="flex items-center gap-1 text-zinc-500"><CheckCircleIcon className="h-3.5 w-3.5" />{isNow ? `${model.confirmedRows} Playing` : `${model.deviceRows} Devices`}</span></div>
-      <Link href={`/media-workspace/publications/${model.id}`} className="mt-auto flex items-center justify-end gap-1 pt-5 text-xs font-medium text-indigo-600 hover:text-indigo-500">View publication <ArrowRightIcon /></Link>
+      <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 pt-4 text-xs dark:border-zinc-800">
+        <span className="flex items-center gap-1 text-zinc-500">
+          <MonitorIcon className="h-3.5 w-3.5" />
+          {model.channelRows} Channels
+        </span>
+        <span className="flex items-center gap-1 text-zinc-500">
+          <CheckCircleIcon className="h-3.5 w-3.5" />
+          {isNow ? `${model.confirmedRows} Playing` : `${model.deviceRows} Devices`}
+        </span>
+      </div>
+      <Link href={`/media-workspace/publications/${model.id}`} className="mt-auto flex items-center justify-end gap-1 pt-5 text-xs font-medium text-indigo-600 hover:text-indigo-500">
+        View program details
+        <ArrowRightIcon />
+      </Link>
     </Card>
   );
 }
 
 function ProgramCardSkeleton() {
   return (
-    <Card className="min-h-74 p-4">
+    <Card className="min-h-[370px] p-5">
       <Skeleton className="h-4 w-28" />
       <div className="mt-5 flex items-center gap-4"><Skeleton className="h-28 w-28" /><div className="flex-1 space-y-3"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-3 w-1/3" /><Skeleton className="h-6 w-1/2" /></div></div>
       <div className="mt-5 grid grid-cols-2 gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800"><Skeleton className="h-4" /><Skeleton className="h-4" /></div>
@@ -95,12 +121,21 @@ export function ProgramStatusCards() {
     };
   }, []);
 
-  if (state.kind === "loading") return <div className="grid h-full gap-4 lg:grid-cols-2"><ProgramCardSkeleton /><ProgramCardSkeleton /></div>;
+  if (state.kind === "loading") {
+    return (
+      <>
+        <ProgramCardSkeleton />
+        <ProgramCardSkeleton />
+      </>
+    );
+  }
 
   const failed = state.kind === "failed";
   const programs = state.kind === "ready" ? state.programs : { nowPlaying: null, nextUp: null };
-  return <div className="grid h-full gap-4 lg:grid-cols-2">
-    <ProgramCard label="Now Playing" model={programs.nowPlaying} isNow emptyMessage={failed ? "Live status unavailable" : "No playback confirmed"} />
-    <ProgramCard label="Next Up" model={programs.nextUp} emptyMessage={failed ? "Live status unavailable" : "No upcoming program in the next 3 hours"} />
-  </div>;
+  return (
+    <>
+      <ProgramCard label="Now Playing" model={programs.nowPlaying} isNow emptyMessage={failed ? "Live status unavailable" : "No playback confirmed"} />
+      <ProgramCard label="Next Program" model={programs.nextUp} emptyMessage={failed ? "Live status unavailable" : "No upcoming program in the next 3 hours"} />
+    </>
+  );
 }

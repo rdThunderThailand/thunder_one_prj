@@ -7,13 +7,14 @@ import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { EditIcon, MoreIcon, PlusIcon, ShareNodesIcon, UsersIcon, XIcon } from "@/components/ui/icons";
+import { EditIcon, MonitorIcon, MoreIcon, PlusIcon, XIcon } from "@/components/ui/icons";
 import { classifyApiError } from "@/lib/api/api-error";
 import { deleteChannelGroup, isGroupInUse, updateChannelGroup } from "../services/channel-groups-api";
 import { memberHealthCounts } from "../channel-groups-logic";
 import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
 import { CreateEditGroupModal } from "./CreateEditGroupModal";
+import { ChannelGroupInspectorSections } from "./ChannelGroupInspectorSections";
 import { ManageChannelsModal } from "./ManageChannelsModal";
 
 const STATUS_BADGE: Record<ChannelGroup["status"], { label: string; color: BadgeColor }> = {
@@ -21,23 +22,8 @@ const STATUS_BADGE: Record<ChannelGroup["status"], { label: string; color: Badge
   disabled: { label: "Inactive", color: "zinc" },
 };
 
-function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  return `${date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
-}
-
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{label}</dt>
-      <dd className="mt-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">{value}</dd>
-    </div>
-  );
-}
-
 /** D11 §2's Group Inspector — actions A (Create Program), B (Edit Group), C (Manage Channels),
- *  D (More → Disable / Delete). No cover image or "Current Program": neither has a real per-group
- *  data source yet (same deviation as ticket 07/08/09 for Channels). */
+ *  D (More → Disable / Delete). */
 export function ChannelGroupInspector({
   group,
   channels,
@@ -59,7 +45,6 @@ export function ChannelGroupInspector({
   const [error, setError] = useState<string | null>(null);
 
   const status = STATUS_BADGE[group.status];
-  const ModeIcon = group.playback_mode === "synchronized" ? ShareNodesIcon : UsersIcon;
   const health = memberHealthCounts(group, new Map(channels.map((c) => [c.id, c])));
 
   const toggleStatus = async () => {
@@ -97,17 +82,20 @@ export function ChannelGroupInspector({
     <Card
       role="region"
       aria-label={`${group.name} detail`}
-      className="relative overflow-hidden p-5 xl:sticky xl:top-0 xl:self-start"
+      className="relative h-full overflow-y-auto p-5 xl:sticky xl:top-0 xl:self-start"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
-            <ModeIcon className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="truncate text-lg font-semibold text-zinc-950 dark:text-zinc-50">{group.name}</h2>
-            <Badge color={status.color} variant="pill">{status.label}</Badge>
-          </div>
+      <div className="grid h-28 place-items-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-700 dark:bg-zinc-950/40">
+        <div>
+          <MonitorIcon className="mx-auto h-6 w-6 text-zinc-400" />
+          <p className="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">No preview available yet</p>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Program content will appear here.</p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="truncate text-lg font-semibold text-zinc-950 dark:text-zinc-50">{group.name}</h2>
+          <Badge color={status.color} variant="pill">{status.label}</Badge>
         </div>
         <button
           type="button"
@@ -128,12 +116,12 @@ export function ChannelGroupInspector({
         </p>
       )}
 
-      <div className="mt-4 flex items-center gap-2">
-        <Link href={`/media-workspace/publications/create?group=${group.id}`} className={buttonClasses("primary", "flex-1")}>
+      <div className="mt-4 flex flex-nowrap items-center gap-2">
+        <Link href={`/media-workspace/publications/create?group=${group.id}`} className={buttonClasses("primary", "min-w-0 flex-1 whitespace-nowrap px-3")}>
           <PlusIcon />
           Create Program
         </Link>
-        <button type="button" onClick={() => setEditing(true)} className={buttonClasses("secondary", "flex-1")}>
+        <button type="button" onClick={() => setEditing(true)} className={buttonClasses("secondary", "min-w-0 flex-1 whitespace-nowrap px-3")}>
           <EditIcon />
           Edit Group
         </button>
@@ -184,60 +172,19 @@ export function ChannelGroupInspector({
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <div>
-          <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{group.member_count}</p>
-          <p className="text-[11px] text-zinc-400">Channels</p>
-        </div>
-        <div>
-          <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">{health.online}</p>
-          <p className="text-[11px] text-zinc-400">Online</p>
-        </div>
-        <div>
-          <p className="text-lg font-semibold text-red-600 dark:text-red-400">{health.offline}</p>
-          <p className="text-[11px] text-zinc-400">Offline</p>
-        </div>
-      </div>
-
-      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Channels in this Group ({group.member_count})
-          </h3>
-          <button
-            type="button"
-            onClick={() => setManagingChannels(true)}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-          >
-            Manage Channels →
-          </button>
-        </div>
-        {group.members.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-400">No channels yet.</p>
-        ) : (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {group.members.map((member) => (
-              <Badge key={member.id} variant="pill" color="zinc">{member.name}</Badge>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Group Information
-        </h3>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
-          <DetailItem label="Playback Mode" value={group.playback_mode === "synchronized" ? "Synchronized" : "Independent"} />
-          <DetailItem label="Channels" value={String(group.member_count)} />
-          <DetailItem label="Created" value={formatDateTime(group.created_at)} />
-          <DetailItem label="Last Updated" value={formatDateTime(group.updated_at)} />
-        </dl>
-      </div>
+      <ChannelGroupInspectorSections
+        group={group}
+        health={health}
+        onManageChannels={() => setManagingChannels(true)}
+      />
 
       {editing && (
         <CreateEditGroupModal
           group={group}
+          onManageChannels={() => {
+            setEditing(false);
+            setManagingChannels(true);
+          }}
           onClose={() => setEditing(false)}
           onSaved={(updated) => {
             onChanged(updated);

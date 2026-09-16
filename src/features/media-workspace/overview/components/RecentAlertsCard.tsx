@@ -8,8 +8,14 @@ export function RecentAlertsCard({ channels, loadFailed }: { channels: ChannelLi
   const attention = channels ? findChannelAttention(channels).slice(0, 4) : [];
 
   return (
-    <Card className="flex h-full flex-col p-4">
-      <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Needs Attention</h2><Link href="/media-workspace/channels?q=attention" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800">View all <ArrowRightIcon /></Link></div>
+    <Card className="flex min-h-[370px] flex-col p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Needs Attention</h2>
+        <Link href="/media-workspace/channels?q=attention" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800">
+          View all alerts
+          <ArrowRightIcon />
+        </Link>
+      </div>
       {loadFailed ? <p className="py-8 text-center text-sm text-red-500">Could not load channel health</p> : channels === null ? <div className="space-y-3">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-10 w-full" />)}</div> : attention.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center"><MonitorIcon className="h-6 w-6 text-emerald-500" /><p className="text-sm font-medium text-zinc-700">All devices are healthy</p></div> : (
         <ul className="flex flex-1 flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
           {attention.map(({ channel, device }) => {

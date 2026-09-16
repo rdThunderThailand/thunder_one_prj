@@ -85,14 +85,18 @@ export function UngroupedChannelsTable({
   channels,
   groups,
   selected,
+  selectedChannelId,
   onSelectionChange,
+  onSelect,
   onCreateGroup,
   onGroupChanged,
 }: {
   channels: ChannelListItem[];
   groups: ChannelGroup[];
   selected: Set<string>;
+  selectedChannelId: string | null;
   onSelectionChange: (next: Set<string>) => void;
+  onSelect: (channel: ChannelListItem) => void;
   onCreateGroup: () => void;
   onGroupChanged: (group: ChannelGroup) => void;
 }) {
@@ -145,8 +149,21 @@ export function UngroupedChannelsTable({
             {channels.map((channel) => {
               const status = STATUS_BADGE[channel.health ?? "no_player"];
               return (
-                <tr key={channel.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/80 dark:border-zinc-800 dark:hover:bg-zinc-800/50">
-                  <td className="px-4 py-3">
+                <tr
+                  key={channel.id}
+                  tabIndex={0}
+                  onClick={() => onSelect(channel)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect(channel);
+                    }
+                  }}
+                  className={`cursor-pointer border-b border-zinc-100 last:border-0 hover:bg-zinc-50/80 dark:border-zinc-800 dark:hover:bg-zinc-800/50 ${
+                    selectedChannelId === channel.id ? "bg-indigo-50/70 dark:bg-indigo-500/10" : ""
+                  }`}
+                >
+                  <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selected.has(channel.id)}
@@ -163,7 +180,7 @@ export function UngroupedChannelsTable({
                   <td className="px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
                     {new Date(channel.updated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()}>
                     <AddToGroupMenu channel={channel} groups={groups} onAdded={onGroupChanged} />
                   </td>
                 </tr>

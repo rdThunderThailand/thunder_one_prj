@@ -22,17 +22,11 @@ export function OverviewDashboard() {
   return (
     <div className="space-y-4">
       <StatCardsRow channels={channels} loadFailed={loadFailed} />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <div className="xl:col-span-7">
-          <ProgramStatusCards />
-        </div>
-        <div className="xl:col-span-5">
-          <RecentAlertsCard channels={channels} loadFailed={loadFailed} />
-        </div>
-        <div className="xl:col-span-12">
-          <LowerOverview />
-        </div>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <ProgramStatusCards />
+        <RecentAlertsCard channels={channels} loadFailed={loadFailed} />
       </div>
+      <LowerOverview />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { shellNavItems } from "@/config/nav/shell";
 import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
 import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
 
 const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
 
@@ -49,13 +50,12 @@ function NavBadge({ badge }: { badge?: string }) {
 }
 
 function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
-  const baseClasses =
-    "flex min-h-9 w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-semibold transition-colors";
+  const baseClasses = "flex min-h-9 w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-semibold transition-colors";
   const icon = item.icon ? <span className="h-4 w-4 shrink-0 text-slate-500">{item.icon}</span> : null;
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed text-slate-800`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-slate-50 text-slate-400 opacity-75 dark:bg-zinc-900`} title="Not built yet">
         {icon}
         {item.label}
         <NavBadge badge={item.badge} />
@@ -80,12 +80,11 @@ function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
 }
 
 function SubLink({ item, active }: { item: NavItem; active: boolean }) {
-  const baseClasses =
-    "flex min-h-8 items-center gap-2 rounded-lg py-1.5 pl-8 pr-2.5 text-sm font-semibold transition-colors";
+  const baseClasses = "flex min-h-8 items-center gap-2 rounded-lg py-1.5 pl-8 pr-2.5 text-sm font-semibold transition-colors";
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed text-slate-800`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-slate-50 text-slate-400 opacity-75 dark:bg-zinc-900`} title="Not built yet">
         {item.label}
       </span>
     );
@@ -96,8 +95,8 @@ function SubLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       className={`${baseClasses} ${
         active
-          ? "text-indigo-600"
-          : "text-slate-800 hover:text-indigo-600"
+          ? "bg-indigo-50 text-indigo-600"
+          : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
       }`}
     >
       {item.label}
@@ -122,7 +121,7 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   }
 
   return (
-    <section className="border-b border-slate-100 pb-4">
+    <section className="border-b border-slate-100 pb-4 last:border-b-0">
       <h2 className="mb-2 px-2.5 text-[11px] font-bold uppercase text-slate-500">{section.label}</h2>
       <button
         type="button"
@@ -208,6 +207,13 @@ function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolea
 // — the existing per-persona sectioned nav, restyled to the light theme.
 function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: string; collapsed: boolean }) {
   const nav = resolveAppNavConfig(appId, pathname);
+  const isMediaWorkspace = appId === "media-workspace";
+
+  if (isMediaWorkspace) {
+    return <MediaWorkspaceNav nav={nav} pathname={pathname} collapsed={collapsed} />;
+  }
+
+  const overviewActive = isActivePath(pathname, nav.overviewItem.href);
 
   if (collapsed) {
     return (
@@ -224,9 +230,15 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
   }
 
   return (
-    <nav className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-4">
+    <nav className="no-scrollbar min-h-0 flex-1 space-y-0 overflow-y-auto px-5 pb-3 tracking-normal">
       <div>
-        <div className="flex min-h-10 items-center gap-3 rounded-md bg-indigo-50 px-2.5 py-2 text-sm font-bold text-indigo-600">
+        <div
+          className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 py-2 text-sm font-bold transition-colors ${
+            overviewActive
+              ? "bg-indigo-50 text-indigo-600"
+              : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
+          }`}
+        >
           <span className="h-4 w-4">{nav.overviewItem.icon}</span>
           <Link href={nav.overviewItem.href!} className="flex-1">
             {nav.overviewItem.label}
@@ -310,6 +322,7 @@ function SettingsSidebar({ pathname }: { pathname: string }) {
 export function Sidebar({ tenantName }: { tenantName?: string | null }) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
+  const isMediaWorkspace = activeApp?.id === "media-workspace";
   const [collapsed, setCollapsed] = useState(false);
 
   if (SETTINGS_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
@@ -318,22 +331,29 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
 
   return (
     <aside
-      className={`flex h-full shrink-0 flex-col border-r border-[#e6edf9] bg-white transition-[width] duration-150 dark:border-zinc-800 dark:bg-zinc-950 ${
-        collapsed ? "w-[76px]" : "w-[300px]"
+      style={isMediaWorkspace ? { fontFamily: "var(--font-manrope)" } : undefined}
+      className={`flex h-full shrink-0 flex-col border-r ${
+        isMediaWorkspace ? "border-zinc-200" : "border-[#e6edf9]"
+      } bg-white transition-[width] duration-150 dark:border-zinc-800 dark:bg-zinc-950 ${
+        collapsed ? (isMediaWorkspace ? "w-17" : "w-[76px]") : isMediaWorkspace ? "w-56" : "w-[300px]"
       }`}
     >
       <Link
         href="/"
-        className={`flex h-[88px] items-center border-b border-[#e6edf9] hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900 ${
-          // Was previously `px-10 ... ${collapsed ? "justify-center px-2" : ""}`
-          // — both px-10 and px-2 ended up in the class list at once when
-          // collapsed, and px-10 (40px) won the cascade over px-2 (8px),
-          // leaving zero content width in the 80px link for the icon to sit
-          // in (it silently flex-shrank to 0). Made mutually exclusive.
-          collapsed ? "justify-center px-2" : "px-10"
+        className={`flex items-center hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
+          isMediaWorkspace
+            ? `h-17 gap-3 border-b border-[oklch(0.929_0.013_255.508)] px-4 ${collapsed ? "justify-center px-2" : ""}`
+            : // Was previously `px-10 ... ${collapsed ? "justify-center px-2" : ""}`
+              // — both px-10 and px-2 ended up in the class list at once when
+              // collapsed, and px-10 (40px) won the cascade over px-2 (8px),
+              // leaving zero content width in the 80px link for the icon to sit
+              // in (it silently flex-shrank to 0). Made mutually exclusive.
+              `h-[88px] border-b border-[#e6edf9] dark:border-zinc-800 ${collapsed ? "justify-center px-2" : "px-10"}`
         }`}
       >
-        {collapsed ? (
+        {isMediaWorkspace ? (
+          <MediaWorkspaceBrand collapsed={collapsed} />
+        ) : collapsed ? (
           // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
           <img src="/icon.svg" alt="ThunderOne" className="rounded-[9px]" style={{ width: 40, height: 40 }} />
         ) : (
@@ -352,31 +372,50 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
         <ShellNav pathname={pathname} collapsed={collapsed} />
       )}
 
-      <div className="mt-auto px-5 pb-5 pt-3">
-        {/* 2026-09-16 shell redesign — tenant name shown for real now (was
-            sr-only-only before); no tenant switcher exists, so this is a
-            static label with a decorative chevron, not a working picker. */}
-        <div
-          className={`mb-3 flex h-14 items-center gap-3 rounded-lg border border-[#e6edf9] px-4 text-sm font-bold text-[#071858] dark:border-zinc-800 dark:text-zinc-200 ${
-            collapsed ? "justify-center" : ""
-          }`}
-          title={collapsed ? (tenantName ?? "Thunder One") : undefined}
-        >
-          <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
-          {!collapsed && (
-            <>
-              <span className="flex-1 truncate">{tenantName ?? "Thunder One"}</span>
-              <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-            </>
-          )}
-        </div>
+      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-[oklch(0.929_0.013_255.508)] p-2" : "px-5 pb-5 pt-3"}`}>
+        {isMediaWorkspace ? (
+          !collapsed && <p className="sr-only">{tenantName ?? "Thunder One"}</p>
+        ) : (
+          // 2026-09-16 shell redesign — tenant name shown for real now (was
+          // sr-only-only before); no tenant switcher exists, so this is a
+          // static label with a decorative chevron, not a working picker.
+          <div
+            className={`mb-3 flex h-14 items-center gap-3 rounded-lg border border-[#e6edf9] px-4 text-sm font-bold text-[#071858] dark:border-zinc-800 dark:text-zinc-200 ${
+              collapsed ? "justify-center" : ""
+            }`}
+            title={collapsed ? (tenantName ?? "Thunder One") : undefined}
+          >
+            <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate">{tenantName ?? "Thunder One"}</span>
+                <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              </>
+            )}
+          </div>
+        )}
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className={`flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-[#e6edf9] text-sm font-bold text-[#61719e] transition-colors hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900`}
+          className={
+            isMediaWorkspace
+              ? `flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 ${
+                  collapsed ? "justify-center" : ""
+                }`
+              : "flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-[#e6edf9] text-sm font-bold text-[#61719e] transition-colors hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900"
+          }
         >
-          {collapsed ? <ArrowRightIcon className="h-5 w-5" /> : <ArrowLeftIcon className="h-5 w-5" />}
-          {!collapsed && "ย่อเมนู"}
+          {isMediaWorkspace ? (
+            <>
+              <MediaWorkspaceCollapseIcon open={collapsed} />
+              {!collapsed && "Collapse"}
+            </>
+          ) : (
+            <>
+              {collapsed ? <ArrowRightIcon className="h-5 w-5" /> : <ArrowLeftIcon className="h-5 w-5" />}
+              {!collapsed && "ย่อเมนู"}
+            </>
+          )}
         </button>
       </div>
     </aside>
