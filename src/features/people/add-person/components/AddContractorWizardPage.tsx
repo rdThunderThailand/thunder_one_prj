@@ -2,35 +2,59 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { WizardSteps } from "@/components/ui/WizardSteps";
 import { CheckCircleIcon, ChevronRightIcon, ImageIcon, InfoIcon, ShieldIcon } from "@/components/ui/icons";
 import { ApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
-import { createMember, isPendingInvite, personnelRows, type CoreRole } from "@/features/people/personnel";
+import {
+  checkEmailTaken,
+  createMember,
+  isPendingInvite,
+  personnelRows,
+  updateMemberContract,
+  type CoreRole,
+} from "@/features/people/personnel";
 import type { OrgUnitNode } from "@/features/people/org-structure";
 // Deep import (bypassing people/new-hires's index.ts) — see
 // AddEmployeeWizardPage's identical comment for why (avoids a barrel-file
 // import cycle between add-person and new-hires).
 import { buildStepsFromDoneIndices, type NewHireRow } from "@/features/people/new-hires/mock-data";
 import { NEW_HIRE_HANDOFF_KEY } from "../handoff";
+import { contractorStep0Schema, contractorStep1Schema, pickDefaultRoleCode, zodErrorsToFieldMap } from "../schemas";
+import { clearFieldError, ErrorText, fieldClasses, inputClasses, labelClasses } from "../form-field";
 
 const POSITION_OPTIONS = Array.from(new Set(personnelRows.map((row) => row.position))).sort((a, b) =>
   a.localeCompare(b)
-);
-
-const MANAGER_OPTIONS = Array.from(
-  new Map(
-    personnelRows
-      .filter((row) => row.managerName)
-      .map((row) => [row.managerName as string, { name: row.managerName as string, role: row.managerRole ?? "" }])
-  ).values()
 );
 
 const WORK_LOCATION_OPTIONS = ["สำนักงานใหญ่ (Bangkok Office)", "สาขาเชียงใหม่", "สาขาขอนแก่น", "ทำงานทางไกล (Remote)"];
 const DURATION_OPTIONS = ["3 เดือน", "6 เดือน", "12 เดือน", "ไม่ระบุ"];
 const PAYMENT_TYPE_OPTIONS = ["รายเดือน", "รายงวด", "เมื่อเสร็จงาน"];
 const PAYMENT_CYCLE_OPTIONS = ["สิ้นเดือน", "ทุก 15 วัน"];
+
+// Maps this page's Thai option labels onto membership_contract's closed
+// enums (docs/api/contractor-bulk-triage-response.md — payment_format:
+// monthly/installment/on_completion, payment_cycle: end_of_month/every_15_days).
+const PAYMENT_FORMAT_BY_LABEL: Record<string, "monthly" | "installment" | "on_completion"> = {
+  รายเดือน: "monthly",
+  รายงวด: "installment",
+  เมื่อเสร็จงาน: "on_completion",
+};
+const PAYMENT_CYCLE_BY_LABEL: Record<string, "end_of_month" | "every_15_days"> = {
+  สิ้นเดือน: "end_of_month",
+  "ทุก 15 วัน": "every_15_days",
+};
+
+// Real column on `memberships` since the 2026-09-01 employment-fields
+// migration (see members-api.ts's CreateMemberInput) — same enum Employee
+// wires, this page just has a different label order in its <select>.
+const WORK_ARRANGEMENT_BY_LABEL: Record<string, "on_site" | "hybrid" | "remote"> = {
+  "On-site": "on_site",
+  Hybrid: "hybrid",
+  Remote: "remote",
+};
 
 /** Same "Division / Team" convention as people/personnel's core-mapper.ts —
  *  a top-level unit's own name, everything below it prefixed with its
@@ -55,13 +79,10 @@ function ageFromBirthDate(birthDate: string): string {
 
 const WIZARD_STEP_LABELS = ["ข้อมูลส่วนบุคคล", "ข้อมูลการจ้างงานและสัญญา", "ตรวจสอบและเพิ่ม"];
 
-const inputClasses =
-  "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
-const labelClasses = "flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400";
-
-function randomContractorCode(): string {
-  return `CON-0${String(Math.floor(100 + Math.random() * 900))}`;
-}
+// Visual counterpart to each field's `required` attribute — same convention
+// as AddEmployeeWizardPage's requiredMark. Only on fields covered by
+// contractorStep0Schema/contractorStep1Schema (../schemas.ts).
+const requiredMark = <span className="text-red-500">*</span>;
 
 function Breadcrumb() {
   return (
@@ -117,19 +138,34 @@ interface AddContractorWizardPageProps {
 // people/add's type picker (the Contractor card, previously inert — no
 // mockup existed for this flow until 2026-09-01).
 //
-// Real Core integration: submitting calls the exact same
+// Real Core integration: submitting calls the same
 // `POST /tenants/:id/members` (people/personnel's createMember) Employee
-// intake uses — Core's schema has no `member_type` distinction at all yet
-// (confirmed, docs/people/core-response-people-workspace-api.md, §8 Q1
-// "still open"), so a Contractor and an Employee are the same kind of row
-// server-side today; only `employee_code`'s `CON-` prefix (a client-side
-// convention, same as people/personnel's mock rows) and this page's own
-// copy/fields distinguish them. Real fields sent: email, role_code,
+// intake uses, now with `member_type: "contractor"` — resolved 2026-08-28
+// (docs/api/people-workspace-response.md §8 Q1) and reconfirmed
+// 2026-09-04 (docs/api/contractor-bulk-triage-response.md) as not a gap:
+// the row is correctly typed server-side as soon as this field is sent, no
+// Core change needed. Real fields sent: email, role_code, member_type,
 // employee_code, job_title (ตำแหน่งงาน), default_department_id
-// (หน่วยงาน), start_date (วันที่เริ่มงาน) — identical set to Employee's.
-// Everything else on this page (ID/passport, contact channels, contract
-// number/value/payment terms, work location/address, etc.) is cosmetic —
-// kept in local state for the review step only, never sent to Core.
+// (หน่วยงาน), start_date (วันที่เริ่มงาน), and — resolved 2026-09-01,
+// same `addMemberSchema` employment-fields migration Employee's doc
+// describes — work_arrangement (ลักษณะการจ้าง) and notes (this page's
+// personal-info-step "หมายเหตุ" box; หมายเหตุสัญญา in step 2 has no
+// backing column, see below, so only this one is sent).
+//
+// Contract fields (เลขที่สัญญา/PO No., วันที่ทำสัญญา, มูลค่าสัญญา, รูปแบบ/รอบ
+// การชำระเงิน) are also real as of 2026-09-04 — `PUT
+// /tenants/:id/members/:memberId/contract` (people/personnel's
+// updateMemberContract), a separate call fired right after createMember
+// succeeds, since the row lives in its own `membership_contract` table, not
+// on the membership itself. Only fires when the member was actually
+// created (not a pending invite — there's no membership id yet to attach a
+// contract to until the invite is accepted) and at least one contract field
+// was filled in; a failure here is reported but doesn't undo the
+// already-created contractor. หมายเหตุสัญญา has no backing column
+// (deliberately out of scope this pass) and stays cosmetic, same as
+// everything else on this page (ID/passport, contact channels, work
+// location/address, ผู้บังคับบัญชา, etc.) — kept in local state for the
+// review step only, never sent to Core.
 //
 // Unlike Employee (which lands at 8/9, `status: "ready-to-work"`, since its
 // wizard covers most onboarding-checklist topics), this flow's own copy is
@@ -161,13 +197,19 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
 
   // Step 2 — employment & contract. position/unitId/startDate/roleCode are
   // real; the rest stays local/cosmetic.
-  const [employeeCode] = useState(randomContractorCode);
+  // Was `useState(randomContractorCode)` — a fake "CON-0xxx" code generated
+  // client-side and sent to Core as if real (fixed 2026-09-15, same UAT
+  // PP03-013 gap as AddEmployeeWizardPage's own employeeCode field). Stays
+  // blank (sent as `undefined`) unless someone actually has a real code.
+  const [employeeCode, setEmployeeCode] = useState("");
+  // Real since 2026-09-16 — memberships.position_code/level_role, round-trip
+  // confirmed against thunder_core_API (commit 489c3b1).
+  const [positionCode, setPositionCode] = useState("");
+  const [levelRole, setLevelRole] = useState("");
   const [position, setPosition] = useState("");
   const [unitId, setUnitId] = useState("");
   const [team, setTeam] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [managerName, setManagerName] = useState("");
-  const [managerRole, setManagerRole] = useState("");
   const [workArrangement, setWorkArrangement] = useState("On-site");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -181,19 +223,56 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
   const [workLocation, setWorkLocation] = useState(WORK_LOCATION_OPTIONS[0]);
   const [subLocation, setSubLocation] = useState("");
   const [workAddress, setWorkAddress] = useState("");
-  const [roleCode, setRoleCode] = useState(
-    () => roles?.find((r) => r.code === "operator_technician")?.code ?? roles?.[0]?.code ?? ""
-  );
+  const [roleCode, setRoleCode] = useState(() => pickDefaultRoleCode(roles));
 
   const [createdRow, setCreatedRow] = useState<NewHireRow | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  // Real since 2026-09-15 (UAT PP02-009) — see handleNext below.
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const fullName = `${firstNameTh} ${lastNameTh}`.trim();
   const unitOptions = Object.values(units ?? {}).sort((a, b) => a.name.localeCompare(b.name));
 
-  const canProceedStep0 = firstNameTh.trim().length > 0 && lastNameTh.trim().length > 0 && email.trim().length > 0;
-  const canProceedStep1 = position.trim().length > 0 && managerName.trim().length > 0 && roleCode.length > 0;
+  function validateStep(index: 0 | 1): boolean {
+    const schema = index === 0 ? contractorStep0Schema : contractorStep1Schema;
+    const data =
+      index === 0
+        ? { firstNameTh, lastNameTh, idOrPassportNumber, email, phone, secondaryPhone }
+        : { position, roleCode };
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      setErrors(zodErrorsToFieldMap(result.error));
+      toast.error("กรุณาตรวจสอบข้อมูลที่กรอกให้ครบถ้วนและถูกต้อง");
+      return false;
+    }
+    setErrors({});
+    return true;
+  }
+
+  // Same "check the duplicate before the last step, not only from Core's
+  // 409" fix as AddEmployeeWizardPage.handleNext — see that component's own
+  // comment. Fails open on a network/API error.
+  async function handleNext() {
+    if (!validateStep(stepIndex === 0 ? 0 : 1)) return;
+    if (stepIndex === 0 && tenantId) {
+      setCheckingEmail(true);
+      try {
+        const taken = await checkEmailTaken(tenantId, email);
+        if (taken) {
+          setErrors((prev) => ({ ...prev, email: "อีเมลนี้เป็นสมาชิกขององค์กรอยู่แล้ว" }));
+          toast.error("อีเมลนี้เป็นสมาชิกขององค์กรอยู่แล้ว");
+          return;
+        }
+      } catch {
+        // fail open — see comment above
+      } finally {
+        setCheckingEmail(false);
+      }
+    }
+    setStepIndex((i) => Math.min(i + 1, 2));
+  }
 
   function resetForNext() {
     setStepIndex(0);
@@ -212,12 +291,13 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
     setLineId("");
     setOtherContact("");
     setAdditionalNote("");
+    setEmployeeCode("");
+    setPositionCode("");
+    setLevelRole("");
     setPosition("");
     setUnitId("");
     setTeam("");
     setJobDescription("");
-    setManagerName("");
-    setManagerRole("");
     setStartDate("");
     setEndDate("");
     setContractNumber("");
@@ -226,18 +306,33 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
     setContractNote("");
     setSubLocation("");
     setWorkAddress("");
-    setRoleCode(roles?.find((r) => r.code === "operator_technician")?.code ?? roles?.[0]?.code ?? "");
+    setRoleCode(pickDefaultRoleCode(roles));
     setCreatedRow(null);
     setSubmitError(null);
+    setErrors({});
   }
 
   async function handleSubmit() {
+    // Belt-and-suspenders re-check — see AddEmployeeWizardPage's identical
+    // comment for why this re-validates rather than trusting handleNext alone.
+    if (!validateStep(0)) {
+      setStepIndex(0);
+      toast.error("กรุณาตรวจสอบข้อมูลส่วนบุคคลให้ครบถ้วนและถูกต้อง");
+      return;
+    }
+    if (!validateStep(1)) {
+      setStepIndex(1);
+      toast.error("กรุณาตรวจสอบข้อมูลการจ้างงานให้ครบถ้วนและถูกต้อง");
+      return;
+    }
     if (!tenantId) {
       setSubmitError("ไม่พบข้อมูล Tenant ของผู้ใช้ปัจจุบัน กรุณาโหลดหน้านี้ใหม่แล้วลองอีกครั้ง");
+      toast.error("ไม่พบข้อมูล Tenant ของผู้ใช้ปัจจุบัน กรุณาโหลดหน้านี้ใหม่แล้วลองอีกครั้ง");
       return;
     }
     if (!roleCode) {
       setSubmitError("ไม่พบบทบาท (Role) ที่ใช้ได้ในองค์กรนี้ ไม่สามารถสร้างผู้รับเหมาได้ในขณะนี้");
+      toast.error("ไม่พบบทบาท (Role) ที่ใช้ได้ในองค์กรนี้ ไม่สามารถสร้างผู้รับเหมาได้ในขณะนี้");
       return;
     }
 
@@ -247,13 +342,39 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
       const result = await createMember(tenantId, {
         email: email.trim(),
         role_code: roleCode,
-        employee_code: employeeCode,
+        employee_code: employeeCode.trim() || undefined,
+        position_code: positionCode.trim() || undefined,
+        level_role: levelRole.trim() || undefined,
         job_title: position.trim() || undefined,
         default_department_id: unitId || undefined,
         start_date: startDate || undefined,
+        member_type: "contractor",
+        work_arrangement: WORK_ARRANGEMENT_BY_LABEL[workArrangement],
+        notes: additionalNote.trim() || undefined,
       });
 
       const pending = isPendingInvite(result);
+
+      // Contract fields live in their own table/route — only reachable once
+      // a real membership exists (not a pending invite) and only worth the
+      // call if the user actually entered contract info. A failure here is
+      // surfaced but doesn't roll back the contractor that was just created.
+      const hasContractInfo = Boolean(contractNumber.trim() || contractDate || contractValue.trim());
+      if (!pending && hasContractInfo) {
+        const parsedValue = contractValue.trim() ? Number(contractValue.replace(/,/g, "")) : undefined;
+        try {
+          await updateMemberContract(tenantId, result.id, {
+            contract_number: contractNumber.trim() || undefined,
+            contract_date: contractDate || undefined,
+            contract_value: parsedValue !== undefined && !Number.isNaN(parsedValue) ? parsedValue : undefined,
+            payment_format: PAYMENT_FORMAT_BY_LABEL[paymentType],
+            payment_cycle: PAYMENT_CYCLE_BY_LABEL[paymentCycle],
+          });
+        } catch {
+          toast.error("สร้างผู้รับเหมาสำเร็จ แต่บันทึกข้อมูลสัญญาไม่สำเร็จ กรุณาเพิ่มข้อมูลสัญญาภายหลัง");
+        }
+      }
+
       // Always 0/9 — see this component's header comment on why Contractor
       // lands at "pre-boarding" rather than Employee's 8/9 "ready-to-work".
       const steps = buildStepsFromDoneIndices([]);
@@ -261,19 +382,22 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
       const row: NewHireRow = {
         id: pending ? result.invitation_id : result.id,
         name: pending ? email.trim() : result.user.full_name,
-        employeeCode: pending ? employeeCode : (result.employee_code ?? employeeCode),
+        employeeCode: pending ? employeeCode.trim() || "-" : result.employee_code || employeeCode.trim() || "-",
         position: position.trim() || "-",
         unit: unitId ? unitLabel(unitId, units ?? {}) : "-",
         startDateLabel: startDate ? formatThaiDate(startDate) : "-",
         daysLeftLabel: startDate ? formatDaysUntilThai(startDate) : "-",
         progress: 0,
         status: "pre-boarding",
-        managerName: managerName.trim() || null,
-        managerRole: managerName.trim() ? managerRole.trim() || "ผู้จัดการ" : null,
+        // Reporting-to field removed from the UI — see AddEmployeeWizardPage's
+        // identical comment.
+        managerName: null,
+        managerRole: null,
         steps,
         inviteUrl: pending ? result.invite_url : undefined,
       };
       setCreatedRow(row);
+      toast.success(pending ? `ส่งคำเชิญไปที่ ${email.trim()} แล้ว` : `เพิ่มผู้รับเหมา ${row.name} แล้ว`);
       try {
         sessionStorage.setItem(NEW_HIRE_HANDOFF_KEY, JSON.stringify(row));
       } catch {
@@ -281,9 +405,9 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
         // just won't show up pre-prepended on /people/new-hires; not fatal.
       }
     } catch (err) {
-      setSubmitError(
-        err instanceof ApiError ? err.message : "ไม่สามารถสร้างผู้รับเหมาได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง"
-      );
+      const message = err instanceof ApiError ? err.message : "ไม่สามารถสร้างผู้รับเหมาได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -326,12 +450,30 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
                 </select>
               </label>
               <label className={labelClasses}>
-                ชื่อ (ภาษาไทย)
-                <input required value={firstNameTh} onChange={(e) => setFirstNameTh(e.target.value)} className={inputClasses} />
+                <span>ชื่อ (ภาษาไทย) {requiredMark}</span>
+                <input
+                  required
+                  value={firstNameTh}
+                  onChange={(e) => {
+                    setFirstNameTh(e.target.value);
+                    clearFieldError(setErrors, "firstNameTh");
+                  }}
+                  className={fieldClasses(!!errors.firstNameTh)}
+                />
+                <ErrorText message={errors.firstNameTh} />
               </label>
               <label className={labelClasses}>
-                นามสกุล (ภาษาไทย)
-                <input required value={lastNameTh} onChange={(e) => setLastNameTh(e.target.value)} className={inputClasses} />
+                <span>นามสกุล (ภาษาไทย) {requiredMark}</span>
+                <input
+                  required
+                  value={lastNameTh}
+                  onChange={(e) => {
+                    setLastNameTh(e.target.value);
+                    clearFieldError(setErrors, "lastNameTh");
+                  }}
+                  className={fieldClasses(!!errors.lastNameTh)}
+                />
+                <ErrorText message={errors.lastNameTh} />
               </label>
               <label className={labelClasses}>
                 ชื่อ (ภาษาอังกฤษ)
@@ -342,14 +484,17 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
                 <input value={lastNameEn} onChange={(e) => setLastNameEn(e.target.value)} className={inputClasses} />
               </label>
               <label className={`${labelClasses} sm:col-span-1`}>
-                เลขบัตรประชาชน / เลขที่หนังสือเดินทาง
+                <span>เลขบัตรประชาชน / เลขที่หนังสือเดินทาง</span>
                 <input
-                  required
                   value={idOrPassportNumber}
-                  onChange={(e) => setIdOrPassportNumber(e.target.value)}
+                  onChange={(e) => {
+                    setIdOrPassportNumber(e.target.value);
+                    clearFieldError(setErrors, "idOrPassportNumber");
+                  }}
                   placeholder="กรอกเลขบัตรประชาชน 13 หลัก หรือเลขหนังสือเดินทาง"
-                  className={inputClasses}
+                  className={fieldClasses(!!errors.idOrPassportNumber)}
                 />
+                <ErrorText message={errors.idOrPassportNumber} />
               </label>
               <label className={labelClasses}>
                 สัญชาติ
@@ -364,16 +509,42 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
                 </select>
               </label>
               <label className={labelClasses}>
-                อีเมล (สำหรับการเข้าสู่ระบบ)
-                <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClasses} />
+                <span>อีเมล (สำหรับการเข้าสู่ระบบ) {requiredMark}</span>
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearFieldError(setErrors, "email");
+                  }}
+                  className={fieldClasses(!!errors.email)}
+                />
+                <ErrorText message={errors.email} />
               </label>
               <label className={labelClasses}>
                 เบอร์โทรศัพท์มือถือ
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} />
+                <input
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    clearFieldError(setErrors, "phone");
+                  }}
+                  className={fieldClasses(!!errors.phone)}
+                />
+                <ErrorText message={errors.phone} />
               </label>
               <label className={labelClasses}>
                 เบอร์โทรศัพท์สำรอง
-                <input value={secondaryPhone} onChange={(e) => setSecondaryPhone(e.target.value)} className={inputClasses} />
+                <input
+                  value={secondaryPhone}
+                  onChange={(e) => {
+                    setSecondaryPhone(e.target.value);
+                    clearFieldError(setErrors, "secondaryPhone");
+                  }}
+                  className={fieldClasses(!!errors.secondaryPhone)}
+                />
+                <ErrorText message={errors.secondaryPhone} />
               </label>
             </div>
             <label className={labelClasses}>
@@ -415,7 +586,15 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
               </summary>
               <label className={`${labelClasses} mt-2`}>
                 หมายเหตุ
-                <textarea rows={2} value={additionalNote} onChange={(e) => setAdditionalNote(e.target.value)} className={inputClasses} />
+                {/* Sent as-is into Core's `notes` column (≤2000 chars) — this
+                    page's only notes field, unlike Employee's two boxes. */}
+                <textarea
+                  rows={2}
+                  maxLength={2000}
+                  value={additionalNote}
+                  onChange={(e) => setAdditionalNote(e.target.value)}
+                  className={inputClasses}
+                />
               </label>
             </details>
           </div>
@@ -466,20 +645,24 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
               <p className="mb-2 text-xs font-semibold text-zinc-400">ตำแหน่งและหน้าที่</p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className={labelClasses}>
-                  ตำแหน่งงาน
+                  <span>ตำแหน่งงาน {requiredMark}</span>
                   <input
                     required
                     list="contractor-position-options"
                     value={position}
-                    onChange={(e) => setPosition(e.target.value)}
+                    onChange={(e) => {
+                      setPosition(e.target.value);
+                      clearFieldError(setErrors, "position");
+                    }}
                     placeholder="พิมพ์เพื่อค้นหา หรือระบุตำแหน่งใหม่"
-                    className={inputClasses}
+                    className={fieldClasses(!!errors.position)}
                   />
                   <datalist id="contractor-position-options">
                     {POSITION_OPTIONS.map((option) => (
                       <option key={option} value={option} />
                     ))}
                   </datalist>
+                  <ErrorText message={errors.position} />
                 </label>
                 <label className={labelClasses}>
                   หน่วยงาน / ทีม
@@ -517,28 +700,34 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
                   <input value={team} onChange={(e) => setTeam(e.target.value)} className={inputClasses} />
                 </label>
                 <label className={labelClasses}>
-                  ผู้บังคับบัญชา (Reporting To)
-                  <select
-                    required
-                    value={managerName}
-                    onChange={(e) => {
-                      setManagerName(e.target.value);
-                      setManagerRole(MANAGER_OPTIONS.find((m) => m.name === e.target.value)?.role ?? "");
-                    }}
+                  รหัสตำแหน่ง (Position Code)
+                  <input
+                    value={positionCode}
+                    onChange={(e) => setPositionCode(e.target.value)}
+                    placeholder="เช่น POS-CEO"
                     className={inputClasses}
-                  >
-                    <option value="">เลือกผู้บังคับบัญชา</option>
-                    {MANAGER_OPTIONS.map((manager) => (
-                      <option key={manager.name} value={manager.name}>
-                        {manager.name} — {manager.role}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </label>
+                <label className={labelClasses}>
+                  ระดับตำแหน่ง (Level)
+                  <input
+                    value={levelRole}
+                    onChange={(e) => setLevelRole(e.target.value)}
+                    placeholder="เช่น Executive, Senior"
+                    className={inputClasses}
+                  />
+                </label>
+                {/* ผู้บังคับบัญชา (Reporting To) removed — see
+                    AddEmployeeWizardPage's identical comment. */}
                 <label className={labelClasses}>
                   บทบาท / สิทธิ์การเข้าถึง (Role)
                   {roles && roles.length > 0 ? (
                     <select required value={roleCode} onChange={(e) => setRoleCode(e.target.value)} className={inputClasses}>
+                      {!roleCode && (
+                        <option value="" disabled>
+                          -- เลือกบทบาท --
+                        </option>
+                      )}
                       {roles.map((role) => (
                         <option key={role.id} value={role.code}>
                           {role.name} ({role.code})
@@ -720,8 +909,9 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
                   <EditLink onClick={() => setStepIndex(1)} />
                 </div>
                 <SummaryRow label="ตำแหน่ง" value={position} />
+                <SummaryRow label="รหัสตำแหน่ง" value={positionCode} />
+                <SummaryRow label="ระดับตำแหน่ง" value={levelRole} />
                 <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />
-                <SummaryRow label="ผู้บังคับบัญชา" value={managerName} />
               </div>
               <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
                 <div className="mb-1 flex items-center justify-between">
@@ -850,12 +1040,8 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
             </Button>
           )}
           {stepIndex < 2 ? (
-            <Button
-              variant="primary"
-              onClick={() => setStepIndex((i) => Math.min(i + 1, 2))}
-              disabled={stepIndex === 0 ? !canProceedStep0 : !canProceedStep1}
-            >
-              ถัดไป
+            <Button variant="primary" onClick={handleNext} disabled={checkingEmail}>
+              {checkingEmail ? "กำลังตรวจสอบ..." : "ถัดไป"}
             </Button>
           ) : (
             <div className="flex flex-col items-end gap-1">

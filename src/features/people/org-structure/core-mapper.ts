@@ -56,6 +56,8 @@ export function mapCoreOrgTree(
       name: node.name,
       headName: manager?.user.full_name ?? null,
       headTitle: manager?.job_title ?? null,
+      headAvatarUrl: manager?.user.avatar_url ?? null,
+      headEmail: manager?.user.email ?? null,
       employeeCount,
       unitCode: node.code ?? "-",
       unitType: node.department_type ?? "-",

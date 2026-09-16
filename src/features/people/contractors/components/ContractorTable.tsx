@@ -42,22 +42,26 @@ export function ContractorTable({ rows }: { rows: ContractorRow[] }) {
                   </div>
                 </div>
               </td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{row.company}</td>
+              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{row.company ?? "-"}</td>
               <td className="px-4 py-3">
                 <p className="text-zinc-700 dark:text-zinc-200">{row.role}</p>
                 <p className="text-xs text-zinc-400">{row.unit}</p>
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Avatar name={row.coordinatorName} size={22} />
-                  <div className="min-w-0">
-                    <p className="truncate text-zinc-700 dark:text-zinc-200">{row.coordinatorName}</p>
-                    <p className="truncate text-xs text-zinc-400">{row.coordinatorRole}</p>
+                {row.coordinatorName ? (
+                  <div className="flex items-center gap-2">
+                    <Avatar name={row.coordinatorName} size={22} />
+                    <div className="min-w-0">
+                      <p className="truncate text-zinc-700 dark:text-zinc-200">{row.coordinatorName}</p>
+                      <p className="truncate text-xs text-zinc-400">{row.coordinatorRole ?? "-"}</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <span className="text-zinc-300 dark:text-zinc-600">-</span>
+                )}
               </td>
               <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
-                {row.contractStartLabel} - {row.contractEndLabel}
+                {row.contractStartLabel ?? "-"} - {row.contractEndLabel ?? "-"}
               </td>
               <td className="px-4 py-3">
                 <Badge variant="pill" color={statusBadge[row.status].color}>

@@ -1,8 +1,13 @@
 import { Card } from "@/components/ui/Card";
 import { ChevronRightIcon } from "@/components/ui/icons";
-import { orgStructureRows } from "../mock-data";
 
-export function OrgStructureCard() {
+interface OrgStructureCardProps {
+  /** Real since 2026-09-15 — top-level departments from the same org tree
+   *  people/org-structure uses, sorted by real `employeeCount`. */
+  orgStructureRows: { id: string; name: string; count: number }[];
+}
+
+export function OrgStructureCard({ orgStructureRows }: OrgStructureCardProps) {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">

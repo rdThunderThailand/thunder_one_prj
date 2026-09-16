@@ -2,35 +2,18 @@
 // (`/people/org-structure`) — no backend yet, same discipline as
 // people/overview's and people/personnel's mock-data.ts.
 //
-// `orgStatTiles` carries the mockup's own top-line numbers (18 units, 56
-// teams, 128 employees, 142 positions, 87% fill rate) as static labels — they
-// are NOT derived from `orgUnits` below (which only models the org chart's
-// visible boxes, not every team/position in the company), same
-// "mockup number vs. deeper page's real list" gap documented in
-// people/personnel's mock-data.ts.
-//
 // `orgUnits` is a flat, id-keyed map (not nested objects) so OrgDetailPanel
 // can look up any clicked node — including one several levels deep — by id
 // in O(1), and so a sub-unit's "หน่วยงานย่อย" row and the chart node for the
 // same unit are provably the same record.
-export interface OrgStatTile {
-  id: string;
-  label: string;
-  value: string;
-  sublabel: string;
-}
-
-export const orgStatTiles: OrgStatTile[] = [
-  { id: "units", label: "หน่วยงานทั้งหมด", value: "18", sublabel: "↑ 1 จากเดือนที่แล้ว" },
-  { id: "teams", label: "ทีมทั้งหมด", value: "56", sublabel: "↑ 3 จากเดือนที่แล้ว" },
-  { id: "employees", label: "พนักงานทั้งหมด", value: "128", sublabel: "↑ 3 จากเดือนที่แล้ว" },
-  { id: "positions", label: "ตำแหน่งงาน", value: "142", sublabel: "↑ 5 จากเดือนที่แล้ว" },
-  { id: "fill-rate", label: "อัตราบรรจุ", value: "87%", sublabel: "จากตำแหน่งงานทั้งหมด" },
-];
-
-export const orgStructureUpdatedLabel = "แก้ไขเมื่อ 10 พ.ค. 2569";
-export const orgStructureUpdatedBy = "โดย May HR";
-
+//
+// The old `orgStatTiles`/`orgStructureUpdatedLabel`/`orgStructureUpdatedBy`
+// mock exports (hardcoded "18 units / 56 teams / 128 employees / 142
+// positions / 87% fill rate / last changed by May HR") were removed
+// 2026-09-14 — `OrgStatTilesRow` now computes its tiles from the real
+// `units`/`rootUnitId` the page already fetches, instead of showing numbers
+// with zero relationship to the tenant actually being viewed.
+//
 // `headName`/`headTitle`/`positionsCount`/`fillRate` are nullable — every mock
 // unit below has all four, but the real Core-derived units (mapped in
 // `core-mapper.ts` from `GET /tenants/:id/organizations`) can't supply any of
@@ -43,6 +26,14 @@ export interface OrgUnitNode {
   name: string;
   headName: string | null;
   headTitle: string | null;
+  /** Added 2026-09-15, alongside headEmail — same real `manager_id`
+   *  resolution headName/headTitle already use, just two more fields off
+   *  the same resolved member row (`user.avatar_url`/`user.email`). Not new
+   *  Core work, just not surfaced in the detail panel before now. Optional
+   *  (not `| null`) so the 22 existing mock entries below don't all need
+   *  touching — real rows (`core-mapper.ts`) always set them explicitly. */
+  headAvatarUrl?: string | null;
+  headEmail?: string | null;
   employeeCount: number;
   unitCode: string;
   unitType: string;
