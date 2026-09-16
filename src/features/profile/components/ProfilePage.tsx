@@ -100,6 +100,10 @@ export function ProfilePage({ me, tenantName, roleName }: ProfilePageProps) {
                   </div>
                   <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                     <Row label="ชื่อ - นามสกุล" value={fullName} />
+                    <Row
+                      label="ชื่อ - นามสกุล (ไทย)"
+                      value={[me.first_name_th, me.last_name_th].filter(Boolean).join(" ")}
+                    />
                     <Row label="ชื่อที่ใช้แสดง" value={me.display_name ?? ""} />
                     <Row label="อีเมล" value={me.email} />
                   </div>
@@ -161,6 +165,8 @@ export function ProfilePage({ me, tenantName, roleName }: ProfilePageProps) {
           userId={me.id}
           firstName={me.first_name ?? ""}
           lastName={me.last_name ?? ""}
+          firstNameTh={me.first_name_th ?? ""}
+          lastNameTh={me.last_name_th ?? ""}
           onClose={() => setEditing(false)}
         />
       )}

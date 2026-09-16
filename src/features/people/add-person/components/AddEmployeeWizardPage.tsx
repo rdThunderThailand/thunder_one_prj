@@ -223,6 +223,10 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
   // blank column) now stays blank — sent as `undefined`, not a made-up
   // string — rather than getting a fabricated "EMP-0740" no one assigned.
   const [employeeCode, setEmployeeCode] = useState("");
+  // Real since 2026-09-16 — memberships.position_code/level_role, round-trip
+  // confirmed against thunder_core_API (commit 489c3b1).
+  const [positionCode, setPositionCode] = useState("");
+  const [levelRole, setLevelRole] = useState("");
   const [employmentType, setEmploymentType] = useState(EMPLOYMENT_TYPE_OPTIONS[0]);
   const [jobType, setJobType] = useState("Full-time");
   const [workArrangement, setWorkArrangement] = useState("On-site");
@@ -317,6 +321,8 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
     setAdditionalNote("");
     setEmploymentType(EMPLOYMENT_TYPE_OPTIONS[0]);
     setEmployeeCode("");
+    setPositionCode("");
+    setLevelRole("");
     setPosition("");
     setUnitId("");
     setTeam("");
@@ -366,6 +372,8 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
         email: email.trim(),
         role_code: roleCode,
         employee_code: employeeCode.trim() || undefined,
+        position_code: positionCode.trim() || undefined,
+        level_role: levelRole.trim() || undefined,
         default_department_id: unitId || undefined,
         member_type: "employee" as const,
         job_type: JOB_TYPE_BY_LABEL[jobType],
@@ -385,6 +393,14 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
           ...sharedFields,
           first_name: firstNameTh.trim(),
           last_name: lastNameTh.trim(),
+          // Also captured explicitly (real since 2026-09-16, commit
+          // f15d612) — this form's "ชื่อ (ภาษาไทย)" is already required Thai
+          // script, so it doubles as both the primary and the explicit
+          // Thai-name field. Keeps the Thai name recoverable even if
+          // first_name/last_name are ever overwritten with something else
+          // downstream (the exact failure mode a 2026-09 bulk import hit).
+          first_name_th: firstNameTh.trim(),
+          last_name_th: lastNameTh.trim(),
           job_title: position.trim(),
           start_date: startDate,
           title_prefix: titlePrefix || undefined,
@@ -689,6 +705,24 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
                   <span className="text-[11px] font-normal text-zinc-400">เว้นว่างได้หากยังไม่มีรหัสพนักงาน</span>
                 </label>
                 <label className={labelClasses}>
+                  รหัสตำแหน่ง (Position Code)
+                  <input
+                    value={positionCode}
+                    onChange={(e) => setPositionCode(e.target.value)}
+                    placeholder="เช่น POS-CEO"
+                    className={inputClasses}
+                  />
+                </label>
+                <label className={labelClasses}>
+                  ระดับตำแหน่ง (Level)
+                  <input
+                    value={levelRole}
+                    onChange={(e) => setLevelRole(e.target.value)}
+                    placeholder="เช่น Executive, Senior"
+                    className={inputClasses}
+                  />
+                </label>
+                <label className={labelClasses}>
                   ประเภทงาน (Job Type)
                   <select value={jobType} onChange={(e) => setJobType(e.target.value)} className={inputClasses}>
                     <option>Full-time</option>
@@ -916,6 +950,8 @@ export function AddEmployeeWizardPage({ tenantId, roles, units }: AddEmployeeWiz
             <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
               <p className="mb-1 text-xs font-semibold text-zinc-400">การจ้างงานและตำแหน่ง</p>
               <SummaryRow label="รหัสพนักงาน" value={employeeCode} />
+              <SummaryRow label="รหัสตำแหน่ง" value={positionCode} />
+              <SummaryRow label="ระดับตำแหน่ง" value={levelRole} />
               <SummaryRow label="ประเภทการจ้างงาน" value={employmentType} />
               <SummaryRow label="ตำแหน่งงาน" value={position} />
               <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />

@@ -58,7 +58,10 @@ export function PersonnelGridView({ rows, onEditRow, onViewRow }: PersonnelGridV
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-zinc-400">ตำแหน่ง</dt>
-              <dd className="truncate text-zinc-700 dark:text-zinc-200">{row.position}</dd>
+              <dd className="truncate text-zinc-700 dark:text-zinc-200">
+                {row.position}
+                {row.levelRole && <span className="text-zinc-400"> · {row.levelRole}</span>}
+              </dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-zinc-400">หน่วยงาน</dt>

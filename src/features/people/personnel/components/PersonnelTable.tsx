@@ -72,7 +72,10 @@ export function PersonnelTable({ rows, startIndex = 0, onEditRow, onViewRow }: P
                     {typeBadge[row.type].label}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{row.position}</td>
+                <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">
+                  <p>{row.position}</p>
+                  {row.levelRole && <p className="text-xs text-zinc-400">{row.levelRole}</p>}
+                </td>
                 <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{row.unit}</td>
                 <td className="px-4 py-3">
                   <div className="flex flex-col gap-1">

@@ -41,10 +41,36 @@ export const personnelViewTabs: PersonnelViewTabItem[] = [
 
 export interface PersonnelRow {
   id: string;
+  /** Raw `user_id` (distinct from `id`, the membership id) — needed since
+   *  2026-09-16 to edit `nameTh` below, which lives on `users` and is
+   *  written via `PATCH /users/:id` (`updateUserProfile`), a different
+   *  endpoint/resource than the membership-level PATCH `id` above goes
+   *  through. Omitted (not `null`) on mock rows, same reasoning as
+   *  departmentId below. */
+  userId?: string;
   name: string;
+  /** Real `first_name_th`/`last_name_th` — added 2026-09-16, see
+   *  `CoreMemberRow.user`'s own comment. Kept as separate raw fields (not
+   *  just a joined display string) so EditPersonnelModal can pre-populate
+   *  two distinct inputs, same reasoning as departmentId/startDate below —
+   *  writable via `updateUserProfile` (`@/features/profile`), a different
+   *  endpoint than the rest of this modal's fields (see `userId` above). */
+  firstNameTh?: string | null;
+  lastNameTh?: string | null;
+  /** `firstNameTh`/`lastNameTh` joined for display — `null` when neither is
+   *  set. Kept separate from `name` (the primary/fallback name) rather than
+   *  merged into it, since Core keeps them as genuinely distinct columns. */
+  nameTh?: string | null;
   email: string;
   employeeCode: string;
   position: string;
+  /** Raw `memberships.position_code`/`level_role` (e.g. "POS-CEO"/
+   *  "Executive") — real since 2026-09-16, round-trip confirmed directly
+   *  against `thunder_core_API`. Free text, not a closed set on Core's
+   *  side. Omitted (not `null`) on mock rows, same reasoning as
+   *  departmentId below. */
+  positionCode?: string | null;
+  levelRole?: string | null;
   unit: string;
   /** Raw `default_department_id`, for pre-selecting the right option in
    *  EditPersonnelModal's department dropdown — `unit` above is already a

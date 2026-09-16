@@ -74,8 +74,11 @@ export function ViewPersonnelModal({ row, onClose, onEdit }: ViewPersonnelModalP
         </Badge>
       </div>
       <dl className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <Row label="ชื่อ (ไทย)" value={row.nameTh || "-"} />
         <Row label="รหัสพนักงาน" value={row.employeeCode} />
         <Row label="ตำแหน่ง" value={row.position} />
+        <Row label="รหัสตำแหน่ง" value={row.positionCode || "-"} />
+        <Row label="ระดับตำแหน่ง" value={row.levelRole || "-"} />
         <Row label="หน่วยงาน" value={row.unit} />
         <Row
           label="วันที่เริ่มงาน"

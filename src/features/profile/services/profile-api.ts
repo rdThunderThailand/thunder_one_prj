@@ -2,8 +2,8 @@
 // & Security page (/account-security), both of which show the same "me"
 // data. Two access patterns, same split every other people/* service uses:
 // getMyProfile is server-only (coreGet, token passed in explicitly);
-// updateMyProfile is client-safe (goes through /api/proxy) since it's called
-// from the edit-profile modal's "use client" form.
+// updateUserProfile is client-safe (goes through /api/proxy) since it's
+// called from "use client" edit forms.
 //
 // `GET /api/core/v1/me` returns everything below — confirmed real by reading
 // thunder_core_API directly (2026-09-16). Writing is far narrower:
@@ -13,6 +13,11 @@
 // real to *read* but have NO write path anywhere in Core today. Don't send
 // them in a PATCH body — the schema is `.strict()` and rejects unknown keys
 // with a 400.
+//
+// `first_name_th`/`last_name_th` real since 2026-09-16 (commit `f15d612`) —
+// both read and write; see `people/personnel`'s `CoreMemberRow.user` comment
+// for the full history (write-only for ~10 minutes after `489c3b1` before
+// the read-back fix landed).
 import { coreGet } from "@/lib/core/core-get";
 import { requestApi } from "@/lib/api/media-api";
 
@@ -22,6 +27,8 @@ export interface CoreMe {
   email: string;
   first_name: string | null;
   last_name: string | null;
+  first_name_th: string | null;
+  last_name_th: string | null;
   display_name: string | null;
   avatar_url: string | null;
   preferred_language: string | null;
@@ -37,8 +44,19 @@ export async function getMyProfile(token: string): Promise<CoreMe | null> {
 export interface UpdateProfileInput {
   first_name?: string | null;
   last_name?: string | null;
+  first_name_th?: string | null;
+  last_name_th?: string | null;
 }
 
-export async function updateMyProfile(userId: string, input: UpdateProfileInput): Promise<CoreMe> {
+/**
+ * `PATCH /users/:id` — despite the name, `userId` isn't locked to "the
+ * caller's own id": Core's `updateProfileSchema` route also permits a
+ * `company_admin` editing another user sharing an administered tenant (or
+ * `super_admin`, any user). `people/personnel`'s `EditPersonnelModal` reuses
+ * this directly for that HR-editing-someone-else's-record case, rather than
+ * duplicating a thin wrapper — same "share the real service" reasoning as
+ * `people/personnel`'s own barrel exports.
+ */
+export async function updateUserProfile(userId: string, input: UpdateProfileInput): Promise<CoreMe> {
   return requestApi<CoreMe>("PATCH", `/users/${userId}`, input);
 }

@@ -75,10 +75,16 @@ export function mapCoreMember(row: CoreMemberRow, units: Record<string, OrgUnitN
   const now = new Date();
   return {
     id: row.id,
+    userId: row.user.id,
     name: row.user.full_name,
+    firstNameTh: row.user.first_name_th,
+    lastNameTh: row.user.last_name_th,
+    nameTh: [row.user.first_name_th, row.user.last_name_th].filter(Boolean).join(" ") || null,
     email: row.user.email,
     employeeCode: row.employee_code ?? "-",
     position: row.job_title ?? "-",
+    positionCode: row.position_code,
+    levelRole: row.level_role,
     unit: unitLabel(row.default_department_id, units),
     departmentId: row.default_department_id,
     type: resolveType(row),

@@ -37,6 +37,13 @@ export interface CoreMemberRow {
   joined_at: string;
   employee_code: string | null;
   job_title: string | null;
+  /** Confirmed real 2026-09-16 — added to `MEMBER_SELECT`/`toMemberView` in
+   *  `thunder_core_API` commit `489c3b1` (round-trip: write via
+   *  `updateMemberSchema`, read back here). `position_code` e.g. "POS-CEO",
+   *  `level_role` e.g. "Executive"/"Senior" — plain free text, not a closed
+   *  set on Core's side. */
+  position_code: string | null;
+  level_role: string | null;
   default_department_id: string | null;
   start_date: string | null;
   role_code: string | null;
@@ -57,6 +64,15 @@ export interface CoreMemberRow {
     id: string;
     email: string;
     full_name: string;
+    /** Real since 2026-09-16 — `thunder_core_API` commit `f15d612` added
+     *  these to `fetchUsers()`'s select (feeds `toMemberView`'s embedded
+     *  `user` object), closing the write-only gap `first_name_th`/
+     *  `last_name_th` had when first added in `489c3b1`. An explicit
+     *  Thai-script name pair, separate from `full_name` (which still falls
+     *  back through display_name → composed first_name/last_name → the
+     *  romanized names a 2026-09 bulk import wrote into those). */
+    first_name_th: string | null;
+    last_name_th: string | null;
     avatar_url: string | null;
   };
 }
@@ -88,6 +104,9 @@ export interface CreateMemberInput {
   role_code: string;
   employee_code?: string;
   job_title?: string;
+  /** Real since 2026-09-16 — see `CoreMemberRow`'s own comment. */
+  position_code?: string;
+  level_role?: string;
   default_department_id?: string;
   /** "YYYY-MM-DD". */
   start_date?: string;
@@ -168,6 +187,9 @@ export interface UpdateMemberInput {
    *  this file's own updateMember() comment for the "build ahead, 404
    *  gracefully" pattern. */
   start_date?: string | null;
+  /** Real since 2026-09-16 — see `CoreMemberRow`'s own comment. */
+  position_code?: string | null;
+  level_role?: string | null;
 }
 
 export async function updateMember(
@@ -237,6 +259,11 @@ export interface CreateEmployeeInput
   title_prefix?: string;
   first_name_en?: string;
   last_name_en?: string;
+  /** Real since 2026-09-16 — explicit Thai-script name pair, distinct from
+   *  `first_name`/`last_name` above (still the primary/fallback name).
+   *  See `CoreMemberRow.user`'s own comment for why this field exists. */
+  first_name_th?: string;
+  last_name_th?: string;
   gender?: "male" | "female" | "unspecified";
   /** PII — not returned on any GET/list per the integration guide. */
   national_id?: string;

@@ -202,6 +202,10 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
   // PP03-013 gap as AddEmployeeWizardPage's own employeeCode field). Stays
   // blank (sent as `undefined`) unless someone actually has a real code.
   const [employeeCode, setEmployeeCode] = useState("");
+  // Real since 2026-09-16 — memberships.position_code/level_role, round-trip
+  // confirmed against thunder_core_API (commit 489c3b1).
+  const [positionCode, setPositionCode] = useState("");
+  const [levelRole, setLevelRole] = useState("");
   const [position, setPosition] = useState("");
   const [unitId, setUnitId] = useState("");
   const [team, setTeam] = useState("");
@@ -288,6 +292,8 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
     setOtherContact("");
     setAdditionalNote("");
     setEmployeeCode("");
+    setPositionCode("");
+    setLevelRole("");
     setPosition("");
     setUnitId("");
     setTeam("");
@@ -337,6 +343,8 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
         email: email.trim(),
         role_code: roleCode,
         employee_code: employeeCode.trim() || undefined,
+        position_code: positionCode.trim() || undefined,
+        level_role: levelRole.trim() || undefined,
         job_title: position.trim() || undefined,
         default_department_id: unitId || undefined,
         start_date: startDate || undefined,
@@ -691,6 +699,24 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
                   ทีม (Team)
                   <input value={team} onChange={(e) => setTeam(e.target.value)} className={inputClasses} />
                 </label>
+                <label className={labelClasses}>
+                  รหัสตำแหน่ง (Position Code)
+                  <input
+                    value={positionCode}
+                    onChange={(e) => setPositionCode(e.target.value)}
+                    placeholder="เช่น POS-CEO"
+                    className={inputClasses}
+                  />
+                </label>
+                <label className={labelClasses}>
+                  ระดับตำแหน่ง (Level)
+                  <input
+                    value={levelRole}
+                    onChange={(e) => setLevelRole(e.target.value)}
+                    placeholder="เช่น Executive, Senior"
+                    className={inputClasses}
+                  />
+                </label>
                 {/* ผู้บังคับบัญชา (Reporting To) removed — see
                     AddEmployeeWizardPage's identical comment. */}
                 <label className={labelClasses}>
@@ -883,6 +909,8 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
                   <EditLink onClick={() => setStepIndex(1)} />
                 </div>
                 <SummaryRow label="ตำแหน่ง" value={position} />
+                <SummaryRow label="รหัสตำแหน่ง" value={positionCode} />
+                <SummaryRow label="ระดับตำแหน่ง" value={levelRole} />
                 <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />
               </div>
               <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">

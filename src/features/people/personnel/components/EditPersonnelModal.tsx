@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ApiError } from "@/lib/api/api-error";
 import type { OrgUnitNode } from "@/features/people/org-structure";
+import { updateUserProfile } from "@/features/profile";
 import { updateMember } from "../services/members-api";
 import type { PersonnelRow } from "../mock-data";
 
@@ -36,21 +38,23 @@ interface EditPersonnelModalProps {
  * Opened from PersonnelTable's row-action ("...") button — previously a
  * disabled "Not built yet" stub. Originally scoped to department/job_title
  * (see docs/people/edit-member-department-job-title-field-requirements.md);
- * วันที่เริ่มงาน (start_date) added 2026-09-15 on the same endpoint once it
- * turned out to be the same `memberships` column the other two fields
- * already live on. Calls `updateMember()` (services/members-api.ts), which
- * 404s until Core ships the proposed `PATCH /tenants/:id/members/:memberId`
- * (department/job_title) or its start_date extension — same "build ahead of
- * Core, degrade gracefully" pattern as asset-intelligence/assets's
- * `EditAssetModal`/`updateAsset`. `router.refresh()` on success re-runs the
- * Server Component fetch in people/personnel/page.tsx so the edited row
- * reflects immediately.
+ * วันที่เริ่มงาน (start_date) added 2026-09-15, รหัสตำแหน่ง/ระดับตำแหน่ง
+ * (position_code/level_role) added 2026-09-16 — all on the same
+ * `PATCH /tenants/:id/members/:memberId`, confirmed live and fully
+ * round-trip on Core's side (unlike when this modal was first built, this
+ * is no longer a "build ahead, degrade gracefully" case). `router.refresh()`
+ * on success re-runs the Server Component fetch in people/personnel/page.tsx
+ * so the edited row reflects immediately.
  */
 export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPersonnelModalProps) {
   const router = useRouter();
   const [departmentId, setDepartmentId] = useState(row.departmentId ?? "");
   const [jobTitle, setJobTitle] = useState(row.position === "-" ? "" : row.position);
   const [startDate, setStartDate] = useState(row.startDate ?? "");
+  const [positionCode, setPositionCode] = useState(row.positionCode ?? "");
+  const [levelRole, setLevelRole] = useState(row.levelRole ?? "");
+  const [firstNameTh, setFirstNameTh] = useState(row.firstNameTh ?? "");
+  const [lastNameTh, setLastNameTh] = useState(row.lastNameTh ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -65,7 +69,24 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
         default_department_id: departmentId || null,
         job_title: jobTitle.trim() || null,
         start_date: startDate || null,
+        position_code: positionCode.trim() || null,
+        level_role: levelRole.trim() || null,
       });
+      // Separate endpoint/resource (users, not memberships) — see
+      // ชื่อ (ไทย)'s field comment below. A failure here shouldn't undo the
+      // membership fields that already saved successfully; report it as a
+      // partial-success toast instead, same pattern
+      // AddContractorWizardPage's own contract-fields follow-up call uses.
+      if (row.userId) {
+        try {
+          await updateUserProfile(row.userId, {
+            first_name_th: firstNameTh.trim() || null,
+            last_name_th: lastNameTh.trim() || null,
+          });
+        } catch {
+          toast.error("บันทึกข้อมูลอื่นสำเร็จ แต่บันทึกชื่อ (ไทย) ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+        }
+      }
       router.refresh();
       onClose();
     } catch (err) {
@@ -92,6 +113,24 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
       }
     >
       <form id="edit-personnel-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
+        {/* ชื่อ (ไทย) — real since 2026-09-16, but written via
+            updateUserProfile (PATCH /users/:id), a different Core
+            endpoint/resource than every other field in this form (which all
+            go through updateMember's PATCH /tenants/:id/members/:memberId
+            above). Only rendered when row.userId is known (real rows always
+            have it; mock rows never do). */}
+        {row.userId && (
+          <>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              ชื่อ (ไทย)
+              <input value={firstNameTh} onChange={(e) => setFirstNameTh(e.target.value)} className={inputClasses} />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              นามสกุล (ไทย)
+              <input value={lastNameTh} onChange={(e) => setLastNameTh(e.target.value)} className={inputClasses} />
+            </label>
+          </>
+        )}
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           หน่วยงาน
           <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} className={inputClasses}>
@@ -113,6 +152,24 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
+            className={inputClasses}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          รหัสตำแหน่ง (Position Code)
+          <input
+            value={positionCode}
+            onChange={(e) => setPositionCode(e.target.value)}
+            placeholder="เช่น POS-CEO"
+            className={inputClasses}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          ระดับตำแหน่ง (Level)
+          <input
+            value={levelRole}
+            onChange={(e) => setLevelRole(e.target.value)}
+            placeholder="เช่น Executive, Senior"
             className={inputClasses}
           />
         </label>

@@ -163,9 +163,19 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
   const [importMode, setImportMode] = useState<"new" | "update" | "mix">("new");
   const [skipFirstRow, setSkipFirstRow] = useState(true);
 
-  // Step 2 — bulk-applied employment details. All decorative.
+  // Step 2 — bulk-applied employment details, applied to every row in the
+  // batch. unitId/position/workArrangement/notes/startDate below are real
+  // (sent in `sharedFields`); team/employmentType label/workLocation/endDate
+  // stay decorative — this comment previously said "All decorative", which
+  // was stale (fixed 2026-09-16, same mock-data audit as the rest of
+  // People Workspace).
   const [unitId, setUnitId] = useState("");
   const [team, setTeam] = useState("");
+  // Real since 2026-09-16 — memberships.position_code/level_role, round-trip
+  // confirmed against thunder_core_API (commit 489c3b1), applied to every
+  // row in this batch same as position/unitId above.
+  const [positionCode, setPositionCode] = useState("");
+  const [levelRole, setLevelRole] = useState("");
   const [position, setPosition] = useState("");
   const [employmentType, setEmploymentType] = useState("ผู้รับเหมา (Contractor)");
   const [workLocation, setWorkLocation] = useState(WORK_LOCATION_OPTIONS[0]);
@@ -309,6 +319,8 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
         email: row.email,
         role_code: roleCode,
         default_department_id: unitId || undefined,
+        position_code: positionCode.trim() || undefined,
+        level_role: levelRole.trim() || undefined,
         member_type: memberType,
         work_arrangement: workArrangementCode,
         notes: notes.trim() || undefined,
@@ -321,6 +333,13 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
             ...sharedFields,
             first_name: row.firstName,
             last_name: row.lastName,
+            // Also captured explicitly (real since 2026-09-16) — see
+            // AddEmployeeWizardPage's identical comment. The CSV's
+            // "ชื่อ (ภาษาไทย)" column maps to both; if the source file's own
+            // data is genuinely Thai script, this keeps it recoverable even
+            // if first_name/last_name are ever overwritten downstream.
+            first_name_th: row.firstName,
+            last_name_th: row.lastName,
             job_title: position.trim(),
             start_date: startDate,
             phone: row.mobile,
@@ -685,6 +704,24 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
                   ))}
                 </datalist>
                 <ErrorText message={errors.position} />
+              </label>
+              <label className={labelClasses}>
+                รหัสตำแหน่ง (Position Code)
+                <input
+                  value={positionCode}
+                  onChange={(e) => setPositionCode(e.target.value)}
+                  placeholder="เช่น POS-CEO"
+                  className={inputClasses}
+                />
+              </label>
+              <label className={labelClasses}>
+                ระดับตำแหน่ง (Level)
+                <input
+                  value={levelRole}
+                  onChange={(e) => setLevelRole(e.target.value)}
+                  placeholder="เช่น Executive, Senior"
+                  className={inputClasses}
+                />
               </label>
               <label className={labelClasses}>
                 ประเภทการจ้างงาน
