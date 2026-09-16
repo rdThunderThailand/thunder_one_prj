@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRightIcon, LightningIcon, XIcon } from "@/components/ui/icons";
 
 const DISMISS_KEY = "thunderone-home-banner-dismissed";
@@ -8,15 +8,32 @@ const DISMISS_KEY = "thunderone-home-banner-dismissed";
 // A real, working dismiss (persisted per-browser via localStorage) — this is
 // what the mockup's "ตัวอย่าง disable" annotation on the close button is
 // pointing at; it must actually hide the banner, not just be decorative.
+//
+// `dismissed` starts `false` unconditionally so the very first client render
+// matches the server's (which has no access to localStorage and so can only
+// ever render "not dismissed") — reading localStorage inside the `useState`
+// initializer, as this component did before, made the client's *first*
+// render disagree with the server's whenever the flag was already set,
+// which is exactly a hydration mismatch. Syncing the real value in a
+// `useEffect` instead (runs only after hydration completes) fixes that; the
+// cost is a previously-dismissed banner can flash for a frame on
+// navigation, an accepted tradeoff for a non-critical dismissible banner.
 export function HomeBanner() {
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
     try {
-      return window.localStorage.getItem(DISMISS_KEY) === "1";
+      // One-time correction of a browser-only value (localStorage) the
+      // server could never have known — exactly the "external system"
+      // exception react-hooks/set-state-in-effect itself carves out
+      // (synchronizing from a source outside React), not a synchronous
+      // render-loop hazard: empty deps, runs once, no re-subscription.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (window.localStorage.getItem(DISMISS_KEY) === "1") setDismissed(true);
     } catch {
-      return false;
+      // Private browsing / storage disabled — stays not-dismissed.
     }
-  });
+  }, []);
 
   if (dismissed) return null;
 
