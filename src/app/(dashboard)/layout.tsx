@@ -18,8 +18,12 @@ export default async function DashboardLayout({
   if (session === "forbidden") {
     redirect("/no-access");
   }
-  const { userName, tenantName } = session;
-  const roleLabel = resolveRoleLabel(resolveRole(session));
+  const { userName, tenantName, jobTitle } = session;
+  // 2026-09-16 — the Topbar shows the person's real job title (Personnel's
+  // own `job_title` field) when their membership has one, not the RBAC
+  // access-tier label; falls back to the tier label (e.g. "Company
+  // Administrator") only for members with no job_title set.
+  const roleLabel = jobTitle ?? resolveRoleLabel(resolveRole(session));
 
   return (
     <div className="flex h-full">

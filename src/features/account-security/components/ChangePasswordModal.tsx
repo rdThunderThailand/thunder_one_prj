@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CheckCircleIcon, InfoIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/Modal";
+import { ApiError } from "@/lib/api/api-error";
+import { changePassword } from "@/features/profile/services/profile-api";
 
 const inputClasses =
   "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
@@ -20,21 +22,43 @@ const RULES: Rule[] = [
   { label: "มีอักขระพิเศษ (เช่น !@#$%^&*)", test: (pw) => /[!@#$%^&*]/.test(pw) },
 ];
 
-type Step = "form" | "validating" | "unavailable";
+// Strength bar reuses the exact same 4 RULES the checklist below already
+// checks in real time against the literal typed value — not a separate
+// scoring heuristic, so the bar and the checklist can never disagree.
+const STRENGTH_LABELS = ["อ่อนมาก", "อ่อน", "ปานกลาง", "ดี", "แข็งแรง"];
+const STRENGTH_BAR_COLORS = ["bg-red-500", "bg-orange-500", "bg-amber-500", "bg-lime-500", "bg-emerald-500"];
+const STRENGTH_TEXT_COLORS = [
+  "text-red-500",
+  "text-orange-500",
+  "text-amber-500",
+  "text-lime-600 dark:text-lime-400",
+  "text-emerald-600 dark:text-emerald-400",
+];
+
+type Step = "form" | "validating" | "success";
+
+function errorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.status === 401) return "รหัสผ่านปัจจุบันไม่ถูกต้อง";
+    return err.message || "เซิร์ฟเวอร์ปฏิเสธคำขอนี้";
+  }
+  return err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน";
+}
 
 /**
- * Matches the coordinating session's 6-step mockup for steps 1-3 (form →
- * validating). Steps 4-6 (success → "log out other devices?" → done) are
- * NOT built as shown: changing a password for real needs
- * `supabase.auth.updateUser({password})` (confirmed working in the sibling
- * Core repo's own dashboard), which needs a live Supabase browser session —
- * this app's session is Core's own `to_at` bearer cookie, not a Supabase
- * SSR session, and no Supabase client is wired up anywhere in this repo.
- * Rather than fake a success screen, step 3 always resolves to an honest
- * "unavailable" state. This is a known, flagged gap — see this feature's
- * README — not a silent stub.
+ * `PATCH /api/core/v1/me/password` — real since 2026-09-16 (Core commit
+ * `d33d21a`), see `profile-api.ts`'s `changePassword` for exactly what it
+ * verifies. Steps 1-3 (form → validating → success) are now a genuine
+ * end-to-end password change, not a UI mockup — no fabricated success
+ * screen anymore.
+ *
+ * The mockup's steps 5-6 ("log out other devices?" → logging out) are
+ * still NOT built: that needs a session/device-revoke endpoint, which
+ * doesn't exist in Core yet (flagged, backlogged — see this feature's
+ * README). Success closes straight through rather than offering a button
+ * that would do nothing.
  */
-export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+export function ChangePasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess?: () => void }) {
   const [step, setStep] = useState<Step>("form");
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -43,7 +67,7 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
   const passedRules = RULES.filter((r) => r.test(next)).length;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setError(null);
     if (!current) {
       setError("กรุณากรอกรหัสผ่านปัจจุบัน");
@@ -58,7 +82,14 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
       return;
     }
     setStep("validating");
-    window.setTimeout(() => setStep("unavailable"), 900);
+    try {
+      await changePassword({ current_password: current, new_password: next });
+      setStep("success");
+      onSuccess?.();
+    } catch (err) {
+      setError(errorMessage(err));
+      setStep("form");
+    }
   }
 
   if (step === "validating") {
@@ -66,14 +97,14 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
       <Modal open onClose={onClose} title="เปลี่ยนรหัสผ่าน" footer={null}>
         <div className="flex flex-col items-center gap-3 py-8 text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">กำลังตรวจสอบ...</p>
+          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">กำลังเปลี่ยนรหัสผ่าน...</p>
           <p className="text-xs text-zinc-400">กรุณารอสักครู่</p>
         </div>
       </Modal>
     );
   }
 
-  if (step === "unavailable") {
+  if (step === "success") {
     return (
       <Modal
         open
@@ -86,13 +117,11 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
         }
       >
         <div className="flex flex-col items-center gap-3 py-4 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400">
-            <InfoIcon className="h-6 w-6" />
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+            <CheckCircleIcon className="h-7 w-7" />
           </span>
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">ฟีเจอร์นี้ยังไม่เปิดใช้งานในตอนนี้</p>
-          <p className="max-w-xs text-xs text-zinc-400">
-            ระบบเปลี่ยนรหัสผ่านกำลังอยู่ระหว่างการเชื่อมต่อกับผู้ให้บริการยืนยันตัวตน ยังไม่สามารถเปลี่ยนรหัสผ่านได้ในขณะนี้
-          </p>
+          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">เปลี่ยนรหัสผ่านเรียบร้อยแล้ว</p>
+          <p className="max-w-xs text-xs text-zinc-400">รหัสผ่านของคุณได้รับการอัปเดตแล้ว</p>
         </div>
       </Modal>
     );
@@ -123,6 +152,20 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
           รหัสผ่านใหม่
           <input type="password" value={next} onChange={(e) => setNext(e.target.value)} className={inputClasses} />
         </label>
+        {next.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              <span>ความปลอดภัยของรหัสผ่าน</span>
+              <span className={STRENGTH_TEXT_COLORS[passedRules]}>{STRENGTH_LABELS[passedRules]}</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+              <div
+                className={`h-full rounded-full transition-all duration-200 ${STRENGTH_BAR_COLORS[passedRules]}`}
+                style={{ width: `${(passedRules / RULES.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
         <ul className="flex flex-col gap-1 text-xs">
           {RULES.map((rule) => {
             const passed = rule.test(next);
@@ -138,7 +181,12 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
           ยืนยันรหัสผ่านใหม่
           <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={inputClasses} />
         </label>
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        {error && (
+          <p className="flex items-start gap-1.5 text-xs text-red-500">
+            <InfoIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            {error}
+          </p>
+        )}
       </div>
     </Modal>
   );

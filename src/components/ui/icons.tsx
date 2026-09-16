@@ -763,3 +763,36 @@ export function LogoutIcon({ className = "h-4 w-4" }: IconProps) {
     </svg>
   );
 }
+
+// Added 2026-09-16 for AccountSecurityPage's "copy username" button (a real,
+// working clipboard copy — not decorative).
+export function CopyIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <rect x="8.5" y="8.5" width="11" height="11" rx="1.8" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M15.5 8.5V6.5A1.8 1.8 0 0 0 13.7 4.7H6.3A1.8 1.8 0 0 0 4.5 6.5v7.4a1.8 1.8 0 0 0 1.8 1.8h2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// Added 2026-09-16 for ProfilePage's avatar edit-photo affordance (inert —
+// no photo upload feature exists yet, see that component's own comment).
+export function CameraIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.1l.9-1.5A1.5 1.5 0 0 1 9.79 4.7h4.42a1.5 1.5 0 0 1 1.29.75L16.4 7h2.1A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="13" r="3.25" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}

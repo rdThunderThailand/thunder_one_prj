@@ -35,18 +35,18 @@ export function UserMenu({ userName, roleLabel }: UserMenuProps) {
         onClick={() => setIsOpen((open) => !open)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+        className="flex items-center gap-3 rounded-lg px-1.5 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-900"
       >
-        <Avatar name={userName} />
+        <Avatar name={userName} size={44} className="shadow-sm" />
         <span className="text-left leading-tight">
-          <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <span className="block text-base font-bold text-[#071858] dark:text-zinc-100">
             {userName}
           </span>
           {roleLabel && (
-            <span className="block text-xs text-zinc-500 dark:text-zinc-400">{roleLabel}</span>
+            <span className="block text-[12.8px] text-[#6071a1] dark:text-zinc-400">{roleLabel}</span>
           )}
         </span>
-        <ChevronDownIcon className="h-4 w-4 text-zinc-400" />
+        <ChevronDownIcon className="h-4 w-4 text-[#536999] dark:text-zinc-500" />
       </button>
 
       {isOpen && (

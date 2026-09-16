@@ -9,7 +9,11 @@ export default async function ProfileRoute() {
   const session = await getSession();
   const token = await getAuthToken();
   const tenantName = session === "forbidden" ? null : session.tenantName;
-  const roleName = session === "forbidden" ? null : (session.roleName ?? resolveRoleLabel(resolveRole(session)));
+  // Same preference as (dashboard)/layout.tsx's Topbar: the real job title
+  // over the RBAC tier label, falling back to it only when the member has
+  // no job_title set.
+  const roleName =
+    session === "forbidden" ? null : (session.jobTitle ?? session.roleName ?? resolveRoleLabel(resolveRole(session)));
 
   const me = token ? await getMyProfile(token) : null;
 

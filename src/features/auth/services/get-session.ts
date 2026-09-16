@@ -36,6 +36,15 @@ export interface Session {
   /** The winning role's `roles.name` — the human-readable label to show in the UI
    * (e.g. Topbar), preferred over any generic tier label. */
   roleName: string | null;
+  /** The caller's own `job_title` on their current tenant's membership row
+   * (e.g. "Senior Software Engineer") — the same field Personnel reads/
+   * writes, not an RBAC concept. Neither `/session` nor `/me/memberships`
+   * carry it, so it's a best-effort lookup against `/tenants/:id/members`
+   * (see `resolveMembershipExtras` below); `null` when the member has none
+   * set or the lookup failed. The Topbar prefers this over `roleName` — a
+   * person's actual position reads better under their name than their
+   * access tier. */
+  jobTitle: string | null;
 }
 
 /**
@@ -128,7 +137,7 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, tenantName: null, tenantId: null, ...NO_ROLE };
+    return { userName: FALLBACK_NAME, userId: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
   }
 
   if (sessionRes.status === 401) {
@@ -138,21 +147,71 @@ async function getSessionUncached(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, tenantName: null, tenantId: null, ...NO_ROLE };
+    return { userName: FALLBACK_NAME, userId: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
   }
 
   const body = await sessionRes.json().catch(() => null);
   const user = body?.data?.user;
   const tenantId: string | null = body?.data?.tenant?.id ?? null;
   const tenantName: string | null = body?.data?.tenant?.name ?? null;
-  const role = await resolveRole(membershipsRes, tenantId);
+  const userEmail = typeof user?.email === "string" ? user.email : null;
+  const rawUserId = typeof user?.id === "string" ? user.id : null;
+  const [role, membershipExtras] = await Promise.all([
+    resolveRole(membershipsRes, tenantId),
+    resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
+  ]);
+  const { jobTitle } = membershipExtras;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, tenantName, tenantId, ...role };
+    return { userName: FALLBACK_NAME, userId: null, tenantName, tenantId, ...role, jobTitle };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
-  return { userName: resolveUserName(user), userId, tenantName, tenantId, ...role };
+  return { userName: resolveUserName(user, membershipExtras), userId, tenantName, tenantId, ...role, jobTitle };
+}
+
+/**
+ * Best-effort lookup of two fields neither `/session` nor `/me/memberships`
+ * carry: the caller's `job_title` on their current tenant's membership, and
+ * their `first_name_th`/`last_name_th` (both live on the `/tenants/:id/
+ * members` list row's nested `user` — same shape Personnel already reads,
+ * and the same row already needed for job_title, so this is one lookup for
+ * both rather than two). Rather than pulling the whole roster just for a
+ * couple of fields, this reuses that endpoint's own `search` filter (by
+ * email, unique per account) to narrow it to a handful of rows, then
+ * confirms the match by `user.id` before trusting it, since `search`'s
+ * match semantics aren't a guaranteed-exact `user_id` filter. Returns all
+ * `null` (callers fall back to their non-Thai/RBAC defaults) on any failure
+ * — this is a display nicety, not worth failing the whole session over.
+ */
+async function resolveMembershipExtras(
+  authHeaders: Record<string, string>,
+  tenantId: string | null,
+  email: string | null,
+  userId: string | null,
+): Promise<{ jobTitle: string | null; firstNameTh: string | null; lastNameTh: string | null }> {
+  const empty = { jobTitle: null, firstNameTh: null, lastNameTh: null };
+  if (!tenantId || !email || !userId) return empty;
+  try {
+    const res = await fetch(
+      `${env.coreApiUrl}/api/core/v1/tenants/${tenantId}/members?limit=5&search=${encodeURIComponent(email)}`,
+      { headers: authHeaders, cache: "no-store" },
+    );
+    if (!res.ok) return empty;
+    const body = await res.json().catch(() => null);
+    const rows: Array<{ job_title?: unknown; user?: { id?: unknown; first_name_th?: unknown; last_name_th?: unknown } }> =
+      body?.data?.data ?? [];
+    const match = rows.find((r) => r.user?.id === userId);
+    if (!match) return empty;
+    const jobTitle = typeof match.job_title === "string" && match.job_title.trim() ? match.job_title : null;
+    const firstNameTh =
+      typeof match.user?.first_name_th === "string" && match.user.first_name_th.trim() ? match.user.first_name_th : null;
+    const lastNameTh =
+      typeof match.user?.last_name_th === "string" && match.user.last_name_th.trim() ? match.user.last_name_th : null;
+    return { jobTitle, firstNameTh, lastNameTh };
+  } catch {
+    return empty;
+  }
 }
 
 /** Public entry point — memoized per request via `React.cache()`. See
@@ -232,8 +291,20 @@ async function resolveRole(
 /** Never falls back to `user.email` — an email address isn't a display name,
  * and showing one in the Topbar profile chip is exactly what Nie asked to
  * stop happening (2026-08-25). Falls to the generic `FALLBACK_NAME` instead
- * when Core has neither a display_name nor a first/last name for the user. */
-function resolveUserName(user: Record<string, unknown>): string {
+ * when Core has neither a display_name nor a first/last name for the user.
+ *
+ * Prefers the Thai name (`extras`, from `resolveMembershipExtras`) over
+ * `display_name` when `preferred_language` is "th" and one is actually set
+ * — same real-field-driven preference `ProfilePage` uses, so the Topbar and
+ * Profile agree instead of one silently staying English (Nie, 2026-09-16). */
+function resolveUserName(
+  user: Record<string, unknown>,
+  extras: { firstNameTh: string | null; lastNameTh: string | null },
+): string {
+  const preferredLanguage = typeof user.preferred_language === "string" ? user.preferred_language : null;
+  const thaiName = [extras.firstNameTh, extras.lastNameTh].filter(Boolean).join(" ");
+  if (preferredLanguage === "th" && thaiName) return thaiName;
+
   const displayName = String(user.display_name ?? "").trim();
   if (displayName) return displayName;
 
