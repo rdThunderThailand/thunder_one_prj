@@ -72,12 +72,42 @@ function NavLink({ item, pathname, collapsed }: { item: NavItem; pathname: strin
 export function MediaWorkspaceBrand({ collapsed }: { collapsed: boolean }) {
   return (
     <>
-      <span
-        className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg text-sm font-black italic text-white"
-        style={{ background: PRIMARY }}
+      <svg
+        viewBox="0 0 200 200"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-9 w-9 shrink-0"
+        aria-hidden="true"
       >
-        T1
-      </span>
+        <rect width="200" height="200" rx="44" fill="#010F29" />
+        <g transform="translate(40 53.4) scale(1.92)">
+          <path
+            d="M62.5277 4.82971L52.1716 43.9017H38.9355L46.4714 16.0402H39.805L49.2732 4.82971H62.5277Z"
+            fill="url(#media_sidebar_logo_gradient)"
+          />
+          <path
+            d="M33.2354 15.8467H0L2.99512 4.63965H42.7031L33.2354 15.8467Z"
+            fill="white"
+          />
+          <path
+            d="M27.4442 11.5132L19.1298 43.8647H5.89343L15.1473 8.31104L27.4442 11.5132Z"
+            fill="white"
+          />
+        </g>
+        <defs>
+          <linearGradient
+            id="media_sidebar_logo_gradient"
+            x1="57.7753"
+            y1="18.9386"
+            x2="37.0998"
+            y2="35.4597"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0.466346" stopColor="#1165B7" />
+            <stop offset="0.495192" stopColor="#0A50BA" />
+          </linearGradient>
+        </defs>
+      </svg>
       {!collapsed && (
         <span className="min-w-0">
           <span className="block truncate text-[15px] font-extrabold leading-none" style={{ color: FOREGROUND }}>
