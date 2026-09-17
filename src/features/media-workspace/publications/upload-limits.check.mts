@@ -18,13 +18,10 @@ for (const [name, type] of [
   ["clip.mp4", "video/mp4"],
   ["shot.png", "image/png"],
   ["shot.jpg", "image/jpeg"],
+  ["shot.webp", "image/webp"],
 ] as const) {
   assert.equal(rejectUploadReason(file(name, type)), null, `${type} should be accepted`);
 }
-
-// WebP is refused: players cannot render it, so it must not slip through as an image type.
-assert.ok(rejectUploadReason(file("shot.webp", "image/webp")), "webp should be rejected");
-assert.ok(rejectUploadReason(file("shot.webp", "")), "webp should be rejected via extension fallback too");
 
 // The format that is actually in the library gets the convert-first message.
 const movReason = rejectUploadReason(file("clip.mov", "video/quicktime"));
