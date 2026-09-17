@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { OrgUnitNode } from "@/features/people/org-structure";
+import { LoadFailure } from "@/features/people/shared";
 import { isOnProbation } from "../core-mapper";
 import type { PersonnelRow, PersonnelType, PersonnelViewTab, WorkStatus } from "../mock-data";
 import { EditPersonnelModal } from "./EditPersonnelModal";
@@ -149,9 +150,7 @@ export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }
       <PersonnelTabs active={activeTab} onChange={setActiveTab} />
 
       {fetchedRows === null ? (
-        <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
-          ไม่สามารถโหลดรายชื่อบุคลากรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
-        </p>
+        <LoadFailure message="ไม่สามารถโหลดรายชื่อบุคลากรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
       ) : activeTab === "by-unit" ? (
         <PersonnelGroupedView
           rows={filteredRows}

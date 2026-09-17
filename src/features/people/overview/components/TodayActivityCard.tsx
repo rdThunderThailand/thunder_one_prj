@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/Card";
+import { LoadFailure } from "@/features/people/shared";
 import type { CoreRecentLog } from "../services/dashboard-api";
 
 interface TodayActivityCardProps {
@@ -35,9 +36,7 @@ export function TodayActivityCard({ logs }: TodayActivityCardProps) {
         </button>
       </div>
       {logs === null ? (
-        <p className="flex flex-1 items-center justify-center text-center text-xs text-zinc-400">
-          ไม่สามารถโหลดกิจกรรมได้ในขณะนี้
-        </p>
+        <LoadFailure message="ไม่สามารถโหลดกิจกรรมได้ในขณะนี้" compact />
       ) : logs.length === 0 ? (
         <p className="flex flex-1 items-center justify-center text-center text-xs text-zinc-400">ไม่มีกิจกรรมวันนี้</p>
       ) : (

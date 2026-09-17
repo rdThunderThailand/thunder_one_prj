@@ -841,3 +841,18 @@ export function CameraIcon({ className = "h-4 w-4" }: IconProps) {
     </svg>
   );
 }
+
+// Added 2026-09-17 for the shared People LoadFailure retry button.
+export function RefreshIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path d="M17 4v4h-4M7 20v-4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
