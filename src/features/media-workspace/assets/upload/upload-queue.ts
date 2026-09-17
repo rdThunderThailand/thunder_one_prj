@@ -14,6 +14,9 @@ export type UploadItem = {
   state: UploadItemState;
   pct: number;
   error?: string;
+  /** Set on a `completed` item admitted with a caveat (ADR 0070 `unverified_preset`, e.g. an
+   *  uncertified H.264 Main Profile) — a completed upload, not a failure. */
+  warning?: string;
   /** Authorization from this file's first attempt. A retry reuses it to resume from the prior
    *  offset; dropping it means re-authorizing and restarting from zero (ADR-0059). */
   target?: UploadTarget;

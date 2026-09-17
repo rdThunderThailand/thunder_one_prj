@@ -126,6 +126,7 @@ export function UploadQueuePage() {
                         <div className={`h-full rounded-full transition-[width] ${item.state === "failed" ? "bg-red-500" : item.state === "completed" ? "bg-emerald-500" : "bg-indigo-600"}`} style={{ width: `${item.pct}%` }} />
                       </div>
                       {item.error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{item.error}</p>}
+                      {item.warning && <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{item.warning}</p>}
                     </div>
                     <div className="flex shrink-0 items-center gap-3 text-xs">
                       <span className={`min-w-16 text-right font-medium ${STATE_TONE[item.state]}`}>{STATE_LABEL[item.state]}{item.state === "uploading" && ` ${item.pct}%`}</span>

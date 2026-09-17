@@ -20,6 +20,7 @@ import {
   summarize,
   type UploadItem,
 } from "./upload-queue";
+import { verdictMessage } from "./verdict-message";
 
 let nextId = 0;
 const newId = () => String(nextId++);
@@ -87,8 +88,21 @@ export function useUploadQueue() {
           onProgress: (pct) => patchItem(id, (item) => ({ ...item, pct })),
         });
       })
-      .then(() => {
-        patchItem(id, (item) => ({ ...item, state: "completed", pct: 100 }));
+      .then((registered) => {
+        // ADR 0070: a resolved register call is not automatically success — the backend already
+        // judged the file on intake. `failed` renders like any other refusal; `ready` with a
+        // verdict message (unverified_preset) still completed, just with a caveat attached.
+        const message = verdictMessage(registered.probe_verdict);
+        if (registered.status === "failed") {
+          patchItem(id, (item) => ({
+            ...item,
+            state: "failed",
+            pct: 100,
+            error: message ?? "The server refused this file.",
+          }));
+        } else {
+          patchItem(id, (item) => ({ ...item, state: "completed", pct: 100, warning: message ?? undefined }));
+        }
       })
       .catch((error: unknown) => {
         const name = error instanceof Error ? error.name : "";
