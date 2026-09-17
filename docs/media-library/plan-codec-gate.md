@@ -1,8 +1,9 @@
 # Plan — Codec gate (ADR 0069 + ADR 0070, no backfill)
 
-**Living document.** Update the status table every time a ticket moves, and paste this file's
-path into the handoff at the start of every new session on this work. Spec of record:
-[thunder_one_prj#119](https://github.com/rdThunderThailand/thunder_one_prj/issues/119).
+**CLOSED — epic done, 2026-09-17.** Every deliverable and every ticket (including the backfill and
+WebP closure that were originally split out) is closed and merged. Kept as a historical record;
+see "Frontier right now" below. Spec of record:
+[thunder_one_prj#119](https://github.com/rdThunderThailand/thunder_one_prj/issues/119) — CLOSED.
 ADRs: `docs/adr/0069-*.md`, `docs/adr/0070-*.md` (branch `feat/converter`). ADR 0071 is out of
 scope and has no ticket.
 
@@ -148,3 +149,4 @@ rediscover in the Facts section above.
 | 2026-09-17 | #67 UI verify | Signed into `localhost:3000` (pointed at prod) and opened Media Detail for `video_593311223752425916-AWtqkwNQ.MP4` (one of the 3 backfilled Assets): Status pill "Failed", message "This file is H.264 High Profile, which the players cannot decode — convert to Baseline and upload again." — matches the verdict exactly. Posted as a PR #74 comment. PR is fully verified at every layer now (SQL, RPC, UI); still Draft, waiting on the user to flip it to Ready. |
 | 2026-09-17 | #67 PR merged, epic closed | User merged PR #74 into `develop` (Thunder_Core). Local `feat/codec-backfill-67` branch deleted post-merge. Epic is fully done — every ticket except the held #121 is closed and merged. |
 | 2026-09-17 | #121 closed, epic fully done | Bucket migration ([Thunder_Core#75](https://github.com/rdThunderThailand/Thunder_Core/pull/75)) and FE upload-limits ([#125](https://github.com/rdThunderThailand/thunder_one_prj/pull/125)) both applied, verified (Storage-edge signed-URL probe both environments + real prod browser check), and merged. Inventory before any write found the ticket's "2 live WebP Assets on prod" premise stale — 0 exist, the 2 `.webp` objects are ADR 0011 orphans — so part 3 was N/A. #121 closed. Every ticket in the codec-gate epic is now CLOSED and every PR MERGED. |
+| 2026-09-17 | #119 closed, spec archived | Closed the parent spec issue — no checklist/sub-issue link of its own on GitHub, just hadn't been closed after the last child ticket (#121) closed. Comment lists every deliverable (A–E) and every ticket with its merged PR, and repeats the one known accepted-risk gap (verification item 7, real-player check — same as #66's). Epic is now closed at every level: spec, every ticket, every PR. |
