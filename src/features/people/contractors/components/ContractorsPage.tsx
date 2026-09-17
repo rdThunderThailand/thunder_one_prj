@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { LoadFailure } from "@/features/people/shared";
 import type { ContractorRow, ContractorTab } from "../mock-data";
 import { ContractorFilterPanel } from "./ContractorFilterPanel";
 import { ContractorStatTilesRow } from "./ContractorStatTilesRow";
@@ -61,9 +62,7 @@ export function ContractorsPage({ rows: fetchedRows }: ContractorsPageProps) {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div className="lg:col-span-3">
           {fetchedRows === null ? (
-            <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
-              ไม่สามารถโหลดข้อมูลผู้ปฏิบัติงานภายนอกได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
-            </p>
+            <LoadFailure message="ไม่สามารถโหลดข้อมูลผู้ปฏิบัติงานภายนอกได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
           ) : (
             <ContractorTable rows={rows} />
           )}

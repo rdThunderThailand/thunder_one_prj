@@ -1,3 +1,4 @@
+import { LoadFailure } from "@/features/people/shared";
 import type { OverviewStats } from "../core-mapper";
 import type { CoreRecentLog } from "../services/dashboard-api";
 import { OnboardingStatusCard } from "./OnboardingStatusCard";
@@ -26,9 +27,7 @@ export function OverviewPage({ todayLogs, stats }: OverviewPageProps) {
       <OverviewHeader />
 
       {stats === null ? (
-        <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
-          ไม่สามารถโหลดข้อมูลสถิติบุคลากรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
-        </p>
+        <LoadFailure message="ไม่สามารถโหลดข้อมูลสถิติบุคลากรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
       ) : (
         <>
           <StatTilesRow
