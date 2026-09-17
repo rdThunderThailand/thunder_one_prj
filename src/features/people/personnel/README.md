@@ -93,11 +93,12 @@ Workspace's Overview (`people/overview`). Nests under `people/` per
     description). Slices the already-fetched (and filtered) roster rather than a fresh Core
     round-trip per page, since the tab/filter views above need the full roster in memory anyway —
     see the component's own comment.
-- `mock-data.ts` — `personnelRetentionRate` is the one remaining mock export (see
-  `PersonnelStatTilesRow` above); `personnelRows` is (re-exported via `index.ts`) also
-  `people/add-person`'s source for its ตำแหน่งงาน picker options. The old `PersonnelStatTile`/
-  `personnelStatTiles` and `personnelTotalCount`/`personnelPageSize`/`personnelTotalPages` exports
-  were removed 2026-09-15, superseded by the real computations above.
+- `mock-data.ts` — now types + UI config only (no mock roster data). `personnelRows` (the old static
+  sample roster, also `people/add-person`'s source for its ตำแหน่งงาน picker options) was removed
+  2026-09-17 once that picker switched to `derivePositionOptions()` (`core-mapper.ts`) over the real
+  fetched roster instead. `personnelRetentionRate`, `PersonnelStatTile`/`personnelStatTiles`, and
+  `personnelTotalCount`/`personnelPageSize`/`personnelTotalPages` were removed earlier (2026-09-15/16),
+  superseded by the real computations above.
 
 **Not built yet / blocked on Core** (no historical snapshot or offboarding entity exists in Core at
 all): month-over-month delta on the พนักงานทั้งหมด/เข้าใหม่ tiles, ออกจากองค์กร (เดือนนี้)'s real

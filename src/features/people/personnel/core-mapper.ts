@@ -71,6 +71,18 @@ export function isOnProbation(probationEndDate: string | null | undefined, now: 
   return !Number.isNaN(end.getTime()) && end.getTime() >= now.getTime();
 }
 
+/** Distinct real `job_title` values from the current roster, sorted — backs
+ *  the position autocomplete (`<datalist>`) on people/add-person's 3 wizard
+ *  forms. Added 2026-09-17: those wizards previously derived their
+ *  suggestion list from `personnelRows` mock data (a leftover from before
+ *  Core's real roster existed) rather than this real, already-fetched
+ *  roster — the field itself (`position`) is free text either way, so an
+ *  empty list just means no autocomplete suggestions, never a blocked form. */
+export function derivePositionOptions(rows: CoreMemberRow[]): string[] {
+  const values = new Set(rows.map((row) => row.job_title).filter((title): title is string => Boolean(title)));
+  return Array.from(values).sort((a, b) => a.localeCompare(b));
+}
+
 export function mapCoreMember(row: CoreMemberRow, units: Record<string, OrgUnitNode>): PersonnelRow {
   const now = new Date();
   return {
