@@ -28,15 +28,22 @@ Legend: `todo` · `in progress` · `in review` (PR open, Draft until verified) �
 | 4 | [#120](https://github.com/rdThunderThailand/thunder_one_prj/issues/120) Upload Queue + Media Detail show the refusal | thunder_one_prj | Thunder_Core#65 on `develop` | **CLOSED** — merged to `dev` | [#124](https://github.com/rdThunderThailand/thunder_one_prj/pull/124) MERGED | 2026-09-17 |
 | 5 | [Thunder_Core#66](https://github.com/rdThunderThailand/Thunder_Core/issues/66) activation guard | Thunder_Core | Thunder_Core#65 | **CLOSED** — merged to `develop` and prod; UI-verified except one sub-case, accepted as risk (see below) | [Thunder_Core#73](https://github.com/rdThunderThailand/Thunder_Core/pull/73), [thunder_one_prj#123](https://github.com/rdThunderThailand/thunder_one_prj/pull/123) — both MERGED | 2026-09-17 |
 | 6 | [Thunder_Core#67](https://github.com/rdThunderThailand/Thunder_Core/issues/67) backfill existing Assets | Thunder_Core | #64, #65, #66 + human "go" | **CLOSED** — applied to prod 2026-09-17 (3 Assets `ready→failed`, video `ready 25→22`, 0 airing); rehearsed apply→rollback on `develop` first; develop deliberately NOT backfilled; UI-verified on prod Media Detail (Failed pill + H.264 High Profile message) | [#74](https://github.com/rdThunderThailand/Thunder_Core/pull/74) MERGED into `develop` | 2026-09-17 |
-| 7 | [#121](https://github.com/rdThunderThailand/thunder_one_prj/issues/121) close WebP intake | both | human schedules it (prod writes) | held | — | 2026-09-16 |
+| 7 | [#121](https://github.com/rdThunderThailand/thunder_one_prj/issues/121) close WebP intake | both | human schedules it (prod writes) | **CLOSED** — bucket migration + FE rejection both applied and merged; part 3 (replace 2 files) was N/A — inventory found 0 live WebP Assets on prod (see below) | [Thunder_Core#75](https://github.com/rdThunderThailand/Thunder_Core/pull/75) + [#125](https://github.com/rdThunderThailand/thunder_one_prj/pull/125) — both MERGED | 2026-09-17 |
 | 8 | [Thunder_Core#72](https://github.com/rdThunderThailand/Thunder_Core/pull/72) `requireAppKey` error split (bugfix found this session, not in the original 7 tickets) | Thunder_Core | — | merged | [#72](https://github.com/rdThunderThailand/Thunder_Core/pull/72) MERGED | 2026-09-17 |
 
-**Frontier right now:** #63/#64/#65/#66/#67/#120 are all CLOSED, PR #74 (the #67 backfill
-migration) is MERGED into `develop` (2026-09-17). **Epic is fully done.** Only the held #121
-remains, and that needs a human to schedule its prod write — nothing else to build, verify, or
-merge in this epic.
-**Order:** ~~63 → (64 ∥ 65) → 66~~ done → ~~120~~ done → ~~67 (prod only)~~ done, merged. Only
-#121 remains, independent, held.
+**Frontier right now:** every ticket in the epic — #63/#64/#65/#66/#67/#120/#121 — is CLOSED, and
+every PR is MERGED. **This epic is entirely done.** Nothing left to build, verify, or merge.
+
+**#121's inventory found the ticket's own premise stale:** it assumed 2 live WebP Assets on prod.
+Read-only check (before any write, satisfying its own AC) found **0** — prod's only image Asset is
+JPEG, and the 2 `.webp` Storage objects that exist are orphans sitting in `videos/backup/` since
+the 2026-09-15 ADR 0011 sweep, referenced by no `media_assets`/`files` row and no
+Playlist/Publication. Part 3 (replace the 2 files through Playlists/Publications) was therefore
+N/A; only parts 1 (bucket `allowed_mime_types` drops `image/webp`, `file_size_limit` untouched)
+and 2 (FE `upload-limits` refuses `.webp`) were needed, both verified end-to-end (Storage-edge
+signed-URL probe on both environments + real prod browser check) before either PR opened, so both
+opened Ready rather than Draft. The orphan `.webp` objects themselves are untouched — deleting
+`videos/backup/` stays a separate future R0 per ADR 0011.
 
 **#66 loose end:** every UI-checkable acceptance criterion passed (single-file refusal, two-zone
 composition refusal naming both files, save-with-quarantined-asset, remove-then-activate-succeeds,
@@ -140,3 +147,4 @@ rediscover in the Facts section above.
 | 2026-09-17 | epic closeout | Closed all remaining epic issues: Thunder_Core#64 (report delivered to player team, confirmed by user; fresh count posted on #119), #65, #66 (accepting the known real-player gap as risk), #67 (see row above), thunder_one_prj#120. Only #74 (Draft, #67's migration PR) and held #121 remain open in the epic. |
 | 2026-09-17 | #67 UI verify | Signed into `localhost:3000` (pointed at prod) and opened Media Detail for `video_593311223752425916-AWtqkwNQ.MP4` (one of the 3 backfilled Assets): Status pill "Failed", message "This file is H.264 High Profile, which the players cannot decode — convert to Baseline and upload again." — matches the verdict exactly. Posted as a PR #74 comment. PR is fully verified at every layer now (SQL, RPC, UI); still Draft, waiting on the user to flip it to Ready. |
 | 2026-09-17 | #67 PR merged, epic closed | User merged PR #74 into `develop` (Thunder_Core). Local `feat/codec-backfill-67` branch deleted post-merge. Epic is fully done — every ticket except the held #121 is closed and merged. |
+| 2026-09-17 | #121 closed, epic fully done | Bucket migration ([Thunder_Core#75](https://github.com/rdThunderThailand/Thunder_Core/pull/75)) and FE upload-limits ([#125](https://github.com/rdThunderThailand/thunder_one_prj/pull/125)) both applied, verified (Storage-edge signed-URL probe both environments + real prod browser check), and merged. Inventory before any write found the ticket's "2 live WebP Assets on prod" premise stale — 0 exist, the 2 `.webp` objects are ADR 0011 orphans — so part 3 was N/A. #121 closed. Every ticket in the codec-gate epic is now CLOSED and every PR MERGED. |
