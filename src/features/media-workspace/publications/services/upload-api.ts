@@ -1,6 +1,7 @@
 import { requestApi } from "@/lib/api/media-api";
 import { resolveUploadMimeType } from "../upload-limits";
 import { Upload } from "tus-js-client";
+import type { ProbeVerdict } from "@/types/domain";
 
 /** Everything the browser needs to upload; every field is chosen by Core (ADR-0059).
  *  `storage_key` already carries the authenticated tenant's prefix. Core also returns the
@@ -173,9 +174,10 @@ export async function uploadAndRegisterAsset(
   });
 }
 
-/** Registration is idempotent per `file_id` and returns only these two fields — it is
- *  not the Asset. Callers that need the Asset fetch it by `media_asset_id`. */
-export type RegisteredVideo = { media_asset_id: string; status: string };
+/** Registration is idempotent per `file_id` and returns only these fields — it is not the
+ *  Asset. Callers that need the Asset fetch it by `media_asset_id`. `probe_verdict` is present
+ *  only when the route actually probed the file (a video registered after ADR 0070 shipped). */
+export type RegisteredVideo = { media_asset_id: string; status: string; probe_verdict?: ProbeVerdict | null };
 
 export async function registerVideo(payload: {
   file_id: string;

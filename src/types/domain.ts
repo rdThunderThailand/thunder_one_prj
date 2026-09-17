@@ -41,6 +41,14 @@ export type Tag = {
   usage_count?: number;
 };
 
+/** ADR 0070: what the intake probe concluded about a video's codec profile. `unsupported_profile`
+ *  and `unreadable` register the Asset `failed`; `unverified_preset` (e.g. H.264 Main) registers
+ *  `ready` with a caveat; `supported` (Baseline) is the plain happy path. */
+export type ProbeVerdict = {
+  code: "supported" | "unverified_preset" | "unsupported_profile" | "unreadable";
+  profile?: string | null;
+};
+
 export type MediaAsset = {
   id: string;
   title?: string;
@@ -52,6 +60,7 @@ export type MediaAsset = {
   width?: number;
   height?: number;
   codec?: string;
+  probe_verdict?: ProbeVerdict | null;
   folder_id?: string | null;
   thumbnail_storage_key?: string | null;
   tags?: Tag[];
