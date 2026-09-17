@@ -86,6 +86,16 @@ function isUnapprovedAsset(message: string): boolean {
 }
 
 /**
+ * `media_publication_activate`'s codec-quarantine guard (Thunder_Core#66, ADR 0070) — a
+ * `failed` or still-`processing` Asset in the snapshot. The raw text names every offending
+ * file and tells the operator to replace it or wait, so it is shown as-is rather than routed
+ * through the generic "Invalid input:" bucket below, which would otherwise swallow those names.
+ */
+function isQuarantinedAsset(message: string): boolean {
+  return message.includes("cannot activate — replace this file:") || message.includes("wait — conversion in flight:");
+}
+
+/**
  * A request that never got a response — the browser is offline, the host is
  * unreachable, or it timed out. Axios reports it as `code: "ERR_NETWORK"` (or
  * `"ECONNABORTED"` on timeout) with the bare English `message` "Network Error",
@@ -127,6 +137,10 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
   }
 
   if (isIncompleteSyncGroupTarget(message)) {
+    return { kind: "rejected", message };
+  }
+
+  if (isQuarantinedAsset(message)) {
     return { kind: "rejected", message };
   }
 
