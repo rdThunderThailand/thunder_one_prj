@@ -41,8 +41,8 @@ export function ProgramStep({
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Step 3 — Program</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">กำหนดที่ / เวลา / วิธีเล่น</p>
+          <h1 className="text-xl font-semibold text-foreground">Step 3 — Program</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">กำหนดที่ / เวลา / วิธีเล่น</p>
         </div>
         <DisabledControl label="Load from Template" />
       </div>
@@ -96,13 +96,13 @@ function ProgramColumn({
 }) {
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <div className="flex items-baseline gap-2 border-b border-zinc-100 pb-3">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-semibold text-indigo-600">
+      <div className="flex items-baseline gap-2 border-b border-border pb-3">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary">
           {index}
         </span>
         <div>
-          <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
-          <p className="text-xs text-zinc-400">{subtitle}</p>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
       </div>
       {children}
@@ -119,39 +119,39 @@ function AdditionalSettings() {
 
   return (
     <Card className="p-5">
-      <h2 className="text-base font-semibold text-zinc-900">
-        Additional Settings <span className="text-sm font-normal text-zinc-400">(optional)</span>
+      <h2 className="text-base font-semibold text-foreground">
+        Additional Settings <span className="text-sm font-normal text-muted-foreground">(optional)</span>
       </h2>
-      <p className="mt-0.5 text-xs text-zinc-400">ตั้งค่าเพิ่มเติม</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">ตั้งค่าเพิ่มเติม</p>
 
       <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-zinc-700">Priority</label>
-          <p className="text-xs text-zinc-400">ตั้งลำดับความสำคัญของการเล่น (สำหรับกรณีเนื้อหาทับกัน)</p>
+          <label className="text-sm font-medium text-muted-foreground">Priority</label>
+          <p className="text-xs text-muted-foreground">ตั้งลำดับความสำคัญของการเล่น (สำหรับกรณีเนื้อหาทับกัน)</p>
           <div className="relative">
             <span
               className={`pointer-events-none absolute left-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
-                priorities.find((p) => p.id === priorityId)?.color ?? "bg-emerald-500"
+                priorities.find((p) => p.id === priorityId)?.color ?? "bg-success"
               }`}
             />
             <select
               value={priorityId}
               onChange={(e) => setBasicInfo({ ...basicInfo, priorityId: e.target.value })}
-              className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2.5 pl-7 pr-9 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+              className="w-full appearance-none rounded-lg border border-border bg-card py-2.5 pl-7 pr-9 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               {priorities.map((p) => (
                 <option key={p.id} value={p.id}>{p.label}</option>
               ))}
             </select>
-            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5 opacity-60">
-          <label className="text-sm font-medium text-zinc-700">
+          <label className="text-sm font-medium text-muted-foreground">
             Playback Behaviour when offline
           </label>
-          <p className="text-xs text-zinc-400">ยังไม่เปิดใช้งาน</p>
+          <p className="text-xs text-muted-foreground">ยังไม่เปิดใช้งาน</p>
           <div className="mt-1 flex flex-col gap-2">
             {[
               ["Play last cached content", "เล่นเนื้อหาล่าสุดที่แคชไว้"],
@@ -161,7 +161,7 @@ function AdditionalSettings() {
               <label
                 key={label}
                 title="ยังไม่เปิดใช้งาน"
-                className="flex cursor-not-allowed items-start gap-2 text-sm text-zinc-400"
+                className="flex cursor-not-allowed items-start gap-2 text-sm text-muted-foreground"
               >
                 <input
                   type="radio"
@@ -173,7 +173,7 @@ function AdditionalSettings() {
                 />
                 <span>
                   {label}
-                  <span className="block text-xs text-zinc-300">{sublabel}</span>
+                  <span className="block text-xs text-muted-foreground">{sublabel}</span>
                 </span>
               </label>
             ))}
@@ -191,7 +191,7 @@ function DisabledControl({ label }: { label: string }) {
       type="button"
       disabled
       title="ยังไม่เปิดใช้งาน"
-      className="flex shrink-0 cursor-not-allowed items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-400"
+      className="flex shrink-0 cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-muted px-3 py-1.5 text-sm text-muted-foreground"
     >
       {label}
       <ChevronDownIcon className="h-4 w-4" />

@@ -47,8 +47,8 @@ function formatDateTime(iso: string | null): string {
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{label}</dt>
-      <dd className="mt-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">{value}</dd>
+      <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm font-medium text-foreground">{value}</dd>
     </div>
   );
 }
@@ -134,7 +134,7 @@ export function ChannelDetailPanel({
         {cover ? (
           <MediaThumb url={cover} alt="" className="h-32 w-full rounded-xl" />
         ) : (
-          <div className="flex h-32 w-full items-center justify-center rounded-xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+          <div className="flex h-32 w-full items-center justify-center rounded-xl bg-muted text-muted-foreground">
             <TypeIcon className="h-8 w-8" />
           </div>
         )}
@@ -142,14 +142,14 @@ export function ChannelDetailPanel({
           type="button"
           aria-label="Close channel detail"
           onClick={onClose}
-          className="absolute right-2 top-2 rounded-lg bg-white/90 p-1.5 text-zinc-500 hover:bg-white hover:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="absolute right-2 top-2 rounded-lg bg-card/90 p-1.5 text-muted-foreground hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
         >
           <XIcon />
         </button>
       </div>
 
       <div className="mt-4 flex items-start justify-between gap-3">
-        <h2 id={titleId} className="min-w-0 truncate text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+        <h2 id={titleId} className="min-w-0 truncate text-lg font-semibold text-foreground">
           {channel.name}
         </h2>
         <Badge color={status.color} variant="pill">{status.label}</Badge>
@@ -158,7 +158,7 @@ export function ChannelDetailPanel({
         <Badge color={lifecycle.color} variant="pill">{lifecycle.label}</Badge>
       </div>
       {channel.description && (
-        <p className="mt-2 text-sm leading-5 text-zinc-500 dark:text-zinc-400">{channel.description}</p>
+        <p className="mt-2 text-sm leading-5 text-muted-foreground">{channel.description}</p>
       )}
 
       <div className="mt-4 flex items-center gap-2">
@@ -191,67 +191,67 @@ export function ChannelDetailPanel({
         </Link>
       </div>
 
-      <div className="mt-5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Status</h3>
+      <div className="mt-5 border-t border-border pt-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</h3>
         <div className="mt-2 flex items-center gap-2">
           <Badge color={status.color}>{status.label}</Badge>
         </div>
-        <p className="mt-1 text-xs text-zinc-400">Last updated {formatDateTime(channel.updated_at)}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Last updated {formatDateTime(channel.updated_at)}</p>
       </div>
 
-      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+      <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Now Playing</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Now Playing</h3>
           <Link
             href={`/media-workspace/publications?q=${encodeURIComponent(channel.name)}`}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="text-xs font-medium text-primary hover:text-primary"
           >
             View Programs →
           </Link>
         </div>
         {names.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-400">Nothing scheduled now</p>
+          <p className="mt-2 text-sm text-muted-foreground">Nothing scheduled now</p>
         ) : (
           <div className="mt-2 flex gap-3">
             <MediaThumb url={cover ?? undefined} alt="" className="h-14 w-20 rounded-lg" />
             <div className="min-w-0">
               {names.map((name) => (
-                <p key={name} className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                <p key={name} className="truncate text-sm font-medium text-foreground">
                   {name}
                 </p>
               ))}
-              <p className="mt-0.5 text-xs text-zinc-400">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {window_}
                 {remaining ? ` (${remaining})` : ""}
               </p>
-              {viaGroups && <p className="mt-0.5 text-xs text-zinc-400">via {viaGroups.join(", ")}</p>}
+              {viaGroups && <p className="mt-0.5 text-xs text-muted-foreground">via {viaGroups.join(", ")}</p>}
             </div>
           </div>
         )}
       </div>
 
-      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <div className="mt-4 border-t border-border pt-4">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Channel Structure
         </h3>
         <ChannelStructureTree channel={channel} />
       </div>
 
-      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+      <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Groups ({groups.length})
           </h3>
           <button
             type="button"
             onClick={() => setManagingGroups(true)}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="text-xs font-medium text-primary hover:text-primary"
           >
             Manage →
           </button>
         </div>
         {groups.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-400">No Groups yet</p>
+          <p className="mt-2 text-sm text-muted-foreground">No Groups yet</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {groups.map((group) => (
@@ -272,8 +272,8 @@ export function ChannelDetailPanel({
         />
       )}
 
-      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <div className="mt-4 border-t border-border pt-4">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Channel Information
         </h3>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4">

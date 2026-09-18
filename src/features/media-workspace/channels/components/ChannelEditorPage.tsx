@@ -96,12 +96,12 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
   const disabled = channel === null || Boolean(loadError) || saving;
 
   return (
-    <div data-testid="channel-editor" className="flex flex-col gap-5">
+    <div data-testid="channel-editor" className="flex flex-col gap-4">
       <PageHeader
         title={
           <span className="inline-flex items-center gap-2">
             Edit Channel
-            <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-sm font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300">
+            <span className="rounded-full bg-primary-soft px-2.5 py-1 text-sm font-medium text-primary">
               {channel?.display_config?.mode === "multi" ? "Multi-screen" : "Single-screen"}
             </span>
           </span>
@@ -119,7 +119,7 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
         <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-4">
             {saveError && (
-              <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">
+              <p role="alert" className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
                 {saveError}
               </p>
             )}

@@ -24,10 +24,10 @@ type Props = {
 };
 
 const countLabel = (counts: Record<string, number> | undefined, key: string) =>
-  counts && key in counts ? <span className="ml-1 text-xs text-zinc-400">{counts[key]}</span> : null;
+  counts && key in counts ? <span className="ml-1 text-xs text-muted-foreground">{counts[key]}</span> : null;
 
-const selectedClass = "bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200";
-const itemClass = "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800";
+const selectedClass = "bg-primary-soft font-medium text-primary";
+const itemClass = "text-muted-foreground hover:bg-muted";
 
 export function ContentFolderRail({ folders, selected, labels, onSelect, onRename, onMove, onDelete, counts, footer, isLoading = false }: Props) {
   const children = foldersByParent(folders);
@@ -53,12 +53,12 @@ export function ContentFolderRail({ folders, selected, labels, onSelect, onRenam
                 const details = event.currentTarget.parentElement as HTMLDetailsElement | null;
                 if (details) details.open = !details.open;
               }}
-              className="cursor-pointer list-none rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
+              className="cursor-pointer list-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
             >⋯</summary>
-            <div className="absolute right-0 z-20 mt-1 w-32 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => onRename(folder)}>Rename</button>
-              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => onMove(folder)}>Move</button>
-              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={() => onDelete(folder)}>Delete</button>
+            <div className="absolute right-0 z-20 mt-1 w-32 rounded-lg border border-border bg-card p-1 shadow-lg">
+              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-muted" onClick={() => onRename(folder)}>Rename</button>
+              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-muted" onClick={() => onMove(folder)}>Move</button>
+              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs text-danger hover:bg-danger-soft" onClick={() => onDelete(folder)}>Delete</button>
             </div>
           </details>}
         </div>
@@ -74,7 +74,7 @@ export function ContentFolderRail({ folders, selected, labels, onSelect, onRenam
         {isLoading && <div className="space-y-2 px-2 py-2" aria-hidden="true">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>}
         {render(null)}
       </div>
-      <div className="shrink-0 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+      <div className="shrink-0 border-t border-border pt-3">
         <button type="button" onClick={() => onSelect("trash")} className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm ${selected === "trash" ? selectedClass : itemClass}`}><TrashIcon />{labels.trash}</button>
         {footer}
       </div>

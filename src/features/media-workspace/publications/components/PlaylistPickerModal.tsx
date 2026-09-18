@@ -88,39 +88,39 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
   const footer = (
     <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="shrink-0 text-xs font-medium text-zinc-600">{stagedId ? "1 item selected" : "0 items selected"}</span>
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">{stagedId ? "1 item selected" : "0 items selected"}</span>
         {selected && (
-          <span className="inline-flex max-w-64 items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50/60 px-2 py-1 text-xs text-zinc-700">
+          <span className="inline-flex max-w-64 items-center gap-2 rounded-lg border border-primary/30 bg-primary-soft px-2 py-1 text-xs text-muted-foreground">
             <span className="truncate">{selected.name}</span>
-            <button type="button" onClick={() => setStagedId(null)} aria-label={`Remove ${selected.name}`} className="text-zinc-400 hover:text-zinc-700">×</button>
+            <button type="button" onClick={() => setStagedId(null)} aria-label={`Remove ${selected.name}`} className="text-muted-foreground hover:text-foreground">×</button>
           </span>
         )}
       </div>
       <div className="flex shrink-0 gap-2">
-        <button type="button" onClick={onClose} className="rounded-lg border border-zinc-200 px-5 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Cancel</button>
-        <button type="button" disabled={!stagedId} onClick={() => stagedId && onSelect(stagedId)} className="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50">Select →</button>
+        <button type="button" onClick={onClose} className="rounded-lg border border-border px-5 py-2 text-sm font-medium text-muted-foreground hover:bg-muted">Cancel</button>
+        <button type="button" disabled={!stagedId} onClick={() => stagedId && onSelect(stagedId)} className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary disabled:opacity-50">Select →</button>
       </div>
     </div>
   );
 
   return (
     <Modal open onClose={onClose} title="Playlist Picker" size="preview" showCloseButton footer={footer}>
-      <p className="-mt-2 text-xs text-zinc-500">เลือก Playlist ที่ต้องการใช้งาน</p>
-      <div className="mt-1 flex items-center gap-2 border-y border-zinc-200 py-3">
+      <p className="-mt-2 text-xs text-muted-foreground">เลือก Playlist ที่ต้องการใช้งาน</p>
+      <div className="mt-1 flex items-center gap-2 border-y border-border py-3">
         <label className="relative min-w-64 flex-1">
-          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={filters.query}
             onChange={(event) => update({ query: event.target.value })}
             placeholder="Search playlists by name, creator, or tag..."
-            className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-border py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30"
           />
         </label>
-        <Link href="/media-workspace/playlists" target="_blank" className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-indigo-700">
+        <Link href="/media-workspace/playlists" target="_blank" className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-primary">
           Playlist Library <ExternalLinkIcon />
         </Link>
       </div>
-      <div className="grid h-[min(42rem,calc(100vh-15rem))] min-h-[30rem] grid-cols-[11rem_minmax(0,1fr)_16rem] overflow-hidden border-b border-zinc-200">
+      <div className="grid h-[min(42rem,calc(100vh-15rem))] min-h-[30rem] grid-cols-[11rem_minmax(0,1fr)_16rem] overflow-hidden border-b border-border">
         <PickerFilterPanel onClear={() => { setFilters(defaultPlaylistPickerFilters); setPage(1); }}>
           <PickerFilterSection label="Status">
             <div role="radiogroup" aria-label="Status">
@@ -128,19 +128,19 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
               <PickerFilterChoice
                 checked={filters.status === "active"}
                 label="Active"
-                marker={<span className="h-2 w-2 rounded-full bg-emerald-500" />}
+                marker={<span className="h-2 w-2 rounded-full bg-success" />}
                 onClick={() => update({ status: "active" })}
               />
               <PickerFilterChoice
                 checked={filters.status === "draft"}
                 label="Draft"
-                marker={<span className="h-2 w-2 rounded-full bg-amber-500" />}
+                marker={<span className="h-2 w-2 rounded-full bg-warning" />}
                 onClick={() => update({ status: "draft" })}
               />
               <PickerFilterChoice
                 checked={filters.status === "inactive"}
                 label="Inactive"
-                marker={<span className="h-2 w-2 rounded-full bg-zinc-400" />}
+                marker={<span className="h-2 w-2 rounded-full bg-border" />}
                 onClick={() => update({ status: "inactive" })}
               />
             </div>
@@ -153,27 +153,27 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
                 value={filters.minDuration}
                 onChange={(event) => update({ minDuration: event.target.value })}
                 placeholder="Min"
-                className="min-w-0 rounded-lg border border-zinc-200 px-2 py-2 text-xs"
+                className="min-w-0 rounded-lg border border-border px-2 py-2 text-xs"
               />
-              <span className="text-[10px] text-zinc-400">to</span>
+              <span className="text-[10px] text-muted-foreground">to</span>
               <input
                 aria-label="Maximum duration"
                 inputMode="numeric"
                 value={filters.maxDuration}
                 onChange={(event) => update({ maxDuration: event.target.value })}
                 placeholder="Max"
-                className="min-w-0 rounded-lg border border-zinc-200 px-2 py-2 text-xs"
+                className="min-w-0 rounded-lg border border-border px-2 py-2 text-xs"
               />
             </div>
           </PickerFilterSection>
           <PickerFilterSection label="Created by" divided>
-            <select aria-label="Created by" value={filters.creatorId} onChange={(event) => update({ creatorId: event.target.value })} className="w-full rounded-lg border border-zinc-200 px-2 py-2 text-xs">
+            <select aria-label="Created by" value={filters.creatorId} onChange={(event) => update({ creatorId: event.target.value })} className="w-full rounded-lg border border-border px-2 py-2 text-xs">
               <option value="">All Creators</option>
               {creators.map((creator) => <option key={creator.id} value={creator.id}>{creator.display_name}</option>)}
             </select>
           </PickerFilterSection>
           <PickerFilterSection label="Tags" divided>
-            <select aria-label="Tag" value={filters.tagId} onChange={(event) => update({ tagId: event.target.value })} className="w-full rounded-lg border border-zinc-200 px-2 py-2 text-xs">
+            <select aria-label="Tag" value={filters.tagId} onChange={(event) => update({ tagId: event.target.value })} className="w-full rounded-lg border border-border px-2 py-2 text-xs">
               <option value="">Select or type tags</option>
               {tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
             </select>
@@ -181,21 +181,21 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
         </PickerFilterPanel>
         <section className="flex min-w-0 flex-col overflow-hidden p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-medium text-zinc-700">{playlists === null ? "Loading playlists…" : error ?? `${sorted.length} playlists found`}</p>
+            <p className="text-xs font-medium text-muted-foreground">{playlists === null ? "Loading playlists…" : error ?? `${sorted.length} playlists found`}</p>
             <div className="flex items-center gap-2">
               <select
                 aria-label="Sort playlists"
                 value={sort}
                 onChange={(event) => setSort(event.target.value as typeof sort)}
-                className="rounded-lg border border-zinc-200 px-2 py-1.5 text-xs"
+                className="rounded-lg border border-border px-2 py-1.5 text-xs"
               >
                 <option value="newest">Sort by: Recently Updated</option>
                 <option value="oldest">Sort by: Oldest</option>
                 <option value="name">Sort by: Name</option>
               </select>
-              <div className="flex rounded-lg border border-zinc-200 p-0.5">
-                <button type="button" onClick={() => setView("grid")} aria-label="Grid view" className={`rounded p-1.5 ${view === "grid" ? "bg-indigo-50 text-indigo-600" : "text-zinc-400"}`}><GridIcon /></button>
-                <button type="button" onClick={() => setView("list")} aria-label="List view" className={`rounded p-1.5 ${view === "list" ? "bg-indigo-50 text-indigo-600" : "text-zinc-400"}`}><ListIcon /></button>
+              <div className="flex rounded-lg border border-border p-0.5">
+                <button type="button" onClick={() => setView("grid")} aria-label="Grid view" className={`rounded p-1.5 ${view === "grid" ? "bg-primary-soft text-primary" : "text-muted-foreground"}`}><GridIcon /></button>
+                <button type="button" onClick={() => setView("list")} aria-label="List view" className={`rounded p-1.5 ${view === "list" ? "bg-primary-soft text-primary" : "text-muted-foreground"}`}><ListIcon /></button>
               </div>
             </div>
           </div>
@@ -215,9 +215,9 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
                 ))}
               </div>
             )}
-            {playlists !== null && !error && !visible.length && <p className="py-12 text-center text-sm text-zinc-500">No playlists match these filters.</p>}
+            {playlists !== null && !error && !visible.length && <p className="py-12 text-center text-sm text-muted-foreground">No playlists match these filters.</p>}
           </div>
-          <div className="shrink-0 border-t border-zinc-100 bg-white">
+          <div className="shrink-0 border-t border-border bg-card">
             <Pagination
               page={currentPage}
               totalPages={totalPages}
@@ -232,11 +232,11 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
             />
           </div>
         </section>
-        <aside className="overflow-y-auto border-l border-zinc-200">
+        <aside className="overflow-y-auto border-l border-border">
           {selected ? (
             <PlaylistDetailPanel playlist={selected} detail={detail} previews={previews} expanded={contentExpanded} onToggle={() => setContentExpanded((value) => !value)} />
           ) : (
-            <p className="p-5 text-sm text-zinc-500">เลือก Playlist เพื่อดูรายละเอียด</p>
+            <p className="p-5 text-sm text-muted-foreground">เลือก Playlist เพื่อดูรายละเอียด</p>
           )}
         </aside>
       </div>
@@ -278,9 +278,9 @@ function PlaylistDetailPanel({ playlist, detail, previews, expanded, onToggle }:
       onToggle={onToggle}
     >
       {detail ? (
-        <ul className="mt-2 space-y-1 rounded-lg bg-zinc-50 p-3">
+        <ul className="mt-2 space-y-1 rounded-lg bg-muted p-3">
           {detail.items.map((item) => (
-            <li key={`${item.media_asset_id}-${item.position}`} className="truncate text-xs text-zinc-600">
+            <li key={`${item.media_asset_id}-${item.position}`} className="truncate text-xs text-muted-foreground">
               {item.position + 1}. {item.title ?? item.media_asset_id.slice(0, 8)}
             </li>
           ))}
@@ -302,11 +302,11 @@ function PlaylistCover({ playlist, previews, className }: Pick<CardProps, "playl
 function PlaylistGridCard({ playlist, selected, previews, onSelect }: CardProps) {
   const badge = statusBadge(playlistDisplayStatus(playlist));
   return (
-    <button type="button" onClick={onSelect} className={`overflow-hidden rounded-xl border text-left ${selected ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200"}`}>
+    <button type="button" onClick={onSelect} className={`overflow-hidden rounded-xl border text-left ${selected ? "border-primary ring-2 ring-primary" : "border-border"}`}>
       <PlaylistCover playlist={playlist} previews={previews} className="aspect-video w-full rounded-none" />
       <div className="space-y-1 p-2">
-        <p className="truncate text-xs font-semibold text-zinc-900">{playlist.name}</p>
-        <p className="text-[10px] text-zinc-500">{playlist.item_count} items · {formatDuration(playlist.total_duration_seconds ?? 0)}</p>
+        <p className="truncate text-xs font-semibold text-foreground">{playlist.name}</p>
+        <p className="text-[10px] text-muted-foreground">{playlist.item_count} items · {formatDuration(playlist.total_duration_seconds ?? 0)}</p>
         <Badge color={badge.color} variant="pill">{badge.label}</Badge>
       </div>
     </button>
@@ -319,18 +319,18 @@ function PlaylistRow({ playlist, selected, previews, onSelect }: CardProps) {
     <button
       type="button"
       onClick={onSelect}
-      className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${selected ? "border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-100" : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"}`}
+      className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${selected ? "border-primary bg-primary-soft ring-1 ring-primary/30" : "border-border hover:border-border hover:bg-muted"}`}
     >
-      <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${selected ? "border-indigo-600 bg-indigo-600 text-white" : "border-zinc-300 bg-white"}`}>
+      <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${selected ? "border-primary bg-primary text-white" : "border-border bg-card"}`}>
         {selected ? "✓" : ""}
       </span>
       <PlaylistCover playlist={playlist} previews={previews} className="aspect-video h-12 w-20 rounded-lg" />
       <span className="min-w-0">
         <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-semibold text-zinc-900">{playlist.name}</span>
-          {playlist.tags?.[0] && <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600">{playlist.tags[0].name}</span>}
+          <span className="truncate text-sm font-semibold text-foreground">{playlist.name}</span>
+          {playlist.tags?.[0] && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-medium text-primary">{playlist.tags[0].name}</span>}
         </span>
-        <span className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-zinc-500">
+        <span className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted-foreground">
           <span>{formatDuration(playlist.total_duration_seconds ?? 0)}</span>
           <span>{playlist.item_count} items</span>
           <span>Updated {formatDate(playlist.updated_at ?? playlist.created_at)}</span>
@@ -338,7 +338,7 @@ function PlaylistRow({ playlist, selected, previews, onSelect }: CardProps) {
       </span>
       <span className="text-right">
         <Badge color={badge.color} variant="pill">{badge.label}</Badge>
-        <span className="mt-1 block truncate text-[10px] text-zinc-500">{playlist.created_by?.display_name ?? "—"}</span>
+        <span className="mt-1 block truncate text-[10px] text-muted-foreground">{playlist.created_by?.display_name ?? "—"}</span>
       </span>
     </button>
   );

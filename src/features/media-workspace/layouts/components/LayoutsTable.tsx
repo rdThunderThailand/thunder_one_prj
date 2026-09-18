@@ -39,7 +39,7 @@ export function LayoutsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <tr className="border-b border-border text-xs font-medium text-muted-foreground">
             <th className="py-2 pl-1">Preview</th>
             <SortHeader label="Layout Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Aspect ratio" sortKey="aspectRatio" sort={sort} onSortChange={onSortChange} className="py-2" />
@@ -55,25 +55,25 @@ export function LayoutsTable({
             return (
               <tr
                 key={layout.id}
-                className="border-b border-zinc-100 last:border-0 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                className="border-b border-border last:border-0 hover:bg-muted"
               >
                 <td className="py-3 pl-1">
                   <LayoutWireframe
                     zones={layout.zones}
                     background={layout.background}
                     aspectRatio={layout.aspect_ratio}
-                    className="h-10 w-16 rounded border border-zinc-200 dark:border-zinc-700"
+                    className="h-10 w-16 rounded border border-border"
                   />
                 </td>
-                <td className="py-3 text-sm font-medium text-zinc-900 dark:text-zinc-100">{layout.name}</td>
-                <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">{layout.aspect_ratio}</td>
-                <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">{layout.zone_count}</td>
+                <td className="py-3 text-sm font-medium text-foreground">{layout.name}</td>
+                <td className="py-3 text-sm text-muted-foreground">{layout.aspect_ratio}</td>
+                <td className="py-3 text-sm text-muted-foreground">{layout.zone_count}</td>
                 <td className="py-3">
                   <Badge color={badge.color} variant="pill">
                     {badge.label}
                   </Badge>
                 </td>
-                <td className="py-3 text-sm text-zinc-500 dark:text-zinc-400">
+                <td className="py-3 text-sm text-muted-foreground">
                   {formatUpdatedAt(layout.updated_at ?? layout.created_at)}
                 </td>
                 <td className="py-3 pr-1 text-right">
@@ -111,7 +111,7 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSortChange(sortKey)}
-        className="inline-flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-200"
+        className="inline-flex items-center gap-1 hover:text-foreground"
       >
         {label}
         {active && <span aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span>}
@@ -132,7 +132,7 @@ function RowActions({
   onAction: (action: RowAction) => void;
 }) {
   const item =
-    "block w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800";
+    "block w-full px-3 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted";
 
   return (
     <details
@@ -146,11 +146,11 @@ function RowActions({
     >
       <summary
         aria-label="Actions"
-        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         <MoreIcon />
       </summary>
-      <div className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
         <button type="button" className={item} onClick={() => onAction("edit")}>
           Edit
         </button>
@@ -160,7 +160,7 @@ function RowActions({
         {status === "active" ? (
           <button
             type="button"
-            className={`${item} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10`}
+            className={`${item} text-danger hover:bg-danger-soft`}
             disabled={disabled}
             onClick={() => onAction("archive")}
           >

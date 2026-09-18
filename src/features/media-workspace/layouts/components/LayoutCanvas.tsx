@@ -16,7 +16,7 @@ import type { LayoutZone } from "../types";
 const ZONE_FILL = [
   "bg-violet-500/60 border-violet-600",
   "bg-sky-500/60 border-sky-600",
-  "bg-amber-500/60 border-amber-600",
+  "bg-amber-500/60 border-warning",
   "bg-zinc-400/60 border-zinc-500",
 ];
 
@@ -179,23 +179,23 @@ export function LayoutCanvas({
   return (
     <div className={`flex flex-col gap-2 ${fillAvailable ? "min-h-0 flex-1" : ""}`}>
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Canvas</p>
+        <p className="text-sm font-medium text-muted-foreground">Canvas</p>
         <div className="flex items-center gap-1.5">
           {fillAvailable && <>
-            <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= 0.25} onClick={() => setZoom((value) => Math.max(0.25, value - 0.25))} className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 disabled:opacity-40 dark:border-zinc-700"><MinusIcon /></button>
-            <span className="min-w-12 text-center text-xs text-zinc-500">{Math.round(zoom * 100)}%</span>
-            <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 disabled:opacity-40 dark:border-zinc-700"><PlusIcon /></button>
-            <button type="button" aria-label="Fit canvas" title="Fit canvas" onClick={() => setZoom(1)} className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 dark:border-zinc-700"><ExpandIcon /></button>
+            <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= 0.25} onClick={() => setZoom((value) => Math.max(0.25, value - 0.25))} className="rounded-lg border border-border p-1.5 text-muted-foreground disabled:opacity-40"><MinusIcon /></button>
+            <span className="min-w-12 text-center text-xs text-muted-foreground">{Math.round(zoom * 100)}%</span>
+            <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg border border-border p-1.5 text-muted-foreground disabled:opacity-40"><PlusIcon /></button>
+            <button type="button" aria-label="Fit canvas" title="Fit canvas" onClick={() => setZoom(1)} className="rounded-lg border border-border p-1.5 text-muted-foreground"><ExpandIcon /></button>
           </>}
-          <button type="button" onClick={() => setSnap((v) => !v)} aria-pressed={snap} className={`rounded-lg border px-3 py-1 text-xs font-medium ${snap ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"}`}>Snap to grid</button>
+          <button type="button" onClick={() => setSnap((v) => !v)} aria-pressed={snap} className={`rounded-lg border px-3 py-1 text-xs font-medium ${snap ? "border-primary bg-primary-soft text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
         </div>
       </div>
 
-      <div ref={viewportRef} className={fillAvailable ? "flex min-h-0 flex-1 overflow-auto rounded-xl bg-zinc-50 dark:bg-zinc-950/40" : ""}>
+      <div ref={viewportRef} className={fillAvailable ? "flex min-h-0 flex-1 overflow-auto rounded-xl bg-muted" : ""}>
       <div
         ref={containerRef}
         onClick={() => onSelectIndex(null)}
-        className="relative m-auto w-full shrink-0 select-none overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
+        className="relative m-auto w-full shrink-0 select-none overflow-hidden rounded-lg border border-border"
         style={{
           aspectRatio: `${ratioW} / ${ratioH}`,
           // Bounded on both axes: capped at 42rem wide (the old max-w-2xl) OR whatever
@@ -220,8 +220,8 @@ export function LayoutCanvas({
               onSelectIndex(index);
             }}
             className={`absolute border-2 ${zone.id && lockedZoneIds.has(zone.id) ? "cursor-default" : "cursor-move"} ${ZONE_FILL[index % ZONE_FILL.length]} ${
-              overlapping.has(index) ? "outline outline-2 outline-red-500" : ""
-            } ${selectedIndex === index ? "ring-2 ring-offset-1 ring-indigo-500" : ""}`}
+              overlapping.has(index) ? "outline outline-2 outline-danger" : ""
+            } ${selectedIndex === index ? "ring-2 ring-offset-1 ring-primary" : ""}`}
             style={{
               left: `${zone.x}%`,
               top: `${zone.y}%`,
@@ -250,7 +250,7 @@ export function LayoutCanvas({
                 <div
                   key={h.handle}
                   onPointerDown={startDrag(index, h.handle)}
-                  className={`absolute h-3 w-3 rounded-full border border-white bg-indigo-600 ${h.className}`}
+                  className={`absolute h-3 w-3 rounded-full border border-white bg-primary ${h.className}`}
                 />
               ))}
           </div>
@@ -259,7 +259,7 @@ export function LayoutCanvas({
       </div>
 
       {overlapping.size > 0 && (
-        <p className="text-sm text-red-600 dark:text-red-400">
+        <p className="text-sm text-danger">
           Zone ซ้อนทับกัน กรุณาปรับขนาดหรือตำแหน่งใหม่
         </p>
       )}

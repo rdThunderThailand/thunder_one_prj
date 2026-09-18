@@ -68,6 +68,11 @@ Facts established before deciding (2026-09-18):
 
 - Every surface inherits the new colours, radius and font at once; feature pages that hardcode zinc/hex will look
   slightly off against the shell until migrated (follow-up ticket).
+- **Rule (2026-09-18, branch `style/media-workspace-tokens`):** inside `src/features/media-workspace/` and its
+  routes, raw palette classes (`indigo-*`, `zinc-*`, `bg-white`, `red/emerald/amber-*` where a semantic token
+  exists) and `dark:` variants are not allowed — use the tokens in `globals.css`. Categorical hues that
+  distinguish content kinds or layout zones (`blue/violet/sky`) are the one exception until a Lovable design
+  covers them. Plan: `docs/media-workspace/plan-media-workspace-tokens.md`.
 - `PageHeader` callers need no change, but a page that renders no `PageHeader` shows the nav-config label.
 - Follow-ups, not in this branch: migrate `*ListStates.tsx` to the shared `EmptyState`; migrate `icons.tsx` users
   to lucide; dark mode toggle (tokens are structured to accept a `.dark` block).

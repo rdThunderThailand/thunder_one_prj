@@ -64,12 +64,12 @@ export function PlaylistsListDialogs({
 
   return <Modal open={action !== null && target !== null} onClose={onClose} title={title} footer={<>
     <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>Cancel</Button>
-    <Button type="button" disabled={busy} onClick={() => void submit()} className={destructive ? "bg-red-600 hover:bg-red-500" : ""}>
+    <Button type="button" disabled={busy} onClick={() => void submit()} className={destructive ? "bg-danger hover:bg-danger" : ""}>
       {busy ? "กำลังทำรายการ…" : action === "move" ? "Save" : action === "trash" ? "Move to Trash" : "Delete permanently"}
     </Button>
   </>}>
     {action === "move" && <label className="space-y-1"><span>Destination</span>
-      <select autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
+      <select autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2">
         <option value="">Uncategorized</option>
         {folders.map((folder) => <option key={folder.id} value={folder.id}>{folderPath(folders, folder.id)}</option>)}
       </select>

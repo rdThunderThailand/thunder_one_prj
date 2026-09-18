@@ -118,11 +118,11 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     router.push(LIST_PATH);
   };
 
-  if (row.loading) return <p className="p-6 text-sm text-zinc-400">กำลังโหลด...</p>;
+  if (row.loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
   if (row.loadError) {
     return (
       <Card className="p-6">
-        <p className="text-sm text-red-500">{row.loadError.message}</p>
+        <p className="text-sm text-danger">{row.loadError.message}</p>
         <Button className="mt-4" variant="secondary" onClick={() => router.push(LIST_PATH)}>
           กลับไป Playlists
         </Button>
@@ -165,8 +165,8 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />
       )}
       {row.saveError && (
-        <Card className="border-red-200 p-4 dark:border-red-900">
-          <p className="text-sm text-red-600 dark:text-red-400">{row.saveError}</p>
+        <Card className="border-danger/30 p-4">
+          <p className="text-sm text-danger">{row.saveError}</p>
         </Card>
       )}
       {row.conflict && <RevisionConflictCard message={row.conflict} onReload={row.reloadFromServer} />}

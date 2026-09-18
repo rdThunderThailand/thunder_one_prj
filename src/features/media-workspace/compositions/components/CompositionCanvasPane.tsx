@@ -109,7 +109,7 @@ export function CompositionCanvasPane({
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={add}><PlusIcon /> Add Zone</Button>
           <Button variant="secondary" disabled={!activeZoneId || isActiveLocked} onClick={split}><LayoutIcon /> Split Zone</Button>
-          <div role="group" aria-label="Align selected Zone" className="flex overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <div role="group" aria-label="Align selected Zone" className="flex overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             {ALIGN_EDGES.map(({ edge, label }) => (
               <button
                 key={edge}
@@ -118,20 +118,20 @@ export function CompositionCanvasPane({
                 onClick={() => align(edge)}
                 aria-label={label}
                 title={label}
-                className="flex h-10 w-10 items-center justify-center border-r border-zinc-200 text-zinc-600 transition last:border-r-0 hover:bg-zinc-50 hover:text-indigo-600 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:text-zinc-300 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-indigo-300 dark:disabled:text-zinc-600"
+                className="flex h-10 w-10 items-center justify-center border-r border-border text-muted-foreground transition last:border-r-0 hover:bg-muted hover:text-primary focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:text-muted-foreground"
               >
                 <AlignIcon edge={edge} />
               </button>
             ))}
           </div>
           <div role="group" aria-label="Selected Zone actions" className="flex items-center gap-1">
-            <button type="button" disabled={activeIndex < 0} onClick={() => toggleZoneState(setLockedZoneIds)} aria-label={isActiveLocked ? "Unlock Zone" : "Lock Zone"} aria-pressed={isActiveLocked} title={isActiveLocked ? "Unlock Zone" : "Lock Zone"} className={`grid h-10 w-10 place-items-center rounded-lg border disabled:text-zinc-300 ${isActiveLocked ? "border-indigo-300 bg-indigo-50 text-indigo-600" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}><LockIcon /></button>
-            <button type="button" disabled={activeIndex < 0} onClick={() => toggleZoneState(setHiddenZoneIds)} aria-label={isActiveHidden ? "Show Zone" : "Hide Zone"} aria-pressed={isActiveHidden} title={isActiveHidden ? "Show Zone" : "Hide Zone"} className={`relative grid h-10 w-10 place-items-center rounded-lg border disabled:text-zinc-300 ${isActiveHidden ? "border-indigo-300 bg-indigo-50 text-indigo-600" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}><EyeIcon />{isActiveHidden && <span className="absolute h-px w-5 -rotate-45 bg-current" />}</button>
-            <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
-            <button type="button" disabled={activeIndex < 0} onClick={duplicate} aria-label="Duplicate Zone" title="Duplicate Zone" className="grid h-10 w-10 place-items-center rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:text-zinc-300"><ClipboardIcon /></button>
+            <button type="button" disabled={activeIndex < 0} onClick={() => toggleZoneState(setLockedZoneIds)} aria-label={isActiveLocked ? "Unlock Zone" : "Lock Zone"} aria-pressed={isActiveLocked} title={isActiveLocked ? "Unlock Zone" : "Lock Zone"} className={`grid h-10 w-10 place-items-center rounded-lg border disabled:text-muted-foreground ${isActiveLocked ? "border-primary/30 bg-primary-soft text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}><LockIcon /></button>
+            <button type="button" disabled={activeIndex < 0} onClick={() => toggleZoneState(setHiddenZoneIds)} aria-label={isActiveHidden ? "Show Zone" : "Hide Zone"} aria-pressed={isActiveHidden} title={isActiveHidden ? "Show Zone" : "Hide Zone"} className={`relative grid h-10 w-10 place-items-center rounded-lg border disabled:text-muted-foreground ${isActiveHidden ? "border-primary/30 bg-primary-soft text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}><EyeIcon />{isActiveHidden && <span className="absolute h-px w-5 -rotate-45 bg-current" />}</button>
+            <span className="mx-1 h-5 w-px bg-muted" />
+            <button type="button" disabled={activeIndex < 0} onClick={duplicate} aria-label="Duplicate Zone" title="Duplicate Zone" className="grid h-10 w-10 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><ClipboardIcon /></button>
           </div>
           </div>
-          <button type="button" disabled={!canDelete || activeIndex < 0} onClick={onDelete} title={canDelete ? "Delete Zone" : "A Layout must have at least one Zone"} className="ml-auto flex h-10 shrink-0 items-center gap-2 rounded-lg border border-red-200 px-3 text-sm font-medium text-red-600 hover:bg-red-50 disabled:border-zinc-200 disabled:text-zinc-300"><TrashIcon /> Delete Zone</button>
+          <button type="button" disabled={!canDelete || activeIndex < 0} onClick={onDelete} title={canDelete ? "Delete Zone" : "A Layout must have at least one Zone"} className="ml-auto flex h-10 shrink-0 items-center gap-2 rounded-lg border border-danger/30 px-3 text-sm font-medium text-danger hover:bg-danger-soft disabled:border-border disabled:text-muted-foreground"><TrashIcon /> Delete Zone</button>
         </div>
 
         <LayoutCanvas
@@ -182,7 +182,7 @@ function AlignIcon({ edge }: { edge: AlignEdge }) {
   );
 }
 
-const zoneBadgeClasses = ["bg-violet-600", "bg-blue-600", "bg-emerald-600"];
+const zoneBadgeClasses = ["bg-violet-600", "bg-blue-600", "bg-success"];
 
 export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, referenceResolution, onSelectZone }: {
   zones: LayoutZone[];
@@ -195,7 +195,7 @@ export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, re
   const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   return (
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Zone Overview</p>
+        <p className="text-sm font-semibold text-foreground">Zone Overview</p>
         {zones.map((zone, index) => {
           const isUnbound = !zone.id || unboundZoneIds.includes(zone.id);
           const binding = zone.id ? bindings.find((candidate) => candidate.layoutZoneId === zone.id) : undefined;
@@ -211,22 +211,22 @@ export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, re
               onClick={() => zone.id && onSelectZone(zone.id)}
               className={`grid grid-cols-[28px_minmax(0,1fr)_auto_auto_8px] items-center gap-2 rounded-lg px-2 py-2 text-left text-xs ${
                 zone.id === activeZoneId
-                  ? "bg-indigo-50 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300"
-                  : "bg-zinc-50 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                  ? "bg-primary-soft text-primary"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               <span className={`grid h-7 w-7 place-items-center rounded-md font-semibold text-white ${zoneBadgeClasses[index % zoneBadgeClasses.length]}`}>
                 {String.fromCharCode(65 + index)}
               </span>
               <span className="truncate font-medium">{zone.name}</span>
-              <span className="whitespace-nowrap text-zinc-500">
+              <span className="whitespace-nowrap text-muted-foreground">
                 {resolution ? `${referencePixels(zone.width, resolution[0])} × ${referencePixels(zone.height, resolution[1])}` : `${zone.width} × ${zone.height}%`}
               </span>
-              <span className="max-w-24 truncate text-zinc-500">{sourceLabel}</span>
+              <span className="max-w-24 truncate text-muted-foreground">{sourceLabel}</span>
               <span
                 aria-label={isUnbound ? "Unbound" : "Bound"}
                 title={isUnbound ? "Unbound" : "Bound"}
-                className={`h-2 w-2 rounded-full ${isUnbound ? "bg-amber-500" : "bg-emerald-500"}`}
+                className={`h-2 w-2 rounded-full ${isUnbound ? "bg-warning" : "bg-success"}`}
               />
             </button>
           );

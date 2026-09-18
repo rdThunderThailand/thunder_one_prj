@@ -55,7 +55,7 @@ export function AssetPicker({
     <div>
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-56 flex-1">
-          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -84,13 +84,13 @@ export function AssetPicker({
             />
           </div>
         )}
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">เลือกแล้ว {selectedIds.length} ชิ้น</span>
+        <span className="text-sm text-muted-foreground">เลือกแล้ว {selectedIds.length} ชิ้น</span>
       </div>
 
       {loading ? (
-        <p className="py-10 text-center text-sm text-zinc-400">กำลังโหลด media...</p>
+        <p className="py-10 text-center text-sm text-muted-foreground">กำลังโหลด media...</p>
       ) : filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-zinc-400">
+        <p className="py-10 text-center text-sm text-muted-foreground">
           {assets.length === 0 ? "ยังไม่มี media ในคลัง" : "ไม่พบ media ที่ตรงกับที่ค้นหา"}
         </p>
       ) : (
@@ -106,8 +106,8 @@ export function AssetPicker({
                 aria-pressed={selected}
                 className={`flex flex-col gap-2 rounded-xl border p-2 text-left transition-colors ${
                   selected
-                    ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10"
-                    : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                    ? "border-primary bg-primary-soft"
+                    : "border-border hover:bg-muted"
                 }`}
               >
                 <div className="relative">
@@ -124,7 +124,7 @@ export function AssetPicker({
                     </span>
                   )}
                 </div>
-                <span className="truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">{label}</span>
+                <span className="truncate text-xs font-medium text-foreground">{label}</span>
                 <span className="flex items-center gap-2">
                   <Badge color={asset.kind === "video" ? "blue" : asset.kind === "image" ? "green" : "zinc"} variant="pill">
                     {asset.kind ?? "file"}

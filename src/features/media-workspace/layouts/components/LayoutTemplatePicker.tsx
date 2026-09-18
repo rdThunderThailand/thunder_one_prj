@@ -38,7 +38,7 @@ const INITIAL_DETAILS: StartDetails = {
 };
 
 const selectClasses =
-  "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900";
+  "rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 function splitTags(value: string): string[] {
   return [...new Set(value.split(",").map((tag) => tag.trim()).filter(Boolean))];
@@ -50,26 +50,26 @@ function TemplateCard({ entry, selected, onSelect }: { entry: PickerEntry; selec
       type="button"
       aria-pressed={selected}
       onClick={onSelect}
-      className={`relative flex flex-col gap-2 rounded-xl border bg-white p-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-zinc-900 ${
+      className={`relative flex flex-col gap-2 rounded-xl border bg-card p-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 ${
         selected
-          ? "border-indigo-500 ring-1 ring-indigo-500"
-          : "border-zinc-200 hover:border-indigo-300 dark:border-zinc-700"
+          ? "border-primary ring-1 ring-primary"
+          : "border-border hover:border-primary/30"
       }`}
     >
       {selected && (
-        <span className="absolute right-1.5 top-1.5 z-10 grid h-5 w-5 place-items-center rounded-full bg-indigo-600 text-xs text-white" aria-hidden="true">✓</span>
+        <span className="absolute right-1.5 top-1.5 z-10 grid h-5 w-5 place-items-center rounded-full bg-primary text-xs text-white" aria-hidden="true">✓</span>
       )}
-      <span className="flex h-32 w-full items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-950">
+      <span className="flex h-32 w-full items-center justify-center rounded-lg bg-muted">
         <LayoutWireframe
           zones={entry.zones}
           background="#f8fafc"
           aspectRatio={entry.aspectRatio}
           shouldShowLabels
-          className="h-full max-w-full rounded-lg border border-zinc-200 dark:border-zinc-700"
+          className="h-full max-w-full rounded-lg border border-border"
         />
       </span>
-      <span className="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">{entry.name}</span>
-      <span className="flex items-center justify-between gap-2 text-xs text-zinc-400">
+      <span className="truncate text-sm font-semibold text-foreground">{entry.name}</span>
+      <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>{entry.referenceResolution?.replace("x", "×") ?? "Not set"} · {entry.aspectRatio}</span>
         <span>{entry.zoneCount} {entry.zoneCount === 1 ? "Zone" : "Zones"}</span>
       </span>
@@ -200,7 +200,7 @@ export function LayoutTemplatePicker({
       showCloseButton
       footer={footer}
     >
-      <p className="-mt-1 mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="-mt-1 mb-3 text-sm text-muted-foreground">
         {step === "start"
           ? "Create a new layout from scratch or using a template."
           : "Choose a template to start your new layout."}
@@ -219,8 +219,8 @@ export function LayoutTemplatePicker({
           onDetailsChange={setDetails}
         />
       ) : (
-        <div className="grid min-h-[560px] overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 lg:grid-cols-[180px_minmax(0,1fr)_260px]">
-          <aside className="flex flex-col border-b border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-700 dark:bg-zinc-950/40 lg:border-b-0 lg:border-r">
+        <div className="grid min-h-[560px] overflow-hidden rounded-lg border border-border lg:grid-cols-[180px_minmax(0,1fr)_260px]">
+          <aside className="flex flex-col border-b border-border bg-muted p-3 lg:border-b-0 lg:border-r">
             <nav aria-label="Template groups" className="space-y-1">
               {GROUPS.map((item) => (
                 <button
@@ -229,15 +229,15 @@ export function LayoutTemplatePicker({
                   onClick={() => { setGroup(item.key); setSelectedId(null); }}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium ${
                     group === item.key
-                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300"
-                      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      ? "bg-primary-soft text-primary"
+                      : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {item.label}
                 </button>
               ))}
             </nav>
-            <div className="mt-auto border-t border-zinc-200 pt-3 dark:border-zinc-700">
+            <div className="mt-auto border-t border-border pt-3">
               <Button type="button" variant="secondary" className="w-full" onClick={createTemplate}>+ Create Template</Button>
             </div>
           </aside>
@@ -261,25 +261,25 @@ export function LayoutTemplatePicker({
                 <option value="all">All Use Cases</option>{useCases.map((useCase) => <option key={useCase} value={useCase}>{useCase}</option>)}
               </select>
             </div>
-            {loadError && <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">{loadError}</p>}
-            <p className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{GROUPS.find((item) => item.key === group)?.label}</p>
+            {loadError && <p role="alert" className="mb-3 text-sm text-danger">{loadError}</p>}
+            <p className="mb-3 text-sm font-semibold text-foreground">{GROUPS.find((item) => item.key === group)?.label}</p>
             <div className="grid max-h-[470px] grid-cols-1 gap-3 overflow-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
               {visible.map((entry) => <TemplateCard key={`${entry.source}:${entry.id}`} entry={entry} selected={selected?.id === entry.id && selected.source === entry.source} onSelect={() => setSelectedId(entry.id)} />)}
-              {visible.length === 0 && <p className="col-span-full py-16 text-center text-sm text-zinc-500">No templates match these filters.</p>}
+              {visible.length === 0 && <p className="col-span-full py-16 text-center text-sm text-muted-foreground">No templates match these filters.</p>}
             </div>
           </section>
 
-          <aside className="flex flex-col border-t border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-950/30 lg:border-l lg:border-t-0">
-            <p className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">Template Details</p>
+          <aside className="flex flex-col border-t border-border bg-muted p-4 lg:border-l lg:border-t-0">
+            <p className="mb-3 text-sm font-semibold text-foreground">Template Details</p>
             <div className="min-h-0 flex-1">{selected ? (
               <div className="space-y-3">
-                <LayoutWireframe zones={selected.zones} background="#f8fafc" aspectRatio={selected.aspectRatio} shouldShowLabels className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700" />
-                <div><p className="font-semibold text-zinc-900 dark:text-zinc-100">{selected.name}</p><p className="mt-1 text-xs text-zinc-500">{selected.zoneCount} Zones · {selected.orientation}</p></div>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs"><dt className="text-zinc-400">Resolution</dt><dd>{selected.referenceResolution ?? "Not set"}</dd><dt className="text-zinc-400">Aspect ratio</dt><dd>{selected.aspectRatio}</dd><dt className="text-zinc-400">On use</dt><dd>{selected.behaviour === "copied" ? "Copied" : "Shared"}</dd></dl>
-                {selected.useCases.length > 0 && <div className="flex flex-wrap gap-1">{selected.useCases.map((useCase) => <span key={useCase} className="rounded-full bg-indigo-50 px-2 py-1 text-[11px] text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">{useCase}</span>)}</div>}
-                {selected.description && <p className="text-xs leading-5 text-zinc-500">{selected.description}</p>}
+                <LayoutWireframe zones={selected.zones} background="#f8fafc" aspectRatio={selected.aspectRatio} shouldShowLabels className="w-full rounded-lg border border-border" />
+                <div><p className="font-semibold text-foreground">{selected.name}</p><p className="mt-1 text-xs text-muted-foreground">{selected.zoneCount} Zones · {selected.orientation}</p></div>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs"><dt className="text-muted-foreground">Resolution</dt><dd>{selected.referenceResolution ?? "Not set"}</dd><dt className="text-muted-foreground">Aspect ratio</dt><dd>{selected.aspectRatio}</dd><dt className="text-muted-foreground">On use</dt><dd>{selected.behaviour === "copied" ? "Copied" : "Shared"}</dd></dl>
+                {selected.useCases.length > 0 && <div className="flex flex-wrap gap-1">{selected.useCases.map((useCase) => <span key={useCase} className="rounded-full bg-primary-soft px-2 py-1 text-[11px] text-primary">{useCase}</span>)}</div>}
+                {selected.description && <p className="text-xs leading-5 text-muted-foreground">{selected.description}</p>}
               </div>
-            ) : <p className="text-sm text-zinc-500">Select a template to see its details.</p>}</div>
+            ) : <p className="text-sm text-muted-foreground">Select a template to see its details.</p>}</div>
           </aside>
         </div>
       )}

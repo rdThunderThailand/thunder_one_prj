@@ -24,8 +24,8 @@ import type { PlaylistDetail } from "../types";
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3 py-1.5 text-sm">
-      <span className="shrink-0 text-zinc-500 dark:text-zinc-400">{label}</span>
-      <span className="text-right font-medium text-zinc-900 dark:text-zinc-100">{value}</span>
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="text-right font-medium text-foreground">{value}</span>
     </div>
   );
 }
@@ -48,7 +48,7 @@ export function DetailsTab({
   );
 
   return (
-    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+    <div className="divide-y divide-border">
       <Row label="Playlist Type" value={metadata.info.playlistType ?? "—"} />
       <Row label="Campaign" value={campaignName ?? "—"} />
       <Row label="Items" value={detail.items.length} />
@@ -61,7 +61,7 @@ export function DetailsTab({
       <Row label="Resolution" value={resolutionLabel(metadata.info.resolution)} />
       <Row label="Created By" value={detail.created_by?.display_name ?? "—"} />
       {metadata.info.description && (
-        <p className="pt-3 text-sm text-zinc-600 dark:text-zinc-300">
+        <p className="pt-3 text-sm text-muted-foreground">
           {metadata.info.description}
         </p>
       )}
@@ -79,24 +79,24 @@ export function ContentTab({ detail }: { detail: PlaylistDetail }) {
   const previews = usePreviewUrls(useMemo(() => items.map((i) => i.media_asset_id), [items]));
 
   if (items.length === 0) {
-    return <p className="py-8 text-center text-sm text-zinc-400">Playlist นี้ยังไม่มีสื่อ</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">Playlist นี้ยังไม่มีสื่อ</p>;
   }
 
   return (
     <ul className="flex flex-col gap-2">
       {items.map((item, index) => (
         <li key={`${item.media_asset_id}-${item.position}`} className="flex items-center gap-3">
-          <span className="w-4 text-xs text-zinc-400">{index + 1}</span>
+          <span className="w-4 text-xs text-muted-foreground">{index + 1}</span>
           <MediaThumb
             url={previews.urls[item.media_asset_id]}
             thumbnailUrl={previews.thumbnailUrls[item.media_asset_id]}
             alt={item.title ?? "media"}
             className="h-9 w-12"
           />
-          <span className="min-w-0 flex-1 truncate text-sm text-zinc-700 dark:text-zinc-200">
+          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
             {item.title ?? item.media_asset_id.slice(0, 8)}
           </span>
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-muted-foreground">
             {item.duration_seconds != null ? `${item.duration_seconds}s` : "—"}
           </span>
         </li>
@@ -143,12 +143,12 @@ function PageNav({
 }) {
   if (totalPages <= 1) return null;
   return (
-    <div className="flex items-center justify-between pt-1 text-xs text-zinc-500 dark:text-zinc-400">
+    <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
       <button
         type="button"
         disabled={page <= 1}
         onClick={() => onChange(page - 1)}
-        className="rounded px-2 py-1 hover:bg-zinc-50 disabled:opacity-40 dark:hover:bg-zinc-800"
+        className="rounded px-2 py-1 hover:bg-muted disabled:opacity-40"
       >
         ก่อนหน้า
       </button>
@@ -159,7 +159,7 @@ function PageNav({
         type="button"
         disabled={page >= totalPages}
         onClick={() => onChange(page + 1)}
-        className="rounded px-2 py-1 hover:bg-zinc-50 disabled:opacity-40 dark:hover:bg-zinc-800"
+        className="rounded px-2 py-1 hover:bg-muted disabled:opacity-40"
       >
         ถัดไป
       </button>
@@ -169,14 +169,14 @@ function PageNav({
 
 function PublicationRow({ publication }: { publication: PublicationListItem }) {
   return (
-    <li className="flex items-center justify-between gap-2 rounded-lg border border-zinc-100 p-2 dark:border-zinc-800">
+    <li className="flex items-center justify-between gap-2 rounded-lg border border-border p-2">
       <Link
         href={`/media-workspace/publications/${publication.id}`}
-        className="min-w-0 flex-1 truncate text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+        className="min-w-0 flex-1 truncate text-sm text-primary hover:underline"
       >
         {publication.name}
       </Link>
-      <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+      <span className="shrink-0 text-xs text-muted-foreground">
         {publication.campaign_name ?? "—"}
       </span>
       <Badge color={publicationStatusColor(publication.effective_status ?? publication.status)} variant="pill">
@@ -193,16 +193,16 @@ export function ScheduleTab({ playlistId }: { playlistId: string }) {
   const [page, setPage] = useState(1);
 
   if (failed) {
-    return <p className="py-8 text-center text-sm text-zinc-400">โหลดตารางเวลาไม่สำเร็จ</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">โหลดตารางเวลาไม่สำเร็จ</p>;
   }
   if (publications === null) {
-    return <p className="py-8 text-center text-sm text-zinc-400">กำลังโหลด...</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">กำลังโหลด...</p>;
   }
 
   const live = publications.filter((p) => !isPastPublication(p));
   if (live.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-zinc-400">
+      <p className="py-8 text-center text-sm text-muted-foreground">
         ยังไม่มี publication ที่กำลังใช้ playlist นี้
       </p>
     );
@@ -234,16 +234,16 @@ export function HistoryTab({ playlistId }: { playlistId: string }) {
   const [page, setPage] = useState(1);
 
   if (failed) {
-    return <p className="py-8 text-center text-sm text-zinc-400">โหลดประวัติไม่สำเร็จ</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">โหลดประวัติไม่สำเร็จ</p>;
   }
   if (publications === null) {
-    return <p className="py-8 text-center text-sm text-zinc-400">กำลังโหลด...</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">กำลังโหลด...</p>;
   }
 
   const past = publications.filter(isPastPublication);
   if (past.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-zinc-400">ยังไม่มี publication ที่จบไปแล้ว</p>
+      <p className="py-8 text-center text-sm text-muted-foreground">ยังไม่มี publication ที่จบไปแล้ว</p>
     );
   }
 

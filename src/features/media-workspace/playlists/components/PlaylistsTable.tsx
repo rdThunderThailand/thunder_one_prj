@@ -68,7 +68,7 @@ export function PlaylistsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <tr className="border-b border-border text-xs font-medium text-muted-foreground">
             <th className="w-10 py-2 pl-1"><input type="checkbox" aria-label="Select all playlists on this page" checked={isAllSelected} onChange={(event) => onSelectionChange(event.target.checked ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
             <SortHeader label="Playlist Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="py-2" />
@@ -86,7 +86,7 @@ export function PlaylistsTable({
             return (
               <tr
                 key={playlist.id}
-                className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                className="border-b border-border last:border-0 hover:bg-muted"
               >
                 <td className="py-3 pl-1"><input type="checkbox" aria-label={`Select ${playlist.name}`} checked={selectedIds.has(playlist.id)} onChange={(event) => { const next = new Set(selectedIds); if (event.target.checked) next.add(playlist.id); else next.delete(playlist.id); onSelectionChange(next); }} /></td>
                 <td className="py-3">
@@ -97,11 +97,11 @@ export function PlaylistsTable({
                       className="h-10 w-14"
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {playlist.name}
                       </p>
                       {playlist.created_by?.display_name && (
-                        <p className="truncate text-xs text-zinc-400">
+                        <p className="truncate text-xs text-muted-foreground">
                           By {playlist.created_by.display_name}
                         </p>
                       )}
@@ -117,13 +117,13 @@ export function PlaylistsTable({
                     </div>
                   </div>
                 </td>
-                <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">
+                <td className="py-3 text-sm text-muted-foreground">
                   {(() => {
                     const type = playlistContentType(playlist);
                     return type ? TYPE_LABELS[type] : "—";
                   })()}
                 </td>
-                <td className="py-3 text-sm text-zinc-600 dark:text-zinc-300">
+                <td className="py-3 text-sm text-muted-foreground">
                   {playlist.total_duration_seconds == null
                     ? "—"
                     : formatDuration(playlist.total_duration_seconds)}
@@ -133,7 +133,7 @@ export function PlaylistsTable({
                     {badge.label}
                   </Badge>
                 </td>
-                <td className="py-3 text-sm text-zinc-500 dark:text-zinc-400">
+                <td className="py-3 text-sm text-muted-foreground">
                   {formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}
                 </td>
                 <td className="py-3 pr-1 text-right">
@@ -174,7 +174,7 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSortChange(sortKey)}
-        className="inline-flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-200"
+        className="inline-flex items-center gap-1 hover:text-foreground"
       >
         {label}
         {active && <span aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span>}
@@ -201,8 +201,8 @@ function RowActions({
   onAction: (action: RowAction) => void;
 }) {
   const item =
-    "block w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800";
-  const danger = `${item} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10`;
+    "block w-full px-3 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted";
+  const danger = `${item} text-danger hover:bg-danger-soft`;
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -212,7 +212,7 @@ function RowActions({
             href={`/media-workspace/preview/playlist/${playlist.id}`}
             aria-label={`Preview ${playlist.name}`}
             title="Preview"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"
           >
             <PlayIcon />
           </Link>
@@ -220,7 +220,7 @@ function RowActions({
             href={`/media-workspace/playlists/${playlist.id}`}
             aria-label={`Edit ${playlist.name}`}
             title="Edit"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"
           >
             <EditIcon />
           </Link>
@@ -244,11 +244,11 @@ function RowActions({
             const details = event.currentTarget.parentElement as HTMLDetailsElement | null;
             if (details) details.open = !details.open;
           }}
-          className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+          className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <MoreIcon />
         </summary>
-        <div className="absolute right-0 z-10 mt-1 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="absolute right-0 z-10 mt-1 w-48 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
         {inTrash ? (
           <>
             <button type="button" className={item} disabled={disabled} onClick={() => onAction("restore")}>
@@ -262,7 +262,7 @@ function RowActions({
                 Delete permanently
               </button>
             ) : (
-              <p className="px-3 py-1.5 text-xs text-zinc-400">
+              <p className="px-3 py-1.5 text-xs text-muted-foreground">
                 Can&rsquo;t delete permanently — this playlist has been published.
               </p>
             )}

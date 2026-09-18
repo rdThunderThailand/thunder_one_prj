@@ -21,19 +21,19 @@ function ChannelRow({
   onChange: () => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 border-b border-zinc-100 px-3 py-2.5 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50">
+    <label className="flex cursor-pointer items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0 hover:bg-muted">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+        className="h-4 w-4 rounded border-border text-primary focus:ring-ring/30"
       />
-      <MonitorIcon className="h-4 w-4 shrink-0 text-indigo-500" />
+      <MonitorIcon className="h-4 w-4 shrink-0 text-primary" />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{channel.name}</p>
-        <p className="truncate text-xs text-zinc-400">{channel.location?.name ?? "Unassigned"}</p>
+        <p className="truncate text-sm font-medium text-foreground">{channel.name}</p>
+        <p className="truncate text-xs text-muted-foreground">{channel.location?.name ?? "Unassigned"}</p>
       </div>
-      <span className={`shrink-0 text-xs ${channel.health === "online" ? "text-emerald-600" : "text-zinc-400"}`}>
+      <span className={`shrink-0 text-xs ${channel.health === "online" ? "text-success" : "text-muted-foreground"}`}>
         {channel.health ?? "No player"}
       </span>
     </label>
@@ -116,48 +116,48 @@ export function CreateGroupChannelsModal({
       }
     >
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700">
+        <section className="rounded-xl border border-border p-3">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Available Channels</h3>
-            <span className="text-xs text-zinc-400">{available.length}</span>
+            <h3 className="font-semibold text-foreground">Available Channels</h3>
+            <span className="text-xs text-muted-foreground">{available.length}</span>
           </div>
           <label className="relative mt-3 block">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               value={availableSearch}
               onChange={(event) => setAvailableSearch(event.target.value)}
               placeholder="Search channels…"
-              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900"
+              className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             />
           </label>
-          <div className="mt-3 max-h-80 overflow-y-auto rounded-lg border border-zinc-100 dark:border-zinc-800">
-            {available.length === 0 ? <p className="p-4 text-sm text-zinc-400">No available channels.</p> : available.map((channel) => <ChannelRow key={channel.id} channel={channel} checked={false} onChange={() => toggle(channel.id)} />)}
+          <div className="mt-3 max-h-80 overflow-y-auto rounded-lg border border-border">
+            {available.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No available channels.</p> : available.map((channel) => <ChannelRow key={channel.id} channel={channel} checked={false} onChange={() => toggle(channel.id)} />)}
           </div>
         </section>
 
-        <section className="rounded-xl border border-indigo-200 bg-indigo-50/30 p-3 dark:border-indigo-500/30 dark:bg-indigo-500/5">
+        <section className="rounded-xl border border-primary/30 bg-primary-soft p-3">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{selectedTitle}</h3>
-            <span className="text-xs text-indigo-600 dark:text-indigo-300">{draft.size} selected</span>
+            <h3 className="font-semibold text-foreground">{selectedTitle}</h3>
+            <span className="text-xs text-primary">{draft.size} selected</span>
           </div>
           <label className="relative mt-3 block">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               value={selectedSearch}
               onChange={(event) => setSelectedSearch(event.target.value)}
               placeholder="Search selected channels…"
-              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900"
+              className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             />
           </label>
-          <div className="mt-3 max-h-80 overflow-y-auto rounded-lg border border-indigo-100 bg-white dark:border-indigo-500/20 dark:bg-zinc-900">
-            {selected.length === 0 ? <p className="p-4 text-sm text-zinc-400">{selectedEmptyMessage}</p> : selected.map((channel) => <ChannelRow key={channel.id} channel={channel} checked onChange={() => toggle(channel.id)} />)}
+          <div className="mt-3 max-h-80 overflow-y-auto rounded-lg border border-primary/30 bg-card">
+            {selected.length === 0 ? <p className="p-4 text-sm text-muted-foreground">{selectedEmptyMessage}</p> : selected.map((channel) => <ChannelRow key={channel.id} channel={channel} checked onChange={() => toggle(channel.id)} />)}
           </div>
         </section>
       </div>
       {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}

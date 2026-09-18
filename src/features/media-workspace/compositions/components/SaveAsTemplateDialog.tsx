@@ -39,7 +39,7 @@ export function SaveAsTemplateDialog({
         Save as Template
       </Button>
     </>}>
-      <p className="text-zinc-500 dark:text-zinc-400">
+      <p className="text-muted-foreground">
         Template คือ geometry ที่ Layout อื่นนำไปใช้ร่วมกันได้ — ตั้งชื่อตามรูปแบบการวาง Zone
         ไม่ใช่ตามงานที่ใช้อยู่ตอนนี้
       </p>
@@ -50,10 +50,10 @@ export function SaveAsTemplateDialog({
           autoFocus
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-border px-3 py-2"
         />
       </label>
-      {taken && <p className="text-red-500">ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น</p>}
+      {taken && <p className="text-danger">ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น</p>}
     </Modal>
   );
 }

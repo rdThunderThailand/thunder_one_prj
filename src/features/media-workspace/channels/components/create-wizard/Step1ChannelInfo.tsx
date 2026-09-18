@@ -4,7 +4,7 @@ import type { CreateChannelDraft } from "../../create-wizard-state";
 import type { ChannelLocationOption, ChannelOutputKind } from "../../types";
 
 const fieldClasses =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 // PA / Audio is deliberately not offered (ticket 08 deviation — ADR 0074 §2, Output Kind covers
 // Screen/TV/Kiosk only).
@@ -28,8 +28,8 @@ export function Step1ChannelInfo({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">1. Select Channel Type</h3>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Choose the type of channel you want to create.</p>
+        <h3 className="text-sm font-semibold text-foreground">1. Select Channel Type</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">Choose the type of channel you want to create.</p>
         <div className="mt-3 grid grid-cols-3 gap-3">
           {OUTPUT_KINDS.map(({ kind, label, hint, icon: Icon }) => {
             const selected = draft.outputKind === kind;
@@ -41,13 +41,13 @@ export function Step1ChannelInfo({
                 aria-pressed={selected}
                 className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 text-center transition-colors ${
                   selected
-                    ? "border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-500/10"
-                    : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-700 dark:hover:border-zinc-600"
+                    ? "border-primary bg-primary-soft"
+                    : "border-border hover:border-border"
                 }`}
               >
-                <Icon className={`h-6 w-6 ${selected ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400"}`} />
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{label}</span>
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">{hint}</span>
+                <Icon className={`h-6 w-6 ${selected ? "text-primary" : "text-muted-foreground"}`} />
+                <span className="text-sm font-semibold text-foreground">{label}</span>
+                <span className="text-[11px] text-muted-foreground">{hint}</span>
               </button>
             );
           })}
@@ -55,8 +55,8 @@ export function Step1ChannelInfo({
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">2. Basic Information</h3>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Set the basic details for this channel.</p>
+        <h3 className="text-sm font-semibold text-foreground">2. Basic Information</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">Set the basic details for this channel.</p>
         <div className="mt-3 grid gap-4 md:grid-cols-2">
           <Input
             name="create-channel-name"
@@ -66,9 +66,9 @@ export function Step1ChannelInfo({
             placeholder="e.g. Cafe Menu Board"
             onChange={(event) => onChange({ ...draft, name: event.target.value })}
           />
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-muted-foreground">
             <span>
-              Location <span className="font-normal text-zinc-400">(optional)</span>
+              Location <span className="font-normal text-muted-foreground">(optional)</span>
             </span>
             <select
               value={draft.locationId ?? ""}
@@ -83,8 +83,8 @@ export function Step1ChannelInfo({
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:col-span-2">
-            Description <span className="font-normal text-zinc-400">(optional)</span>
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-muted-foreground md:col-span-2">
+            Description <span className="font-normal text-muted-foreground">(optional)</span>
             <textarea
               value={draft.description}
               maxLength={300}
@@ -93,7 +93,7 @@ export function Step1ChannelInfo({
               onChange={(event) => onChange({ ...draft, description: event.target.value })}
               className={`${fieldClasses} resize-y`}
             />
-            <span className="self-end text-[11px] text-zinc-400">{draft.description.length}/300</span>
+            <span className="self-end text-[11px] text-muted-foreground">{draft.description.length}/300</span>
           </label>
         </div>
       </div>

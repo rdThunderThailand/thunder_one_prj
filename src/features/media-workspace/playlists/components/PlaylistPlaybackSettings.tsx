@@ -18,7 +18,7 @@ export function PlaylistPlaybackSettings({
 }) {
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Playback Settings</h2>
+      <h2 className="text-base font-semibold text-foreground">Playback Settings</h2>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Field label="Play Mode">
           <Select
@@ -59,7 +59,7 @@ export function PlaylistPlaybackSettings({
           />
         </Field>
       </div>
-      <p className="text-xs text-zinc-400">
+      <p className="text-xs text-muted-foreground">
         Play mode, repeat and start-from reach the player only for a Playlist published on its own —
         a Composition Zone overrides them (ADR 0060 §3b).
       </p>

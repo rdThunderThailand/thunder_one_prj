@@ -39,46 +39,46 @@ export function EditChannelSidebar({
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <Card className="p-5">
-        <p className="flex items-center gap-1.5 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        <p className="flex items-center gap-1.5 text-base font-semibold text-foreground">
           Channel Preview
-          <InfoIcon className="h-4 w-4 text-zinc-400" />
+          <InfoIcon className="h-4 w-4 text-muted-foreground" />
         </p>
-        <div className="mt-3 grid min-h-40 place-items-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-5 text-center dark:border-zinc-700 dark:bg-zinc-950/40">
+        <div className="mt-3 grid min-h-40 place-items-center rounded-xl border border-dashed border-border bg-muted p-5 text-center">
           <div>
-            <MonitorIcon className="mx-auto h-7 w-7 text-zinc-400" />
-            <p className="mt-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">No preview available yet</p>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Content appears after a Program targets this channel.</p>
+            <MonitorIcon className="mx-auto h-7 w-7 text-muted-foreground" />
+            <p className="mt-2 text-sm font-medium text-muted-foreground">No preview available yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">Content appears after a Program targets this channel.</p>
           </div>
         </div>
       </Card>
 
       <Card className="p-5">
-        <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Current Status</p>
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-950/40">
+        <p className="text-base font-semibold text-foreground">Current Status</p>
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted px-3 py-2.5">
           <Badge color={status.color}>{status.label}</Badge>
-          <span className="text-sm text-zinc-600 dark:text-zinc-300">{status.label === "Online" ? "Running as expected" : "Player connection needs attention"}</span>
+          <span className="text-sm text-muted-foreground">{status.label === "Online" ? "Running as expected" : "Player connection needs attention"}</span>
         </div>
-        <p className="mt-1 text-xs text-zinc-400">Last updated {formatDateTime(channel.updated_at)}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Last updated {formatDateTime(channel.updated_at)}</p>
       </Card>
 
       <Card className="p-5">
-        <p className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">Screen Outputs</p>
+        <p className="mb-3 text-base font-semibold text-foreground">Screen Outputs</p>
         <ChannelStructureTree channel={channel} />
       </Card>
 
       <Card className="p-5">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Groups ({groups.length})</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Groups ({groups.length})</p>
           <button
             type="button"
             onClick={() => setManagingGroups(true)}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="text-xs font-medium text-primary hover:text-primary"
           >
             Manage →
           </button>
         </div>
         {groups.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-400">No Groups yet</p>
+          <p className="mt-2 text-sm text-muted-foreground">No Groups yet</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {groups.map((group) => (
@@ -88,16 +88,16 @@ export function EditChannelSidebar({
         )}
       </Card>
 
-      <Card className="border-indigo-100 bg-indigo-50/70 p-5 dark:border-indigo-500/20 dark:bg-indigo-500/10">
+      <Card className="border-primary/30 bg-primary-soft p-5">
         <div className="flex gap-2">
-          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-300" />
+          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div>
-            <p className="text-sm font-semibold text-indigo-950 dark:text-indigo-100">Manage channel content</p>
-            <p className="mt-1 text-xs text-indigo-700 dark:text-indigo-200">Create or schedule content for this channel in Programs.</p>
+            <p className="text-sm font-semibold text-primary">Manage channel content</p>
+            <p className="mt-1 text-xs text-primary">Create or schedule content for this channel in Programs.</p>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Link href="/media-workspace/publications" className={buttonClasses("secondary", "w-full px-2.5 py-2 text-xs text-indigo-700 dark:text-indigo-300")}>
+          <Link href="/media-workspace/publications" className={buttonClasses("secondary", "w-full px-2.5 py-2 text-xs text-primary")}>
             <PlayIcon className="h-4 w-4" />
             Go to Programs
           </Link>

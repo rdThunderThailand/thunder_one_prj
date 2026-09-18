@@ -53,20 +53,20 @@ export function CompositionEditorOverlays({
       )}
 
       {saveError && (
-        <Card className="border-red-200 p-4 dark:border-red-900">
-          <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+        <Card className="border-danger/30 p-4">
+          <p className="text-sm text-danger">{saveError}</p>
         </Card>
       )}
 
       {templateSavedName && (
-        <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
+        <p role="status" className="rounded-lg border border-success/30 bg-success-soft p-3 text-sm text-success">
           Added “{templateSavedName}” to My Templates.
         </p>
       )}
 
       {sharedTemplateUsage > 1 && (
-        <Card className="flex flex-wrap items-center justify-between gap-3 border-amber-200 p-4 dark:border-amber-800">
-          <p className="text-sm text-amber-800 dark:text-amber-200">
+        <Card className="flex flex-wrap items-center justify-between gap-3 border-warning/30 p-4">
+          <p className="text-sm text-warning">
             This Template is used by {sharedTemplateUsage} Layouts. Changing the Zones affects all of them.
           </p>
           <Button variant="secondary" disabled={saving} onClick={onForkLayout}>Make this Layout its own copy</Button>

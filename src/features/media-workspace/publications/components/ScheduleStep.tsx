@@ -87,7 +87,7 @@ export function ScheduleStep({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="mb-2 text-sm font-medium text-zinc-700">Play Mode</p>
+        <p className="mb-2 text-sm font-medium text-muted-foreground">Play Mode</p>
         <div className="grid grid-cols-1 gap-2.5 xl:grid-cols-2">
           {scheduleTypes.map((option) => {
             const active = activeCardId === option.id;
@@ -98,39 +98,39 @@ export function ScheduleStep({
                 onClick={() => patch({ schedule_type: SCHEDULE_TYPE_BY_CARD[option.id] })}
                 className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-colors ${
                   active
-                    ? "border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400"
-                    : "border-zinc-200 hover:border-zinc-300"
+                    ? "border-primary/30 bg-primary-soft ring-1 ring-primary"
+                    : "border-border hover:border-border"
                 }`}
               >
-                <span className={`h-5 w-5 ${active ? "text-indigo-600" : "text-zinc-400"}`}>
+                <span className={`h-5 w-5 ${active ? "text-primary" : "text-muted-foreground"}`}>
                   {scheduleTypeIcon[option.id]}
                 </span>
-                <span className="text-xs font-semibold text-zinc-900">{option.label}</span>
-                <span className="text-[11px] text-zinc-400">{option.sublabel}</span>
+                <span className="text-xs font-semibold text-foreground">{option.label}</span>
+                <span className="text-[11px] text-muted-foreground">{option.sublabel}</span>
               </button>
             );
           })}
           <span
             title="ยังไม่เปิดใช้งาน"
-            className="flex cursor-not-allowed flex-col items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-center opacity-60"
+            className="flex cursor-not-allowed flex-col items-center gap-1.5 rounded-lg border border-border bg-muted p-3 text-center opacity-60"
           >
-            <span className="h-5 w-5 text-zinc-400">
+            <span className="h-5 w-5 text-muted-foreground">
               <LightningIcon />
             </span>
-            <span className="text-xs font-semibold text-zinc-400">Event</span>
-            <span className="text-[11px] text-zinc-300">ตามเหตุการณ์</span>
+            <span className="text-xs font-semibold text-muted-foreground">Event</span>
+            <span className="text-[11px] text-muted-foreground">ตามเหตุการณ์</span>
           </span>
         </div>
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+        <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
           Publish Date &amp; Time
         </label>
         {scheduleForm.schedule_type === "now" ? (
           <>
             <DateTimeInputs date={nowZoned.date} time={nowZoned.time} disabled />
-            <p className="mt-1.5 text-xs text-zinc-500">Publishes immediately once activated.</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">Publishes immediately once activated.</p>
           </>
         ) : (
           <DateTimeInputs
@@ -159,7 +159,7 @@ export function ScheduleStep({
 
       {hasEndPicker && (
         <div>
-          <label className="mb-1.5 flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-700">
+          <label className="mb-1.5 flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground">
             <input
               type="checkbox"
               checked={noEndDate}
@@ -170,7 +170,7 @@ export function ScheduleStep({
                   : undefined
               }
               onChange={(e) => toggleNoEndDate(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-border text-primary focus:ring-ring/30"
             />
             No end date
           </label>
@@ -190,13 +190,13 @@ export function ScheduleStep({
           <WeekdayChips selected={scheduleForm.days} onToggle={toggleDay} error={fieldErrors.days} />
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-sm font-medium text-zinc-700">Time — every day</span>
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-zinc-500">
+              <span className="text-sm font-medium text-muted-foreground">Time — every day</span>
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
                 <input
                   type="checkbox"
                   checked={allDay}
                   onChange={(e) => toggleAllDay(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-ring/30"
                 />
                 All day
               </label>
@@ -219,8 +219,8 @@ export function ScheduleStep({
         <div
           className={`rounded-lg border p-3 text-xs ${
             conflictsError
-              ? "border-red-200 bg-red-50 text-red-700"
-              : "border-amber-200 bg-amber-50 text-amber-700"
+              ? "border-danger/30 bg-danger-soft text-danger"
+              : "border-warning/30 bg-warning-soft text-warning"
           }`}
         >
           {checkingConflicts
@@ -231,15 +231,15 @@ export function ScheduleStep({
         </div>
       )}
 
-      <div className="border-t border-zinc-100 pt-4">
+      <div className="border-t border-border pt-4">
         <button
           type="button"
           onClick={() => setAdvancedOpen((v) => !v)}
-          className="flex w-full items-center justify-between text-sm font-medium text-zinc-900"
+          className="flex w-full items-center justify-between text-sm font-medium text-foreground"
         >
           Advanced Schedule
           <ChevronDownIcon
-            className={`h-4 w-4 text-zinc-400 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+            className={`h-4 w-4 text-muted-foreground transition-transform ${advancedOpen ? "rotate-180" : ""}`}
           />
         </button>
         {advancedOpen && (

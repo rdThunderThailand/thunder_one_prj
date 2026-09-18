@@ -16,8 +16,8 @@ import type { ContentFolder, Tag } from "@/types/domain";
 import type { LayoutSettingsDraft } from "../save-composition";
 
 const inputClasses =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
-const labelClasses = "text-xs font-semibold uppercase tracking-wide text-zinc-500";
+  "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
+const labelClasses = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
 export function LayoutPropertiesPanel({
   name,
@@ -86,7 +86,7 @@ export function LayoutPropertiesPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
-      <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Layout Properties</p>
+      <p className="text-sm font-semibold text-foreground">Layout Properties</p>
       <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
 
       <label className="flex flex-col gap-1.5">
@@ -122,7 +122,7 @@ export function LayoutPropertiesPanel({
           {tags.map((tag) => (
             <span
               key={tag}
-              className="flex items-center gap-1 rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+              className="flex items-center gap-1 rounded bg-muted px-2 py-1 text-xs text-muted-foreground"
             >
               {tag}
               <button
@@ -130,7 +130,7 @@ export function LayoutPropertiesPanel({
                 aria-label={`Remove ${tag}`}
                 disabled={disabled}
                 onClick={() => onTagsChange(tags.filter((candidate) => candidate !== tag))}
-                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-100"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <XIcon className="h-3 w-3" />
               </button>
@@ -159,7 +159,7 @@ export function LayoutPropertiesPanel({
       </div>
 
       {sharedTemplateUsage > 1 && (
-        <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-200 md:col-span-2 xl:col-span-3">
+        <p className="rounded-lg bg-warning-soft p-2 text-xs text-warning md:col-span-2 xl:col-span-3">
           Resolution and background come from a Template used by {sharedTemplateUsage} Layouts.
           Changing them here changes all of them.
         </p>
@@ -191,7 +191,7 @@ export function LayoutPropertiesPanel({
           <option value="custom">Custom</option>
         </select>
         {customMode && <CustomResolution disabled={disabled} aspectRatio={settings.aspectRatio} onCommit={setResolution} />}
-        <p className="text-xs text-zinc-400">Aspect ratio: {settings.aspectRatio}</p>
+        <p className="text-xs text-muted-foreground">Aspect ratio: {settings.aspectRatio}</p>
       </div>
 
       <label className="flex flex-col gap-1.5">
@@ -201,7 +201,7 @@ export function LayoutPropertiesPanel({
           value={settings.background}
           disabled={disabled}
           onChange={(event) => onSettingsChange({ ...settings, background: event.target.value })}
-          className="h-10 w-full rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900"
+          className="h-10 w-full rounded-lg border border-border bg-card p-1"
         />
       </label>
       </div>
@@ -243,7 +243,7 @@ function CustomResolution({
           title={locked ? "Unlock aspect ratio" : "Lock aspect ratio"}
           disabled={disabled}
           onClick={() => setLocked((current) => !current)}
-          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border transition-colors ${locked ? "border-indigo-200 bg-indigo-50 text-indigo-600" : "border-zinc-200 bg-white text-zinc-400 hover:text-zinc-700"}`}
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border transition-colors ${locked ? "border-primary/30 bg-primary-soft text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
         >
           <LockIcon className="h-3.5 w-3.5" />
         </button>
@@ -258,7 +258,7 @@ function CustomResolution({
         />
       </div>
       {!valid && (width || height) && (
-        <p className="text-xs text-red-600 dark:text-red-400">Width and height must each be 100–99999.</p>
+        <p className="text-xs text-danger">Width and height must each be 100–99999.</p>
       )}
     </>
   );

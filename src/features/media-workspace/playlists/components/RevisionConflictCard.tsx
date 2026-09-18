@@ -11,8 +11,8 @@ export function RevisionConflictCard({
   onReload: () => void;
 }) {
   return (
-    <Card className="border-amber-200 p-4 dark:border-amber-900">
-      <p className="text-sm text-amber-700 dark:text-amber-400">{message}</p>
+    <Card className="border-warning/30 p-4">
+      <p className="text-sm text-warning">{message}</p>
       <Button className="mt-2" variant="secondary" onClick={onReload}>
         โหลดใหม่
       </Button>

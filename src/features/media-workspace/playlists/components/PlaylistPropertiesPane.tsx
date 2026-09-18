@@ -43,7 +43,7 @@ export function PlaylistPropertiesPane({
 
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-y-auto p-5">
-      <div className="mb-4 flex gap-1 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="mb-4 flex gap-1 border-b border-border">
         {(["item", "playlist"] as const).map((key) => (
           <button
             key={key}
@@ -51,8 +51,8 @@ export function PlaylistPropertiesPane({
             onClick={() => onTab(key)}
             className={`border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors ${
               tab === key
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {key}
@@ -62,7 +62,7 @@ export function PlaylistPropertiesPane({
 
       {tab === "item" ? (
         !selectedItem ? (
-          <p className="py-10 text-center text-sm text-zinc-400">เลือก item จากรายการเพื่อแก้ไข</p>
+          <p className="py-10 text-center text-sm text-muted-foreground">เลือก item จากรายการเพื่อแก้ไข</p>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
@@ -73,23 +73,23 @@ export function PlaylistPropertiesPane({
                 className="h-12 w-16"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="truncate text-sm font-medium text-foreground">
                   {selectedItem.title ?? asset?.title ?? selectedItem.mediaAssetId}
                 </p>
-                <p className="text-xs text-zinc-400">{isVideo ? "Video" : "Image"}</p>
+                <p className="text-xs text-muted-foreground">{isVideo ? "Video" : "Image"}</p>
               </div>
             </div>
 
             <Field label="Duration (seconds)">
               {isVideo ? (
-                <p className="text-sm text-zinc-400">ตามความยาวคลิป</p>
+                <p className="text-sm text-muted-foreground">ตามความยาวคลิป</p>
               ) : (
                 <input
                   type="number"
                   min={1}
                   value={selectedItem.durationSeconds ?? ""}
                   onChange={(e) => onItemPatch({ durationSeconds: Math.max(1, Number(e.target.value) || 1) })}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-ring"
                 />
               )}
             </Field>
@@ -116,12 +116,12 @@ export function PlaylistPropertiesPane({
                     transitionDurationSeconds: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)),
                   })
                 }
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-ring"
               />
             </Field>
 
-            <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-              <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <div className="rounded-lg border border-border p-3">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">
                 Display Options
               </h3>
               <div className="flex flex-col gap-3">
@@ -139,13 +139,13 @@ export function PlaylistPropertiesPane({
                       type="color"
                       value={selectedItem.backgroundColor ?? "#000000"}
                       onChange={(e) => onItemPatch({ backgroundColor: e.target.value })}
-                      className="h-10 w-14 rounded-lg border border-zinc-200 bg-white px-1 dark:border-zinc-700 dark:bg-zinc-900"
+                      className="h-10 w-14 rounded-lg border border-border bg-card px-1"
                     />
                     {selectedItem.backgroundColor && (
                       <button
                         type="button"
                         onClick={() => onItemPatch({ backgroundColor: undefined })}
-                        className="text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground"
                       >
                         Clear
                       </button>
@@ -166,7 +166,7 @@ export function PlaylistPropertiesPane({
             <button
               type="button"
               onClick={onItemRemove}
-              className="mt-2 rounded-lg border border-red-200 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30"
+              className="mt-2 rounded-lg border border-danger/30 py-2 text-sm font-medium text-danger hover:bg-danger-soft"
             >
               Remove from Playlist
             </button>

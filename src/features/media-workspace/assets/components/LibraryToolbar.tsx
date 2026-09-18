@@ -20,18 +20,18 @@ export function LibraryToolbar({
   return (
     <div className="mb-4 flex shrink-0 flex-wrap gap-3">
       <label className="relative min-w-56 flex-1">
-        <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+        <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <input
           value={search}
           onChange={(event) => onSearch(event.target.value)}
           placeholder="Search media..."
-          className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm"
         />
       </label>
       <select
         value={kind}
         onChange={(event) => onKind(event.target.value as "" | "image" | "video")}
-        className="rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="rounded-lg border border-border bg-card px-3 text-sm"
       >
         <option value="">All Types</option>
         <option value="image">Images</option>
@@ -40,14 +40,14 @@ export function LibraryToolbar({
       <button
         onClick={() => onIsGrid(true)}
         aria-pressed={isGrid}
-        className="rounded-lg border border-zinc-200 p-2 dark:border-zinc-700"
+        className="rounded-lg border border-border p-2"
       >
         <GridIcon />
       </button>
       <button
         onClick={() => onIsGrid(false)}
         aria-pressed={!isGrid}
-        className="rounded-lg border border-zinc-200 p-2 dark:border-zinc-700"
+        className="rounded-lg border border-border p-2"
       >
         <ListIcon />
       </button>

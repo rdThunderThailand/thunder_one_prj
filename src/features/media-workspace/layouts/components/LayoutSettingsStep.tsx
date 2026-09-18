@@ -6,7 +6,7 @@ import { deriveAspectRatio, parseResolution } from "../geometry";
 import { LAYOUT_STATUSES, RESOLUTION_PRESETS, type LayoutStatus } from "../types";
 
 const inputClasses =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 type Settings = {
   name: string;
@@ -54,14 +54,14 @@ export function LayoutSettingsStep({
   return (
     <Card className="flex flex-col gap-4 p-5">
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Layout name</label>
+        <label className="text-sm font-medium text-muted-foreground">Layout name</label>
         <input value={name} onChange={(e) => set({ name: e.target.value })} className={inputClasses} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {referenceResolution === null && !showLegacyResolutionInput ? (
           <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Aspect ratio</label>
+            <label className="text-sm font-medium text-muted-foreground">Aspect ratio</label>
             <input
               value={aspectRatio}
               placeholder="16:9"
@@ -71,14 +71,14 @@ export function LayoutSettingsStep({
             <button
               type="button"
               onClick={() => setShowLegacyResolutionInput(true)}
-              className="self-start text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              className="self-start text-xs font-medium text-primary hover:underline"
             >
               Set a resolution
             </button>
           </div>
         ) : (
           <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Resolution</label>
+            <label className="text-sm font-medium text-muted-foreground">Resolution</label>
             <select
               value={customMode ? "custom" : (referenceResolution ?? "")}
               onChange={(e) => {
@@ -112,7 +112,7 @@ export function LayoutSettingsStep({
                   onBlur={() => customValid && setResolution(`${customWidth}x${customHeight}`)}
                   className={inputClasses}
                 />
-                <span className="text-zinc-400">×</span>
+                <span className="text-muted-foreground">×</span>
                 <input
                   type="number"
                   step={1}
@@ -127,26 +127,26 @@ export function LayoutSettingsStep({
               </div>
             )}
             {customMode && !customValid && (customWidth || customHeight) && (
-              <p className="text-xs text-red-600 dark:text-red-400">
+              <p className="text-xs text-danger">
                 Width and height must each be 100–99999.
               </p>
             )}
-            <p className="text-xs text-zinc-400">Aspect ratio: {aspectRatio}</p>
+            <p className="text-xs text-muted-foreground">Aspect ratio: {aspectRatio}</p>
           </div>
         )}
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Background</label>
+          <label className="text-sm font-medium text-muted-foreground">Background</label>
           <input
             type="color"
             value={background}
             onChange={(e) => set({ background: e.target.value })}
-            className="h-[42px] w-full rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="h-[42px] w-full rounded-lg border border-border bg-card p-1"
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Status</label>
+          <label className="text-sm font-medium text-muted-foreground">Status</label>
           <select
             value={status}
             onChange={(e) => set({ status: e.target.value as LayoutStatus })}

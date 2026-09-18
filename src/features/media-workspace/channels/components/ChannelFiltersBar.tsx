@@ -6,7 +6,7 @@ import type { Sort, SortKey } from "../list-filtering";
 import type { ChannelFilters } from "../types";
 
 const selectClasses =
-  "h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200";
+  "h-9 rounded-lg border border-border bg-card px-3 text-sm text-muted-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 // D1's "Sort by" dropdown. Name offers both directions; Location/Status sort ascending only —
 // there is no mockup evidence for a Z-A reading of either.
@@ -44,27 +44,27 @@ export function ChannelFiltersBar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2.5 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+    <div className="flex flex-wrap items-center gap-2.5 border-b border-border px-4 py-3">
       <label className="relative min-w-60 flex-1">
         <span className="sr-only">Search channels</span>
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="search"
           value={value.search}
           onChange={(event) => onChange({ ...value, search: event.target.value })}
           placeholder="Search channel, location or device"
-          className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:focus:bg-zinc-900"
+          className="h-9 w-full rounded-lg border border-border bg-muted pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:bg-card focus:ring-2 focus:ring-ring/30"
         />
       </label>
 
       <details className="relative">
         <summary
           aria-label="Filter channels"
-          className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted"
         >
           <FilterIcon />
         </summary>
-        <div className="absolute right-0 z-20 mt-2 grid w-52 gap-2 rounded-lg border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="absolute right-0 z-20 mt-2 grid w-52 gap-2 rounded-lg border border-border bg-card p-3 shadow-lg">
           <select
             aria-label="Type"
             value={value.type}

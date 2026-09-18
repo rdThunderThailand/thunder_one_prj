@@ -56,12 +56,12 @@ export function PlaylistTimelinePane({
   return (
     <Card className="flex flex-none flex-col p-5">
       <div className="mb-4 flex shrink-0 items-center justify-between">
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Timeline</h2>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">Total Duration {total}</span>
+        <h2 className="text-base font-semibold text-foreground">Timeline</h2>
+        <span className="text-sm text-muted-foreground">Total Duration {total}</span>
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-zinc-200 py-16 text-center text-sm text-zinc-400 dark:border-zinc-800">
+        <p className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
           เพิ่ม media เพื่อดู timeline
         </p>
       ) : (
@@ -97,9 +97,9 @@ export function PlaylistTimelinePane({
                   <span
                     className={`block overflow-hidden rounded-lg border-2 ${
                       isSelected
-                        ? "border-indigo-500"
+                        ? "border-primary"
                         : nowPlayingId === item.mediaAssetId
-                          ? "border-emerald-500"
+                          ? "border-success"
                           : "border-transparent"
                     }`}
                   >
@@ -110,7 +110,7 @@ export function PlaylistTimelinePane({
                       className="h-[118px] w-full rounded-none"
                     />
                   </span>
-                  <span className="mt-1 block truncate text-center text-base font-bold text-zinc-700 dark:text-zinc-200">
+                  <span className="mt-1 block truncate text-center text-base font-bold text-muted-foreground">
                     {index + 1} · {seconds != null ? formatDuration(seconds) : "—"}
                   </span>
                 </button>

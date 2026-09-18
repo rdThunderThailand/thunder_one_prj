@@ -143,13 +143,13 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   };
 
   if (loading) {
-    return <p className="p-6 text-sm text-zinc-400">กำลังโหลด...</p>;
+    return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
   }
 
   if (loadError) {
     return (
       <Card className="p-6">
-        <p className="text-sm text-red-500">{loadError.message}</p>
+        <p className="text-sm text-danger">{loadError.message}</p>
         <Button className="mt-4" variant="secondary" onClick={() => router.push("/media-workspace/layouts/templates")}>
           กลับไป Templates
         </Button>
@@ -167,7 +167,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
         : null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title={draft.id ? "Edit Template" : "New Template"}
         subtitle={step === 1 ? "Choose a template and arrange the Zones." : "Name, aspect ratio, background and status."}
@@ -206,14 +206,14 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       )}
 
       {saveError && (
-        <Card className="border-red-200 p-4 dark:border-red-900">
-          <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+        <Card className="border-danger/30 p-4">
+          <p className="text-sm text-danger">{saveError}</p>
         </Card>
       )}
 
       {usageCount > 1 && (
-        <Card className="border-amber-200 p-4 dark:border-amber-800">
-          <p className="text-sm text-amber-800 dark:text-amber-200">Change-all mode: this Template is used by {usageCount} Layouts.</p>
+        <Card className="border-warning/30 p-4">
+          <p className="text-sm text-warning">Change-all mode: this Template is used by {usageCount} Layouts.</p>
         </Card>
       )}
 

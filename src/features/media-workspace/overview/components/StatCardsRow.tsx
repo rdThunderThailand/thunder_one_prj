@@ -14,9 +14,9 @@ const cards = [
 
 const colors = {
   indigo: { icon: "bg-primary-soft text-primary", bar: "bg-primary" },
-  emerald: { icon: "bg-emerald-50 text-emerald-600", bar: "bg-emerald-500" },
-  amber: { icon: "bg-amber-50 text-amber-600", bar: "bg-amber-500" },
-  red: { icon: "bg-red-50 text-red-600", bar: "bg-red-500" },
+  emerald: { icon: "bg-success-soft text-success", bar: "bg-success" },
+  amber: { icon: "bg-warning-soft text-warning", bar: "bg-warning" },
+  red: { icon: "bg-danger-soft text-danger", bar: "bg-danger" },
 };
 
 export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListItem[] | null; loadFailed: boolean }) {
@@ -40,8 +40,8 @@ export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListIt
               </div>
               {loadFailed ? (
                 <>
-                  <span className="mt-2 text-2xl font-bold text-zinc-400">—</span>
-                  <p className="mt-auto truncate text-[10px] text-red-500">Could not load channel health</p>
+                  <span className="mt-2 text-2xl font-bold text-muted-foreground">—</span>
+                  <p className="mt-auto truncate text-[10px] text-danger">Could not load channel health</p>
                 </>
               ) : summary === null ? (
                 <div className="mt-2 space-y-2">

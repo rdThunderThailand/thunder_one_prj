@@ -73,10 +73,10 @@ export function PlaylistSidePanel({
   const badge = statusBadge(playlistDisplayStatus(playlist));
 
   return (
-    <aside className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <aside className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <h2 className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">
+          <h2 className="truncate text-base font-semibold text-foreground">
             {playlist.name}
           </h2>
           <Badge color={badge.color} variant="pill">
@@ -87,13 +87,13 @@ export function PlaylistSidePanel({
           type="button"
           aria-label="Close panel"
           onClick={onClose}
-          className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+          className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <XIcon />
         </button>
       </div>
 
-      <div className="aspect-video w-full overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+      <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
         <MediaThumb
           url={coverId ? previews.urls[coverId] : undefined}
           thumbnailUrl={coverId ? previews.thumbnailUrls[coverId] : undefined}
@@ -104,14 +104,14 @@ export function PlaylistSidePanel({
 
       {error && (
         <div>
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-danger">{error}</p>
           <button
             type="button"
             onClick={() => {
               setResult(null);
               load();
             }}
-            className="mt-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="mt-2 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted"
           >
             ลองใหม่
           </button>
@@ -157,7 +157,7 @@ export function PlaylistSidePanel({
         )
       )}
 
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Link
           href={`/media-workspace/playlists/${playlist.id}`}
           className={buttonClasses("secondary")}
@@ -171,7 +171,7 @@ export function PlaylistSidePanel({
           <>
             <Button
               variant="primary"
-              className="bg-red-600 hover:bg-red-500 dark:bg-red-600"
+              className="bg-danger hover:bg-danger"
               disabled={busy}
               onClick={onDelete}
             >
@@ -184,7 +184,7 @@ export function PlaylistSidePanel({
         ) : (
           <Button
             variant="ghost"
-            className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+            className="text-danger hover:bg-danger-soft"
             disabled={busy}
             onClick={() => setConfirmingDelete(true)}
           >

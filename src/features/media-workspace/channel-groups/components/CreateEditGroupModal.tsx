@@ -12,7 +12,7 @@ import { CreateGroupChannelsModal } from "./CreateGroupChannelsModal";
 import type { ChannelGroup, PlaybackMode } from "../types";
 
 const fieldClasses =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 const MODES: { mode: PlaybackMode; label: string; hint: string; icon: typeof ShareNodesIcon }[] = [
   { mode: "synchronized", label: "Synchronized", hint: "All channels play the same content in sync (same timing).", icon: ShareNodesIcon },
@@ -107,8 +107,8 @@ export function CreateEditGroupModal({
           placeholder="e.g. All Restaurant Screens"
           onChange={(event) => setName(event.target.value)}
         />
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Description <span className="font-normal text-zinc-400">(optional)</span>
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-muted-foreground">
+          Description <span className="font-normal text-muted-foreground">(optional)</span>
           <textarea
             value={description}
             maxLength={300}
@@ -120,7 +120,7 @@ export function CreateEditGroupModal({
         </label>
 
         <div>
-          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Playback Mode</p>
+          <p className="text-sm font-medium text-muted-foreground">Playback Mode</p>
           <div className="mt-1.5 grid grid-cols-2 gap-3">
             {MODES.map(({ mode: m, label, hint, icon: Icon }) => {
               const selected = mode === m;
@@ -132,13 +132,13 @@ export function CreateEditGroupModal({
                   aria-pressed={selected}
                   className={`flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-colors ${
                     selected
-                      ? "border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-500/10"
-                      : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-700 dark:hover:border-zinc-600"
+                      ? "border-primary bg-primary-soft"
+                      : "border-border hover:border-border"
                   }`}
                 >
-                  <Icon className={`h-4 w-4 ${selected ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400"}`} />
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{label}</span>
-                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400">{hint}</span>
+                  <Icon className={`h-4 w-4 ${selected ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="text-sm font-semibold text-foreground">{label}</span>
+                  <span className="text-[11px] text-muted-foreground">{hint}</span>
                 </button>
               );
             })}
@@ -146,31 +146,31 @@ export function CreateEditGroupModal({
         </div>
 
         {!group && (
-          <section className="border-t border-zinc-100 pt-4 dark:border-zinc-800">
+          <section className="border-t border-border pt-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Channels to Add ({selectedChannelIds.size})</h3>
-                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Selected channels will be added to this group.</p>
+                <h3 className="font-semibold text-foreground">Channels to Add ({selectedChannelIds.size})</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">Selected channels will be added to this group.</p>
               </div>
               <Button type="button" variant="secondary" className="!px-3 !py-2 text-xs" onClick={() => setManagingChannels(true)}>
                 <PlusIcon className="h-4 w-4" />
                 Add More Channels
               </Button>
             </div>
-            <div className="mt-3 max-h-36 overflow-y-auto rounded-lg border border-zinc-100 dark:border-zinc-800">
+            <div className="mt-3 max-h-36 overflow-y-auto rounded-lg border border-border">
               {selectedChannels.length === 0 ? (
-                <p className="p-3 text-sm text-zinc-400">No channels selected yet.</p>
+                <p className="p-3 text-sm text-muted-foreground">No channels selected yet.</p>
               ) : (
                 selectedChannels.map((channel) => (
-                  <div key={channel.id} className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2 last:border-b-0 dark:border-zinc-800">
-                    <MonitorIcon className="h-4 w-4 shrink-0 text-indigo-500" />
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{channel.name}</span>
-                    <span className="shrink-0 text-xs text-zinc-400">{channel.location?.name ?? "Unassigned"}</span>
+                  <div key={channel.id} className="flex items-center gap-2 border-b border-border px-3 py-2 last:border-b-0">
+                    <MonitorIcon className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{channel.name}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{channel.location?.name ?? "Unassigned"}</span>
                   </div>
                 ))
               )}
             </div>
-            <div className="mt-3 flex gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-200">
+            <div className="mt-3 flex gap-2 rounded-lg bg-primary-soft px-3 py-2 text-xs text-primary">
               <InfoIcon className="h-4 w-4 shrink-0" />
               You can add or remove channels later from the group details.
             </div>
@@ -178,7 +178,7 @@ export function CreateEditGroupModal({
         )}
 
         {group && (
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-indigo-50 px-3 py-3 text-sm text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-200">
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-primary-soft px-3 py-3 text-sm text-primary">
             <div className="flex min-w-0 gap-2">
               <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <p>You can manage which channels belong to this group from the Manage Channels action.</p>
@@ -190,7 +190,7 @@ export function CreateEditGroupModal({
         )}
 
         {error && (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         )}

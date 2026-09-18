@@ -54,9 +54,9 @@ function AddToGroupMenu({
       {open && (
         <>
           <button type="button" aria-hidden="true" tabIndex={-1} className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-border bg-card py-1 shadow-lg">
             {groups.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-zinc-400">No Channel Groups yet.</p>
+              <p className="px-3 py-2 text-xs text-muted-foreground">No Channel Groups yet.</p>
             ) : (
               groups.map((group) => (
                 <button
@@ -64,13 +64,13 @@ function AddToGroupMenu({
                   type="button"
                   disabled={busy}
                   onClick={() => void addTo(group)}
-                  className="block w-full truncate px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="block w-full truncate px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed"
                 >
                   {group.name}
                 </button>
               ))
             )}
-            {error && <p className="px-3 py-2 text-xs text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p className="px-3 py-2 text-xs text-danger">{error}</p>}
           </div>
         </>
       )}
@@ -113,8 +113,8 @@ export function UngroupedChannelsTable({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3 rounded-lg bg-indigo-50/60 px-4 py-3 text-sm dark:bg-indigo-500/10">
-        <span className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200">
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-primary-soft px-4 py-3 text-sm">
+        <span className="flex items-center gap-2 text-primary">
           <InfoIcon className="h-4 w-4 shrink-0" />
           {selected.size > 0
             ? `${selected.size} channel(s) selected.`
@@ -128,13 +128,13 @@ export function UngroupedChannelsTable({
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-400">
+            <tr className="border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               <th className="w-10 px-4 py-2.5">
                 <input
                   type="checkbox"
                   checked={channels.length > 0 && selected.size === channels.length}
                   onChange={toggleAll}
-                  className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-ring/30"
                 />
               </th>
               <th className="px-3 py-2.5">Channel Name</th>
@@ -159,8 +159,8 @@ export function UngroupedChannelsTable({
                       onSelect(channel);
                     }
                   }}
-                  className={`cursor-pointer border-b border-zinc-100 last:border-0 hover:bg-zinc-50/80 dark:border-zinc-800 dark:hover:bg-zinc-800/50 ${
-                    selectedChannelId === channel.id ? "bg-indigo-50/70 dark:bg-indigo-500/10" : ""
+                  className={`cursor-pointer border-b border-border last:border-0 hover:bg-muted ${
+                    selectedChannelId === channel.id ? "bg-primary-soft" : ""
                   }`}
                 >
                   <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
@@ -168,16 +168,16 @@ export function UngroupedChannelsTable({
                       type="checkbox"
                       checked={selected.has(channel.id)}
                       onChange={() => toggle(channel.id)}
-                      className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-ring/30"
                     />
                   </td>
-                  <td className="px-3 py-3 font-semibold text-zinc-950 dark:text-zinc-50">{channel.name}</td>
-                  <td className="px-3 py-3 text-zinc-600 dark:text-zinc-300 capitalize">{channel.output_kind}</td>
-                  <td className="px-3 py-3 text-zinc-600 dark:text-zinc-300">{channel.location?.name ?? "Unassigned"}</td>
+                  <td className="px-3 py-3 font-semibold text-foreground">{channel.name}</td>
+                  <td className="px-3 py-3 text-muted-foreground capitalize">{channel.output_kind}</td>
+                  <td className="px-3 py-3 text-muted-foreground">{channel.location?.name ?? "Unassigned"}</td>
                   <td className="px-3 py-3">
                     <Badge color={status.color}>{status.label}</Badge>
                   </td>
-                  <td className="px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                  <td className="px-3 py-3 text-xs text-muted-foreground">
                     {new Date(channel.updated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                   </td>
                   <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()}>
@@ -188,7 +188,7 @@ export function UngroupedChannelsTable({
             })}
           </tbody>
         </table>
-        {channels.length === 0 && <p className="p-6 text-center text-sm text-zinc-400">No ungrouped channels.</p>}
+        {channels.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No ungrouped channels.</p>}
       </div>
     </div>
   );

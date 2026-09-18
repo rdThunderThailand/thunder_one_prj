@@ -209,17 +209,17 @@ export function CompositionEditorPage({
       setTemplateSavedName(templateName);
     }, "บันทึกเป็น Template ไม่สำเร็จ");
   };
-  if (loading) return <p className="p-6 text-sm text-zinc-400">กำลังโหลด...</p>;
+  if (loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
   const fatal = loadError ?? data.loadError;
   if (fatal) return (
     <Card className="p-6">
-      <p className="text-sm text-red-500">{fatal.message}</p>
+      <p className="text-sm text-danger">{fatal.message}</p>
       <Button className="mt-4" variant="secondary" onClick={() => router.push(LIST_PATH)}>กลับไป Layouts</Button>
     </Card>
   );
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <CompositionEditorHeader
         isExisting={!!id}
         name={name}
@@ -279,8 +279,8 @@ export function CompositionEditorPage({
             playlistPreviews={preview.playlistPreviews} playlistDurations={data.playlistDurations}
           />
         ) : (
-          <section className="border-b border-zinc-200 pb-4 dark:border-zinc-700 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-6">
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Insert to Layout</p><p className="mt-2 text-sm text-zinc-400">Select a Zone to add content.</p>
+          <section className="border-b border-border pb-4 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-6">
+            <p className="text-sm font-semibold text-foreground">Insert to Layout</p><p className="mt-2 text-sm text-muted-foreground">Select a Zone to add content.</p>
           </section>
         )}
 
@@ -294,18 +294,18 @@ export function CompositionEditorPage({
             onDelete={() => { if (!layout || layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
           />
         ) : (
-          <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg bg-zinc-100 text-sm text-zinc-500 dark:bg-zinc-800">
+          <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg bg-muted text-sm text-muted-foreground">
             <p>Start from the Template Picker to see Zones here</p>
             <Button onClick={() => setPickerOpen(true)}>+ New Layout</Button>
           </div>
         )}
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
-          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Zone Properties</p>
+          <p className="text-sm font-semibold text-foreground">Zone Properties</p>
           {view.binding && view.activeZone ? <ZonePropertiesPanel
             zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null} binding={view.binding}
             onZoneChange={(next) => beginZoneEdit() && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
             onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} playlistDurations={data.playlistDurations}
-          /> : <p className="text-sm text-zinc-400">Select a Zone to edit its properties.</p>}
+          /> : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
         </div>
       </Card>
 

@@ -37,7 +37,7 @@ export function ReviewTargets({
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-[0.75fr_1fr_1.2fr] gap-1 rounded-lg bg-zinc-100 p-1" role="tablist" aria-label="Review target type">
+      <div className="grid grid-cols-[0.75fr_1fr_1.2fr] gap-1 rounded-lg bg-muted p-1" role="tablist" aria-label="Review target type">
         <TargetTabButton label="Screens" active={activeTab === "screens"} disabled onClick={() => undefined} />
         <TargetTabButton label={`Channels (${impactedChannels.length})`} active={activeTab === "channels"} onClick={() => setActiveTab("channels")} />
         <TargetTabButton label={`Groups (${selectedGroups.length})`} active={activeTab === "groups"} onClick={() => setActiveTab("groups")} />
@@ -49,17 +49,17 @@ export function ReviewTargets({
             const inheritedGroups = source.groups.filter((group) => selectedGroupIds.has(group.id));
             const isDirect = channelIds.includes(source.id);
             return (
-              <div key={source.id} className="flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-indigo-50 text-indigo-600">
+              <div key={source.id} className="flex items-center gap-2 rounded-lg border border-border bg-muted px-2.5 py-2">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
                   <MonitorIcon className="h-3.5 w-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-zinc-900" title={item?.name}>{item?.name}</p>
-                  <p className="truncate text-[10px] text-zinc-500">
+                  <p className="truncate text-xs font-semibold text-foreground" title={item?.name}>{item?.name}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">
                     {isDirect ? "Direct" : inheritedGroups.map((group) => group.name).join(", ")} · {item?.subLabel}
                   </p>
                 </div>
-                <span className={`h-2 w-2 shrink-0 rounded-full ${item?.status === "online" ? "bg-emerald-500" : item?.status === "warning" ? "bg-amber-500" : "bg-red-500"}`} title={item?.status} />
+                <span className={`h-2 w-2 shrink-0 rounded-full ${item?.status === "online" ? "bg-success" : item?.status === "warning" ? "bg-warning" : "bg-danger"}`} title={item?.status} />
               </div>
             );
           })}
@@ -70,12 +70,12 @@ export function ReviewTargets({
       {activeTab === "groups" && (
         <div className="space-y-1.5">
           {selectedGroups.map((group) => (
-            <div key={group.id} className="flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2">
+            <div key={group.id} className="flex items-center gap-2 rounded-lg border border-border bg-muted px-2.5 py-2">
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-violet-50 text-violet-600">
                 <UsersIcon className="h-3.5 w-3.5" />
               </span>
-              <p className="min-w-0 flex-1 truncate text-xs font-semibold text-zinc-900" title={group.name}>{group.name}</p>
-              <span className="shrink-0 text-[10px] text-zinc-500">{group.members} channels</span>
+              <p className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground" title={group.name}>{group.name}</p>
+              <span className="shrink-0 text-[10px] text-muted-foreground">{group.members} channels</span>
             </div>
           ))}
           {selectedGroups.length === 0 && <EmptyTargets label="No channel groups selected" />}
@@ -94,7 +94,7 @@ function TargetTabButton({ label, active, disabled = false, onClick }: { label: 
       disabled={disabled}
       title={disabled ? "ยังไม่เปิดใช้งาน" : undefined}
       onClick={onClick}
-      className={`whitespace-nowrap rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${active ? "bg-white text-zinc-900 shadow-sm" : disabled ? "cursor-not-allowed text-zinc-300" : "text-zinc-500 hover:text-zinc-900"}`}
+      className={`whitespace-nowrap rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${active ? "bg-card text-foreground shadow-sm" : disabled ? "cursor-not-allowed text-muted-foreground" : "text-muted-foreground hover:text-foreground"}`}
     >
       {label}
     </button>
@@ -102,5 +102,5 @@ function TargetTabButton({ label, active, disabled = false, onClick }: { label: 
 }
 
 function EmptyTargets({ label }: { label: string }) {
-  return <p className="rounded-lg border border-dashed border-zinc-200 px-3 py-4 text-center text-xs text-zinc-400">{label}</p>;
+  return <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">{label}</p>;
 }

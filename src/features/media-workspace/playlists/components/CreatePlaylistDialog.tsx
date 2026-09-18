@@ -63,7 +63,7 @@ export function CreatePlaylistDialog({
           autoFocus
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-border px-3 py-2"
         />
       </label>
       <label className="space-y-1">
@@ -72,7 +72,7 @@ export function CreatePlaylistDialog({
           aria-label="Folder"
           value={folderId}
           onChange={(event) => setFolderId(event.target.value)}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-border px-3 py-2"
         >
           <option value="">Uncategorized</option>
           {folders.map((folder) => <option key={folder.id} value={folder.id}>{folderPath(folders, folder.id)}</option>)}

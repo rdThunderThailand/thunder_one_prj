@@ -34,11 +34,11 @@ export function EditorLoadError({
   onRetry: () => void;
 }) {
   return (
-    <Card className="border-red-200 p-8 text-center dark:border-red-900/70">
-      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+    <Card className="border-danger/30 p-8 text-center">
+      <p className="text-sm font-semibold text-foreground">
         Channel editor is unavailable
       </p>
-      <p className="mx-auto mt-2 max-w-xl text-sm text-red-600 dark:text-red-400">
+      <p className="mx-auto mt-2 max-w-xl text-sm text-danger">
         {error.message}
       </p>
       <Button variant="secondary" className="mt-4" disabled={retrying} onClick={onRetry}>

@@ -32,7 +32,7 @@ import { CompositionsGrid, CompositionsTable } from "./CompositionsTable";
 
 const railTabClass = (active: boolean) =>
   `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${
-    active ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+    active ? "bg-muted text-muted-foreground" : "text-muted-foreground hover:text-foreground"
   }`;
 
 export function CompositionsListPage() {
@@ -203,7 +203,7 @@ export function CompositionsListPage() {
   if (error?.kind === "forbidden" && !library) return <NoAccess />;
 
   return (
-    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-6">
+    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-4">
       <PageHeader
         title="Layouts"
         subtitle="Create, organize, and manage screen layouts for your displays."
@@ -228,7 +228,7 @@ export function CompositionsListPage() {
       )}
       <Card className="flex flex-1 flex-col overflow-hidden">
         <div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
-          <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r">
+          <aside className="flex min-h-0 flex-col border-b border-border p-3 md:border-b-0 md:border-r">
             <div className="mb-2 flex shrink-0 gap-1 px-1">
               <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>Folders</button>
               <button type="button" className={railTabClass(railTab === "tags")} onClick={() => setRailTab("tags")}>Tags</button>
@@ -259,28 +259,28 @@ export function CompositionsListPage() {
               {collection === "trash" ? (
                 <>
                   <Button variant="secondary" disabled={batchBusy || !library?.pagination?.total} onClick={() => void runBatch("restore")}>Recover All</Button>
-                  <Button disabled={batchBusy || !library?.pagination?.total} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete")}>Delete All</Button>
+                  <Button disabled={batchBusy || !library?.pagination?.total} className="bg-danger hover:bg-danger" onClick={() => void runBatch("delete")}>Delete All</Button>
                 </>
               ) : selectedIds.size > 0 ? (
-                <Button disabled={batchBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("trash", [...selectedIds])}>Move {selectedIds.size} to Trash</Button>
+                <Button disabled={batchBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("trash", [...selectedIds])}>Move {selectedIds.size} to Trash</Button>
               ) : null}
               {collection === "trash" && selectedIds.size > 0 && (
                 <>
                   <Button variant="secondary" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button>
-                  <Button disabled={batchBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button>
+                  <Button disabled={batchBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button>
                 </>
               )}
             </div>
             {library?.isLegacyResponse && (
-              <p className="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Layouts Library filters and summary need the Core read-model rollout.</p>
+              <p className="mb-3 rounded-lg bg-warning-soft p-3 text-sm text-warning">Layouts Library filters and summary need the Core read-model rollout.</p>
             )}
-            {actionError && <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+            {actionError && <p role="alert" className="mb-3 text-sm text-danger">{actionError}</p>}
             {error && <ListError message={error.message} onRetry={reload} retrying={false} />}
             <div className="min-h-0 flex-1 overflow-auto">
               {!library ? (
                 error ? null : <ListSkeleton />
               ) : library.data.length === 0 ? (
-                <p className="py-10 text-center text-sm text-zinc-500">No layouts found.</p>
+                <p className="py-10 text-center text-sm text-muted-foreground">No layouts found.</p>
               ) : isGrid ? (
                 <CompositionsGrid
                   rows={library.data}
@@ -308,7 +308,7 @@ export function CompositionsListPage() {
           </main>
         </div>
         {pagination && (
-          <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0">
+          <div className="shrink-0 border-t border-border px-5 py-4 [&>div]:mt-0">
             <Pagination
               page={pagination.page}
               totalPages={pagination.totalPages}

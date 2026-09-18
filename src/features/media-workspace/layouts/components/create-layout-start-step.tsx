@@ -19,7 +19,7 @@ export type StartDetails = {
 };
 
 const inputClasses =
-  "h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-800";
+  "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
 
 const canvasLabelClasses = "grid grid-rows-[20px_40px] gap-1.5";
 
@@ -59,25 +59,25 @@ function ChoiceCard({
       role="radio"
       aria-checked={selected}
       onClick={() => onSelect(choice)}
-      className={`relative flex min-h-32 items-center gap-5 rounded-xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+      className={`relative flex min-h-32 items-center gap-5 rounded-xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-2 ${
         selected
-          ? "border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500 dark:bg-indigo-500/10"
-          : "border-zinc-200 hover:border-indigo-300 dark:border-zinc-700"
+          ? "border-primary bg-primary-soft ring-1 ring-primary"
+          : "border-border hover:border-primary/30"
       }`}
     >
       <span
         className={`absolute left-4 top-4 h-4 w-4 rounded-full border ${
-          selected ? "border-[5px] border-indigo-600" : "border-zinc-300 dark:border-zinc-600"
+          selected ? "border-[5px] border-primary" : "border-border"
         }`}
       />
-      <span className="ml-3 shrink-0 text-indigo-600 dark:text-indigo-400">
+      <span className="ml-3 shrink-0 text-primary">
         {selectedTemplate ? (
           <LayoutWireframe
             zones={selectedTemplate.zones}
             background={selectedTemplate.background}
             aspectRatio={selectedTemplate.aspectRatio}
             shouldShowLabels
-            className="h-16 w-24 rounded-lg border border-indigo-200 shadow-sm dark:border-indigo-800"
+            className="h-16 w-24 rounded-lg border border-primary/30 shadow-sm"
           />
         ) : (
           <ChoiceIcon kind={choice} />
@@ -87,23 +87,23 @@ function ChoiceCard({
         {selectedTemplate ? (
           <>
             <span className="flex items-center justify-between gap-2">
-              <span className="block truncate text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+              <span className="block truncate text-sm font-semibold text-primary">
                 {selectedTemplate.name}
               </span>
-              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
+              <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary">
                 {selectedTemplate.behaviour === "copied" ? "Copied" : "Shared"}
               </span>
             </span>
-            <span className="mt-1 block text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+            <span className="mt-1 block text-xs leading-5 text-muted-foreground">
               {selectedTemplate.referenceResolution?.replace("x", " × ") ?? "Resolution not set"}
               {" · "}{selectedTemplate.zoneCount} {selectedTemplate.zoneCount === 1 ? "Zone" : "Zones"}
             </span>
-            <span className="mt-1 block text-xs font-medium text-indigo-600 dark:text-indigo-400">Change template →</span>
+            <span className="mt-1 block text-xs font-medium text-primary">Change template →</span>
           </>
         ) : (
           <>
-            <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</span>
-            <span className="mt-1 block text-sm leading-5 text-zinc-500 dark:text-zinc-400">{description}</span>
+            <span className="block text-sm font-semibold text-foreground">{title}</span>
+            <span className="mt-1 block text-sm leading-5 text-muted-foreground">{description}</span>
           </>
         )}
       </span>
@@ -154,7 +154,7 @@ export function CreateLayoutStartStep({
   return (
     <div className="space-y-6">
       <fieldset>
-        <legend className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">1. Choose how to start</legend>
+        <legend className="mb-3 text-sm font-semibold text-foreground">1. Choose how to start</legend>
         <div role="radiogroup" className="grid gap-3 sm:grid-cols-2">
           <ChoiceCard
             choice="blank"
@@ -180,9 +180,9 @@ export function CreateLayoutStartStep({
       {(choice === "blank" || resolutionLocked) && (
         <>
           <fieldset className="space-y-3">
-            <legend className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">2. Layout information</legend>
+            <legend className="mb-3 text-sm font-semibold text-foreground">2. Layout information</legend>
             <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Layout name <span className="text-red-500">*</span></span>
+              <span className="text-sm font-medium text-muted-foreground">Layout name <span className="text-danger">*</span></span>
               <input
                 autoFocus
                 maxLength={100}
@@ -191,18 +191,18 @@ export function CreateLayoutStartStep({
                 placeholder="e.g. Corporate Lobby 3-Zone"
                 className={inputClasses}
               />
-              <span className="block text-right text-xs text-zinc-400">{details.name.length}/100</span>
+              <span className="block text-right text-xs text-muted-foreground">{details.name.length}/100</span>
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className={canvasLabelClasses}>
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Folder <span className="font-normal text-zinc-400">(Optional)</span></span>
+                <span className="text-sm font-medium text-muted-foreground">Folder <span className="font-normal text-muted-foreground">(Optional)</span></span>
                 <select value={details.folderId} onChange={(event) => set({ folderId: event.target.value })} className={inputClasses}>
                   <option value="">Uncategorized</option>
                   {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
                 </select>
               </label>
               <label className="space-y-1.5">
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tags <span className="font-normal text-zinc-400">(Optional)</span></span>
+                <span className="text-sm font-medium text-muted-foreground">Tags <span className="font-normal text-muted-foreground">(Optional)</span></span>
                 <input
                   list="new-layout-tags"
                   value={details.tags}
@@ -216,12 +216,12 @@ export function CreateLayoutStartStep({
           </fieldset>
 
           <fieldset>
-            <legend className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">3. Canvas settings</legend>
+            <legend className="mb-3 text-sm font-semibold text-foreground">3. Canvas settings</legend>
             <div className="grid gap-3 sm:grid-cols-4">
               <label className="space-y-1.5">
-                <span className="flex items-center justify-between gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <span className="flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground">
                   Resolution
-                  {resolutionLocked && <span className="whitespace-nowrap text-xs font-normal text-zinc-400">Locked</span>}
+                  {resolutionLocked && <span className="whitespace-nowrap text-xs font-normal text-muted-foreground">Locked</span>}
                 </span>
                 <select
                   value={isPreset ? resolution : "custom"}
@@ -242,7 +242,7 @@ export function CreateLayoutStartStep({
               </label>
               <div className="grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)] items-end gap-2 sm:col-span-2">
                 <label className={canvasLabelClasses}>
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Width</span>
+                  <span className="text-sm font-medium text-muted-foreground">Width</span>
                   <input type="number" min={100} max={99999} value={details.width} disabled={resolutionLocked} onChange={(event) => setDimension(event.target.value, "width")} className={inputClasses} />
                 </label>
                 <button
@@ -258,17 +258,17 @@ export function CreateLayoutStartStep({
                     }
                     setIsAspectLocked((current) => !current);
                   }}
-                  className={`mb-1 grid h-8 w-8 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isAspectLocked ? "border-indigo-200 bg-indigo-50 text-indigo-600" : "border-zinc-200 bg-white text-zinc-400 hover:text-zinc-700"}`}
+                  className={`mb-1 grid h-8 w-8 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isAspectLocked ? "border-primary/30 bg-primary-soft text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
                 >
                   <LockIcon className="h-3.5 w-3.5" />
                 </button>
                 <label className={canvasLabelClasses}>
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Height</span>
+                  <span className="text-sm font-medium text-muted-foreground">Height</span>
                   <input type="number" min={100} max={99999} value={details.height} disabled={resolutionLocked} onChange={(event) => setDimension(event.target.value, "height")} className={inputClasses} />
                 </label>
               </div>
               <label className={canvasLabelClasses}>
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Background</span>
+                <span className="text-sm font-medium text-muted-foreground">Background</span>
                 <span className={`${inputClasses} flex items-center gap-2`}>
                   <input type="color" value={details.background} onChange={(event) => set({ background: event.target.value })} className="h-5 w-6 cursor-pointer border-0 bg-transparent p-0" />
                   <span className="font-mono text-xs uppercase">{details.background}</span>

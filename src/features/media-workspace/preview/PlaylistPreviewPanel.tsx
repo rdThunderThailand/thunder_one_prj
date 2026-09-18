@@ -36,15 +36,15 @@ export function PlaylistPreviewPanel({
   const asset = nowPlaying ? assets.find((item) => item.id === nowPlaying.mediaAssetId) : undefined;
   const previews = usePreviewUrls(nowPlaying ? [nowPlaying.mediaAssetId] : []);
   const section = tone === "light"
-    ? "rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-    : "rounded-xl border border-zinc-800 bg-zinc-900 p-4";
-  const labelClass = tone === "light" ? "text-zinc-500 dark:text-zinc-400" : "text-zinc-500";
-  const valueClass = tone === "light" ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-100";
+    ? "rounded-xl border border-border bg-card p-4 shadow-sm"
+    : "rounded-xl border border-zinc-800 bg-foreground p-4";
+  const labelClass = tone === "light" ? "text-muted-foreground" : "text-muted-foreground";
+  const valueClass = tone === "light" ? "text-foreground" : "text-background";
 
   return (
     <aside className="flex w-full flex-col gap-4 lg:w-80">
       <section className={section}>
-        <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Now Playing</h2>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Now Playing</h2>
         {nowPlaying ? (
           <>
             <div className="mb-4 flex items-center gap-3">
@@ -66,12 +66,12 @@ export function PlaylistPreviewPanel({
             </dl>
           </>
         ) : (
-          <p className="text-sm text-zinc-500">No item playing</p>
+          <p className="text-sm text-muted-foreground">No item playing</p>
         )}
       </section>
 
       <section className={section}>
-        <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Playlist Information</h2>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Playlist Information</h2>
         <dl className="space-y-2 text-sm">
           <Row label="Name" value={name || "Playlist"} labelClass={labelClass} valueClass={valueClass} />
           <Row label="Items" value={String(items.length)} labelClass={labelClass} valueClass={valueClass} />
@@ -93,7 +93,7 @@ export function PlaylistPreviewPanel({
       </section>
 
       <section className={section}>
-        <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Preview Mode</h2>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Preview Mode</h2>
         <div className="grid grid-cols-3 gap-2">
           {["16:9", "9:16", "4:3"].map((mode) => (
             <button
@@ -103,8 +103,8 @@ export function PlaylistPreviewPanel({
               onClick={() => onPreviewMode?.(mode)}
               className={`rounded-lg border px-2 py-3 text-center text-xs font-medium ${
                 mode === previewMode
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
-                  : "border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400"
+                  ? "border-primary bg-primary-soft text-primary"
+                  : "border-border text-muted-foreground hover:border-border"
               }`}
             >
               {mode}

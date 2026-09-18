@@ -16,7 +16,7 @@ export function SummarySkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-zinc-100 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <div key={i} className="rounded-xl border border-border bg-card p-4">
           <Skeleton className="mb-2 h-4 w-24" />
           <Skeleton className="h-8 w-12" />
         </div>
@@ -46,12 +46,12 @@ export function ListEmpty({
 }) {
   return (
     <div className="py-10 text-center">
-      <p className="text-sm text-zinc-400">{EMPTY_MESSAGES[cause]}</p>
+      <p className="text-sm text-muted-foreground">{EMPTY_MESSAGES[cause]}</p>
       {cause === "no-match" && (
         <button
           type="button"
           onClick={onClearFilters}
-          className="mt-3 rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
         >
           ล้างตัวกรอง
         </button>
@@ -72,12 +72,12 @@ export function ListError({
 }) {
   return (
     <div className="py-10 text-center">
-      <p className="text-sm text-red-500">{message}</p>
+      <p className="text-sm text-danger">{message}</p>
       <button
         type="button"
         disabled={retrying}
         onClick={onRetry}
-        className="mt-3 rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
       >
         {retrying ? "กำลังลองใหม่…" : "ลองใหม่"}
       </button>

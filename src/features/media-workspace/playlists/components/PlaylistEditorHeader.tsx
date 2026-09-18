@@ -63,39 +63,39 @@ export function PlaylistEditorHeader({
                 }}
                 placeholder="Untitled Playlist"
                 maxLength={100}
-                className="min-w-0 flex-1 border-b border-indigo-500 bg-transparent text-2xl font-semibold text-zinc-900 outline-none dark:text-zinc-50"
+                className="min-w-0 flex-1 border-b border-primary bg-transparent text-2xl font-semibold text-foreground outline-none"
               />
               <button
                 type="button"
                 onClick={commitName}
                 aria-label="ยืนยันชื่อ Playlist"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"
               >
                 <CheckIcon className="h-5 w-5" />
               </button>
             </>
           ) : (
             <>
-              <h1 className="min-w-0 break-words text-2xl font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
+              <h1 className="min-w-0 break-words text-2xl font-semibold leading-tight text-foreground">
                 {displayName}
               </h1>
               <button
                 type="button"
                 onClick={() => setEditing(true)}
                 aria-label="แก้ไขชื่อ Playlist"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <EditIcon className="h-4 w-4" />
               </button>
             </>
           )}
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span
             className={`rounded-full px-2.5 py-1 font-medium ${
               isUnsaved
-                ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-                : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                ? "bg-warning-soft text-warning"
+                : "bg-success-soft text-success"
             }`}
           >
             {savedLabel}
@@ -110,7 +110,7 @@ export function PlaylistEditorHeader({
           disabled={!canUndo}
           aria-label="ย้อนกลับ (⌘Z)"
           title="ย้อนกลับ (⌘Z)"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:pointer-events-none disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
         >
           <UndoIcon className="h-4 w-4" />
         </button>
@@ -120,7 +120,7 @@ export function PlaylistEditorHeader({
           disabled={!canRedo}
           aria-label="ทำซ้ำ (⇧⌘Z)"
           title="ทำซ้ำ (⇧⌘Z)"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:pointer-events-none disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
         >
           <RedoIcon className="h-4 w-4" />
         </button>

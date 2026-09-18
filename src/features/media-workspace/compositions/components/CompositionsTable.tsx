@@ -72,16 +72,16 @@ function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }
       onClick={() => onAction(action, item)}
       aria-label={`${labels[action]} ${item.name}`}
       title={labels[action]}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-40 ${action === "delete-forever" ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" : "text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"}`}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-40 ${action === "delete-forever" ? "text-danger hover:bg-danger-soft" : "text-primary hover:bg-primary-soft"}`}
     >
       {action === "restore" ? <UndoIcon /> : <TrashIcon />}
     </button>
   ))}</div>;
 
-  const itemClass = "block w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800";
+  const itemClass = "block w-full px-3 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted disabled:opacity-50";
   return <div className="flex items-center justify-end gap-2">
-    <button type="button" disabled={previewing} onClick={() => onPreview(item)} aria-label={`Preview ${item.name}`} title={previewing ? "Loading preview…" : "Preview"} className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 disabled:cursor-wait disabled:text-indigo-300"><PlayIcon /></button>
-    <Link href={`/media-workspace/layouts/${item.id}`} aria-label={`Edit ${item.name}`} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50"><EditIcon /></Link>
+    <button type="button" disabled={previewing} onClick={() => onPreview(item)} aria-label={`Preview ${item.name}`} title={previewing ? "Loading preview…" : "Preview"} className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft disabled:cursor-wait disabled:text-primary"><PlayIcon /></button>
+    <Link href={`/media-workspace/layouts/${item.id}`} aria-label={`Edit ${item.name}`} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"><EditIcon /></Link>
     <details className="relative" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.removeAttribute("open"); }}>
       <summary
         aria-label={`More actions for ${item.name}`}
@@ -92,10 +92,10 @@ function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }
           const details = event.currentTarget.parentElement as HTMLDetailsElement | null;
           if (details) details.open = !details.open;
         }}
-        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
       ><MoreIcon /></summary>
-      <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-        {actions.map((action) => <button key={action} type="button" disabled={disabled} onClick={() => onAction(action, item)} className={`${itemClass} ${action === "trash" ? "text-red-600 dark:text-red-400" : ""}`}>{labels[action]}</button>)}
+      <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
+        {actions.map((action) => <button key={action} type="button" disabled={disabled} onClick={() => onAction(action, item)} className={`${itemClass} ${action === "trash" ? "text-danger" : ""}`}>{labels[action]}</button>)}
       </div>
     </details>
   </div>;
@@ -119,7 +119,7 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
     <div>
       <table className="w-full table-fixed text-left text-sm">
         <thead>
-          <tr className="border-b border-zinc-100 text-xs text-zinc-500 dark:border-zinc-800">
+          <tr className="border-b border-border text-xs text-muted-foreground">
             <th className="w-10 py-2 pl-1">
               <input
                 type="checkbox"
@@ -142,7 +142,7 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
           {rows.map((item) => {
             const badge = statusBadge(item.status);
             return (
-              <tr key={item.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+              <tr key={item.id} className="border-b border-border last:border-0">
                 <td className="py-3 pl-1">
                   <input
                     type="checkbox"
@@ -159,17 +159,17 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
                 <td className="py-3"><CompositionLibraryPreview zones={item.previewZones} previews={previews} /></td>
                 <td className="truncate py-3 pr-2 font-medium">
                   <p className="truncate">{item.name}</p>
-                  <p className="truncate text-xs font-normal text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p>
+                  <p className="truncate text-xs font-normal text-muted-foreground">{item.folderId ? "In folder" : "Uncategorized"}</p>
                 </td>
                 <td className="py-3">{item.bound_count}/{item.zone_count}</td>
                 <td className="py-3">{item.referenceResolution ?? "—"}</td>
                 <td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td>
                 <td className="py-3">{item.usageCount ?? "—"}</td>
-                <td className="py-3 text-zinc-500">
+                <td className="py-3 text-muted-foreground">
                   <div className="flex min-w-0 items-center gap-2">
                     <Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} />
                     <span className="min-w-0">
-                      <span className="block truncate text-zinc-700">{item.createdBy?.displayName ?? "Unknown user"}</span>
+                      <span className="block truncate text-muted-foreground">{item.createdBy?.displayName ?? "Unknown user"}</span>
                       <span className="block truncate text-xs">{formatDate(item.updated_at ?? item.created_at)}</span>
                     </span>
                   </div>
@@ -201,10 +201,10 @@ export function CompositionsGrid({ rows, inTrash, busyId, previewBusyId, onPrevi
       <CompositionLibraryPreview zones={item.previewZones} previews={previews} />
       <div className="mt-3 space-y-2">
         <div className="min-w-0">
-          <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-sm font-semibold text-zinc-900 hover:text-indigo-600 dark:text-zinc-100">{item.name}</Link>
-          <p className="truncate text-xs text-zinc-500">{item.folderId ? "In folder" : "Uncategorized"}</p>
+          <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-sm font-semibold text-foreground hover:text-primary">{item.name}</Link>
+          <p className="truncate text-xs text-muted-foreground">{item.folderId ? "In folder" : "Uncategorized"}</p>
         </div>
-        <div className="flex items-center justify-between text-xs text-zinc-500"><span>{item.bound_count}/{item.zone_count} content</span><span>{item.referenceResolution ?? "—"}</span></div>
+        <div className="flex items-center justify-between text-xs text-muted-foreground"><span>{item.bound_count}/{item.zone_count} content</span><span>{item.referenceResolution ?? "—"}</span></div>
         <div className="flex items-center justify-between"><Badge color={badge.color} variant="pill">{badge.label}</Badge><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></div>
       </div>
     </Card>;

@@ -151,7 +151,7 @@ export function LayoutsListPage() {
   const stats = layouts !== null ? summarize(layouts) : null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Templates"
         subtitle="Create and manage reusable Zone geometry for Layouts."
@@ -165,7 +165,7 @@ export function LayoutsListPage() {
       {stats === null ? (
         <SummarySkeleton />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatTile label="Total Layouts" value={String(stats.total)} />
           <StatTile label="Active" value={String(stats.active)} color="emerald" />
           <StatTile label="Inactive" value={String(stats.inactive)} />
@@ -173,7 +173,7 @@ export function LayoutsListPage() {
       )}
 
       <Card className="flex h-[calc(100vh-345px)] min-h-[420px] flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-zinc-200 p-5 dark:border-zinc-800">
+        <div className="shrink-0 border-b border-border p-5">
           <LayoutsFilters
             value={filters}
             onClearAll={qs === "" ? undefined : handleClearAll}
@@ -184,16 +184,16 @@ export function LayoutsListPage() {
           />
           {/* กำลังรีเฟรช… shown only during a background reload, not initial load */}
           {refreshing && layouts !== null && (
-            <p className="text-right text-xs text-zinc-400">กำลังรีเฟรช…</p>
+            <p className="text-right text-xs text-muted-foreground">กำลังรีเฟรช…</p>
           )}
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto p-5">
-          {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+          {actionError && <p className="mb-3 text-sm text-danger">{actionError}</p>}
 
           {error && layouts !== null && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
-              <p className="text-sm text-red-500">{error.message}</p>
+            <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-3">
+              <p className="text-sm text-danger">{error.message}</p>
             </div>
           )}
 
@@ -218,7 +218,7 @@ export function LayoutsListPage() {
         </div>
 
         {rows.length > 0 && (
-          <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0">
+          <div className="shrink-0 border-t border-border px-5 py-4 [&>div]:mt-0">
             <Pagination
               page={currentPage}
               totalPages={totalPages}
@@ -246,14 +246,14 @@ export function LayoutsListPage() {
             <button
               type="button"
               onClick={() => setArchiveTarget(null)}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
             >
               ยกเลิก
             </button>
             <button
               type="button"
               onClick={confirmArchive}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+              className="rounded-lg bg-danger px-4 py-2 text-sm text-white hover:bg-danger"
             >
               Archive
             </button>

@@ -103,29 +103,29 @@ export function AddItemDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="asset-picker-title"
-        className={`flex h-full w-full max-w-2xl flex-col bg-white shadow-xl transition-transform duration-200 dark:bg-zinc-900 ${open ? "translate-x-0" : side === "left" ? "-translate-x-full" : "translate-x-full"}`}
+        className={`flex h-full w-full max-w-2xl flex-col bg-card shadow-xl transition-transform duration-200 ${open ? "translate-x-0" : side === "left" ? "-translate-x-full" : "translate-x-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-100 p-5 dark:border-zinc-800">
+        <div className="flex items-start justify-between gap-3 border-b border-border p-5">
           <div>
-            <h2 id="asset-picker-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+            <h2 id="asset-picker-title" className="text-base font-semibold text-foreground">
               {isLayout ? "Pick Media Asset" : "Add Item"}
             </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               {isLayout ? "Select media to insert into this Zone." : "เลือก media ที่จะเพิ่มลง Playlist"} ·{" "}
-              <Link href="/media-workspace/assets/upload" target="_blank" className="text-indigo-600 hover:underline dark:text-indigo-400">Upload new media ↗</Link>
+              <Link href="/media-workspace/assets/upload" target="_blank" className="text-primary hover:underline">Upload new media ↗</Link>
             </p>
           </div>
-          <button type="button" aria-label="ปิด" onClick={close} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+          <button type="button" aria-label="ปิด" onClick={close} className="rounded-lg p-1 text-muted-foreground hover:bg-muted">
             <XIcon />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
           {isLayout && (
-            <div className="mb-4 flex rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="mb-4 flex rounded-xl border border-border bg-muted p-1">
               {(["media", "playlists"] as const).map((value) => (
-                <button key={value} type="button" onClick={() => setSource(value)} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${source === value ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300" : "text-zinc-500"}`}>
+                <button key={value} type="button" onClick={() => setSource(value)} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${source === value ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`}>
                   {value === "media" ? "Media" : "Playlists"}
                 </button>
               ))}
@@ -136,24 +136,24 @@ export function AddItemDrawer({
           ) : (
             <div className="flex flex-col gap-3">
               <div className="relative">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <input value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} placeholder="Search playlists..." className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900" />
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} placeholder="Search playlists..." className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-ring" />
               </div>
               {playlists.filter((playlist) => playlist.name.toLowerCase().includes(playlistQuery.trim().toLowerCase())).map((playlist) => (
-                <button key={playlist.id} type="button" onClick={() => setPlaylistId(playlist.id)} className={`flex items-center gap-3 rounded-xl border p-3 text-left ${playlistId === playlist.id ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10" : "border-zinc-200 dark:border-zinc-700"}`}>
+                <button key={playlist.id} type="button" onClick={() => setPlaylistId(playlist.id)} className={`flex items-center gap-3 rounded-xl border p-3 text-left ${playlistId === playlist.id ? "border-primary bg-primary-soft" : "border-border"}`}>
                   <MediaThumb url={playlistPreviews[playlist.id]?.url} thumbnailUrl={playlistPreviews[playlist.id]?.thumbnailUrl} alt={`${playlist.name} thumbnail`} className="h-12 w-20" />
-                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{playlist.name}</span><span className="text-xs text-zinc-500">{playlist.item_count} items · {playlist.status}</span></span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{playlist.name}</span><span className="text-xs text-muted-foreground">{playlist.item_count} items · {playlist.status}</span></span>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-zinc-100 p-4 dark:border-zinc-800">
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="flex items-center justify-between gap-3 border-t border-border p-4">
+          <span className="text-sm text-muted-foreground">
             {source === "playlists" ? (playlistId ? "1 playlist selected" : "No playlist selected") : `${staged.length} ${isLayout ? "assets" : "items"} selected`}
             {source === "media" && staged.length > 0 && (
-              <button type="button" onClick={() => setStaged([])} className="ml-3 text-indigo-600 hover:underline dark:text-indigo-400">
+              <button type="button" onClick={() => setStaged([])} className="ml-3 text-primary hover:underline">
                 Clear
               </button>
             )}

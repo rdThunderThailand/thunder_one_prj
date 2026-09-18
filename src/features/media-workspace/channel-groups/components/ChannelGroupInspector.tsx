@@ -84,34 +84,34 @@ export function ChannelGroupInspector({
       aria-label={`${group.name} detail`}
       className="relative h-full overflow-y-auto p-5 xl:sticky xl:top-0 xl:self-start"
     >
-      <div className="grid h-28 place-items-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-700 dark:bg-zinc-950/40">
+      <div className="grid h-28 place-items-center rounded-xl border border-dashed border-border bg-muted p-4 text-center">
         <div>
-          <MonitorIcon className="mx-auto h-6 w-6 text-zinc-400" />
-          <p className="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">No preview available yet</p>
-          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Program content will appear here.</p>
+          <MonitorIcon className="mx-auto h-6 w-6 text-muted-foreground" />
+          <p className="mt-1 text-sm font-medium text-muted-foreground">No preview available yet</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Program content will appear here.</p>
         </div>
       </div>
 
       <div className="mt-4 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <h2 className="truncate text-lg font-semibold text-zinc-950 dark:text-zinc-50">{group.name}</h2>
+          <h2 className="truncate text-lg font-semibold text-foreground">{group.name}</h2>
           <Badge color={status.color} variant="pill">{status.label}</Badge>
         </div>
         <button
           type="button"
           aria-label="Close group detail"
           onClick={onClose}
-          className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <XIcon />
         </button>
       </div>
       {group.description && (
-        <p className="mt-2 text-sm leading-5 text-zinc-500 dark:text-zinc-400">{group.description}</p>
+        <p className="mt-2 text-sm leading-5 text-muted-foreground">{group.description}</p>
       )}
 
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {error}
         </p>
       )}
@@ -131,7 +131,7 @@ export function ChannelGroupInspector({
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
-            className="rounded-lg border border-zinc-200 p-2.5 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-border p-2.5 text-muted-foreground hover:bg-muted"
           >
             <MoreIcon />
           </button>
@@ -144,13 +144,13 @@ export function ChannelGroupInspector({
                 className="fixed inset-0 z-10 cursor-default"
                 onClick={() => setMenuOpen(false)}
               />
-              <div role="menu" className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+              <div role="menu" className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-border bg-card py-1 shadow-lg">
                 <button
                   type="button"
                   role="menuitem"
                   disabled={busy}
                   onClick={() => void toggleStatus()}
-                  className="w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed"
                 >
                   {group.status === "active" ? "Disable Group" : "Enable Group"}
                 </button>
@@ -162,7 +162,7 @@ export function ChannelGroupInspector({
                     setMenuOpen(false);
                     setConfirmingDelete(true);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:cursor-not-allowed dark:text-red-400 dark:hover:bg-red-500/10"
+                  className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed"
                 >
                   Delete Group
                 </button>
@@ -221,7 +221,7 @@ export function ChannelGroupInspector({
         }
       >
         <p>This will permanently delete the group &ldquo;{group.name}&rdquo;.</p>
-        <p className="text-zinc-500 dark:text-zinc-400">Channels in this group will not be deleted — they become ungrouped.</p>
+        <p className="text-muted-foreground">Channels in this group will not be deleted — they become ungrouped.</p>
       </Modal>
     </Card>
   );

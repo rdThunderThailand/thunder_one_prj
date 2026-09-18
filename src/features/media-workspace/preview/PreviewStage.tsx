@@ -208,12 +208,12 @@ export function PreviewStage({
   };
   const geometryControls = geometryOptions.length > 0 ? (
     <div className="mb-3 space-y-2">
-      <label className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+      <label className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>Preview shape</span>
         <select
           value={selectedGeometry?.id ?? ""}
           onChange={(event) => setGeometryId(event.target.value)}
-          className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground"
         >
           {geometryOptions.map((option) => (
             <option key={option.id} value={option.id}>{option.label}</option>
@@ -222,12 +222,12 @@ export function PreviewStage({
         <span>· frame {frameAspectRatio}</span>
       </label>
       {geometryFit === "unknown" && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800" role="status">
+        <p className="rounded-md border border-warning/30 bg-warning-soft px-2.5 py-2 text-xs text-warning" role="status">
           These targets report no screen geometry. Previewing at {frameAspectRatio} from the Layout instead.
         </p>
       )}
       {(geometryFit === "orientation-mismatch" || geometryFit === "aspect-mismatch") && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800" role="status">
+        <p className="rounded-md border border-warning/30 bg-warning-soft px-2.5 py-2 text-xs text-warning" role="status">
           This target is a different shape from the Layout ({aspectRatio}). Zones stretch to fill it — check the framing before publishing.
         </p>
       )}
@@ -279,7 +279,7 @@ export function PreviewStage({
             return (
               <div
                 key={zone.id}
-                className="absolute overflow-hidden border border-white/25 bg-zinc-950"
+                className="absolute overflow-hidden border border-white/25 bg-foreground"
                 style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
               >
                 <div className="relative h-full w-full">
@@ -337,7 +337,7 @@ export function PreviewStage({
               </div>
             );
           })}
-          {resolvedZones.length === 0 && <div className="flex h-full items-center justify-center text-sm text-zinc-400">No Zones to preview</div>}
+          {resolvedZones.length === 0 && <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No Zones to preview</div>}
           {controlsPlacement === "overlay" && controls}
           </div>
         </div>

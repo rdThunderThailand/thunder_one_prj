@@ -22,7 +22,7 @@ export function WhereToPlayPanel(props: ChannelsStepProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="grid grid-cols-[0.8fr_1fr_1.35fr] gap-1 rounded-lg bg-zinc-100 p-0.5">
+      <div className="grid grid-cols-[0.8fr_1fr_1.35fr] gap-1 rounded-lg bg-muted p-0.5">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -32,10 +32,10 @@ export function WhereToPlayPanel(props: ChannelsStepProps) {
             onClick={() => t.enabled && setTab(t.id)}
             className={`min-w-0 rounded-md px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
               tab === t.id
-                ? "bg-white text-zinc-900 shadow-sm"
+                ? "bg-card text-foreground shadow-sm"
                 : t.enabled
-                ? "text-zinc-500 hover:text-zinc-900"
-                : "cursor-not-allowed text-zinc-300"
+                ? "text-muted-foreground hover:text-foreground"
+                : "cursor-not-allowed text-muted-foreground"
             }`}
           >
             {t.label}

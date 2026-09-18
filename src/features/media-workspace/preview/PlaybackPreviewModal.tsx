@@ -59,19 +59,19 @@ export function PlaybackPreviewModal({
         </Button>
       </> : <Button variant="secondary" onClick={onClose}>Close preview</Button>}
     >
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 pb-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="min-w-0">
-          <p className="truncate font-semibold text-zinc-900">{layoutName.trim() || "Untitled Layout"}</p>
-          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Live simulation
+          <p className="truncate font-semibold text-foreground">{layoutName.trim() || "Untitled Layout"}</p>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" /> Live simulation
           </p>
         </div>
-        <p className="text-xs font-medium text-zinc-500">
-          {referenceResolution ?? "Custom"} <span className="px-1.5 text-zinc-300">•</span> {aspectRatio}
-          <span className="px-1.5 text-zinc-300">•</span> {zones.length} {zones.length === 1 ? "Zone" : "Zones"}
+        <p className="text-xs font-medium text-muted-foreground">
+          {referenceResolution ?? "Custom"} <span className="px-1.5 text-muted-foreground">•</span> {aspectRatio}
+          <span className="px-1.5 text-muted-foreground">•</span> {zones.length} {zones.length === 1 ? "Zone" : "Zones"}
         </p>
       </div>
-      <div className="overflow-hidden rounded-xl bg-white">
+      <div className="overflow-hidden rounded-xl bg-card">
         <PreviewStage
           zones={zones}
           assets={assets}

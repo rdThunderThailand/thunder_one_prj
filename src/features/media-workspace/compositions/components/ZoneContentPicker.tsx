@@ -70,28 +70,28 @@ export function ZoneContentPicker({
 
   return (
     <>
-      <section className="flex h-full min-h-0 min-w-0 flex-col gap-4 border-b border-zinc-200 pb-4 dark:border-zinc-700 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-6">
+      <section className="flex h-full min-h-0 min-w-0 flex-col gap-4 border-b border-border pb-4 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Insert to Layout</p>
-            <p className="text-xs text-zinc-400">Zone: {zoneName}</p>
+            <p className="text-sm font-semibold text-foreground">Insert to Layout</p>
+            <p className="text-xs text-muted-foreground">Zone: {zoneName}</p>
           </div>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">Total {durationSeconds}s</span>
+          <span className="text-xs text-muted-foreground">Total {durationSeconds}s</span>
         </div>
 
         {!hasBoundContent && !hasStagedContent ? (
-          <button type="button" onClick={() => setIsAssetPickerOpen(true)} className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 p-6 text-center text-zinc-500 transition hover:border-indigo-400 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800/40">
+          <button type="button" onClick={() => setIsAssetPickerOpen(true)} className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted p-6 text-center text-muted-foreground transition hover:border-primary/30 hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30">
             <ImageIcon className="h-8 w-8" />
-            <span className="font-medium text-zinc-700 dark:text-zinc-200">Pick Media Assets</span>
+            <span className="font-medium text-muted-foreground">Pick Media Assets</span>
             <span className="max-w-52 text-xs">Choose media or a Playlist for {zoneName}</span>
-            <span className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm">
+            <span className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white shadow-sm">
               <PlusIcon className="h-4 w-4" />
               Add Media
             </span>
           </button>
         ) : <>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
-          {hasBoundContent && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">In this Zone</p>
+          {hasBoundContent && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">In this Zone</p>
           <SelectedAssetList
             bare
             assets={assets}
@@ -118,12 +118,12 @@ export function ZoneContentPicker({
           />
           {binding.source === "playlist" && binding.playlistId && <ShelfItem label={binding.playlistName ?? boundPlaylist?.name ?? "Playlist"} meta={`${boundPlaylist?.item_count ?? 0} items · ${boundPlaylist?.status ?? "bound"}`} url={playlistPreviews[binding.playlistId]?.url} thumbnailUrl={playlistPreviews[binding.playlistId]?.thumbnailUrl} onRemove={() => onChange({ ...binding, playlistId: null, playlistName: undefined, assetItems: [] })} />}
           </div>}
-          {hasStagedContent && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-indigo-600">Ready to add</p><div className="space-y-2">
+          {hasStagedContent && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary">Ready to add</p><div className="space-y-2">
             {stagedPlaylist && <ShelfItem label={stagedPlaylist.name} meta={`${stagedPlaylist.item_count} items · ${stagedPlaylist.status}`} url={playlistPreviews[stagedPlaylist.id]?.url} thumbnailUrl={playlistPreviews[stagedPlaylist.id]?.thumbnailUrl} onRemove={() => setStagedPlaylist(null)} />}
             {stagedAssets.map((asset) => <ShelfItem key={asset.id} label={asset.file?.original_filename ?? asset.title ?? asset.id} meta={`${asset.kind ?? "File"}${asset.width && asset.height ? ` · ${asset.width}×${asset.height}` : ""}`} url={previews[asset.id]} onRemove={() => setStagedAssets((current) => current.filter((item) => item.id !== asset.id))} />)}
           </div></div>}
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+        <div className="flex shrink-0 flex-wrap gap-2 border-t border-border pt-4">
           <Button variant="secondary" onClick={() => setIsAssetPickerOpen(true)}><PlusIcon /> Add Media or Playlist</Button>
           {hasStagedContent && <Button onClick={insertStaged}>Add to {zoneName}</Button>}
         </div>
@@ -148,5 +148,5 @@ export function ZoneContentPicker({
 }
 
 function ShelfItem({ label, meta, url, thumbnailUrl, onRemove }: { label: string; meta: string; url?: string; thumbnailUrl?: string; onRemove: () => void }) {
-  return <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-2 text-left dark:border-zinc-700 dark:bg-zinc-900"><MediaThumb url={url} thumbnailUrl={thumbnailUrl} alt={`${label} thumbnail`} className="h-14 w-20" /><span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{label}</span><span className="block truncate text-xs text-zinc-500">{meta}</span></span><button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="shrink-0 rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"><XIcon /></button></div>;
+  return <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-2 text-left"><MediaThumb url={url} thumbnailUrl={thumbnailUrl} alt={`${label} thumbnail`} className="h-14 w-20" /><span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium text-foreground">{label}</span><span className="block truncate text-xs text-muted-foreground">{meta}</span></span><button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"><XIcon /></button></div>;
 }

@@ -42,10 +42,10 @@ export function AssetActions({ asset, trash, folders, onRefresh, compact = false
   };
 
   if (trash) return <div className="flex justify-end gap-1">
-    <button aria-label={`Restore ${label}`} title="Restore" className={compact ? "grid h-8 w-8 place-items-center rounded-lg text-indigo-600 hover:bg-indigo-50" : "text-xs font-medium text-indigo-600"} onClick={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}>
+    <button aria-label={`Restore ${label}`} title="Restore" className={compact ? "grid h-8 w-8 place-items-center rounded-lg text-primary hover:bg-primary-soft" : "text-xs font-medium text-primary"} onClick={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}>
       {compact ? <UndoIcon /> : "Restore"}
     </button>
-    <button aria-label={`Permanently delete ${label}`} title="Delete forever" className={compact ? "grid h-8 w-8 place-items-center rounded-lg text-red-600 hover:bg-red-50" : "text-xs font-medium text-red-600"} onClick={async () => {
+    <button aria-label={`Permanently delete ${label}`} title="Delete forever" className={compact ? "grid h-8 w-8 place-items-center rounded-lg text-danger hover:bg-danger-soft" : "text-xs font-medium text-danger"} onClick={async () => {
       if (window.confirm(`Permanently delete ${label}? This cannot be undone.`)) {
         await permanentlyDeleteMediaAsset(asset.id);
         onRefresh();
@@ -56,11 +56,11 @@ export function AssetActions({ asset, trash, folders, onRefresh, compact = false
   </div>;
 
   return <div className="flex items-center justify-end gap-2">
-    <select aria-label={`Move ${label}`} disabled={moving} className={`${compact ? "w-40" : "min-w-0 flex-1"} rounded border border-zinc-200 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900`} value={asset.folder_id ?? ""} onChange={(event) => void move(event.target.value || null)}>
+    <select aria-label={`Move ${label}`} disabled={moving} className={`${compact ? "w-40" : "min-w-0 flex-1"} rounded border border-border bg-card px-2 py-1 text-xs`} value={asset.folder_id ?? ""} onChange={(event) => void move(event.target.value || null)}>
       <option value="">Uncategorized</option>
       {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
     </select>
-    <button aria-label={`Move ${label} to Trash`} title="Move to Trash" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-zinc-500 hover:bg-red-50 hover:text-red-600" onClick={async () => {
+    <button aria-label={`Move ${label} to Trash`} title="Move to Trash" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-danger-soft hover:text-danger" onClick={async () => {
       if (window.confirm(`Move ${label} to Trash?`)) {
         await trashMediaAsset(asset.id);
         onRefresh();
@@ -102,11 +102,11 @@ export function AssetCard({
       <div className="space-y-2 p-3">
         <Link
           href={`/media-workspace/assets/${asset.id}`}
-          className="block truncate text-sm font-semibold text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-300"
+          className="block truncate text-sm font-semibold text-foreground hover:text-primary"
         >
           {label}
         </Link>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground">
           {asset.kind?.toUpperCase() ?? "FILE"} · {formatResolution(asset)} · {formatBytes(asset.file?.file_size_bytes)}
         </p>
         <AssetActions asset={asset} trash={trash} folders={folders} onRefresh={onRefresh} />

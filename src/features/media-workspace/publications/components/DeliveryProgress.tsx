@@ -63,10 +63,10 @@ export function DeliveryProgress({
   if (targets.length === 0) {
     return (
       <Card className="p-5">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
           Delivery Progress
         </h2>
-        <p className="text-sm text-zinc-400">ยังไม่มีข้อมูลการส่ง</p>
+        <p className="text-sm text-muted-foreground">ยังไม่มีข้อมูลการส่ง</p>
       </Card>
     );
   }
@@ -120,8 +120,8 @@ export function DeliveryProgress({
     <Card className="p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Delivery Progress</h2>
-          <p className="text-xs text-zinc-400">
+          <h2 className="text-base font-semibold text-foreground">Delivery Progress</h2>
+          <p className="text-xs text-muted-foreground">
             Published {formatDate(detail.activated_at)} · {summary.total} devices
             {summary.completedAt && <> · Completed {formatDate(summary.completedAt)}</>}
           </p>
@@ -137,14 +137,14 @@ export function DeliveryProgress({
         className="mb-2"
         animated={isPublishing}
       />
-      <p className="mb-5 flex flex-wrap items-center gap-x-2 text-xs text-zinc-400">
+      <p className="mb-5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
         <span>
           {summary.overallPercent}% — {summary.stage3Done} of {summary.total} devices confirmed
           playback
         </span>
         {pollInterval !== null && (
-          <span className="inline-flex items-center gap-1.5 text-indigo-500">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-500" />
+          <span className="inline-flex items-center gap-1.5 text-primary">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
             อัปเดตอัตโนมัติทุก {pollInterval / 1000} วินาที
           </span>
         )}
@@ -154,26 +154,26 @@ export function DeliveryProgress({
         <DeliveryStages stages={stages} />
       </div>
 
-      <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-zinc-500 sm:grid-cols-5">
+      <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground sm:grid-cols-5">
         <div>
-          <dt className="text-zinc-400">Connected</dt>
-          <dd className="font-medium text-zinc-900 dark:text-zinc-100">{summary.connected}</dd>
+          <dt className="text-muted-foreground">Connected</dt>
+          <dd className="font-medium text-foreground">{summary.connected}</dd>
         </div>
         <div>
-          <dt className="text-zinc-400">Delivered</dt>
-          <dd className="font-medium text-zinc-900 dark:text-zinc-100">{summary.delivered}</dd>
+          <dt className="text-muted-foreground">Delivered</dt>
+          <dd className="font-medium text-foreground">{summary.delivered}</dd>
         </div>
         <div>
-          <dt className="text-zinc-400">Downloading</dt>
-          <dd className="font-medium text-zinc-900 dark:text-zinc-100">{summary.downloading}</dd>
+          <dt className="text-muted-foreground">Downloading</dt>
+          <dd className="font-medium text-foreground">{summary.downloading}</dd>
         </div>
         <div>
-          <dt className="text-zinc-400">Offline</dt>
-          <dd className="font-medium text-zinc-900 dark:text-zinc-100">{summary.offline}</dd>
+          <dt className="text-muted-foreground">Offline</dt>
+          <dd className="font-medium text-foreground">{summary.offline}</dd>
         </div>
         <div>
-          <dt className="text-zinc-400">Failed</dt>
-          <dd className="font-medium text-zinc-900 dark:text-zinc-100">{summary.failed}</dd>
+          <dt className="text-muted-foreground">Failed</dt>
+          <dd className="font-medium text-foreground">{summary.failed}</dd>
         </div>
       </dl>
 
@@ -182,7 +182,7 @@ export function DeliveryProgress({
           <Button variant="secondary" onClick={handleRetryAll} disabled={retrying}>
             {retrying ? "กำลัง Retry…" : "Retry Failed/Offline"}
           </Button>
-          {retryError && <span className="text-xs text-red-600 dark:text-red-400">{retryError}</span>}
+          {retryError && <span className="text-xs text-danger">{retryError}</span>}
         </div>
       )}
 

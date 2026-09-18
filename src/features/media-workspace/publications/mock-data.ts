@@ -29,10 +29,10 @@ export interface PriorityOption {
 }
 
 export const priorities: PriorityOption[] = [
-  { id: "low", label: "Low", color: "bg-zinc-400" },
-  { id: "normal", label: "Normal", color: "bg-emerald-500" },
-  { id: "high", label: "High", color: "bg-amber-500" },
-  { id: "urgent", label: "Urgent", color: "bg-red-500" },
+  { id: "low", label: "Low", color: "bg-border" },
+  { id: "normal", label: "Normal", color: "bg-success" },
+  { id: "high", label: "High", color: "bg-warning" },
+  { id: "urgent", label: "Urgent", color: "bg-danger" },
 ];
 
 export const wizardSteps = [

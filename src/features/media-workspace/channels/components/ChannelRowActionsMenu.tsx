@@ -49,7 +49,7 @@ export function ChannelRowActionsMenu({
           event.stopPropagation();
           setIsOpen((open) => !open);
         }}
-        className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
       >
         <MoreIcon />
       </button>
@@ -69,14 +69,14 @@ export function ChannelRowActionsMenu({
           <div
             role="menu"
             onClick={(event) => event.stopPropagation()}
-            className="absolute right-0 z-20 mt-1 w-48 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
+            className="absolute right-0 z-20 mt-1 w-48 rounded-lg border border-border bg-card py-1 shadow-lg"
           >
             <button
               type="button"
               role="menuitem"
               disabled
               title="Duplicate Channel — not available yet"
-              className="w-full px-3 py-2 text-left text-sm text-zinc-400 disabled:cursor-not-allowed dark:text-zinc-600"
+              className="w-full px-3 py-2 text-left text-sm text-muted-foreground disabled:cursor-not-allowed"
             >
               Duplicate Channel
             </button>
@@ -86,12 +86,12 @@ export function ChannelRowActionsMenu({
               disabled={!canDisable || pending}
               title={canDisable ? undefined : "Channel is not active"}
               onClick={() => void disable()}
-              className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:text-zinc-400 disabled:hover:bg-transparent dark:text-red-400 dark:hover:bg-red-500/10 dark:disabled:text-zinc-600"
+              className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
             >
               {pending ? "Disabling…" : "Disable Channel"}
             </button>
             {error && (
-              <p role="alert" className="px-3 py-2 text-xs text-red-600 dark:text-red-400">
+              <p role="alert" className="px-3 py-2 text-xs text-danger">
                 {error}
               </p>
             )}

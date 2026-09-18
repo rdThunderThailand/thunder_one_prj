@@ -56,7 +56,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
             )}
             {/* A merged loop airs several Publications on the same targets; the card stays
                 single-Publication and discloses the rest rather than hiding them (ADR 0065 §2). */}
-            {model.mergedWith > 0 && <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">+{model.mergedWith} more</span>}
+            {model.mergedWith > 0 && <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">+{model.mergedWith} more</span>}
           </div>
           <p className="mt-1 text-[10px] capitalize text-muted-foreground">
             {model.publicationType}

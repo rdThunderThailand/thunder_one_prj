@@ -28,7 +28,7 @@ import { LibraryToolbar } from "./components/LibraryToolbar";
 type Collection = FolderCollection;
 const PAGE_SIZE = 12;
 const railTabClass = (active: boolean) =>
-  `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${active ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"}`;
+  `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${active ? "bg-muted text-muted-foreground" : "text-muted-foreground hover:text-foreground"}`;
 
 function StatTilesSkeleton() {
   return (
@@ -172,11 +172,11 @@ export function MediaLibraryPage() {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {statTiles.map((tile) => (
             <Card key={tile.label} className={`flex items-center gap-3 p-4 ${tile.disabled ? "opacity-55" : ""}`}>
-              <span className="rounded-xl bg-indigo-50 p-3 text-indigo-600 dark:bg-indigo-500/15">{tile.icon}</span>
+              <span className="rounded-xl bg-primary-soft p-3 text-primary">{tile.icon}</span>
               <div>
-                <p className="text-xs text-zinc-500">{tile.label}</p>
+                <p className="text-xs text-muted-foreground">{tile.label}</p>
                 <p className="text-2xl font-semibold">{tile.value}</p>
-                {tile.disabled && <p className="text-[10px] text-zinc-400">Coming soon</p>}
+                {tile.disabled && <p className="text-[10px] text-muted-foreground">Coming soon</p>}
               </div>
             </Card>
           ))}
@@ -185,7 +185,7 @@ export function MediaLibraryPage() {
 
       <Card className="flex min-h-[420px] flex-1 flex-col overflow-hidden">
         <div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
-          <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r">
+          <aside className="flex min-h-0 flex-col border-b border-border p-3 md:border-b-0 md:border-r">
             <div className="mb-2 flex shrink-0 gap-1 px-1">
               <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>Folders</button>
               <button type="button" className={railTabClass(railTab === "tags")} onClick={() => setRailTab("tags")}>Tags</button>
@@ -214,25 +214,25 @@ export function MediaLibraryPage() {
                 {loading && assets.length === 0 ? (
                   <Skeleton className="mt-2 h-4 w-16" />
                 ) : (
-                  <p className="text-sm text-zinc-500">{filteredAssets.length.toLocaleString()} items</p>
+                  <p className="text-sm text-muted-foreground">{filteredAssets.length.toLocaleString()} items</p>
                 )}
               </div>
               <div className="flex gap-2">
                 {collection === "trash" ? <>
                   <Button variant="secondary" disabled={batchBusy || assets.length === 0} onClick={() => void runBatch("restore", assets.map((asset) => asset.id))}>Recover All</Button>
-                  <Button disabled={batchBusy || assets.length === 0} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", assets.map((asset) => asset.id))}>Delete All</Button>
-                </> : selectedIds.size > 0 ? <Button disabled={batchBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("trash", [...selectedIds])}>Move {selectedIds.size} to Trash</Button> : null}
-                {collection === "trash" && selectedIds.size > 0 && <><Button variant="secondary" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button><Button disabled={batchBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button></>}
+                  <Button disabled={batchBusy || assets.length === 0} className="bg-danger hover:bg-danger" onClick={() => void runBatch("delete", assets.map((asset) => asset.id))}>Delete All</Button>
+                </> : selectedIds.size > 0 ? <Button disabled={batchBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("trash", [...selectedIds])}>Move {selectedIds.size} to Trash</Button> : null}
+                {collection === "trash" && selectedIds.size > 0 && <><Button variant="secondary" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button><Button disabled={batchBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button></>}
               </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
               {error ? (
-                <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
+                <p className="rounded-lg bg-danger-soft p-3 text-sm text-danger">{error}</p>
               ) : loading && assets.length === 0 ? (
                 <AssetListSkeleton isGrid={isGrid} />
               ) : visibleAssets.length === 0 ? (
-                <p className="py-20 text-center text-sm text-zinc-500">No media found.</p>
+                <p className="py-20 text-center text-sm text-muted-foreground">No media found.</p>
               ) : isGrid ? (
                 <div className={isGrid ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-4" : "space-y-3"}>
                   {visibleAssets.map((asset) => (
@@ -246,7 +246,7 @@ export function MediaLibraryPage() {
 
           </main>
         </div>
-        <div className="flex shrink-0 items-center justify-between border-t border-zinc-200 px-5 py-4 text-sm dark:border-zinc-800">
+        <div className="flex shrink-0 items-center justify-between border-t border-border px-5 py-4 text-sm">
           <span>Page {currentPage} of {totalPages}</span>
           <div className="flex gap-2">
             <Button variant="secondary" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</Button>

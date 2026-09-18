@@ -49,8 +49,8 @@ export function SelectedAssetList({
   if (assetItems.length === 0) return null;
 
   return (
-    <div className={bare ? "" : "rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"}>
-      <p className="mb-2 text-sm font-semibold text-zinc-900">{`${assetItems.length} Asset${assetItems.length > 1 ? "s" : ""} Selected`}</p>
+    <div className={bare ? "" : "rounded-2xl border border-border bg-card p-4 shadow-sm"}>
+      <p className="mb-2 text-sm font-semibold text-foreground">{`${assetItems.length} Asset${assetItems.length > 1 ? "s" : ""} Selected`}</p>
       <div className="flex flex-col gap-2">
         {assetItems.map((item, index) => {
           const asset = assets.find((a) => a.id === item.media_asset_id);
@@ -82,9 +82,9 @@ export function SelectedAssetList({
                 moveAssetItemTo(event.dataTransfer.getData("text/plain"), index);
               }}
               title={moveAssetItemTo ? "Drag to reorder" : undefined}
-              className={`grid grid-cols-[48px_minmax(0,1fr)_auto] items-start gap-2 rounded-lg border border-zinc-200 p-2 transition ${moveAssetItemTo ? "cursor-grab active:cursor-grabbing" : ""}`}
+              className={`grid grid-cols-[48px_minmax(0,1fr)_auto] items-start gap-2 rounded-lg border border-border p-2 transition ${moveAssetItemTo ? "cursor-grab active:cursor-grabbing" : ""}`}
             >
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
                 <MediaThumb
                   url={previews[asset.id]}
                   kind={asset.kind}
@@ -94,11 +94,11 @@ export function SelectedAssetList({
                 />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-zinc-900">{filename}</p>
-                <span className="mt-1 flex flex-wrap items-center gap-1.5"><Badge color={isImage ? "green" : "blue"} variant="pill">{kindLabel}</Badge><span className="text-xs text-zinc-400">{dimensions}</span></span>
+                <p className="truncate text-sm font-medium text-foreground">{filename}</p>
+                <span className="mt-1 flex flex-wrap items-center gap-1.5"><Badge color={isImage ? "green" : "blue"} variant="pill">{kindLabel}</Badge><span className="text-xs text-muted-foreground">{dimensions}</span></span>
               </div>
 
-              <button type="button" onClick={() => toggleAssetItem({ id: asset.id, isImage })} aria-label="Remove selected asset" className="shrink-0 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"><XIcon className="h-4 w-4" /></button>
+              <button type="button" onClick={() => toggleAssetItem({ id: asset.id, isImage })} aria-label="Remove selected asset" className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"><XIcon className="h-4 w-4" /></button>
 
               <div className="col-span-2 col-start-2 flex min-w-0 flex-wrap items-center gap-2">
 
@@ -117,9 +117,9 @@ export function SelectedAssetList({
                       setAssetDuration(item.media_asset_id, secs);
                     }}
                     aria-label={`Seconds on screen for ${filename}`}
-                    className="w-16 rounded-lg border border-zinc-200 px-2 py-1 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-16 rounded-lg border border-border px-2 py-1 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-xs text-zinc-400">วิ</span>
+                  <span className="text-xs text-muted-foreground">วิ</span>
                 </div>
               )}
 
@@ -128,7 +128,7 @@ export function SelectedAssetList({
                   value={item.transition ?? "cut"}
                   onChange={(event) => setAssetTransition(item.media_asset_id, event.target.value as "cut" | "fade")}
                   aria-label={`Transition for ${filename}`}
-                  className="shrink-0 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 outline-none focus:border-indigo-500"
+                  className="shrink-0 rounded-lg border border-border bg-card px-2 py-1 text-xs text-muted-foreground outline-none focus:border-ring"
                 >
                   <option value="cut">Cut</option>
                   <option value="fade">Fade</option>
@@ -142,7 +142,7 @@ export function SelectedAssetList({
                     onClick={() => moveAssetItem(item.media_asset_id, -1)}
                     disabled={index === 0}
                     aria-label="Move up"
-                    className="text-zinc-400 hover:text-zinc-700 disabled:opacity-30 disabled:hover:text-zinc-400"
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground"
                   >
                     <ChevronDownIcon className="h-4 w-4 rotate-180" />
                   </button>
@@ -151,7 +151,7 @@ export function SelectedAssetList({
                     onClick={() => moveAssetItem(item.media_asset_id, 1)}
                     disabled={index === assetItems.length - 1}
                     aria-label="Move down"
-                    className="text-zinc-400 hover:text-zinc-700 disabled:opacity-30 disabled:hover:text-zinc-400"
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground"
                   >
                     <ChevronDownIcon className="h-4 w-4" />
                   </button>

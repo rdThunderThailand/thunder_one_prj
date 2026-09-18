@@ -116,21 +116,21 @@ export function PublicationsListPage() {
     tab: "draft" | "active" | "inactive"
   ) => {
     if (loading) {
-      return <p className="py-6 text-center text-sm text-zinc-400">กำลังโหลด…</p>;
+      return <p className="py-6 text-center text-sm text-muted-foreground">กำลังโหลด…</p>;
     }
     if (error) {
       if (error.kind === "forbidden") {
         return <NoAccess message={error.message} />;
       }
       return (
-        <p className="py-6 text-center text-sm text-red-600 dark:text-red-400">
+        <p className="py-6 text-center text-sm text-danger">
           {error.message}
         </p>
       );
     }
     if (!rows || rows.length === 0) {
       return (
-        <p className="py-6 text-center text-sm text-zinc-400">
+        <p className="py-6 text-center text-sm text-muted-foreground">
           {tab === "draft"
             ? "ไม่มี publication ดราฟต์"
             : tab === "active"
@@ -144,7 +144,7 @@ export function PublicationsListPage() {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-400 dark:border-zinc-800">
+            <tr className="border-b border-border text-xs font-medium text-muted-foreground">
               <th className="py-2 pr-3">Name</th>
               <th className="py-2 pr-3">Status</th>
               <th className="py-2 pr-3">Type</th>
@@ -165,12 +165,12 @@ export function PublicationsListPage() {
               return (
                 <tr
                   key={item.id}
-                  className="border-t border-zinc-100 dark:border-zinc-800"
+                  className="border-t border-border"
                 >
                   <td className="py-2.5 pr-3">
                     <Link
                       href={`/media-workspace/publications/${item.id}`}
-                      className="font-medium text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400"
+                      className="font-medium text-foreground hover:text-primary"
                     >
                       {item.name}
                     </Link>
@@ -183,19 +183,19 @@ export function PublicationsListPage() {
                       {publicationDisplayStatus(item)}
                     </Badge>
                   </td>
-                  <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                  <td className="py-2.5 pr-3 text-muted-foreground">
                     {item.publication_type}
                   </td>
-                  <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                  <td className="py-2.5 pr-3 text-muted-foreground">
                     {item.priority}
                   </td>
-                  <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                  <td className="py-2.5 pr-3 text-muted-foreground">
                     {item.item_count ?? 0}
                   </td>
-                  <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                  <td className="py-2.5 pr-3 text-muted-foreground">
                     {item.created_by?.display_name ?? "—"}
                   </td>
-                  <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                  <td className="py-2.5 pr-3 text-muted-foreground">
                     {updatedDisplay}
                   </td>
                   <td className="py-2.5 text-right">
@@ -216,7 +216,7 @@ export function PublicationsListPage() {
                               variant="primary"
                               disabled={isBusy}
                               onClick={() => handleDelete(item.id)}
-                              className="bg-red-600 hover:bg-red-500 dark:bg-red-600 text-xs px-2.5 py-1"
+                              className="bg-danger hover:bg-danger text-xs px-2.5 py-1"
                             >
                               {isBusy ? "กำลังลบ…" : "ยืนยันลบ?"}
                             </Button>
@@ -234,7 +234,7 @@ export function PublicationsListPage() {
                             variant="ghost"
                             disabled={isBusy}
                             onClick={() => setConfirmingId(item.id)}
-                            className="text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 px-2.5 py-1"
+                            className="text-xs text-danger hover:bg-danger-soft px-2.5 py-1"
                           >
                             Delete
                           </Button>
@@ -247,7 +247,7 @@ export function PublicationsListPage() {
                               variant="primary"
                               disabled={isBusy}
                               onClick={() => handleCancel(item.id)}
-                              className="bg-red-600 hover:bg-red-500 dark:bg-red-600 text-xs px-2.5 py-1"
+                              className="bg-danger hover:bg-danger text-xs px-2.5 py-1"
                             >
                               {isBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
                             </Button>
@@ -265,7 +265,7 @@ export function PublicationsListPage() {
                             variant="ghost"
                             disabled={isBusy}
                             onClick={() => setConfirmingId(item.id)}
-                            className="text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 px-2.5 py-1"
+                            className="text-xs text-danger hover:bg-danger-soft px-2.5 py-1"
                           >
                             Cancel
                           </Button>
@@ -293,7 +293,7 @@ export function PublicationsListPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Publications"
         subtitle="จัดการ publication ที่บันทึกและเผยแพร่ไว้"
@@ -306,7 +306,7 @@ export function PublicationsListPage() {
 
       <Card className="p-5">
         {actionError && (
-          <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>
+          <p className="mb-3 text-sm text-danger">{actionError}</p>
         )}
         <Tabs
           items={[

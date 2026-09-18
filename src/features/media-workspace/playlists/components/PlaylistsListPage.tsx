@@ -32,7 +32,7 @@ import { ListEmpty, ListError, ListSkeleton, StatCard, SummarySkeleton } from ".
 const RAIL_LABELS = { all: "All", uncategorized: "Uncategorized", trash: "Trash" };
 const railTabClass = (active: boolean) =>
   `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${
-    active ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+    active ? "bg-muted text-muted-foreground" : "text-muted-foreground hover:text-foreground"
   }`;
 
 export function PlaylistsListPage() {
@@ -213,7 +213,7 @@ export function PlaylistsListPage() {
         : emptyCause({ totalCount: (playlists ?? []).length, hasActiveFilters: hasActiveFilters(filters) });
 
   return (
-    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-6">
+    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-4">
       <PageHeader
         title="Playlists"
         subtitle="Create and manage playlists for your campaigns and channels."
@@ -227,7 +227,7 @@ export function PlaylistsListPage() {
       {stats === null ? (
         <SummarySkeleton />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total Playlists" value={stats.total} />
           <StatCard label="Draft" value={stats.draft} />
           <StatCard label="Active" value={stats.active} />
@@ -237,7 +237,7 @@ export function PlaylistsListPage() {
 
       <Card className="flex flex-1 flex-col overflow-hidden">
         <div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
-          <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r">
+          <aside className="flex min-h-0 flex-col border-b border-border p-3 md:border-b-0 md:border-r">
             <div className="mb-2 flex shrink-0 gap-1 px-1">
               <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>
                 Folders
@@ -264,7 +264,7 @@ export function PlaylistsListPage() {
           </aside>
 
           <main className="flex min-h-0 min-w-0 flex-col p-5">
-            {refreshing && playlists !== null && <span className="mb-3 self-end text-xs text-zinc-400">กำลังรีเฟรช…</span>}
+            {refreshing && playlists !== null && <span className="mb-3 self-end text-xs text-muted-foreground">กำลังรีเฟรช…</span>}
 
             <PlaylistsFilters
               onClearAll={!inTrash && qs !== "" ? handleClearAll : undefined}
@@ -286,7 +286,7 @@ export function PlaylistsListPage() {
                       variant="secondary"
                       disabled={emptyTrashTargets.length === 0 || emptyTrashBusy}
                       onClick={() => setEmptyTrashOpen(true)}
-                      className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                      className="text-danger hover:bg-danger-soft"
                     >
                       Delete All
                     </Button>
@@ -296,25 +296,25 @@ export function PlaylistsListPage() {
             />
 
             {selectedIds.size > 0 && (
-              <div className="mb-3 flex items-center justify-between rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+              <div className="mb-3 flex items-center justify-between rounded-lg bg-primary-soft px-3 py-2 text-sm text-primary">
                 <span>{selectedIds.size} selected</span>
                 <div className="flex gap-2">
                   {inTrash ? (
                     <>
                       <Button variant="secondary" disabled={emptyTrashBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button>
-                      <Button disabled={emptyTrashBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button>
+                      <Button disabled={emptyTrashBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button>
                     </>
                   ) : (
-                    <Button disabled={emptyTrashBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("trash", [...selectedIds])}>Move to Trash</Button>
+                    <Button disabled={emptyTrashBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("trash", [...selectedIds])}>Move to Trash</Button>
                   )}
                 </div>
               </div>
             )}
 
-            {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+            {actionError && <p className="mb-3 text-sm text-danger">{actionError}</p>}
             {error && playlists !== null && (
-              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
-                <p className="text-sm text-red-500">{error.message}</p>
+              <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-3">
+                <p className="text-sm text-danger">{error.message}</p>
               </div>
             )}
 
@@ -341,7 +341,7 @@ export function PlaylistsListPage() {
           </main>
         </div>
         {!loading && rows.length > 0 && (
-          <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0">
+          <div className="shrink-0 border-t border-border px-5 py-4 [&>div]:mt-0">
             <Pagination
               page={currentPage}
               totalPages={totalPages}
@@ -388,7 +388,7 @@ export function PlaylistsListPage() {
         title="Empty Trash?"
         footer={<>
           <Button type="button" variant="secondary" disabled={emptyTrashBusy} onClick={() => setEmptyTrashOpen(false)}>Cancel</Button>
-          <Button type="button" disabled={emptyTrashBusy || emptyTrashTargets.length === 0} onClick={() => void handleEmptyTrash()} className="bg-red-600 hover:bg-red-500">
+          <Button type="button" disabled={emptyTrashBusy || emptyTrashTargets.length === 0} onClick={() => void handleEmptyTrash()} className="bg-danger hover:bg-danger">
             {emptyTrashBusy ? "กำลังลบ…" : "Empty Trash"}
           </Button>
         </>}

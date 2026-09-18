@@ -8,8 +8,8 @@ import type { EmptyCause } from "../list-empty-state";
 export function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <Card className="p-4">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
     </Card>
   );
 }
@@ -19,7 +19,7 @@ export function SummarySkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-zinc-100 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <div key={i} className="rounded-xl border border-border bg-card p-4">
           <Skeleton className="mb-2 h-4 w-24" />
           <Skeleton className="h-8 w-12" />
         </div>
@@ -57,12 +57,12 @@ export function ListEmpty({
 }) {
   return (
     <div className="py-10 text-center">
-      <p className="text-sm text-zinc-400">{EMPTY_MESSAGES[cause]}</p>
+      <p className="text-sm text-muted-foreground">{EMPTY_MESSAGES[cause]}</p>
       {cause === "no-match" && (
         <button
           type="button"
           onClick={onClearFilters}
-          className="mt-3 rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
         >
           ล้างตัวกรอง
         </button>
@@ -83,12 +83,12 @@ export function ListError({
 }) {
   return (
     <div className="py-10 text-center">
-      <p className="text-sm text-red-500">{message}</p>
+      <p className="text-sm text-danger">{message}</p>
       <button
         type="button"
         disabled={retrying}
         onClick={onRetry}
-        className="mt-3 rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
       >
         {retrying ? "กำลังลองใหม่…" : "ลองใหม่"}
       </button>
