@@ -62,56 +62,15 @@ function NavLink({ item, pathname, collapsed }: { item: NavItem; pathname: strin
   );
 }
 
+// The Figma "Side Bar Brand Block": bare mark + "Thunder One" wordmark +
+// "Media Workspace", composed into one SVG so the proportions can't drift.
 export function MediaWorkspaceBrand({ collapsed }: { collapsed: boolean }) {
-  return (
-    <>
-      <svg
-        viewBox="0 0 200 200"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-9 w-9 shrink-0"
-        aria-hidden="true"
-      >
-        <rect width="200" height="200" rx="44" fill="#010F29" />
-        <g transform="translate(40 53.4) scale(1.92)">
-          <path
-            d="M62.5277 4.82971L52.1716 43.9017H38.9355L46.4714 16.0402H39.805L49.2732 4.82971H62.5277Z"
-            fill="url(#media_sidebar_logo_gradient)"
-          />
-          <path
-            d="M33.2354 15.8467H0L2.99512 4.63965H42.7031L33.2354 15.8467Z"
-            fill="white"
-          />
-          <path
-            d="M27.4442 11.5132L19.1298 43.8647H5.89343L15.1473 8.31104L27.4442 11.5132Z"
-            fill="white"
-          />
-        </g>
-        <defs>
-          <linearGradient
-            id="media_sidebar_logo_gradient"
-            x1="57.7753"
-            y1="18.9386"
-            x2="37.0998"
-            y2="35.4597"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0.466346" stopColor="#1165B7" />
-            <stop offset="0.495192" stopColor="#0A50BA" />
-          </linearGradient>
-        </defs>
-      </svg>
-      {!collapsed && (
-        <span className="min-w-0">
-          <span className="block truncate text-[15px] font-extrabold leading-none text-foreground">
-            ThunderOne
-          </span>
-          <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Media workspace
-          </span>
-        </span>
-      )}
-    </>
+  return collapsed ? (
+    // eslint-disable-next-line @next/next/no-img-element -- brand SVG, no optimization needed
+    <img src="/brand/t1-mark.svg" alt="ThunderOne" className="h-8 w-auto" />
+  ) : (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/brand/t1-sidebar-brand-block.svg" alt="ThunderOne — Media Workspace" className="h-10 w-auto" />
   );
 }
 
@@ -124,11 +83,11 @@ export function MediaWorkspaceNav({ nav, pathname, collapsed }: { nav: NavConfig
         href={nav.overviewItem.href!}
         title={collapsed ? nav.overviewItem.label : undefined}
         aria-current={overviewActive ? "page" : undefined}
-        className={`mb-3 flex h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold hover:bg-accent ${
-          overviewActive ? "bg-primary-soft text-primary" : "text-foreground"
+        className={`mb-3 flex h-8 w-full items-center gap-3 rounded-md px-3 text-left text-xs font-medium transition-colors ${
+          overviewActive ? "bg-primary-soft text-primary" : "text-sidebar-foreground hover:bg-accent"
         } ${collapsed ? "justify-center" : ""}`}
       >
-        <span className="h-4 w-4 shrink-0">{nav.overviewItem.icon}</span>
+        <span className={`h-4 w-4 shrink-0 ${overviewActive ? "" : "text-muted-foreground"}`}>{nav.overviewItem.icon}</span>
         {!collapsed && <span>{nav.overviewItem.label}</span>}
       </Link>
 

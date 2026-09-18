@@ -16,11 +16,9 @@ import {
   LayoutDashboard,
   ListVideo,
   Megaphone,
-  Monitor,
   PlaySquare,
   Radio,
   TrendingUp,
-  Tv,
   Users,
 } from "lucide-react";
 import type { NavConfig, NavItem } from "./types";
@@ -55,8 +53,6 @@ export const mediaWorkspaceNav: NavConfig = {
       items: [
         { label: "All Channels", href: "/media-workspace/channels", icon: <Radio className={iconClass} /> },
         { label: "Channel Groups", href: "/media-workspace/channel-groups", icon: <Users className={iconClass} /> },
-        { label: "Screens", icon: <Monitor className={iconClass} /> },
-        { label: "TV", icon: <Tv className={iconClass} /> },
         { label: "PA / Audio", icon: <Megaphone className={iconClass} /> },
         { label: "Kiosks", icon: <LayoutDashboard className={iconClass} /> },
       ],
