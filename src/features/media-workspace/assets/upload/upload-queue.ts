@@ -1,5 +1,7 @@
 import { rejectUploadReason } from "../../publications/upload-limits.ts";
 import type { UploadTarget } from "../../publications/services/upload-api.ts";
+import type { ProbeVerdict } from "@/types/domain";
+import { verdictMessage } from "./verdict-message.ts";
 
 /** Structural subset of `File` — lets the pure queue logic run under `node` in the
  *  `.check.mts` without a File polyfill; a real File satisfies this. */
@@ -105,6 +107,25 @@ export function retryPlan(item: UploadItem): { shouldResume: boolean; release?: 
 export function reservationToRelease(item: UploadItem): UploadTarget | undefined {
   if (item.state === "completed") return undefined;
   return item.target;
+}
+
+export type UploadOutcome = { state: "failed"; error: string } | { state: "completed"; warning?: string };
+
+/** ADR 0071: what a resolved register call means for a queue row. A resolved call is not
+ *  automatically success — the backend already judged the file on intake:
+ *  - `failed` is a refusal; ADR 0070's verdict sentence explains why (unchanged by ADR 0071).
+ *  - `processing` means a High/HEVC upload was accepted and queued for automatic conversion —
+ *    the ADR 0070 refusal would be misleading here, so it is replaced with a plain notice.
+ *    Upload Queue does not poll; the outcome shows up later on Media Detail.
+ *  - anything else (`ready`) completed, optionally with ADR 0070's `unverified_preset` caveat. */
+export function uploadOutcome(status: string, verdict: ProbeVerdict | null | undefined): UploadOutcome {
+  if (status === "failed") {
+    return { state: "failed", error: verdictMessage(verdict) ?? "The server refused this file." };
+  }
+  if (status === "processing") {
+    return { state: "completed", warning: "กำลังแปลงไฟล์ให้เล่นได้" };
+  }
+  return { state: "completed", warning: verdictMessage(verdict) ?? undefined };
 }
 
 export function summarize(items: UploadItem[]) {
