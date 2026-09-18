@@ -22,7 +22,7 @@ export function TagsRail({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
-        <button type="button" onClick={() => onSelect(null)} className={rowClass(selected === null)}>
+        <button type="button" data-rail-item onClick={() => onSelect(null)} className={rowClass(selected === null)}>
           <Tag className="h-3.5 w-3.5 shrink-0" />
           <span className="min-w-0 flex-1 truncate">All</span>
         </button>
@@ -30,7 +30,7 @@ export function TagsRail({
           <p className="px-2 py-3 text-[10px] text-muted-foreground">No tags yet</p>
         ) : (
           tags.map((tag) => (
-            <button key={tag.id} type="button" onClick={() => onSelect(tag.id)} className={rowClass(selected === tag.id)}>
+            <button key={tag.id} type="button" data-rail-item onClick={() => onSelect(tag.id)} className={rowClass(selected === tag.id)}>
               <Tag className="h-3.5 w-3.5 shrink-0" />
               <span className="min-w-0 flex-1 truncate">{tag.name}</span>
               <span className="text-[8px] text-muted-foreground">{tag.count}</span>

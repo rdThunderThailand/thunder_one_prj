@@ -1,97 +1,54 @@
 // Presentational blocks extracted from PlaylistsListPage.tsx so that file stays
 // inside the 300-line rule. No data-fetching, no side-effects here.
 
-import { Card } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { CheckCircle2, FileEdit, ListMusic, PauseCircle } from "lucide-react";
+import { Button } from "@/components/ui/lovable/button";
+import { LibraryEmpty, LibrarySummary } from "../../content-library/LibraryChrome";
 import type { EmptyCause } from "../list-empty-state";
 
-export function StatCard({ label, value }: { label: string; value: number }) {
+export { LibraryRowsSkeleton as ListSkeleton, LibrarySummarySkeleton as SummarySkeleton } from "../../content-library/LibraryChrome";
+
+export function PlaylistsSummary({ stats }: { stats: { total: number; draft: number; active: number; inactive: number } }) {
   return (
-    <Card className="p-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
-    </Card>
+    <LibrarySummary
+      label="Playlist summary"
+      cards={[
+        { label: "Total Playlists", value: stats.total, detail: "All playlists", icon: ListMusic },
+        { label: "Draft", value: stats.draft, detail: "Not yet ready", icon: FileEdit, tone: "text-warning bg-warning-soft" },
+        { label: "Active", value: stats.active, detail: "Ready to publish", icon: CheckCircle2, tone: "text-success bg-success-soft" },
+        { label: "Inactive", value: stats.inactive, detail: "Paused", icon: PauseCircle, tone: "text-muted-foreground bg-muted" },
+      ]}
+    />
   );
 }
 
-/** Four StatCard-shaped skeleton boxes shown during the initial data load. */
-export function SummarySkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-border bg-card p-4">
-          <Skeleton className="mb-2 h-4 w-24" />
-          <Skeleton className="h-8 w-12" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Skeleton rows to fill the table area during initial load. */
-export function ListSkeleton() {
-  return (
-    <div className="space-y-2 py-2">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-10 w-full" />
-      ))}
-    </div>
-  );
-}
-
-const EMPTY_MESSAGES: Record<EmptyCause, string> = {
-  "no-playlists": "ยังไม่มี playlist — กด + Create Playlist เพื่อเริ่มต้น",
-  "no-match": "ไม่พบ playlist ที่ตรงกับตัวกรองที่เลือก",
-  "trash-empty": "ถังขยะว่าง",
-  "folder-empty": "โฟลเดอร์นี้ยังไม่มี playlist",
-  "tag-empty": "แท็กนี้ยังไม่มี playlist",
+const EMPTY_MESSAGES: Record<EmptyCause, [string, string]> = {
+  "no-playlists": ["ยังไม่มี playlist", "กด + Create Playlist เพื่อเริ่มต้น"],
+  "no-match": ["ไม่พบ playlist ที่ตรงกับตัวกรอง", "ลองปรับคำค้นหรือตัวกรอง"],
+  "trash-empty": ["ถังขยะว่าง", "playlist ที่ย้ายไปถังขยะจะแสดงที่นี่"],
+  "folder-empty": ["โฟลเดอร์นี้ยังไม่มี playlist", "เลือกโฟลเดอร์อื่นหรือย้าย playlist มาที่นี่"],
+  "tag-empty": ["แท็กนี้ยังไม่มี playlist", "เลือกแท็กอื่น"],
 };
 
 /** Empty-state message, with a Clear Filters button for the no-match cause only. */
-export function ListEmpty({
-  cause,
-  onClearFilters,
-}: {
-  cause: EmptyCause;
-  onClearFilters: () => void;
-}) {
+export function ListEmpty({ cause, onClearFilters }: { cause: EmptyCause; onClearFilters: () => void }) {
+  const [title, hint] = EMPTY_MESSAGES[cause];
   return (
-    <div className="py-10 text-center">
-      <p className="text-sm text-muted-foreground">{EMPTY_MESSAGES[cause]}</p>
-      {cause === "no-match" && (
-        <button
-          type="button"
-          onClick={onClearFilters}
-          className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
-        >
-          ล้างตัวกรอง
-        </button>
-      )}
-    </div>
+    <LibraryEmpty
+      title={title}
+      hint={hint}
+      action={cause === "no-match" ? <Button variant="outline" size="sm" onClick={onClearFilters}>ล้างตัวกรอง</Button> : undefined}
+    />
   );
 }
 
 /** Error card with a ลองใหม่ retry button, disabled while a retry is in-flight. */
-export function ListError({
-  message,
-  onRetry,
-  retrying,
-}: {
-  message: string;
-  onRetry: () => void;
-  retrying: boolean;
-}) {
+export function ListError({ message, onRetry, retrying }: { message: string; onRetry: () => void; retrying: boolean }) {
   return (
-    <div className="py-10 text-center">
-      <p className="text-sm text-danger">{message}</p>
-      <button
-        type="button"
-        disabled={retrying}
-        onClick={onRetry}
-        className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {retrying ? "กำลังลองใหม่…" : "ลองใหม่"}
-      </button>
-    </div>
+    <LibraryEmpty
+      tone="danger"
+      title={message}
+      action={<Button variant="outline" size="sm" disabled={retrying} onClick={onRetry}>{retrying ? "กำลังลองใหม่…" : "ลองใหม่"}</Button>}
+    />
   );
 }

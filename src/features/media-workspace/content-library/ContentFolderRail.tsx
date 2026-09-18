@@ -52,6 +52,7 @@ export function ContentFolderRail({ folders, selected, labels, onSelect, onRenam
           <div className="group/row flex items-center">
             <button
               type="button"
+              data-rail-item
               onClick={() => onSelect(folder.id)}
               className={cn(rowClass(selected === folder.id), "flex-1")}
               style={{ paddingLeft: `${8 + depth * 12}px` }}
@@ -92,13 +93,13 @@ export function ContentFolderRail({ folders, selected, labels, onSelect, onRenam
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
-        <button type="button" onClick={() => onSelect("all")} className={rowClass(selected === "all")}>
+        <button type="button" data-rail-item onClick={() => onSelect("all")} className={rowClass(selected === "all")}>
           <span className="w-3 shrink-0" />
           <FolderOpen className="h-3.5 w-3.5 shrink-0" />
           <span className="min-w-0 flex-1 truncate">{labels.all}</span>
           {countLabel(counts, "all")}
         </button>
-        <button type="button" onClick={() => onSelect("uncategorized")} className={rowClass(selected === "uncategorized")}>
+        <button type="button" data-rail-item onClick={() => onSelect("uncategorized")} className={rowClass(selected === "uncategorized")}>
           <span className="w-3 shrink-0" />
           <Folder className="h-3.5 w-3.5 shrink-0" />
           <span className="min-w-0 flex-1 truncate">{labels.uncategorized}</span>
@@ -106,7 +107,7 @@ export function ContentFolderRail({ folders, selected, labels, onSelect, onRenam
         </button>
         {isLoading && <div className="space-y-2 px-2 py-2" aria-hidden="true">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>}
         {render(null)}
-        <button type="button" onClick={() => onSelect("trash")} className={rowClass(selected === "trash")}>
+        <button type="button" data-rail-item onClick={() => onSelect("trash")} className={rowClass(selected === "trash")}>
           <span className="w-3 shrink-0" />
           <Trash2 className="h-3.5 w-3.5 shrink-0" />
           <span className="min-w-0 flex-1 truncate">{labels.trash}</span>

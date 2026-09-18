@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
+import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { EditIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";
@@ -66,10 +67,10 @@ export function PlaylistsTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-left text-[10px]">
         <thead>
-          <tr className="border-b border-border text-xs font-medium text-muted-foreground">
-            <th className="w-10 py-2 pl-1"><input type="checkbox" aria-label="Select all playlists on this page" checked={isAllSelected} onChange={(event) => onSelectionChange(event.target.checked ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
+          <tr className="border-b border-border text-[9px] font-semibold text-muted-foreground">
+            <th className="w-8 py-2 pl-2"><Checkbox aria-label="Select all playlists on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
             <SortHeader label="Playlist Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Duration" sortKey="duration" sort={sort} onSortChange={onSortChange} className="py-2" />
@@ -88,7 +89,7 @@ export function PlaylistsTable({
                 key={playlist.id}
                 className="border-b border-border last:border-0 hover:bg-muted"
               >
-                <td className="py-3 pl-1"><input type="checkbox" aria-label={`Select ${playlist.name}`} checked={selectedIds.has(playlist.id)} onChange={(event) => { const next = new Set(selectedIds); if (event.target.checked) next.add(playlist.id); else next.delete(playlist.id); onSelectionChange(next); }} /></td>
+                <td className="py-3 pl-2"><Checkbox aria-label={`Select ${playlist.name}`} checked={selectedIds.has(playlist.id)} onCheckedChange={(value) => { const next = new Set(selectedIds); if (value === true) next.add(playlist.id); else next.delete(playlist.id); onSelectionChange(next); }} /></td>
                 <td className="py-3">
                   <div className="flex items-center gap-3">
                     <MediaThumb
@@ -97,11 +98,11 @@ export function PlaylistsTable({
                       className="h-10 w-14"
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">
+                      <p className="truncate text-[10px] font-semibold text-foreground">
                         {playlist.name}
                       </p>
                       {playlist.created_by?.display_name && (
-                        <p className="truncate text-xs text-muted-foreground">
+                        <p className="truncate text-[8px] text-muted-foreground">
                           By {playlist.created_by.display_name}
                         </p>
                       )}
@@ -117,13 +118,13 @@ export function PlaylistsTable({
                     </div>
                   </div>
                 </td>
-                <td className="py-3 text-sm text-muted-foreground">
+                <td className="py-3 text-[10px] text-muted-foreground">
                   {(() => {
                     const type = playlistContentType(playlist);
                     return type ? TYPE_LABELS[type] : "—";
                   })()}
                 </td>
-                <td className="py-3 text-sm text-muted-foreground">
+                <td className="py-3 text-[10px] text-muted-foreground">
                   {playlist.total_duration_seconds == null
                     ? "—"
                     : formatDuration(playlist.total_duration_seconds)}
@@ -133,7 +134,7 @@ export function PlaylistsTable({
                     {badge.label}
                   </Badge>
                 </td>
-                <td className="py-3 text-sm text-muted-foreground">
+                <td className="py-3 text-[10px] text-muted-foreground">
                   {formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}
                 </td>
                 <td className="py-3 pr-1 text-right">
@@ -262,7 +263,7 @@ function RowActions({
                 Delete permanently
               </button>
             ) : (
-              <p className="px-3 py-1.5 text-xs text-muted-foreground">
+              <p className="px-3 py-1.5 text-[10px] text-muted-foreground">
                 Can&rsquo;t delete permanently — this playlist has been published.
               </p>
             )}

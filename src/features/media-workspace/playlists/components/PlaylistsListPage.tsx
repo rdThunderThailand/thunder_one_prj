@@ -4,15 +4,17 @@ import { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Plus, Trash2, Undo2 } from "lucide-react";
+import { Button as LegacyButton } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { Pagination } from "@/components/ui/Pagination";
+import { Button } from "@/components/ui/lovable/button";
+import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { LibrarySelectionBar, LibraryShell } from "../../content-library/LibraryShell";
 import { classifyApiError } from "@/lib/api/api-error";
-import { permanentlyDeletePlaylist, restorePlaylist } from "@/lib/api/media-api";
+import { restorePlaylist } from "@/lib/api/media-api";
 import { FeatureFolderRail } from "../../content-library/FeatureFolderRail";
-import { deletePlaylist, duplicatePlaylist, upsertPlaylist } from "../services/playlists-api";
+import { duplicatePlaylist, upsertPlaylist } from "../services/playlists-api";
 import { copyName, filterPlaylists, paginate, sortPlaylists, summarize } from "../list-filtering";
 import { filterByCollection, folderCounts } from "../folder-filtering";
 import { filterByTag, tagCounts } from "../tag-filtering";
@@ -20,6 +22,7 @@ import { readListState, writeListState, DEFAULT_STATE, type Collection } from ".
 import type { Sort, SortKey } from "../list-filtering";
 import type { PlaylistListItem } from "../types";
 import { usePlaylistsListData } from "../use-playlists-list-data";
+import { useTrashBatch } from "../use-trash-batch";
 import { PlaylistsFilters, type FilterState } from "./PlaylistsFilters";
 import { PlaylistsTable, type RowAction } from "./PlaylistsTable";
 import { PlaylistsListDialogs, type PlaylistDialogAction } from "./PlaylistsListDialogs";
@@ -27,13 +30,10 @@ import { PlaylistTagsDialog } from "./PlaylistTagsDialog";
 import { CreatePlaylistDialog } from "./CreatePlaylistDialog";
 import { TagsRail } from "../../content-library/TagsRail";
 import { emptyCause, hasActiveFilters } from "../list-empty-state";
-import { ListEmpty, ListError, ListSkeleton, StatCard, SummarySkeleton } from "./PlaylistsListStates";
+import { ListEmpty, ListError, ListSkeleton, PlaylistsSummary, SummarySkeleton } from "./PlaylistsListStates";
 
-const RAIL_LABELS = { all: "All", uncategorized: "Uncategorized", trash: "Trash" };
-const railTabClass = (active: boolean) =>
-  `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${
-    active ? "bg-muted text-muted-foreground" : "text-muted-foreground hover:text-foreground"
-  }`;
+const RAIL_LABELS = { all: "All Playlists", uncategorized: "Uncategorized", trash: "Trash" };
+const PER_PAGE_OPTIONS = [10, 25, 50];
 
 export function PlaylistsListPage() {
   const router = useRouter();
@@ -42,7 +42,6 @@ export function PlaylistsListPage() {
   const [initial] = useState(() => readListState(new URLSearchParams(searchParams.toString())));
   const [collection, setCollection] = useState<Collection>(initial.collection);
   const [tagId, setTagId] = useState<string | null>(initial.tagId);
-  const [railTab, setRailTab] = useState<"folders" | "tags">(initial.tagId ? "tags" : "folders");
   const [filters, setFilters] = useState<FilterState>(initial.filters);
   const [sort, setSort] = useState<Sort>(initial.sort);
   const [page, setPage] = useState(initial.page);
@@ -52,18 +51,18 @@ export function PlaylistsListPage() {
   const [dialog, setDialog] = useState<{ action: PlaylistDialogAction; target: PlaylistListItem } | null>(null);
   const [tagsTarget, setTagsTarget] = useState<PlaylistListItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
-  const [emptyTrashBusy, setEmptyTrashBusy] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const inTrash = collection === "trash";
   const { playlists, trashed, folders, error, refreshing, reload } = usePlaylistsListData(inTrash);
+  const {
+    selectedIds, setSelectedIds, emptyTrashOpen, setEmptyTrashOpen, emptyTrashBusy,
+    emptyTrashTargets, emptyTrashLocked, runBatch, handleEmptyTrash,
+  } = useTrashBatch({ inTrash, trashed, reload, onError: setActionError });
 
   const restore = useCallback(() => {
     const s = readListState(new URLSearchParams(window.location.search));
     setCollection(s.collection);
     setTagId(s.tagId);
-    setRailTab(s.tagId ? "tags" : "folders");
     setFilters(s.filters);
     setSort(s.sort);
     setPage(s.page);
@@ -97,12 +96,6 @@ export function PlaylistsListPage() {
   );
   const sorted = useMemo(() => sortPlaylists(filtered, sort), [filtered, sort]);
   const { rows, page: currentPage, totalPages } = paginate(sorted, page, perPage);
-  const emptyTrashTargets = useMemo(
-    () => (inTrash ? (trashed ?? []).filter((playlist) => (playlist.publication_count ?? 0) === 0) : []),
-    [inTrash, trashed]
-  );
-  const emptyTrashLocked = inTrash ? (trashed?.length ?? 0) - emptyTrashTargets.length : 0;
-
   // Selecting a folder (or Trash) clears any tag selection, and vice versa — the rail's
   // two tabs are mutually exclusive (#41 AC).
   const changeCollection = (next: Collection) => {
@@ -136,44 +129,6 @@ export function PlaylistsListPage() {
     } finally {
       setBusyId(null);
     }
-  };
-
-  const handleEmptyTrash = async () => {
-    setEmptyTrashBusy(true);
-    setActionError(null);
-    try {
-      const results = await Promise.allSettled(emptyTrashTargets.map((playlist) => permanentlyDeletePlaylist(playlist.id)));
-      const deleted = results.filter((result) => result.status === "fulfilled" && result.value.deleted).length;
-      const skipped = emptyTrashLocked + results.filter((result) => result.status === "fulfilled" && !result.value.deleted).length;
-      const failed = results.filter((result) => result.status === "rejected").length;
-      await reload();
-      setEmptyTrashOpen(false);
-      if (skipped || failed) {
-        setActionError(`ลบถาวรแล้ว ${deleted} playlist; ข้าม ${skipped} playlist ที่ถูกล็อก${failed ? `; ล้มเหลว ${failed} playlist` : ""}`);
-      }
-    } catch (err) {
-      setActionError(classifyApiError(err, "ล้างถังขยะไม่สำเร็จ").message);
-    } finally {
-      setEmptyTrashBusy(false);
-    }
-  };
-
-  const runBatch = async (mode: "trash" | "restore" | "delete", ids: string[]) => {
-    if (!ids.length) return;
-    const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
-    if (!window.confirm(`${verb} ${ids.length} playlist${ids.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
-    setEmptyTrashBusy(true);
-    const action = mode === "trash" ? deletePlaylist : mode === "restore" ? restorePlaylist : permanentlyDeletePlaylist;
-    const results = await Promise.allSettled(ids.map((id) => action(id)));
-    const failed = results.filter(
-      (result) =>
-        result.status === "rejected" ||
-        (result.status === "fulfilled" && typeof result.value === "object" && result.value !== null && "deleted" in result.value && !result.value.deleted),
-    ).length;
-    setSelectedIds(new Set());
-    if (failed) setActionError(`${failed} playlist${failed === 1 ? "" : "s"} could not be updated.`);
-    await reload();
-    setEmptyTrashBusy(false);
   };
 
   const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
@@ -212,150 +167,87 @@ export function PlaylistsListPage() {
         ? "folder-empty"
         : emptyCause({ totalCount: (playlists ?? []).length, hasActiveFilters: hasActiveFilters(filters) });
 
+  const collectionName = inTrash ? "Trash" : tagId ? tags.find((tag) => tag.id === tagId)?.name ?? "Tag" : collection === "uncategorized" ? "Uncategorized" : collection === "all" ? "All Playlists" : folders.find((folder) => folder.id === collection)?.name ?? "Folder";
+
   return (
-    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Playlists"
         subtitle="Create and manage playlists for your campaigns and channels."
-        actions={
-          <Button type="button" onClick={() => setCreateOpen(true)}>
-            + Create Playlist
-          </Button>
-        }
+        titleInTopbar
+        actions={<Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="h-3.5 w-3.5" />Create Playlist</Button>}
       />
 
       {stats === null ? (
-        <SummarySkeleton />
+        <SummarySkeleton count={4} />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Total Playlists" value={stats.total} />
-          <StatCard label="Draft" value={stats.draft} />
-          <StatCard label="Active" value={stats.active} />
-          <StatCard label="Inactive" value={stats.inactive} />
-        </div>
+        <PlaylistsSummary stats={stats} />
       )}
 
-      <Card className="flex flex-1 flex-col overflow-hidden">
-        <div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
-          <aside className="flex min-h-0 flex-col border-b border-border p-3 md:border-b-0 md:border-r">
-            <div className="mb-2 flex shrink-0 gap-1 px-1">
-              <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>
-                Folders
-              </button>
-              <button type="button" className={railTabClass(railTab === "tags")} onClick={() => setRailTab("tags")}>
-                Tags
-              </button>
-            </div>
-            {railTab === "folders" ? (
-              <FeatureFolderRail
-                scope="playlist"
-                labels={RAIL_LABELS}
-                folders={folders}
-                selected={collection}
-                counts={counts}
-                isLoading={playlists === null && folders.length === 0}
-                onSelect={changeCollection}
-                onRefresh={reload}
-                onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)}
-              />
+      <LibraryShell
+        toolbar={
+          <>
+            <PlaylistsFilters onClearAll={!inTrash && qs !== "" ? handleClearAll : undefined} value={filters} onChange={(next) => { setFilters(next); setPage(1); }} />
+            {refreshing && playlists !== null && <span className="ml-auto text-[10px] text-muted-foreground">กำลังรีเฟรช…</span>}
+          </>
+        }
+        selection={selectedIds.size > 0 && (
+          <LibrarySelectionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+            {inTrash ? (
+              <>
+                <Button variant="outline" size="sm" disabled={emptyTrashBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={emptyTrashBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Delete forever</Button>
+              </>
             ) : (
-              <TagsRail tags={tags} selected={tagId} onSelect={changeTag} />
+              <Button variant="outline" size="sm" className="text-destructive" disabled={emptyTrashBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
             )}
-          </aside>
-
-          <main className="flex min-h-0 min-w-0 flex-col p-5">
-            {refreshing && playlists !== null && <span className="mb-3 self-end text-xs text-muted-foreground">กำลังรีเฟรช…</span>}
-
-            <PlaylistsFilters
-              onClearAll={!inTrash && qs !== "" ? handleClearAll : undefined}
-              value={filters}
-              onChange={(next) => { setFilters(next); setPage(1); }}
-              tailAction={
-                inTrash ? (
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={(trashed?.length ?? 0) === 0 || emptyTrashBusy}
-                      onClick={() => void runBatch("restore", (trashed ?? []).map((playlist) => playlist.id))}
-                    >
-                      Recover All
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={emptyTrashTargets.length === 0 || emptyTrashBusy}
-                      onClick={() => setEmptyTrashOpen(true)}
-                      className="text-danger hover:bg-danger-soft"
-                    >
-                      Delete All
-                    </Button>
-                  </div>
-                ) : undefined
-              }
+          </LibrarySelectionBar>
+        )}
+        rail={{
+          defaultTab: tagId ? "tags" : "folders",
+          folders: (
+            <FeatureFolderRail
+              scope="playlist"
+              labels={RAIL_LABELS}
+              folders={folders}
+              selected={collection}
+              counts={counts}
+              isLoading={playlists === null && folders.length === 0}
+              onSelect={changeCollection}
+              onRefresh={reload}
+              onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)}
             />
-
-            {selectedIds.size > 0 && (
-              <div className="mb-3 flex items-center justify-between rounded-lg bg-primary-soft px-3 py-2 text-sm text-primary">
-                <span>{selectedIds.size} selected</span>
-                <div className="flex gap-2">
-                  {inTrash ? (
-                    <>
-                      <Button variant="secondary" disabled={emptyTrashBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button>
-                      <Button disabled={emptyTrashBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button>
-                    </>
-                  ) : (
-                    <Button disabled={emptyTrashBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("trash", [...selectedIds])}>Move to Trash</Button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {actionError && <p className="mb-3 text-sm text-danger">{actionError}</p>}
-            {error && playlists !== null && (
-              <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-3">
-                <p className="text-sm text-danger">{error.message}</p>
-              </div>
-            )}
-
-            <div className="min-h-0 flex-1 overflow-auto">
-              {loading && !error ? (
-                <ListSkeleton />
-              ) : playlists === null && error ? (
-                <ListError message={error.message} onRetry={reload} retrying={refreshing} />
-              ) : rows.length === 0 ? (
-                <ListEmpty cause={cause} onClearFilters={handleClearAll} />
-              ) : (
-                <PlaylistsTable
-                  rows={rows}
-                  busyId={busyId}
-                  sort={sort}
-                  inTrash={inTrash}
-                  onAction={handleAction}
-                  onSortChange={handleSortChange}
-                  selectedIds={selectedIds}
-                  onSelectionChange={setSelectedIds}
-                />
-              )}
-            </div>
-          </main>
-        </div>
-        {!loading && rows.length > 0 && (
-          <div className="shrink-0 border-t border-border px-5 py-4 [&>div]:mt-0">
-            <Pagination
-              page={currentPage}
-              totalPages={totalPages}
-              perPage={perPage}
-              totalItems={sorted.length}
-              rangeStart={(currentPage - 1) * perPage + 1}
-              rangeEnd={Math.min(currentPage * perPage, sorted.length)}
-              itemLabel="playlists"
-              onPageChange={setPage}
-              onPerPageChange={(next) => { setPerPage(next); setPage(1); }}
-            />
+          ),
+          tags: <TagsRail tags={tags} selected={tagId} onSelect={changeTag} />,
+        }}
+        title={collectionName}
+        meta={loading ? "…" : `${sorted.length.toLocaleString()} playlists`}
+        headerActions={inTrash && (
+          <>
+            <Button variant="outline" size="sm" disabled={(trashed?.length ?? 0) === 0 || emptyTrashBusy} onClick={() => void runBatch("restore", (trashed ?? []).map((playlist) => playlist.id))}><Undo2 className="h-3.5 w-3.5" />Recover All</Button>
+            <Button variant="outline" size="sm" className="text-destructive" disabled={emptyTrashTargets.length === 0 || emptyTrashBusy} onClick={() => setEmptyTrashOpen(true)}><Trash2 className="h-3.5 w-3.5" />Delete All</Button>
+          </>
+        )}
+        footer={!loading && rows.length > 0 && (
+          <LibraryPagination page={currentPage} totalPages={totalPages} total={sorted.length} pageSize={perPage} onPage={setPage} itemLabel="playlists" perPageOptions={PER_PAGE_OPTIONS} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
+        )}
+      >
+        {actionError && <p className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {error && playlists !== null && (
+          <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-3">
+            <p className="text-[10px] text-danger">{error.message}</p>
           </div>
         )}
-      </Card>
+        {loading && !error ? (
+          <ListSkeleton />
+        ) : playlists === null && error ? (
+          <ListError message={error.message} onRetry={reload} retrying={refreshing} />
+        ) : rows.length === 0 ? (
+          <ListEmpty cause={cause} onClearFilters={handleClearAll} />
+        ) : (
+          <PlaylistsTable rows={rows} busyId={busyId} sort={sort} inTrash={inTrash} onAction={handleAction} onSortChange={handleSortChange} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
+        )}
+      </LibraryShell>
 
       <PlaylistsListDialogs
         key={dialog ? `${dialog.action}:${dialog.target.id}` : "none"}
@@ -387,10 +279,10 @@ export function PlaylistsListPage() {
         onClose={() => { if (!emptyTrashBusy) setEmptyTrashOpen(false); }}
         title="Empty Trash?"
         footer={<>
-          <Button type="button" variant="secondary" disabled={emptyTrashBusy} onClick={() => setEmptyTrashOpen(false)}>Cancel</Button>
-          <Button type="button" disabled={emptyTrashBusy || emptyTrashTargets.length === 0} onClick={() => void handleEmptyTrash()} className="bg-danger hover:bg-danger">
+          <LegacyButton type="button" variant="secondary" disabled={emptyTrashBusy} onClick={() => setEmptyTrashOpen(false)}>Cancel</LegacyButton>
+          <LegacyButton type="button" disabled={emptyTrashBusy || emptyTrashTargets.length === 0} onClick={() => void handleEmptyTrash()} className="bg-danger hover:bg-danger">
             {emptyTrashBusy ? "กำลังลบ…" : "Empty Trash"}
-          </Button>
+          </LegacyButton>
         </>}
       >
         <p>Permanently delete {emptyTrashTargets.length} playlist{emptyTrashTargets.length === 1 ? "" : "s"} from Trash? This cannot be undone.</p>

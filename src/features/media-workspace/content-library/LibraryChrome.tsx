@@ -1,34 +1,34 @@
 "use client";
 
-import type { ComponentType } from "react";
-import { Archive, ChevronLeft, ChevronRight, FileAudio, FileImage, FileText, FileVideo } from "lucide-react";
+import type { ComponentType, ReactNode } from "react";
+import { ChevronLeft, ChevronRight, FileImage } from "lucide-react";
 import { Button } from "@/components/ui/lovable/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { cn } from "@/lib/utils";
 
-type Icon = ComponentType<{ className?: string; strokeWidth?: number }>;
+export type SummaryCard = {
+  label: string;
+  value: string | number;
+  detail?: string;
+  icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+  /** Icon tile colours, e.g. "text-primary bg-primary-soft". */
+  tone?: string;
+  disabled?: boolean;
+};
 
-/** Lovable `MediaSummary` on the counts this page really has — audio/documents
- *  are not asset kinds here yet, so those two cards stay dimmed ("Coming soon"). */
-export function LibrarySummary({ total, images, videos }: { total: number; images: number; videos: number }) {
-  const pct = (n: number) => (total ? `${((n / total) * 100).toFixed(1)}% of total` : "—");
-  const cards: Array<{ label: string; value: string; detail: string; icon: Icon; tone: string; disabled?: boolean }> = [
-    { label: "Total Files", value: total.toLocaleString(), detail: "All media", icon: Archive, tone: "text-primary bg-primary-soft" },
-    { label: "Images", value: images.toLocaleString(), detail: pct(images), icon: FileImage, tone: "text-primary bg-primary-soft" },
-    { label: "Videos", value: videos.toLocaleString(), detail: pct(videos), icon: FileVideo, tone: "text-primary bg-primary-soft" },
-    { label: "Audio", value: "—", detail: "Coming soon", icon: FileAudio, tone: "text-success bg-success-soft", disabled: true },
-    { label: "Documents", value: "—", detail: "Coming soon", icon: FileText, tone: "text-warning bg-warning-soft", disabled: true },
-  ];
+/** Lovable `MediaSummary` cards. */
+export function LibrarySummary({ cards, label }: { cards: SummaryCard[]; label: string }) {
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Media summary">
+    <section className={cn("grid gap-3 sm:grid-cols-2", cards.length >= 5 ? "xl:grid-cols-5" : "lg:grid-cols-4")} aria-label={label}>
       {cards.map((card) => (
         <article key={card.label} className={cn("flex min-h-22 items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-panel", card.disabled && "opacity-55")}>
-          <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", card.tone)}>
+          <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", card.tone ?? "text-primary bg-primary-soft")}>
             <card.icon className="h-4 w-4" strokeWidth={1.8} />
           </span>
           <div>
             <p className="text-[10px] font-semibold text-muted-foreground">{card.label}</p>
-            <strong className="mt-1 block text-lg leading-none">{card.value}</strong>
-            <span className="mt-1.5 block text-[9px] text-muted-foreground">{card.detail}</span>
+            <strong className="mt-1 block text-lg leading-none">{typeof card.value === "number" ? card.value.toLocaleString() : card.value}</strong>
+            {card.detail && <span className="mt-1.5 block text-[9px] text-muted-foreground">{card.detail}</span>}
           </div>
         </article>
       ))}
@@ -36,10 +36,10 @@ export function LibrarySummary({ total, images, videos }: { total: number; image
   );
 }
 
-export function LibrarySummarySkeleton() {
+export function LibrarySummarySkeleton({ count }: { count: number }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-hidden="true">
-      {Array.from({ length: 5 }, (_, i) => (
+    <div className={cn("grid gap-3 sm:grid-cols-2", count >= 5 ? "xl:grid-cols-5" : "lg:grid-cols-4")} aria-hidden="true">
+      {Array.from({ length: count }, (_, i) => (
         <div key={i} className="flex min-h-22 items-center gap-3 rounded-xl border border-border bg-card p-4">
           <div className="h-9 w-9 animate-pulse rounded-lg bg-muted" />
           <div className="flex-1 space-y-2">
@@ -54,7 +54,7 @@ export function LibrarySummarySkeleton() {
 
 export function LibraryGridSkeleton() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" aria-label="Loading media">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" aria-label="Loading">
       {Array.from({ length: 12 }, (_, i) => (
         <div key={i} className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="aspect-video animate-pulse bg-muted" />
@@ -68,31 +68,38 @@ export function LibraryGridSkeleton() {
   );
 }
 
-export function LibraryEmpty({ type }: { type: "library" | "folder" | "search" | "trash" }) {
-  const [title, hint] =
-    type === "library" ? ["No media yet", "Upload media to start building your library."]
-    : type === "folder" ? ["This folder is empty", "Choose another folder or move media here."]
-    : type === "trash" ? ["Trash is empty", "Items you move to Trash will appear here."]
-    : ["No media found", "Try adjusting your search or filters."];
+export function LibraryRowsSkeleton() {
+  return (
+    <div className="space-y-2 py-2" aria-label="Loading">
+      {Array.from({ length: 6 }, (_, i) => <div key={i} className="h-10 w-full animate-pulse rounded-md bg-muted" />)}
+    </div>
+  );
+}
+
+/** Lovable `EmptyMedia`. */
+export function LibraryEmpty({ title, hint, action, tone = "muted" }: { title: string; hint?: string; action?: ReactNode; tone?: "muted" | "danger" }) {
   return (
     <div className="grid min-h-80 place-items-center text-center">
       <div>
-        <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-muted text-muted-foreground"><FileImage className="h-5 w-5" /></span>
+        <span className={cn("mx-auto grid h-10 w-10 place-items-center rounded-full", tone === "danger" ? "bg-danger-soft text-danger" : "bg-muted text-muted-foreground")}><FileImage className="h-5 w-5" /></span>
         <h3 className="mt-3 text-sm font-bold">{title}</h3>
-        <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>
+        {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
+        {action && <div className="mt-3">{action}</div>}
       </div>
     </div>
   );
 }
 
-/** Lovable `MediaPagination` with a real page window; the per-page select is not ported
- *  (page size is fixed here). */
-export function LibraryPagination({ page, totalPages, total, pageSize, onPage }: {
+/** Lovable `MediaPagination` with a real page window and optional per-page select. */
+export function LibraryPagination({ page, totalPages, total, pageSize, onPage, itemLabel = "items", perPageOptions, onPageSize }: {
   page: number;
   totalPages: number;
   total: number;
   pageSize: number;
   onPage: (page: number) => void;
+  itemLabel?: string;
+  perPageOptions?: number[];
+  onPageSize?: (size: number) => void;
 }) {
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
@@ -100,7 +107,7 @@ export function LibraryPagination({ page, totalPages, total, pageSize, onPage }:
   const pages = Array.from({ length: Math.min(5, totalPages) }, (_, i) => start + i);
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-[9px] text-muted-foreground">
-      <span>Showing {from} to {to} of {total.toLocaleString()} items</span>
+      <span>Showing {from} to {to} of {total.toLocaleString()} {itemLabel}</span>
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label="Previous page"><ChevronLeft className="h-3.5 w-3.5" /></Button>
         {pages.map((n) => (
@@ -113,6 +120,12 @@ export function LibraryPagination({ page, totalPages, total, pageSize, onPage }:
           </>
         )}
         <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages} onClick={() => onPage(page + 1)} aria-label="Next page"><ChevronRight className="h-3.5 w-3.5" /></Button>
+        {perPageOptions && onPageSize && (
+          <Select value={String(pageSize)} onValueChange={(value) => onPageSize(Number(value))}>
+            <SelectTrigger className="ml-2 h-8 w-23 text-[9px]" aria-label="Items per page"><SelectValue /></SelectTrigger>
+            <SelectContent>{perPageOptions.map((n) => <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>)}</SelectContent>
+          </Select>
+        )}
       </div>
     </div>
   );

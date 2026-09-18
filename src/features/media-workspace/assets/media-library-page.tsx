@@ -2,12 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Folder, FolderInput, Trash2, Undo2, Upload, X } from "lucide-react";
+import { Archive, FileAudio, FileImage, FileText, FileVideo, Folder, FolderInput, Trash2, Undo2, Upload } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/lovable/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
 import {
   fetchContentFolders,
   fetchMediaAssets,
@@ -25,14 +23,18 @@ import { folderCounts } from "../playlists/folder-filtering";
 import type { FolderCollection } from "../content-library/ContentFolderRail";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
 import { AssetCard } from "./components/AssetCard";
-import { LibraryEmpty, LibraryGridSkeleton, LibraryPagination, LibrarySummary, LibrarySummarySkeleton } from "./components/LibraryChrome";
+import { LibraryEmpty, LibraryGridSkeleton, LibraryPagination, LibrarySummary, LibrarySummarySkeleton } from "../content-library/LibraryChrome";
+import { LibrarySelectionBar, LibraryShell } from "../content-library/LibraryShell";
 import { LibraryToolbar, type AssetKindFilter } from "./components/LibraryToolbar";
 
 type Collection = FolderCollection;
 const PAGE_SIZE = 12;
-// Lovable `MediaFolderSidebar` tab: underline, no pill.
-const railTabClass =
-  "h-10 flex-1 rounded-none text-[10px] shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none";
+const EMPTY_COPY = {
+  library: ["No media yet", "Upload media to start building your library."],
+  folder: ["This folder is empty", "Choose another folder or move media here."],
+  trash: ["Trash is empty", "Items you move to Trash will appear here."],
+  search: ["No media found", "Try adjusting your search or filters."],
+} as const;
 
 export function MediaLibraryPage() {
   const [collection, setCollection] = useState<Collection>("all");
@@ -47,7 +49,6 @@ export function MediaLibraryPage() {
   const [tagId, setTagId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
-  const [railOpen, setRailOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   // Summary cards describe the library, not the Trash — keep the last non-trash fetch.
   const [libraryAssets, setLibraryAssets] = useState<MediaAsset[]>([]);
@@ -99,8 +100,8 @@ export function MediaLibraryPage() {
     return () => window.clearTimeout(timer);
   }, [refresh]);
 
-  const selectCollection = (next: Collection) => { setCollection(next); setTagId(null); setSelectedIds(new Set()); setPage(1); setRailOpen(false); };
-  const selectTag = (next: string | null) => { setTagId(next); setCollection("all"); setPage(1); setRailOpen(false); };
+  const selectCollection = (next: Collection) => { setCollection(next); setTagId(null); setSelectedIds(new Set()); setPage(1); };
+  const selectTag = (next: string | null) => { setTagId(next); setCollection("all"); setPage(1); };
   const handleSearch = (value: string) => { setSearch(value); setPage(1); };
   const handleKind = (value: AssetKindFilter) => { setKind(value); setPage(1); };
   const toggleSelected = (id: string, checked: boolean) => setSelectedIds((current) => { const next = new Set(current); if (checked) next.add(id); else next.delete(id); return next; });
@@ -129,38 +130,28 @@ export function MediaLibraryPage() {
 
   const collectionName = isTrash ? "Trash" : folderId ? folders.find((folder) => folder.id === folderId)?.name ?? "Folder" : collection === "uncategorized" ? "Uncategorized" : "All Media";
   const emptyType = search || kind || tagId ? "search" : isTrash ? "trash" : folderId || collection === "uncategorized" ? "folder" : "library";
-  // The aside instance is the only one the header button controls: below `xl` the aside is
-  // display:none, so a <dialog> inside it could not open — the drawer keeps its own footer button.
-  const rail = (inAside: boolean) => (
-    <Tabs defaultValue="folders" className="flex min-h-0 flex-1 flex-col">
-      <TabsList className="h-10 w-full shrink-0 rounded-none border-b border-border bg-transparent p-0">
-        <TabsTrigger value="folders" className={railTabClass}>Folders</TabsTrigger>
-        <TabsTrigger value="tags" className={railTabClass}>Tags</TabsTrigger>
-      </TabsList>
-      <TabsContent value="folders" className="m-0 flex min-h-0 flex-1 flex-col p-2 data-[state=inactive]:hidden">
-        <FeatureFolderRail
-          scope="asset"
-          folders={folders}
-          selected={collection}
-          labels={{ all: "All Media", uncategorized: "Uncategorized", trash: "Trash" }}
-          counts={isTrash ? undefined : counts}
-          createOpen={inAside ? createFolderOpen : undefined}
-          onCreateOpenChange={inAside ? setCreateFolderOpen : undefined}
-          onSelect={selectCollection}
-          onRefresh={() => void refresh()}
-          onError={(reason) => setError(reason instanceof Error ? reason.message : "Unable to update folder")}
-          deleteFolderItems={{
-            loadIds: async (targetFolderId) => (await fetchMediaAssets({ folderId: targetFolderId })).map((asset) => asset.id),
-            move: moveMediaAsset,
-          }}
-          isLoading={loading && folders.length === 0}
-        />
-      </TabsContent>
-      <TabsContent value="tags" className="m-0 flex min-h-0 flex-1 flex-col p-2 data-[state=inactive]:hidden">
-        <TagsRail tags={tags} selected={tagId} onSelect={selectTag} />
-      </TabsContent>
-    </Tabs>
+  // Only the aside instance is controlled by the header button (see LibraryRail.folders).
+  const folderRail = (inAside: boolean) => (
+    <FeatureFolderRail
+      scope="asset"
+      folders={folders}
+      selected={collection}
+      labels={{ all: "All Media", uncategorized: "Uncategorized", trash: "Trash" }}
+      counts={isTrash ? undefined : counts}
+      createOpen={inAside ? createFolderOpen : undefined}
+      onCreateOpenChange={inAside ? setCreateFolderOpen : undefined}
+      onSelect={selectCollection}
+      onRefresh={() => void refresh()}
+      onError={(reason) => setError(reason instanceof Error ? reason.message : "Unable to update folder")}
+      deleteFolderItems={{
+        loadIds: async (targetFolderId) => (await fetchMediaAssets({ folderId: targetFolderId })).map((asset) => asset.id),
+        move: moveMediaAsset,
+      }}
+      isLoading={loading && folders.length === 0}
+    />
   );
+  const stats = { total: libraryAssets.length, images: libraryAssets.filter((asset) => asset.kind === "image").length, videos: libraryAssets.filter((asset) => asset.kind === "video").length };
+  const pct = (n: number) => (stats.total ? `${((n / stats.total) * 100).toFixed(1)}% of total` : "—");
 
   return (
     <div className="flex flex-col gap-4">
@@ -176,16 +167,23 @@ export function MediaLibraryPage() {
         }
       />
 
-      {loading && assets.length === 0 ? <LibrarySummarySkeleton /> : (
-        <LibrarySummary total={libraryAssets.length} images={libraryAssets.filter((asset) => asset.kind === "image").length} videos={libraryAssets.filter((asset) => asset.kind === "video").length} />
+      {loading && assets.length === 0 ? <LibrarySummarySkeleton count={5} /> : (
+        <LibrarySummary
+          label="Media summary"
+          cards={[
+            { label: "Total Files", value: stats.total, detail: "All media", icon: Archive },
+            { label: "Images", value: stats.images, detail: pct(stats.images), icon: FileImage },
+            { label: "Videos", value: stats.videos, detail: pct(stats.videos), icon: FileVideo },
+            { label: "Audio", value: "—", detail: "Coming soon", icon: FileAudio, tone: "text-success bg-success-soft", disabled: true },
+            { label: "Documents", value: "—", detail: "Coming soon", icon: FileText, tone: "text-warning bg-warning-soft", disabled: true },
+          ]}
+        />
       )}
 
-      <section className="overflow-hidden rounded-xl border border-border bg-card shadow-panel">
-        <LibraryToolbar search={search} onSearch={handleSearch} kind={kind} onKind={handleKind} isGrid={isGrid} onIsGrid={setIsGrid} onFolders={() => setRailOpen(true)} />
-
-        {selectedIds.size > 0 && (
-          <div className="flex flex-wrap items-center gap-2 border-b border-primary/20 bg-primary-soft px-3 py-2">
-            <strong className="mr-2 text-[10px] text-primary">{selectedIds.size} selected</strong>
+      <LibraryShell
+        toolbar={<LibraryToolbar search={search} onSearch={handleSearch} kind={kind} onKind={handleKind} isGrid={isGrid} onIsGrid={setIsGrid} />}
+        selection={selectedIds.size > 0 && (
+          <LibrarySelectionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
             {isTrash ? (
               <>
                 <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
@@ -205,54 +203,33 @@ export function MediaLibraryPage() {
                 <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
               </>
             )}
-            <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds(new Set())}><X className="h-3.5 w-3.5" />Clear Selection</Button>
+          </LibrarySelectionBar>
+        )}
+        rail={{ folders: folderRail, tags: <TagsRail tags={tags} selected={tagId} onSelect={selectTag} /> }}
+        title={collectionName}
+        meta={loading && assets.length === 0 ? "…" : `${filteredAssets.length.toLocaleString()} items`}
+        headerActions={isTrash && assets.length > 0 && (
+          <>
+            <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", assets.map((asset) => asset.id))}><Undo2 className="h-3.5 w-3.5" />Recover All</Button>
+            <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", assets.map((asset) => asset.id))}><Trash2 className="h-3.5 w-3.5" />Delete All</Button>
+          </>
+        )}
+        footer={<LibraryPagination page={currentPage} totalPages={totalPages} total={filteredAssets.length} pageSize={PAGE_SIZE} onPage={setPage} />}
+      >
+        {error ? (
+          <p className="rounded-lg bg-danger-soft p-3 text-sm text-danger">{error}</p>
+        ) : loading && assets.length === 0 ? (
+          <LibraryGridSkeleton />
+        ) : visibleAssets.length === 0 ? (
+          <LibraryEmpty title={EMPTY_COPY[emptyType][0]} hint={EMPTY_COPY[emptyType][1]} />
+        ) : (
+          <div className={cn("grid gap-3", isGrid ? "sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1")}>
+            {visibleAssets.map((asset) => (
+              <AssetCard key={asset.id} asset={asset} trash={isTrash} folders={folders} onRefresh={() => void refresh()} previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} selected={selectedIds.has(asset.id)} onSelect={(checked) => toggleSelected(asset.id, checked)} view={isGrid ? "grid" : "list"} />
+            ))}
           </div>
         )}
-
-        <div className="grid min-h-155 xl:grid-cols-[180px_minmax(0,1fr)]">
-          <aside className="hidden border-r border-border xl:flex xl:flex-col">{rail(true)}</aside>
-          <div className="min-w-0 p-4">
-            <div className="mb-4 flex items-end justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-bold">{collectionName}</h2>
-                <p className="mt-1 text-[9px] text-muted-foreground">{loading && assets.length === 0 ? "…" : `${filteredAssets.length.toLocaleString()} items`}</p>
-              </div>
-              {isTrash && assets.length > 0 && (
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", assets.map((asset) => asset.id))}><Undo2 className="h-3.5 w-3.5" />Recover All</Button>
-                  <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", assets.map((asset) => asset.id))}><Trash2 className="h-3.5 w-3.5" />Delete All</Button>
-                </div>
-              )}
-            </div>
-
-            {error ? (
-              <p className="rounded-lg bg-danger-soft p-3 text-sm text-danger">{error}</p>
-            ) : loading && assets.length === 0 ? (
-              <LibraryGridSkeleton />
-            ) : visibleAssets.length === 0 ? (
-              <LibraryEmpty type={emptyType} />
-            ) : (
-              <div className={cn("grid gap-3", isGrid ? "sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1")}>
-                {visibleAssets.map((asset) => (
-                  <AssetCard key={asset.id} asset={asset} trash={isTrash} folders={folders} onRefresh={() => void refresh()} previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} selected={selectedIds.has(asset.id)} onSelect={(checked) => toggleSelected(asset.id, checked)} view={isGrid ? "grid" : "list"} />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <LibraryPagination page={currentPage} totalPages={totalPages} total={filteredAssets.length} pageSize={PAGE_SIZE} onPage={setPage} />
-      </section>
-
-      <Sheet open={railOpen} onOpenChange={setRailOpen}>
-        <SheetContent side="left" className="flex w-72 flex-col p-0">
-          <SheetHeader className="border-b border-border p-4">
-            <SheetTitle>Library navigation</SheetTitle>
-            <SheetDescription>Browse folders and tags.</SheetDescription>
-          </SheetHeader>
-          {rail(false)}
-        </SheetContent>
-      </Sheet>
+      </LibraryShell>
     </div>
   );
 }

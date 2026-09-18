@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
-import { SearchIcon } from "@/components/ui/icons";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/lovable/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
+import { LibrarySearch } from "../../content-library/LibraryShell";
 import { CONTENT_TYPES, type ContentType } from "../list-filtering";
 import type { PlaylistStatus } from "../types";
 
@@ -21,14 +22,13 @@ const STATUS_OPTIONS: { value: PlaylistStatus | "all"; label: string }[] = [
   { value: "draft", label: "Draft" },
 ];
 
-const selectClasses =
-  "rounded-lg border border-border bg-card px-3 py-2 text-sm capitalize outline-none focus:border-ring";
+const triggerClass = "h-9 w-30 text-[10px] shadow-none";
 
+/** Lovable toolbar controls (search + selects) on this list's real filters. */
 export function PlaylistsFilters({
   value,
   onChange,
   onClearAll,
-  tailAction,
 }: {
   value: FilterState;
   onChange: (next: FilterState) => void;
@@ -36,53 +36,26 @@ export function PlaylistsFilters({
    *  when the URL carries no query string — so the button appears only when it would do
    *  something. Resets folder, sort and paging too, not just the filters shown here. */
   onClearAll?: () => void;
-  tailAction?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3">
-      <div className="relative min-w-56 flex-1">
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          value={value.query}
-          onChange={(e) => onChange({ ...value, query: e.target.value })}
-          placeholder="Search by playlist name..."
-          className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-        />
-      </div>
-
-      <select
-        aria-label="Status"
-        value={value.status}
-        onChange={(e) => onChange({ ...value, status: e.target.value as FilterState["status"] })}
-        className={selectClasses}
-      >
-        {STATUS_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-
-      <select
-        aria-label="Type"
-        value={value.type}
-        onChange={(e) => onChange({ ...value, type: e.target.value as FilterState["type"] })}
-        className={selectClasses}
-      >
-        <option value="all">All Types</option>
-        {CONTENT_TYPES.map((t) => (
-          <option key={t} value={t}>
-            {TYPE_LABELS[t]}
-          </option>
-        ))}
-      </select>
-
-      {onClearAll ? (
-        <Button variant="ghost" onClick={onClearAll}>
-          Clear filters
-        </Button>
-      ) : null}
-      {tailAction}
-    </div>
+    <>
+      <LibrarySearch value={value.query} onChange={(query) => onChange({ ...value, query })} placeholder="Search by playlist name..." />
+      <Select value={value.status} onValueChange={(status) => onChange({ ...value, status: status as FilterState["status"] })}>
+        <SelectTrigger className={triggerClass} aria-label="Status"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      <Select value={value.type} onValueChange={(type) => onChange({ ...value, type: type as FilterState["type"] })}>
+        <SelectTrigger className={triggerClass} aria-label="Type"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all" className="text-xs">All Types</SelectItem>
+          {CONTENT_TYPES.map((t) => <SelectItem key={t} value={t} className="text-xs">{TYPE_LABELS[t]}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      {onClearAll && (
+        <Button variant="ghost" size="sm" onClick={onClearAll}><X className="h-3.5 w-3.5" />Clear filters</Button>
+      )}
+    </>
   );
 }
