@@ -1,7 +1,7 @@
 # Plan — Lovable → thunder_one_prj port workflow
 
-Status: **rev 2, [DECIDED] on the four §6 questions; §2 rules pending the owner's final wording**
-(2026-09-18). Rev 1 was reviewed and reworked: its central claim that "installing shadcn gives
+Status: **rev 3, [DECIDED] on the four §6 questions; R1–R6 wording reviewed — ready to move into
+`CLAUDE.md` on the owner's go** (2026-09-18). Rev 1 was reviewed and reworked: its central claim that "installing shadcn gives
 Lovable 1:1" was wrong (see §3).
 
 Goal: make a Lovable port land accurately on the first pass **without breaking the repo's data,
@@ -56,7 +56,10 @@ are affected, and which files change. Report size only when a real bundle delta 
 Install only after an explicit yes. §8's default ("write it yourself") is unchanged — R5 only
 permits *asking*.
 
-**R6 — Primitive parity by copying, not by installing (see §3).**
+**R6 — Copy primitive parity; do not infer it from a library name.**
+For each touched surface, copy the primitive implementation from the pinned Lovable source. Use an
+existing repository or upstream shadcn primitive only after comparing the implementation,
+configuration, and required dependencies. (Decision record and namespace: §3.)
 
 ## 3. Primitives — decision: **B (modified): copy exact Lovable primitives per surface**
 
@@ -113,8 +116,9 @@ Options considered:
 ## 5. Sequence
 
 1. Owner confirms the R1–R6 wording above (or edits it) → write the block into `CLAUDE.md`.
-2. Close out `style/lovable-tokens`: remaining verification per §3 of CLAUDE.md, commit, Draft PR
-   (Thai).
+2. ~~Close out `style/lovable-tokens`~~ — done: PR #130 merged into `dev` 2026-09-18. For any later
+   port: complete verification, then commit/open a Draft PR only when explicitly requested; ask for
+   the PR language at that point.
 3. Follow-up branch: copy the primitives Topbar/Overview actually use into `ui/lovable/`, propose
    their derived deps (R5), re-express the hand-rolled controls on them.
 4. Skill `/port-lovable` encoding R1–R6 — after two or three manual ports, so the checklist format
@@ -125,6 +129,6 @@ Options considered:
 1. Primitive strategy: **B modified** — copy exact Lovable primitives per surface; no `shadcn init`;
    nothing pre-installed.
 2. Namespace: **`src/components/ui/lovable/`**; legacy kit keeps its names.
-3. Sequencing: **finish the current branch first**; primitive adoption is a separate PR.
+3. Sequencing: **the first port shipped on its own** (PR #130, merged 2026-09-18); primitive adoption is a separate PR.
 4. R5: **full detail** — exact direct packages, runtime/dev, what they replace, why native/existing
    won't do, affected routes/bundles, files changed; size only when measured.
