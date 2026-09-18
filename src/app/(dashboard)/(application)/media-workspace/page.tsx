@@ -7,9 +7,8 @@ import { OverviewDashboard } from "@/features/media-workspace/overview";
 export default function OverviewPage() {
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader
-        title="Overview"
-        subtitle="Real-time status of your media ecosystem"
+      <PageHeader title="Overview" subtitle="Real-time status of your media ecosystem" titleInTopbar />
+      <OverviewDashboard
         actions={
           <>
             <Button variant="secondary" disabled title="Coming soon">
@@ -23,7 +22,6 @@ export default function OverviewPage() {
           </>
         }
       />
-      <OverviewDashboard />
     </div>
   );
 }

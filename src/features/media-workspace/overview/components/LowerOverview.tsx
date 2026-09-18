@@ -1,19 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { CheckCircle2, LayoutGrid, Megaphone, Monitor, Radio } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
 import { Skeleton } from "@/components/ui/Skeleton";
-import {
-  BroadcastIcon,
-  CheckCircleIcon,
-  LayoutIcon,
-  MegaphoneIcon,
-  MonitorIcon,
-} from "@/components/ui/icons";
-import { fetchChannels, type ChannelListItem } from "@/features/media-workspace/channels";
-import { fetchPublications, type PublicationListItem } from "@/features/media-workspace/publications";
+import type { ChannelListItem } from "@/features/media-workspace/channels";
+import type { PublicationListItem } from "@/features/media-workspace/publications";
 import { scheduleTime, targetSummary, todaysSchedule } from "../todays-schedule";
 import { QuickActionsCard } from "./QuickActionsCard";
 
@@ -28,10 +22,10 @@ function formatTime(iso: string, timeZone = "Asia/Bangkok") {
 
 function typeIcon(name: string) {
   const normalized = name.toLowerCase();
-  if (normalized.includes("audio") || normalized.includes("pa")) return MegaphoneIcon;
-  if (normalized.includes("tv")) return BroadcastIcon;
-  if (normalized.includes("kiosk")) return LayoutIcon;
-  return MonitorIcon;
+  if (normalized.includes("audio") || normalized.includes("pa")) return Megaphone;
+  if (normalized.includes("tv")) return Radio;
+  if (normalized.includes("kiosk")) return LayoutGrid;
+  return Monitor;
 }
 
 function ScheduleSkeleton() {
@@ -63,28 +57,15 @@ function ActivitySkeleton() {
   );
 }
 
-export function LowerOverview() {
-  const [channels, setChannels] = useState<ChannelListItem[] | null>(null);
-  const [publications, setPublications] = useState<PublicationListItem[] | null>(null);
+interface LowerOverviewProps {
+  channels: ChannelListItem[] | null;
+  publications: PublicationListItem[] | null;
+  loadFailed: boolean;
+}
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([fetchChannels(), fetchPublications("active")])
-      .then(([channelRows, publicationRows]) => {
-        if (!active) return;
-        setChannels(channelRows);
-        setPublications(publicationRows);
-      })
-      .catch(() => {
-        if (!active) return;
-        setChannels([]);
-        setPublications([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
+// Channels + Publications are fetched once, on a shared 60s poll, by
+// OverviewDashboard (docs/adr/0075 §7) — this used to fetch its own copy.
+export function LowerOverview({ channels, publications, loadFailed }: LowerOverviewProps) {
   const data = useMemo(() => {
     const devices = channels?.flatMap((channel) => (channel.player === null ? [] : [channel.player])) ?? [];
     const health = { online: 0, warning: 0, offline: 0 };
@@ -100,13 +81,13 @@ export function LowerOverview() {
       ...(channels ?? []).map((channel) => ({
         label: `Channel “${channel.name}” updated`,
         at: channel.updated_at,
-        icon: MonitorIcon,
+        icon: Monitor,
         color: "text-indigo-500",
       })),
       ...(publications ?? []).map((publication) => ({
         label: `Publication “${publication.name}” updated`,
         at: publication.updated_at ?? publication.created_at ?? "",
-        icon: CheckCircleIcon,
+        icon: CheckCircle2,
         color: "text-emerald-500",
       })),
     ]
@@ -132,14 +113,16 @@ export function LowerOverview() {
 
   return (
     <div className="grid items-stretch gap-4 xl:grid-cols-3">
-      <Card className="flex min-h-[509px] flex-col p-5">
+      <Card className="flex min-h-[509px] flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Today&apos;s Schedule</h2>
           <Link href="/media-workspace/publications" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
             View full calendar →
           </Link>
         </div>
-        {isLoading ? (
+        {loadFailed ? (
+          <p className="py-10 text-center text-sm text-red-500">Could not load today&apos;s schedule</p>
+        ) : isLoading ? (
           <ScheduleSkeleton />
         ) : data.schedule.length === 0 ? (
           <p className="py-10 text-center text-sm text-zinc-400">No scheduled publications for today</p>
@@ -161,14 +144,16 @@ export function LowerOverview() {
       </Card>
 
       <div className="flex min-h-[509px] flex-col gap-4">
-        <Card className="flex min-h-0 flex-1 flex-col p-5">
+        <Card className="flex min-h-0 flex-1 flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Channel Health</h2>
             <Link href="/media-workspace/channels" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
               View all channels →
             </Link>
           </div>
-          {isLoading ? (
+          {loadFailed ? (
+            <p className="py-8 text-center text-sm text-red-500">Could not load channel health</p>
+          ) : isLoading ? (
             <div className="flex flex-1 items-center gap-6">
               <Skeleton className="h-36 w-36 shrink-0 rounded-full" />
               <div className="flex-1 space-y-5">
@@ -179,7 +164,7 @@ export function LowerOverview() {
             </div>
           ) : (
             <div className="flex flex-1 items-center gap-6">
-              <div className="relative shrink-0">
+              <div className="relative shrink-0 animate-ring-in">
                 <DonutChart segments={healthRows.map(([label, value, , color]) => ({ label, value, color }))} size={144} strokeWidth={18} />
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                   <strong className="text-2xl text-zinc-900 dark:text-zinc-50">{data.total}</strong>
@@ -206,14 +191,16 @@ export function LowerOverview() {
           )}
         </Card>
 
-        <Card className="shrink-0 p-5">
+        <Card className="shrink-0 border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Channels by Type</h2>
             <Link href="/media-workspace/channels" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
               View all channels →
             </Link>
           </div>
-          {isLoading ? (
+          {loadFailed ? (
+            <p className="py-4 text-center text-sm text-red-500">Could not load channel types</p>
+          ) : isLoading ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
                 <Skeleton key={index} className="h-24" />
@@ -243,12 +230,15 @@ export function LowerOverview() {
         <div className="shrink-0">
           <QuickActionsCard />
         </div>
-        <Card className="flex min-h-0 flex-1 flex-col p-5">
+        <Card className="flex min-h-0 flex-1 flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Activity Feed</h2>
-            <span className="text-xs font-medium text-indigo-600">View all activity →</span>
+            {/* Not an audit log — synthesized from each row's own `updated_at`
+                (docs/adr/0075 §7), so it's labeled for what it actually is. */}
+            <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Recent Updates</h2>
           </div>
-          {isLoading ? (
+          {loadFailed ? (
+            <p className="py-2 text-xs text-red-500">Could not load recent updates</p>
+          ) : isLoading ? (
             <ActivitySkeleton />
           ) : data.activity.length === 0 ? (
             <p className="py-2 text-xs text-zinc-400">No recent updates available</p>

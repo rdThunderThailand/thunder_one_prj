@@ -331,18 +331,17 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
 
   return (
     <aside
-      style={isMediaWorkspace ? { fontFamily: "var(--font-manrope)" } : undefined}
       className={`flex h-full shrink-0 flex-col border-r ${
-        isMediaWorkspace ? "border-zinc-200" : "border-[#e6edf9]"
-      } bg-white transition-[width] duration-150 dark:border-zinc-800 dark:bg-zinc-950 ${
+        isMediaWorkspace ? "border-sidebar-border bg-sidebar" : "border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950"
+      } transition-[width] duration-150 ${
         collapsed ? (isMediaWorkspace ? "w-17" : "w-[76px]") : isMediaWorkspace ? "w-56" : "w-[300px]"
       }`}
     >
       <Link
         href="/"
-        className={`flex items-center hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
+        className={`flex items-center hover:bg-accent dark:hover:bg-zinc-900 ${
           isMediaWorkspace
-            ? `h-17 gap-3 border-b border-[oklch(0.929_0.013_255.508)] px-4 ${collapsed ? "justify-center px-2" : ""}`
+            ? `h-17 gap-3 border-b border-sidebar-border px-4 ${collapsed ? "justify-center px-2" : ""}`
             : // Was previously `px-10 ... ${collapsed ? "justify-center px-2" : ""}`
               // — both px-10 and px-2 ended up in the class list at once when
               // collapsed, and px-10 (40px) won the cascade over px-2 (8px),
@@ -372,7 +371,7 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
         <ShellNav pathname={pathname} collapsed={collapsed} />
       )}
 
-      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-[oklch(0.929_0.013_255.508)] p-2" : "px-5 pb-5 pt-3"}`}>
+      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-sidebar-border p-2" : "px-5 pb-5 pt-3"}`}>
         {isMediaWorkspace ? (
           !collapsed && <p className="sr-only">{tenantName ?? "Thunder One"}</p>
         ) : (
@@ -399,7 +398,7 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
           onClick={() => setCollapsed((v) => !v)}
           className={
             isMediaWorkspace
-              ? `flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 ${
+              ? `flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-foreground transition-colors hover:bg-accent hover:text-primary ${
                   collapsed ? "justify-center" : ""
                 }`
               : "flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-[#e6edf9] text-sm font-bold text-[#61719e] transition-colors hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900"

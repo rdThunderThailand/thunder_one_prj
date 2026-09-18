@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowRight, CheckCircle2, Monitor, Radio } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ArrowRightIcon, BroadcastIcon, CheckCircleIcon, MonitorIcon } from "@/components/ui/icons";
 import { fetchNowNext } from "@/features/media-workspace/publications";
 import { mapNowNextPrograms, type NowNextPrograms, type ProgramCardModel } from "../now-next-programs";
 
@@ -23,7 +23,7 @@ function formatTime(iso: string) {
 function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; model: ProgramCardModel | null; isNow?: boolean; emptyMessage: string }) {
   if (model === null) {
     return (
-      <Card className="flex min-h-[370px] flex-col justify-center p-5 text-center">
+      <Card className="flex min-h-[370px] flex-col justify-center border-border p-5 text-center shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
         <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">{label}</h2>
         <p className="mt-2 text-sm text-zinc-400">{emptyMessage}</p>
       </Card>
@@ -31,12 +31,13 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
   }
 
   return (
-    <Card className="flex min-h-[370px] flex-col p-5">
+    <Card className="flex min-h-[370px] flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
       <div className="mb-5 flex items-center gap-2">
         <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">{label}</h2>
         {isNow && (
-          <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-            LIVE
+          <span className="flex items-center gap-1 rounded-md bg-success-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-success">
+            <i className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+            Live
           </span>
         )}
       </div>
@@ -46,7 +47,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
           // as a poster/preview instead of reaching next/image (see lib/media-kind).
           <MediaThumb url={model.thumbnailUrl} alt={model.name} className="h-28 w-28 shrink-0 rounded-lg" />
         ) : isNow ? (
-          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-cyan-100"><BroadcastIcon className="h-9 w-9" /></div>
+          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-cyan-100"><Radio className="h-9 w-9" /></div>
         ) : (
           <time className="border-r border-zinc-100 pr-5 text-2xl font-semibold text-zinc-900 dark:border-zinc-800 dark:text-zinc-50">
             {model.opensAt ? formatTime(model.opensAt) : "—"}
@@ -65,17 +66,17 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
       </div>
       <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 pt-4 text-xs dark:border-zinc-800">
         <span className="flex items-center gap-1 text-zinc-500">
-          <MonitorIcon className="h-3.5 w-3.5" />
+          <Monitor className="h-3.5 w-3.5" />
           {model.channelRows} Channels
         </span>
         <span className="flex items-center gap-1 text-zinc-500">
-          <CheckCircleIcon className="h-3.5 w-3.5" />
+          <CheckCircle2 className="h-3.5 w-3.5" />
           {isNow ? `${model.confirmedRows} Playing` : `${model.deviceRows} Devices`}
         </span>
       </div>
       <Link href={`/media-workspace/publications/${model.id}`} className="mt-auto flex items-center justify-end gap-1 pt-5 text-xs font-medium text-indigo-600 hover:text-indigo-500">
         View program details
-        <ArrowRightIcon />
+        <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </Card>
   );
@@ -83,7 +84,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
 
 function ProgramCardSkeleton() {
   return (
-    <Card className="min-h-[370px] p-5">
+    <Card className="min-h-[370px] border-border p-5 shadow-panel">
       <Skeleton className="h-4 w-28" />
       <div className="mt-5 flex items-center gap-4"><Skeleton className="h-28 w-28" /><div className="flex-1 space-y-3"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-3 w-1/3" /><Skeleton className="h-6 w-1/2" /></div></div>
       <div className="mt-5 grid grid-cols-2 gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800"><Skeleton className="h-4" /><Skeleton className="h-4" /></div>

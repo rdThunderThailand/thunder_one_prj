@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
-import { ShortcutsBar } from "@/components/layout/ShortcutsBar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
 import { getSession } from "@/features/auth/services/get-session";
 
@@ -33,7 +32,6 @@ export default async function DashboardLayout({
         <main className="flex-1 overflow-y-auto bg-zinc-50 px-6 py-6 dark:bg-zinc-950">
           {children}
         </main>
-        <ShortcutsBar />
       </div>
     </div>
   );

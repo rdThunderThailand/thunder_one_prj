@@ -1,22 +1,15 @@
 import Link from "next/link";
+import { CalendarClock, FilePlus2, Grid2x2Plus, ListVideo, Megaphone, Upload } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import {
-  BroadcastIcon,
-  CalendarIcon,
-  GridIcon,
-  LayoutIcon,
-  MegaphoneIcon,
-  UploadIcon,
-} from "@/components/ui/icons";
 import { quickActions, type QuickActionData, type QuickActionIcon } from "../mock-data";
 
 const iconFor: Record<QuickActionIcon, React.ReactNode> = {
-  publication: <BroadcastIcon />,
-  playlist: <LayoutIcon />,
-  upload: <UploadIcon />,
-  campaign: <MegaphoneIcon />,
-  schedule: <CalendarIcon />,
-  channel: <GridIcon />,
+  publication: <FilePlus2 className="h-4 w-4" />,
+  playlist: <ListVideo className="h-4 w-4" />,
+  upload: <Upload className="h-4 w-4" />,
+  campaign: <Megaphone className="h-4 w-4" />,
+  schedule: <CalendarClock className="h-4 w-4" />,
+  channel: <Grid2x2Plus className="h-4 w-4" />,
 };
 
 const iconColor: Record<QuickActionData["color"], string> = {
@@ -46,40 +39,33 @@ const iconBackground: Record<QuickActionData["color"], string> = {
   teal: "bg-teal-50",
 };
 
+// Only actions with a real destination are shown — the mockup's disabled
+// "Not built yet" buttons would just be more mock UI (docs/adr/0075 §7).
+const availableActions = quickActions.filter((action): action is QuickActionData & { href: string } => Boolean(action.href));
+
 export function QuickActionsCard() {
   return (
-    <Card className="p-5">
+    <Card className="border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
       <h2 className="mb-4 text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">
         Quick Actions
       </h2>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {quickActions.map((action) => {
-          const content = (
-            <>
-              <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${iconBackground[action.color]} ${iconColor[action.color]}`}>
-                {iconFor[action.icon]}
-              </span>
-              <span>
-                <span className="block text-xs font-semibold">{action.label}</span>
-                <span className="mt-0.5 block text-[10px] font-medium text-zinc-500">{actionDescriptions[action.label]}</span>
-              </span>
-            </>
-          );
-          const className =
-            "flex min-h-16 items-center gap-3 rounded-lg border border-zinc-200 p-2 text-left text-zinc-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/10 disabled:cursor-not-allowed disabled:opacity-45";
-
-          return action.href ? (
-            <Link key={action.label} href={action.href} className={className}>
-              {content}
-            </Link>
-          ) : (
-            <button key={action.label} className={className} title="Not built yet" disabled>
-              {content}
-            </button>
-          );
-        })}
+        {availableActions.map((action) => (
+          <Link
+            key={action.label}
+            href={action.href}
+            className="flex min-h-16 items-center gap-3 rounded-lg border border-zinc-200 p-2 text-left text-zinc-700 transition-colors hover:border-primary/30 hover:bg-primary-soft dark:border-zinc-800 dark:text-zinc-300"
+          >
+            <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${iconBackground[action.color]} ${iconColor[action.color]}`}>
+              {iconFor[action.icon]}
+            </span>
+            <span>
+              <span className="block text-xs font-semibold">{action.label}</span>
+              <span className="mt-0.5 block text-[10px] font-medium text-zinc-500">{actionDescriptions[action.label]}</span>
+            </span>
+          </Link>
+        ))}
       </div>
     </Card>
-
   );
 }

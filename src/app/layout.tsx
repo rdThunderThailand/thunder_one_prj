@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Geist_Mono, Manrope } from "next/font/google";
+import { Geist_Mono, Manrope } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta-sans",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -31,7 +26,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable} ${geistMono.variable} ${manrope.variable} h-full antialiased`}
+      className={`${geistMono.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="h-full flex flex-col">
         {children}
