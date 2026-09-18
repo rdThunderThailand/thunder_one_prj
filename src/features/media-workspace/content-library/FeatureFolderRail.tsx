@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Folder } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Button as LovableButton } from "@/components/ui/lovable/button";
 import { Modal } from "@/components/ui/Modal";
 import { ContentFolderRail, type FolderCollection } from "./ContentFolderRail";
 import { isDescendant } from "./folder-tree";
@@ -33,6 +35,8 @@ export function FeatureFolderRail({
   counts,
   deleteFolderItems,
   isLoading = false,
+  createOpen: controlledCreateOpen,
+  onCreateOpenChange,
 }: {
   scope: FolderScope;
   labels: { all: string; uncategorized: string; trash: string };
@@ -41,11 +45,18 @@ export function FeatureFolderRail({
   counts?: Record<string, number>;
   deleteFolderItems?: DeleteFolderItems;
   isLoading?: boolean;
+  /** Pass both to open the Create Folder modal from outside (e.g. a page-header button);
+   *  the rail then renders no footer button of its own. */
+  createOpen?: boolean;
+  onCreateOpenChange?: (open: boolean) => void;
   onSelect: (collection: FolderCollection) => void;
   onRefresh: () => void;
   onError: (error: unknown) => void;
 }) {
-  const [createOpen, setCreateOpen] = useState(false);
+  const [internalCreateOpen, setInternalCreateOpen] = useState(false);
+  const isCreateControlled = controlledCreateOpen !== undefined;
+  const createOpen = isCreateControlled ? controlledCreateOpen : internalCreateOpen;
+  const setCreateOpen = isCreateControlled ? (onCreateOpenChange ?? (() => {})) : setInternalCreateOpen;
   const [action, setAction] = useState<FolderAction | null>(null);
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -109,7 +120,7 @@ export function FeatureFolderRail({
     && (deleteItemIds === null || (deletingItems && deleteDestination === "folder" && !value))));
 
   return <>
-    <ContentFolderRail folders={folders} selected={selected} labels={labels} counts={counts} onSelect={onSelect} onRename={(folder) => openAction("rename", folder)} onMove={(folder) => openAction("move", folder)} onDelete={(folder) => openAction("delete", folder)} isLoading={isLoading} footer={<Button type="button" variant="secondary" className="mt-2 w-full py-2" onClick={() => { setValue(""); setCreateOpen(true); }}>+ New Folder</Button>} />
+    <ContentFolderRail folders={folders} selected={selected} labels={labels} counts={counts} onSelect={onSelect} onRename={(folder) => openAction("rename", folder)} onMove={(folder) => openAction("move", folder)} onDelete={(folder) => openAction("delete", folder)} isLoading={isLoading} footer={isCreateControlled ? undefined : <LovableButton variant="outline" size="sm" className="w-full" onClick={() => { setValue(""); setCreateOpen(true); }}><Folder className="h-3.5 w-3" />Create Folder</LovableButton>} />
     <Modal open={createOpen} onClose={close} title="Create Folder" footer={<><Button type="button" variant="secondary" disabled={busy} onClick={close}>Cancel</Button><Button type="button" disabled={busy || !value.trim()} onClick={() => void create()}>{busy ? "Creating…" : "Create"}</Button></>}>
       <label className="space-y-1"><span>Folder name</span><input autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2" /></label>
     </Modal>

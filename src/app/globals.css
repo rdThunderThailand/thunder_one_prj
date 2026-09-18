@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* This app has no theme toggle — content stays light regardless of OS
    preference. Switching `dark:` to a class-based trigger (never applied)
@@ -50,6 +51,7 @@
   --danger-foreground: oklch(1 0 0);
   --primary-soft: oklch(0.965 0.028 262);
   --overlay: oklch(0.12 0.02 260 / 45%);
+  --program: oklch(0.25 0.09 252);
 }
 
 @theme inline {
@@ -89,6 +91,7 @@
   --color-danger-foreground: var(--danger-foreground);
   --color-primary-soft: var(--primary-soft);
   --color-overlay: var(--overlay);
+  --color-program: var(--program);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
