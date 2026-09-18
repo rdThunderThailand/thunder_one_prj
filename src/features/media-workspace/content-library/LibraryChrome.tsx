@@ -14,14 +14,18 @@ export type SummaryCard = {
   /** Icon tile colours, e.g. "text-primary bg-primary-soft". */
   tone?: string;
   disabled?: boolean;
+  /** Renders the card as a button (e.g. a card that applies a filter). */
+  onClick?: () => void;
 };
 
 /** Lovable `MediaSummary` cards. */
 export function LibrarySummary({ cards, label }: { cards: SummaryCard[]; label: string }) {
   return (
     <section className={cn("grid gap-3 sm:grid-cols-2", cards.length >= 5 ? "xl:grid-cols-5" : "lg:grid-cols-4")} aria-label={label}>
-      {cards.map((card) => (
-        <article key={card.label} className={cn("flex min-h-22 items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-panel", card.disabled && "opacity-55")}>
+      {cards.map((card) => {
+        const Tag = card.onClick ? "button" : "article";
+        return (
+        <Tag key={card.label} type={card.onClick ? "button" : undefined} onClick={card.onClick} className={cn("flex min-h-22 items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-panel", card.onClick && "transition hover:border-foreground/20 hover:shadow-float", card.disabled && "opacity-55")}>
           <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", card.tone ?? "text-primary bg-primary-soft")}>
             <card.icon className="h-4 w-4" strokeWidth={1.8} />
           </span>
@@ -30,8 +34,9 @@ export function LibrarySummary({ cards, label }: { cards: SummaryCard[]; label: 
             <strong className="mt-1 block text-lg leading-none">{typeof card.value === "number" ? card.value.toLocaleString() : card.value}</strong>
             {card.detail && <span className="mt-1.5 block text-[9px] text-muted-foreground">{card.detail}</span>}
           </div>
-        </article>
-      ))}
+        </Tag>
+        );
+      })}
     </section>
   );
 }

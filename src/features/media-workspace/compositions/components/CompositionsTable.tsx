@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { Badge } from "@/components/ui/Badge";
+import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { EditIcon, MoreIcon, PlayIcon, TrashIcon, UndoIcon } from "@/components/ui/icons";
@@ -117,16 +118,11 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
   const isAllSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
   return (
     <div>
-      <table className="w-full table-fixed text-left text-sm">
+      <table className="w-full table-fixed text-left text-[10px]">
         <thead>
-          <tr className="border-b border-border text-xs text-muted-foreground">
-            <th className="w-10 py-2 pl-1">
-              <input
-                type="checkbox"
-                aria-label="Select all layouts on this page"
-                checked={isAllSelected}
-                onChange={(event) => onSelectionChange(event.target.checked ? new Set(rows.map((row) => row.id)) : new Set())}
-              />
+          <tr className="border-b border-border text-[9px] font-semibold text-muted-foreground">
+            <th className="w-8 py-2 pl-2">
+              <Checkbox aria-label="Select all layouts on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} />
             </th>
             <th className="w-[72px] py-2">Preview</th>
             <SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort} />
@@ -143,14 +139,13 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
             const badge = statusBadge(item.status);
             return (
               <tr key={item.id} className="border-b border-border last:border-0">
-                <td className="py-3 pl-1">
-                  <input
-                    type="checkbox"
+                <td className="py-3 pl-2">
+                  <Checkbox
                     aria-label={`Select ${item.name}`}
                     checked={selectedIds.has(item.id)}
-                    onChange={(event) => {
+                    onCheckedChange={(value) => {
                       const next = new Set(selectedIds);
-                      if (event.target.checked) next.add(item.id);
+                      if (value === true) next.add(item.id);
                       else next.delete(item.id);
                       onSelectionChange(next);
                     }}
@@ -159,7 +154,7 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
                 <td className="py-3"><CompositionLibraryPreview zones={item.previewZones} previews={previews} /></td>
                 <td className="truncate py-3 pr-2 font-medium">
                   <p className="truncate">{item.name}</p>
-                  <p className="truncate text-xs font-normal text-muted-foreground">{item.folderId ? "In folder" : "Uncategorized"}</p>
+                  <p className="truncate text-[8px] font-normal text-muted-foreground">{item.folderId ? "In folder" : "Uncategorized"}</p>
                 </td>
                 <td className="py-3">{item.bound_count}/{item.zone_count}</td>
                 <td className="py-3">{item.referenceResolution ?? "—"}</td>
@@ -170,7 +165,7 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
                     <Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} />
                     <span className="min-w-0">
                       <span className="block truncate text-muted-foreground">{item.createdBy?.displayName ?? "Unknown user"}</span>
-                      <span className="block truncate text-xs">{formatDate(item.updated_at ?? item.created_at)}</span>
+                      <span className="block truncate text-[10px]">{formatDate(item.updated_at ?? item.created_at)}</span>
                     </span>
                   </div>
                 </td>
@@ -201,10 +196,10 @@ export function CompositionsGrid({ rows, inTrash, busyId, previewBusyId, onPrevi
       <CompositionLibraryPreview zones={item.previewZones} previews={previews} />
       <div className="mt-3 space-y-2">
         <div className="min-w-0">
-          <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-sm font-semibold text-foreground hover:text-primary">{item.name}</Link>
-          <p className="truncate text-xs text-muted-foreground">{item.folderId ? "In folder" : "Uncategorized"}</p>
+          <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-[10px] font-semibold text-foreground hover:text-primary">{item.name}</Link>
+          <p className="truncate text-[8px] text-muted-foreground">{item.folderId ? "In folder" : "Uncategorized"}</p>
         </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground"><span>{item.bound_count}/{item.zone_count} content</span><span>{item.referenceResolution ?? "—"}</span></div>
+        <div className="flex items-center justify-between text-[8px] text-muted-foreground"><span>{item.bound_count}/{item.zone_count} content</span><span>{item.referenceResolution ?? "—"}</span></div>
         <div className="flex items-center justify-between"><Badge color={badge.color} variant="pill">{badge.label}</Badge><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></div>
       </div>
     </Card>;

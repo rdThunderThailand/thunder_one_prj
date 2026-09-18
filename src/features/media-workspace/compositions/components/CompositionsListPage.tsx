@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button, buttonClasses } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Plus, Trash2, Undo2 } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { Pagination } from "@/components/ui/Pagination";
-import { StatTile } from "@/components/ui/StatTile";
+import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { LibrarySelectionBar, LibraryShell } from "../../content-library/LibraryShell";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchContentFolders, fetchMediaAssets } from "@/lib/api/media-api";
@@ -27,20 +27,14 @@ import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/compone
 import { TagsRail } from "@/features/media-workspace/content-library/TagsRail";
 import { CompositionFolderRail } from "./CompositionFolderRail";
 import { CompositionsFilters } from "./CompositionsFilters";
-import { ListError, ListSkeleton, SummarySkeleton } from "./CompositionsListStates";
+import { CompositionsSummary, ListEmpty, ListError, ListSkeleton, SummarySkeleton } from "./CompositionsListStates";
 import { CompositionsGrid, CompositionsTable } from "./CompositionsTable";
-
-const railTabClass = (active: boolean) =>
-  `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${
-    active ? "bg-muted text-muted-foreground" : "text-muted-foreground hover:text-foreground"
-  }`;
 
 export function CompositionsListPage() {
   const searchParams = useSearchParams();
   const [initial] = useState(() => readListState(new URLSearchParams(searchParams.toString())));
   const [collection, setCollection] = useState(initial.collection);
   const [tagId, setTagId] = useState(initial.tagId);
-  const [railTab, setRailTab] = useState<"folders" | "tags">(initial.tagId ? "tags" : "folders");
   const [filters, setFilters] = useState(initial.filters);
   const [sort, setSort] = useState(initial.sort);
   const [page, setPage] = useState(initial.page);
@@ -66,7 +60,6 @@ export function CompositionsListPage() {
     const next = readListState(new URLSearchParams(window.location.search));
     setCollection(next.collection);
     setTagId(next.tagId);
-    setRailTab(next.tagId ? "tags" : "folders");
     setFilters(next.filters);
     setSort(next.sort);
     setPage(next.page);
@@ -110,7 +103,6 @@ export function CompositionsListPage() {
   const reset = () => {
     setCollection(DEFAULT_STATE.collection);
     setTagId(DEFAULT_STATE.tagId);
-    setRailTab("folders");
     setFilters(DEFAULT_STATE.filters);
     setSort(DEFAULT_STATE.sort);
     setPage(1);
@@ -202,127 +194,82 @@ export function CompositionsListPage() {
   const pagination = library?.pagination;
   if (error?.kind === "forbidden" && !library) return <NoAccess />;
 
+  const inTrash = collection === "trash";
+  const collectionName = inTrash ? "Trash" : tagId ? library?.facets.tags.find((tag) => tag.id === tagId)?.name ?? "Tag" : collection === "uncategorized" ? "Uncategorized" : collection === "all" ? "All Layouts" : folders.find((folder) => folder.id === collection)?.name ?? "Folder";
+
   return (
-    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Layouts"
         subtitle="Create, organize, and manage screen layouts for your displays."
+        titleInTopbar
         actions={
           <>
-            <Link href="/media-workspace/layouts/templates" className={buttonClasses("secondary")}>Manage Templates</Link>
-            <button type="button" onClick={() => setPickerOpen(true)} className={buttonClasses("primary")}>+ New Layout</button>
+            <Link href="/media-workspace/layouts/templates" className={buttonVariants({ variant: "outline", size: "sm" })}>Manage Templates</Link>
+            <Button size="sm" onClick={() => setPickerOpen(true)}><Plus className="h-3.5 w-3.5" />New Layout</Button>
           </>
         }
       />
       {summary ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatTile label="Total Layouts" value={String(summary.total)} />
-          <StatTile label="Template-based" value={String(summary.templateBased)} />
-          <StatTile label="Custom" value={String(summary.custom)} />
-          <button type="button" onClick={() => changeFilters({ ...filters, content: "incomplete" })}>
-            <StatTile label="Needs content" value={String(summary.needsContent)} />
-          </button>
-        </div>
+        <CompositionsSummary summary={summary} onNeedsContent={() => changeFilters({ ...filters, content: "incomplete" })} />
       ) : (
-        <SummarySkeleton />
+        <SummarySkeleton count={4} />
       )}
-      <Card className="flex flex-1 flex-col overflow-hidden">
-        <div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
-          <aside className="flex min-h-0 flex-col border-b border-border p-3 md:border-b-0 md:border-r">
-            <div className="mb-2 flex shrink-0 gap-1 px-1">
-              <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>Folders</button>
-              <button type="button" className={railTabClass(railTab === "tags")} onClick={() => setRailTab("tags")}>Tags</button>
-            </div>
-            {railTab === "folders" ? (
-              <CompositionFolderRail
-                folders={folders}
-                selected={collection}
-                isLoading={!library && folders.length === 0}
-                onSelect={changeCollection}
-                onRefresh={reload}
-                onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)}
-              />
+      <LibraryShell
+        toolbar={<CompositionsFilters value={filters} referenceResolutions={library?.facets.referenceResolutions ?? []} isGrid={isGrid} onViewChange={setIsGrid} onChange={changeFilters} onClearAll={qs ? reset : undefined} />}
+        selection={selectedIds.size > 0 && (
+          <LibrarySelectionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+            {inTrash ? (
+              <>
+                <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Delete forever</Button>
+              </>
             ) : (
-              <TagsRail tags={library?.facets.tags ?? []} selected={tagId} onSelect={changeTag} />
+              <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
             )}
-          </aside>
-          <main className="flex min-h-0 min-w-0 flex-col p-5">
-            <CompositionsFilters
-              value={filters}
-              referenceResolutions={library?.facets.referenceResolutions ?? []}
-              isGrid={isGrid}
-              onViewChange={setIsGrid}
-              onChange={changeFilters}
-              onClearAll={qs ? reset : undefined}
-            />
-            <div className="mb-3 flex justify-end gap-2">
-              {collection === "trash" ? (
-                <>
-                  <Button variant="secondary" disabled={batchBusy || !library?.pagination?.total} onClick={() => void runBatch("restore")}>Recover All</Button>
-                  <Button disabled={batchBusy || !library?.pagination?.total} className="bg-danger hover:bg-danger" onClick={() => void runBatch("delete")}>Delete All</Button>
-                </>
-              ) : selectedIds.size > 0 ? (
-                <Button disabled={batchBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("trash", [...selectedIds])}>Move {selectedIds.size} to Trash</Button>
-              ) : null}
-              {collection === "trash" && selectedIds.size > 0 && (
-                <>
-                  <Button variant="secondary" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button>
-                  <Button disabled={batchBusy} className="bg-danger hover:bg-danger" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button>
-                </>
-              )}
-            </div>
-            {library?.isLegacyResponse && (
-              <p className="mb-3 rounded-lg bg-warning-soft p-3 text-sm text-warning">Layouts Library filters and summary need the Core read-model rollout.</p>
-            )}
-            {actionError && <p role="alert" className="mb-3 text-sm text-danger">{actionError}</p>}
-            {error && <ListError message={error.message} onRetry={reload} retrying={false} />}
-            <div className="min-h-0 flex-1 overflow-auto">
-              {!library ? (
-                error ? null : <ListSkeleton />
-              ) : library.data.length === 0 ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">No layouts found.</p>
-              ) : isGrid ? (
-                <CompositionsGrid
-                  rows={library.data}
-                  inTrash={collection === "trash"}
-                  busyId={busyId}
-                  previewBusyId={previewBusyId}
-                  onPreview={(item) => void openPreview(item)}
-                  onAction={handleAction}
-                />
-              ) : (
-                <CompositionsTable
-                  rows={library.data}
-                  sort={sort}
-                  inTrash={collection === "trash"}
-                  busyId={busyId}
-                  previewBusyId={previewBusyId}
-                  onSort={changeSort}
-                  onPreview={(item) => void openPreview(item)}
-                  onAction={handleAction}
-                  selectedIds={selectedIds}
-                  onSelectionChange={setSelectedIds}
-                />
-              )}
-            </div>
-          </main>
-        </div>
-        {pagination && (
-          <div className="shrink-0 border-t border-border px-5 py-4 [&>div]:mt-0">
-            <Pagination
-              page={pagination.page}
-              totalPages={pagination.totalPages}
-              perPage={perPage}
-              totalItems={pagination.total}
-              rangeStart={(pagination.page - 1) * perPage + 1}
-              rangeEnd={Math.min(pagination.page * perPage, pagination.total)}
-              itemLabel="layouts"
-              onPageChange={setPage}
-              onPerPageChange={(next) => { setPerPage(next); setPage(1); }}
-            />
-          </div>
+          </LibrarySelectionBar>
         )}
-      </Card>
+        rail={{
+          defaultTab: tagId ? "tags" : "folders",
+          folders: (
+            <CompositionFolderRail
+              folders={folders}
+              selected={collection}
+              isLoading={!library && folders.length === 0}
+              onSelect={changeCollection}
+              onRefresh={reload}
+              onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)}
+            />
+          ),
+          tags: <TagsRail tags={library?.facets.tags ?? []} selected={tagId} onSelect={changeTag} />,
+        }}
+        title={collectionName}
+        meta={pagination ? `${pagination.total.toLocaleString()} layouts` : "…"}
+        headerActions={inTrash && (
+          <>
+            <Button variant="outline" size="sm" disabled={batchBusy || !library?.pagination?.total} onClick={() => void runBatch("restore")}><Undo2 className="h-3.5 w-3.5" />Recover All</Button>
+            <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy || !library?.pagination?.total} onClick={() => void runBatch("delete")}><Trash2 className="h-3.5 w-3.5" />Delete All</Button>
+          </>
+        )}
+        footer={pagination && (
+          <LibraryPagination page={pagination.page} totalPages={pagination.totalPages} total={pagination.total} pageSize={perPage} onPage={setPage} itemLabel="layouts" perPageOptions={[10, 25, 50]} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
+        )}
+      >
+        {library?.isLegacyResponse && (
+          <p className="mb-3 rounded-lg bg-warning-soft p-3 text-[10px] text-warning">Layouts Library filters and summary need the Core read-model rollout.</p>
+        )}
+        {actionError && <p role="alert" className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {error && <ListError message={error.message} onRetry={reload} retrying={false} />}
+        {!library ? (
+          error ? null : <ListSkeleton />
+        ) : library.data.length === 0 ? (
+          <ListEmpty cause={qs ? "no-match" : "no-compositions"} onClearFilters={reset} />
+        ) : isGrid ? (
+          <CompositionsGrid rows={library.data} inTrash={inTrash} busyId={busyId} previewBusyId={previewBusyId} onPreview={(item) => void openPreview(item)} onAction={handleAction} />
+        ) : (
+          <CompositionsTable rows={library.data} sort={sort} inTrash={inTrash} busyId={busyId} previewBusyId={previewBusyId} onSort={changeSort} onPreview={(item) => void openPreview(item)} onAction={handleAction} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
+        )}
+      </LibraryShell>
       <LayoutTemplatePicker
         open={pickerOpen}
         folders={folders}
@@ -344,15 +291,7 @@ export function CompositionsListPage() {
           onOpenFullPreview={() => window.open(`/media-workspace/preview/composition/${encodeURIComponent(previewTarget.id)}`, "_blank", "noopener")}
         />
       )}
-      <CompositionLibraryDialogs
-        key={`${dialogAction}:${dialogTarget?.id ?? ""}`}
-        action={dialogAction}
-        target={dialogTarget}
-        folders={folders}
-        onClose={closeDialog}
-        onDone={() => { closeDialog(); reload(); }}
-        onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }}
-      />
+      <CompositionLibraryDialogs key={`${dialogAction}:${dialogTarget?.id ?? ""}`} action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
     </div>
   );
 }
