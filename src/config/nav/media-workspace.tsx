@@ -5,72 +5,71 @@
 // media/DOOH publishing feature, not a generic "Communication" one; "Media
 // Workspace" was the original, correct name per CONTEXT.md).
 import {
-  BellIcon,
-  BroadcastIcon,
-  CalendarIcon,
-  ChartIcon,
-  ClockIcon,
-  FolderIcon,
-  GridIcon,
-  HeartIcon,
-  LayoutIcon,
-  ListIcon,
-  MegaphoneIcon,
-  MonitorIcon,
-  PlayIcon,
-  TrendUpIcon,
-  UsersIcon,
-  VideoIcon,
-} from "@/components/ui/icons";
+  Activity,
+  Bell,
+  BarChart3,
+  CalendarDays,
+  Clock3,
+  Folder,
+  Grid2x2,
+  HeartPulse,
+  LayoutDashboard,
+  ListVideo,
+  Megaphone,
+  PlaySquare,
+  Radio,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import type { NavConfig, NavItem } from "./types";
+
+const iconClass = "h-full w-full";
 
 export const mediaWorkspaceNav: NavConfig = {
   overviewItem: {
     label: "Overview",
     href: "/media-workspace",
-    icon: <GridIcon />,
+    icon: <Grid2x2 className={iconClass} />,
   },
   sections: [
     {
       label: "Content",
       items: [
-        { label: "Media Library", href: "/media-workspace/assets", icon: <FolderIcon /> },
-        { label: "Playlists", href: "/media-workspace/playlists", icon: <ListIcon /> },
-        { label: "Layouts", href: "/media-workspace/layouts", icon: <LayoutIcon /> },
+        { label: "Media Library", href: "/media-workspace/assets", icon: <Folder className={iconClass} /> },
+        { label: "Playlists", href: "/media-workspace/playlists", icon: <ListVideo className={iconClass} /> },
+        { label: "Layouts", href: "/media-workspace/layouts", icon: <LayoutDashboard className={iconClass} /> },
       ],
     },
     {
       label: "Programming",
       items: [
-        { label: "Programs", href: "/media-workspace/publications/manage", icon: <PlayIcon /> },
-        { label: "Now & Next", href: "/media-workspace/publications", icon: <ClockIcon /> },
-        { label: "Calendar", icon: <CalendarIcon /> },
+        { label: "Programs", href: "/media-workspace/publications/manage", icon: <PlaySquare className={iconClass} /> },
+        { label: "Now & Next", href: "/media-workspace/publications", icon: <Clock3 className={iconClass} /> },
+        { label: "Calendar", icon: <CalendarDays className={iconClass} /> },
       ],
     },
     {
       label: "Channels",
       items: [
-        { label: "All Channels", href: "/media-workspace/channels", icon: <BroadcastIcon /> },
-        { label: "Channel Groups", href: "/media-workspace/channel-groups", icon: <UsersIcon /> },
-        { label: "Screens", icon: <MonitorIcon /> },
-        { label: "TV", icon: <VideoIcon /> },
-        { label: "PA / Audio", icon: <MegaphoneIcon /> },
-        { label: "Kiosks", icon: <LayoutIcon /> },
+        { label: "All Channels", href: "/media-workspace/channels", icon: <Radio className={iconClass} /> },
+        { label: "Channel Groups", href: "/media-workspace/channel-groups", icon: <Users className={iconClass} /> },
+        { label: "PA / Audio", icon: <Megaphone className={iconClass} /> },
+        { label: "Kiosks", icon: <LayoutDashboard className={iconClass} /> },
       ],
     },
     {
       label: "Monitoring",
       items: [
-        { label: "Live View", icon: <BroadcastIcon /> },
-        { label: "Alerts", icon: <BellIcon /> },
-        { label: "System Health", icon: <HeartIcon /> },
+        { label: "Live View", icon: <Activity className={iconClass} /> },
+        { label: "Alerts", icon: <Bell className={iconClass} /> },
+        { label: "System Health", icon: <HeartPulse className={iconClass} /> },
       ],
     },
     {
       label: "Reports & Analytics",
       items: [
-        { label: "Reports", icon: <ChartIcon /> },
-        { label: "Analytics", icon: <TrendUpIcon /> },
+        { label: "Reports", icon: <BarChart3 className={iconClass} /> },
+        { label: "Analytics", icon: <TrendingUp className={iconClass} /> },
       ],
     },
   ],

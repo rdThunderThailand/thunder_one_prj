@@ -34,6 +34,10 @@ export function targetSummary(summary: PublicationListItem["target_summary"]) {
   return parts.join(" · ") || "No targets";
 }
 
+export function scheduleDotClass(row: PublicationListItem) {
+  return row.effective_status === "active" ? "bg-success" : "bg-primary";
+}
+
 /** The row's clock, read in the Schedule's own zone. */
 export function scheduleTime(row: PublicationListItem) {
   return new Intl.DateTimeFormat("en-GB", {
