@@ -1,10 +1,21 @@
 # Plan — Transcode v1 (ADR 0071)
 
-**Status: design closed 2026-09-17, nothing built.** ADR of record:
-`docs/adr/0071-a-quarantined-video-is-transcoded-instead-of-refused.md` (revised 2026-09-17, still
-`proposed` until T1). Spec of record:
-[thunder_one_prj#127](https://github.com/rdThunderThailand/thunder_one_prj/issues/127).
+**Status: CLOSED 2026-09-18.** T1–T8 all done and closed; prod live end to end (upload → probe →
+`processing` → cron converts → `ready` + Rendition), backfill of the 3 pre-existing prod refusals
+complete, real-player gate (T8) passed on Android and Windows. ADR of record:
+`docs/adr/0071-a-quarantined-video-is-transcoded-instead-of-refused.md` (`accepted`). Spec of record:
+[thunder_one_prj#127](https://github.com/rdThunderThailand/thunder_one_prj/issues/127) (closed).
 Predecessor epic (ADR 0069 + 0070) is CLOSED — `plan-codec-gate.md`.
+
+**Notable find during T7 (fixed in the same window, outside this plan's original scope):** the real
+upload intake route (`videos/route.ts`) had never actually been deployed to prod with ADR 0069/0070's
+probe-computation code — only the DB schema/RPCs and a one-time backfill of 3 pre-existing Assets had
+reached prod via direct migration apply. Every *new* upload on prod, including High/HEVC, was
+registering `ready` with no gate at all until this was caught and fixed as part of T7 (cherry-picked
+the probe module, intake wiring, activation guard and the ADR-0069 backfill migration source onto
+`main` alongside T2/T3 — all four were already live on prod's database, only the app code/migration
+source were missing). Verified with a real end-to-end upload through the actual HTTP route before T7
+continued. See Thunder_Core's `.docs/SESSIONLOG-transcode-t6-t7-t8-close-2026-09-18.md`.
 
 ## The problem in one paragraph
 
@@ -39,17 +50,17 @@ Legend: `todo` · `in progress` · `in review` · `done` · `held`
 
 | # | Ticket | Repo | Blocked by | Status | Acceptance |
 |---|---|---|---|---|---|
-| T1 | [Thunder_Core#76](https://github.com/rdThunderThailand/Thunder_Core/issues/76) Spike: ffmpeg/ffprobe on a Vercel **preview** deployment (manual GET only) | Thunder_Core | — | todo | see below |
-| T2 | [Thunder_Core#77](https://github.com/rdThunderThailand/Thunder_Core/issues/77) Worker route + recipe + validation, deployed with **no cron** | Thunder_Core | T1 | todo | see below |
-| T3 | [Thunder_Core#78](https://github.com/rdThunderThailand/Thunder_Core/issues/78) Migration: job table, rendition columns, RPCs, replaced functions — **no backfill** | Thunder_Core | T2 deployed on develop | todo | see below |
-| T4 | [Thunder_Core#79](https://github.com/rdThunderThailand/Thunder_Core/issues/79) Enable cron `* * * * *` — cadence proof lives here | Thunder_Core | T3 | todo | see below |
-| T5 | [#128](https://github.com/rdThunderThailand/thunder_one_prj/issues/128) FE: Upload Queue + Media Detail + `MediaAsset` type | thunder_one_prj | T3 (contract) | todo | see below |
-| T6 | [Thunder_Core#80](https://github.com/rdThunderThailand/Thunder_Core/issues/80) Backfill migration (own file) — written and rehearsed on develop | Thunder_Core | T4, T5 | todo | see below |
-| T7 | [Thunder_Core#81](https://github.com/rdThunderThailand/Thunder_Core/issues/81) Prod rollout, same order as develop — every step its own R0 | Thunder_Core | T6 | todo | see below |
-| T8 | [Thunder_Core#82](https://github.com/rdThunderThailand/Thunder_Core/issues/82) Real-player rollout gate → close-out | manual | T7 | todo | see below |
+| T1 | [Thunder_Core#76](https://github.com/rdThunderThailand/Thunder_Core/issues/76) Spike: ffmpeg/ffprobe on a Vercel **preview** deployment (manual GET only) | Thunder_Core | — | done 2026-09-17 | see below |
+| T2 | [Thunder_Core#77](https://github.com/rdThunderThailand/Thunder_Core/issues/77) Worker route + recipe + validation, deployed with **no cron** | Thunder_Core | T1 | done 2026-09-17 | see below |
+| T3 | [Thunder_Core#78](https://github.com/rdThunderThailand/Thunder_Core/issues/78) Migration: job table, rendition columns, RPCs, replaced functions — **no backfill** | Thunder_Core | T2 deployed on develop | done — develop 2026-09-18, prod 2026-09-18 (T7 step 3) | see below |
+| T4 | [Thunder_Core#79](https://github.com/rdThunderThailand/Thunder_Core/issues/79) Enable cron `* * * * *` — cadence proof lives here | Thunder_Core | T3 | done — develop 2026-09-18, prod 2026-09-18 (T7 step 6) | see below |
+| T5 | [#128](https://github.com/rdThunderThailand/thunder_one_prj/issues/128) FE: Upload Queue + Media Detail + `MediaAsset` type | thunder_one_prj | T3 (contract) | done — PR #129 merged to `dev` 2026-09-18 | see below |
+| T6 | [Thunder_Core#80](https://github.com/rdThunderThailand/Thunder_Core/issues/80) Backfill migration (own file) — written and rehearsed on develop | Thunder_Core | T4, T5 | done — rehearsed on develop (0 rows, no organic target there), applied to prod 2026-09-18 (3/3 rows done) | see below |
+| T7 | [Thunder_Core#81](https://github.com/rdThunderThailand/Thunder_Core/issues/81) Prod rollout, same order as develop — every step its own R0 | Thunder_Core | T6 | done 2026-09-18, all 8 steps | see below |
+| T8 | [Thunder_Core#82](https://github.com/rdThunderThailand/Thunder_Core/issues/82) Real-player rollout gate → close-out | manual | T7 | done 2026-09-18 — Android + Windows confirmed playing normally | see below |
 
-Canonical sequence: T1 → T2 → T3 → T4 → T5 → T6 (develop) → T7 (prod) → T8. The plan is marked
-CLOSED only after T8.
+Canonical sequence: T1 → T2 → T3 → T4 → T5 → T6 (develop) → T7 (prod) → T8. **All done — plan CLOSED
+2026-09-18.**
 
 ### T1 — Spike (throwaway branch, preview deployment, no DB writes)
 
