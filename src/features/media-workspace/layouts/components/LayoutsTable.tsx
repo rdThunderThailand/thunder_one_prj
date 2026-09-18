@@ -37,9 +37,9 @@ export function LayoutsTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-left text-[10px]">
         <thead>
-          <tr className="border-b border-border text-xs font-medium text-muted-foreground">
+          <tr className="border-b border-border text-[9px] font-semibold text-muted-foreground">
             <th className="py-2 pl-1">Preview</th>
             <SortHeader label="Layout Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Aspect ratio" sortKey="aspectRatio" sort={sort} onSortChange={onSortChange} className="py-2" />
@@ -65,15 +65,15 @@ export function LayoutsTable({
                     className="h-10 w-16 rounded border border-border"
                   />
                 </td>
-                <td className="py-3 text-sm font-medium text-foreground">{layout.name}</td>
-                <td className="py-3 text-sm text-muted-foreground">{layout.aspect_ratio}</td>
-                <td className="py-3 text-sm text-muted-foreground">{layout.zone_count}</td>
+                <td className="py-3 text-[10px] font-semibold text-foreground">{layout.name}</td>
+                <td className="py-3 text-[10px] text-muted-foreground">{layout.aspect_ratio}</td>
+                <td className="py-3 text-[10px] text-muted-foreground">{layout.zone_count}</td>
                 <td className="py-3">
                   <Badge color={badge.color} variant="pill">
                     {badge.label}
                   </Badge>
                 </td>
-                <td className="py-3 text-sm text-muted-foreground">
+                <td className="py-3 text-[10px] text-muted-foreground">
                   {formatUpdatedAt(layout.updated_at ?? layout.created_at)}
                 </td>
                 <td className="py-3 pr-1 text-right">

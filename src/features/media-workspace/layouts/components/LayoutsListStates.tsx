@@ -1,86 +1,37 @@
-// Presentational blocks extracted from LayoutsListPage.tsx so that file stays inside
-// the 300-line rule. No data-fetching, no side-effects here. Mirrors
-// src/features/media-workspace/playlists/components/PlaylistsListStates.tsx.
+// Presentational blocks extracted from LayoutsListPage.tsx so that file stays inside the
+// 300-line rule. No data-fetching, no side-effects here.
 
-import { Skeleton } from "@/components/ui/Skeleton";
+import { CheckCircle2, LayoutTemplate, PauseCircle } from "lucide-react";
+import { Button } from "@/components/ui/lovable/button";
+import { LibraryEmpty, LibrarySummary } from "../../content-library/LibraryChrome";
+
+export { LibraryRowsSkeleton as ListSkeleton, LibrarySummarySkeleton as SummarySkeleton } from "../../content-library/LibraryChrome";
 
 export type EmptyCause = "no-layouts" | "no-match";
 
-const EMPTY_MESSAGES: Record<EmptyCause, string> = {
-  "no-layouts": "ยังไม่มี Layout — กด + New Layout เพื่อเริ่มต้น",
-  "no-match": "ไม่พบ Layout ที่ตรงกับตัวกรองที่เลือก",
+const EMPTY_MESSAGES: Record<EmptyCause, [string, string]> = {
+  "no-layouts": ["ยังไม่มี Template", "กด + New Template เพื่อเริ่มต้น"],
+  "no-match": ["ไม่พบ Template ที่ตรงกับตัวกรอง", "ลองปรับคำค้นหรือตัวกรอง"],
 };
 
-/** Four StatTile-shaped skeleton boxes shown during the initial data load. */
-export function SummarySkeleton() {
+export function LayoutsSummary({ stats }: { stats: { total: number; active: number; inactive: number } }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-border bg-card p-4">
-          <Skeleton className="mb-2 h-4 w-24" />
-          <Skeleton className="h-8 w-12" />
-        </div>
-      ))}
-    </div>
+    <LibrarySummary
+      label="Template summary"
+      cards={[
+        { label: "Total Templates", value: stats.total, detail: "All templates", icon: LayoutTemplate },
+        { label: "Active", value: stats.active, detail: "Available to layouts", icon: CheckCircle2, tone: "text-success bg-success-soft" },
+        { label: "Inactive", value: stats.inactive, detail: "Archived", icon: PauseCircle, tone: "text-muted-foreground bg-muted" },
+      ]}
+    />
   );
 }
 
-/** Skeleton rows to fill the table area during initial load. */
-export function ListSkeleton() {
-  return (
-    <div className="space-y-2 py-2">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-10 w-full" />
-      ))}
-    </div>
-  );
+export function ListEmpty({ cause, onClearFilters }: { cause: EmptyCause; onClearFilters: () => void }) {
+  const [title, hint] = EMPTY_MESSAGES[cause];
+  return <LibraryEmpty title={title} hint={hint} action={cause === "no-match" ? <Button variant="outline" size="sm" onClick={onClearFilters}>ล้างตัวกรอง</Button> : undefined} />;
 }
 
-/** Empty-state message, with a Clear Filters button for the no-match cause only. */
-export function ListEmpty({
-  cause,
-  onClearFilters,
-}: {
-  cause: EmptyCause;
-  onClearFilters: () => void;
-}) {
-  return (
-    <div className="py-10 text-center">
-      <p className="text-sm text-muted-foreground">{EMPTY_MESSAGES[cause]}</p>
-      {cause === "no-match" && (
-        <button
-          type="button"
-          onClick={onClearFilters}
-          className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
-        >
-          ล้างตัวกรอง
-        </button>
-      )}
-    </div>
-  );
-}
-
-/** Error card with a ลองใหม่ retry button, disabled while a retry is in-flight. */
-export function ListError({
-  message,
-  onRetry,
-  retrying,
-}: {
-  message: string;
-  onRetry: () => void;
-  retrying: boolean;
-}) {
-  return (
-    <div className="py-10 text-center">
-      <p className="text-sm text-danger">{message}</p>
-      <button
-        type="button"
-        disabled={retrying}
-        onClick={onRetry}
-        className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {retrying ? "กำลังลองใหม่…" : "ลองใหม่"}
-      </button>
-    </div>
-  );
+export function ListError({ message, onRetry, retrying }: { message: string; onRetry: () => void; retrying: boolean }) {
+  return <LibraryEmpty tone="danger" title={message} action={<Button variant="outline" size="sm" disabled={retrying} onClick={onRetry}>{retrying ? "กำลังลองใหม่…" : "ลองใหม่"}</Button>} />;
 }

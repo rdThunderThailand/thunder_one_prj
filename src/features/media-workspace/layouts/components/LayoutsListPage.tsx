@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { buttonClasses } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Plus } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { Pagination } from "@/components/ui/Pagination";
-import { StatTile } from "@/components/ui/StatTile";
+import { buttonVariants } from "@/components/ui/lovable/button";
+import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { LibraryShell } from "../../content-library/LibraryShell";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { duplicateLayout, fetchLayouts, setLayoutStatus } from "../services/layouts-api";
 import { copyName, filterLayouts, paginate, sortLayouts, summarize } from "../list-filtering";
@@ -20,7 +20,7 @@ import type { ListFilters, Sort, SortKey } from "../list-filtering";
 import type { LayoutListItem } from "../types";
 import { LayoutsFilters } from "./LayoutsFilters";
 import { LayoutsTable, type RowAction } from "./LayoutsTable";
-import { ListEmpty, ListError, ListSkeleton, SummarySkeleton } from "./LayoutsListStates";
+import { LayoutsSummary, ListEmpty, ListError, ListSkeleton, SummarySkeleton } from "./LayoutsListStates";
 
 export function LayoutsListPage() {
   const router = useRouter();
@@ -155,87 +155,41 @@ export function LayoutsListPage() {
       <PageHeader
         title="Templates"
         subtitle="Create and manage reusable Zone geometry for Layouts."
-        actions={
-          <Link href="/media-workspace/layouts/templates/create" className={buttonClasses("primary")}>
-            + New Template
-          </Link>
-        }
+        titleInTopbar
+        actions={<Link href="/media-workspace/layouts/templates/create" className={buttonVariants({ size: "sm" })}><Plus className="h-3.5 w-3.5" />New Template</Link>}
       />
 
-      {stats === null ? (
-        <SummarySkeleton />
-      ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatTile label="Total Layouts" value={String(stats.total)} />
-          <StatTile label="Active" value={String(stats.active)} color="emerald" />
-          <StatTile label="Inactive" value={String(stats.inactive)} />
-        </div>
-      )}
+      {stats === null ? <SummarySkeleton count={3} /> : <LayoutsSummary stats={stats} />}
 
-      <Card className="flex h-[calc(100vh-345px)] min-h-[420px] flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-border p-5">
-          <LayoutsFilters
-            value={filters}
-            onClearAll={qs === "" ? undefined : handleClearAll}
-            onChange={(next) => {
-              setFilters(next);
-              setPage(1);
-            }}
-          />
-          {/* กำลังรีเฟรช… shown only during a background reload, not initial load */}
-          {refreshing && layouts !== null && (
-            <p className="text-right text-xs text-muted-foreground">กำลังรีเฟรช…</p>
-          )}
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-auto p-5">
-          {actionError && <p className="mb-3 text-sm text-danger">{actionError}</p>}
-
-          {error && layouts !== null && (
-            <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-3">
-              <p className="text-sm text-danger">{error.message}</p>
-            </div>
-          )}
-
-          {layouts === null && !error ? (
-            <ListSkeleton />
-          ) : layouts === null && error ? (
-            <ListError message={error.message} onRetry={reload} retrying={refreshing} />
-          ) : rows.length === 0 ? (
-            <ListEmpty
-              cause={layouts!.length === 0 ? "no-layouts" : "no-match"}
-              onClearFilters={handleClearAll}
-            />
-          ) : (
-            <LayoutsTable
-              rows={rows}
-              busyId={busyId}
-              sort={sort}
-              onAction={handleAction}
-              onSortChange={handleSortChange}
-            />
-          )}
-        </div>
-
-        {rows.length > 0 && (
-          <div className="shrink-0 border-t border-border px-5 py-4 [&>div]:mt-0">
-            <Pagination
-              page={currentPage}
-              totalPages={totalPages}
-              perPage={perPage}
-              totalItems={sorted.length}
-              rangeStart={(currentPage - 1) * perPage + 1}
-              rangeEnd={Math.min(currentPage * perPage, sorted.length)}
-              itemLabel="layouts"
-              onPageChange={setPage}
-              onPerPageChange={(next) => {
-                setPerPage(next);
-                setPage(1);
-              }}
-            />
+      <LibraryShell
+        toolbar={
+          <>
+            <LayoutsFilters value={filters} onClearAll={qs === "" ? undefined : handleClearAll} onChange={(next) => { setFilters(next); setPage(1); }} />
+            {refreshing && layouts !== null && <span className="ml-auto text-[10px] text-muted-foreground">กำลังรีเฟรช…</span>}
+          </>
+        }
+        title="All Templates"
+        meta={layouts === null ? "…" : `${sorted.length.toLocaleString()} templates`}
+        footer={rows.length > 0 && (
+          <LibraryPagination page={currentPage} totalPages={totalPages} total={sorted.length} pageSize={perPage} onPage={setPage} itemLabel="templates" perPageOptions={[10, 25, 50]} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
+        )}
+      >
+        {actionError && <p className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {error && layouts !== null && (
+          <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-3">
+            <p className="text-[10px] text-danger">{error.message}</p>
           </div>
         )}
-      </Card>
+        {layouts === null && !error ? (
+          <ListSkeleton />
+        ) : layouts === null && error ? (
+          <ListError message={error.message} onRetry={reload} retrying={refreshing} />
+        ) : rows.length === 0 ? (
+          <ListEmpty cause={layouts!.length === 0 ? "no-layouts" : "no-match"} onClearFilters={handleClearAll} />
+        ) : (
+          <LayoutsTable rows={rows} busyId={busyId} sort={sort} onAction={handleAction} onSortChange={handleSortChange} />
+        )}
+      </LibraryShell>
 
       <Modal
         open={archiveTarget !== null}

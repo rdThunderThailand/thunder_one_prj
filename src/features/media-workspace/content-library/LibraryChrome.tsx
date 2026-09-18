@@ -18,10 +18,13 @@ export type SummaryCard = {
   onClick?: () => void;
 };
 
+const COLS: Record<number, string> = { 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "xl:grid-cols-5" };
+const summaryGrid = (count: number) => cn("grid gap-3 sm:grid-cols-2", COLS[Math.min(5, Math.max(3, count))]);
+
 /** Lovable `MediaSummary` cards. */
 export function LibrarySummary({ cards, label }: { cards: SummaryCard[]; label: string }) {
   return (
-    <section className={cn("grid gap-3 sm:grid-cols-2", cards.length >= 5 ? "xl:grid-cols-5" : "lg:grid-cols-4")} aria-label={label}>
+    <section className={summaryGrid(cards.length)} aria-label={label}>
       {cards.map((card) => {
         const Tag = card.onClick ? "button" : "article";
         return (
@@ -43,7 +46,7 @@ export function LibrarySummary({ cards, label }: { cards: SummaryCard[]; label: 
 
 export function LibrarySummarySkeleton({ count }: { count: number }) {
   return (
-    <div className={cn("grid gap-3 sm:grid-cols-2", count >= 5 ? "xl:grid-cols-5" : "lg:grid-cols-4")} aria-hidden="true">
+    <div className={summaryGrid(count)} aria-hidden="true">
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="flex min-h-22 items-center gap-3 rounded-xl border border-border bg-card p-4">
           <div className="h-9 w-9 animate-pulse rounded-lg bg-muted" />
