@@ -2,26 +2,47 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, TriangleAlert, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { findChannelAttention, formatChannelLastSeen, type ChannelListItem } from "@/features/media-workspace/channels";
+import { channelTypeLabel, findChannelAttention, formatChannelLastSeen, type ChannelListItem } from "@/features/media-workspace/channels";
 
 export function RecentAlertsCard({ channels, loadFailed }: { channels: ChannelListItem[] | null; loadFailed: boolean }) {
   const attention = channels ? findChannelAttention(channels).slice(0, 4) : [];
 
   return (
-    <Card className="flex min-h-[370px] flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
+    <Card className="flex h-[240px] flex-col overflow-hidden rounded-xl border-border p-4 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Needs Attention</h2>
-        <Link href="/media-workspace/channels?q=attention" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800">
+        <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Needs Attention</h2>
+        <Link href="/media-workspace/channels?q=attention" className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline">
           View all alerts
-          <ArrowRight className="h-3.5 w-3.5" />
+          <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
-      {loadFailed ? <p className="py-8 text-center text-sm text-red-500">Could not load channel health</p> : channels === null ? <div className="space-y-3">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-10 w-full" />)}</div> : attention.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center"><CheckCircle2 className="h-6 w-6 text-emerald-500" /><p className="text-sm font-medium text-zinc-700">All devices are healthy</p></div> : (
-        <ul className="flex flex-1 flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+      {loadFailed ? <p className="py-8 text-center text-xs text-red-500">Could not load channel health</p> : channels === null ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-9 w-full" />)}</div> : attention.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center"><CheckCircle2 className="h-6 w-6 text-emerald-500" /><p className="text-xs font-medium text-foreground">All devices are healthy</p></div> : (
+        <ul className="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-hidden">
           {attention.map(({ channel, device }) => {
             const isOffline = device.health === "offline";
             const Icon = isOffline ? XCircle : TriangleAlert;
-            return <li key={device.id}><Link href={`/media-workspace/channels?q=${encodeURIComponent(channel.name)}`} className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"><span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${isOffline ? "bg-red-50 text-red-500" : "bg-amber-50 text-amber-500"}`}><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1 space-y-0.5"><span className="block truncate text-sm font-medium leading-5 text-zinc-900 dark:text-zinc-100">{channel.name}</span><span className="block truncate text-xs leading-4 text-zinc-500">{device.name} · {formatChannelLastSeen(device.last_heartbeat_at)}</span></span><span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium capitalize text-zinc-500 dark:bg-zinc-800">{device.health}</span></Link></li>;
+            const lastSeen = formatChannelLastSeen(device.last_heartbeat_at).replace(/^Last seen /, "");
+            return (
+              <li key={device.id}>
+                <Link
+                  href={`/media-workspace/channels/${channel.id}/edit`}
+                  aria-label={`Open ${channel.name}`}
+                  className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md py-2 transition-colors hover:bg-muted/60"
+                >
+                  <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${isOffline ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning"}`}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-[11px] font-semibold leading-4 text-foreground">{channel.name} · {device.name}</span>
+                    <span className="mt-0.5 block truncate text-[9px] capitalize leading-3 text-muted-foreground">Player {device.health}</span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-[9px] text-muted-foreground">{lastSeen}</span>
+                    <span className="rounded-full border border-border px-2 py-0.5 text-[8px] font-semibold text-muted-foreground">{channelTypeLabel(channel)}</span>
+                  </span>
+                </Link>
+              </li>
+            );
           })}
         </ul>
       )}

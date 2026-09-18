@@ -13,7 +13,7 @@ const cards = [
 ] as const;
 
 const colors = {
-  indigo: { icon: "bg-indigo-50 text-indigo-600", bar: "bg-indigo-500" },
+  indigo: { icon: "bg-primary-soft text-primary", bar: "bg-primary" },
   emerald: { icon: "bg-emerald-50 text-emerald-600", bar: "bg-emerald-500" },
   amber: { icon: "bg-amber-50 text-amber-600", bar: "bg-amber-500" },
   red: { icon: "bg-red-50 text-red-600", bar: "bg-red-500" },
@@ -23,28 +23,52 @@ export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListIt
   const summary = channels ? summarizeChannels(channels) : null;
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {cards.map(({ key, label, href, color, Icon }) => {
         // ADR 0074 §4: Channel status is the Player's health, so this rolls up Channels now,
         // not Devices — `summary` is flat ({ total, online, warning, offline }).
         const value = summary?.[key];
         const percent = summary?.total ? Math.round(((value ?? 0) / summary.total) * 1000) / 10 : 0;
         return (
-          <Link key={key} href={href} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-            <Card className="flex min-h-26 flex-col gap-2 border-border p-4 shadow-panel transition group-hover:-translate-y-0.5 group-hover:border-foreground/20 group-hover:shadow-float">
-              <div className="flex items-start justify-between"><p className="text-sm text-zinc-500">{label}</p><span className={`grid h-8 w-8 place-items-center rounded-lg ${colors[color].icon}`}><Icon className="h-4 w-4" /></span></div>
-              {loadFailed ? <><span className="text-2xl font-semibold text-zinc-400">—</span><p className="text-xs text-red-500">Could not load channel health</p></> : summary === null ? <><Skeleton className="h-8 w-16" /><Skeleton className="h-3 w-24" /></> : <>
-                <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</span>
-                <p className="text-xs text-zinc-500">{key === "total" ? `${summary.total} Channels` : `${percent}% of Channels`}</p>
-                <span className="mt-auto h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"><span className={`block h-full origin-left animate-grow-bar rounded-full ${colors[color].bar}`} style={{ width: `${key === "total" ? 100 : percent}%` }} /></span>
-              </>}
+          <Link key={key} href={href} className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Card className="flex h-[140px] flex-col rounded-xl border-border p-4 shadow-panel transition group-hover:-translate-y-0.5 group-hover:border-foreground/20 group-hover:shadow-float">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+                <span className={`grid h-8 w-8 place-items-center rounded-lg ${colors[color].icon}`}>
+                  <Icon className="h-4 w-4" />
+                </span>
+              </div>
+              {loadFailed ? (
+                <>
+                  <span className="mt-2 text-2xl font-bold text-zinc-400">—</span>
+                  <p className="mt-auto truncate text-[10px] text-red-500">Could not load channel health</p>
+                </>
+              ) : summary === null ? (
+                <div className="mt-2 space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              ) : (
+                <>
+                  <span className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</span>
+                  <p className="mt-auto truncate text-[10px] text-muted-foreground">
+                    {key === "total" ? `${summary.total} Channels` : `${percent}% of Channels`}
+                  </p>
+                  <span className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+                    <span
+                      className={`block h-full origin-left animate-grow-bar rounded-full ${colors[color].bar}`}
+                      style={{ width: `${key === "total" ? 100 : percent}%` }}
+                    />
+                  </span>
+                </>
+              )}
             </Card>
           </Link>
         );
       })}
       {/* Delivery success rate has no aggregate endpoint yet (docs/adr/0075 §7) —
           an honest empty state, not the Lovable mockup's invented "98.6%". */}
-      <Card className="flex min-h-26 flex-col border-border p-3 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
+      <Card className="flex h-[140px] flex-col overflow-hidden rounded-xl border-border p-3 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
         <EmptyState icon={Gauge} title="No delivery data" detail="Delivery success rate isn't tracked yet." compact />
       </Card>
     </div>

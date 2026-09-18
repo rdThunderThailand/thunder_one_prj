@@ -97,8 +97,8 @@ assert.deepEqual(mapNowNextPrograms(null), { nowPlaying: null, nextUp: null });
 // Nothing upcoming inside the horizon: Next Up is empty even though rows are airing now.
 assert.equal(mapNowNextPrograms(response([row({ current: occurrence([alpha]) })])).nextUp, null);
 
-// A `current` set that is entirely `not_confirmed` never lights the card — the rows are
-// scheduled, but nothing is playing on them.
+// A scheduled current Publication still appears when playback is not confirmed. The card's
+// badge distinguishes that state from LIVE instead of hiding the Publication completely.
 {
   const quiet = mapNowNextPrograms(
     response([
@@ -106,7 +106,9 @@ assert.equal(mapNowNextPrograms(response([row({ current: occurrence([alpha]) })]
       row({ current: occurrence([beta], { playback_state: "stale" }) }),
     ])
   );
-  assert.equal(quiet.nowPlaying, null);
+  assert.equal(quiet.nowPlaying?.id, "a");
+  assert.equal(quiet.nowPlaying?.confirmedRows, 0);
+  assert.equal(quiet.nowPlaying?.playbackState, "not_confirmed");
 }
 
 // A mixed set: rank counts confirmed rows only, while the target summary counts every row the
@@ -124,7 +126,8 @@ assert.equal(mapNowNextPrograms(response([row({ current: occurrence([alpha]) })]
   assert.equal(mixed.nowPlaying?.id, "b");
   assert.equal(mixed.nowPlaying?.confirmedRows, 2);
   const quieter = mapNowNextPrograms(response([row({ current: occurrence([alpha], { playback_state: "stale" }) })]));
-  assert.equal(quieter.nowPlaying, null);
+  assert.equal(quieter.nowPlaying?.id, "a");
+  assert.equal(quieter.nowPlaying?.playbackState, "stale");
 }
 
 // Next Up takes the earliest opening outright, whatever it is playing on.

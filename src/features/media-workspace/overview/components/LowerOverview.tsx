@@ -8,7 +8,7 @@ import { DonutChart } from "@/components/ui/DonutChart";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { ChannelListItem } from "@/features/media-workspace/channels";
 import type { PublicationListItem } from "@/features/media-workspace/publications";
-import { scheduleTime, targetSummary, todaysSchedule } from "../todays-schedule";
+import { scheduleDotClass, scheduleTime, targetSummary, todaysSchedule } from "../todays-schedule";
 import { QuickActionsCard } from "./QuickActionsCard";
 
 function formatTime(iso: string, timeZone = "Asia/Bangkok") {
@@ -82,7 +82,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
         label: `Channel “${channel.name}” updated`,
         at: channel.updated_at,
         icon: Monitor,
-        color: "text-indigo-500",
+        color: "text-primary",
       })),
       ...(publications ?? []).map((publication) => ({
         label: `Publication “${publication.name}” updated`,
@@ -112,11 +112,11 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
   ] as const;
 
   return (
-    <div className="grid items-stretch gap-4 xl:grid-cols-3">
-      <Card className="flex min-h-[509px] flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
+    <div className="grid items-stretch gap-4 xl:grid-cols-3 xl:grid-rows-[minmax(0,1fr)_auto]">
+      <Card className="flex min-h-[509px] flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:row-span-2">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Today&apos;s Schedule</h2>
-          <Link href="/media-workspace/publications" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+          <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Today&apos;s Schedule</h2>
+          <Link href="/media-workspace/publications" className="text-xs font-medium text-primary hover:underline">
             View full calendar →
           </Link>
         </div>
@@ -130,7 +130,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
           <ol>
             {data.schedule.map((row) => (
               <li key={row.id} className="grid grid-cols-[8px_52px_minmax(0,1fr)_auto] items-center gap-3 border-b border-zinc-100 py-4 text-xs last:border-0 dark:border-zinc-800">
-                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className={`h-2 w-2 rounded-full ${scheduleDotClass(row)}`} />
                 <time className="font-semibold text-zinc-700 dark:text-zinc-200">{scheduleTime(row)}</time>
                 <span className="min-w-0">
                   <span className="block truncate font-medium text-zinc-800 dark:text-zinc-100">{row.name}</span>
@@ -143,11 +143,10 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
         )}
       </Card>
 
-      <div className="flex min-h-[509px] flex-col gap-4">
-        <Card className="flex min-h-0 flex-1 flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
+      <Card className="flex min-h-0 flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:col-start-2 xl:row-start-1">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Channel Health</h2>
-            <Link href="/media-workspace/channels" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Channel Health</h2>
+            <Link href="/media-workspace/channels" className="text-xs font-medium text-primary hover:underline">
               View all channels →
             </Link>
           </div>
@@ -189,12 +188,12 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
               </div>
             </div>
           )}
-        </Card>
+      </Card>
 
-        <Card className="shrink-0 border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
+      <Card className="border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:col-start-2 xl:row-start-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Channels by Type</h2>
-            <Link href="/media-workspace/channels" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Channels by Type</h2>
+            <Link href="/media-workspace/channels" className="text-xs font-medium text-primary hover:underline">
               View all channels →
             </Link>
           </div>
@@ -214,7 +213,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
                 const Icon = typeIcon(label);
                 return (
                   <div key={label} className="rounded-lg border border-zinc-100 p-3 text-center dark:border-zinc-800">
-                    <Icon className="mx-auto h-5 w-5 text-indigo-500" />
+                    <Icon className="mx-auto h-5 w-5 text-primary" />
                     <p className="mt-2 truncate text-xs font-medium text-zinc-600 dark:text-zinc-300">{label}</p>
                     <p className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">{count}</p>
                     <p className="mt-1 text-[10px] text-zinc-400">Channels</p>
@@ -223,18 +222,16 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
               })}
             </div>
           )}
-        </Card>
-      </div>
+      </Card>
 
-      <div className="flex min-h-[509px] flex-col gap-4">
-        <div className="shrink-0">
-          <QuickActionsCard />
-        </div>
-        <Card className="flex min-h-0 flex-1 flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
+      <div className="min-h-0 xl:col-start-3 xl:row-start-1">
+        <QuickActionsCard />
+      </div>
+      <Card className="flex min-h-0 flex-col border-border p-4 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:col-start-3 xl:row-start-2">
           <div className="mb-4 flex items-center justify-between">
             {/* Not an audit log — synthesized from each row's own `updated_at`
                 (docs/adr/0075 §7), so it's labeled for what it actually is. */}
-            <h2 className="text-xs font-medium uppercase text-zinc-900 dark:text-zinc-50">Recent Updates</h2>
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Recent Updates</h2>
           </div>
           {loadFailed ? (
             <p className="py-2 text-xs text-red-500">Could not load recent updates</p>
@@ -253,8 +250,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
               ))}
             </ul>
           )}
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 }

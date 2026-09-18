@@ -77,7 +77,7 @@ export function OverviewDashboard({ actions }: { actions?: ReactNode }) {
       </div>
 
       <StatCardsRow channels={filteredChannels} loadFailed={loadFailed} />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.15fr_0.95fr_1.2fr]">
         <ProgramStatusCards />
         <RecentAlertsCard channels={filteredChannels} loadFailed={loadFailed} />
       </div>
