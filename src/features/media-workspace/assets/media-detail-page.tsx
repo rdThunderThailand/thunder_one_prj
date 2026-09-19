@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ChevronRight, Download, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button, buttonClasses } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/lovable/badge";
+import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Input } from "@/components/ui/lovable/input";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { EditIcon } from "@/components/ui/icons";
@@ -43,12 +45,16 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 function ComingSoon({ label, className = "" }: { label: string; className?: string }) {
-  return <button type="button" disabled title="Coming soon" className={`rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground ${className}`}>{label}</button>;
+  return (
+    <Button variant="outline" disabled title="Coming soon" className={className}>
+      {label}
+    </Button>
+  );
 }
 
 function QuickActions({ onTrash }: { onTrash: () => void }) {
   const compactClassName = "w-full px-2 py-2 text-xs";
-  return <Card className="p-4">
+  return <section className="rounded-xl border border-border bg-card p-4 shadow-panel">
     <h2 className="mb-3 font-semibold">Quick Actions</h2>
     <div className="grid grid-cols-2 gap-2">
       <ComingSoon label="Add to Playlist" className={compactClassName} />
@@ -56,9 +62,12 @@ function QuickActions({ onTrash }: { onTrash: () => void }) {
       <ComingSoon label="Publish Now" className={compactClassName} />
       <ComingSoon label="Replace File" className={compactClassName} />
       <ComingSoon label="Duplicate" className={compactClassName} />
-      <Button variant="secondary" onClick={onTrash} className="w-full px-2 py-2 text-xs text-danger">Move to Trash</Button>
+      <Button variant="outline" onClick={onTrash} className="w-full px-2 py-2 text-xs text-danger">
+        <Trash2 className="h-3.5 w-3.5" />
+        Move to Trash
+      </Button>
     </div>
-  </Card>;
+  </section>;
 }
 
 export function MediaDetailPage({ assetId }: { assetId: string }) {
@@ -96,7 +105,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   }, [asset?.height, asset?.width]);
 
   if (error?.kind === "forbidden") return <NoAccess message={error.message} />;
-  if (error) return <div className="space-y-4 py-16 text-center"><p className={error.kind === "not-found" ? "text-muted-foreground" : "text-danger"}>{error.message}</p><Link href="/media-workspace/assets" className={buttonClasses("secondary")}>Back to Media Library</Link></div>;
+  if (error) return <div className="space-y-4 py-16 text-center"><p className={error.kind === "not-found" ? "text-muted-foreground" : "text-danger"}>{error.message}</p><Link href="/media-workspace/assets" className={buttonVariants({ variant: "secondary" })}>Back to Media Library</Link></div>;
   if (!asset) return <p className="py-16 text-center text-sm text-muted-foreground">Loading media…</p>;
 
   const move = async (folderId: string | null) => {
@@ -133,28 +142,44 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   };
 
   return <div className="space-y-4">
-    <div className="text-xs text-muted-foreground"><Link href="/media-workspace/assets" className="hover:text-primary">Media Library</Link><span className="mx-2">/</span>{label}</div>
-    <PageHeader title="Media Detail" subtitle={label} actions={<div className="flex flex-wrap gap-2">{previewUrl ? <a href={previewUrl} download={asset.file?.original_filename} className={buttonClasses("secondary")}>Download</a> : <Button variant="secondary" disabled>Download</Button>}<ComingSoon label="More" /></div>} />
+    <PageHeader
+      title="Media Detail"
+      subtitle="Inspect and manage a single media asset."
+      titleInTopbar
+      actions={<div className="flex flex-wrap gap-2">{previewUrl ? <a href={previewUrl} download={asset.file?.original_filename} className={buttonVariants({ variant: "outline", size: "sm" })}><Download className="h-3.5 w-3.5" />Download</a> : <Button variant="outline" size="sm" disabled>Download</Button>}<ComingSoon label="More" className="h-8 text-xs" /></div>}
+    />
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <Link href="/media-workspace/assets" className="hover:text-foreground">Media Library</Link>
+      <ChevronRight className="h-3 w-3" />
+      <span className="truncate text-foreground">{label}</span>
+    </nav>
+    <div>
+      <h1 className="text-xl font-bold text-foreground">Media Detail</h1>
+      <Link href="/media-workspace/assets" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80">
+        <ArrowLeft className="h-3 w-3" />
+        Back to Media Library
+      </Link>
+    </div>
 
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-4">
-        <Card className="grid overflow-hidden p-0 lg:h-[394px] lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,1fr)]">
-          <div className="min-h-64 bg-foreground lg:h-full lg:min-h-0">
+        <section className="grid gap-4 rounded-xl border border-border bg-card p-4 shadow-panel lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)]">
+          <div className="min-h-64 overflow-hidden rounded-lg border border-border bg-foreground lg:min-h-0">
             {asset.kind === "video" && previewUrl ? <video src={previewUrl} controls poster={thumbnailUrl} className="h-full w-full object-contain" /> : <MediaThumb url={previewUrl} thumbnailUrl={thumbnailUrl} kind={asset.kind} mimeType={asset.file?.mime_type} alt={label} className="h-full w-full rounded-none object-contain" />}
           </div>
           <div className="space-y-5 p-5">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 {isRenaming ? <form className="flex min-w-0 flex-1 items-center gap-2" onSubmit={(event) => { event.preventDefault(); void rename(); }}>
-                  <input autoFocus aria-label="Media name" value={draftTitle} maxLength={200} onChange={(event) => { setDraftTitle(event.target.value); setRenameError(""); }} onKeyDown={(event) => { if (event.key === "Escape") { setIsRenaming(false); setRenameError(""); } }} className="min-w-0 flex-1 rounded-lg border border-primary bg-card px-3 py-2 text-base font-semibold outline-none ring-2 ring-primary/30" />
+                  <Input autoFocus aria-label="Media name" value={draftTitle} maxLength={200} onChange={(event) => { setDraftTitle(event.target.value); setRenameError(""); }} onKeyDown={(event) => { if (event.key === "Escape") { setIsRenaming(false); setRenameError(""); } }} className="min-w-0 flex-1 border-primary text-base font-semibold ring-2 ring-primary/30" />
                   <Button type="submit" className="px-3 py-2">Save</Button>
                   <Button type="button" variant="secondary" className="px-3 py-2" onClick={() => { setIsRenaming(false); setRenameError(""); }}>Cancel</Button>
                 </form> : <>
                   <h2 className="min-w-0 break-words text-xl font-semibold text-foreground">{label}</h2>
                   <button type="button" aria-label="Rename media" title="Rename media" onClick={() => { setDraftTitle(label); setIsRenaming(true); setRenameError(""); }} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"><EditIcon /></button>
                 </>}
-                <span className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${asset.status === "failed" ? "bg-danger-soft text-danger" : "bg-success-soft text-success"}`}>{asset.status ?? "ready"}</span>
-                {asset.status !== "failed" && asset.rendition?.present && <span className="rounded-full bg-primary-soft px-2 py-1 text-xs font-medium text-primary">แปลงแล้ว</span>}
+                <Badge variant={asset.status === "failed" ? "danger" : "success"} className="capitalize">{asset.status ?? "ready"}</Badge>
+                {asset.status !== "failed" && asset.rendition?.present && <Badge variant="info">แปลงแล้ว</Badge>}
               </div>
               {/* ADR 0071: `processing` is a background conversion in progress, not a refusal — the
                   ADR 0070 verdict sentence would misdescribe it. `failed` is a refusal and always
@@ -173,21 +198,21 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
             </div>
             <dl><Fact label="Uploaded by" value={asset.created_by?.display_name ?? "—"} /><Fact label="Uploaded on" value={formatDate(asset.created_at)} /><Fact label="Dimensions" value={dimensions} /><Fact label="Duration" value={formatDuration(asset.duration_seconds)} /><Fact label="Folder" value={folderPath(folders, asset.folder_id)} /><Fact label="File ID" value={asset.file?.id ?? "—"} /><Fact label="Source" value="Uploaded" /></dl>
           </div>
-        </Card>
+        </section>
 
-        <Card className="overflow-hidden p-0">
+        <section className="overflow-hidden rounded-xl border border-border bg-card shadow-panel">
           <div className="flex gap-6 border-b border-border px-5"><button className="border-b-2 border-primary py-3 text-sm font-medium text-primary">Overview</button>{["Metadata", "Versions", "Activity History"].map((tab) => <button key={tab} disabled title="Coming soon" className="py-3 text-sm text-muted-foreground">{tab}</button>)}</div>
           <div className="grid gap-5 p-4 lg:grid-cols-2">
             <section><h3 className="mb-2 font-semibold">File Information</h3><dl><Fact label="File name" value={asset.file?.original_filename ?? "—"} /><Fact label="File type" value={asset.file?.mime_type ?? "—"} /><Fact label="File size" value={formatBytes(asset.file?.file_size_bytes)} /><Fact label="Dimensions" value={dimensions} /><Fact label="Created on" value={formatDate(asset.created_at)} /><Fact label="Last modified" value={formatDate(asset.updated_at)} /></dl></section>
             <section><h3 className="mb-2 font-semibold">Technical Information</h3><dl><Fact label="Resolution" value={dimensions} /><Fact label="Aspect ratio" value={aspectRatio} /><Fact label="Codec" value={asset.codec ?? "—"} /><Fact label="Checksum" value={asset.file?.checksum ?? "—"} /></dl></section>
           </div>
-        </Card>
+        </section>
       </div>
 
       <aside className="space-y-4">
-        <Card className="flex min-h-[394px] flex-col p-0 xl:h-[394px]"><div className="flex items-center justify-between border-b border-border px-5 py-4"><h2 className="font-semibold">Usage (Where it&apos;s used)</h2><span className="text-xs text-muted-foreground">Coming soon</span></div><div className="flex flex-1 items-center p-5"><p className="w-full rounded-lg bg-muted p-4 text-sm leading-5 text-muted-foreground">Usage counts will appear when a tenant-scoped usage contract is available.</p></div></Card>
-        <Card className="p-4"><h2 className="font-semibold">Tags</h2>{asset.tags?.length ? <div className="mt-3 flex flex-wrap gap-2">{asset.tags.map((tag) => <span key={tag.id} className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary">{tag.name}</span>)}</div> : <p className="mt-3 text-sm text-muted-foreground">No tags assigned.</p>}</Card>
-        <Card className="p-4"><h2 className="font-semibold">Move to Folder</h2><select aria-label={`Move ${label}`} value={asset.folder_id ?? ""} disabled={isMoving} onChange={(event) => void move(event.target.value || null)} className="mt-3 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"><option value="">Uncategorized</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select></Card>
+        <section className="flex min-h-[260px] flex-col rounded-xl border border-border bg-card shadow-panel"><div className="flex items-center justify-between border-b border-border px-5 py-4"><h2 className="font-semibold">Usage (Where it&apos;s used)</h2><Badge variant="neutral">Coming soon</Badge></div><div className="flex flex-1 items-center p-5"><p className="w-full rounded-lg bg-muted p-4 text-sm leading-5 text-muted-foreground">Usage counts will appear when a tenant-scoped usage contract is available.</p></div></section>
+        <section className="rounded-xl border border-border bg-card p-4 shadow-panel"><h2 className="font-semibold">Tags</h2>{asset.tags?.length ? <div className="mt-3 flex flex-wrap gap-2">{asset.tags.map((tag) => <Badge key={tag.id} variant="secondary">{tag.name}</Badge>)}</div> : <p className="mt-3 text-sm text-muted-foreground">No tags assigned.</p>}</section>
+        <section className="rounded-xl border border-border bg-card p-4 shadow-panel"><h2 className="font-semibold">Move to Folder</h2><select aria-label={`Move ${label}`} value={asset.folder_id ?? ""} disabled={isMoving} onChange={(event) => void move(event.target.value || null)} className="mt-3 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"><option value="">Uncategorized</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select></section>
         <QuickActions onTrash={() => void trash()} />
       </aside>
     </div>
