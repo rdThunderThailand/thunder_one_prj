@@ -37,13 +37,19 @@ export function UserMenu({ userName, roleLabel }: UserMenuProps) {
         aria-expanded={isOpen}
         className="flex items-center gap-3 rounded-lg px-1.5 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-900"
       >
-        <Avatar name={userName} size={44} className="shadow-sm" />
+        {/* 2026-09-19: 44px -> 32px, matching the design reference's own
+            avatar size exactly (measured 32x32). */}
+        <Avatar name={userName} size={32} className="shadow-sm" />
+        {/* 2026-09-19: matched to the design reference's user-block
+            typography direction (bold name, small light role label) — was
+            text-base (16px) and a bespoke 12.8px, both noticeably larger
+            than the reference's own (very compact) 10px/8px. */}
         <span className="text-left leading-tight">
-          <span className="block text-base font-bold text-[#071858] dark:text-zinc-100">
+          <span className="block text-2xs font-bold text-[#071858] dark:text-zinc-100">
             {userName}
           </span>
           {roleLabel && (
-            <span className="block text-[12.8px] text-[#6071a1] dark:text-zinc-400">{roleLabel}</span>
+            <span className="block text-3xs text-[#6071a1] dark:text-zinc-400">{roleLabel}</span>
           )}
         </span>
         <ChevronDownIcon className="h-4 w-4 text-[#536999] dark:text-zinc-500" />
