@@ -59,12 +59,12 @@ function TemplateCard({ entry, selected, onSelect }: { entry: PickerEntry; selec
       {selected && (
         <span className="absolute right-1.5 top-1.5 z-10 grid h-5 w-5 place-items-center rounded-full bg-primary text-xs text-white" aria-hidden="true">✓</span>
       )}
-      <span className="flex h-32 w-full items-center justify-center rounded-lg bg-muted">
+      <span className="flex h-32 w-full items-center justify-center rounded-lg bg-program p-2">
         <LayoutWireframe
           zones={entry.zones}
-          background="#f8fafc"
+          background="var(--program)"
           aspectRatio={entry.aspectRatio}
-          shouldShowLabels
+          programStyle
           className="h-full max-w-full rounded-lg border border-border"
         />
       </span>
@@ -195,7 +195,7 @@ export function LayoutTemplatePicker({
     <Modal
       open={open}
       onClose={resetAndClose}
-      size={step === "start" ? "form" : "xl"}
+      size={step === "start" ? "lg" : "xl"}
       title={step === "start" ? "New Layout" : "Template Picker"}
       showCloseButton
       footer={footer}
@@ -273,7 +273,7 @@ export function LayoutTemplatePicker({
             <p className="mb-3 text-sm font-semibold text-foreground">Template Details</p>
             <div className="min-h-0 flex-1">{selected ? (
               <div className="space-y-3">
-                <LayoutWireframe zones={selected.zones} background="#f8fafc" aspectRatio={selected.aspectRatio} shouldShowLabels className="w-full rounded-lg border border-border" />
+                <LayoutWireframe zones={selected.zones} background="var(--program)" aspectRatio={selected.aspectRatio} programStyle className="w-full rounded-lg border border-border" />
                 <div><p className="font-semibold text-foreground">{selected.name}</p><p className="mt-1 text-xs text-muted-foreground">{selected.zoneCount} Zones · {selected.orientation}</p></div>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs"><dt className="text-muted-foreground">Resolution</dt><dd>{selected.referenceResolution ?? "Not set"}</dd><dt className="text-muted-foreground">Aspect ratio</dt><dd>{selected.aspectRatio}</dd><dt className="text-muted-foreground">On use</dt><dd>{selected.behaviour === "copied" ? "Copied" : "Shared"}</dd></dl>
                 {selected.useCases.length > 0 && <div className="flex flex-wrap gap-1">{selected.useCases.map((useCase) => <span key={useCase} className="rounded-full bg-primary-soft px-2 py-1 text-[11px] text-primary">{useCase}</span>)}</div>}

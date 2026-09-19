@@ -25,12 +25,12 @@ const canvasLabelClasses = "grid grid-rows-[20px_40px] gap-1.5";
 
 function ChoiceIcon({ kind }: { kind: StartChoice }) {
   return kind === "blank" ? (
-    <svg viewBox="0 0 40 40" fill="none" className="h-10 w-10" aria-hidden="true">
+    <svg viewBox="0 0 40 40" fill="none" className="h-5 w-5" aria-hidden="true">
       <rect x="6" y="7" width="25" height="25" rx="3" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" />
       <path d="M27 27h9m-4.5-4.5v9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   ) : (
-    <svg viewBox="0 0 40 40" fill="none" className="h-10 w-10" aria-hidden="true">
+    <svg viewBox="0 0 40 40" fill="none" className="h-5 w-5" aria-hidden="true">
       <rect x="4" y="8" width="26" height="21" rx="3" stroke="currentColor" strokeWidth="2" />
       <rect x="10" y="13" width="26" height="21" rx="3" fill="white" stroke="currentColor" strokeWidth="2" />
       <path d="M15 29h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -59,25 +59,25 @@ function ChoiceCard({
       role="radio"
       aria-checked={selected}
       onClick={() => onSelect(choice)}
-      className={`relative flex min-h-32 items-center gap-5 rounded-xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-2 ${
+      className={`relative flex items-center gap-3 rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-2 ${
         selected
           ? "border-primary bg-primary-soft ring-1 ring-primary"
           : "border-border hover:border-primary/30"
       }`}
     >
       <span
-        className={`absolute left-4 top-4 h-4 w-4 rounded-full border ${
+        className={`absolute left-3 top-3 h-3.5 w-3.5 rounded-full border ${
           selected ? "border-[5px] border-primary" : "border-border"
         }`}
       />
-      <span className="ml-3 shrink-0 text-primary">
+      <span className="ml-5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
         {selectedTemplate ? (
           <LayoutWireframe
             zones={selectedTemplate.zones}
-            background={selectedTemplate.background}
+            background="var(--program)"
             aspectRatio={selectedTemplate.aspectRatio}
-            shouldShowLabels
-            className="h-16 w-24 rounded-lg border border-primary/30 shadow-sm"
+            programStyle
+            className="h-9 w-16 rounded-md border border-primary/30 shadow-sm"
           />
         ) : (
           <ChoiceIcon kind={choice} />
@@ -154,20 +154,20 @@ export function CreateLayoutStartStep({
   return (
     <div className="space-y-6">
       <fieldset>
-        <legend className="mb-3 text-sm font-semibold text-foreground">1. Choose how to start</legend>
+        <legend className="mb-3 text-sm font-semibold text-foreground">Choose how to start</legend>
         <div role="radiogroup" className="grid gap-3 sm:grid-cols-2">
           <ChoiceCard
             choice="blank"
             selected={choice === "blank"}
             title="Blank Layout"
-            description="Start with an empty canvas and create your own layout."
+            description="Start with an empty canvas"
             onSelect={onChoiceChange}
           />
           <ChoiceCard
             choice="template"
             selected={choice === "template"}
             title="From Template"
-            description="Choose from ready-made layout templates."
+            description="Use a ready-made layout"
             selectedTemplate={selectedTemplate}
             onSelect={(next) => {
               onChoiceChange(next);
@@ -180,7 +180,7 @@ export function CreateLayoutStartStep({
       {(choice === "blank" || resolutionLocked) && (
         <>
           <fieldset className="space-y-3">
-            <legend className="mb-3 text-sm font-semibold text-foreground">2. Layout information</legend>
+            <legend className="mb-3 text-sm font-semibold text-foreground">Layout information</legend>
             <label className="block space-y-1.5">
               <span className="text-sm font-medium text-muted-foreground">Layout name <span className="text-danger">*</span></span>
               <input
@@ -216,7 +216,7 @@ export function CreateLayoutStartStep({
           </fieldset>
 
           <fieldset>
-            <legend className="mb-3 text-sm font-semibold text-foreground">3. Canvas settings</legend>
+            <legend className="mb-3 text-sm font-semibold text-foreground">Canvas settings</legend>
             <div className="grid gap-3 sm:grid-cols-4">
               <label className="space-y-1.5">
                 <span className="flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground">
