@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { WizardSteps } from "@/components/ui/WizardSteps";
 import { ChevronRightIcon } from "@/components/ui/icons";
-import { ApiError } from "@/lib/api/api-error";
+import { ApiError, classifyApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
 import {
   checkEmailTaken,
@@ -466,7 +466,13 @@ export function AddEmployeeWizardPage({ tenantId, roles, units, positionOptions 
         // just won't show up pre-prepended on /people/new-hires; not fatal.
       }
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "ไม่สามารถสร้างพนักงานใหม่ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง";
+      // classifyApiError() (2026-09-17, RBAC audit follow-up) turns a raw 403
+      // ("Forbidden"/whatever Core's own wording is) into a real Thai
+      // permission message instead of showing Core's text verbatim — matters
+      // more now that GET /organizations|members|dashboard dropped from
+      // requireTenantAdmin to requireTenantMember, so non-admin roles reach
+      // this submit step (and its still-admin-gated POST) far more often.
+      const message = classifyApiError(err, "ไม่สามารถสร้างพนักงานใหม่ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง").message;
       setSubmitError(message);
       toast.error(message);
     } finally {

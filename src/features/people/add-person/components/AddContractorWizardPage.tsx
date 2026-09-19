@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { WizardSteps } from "@/components/ui/WizardSteps";
 import { ChevronRightIcon } from "@/components/ui/icons";
-import { ApiError } from "@/lib/api/api-error";
+import { classifyApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
 import {
   checkEmailTaken,
@@ -408,7 +408,10 @@ export function AddContractorWizardPage({ tenantId, roles, units, positionOption
         // just won't show up pre-prepended on /people/new-hires; not fatal.
       }
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "ไม่สามารถสร้างผู้รับเหมาได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง";
+      // classifyApiError() (2026-09-17, RBAC audit follow-up) — see
+      // AddEmployeeWizardPage's identical comment for why this replaced a
+      // raw err.message.
+      const message = classifyApiError(err, "ไม่สามารถสร้างผู้รับเหมาได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง").message;
       setSubmitError(message);
       toast.error(message);
     } finally {
