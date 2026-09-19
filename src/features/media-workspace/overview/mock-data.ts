@@ -3,58 +3,6 @@
 // - Everything exported here remains an R&D placeholder until the corresponding
 //   monitoring/read-side endpoint exists. Do not present it as live telemetry.
 
-export interface StatCardData {
-  id: string;
-  label: string;
-  value: string;
-  total?: string;
-  delta: string;
-  trend: number[];
-  color: "indigo" | "blue" | "amber" | "emerald";
-  icon: "monitor" | "paperPlane" | "calendar" | "checkCircle";
-  failedLabel?: string;
-  failedProgress?: number;
-}
-
-export const statCards: StatCardData[] = [
-  {
-    id: "total-channels",
-    label: "Total Channels",
-    value: "206",
-    delta: "",
-    trend: [40, 42, 38, 45, 50, 48, 55, 60, 58, 62, 65, 63],
-    color: "indigo",
-    icon: "monitor",
-  },
-  {
-    id: "online-channels",
-    label: "Online",
-    value: "186",
-    delta: "90.3% of total",
-    trend: [30, 35, 33, 40, 45, 42, 48, 50, 55, 52, 58, 60],
-    color: "blue",
-    icon: "paperPlane",
-  },
-  {
-    id: "warning-channels",
-    label: "Warning",
-    value: "12",
-    delta: "5.8% of total",
-    trend: [20, 25, 22, 28, 30, 27, 32, 35, 33, 38, 36, 40],
-    color: "amber",
-    icon: "calendar",
-  },
-  {
-    id: "offline-channels",
-    label: "Offline",
-    value: "8",
-    delta: "3.9% of total",
-    trend: [96, 97, 95, 98, 97, 99, 98, 97, 99, 98, 99, 98.6],
-    color: "amber",
-    icon: "calendar",
-  },
-];
-
 export interface AlertItemData {
   id: string;
   severity: "red" | "yellow" | "blue";

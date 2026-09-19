@@ -11,11 +11,16 @@ const cards = [
   { key: "offline", label: "Offline", href: "/media-workspace/channels?q=offline", color: "red", Icon: XIcon },
 ] as const;
 
+// 2026-09-19: icon chips matched to the design reference's own pattern — a
+// single neutral bg-muted chip with a semantic-colored icon (not a per-stat
+// pastel background); `.bar` (the mini progress bar at the bottom of each
+// card) keeps a solid semantic fill, that part already matched the
+// reference as-is.
 const colors = {
-  indigo: { icon: "bg-indigo-50 text-indigo-600", bar: "bg-indigo-500" },
-  emerald: { icon: "bg-emerald-50 text-emerald-600", bar: "bg-emerald-500" },
-  amber: { icon: "bg-amber-50 text-amber-600", bar: "bg-amber-500" },
-  red: { icon: "bg-red-50 text-red-600", bar: "bg-red-500" },
+  indigo: { icon: "bg-muted text-primary", bar: "bg-primary" },
+  emerald: { icon: "bg-muted text-success", bar: "bg-success" },
+  amber: { icon: "bg-muted text-warning", bar: "bg-warning" },
+  red: { icon: "bg-muted text-danger", bar: "bg-danger" },
 };
 
 export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListItem[] | null; loadFailed: boolean }) {
@@ -29,13 +34,15 @@ export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListIt
         const value = summary?.[key];
         const percent = summary?.total ? Math.round(((value ?? 0) / summary.total) * 1000) / 10 : 0;
         return (
-          <Link key={key} href={href} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-            <Card className="flex min-h-31 flex-col gap-3 p-4 transition group-hover:-translate-y-0.5 group-hover:border-indigo-200 group-hover:shadow-sm">
-              <div className="flex items-start justify-between"><p className="text-sm text-zinc-500">{label}</p><span className={`grid h-8 w-8 place-items-center rounded-lg ${colors[color].icon}`}><Icon /></span></div>
-              {loadFailed ? <><span className="text-2xl font-semibold text-zinc-400">—</span><p className="text-xs text-red-500">Could not load channel health</p></> : summary === null ? <><Skeleton className="h-8 w-16" /><Skeleton className="h-3 w-24" /></> : <>
-                <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</span>
-                <p className="text-xs text-zinc-500">{key === "total" ? `${summary.total} Channels` : `${percent}% of Channels`}</p>
-                <span className="mt-auto h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"><span className={`block h-full rounded-full ${colors[color].bar}`} style={{ width: `${key === "total" ? 100 : percent}%` }} /></span>
+          <Link key={key} href={href} className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Card className="flex min-h-31 flex-col gap-3 p-4 transition group-hover:-translate-y-0.5">
+              {/* 2026-09-19: label/value/sub-text sizes matched to the design
+                  reference (11px/600, 24px/700, 10px). */}
+              <div className="flex items-start justify-between"><p className="text-[11px] font-semibold text-muted-foreground">{label}</p><span className={`grid h-8 w-8 place-items-center rounded-lg ${colors[color].icon}`}><Icon /></span></div>
+              {loadFailed ? <><span className="text-2xl font-bold text-muted-foreground">—</span><p className="text-2xs text-danger">Could not load channel health</p></> : summary === null ? <><Skeleton className="h-8 w-16" /><Skeleton className="h-3 w-24" /></> : <>
+                <span className="text-2xl font-bold text-foreground">{value}</span>
+                <p className="text-2xs text-muted-foreground">{key === "total" ? `${summary.total} Channels` : `${percent}% of Channels`}</p>
+                <span className="mt-auto h-1.5 overflow-hidden rounded-full bg-muted"><span className={`block h-full rounded-full ${colors[color].bar}`} style={{ width: `${key === "total" ? 100 : percent}%` }} /></span>
               </>}
             </Card>
           </Link>
