@@ -15,7 +15,7 @@ Reference: Lovable `e8b49026-3bd5-4a8f-b94c-aad813085d2c`; fact-finding in the 2
 | Q4 | App shell (sidebar/header/breadcrumb) untouched; differences are reported, not fixed. |
 | Q6/Q12 | `(preview)` routes: chrome only, last, separate commit, every mode browser-verified. |
 | Q7 | One commit per page; PR may be split (`lists` / `editors`) at PR time. |
-| Q8/Q9 | Verify per page as it lands (§3: ask 1/2/3 each time). 1440 primary, 1024 must not break. |
+| Q8/Q9 | Verify per page as it lands — owner pre-chose mode 1 (agent compares in the browser) for every step. 1440 primary, 1024 must not break. |
 | Q11/Q18 | Tokens additive; base layer per ADR 0076 §5. |
 | Q14 | Templates list page stays; styled with the Layouts-list treatment. |
 | Q15 | No `/design-system` page. |
@@ -43,7 +43,7 @@ Reference: Lovable `e8b49026-3bd5-4a8f-b94c-aad813085d2c`; fact-finding in the 2
 8. Preview chrome (Q12) — `PlaybackPreviewModal`, `FullPreviewPage` header/aside/filmstrip only.
 9. Docs: SESSIONLOG, update `plan-media-workspace-tokens.md` Status, this plan's Status.
 
-Each step: commit → ask verify mode → fix within the touched surface only.
+Each step: commit → browser side-by-side (mode 1, pre-decided) → fix within the touched surface only.
 
 ## Feature gaps — Lovable has, repo lacks (tickets, not this branch)
 
