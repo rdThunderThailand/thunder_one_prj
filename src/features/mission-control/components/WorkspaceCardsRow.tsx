@@ -102,6 +102,8 @@ export function WorkspaceCardsRow() {
               <p className="text-sm text-[#536a9c] dark:text-zinc-400">{DESCRIPTIONS[app.id]}</p>
               <Link
                 href={app.basePath}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`mt-auto flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-center text-sm font-bold ${tone.buttonBg} ${tone.buttonText}`}
               >
                 เปิดใช้งาน

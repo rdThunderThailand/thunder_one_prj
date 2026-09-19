@@ -71,7 +71,7 @@ function WorkspaceCard({ tile }: { tile: WorkspaceTileData }) {
 
   if (tile.href) {
     return (
-      <Link href={tile.href}>
+      <Link href={tile.href} target="_blank" rel="noopener noreferrer">
         <Card className="flex h-full flex-col p-4 transition-colors hover:border-indigo-200 dark:hover:border-indigo-800">
           {body}
         </Card>
