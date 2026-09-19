@@ -1,25 +1,35 @@
 import { Card } from "@/components/ui/Card";
 import { Sparkline } from "@/components/ui/Sparkline";
 import {
+  AlertCircleIcon,
   CalendarIcon,
   CheckCircleIcon,
   MonitorIcon,
   PaperPlaneIcon,
+  WarningTriangleIcon,
 } from "@/components/ui/icons";
 import { statCards, type StatCardData } from "../mock-data";
 
+// 2026-09-19: matched to the design reference's own stat-tile icon chips —
+// a single neutral bg-muted chip with a semantic-colored icon (not a
+// per-stat pastel background). indigo/blue/amber/emerald map onto this
+// app's closest semantic tokens (primary/info/warning/success); "red" is a
+// new addition for Offline (see mock-data.ts's own 2026-09-19 comment —
+// Offline+Warning previously both reused "amber" and the calendar glyph).
 const textColor: Record<StatCardData["color"], string> = {
-  indigo: "text-indigo-500",
-  blue: "text-blue-500",
-  amber: "text-amber-500",
-  emerald: "text-emerald-500",
+  indigo: "text-primary",
+  blue: "text-info",
+  amber: "text-warning",
+  emerald: "text-success",
+  red: "text-danger",
 };
 
 const badgeColor: Record<StatCardData["color"], string> = {
-  indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
-  blue: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-  amber: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+  indigo: "bg-muted text-primary",
+  blue: "bg-muted text-info",
+  amber: "bg-muted text-warning",
+  emerald: "bg-muted text-success",
+  red: "bg-muted text-danger",
 };
 
 const iconFor: Record<StatCardData["icon"], React.ReactNode> = {
@@ -27,13 +37,18 @@ const iconFor: Record<StatCardData["icon"], React.ReactNode> = {
   paperPlane: <PaperPlaneIcon />,
   calendar: <CalendarIcon />,
   checkCircle: <CheckCircleIcon />,
+  warningTriangle: <WarningTriangleIcon />,
+  alertCircle: <AlertCircleIcon />,
 };
 
 function StatCard({ stat }: { stat: StatCardData }) {
   return (
     <Card className="flex min-h-31 flex-col gap-3 p-4">
       <div className="flex items-start justify-between">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{stat.label}</p>
+        {/* 2026-09-19: text-sm/text-zinc-500 -> text-[11px]/font-semibold/
+            text-muted-foreground, matching the reference's own stat label
+            (11px/600). */}
+        <p className="text-[11px] font-semibold text-muted-foreground">{stat.label}</p>
         <span
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${badgeColor[stat.color]}`}
         >
@@ -41,14 +56,17 @@ function StatCard({ stat }: { stat: StatCardData }) {
         </span>
       </div>
       <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        {/* font-semibold -> font-bold, text-zinc-900 -> text-foreground,
+            matching the reference's stat value (24px/700). */}
+        <span className="text-2xl font-bold text-foreground">
           {stat.value}
         </span>
         {stat.total && (
-          <span className="text-sm text-zinc-400">/ {stat.total}</span>
+          <span className="text-sm text-muted-foreground">/ {stat.total}</span>
         )}
       </div>
-      {stat.delta && <p className="text-xs text-zinc-500 dark:text-zinc-400">{stat.delta}</p>}
+      {/* text-xs -> text-2xs (10px), matching the reference's sub-line. */}
+      {stat.delta && <p className="text-2xs text-muted-foreground">{stat.delta}</p>}
       <Sparkline data={stat.trend} className={`h-8 w-full ${textColor[stat.color]}`} />
     </Card>
   );

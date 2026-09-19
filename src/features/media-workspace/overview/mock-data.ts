@@ -10,8 +10,8 @@ export interface StatCardData {
   total?: string;
   delta: string;
   trend: number[];
-  color: "indigo" | "blue" | "amber" | "emerald";
-  icon: "monitor" | "paperPlane" | "calendar" | "checkCircle";
+  color: "indigo" | "blue" | "amber" | "emerald" | "red";
+  icon: "monitor" | "paperPlane" | "calendar" | "checkCircle" | "warningTriangle" | "alertCircle";
   failedLabel?: string;
   failedProgress?: number;
 }
@@ -42,7 +42,7 @@ export const statCards: StatCardData[] = [
     delta: "5.8% of total",
     trend: [20, 25, 22, 28, 30, 27, 32, 35, 33, 38, 36, 40],
     color: "amber",
-    icon: "calendar",
+    icon: "warningTriangle",
   },
   {
     id: "offline-channels",
@@ -50,8 +50,8 @@ export const statCards: StatCardData[] = [
     value: "8",
     delta: "3.9% of total",
     trend: [96, 97, 95, 98, 97, 99, 98, 97, 99, 98, 99, 98.6],
-    color: "amber",
-    icon: "calendar",
+    color: "red",
+    icon: "alertCircle",
   },
 ];
 
