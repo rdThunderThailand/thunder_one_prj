@@ -811,3 +811,15 @@ export function RefreshIcon({ className = "h-4 w-4" }: IconProps) {
     </svg>
   );
 }
+
+// Added 2026-09-19 for stat tiles that need a distinct "offline/error" glyph
+// from WarningTriangleIcon (e.g. media-workspace overview's "Offline" tile,
+// which previously reused CalendarIcon — a content bug, not a style one).
+export function AlertCircleIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 7.5v5M12 16.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
