@@ -120,29 +120,29 @@ export function CompositionEditorHeader({
   const statusVariant: Record<CompositionStatus, "warning" | "success" | "neutral"> = { draft: "warning", active: "success", inactive: "neutral" };
 
   return (
-    <div className="flex shrink-0 flex-wrap items-start justify-between gap-4">
-      <div className="flex min-w-0 flex-1 items-start gap-2">
+    <div className="flex min-h-[70px] shrink-0 flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
         <button
           type="button"
           onClick={onBack}
           aria-label="Back to Layouts"
           title="Back to Layouts"
-          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
         >
           <ArrowLeftIcon />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="mb-1 text-xs text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
+          <p className="mb-1 text-[11px] text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
           <div className="flex min-w-0 items-center gap-2">
           {editing ? <>
-            <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-primary bg-transparent text-2xl font-semibold text-foreground outline-none" />
+            <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-primary bg-transparent text-lg font-semibold text-foreground outline-none" />
             <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"><CheckIcon /></button>
           </> : <>
-            <h1 className="min-w-0 break-words text-2xl font-semibold leading-tight text-foreground">{name.trim() || "Untitled Layout"}</h1>
+            <h1 className="min-w-0 break-words text-lg font-semibold leading-tight text-foreground">{name.trim() || "Untitled Layout"}</h1>
             <button type="button" onClick={() => setEditing(true)} aria-label="แก้ไขชื่อ Layout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><EditIcon /></button>
           </>}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="mt-1 flex flex-wrap items-center gap-2">
             <Badge variant={statusVariant[status]} className="rounded-full">{status[0].toUpperCase() + status.slice(1)}</Badge>
             <span className="text-xs text-muted-foreground">{referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · {updatedLabel}</span>
           </div>
@@ -150,16 +150,17 @@ export function CompositionEditorHeader({
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
           <div role="group" aria-label="Edit history" className="flex overflow-hidden rounded-lg border border-border bg-card">
-            <button type="button" disabled={!canUndo} onClick={onUndo} aria-label="Undo" title="Undo (Ctrl/Cmd+Z)" className="grid h-10 w-10 place-items-center border-r border-border text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><UndoIcon /></button>
-            <button type="button" disabled={!canRedo} onClick={onRedo} aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)" className="grid h-10 w-10 place-items-center text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><RedoIcon /></button>
+            <button type="button" disabled={!canUndo} onClick={onUndo} aria-label="Undo" title="Undo (Ctrl/Cmd+Z)" className="grid h-8 w-8 place-items-center border-r border-border text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><UndoIcon /></button>
+            <button type="button" disabled={!canRedo} onClick={onRedo} aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)" className="grid h-8 w-8 place-items-center text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><RedoIcon /></button>
           </div>
-          <Button variant="secondary" onClick={onPreview} disabled={!canPreview}><EyeIcon /> Preview</Button>
-          <Button variant="secondary" onClick={onSaveAsTemplate} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>
+          <Button size="sm" variant="secondary" onClick={onPreview} disabled={!canPreview}><EyeIcon /> Preview</Button>
+          <Button size="sm" variant="secondary" onClick={onSaveAsTemplate} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>
             Save as Template
           </Button>
 
           <div className="flex">
             <Button
+              size="sm"
               className={saveState.canActivate ? "rounded-r-none" : undefined}
               onClick={onSaveDraft}
               disabled={saving || !!saveDisabledReason}
@@ -175,7 +176,7 @@ export function CompositionEditorHeader({
             >
               <summary
                 aria-label="ตัวเลือกการบันทึก"
-                className={`${buttonVariants()} cursor-pointer rounded-l-none border-l border-primary-foreground/25 px-2 list-none [&::-webkit-details-marker]:hidden`}
+                className={`${buttonVariants({ size: "sm" })} cursor-pointer rounded-l-none border-l border-primary-foreground/25 px-2 list-none [&::-webkit-details-marker]:hidden`}
               >
                 ▾
               </summary>
@@ -185,6 +186,7 @@ export function CompositionEditorHeader({
             </details>}
           </div>
           <Button
+            size="sm"
             onClick={onPublish}
             disabled={saving || !!publishDisabledReason}
             title={publishDisabledReason ?? undefined}

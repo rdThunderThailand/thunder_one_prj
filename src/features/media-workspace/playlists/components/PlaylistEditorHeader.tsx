@@ -51,15 +51,15 @@ export function PlaylistEditorHeader({
   };
 
   return (
-    <div className="shrink-0 space-y-3">
+    <div className="min-h-[70px] shrink-0 space-y-1">
       <button
         type="button"
         onClick={onCancel}
-        className="text-xs font-medium text-muted-foreground hover:text-foreground"
+        className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
       >
         Playlists <span aria-hidden="true">›</span> {displayName} <span aria-hidden="true">›</span> Editor
       </button>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             {editing ? (
@@ -74,7 +74,7 @@ export function PlaylistEditorHeader({
                   }}
                   placeholder="Untitled Playlist"
                   maxLength={100}
-                  className="min-w-0 flex-1 border-b border-primary bg-transparent text-2xl font-semibold text-foreground outline-none"
+                  className="min-w-0 flex-1 border-b border-primary bg-transparent text-lg font-semibold text-foreground outline-none"
                 />
                 <button
                   type="button"
@@ -87,7 +87,7 @@ export function PlaylistEditorHeader({
               </>
             ) : (
               <>
-                <h1 className="min-w-0 break-words text-2xl font-semibold leading-tight text-foreground">
+                <h1 className="min-w-0 break-words text-lg font-semibold leading-tight text-foreground">
                   {displayName}
                 </h1>
                 <StatusBadge status={status} label={status[0].toUpperCase() + status.slice(1)} />
@@ -102,9 +102,9 @@ export function PlaylistEditorHeader({
               </>
             )}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span
-              className={`rounded-full px-2.5 py-1 font-medium ${
+              className={`rounded-full px-2 py-0.5 font-medium ${
                 isUnsaved
                   ? "bg-warning-soft text-warning"
                   : "bg-success-soft text-success"
@@ -122,7 +122,7 @@ export function PlaylistEditorHeader({
           disabled={!canUndo}
           aria-label="ย้อนกลับ (⌘Z)"
           title="ย้อนกลับ (⌘Z)"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
         >
           <UndoIcon className="h-4 w-4" />
         </button>
@@ -132,11 +132,12 @@ export function PlaylistEditorHeader({
           disabled={!canRedo}
           aria-label="ทำซ้ำ (⇧⌘Z)"
           title="ทำซ้ำ (⇧⌘Z)"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
         >
           <RedoIcon className="h-4 w-4" />
         </button>
         <Button
+          size="sm"
           variant="outline"
           onClick={onPreview}
           disabled={!hasItems}
@@ -144,10 +145,11 @@ export function PlaylistEditorHeader({
         >
           Preview
         </Button>
-        <Button onClick={onSave} disabled={saving || name.trim() === ""}>
+        <Button size="sm" onClick={onSave} disabled={saving || name.trim() === ""}>
           {saving ? "กำลังบันทึก..." : "Save Draft"}
         </Button>
         <Button
+          size="sm"
           variant="default"
           onClick={onPublish}
           disabled={saving || !!publishDisabledReason}
