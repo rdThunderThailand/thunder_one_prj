@@ -180,7 +180,7 @@ function PlaylistFullPreview({
   // ADR 0061 §2: a Playlist has no geometry of its own, so the operator picks the frame.
   const [previewMode, setPreviewMode] = useState("16:9");
   return (
-    <main className="min-h-full bg-card p-4 text-foreground sm:p-6">
+    <main className="min-h-full bg-program p-4 text-background sm:p-6">
       <div className="w-full">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
           <div className="flex min-w-0 items-center gap-4">
@@ -188,13 +188,13 @@ function PlaylistFullPreview({
               type="button"
               onClick={() => window.close()}
               aria-label="Close preview"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-background/70 hover:bg-background/10 hover:text-background"
             >
               <XIcon className="h-5 w-5" />
             </button>
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-semibold">Preview Playlist</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h1 className="truncate text-2xl font-semibold text-background">Preview Playlist</h1>
+              <p className="mt-1 text-sm text-background/70">
                 {zone.name} · {items.length} items · Total duration {total}
               </p>
             </div>
@@ -221,7 +221,7 @@ function PlaylistFullPreview({
               />
             </div>
             <PlaylistTimelineStrip items={items} assets={assets} schedule={schedule} frame={frame} onSeek={onSeek} />
-            <p className="mx-auto mt-5 max-w-3xl rounded-lg border border-border bg-muted px-4 py-3 text-center text-sm text-muted-foreground">
+            <p className="mx-auto mt-5 max-w-3xl rounded-lg border border-background/20 bg-background/10 px-4 py-3 text-center text-sm text-background/70">
               This is a preview only. Actual playback may vary slightly depending on your screen and network.
             </p>
           </section>
@@ -233,7 +233,7 @@ function PlaylistFullPreview({
             totalSeconds={schedule.totalSeconds}
             frame={frame}
             assets={assets}
-            tone="light"
+            tone="dark"
             previewMode={previewMode}
             onPreviewMode={setPreviewMode}
           />
@@ -260,8 +260,8 @@ function PlaylistTimelineStrip({
   const assetById = useMemo(() => Object.fromEntries(assets.map((asset) => [asset.id, asset])), [assets]);
   return (
     <section className="mt-5">
-      <h2 className="text-sm font-semibold text-foreground">
-        Playlist Timeline <span className="font-normal text-muted-foreground">(Total {formatDuration(schedule.totalSeconds)})</span>
+      <h2 className="text-sm font-semibold text-background">
+        Playlist Timeline <span className="font-normal text-background/70">(Total {formatDuration(schedule.totalSeconds)})</span>
       </h2>
       <div className="mt-3 flex gap-4 overflow-x-auto pb-2">
         {items.map((item, index) => {
@@ -279,8 +279,8 @@ function PlaylistTimelineStrip({
                 <MediaThumb url={previews.urls[item.mediaAssetId]} kind={asset?.kind} alt={item.label ?? ""} className="h-24 w-full rounded-none" />
                 <span className="absolute left-2 top-2 rounded-md bg-overlay px-2 py-0.5 text-xs font-semibold text-white">{index + 1}</span>
               </span>
-              <span className="mt-2 block truncate text-sm font-medium text-foreground">{item.label ?? "Untitled item"}</span>
-              <span className="text-xs text-muted-foreground">{asset?.kind === "video" ? "Video" : "Image"} · {seconds != null ? formatDuration(seconds) : "—"}</span>
+              <span className="mt-2 block truncate text-sm font-medium text-background">{item.label ?? "Untitled item"}</span>
+              <span className="text-xs text-background/70">{asset?.kind === "video" ? "Video" : "Image"} · {seconds != null ? formatDuration(seconds) : "—"}</span>
             </button>
           );
         })}

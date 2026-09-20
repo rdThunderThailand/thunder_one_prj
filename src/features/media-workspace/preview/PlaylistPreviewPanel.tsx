@@ -37,14 +37,14 @@ export function PlaylistPreviewPanel({
   const previews = usePreviewUrls(nowPlaying ? [nowPlaying.mediaAssetId] : []);
   const section = tone === "light"
     ? "rounded-xl border border-border bg-card p-4 shadow-sm"
-    : "rounded-xl border border-zinc-800 bg-foreground p-4";
+    : "border-t border-background/15 py-4 first:border-t-0 first:pt-0";
   const labelClass = tone === "light" ? "text-muted-foreground" : "text-muted-foreground";
   const valueClass = tone === "light" ? "text-foreground" : "text-background";
 
   return (
-    <aside className="flex w-full flex-col gap-4 lg:w-80">
+    <aside className="flex w-full flex-col lg:w-80">
       <section className={section}>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Now Playing</h2>
+        <h2 className={`mb-3 text-sm font-semibold ${valueClass}`}>Now Playing</h2>
         {nowPlaying ? (
           <>
             <div className="mb-4 flex items-center gap-3">
@@ -71,7 +71,7 @@ export function PlaylistPreviewPanel({
       </section>
 
       <section className={section}>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Playlist Information</h2>
+        <h2 className={`mb-3 text-sm font-semibold ${valueClass}`}>Playlist Information</h2>
         <dl className="space-y-2 text-sm">
           <Row label="Name" value={name || "Playlist"} labelClass={labelClass} valueClass={valueClass} />
           <Row label="Items" value={String(items.length)} labelClass={labelClass} valueClass={valueClass} />
@@ -93,7 +93,7 @@ export function PlaylistPreviewPanel({
       </section>
 
       <section className={section}>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Preview Mode</h2>
+        <h2 className={`mb-3 text-sm font-semibold ${valueClass}`}>Preview Mode</h2>
         <div className="grid grid-cols-3 gap-2">
           {["16:9", "9:16", "4:3"].map((mode) => (
             <button
@@ -104,7 +104,9 @@ export function PlaylistPreviewPanel({
               className={`rounded-lg border px-2 py-3 text-center text-xs font-medium ${
                 mode === previewMode
                   ? "border-primary bg-primary-soft text-primary"
-                  : "border-border text-muted-foreground hover:border-border"
+                  : tone === "light"
+                    ? "border-border text-muted-foreground hover:border-border"
+                    : "border-background/20 text-background/70 hover:border-background/50"
               }`}
             >
               {mode}
