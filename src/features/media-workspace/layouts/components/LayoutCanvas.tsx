@@ -178,18 +178,16 @@ export function LayoutCanvas({
 
   return (
     <div className={`flex flex-col gap-2 ${fillAvailable ? "min-h-0 flex-1" : ""}`}>
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-muted-foreground">Canvas</p>
-        <div className="flex items-center gap-1.5">
-          {fillAvailable && <>
-            <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= 0.25} onClick={() => setZoom((value) => Math.max(0.25, value - 0.25))} className="rounded-lg border border-border p-1.5 text-muted-foreground disabled:opacity-40"><MinusIcon /></button>
-            <span className="min-w-12 text-center text-xs text-muted-foreground">{Math.round(zoom * 100)}%</span>
-            <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg border border-border p-1.5 text-muted-foreground disabled:opacity-40"><PlusIcon /></button>
-            <button type="button" aria-label="Fit to Screen" title="Fit to Screen" onClick={() => setZoom(1)} className="rounded-lg border border-border p-1.5 text-muted-foreground"><ExpandIcon /></button>
-          </>}
+      {fillAvailable ? (
+        <div className="flex justify-between px-1 text-[10px] text-muted-foreground" aria-hidden="true">
+          <span>0</span><span>480</span><span>960</span><span>1440</span><span>1920</span>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-muted-foreground">Canvas</p>
           <button type="button" onClick={() => setSnap((v) => !v)} aria-pressed={snap} className={`rounded-lg border px-3 py-1 text-xs font-medium ${snap ? "border-primary bg-primary-soft text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
         </div>
-      </div>
+      )}
 
       <div ref={viewportRef} className={fillAvailable ? "flex min-h-0 flex-1 overflow-auto rounded-xl bg-muted" : ""}>
       <div
@@ -241,9 +239,9 @@ export function LayoutCanvas({
               />
             )}
             <span className="absolute left-1 top-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] text-white">
-              {zone.name} · {resolution
+              {fillAvailable ? `${String.fromCharCode(65 + index)} ${zone.name}` : `${zone.name} · ${resolution
                 ? `${referencePixels(zone.width, resolution[0])}×${referencePixels(zone.height, resolution[1])}px`
-                : `${zone.width.toFixed(3)}×${zone.height.toFixed(3)}%`}
+                : `${zone.width.toFixed(3)}×${zone.height.toFixed(3)}%`}`}
             </span>
             {selectedIndex === index && !(zone.id && lockedZoneIds.has(zone.id)) &&
               RESIZE_HANDLES.map((h) => (
@@ -256,6 +254,16 @@ export function LayoutCanvas({
           </div>
         ))}
       </div>
+
+      {fillAvailable && (
+        <div className="flex items-center justify-center gap-1.5">
+          <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= 0.25} onClick={() => setZoom((value) => Math.max(0.25, value - 0.25))} className="rounded-md border border-border p-1 text-muted-foreground disabled:opacity-40"><MinusIcon /></button>
+          <span className="min-w-12 text-center text-xs text-muted-foreground">{Math.round(zoom * 100)} %</span>
+          <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-md border border-border p-1 text-muted-foreground disabled:opacity-40"><PlusIcon /></button>
+          <button type="button" aria-label="Fit to Screen" title="Fit to Screen" onClick={() => setZoom(1)} className="rounded-md border border-border p-1 text-muted-foreground"><ExpandIcon /></button>
+          <button type="button" onClick={() => setSnap((value) => !value)} aria-pressed={snap} className={`ml-2 rounded-md border px-2 py-1 text-[10px] font-medium ${snap ? "border-primary bg-primary-soft text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
+        </div>
+      )}
       </div>
 
       {overlapping.size > 0 && (

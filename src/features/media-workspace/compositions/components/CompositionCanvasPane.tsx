@@ -10,13 +10,8 @@
 // here goes through the `onChangeStart` gate the page passes down (it checkpoints, then
 // applies ADR 0052 §3's shared-Template confirm) rather than keeping a second one locally.
 
-import { useState, type Dispatch, type SetStateAction } from "react";
-import { ALIGN_EDGES, alignZone, duplicateZone, type AlignEdge } from "@/features/media-workspace/layouts/align-zones";
-import { Button } from "@/components/ui/lovable/button";
-import { ClipboardIcon, EyeIcon, LayoutIcon, LockIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { LayoutCanvas } from "@/features/media-workspace/layouts/components/LayoutCanvas";
 import { parseResolution, referencePixels } from "@/features/media-workspace/layouts/geometry";
-import { splitZone } from "@/features/media-workspace/layouts/split-zone";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
 import type { ZoneBindingDraft } from "../zone-bindings";
 
@@ -32,8 +27,9 @@ export function CompositionCanvasPane({
   onSelectZone,
   onChangeStart,
   onChange,
-  canDelete,
-  onDelete,
+  lockedZoneIds,
+  hiddenZoneIds,
+  fitSignal,
 }: {
   zones: LayoutZone[];
   background: string;
@@ -46,98 +42,16 @@ export function CompositionCanvasPane({
    *  the caller has already taken an undo checkpoint of the Zones as they are right now. */
   onChangeStart: () => boolean;
   onChange: (zones: LayoutZone[]) => void;
-  canDelete: boolean;
-  onDelete: () => void;
+  lockedZoneIds: ReadonlySet<string>;
+  hiddenZoneIds: ReadonlySet<string>;
+  fitSignal: number;
 }) {
   const activeIndex = zones.findIndex((zone) => zone.id === activeZoneId);
-  const [lockedZoneIds, setLockedZoneIds] = useState<Set<string>>(() => new Set());
-  const [hiddenZoneIds, setHiddenZoneIds] = useState<Set<string>>(() => new Set());
-  const activeZone = activeIndex < 0 ? null : zones[activeIndex];
-  const isActiveLocked = !!activeZone?.id && lockedZoneIds.has(activeZone.id);
-  const isActiveHidden = !!activeZone?.id && hiddenZoneIds.has(activeZone.id);
-
-  const toggleZoneState = (setter: Dispatch<SetStateAction<Set<string>>>) => {
-    if (!activeZone?.id) return;
-    setter((current) => {
-      const next = new Set(current);
-      if (next.has(activeZone.id!)) next.delete(activeZone.id!);
-      else next.add(activeZone.id!);
-      return next;
-    });
-  };
-
-  const add = () => {
-    if (!onChangeStart() || zones.length === 0) return;
-    const sourceIndex = activeIndex < 0 ? zones.length - 1 : activeIndex;
-    const next = duplicateZone(zones, sourceIndex);
-    if (!next) return;
-    const createdIndex = sourceIndex + 1;
-    next[createdIndex] = { ...next[createdIndex]!, id: crypto.randomUUID(), name: `Zone ${zones.length + 1}` };
-    onChange(next);
-    onSelectZone(next[createdIndex]?.id ?? null);
-  };
-
-  const split = () => {
-    if (activeIndex < 0 || isActiveLocked || !onChangeStart()) return;
-    const next = splitZone(zones, activeIndex);
-    if (!next) return;
-    // The Zone the split created has no id yet; the canvas keys and binds by id, so it needs
-    // one now rather than at save time.
-    const created = activeIndex + 1;
-    if (next[created] && !next[created].id) next[created] = { ...next[created], id: crypto.randomUUID() };
-    onChange(next);
-  };
-
-  const align = (edge: (typeof ALIGN_EDGES)[number]["edge"]) => {
-    if (activeIndex < 0 || isActiveLocked || !onChangeStart()) return;
-    onChange(zones.map((zone, index) => (index === activeIndex ? alignZone(zone, edge) : zone)));
-  };
-
-  const duplicate = () => {
-    if (!onChangeStart() || activeIndex < 0) return;
-    const next = duplicateZone(zones, activeIndex);
-    if (!next) return;
-    const created = next[activeIndex + 1];
-    if (created && !created.id) next[activeIndex + 1] = { ...created, id: crypto.randomUUID() };
-    onChange(next);
-    onSelectZone(next[activeIndex + 1]?.id ?? null);
-  };
 
   return (
-      <div className="flex h-full min-h-0 flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <Button variant="secondary" aria-pressed={!activeZoneId} onClick={() => onSelectZone(null)}>Select</Button>
-          <Button variant="secondary" onClick={add}><PlusIcon /> Add Zone</Button>
-          <Button variant="secondary" disabled={!activeZoneId || isActiveLocked} onClick={split}><LayoutIcon /> Split Zone</Button>
-          <span className="h-6 w-px bg-border" aria-hidden="true" />
-          <div role="group" aria-label="Align selected Zone" className="flex overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-            {ALIGN_EDGES.map(({ edge, label }) => (
-              <button
-                key={edge}
-                type="button"
-                disabled={activeIndex < 0 || isActiveLocked}
-                onClick={() => align(edge)}
-                aria-label={label}
-                title={label}
-                className="flex h-10 w-10 items-center justify-center border-r border-border text-muted-foreground transition last:border-r-0 hover:bg-muted hover:text-primary focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:text-muted-foreground"
-              >
-                <AlignIcon edge={edge} />
-              </button>
-            ))}
-          </div>
-          <div role="group" aria-label="Selected Zone actions" className="flex items-center gap-1">
-            <button type="button" disabled={activeIndex < 0} onClick={() => toggleZoneState(setLockedZoneIds)} aria-label={isActiveLocked ? "Unlock Zone" : "Lock Zone"} aria-pressed={isActiveLocked} title={isActiveLocked ? "Unlock Zone" : "Lock Zone"} className={`grid h-10 w-10 place-items-center rounded-lg border disabled:text-muted-foreground ${isActiveLocked ? "border-primary/30 bg-primary-soft text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}><LockIcon /></button>
-            <button type="button" disabled={activeIndex < 0} onClick={() => toggleZoneState(setHiddenZoneIds)} aria-label={isActiveHidden ? "Show Zone" : "Hide Zone"} aria-pressed={isActiveHidden} title={isActiveHidden ? "Show Zone" : "Hide Zone"} className={`relative grid h-10 w-10 place-items-center rounded-lg border disabled:text-muted-foreground ${isActiveHidden ? "border-primary/30 bg-primary-soft text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}><EyeIcon />{isActiveHidden && <span className="absolute h-px w-5 -rotate-45 bg-current" />}</button>
-            <span className="mx-1 h-5 w-px bg-muted" />
-            <button type="button" disabled={activeIndex < 0} onClick={duplicate} aria-label="Duplicate Zone" title="Duplicate Zone" className="grid h-10 w-10 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><ClipboardIcon /></button>
-          </div>
-          <span className="text-xs text-muted-foreground">Selected: {activeZone?.name ?? "None"}</span>
-          </div>
-          <button type="button" disabled={!canDelete || activeIndex < 0} onClick={onDelete} title={canDelete ? "Delete Zone" : "A Layout must have at least one Zone"} className="ml-auto flex h-10 shrink-0 items-center gap-2 rounded-lg border border-danger/30 px-3 text-sm font-medium text-danger hover:bg-danger-soft disabled:border-border disabled:text-muted-foreground"><TrashIcon /> Delete Zone</button>
-        </div>
-
+      <div className="flex h-full min-h-0 flex-col">
         <LayoutCanvas
+          key={fitSignal}
           zones={zones}
           background={background}
           aspectRatio={aspectRatio}
@@ -152,36 +66,6 @@ export function CompositionCanvasPane({
           onChange={onChange}
         />
       </div>
-  );
-}
-
-function AlignIcon({ edge }: { edge: AlignEdge }) {
-  const horizontal = edge === "left" || edge === "center-h" || edge === "right";
-  const guide = edge === "left" || edge === "top" ? 5 : edge === "right" ? 19 : 12;
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
-      {horizontal ? (
-        <>
-          <path d={`M${guide} 3v18`} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          <path
-            d={edge === "left" ? "M8 7h8M8 12h11M8 17h6" : edge === "right" ? "M8 7h8M5 12h11M10 17h6" : "M8 7h8M5.5 12h13M9 17h6"}
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </>
-      ) : (
-        <>
-          <path d={`M3 ${guide}h18`} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          <path
-            d={edge === "top" ? "M7 8v8M12 8v11M17 8v6" : "M7 8v8M12 5.5v13M17 9v6"}
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </>
-      )}
-    </svg>
   );
 }
 

@@ -5,6 +5,7 @@ import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Input } from "@/components/ui/lovable/input";
 import type { MediaAsset } from "@/types/domain";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";
+import { formatDuration } from "@/features/media-workspace/playlists";
 import { appendPickedAssets, type ZoneBindingDraft } from "../zone-bindings";
 
 export function CompositionContentBrowser({ binding, assets, playlists, previews, playlistPreviews, onChange }: {
@@ -31,6 +32,10 @@ export function CompositionContentBrowser({ binding, assets, playlists, previews
 
   return (
     <section className="flex min-h-0 flex-col border-r border-border bg-card">
+      <div className="border-b border-border p-3">
+        <h2 className="text-[11px] font-bold text-foreground">Insert to Zone</h2>
+        <p className="text-[9px] text-muted-foreground">{binding ? "Choose content for the selected zone." : "Select a zone to assign content."}</p>
+      </div>
       <div className="grid grid-cols-2 border-b border-border p-2">
         <button type="button" className={`rounded-md py-2 text-xs font-semibold ${tab === "media" ? "bg-primary-soft text-primary" : "text-muted-foreground"}`} onClick={() => setTab("media")}>Media</button>
         <button type="button" className={`rounded-md py-2 text-xs font-semibold ${tab === "playlists" ? "bg-primary-soft text-primary" : "text-muted-foreground"}`} onClick={() => setTab("playlists")}>Playlists</button>
@@ -64,7 +69,12 @@ export function CompositionContentBrowser({ binding, assets, playlists, previews
               className="overflow-hidden rounded-lg border border-border bg-card text-left hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <MediaThumb url={url} thumbnailUrl={playlist ? playlistPreviews[playlist.id]?.thumbnailUrl : undefined} kind={asset?.kind} mimeType={asset?.file?.mime_type} alt={label} className="aspect-video w-full rounded-none" />
-              <span className="block truncate p-2 text-[10px] font-medium">{label}</span>
+              <span className="block truncate px-2 pt-1.5 text-[10px] font-medium">{label}</span>
+              <span className="block truncate px-2 pb-1.5 text-[9px] text-muted-foreground">
+                {playlist
+                  ? `Playlist · ${playlist.total_duration_seconds == null ? "—" : formatDuration(playlist.total_duration_seconds)}`
+                  : `${asset?.kind === "video" ? "Video" : "Image"}${asset?.duration_seconds == null ? "" : ` · ${formatDuration(asset.duration_seconds)}`}`}
+              </span>
             </button>
           );
         })}

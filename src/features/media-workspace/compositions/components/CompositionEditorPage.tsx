@@ -24,6 +24,7 @@ import { useZoneEditGuard } from "../hooks/useZoneEditGuard";
 import { CompositionCanvasPane, ZoneOverview } from "./CompositionCanvasPane";
 import { CompositionContentBrowser } from "./CompositionContentBrowser";
 import { CompositionEditorHeader } from "./CompositionEditorHeader";
+import { CompositionEditorToolbar } from "./CompositionEditorToolbar";
 import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
 import { LayoutInformationCard } from "./LayoutInformationCard";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
@@ -58,6 +59,9 @@ export function CompositionEditorPage({
   const [namingTemplate, setNamingTemplate] = useState(false);
   const [templateSavedName, setTemplateSavedName] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [lockedZoneIds, setLockedZoneIds] = useState<Set<string>>(() => new Set());
+  const [hiddenZoneIds, setHiddenZoneIds] = useState<Set<string>>(() => new Set());
+  const [fitSignal, setFitSignal] = useState(0);
   const view = useEditorLayout({
     layouts: data.layouts, layoutId, name, blankZones, editedZones, layoutSettings, bindings,
   });
@@ -245,7 +249,23 @@ export function CompositionEditorPage({
       />
       <LayoutTemplatePicker open={pickerOpen} folders={data.folders} tagNames={tags ?? []} hasUnsavedChanges={isDirty} onClose={() => setPickerOpen(false)} onStarted={() => window.location.reload()} />
       <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-panel">
-      <div className="grid h-[50rem] min-w-[1060px] grid-cols-[230px_minmax(560px,1fr)_270px] items-stretch">
+      <div className="flex h-[50rem] min-w-[1060px] flex-col">
+        {layout && (
+          <CompositionEditorToolbar
+            zones={layout.zones}
+            activeZoneId={view.selectedZoneId}
+            lockedZoneIds={lockedZoneIds}
+            hiddenZoneIds={hiddenZoneIds}
+            onLockedZoneIds={setLockedZoneIds}
+            onHiddenZoneIds={setHiddenZoneIds}
+            onSelectZone={view.setSelectedZoneId}
+            onChangeStart={beginZoneEdit}
+            onChange={setEditedZones}
+            onDelete={() => { if (layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
+            onFit={() => setFitSignal((value) => value + 1)}
+          />
+        )}
+      <div className="grid min-h-0 flex-1 grid-cols-[230px_minmax(560px,1fr)_270px] items-stretch">
         <CompositionContentBrowser
           binding={view.binding ?? null}
           assets={data.assets}
@@ -261,8 +281,9 @@ export function CompositionEditorPage({
               referenceResolution={settings.referenceResolution} zonePreviews={preview.zonePreviews}
               activeZoneId={view.selectedZoneId} onSelectZone={view.setSelectedZoneId}
               onChangeStart={beginZoneEdit} onChange={setEditedZones}
-              canDelete={(layout?.zones.length ?? 0) > 1}
-              onDelete={() => { if (!layout || layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
+              lockedZoneIds={lockedZoneIds}
+              hiddenZoneIds={hiddenZoneIds}
+              fitSignal={fitSignal}
             />
             <div className="grid shrink-0 grid-cols-2 gap-3">
               <LayoutInformationCard name={name} resolution={settings.referenceResolution} aspectRatio={settings.aspectRatio} zoneCount={layout.zones.length} status={status} />
@@ -293,6 +314,7 @@ export function CompositionEditorPage({
             />
           ) : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
         </aside>
+      </div>
       </div>
       </div>
     </div>
