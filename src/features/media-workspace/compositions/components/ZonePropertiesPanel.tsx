@@ -8,7 +8,7 @@
 // Zone-level number.
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { parseResolution, referencePixels, roundPercent } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
 import type { MediaAsset } from "@/types/domain";
@@ -169,7 +169,7 @@ export function ZonePropertiesPanel({
             <span className="font-medium text-foreground">{durationSeconds}s</span>
           </div>
 
-          <Button variant="secondary" onClick={() => onApplyPlaybackToAllZones(binding.playback)}>
+          <Button variant="outline" onClick={() => onApplyPlaybackToAllZones(binding.playback)}>
             Apply content settings to all Zones
           </Button>
         </div>

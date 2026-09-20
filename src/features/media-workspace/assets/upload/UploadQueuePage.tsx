@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Card } from "@/components/ui/Card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import { CheckCircleIcon, LightbulbIcon, UploadIcon } from "@/components/ui/icons";
@@ -97,7 +97,7 @@ export function UploadQueuePage() {
           <p className="mt-1 text-sm text-muted-foreground">Upload and manage your media assets.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" disabled title="Coming in Phase 2">Add from Source · Phase 2</Button>
+          <Button variant="outline" disabled title="Coming in Phase 2">Add from Source · Phase 2</Button>
           <Button disabled={!canStart} onClick={queue.startUpload}><UploadIcon /> Start Upload</Button>
         </div>
       </div>
@@ -124,7 +124,7 @@ export function UploadQueuePage() {
           <Card className="overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
               <div><h2 className="text-sm font-semibold text-foreground">Upload Queue ({queue.summary.total} files)</h2><p className="mt-0.5 text-xs text-muted-foreground">Two files upload at a time.</p></div>
-              {queue.aggregateAction && <Button variant="secondary" onClick={runAggregateAction}>{AGGREGATE_LABEL[queue.aggregateAction]}</Button>}
+              {queue.aggregateAction && <Button variant="outline" onClick={runAggregateAction}>{AGGREGATE_LABEL[queue.aggregateAction]}</Button>}
             </div>
 
             {queue.items.length === 0 ? (

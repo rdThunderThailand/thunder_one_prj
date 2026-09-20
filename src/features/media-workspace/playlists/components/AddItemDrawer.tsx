@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { SearchIcon } from "@/components/ui/icons";
 import {
@@ -177,7 +177,7 @@ export function AddItemDrawer({
             )}
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={close}>
+            <Button variant="outline" onClick={close}>
               Cancel
             </Button>
             <Button onClick={commit} disabled={source === "playlists" ? !playlistId : staged.length === 0}>

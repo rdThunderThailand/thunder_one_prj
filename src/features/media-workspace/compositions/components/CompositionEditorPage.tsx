@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Card } from "@/components/ui/Card";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchLayout, upsertLayout } from "@/features/media-workspace/layouts/services/layouts-api";
@@ -195,7 +195,7 @@ export function CompositionEditorPage({
   if (fatal) return (
     <Card className="p-6">
       <p className="text-sm text-danger">{fatal.message}</p>
-      <Button className="mt-4" variant="secondary" onClick={() => router.push(LIST_PATH)}>กลับไป Layouts</Button>
+      <Button className="mt-4" variant="outline" onClick={() => router.push(LIST_PATH)}>กลับไป Layouts</Button>
     </Card>
   );
   return (

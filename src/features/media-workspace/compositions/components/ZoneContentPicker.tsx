@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { ImageIcon, PlusIcon, XIcon } from "@/components/ui/icons";
 import { isImageAsset } from "@/features/media-workspace/publications/draft-mapping";
@@ -124,7 +124,7 @@ export function ZoneContentPicker({
           </div></div>}
         </div>
         <div className="flex shrink-0 flex-wrap gap-2 border-t border-border pt-4">
-          <Button variant="secondary" onClick={() => setIsAssetPickerOpen(true)}><PlusIcon /> Add Media or Playlist</Button>
+          <Button variant="outline" onClick={() => setIsAssetPickerOpen(true)}><PlusIcon /> Add Media or Playlist</Button>
           {hasStagedContent && <Button onClick={insertStaged}>Add to {zoneName}</Button>}
         </div>
         </>}

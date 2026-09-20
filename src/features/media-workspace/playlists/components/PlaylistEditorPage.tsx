@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Card } from "@/components/ui/Card";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
@@ -123,7 +123,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     return (
       <Card className="p-6">
         <p className="text-sm text-danger">{row.loadError.message}</p>
-        <Button className="mt-4" variant="secondary" onClick={() => router.push(LIST_PATH)}>
+        <Button className="mt-4" variant="outline" onClick={() => router.push(LIST_PATH)}>
           กลับไป Playlists
         </Button>
       </Card>

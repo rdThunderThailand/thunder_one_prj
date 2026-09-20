@@ -1,5 +1,6 @@
-import type { BadgeColor } from "@/components/ui/Badge";
 import type { PlaylistStatus } from "./types";
+
+type BadgeColor = "green" | "yellow" | "zinc";
 
 /**
  * ADR 0028: active means "referenced by at least one publication (any status)",

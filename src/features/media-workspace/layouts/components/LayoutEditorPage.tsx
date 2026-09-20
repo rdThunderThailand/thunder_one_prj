@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Card } from "@/components/ui/Card";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 // Reused rather than re-written — see docs/layouts/plan-layout-execution.md Task 7 Step 5.
@@ -150,7 +150,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
     return (
       <Card className="p-6">
         <p className="text-sm text-danger">{loadError.message}</p>
-        <Button className="mt-4" variant="secondary" onClick={() => router.push("/media-workspace/layouts/templates")}>
+        <Button className="mt-4" variant="outline" onClick={() => router.push("/media-workspace/layouts/templates")}>
           กลับไป Templates
         </Button>
       </Card>
@@ -173,7 +173,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
         subtitle={step === 1 ? "Choose a template and arrange the Zones." : "Name, aspect ratio, background and status."}
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={goBack}>
+            <Button variant="outline" onClick={goBack}>
               Cancel
             </Button>
             {step === 1 ? (
@@ -186,7 +186,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
               </Button>
             ) : (
               <>
-                <Button variant="secondary" onClick={() => setStep(1)}>
+                <Button variant="outline" onClick={() => setStep(1)}>
                   Back
                 </Button>
                 <Button onClick={handleSave} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>
@@ -260,7 +260,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
             <div className="flex flex-wrap gap-2">
               {selectedIndex !== null && (
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   onClick={() => {
                     const next = splitZone(draft.zones, selectedIndex);
                     if (!next) return;
@@ -274,7 +274,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
               {[2, 3, 4].map((count) => (
                 <Button
                   key={count}
-                  variant="secondary"
+                  variant="outline"
                   onClick={() => {
                     setDraft((d) => ({ ...d, zones: evenSplitColumns(count) }));
                     setSelectedIndex(null);

@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/lovable/badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { fetchPublications } from "@/features/media-workspace/publications/services/publications-api";
@@ -168,6 +168,7 @@ function PageNav({
 }
 
 function PublicationRow({ publication }: { publication: PublicationListItem }) {
+  const color = publicationStatusColor(publication.effective_status ?? publication.status);
   return (
     <li className="flex items-center justify-between gap-2 rounded-lg border border-border p-2">
       <Link
@@ -179,7 +180,7 @@ function PublicationRow({ publication }: { publication: PublicationListItem }) {
       <span className="shrink-0 text-xs text-muted-foreground">
         {publication.campaign_name ?? "—"}
       </span>
-      <Badge color={publicationStatusColor(publication.effective_status ?? publication.status)} variant="pill">
+      <Badge variant={color === "green" ? "success" : color === "yellow" ? "warning" : color === "red" ? "danger" : "neutral"} className="rounded-full">
         {publicationDisplayStatus(publication)}
       </Badge>
     </li>

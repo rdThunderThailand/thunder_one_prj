@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Modal } from "@/components/ui/Modal";
 
 export function CreateFolderModal({
@@ -25,7 +25,7 @@ export function CreateFolderModal({
       title="Create Folder"
       footer={
         <>
-          <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
           <Button disabled={busy} onClick={onCreate}>{busy ? "Creating…" : "Create"}</Button>
         </>
       }

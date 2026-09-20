@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/Badge";
-import { Button, buttonClasses } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/lovable/badge";
+import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
@@ -79,7 +79,7 @@ export function PlaylistSidePanel({
           <h2 className="truncate text-base font-semibold text-foreground">
             {playlist.name}
           </h2>
-          <Badge color={badge.color} variant="pill">
+          <Badge variant={badge.color === "green" ? "success" : badge.color === "yellow" ? "warning" : "neutral"} className="rounded-full">
             {badge.label}
           </Badge>
         </div>
@@ -160,7 +160,7 @@ export function PlaylistSidePanel({
       <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Link
           href={`/media-workspace/playlists/${playlist.id}`}
-          className={buttonClasses("secondary")}
+          className={buttonVariants({ variant: "outline" })}
         >
           Edit Playlist
         </Link>
@@ -177,7 +177,7 @@ export function PlaylistSidePanel({
             >
               {busy ? "กำลังลบ…" : "ยืนยันลบ?"}
             </Button>
-            <Button variant="secondary" disabled={busy} onClick={() => setConfirmingDelete(false)}>
+            <Button variant="outline" disabled={busy} onClick={() => setConfirmingDelete(false)}>
               ไม่
             </Button>
           </>

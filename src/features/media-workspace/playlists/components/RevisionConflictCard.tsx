@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Card } from "@/components/ui/Card";
 
 export function RevisionConflictCard({
@@ -13,7 +13,7 @@ export function RevisionConflictCard({
   return (
     <Card className="border-warning/30 p-4">
       <p className="text-sm text-warning">{message}</p>
-      <Button className="mt-2" variant="secondary" onClick={onReload}>
+      <Button className="mt-2" variant="outline" onClick={onReload}>
         โหลดใหม่
       </Button>
     </Card>

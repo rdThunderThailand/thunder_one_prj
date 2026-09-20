@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Modal } from "@/components/ui/Modal";
 import type { ContentFolder } from "@/types/domain";
 
@@ -29,7 +29,7 @@ export function FolderActionModal({
       title={action?.kind === "rename" ? "Rename Folder" : "Move Folder"}
       footer={
         <>
-          <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
           <Button disabled={disabled} onClick={onSubmit}>{busy ? "Saving…" : "Save"}</Button>
         </>
       }
