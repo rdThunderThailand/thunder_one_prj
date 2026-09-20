@@ -1,16 +1,16 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/lovable/badge";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Avatar } from "@/components/ui/Avatar";
-import { Card } from "@/components/ui/Card";
 import { EditIcon, MoreIcon, PlayIcon, TrashIcon, UndoIcon } from "@/components/ui/icons";
 import { actionsForComposition, type CompositionLibraryAction } from "../library-actions";
 import type { CompositionLibraryItem } from "../types";
 import type { SortKey } from "../list-url-state";
 import { statusBadge } from "../status-display";
 import { CompositionLibraryPreview } from "./CompositionLibraryPreview";
+import { LayoutWireframe } from "../../layouts/components/LayoutWireframe";
+import { parseResolution } from "../../layouts/geometry";
 
 // One signing call for every zone thumbnail on the page, not one per row (ADR 0067).
 function useRowPreviews(rows: CompositionLibraryItem[]) {
@@ -55,6 +55,7 @@ const labels: Record<CompositionLibraryAction, string> = {
   restore: "Restore",
   "delete-forever": "Delete forever",
 };
+const badgeVariant = (color: string) => color === "green" ? "success" : color === "yellow" ? "warning" : "neutral";
 
 function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }: {
   item: CompositionLibraryItem;
@@ -102,8 +103,9 @@ function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }
   </div>;
 }
 
-export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, onSort, onPreview, onAction, selectedIds, onSelectionChange }: {
+export function CompositionsTable({ rows, folders, sort, inTrash, busyId, previewBusyId, onSort, onPreview, onAction, selectedIds, onSelectionChange }: {
   rows: CompositionLibraryItem[];
+  folders: Map<string, string>;
   sort: { key: SortKey; dir: "asc" | "desc" };
   inTrash: boolean;
   busyId: string | null;
@@ -117,20 +119,19 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
   const previews = useRowPreviews(rows);
   const isAllSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
   return (
-    <div>
-      <table className="w-full table-fixed text-left text-[10px]">
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-220 text-left text-[10px]">
         <thead>
           <tr className="border-b border-border text-[9px] font-semibold text-muted-foreground">
             <th className="w-8 py-2 pl-2">
               <Checkbox aria-label="Select all layouts on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} />
             </th>
-            <th className="w-[72px] py-2">Preview</th>
             <SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort} />
-            <th className="w-[64px] py-2">Content</th>
+            <th className="w-[80px] py-2">Zones</th>
             <th className="w-[130px] py-2">Resolution</th>
-            <SortHeader className="w-[135px]" label="Status" sortKey="status" sort={sort} onSort={onSort} />
-            <SortHeader className="w-[100px]" label="Used in" sortKey="usage" sort={sort} onSort={onSort} />
             <SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort} />
+            <SortHeader className="w-[110px]" label="Status" sortKey="status" sort={sort} onSort={onSort} />
+            <SortHeader className="w-[100px]" label="Used In" sortKey="usage" sort={sort} onSort={onSort} />
             <th className="w-[132px] py-2 pr-1 text-right">Actions</th>
           </tr>
         </thead>
@@ -151,24 +152,23 @@ export function CompositionsTable({ rows, sort, inTrash, busyId, previewBusyId, 
                     }}
                   />
                 </td>
-                <td className="py-3"><CompositionLibraryPreview zones={item.previewZones} previews={previews} /></td>
-                <td className="truncate py-3 pr-2 font-medium">
-                  <p className="truncate">{item.name}</p>
-                  <p className="truncate text-[8px] font-normal text-muted-foreground">{item.folderId ? "In folder" : "Uncategorized"}</p>
-                </td>
-                <td className="py-3">{item.bound_count}/{item.zone_count}</td>
-                <td className="py-3">{item.referenceResolution ?? "—"}</td>
-                <td className="py-3"><Badge color={badge.color} variant="pill">{badge.label}</Badge></td>
-                <td className="py-3">{item.usageCount ?? "—"}</td>
-                <td className="py-3 text-muted-foreground">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Avatar name={item.createdBy?.displayName ?? "Unknown"} src={item.createdBy?.avatarUrl} size={24} />
+                <td className="py-3 pr-2 font-medium">
+                  <div className="flex items-center gap-3">
+                    <CompositionLibraryPreview zones={item.previewZones} previews={previews} />
                     <span className="min-w-0">
-                      <span className="block truncate text-muted-foreground">{item.createdBy?.displayName ?? "Unknown user"}</span>
-                      <span className="block truncate text-[10px]">{formatDate(item.updated_at ?? item.created_at)}</span>
+                      <span className="block truncate">{item.name}</span>
+                      <span className="block truncate text-[8px] font-normal text-muted-foreground">/{item.folderId ? folders.get(item.folderId) ?? "Folder" : "Uncategorized"} · {item.bound_count}/{item.zone_count} content ready</span>
                     </span>
                   </div>
                 </td>
+                <td className="py-3">{item.zone_count} Zone{item.zone_count === 1 ? "" : "s"}</td>
+                <td className="py-3">{item.referenceResolution ?? "—"}</td>
+                <td className="py-3 text-muted-foreground">
+                  <span className="block truncate">{item.createdBy?.displayName ?? "Unknown user"}</span>
+                  <span className="block truncate text-[9px]">{formatDate(item.updated_at ?? item.created_at)}</span>
+                </td>
+                <td className="py-3"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge></td>
+                <td className="py-3">{item.usageCount ? `${item.usageCount} Program${item.usageCount === 1 ? "" : "s"}` : "—"}</td>
                 <td className="py-3 pr-1 text-right">
                   <RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} />
                 </td>
@@ -192,16 +192,21 @@ export function CompositionsGrid({ rows, inTrash, busyId, previewBusyId, onPrevi
   const previews = useRowPreviews(rows);
   return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{rows.map((item) => {
     const badge = statusBadge(item.status);
-    return <Card key={item.id} className="overflow-hidden p-4">
-      <CompositionLibraryPreview zones={item.previewZones} previews={previews} />
-      <div className="mt-3 space-y-2">
+    const resolution = item.referenceResolution ? parseResolution(item.referenceResolution) : null;
+    const zones = (item.previewZones ?? []).map((zone) => ({ ...zone, id: String(zone.position), name: `Zone ${zone.position}` }));
+    return <article key={item.id} className="group overflow-hidden rounded-lg border border-border bg-card transition hover:border-foreground/20 hover:shadow-float">
+      <div className="relative aspect-video bg-layout-canvas">
+        <CompositionLibraryPreview zones={item.previewZones} previews={previews} referenceResolution={item.referenceResolution} className="h-full w-full rounded-none" />
+        <LayoutWireframe zones={zones} background="transparent" aspectRatio={resolution ? `${resolution[0]}:${resolution[1]}` : "16:9"} programStyle className="absolute inset-0 h-full w-full" />
+        <div className="absolute right-2 top-2 rounded-lg bg-card opacity-0 shadow-float group-hover:opacity-100"><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></div>
+      </div>
+      <div className="space-y-2 p-3">
         <div className="min-w-0">
           <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-[10px] font-semibold text-foreground hover:text-primary">{item.name}</Link>
-          <p className="truncate text-[8px] text-muted-foreground">{item.folderId ? "In folder" : "Uncategorized"}</p>
+          <p className="mt-1 text-[8px] text-muted-foreground">{item.zone_count} Zones · {item.referenceResolution ?? "—"}</p>
         </div>
-        <div className="flex items-center justify-between text-[8px] text-muted-foreground"><span>{item.bound_count}/{item.zone_count} content</span><span>{item.referenceResolution ?? "—"}</span></div>
-        <div className="flex items-center justify-between"><Badge color={badge.color} variant="pill">{badge.label}</Badge><RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} /></div>
+        <div className="flex items-center justify-between"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge><span className="text-[8px] text-muted-foreground">Updated {formatDate(item.updated_at ?? item.created_at)}</span></div>
       </div>
-    </Card>;
+    </article>;
   })}</div>;
 }

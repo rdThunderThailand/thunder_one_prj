@@ -8,7 +8,7 @@ import { Plus, Trash2, Undo2 } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
-import { LibrarySelectionBar, LibraryShell } from "../../content-library/LibraryShell";
+import { LibraryShell } from "../../content-library/LibraryShell";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchContentFolders, fetchMediaAssets } from "@/lib/api/media-api";
@@ -22,14 +22,12 @@ import { fetchCompositionLibrary, permanentlyDeleteComposition, restoreCompositi
 import type { CompositionLibraryItem, CompositionLibraryPage } from "../types";
 import { CompositionLibraryDialogs, type CompositionDialogAction } from "./CompositionLibraryDialogs";
 import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/components/LayoutTemplatePicker";
-// Reused rather than re-written, following UnsavedLeaveConfirm's precedent — the rail is
-// presentational and takes {id, name, count}[].
 import { TagsRail } from "@/features/media-workspace/content-library/TagsRail";
 import { CompositionFolderRail } from "./CompositionFolderRail";
 import { CompositionsFilters } from "./CompositionsFilters";
 import { CompositionsSummary, ListEmpty, ListError, ListSkeleton, SummarySkeleton } from "./CompositionsListStates";
 import { CompositionsGrid, CompositionsTable } from "./CompositionsTable";
-
+import { CompositionBatchMoveDialog } from "./CompositionBatchMoveDialog";
 export function CompositionsListPage() {
   const searchParams = useSearchParams();
   const [initial] = useState(() => readListState(new URLSearchParams(searchParams.toString())));
@@ -55,7 +53,7 @@ export function CompositionsListPage() {
   const [previewBusyId, setPreviewBusyId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
-
+  const [batchMoveOpen, setBatchMoveOpen] = useState(false);
   const restoreUrlState = useCallback(() => {
     const next = readListState(new URLSearchParams(window.location.search));
     setCollection(next.collection);
@@ -109,8 +107,6 @@ export function CompositionsListPage() {
     setPerPage(DEFAULT_STATE.perPage);
   };
   const changeFilters = (next: ListFilters) => { setFilters(next); setPage(1); };
-  // A folder selection and a tag selection are mutually exclusive: picking one clears the
-  // other, so at most one narrows the collection the RPC counts its facets over.
   const changeCollection = (next: string) => { setTagId(null); setCollection(next); setSelectedIds(new Set()); setPage(1); };
   const changeTag = (next: string | null) => { setCollection("all"); setTagId(next); setPage(1); };
   const changeSort = (key: SortKey) => {
@@ -196,6 +192,24 @@ export function CompositionsListPage() {
 
   const inTrash = collection === "trash";
   const collectionName = inTrash ? "Trash" : tagId ? library?.facets.tags.find((tag) => tag.id === tagId)?.name ?? "Tag" : collection === "uncategorized" ? "Uncategorized" : collection === "all" ? "All Layouts" : folders.find((folder) => folder.id === collection)?.name ?? "Folder";
+  const folderNames = new Map(folders.map((folder) => [folder.id, folder.name]));
+  const selectionActions = selectedIds.size > 0 && (
+    <div className="flex flex-wrap items-center gap-1 rounded-md border border-border bg-background p-1 text-[9px]">
+      <strong className="px-2">{selectedIds.size} selected</strong>
+      {inTrash ? (
+        <>
+          <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
+          <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Delete forever</Button>
+        </>
+      ) : (
+        <>
+          <Button variant="outline" size="sm" onClick={() => setBatchMoveOpen(true)}>Move</Button>
+          <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Trash</Button>
+        </>
+      )}
+      <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear</Button>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -217,18 +231,6 @@ export function CompositionsListPage() {
       )}
       <LibraryShell
         toolbar={<CompositionsFilters value={filters} referenceResolutions={library?.facets.referenceResolutions ?? []} isGrid={isGrid} onViewChange={setIsGrid} onChange={changeFilters} onClearAll={qs ? reset : undefined} />}
-        selection={selectedIds.size > 0 && (
-          <LibrarySelectionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
-            {inTrash ? (
-              <>
-                <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
-                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Delete forever</Button>
-              </>
-            ) : (
-              <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
-            )}
-          </LibrarySelectionBar>
-        )}
         rail={{
           defaultTab: tagId ? "tags" : "folders",
           folders: (
@@ -245,12 +247,12 @@ export function CompositionsListPage() {
         }}
         title={collectionName}
         meta={pagination ? `${pagination.total.toLocaleString()} layouts` : "…"}
-        headerActions={inTrash && (
+        headerActions={selectionActions || (inTrash && (
           <>
             <Button variant="outline" size="sm" disabled={batchBusy || !library?.pagination?.total} onClick={() => void runBatch("restore")}><Undo2 className="h-3.5 w-3.5" />Recover All</Button>
             <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy || !library?.pagination?.total} onClick={() => void runBatch("delete")}><Trash2 className="h-3.5 w-3.5" />Delete All</Button>
           </>
-        )}
+        ))}
         footer={pagination && (
           <LibraryPagination page={pagination.page} totalPages={pagination.totalPages} total={pagination.total} pageSize={perPage} onPage={setPage} itemLabel="layouts" perPageOptions={[10, 25, 50]} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
         )}
@@ -267,7 +269,7 @@ export function CompositionsListPage() {
         ) : isGrid ? (
           <CompositionsGrid rows={library.data} inTrash={inTrash} busyId={busyId} previewBusyId={previewBusyId} onPreview={(item) => void openPreview(item)} onAction={handleAction} />
         ) : (
-          <CompositionsTable rows={library.data} sort={sort} inTrash={inTrash} busyId={busyId} previewBusyId={previewBusyId} onSort={changeSort} onPreview={(item) => void openPreview(item)} onAction={handleAction} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
+          <CompositionsTable rows={library.data} folders={folderNames} sort={sort} inTrash={inTrash} busyId={busyId} previewBusyId={previewBusyId} onSort={changeSort} onPreview={(item) => void openPreview(item)} onAction={handleAction} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
         )}
       </LibraryShell>
       <LayoutTemplatePicker
@@ -292,6 +294,7 @@ export function CompositionsListPage() {
         />
       )}
       <CompositionLibraryDialogs key={`${dialogAction}:${dialogTarget?.id ?? ""}`} action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
+      <CompositionBatchMoveDialog key={batchMoveOpen ? [...selectedIds].join(":") : "closed"} open={batchMoveOpen} ids={[...selectedIds]} folders={folders} onClose={() => setBatchMoveOpen(false)} onDone={() => { setBatchMoveOpen(false); setSelectedIds(new Set()); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "ย้าย Layout ไม่สำเร็จ").message); setBatchMoveOpen(false); }} />
     </div>
   );
 }
