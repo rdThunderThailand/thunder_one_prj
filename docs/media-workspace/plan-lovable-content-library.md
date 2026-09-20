@@ -1,6 +1,6 @@
 # Plan — Content library pages on the Lovable design system
 
-Status: **in progress** (2026-09-20 audit — see *Audit* below; the 2026-09-20 "complete" claim was wrong). Branch `style/lovable` (renamed from `style/media-library-lovable`,
+Status: **complete** (2026-09-20 run-2 rework; see *Audit* below). Branch `style/lovable` (renamed from `style/media-library-lovable`,
 base `style/media-workspace-tokens` → `dev`). Executes ADR 0076.
 Reference: Lovable `e8b49026-3bd5-4a8f-b94c-aad813085d2c`; fact-finding in the 2026-09-19 session
 (`lovable-vs-repo.md`, not committed). Previous handoff: `/private/tmp/HANDOFF-media-workspace-lovable-2026-09-19.md`.
@@ -40,7 +40,23 @@ The first execution run reported every step done; the diff says otherwise.
 | 7 | editor + picker | partial — `c2edf75` picker only; `PlaylistEditor*`/`Playlist*Pane` untouched |
 | 8 | preview chrome | partial — `823e5a6` +18/−16 colours |
 
-Remaining: full step 0, 1, 2, 3, 6, 7; finish 4 (trash), 5 (`Dialog`), 8 after step 0 lands.
+Run 2 reworked every audited gap from the full Lovable page sources and re-ran mode-1 browser
+comparison at 1440px and 1024px. The original run remains in history; the correcting commits are:
+
+| Step | Run-2 evidence (`git show --stat`) |
+|---|---|
+| 0 | `9ef6ccc` — tokens, primitives, dependencies, wrapper and repository rule |
+| 1 | `a494a65` — Playlists list/table/grid/dialog treatment |
+| 2 | `dc6561b` — Layouts list/table/grid/dialog treatment |
+| 3 | `0bf02ec` — Templates list treatment |
+| 4 | `945f3f4` — Media trash and detail flows |
+| 5 | `0108e6a` — New Layout and Template picker dialogs |
+| 6 | `ae17cad` — Composition editor structure and inspector |
+| 7 | `20655c6` — Playlist editor; `2816c16` — 1024px follow-up found by mode-1 verification |
+| 8 | `2739dc2` — Layout modal and full playlist preview chrome |
+
+Run-2 verification and the remaining intentional product-contract deltas are recorded in
+`.docs/SESSIONLOG-lovable-content-library-run2-2026-09-20.md`.
 
 ## Sequence
 

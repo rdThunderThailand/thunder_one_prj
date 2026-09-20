@@ -1,6 +1,6 @@
 # Plan — Media Workspace on Lovable tokens
 
-Status: **Tier B done, Tier A in progress** (2026-09-20; see plan-lovable-content-library.md Audit). Branch `style/media-workspace-tokens` → `dev`.
+Status: **Tier B done, Tier A complete** (2026-09-20 run-2; see plan-lovable-content-library.md Audit). Branch `style/media-workspace-tokens` → `dev`.
 Executes ADR 0075 across the rest of Media Workspace; no new ADR.
 Reference: Lovable project `e8b49026-3bd5-4a8f-b94c-aad813085d2c` (Overview + Media Library only).
 
