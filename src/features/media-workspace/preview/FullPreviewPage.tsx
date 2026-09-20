@@ -182,7 +182,7 @@ function PlaylistFullPreview({
   return (
     <main className="min-h-full bg-program p-4 text-background sm:p-6">
       <div className="w-full">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-background/15 bg-background/5 px-4 py-3">
           <div className="flex min-w-0 items-center gap-4">
             <button
               type="button"
@@ -205,7 +205,7 @@ function PlaylistFullPreview({
           </div>
         </header>
 
-        <div className="grid gap-5 pt-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid gap-5 pt-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <section className="min-w-0">
             <div>
               <PreviewStage
@@ -259,7 +259,7 @@ function PlaylistTimelineStrip({
   const previews = usePreviewUrls(useMemo(() => items.map((item) => item.mediaAssetId), [items]));
   const assetById = useMemo(() => Object.fromEntries(assets.map((asset) => [asset.id, asset])), [assets]);
   return (
-    <section className="mt-5">
+    <section className="mt-5 rounded-xl border border-background/15 bg-background/5 p-4">
       <h2 className="text-sm font-semibold text-background">
         Playlist Timeline <span className="font-normal text-background/70">(Total {formatDuration(schedule.totalSeconds)})</span>
       </h2>
