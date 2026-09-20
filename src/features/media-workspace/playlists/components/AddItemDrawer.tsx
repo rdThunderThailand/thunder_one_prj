@@ -4,11 +4,25 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { SearchIcon, XIcon } from "@/components/ui/icons";
+import { SearchIcon } from "@/components/ui/icons";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/lovable/sheet";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";
 import { fetchContentFolders, fetchTags } from "@/lib/api/media-api";
 import type { ContentFolder, MediaAsset, Tag } from "@/types/domain";
 import { AssetPicker } from "./AssetPicker";
+
+type PickerFilters = {
+  query: string;
+  kind: string;
+  folderId: string;
+  tagId: string;
+};
 
 /** #35: the editor's one way to add content. A staged selection is committed with one
  *  "Add N Items" action; upload is a link out so a slow upload never locks the editor.
@@ -48,6 +62,12 @@ export function AddItemDrawer({
   const [playlistQuery, setPlaylistQuery] = useState("");
   const [folders, setFolders] = useState<ContentFolder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [pickerFilters, setPickerFilters] = useState<PickerFilters>({
+    query: "",
+    kind: "",
+    folderId: "",
+    tagId: "",
+  });
   // Latched on the first open. Adjusting state during render is React's own answer to
   // "derive from a prop change" — an effect here would trip the no-sync-setState rule.
   const [hasOpened, setHasOpened] = useState(open);
@@ -94,32 +114,21 @@ export function AddItemDrawer({
   if (!hasOpened) return null;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex bg-black/30 transition-opacity duration-200 ${side === "left" ? "justify-start" : "justify-end"} ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
-      onClick={close}
-      inert={!open}
-    >
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="asset-picker-title"
-        className={`flex h-full w-full max-w-2xl flex-col bg-card shadow-xl transition-transform duration-200 ${open ? "translate-x-0" : side === "left" ? "-translate-x-full" : "translate-x-full"}`}
-        onClick={(e) => e.stopPropagation()}
+    <Sheet open={open} onOpenChange={(next) => !next && close()}>
+      <SheetContent
+        forceMount
+        side={side}
+        className="flex w-[400px] max-w-full flex-col gap-0 bg-card p-0 sm:max-w-none"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-border p-5">
-          <div>
-            <h2 id="asset-picker-title" className="text-base font-semibold text-foreground">
-              {isLayout ? "Pick Media Asset" : "Add Item"}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {isLayout ? "Select media to insert into this Zone." : "เลือก media ที่จะเพิ่มลง Playlist"} ·{" "}
-              <Link href="/media-workspace/assets/upload" target="_blank" className="text-primary hover:underline">Upload new media ↗</Link>
-            </p>
-          </div>
-          <button type="button" aria-label="ปิด" onClick={close} className="rounded-lg p-1 text-muted-foreground hover:bg-muted">
-            <XIcon />
-          </button>
-        </div>
+        <SheetHeader className="border-b border-border p-5 pr-12">
+          <SheetTitle className="text-base">
+            {isLayout ? "Pick Media Asset" : "Add Item"}
+          </SheetTitle>
+          <SheetDescription>
+            {isLayout ? "Select media to insert into this Zone." : "เลือก media ที่จะเพิ่มลง Playlist"} ·{" "}
+            <Link href="/media-workspace/assets/upload" target="_blank" className="text-primary hover:underline">Upload new media ↗</Link>
+          </SheetDescription>
+        </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-5">
           {isLayout && (
@@ -132,7 +141,16 @@ export function AddItemDrawer({
             </div>
           )}
           {source === "media" ? (
-            <AssetPicker assets={pickable} loading={loading} selectedIds={staged} onToggle={toggle} folders={folders} tags={tags} />
+            <AssetPicker
+              assets={pickable}
+              loading={loading}
+              selectedIds={staged}
+              onToggle={toggle}
+              folders={folders}
+              tags={tags}
+              filters={pickerFilters}
+              onFiltersChange={(patch) => setPickerFilters((current) => ({ ...current, ...patch }))}
+            />
           ) : (
             <div className="flex flex-col gap-3">
               <div className="relative">
@@ -167,7 +185,7 @@ export function AddItemDrawer({
             </Button>
           </div>
         </div>
-      </aside>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
