@@ -5,7 +5,7 @@
 // of CompositionEditorPage only to keep that file under the 300-line ceiling — the handlers
 // still live there because they touch the draft.
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Card } from "@/components/ui/Card";
 import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
 import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";

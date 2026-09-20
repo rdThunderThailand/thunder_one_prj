@@ -1,5 +1,4 @@
 "use client";
-// ADR 0052/0063 Composition root: draft state and wiring only; UI stays in child components.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -10,7 +9,7 @@ import { seedCanvasSettings, takeCreateSeed } from "@/features/media-workspace/l
 import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/components/LayoutTemplatePicker";
 import { deriveAspectRatio, parseResolution } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
-import { PlaybackPreviewModal } from "@/features/media-workspace/preview/PlaybackPreviewModal";
+import { PlaybackPreviewDialog } from "@/features/media-workspace/preview/PlaybackPreviewDialog";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
 import { setCompositionStatus } from "../services/compositions-api";
 import { forkLayoutForComposition, type LayoutSettingsDraft } from "../save-composition";
@@ -23,10 +22,11 @@ import { useCompositionSave } from "../hooks/useCompositionSave";
 import { useEditorLayout } from "../hooks/useEditorLayout";
 import { useZoneEditGuard } from "../hooks/useZoneEditGuard";
 import { CompositionCanvasPane, ZoneOverview } from "./CompositionCanvasPane";
+import { CompositionContentBrowser } from "./CompositionContentBrowser";
 import { CompositionEditorHeader } from "./CompositionEditorHeader";
 import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
+import { LayoutInformationCard } from "./LayoutInformationCard";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
-import { ZoneContentPicker } from "./ZoneContentPicker";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
 const LIST_PATH = "/media-workspace/layouts";
 export function CompositionEditorPage({
@@ -44,14 +44,12 @@ export function CompositionEditorPage({
   const [blankZones, setBlankZones] = useState<LayoutZone[] | null>(null);
   const [editedZones, setEditedZones] = useState<LayoutZone[] | null>(null);
   const [layoutSettings, setLayoutSettings] = useState<LayoutSettingsDraft | null>(null);
-  // `undefined` = untouched and unknown, so persist leaves filing alone (see PersistInput).
   const [folderId, setFolderId] = useState<string | null | undefined>(undefined);
   const [tags, setTags] = useState<string[] | undefined>(undefined);
   const [status, setStatus] = useState<CompositionStatus>("draft");
   const [revision, setRevision] = useState<number | null>(null);
   const [bindings, setBindings] = useState<ZoneBindingDraft[]>([]);
   const [initialSnapshot, setInitialSnapshot] = useState("");
-  // ADR 0063 §2: `Unsaved` until the first write, `Last saved HH:MM` after — never "Saved just now".
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [previewOpen, setPreviewOpen] = useState(initialPreview);
   const [loading, setLoading] = useState(!!compositionId);
@@ -64,8 +62,6 @@ export function CompositionEditorPage({
     layouts: data.layouts, layoutId, name, blankZones, editedZones, layoutSettings, bindings,
   });
   const { layout, settings, sharedTemplateUsage } = view;
-  // ADR 0063 §2: Template Picker seeds the choice in sessionStorage; read once into state so
-  // Strict Mode's second effect pass can't find it already cleared.
   const [createSeed] = useState(() => (compositionId ? null : takeCreateSeed()));
   useEffect(() => {
     if (compositionId) return;
@@ -133,41 +129,28 @@ export function CompositionEditorPage({
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [compositionId]);
-
   const preview = useCompositionPreview({ compositionId: id, layout, bindings, ...data });
-  const isDirty = draftSnapshot({ name, layoutId, bindings, folderId, tags }) !== initialSnapshot;
+  const isDirty = editedZones !== null || layoutSettings !== null || draftSnapshot({ name, layoutId, bindings, folderId, tags }) !== initialSnapshot;
   const setBinding = (next: ZoneBindingDraft) => {
-    // Guard on the detail map, not the preview-asset map: the list load seeds a
-    // cover_asset_id for nearly every Playlist, so the old guard would skip hydration
-    // (items + playback) for almost every newly bound Zone once the bulk read is gone.
     if (next.playlistId && !Object.hasOwn(data.playlistItemsById, next.playlistId)) {
       data.hydratePlaylist(next.playlistId);
     }
     setBindings((prev) => upsertBinding(prev, next));
   };
-
-  // Every Zone edit — canvas or the Layout tab — goes through this one gate.
   const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, canUndo, canRedo } =
     useZoneEditGuard(layout?.zones ?? [], sharedTemplateUsage, setEditedZones);
-
   const applyPlaybackToAllZones = (playback: ZonePlayback) =>
     setBindings((prev) => applyPlaybackToAll(view.layoutZoneIds, prev, playback));
-
-  /** Swap RPC-confirmed geometry in for the draft's client-minted Zone ids. Called mid-save as
-   *  well as after, so a save that dies later resumes on real ids. `saved` null = no geometry
-   *  written this round. */
   const absorbLayout = (saved: LayoutListItem | null, savedId = saved?.id) => {
     if (saved) data.setLayouts((current) => [...current.filter((c) => c.id !== saved.id), saved]);
     if (savedId) setLayoutId(savedId);
     setBlankZones(null); setEditedZones(null); setLayoutSettings(null);
   };
-
   const { save, run, saving, saveError } = useCompositionSave(
     () => ({
       compositionId: id, name, revision, layoutId, layout, layoutSettings,
       savedZoneIds: new Set((data.layouts.find((c) => c.id === layoutId)?.zones ?? []).flatMap((z) => (z.id ? [z.id] : []))),
       editedZones, blankZones, layoutZoneIds: view.layoutZoneIds, bindings, folderId, tags,
-      // Ticket 28's recovery seams — banked into the draft mid-save so a failure keeps them.
       onLayoutCreated: setLayoutId, onCompositionCreated: setId, onBindingsChanged: setBindings, onLayoutSaved: absorbLayout,
     }),
     (result) => {
@@ -178,8 +161,6 @@ export function CompositionEditorPage({
       absorbLayout(result.refreshedLayout, result.layoutId);
     },
   );
-
-  /** ADR 0052 §3's escape hatch, offered next to the shared-Template warning. */
   const handleForkLayout = () => {
     if (!id || !window.confirm(`This Template is used by ${sharedTemplateUsage} Layouts. Make this Layout its own copy?`)) return;
     void run(async () => {
@@ -194,16 +175,12 @@ export function CompositionEditorPage({
       resetApproval();
     }, "สร้าง Layout ส่วนตัวไม่สำเร็จ");
   };
-  // Dialog closed before the save runs: a failure must reach the header slot a modal would hide.
   const saveAsTemplate = (templateName: string) => {
     setNamingTemplate(false);
     if (!layout) return;
     void run(async () => {
       const { layout_id } = await upsertLayout({ name: templateName, aspectRatio: settings.aspectRatio, referenceResolution: settings.referenceResolution,
         background: settings.background, status: "active", zones: layout.zones.map(({ name, x, y, width, height }) => ({ name, x, y, width, height })) });
-      // Fold the new Template into the in-memory list so a second Save as Template this session
-      // sees its name — otherwise the duplicate-name guard only knows the one saved just before
-      // it and the collision comes back as a silent 409 from upsertLayout.
       const created = await fetchLayout(layout_id);
       data.setLayouts((current) => [...current.filter((c) => c.id !== created.id), created]);
       setTemplateSavedName(templateName);
@@ -217,7 +194,6 @@ export function CompositionEditorPage({
       <Button className="mt-4" variant="secondary" onClick={() => router.push(LIST_PATH)}>กลับไป Layouts</Button>
     </Card>
   );
-
   return (
     <div className="flex flex-col gap-4">
       <CompositionEditorHeader
@@ -245,7 +221,6 @@ export function CompositionEditorPage({
           router.push(LIST_PATH);
         }, "เปิดใช้งาน Composition ไม่สำเร็จ")}
       />
-
       <CompositionEditorOverlays
         confirmLeave={confirmLeave}
         onStay={() => setConfirmLeave(false)}
@@ -258,8 +233,7 @@ export function CompositionEditorPage({
         saveError={saveError} sharedTemplateUsage={sharedTemplateUsage} saving={saving}
         onForkLayout={handleForkLayout}
       />
-
-      <PlaybackPreviewModal
+      <PlaybackPreviewDialog
         open={previewOpen} onClose={() => setPreviewOpen(false)}
         zones={preview.playbackPreviewZones} assets={data.assets}
         aspectRatio={layout?.aspect_ratio} previewUrls={data.previews}
@@ -270,22 +244,18 @@ export function CompositionEditorPage({
         onOpenFullPreview={() => preview.openFullPreview(isDirty)}
       />
       <LayoutTemplatePicker open={pickerOpen} folders={data.folders} tagNames={tags ?? []} hasUnsavedChanges={isDirty} onClose={() => setPickerOpen(false)} onStarted={() => window.location.reload()} />
-
-      <Card className="grid items-stretch gap-6 p-4 xl:h-[50rem] xl:grid-cols-[340px_minmax(0,1fr)_300px]">
-        {view.binding && view.activeZone ? (
-          <ZoneContentPicker
-            zoneName={view.activeZone.name} binding={view.binding} onChange={setBinding}
-            assets={data.assets} playlists={data.playlists} previews={data.previews}
-            playlistPreviews={preview.playlistPreviews} playlistDurations={data.playlistDurations}
-          />
-        ) : (
-          <section className="border-b border-border pb-4 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-6">
-            <p className="text-sm font-semibold text-foreground">Insert to Layout</p><p className="mt-2 text-sm text-muted-foreground">Select a Zone to add content.</p>
-          </section>
-        )}
-
+      <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-panel">
+      <div className="grid h-[50rem] min-w-[1060px] grid-cols-[230px_minmax(560px,1fr)_270px] items-stretch">
+        <CompositionContentBrowser
+          binding={view.binding ?? null}
+          assets={data.assets}
+          playlists={data.playlists}
+          previews={data.previews}
+          playlistPreviews={preview.playlistPreviews}
+          onChange={setBinding}
+        />
         {layout ? (
-          <div className="flex min-h-0 flex-col gap-4">
+          <main className="flex min-h-0 flex-col gap-3 p-3">
             <CompositionCanvasPane
               zones={layout.zones} background={settings.background} aspectRatio={settings.aspectRatio}
               referenceResolution={settings.referenceResolution} zonePreviews={preview.zonePreviews}
@@ -294,17 +264,18 @@ export function CompositionEditorPage({
               canDelete={(layout?.zones.length ?? 0) > 1}
               onDelete={() => { if (!layout || layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
             />
-            <Card className="shrink-0 p-3">
-              <ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} />
-            </Card>
-          </div>
+            <div className="grid shrink-0 grid-cols-2 gap-3">
+              <LayoutInformationCard name={name} resolution={settings.referenceResolution} aspectRatio={settings.aspectRatio} zoneCount={layout.zones.length} status={status} />
+              <section className="rounded-lg border border-border bg-card p-3 shadow-panel"><ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} /></section>
+            </div>
+          </main>
         ) : (
-          <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg bg-muted text-sm text-muted-foreground">
+          <main className="flex min-h-40 flex-col items-center justify-center gap-3 bg-muted text-sm text-muted-foreground">
             <p>Start from the Template Picker to see Zones here</p>
             <Button onClick={() => setPickerOpen(true)}>+ New Layout</Button>
-          </div>
+          </main>
         )}
-        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
+        <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-border p-3">
           {view.binding && view.activeZone ? <>
             <p className="text-sm font-semibold text-foreground">Zone Properties</p>
             <ZonePropertiesPanel
@@ -321,8 +292,9 @@ export function CompositionEditorPage({
               sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
             />
           ) : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
-        </div>
-      </Card>
+        </aside>
+      </div>
+      </div>
     </div>
   );
 }

@@ -12,7 +12,7 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { ALIGN_EDGES, alignZone, duplicateZone, type AlignEdge } from "@/features/media-workspace/layouts/align-zones";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { ClipboardIcon, EyeIcon, LayoutIcon, LockIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { LayoutCanvas } from "@/features/media-workspace/layouts/components/LayoutCanvas";
 import { parseResolution, referencePixels } from "@/features/media-workspace/layouts/geometry";
@@ -110,6 +110,7 @@ export function CompositionCanvasPane({
           <Button variant="secondary" aria-pressed={!activeZoneId} onClick={() => onSelectZone(null)}>Select</Button>
           <Button variant="secondary" onClick={add}><PlusIcon /> Add Zone</Button>
           <Button variant="secondary" disabled={!activeZoneId || isActiveLocked} onClick={split}><LayoutIcon /> Split Zone</Button>
+          <span className="h-6 w-px bg-border" aria-hidden="true" />
           <div role="group" aria-label="Align selected Zone" className="flex overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             {ALIGN_EDGES.map(({ edge, label }) => (
               <button
@@ -131,6 +132,7 @@ export function CompositionCanvasPane({
             <span className="mx-1 h-5 w-px bg-muted" />
             <button type="button" disabled={activeIndex < 0} onClick={duplicate} aria-label="Duplicate Zone" title="Duplicate Zone" className="grid h-10 w-10 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><ClipboardIcon /></button>
           </div>
+          <span className="text-xs text-muted-foreground">Selected: {activeZone?.name ?? "None"}</span>
           </div>
           <button type="button" disabled={!canDelete || activeIndex < 0} onClick={onDelete} title={canDelete ? "Delete Zone" : "A Layout must have at least one Zone"} className="ml-auto flex h-10 shrink-0 items-center gap-2 rounded-lg border border-danger/30 px-3 text-sm font-medium text-danger hover:bg-danger-soft disabled:border-border disabled:text-muted-foreground"><TrashIcon /> Delete Zone</button>
         </div>

@@ -89,6 +89,9 @@ export function LayoutPropertiesPanel({
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
       <p className="text-sm font-semibold text-foreground">Layout Properties</p>
+      <div className="rounded-lg border border-border bg-muted p-1">
+        <button type="button" aria-current="page" className="w-full rounded-md bg-card px-3 py-1.5 text-sm font-medium text-primary shadow-sm">General</button>
+      </div>
       <div className={`grid items-start gap-4 ${compact ? "" : "md:grid-cols-2 xl:grid-cols-3"}`}>
 
       <label className="flex flex-col gap-1.5">

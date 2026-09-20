@@ -11,8 +11,9 @@
 // current name on every open — reset by remounting, not by effect (commit e877e4c).
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/lovable/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
+import { Input } from "@/components/ui/lovable/input";
 
 export function SaveAsTemplateDialog({
   defaultName,
@@ -33,27 +34,22 @@ export function SaveAsTemplateDialog({
   const taken = takenNames.includes(trimmed);
 
   return (
-    <Modal open onClose={onClose} title="Save as Template" footer={<>
-      <Button type="button" variant="secondary" onClick={onClose}>ยกเลิก</Button>
-      <Button type="button" disabled={!trimmed || taken} onClick={() => onConfirm(trimmed)}>
-        Save as Template
-      </Button>
-    </>}>
-      <p className="text-muted-foreground">
-        Template คือ geometry ที่ Layout อื่นนำไปใช้ร่วมกันได้ — ตั้งชื่อตามรูปแบบการวาง Zone
-        ไม่ใช่ตามงานที่ใช้อยู่ตอนนี้
-      </p>
-      <label className="space-y-1">
-        <span>Template name</span>
-        <input
-          aria-label="Template name"
-          autoFocus
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          className="w-full rounded-lg border border-border px-3 py-2"
-        />
-      </label>
-      {taken && <p className="text-danger">ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น</p>}
-    </Modal>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Save as Template</DialogTitle>
+          <DialogDescription>Template คือ geometry ที่ Layout อื่นนำไปใช้ร่วมกันได้ — ตั้งชื่อตามรูปแบบการวาง Zone ไม่ใช่ตามงานที่ใช้อยู่ตอนนี้</DialogDescription>
+        </DialogHeader>
+        <label className="space-y-1">
+          <span>Template name</span>
+          <Input aria-label="Template name" autoFocus value={name} onChange={(event) => setName(event.target.value)} />
+        </label>
+        {taken && <p className="text-danger">ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น</p>}
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>ยกเลิก</Button>
+          <Button type="button" disabled={!trimmed || taken} onClick={() => onConfirm(trimmed)}>Save as Template</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

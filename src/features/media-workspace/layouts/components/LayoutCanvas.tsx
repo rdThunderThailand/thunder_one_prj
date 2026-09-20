@@ -185,7 +185,7 @@ export function LayoutCanvas({
             <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= 0.25} onClick={() => setZoom((value) => Math.max(0.25, value - 0.25))} className="rounded-lg border border-border p-1.5 text-muted-foreground disabled:opacity-40"><MinusIcon /></button>
             <span className="min-w-12 text-center text-xs text-muted-foreground">{Math.round(zoom * 100)}%</span>
             <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-lg border border-border p-1.5 text-muted-foreground disabled:opacity-40"><PlusIcon /></button>
-            <button type="button" aria-label="Fit canvas" title="Fit canvas" onClick={() => setZoom(1)} className="rounded-lg border border-border p-1.5 text-muted-foreground"><ExpandIcon /></button>
+            <button type="button" aria-label="Fit to Screen" title="Fit to Screen" onClick={() => setZoom(1)} className="rounded-lg border border-border p-1.5 text-muted-foreground"><ExpandIcon /></button>
           </>}
           <button type="button" onClick={() => setSnap((v) => !v)} aria-pressed={snap} className={`rounded-lg border px-3 py-1 text-xs font-medium ${snap ? "border-primary bg-primary-soft text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
         </div>

@@ -5,8 +5,8 @@
 // to reach into the page component to change them.
 
 import { useRef, useState } from "react";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
-import { Button, buttonClasses } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/lovable/badge";
+import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
@@ -117,7 +117,7 @@ export function CompositionEditorHeader({
     setEditing(false);
   };
   const updatedLabel = savedAt ? `Updated ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Not saved";
-  const statusColor: Record<CompositionStatus, BadgeColor> = { draft: "yellow", active: "green", inactive: "zinc" };
+  const statusVariant: Record<CompositionStatus, "warning" | "success" | "neutral"> = { draft: "warning", active: "success", inactive: "neutral" };
 
   return (
     <div className="flex shrink-0 flex-wrap items-start justify-between gap-4">
@@ -132,6 +132,7 @@ export function CompositionEditorHeader({
           <ArrowLeftIcon />
         </button>
         <div className="min-w-0 flex-1">
+          <p className="mb-1 text-xs text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
           <div className="flex min-w-0 items-center gap-2">
           {editing ? <>
             <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-primary bg-transparent text-2xl font-semibold text-foreground outline-none" />
@@ -142,11 +143,8 @@ export function CompositionEditorHeader({
           </>}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge variant="pill">{referenceResolution ?? "Custom"}</Badge>
-            <Badge variant="pill">{aspectRatio}</Badge>
-            <Badge variant="pill">{zoneCount} {zoneCount === 1 ? "Zone" : "Zones"}</Badge>
-            <Badge variant="pill" color={savedAt ? "blue" : "zinc"}>{updatedLabel}</Badge>
-            <Badge variant="pill" color={statusColor[status]}>{status[0].toUpperCase() + status.slice(1)}</Badge>
+            <Badge variant={statusVariant[status]} className="rounded-full">{status[0].toUpperCase() + status.slice(1)}</Badge>
+            <span className="text-xs text-muted-foreground">{referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · {updatedLabel}</span>
           </div>
         </div>
       </div>
@@ -156,14 +154,6 @@ export function CompositionEditorHeader({
             <button type="button" disabled={!canRedo} onClick={onRedo} aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)" className="grid h-10 w-10 place-items-center text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><RedoIcon /></button>
           </div>
           <Button variant="secondary" onClick={onPreview} disabled={!canPreview}><EyeIcon /> Preview</Button>
-          <Button
-            variant="secondary"
-            onClick={onPublish}
-            disabled={saving || !!publishDisabledReason}
-            title={publishDisabledReason ?? undefined}
-          >
-            Publish →
-          </Button>
           <Button variant="secondary" onClick={onSaveAsTemplate} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>
             Save as Template
           </Button>
@@ -185,7 +175,7 @@ export function CompositionEditorHeader({
             >
               <summary
                 aria-label="ตัวเลือกการบันทึก"
-                className={`${buttonClasses()} cursor-pointer rounded-l-none border-l border-white/25 px-2 list-none [&::-webkit-details-marker]:hidden`}
+                className={`${buttonVariants()} cursor-pointer rounded-l-none border-l border-primary-foreground/25 px-2 list-none [&::-webkit-details-marker]:hidden`}
               >
                 ▾
               </summary>
@@ -194,6 +184,13 @@ export function CompositionEditorHeader({
               </div>
             </details>}
           </div>
+          <Button
+            onClick={onPublish}
+            disabled={saving || !!publishDisabledReason}
+            title={publishDisabledReason ?? undefined}
+          >
+            Publish →
+          </Button>
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ import { useListUrlState } from "@/hooks/use-list-url-state";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchContentFolders, fetchMediaAssets } from "@/lib/api/media-api";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
-import { PlaybackPreviewModal } from "@/features/media-workspace/preview/PlaybackPreviewModal";
+import { PlaybackPreviewDialog } from "@/features/media-workspace/preview/PlaybackPreviewDialog";
 import { loadCompositionPreview, type StagePreview } from "@/features/media-workspace/preview/composition-preview";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
 import type { CompositionLibraryAction } from "../library-actions";
@@ -279,7 +279,7 @@ export function CompositionsListPage() {
         onClose={() => setPickerOpen(false)}
       />
       {previewTarget && preview && (
-        <PlaybackPreviewModal
+        <PlaybackPreviewDialog
           open
           onClose={closePreview}
           zones={preview.zones}
