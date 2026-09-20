@@ -41,7 +41,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [nowPlayingItemId, setNowPlayingItemId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [propTab, setPropTab] = useState<"item" | "playlist">("playlist");
+  const [propTab, setPropTab] = useState<"item" | "playlist">("item");
   const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
 
   const row = usePlaylistEditorRow({ playlistId, history, info, setInfo });
@@ -131,7 +131,8 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   }
 
   const savedLabel = savedStateLabel(row.isDirty, row.lastSavedAt, !!row.serverId);
-  const selectedItem = present.items.find((i) => i.mediaAssetId === selectedItemId) ?? null;
+  const effectiveSelectedItemId = selectedItemId ?? present.items[0]?.mediaAssetId ?? null;
+  const selectedItem = present.items.find((i) => i.mediaAssetId === effectiveSelectedItemId) ?? null;
   const onFrame = (frame: ZonePreviewFrame | null) =>
     setNowPlayingItemId(frame?.item?.mediaAssetId ?? null);
 
@@ -139,6 +140,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     <div className="flex h-[calc(100dvh-9rem)] min-h-0 flex-col gap-4 overflow-hidden">
       <PlaylistEditorHeader
         name={present.name}
+        status={row.status}
         savedLabel={savedLabel}
         lastUpdatedAt={row.lastSavedAt}
         hasItems={present.items.length > 0}
@@ -171,12 +173,12 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
       )}
       {row.conflict && <RevisionConflictCard message={row.conflict} onReload={row.reloadFromServer} />}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-[340px_minmax(0,1fr)_340px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-[300px_minmax(0,1fr)_290px]">
         <PlaylistItemsPane
           items={present.items}
           playback={present.playback}
           assets={assets}
-          selectedId={selectedItemId}
+          selectedId={effectiveSelectedItemId}
           nowPlayingId={nowPlayingItemId}
           onSelect={selectItem}
           onMove={(from, to) => history.commit((s) => ({ ...s, items: moveItem(s.items, from, to) }))}
@@ -191,7 +193,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
             items={present.items}
             playback={present.playback}
             assets={assets}
-            selectedId={selectedItemId}
+            selectedId={effectiveSelectedItemId}
             nowPlayingId={nowPlayingItemId}
             onSelect={selectItem}
             onFrame={onFrame}

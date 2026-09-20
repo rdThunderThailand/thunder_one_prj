@@ -73,7 +73,7 @@ export function PlaylistSidePanel({
   const badge = statusBadge(playlistDisplayStatus(playlist));
 
   return (
-    <aside className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+    <aside className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="truncate text-base font-semibold text-foreground">

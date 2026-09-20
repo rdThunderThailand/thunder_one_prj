@@ -61,17 +61,15 @@ export function PlaylistItemsPane({
       </div>
       <p className="mb-3 shrink-0 text-xs text-muted-foreground">{items.length} items · Total {total}</p>
 
-      {items.length > 3 && (
-        <div className="relative mb-3 shrink-0">
-          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="ค้นหาใน playlist..."
-            className={`${inputClasses} pl-9`}
-          />
-        </div>
-      )}
+      <div className="relative mb-3 shrink-0">
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search playlist items..."
+          className={`${inputClasses} pl-9`}
+        />
+      </div>
 
       {items.length === 0 ? (
         <p className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-border px-4 text-center text-sm text-muted-foreground">

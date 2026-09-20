@@ -50,13 +50,14 @@ export function PlaylistTimelinePane({
   );
   const previews = usePreviewUrls(useMemo(() => items.map((i) => i.mediaAssetId), [items]));
   const assetById = useMemo(() => Object.fromEntries(assets.map((a) => [a.id, a])), [assets]);
-  const total = formatDuration(totalItemsDurationSeconds(items, assets, playback));
+  const totalSeconds = totalItemsDurationSeconds(items, assets, playback);
+  const total = formatDuration(totalSeconds);
   const startSeconds = useMemo(() => itemStartSeconds(items, assets, playback), [assets, items, playback]);
 
   return (
     <Card className="flex flex-none flex-col p-5">
-      <div className="mb-4 flex shrink-0 items-center justify-between">
-        <h2 className="text-base font-semibold text-foreground">Timeline</h2>
+      <div className="mb-4 flex shrink-0 items-end justify-between border-b border-border">
+        <span className="border-b-2 border-primary px-3 pb-2 text-sm font-semibold text-primary">Timeline</span>
         <span className="text-sm text-muted-foreground">Total Duration {total}</span>
       </div>
 
@@ -79,41 +80,47 @@ export function PlaylistTimelinePane({
             frameViewportHeight="75vh"
           />
 
-          <div className="mt-[11px] grid h-[157px] shrink-0 grid-flow-col auto-cols-[150px] gap-3 overflow-x-auto overflow-y-hidden pb-1">
+          <div className="mt-3 flex justify-between text-[10px] font-medium text-muted-foreground">
+            {Array.from({ length: 5 }, (_, index) => (
+              <span key={index}>{formatDuration((totalSeconds * index) / 4)}</span>
+            ))}
+          </div>
+          <div className="mt-1 flex shrink-0 gap-3 overflow-x-auto pb-1">
             {items.map((item, index) => {
               const asset = assetById[item.mediaAssetId];
               const seconds = item.durationSeconds ?? asset?.duration_seconds ?? null;
               const isSelected = selectedId === item.mediaAssetId;
               return (
-                <button
-                  key={item.mediaAssetId}
-                  type="button"
-                  onClick={() => {
-                    onSelect(item.mediaAssetId);
-                    onSeek(startSeconds[index] ?? 0);
-                  }}
-                  className="h-[150px] w-[150px] text-left"
-                >
-                  <span
-                    className={`block overflow-hidden rounded-lg border-2 ${
-                      isSelected
-                        ? "border-primary"
-                        : nowPlayingId === item.mediaAssetId
-                          ? "border-success"
-                          : "border-transparent"
-                    }`}
+                <div key={item.mediaAssetId} className="w-[150px] shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelect(item.mediaAssetId);
+                      onSeek(startSeconds[index] ?? 0);
+                    }}
+                    className="w-full text-left"
                   >
-                    <MediaThumb
-                      url={previews.urls[item.mediaAssetId]}
-                      kind={item.kind ?? asset?.kind}
-                      alt={item.title ?? asset?.title ?? ""}
-                      className="h-[118px] w-full rounded-none"
-                    />
-                  </span>
-                  <span className="mt-1 block truncate text-center text-base font-bold text-muted-foreground">
-                    {index + 1} · {seconds != null ? formatDuration(seconds) : "—"}
-                  </span>
-                </button>
+                    <span
+                      className={`block overflow-hidden rounded-lg border-2 ${
+                        isSelected
+                          ? "border-primary"
+                          : nowPlayingId === item.mediaAssetId
+                            ? "border-success"
+                            : "border-transparent"
+                      }`}
+                    >
+                      <MediaThumb
+                        url={previews.urls[item.mediaAssetId]}
+                        kind={item.kind ?? asset?.kind}
+                        alt={item.title ?? asset?.title ?? ""}
+                        className="h-[118px] w-full rounded-none"
+                      />
+                    </span>
+                    <span className="mt-1 block truncate text-center text-base font-bold text-muted-foreground">
+                      {index + 1} · {seconds != null ? formatDuration(seconds) : "—"}
+                    </span>
+                  </button>
+                </div>
               );
             })}
           </div>

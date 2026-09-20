@@ -18,7 +18,10 @@ export function PlaylistPlaybackSettings({
 }) {
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <h2 className="text-base font-semibold text-foreground">Playback Settings</h2>
+      <div>
+        <h2 className="text-base font-semibold text-foreground">Playback Settings</h2>
+        <p className="mt-1 text-xs text-muted-foreground">Defaults applied across this playlist.</p>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Field label="Play Mode">
           <Select
