@@ -18,8 +18,8 @@ export type SummaryCard = {
   onClick?: () => void;
 };
 
-const COLS: Record<number, string> = { 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "xl:grid-cols-5" };
-const summaryGrid = (count: number) => cn("grid gap-3 sm:grid-cols-2", COLS[Math.min(5, Math.max(3, count))]);
+const COLS: Record<number, string> = { 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "xl:grid-cols-5", 6: "xl:grid-cols-3 2xl:grid-cols-6" };
+const summaryGrid = (count: number) => cn("grid gap-3 sm:grid-cols-2", COLS[Math.min(6, Math.max(3, count))]);
 
 /** Lovable `MediaSummary` cards. */
 export function LibrarySummary({ cards, label }: { cards: SummaryCard[]; label: string }) {

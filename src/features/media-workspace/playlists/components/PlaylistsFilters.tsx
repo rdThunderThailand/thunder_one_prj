@@ -4,7 +4,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/lovable/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { LibrarySearch } from "../../content-library/LibraryShell";
-import { CONTENT_TYPES, type ContentType } from "../list-filtering";
+import { LibraryViewToggle } from "../../assets/components/LibraryToolbar";
+import { CONTENT_TYPES, type ContentType, type Sort, type SortKey } from "../list-filtering";
 import type { PlaylistStatus } from "../types";
 
 export type FilterState = {
@@ -29,6 +30,10 @@ export function PlaylistsFilters({
   value,
   onChange,
   onClearAll,
+  isGrid,
+  sort,
+  onViewChange,
+  onSortChange,
 }: {
   value: FilterState;
   onChange: (next: FilterState) => void;
@@ -36,6 +41,10 @@ export function PlaylistsFilters({
    *  when the URL carries no query string — so the button appears only when it would do
    *  something. Resets folder, sort and paging too, not just the filters shown here. */
   onClearAll?: () => void;
+  isGrid: boolean;
+  sort: Sort;
+  onViewChange: (next: boolean) => void;
+  onSortChange: (key: SortKey) => void;
 }) {
   return (
     <>
@@ -56,6 +65,17 @@ export function PlaylistsFilters({
       {onClearAll && (
         <Button variant="ghost" size="sm" onClick={onClearAll}><X className="h-3.5 w-3.5" />Clear filters</Button>
       )}
+      <LibraryViewToggle isGrid={isGrid} onIsGrid={onViewChange} />
+      <Select value={sort.key} onValueChange={(key) => onSortChange(key as SortKey)}>
+        <SelectTrigger className={triggerClass} aria-label="Sort playlists"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="updated">Last Modified</SelectItem>
+          <SelectItem value="name">Name</SelectItem>
+          <SelectItem value="type">Type</SelectItem>
+          <SelectItem value="duration">Duration</SelectItem>
+          <SelectItem value="status">Status</SelectItem>
+        </SelectContent>
+      </Select>
     </>
   );
 }

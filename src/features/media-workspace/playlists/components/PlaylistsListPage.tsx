@@ -1,12 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Plus, Trash2, Undo2 } from "lucide-react";
-import { Button as LegacyButton } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Folder, Plus, Trash2, Undo2 } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
@@ -25,6 +23,8 @@ import { usePlaylistsListData } from "../use-playlists-list-data";
 import { useTrashBatch } from "../use-trash-batch";
 import { PlaylistsFilters, type FilterState } from "./PlaylistsFilters";
 import { PlaylistsTable, type RowAction } from "./PlaylistsTable";
+import { PlaylistsGrid } from "./PlaylistsGrid";
+import { EmptyTrashDialog } from "./EmptyTrashDialog";
 import { PlaylistsListDialogs, type PlaylistDialogAction } from "./PlaylistsListDialogs";
 import { PlaylistTagsDialog } from "./PlaylistTagsDialog";
 import { CreatePlaylistDialog } from "./CreatePlaylistDialog";
@@ -34,7 +34,9 @@ import { ListEmpty, ListError, ListSkeleton, PlaylistsSummary, SummarySkeleton }
 
 const RAIL_LABELS = { all: "All Playlists", uncategorized: "Uncategorized", trash: "Trash" };
 const PER_PAGE_OPTIONS = [10, 25, 50];
-
+const VIEW_KEY = "media-workspace-playlists-view";
+const subscribeView = (notify: () => void) => { window.addEventListener("storage", notify); return () => window.removeEventListener("storage", notify); };
+const readView = () => window.localStorage.getItem(VIEW_KEY) === "grid";
 export function PlaylistsListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,6 +53,8 @@ export function PlaylistsListPage() {
   const [dialog, setDialog] = useState<{ action: PlaylistDialogAction; target: PlaylistListItem } | null>(null);
   const [tagsTarget, setTagsTarget] = useState<PlaylistListItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const isGrid = useSyncExternalStore(subscribeView, readView, () => false);
 
   const inTrash = collection === "trash";
   const { playlists, trashed, folders, error, refreshing, reload } = usePlaylistsListData(inTrash);
@@ -79,12 +83,14 @@ export function PlaylistsListPage() {
     );
     setPage(1);
   };
+  const handleViewChange = (next: boolean) => {
+    window.localStorage.setItem(VIEW_KEY, next ? "grid" : "list");
+    window.dispatchEvent(new StorageEvent("storage", { key: VIEW_KEY }));
+  };
 
   const counts = useMemo(() => folderCounts(playlists ?? [], folders), [playlists, folders]);
   const tags = useMemo(() => tagCounts(playlists ?? []), [playlists]);
 
-  // In Trash the rail's own dataset feeds the table; a tag selection and a folder
-  // selection are mutually exclusive (#41), so at most one narrows the active dataset.
   const base = useMemo(() => {
     if (inTrash) return trashed ?? [];
     if (tagId) return filterByTag(playlists ?? [], tagId);
@@ -96,8 +102,6 @@ export function PlaylistsListPage() {
   );
   const sorted = useMemo(() => sortPlaylists(filtered, sort), [filtered, sort]);
   const { rows, page: currentPage, totalPages } = paginate(sorted, page, perPage);
-  // Selecting a folder (or Trash) clears any tag selection, and vice versa — the rail's
-  // two tabs are mutually exclusive (#41 AC).
   const changeCollection = (next: Collection) => {
     setTagId(null);
     setCollection(next);
@@ -158,6 +162,8 @@ export function PlaylistsListPage() {
   if (error?.kind === "forbidden" && !playlists) return <NoAccess />;
 
   const stats = playlists !== null ? summarize(playlists) : null;
+  const totalItems = (playlists ?? []).reduce((total, playlist) => total + playlist.item_count, 0);
+  const totalDuration = (playlists ?? []).reduce((total, playlist) => total + (playlist.total_duration_seconds ?? 0), 0);
   const loading = inTrash ? trashed === null : playlists === null;
   const cause = inTrash
     ? "trash-empty"
@@ -175,19 +181,23 @@ export function PlaylistsListPage() {
         title="Playlists"
         subtitle="Create and manage playlists for your campaigns and channels."
         titleInTopbar
-        actions={<Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="h-3.5 w-3.5" />Create Playlist</Button>}
       />
 
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" className="hidden xl:inline-flex" onClick={() => setCreateFolderOpen(true)}><Folder className="h-3.5 w-3.5" />Create Folder</Button>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="h-3.5 w-3.5" />Create Playlist</Button>
+      </div>
+
       {stats === null ? (
-        <SummarySkeleton count={4} />
+        <SummarySkeleton count={6} />
       ) : (
-        <PlaylistsSummary stats={stats} />
+        <PlaylistsSummary stats={stats} items={totalItems} duration={formatSummaryDuration(totalDuration)} />
       )}
 
       <LibraryShell
         toolbar={
           <>
-            <PlaylistsFilters onClearAll={!inTrash && qs !== "" ? handleClearAll : undefined} value={filters} onChange={(next) => { setFilters(next); setPage(1); }} />
+            <PlaylistsFilters onClearAll={!inTrash && qs !== "" ? handleClearAll : undefined} value={filters} isGrid={isGrid} sort={sort} onViewChange={handleViewChange} onSortChange={handleSortChange} onChange={(next) => { setFilters(next); setPage(1); }} />
             {refreshing && playlists !== null && <span className="ml-auto text-[10px] text-muted-foreground">กำลังรีเฟรช…</span>}
           </>
         }
@@ -205,7 +215,7 @@ export function PlaylistsListPage() {
         )}
         rail={{
           defaultTab: tagId ? "tags" : "folders",
-          folders: (
+          folders: (inAside) => (
             <FeatureFolderRail
               scope="playlist"
               labels={RAIL_LABELS}
@@ -213,6 +223,8 @@ export function PlaylistsListPage() {
               selected={collection}
               counts={counts}
               isLoading={playlists === null && folders.length === 0}
+              createOpen={inAside ? createFolderOpen : undefined}
+              onCreateOpenChange={inAside ? setCreateFolderOpen : undefined}
               onSelect={changeCollection}
               onRefresh={reload}
               onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)}
@@ -244,6 +256,8 @@ export function PlaylistsListPage() {
           <ListError message={error.message} onRetry={reload} retrying={refreshing} />
         ) : rows.length === 0 ? (
           <ListEmpty cause={cause} onClearFilters={handleClearAll} />
+        ) : isGrid && !inTrash ? (
+          <PlaylistsGrid rows={rows} />
         ) : (
           <PlaylistsTable rows={rows} busyId={busyId} sort={sort} inTrash={inTrash} onAction={handleAction} onSortChange={handleSortChange} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
         )}
@@ -274,20 +288,13 @@ export function PlaylistsListPage() {
         onCreated={(playlistId) => router.push(`/media-workspace/playlists/${playlistId}`)}
         onError={(message) => { setActionError(message); setCreateOpen(false); }}
       />
-      <Modal
-        open={emptyTrashOpen}
-        onClose={() => { if (!emptyTrashBusy) setEmptyTrashOpen(false); }}
-        title="Empty Trash?"
-        footer={<>
-          <LegacyButton type="button" variant="secondary" disabled={emptyTrashBusy} onClick={() => setEmptyTrashOpen(false)}>Cancel</LegacyButton>
-          <LegacyButton type="button" disabled={emptyTrashBusy || emptyTrashTargets.length === 0} onClick={() => void handleEmptyTrash()} className="bg-danger hover:bg-danger">
-            {emptyTrashBusy ? "กำลังลบ…" : "Empty Trash"}
-          </LegacyButton>
-        </>}
-      >
-        <p>Permanently delete {emptyTrashTargets.length} playlist{emptyTrashTargets.length === 1 ? "" : "s"} from Trash? This cannot be undone.</p>
-        {emptyTrashLocked > 0 && <p>{emptyTrashLocked} playlist{emptyTrashLocked === 1 ? "" : "s"} will be skipped because they have been published.</p>}
-      </Modal>
+      <EmptyTrashDialog open={emptyTrashOpen} busy={emptyTrashBusy} targets={emptyTrashTargets.length} locked={emptyTrashLocked} onOpenChange={setEmptyTrashOpen} onConfirm={handleEmptyTrash} />
     </div>
   );
+}
+
+function formatSummaryDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
 }

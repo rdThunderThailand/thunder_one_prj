@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/lovable/badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { EditIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
@@ -13,8 +13,6 @@ import { playlistContentType, type Sort, type SortKey } from "../list-filtering"
 import { playlistDisplayStatus, statusBadge } from "../status-display";
 import type { PlaylistListItem } from "../types";
 
-/** "14 May 2025 10:30" — the list is client-rendered after its fetch, so the browser's
- *  own formatting never has server HTML to mismatch against. */
 function formatUpdatedAt(iso?: string): string {
   if (!iso) return "—";
   const date = new Date(iso);
@@ -31,12 +29,12 @@ function coverAssetId(playlist: PlaylistListItem): string | undefined {
 }
 
 export type RowAction = "duplicate" | "delete" | "mark-ready" | "move" | "tags" | "restore" | "permanent-delete";
-
 const TYPE_LABELS: Record<"video" | "image" | "mixed", string> = {
   video: "Video",
   image: "Image",
   mixed: "Mixed",
 };
+const statusVariant = (color: string) => color === "green" ? "success" : color === "yellow" ? "warning" : "neutral";
 
 export function PlaylistsTable({
   rows,
@@ -57,7 +55,6 @@ export function PlaylistsTable({
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
 }) {
-  // One signing call for every cover on the page, not one per row.
   const coverIds = useMemo(
     () => [...new Set(rows.map(coverAssetId).filter((id): id is string => !!id))],
     [rows]
@@ -71,11 +68,12 @@ export function PlaylistsTable({
         <thead>
           <tr className="border-b border-border text-[9px] font-semibold text-muted-foreground">
             <th className="w-8 py-2 pl-2"><Checkbox aria-label="Select all playlists on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
-            <SortHeader label="Playlist Name" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2" />
+            <SortHeader label="Playlist" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Duration" sortKey="duration" sort={sort} onSortChange={onSortChange} className="py-2" />
+            <th className="py-2">Items</th>
+            <SortHeader label="Last Modified" sortKey="updated" sort={sort} onSortChange={onSortChange} className="py-2" />
             <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Last Updated" sortKey="updated" sort={sort} onSortChange={onSortChange} className="py-2" />
             <th className="py-2 pr-1 text-right">Actions</th>
           </tr>
         </thead>
@@ -83,6 +81,7 @@ export function PlaylistsTable({
           {rows.map((playlist) => {
             const cover = coverAssetId(playlist);
             const badge = statusBadge(playlistDisplayStatus(playlist));
+            const metadata = decodeMetadata(playlist.metadata);
 
             return (
               <tr
@@ -101,6 +100,9 @@ export function PlaylistsTable({
                       <p className="truncate text-[10px] font-semibold text-foreground">
                         {playlist.name}
                       </p>
+                      <p className="truncate text-[9px] text-muted-foreground">
+                        {metadata.info.description || "No description"}
+                      </p>
                       {playlist.created_by?.display_name && (
                         <p className="truncate text-[8px] text-muted-foreground">
                           By {playlist.created_by.display_name}
@@ -109,7 +111,7 @@ export function PlaylistsTable({
                       {playlist.tags && playlist.tags.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {playlist.tags.map((tag) => (
-                            <Badge key={tag.id} color="zinc" variant="pill">
+                            <Badge key={tag.id} variant="neutral" className="rounded-full px-2 py-0 text-[8px]">
                               {tag.name}
                             </Badge>
                           ))}
@@ -119,23 +121,25 @@ export function PlaylistsTable({
                   </div>
                 </td>
                 <td className="py-3 text-[10px] text-muted-foreground">
-                  {(() => {
+                  <Badge variant="outline" className="rounded-full px-2 py-0 text-[9px] font-medium">{(() => {
                     const type = playlistContentType(playlist);
                     return type ? TYPE_LABELS[type] : "—";
-                  })()}
+                  })()}</Badge>
                 </td>
                 <td className="py-3 text-[10px] text-muted-foreground">
                   {playlist.total_duration_seconds == null
                     ? "—"
                     : formatDuration(playlist.total_duration_seconds)}
                 </td>
-                <td className="py-3">
-                  <Badge color={badge.color} variant="pill">
-                    {badge.label}
-                  </Badge>
+                <td className="py-3 text-[10px] text-muted-foreground">
+                  {playlist.item_count.toLocaleString()}
                 </td>
                 <td className="py-3 text-[10px] text-muted-foreground">
+                  {playlist.created_by?.display_name && <span className="block">by {playlist.created_by.display_name}</span>}
                   {formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}
+                </td>
+                <td className="py-3">
+                  <Badge variant={statusVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge>
                 </td>
                 <td className="py-3 pr-1 text-right">
                   <RowActions
@@ -184,8 +188,6 @@ function SortHeader({
   );
 }
 
-// ponytail: native <details> menu — no outside-click dismiss, no positioning library.
-// Swap to the popover API if the open menu ever gets in the way.
 function RowActions({
   playlist,
   isDraft,

@@ -63,7 +63,7 @@ export function LibraryShell({ toolbar, selection, rail, title, meta, headerActi
         {toolbar}
       </div>
       {selection}
-      <div className={cn("grid min-h-155", rail && "xl:grid-cols-[180px_minmax(0,1fr)]")}>
+      <div className={cn("grid min-h-155", rail && "xl:grid-cols-[200px_minmax(0,1fr)]")}>
         {rail && <aside className="hidden border-r border-border xl:flex xl:flex-col"><Rail rail={rail} inAside /></aside>}
         <div className="flex min-w-0 flex-col p-4">
           <div className="mb-4 flex items-end justify-between gap-3">
