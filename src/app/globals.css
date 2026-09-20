@@ -50,6 +50,11 @@
   --danger-soft: oklch(0.96 0.035 25);
   --danger-foreground: oklch(1 0 0);
   --primary-soft: oklch(0.965 0.028 262);
+  --info: oklch(0.58 0.17 235);
+  --info-soft: oklch(0.965 0.025 235);
+  --surface-subtle: oklch(0.975 0.004 255);
+  --surface-raised: oklch(1 0 0);
+  --border-subtle: oklch(0.94 0.008 255);
   --overlay: oklch(0.12 0.02 260 / 45%);
   --program: oklch(0.25 0.09 252);
 }
@@ -90,22 +95,59 @@
   --color-danger-soft: var(--danger-soft);
   --color-danger-foreground: var(--danger-foreground);
   --color-primary-soft: var(--primary-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-raised: var(--surface-raised);
+  --color-border-subtle: var(--border-subtle);
   --color-overlay: var(--overlay);
   --color-program: var(--program);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --text-3xs: 0.5rem;
+  --text-3xs--line-height: 0.75rem;
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.875rem;
+  --text-ui: 0.6875rem;
+  --text-ui--line-height: 1rem;
+  --spacing-shell-header: 4.25rem;
+  --spacing-summary-card: 5.5rem;
+  --breakpoint-xs: 30rem;
   --font-sans: var(--font-manrope);
   --font-mono: var(--font-geist-mono);
   --shadow-panel: 0 1px 2px color-mix(in oklab, var(--foreground) 4%, transparent);
   --shadow-float: 0 14px 36px color-mix(in oklab, var(--foreground) 12%, transparent);
+  --shadow-dialog: 0 24px 60px color-mix(in oklab, var(--foreground) 18%, transparent);
+  --z-index-nav: 20;
+  --z-index-sticky: 30;
+  --z-index-overlay: 60;
+  --z-index-modal: 70;
+  --z-index-popover: 80;
+  --z-index-tooltip: 90;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+@utility type-label {
+  font-size: var(--text-2xs);
+  line-height: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@utility focus-ring {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
 }
 
 @keyframes spark-draw {
