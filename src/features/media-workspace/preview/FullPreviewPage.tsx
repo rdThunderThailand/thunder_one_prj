@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useReducer, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { XIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
@@ -17,7 +17,6 @@ import { zoneSchedule, type PlaybackPreviewItem, type ZonePreviewFrame, type Zon
 import { initialPreviewSession, reducePreviewSession } from "./preview-session";
 
 export type PreviewSource = "composition" | "publication" | "playlist";
-
 type PreviewHandoff = StagePreview & { source: PreviewSource; id: string; assets: MediaAsset[] };
 type PreviewMessage =
   | { type: "connect" | "heartbeat" }
@@ -200,7 +199,7 @@ function PlaylistFullPreview({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={() => window.close()}>Edit Playlist</Button>
+            <Button variant="outline" onClick={() => window.close()}>Edit Playlist</Button>
             <Button disabled title="Publish from Playlist editor">Publish</Button>
           </div>
         </header>
@@ -294,7 +293,7 @@ function PreviewExpired() {
     <main className="flex min-h-full items-center justify-center bg-foreground p-6">
       <div className="max-w-sm rounded-xl bg-card p-6 text-center shadow-lg">
         <p className="text-sm font-medium text-foreground">Preview session expired — reopen from editor</p>
-        <Button className="mt-4" variant="secondary" onClick={() => window.close()}>Close tab</Button>
+        <Button className="mt-4" variant="outline" onClick={() => window.close()}>Close tab</Button>
       </div>
     </main>
   );
