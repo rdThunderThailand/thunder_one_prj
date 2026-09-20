@@ -80,17 +80,20 @@ export function PlaylistPropertiesPane({
               </div>
             </div>
 
-            <Field label="Duration (seconds)">
+            <Field label="Duration">
               {isVideo ? (
                 <p className="text-sm text-muted-foreground">ตามความยาวคลิป</p>
               ) : (
-                <input
-                  type="number"
-                  min={1}
-                  value={selectedItem.durationSeconds ?? ""}
-                  onChange={(e) => onItemPatch({ durationSeconds: Math.max(1, Number(e.target.value) || 1) })}
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-ring"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={1}
+                    value={selectedItem.durationSeconds ?? ""}
+                    onChange={(e) => onItemPatch({ durationSeconds: Math.max(1, Number(e.target.value) || 1) })}
+                    className="w-full rounded-lg border border-border py-2 pl-3 pr-10 text-sm outline-none focus:border-ring"
+                  />
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">sec</span>
+                </div>
               )}
             </Field>
 
@@ -102,25 +105,28 @@ export function PlaylistPropertiesPane({
               />
             </Field>
 
-            <Field label="Transition duration (seconds)" optional hint="Empty = inherit playlist default.">
-              <input
-                type="number"
-                min={0}
-                step="0.1"
-                value={selectedItem.transitionDurationSeconds ?? ""}
-                placeholder={String(
-                  playback.transitionDuration ?? (selectedItem.transition === "fade" ? 1 : 0)
-                )}
-                onChange={(e) =>
-                  onItemPatch({
-                    transitionDurationSeconds: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)),
-                  })
-                }
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-ring"
-              />
+            <Field label="Transition Duration" optional hint="Empty = inherit playlist default.">
+              <div className="relative">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={selectedItem.transitionDurationSeconds ?? ""}
+                  placeholder={String(
+                    playback.transitionDuration ?? (selectedItem.transition === "fade" ? 1 : 0)
+                  )}
+                  onChange={(e) =>
+                    onItemPatch({
+                      transitionDurationSeconds: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)),
+                    })
+                  }
+                  className="w-full rounded-lg border border-border py-2 pl-3 pr-10 text-sm outline-none focus:border-ring"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">sec</span>
+              </div>
             </Field>
 
-            <div className="rounded-lg border border-border p-3">
+            <div className="border-t border-border pt-3">
               <h3 className="mb-3 text-sm font-semibold text-foreground">
                 Display Options
               </h3>

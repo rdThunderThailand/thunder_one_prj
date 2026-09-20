@@ -12,6 +12,10 @@ import { formatDuration } from "../duration";
 import { itemStartSeconds, totalItemsDurationSeconds } from "../playlist-editor-state";
 import type { DraftItem, PlaylistPlayback } from "../types";
 
+const shortDuration = (seconds: number) => seconds < 60
+  ? `${Math.floor(seconds)}s`
+  : `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+
 /** #36 center pane: the shared PreviewStage embedded live (ADR 0061 — one full-frame Zone),
  *  plus a filmstrip that stays in step with the item list. Its own control box is the scrubber;
  *  ponytail: two independent clocks (this and the popped-out Preview tab) — different windows,
@@ -55,10 +59,10 @@ export function PlaylistTimelinePane({
   const startSeconds = useMemo(() => itemStartSeconds(items, assets, playback), [assets, items, playback]);
 
   return (
-    <Card className="flex flex-none flex-col p-5">
-      <div className="mb-4 flex shrink-0 items-end justify-between border-b border-border">
-        <span className="border-b-2 border-primary px-3 pb-2 text-sm font-semibold text-primary">Timeline</span>
-        <span className="text-sm text-muted-foreground">Total Duration {total}</span>
+    <Card className="flex flex-none flex-col p-3">
+      <div className="mb-3 flex shrink-0 items-end justify-between border-b border-border">
+        <span className="border-b-2 border-primary px-3 pb-2 text-[11px] font-semibold text-primary">Timeline</span>
+        <span className="text-[10px] text-muted-foreground">Total Duration {total}</span>
       </div>
 
       {items.length === 0 ? (
@@ -77,7 +81,7 @@ export function PlaylistTimelinePane({
             onFrameChange={onFrame}
             seekRequest={seekRequest}
             controlsPlacement="overlay"
-            frameViewportHeight="75vh"
+            frameViewportHeight="34vh"
           />
 
           <div className="mt-3 flex justify-between text-[10px] font-medium text-muted-foreground">
@@ -85,13 +89,13 @@ export function PlaylistTimelinePane({
               <span key={index}>{formatDuration((totalSeconds * index) / 4)}</span>
             ))}
           </div>
-          <div className="mt-1 flex shrink-0 gap-3 overflow-x-auto pb-1">
+          <div className="mt-1 flex shrink-0 gap-2 overflow-x-auto pb-1">
             {items.map((item, index) => {
               const asset = assetById[item.mediaAssetId];
               const seconds = item.durationSeconds ?? asset?.duration_seconds ?? null;
               const isSelected = selectedId === item.mediaAssetId;
               return (
-                <div key={item.mediaAssetId} className="w-[150px] shrink-0">
+                <div key={item.mediaAssetId} className="w-[88px] shrink-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -113,11 +117,11 @@ export function PlaylistTimelinePane({
                         url={previews.urls[item.mediaAssetId]}
                         kind={item.kind ?? asset?.kind}
                         alt={item.title ?? asset?.title ?? ""}
-                        className="h-[118px] w-full rounded-none"
+                        className="aspect-video w-full rounded-none"
                       />
                     </span>
-                    <span className="mt-1 block truncate text-center text-base font-bold text-muted-foreground">
-                      {index + 1} · {seconds != null ? formatDuration(seconds) : "—"}
+                    <span className="mt-1 block truncate text-center text-[9px] text-muted-foreground">
+                      {seconds != null ? shortDuration(seconds) : "—"}
                     </span>
                   </button>
                 </div>

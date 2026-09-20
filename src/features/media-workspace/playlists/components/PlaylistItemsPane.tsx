@@ -58,6 +58,14 @@ export function PlaylistItemsPane({
     <Card className="flex h-[32rem] min-h-0 flex-col p-5 xl:h-full">
       <div className="mb-1 flex shrink-0 items-center justify-between">
         <h2 className="text-base font-semibold text-foreground">Playlist Items</h2>
+        <button
+          type="button"
+          onClick={onAddItem}
+          aria-label="Add item"
+          className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <PlusIcon className="h-4 w-4" />
+        </button>
       </div>
       <p className="mb-3 shrink-0 text-xs text-muted-foreground">{items.length} items · Total {total}</p>
 

@@ -187,7 +187,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           onAddItem={() => setDrawerOpen(true)}
         />
 
-        <div className="flex min-h-0 flex-col gap-4 xl:overflow-y-auto">
+        <div className="flex min-h-0 flex-col gap-3">
           <PlaylistTimelinePane
             name={present.name}
             items={present.items}
