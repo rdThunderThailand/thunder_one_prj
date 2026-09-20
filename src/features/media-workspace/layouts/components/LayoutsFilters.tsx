@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/lovable/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { LibrarySearch } from "../../content-library/LibraryShell";
+import { LibraryViewToggle } from "../../assets/components/LibraryToolbar";
 import type { ListFilters } from "../list-filtering";
 import { LAYOUT_STATUSES, type LayoutStatus } from "../types";
 
@@ -17,6 +18,8 @@ export function LayoutsFilters({
   value,
   onChange,
   onClearAll,
+  isGrid,
+  onViewChange,
 }: {
   value: ListFilters;
   onChange: (next: ListFilters) => void;
@@ -24,6 +27,8 @@ export function LayoutsFilters({
    *  when the URL carries no query string — so the button appears only when it would do
    *  something. Resets sort and paging too, not just the filters shown here. */
   onClearAll?: () => void;
+  isGrid: boolean;
+  onViewChange: (next: boolean) => void;
 }) {
   return (
     <>
@@ -33,6 +38,7 @@ export function LayoutsFilters({
         <SelectContent>{STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>)}</SelectContent>
       </Select>
       {onClearAll && <Button variant="ghost" size="sm" onClick={onClearAll}><X className="h-3.5 w-3.5" />Clear all</Button>}
+      <LibraryViewToggle isGrid={isGrid} onIsGrid={onViewChange} />
     </>
   );
 }

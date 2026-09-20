@@ -6,9 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Plus } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { buttonVariants } from "@/components/ui/lovable/button";
+import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
 import { LibraryShell } from "../../content-library/LibraryShell";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
@@ -19,7 +19,7 @@ import { readListState, writeListState, DEFAULT_STATE } from "../list-url-state"
 import type { ListFilters, Sort, SortKey } from "../list-filtering";
 import type { LayoutListItem } from "../types";
 import { LayoutsFilters } from "./LayoutsFilters";
-import { LayoutsTable, type RowAction } from "./LayoutsTable";
+import { LayoutsGrid, LayoutsTable, type RowAction } from "./LayoutsTable";
 import { LayoutsSummary, ListEmpty, ListError, ListSkeleton, SummarySkeleton } from "./LayoutsListStates";
 
 export function LayoutsListPage() {
@@ -38,6 +38,7 @@ export function LayoutsListPage() {
   const [perPage, setPerPage] = useState(initial.perPage);
   const [refreshing, setRefreshing] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<LayoutListItem | null>(null);
+  const [isGrid, setIsGrid] = useState(false);
 
   // Keeps the URL in sync with the view (push/replace decided by useListUrlState — a
   // search-typing run collapses into one history step) and restores filters/sort/page
@@ -164,7 +165,7 @@ export function LayoutsListPage() {
       <LibraryShell
         toolbar={
           <>
-            <LayoutsFilters value={filters} onClearAll={qs === "" ? undefined : handleClearAll} onChange={(next) => { setFilters(next); setPage(1); }} />
+            <LayoutsFilters value={filters} isGrid={isGrid} onViewChange={setIsGrid} onClearAll={qs === "" ? undefined : handleClearAll} onChange={(next) => { setFilters(next); setPage(1); }} />
             {refreshing && layouts !== null && <span className="ml-auto text-[10px] text-muted-foreground">กำลังรีเฟรช…</span>}
           </>
         }
@@ -186,39 +187,29 @@ export function LayoutsListPage() {
           <ListError message={error.message} onRetry={reload} retrying={refreshing} />
         ) : rows.length === 0 ? (
           <ListEmpty cause={layouts!.length === 0 ? "no-layouts" : "no-match"} onClearFilters={handleClearAll} />
+        ) : isGrid ? (
+          <LayoutsGrid rows={rows} busyId={busyId} onAction={handleAction} />
         ) : (
           <LayoutsTable rows={rows} busyId={busyId} sort={sort} onAction={handleAction} onSortChange={handleSortChange} />
         )}
       </LibraryShell>
 
-      <Modal
-        open={archiveTarget !== null}
-        onClose={() => setArchiveTarget(null)}
-        title="Archive Layout"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={() => setArchiveTarget(null)}
-              className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
-            >
-              ยกเลิก
-            </button>
-            <button
-              type="button"
-              onClick={confirmArchive}
-              className="rounded-lg bg-danger px-4 py-2 text-sm text-white hover:bg-danger"
-            >
-              Archive
-            </button>
-          </>
-        }
-      >
-        <p>
-          Archive Layout &ldquo;{archiveTarget?.name}&rdquo;? Layout จะถูกตั้งเป็น Inactive และกู้คืนได้ทีหลัง
-          ไม่มีการลบข้อมูล
-        </p>
-      </Modal>
+      <AlertDialog open={archiveTarget !== null} onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive Layout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Archive Layout &ldquo;{archiveTarget?.name}&rdquo;? Layout จะถูกตั้งเป็น Inactive และกู้คืนได้ทีหลัง ไม่มีการลบข้อมูล
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button className="bg-danger hover:bg-danger" onClick={confirmArchive}>Archive</Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
