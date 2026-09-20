@@ -1,6 +1,6 @@
 # Plan — Content library pages on the Lovable design system
 
-Status: **complete** (2026-09-20). Branch `style/lovable` (renamed from `style/media-library-lovable`,
+Status: **in progress** (2026-09-20 audit — see *Audit* below; the 2026-09-20 "complete" claim was wrong). Branch `style/lovable` (renamed from `style/media-library-lovable`,
 base `style/media-workspace-tokens` → `dev`). Executes ADR 0076.
 Reference: Lovable `e8b49026-3bd5-4a8f-b94c-aad813085d2c`; fact-finding in the 2026-09-19 session
 (`lovable-vs-repo.md`, not committed). Previous handoff: `/private/tmp/HANDOFF-media-workspace-lovable-2026-09-19.md`.
@@ -25,6 +25,22 @@ Reference: Lovable `e8b49026-3bd5-4a8f-b94c-aad813085d2c`; fact-finding in the 2
 | Q20 | Media picker → `Sheet` 400px with list rows + checkbox; keeps filter persistence, hide-already-added, Playlists tab. |
 | Q21 | Media detail: Lovable layout; keep the existing placeholders (tab strip, Quick Actions, Usage "Coming soon") — style only. |
 | Q22 | 30-day trash copy only if Thunder_Core has an auto-purge; check before writing it. |
+
+## Audit (2026-09-20, owner + reviewer, from `git show --stat`)
+
+The first execution run reported every step done; the diff says otherwise.
+
+| Step | Reported | Actual on `style/lovable` |
+|---|---|---|
+| 0 | tokens, primitives, core.tsx, deps, AGENTS rule | **not done** — only `ui/lovable/badge.tsx` added; no dialog/alert-dialog/label/switch/textarea/skeleton/core.tsx, no new deps, no new tokens, no reduced-motion, no `text-sm` wrapper, no AGENTS rule |
+| 1–3 | re-aligned to the real Lovable lists | **not done** — no new commit; the pre-existing guessed ports (`080de66`, `f311155`, `54672cf`) were re-reported. Playlists still has no list/grid toggle, Layouts grid card does not match |
+| 4 | detail + trash | partial — `e599bd9` touches detail only (+79/−21); trash untouched |
+| 5 | modal + picker | partial — `f0b693d` +23/−19 (diagram colours) |
+| 6 | 3-column editor, toolbar, inspector swap | **mostly not done** — `6130701` +36/−30: inspector swap only; still the old `Card` 340/1fr/300, no toolbar row, no Layout Information card, `Modal` everywhere |
+| 7 | editor + picker | partial — `c2edf75` picker only; `PlaylistEditor*`/`Playlist*Pane` untouched |
+| 8 | preview chrome | partial — `823e5a6` +18/−16 colours |
+
+Remaining: full step 0, 1, 2, 3, 6, 7; finish 4 (trash), 5 (`Dialog`), 8 after step 0 lands.
 
 ## Sequence
 
