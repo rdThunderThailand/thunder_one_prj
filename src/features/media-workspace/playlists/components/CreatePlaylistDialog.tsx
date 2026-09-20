@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/lovable/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { classifyApiError } from "@/lib/api/api-error";
 import { movePlaylist } from "@/lib/api/media-api";
 import type { ContentFolder } from "@/types/domain";
@@ -50,12 +50,9 @@ export function CreatePlaylistDialog({
   };
 
   return (
-    <Modal open={open} onClose={close} title="Create Playlist" footer={<>
-      <Button type="button" variant="secondary" disabled={busy} onClick={close}>Cancel</Button>
-      <Button type="button" disabled={busy || !name.trim()} onClick={() => void submit()}>
-        {busy ? "Creating…" : "Next"}
-      </Button>
-    </>}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) close(); }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Create Playlist</DialogTitle></DialogHeader>
       <label className="space-y-1">
         <span>Playlist name</span>
         <input
@@ -78,6 +75,11 @@ export function CreatePlaylistDialog({
           {folders.map((folder) => <option key={folder.id} value={folder.id}>{folderPath(folders, folder.id)}</option>)}
         </select>
       </label>
-    </Modal>
+        <DialogFooter>
+          <Button type="button" variant="outline" disabled={busy} onClick={close}>Cancel</Button>
+          <Button type="button" disabled={busy || !name.trim()} onClick={() => void submit()}>{busy ? "Creating…" : "Next"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

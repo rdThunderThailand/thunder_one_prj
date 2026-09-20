@@ -6,8 +6,8 @@
 // datalist of the tenant's existing vocabulary, so typing an existing name reuses it.
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/lovable/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { XIcon } from "@/components/ui/icons";
 import { classifyApiError } from "@/lib/api/api-error";
 import { fetchTags, setPlaylistTags } from "@/lib/api/media-api";
@@ -61,15 +61,12 @@ export function PlaylistTagsDialog({
   };
 
   return (
-    <Modal
+    <Dialog
       open={target !== null}
-      onClose={() => { if (!busy) onClose(); }}
-      title="Edit tags"
-      footer={<>
-        <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>Cancel</Button>
-        <Button type="button" disabled={busy} onClick={() => void submit()}>{busy ? "Saving…" : "Save"}</Button>
-      </>}
+      onOpenChange={(open) => { if (!open && !busy) onClose(); }}
     >
+      <DialogContent>
+        <DialogHeader><DialogTitle>Edit tags</DialogTitle></DialogHeader>
       <div className="flex flex-wrap items-center gap-2">
         {names.map((name) => (
           <span
@@ -115,6 +112,11 @@ export function PlaylistTagsDialog({
           </button>
         )}
       </div>
-    </Modal>
+        <DialogFooter>
+          <Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button>
+          <Button type="button" disabled={busy} onClick={() => void submit()}>{busy ? "Saving…" : "Save"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

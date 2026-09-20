@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Folder } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Button as LovableButton } from "@/components/ui/lovable/button";
-import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/lovable/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { ContentFolderRail, type FolderCollection } from "./ContentFolderRail";
 import { isDescendant } from "./folder-tree";
 import {
@@ -120,11 +119,17 @@ export function FeatureFolderRail({
     && (deleteItemIds === null || (deletingItems && deleteDestination === "folder" && !value))));
 
   return <>
-    <ContentFolderRail folders={folders} selected={selected} labels={labels} counts={counts} onSelect={onSelect} onRename={(folder) => openAction("rename", folder)} onMove={(folder) => openAction("move", folder)} onDelete={(folder) => openAction("delete", folder)} isLoading={isLoading} footer={isCreateControlled ? undefined : <LovableButton variant="outline" size="sm" className="w-full" onClick={() => { setValue(""); setCreateOpen(true); }}><Folder className="h-3.5 w-3" />Create Folder</LovableButton>} />
-    <Modal open={createOpen} onClose={close} title="Create Folder" footer={<><Button type="button" variant="secondary" disabled={busy} onClick={close}>Cancel</Button><Button type="button" disabled={busy || !value.trim()} onClick={() => void create()}>{busy ? "Creating…" : "Create"}</Button></>}>
+    <ContentFolderRail folders={folders} selected={selected} labels={labels} counts={counts} onSelect={onSelect} onRename={(folder) => openAction("rename", folder)} onMove={(folder) => openAction("move", folder)} onDelete={(folder) => openAction("delete", folder)} isLoading={isLoading} footer={isCreateControlled ? undefined : <Button variant="outline" size="sm" className="w-full" onClick={() => { setValue(""); setCreateOpen(true); }}><Folder className="h-3.5 w-3" />Create Folder</Button>} />
+    <Dialog open={createOpen} onOpenChange={(open) => { if (!open && !busy) close(); }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Create Folder</DialogTitle></DialogHeader>
       <label className="space-y-1"><span>Folder name</span><input autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2" /></label>
-    </Modal>
-    <Modal open={action !== null} onClose={close} title={action?.kind === "rename" ? "Rename Folder" : action?.kind === "move" ? "Move Folder" : `Delete “${action?.folder.name ?? "Folder"}”?`} footer={<><Button type="button" variant="secondary" disabled={busy} onClick={close}>Cancel</Button><Button type="button" disabled={busy || deleteDisabled || (action?.kind === "rename" && !value.trim())} onClick={submitAction} className={action?.kind === "delete" ? "bg-danger hover:bg-danger disabled:bg-danger/40" : ""}>{busy ? "Saving…" : action?.kind === "delete" ? "Delete Folder" : "Save"}</Button></>}>
+        <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={close}>Cancel</Button><Button type="button" disabled={busy || !value.trim()} onClick={() => void create()}>{busy ? "Creating…" : "Create"}</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+    <Dialog open={action !== null} onOpenChange={(open) => { if (!open && !busy) close(); }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{action?.kind === "rename" ? "Rename Folder" : action?.kind === "move" ? "Move Folder" : `Delete “${action?.folder.name ?? "Folder"}”?`}</DialogTitle></DialogHeader>
       {action?.kind === "rename" && <label className="space-y-1"><span>Folder name</span><input autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2" /></label>}
       {action?.kind === "move" && <label className="space-y-1"><span>Parent folder</span><select autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2"><option value="">Root</option>{moveTargets.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select></label>}
       {action?.kind === "delete" && childFolders.length > 0 && <div className="flex items-start gap-3">
@@ -149,6 +154,8 @@ export function FeatureFolderRail({
           <select aria-label="Destination folder" disabled={deleteDestination !== "folder"} value={value} onChange={(event) => setValue(event.target.value)} className="ml-6 w-[calc(100%-1.5rem)] rounded-lg border border-border px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"><option value="">Select a folder</option>{moveTargets.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select>
         </fieldset>}
       </div>}
-    </Modal>
+        <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={close}>Cancel</Button><Button type="button" disabled={busy || deleteDisabled || (action?.kind === "rename" && !value.trim())} onClick={submitAction} className={action?.kind === "delete" ? "bg-danger hover:bg-danger disabled:bg-danger/40" : ""}>{busy ? "Saving…" : action?.kind === "delete" ? "Delete Folder" : "Save"}</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   </>;
 }
