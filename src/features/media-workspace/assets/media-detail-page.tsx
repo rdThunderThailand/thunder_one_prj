@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/lovable/badge";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { EditIcon } from "@/components/ui/icons";
@@ -79,6 +80,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   const [isRenaming, setIsRenaming] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
   const [renameError, setRenameError] = useState("");
+  const [trashOpen, setTrashOpen] = useState(false);
   const previews = usePreviewUrls([assetId]);
 
   useEffect(() => {
@@ -119,7 +121,6 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   };
 
   const trash = async () => {
-    if (!window.confirm(`Move ${label} to Trash?`)) return;
     await trashMediaAsset(asset.id);
     router.push("/media-workspace/assets");
   };
@@ -213,8 +214,20 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
         <section className="flex min-h-[260px] flex-col rounded-xl border border-border bg-card shadow-panel"><div className="flex items-center justify-between border-b border-border px-5 py-4"><h2 className="font-semibold">Usage (Where it&apos;s used)</h2><Badge variant="neutral">Coming soon</Badge></div><div className="flex flex-1 items-center p-5"><p className="w-full rounded-lg bg-muted p-4 text-sm leading-5 text-muted-foreground">Usage counts will appear when a tenant-scoped usage contract is available.</p></div></section>
         <section className="rounded-xl border border-border bg-card p-4 shadow-panel"><h2 className="font-semibold">Tags</h2>{asset.tags?.length ? <div className="mt-3 flex flex-wrap gap-2">{asset.tags.map((tag) => <Badge key={tag.id} variant="secondary">{tag.name}</Badge>)}</div> : <p className="mt-3 text-sm text-muted-foreground">No tags assigned.</p>}</section>
         <section className="rounded-xl border border-border bg-card p-4 shadow-panel"><h2 className="font-semibold">Move to Folder</h2><select aria-label={`Move ${label}`} value={asset.folder_id ?? ""} disabled={isMoving} onChange={(event) => void move(event.target.value || null)} className="mt-3 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"><option value="">Uncategorized</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select></section>
-        <QuickActions onTrash={() => void trash()} />
+        <QuickActions onTrash={() => setTrashOpen(true)} />
       </aside>
     </div>
+    <AlertDialog open={trashOpen} onOpenChange={setTrashOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Move to Trash?</AlertDialogTitle>
+          <AlertDialogDescription>Move {label} to Trash?</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => void trash()}>Move to Trash</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>;
 }

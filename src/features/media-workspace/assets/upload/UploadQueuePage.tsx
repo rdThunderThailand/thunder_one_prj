@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import { CheckCircleIcon, LightbulbIcon, UploadIcon } from "@/components/ui/icons";
 import { formatBytes } from "@/features/media-workspace/playlists/totals";
 import { MAX_UPLOAD_SIZE_LABEL, UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "@/features/media-workspace/publications/upload-limits";
@@ -52,6 +53,11 @@ export function UploadQueuePage() {
   const stagedItems = queue.items.filter((item) => item.state === "staged");
   const canStart = stagedItems.length > 0 && stagedItems.every((item) => item.title.trim());
   const settingsLocked = queue.items.some((item) => item.state === "waiting" || item.state === "uploading");
+  const [confirmation, setConfirmation] = useState<
+    | { action: "aggregate"; label: string }
+    | { action: "cancel" | "dismiss"; id: string; label: string }
+    | null
+  >(null);
 
   const addTag = (tagId: string) => {
     if (!tagId || queue.selectedTagIds.includes(tagId)) return;
@@ -70,7 +76,16 @@ export function UploadQueuePage() {
   const runAggregateAction = () => {
     const action = queue.aggregateAction;
     if (!action) return;
-    if (action === "clear-queue" || window.confirm(`${AGGREGATE_LABEL[action]}? Uploaded data for in-progress files will be deleted.`)) queue.runAggregateAction();
+    if (action === "clear-queue") queue.runAggregateAction();
+    else setConfirmation({ action: "aggregate", label: AGGREGATE_LABEL[action] });
+  };
+
+  const confirmAction = () => {
+    if (!confirmation) return;
+    if (confirmation.action === "aggregate") queue.runAggregateAction();
+    if (confirmation.action === "cancel") queue.cancelItem(confirmation.id);
+    if (confirmation.action === "dismiss") queue.removeItem(confirmation.id);
+    setConfirmation(null);
   };
 
   return (
@@ -131,8 +146,8 @@ export function UploadQueuePage() {
                     <div className="flex shrink-0 items-center gap-3 text-xs">
                       <span className={`min-w-16 text-right font-medium ${STATE_TONE[item.state]}`}>{STATE_LABEL[item.state]}{item.state === "uploading" && ` ${item.pct}%`}</span>
                       {item.state === "staged" && <button className="text-muted-foreground hover:text-danger" onClick={() => queue.removeItem(item.id)}>Remove</button>}
-                      {(item.state === "waiting" || item.state === "uploading") && <button className="text-muted-foreground hover:text-danger" onClick={() => { if (window.confirm(`Cancel uploading ${item.file.name}? The uploaded data will be deleted.`)) queue.cancelItem(item.id); }}>Cancel</button>}
-                      {(item.state === "failed" || item.state === "canceled") && <><button className="font-medium text-primary" onClick={() => queue.retryItem(item.id)}>Retry</button><button className="text-muted-foreground" onClick={() => { if (window.confirm(`Dismiss ${item.file.name}? Any uploaded data will be deleted.`)) queue.removeItem(item.id); }}>Dismiss</button></>}
+                      {(item.state === "waiting" || item.state === "uploading") && <button className="text-muted-foreground hover:text-danger" onClick={() => setConfirmation({ action: "cancel", id: item.id, label: item.file.name })}>Cancel</button>}
+                      {(item.state === "failed" || item.state === "canceled") && <><button className="font-medium text-primary" onClick={() => queue.retryItem(item.id)}>Retry</button><button className="text-muted-foreground" onClick={() => setConfirmation({ action: "dismiss", id: item.id, label: item.file.name })}>Dismiss</button></>}
                       {item.state === "completed" && <button className="text-muted-foreground" onClick={() => queue.removeItem(item.id)}>Dismiss</button>}
                     </div>
                   </li>
@@ -178,6 +193,22 @@ export function UploadQueuePage() {
           <RecentUploadsCard completedCount={queue.summary.completed} />
         </aside>
       </div>
+      <AlertDialog open={confirmation !== null} onOpenChange={(open) => { if (!open) setConfirmation(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmation?.action === "aggregate" ? confirmation.label : confirmation?.action === "cancel" ? "Cancel upload?" : "Dismiss upload?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmation?.action === "aggregate"
+                ? "Uploaded data for in-progress files will be deleted."
+                : `${confirmation?.label ?? "This file"} and its uploaded data will be removed.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogAction className="bg-danger hover:bg-danger" onClick={confirmAction}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

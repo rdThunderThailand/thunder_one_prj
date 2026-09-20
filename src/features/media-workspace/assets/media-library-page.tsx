@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Archive, FileAudio, FileImage, FileText, FileVideo, Folder, FolderInput, Trash2, Undo2, Upload } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import {
   fetchContentFolders,
@@ -49,6 +50,7 @@ export function MediaLibraryPage() {
   const [tagId, setTagId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
+  const [pendingBatch, setPendingBatch] = useState<{ mode: "trash" | "delete"; ids: string[] } | null>(null);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   // Summary cards describe the library, not the Trash — keep the last non-trash fetch.
   const [libraryAssets, setLibraryAssets] = useState<MediaAsset[]>([]);
@@ -107,8 +109,6 @@ export function MediaLibraryPage() {
   const toggleSelected = (id: string, checked: boolean) => setSelectedIds((current) => { const next = new Set(current); if (checked) next.add(id); else next.delete(id); return next; });
   const runBatch = async (mode: "trash" | "restore" | "delete", ids: string[]) => {
     if (!ids.length) return;
-    const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
-    if (!window.confirm(`${verb} ${ids.length} media item${ids.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
     setBatchBusy(true);
     const action = mode === "trash" ? trashMediaAsset : mode === "restore" ? restoreMediaAsset : permanentlyDeleteMediaAsset;
     const results = await Promise.allSettled(ids.map(action));
@@ -186,8 +186,8 @@ export function MediaLibraryPage() {
           <LibrarySelectionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
             {isTrash ? (
               <>
-                <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
-                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Delete forever</Button>
+                <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Restore</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "delete", ids: [...selectedIds] })}><Trash2 className="h-3.5 w-3.5" />Delete Permanently</Button>
               </>
             ) : (
               <>
@@ -200,7 +200,7 @@ export function MediaLibraryPage() {
                     {folders.map((folder) => <DropdownMenuItem key={folder.id} onSelect={() => void moveSelected(folder.id)}>{folder.name}</DropdownMenuItem>)}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "trash", ids: [...selectedIds] })}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
               </>
             )}
           </LibrarySelectionBar>
@@ -209,10 +209,10 @@ export function MediaLibraryPage() {
         title={collectionName}
         meta={loading && assets.length === 0 ? "…" : `${filteredAssets.length.toLocaleString()} items`}
         headerActions={isTrash && assets.length > 0 && (
-          <>
-            <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", assets.map((asset) => asset.id))}><Undo2 className="h-3.5 w-3.5" />Recover All</Button>
-            <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", assets.map((asset) => asset.id))}><Trash2 className="h-3.5 w-3.5" />Delete All</Button>
-          </>
+          <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "delete", ids: assets.map((asset) => asset.id) })}>
+            <Trash2 className="h-3.5 w-3.5" />
+            Empty Trash
+          </Button>
         )}
         footer={<LibraryPagination page={currentPage} totalPages={totalPages} total={filteredAssets.length} pageSize={PAGE_SIZE} onPage={setPage} />}
       >
@@ -230,6 +230,33 @@ export function MediaLibraryPage() {
           </div>
         )}
       </LibraryShell>
+
+      <AlertDialog open={pendingBatch !== null} onOpenChange={(open) => { if (!open) setPendingBatch(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{pendingBatch?.mode === "delete" ? "Delete permanently?" : "Move to Trash?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingBatch?.mode === "delete"
+                ? `${pendingBatch.ids.length} item(s) will be permanently deleted. This cannot be undone.`
+                : `${pendingBatch?.ids.length ?? 0} item(s) will be moved to Trash.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={pendingBatch?.mode === "delete" ? "bg-danger hover:bg-danger" : undefined}
+              onClick={() => {
+                if (!pendingBatch) return;
+                const { mode, ids } = pendingBatch;
+                setPendingBatch(null);
+                void runBatch(mode, ids);
+              }}
+            >
+              {pendingBatch?.mode === "delete" ? "Delete Permanently" : "Move to Trash"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
