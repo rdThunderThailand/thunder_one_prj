@@ -55,7 +55,7 @@ export function PlaylistItemsPane({
   };
 
   return (
-    <Card className="flex h-full min-h-0 flex-col p-5">
+    <Card className="flex h-[32rem] min-h-0 flex-col p-5 xl:h-full">
       <div className="mb-1 flex shrink-0 items-center justify-between">
         <h2 className="text-base font-semibold text-foreground">Playlist Items</h2>
       </div>

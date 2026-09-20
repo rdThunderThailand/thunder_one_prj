@@ -42,7 +42,7 @@ export function PlaylistPropertiesPane({
   const isVideo = selectedItem ? (selectedItem.kind ?? asset?.kind) === "video" : false;
 
   return (
-    <Card className="flex h-full min-h-0 flex-col overflow-y-auto p-5" aria-label="Playlist properties">
+    <Card className="flex min-h-[32rem] flex-col overflow-y-auto p-5 xl:h-full xl:min-h-0" aria-label="Playlist properties">
       <div className="mb-4 flex gap-1 border-b border-border">
         {(["item", "playlist"] as const).map((key) => (
           <button
