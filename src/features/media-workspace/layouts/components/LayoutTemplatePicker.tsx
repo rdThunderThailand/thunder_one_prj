@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/lovable/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { classifyApiError } from "@/lib/api/api-error";
 import type { ContentFolder } from "@/types/domain";
 import { writeCreateSeed, type CreateSeed } from "../create-seed";
@@ -192,34 +192,32 @@ export function LayoutTemplatePicker({
   );
 
   return (
-    <Modal
-      open={open}
-      onClose={resetAndClose}
-      size={step === "start" ? "lg" : "xl"}
-      title={step === "start" ? "New Layout" : "Template Picker"}
-      showCloseButton
-      footer={footer}
-    >
-      <p className="-mt-1 mb-3 text-sm text-muted-foreground">
-        {step === "start"
-          ? "Create a new layout from scratch or using a template."
-          : "Choose a template to start your new layout."}
-      </p>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) resetAndClose(); }}>
+      <DialogContent className={step === "templates" ? "flex h-[88vh] w-[94vw] max-w-6xl flex-col overflow-hidden" : "max-w-3xl"}>
+        <DialogHeader>
+          <DialogTitle>{step === "start" ? "New Layout" : "Template Picker"}</DialogTitle>
+          <DialogDescription>
+            {step === "start"
+              ? "Create a new layout from scratch or using a template."
+              : "Choose a template to start your new layout."}
+          </DialogDescription>
+        </DialogHeader>
 
-      {step === "start" ? (
-        <CreateLayoutStartStep
-          choice={choice}
-          details={details}
-          folders={folders}
-          tagNames={tagNames}
-          selectedTemplate={pickedTemplate}
-          resolutionLocked={choice === "template" && !!pickedTemplate}
-          onTemplateChange={() => setStep("templates")}
-          onChoiceChange={setChoice}
-          onDetailsChange={setDetails}
-        />
-      ) : (
-        <div className="grid min-h-[560px] overflow-hidden rounded-lg border border-border lg:grid-cols-[180px_minmax(0,1fr)_260px]">
+        <div className={step === "templates" ? "min-h-0 flex-1 overflow-hidden" : "max-h-[70vh] overflow-y-auto pr-1"}>
+          {step === "start" ? (
+            <CreateLayoutStartStep
+              choice={choice}
+              details={details}
+              folders={folders}
+              tagNames={tagNames}
+              selectedTemplate={pickedTemplate}
+              resolutionLocked={choice === "template" && !!pickedTemplate}
+              onTemplateChange={() => setStep("templates")}
+              onChoiceChange={setChoice}
+              onDetailsChange={setDetails}
+            />
+          ) : (
+            <div className="grid h-full overflow-hidden rounded-lg border border-border lg:grid-cols-[180px_minmax(0,1fr)_280px]">
           <aside className="flex flex-col border-b border-border bg-muted p-3 lg:border-b-0 lg:border-r">
             <nav aria-label="Template groups" className="space-y-1">
               {GROUPS.map((item) => (
@@ -281,8 +279,11 @@ export function LayoutTemplatePicker({
               </div>
             ) : <p className="text-sm text-muted-foreground">Select a template to see its details.</p>}</div>
           </aside>
+            </div>
+          )}
         </div>
-      )}
-    </Modal>
+        <DialogFooter>{footer}</DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
