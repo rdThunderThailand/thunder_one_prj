@@ -27,7 +27,8 @@ export function useEditorLayout({
   layoutSettings: LayoutSettingsDraft | null;
   bindings: ZoneBindingDraft[];
 }) {
-  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  // undefined = initial auto-selection; null = the operator selected the Layout itself.
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null | undefined>(undefined);
 
   // The not-yet-created case is shaped as a full LayoutListItem rather than a partial, so
   // every reader treats "geometry that does not exist yet" like geometry that does. It is the
@@ -49,7 +50,11 @@ export function useEditorLayout({
   const layoutZoneIds = useMemo(() => layout?.zones.flatMap((zone) => (zone.id ? [zone.id] : [])) ?? [], [layout]);
   // A stale selection (the Zone was split away, or the Layout changed) falls back to the
   // first Zone rather than leaving the content picker pointed at nothing.
-  const activeZoneId = selectedZoneId && layoutZoneIds.includes(selectedZoneId) ? selectedZoneId : (layoutZoneIds[0] ?? null);
+  const activeZoneId = selectedZoneId === null
+    ? null
+    : selectedZoneId && layoutZoneIds.includes(selectedZoneId)
+      ? selectedZoneId
+      : (layoutZoneIds[0] ?? null);
   const unboundZoneIds = findUnboundZoneIds(layoutZoneIds, bindings);
 
   return {

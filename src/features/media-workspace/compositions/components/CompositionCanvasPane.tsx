@@ -107,6 +107,7 @@ export function CompositionCanvasPane({
       <div className="flex h-full min-h-0 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <Button variant="secondary" aria-pressed={!activeZoneId} onClick={() => onSelectZone(null)}>Select</Button>
           <Button variant="secondary" onClick={add}><PlusIcon /> Add Zone</Button>
           <Button variant="secondary" disabled={!activeZoneId || isActiveLocked} onClick={split}><LayoutIcon /> Split Zone</Button>
           <div role="group" aria-label="Align selected Zone" className="flex overflow-hidden rounded-lg border border-border bg-card shadow-sm">

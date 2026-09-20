@@ -285,14 +285,19 @@ export function CompositionEditorPage({
         )}
 
         {layout ? (
-          <CompositionCanvasPane
-            zones={layout.zones} background={settings.background} aspectRatio={settings.aspectRatio}
-            referenceResolution={settings.referenceResolution} zonePreviews={preview.zonePreviews}
-            activeZoneId={view.selectedZoneId} onSelectZone={view.setSelectedZoneId}
-            onChangeStart={beginZoneEdit} onChange={setEditedZones}
-            canDelete={(layout?.zones.length ?? 0) > 1}
-            onDelete={() => { if (!layout || layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
-          />
+          <div className="flex min-h-0 flex-col gap-4">
+            <CompositionCanvasPane
+              zones={layout.zones} background={settings.background} aspectRatio={settings.aspectRatio}
+              referenceResolution={settings.referenceResolution} zonePreviews={preview.zonePreviews}
+              activeZoneId={view.selectedZoneId} onSelectZone={view.setSelectedZoneId}
+              onChangeStart={beginZoneEdit} onChange={setEditedZones}
+              canDelete={(layout?.zones.length ?? 0) > 1}
+              onDelete={() => { if (!layout || layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
+            />
+            <Card className="shrink-0 p-3">
+              <ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} />
+            </Card>
+          </div>
         ) : (
           <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg bg-muted text-sm text-muted-foreground">
             <p>Start from the Template Picker to see Zones here</p>
@@ -300,31 +305,24 @@ export function CompositionEditorPage({
           </div>
         )}
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
-          <p className="text-sm font-semibold text-foreground">Zone Properties</p>
-          {view.binding && view.activeZone ? <ZonePropertiesPanel
-            zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null} binding={view.binding}
-            onZoneChange={(next) => beginZoneEdit() && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
-            onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} playlistDurations={data.playlistDurations}
-          /> : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
-        </div>
-      </Card>
-
-      {layout && (
-        <div className="grid gap-4 xl:grid-cols-[3fr_2fr]">
-          <Card className="min-w-0 p-4">
+          {view.binding && view.activeZone ? <>
+            <p className="text-sm font-semibold text-foreground">Zone Properties</p>
+            <ZonePropertiesPanel
+              zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null} binding={view.binding}
+              onZoneChange={(next) => beginZoneEdit() && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
+              onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} playlistDurations={data.playlistDurations}
+            />
+          </> : layout ? (
             <LayoutPropertiesPanel
-              name={name} onNameChange={setName} folders={data.folders}
+              compact name={name} onNameChange={setName} folders={data.folders}
               folderId={folderId ?? null} onFolderChange={setFolderId}
               tags={tags ?? []} onTagsChange={setTags} settings={settings}
               onSettingsChange={(next) => confirmGeometryChange() && setLayoutSettings(next)}
               sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
             />
-          </Card>
-          <Card className="min-w-0 p-4">
-            <ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} />
-          </Card>
+          ) : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
         </div>
-      )}
+      </Card>
     </div>
   );
 }

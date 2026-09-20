@@ -31,6 +31,7 @@ export function LayoutPropertiesPanel({
   onSettingsChange,
   sharedTemplateUsage,
   disabled = false,
+  compact = false,
 }: {
   name: string;
   onNameChange: (next: string) => void;
@@ -46,6 +47,7 @@ export function LayoutPropertiesPanel({
   /** How many Layouts share this geometry; > 1 means an edit here travels. */
   sharedTemplateUsage: number;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   const [vocabulary, setVocabulary] = useState<Tag[]>([]);
   const [draftTag, setDraftTag] = useState("");
@@ -87,7 +89,7 @@ export function LayoutPropertiesPanel({
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
       <p className="text-sm font-semibold text-foreground">Layout Properties</p>
-      <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className={`grid items-start gap-4 ${compact ? "" : "md:grid-cols-2 xl:grid-cols-3"}`}>
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClasses}>Layout name</span>
@@ -159,7 +161,7 @@ export function LayoutPropertiesPanel({
       </div>
 
       {sharedTemplateUsage > 1 && (
-        <p className="rounded-lg bg-warning-soft p-2 text-xs text-warning md:col-span-2 xl:col-span-3">
+        <p className={`rounded-lg bg-warning-soft p-2 text-xs text-warning ${compact ? "" : "md:col-span-2 xl:col-span-3"}`}>
           Resolution and background come from a Template used by {sharedTemplateUsage} Layouts.
           Changing them here changes all of them.
         </p>
