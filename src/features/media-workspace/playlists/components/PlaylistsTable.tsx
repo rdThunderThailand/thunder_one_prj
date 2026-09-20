@@ -93,6 +93,7 @@ export function PlaylistsTable({
                   <div className="flex items-center gap-3">
                     <MediaThumb
                       url={cover ? previews.urls[cover] : undefined}
+                      thumbnailUrl={cover ? previews.thumbnailUrls[cover] : undefined}
                       alt={playlist.name}
                       className="h-10 w-14"
                     />

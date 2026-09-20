@@ -26,7 +26,7 @@ export function PlaylistsGrid({ rows }: { rows: PlaylistListItem[] }) {
         const status = statusBadge(playlistDisplayStatus(playlist));
         return (
           <Link key={playlist.id} href={`/media-workspace/playlists/${playlist.id}`} className="group overflow-hidden rounded-lg border border-border bg-card transition hover:border-foreground/20 hover:shadow-float">
-            <MediaThumb url={cover ? previews.urls[cover] : undefined} alt={playlist.name} className="aspect-video w-full rounded-none" />
+            <MediaThumb url={cover ? previews.urls[cover] : undefined} thumbnailUrl={cover ? previews.thumbnailUrls[cover] : undefined} alt={playlist.name} className="aspect-video w-full rounded-none" />
             <div className="p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">

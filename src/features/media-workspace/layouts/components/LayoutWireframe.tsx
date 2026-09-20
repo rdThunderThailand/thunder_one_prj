@@ -67,7 +67,7 @@ export function LayoutWireframe({
               width={zone.width}
               height={zone.height}
               className={programStyle
-                ? "fill-transparent stroke-primary/70 stroke-[1]"
+                ? "fill-transparent stroke-white/70 stroke-[0.5]"
                 : `${ZONE_FILL[index % ZONE_FILL.length]} ${isSelected ? "stroke-primary stroke-[1.5]" : "stroke-white/70 stroke-[0.5]"}`}
             />
             {shouldShowLabels && (
