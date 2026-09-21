@@ -96,7 +96,7 @@ export function CompositionEditorToolbar({
       <Button size="sm" variant="ghost" disabled={activeIndex < 0} onClick={duplicate}><ClipboardIcon /> Duplicate</Button>
       <Button size="sm" variant="ghost" className="text-danger" disabled={zones.length <= 1 || activeIndex < 0} onClick={onDelete}><TrashIcon /> Delete Zone</Button>
       <Button size="sm" variant="outline" onClick={onFit}><ExpandIcon /> Fit to Screen</Button>
-      <span className="ml-auto text-[11px] text-muted-foreground">{activeZone ? `Selected: Zone ${String.fromCharCode(65 + activeIndex)} · ${activeZone.name}` : "No zone selected"}</span>
+      <span className="ml-auto whitespace-nowrap text-[11px] text-muted-foreground">{activeZone ? `Selected: Zone ${String.fromCharCode(65 + activeIndex)}` : "No zone selected"}</span>
     </div>
   );
 }

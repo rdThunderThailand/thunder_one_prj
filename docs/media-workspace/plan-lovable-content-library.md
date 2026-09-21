@@ -1,6 +1,6 @@
 # Plan — Content library pages on the Lovable design system
 
-Status: **complete** (2026-09-20 run-2 rework; see *Audit* below). Branch `style/lovable` (renamed from `style/media-library-lovable`,
+Status: **in progress** (2026-09-20 run-3 rework; owner sign-off pending). Branch `style/lovable` (renamed from `style/media-library-lovable`,
 base `style/media-workspace-tokens` → `dev`). Executes ADR 0076.
 Reference: Lovable `e8b49026-3bd5-4a8f-b94c-aad813085d2c`; fact-finding in the 2026-09-19 session
 (`lovable-vs-repo.md`, not committed). Previous handoff: `/private/tmp/HANDOFF-media-workspace-lovable-2026-09-19.md`.
