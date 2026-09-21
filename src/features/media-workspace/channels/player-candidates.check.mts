@@ -31,16 +31,16 @@ const neverConnected = candidate({ id: "p-2", name: "Player 02", neverConnected:
 const reserved = candidate({ id: "p-3", name: "Player 03", reservedByChannel: { id: "ch-1", name: "Channel for Screen 1" } });
 
 assert.equal(isPlayerAvailable(available), true);
-assert.equal(isPlayerAvailable(neverConnected), false);
+assert.equal(isPlayerAvailable(neverConnected), true);
 assert.equal(isPlayerAvailable(reserved), false);
 
 assert.equal(unavailableReason(available), null);
-assert.equal(unavailableReason(neverConnected), "Never connected");
+assert.equal(unavailableReason(neverConnected), null);
 assert.equal(unavailableReason(reserved), "In use by Channel for Screen 1");
 
 const partitioned = partitionPlayerCandidates([available, neverConnected, reserved]);
-assert.deepEqual(partitioned.available.map((c) => c.id), ["p-1"]);
-assert.deepEqual(partitioned.unavailable.map((c) => c.id), ["p-2", "p-3"]);
+assert.deepEqual(partitioned.available.map((c) => c.id), ["p-1", "p-2"]);
+assert.deepEqual(partitioned.unavailable.map((c) => c.id), ["p-3"]);
 
 assert.deepEqual(filterPlayerCandidates([available, neverConnected], "").map((c) => c.id), ["p-1", "p-2"]);
 assert.deepEqual(filterPlayerCandidates([available, neverConnected], "02").map((c) => c.id), ["p-2"]);
@@ -55,7 +55,7 @@ assert.equal(unavailableReason(reserved, "ch-1"), null);
 assert.equal(unavailableReason(reserved, "ch-2"), "In use by Channel for Screen 1");
 assert.deepEqual(
   partitionPlayerCandidates([available, neverConnected, reserved], "ch-1").available.map((c) => c.id),
-  ["p-1", "p-3"],
+  ["p-1", "p-2", "p-3"],
 );
 
 console.log("player-candidates.check.mts — all assertions passed");

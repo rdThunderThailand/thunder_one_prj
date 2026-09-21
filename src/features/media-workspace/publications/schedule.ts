@@ -323,6 +323,36 @@ export function formatScheduleStart(
   return `${dayMonthLabel(start.date)} ${start.time}`;
 }
 
+/** Time range shown in review surfaces: expiry for one-time schedules, daily window for recurring. */
+export function formatReviewTimeRange(form: ScheduleForm, nowTime: string): string {
+  if (form.schedule_type === "recurring") return `${form.daily_start} – ${form.daily_end}`;
+
+  const startTime = form.schedule_type === "now" ? nowTime : form.start_time;
+  return form.end_date
+    ? `${startTime} – ${form.end_time || "23:59"}`
+    : `${startTime} · No end date`;
+}
+
+/** Position one schedule window on a midnight-to-midnight review timeline. */
+export function getDayTimelinePlacement(startTime: string, endTime: string): {
+  leftPercent: number;
+  widthPercent: number;
+} {
+  const minutes = (time: string) => {
+    const [hours = 0, mins = 0] = time.split(":").map(Number);
+    return Math.min(24 * 60, Math.max(0, hours * 60 + mins));
+  };
+  const start = minutes(startTime);
+  const parsedEnd = minutes(endTime);
+  const end = parsedEnd > start ? parsedEnd : 24 * 60;
+  const toPercent = (value: number) => Number(((value / (24 * 60)) * 100).toFixed(4));
+
+  return {
+    leftPercent: toPercent(start),
+    widthPercent: toPercent(end - start),
+  };
+}
+
 /** Build a month matrix (weeks start Sunday) for the overlap calendar. */
 export function buildCalendarMonth(
   form: ScheduleForm,

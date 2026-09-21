@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { SearchIcon } from "@/components/ui/icons";
+import { FilterIcon, SearchIcon } from "@/components/ui/icons";
 import type { Sort, SortKey } from "../list-filtering";
 import type { ChannelFilters } from "../types";
 
@@ -38,6 +38,11 @@ export function ChannelFiltersBar({
    *  something. Resets sort and paging too, not just the filters shown here. */
   onClearAll?: () => void;
 }) {
+  const updateFilters = (next: ChannelFilters, target: HTMLSelectElement) => {
+    onChange(next);
+    target.closest("details")?.removeAttribute("open");
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2.5 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
       <label className="relative min-w-60 flex-1">
@@ -52,45 +57,62 @@ export function ChannelFiltersBar({
         />
       </label>
 
-      <select
-        aria-label="Type"
-        value={value.type}
-        onChange={(event) => onChange({ ...value, type: event.target.value as ChannelFilters["type"] })}
-        className={selectClasses}
-      >
-        <option value="all">All types</option>
-        <option value="screen">Screen</option>
-        <option value="tv">TV</option>
-        <option value="kiosk">Kiosk</option>
-        <option value="multi">Multi-screen</option>
-      </select>
+      <details className="relative">
+        <summary
+          aria-label="Filter channels"
+          className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        >
+          <FilterIcon />
+        </summary>
+        <div className="absolute right-0 z-20 mt-2 grid w-52 gap-2 rounded-lg border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+          <select
+            aria-label="Type"
+            value={value.type}
+            onChange={(event) =>
+              updateFilters({ ...value, type: event.target.value as ChannelFilters["type"] }, event.currentTarget)
+            }
+            className={selectClasses}
+          >
+            <option value="all">All types</option>
+            <option value="screen">Screen</option>
+            <option value="tv">TV</option>
+            <option value="kiosk">Kiosk</option>
+            <option value="multi">Multi-screen</option>
+          </select>
 
-      <select
-        aria-label="Status"
-        value={value.status}
-        onChange={(event) => onChange({ ...value, status: event.target.value as ChannelFilters["status"] })}
-        className={selectClasses}
-      >
-        <option value="all">All statuses</option>
-        <option value="online">Online</option>
-        <option value="warning">Warning</option>
-        <option value="offline">Offline</option>
-        <option value="no_player">No player</option>
-      </select>
+          <select
+            aria-label="Status"
+            value={value.status}
+            onChange={(event) =>
+              updateFilters({ ...value, status: event.target.value as ChannelFilters["status"] }, event.currentTarget)
+            }
+            className={selectClasses}
+          >
+            <option value="all">All statuses</option>
+            <option value="online">Online</option>
+            <option value="warning">Warning</option>
+            <option value="offline">Offline</option>
+            <option value="no_player">No player</option>
+          </select>
 
-      <select
-        aria-label="Lifecycle"
-        value={value.lifecycle}
-        onChange={(event) =>
-          onChange({ ...value, lifecycle: event.target.value as ChannelFilters["lifecycle"] })
-        }
-        className={selectClasses}
-      >
-        <option value="all">All lifecycle</option>
-        <option value="draft">Draft</option>
-        <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
-      </select>
+          <select
+            aria-label="Lifecycle"
+            value={value.lifecycle}
+            onChange={(event) =>
+              updateFilters(
+                { ...value, lifecycle: event.target.value as ChannelFilters["lifecycle"] },
+                event.currentTarget,
+              )
+            }
+            className={selectClasses}
+          >
+            <option value="all">All lifecycle</option>
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </details>
 
       <select
         aria-label="Sort by"

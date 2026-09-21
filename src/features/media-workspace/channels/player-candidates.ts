@@ -19,20 +19,20 @@ export interface ChannelPlayerCandidate {
 
 /** `excludeChannelId`: the edit page's own Channel — a candidate the RPC reports as reserved by
  *  that same Channel is not "in use by someone else", it is this Channel's current Player, still
- *  selectable (and still the pre-selected one). Omit it entirely on the create wizard. */
+ *  selectable (and still the pre-selected one). Omit it entirely on the create wizard.
+ *  A never-connected Player is selectable: a freshly registered device should be assignable to a
+ *  Channel before it first heartbeats, so the only blocker is another Channel's reservation. */
 export function isPlayerAvailable(candidate: ChannelPlayerCandidate, excludeChannelId?: string): boolean {
-  if (candidate.neverConnected) return false;
   if (candidate.reservedByChannel === null) return true;
   return candidate.reservedByChannel.id === excludeChannelId;
 }
 
-/** D5's exact wording: "never connected" / "in use by CH-x" — no "outputs available" (the Player
- *  does not report outputs, ticket 08 deviation). */
+/** D5's wording "in use by CH-x" only — "never connected" is no longer a reason (see
+ *  isPlayerAvailable); no "outputs available" either (the Player does not report outputs). */
 export function unavailableReason(candidate: ChannelPlayerCandidate, excludeChannelId?: string): string | null {
   if (candidate.reservedByChannel && candidate.reservedByChannel.id !== excludeChannelId) {
     return `In use by ${candidate.reservedByChannel.name}`;
   }
-  if (candidate.neverConnected) return "Never connected";
   return null;
 }
 

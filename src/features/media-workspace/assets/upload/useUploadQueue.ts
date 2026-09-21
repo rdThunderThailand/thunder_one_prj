@@ -18,6 +18,7 @@ import {
   startItems,
   stageFiles,
   summarize,
+  uploadOutcome,
   type UploadItem,
 } from "./upload-queue";
 
@@ -87,8 +88,16 @@ export function useUploadQueue() {
           onProgress: (pct) => patchItem(id, (item) => ({ ...item, pct })),
         });
       })
-      .then(() => {
-        patchItem(id, (item) => ({ ...item, state: "completed", pct: 100 }));
+      .then((registered) => {
+        // ADR 0070/0071: a resolved register call is not automatically success — the backend
+        // already judged the file on intake (see uploadOutcome for the failed/processing/ready
+        // branches).
+        const outcome = uploadOutcome(registered.status, registered.probe_verdict);
+        if (outcome.state === "failed") {
+          patchItem(id, (item) => ({ ...item, state: "failed", pct: 100, error: outcome.error }));
+        } else {
+          patchItem(id, (item) => ({ ...item, state: "completed", pct: 100, warning: outcome.warning }));
+        }
       })
       .catch((error: unknown) => {
         const name = error instanceof Error ? error.name : "";

@@ -23,6 +23,37 @@ import { Step3Review } from "./Step3Review";
 
 type WizardStep = 1 | 2 | 3 | "success";
 
+const WIZARD_STEPS = ["Channel", "Setup", "Review"];
+
+function WizardProgress({ step }: { step: Exclude<WizardStep, "success"> }) {
+  return (
+    <ol className="mx-auto mb-6 flex w-full max-w-md items-center">
+      {WIZARD_STEPS.map((label, index) => {
+        const number = index + 1;
+        const completed = number < step;
+        const current = number === step;
+        return (
+          <li key={label} className="flex flex-1 items-center last:flex-none" aria-current={current ? "step" : undefined}>
+            <span
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-semibold ${
+                completed || current
+                  ? "border-indigo-500 bg-indigo-600 text-white"
+                  : "border-indigo-300 bg-white text-indigo-500"
+              }`}
+            >
+              {completed ? "✓" : number}
+            </span>
+            <span className={`ml-2 text-sm font-medium ${current ? "text-indigo-600" : "text-zinc-500"}`}>{label}</span>
+            {number < WIZARD_STEPS.length && (
+              <span className={`mx-3 h-px flex-1 ${number < step ? "bg-indigo-300" : "bg-zinc-200"}`} aria-hidden="true" />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /**
  * The parent mounts this only while the wizard should be open (`{isCreateOpen && <CreateChannelModal
  * .../>}`) rather than passing an `open` boolean through — that makes every re-open a fresh mount
@@ -105,26 +136,41 @@ export function CreateChannelModal({
     }
   };
 
-  const footer =
-    step === "success" ? null : (
-      <>
-        <Button variant="secondary" onClick={step === 1 ? onClose : () => setStep((step === 3 ? 2 : 1) as WizardStep)}>
-          {step === 1 ? "Cancel" : "← Back"}
-        </Button>
-        {step === 3 ? (
+  const footer = step === "success" ? null : (
+    <div className="flex w-full items-center justify-between">
+      <Button variant="secondary" onClick={step === 1 ? onClose : () => setStep((step === 3 ? 2 : 1) as WizardStep)}>
+        {step === 1 ? "Cancel" : "← Back"}
+      </Button>
+      {step === 3 ? (
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={() => void handleSubmit()} disabled={submitting}>
             {submitting ? "Creating…" : "Create Channel"}
           </Button>
-        ) : (
-          <Button onClick={handleNext} disabled={step === 2 && !step2Valid(draft)}>
-            Next →
-          </Button>
-        )}
-      </>
-    );
+        </div>
+      ) : (
+        <Button onClick={handleNext} disabled={step === 2 && !step2Valid(draft)}>
+          Next →
+        </Button>
+      )}
+    </div>
+  );
 
   return (
-    <Modal open onClose={onClose} title="Create Channel" footer={footer} size="xl" showCloseButton>
+    <Modal
+      open
+      onClose={onClose}
+      title="Create Channel"
+      description="Register a new channel to manage your screens, TVs, or kiosks."
+      titleClassName="text-2xl"
+      footer={footer}
+      size={step === 3 ? "xl" : "preview"}
+      showCloseButton
+      overflowVisible={step === 2}
+    >
+      {step !== "success" && <WizardProgress step={step} />}
       {step === 1 && (
         <Step1ChannelInfo draft={draft} locations={locations} nameError={nameError} onChange={setDraft} />
       )}
@@ -137,7 +183,15 @@ export function CreateChannelModal({
           onRefreshCandidates={refreshCandidates}
         />
       )}
-      {step === 3 && <Step3Review draft={draft} locations={locations} player={selectedPlayer} />}
+      {step === 3 && (
+        <Step3Review
+          draft={draft}
+          locations={locations}
+          player={selectedPlayer}
+          onEditChannel={() => setStep(1)}
+          onEditSetup={() => setStep(2)}
+        />
+      )}
       {step === "success" && createdChannel && (
         <CreateChannelSuccessCard
           channelName={createdChannel.name}

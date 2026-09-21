@@ -141,10 +141,19 @@ export function ChannelsListPage() {
   }
 
   return (
-    <div data-testid="channels-list" className="flex flex-col gap-5">
-      <ChannelsHeader onCreate={() => setIsCreateOpen(true)} />
+    <div
+      data-testid="channels-list"
+      className={
+        selected
+          ? "grid h-full grid-cols-1 grid-rows-[auto_auto_minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_360px]"
+          : "flex h-full flex-col gap-5"
+      }
+    >
+      <div className={selected ? "xl:col-span-2" : undefined}>
+        <ChannelsHeader onCreate={() => setIsCreateOpen(true)} />
+      </div>
       {!(channels === null && error !== null) && (
-        <ChannelSummaryTiles summary={summary} groupCount={groupCount} />
+        <ChannelSummaryTiles summary={summary} groupCount={groupCount} className={selected ? "xl:col-start-1" : undefined} />
       )}
 
       {channels === null && error === null ? (
@@ -152,8 +161,14 @@ export function ChannelsListPage() {
       ) : channels === null && error !== null ? (
         <LoadError error={error} retrying={retrying} onRetry={retry} />
       ) : (
-        <div className={selected ? "grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]" : "min-w-0"}>
-          <Card className="min-w-0 overflow-hidden flex flex-col">
+        <div
+          className={
+            selected
+              ? "min-h-0 min-w-0 xl:col-start-1 xl:row-start-3"
+              : "flex min-h-0 min-w-0 flex-1"
+          }
+        >
+          <Card className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <ChannelFiltersBar
               value={state.filters}
               sort={state.sort}
@@ -194,7 +209,7 @@ export function ChannelsListPage() {
                   }}
                   onChanged={handleChanged}
                 />
-                <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
+                <div className="shrink-0 border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
                   <Pagination
                     page={page.page}
                     totalPages={page.totalPages}
@@ -210,19 +225,22 @@ export function ChannelsListPage() {
             )}
           </Card>
 
-          {selected && (
-            <ChannelDetailPanel
-              channel={selected}
-              occurrence={nowNext.get(selected.id)}
-              displayTimezone={displayTimezone}
-              onClose={() => {
-                const trigger = detailTriggerRef.current;
-                setSelectedId(null);
-                requestAnimationFrame(() => trigger?.focus());
-              }}
-              onChanged={handleChanged}
-            />
-          )}
+        </div>
+      )}
+
+      {selected && (
+        <div className="min-h-0 xl:col-start-2 xl:row-start-2 xl:row-span-2">
+          <ChannelDetailPanel
+            channel={selected}
+            occurrence={nowNext.get(selected.id)}
+            displayTimezone={displayTimezone}
+            onClose={() => {
+              const trigger = detailTriggerRef.current;
+              setSelectedId(null);
+              requestAnimationFrame(() => trigger?.focus());
+            }}
+            onChanged={handleChanged}
+          />
         </div>
       )}
 

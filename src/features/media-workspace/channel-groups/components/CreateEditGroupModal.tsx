@@ -4,9 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { ShareNodesIcon, UsersIcon } from "@/components/ui/icons";
+import { InfoIcon, MonitorIcon, PlusIcon, ShareNodesIcon, UsersIcon } from "@/components/ui/icons";
 import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
 import { createChannelGroup, isSyncConflict, setChannelGroupMembers, updateChannelGroup } from "../services/channel-groups-api";
+import type { ChannelListItem } from "../../channels/types";
+import { CreateGroupChannelsModal } from "./CreateGroupChannelsModal";
 import type { ChannelGroup, PlaybackMode } from "../types";
 
 const fieldClasses =
@@ -21,19 +23,25 @@ const MODES: { mode: PlaybackMode; label: string; hint: string; icon: typeof Sha
  *  pre-selected from the Ungrouped tab's checkboxes — set as members right after creation. */
 export function CreateEditGroupModal({
   group,
+  channels,
   preselectedChannelIds,
+  onManageChannels,
   onClose,
   onSaved,
 }: {
   /** `null` = create mode. */
   group: ChannelGroup | null;
+  channels?: ChannelListItem[];
   preselectedChannelIds?: string[];
+  onManageChannels?: () => void;
   onClose: () => void;
   onSaved: (group: ChannelGroup) => void;
 }) {
   const [name, setName] = useState(group?.name ?? "");
   const [description, setDescription] = useState(group?.description ?? "");
   const [mode, setMode] = useState<PlaybackMode>(group?.playback_mode ?? "independent");
+  const [selectedChannelIds, setSelectedChannelIds] = useState<Set<string>>(() => new Set(preselectedChannelIds));
+  const [managingChannels, setManagingChannels] = useState(false);
   const [nameError, setNameError] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,8 +59,8 @@ export function CreateEditGroupModal({
         ? await updateChannelGroup(group.id, { name, description: description || null, playback_mode: mode })
         : await createChannelGroup({ name, description: description || null, playback_mode: mode });
       const withMembers =
-        !group && preselectedChannelIds?.length
-          ? await setChannelGroupMembers(saved.id, preselectedChannelIds)
+        !group && selectedChannelIds.size > 0
+          ? await setChannelGroupMembers(saved.id, Array.from(selectedChannelIds))
           : saved;
       onSaved(withMembers);
     } catch (caught) {
@@ -68,23 +76,29 @@ export function CreateEditGroupModal({
     }
   };
 
+  const selectedChannels = channels?.filter((channel) => selectedChannelIds.has(channel.id)) ?? [];
+
   return (
-    <Modal
+    <>
+      <Modal
       open
       onClose={onClose}
       title={group ? "Edit Channel Group" : "Create Channel Group"}
+      description={group ? "Update group information and settings." : "Create a new group and add channels in one step."}
+      size="form"
+      showCloseButton
       footer={
-        <>
+        <div className="flex w-full justify-between gap-2">
           <Button type="button" variant="secondary" disabled={saving} onClick={onClose}>
             Cancel
           </Button>
           <Button type="button" disabled={saving} onClick={() => void save()}>
             {saving ? "Saving…" : group ? "Save Changes" : "Create Group"}
           </Button>
-        </>
+        </div>
       }
-    >
-      <div className="flex flex-col gap-4">
+      >
+        <div className="flex flex-col gap-4">
         <Input
           name="group-name"
           label="Group Name *"
@@ -131,10 +145,48 @@ export function CreateEditGroupModal({
           </div>
         </div>
 
-        {preselectedChannelIds && preselectedChannelIds.length > 0 && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {preselectedChannelIds.length} channel(s) will be added to this Group.
-          </p>
+        {!group && (
+          <section className="border-t border-zinc-100 pt-4 dark:border-zinc-800">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Channels to Add ({selectedChannelIds.size})</h3>
+                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Selected channels will be added to this group.</p>
+              </div>
+              <Button type="button" variant="secondary" className="!px-3 !py-2 text-xs" onClick={() => setManagingChannels(true)}>
+                <PlusIcon className="h-4 w-4" />
+                Add More Channels
+              </Button>
+            </div>
+            <div className="mt-3 max-h-36 overflow-y-auto rounded-lg border border-zinc-100 dark:border-zinc-800">
+              {selectedChannels.length === 0 ? (
+                <p className="p-3 text-sm text-zinc-400">No channels selected yet.</p>
+              ) : (
+                selectedChannels.map((channel) => (
+                  <div key={channel.id} className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2 last:border-b-0 dark:border-zinc-800">
+                    <MonitorIcon className="h-4 w-4 shrink-0 text-indigo-500" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{channel.name}</span>
+                    <span className="shrink-0 text-xs text-zinc-400">{channel.location?.name ?? "Unassigned"}</span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="mt-3 flex gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-200">
+              <InfoIcon className="h-4 w-4 shrink-0" />
+              You can add or remove channels later from the group details.
+            </div>
+          </section>
+        )}
+
+        {group && (
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-indigo-50 px-3 py-3 text-sm text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-200">
+            <div className="flex min-w-0 gap-2">
+              <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>You can manage which channels belong to this group from the Manage Channels action.</p>
+            </div>
+            <Button type="button" variant="secondary" className="shrink-0 !px-3 !py-2 text-xs" onClick={onManageChannels}>
+              Manage Channels
+            </Button>
+          </div>
         )}
 
         {error && (
@@ -142,7 +194,19 @@ export function CreateEditGroupModal({
             {error}
           </p>
         )}
-      </div>
-    </Modal>
+        </div>
+      </Modal>
+      {managingChannels && channels && (
+        <CreateGroupChannelsModal
+          channels={channels}
+          selectedIds={selectedChannelIds}
+          onClose={() => setManagingChannels(false)}
+          onSave={(selected) => {
+            setSelectedChannelIds(selected);
+            setManagingChannels(false);
+          }}
+        />
+      )}
+    </>
   );
 }

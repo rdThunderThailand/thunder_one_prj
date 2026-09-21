@@ -17,6 +17,7 @@ interface ModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  description?: string;
   children: ReactNode;
   footer: ReactNode;
   /** "lg" for multi-step wizards that need room for a step form — every
@@ -24,9 +25,11 @@ interface ModalProps {
   size?: ModalSize;
   showCloseButton?: boolean;
   hideTitle?: boolean;
+  titleClassName?: string;
+  overflowVisible?: boolean;
 }
 
-export function Modal({ open, onClose, title, children, footer, size = "md", showCloseButton = false, hideTitle = false }: ModalProps) {
+export function Modal({ open, onClose, title, description, children, footer, size = "md", showCloseButton = false, hideTitle = false, titleClassName = "", overflowVisible = false }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -52,14 +55,17 @@ export function Modal({ open, onClose, title, children, footer, size = "md", sho
       ref={ref}
       onClose={onClose}
       onClick={handleBackdropClick}
-      className={`m-auto w-[calc(100%-2rem)] ${sizeClasses[size]} rounded-lg p-0 backdrop:bg-black/40`}
+      className={`m-auto w-[calc(100%-2rem)] ${sizeClasses[size]} rounded-lg p-0 backdrop:bg-black/40 ${overflowVisible ? "overflow-visible" : ""}`}
     >
       {/* The <dialog> stays mounted — the effect above needs its ref — but its contents do not.
           A closed dialog is display:none, so everything inside it used to linger in the DOM:
           invisible, unreachable by keyboard, and still found by document.querySelector. */}
       {open && (
         <div className="relative w-full rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className={hideTitle ? "sr-only" : "mb-3 pr-8 text-base font-semibold text-zinc-900 dark:text-zinc-100"}>{title}</h2>
+          <div className={hideTitle ? "sr-only" : "mb-5 pr-8"}>
+            <h2 className={`text-base font-semibold text-zinc-900 dark:text-zinc-100 ${titleClassName}`}>{title}</h2>
+            {description && <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>}
+          </div>
           {showCloseButton && (
             <button
               type="button"

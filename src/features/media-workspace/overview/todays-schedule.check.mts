@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { scheduleTime, targetSummary, todaysSchedule } from "./todays-schedule.ts";
+import { scheduleDotClass, scheduleTime, targetSummary, todaysSchedule } from "./todays-schedule.ts";
 import type { PublicationListItem } from "../publications/types/index.ts";
 
 const row = (over: Partial<PublicationListItem>): PublicationListItem => ({
@@ -55,6 +55,9 @@ assert.equal(targetSummary({ channels: 2, devices: 0 }), "2 Channels");
 assert.equal(targetSummary({ channels: 0, devices: 3 }), "3 Devices");
 assert.equal(targetSummary({ channels: 0, devices: 0 }), "No targets");
 assert.equal(targetSummary(undefined), "No targets", "a backend older than ADR 0065 §3");
+
+assert.equal(scheduleDotClass(row({ effective_status: "active" })), "bg-success");
+assert.equal(scheduleDotClass(row({ effective_status: "scheduled" })), "bg-primary");
 
 // The clock is the Schedule's, not the viewer's.
 assert.equal(scheduleTime(row({ starts_at: "2026-09-08T18:00:00Z", timezone: "America/New_York" })), "14:00");

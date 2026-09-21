@@ -11,6 +11,7 @@ import { NoAccess } from "@/components/ui/NoAccess";
 import { EditIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { verdictMessage } from "@/features/media-workspace/assets/upload/verdict-message";
 import {
   fetchContentFolders,
   fetchMediaAsset,
@@ -152,8 +153,21 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
                   <h2 className="min-w-0 break-words text-xl font-semibold text-zinc-950 dark:text-white">{label}</h2>
                   <button type="button" aria-label="Rename media" title="Rename media" onClick={() => { setDraftTitle(label); setIsRenaming(true); setRenameError(""); }} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800"><EditIcon /></button>
                 </>}
-                <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium capitalize text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">{asset.status ?? "ready"}</span>
+                <span className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${asset.status === "failed" ? "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"}`}>{asset.status ?? "ready"}</span>
+                {asset.status !== "failed" && asset.rendition?.present && <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">แปลงแล้ว</span>}
               </div>
+              {/* ADR 0071: `processing` is a background conversion in progress, not a refusal — the
+                  ADR 0070 verdict sentence would misdescribe it. `failed` is a refusal and always
+                  keeps its reason, even if a stale Rendition record exists. A present Rendition on
+                  a non-failed Asset means the source finding is resolved, so the profile warning
+                  no longer applies. */}
+              {asset.status === "processing" ? (
+                <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">กำลังแปลง — รีเฟรชเพื่อดูสถานะ</p>
+              ) : (
+                (asset.status === "failed" || !asset.rendition?.present) && verdictMessage(asset.probe_verdict) && (
+                  <p className={`mt-2 text-sm ${asset.status === "failed" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>{verdictMessage(asset.probe_verdict)}</p>
+                )
+              )}
               {renameError && <p role="alert" className="mt-2 text-sm text-red-600">{renameError}</p>}
               <p className="mt-2 text-sm text-zinc-500">{asset.kind?.toUpperCase() ?? "FILE"} · {asset.file?.mime_type ?? "Unknown type"}</p>
             </div>

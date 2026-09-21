@@ -292,10 +292,9 @@ in a later cleanup migration, after the frontend has switched (see plan §2 cuto
 - ADR 0030: reservation table and the Category/Type section's *Type* axis survive; the
   one-or-more-members model and Category as an input are superseded.
 - ADR 0042: `sync_enabled` on the Channel, `direct_target_conflicts`, and the Channel-level guard
-  are superseded by rule 5; the phase arithmetic is not. **Transitional read rule** until M2:
-  `sync_enabled` as seen by `media_job_poll` and `media_channels_list` = `channels.sync_enabled OR
-  EXISTS (member of a synchronized Group)`, so a legacy synchronized Channel does not drop out of
-  phase-lock between the Core v2 deploy and M1b.
+  are superseded by rule 5; the phase arithmetic is not. M2 landed on 2026-09-15, so the
+  transitional `sync_enabled` compatibility read has been removed; synchronized Group membership
+  is now the sole synchronization boundary.
 - ADR 0039: superseded for multi-screen Channels only (rule 3); single-screen refusal stands.
 - ADR 0051 / ADR 0055: geometry source for Channel targets changes from Device-reported to
   Channel-declared canvas with Device fallback (rule 3); the advisory nature is unchanged.

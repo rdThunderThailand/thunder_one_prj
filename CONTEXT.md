@@ -41,8 +41,12 @@ Can create/manage Assets, Playlists, Publications, and Channels, assign existing
 Read-only across content and Monitoring. Cannot see the Audit Log.
 
 **Asset** (Communication):
-A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG, WebP and MP4. Removing one sends it to Trash and hides it from new selections without breaking existing playback; permanent deletion is allowed only from Trash and remains blocked while a live reference or any Publish Job snapshot requires it. `docs/adr/0056-nested-feature-folders-and-trash.md`.
+A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG and MP4 (WebP was dropped by `docs/adr/0070-*.md`). A video whose codec or H.264 profile the players cannot decode is refused on intake (`docs/adr/0070-*.md`); automatic repair through a Rendition is proposed, not built. Removing one sends it to Trash and hides it from new selections without breaking existing playback; permanent deletion is allowed only from Trash and remains blocked while a live reference or any Publish Job snapshot requires it. `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: Video, media file, content (when a specific entity is meant)
+
+**Rendition**:
+_Planned term — ADR 0071 is still proposed; nothing produces or serves one yet._ The player-compatible encode of a video Asset (MP4 / H.264 Constrained Baseline / ≤1080p30 / AAC-LC) that the platform would produce when the uploaded original is not Baseline or Constrained Baseline. The original is kept; a Media Device would be served the Rendition whenever one exists. At most one Rendition per Asset is planned. `docs/adr/0071-a-quarantined-video-is-transcoded-instead-of-refused.md`.
+_Avoid_: converted file, transcode (that is the job, not the artifact), Version (`file_versions` is operator-driven and unrelated)
 _Note_: Another App in this repo, Asset Intelligence, also has an entity called `Asset` with a different meaning — see the Asset Intelligence glossary entry below and `docs/adr/0023-asset-intelligence-feature-namespacing.md` for why neither was renamed.
 
 **Asset** (Asset Intelligence):
