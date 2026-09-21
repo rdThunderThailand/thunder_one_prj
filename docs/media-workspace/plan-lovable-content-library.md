@@ -12,7 +12,7 @@ Reference: Lovable `e8b49026-3bd5-4a8f-b94c-aad813085d2c`; fact-finding in the 2
 | Q1 | Scope = content library only: Playlists / Layouts / Templates lists, Media detail, Media trash, New Layout modal + Template picker, Composition editor, Playlist editor (+ media picker), then preview chrome. Channels, Overview, Brand Assets, Publish dialogs: out. |
 | Q2 | Treatment only — no new behaviour, no disabled placeholders. Gaps listed below for tickets. |
 | Q3/Q10 | Copy primitives/patterns as pages need them; Lovable design system is the source for all future Media Workspace UI (ADR 0076 §1–2). |
-| Q4 | App shell (sidebar/header/breadcrumb) untouched; differences are reported, not fixed. |
+| Q4 | App shell untouched on lists/detail/wizards. **Amended 2026-09-21 (ADR 0077):** editor routes run in a focus shell — no Topbar, sidebar starts collapsed. |
 | Q6/Q12 | `(preview)` routes: chrome only, last, separate commit, every mode browser-verified. |
 | Q7 | One commit per page; PR may be split (`lists` / `editors`) at PR time. |
 | Q8/Q9 | Verify per page as it lands — owner pre-chose mode 1 (agent compares in the browser) for every step. 1440 primary, 1024 must not break. |

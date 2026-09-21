@@ -12,6 +12,7 @@ import { shellNavItems } from "@/config/nav/shell";
 import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
 import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { isEditorRoute } from "@/config/nav/editor-routes";
 import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
 
 const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
@@ -323,7 +324,12 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
   const isMediaWorkspace = activeApp?.id === "media-workspace";
-  const [collapsed, setCollapsed] = useState(false);
+  // Editors start collapsed (focus shell, ADR 0077); a click still expands. Any
+  // route change resets to the route's default so an editor never pins the
+  // list pages collapsed and vice versa.
+  const [choice, setChoice] = useState<{ pathname: string; collapsed: boolean } | null>(null);
+  const collapsed = choice?.pathname === pathname ? choice.collapsed : isMediaWorkspace && isEditorRoute(pathname);
+  const setCollapsed = (update: (v: boolean) => boolean) => setChoice({ pathname, collapsed: update(collapsed) });
 
   if (SETTINGS_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
     return <SettingsSidebar pathname={pathname} />;

@@ -137,7 +137,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     setNowPlayingItemId(frame?.item?.mediaAssetId ?? null);
 
   return (
-    <div className="flex min-h-[calc(100dvh-9rem)] flex-col gap-4 xl:h-[calc(100dvh-9rem)] xl:min-h-0 xl:overflow-hidden">
+    <div className="flex min-h-[calc(100dvh-3rem)] flex-col gap-4 xl:h-[calc(100dvh-3rem)] xl:min-h-0 xl:overflow-hidden">
       <PlaylistEditorHeader
         name={present.name}
         status={row.status}
@@ -187,7 +187,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           onAddItem={() => setDrawerOpen(true)}
         />
 
-        <div className="flex min-h-0 flex-col gap-3">
+        <div className="flex min-h-0 flex-col gap-3 xl:overflow-y-auto">
           <PlaylistTimelinePane
             name={present.name}
             items={present.items}
