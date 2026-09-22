@@ -250,7 +250,6 @@
   outline: 2px solid var(--ring);
   outline-offset: 1px;
 }
-}
 
 /* Keeps an element scrollable (e.g. if the sidebar nav ever outgrows the
    viewport) without showing a scrollbar track — used where a visible
