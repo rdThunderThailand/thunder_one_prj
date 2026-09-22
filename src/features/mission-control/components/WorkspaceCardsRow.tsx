@@ -86,12 +86,19 @@ export function WorkspaceCardsRow() {
         {apps.map((app) => {
           const tone = TONES[app.id];
           return (
-            <div
+            // The whole card is the link (not just the button) — a Link
+            // can't nest another Link, so "เปิดใช้งาน" below is a plain
+            // span styled like a button, and the hover/lift feedback lives
+            // on this outer element so it's clear the whole tile is clickable.
+            <Link
               key={app.id}
-              className={`flex flex-col gap-3 rounded-[10px] border bg-gradient-to-br from-white p-[22px] dark:from-zinc-900 ${tone.border} ${tone.cardTo}`}
+              href={app.basePath}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group flex flex-col gap-3 rounded-[10px] border bg-gradient-to-br from-white p-[22px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:from-zinc-900 ${tone.border} ${tone.cardTo}`}
             >
               <div className="flex items-start gap-3">
-                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] ${tone.chipBg} ${tone.iconColor} [&>svg]:h-6 [&>svg]:w-6`}>
+                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] ${tone.chipBg} ${tone.iconColor} transition-transform duration-200 group-hover:scale-105 [&>svg]:h-6 [&>svg]:w-6`}>
                   {app.icon}
                 </span>
                 <div>
@@ -100,16 +107,13 @@ export function WorkspaceCardsRow() {
                 </div>
               </div>
               <p className="text-sm text-[#536a9c] dark:text-zinc-400">{DESCRIPTIONS[app.id]}</p>
-              <Link
-                href={app.basePath}
-                target="_blank"
-                rel="noopener noreferrer"
+              <span
                 className={`mt-auto flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-center text-sm font-bold ${tone.buttonBg} ${tone.buttonText}`}
               >
                 เปิดใช้งาน
-                <ArrowRightIcon className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+                <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+              </span>
+            </Link>
           );
         })}
       </div>

@@ -5,7 +5,7 @@
    preference. Switching `dark:` to a class-based trigger (never applied)
    means it never activates from `prefers-color-scheme`. The sidebar's
    dark look is intentional and hardcoded separately, not via `dark:`. */
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:is(.dark *));
 
 /*
  * Design system definition — adopted 2026-09-19 from a shared token set
@@ -28,11 +28,15 @@
  */
 
 @theme inline {
-  /* --font-sans/--font-mono point at this app's actual loaded fonts
-     (next/font in src/app/layout.tsx) rather than the token set's own
-     Manrope default — swapping the typeface itself is a separate decision
-     from adopting the color/spacing/radius tokens, not made here. */
-  --font-sans: var(--font-plus-jakarta-sans);
+  /* --font-sans: var(--font-manrope) resolves through next/font's optimized
+     loading (src/app/layout.tsx) rather than the canonical design system's
+     literal "Manrope" — next/font binds the family to this CSS variable
+     with its own internal name, so the bare string wouldn't pick it up.
+     The ui-sans-serif/system-ui/sans-serif fallback chain is copied as-is
+     from that canonical file. --font-mono keeps this app's own Geist Mono
+     (asset IDs/serial numbers in a few places) — the canonical file defines
+     no mono token, so there's nothing to reconcile there. */
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --text-3xs: 0.5rem;
   --text-3xs--line-height: 0.75rem;
