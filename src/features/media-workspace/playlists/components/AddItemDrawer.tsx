@@ -2,13 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { SearchIcon, XIcon } from "@/components/ui/icons";
+import { SearchIcon } from "@/components/ui/icons";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/lovable/sheet";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";
 import { fetchContentFolders, fetchTags } from "@/lib/api/media-api";
 import type { ContentFolder, MediaAsset, Tag } from "@/types/domain";
 import { AssetPicker } from "./AssetPicker";
+
+type PickerFilters = {
+  query: string;
+  kind: string;
+  folderId: string;
+  tagId: string;
+};
 
 /** #35: the editor's one way to add content. A staged selection is committed with one
  *  "Add N Items" action; upload is a link out so a slow upload never locks the editor.
@@ -48,6 +62,12 @@ export function AddItemDrawer({
   const [playlistQuery, setPlaylistQuery] = useState("");
   const [folders, setFolders] = useState<ContentFolder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [pickerFilters, setPickerFilters] = useState<PickerFilters>({
+    query: "",
+    kind: "",
+    folderId: "",
+    tagId: "",
+  });
   // Latched on the first open. Adjusting state during render is React's own answer to
   // "derive from a prop change" — an effect here would trip the no-sync-setState rule.
   const [hasOpened, setHasOpened] = useState(open);
@@ -94,72 +114,70 @@ export function AddItemDrawer({
   if (!hasOpened) return null;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex bg-black/30 transition-opacity duration-200 ${side === "left" ? "justify-start" : "justify-end"} ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
-      onClick={close}
-      inert={!open}
-    >
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="asset-picker-title"
-        className={`flex h-full w-full max-w-2xl flex-col bg-white shadow-xl transition-transform duration-200 dark:bg-zinc-900 ${open ? "translate-x-0" : side === "left" ? "-translate-x-full" : "translate-x-full"}`}
-        onClick={(e) => e.stopPropagation()}
+    <Sheet open={open} onOpenChange={(next) => !next && close()}>
+      <SheetContent
+        forceMount
+        side={side}
+        className="flex w-[400px] max-w-full flex-col gap-0 bg-card p-0 sm:max-w-none"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-100 p-5 dark:border-zinc-800">
-          <div>
-            <h2 id="asset-picker-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              {isLayout ? "Pick Media Asset" : "Add Item"}
-            </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              {isLayout ? "Select media to insert into this Zone." : "เลือก media ที่จะเพิ่มลง Playlist"} ·{" "}
-              <Link href="/media-workspace/assets/upload" target="_blank" className="text-indigo-600 hover:underline dark:text-indigo-400">Upload new media ↗</Link>
-            </p>
-          </div>
-          <button type="button" aria-label="ปิด" onClick={close} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-            <XIcon />
-          </button>
-        </div>
+        <SheetHeader className="border-b border-border p-5 pr-12">
+          <SheetTitle className="text-base">
+            {isLayout ? "Pick Media Asset" : "Add Item"}
+          </SheetTitle>
+          <SheetDescription>
+            {isLayout ? "Select media to insert into this Zone." : "เลือก media ที่จะเพิ่มลง Playlist"} ·{" "}
+            <Link href="/media-workspace/assets/upload" target="_blank" className="text-primary hover:underline">Upload new media ↗</Link>
+          </SheetDescription>
+        </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-5">
           {isLayout && (
-            <div className="mb-4 flex rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="mb-4 flex rounded-xl border border-border bg-muted p-1">
               {(["media", "playlists"] as const).map((value) => (
-                <button key={value} type="button" onClick={() => setSource(value)} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${source === value ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300" : "text-zinc-500"}`}>
+                <button key={value} type="button" onClick={() => setSource(value)} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${source === value ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`}>
                   {value === "media" ? "Media" : "Playlists"}
                 </button>
               ))}
             </div>
           )}
           {source === "media" ? (
-            <AssetPicker assets={pickable} loading={loading} selectedIds={staged} onToggle={toggle} folders={folders} tags={tags} />
+            <AssetPicker
+              assets={pickable}
+              loading={loading}
+              selectedIds={staged}
+              onToggle={toggle}
+              folders={folders}
+              tags={tags}
+              filters={pickerFilters}
+              onFiltersChange={(patch) => setPickerFilters((current) => ({ ...current, ...patch }))}
+            />
           ) : (
             <div className="flex flex-col gap-3">
               <div className="relative">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <input value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} placeholder="Search playlists..." className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900" />
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} placeholder="Search playlists..." className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-ring" />
               </div>
               {playlists.filter((playlist) => playlist.name.toLowerCase().includes(playlistQuery.trim().toLowerCase())).map((playlist) => (
-                <button key={playlist.id} type="button" onClick={() => setPlaylistId(playlist.id)} className={`flex items-center gap-3 rounded-xl border p-3 text-left ${playlistId === playlist.id ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10" : "border-zinc-200 dark:border-zinc-700"}`}>
+                <button key={playlist.id} type="button" onClick={() => setPlaylistId(playlist.id)} className={`flex items-center gap-3 rounded-xl border p-3 text-left ${playlistId === playlist.id ? "border-primary bg-primary-soft" : "border-border"}`}>
                   <MediaThumb url={playlistPreviews[playlist.id]?.url} thumbnailUrl={playlistPreviews[playlist.id]?.thumbnailUrl} alt={`${playlist.name} thumbnail`} className="h-12 w-20" />
-                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{playlist.name}</span><span className="text-xs text-zinc-500">{playlist.item_count} items · {playlist.status}</span></span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{playlist.name}</span><span className="text-xs text-muted-foreground">{playlist.item_count} items · {playlist.status}</span></span>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-zinc-100 p-4 dark:border-zinc-800">
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="flex items-center justify-between gap-3 border-t border-border p-4">
+          <span className="text-sm text-muted-foreground">
             {source === "playlists" ? (playlistId ? "1 playlist selected" : "No playlist selected") : `${staged.length} ${isLayout ? "assets" : "items"} selected`}
             {source === "media" && staged.length > 0 && (
-              <button type="button" onClick={() => setStaged([])} className="ml-3 text-indigo-600 hover:underline dark:text-indigo-400">
+              <button type="button" onClick={() => setStaged([])} className="ml-3 text-primary hover:underline">
                 Clear
               </button>
             )}
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={close}>
+            <Button variant="outline" onClick={close}>
               Cancel
             </Button>
             <Button onClick={commit} disabled={source === "playlists" ? !playlistId : staged.length === 0}>
@@ -167,7 +185,7 @@ export function AddItemDrawer({
             </Button>
           </div>
         </div>
-      </aside>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

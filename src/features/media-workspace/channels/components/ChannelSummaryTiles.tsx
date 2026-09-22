@@ -23,7 +23,7 @@ export function ChannelSummaryTiles({
     return (
       <div className={`grid gap-4 sm:grid-cols-2 xl:grid-cols-5 ${className}`}>
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-zinc-100 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div key={i} className="rounded-xl border border-border bg-card p-4">
             <Skeleton className="mb-2 h-4 w-24" />
             <Skeleton className="h-8 w-12" />
           </div>
@@ -54,7 +54,7 @@ export function ChannelSummaryTiles({
         color="red"
       />
       {groupCount === null ? (
-        <div className="rounded-xl border border-zinc-100 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-border bg-card p-4">
           <Skeleton className="mb-2 h-4 w-24" />
           <Skeleton className="h-8 w-12" />
         </div>

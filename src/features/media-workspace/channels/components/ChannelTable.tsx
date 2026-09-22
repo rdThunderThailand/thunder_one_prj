@@ -44,7 +44,7 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSortChange(sortKey)}
-        className="inline-flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-200"
+        className="inline-flex items-center gap-1 hover:text-foreground"
       >
         {label}
         {active && <span aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span>}
@@ -76,15 +76,15 @@ function ChannelRow({
     <tr
       data-testid={`channel-row-${channel.id}`}
       onClick={() => onSelect(channel)}
-      className={`cursor-pointer border-b border-zinc-100 transition-colors last:border-0 dark:border-zinc-800 ${
+      className={`cursor-pointer border-b border-border transition-colors last:border-0 ${
         selected
-          ? "bg-indigo-50/80 shadow-[inset_3px_0_0_#4f46e5] dark:bg-indigo-500/10"
-          : "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50"
+          ? "bg-primary-soft shadow-[inset_3px_0_0_#4f46e5]"
+          : "hover:bg-muted"
       }`}
     >
       <td className="px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+          <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
             {thumbnail ? (
               // eslint-disable-next-line @next/next/no-img-element -- a small, variably-sourced program thumbnail; not worth next/image's config here.
               <img src={thumbnail} alt="" className="h-full w-full object-cover" />
@@ -102,31 +102,31 @@ function ChannelRow({
                 event.stopPropagation();
                 onSelect(channel, event.currentTarget);
               }}
-              className="block max-w-52 truncate rounded text-left font-semibold text-zinc-950 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-50 dark:hover:text-indigo-400"
+              className="block max-w-52 truncate rounded text-left font-semibold text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
             >
               {channel.name}
             </button>
-            <p className="mt-0.5 max-w-52 truncate text-xs text-zinc-400">
+            <p className="mt-0.5 max-w-52 truncate text-xs text-muted-foreground">
               {channel.description || "No description"}
             </p>
           </div>
         </div>
       </td>
-      <td className="px-3 py-3 text-zinc-600 dark:text-zinc-300">
+      <td className="px-3 py-3 text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          <TypeIcon className="h-3.5 w-3.5 text-zinc-400" />
+          <TypeIcon className="h-3.5 w-3.5 text-muted-foreground" />
           {channelTypeLabel(channel)}
         </span>
       </td>
       <td className="px-3 py-3">
         <Badge color={status.color}>{status.label}</Badge>
       </td>
-      <td className="px-3 py-3 text-zinc-600 dark:text-zinc-300">
+      <td className="px-3 py-3 text-muted-foreground">
         {channel.location?.name ?? "Unassigned"}
       </td>
       <td className="px-3 py-3">
         {groups.length === 0 ? (
-          <span className="text-zinc-400">–</span>
+          <span className="text-muted-foreground">–</span>
         ) : (
           <div className="flex flex-wrap items-center gap-1">
             <Badge variant="pill" color="indigo">{groups[0]!.name}</Badge>
@@ -134,11 +134,11 @@ function ChannelRow({
           </div>
         )}
       </td>
-      <td className="px-3 py-3 text-xs text-zinc-600 dark:text-zinc-300">
-        <p className="max-w-40 truncate font-medium text-zinc-700 dark:text-zinc-200">
+      <td className="px-3 py-3 text-xs text-muted-foreground">
+        <p className="max-w-40 truncate font-medium text-muted-foreground">
           {nowPlayingName(occurrence)}
         </p>
-        {remaining && <p className="mt-0.5 text-zinc-400">{remaining}</p>}
+        {remaining && <p className="mt-0.5 text-muted-foreground">{remaining}</p>}
       </td>
       <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()}>
         <ChannelRowActionsMenu channel={channel} onChanged={onChanged} />
@@ -168,7 +168,7 @@ export function ChannelTable({
     <div className="min-h-0 flex-1 overflow-auto">
       <table className="w-full min-w-[1080px] text-left text-sm">
         <thead>
-          <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-400">
+          <tr className="border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             <SortHeader label="Channel" sortKey="name" sort={sort} onSortChange={onSortChange} className="w-64 px-4 py-2.5" />
             <th className="px-3 py-2.5">Type</th>
             <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="px-3 py-2.5" />

@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/Card";
+import { ArrowRightIcon } from "@/components/ui/icons";
 import type { CoreRecentLog } from "../services/dashboard-api";
 
 const DOT_COLORS = ["bg-indigo-500", "bg-emerald-500", "bg-blue-500", "bg-amber-500"];
@@ -29,14 +30,23 @@ export function ActivityFeedCard({ logs }: { logs: CoreRecentLog[] | null }) {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">กิจกรรมล่าสุด</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">กิจกรรมล่าสุด</h2>
+        {/* No full activity-log page exists yet (same gap people/overview's
+            TodayActivityCard has for this exact recentLogs endpoint) — an
+            inert button rather than a Link to somewhere that doesn't exist. */}
+        <button type="button" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+          ดูทั้งหมด
+          <ArrowRightIcon className="h-3 w-3" />
+        </button>
+      </div>
       {logs === null ? (
         <p className="py-4 text-center text-sm text-zinc-400">ไม่สามารถโหลดกิจกรรมล่าสุดได้ในขณะนี้</p>
       ) : logs.length === 0 ? (
         <p className="py-4 text-center text-sm text-zinc-400">ยังไม่มีกิจกรรมล่าสุด</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {logs.slice(0, 5).map((log, i) => (
+          {logs.slice(0, 3).map((log, i) => (
             <li key={log.id} className="flex items-start gap-2.5 text-sm">
               <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${DOT_COLORS[i % DOT_COLORS.length]}`} />
               <div className="min-w-0 flex-1">

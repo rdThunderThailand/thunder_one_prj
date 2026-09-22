@@ -85,52 +85,52 @@ export function ChannelGroupsPickerModal({
       }
     >
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Select the channel groups for <span className="font-medium text-zinc-800 dark:text-zinc-200">{channel.name}</span>.
+        <p className="text-sm text-muted-foreground">
+          Select the channel groups for <span className="font-medium text-foreground">{channel.name}</span>.
         </p>
 
         <div className="flex items-center justify-between gap-3">
           <label className="relative flex-1">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search groups…"
-              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900"
+              className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             />
           </label>
-          <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{checked.size} selected</span>
+          <span className="shrink-0 text-xs text-muted-foreground">{checked.size} selected</span>
         </div>
 
-        <div className="max-h-80 overflow-y-auto rounded-lg border border-zinc-100 dark:border-zinc-800">
+        <div className="max-h-80 overflow-y-auto rounded-lg border border-border">
           {options === null ? (
-            <p className="p-4 text-sm text-zinc-400">{loadError ?? "Loading channel groups…"}</p>
+            <p className="p-4 text-sm text-muted-foreground">{loadError ?? "Loading channel groups…"}</p>
           ) : filtered.length === 0 ? (
-            <p className="p-4 text-sm text-zinc-400">No channel groups match your search.</p>
+            <p className="p-4 text-sm text-muted-foreground">No channel groups match your search.</p>
           ) : (
             filtered.map((group) => (
               <label
                 key={group.id}
-                className="flex cursor-pointer items-center gap-3 border-b border-zinc-100 px-3 py-2.5 last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                className="flex cursor-pointer items-center gap-3 border-b border-border px-3 py-2.5 last:border-0 hover:bg-muted"
               >
                 <input
                   type="checkbox"
                   checked={checked.has(group.id)}
                   onChange={() => toggle(group.id)}
-                  className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-ring/30"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{group.name}</p>
+                  <p className="truncate text-sm font-medium text-foreground">{group.name}</p>
                 </div>
-                <span className="shrink-0 text-xs capitalize text-zinc-400">{group.playback_mode}</span>
+                <span className="shrink-0 text-xs capitalize text-muted-foreground">{group.playback_mode}</span>
               </label>
             ))
           )}
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         )}

@@ -116,14 +116,14 @@ export function ProgramSummaryRail({
 
     return (
       <Card className="p-5">
-        <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
-        <p className="mt-0.5 text-xs text-zinc-400">{subtitle}</p>
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
         <dl className="mt-4 grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
-          <dt className="text-zinc-500">Program Name</dt><dd className="font-medium text-zinc-900">{basicInfo.name || "—"}</dd>
-          <dt className="text-zinc-500">Content Type</dt><dd className="font-medium text-zinc-900">{type?.label ?? "—"}</dd>
-          <dt className="text-zinc-500">Priority</dt><dd className="font-medium text-zinc-900">{priority?.label ?? "—"}</dd>
+          <dt className="text-muted-foreground">Program Name</dt><dd className="font-medium text-foreground">{basicInfo.name || "—"}</dd>
+          <dt className="text-muted-foreground">Content Type</dt><dd className="font-medium text-foreground">{type?.label ?? "—"}</dd>
+          <dt className="text-muted-foreground">Priority</dt><dd className="font-medium text-foreground">{priority?.label ?? "—"}</dd>
         </dl>
-        <div className="mt-4 space-y-3 border-t border-zinc-100 pt-4">
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
           <ReviewFact icon={<span className="h-4 w-4">{type && publicationTypeIcons[type.id]}</span>} label="Content" value={contentLabel} />
           <ReviewFact icon={<MonitorIcon />} label="Where to Play" value={channelSummary} />
           <ReviewFact icon={<CalendarIcon />} label="When to Play" value={scheduleLabel} />
@@ -135,11 +135,11 @@ export function ProgramSummaryRail({
 
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
-      <p className="-mt-3 text-xs text-zinc-400">{subtitle}</p>
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
+      <p className="-mt-3 text-xs text-muted-foreground">{subtitle}</p>
 
       {previewUrl ? (
-        <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
+        <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-muted">
           {isVideo ? (
             <video src={previewUrl} poster={previewPoster} controls preload="metadata" className="h-full w-full object-contain" />
           ) : (
@@ -147,7 +147,7 @@ export function ProgramSummaryRail({
           )}
         </div>
       ) : (
-        <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400">
+        <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
           <p className="text-xs">ตัวอย่างคอนเทนต์จะแสดงที่นี่</p>
         </div>
       )}
@@ -155,14 +155,14 @@ export function ProgramSummaryRail({
       <Section title="Content">
         <Row label="Type">
           <span className="flex items-center gap-1.5">
-            <span className="h-4 w-4 text-zinc-500">{type && publicationTypeIcons[type.id]}</span>
+            <span className="h-4 w-4 text-muted-foreground">{type && publicationTypeIcons[type.id]}</span>
             {type?.label}
           </span>
         </Row>
         <Row label="Name">{basicInfo.name || "—"}</Row>
         <Row label="Content">{contentLabel}</Row>
         {isMismatch && (
-          <p className="text-right text-[11px] text-amber-600">
+          <p className="text-right text-[11px] text-warning">
             Selected asset is a {selectedAsset?.kind} while publication type is {basicInfo.publicationType}.
           </p>
         )}
@@ -209,17 +209,17 @@ export function ProgramSummaryRail({
 function ReviewFact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="grid grid-cols-[2rem_5.75rem_minmax(0,1fr)] items-start gap-2 text-xs">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">{icon}</span>
-      <span className="pt-2 font-medium text-zinc-600">{label}</span>
-      <span className="pt-2 text-right font-medium leading-4 text-zinc-900">{value}</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary">{icon}</span>
+      <span className="pt-2 font-medium text-muted-foreground">{label}</span>
+      <span className="pt-2 text-right font-medium leading-4 text-foreground">{value}</span>
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border-t border-zinc-100 pt-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">{title}</p>
+    <div className="border-t border-border pt-3">
+      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
       <dl className="flex flex-col gap-2 text-sm">{children}</dl>
     </div>
   );
@@ -230,8 +230,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
   return (
     <div className="flex items-start justify-between gap-4">
-      <dt className="shrink-0 text-zinc-500">{label}</dt>
-      <dd title={tooltip} className="min-w-0 max-w-[65%] truncate text-right font-medium text-zinc-900">{children}</dd>
+      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dd title={tooltip} className="min-w-0 max-w-[65%] truncate text-right font-medium text-foreground">{children}</dd>
     </div>
   );
 }

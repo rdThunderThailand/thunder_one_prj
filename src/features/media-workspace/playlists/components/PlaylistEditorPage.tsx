@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/lovable/button";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import type { ZonePreviewFrame } from "@/features/media-workspace/preview/preview-clock";
+import { PlaylistPreviewModal } from "@/features/media-workspace/preview/PlaylistPreviewModal";
+import { draftItemToPreview, playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
 import { useUndoableState } from "../use-undoable-state";
 import { usePlaylistPreviewHandoff } from "../use-playlist-preview-handoff";
 import {
@@ -41,7 +42,8 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [nowPlayingItemId, setNowPlayingItemId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [propTab, setPropTab] = useState<"item" | "playlist">("playlist");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [propTab, setPropTab] = useState<"item" | "playlist">("item");
   const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
 
   const row = usePlaylistEditorRow({ playlistId, history, info, setInfo });
@@ -110,6 +112,13 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     assets: referencedAssets,
   }));
 
+  // Lovable `playlist-preview`: the sheet reads the live draft; the new-tab handoff stays behind
+  // its "Open full preview" button.
+  const previewStage = useMemo(
+    () => playlistPreviewStage({ name: present.name, items: present.items.map(draftItemToPreview), playback: present.playback }),
+    [present.name, present.items, present.playback],
+  );
+
   const goBack = () => {
     if (row.isDirty) {
       setConfirmLeave(true);
@@ -118,27 +127,35 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     router.push(LIST_PATH);
   };
 
-  if (row.loading) return <p className="p-6 text-sm text-zinc-400">กำลังโหลด...</p>;
+  if (row.loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
   if (row.loadError) {
     return (
-      <Card className="p-6">
-        <p className="text-sm text-red-500">{row.loadError.message}</p>
-        <Button className="mt-4" variant="secondary" onClick={() => router.push(LIST_PATH)}>
+      <div className="rounded-lg border border-border bg-card p-6">
+        <p className="text-sm text-danger">{row.loadError.message}</p>
+        <Button className="mt-4" variant="outline" onClick={() => router.push(LIST_PATH)}>
           กลับไป Playlists
         </Button>
-      </Card>
+      </div>
     );
   }
 
+  const publish = () => router.push(`/media-workspace/publications/create?playlistId=${row.serverId}`);
+  const publishDisabledReason = !row.serverId
+    ? "บันทึก Playlist ก่อนเผยแพร่"
+    : row.isDirty
+      ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
+      : null;
   const savedLabel = savedStateLabel(row.isDirty, row.lastSavedAt, !!row.serverId);
-  const selectedItem = present.items.find((i) => i.mediaAssetId === selectedItemId) ?? null;
+  const effectiveSelectedItemId = selectedItemId ?? present.items[0]?.mediaAssetId ?? null;
+  const selectedItem = present.items.find((i) => i.mediaAssetId === effectiveSelectedItemId) ?? null;
   const onFrame = (frame: ZonePreviewFrame | null) =>
     setNowPlayingItemId(frame?.item?.mediaAssetId ?? null);
 
   return (
-    <div className="flex h-[calc(100dvh-9rem)] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="flex min-h-[calc(100dvh-3rem)] flex-col gap-4 xl:h-[calc(100dvh-3rem)] xl:min-h-0 xl:overflow-hidden">
       <PlaylistEditorHeader
         name={present.name}
+        status={row.status}
         savedLabel={savedLabel}
         lastUpdatedAt={row.lastSavedAt}
         hasItems={present.items.length > 0}
@@ -149,15 +166,9 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         onUndo={history.undo}
         onRedo={history.redo}
         onCancel={goBack}
-        onPreview={openPreview}
-        onPublish={() => router.push(`/media-workspace/publications/create?playlistId=${row.serverId}`)}
-        publishDisabledReason={
-          !row.serverId
-            ? "บันทึก Playlist ก่อนเผยแพร่"
-            : row.isDirty
-              ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
-              : null
-        }
+        onPreview={() => setPreviewOpen(true)}
+        onPublish={publish}
+        publishDisabledReason={publishDisabledReason}
         onSave={row.save}
       />
 
@@ -165,18 +176,18 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />
       )}
       {row.saveError && (
-        <Card className="border-red-200 p-4 dark:border-red-900">
-          <p className="text-sm text-red-600 dark:text-red-400">{row.saveError}</p>
-        </Card>
+        <div className="rounded-lg border border-danger/30 bg-danger-soft p-4">
+          <p className="text-sm text-danger">{row.saveError}</p>
+        </div>
       )}
       {row.conflict && <RevisionConflictCard message={row.conflict} onReload={row.reloadFromServer} />}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-[340px_minmax(0,1fr)_340px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 xl:grid-cols-[300px_minmax(0,1fr)_290px] xl:overflow-hidden">
         <PlaylistItemsPane
           items={present.items}
           playback={present.playback}
           assets={assets}
-          selectedId={selectedItemId}
+          selectedId={effectiveSelectedItemId}
           nowPlayingId={nowPlayingItemId}
           onSelect={selectItem}
           onMove={(from, to) => history.commit((s) => ({ ...s, items: moveItem(s.items, from, to) }))}
@@ -185,13 +196,13 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           onAddItem={() => setDrawerOpen(true)}
         />
 
-        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
+        <div className="flex min-h-0 flex-col rounded-xl border border-border bg-card p-3 shadow-panel xl:overflow-y-auto">
           <PlaylistTimelinePane
             name={present.name}
             items={present.items}
             playback={present.playback}
             assets={assets}
-            selectedId={selectedItemId}
+            selectedId={effectiveSelectedItemId}
             nowPlayingId={nowPlayingItemId}
             onSelect={selectItem}
             onFrame={onFrame}
@@ -213,6 +224,18 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           onInfoChange={(patch) => setInfo((c) => ({ ...c, ...patch }))}
         />
       </div>
+
+      {previewOpen && (
+        <PlaylistPreviewModal
+          open
+          onClose={() => setPreviewOpen(false)}
+          preview={previewStage}
+          assets={referencedAssets}
+          onOpenFullPreview={openPreview}
+          onPublish={publish}
+          publishDisabledReason={publishDisabledReason}
+        />
+      )}
 
       <AddItemDrawer
         open={drawerOpen}

@@ -2,15 +2,29 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui/Card";
+import { File, FileVideo, FolderInput, Image as ImageIcon, MoreHorizontal, Play, Trash2, Undo2 } from "lucide-react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { TrashIcon, UndoIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/lovable/button";
+import { Checkbox } from "@/components/ui/lovable/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/lovable/dropdown-menu";
 import {
   moveMediaAsset,
   permanentlyDeleteMediaAsset,
   restoreMediaAsset,
   trashMediaAsset,
 } from "@/lib/api/media-api";
+import { cn } from "@/lib/utils";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
 
 export function formatBytes(bytes?: number) {
@@ -22,61 +36,123 @@ export function formatResolution(asset: MediaAsset) {
   return asset.width && asset.height ? `${asset.width}×${asset.height}` : "—";
 }
 
-export function AssetActions({ asset, trash, folders, onRefresh, compact = false }: {
+export function formatFormat(asset: MediaAsset) {
+  const ext = asset.file?.original_filename?.split(".").pop();
+  return (ext && ext.length <= 4 ? ext : asset.file?.mime_type?.split("/")[1] ?? asset.kind ?? "file").toUpperCase();
+}
+
+export function formatDuration(seconds?: number | null) {
+  if (!seconds) return null;
+  const total = Math.round(seconds);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+const formatDate = (value?: string) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(date);
+};
+
+export const assetLabel = (asset: MediaAsset) => asset.title ?? asset.file?.original_filename ?? "Untitled asset";
+
+/** Lovable `MediaMenu`, limited to the actions this repo actually has. */
+export function AssetMenu({ asset, trash, folders, onRefresh }: {
   asset: MediaAsset;
   trash: boolean;
   folders: ContentFolder[];
   onRefresh: () => void;
-  compact?: boolean;
 }) {
-  const [moving, setMoving] = useState(false);
-  const label = asset.title ?? asset.file?.original_filename ?? "Untitled asset";
-  const move = async (folderId: string | null) => {
-    setMoving(true);
-    try {
-      await moveMediaAsset(asset.id, folderId);
-      onRefresh();
-    } finally {
-      setMoving(false);
-    }
-  };
-
-  if (trash) return <div className="flex justify-end gap-1">
-    <button aria-label={`Restore ${label}`} title="Restore" className={compact ? "grid h-8 w-8 place-items-center rounded-lg text-indigo-600 hover:bg-indigo-50" : "text-xs font-medium text-indigo-600"} onClick={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}>
-      {compact ? <UndoIcon /> : "Restore"}
-    </button>
-    <button aria-label={`Permanently delete ${label}`} title="Delete forever" className={compact ? "grid h-8 w-8 place-items-center rounded-lg text-red-600 hover:bg-red-50" : "text-xs font-medium text-red-600"} onClick={async () => {
-      if (window.confirm(`Permanently delete ${label}? This cannot be undone.`)) {
-        await permanentlyDeleteMediaAsset(asset.id);
-        onRefresh();
-      }
-    }}>
-      {compact ? <TrashIcon /> : "Delete forever"}
-    </button>
-  </div>;
-
-  return <div className="flex items-center justify-end gap-2">
-    <select aria-label={`Move ${label}`} disabled={moving} className={`${compact ? "w-40" : "min-w-0 flex-1"} rounded border border-zinc-200 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900`} value={asset.folder_id ?? ""} onChange={(event) => void move(event.target.value || null)}>
-      <option value="">Uncategorized</option>
-      {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
-    </select>
-    <button aria-label={`Move ${label} to Trash`} title="Move to Trash" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-zinc-500 hover:bg-red-50 hover:text-red-600" onClick={async () => {
-      if (window.confirm(`Move ${label} to Trash?`)) {
-        await trashMediaAsset(asset.id);
-        onRefresh();
-      }
-    }}><TrashIcon /></button>
-  </div>;
+  const label = assetLabel(asset);
+  const [confirmMode, setConfirmMode] = useState<"trash" | "delete" | null>(null);
+  const move = async (folderId: string | null) => { await moveMediaAsset(asset.id, folderId); onRefresh(); };
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Actions for ${label}`} onClick={(event) => event.stopPropagation()}>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuItem asChild>
+            <Link href={`/media-workspace/assets/${asset.id}`}><File />View Details</Link>
+          </DropdownMenuItem>
+          {trash ? (
+            <>
+              <DropdownMenuItem onSelect={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}><Undo2 />Restore</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setConfirmMode("delete")}>
+                <Trash2 />Delete Permanently
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger><FolderInput />Move to Folder</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="max-h-64 w-44 overflow-y-auto">
+                    <DropdownMenuItem disabled={!asset.folder_id} onSelect={() => void move(null)}>Uncategorized</DropdownMenuItem>
+                    {folders.map((folder) => (
+                      <DropdownMenuItem key={folder.id} disabled={asset.folder_id === folder.id} onSelect={() => void move(folder.id)}>{folder.name}</DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setConfirmMode("trash")}>
+                <Trash2 />Move to Trash
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AlertDialog open={confirmMode !== null} onOpenChange={(open) => { if (!open) setConfirmMode(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmMode === "delete" ? "Delete permanently?" : "Move to Trash?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmMode === "delete" ? `Permanently delete ${label}? This cannot be undone.` : `Move ${label} to Trash?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={confirmMode === "delete" ? "bg-danger hover:bg-danger" : undefined}
+              onClick={async () => {
+                if (confirmMode === "delete") await permanentlyDeleteMediaAsset(asset.id);
+                if (confirmMode === "trash") await trashMediaAsset(asset.id);
+                setConfirmMode(null);
+                onRefresh();
+              }}
+            >
+              {confirmMode === "delete" ? "Delete Permanently" : "Move to Trash"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }
 
-export function AssetCard({
-  asset,
-  trash,
-  folders,
-  onRefresh,
-  previewUrl,
-  thumbnailUrl,
-}: {
+/** Lovable `Preview`: 16:9 thumb; videos get the play badge + duration. */
+export function AssetPreview({ asset, previewUrl, thumbnailUrl }: { asset: MediaAsset; previewUrl?: string; thumbnailUrl?: string }) {
+  const duration = formatDuration(asset.duration_seconds);
+  return (
+    <div className="relative aspect-video overflow-hidden bg-muted">
+      <MediaThumb url={previewUrl} thumbnailUrl={thumbnailUrl} kind={asset.kind} mimeType={asset.file?.mime_type} alt={assetLabel(asset)} className="h-full w-full rounded-none" />
+      {asset.kind === "video" && (
+        <>
+          <span className="pointer-events-none absolute inset-0 grid place-items-center">
+            <i className="grid h-9 w-9 place-items-center rounded-full bg-overlay text-primary-foreground"><Play className="ml-0.5 h-4 w-4 fill-current" /></i>
+          </span>
+          {duration && <span className="absolute bottom-2 right-2 rounded bg-overlay px-1.5 py-0.5 text-[8px] text-primary-foreground">{duration}</span>}
+        </>
+      )}
+    </div>
+  );
+}
+
+export function AssetCard({ asset, trash, folders, onRefresh, previewUrl, thumbnailUrl, selected, onSelect, view }: {
   asset: MediaAsset;
   trash: boolean;
   folders: ContentFolder[];
@@ -84,33 +160,69 @@ export function AssetCard({
   // Signed once for the whole page by the list that owns these cards (ADR 0067).
   previewUrl?: string;
   thumbnailUrl?: string;
+  selected: boolean;
+  onSelect: (checked: boolean) => void;
+  view: "grid" | "list";
 }) {
-  const label = asset.title ?? asset.file?.original_filename ?? "Untitled asset";
-
+  const label = assetLabel(asset);
+  const href = `/media-workspace/assets/${asset.id}`;
+  const [deleteOpen, setDeleteOpen] = useState(false);
   return (
-    <Card className="overflow-hidden">
-      <Link href={`/media-workspace/assets/${asset.id}`} aria-label={`View ${label}`}>
-        <MediaThumb
-          url={previewUrl}
-          thumbnailUrl={thumbnailUrl}
-          kind={asset.kind}
-          mimeType={asset.file?.mime_type}
-          alt={label}
-          className="h-36 w-full rounded-none"
-        />
-      </Link>
-      <div className="space-y-2 p-3">
-        <Link
-          href={`/media-workspace/assets/${asset.id}`}
-          className="block truncate text-sm font-semibold text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-300"
-        >
-          {label}
-        </Link>
-        <p className="text-xs text-zinc-500">
-          {asset.kind?.toUpperCase() ?? "FILE"} · {formatResolution(asset)} · {formatBytes(asset.file?.file_size_bytes)}
-        </p>
-        <AssetActions asset={asset} trash={trash} folders={folders} onRefresh={onRefresh} />
+    <article
+      className={cn(
+        "group relative overflow-hidden rounded-lg border border-border bg-card shadow-panel transition-[box-shadow,border-color] hover:border-foreground/20 hover:shadow-float",
+        selected && "border-primary ring-1 ring-primary",
+        view === "list" && "grid grid-cols-[150px_minmax(0,1fr)]",
+      )}
+    >
+      <div className="absolute left-2 top-2 z-10 opacity-0 transition-opacity group-hover:opacity-100 data-[selected=true]:opacity-100" data-selected={selected}>
+        <Checkbox checked={selected} onCheckedChange={(value) => onSelect(value === true)} aria-label={`Select ${label}`} className="bg-card" />
       </div>
-    </Card>
+      <Link href={href} aria-label={`View ${label}`} className="block">
+        <AssetPreview asset={asset} previewUrl={previewUrl} thumbnailUrl={thumbnailUrl} />
+      </Link>
+      <div className="flex items-start gap-2 p-2.5">
+        <span className="mt-0.5 text-primary">{asset.kind === "video" ? <FileVideo className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />}</span>
+        <div className="min-w-0 flex-1">
+          <Link href={href} className="block truncate text-[10px] font-semibold hover:text-primary">{label}</Link>
+          <p className="mt-1 truncate text-[8px] text-muted-foreground">
+            {formatFormat(asset)} · {formatBytes(asset.file?.file_size_bytes)} · {formatDate(asset.created_at)}
+          </p>
+        </div>
+        <AssetMenu asset={asset} trash={trash} folders={folders} onRefresh={onRefresh} />
+      </div>
+      {trash && (
+        <div className="flex gap-2 border-t border-border p-2.5">
+          <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px]" onClick={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}>
+            <Undo2 className="h-3 w-3" />
+            Restore
+          </Button>
+          <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px] text-destructive" onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="h-3 w-3" />
+            Delete
+          </Button>
+        </div>
+      )}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete permanently?</AlertDialogTitle>
+            <AlertDialogDescription>Permanently delete {label}? This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-danger hover:bg-danger"
+              onClick={async () => {
+                await permanentlyDeleteMediaAsset(asset.id);
+                onRefresh();
+              }}
+            >
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </article>
   );
 }

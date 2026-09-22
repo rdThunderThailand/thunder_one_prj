@@ -353,7 +353,7 @@ export function CreatePublicationPage() {
   if (resumePending) {
     return (
       <Card className="p-6">
-        <p className="text-center text-sm text-zinc-400">กำลังโหลด draft…</p>
+        <p className="text-center text-sm text-muted-foreground">กำลังโหลด draft…</p>
       </Card>
     );
   }
@@ -365,7 +365,7 @@ export function CreatePublicationPage() {
           <NoAccess message={resumeFailure.message} />
         ) : (
           <Card className="p-6">
-            <p className="text-center text-sm text-red-600 dark:text-red-400">{resumeFailure.message}</p>
+            <p className="text-center text-sm text-danger">{resumeFailure.message}</p>
           </Card>
         )}
         <div className="mt-4 flex justify-center gap-3">
@@ -426,7 +426,7 @@ export function CreatePublicationPage() {
       </Modal>
 
       {confirmingCancel && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
           <span>มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ออกจากหน้านี้จะทำให้ข้อมูลหายไป ดำเนินการต่อ?</span>
           <div className="flex shrink-0 gap-2">
             <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setConfirmingCancel(false)}>
@@ -434,7 +434,7 @@ export function CreatePublicationPage() {
             </Button>
             <Button
               variant="primary"
-              className="bg-red-600 px-3 py-1.5 text-xs hover:bg-red-500"
+              className="bg-danger px-3 py-1.5 text-xs hover:bg-danger"
               onClick={performCancel}
               disabled={cancelBusy}
             >
@@ -445,7 +445,7 @@ export function CreatePublicationPage() {
       )}
 
       {revisionConflict && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
           <span>{revisionConflict}</span>
           <div className="flex shrink-0 gap-2">
             <Button
@@ -529,12 +529,12 @@ export function CreatePublicationPage() {
             <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>Cancel</Button>
           )}
           <div className="flex flex-1 items-center gap-3">
-            <span className="whitespace-nowrap text-xs text-zinc-500">
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
               {step} of {wizardSteps.length} steps completed
             </span>
-            <div className="h-1.5 flex-1 rounded-full bg-zinc-100">
+            <div className="h-1.5 flex-1 rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-indigo-600 transition-all"
+                className="h-full rounded-full bg-primary transition-all"
                 style={{ width: `${(step / wizardSteps.length) * 100}%` }}
               />
             </div>
@@ -551,7 +551,7 @@ export function CreatePublicationPage() {
         </div>
         {displayError && (
           <div className="flex items-center gap-2">
-            <p className="text-xs font-medium text-red-600">{displayError}</p>
+            <p className="text-xs font-medium text-danger">{displayError}</p>
             {saveStatus === "error" && (
               <Button
                 variant="secondary"
@@ -565,7 +565,7 @@ export function CreatePublicationPage() {
           </div>
         )}
         {publishedId && (
-          <p className="text-xs font-medium text-emerald-600">
+          <p className="text-xs font-medium text-success">
             Published successfully! (ID: {publishedId})
           </p>
         )}

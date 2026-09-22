@@ -12,6 +12,7 @@ import {
   startItems,
   stageFiles,
   summarize,
+  uploadOutcome,
   type UploadItem,
 } from "./upload-queue.ts";
 import type { UploadTarget } from "../../publications/services/upload-api.ts";
@@ -162,5 +163,45 @@ assert.equal(
   undefined,
   "a cancel already dropped its target, so nothing is cancelled twice"
 );
+
+// --- uploadOutcome (ADR 0071: status -> queue-row outcome) ---
+
+{
+  const outcome = uploadOutcome("failed", { code: "unsupported_profile", profile: "High" });
+  assert.equal(outcome.state, "failed");
+  assert.match((outcome as { error: string }).error, /High Profile/, "failed keeps ADR 0070's message");
+}
+
+{
+  const outcome = uploadOutcome("failed", null);
+  assert.equal(outcome.state, "failed");
+  assert.equal(
+    (outcome as { error: string }).error,
+    "The server refused this file.",
+    "a failed row with no verdict falls back to a generic refusal"
+  );
+}
+
+{
+  const outcome = uploadOutcome("processing", { code: "unsupported_profile", profile: "High" });
+  assert.equal(outcome.state, "completed", "processing is not a refusal, ADR 0071");
+  assert.equal(
+    (outcome as { warning?: string }).warning,
+    "กำลังแปลงไฟล์ให้เล่นได้",
+    "processing shows the converting notice instead of ADR 0070's refusal"
+  );
+}
+
+{
+  const outcome = uploadOutcome("ready", { code: "unverified_preset", profile: "Main" });
+  assert.equal(outcome.state, "completed");
+  assert.match((outcome as { warning?: string }).warning!, /Main Profile/, "ready keeps ADR 0070's caveat");
+}
+
+{
+  const outcome = uploadOutcome("ready", null);
+  assert.equal(outcome.state, "completed");
+  assert.equal((outcome as { warning?: string }).warning, undefined, "the plain happy path has no caveat");
+}
 
 console.log("upload-queue: all checks passed");

@@ -23,6 +23,8 @@ export type ProgramCardModel = {
   deviceRows: number;
   /** Rows reporting `confirmed` — the card's "N Playing" footer, and Now Playing's rank. */
   confirmedRows: number;
+  /** Best playback evidence carried by the current rows. */
+  playbackState: NowNextOccurrence["playback_state"];
   /** Next Up only: the earliest `opens_at` this Publication was seen at. */
   opensAt: string | null;
   /** `+N more` when the airing the card points at is a merged loop; 0 otherwise. */
@@ -53,6 +55,7 @@ function occupy(
     channelRows: 0,
     deviceRows: 0,
     confirmedRows: 0,
+    playbackState: "not_confirmed",
     opensAt: null,
     mergedWith: 0,
   };
@@ -73,7 +76,12 @@ export function mapNowNextPrograms(response: NowNextResponse | null | undefined)
     const currentSubject = row.current ? subjectOf(row.current) : undefined;
     if (row.current && currentSubject) {
       const draft = occupy(current, row, currentSubject);
-      if (row.current.playback_state === "confirmed") draft.confirmedRows += 1;
+      if (row.current.playback_state === "confirmed") {
+        draft.confirmedRows += 1;
+        draft.playbackState = "confirmed";
+      } else if (row.current.playback_state === "stale" && draft.playbackState === "not_confirmed") {
+        draft.playbackState = "stale";
+      }
       // Now Playing spans rows rather than one occurrence, so the label reports the widest
       // merge any of them carries.
       draft.mergedWith = Math.max(draft.mergedWith, row.current.publications.length - 1);
@@ -100,12 +108,15 @@ export function mapNowNextPrograms(response: NowNextResponse | null | undefined)
     }
   }
 
-  // Rank is confirmed rows, the closest available reading of the old `playingTargets` sort,
-  // with the `localeCompare` tie-break the previous selector used. A row that is merely
-  // scheduled never reaches the card, because the card's LIVE badge is unconditional on it.
+  // Confirmed playback wins; when no Player has confirmed yet, keep the scheduled Publication
+  // visible and rank it by the number of target rows it occupies.
   const nowPlaying = [...current.values()]
-    .filter((draft) => draft.confirmedRows > 0)
-    .sort((a, b) => b.confirmedRows - a.confirmedRows || a.name.localeCompare(b.name))[0] ?? null;
+    .sort(
+      (a, b) =>
+        b.confirmedRows - a.confirmedRows ||
+        b.channelRows + b.deviceRows - (a.channelRows + a.deviceRows) ||
+        a.name.localeCompare(b.name)
+    )[0] ?? null;
 
   // Earliest opening wins outright; row count is only the tie-break, preserving a selector
   // that sorted on `next_opens_at` and ignored target counts entirely.

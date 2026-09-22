@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ExpandIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
+import { formatDuration } from "@/features/media-workspace/playlists/duration";
 
 const SPEED_OPTIONS = [1, 2, 3];
 
@@ -36,7 +37,8 @@ export function PreviewControls({
   framePixels: [number, number] | null;
   fitToWindow: boolean;
   isFullscreen: boolean;
-  placement?: "panel" | "overlay";
+  /** `footer` is the Lovable preview dialog's bottom bar — flat, on the dark sheet. */
+  placement?: "panel" | "overlay" | "footer";
   onTimeline: (seconds: number) => void;
   onPlaying: (playing: boolean) => void;
   onSpeed: (speed: number) => void;
@@ -45,9 +47,11 @@ export function PreviewControls({
   onFullscreen: () => void;
 }) {
   const isOverlay = placement === "overlay";
-  const controlClass = `flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-    isOverlay ? "text-white hover:bg-white/15" : "text-zinc-600 hover:bg-zinc-200/70"
+  const isFooter = placement === "footer";
+  const controlClass = `flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring/30 ${
+    isOverlay ? "text-white hover:bg-card/15" : isFooter ? "text-primary-foreground hover:bg-primary-foreground/10" : "text-muted-foreground hover:bg-muted"
   }`;
+  const mutedText = isOverlay ? "text-white/80" : isFooter ? "text-primary-foreground/80" : "text-muted-foreground";
   const overlayVisibility = playing
     ? "translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
     : "translate-y-0 opacity-100";
@@ -56,11 +60,13 @@ export function PreviewControls({
       className={
         isOverlay
           ? `absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/70 to-transparent px-3 pb-3 pt-8 text-white transition duration-200 motion-reduce:transition-none ${overlayVisibility}`
-          : "rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800"
+          : isFooter
+            ? "shrink-0 border-t border-primary-foreground/10 px-5 py-3 text-primary-foreground"
+            : "rounded-lg border border-border bg-muted p-3"
       }
     >
       {conflictCount > 0 && (
-        <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800" role="status">
+        <p className="mb-3 rounded-md border border-warning/30 bg-warning-soft px-2.5 py-2 text-xs text-warning" role="status">
           Preview shows this draft alone. {conflictCount} other publication{conflictCount === 1 ? "" : "s"} may merge on the same screen.
         </p>
       )}
@@ -75,8 +81,8 @@ export function PreviewControls({
         >
           {playing ? <PauseGlyph /> : <PlayIcon className="h-4 w-4" />}
         </button>
-        <span className={`shrink-0 text-[11px] tabular-nums ${isOverlay ? "text-white/80" : "text-zinc-500"}`}>
-          {Math.floor(timeSeconds)}s / {Math.floor(timelineSeconds)}s
+        <span className={`shrink-0 text-[11px] tabular-nums ${mutedText}`}>
+          {isFooter ? `${formatDuration(timeSeconds)} / ${formatDuration(timelineSeconds)}` : `${Math.floor(timeSeconds)}s / ${Math.floor(timelineSeconds)}s`}
         </span>
         <input
           aria-label="Preview timeline"
@@ -86,7 +92,7 @@ export function PreviewControls({
           step="0.1"
           value={timeSeconds}
           onChange={(event) => onTimeline(Number(event.target.value))}
-          className="h-1 min-w-20 flex-1 accent-indigo-600"
+          className="h-1 min-w-20 flex-1 accent-primary"
         />
         <button
           type="button"
@@ -97,7 +103,7 @@ export function PreviewControls({
         >
           <VolumeGlyph muted={muted} />
         </button>
-        <span className={`text-xs ${isOverlay ? "text-white/75" : "text-zinc-500"}`}>
+        <span className={`text-xs ${mutedText}`}>
           {speed}×
         </span>
         <details
@@ -115,13 +121,13 @@ export function PreviewControls({
           >
             <MoreIcon className="h-4 w-4" />
           </summary>
-          <div className="absolute bottom-full right-0 z-20 mb-2 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+          <div className="absolute bottom-full right-0 z-20 mb-2 w-40 overflow-hidden rounded-lg border border-border bg-card py-1 text-foreground shadow-lg">
             {SPEED_OPTIONS.map((option) => (
               <button
                 key={option}
                 type="button"
-                className={`block w-full px-3 py-2 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 ${
-                  speed === option ? "font-semibold text-indigo-600 dark:text-indigo-300" : ""
+                className={`block w-full px-3 py-2 text-left text-sm hover:bg-muted ${
+                  speed === option ? "font-semibold text-primary" : ""
                 }`}
                 onClick={() => onSpeed(option)}
               >
@@ -131,7 +137,7 @@ export function PreviewControls({
             {allowActualSize && framePixels && (
               <button
                 type="button"
-                className="block w-full border-t border-zinc-100 px-3 py-2 text-left text-sm hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                className="block w-full border-t border-border px-3 py-2 text-left text-sm hover:bg-muted"
                 onClick={() => onFitToWindow(!fitToWindow)}
               >
                 {fitToWindow ? `Actual size (${framePixels[0]}×${framePixels[1]})` : "Fit to window"}
@@ -148,6 +154,12 @@ export function PreviewControls({
         >
           <ExpandIcon className="h-4 w-4" />
         </button>
+        {isFooter && (
+          <div className="ml-3 hidden text-right sm:block">
+            <p className="text-[11px] font-semibold">Preview Mode</p>
+            <p className="text-[10px] text-primary-foreground/55">This is a simulation of how your layout will appear on screens.</p>
+          </div>
+        )}
       </div>
     </div>
   );

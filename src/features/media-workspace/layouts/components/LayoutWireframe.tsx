@@ -22,6 +22,7 @@ interface LayoutWireframeProps {
   selectedZoneId?: string | null;
   onZoneSelect?: (zoneId: string) => void;
   shouldShowLabels?: boolean;
+  programStyle?: boolean;
 }
 
 export function LayoutWireframe({
@@ -32,6 +33,7 @@ export function LayoutWireframe({
   selectedZoneId,
   onZoneSelect,
   shouldShowLabels = false,
+  programStyle = false,
 }: LayoutWireframeProps) {
   const [ratioW, ratioH] = parseAspectRatio(aspectRatio) ?? [16, 9];
 
@@ -64,7 +66,9 @@ export function LayoutWireframe({
               y={zone.y}
               width={zone.width}
               height={zone.height}
-              className={`${ZONE_FILL[index % ZONE_FILL.length]} ${isSelected ? "stroke-indigo-950 stroke-[1.5]" : "stroke-white/70 stroke-[0.5]"}`}
+              className={programStyle
+                ? "fill-transparent stroke-white/70 stroke-[0.5]"
+                : `${ZONE_FILL[index % ZONE_FILL.length]} ${isSelected ? "stroke-primary stroke-[1.5]" : "stroke-white/70 stroke-[0.5]"}`}
             />
             {shouldShowLabels && (
               <text

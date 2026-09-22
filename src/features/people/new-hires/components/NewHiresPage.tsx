@@ -8,6 +8,7 @@ import { toast } from "sonner";
 // mock-data.ts — and create a barrel-file import cycle between new-hires
 // and add-person.
 import { NEW_HIRE_HANDOFF_KEY } from "@/features/people/add-person/handoff";
+import { LoadFailure } from "@/features/people/shared";
 import { ApiError } from "@/lib/api/api-error";
 import { updateOnboardingStep } from "../services/onboarding-api";
 import type { NewHireRow, NewHireStatus } from "../mock-data";
@@ -175,9 +176,7 @@ export function NewHiresPage({ rows: fetchedRows, tenantId }: NewHiresPageProps)
             onStartDateToChange={setStartDateTo}
           />
           {fetchedRows === null ? (
-            <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
-              ไม่สามารถโหลดข้อมูลเข้าใหม่ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
-            </p>
+            <LoadFailure message="ไม่สามารถโหลดข้อมูลเข้าใหม่ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
           ) : (
             <NewHireKanbanBoard
               rows={filteredRows}

@@ -13,9 +13,9 @@ const OUTPUT_KIND_LABEL: Record<CreateChannelDraft["outputKind"], string> = {
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-zinc-100 py-1 text-sm last:border-0 dark:border-zinc-800">
-      <dt className="text-zinc-500 dark:text-zinc-400">{label}</dt>
-      <dd className="text-right font-medium text-zinc-900 dark:text-zinc-100">{value}</dd>
+    <div className="flex items-center justify-between gap-4 border-b border-border py-1 text-sm last:border-0">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="text-right font-medium text-foreground">{value}</dd>
     </div>
   );
 }
@@ -34,10 +34,10 @@ function ReviewSection({
   const Icon = icon;
 
   return (
-    <section className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+    <section className="rounded-lg border border-border p-3">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-soft text-primary">
             <Icon />
           </span>
           {title}
@@ -45,7 +45,7 @@ function ReviewSection({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
         >
           <EditIcon className="h-4 w-4" />
           Edit
@@ -79,8 +79,8 @@ export function Step3Review({
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Review &amp; Create</h3>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Confirm the details before creating the channel.</p>
+        <h3 className="text-xl font-semibold text-foreground">Review &amp; Create</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Confirm the details before creating the channel.</p>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -111,7 +111,7 @@ export function Step3Review({
           ))}
       </ReviewSection>
 
-      <div className="rounded-lg bg-indigo-50 p-3 text-xs text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300">
+      <div className="rounded-lg bg-primary-soft p-3 text-xs text-primary">
         <p className="flex items-center gap-2 font-semibold">
           <CheckCircleIcon className="h-4 w-4" />
           What&apos;s Next?

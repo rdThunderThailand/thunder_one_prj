@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/Card";
 import { PLAY_MODES, REPEAT_MODES, START_FROMS, TRANSITIONS, type PlaylistPlayback } from "../types";
 import { Field, Select, inputClasses } from "./form";
 
@@ -17,9 +16,12 @@ export function PlaylistPlaybackSettings({
   onPlayback: (patch: Partial<PlaylistPlayback>) => void;
 }) {
   return (
-    <Card className="flex flex-col gap-4 p-5">
-      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Playback Settings</h2>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
+      <div>
+        <h2 className="text-[11px] font-semibold text-foreground">Playback Settings</h2>
+        <p className="mt-0.5 text-[9px] text-muted-foreground">Defaults applied across this playlist.</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Field label="Play Mode">
           <Select
             value={playback.playMode ?? "sequential"}
@@ -48,21 +50,24 @@ export function PlaylistPlaybackSettings({
             onChange={(e) => onPlayback({ defaultTransition: e.target.value as PlaylistPlayback["defaultTransition"] })}
           />
         </Field>
-        <Field label="Transition Duration (seconds)">
-          <input
-            type="number"
-            min={0}
-            step={0.5}
-            value={playback.transitionDuration ?? 1}
-            onChange={(e) => onPlayback({ transitionDuration: Math.max(0, Number(e.target.value) || 0) })}
-            className={inputClasses}
-          />
+        <Field label="Transition Duration">
+          <div className="relative">
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              value={playback.transitionDuration ?? 1}
+              onChange={(e) => onPlayback({ transitionDuration: Math.max(0, Number(e.target.value) || 0) })}
+              className={`${inputClasses} pr-10`}
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">sec</span>
+          </div>
         </Field>
       </div>
-      <p className="text-xs text-zinc-400">
+      <p className="text-xs text-muted-foreground">
         Play mode, repeat and start-from reach the player only for a Playlist published on its own —
         a Composition Zone overrides them (ADR 0060 §3b).
       </p>
-    </Card>
+    </div>
   );
 }

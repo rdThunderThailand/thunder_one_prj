@@ -27,11 +27,11 @@ export function Dropzone({
     <div
       onDragOver={(event) => event.preventDefault()}
       onDrop={onDrop}
-      className="flex min-h-44 flex-col items-center justify-center rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/30 p-6 text-center"
+      className="flex min-h-44 flex-col items-center justify-center rounded-xl border-2 border-dashed border-success/30 bg-success-soft p-6 text-center"
     >
-      <span className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100"><UploadIcon className="h-6 w-6" /></span>
-      <p className="text-sm font-semibold text-zinc-900">ลากและวางไฟล์ที่นี่</p>
-      <p className="mt-1 text-xs text-zinc-500">หรือ</p>
+      <span className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-success shadow-sm ring-1 ring-success/30"><UploadIcon className="h-6 w-6" /></span>
+      <p className="text-sm font-semibold text-foreground">ลากและวางไฟล์ที่นี่</p>
+      <p className="mt-1 text-xs text-muted-foreground">หรือ</p>
       <input
         ref={fileInputRef}
         type="file"
@@ -43,10 +43,10 @@ export function Dropzone({
           selectFile(file);
         }}
       />
-      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={disabled} className="mt-3 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
+      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={disabled} className="mt-3 rounded-lg border border-success/30 bg-card px-4 py-2 text-sm font-medium text-success hover:bg-success-soft disabled:opacity-50">
         {progress === null ? "อัปโหลดไฟล์จากเครื่อง" : `Uploading ${progress}%`}
       </button>
-      <p className={`mt-3 text-xs ${error ? "text-red-600" : "text-zinc-500"}`}>{error ?? `${UPLOAD_ACCEPT_LABEL} · สูงสุด ${MAX_UPLOAD_SIZE_LABEL} ต่อไฟล์`}</p>
+      <p className={`mt-3 text-xs ${error ? "text-danger" : "text-muted-foreground"}`}>{error ?? `${UPLOAD_ACCEPT_LABEL} · สูงสุด ${MAX_UPLOAD_SIZE_LABEL} ต่อไฟล์`}</p>
     </div>
   );
 }

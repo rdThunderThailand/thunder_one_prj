@@ -52,10 +52,10 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
   return (
     <Card className="p-5">
       <div className="mb-5 flex items-start gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><SettingsIcon className="h-4 w-4" /></span>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary"><SettingsIcon className="h-4 w-4" /></span>
         <div>
-          <h2 className="text-base font-semibold text-zinc-900">Basic Settings</h2>
-          <p className="mt-0.5 text-xs text-zinc-500">ข้อมูลพื้นฐานของเนื้อหา</p>
+          <h2 className="text-base font-semibold text-foreground">Basic Settings</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">ข้อมูลพื้นฐานของเนื้อหา</p>
         </div>
       </div>
 
@@ -68,9 +68,9 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
               value={name}
               onChange={(e) => patch({ name: e.target.value })}
               aria-invalid={!!fieldErrors.name}
-              className={`w-full rounded-lg border ${fieldErrors.name ? "border-red-400" : "border-zinc-200"} py-2.5 pl-3.5 pr-16 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30`}
+              className={`w-full rounded-lg border ${fieldErrors.name ? "border-danger" : "border-border"} py-2.5 pl-3.5 pr-16 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30`}
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
               {name.length}/{PUBLICATION_LIMITS.nameMaxLength}
             </span>
           </div>
@@ -92,18 +92,18 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
                 patch({ description: description.slice(0, start) + sanitized + description.slice(end) });
               }}
               aria-invalid={isDescriptionOverLimit}
-              className="w-full resize-none rounded-lg border border-zinc-200 py-2.5 pl-3.5 pr-3.5 text-sm text-zinc-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+              className="w-full resize-none rounded-lg border border-border py-2.5 pl-3.5 pr-3.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
             />
             <span
               className={`pointer-events-none absolute bottom-2 right-3 text-xs ${
-                isDescriptionOverLimit ? "font-medium text-red-600" : "text-zinc-400"
+                isDescriptionOverLimit ? "font-medium text-danger" : "text-muted-foreground"
               }`}
             >
               {description.length}/{PUBLICATION_LIMITS.descriptionMaxLength}
             </span>
           </div>
           {isDescriptionOverLimit && (
-            <p className="text-xs font-medium text-red-600">
+            <p className="text-xs font-medium text-danger">
               คำอธิบายยาวเกิน {PUBLICATION_LIMITS.descriptionMaxLength} ตัวอักษร
             </p>
           )}
@@ -114,14 +114,14 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="flex items-center gap-1.5 rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700"
+                className="flex items-center gap-1.5 rounded-md bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary"
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => removeTag(tag)}
                   aria-label={`Remove ${tag}`}
-                  className="text-zinc-400 hover:text-zinc-700"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <XIcon className="h-3 w-3" />
                 </button>
@@ -137,7 +137,7 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
                   onKeyDown={(e) => e.key === "Enter" && addTag()}
                   onBlur={addTag}
                   placeholder="Tag name"
-                  className="w-28 rounded-full border border-indigo-300 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-28 rounded-full border border-primary/30 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-ring/30"
                 />
                 <datalist id="publication-workspace-tags">
                   {workspaceTags
@@ -151,7 +151,7 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
               <button
                 type="button"
                 onClick={() => setAddingTag(true)}
-                className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600"
+                className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-primary"
               >
                 <PlusIcon className="h-3 w-3" /> Add tag
               </button>

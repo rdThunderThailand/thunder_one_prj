@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/lovable/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { classifyApiError } from "@/lib/api/api-error";
 import { movePlaylist, permanentlyDeletePlaylist } from "@/lib/api/media-api";
 import type { ContentFolder } from "@/types/domain";
@@ -62,19 +62,23 @@ export function PlaylistsListDialogs({
       : "Delete permanently?";
   const destructive = action === "trash" || action === "permanent-delete";
 
-  return <Modal open={action !== null && target !== null} onClose={onClose} title={title} footer={<>
-    <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>Cancel</Button>
-    <Button type="button" disabled={busy} onClick={() => void submit()} className={destructive ? "bg-red-600 hover:bg-red-500" : ""}>
-      {busy ? "กำลังทำรายการ…" : action === "move" ? "Save" : action === "trash" ? "Move to Trash" : "Delete permanently"}
-    </Button>
-  </>}>
+  return <Dialog open={action !== null && target !== null} onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
+    <DialogContent>
+      <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
     {action === "move" && <label className="space-y-1"><span>Destination</span>
-      <select autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
+      <select autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2">
         <option value="">Uncategorized</option>
         {folders.map((folder) => <option key={folder.id} value={folder.id}>{folderPath(folders, folder.id)}</option>)}
       </select>
     </label>}
     {action === "trash" && <p>Move &ldquo;{target?.name}&rdquo; to Trash? You can restore it later. Playlists used by an active or draft publication can&rsquo;t be trashed.</p>}
     {action === "permanent-delete" && <p>Permanently delete &ldquo;{target?.name}&rdquo;? This cannot be undone.</p>}
-  </Modal>;
+      <DialogFooter>
+        <Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button>
+        <Button type="button" disabled={busy} onClick={() => void submit()} className={destructive ? "bg-danger hover:bg-danger" : ""}>
+          {busy ? "กำลังทำรายการ…" : action === "move" ? "Save" : action === "trash" ? "Move to Trash" : "Delete permanently"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>;
 }

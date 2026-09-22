@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { ChevronDownIcon, ClipboardIcon, EyeIcon, MoreIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
@@ -55,26 +54,32 @@ export function PlaylistItemsPane({
   };
 
   return (
-    <Card className="flex h-full min-h-0 flex-col p-5">
+    <div className="flex h-[32rem] min-h-0 flex-col rounded-xl border border-border bg-card p-5 shadow-panel xl:h-full">
       <div className="mb-1 flex shrink-0 items-center justify-between">
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Playlist Items</h2>
+        <h2 className="text-base font-semibold text-foreground">Playlist Items</h2>
+        <button
+          type="button"
+          onClick={onAddItem}
+          aria-label="Add item"
+          className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <PlusIcon className="h-4 w-4" />
+        </button>
       </div>
-      <p className="mb-3 shrink-0 text-xs text-zinc-400">{items.length} items · Total {total}</p>
+      <p className="mb-3 shrink-0 text-xs text-muted-foreground">{items.length} items · Total {total}</p>
 
-      {items.length > 3 && (
-        <div className="relative mb-3 shrink-0">
-          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="ค้นหาใน playlist..."
-            className={`${inputClasses} pl-9`}
-          />
-        </div>
-      )}
+      <div className="relative mb-3 shrink-0">
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search playlist items..."
+          className={`${inputClasses} pl-9`}
+        />
+      </div>
 
       {items.length === 0 ? (
-        <p className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-zinc-200 px-4 text-center text-sm text-zinc-400 dark:border-zinc-800">
+        <p className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-border px-4 text-center text-sm text-muted-foreground">
           ยังไม่มี item — กด Add Item เพื่อเริ่ม
         </p>
       ) : (
@@ -102,22 +107,22 @@ export function PlaylistItemsPane({
                   setDropId(null);
                 }}
                 className={`mb-1 flex cursor-grab items-center gap-2 rounded-lg p-2 transition-colors active:cursor-grabbing ${
-                  isSelected ? "bg-indigo-50 dark:bg-indigo-500/10" : "hover:bg-zinc-50 hover:shadow-sm dark:hover:bg-zinc-800/50"
+                  isSelected ? "bg-primary-soft" : "hover:bg-muted hover:shadow-sm"
                 } ${
                   dropId === item.mediaAssetId && draggedId !== item.mediaAssetId
-                    ? "ring-2 ring-indigo-300"
+                    ? "ring-2 ring-primary/30"
                     : ""
                 }`}
               >
-                <span className="w-4 text-xs text-zinc-400" aria-hidden="true">::</span>
-                <span className="w-4 text-xs text-zinc-400">{index + 1}</span>
+                <span className="w-4 text-xs text-muted-foreground" aria-hidden="true">::</span>
+                <span className="w-4 text-xs text-muted-foreground">{index + 1}</span>
                 <MediaThumb url={previews.urls[item.mediaAssetId]} kind={item.kind ?? asset?.kind} alt={label} className="h-9 w-12" />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    {nowPlayingId === item.mediaAssetId && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />}
-                    <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{label}</span>
+                    {nowPlayingId === item.mediaAssetId && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />}
+                    <span className="truncate text-sm font-medium text-foreground">{label}</span>
                   </span>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-muted-foreground">
                     {isVideo ? "Video" : "Image"} · {seconds != null ? formatDuration(seconds) : "—"}
                   </span>
                 </span>
@@ -142,16 +147,16 @@ export function PlaylistItemsPane({
       <button
         type="button"
         onClick={onAddItem}
-        className="mt-3 flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-indigo-200 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+        className="mt-3 flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary/30 py-2 text-sm font-medium text-primary hover:bg-primary-soft"
       >
         <PlusIcon className="h-4 w-4" /> Add Item
       </button>
       {items.length > 1 && (
-        <p className="mt-2 shrink-0 text-center text-xs text-zinc-400">
+        <p className="mt-2 shrink-0 text-center text-xs text-muted-foreground">
           Drag items to reorder
         </p>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -173,8 +178,8 @@ function ItemActions({
   onRemove: () => void;
 }) {
   const item =
-    "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:text-zinc-300 dark:disabled:text-zinc-600";
-  const normalItem = `${item} text-zinc-700 hover:bg-indigo-50 hover:text-indigo-700 dark:text-zinc-200 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300`;
+    "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:text-muted-foreground";
+  const normalItem = `${item} text-muted-foreground hover:bg-primary-soft hover:text-primary`;
   return (
     <details
       className="relative inline-block text-left"
@@ -187,11 +192,11 @@ function ItemActions({
     >
       <summary
         aria-label={`Actions for ${label}`}
-        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         <MoreIcon className="h-4 w-4" />
       </summary>
-      <div className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg">
         <button type="button" className={normalItem} onClick={onPreview}>
           <EyeIcon className="h-4 w-4" /> Preview
         </button>
@@ -209,7 +214,7 @@ function ItemActions({
         </button>
         <button
           type="button"
-          className={`${item} text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300`}
+          className={`${item} text-danger hover:bg-danger-soft hover:text-danger`}
           onClick={onRemove}
         >
           <TrashIcon className="h-4 w-4" /> Remove from Playlist

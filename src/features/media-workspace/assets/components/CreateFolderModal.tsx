@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Modal } from "@/components/ui/Modal";
 
 export function CreateFolderModal({
@@ -25,7 +25,7 @@ export function CreateFolderModal({
       title="Create Folder"
       footer={
         <>
-          <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
           <Button disabled={busy} onClick={onCreate}>{busy ? "Creating…" : "Create"}</Button>
         </>
       }
@@ -36,7 +36,7 @@ export function CreateFolderModal({
           autoFocus
           value={name}
           onChange={(event) => onNameChange(event.target.value)}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-border px-3 py-2"
         />
       </label>
     </Modal>

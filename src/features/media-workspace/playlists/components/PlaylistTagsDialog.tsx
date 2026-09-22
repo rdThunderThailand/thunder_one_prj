@@ -6,8 +6,8 @@
 // datalist of the tenant's existing vocabulary, so typing an existing name reuses it.
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/lovable/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { XIcon } from "@/components/ui/icons";
 import { classifyApiError } from "@/lib/api/api-error";
 import { fetchTags, setPlaylistTags } from "@/lib/api/media-api";
@@ -61,27 +61,24 @@ export function PlaylistTagsDialog({
   };
 
   return (
-    <Modal
+    <Dialog
       open={target !== null}
-      onClose={() => { if (!busy) onClose(); }}
-      title="Edit tags"
-      footer={<>
-        <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>Cancel</Button>
-        <Button type="button" disabled={busy} onClick={() => void submit()}>{busy ? "Saving…" : "Save"}</Button>
-      </>}
+      onOpenChange={(open) => { if (!open && !busy) onClose(); }}
     >
+      <DialogContent>
+        <DialogHeader><DialogTitle>Edit tags</DialogTitle></DialogHeader>
       <div className="flex flex-wrap items-center gap-2">
         {names.map((name) => (
           <span
             key={name}
-            className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+            className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
           >
             {name}
             <button
               type="button"
               onClick={() => removeName(name)}
               aria-label={`Remove ${name}`}
-              className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+              className="text-muted-foreground hover:text-foreground"
             >
               <XIcon className="h-3 w-3" />
             </button>
@@ -97,7 +94,7 @@ export function PlaylistTagsDialog({
               onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addDraft(); } }}
               onBlur={addDraft}
               placeholder="Tag name"
-              className="w-28 rounded-full border border-indigo-300 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-indigo-700 dark:bg-zinc-900"
+              className="w-28 rounded-full border border-primary/30 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-ring/30"
             />
             <datalist id="playlist-tags-vocabulary">
               {vocabulary
@@ -109,12 +106,17 @@ export function PlaylistTagsDialog({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="rounded-full border border-dashed border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-zinc-700 dark:text-zinc-300"
+            className="rounded-full border border-dashed border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:border-primary/30 hover:text-primary"
           >
             + Add tag
           </button>
         )}
       </div>
-    </Modal>
+        <DialogFooter>
+          <Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button>
+          <Button type="button" disabled={busy} onClick={() => void submit()}>{busy ? "Saving…" : "Save"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

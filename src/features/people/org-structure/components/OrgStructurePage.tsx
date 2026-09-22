@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LoadFailure } from "@/features/people/shared";
 import type { OrgUnitNode, OrgViewTabId } from "../mock-data";
 import { OrgChartCanvas } from "./OrgChartCanvas";
 import { OrgDetailPanel } from "./OrgDetailPanel";
@@ -38,18 +39,14 @@ export function OrgStructurePage({ units, rootUnitId }: OrgStructurePageProps) {
         units ? (
           <OrgUnitListView units={units} onSelect={setSelectedId} />
         ) : (
-          <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
-            ไม่สามารถโหลดโครงสร้างองค์กรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
-          </p>
+          <LoadFailure message="ไม่สามารถโหลดโครงสร้างองค์กรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
         )
       ) : activeView !== "chart" ? (
         <div className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
           ยังไม่มีข้อมูลสำหรับแท็บนี้
         </div>
       ) : units === null ? (
-        <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
-          ไม่สามารถโหลดโครงสร้างองค์กรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
-        </p>
+        <LoadFailure message="ไม่สามารถโหลดโครงสร้างองค์กรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
       ) : isEmpty ? (
         <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
           ยังไม่มีการตั้งค่าหน่วยงานสำหรับองค์กรนี้ กรุณาตั้งค่าหน่วยงานก่อนเริ่มใช้งานผังองค์กร

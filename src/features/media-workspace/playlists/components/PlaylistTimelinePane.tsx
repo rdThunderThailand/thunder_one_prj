@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
@@ -11,6 +10,10 @@ import type { MediaAsset } from "@/types/domain";
 import { formatDuration } from "../duration";
 import { itemStartSeconds, totalItemsDurationSeconds } from "../playlist-editor-state";
 import type { DraftItem, PlaylistPlayback } from "../types";
+
+const shortDuration = (seconds: number) => seconds < 60
+  ? `${Math.floor(seconds)}s`
+  : `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 
 /** #36 center pane: the shared PreviewStage embedded live (ADR 0061 — one full-frame Zone),
  *  plus a filmstrip that stays in step with the item list. Its own control box is the scrubber;
@@ -50,18 +53,19 @@ export function PlaylistTimelinePane({
   );
   const previews = usePreviewUrls(useMemo(() => items.map((i) => i.mediaAssetId), [items]));
   const assetById = useMemo(() => Object.fromEntries(assets.map((a) => [a.id, a])), [assets]);
-  const total = formatDuration(totalItemsDurationSeconds(items, assets, playback));
+  const totalSeconds = totalItemsDurationSeconds(items, assets, playback);
+  const total = formatDuration(totalSeconds);
   const startSeconds = useMemo(() => itemStartSeconds(items, assets, playback), [assets, items, playback]);
 
   return (
-    <Card className="flex flex-none flex-col p-5">
-      <div className="mb-4 flex shrink-0 items-center justify-between">
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Timeline</h2>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">Total Duration {total}</span>
+    <div className="flex flex-none flex-col">
+      <div className="mb-3 flex shrink-0 items-end justify-between border-b border-border">
+        <span className="border-b-2 border-primary px-3 pb-2 text-[11px] font-semibold text-primary">Timeline</span>
+        <span className="text-[10px] text-muted-foreground">Total Duration {total}</span>
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-zinc-200 py-16 text-center text-sm text-zinc-400 dark:border-zinc-800">
+        <p className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
           เพิ่ม media เพื่อดู timeline
         </p>
       ) : (
@@ -76,49 +80,56 @@ export function PlaylistTimelinePane({
             onFrameChange={onFrame}
             seekRequest={seekRequest}
             controlsPlacement="overlay"
-            frameViewportHeight="75vh"
+            frameViewportHeight="34vh"
+            fillWidth
           />
 
-          <div className="mt-[11px] grid h-[157px] shrink-0 grid-flow-col auto-cols-[150px] gap-3 overflow-x-auto overflow-y-hidden pb-1">
+          <div className="mt-3 flex justify-between text-[10px] font-medium text-muted-foreground">
+            {Array.from({ length: 5 }, (_, index) => (
+              <span key={index}>{formatDuration((totalSeconds * index) / 4)}</span>
+            ))}
+          </div>
+          <div className="mt-1 flex shrink-0 gap-2 overflow-x-auto pb-1">
             {items.map((item, index) => {
               const asset = assetById[item.mediaAssetId];
               const seconds = item.durationSeconds ?? asset?.duration_seconds ?? null;
               const isSelected = selectedId === item.mediaAssetId;
               return (
-                <button
-                  key={item.mediaAssetId}
-                  type="button"
-                  onClick={() => {
-                    onSelect(item.mediaAssetId);
-                    onSeek(startSeconds[index] ?? 0);
-                  }}
-                  className="h-[150px] w-[150px] text-left"
-                >
-                  <span
-                    className={`block overflow-hidden rounded-lg border-2 ${
-                      isSelected
-                        ? "border-indigo-500"
-                        : nowPlayingId === item.mediaAssetId
-                          ? "border-emerald-500"
-                          : "border-transparent"
-                    }`}
+                <div key={item.mediaAssetId} className="w-[88px] shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelect(item.mediaAssetId);
+                      onSeek(startSeconds[index] ?? 0);
+                    }}
+                    className="w-full text-left"
                   >
-                    <MediaThumb
-                      url={previews.urls[item.mediaAssetId]}
-                      kind={item.kind ?? asset?.kind}
-                      alt={item.title ?? asset?.title ?? ""}
-                      className="h-[118px] w-full rounded-none"
-                    />
-                  </span>
-                  <span className="mt-1 block truncate text-center text-base font-bold text-zinc-700 dark:text-zinc-200">
-                    {index + 1} · {seconds != null ? formatDuration(seconds) : "—"}
-                  </span>
-                </button>
+                    <span
+                      className={`block overflow-hidden rounded-lg border-2 ${
+                        isSelected
+                          ? "border-primary"
+                          : nowPlayingId === item.mediaAssetId
+                            ? "border-success"
+                            : "border-transparent"
+                      }`}
+                    >
+                      <MediaThumb
+                        url={previews.urls[item.mediaAssetId]}
+                        kind={item.kind ?? asset?.kind}
+                        alt={item.title ?? asset?.title ?? ""}
+                        className="aspect-video w-full rounded-none"
+                      />
+                    </span>
+                    <span className="mt-1 block truncate text-center text-[9px] text-muted-foreground">
+                      {seconds != null ? shortDuration(seconds) : "—"}
+                    </span>
+                  </button>
+                </div>
               );
             })}
           </div>
         </>
       )}
-    </Card>
+    </div>
   );
 }

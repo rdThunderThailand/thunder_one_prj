@@ -1,8 +1,17 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { ChevronRight, Folder, FolderOpen, MoreHorizontal, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { FolderIcon, TrashIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/lovable/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/lovable/dropdown-menu";
+import { cn } from "@/lib/utils";
 import type { ContentFolder } from "@/types/domain";
 import { foldersByParent } from "./folder-tree";
 
@@ -23,61 +32,88 @@ type Props = {
   isLoading?: boolean;
 };
 
-const countLabel = (counts: Record<string, number> | undefined, key: string) =>
-  counts && key in counts ? <span className="ml-1 text-xs text-zinc-400">{counts[key]}</span> : null;
+// Lovable `FolderTree` row: 32px tall, 10px label, soft-primary when active.
+const rowClass = (active: boolean) =>
+  cn(
+    "group flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-[10px] font-medium",
+    active ? "bg-primary-soft text-primary" : "hover:bg-muted",
+  );
 
-const selectedClass = "bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200";
-const itemClass = "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800";
+const countLabel = (counts: Record<string, number> | undefined, key: string) =>
+  counts && key in counts ? <span className="text-[8px] text-muted-foreground">{counts[key]}</span> : null;
 
 export function ContentFolderRail({ folders, selected, labels, onSelect, onRename, onMove, onDelete, counts, footer, isLoading = false }: Props) {
   const children = foldersByParent(folders);
   const render = (parentId: string | null, depth = 0): React.ReactNode =>
-    (children.get(parentId) ?? []).map((folder) => (
-      <div key={folder.id}>
-        <div className="group flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => onSelect(folder.id)}
-            className={`min-w-0 flex-1 rounded-lg px-2 py-2 text-left text-sm ${selected === folder.id ? selectedClass : itemClass}`}
-            style={{ paddingLeft: `${8 + depth * 16}px` }}
-          >
-            <span className="flex min-w-0 items-center gap-1.5"><FolderIcon className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{folder.name}</span>{countLabel(counts, folder.id)}</span>
-          </button>
-          {onRename && onMove && onDelete && <details className="relative shrink-0">
-            <summary
-              aria-label={`Actions for ${folder.name}`}
-              role="button"
-              onKeyDown={(event) => {
-                if (event.key !== "Enter" && event.key !== " ") return;
-                event.preventDefault();
-                const details = event.currentTarget.parentElement as HTMLDetailsElement | null;
-                if (details) details.open = !details.open;
-              }}
-              className="cursor-pointer list-none rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
-            >⋯</summary>
-            <div className="absolute right-0 z-20 mt-1 w-32 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => onRename(folder)}>Rename</button>
-              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => onMove(folder)}>Move</button>
-              <button type="button" className="block w-full rounded px-2 py-1 text-left text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={() => onDelete(folder)}>Delete</button>
-            </div>
-          </details>}
+    (children.get(parentId) ?? []).map((folder) => {
+      const hasChildren = (children.get(folder.id) ?? []).length > 0;
+      return (
+        <div key={folder.id}>
+          <div className="group/row flex items-center">
+            <button
+              type="button"
+              data-rail-item
+              onClick={() => onSelect(folder.id)}
+              className={cn(rowClass(selected === folder.id), "flex-1")}
+              style={{ paddingLeft: `${8 + depth * 12}px` }}
+            >
+              <span className="w-3 shrink-0">{hasChildren && <ChevronRight className="h-3 w-3" />}</span>
+              <Folder className="h-3.5 w-3.5 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+              {countLabel(counts, folder.id)}
+            </button>
+            {onRename && onMove && onDelete && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
+                    aria-label={`Actions for ${folder.name}`}
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-36">
+                  <DropdownMenuItem onSelect={() => onRename(folder)}>Rename</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => onMove(folder)}>Move</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => onDelete(folder)}>
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+          {render(folder.id, depth + 1)}
         </div>
-        {render(folder.id, depth + 1)}
-      </div>
-    ));
+      );
+    });
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <button type="button" onClick={() => onSelect("all")} className={`w-full rounded-lg px-2 py-2 text-left text-sm ${selected === "all" ? selectedClass : itemClass}`}>{labels.all}{countLabel(counts, "all")}</button>
-        <button type="button" onClick={() => onSelect("uncategorized")} className={`w-full rounded-lg px-2 py-2 text-left text-sm ${selected === "uncategorized" ? selectedClass : itemClass}`}>{labels.uncategorized}{countLabel(counts, "uncategorized")}</button>
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+        <button type="button" data-rail-item onClick={() => onSelect("all")} className={rowClass(selected === "all")}>
+          <span className="w-3 shrink-0" />
+          <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">{labels.all}</span>
+          {countLabel(counts, "all")}
+        </button>
+        <button type="button" data-rail-item onClick={() => onSelect("uncategorized")} className={rowClass(selected === "uncategorized")}>
+          <span className="w-3 shrink-0" />
+          <Folder className="h-3.5 w-3.5 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">{labels.uncategorized}</span>
+          {countLabel(counts, "uncategorized")}
+        </button>
         {isLoading && <div className="space-y-2 px-2 py-2" aria-hidden="true">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>}
         {render(null)}
+        <button type="button" data-rail-item onClick={() => onSelect("trash")} className={rowClass(selected === "trash")}>
+          <span className="w-3 shrink-0" />
+          <Trash2 className="h-3.5 w-3.5 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">{labels.trash}</span>
+        </button>
       </div>
-      <div className="shrink-0 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-        <button type="button" onClick={() => onSelect("trash")} className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm ${selected === "trash" ? selectedClass : itemClass}`}><TrashIcon />{labels.trash}</button>
-        {footer}
-      </div>
+      {footer && <div className="mt-auto shrink-0 pt-3">{footer}</div>}
     </div>
   );
 }

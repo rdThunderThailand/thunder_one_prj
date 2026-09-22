@@ -7,7 +7,6 @@ const ACCEPTED_MIME_TYPES = [
   "video/mp4",
   "image/png",
   "image/jpeg",
-  "image/webp",
 ] as const;
 
 /** Browsers occasionally hand over an empty `File.type`; the extension is the fallback signal. */
@@ -16,13 +15,12 @@ const EXTENSION_MIME_TYPES: Record<string, string> = {
   png: "image/png",
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
-  webp: "image/webp",
 };
 
 /** The `accept` attribute for the file input, so the OS picker filters before we ever see it. */
-export const UPLOAD_ACCEPT_ATTR = ".mp4,.png,.jpg,.jpeg,.webp";
+export const UPLOAD_ACCEPT_ATTR = ".mp4,.png,.jpg,.jpeg";
 
-export const UPLOAD_ACCEPT_LABEL = "รองรับ MP4, PNG, JPG, WebP";
+export const UPLOAD_ACCEPT_LABEL = "รองรับ MP4, PNG, JPG";
 
 /** Matches the ceiling Core and the `media` bucket enforce (ADR-0059); the browser check
  *  only exists to fail a 6 GB file before it wastes an authorization round trip. */

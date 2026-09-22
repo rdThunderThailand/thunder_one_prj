@@ -15,6 +15,19 @@ const STATUS_MAP: Record<CoreMemberRow["status"], WorkStatus> = {
   archived: "inactive",
 };
 
+/** The reverse of STATUS_MAP, for turning PersonnelFilterBar's สถานะการทำงาน
+ *  selection into Core's real `?status=` query param (added 2026-09-17, Core
+ *  commit de57b3e). Deliberately has no "inactive" key — STATUS_MAP collapses
+ *  two real Core statuses (`removed` and `archived`) into it, and `?status=`
+ *  only takes one value, so "inactive" can't be expressed as a single
+ *  server-side filter; callers must fall back to filtering `removed`/
+ *  `archived` rows client-side for that one option. */
+export const WORK_STATUS_TO_CORE_STATUS: Partial<Record<WorkStatus, CoreMemberRow["status"]>> = {
+  invited: "invited",
+  active: "active",
+  "on-leave": "suspended",
+};
+
 /** "removed"/"archived" wins over `member_type`: someone no longer with the
  *  org reads as "inactive" regardless of what kind of member they were,
  *  matching the mockup's own 5th type. */
@@ -69,6 +82,18 @@ export function isOnProbation(probationEndDate: string | null | undefined, now: 
   if (!probationEndDate) return false;
   const end = new Date(probationEndDate);
   return !Number.isNaN(end.getTime()) && end.getTime() >= now.getTime();
+}
+
+/** Distinct real `job_title` values from the current roster, sorted — backs
+ *  the position autocomplete (`<datalist>`) on people/add-person's 3 wizard
+ *  forms. Added 2026-09-17: those wizards previously derived their
+ *  suggestion list from `personnelRows` mock data (a leftover from before
+ *  Core's real roster existed) rather than this real, already-fetched
+ *  roster — the field itself (`position`) is free text either way, so an
+ *  empty list just means no autocomplete suggestions, never a blocked form. */
+export function derivePositionOptions(rows: CoreMemberRow[]): string[] {
+  const values = new Set(rows.map((row) => row.job_title).filter((title): title is string => Boolean(title)));
+  return Array.from(values).sort((a, b) => a.localeCompare(b));
 }
 
 export function mapCoreMember(row: CoreMemberRow, units: Record<string, OrgUnitNode>): PersonnelRow {

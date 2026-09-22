@@ -5,14 +5,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { WizardSteps } from "@/components/ui/WizardSteps";
-import { CheckCircleIcon, ChevronRightIcon, ImageIcon, InfoIcon, ShieldIcon } from "@/components/ui/icons";
-import { ApiError } from "@/lib/api/api-error";
+import { ChevronRightIcon } from "@/components/ui/icons";
+import { classifyApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
 import {
   checkEmailTaken,
   createMember,
   isPendingInvite,
-  personnelRows,
   updateMemberContract,
   type CoreRole,
 } from "@/features/people/personnel";
@@ -23,16 +22,12 @@ import type { OrgUnitNode } from "@/features/people/org-structure";
 import { buildStepsFromDoneIndices, type NewHireRow } from "@/features/people/new-hires/mock-data";
 import { NEW_HIRE_HANDOFF_KEY } from "../handoff";
 import { contractorStep0Schema, contractorStep1Schema, pickDefaultRoleCode, zodErrorsToFieldMap } from "../schemas";
-import { clearFieldError, ErrorText, fieldClasses, inputClasses, labelClasses } from "../form-field";
-
-const POSITION_OPTIONS = Array.from(new Set(personnelRows.map((row) => row.position))).sort((a, b) =>
-  a.localeCompare(b)
-);
-
-const WORK_LOCATION_OPTIONS = ["สำนักงานใหญ่ (Bangkok Office)", "สาขาเชียงใหม่", "สาขาขอนแก่น", "ทำงานทางไกล (Remote)"];
-const DURATION_OPTIONS = ["3 เดือน", "6 เดือน", "12 เดือน", "ไม่ระบุ"];
-const PAYMENT_TYPE_OPTIONS = ["รายเดือน", "รายงวด", "เมื่อเสร็จงาน"];
-const PAYMENT_CYCLE_OPTIONS = ["สิ้นเดือน", "ทุก 15 วัน"];
+import { clearFieldError } from "../form-field";
+import { DURATION_OPTIONS, PAYMENT_CYCLE_OPTIONS, PAYMENT_TYPE_OPTIONS, WORK_LOCATION_OPTIONS, unitLabel } from "../wizard-shared";
+import { AddContractorStep1Personal } from "./AddContractorStep1Personal";
+import { AddContractorStep2Employment } from "./AddContractorStep2Employment";
+import { AddContractorStepReview } from "./AddContractorStepReview";
+import { AddContractorStepSuccess } from "./AddContractorStepSuccess";
 
 // Maps this page's Thai option labels onto membership_contract's closed
 // enums (docs/api/contractor-bulk-triage-response.md — payment_format:
@@ -56,16 +51,6 @@ const WORK_ARRANGEMENT_BY_LABEL: Record<string, "on_site" | "hybrid" | "remote">
   Remote: "remote",
 };
 
-/** Same "Division / Team" convention as people/personnel's core-mapper.ts —
- *  a top-level unit's own name, everything below it prefixed with its
- *  parent's. */
-function unitLabel(unitId: string, units: Record<string, OrgUnitNode>): string {
-  const unit = units[unitId];
-  if (!unit) return "-";
-  const parent = unit.parentId ? units[unit.parentId] : null;
-  return parent && parent.parentId ? `${parent.name} / ${unit.name}` : unit.name;
-}
-
 function ageFromBirthDate(birthDate: string): string {
   if (!birthDate) return "-";
   const dob = new Date(birthDate);
@@ -78,11 +63,6 @@ function ageFromBirthDate(birthDate: string): string {
 }
 
 const WIZARD_STEP_LABELS = ["ข้อมูลส่วนบุคคล", "ข้อมูลการจ้างงานและสัญญา", "ตรวจสอบและเพิ่ม"];
-
-// Visual counterpart to each field's `required` attribute — same convention
-// as AddEmployeeWizardPage's requiredMark. Only on fields covered by
-// contractorStep0Schema/contractorStep1Schema (../schemas.ts).
-const requiredMark = <span className="text-red-500">*</span>;
 
 function Breadcrumb() {
   return (
@@ -100,23 +80,6 @@ function Breadcrumb() {
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
-      <span className="text-zinc-400">{label}</span>
-      <span className="truncate text-right font-medium text-zinc-900 dark:text-zinc-50">{value || "-"}</span>
-    </div>
-  );
-}
-
-function EditLink({ onClick }: { onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-      แก้ไข
-    </button>
-  );
-}
-
 interface AddContractorWizardPageProps {
   /** `null` when session/tenant resolution failed server-side — submission
    *  is disabled with an explanation rather than guessing a tenant. */
@@ -131,6 +94,11 @@ interface AddContractorWizardPageProps {
    *  than silently sending a mock unit's fake id as a real
    *  `default_department_id`. */
   units: Record<string, OrgUnitNode> | null;
+  /** Real distinct `job_title` values from the current roster (`people/
+   *  personnel`'s `derivePositionOptions`) — backs the ตำแหน่งงาน field's
+   *  `<datalist>` autocomplete. `[]` just means no suggestions; the field
+   *  itself is free text, so this never blocks submission. */
+  positionOptions: string[];
 }
 
 // "เพิ่มผู้รับเหมา / ผู้ปฏิบัติงานภายนอก (Contractor)" — full-page 3-step
@@ -172,7 +140,13 @@ interface AddContractorWizardPageProps {
 // explicit that onboarding hasn't started — "บันทึกสำเร็จแล้ว
 // สามารถเริ่มกระบวนการ Onboarding ได้จากเมนู 'เข้าใหม่'" — so a created
 // contractor's NewHireRow always starts at 0/9, `status: "pre-boarding"`.
-export function AddContractorWizardPage({ tenantId, roles, units }: AddContractorWizardPageProps) {
+//
+// Step JSX was split into AddContractorStep1Personal/
+// AddContractorStep2Employment/AddContractorStepReview/
+// AddContractorStepSuccess 2026-09-17 (readability audit) — pure
+// presentational extraction, every state/handler below is unchanged from
+// before the split and still lives only here.
+export function AddContractorWizardPage({ tenantId, roles, units, positionOptions }: AddContractorWizardPageProps) {
   const [stepIndex, setStepIndex] = useState(0);
 
   // Step 1 — personal info. Only `email` is real; the rest stays local, used
@@ -234,6 +208,35 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
 
   const fullName = `${firstNameTh} ${lastNameTh}`.trim();
   const unitOptions = Object.values(units ?? {}).sort((a, b) => a.name.localeCompare(b.name));
+
+  function handleFirstNameThChange(value: string) {
+    setFirstNameTh(value);
+    clearFieldError(setErrors, "firstNameTh");
+  }
+  function handleLastNameThChange(value: string) {
+    setLastNameTh(value);
+    clearFieldError(setErrors, "lastNameTh");
+  }
+  function handleIdOrPassportNumberChange(value: string) {
+    setIdOrPassportNumber(value);
+    clearFieldError(setErrors, "idOrPassportNumber");
+  }
+  function handleEmailChange(value: string) {
+    setEmail(value);
+    clearFieldError(setErrors, "email");
+  }
+  function handlePhoneChange(value: string) {
+    setPhone(value);
+    clearFieldError(setErrors, "phone");
+  }
+  function handleSecondaryPhoneChange(value: string) {
+    setSecondaryPhone(value);
+    clearFieldError(setErrors, "secondaryPhone");
+  }
+  function handlePositionChange(value: string) {
+    setPosition(value);
+    clearFieldError(setErrors, "position");
+  }
 
   function validateStep(index: 0 | 1): boolean {
     const schema = index === 0 ? contractorStep0Schema : contractorStep1Schema;
@@ -405,7 +408,10 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
         // just won't show up pre-prepended on /people/new-hires; not fatal.
       }
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "ไม่สามารถสร้างผู้รับเหมาได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง";
+      // classifyApiError() (2026-09-17, RBAC audit follow-up) — see
+      // AddEmployeeWizardPage's identical comment for why this replaced a
+      // raw err.message.
+      const message = classifyApiError(err, "ไม่สามารถสร้างผู้รับเหมาได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง").message;
       setSubmitError(message);
       toast.error(message);
     } finally {
@@ -437,600 +443,130 @@ export function AddContractorWizardPage({ tenantId, roles, units }: AddContracto
       </div>
 
       {stepIndex === 0 && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">1. ข้อมูลส่วนบุคคล (Personal Information)</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className={labelClasses}>
-                คำนำหน้าชื่อ
-                <select value={titlePrefix} onChange={(e) => setTitlePrefix(e.target.value)} className={inputClasses}>
-                  <option>นาย</option>
-                  <option>นาง</option>
-                  <option>นางสาว</option>
-                </select>
-              </label>
-              <label className={labelClasses}>
-                <span>ชื่อ (ภาษาไทย) {requiredMark}</span>
-                <input
-                  required
-                  value={firstNameTh}
-                  onChange={(e) => {
-                    setFirstNameTh(e.target.value);
-                    clearFieldError(setErrors, "firstNameTh");
-                  }}
-                  className={fieldClasses(!!errors.firstNameTh)}
-                />
-                <ErrorText message={errors.firstNameTh} />
-              </label>
-              <label className={labelClasses}>
-                <span>นามสกุล (ภาษาไทย) {requiredMark}</span>
-                <input
-                  required
-                  value={lastNameTh}
-                  onChange={(e) => {
-                    setLastNameTh(e.target.value);
-                    clearFieldError(setErrors, "lastNameTh");
-                  }}
-                  className={fieldClasses(!!errors.lastNameTh)}
-                />
-                <ErrorText message={errors.lastNameTh} />
-              </label>
-              <label className={labelClasses}>
-                ชื่อ (ภาษาอังกฤษ)
-                <input value={firstNameEn} onChange={(e) => setFirstNameEn(e.target.value)} className={inputClasses} />
-              </label>
-              <label className={labelClasses}>
-                นามสกุล (ภาษาอังกฤษ)
-                <input value={lastNameEn} onChange={(e) => setLastNameEn(e.target.value)} className={inputClasses} />
-              </label>
-              <label className={`${labelClasses} sm:col-span-1`}>
-                <span>เลขบัตรประชาชน / เลขที่หนังสือเดินทาง</span>
-                <input
-                  value={idOrPassportNumber}
-                  onChange={(e) => {
-                    setIdOrPassportNumber(e.target.value);
-                    clearFieldError(setErrors, "idOrPassportNumber");
-                  }}
-                  placeholder="กรอกเลขบัตรประชาชน 13 หลัก หรือเลขหนังสือเดินทาง"
-                  className={fieldClasses(!!errors.idOrPassportNumber)}
-                />
-                <ErrorText message={errors.idOrPassportNumber} />
-              </label>
-              <label className={labelClasses}>
-                สัญชาติ
-                <input value={nationality} onChange={(e) => setNationality(e.target.value)} className={inputClasses} />
-              </label>
-              <label className={labelClasses}>
-                เพศ
-                <select value={gender} onChange={(e) => setGender(e.target.value)} className={inputClasses}>
-                  <option>ชาย</option>
-                  <option>หญิง</option>
-                  <option>ไม่ระบุ</option>
-                </select>
-              </label>
-              <label className={labelClasses}>
-                <span>อีเมล (สำหรับการเข้าสู่ระบบ) {requiredMark}</span>
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    clearFieldError(setErrors, "email");
-                  }}
-                  className={fieldClasses(!!errors.email)}
-                />
-                <ErrorText message={errors.email} />
-              </label>
-              <label className={labelClasses}>
-                เบอร์โทรศัพท์มือถือ
-                <input
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    clearFieldError(setErrors, "phone");
-                  }}
-                  className={fieldClasses(!!errors.phone)}
-                />
-                <ErrorText message={errors.phone} />
-              </label>
-              <label className={labelClasses}>
-                เบอร์โทรศัพท์สำรอง
-                <input
-                  value={secondaryPhone}
-                  onChange={(e) => {
-                    setSecondaryPhone(e.target.value);
-                    clearFieldError(setErrors, "secondaryPhone");
-                  }}
-                  className={fieldClasses(!!errors.secondaryPhone)}
-                />
-                <ErrorText message={errors.secondaryPhone} />
-              </label>
-            </div>
-            <label className={labelClasses}>
-              ที่อยู่ปัจจุบัน
-              <textarea
-                rows={2}
-                maxLength={200}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className={inputClasses}
-              />
-            </label>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-              <label className={labelClasses}>
-                วันเกิด
-                <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inputClasses} />
-              </label>
-              <label className={labelClasses}>
-                อายุ
-                <input readOnly value={ageFromBirthDate(birthDate)} className={`${inputClasses} cursor-not-allowed opacity-70`} />
-              </label>
-              <label className={labelClasses}>
-                ไลน์ไอดี (ถ้ามี)
-                <input value={lineId} onChange={(e) => setLineId(e.target.value)} placeholder="เช่น @somchai" className={inputClasses} />
-              </label>
-              <label className={labelClasses}>
-                ช่องทางติดต่ออื่น (ถ้ามี)
-                <input
-                  value={otherContact}
-                  onChange={(e) => setOtherContact(e.target.value)}
-                  placeholder="เช่น Telegram, WhatsApp"
-                  className={inputClasses}
-                />
-              </label>
-            </div>
-            <details className="rounded-lg border border-zinc-100 p-3 dark:border-zinc-800">
-              <summary className="cursor-pointer text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                ข้อมูลเพิ่มเติม (ถ้ามี)
-              </summary>
-              <label className={`${labelClasses} mt-2`}>
-                หมายเหตุ
-                {/* Sent as-is into Core's `notes` column (≤2000 chars) — this
-                    page's only notes field, unlike Employee's two boxes. */}
-                <textarea
-                  rows={2}
-                  maxLength={2000}
-                  value={additionalNote}
-                  onChange={(e) => setAdditionalNote(e.target.value)}
-                  className={inputClasses}
-                />
-              </label>
-            </details>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">รูปภาพผู้รับเหมา (ถ้ามี)</h3>
-              <div
-                title="ยังไม่เปิดใช้งาน"
-                className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border border-dashed border-zinc-200 py-6 text-center dark:border-zinc-700"
-              >
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
-                  <ImageIcon className="h-5 w-5" />
-                </span>
-                <span className="text-xs font-medium text-indigo-500">อัปโหลดรูปภาพ</span>
-                <span className="text-[11px] text-zinc-400">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 2MB)</span>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 text-xs text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-                <InfoIcon className="h-4 w-4" />
-                คำแนะนำ
-              </h3>
-              <ul className="list-inside list-disc space-y-1">
-                <li>กรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน</li>
-                <li>อีเมลจะถูกใช้ในการเข้าสู่ระบบและรับการแจ้งเตือน</li>
-                <li>ข้อมูลนี้จะถูกใช้ในกระบวนการ Onboarding และการออกเอกสารสัญญา</li>
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลที่จะสร้าง</h3>
-              <ul className="flex flex-col gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                <li>Person Profile — โปรไฟล์บุคคลพื้นฐาน</li>
-                <li>Contractor Record (รอสร้าง) — บันทึกผู้รับเหมา</li>
-                <li>Onboarding (รอเริ่ม) — กระบวนการเตรียมความพร้อม</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <AddContractorStep1Personal
+          titlePrefix={titlePrefix}
+          onTitlePrefixChange={setTitlePrefix}
+          firstNameTh={firstNameTh}
+          onFirstNameThChange={handleFirstNameThChange}
+          lastNameTh={lastNameTh}
+          onLastNameThChange={handleLastNameThChange}
+          firstNameEn={firstNameEn}
+          onFirstNameEnChange={setFirstNameEn}
+          lastNameEn={lastNameEn}
+          onLastNameEnChange={setLastNameEn}
+          idOrPassportNumber={idOrPassportNumber}
+          onIdOrPassportNumberChange={handleIdOrPassportNumberChange}
+          nationality={nationality}
+          onNationalityChange={setNationality}
+          gender={gender}
+          onGenderChange={setGender}
+          email={email}
+          onEmailChange={handleEmailChange}
+          phone={phone}
+          onPhoneChange={handlePhoneChange}
+          secondaryPhone={secondaryPhone}
+          onSecondaryPhoneChange={handleSecondaryPhoneChange}
+          address={address}
+          onAddressChange={setAddress}
+          birthDate={birthDate}
+          onBirthDateChange={setBirthDate}
+          age={ageFromBirthDate(birthDate)}
+          lineId={lineId}
+          onLineIdChange={setLineId}
+          otherContact={otherContact}
+          onOtherContactChange={setOtherContact}
+          additionalNote={additionalNote}
+          onAdditionalNoteChange={setAdditionalNote}
+          errors={errors}
+        />
       )}
 
       {stepIndex === 1 && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">2. ข้อมูลการจ้างงานและสัญญา</h2>
-
-            <div>
-              <p className="mb-2 text-xs font-semibold text-zinc-400">ตำแหน่งและหน้าที่</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label className={labelClasses}>
-                  <span>ตำแหน่งงาน {requiredMark}</span>
-                  <input
-                    required
-                    list="contractor-position-options"
-                    value={position}
-                    onChange={(e) => {
-                      setPosition(e.target.value);
-                      clearFieldError(setErrors, "position");
-                    }}
-                    placeholder="พิมพ์เพื่อค้นหา หรือระบุตำแหน่งใหม่"
-                    className={fieldClasses(!!errors.position)}
-                  />
-                  <datalist id="contractor-position-options">
-                    {POSITION_OPTIONS.map((option) => (
-                      <option key={option} value={option} />
-                    ))}
-                  </datalist>
-                  <ErrorText message={errors.position} />
-                </label>
-                <label className={labelClasses}>
-                  หน่วยงาน / ทีม
-                  {unitOptions.length > 0 ? (
-                    <select value={unitId} onChange={(e) => setUnitId(e.target.value)} className={inputClasses}>
-                      <option value="">ไม่ระบุ</option>
-                      {unitOptions.map((unit) => (
-                        <option key={unit.id} value={unit.id}>
-                          {unitLabel(unit.id, units ?? {})}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span
-                      title="ไม่สามารถโหลดรายชื่อหน่วยงานจาก Core ได้ในขณะนี้ — จะสร้างผู้รับเหมาโดยไม่ระบุหน่วยงาน"
-                      className="flex cursor-not-allowed items-center rounded-lg border border-dashed border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-700"
-                    >
-                      ไม่พบข้อมูลหน่วยงาน
-                    </span>
-                  )}
-                </label>
-                <label className={`${labelClasses} sm:col-span-2`}>
-                  หน้าที่หรือรายละเอียดงาน
-                  <textarea
-                    rows={2}
-                    maxLength={300}
-                    value={jobDescription}
-                    onChange={(e) => setJobDescription(e.target.value)}
-                    placeholder="อธิบายหน้าที่ ความรับผิดชอบ และขอบเขตงาน"
-                    className={inputClasses}
-                  />
-                </label>
-                <label className={labelClasses}>
-                  ทีม (Team)
-                  <input value={team} onChange={(e) => setTeam(e.target.value)} className={inputClasses} />
-                </label>
-                <label className={labelClasses}>
-                  รหัสตำแหน่ง (Position Code)
-                  <input
-                    value={positionCode}
-                    onChange={(e) => setPositionCode(e.target.value)}
-                    placeholder="เช่น POS-CEO"
-                    className={inputClasses}
-                  />
-                </label>
-                <label className={labelClasses}>
-                  ระดับตำแหน่ง (Level)
-                  <input
-                    value={levelRole}
-                    onChange={(e) => setLevelRole(e.target.value)}
-                    placeholder="เช่น Executive, Senior"
-                    className={inputClasses}
-                  />
-                </label>
-                {/* ผู้บังคับบัญชา (Reporting To) removed — see
-                    AddEmployeeWizardPage's identical comment. */}
-                <label className={labelClasses}>
-                  บทบาท / สิทธิ์การเข้าถึง (Role)
-                  {roles && roles.length > 0 ? (
-                    <select required value={roleCode} onChange={(e) => setRoleCode(e.target.value)} className={inputClasses}>
-                      {!roleCode && (
-                        <option value="" disabled>
-                          -- เลือกบทบาท --
-                        </option>
-                      )}
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.code}>
-                          {role.name} ({role.code})
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="rounded-lg border border-dashed border-red-200 px-3 py-2 text-sm text-red-500 dark:border-red-500/30">
-                      ไม่พบบทบาทที่ใช้ได้จาก Core
-                    </span>
-                  )}
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs font-semibold text-zinc-400">ประเภทและระยะเวลาการจ้าง</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label className={labelClasses}>
-                  ประเภทการจ้างงาน
-                  <input readOnly value="ผู้รับเหมา (Contractor)" className={`${inputClasses} cursor-not-allowed opacity-70`} />
-                </label>
-                <label className={labelClasses}>
-                  ลักษณะการจ้าง
-                  <select value={workArrangement} onChange={(e) => setWorkArrangement(e.target.value)} className={inputClasses}>
-                    <option>On-site</option>
-                    <option>Remote</option>
-                    <option>Hybrid</option>
-                  </select>
-                </label>
-                <label className={labelClasses}>
-                  วันที่เริ่มงาน
-                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClasses} />
-                  {startDate && (
-                    <span className="text-[11px] font-normal text-zinc-400">
-                      {formatThaiDate(startDate)} ({formatDaysUntilThai(startDate)})
-                    </span>
-                  )}
-                </label>
-                <label className={labelClasses}>
-                  วันที่สิ้นสุด (คาดการณ์)
-                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClasses} />
-                </label>
-                <label className={labelClasses}>
-                  ระยะเวลาการจ้าง
-                  <select value={duration} onChange={(e) => setDuration(e.target.value)} className={inputClasses}>
-                    {DURATION_OPTIONS.map((option) => (
-                      <option key={option}>{option}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs font-semibold text-zinc-400">ข้อมูลสัญญา</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label className={labelClasses}>
-                  เลขที่สัญญา / PO No.
-                  <input value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} className={inputClasses} />
-                </label>
-                <label className={labelClasses}>
-                  วันที่ทำสัญญา
-                  <input type="date" value={contractDate} onChange={(e) => setContractDate(e.target.value)} className={inputClasses} />
-                </label>
-                <label className={labelClasses}>
-                  มูลค่าสัญญา
-                  <input
-                    inputMode="numeric"
-                    value={contractValue}
-                    onChange={(e) => setContractValue(e.target.value)}
-                    placeholder="บาท"
-                    className={inputClasses}
-                  />
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className={labelClasses}>
-                    รูปแบบการชำระเงิน
-                    <select value={paymentType} onChange={(e) => setPaymentType(e.target.value)} className={inputClasses}>
-                      {PAYMENT_TYPE_OPTIONS.map((option) => (
-                        <option key={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={labelClasses}>
-                    รอบการชำระเงิน
-                    <select value={paymentCycle} onChange={(e) => setPaymentCycle(e.target.value)} className={inputClasses}>
-                      {PAYMENT_CYCLE_OPTIONS.map((option) => (
-                        <option key={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </div>
-              <label className={`${labelClasses} mt-3`}>
-                หมายเหตุสัญญา
-                <textarea
-                  rows={2}
-                  maxLength={300}
-                  value={contractNote}
-                  onChange={(e) => setContractNote(e.target.value)}
-                  placeholder="เงื่อนไขสัญญา ข้อตกลงพิเศษ หรือหมายเหตุเพิ่มเติม (ถ้ามี)"
-                  className={inputClasses}
-                />
-              </label>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs font-semibold text-zinc-400">สถานที่และการปฏิบัติงาน</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label className={labelClasses}>
-                  สถานที่ทำงานหลัก
-                  <select value={workLocation} onChange={(e) => setWorkLocation(e.target.value)} className={inputClasses}>
-                    {WORK_LOCATION_OPTIONS.map((option) => (
-                      <option key={option}>{option}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className={labelClasses}>
-                  พื้นที่ / ชั้น
-                  <input value={subLocation} onChange={(e) => setSubLocation(e.target.value)} className={inputClasses} />
-                </label>
-                <label className={`${labelClasses} sm:col-span-2`}>
-                  ที่อยู่สถานที่ทำงาน
-                  <textarea
-                    rows={2}
-                    maxLength={200}
-                    value={workAddress}
-                    onChange={(e) => setWorkAddress(e.target.value)}
-                    className={inputClasses}
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปข้อมูลที่กรอก</h3>
-                <EditLink onClick={() => setStepIndex(0)} />
-              </div>
-              <p className="mb-2 text-xs font-medium text-zinc-400">ข้อมูลส่วนบุคคล</p>
-              <SummaryRow label="ชื่อ-นามสกุล" value={`${titlePrefix} ${fullName}`} />
-              <SummaryRow label="อีเมล" value={email} />
-              <SummaryRow label="เบอร์โทรศัพท์" value={phone} />
-            </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลที่จะสร้าง</h3>
-              <ul className="flex flex-col gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                <li>Contractor Record (รอสร้าง)</li>
-                <li>Onboarding (รอเริ่ม)</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <AddContractorStep2Employment
+          position={position}
+          onPositionChange={handlePositionChange}
+          positionOptions={positionOptions}
+          unitId={unitId}
+          onUnitIdChange={setUnitId}
+          units={units}
+          unitOptions={unitOptions}
+          jobDescription={jobDescription}
+          onJobDescriptionChange={setJobDescription}
+          team={team}
+          onTeamChange={setTeam}
+          positionCode={positionCode}
+          onPositionCodeChange={setPositionCode}
+          levelRole={levelRole}
+          onLevelRoleChange={setLevelRole}
+          roleCode={roleCode}
+          onRoleCodeChange={setRoleCode}
+          roles={roles}
+          workArrangement={workArrangement}
+          onWorkArrangementChange={setWorkArrangement}
+          startDate={startDate}
+          onStartDateChange={setStartDate}
+          endDate={endDate}
+          onEndDateChange={setEndDate}
+          duration={duration}
+          onDurationChange={setDuration}
+          contractNumber={contractNumber}
+          onContractNumberChange={setContractNumber}
+          contractDate={contractDate}
+          onContractDateChange={setContractDate}
+          contractValue={contractValue}
+          onContractValueChange={setContractValue}
+          paymentType={paymentType}
+          onPaymentTypeChange={setPaymentType}
+          paymentCycle={paymentCycle}
+          onPaymentCycleChange={setPaymentCycle}
+          contractNote={contractNote}
+          onContractNoteChange={setContractNote}
+          workLocation={workLocation}
+          onWorkLocationChange={setWorkLocation}
+          subLocation={subLocation}
+          onSubLocationChange={setSubLocation}
+          workAddress={workAddress}
+          onWorkAddressChange={setWorkAddress}
+          errors={errors}
+          titlePrefix={titlePrefix}
+          fullName={fullName}
+          email={email}
+          phone={phone}
+          onEditStep1={() => setStepIndex(0)}
+        />
       )}
 
       {stepIndex === 2 && !createdRow && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">3. ตรวจสอบและเพิ่ม</h2>
-            <p className="text-xs text-zinc-400">ตรวจสอบข้อมูลทั้งหมดก่อนสร้างผู้รับเหมา</p>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-xs font-semibold text-zinc-400">ข้อมูลส่วนบุคคล</p>
-                  <EditLink onClick={() => setStepIndex(0)} />
-                </div>
-                <SummaryRow label="ชื่อ-นามสกุล" value={`${titlePrefix} ${fullName}`} />
-                <SummaryRow label="เลขบัตรประชาชน" value={idOrPassportNumber} />
-                <SummaryRow label="อีเมล" value={email} />
-                <SummaryRow label="เบอร์โทรศัพท์มือถือ" value={phone} />
-              </div>
-              <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-xs font-semibold text-zinc-400">ตำแหน่งและหน้าที่</p>
-                  <EditLink onClick={() => setStepIndex(1)} />
-                </div>
-                <SummaryRow label="ตำแหน่ง" value={position} />
-                <SummaryRow label="รหัสตำแหน่ง" value={positionCode} />
-                <SummaryRow label="ระดับตำแหน่ง" value={levelRole} />
-                <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />
-              </div>
-              <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-xs font-semibold text-zinc-400">ประเภทและรายละเอียดการจ้าง</p>
-                  <EditLink onClick={() => setStepIndex(1)} />
-                </div>
-                <SummaryRow label="ประเภทการจ้างงาน" value="ผู้รับเหมา (Contractor)" />
-                <SummaryRow label="ลักษณะการจ้าง" value={workArrangement} />
-                <SummaryRow label="วันที่เริ่มงาน" value={startDate ? formatThaiDate(startDate) : ""} />
-                <SummaryRow label="วันที่สิ้นสุด (คาดการณ์)" value={endDate ? formatThaiDate(endDate) : ""} />
-                <SummaryRow label="ระยะเวลาการจ้าง" value={duration} />
-              </div>
-              <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-xs font-semibold text-zinc-400">ข้อมูลสัญญา</p>
-                  <EditLink onClick={() => setStepIndex(1)} />
-                </div>
-                <SummaryRow label="รูปแบบการชำระเงิน" value={paymentType} />
-                <SummaryRow label="รอบการชำระเงิน" value={paymentCycle} />
-                <SummaryRow label="มูลค่าสัญญา" value={contractValue ? `${contractValue} บาท` : ""} />
-                <SummaryRow label="หมายเหตุสัญญา" value={contractNote} />
-              </div>
-              <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50 sm:col-span-2">
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-xs font-semibold text-zinc-400">สถานที่และการปฏิบัติงาน</p>
-                  <EditLink onClick={() => setStepIndex(1)} />
-                </div>
-                <SummaryRow label="สถานที่ทำงานหลัก" value={workLocation} />
-                <SummaryRow label="พื้นที่ / ชั้น" value={subLocation} />
-                <SummaryRow label="ที่อยู่สถานที่ทำงาน" value={workAddress} />
-              </div>
-            </div>
-
-            {submitError && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-400">{submitError}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลที่จะสร้าง</h3>
-              <ul className="flex flex-col gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                <li>Contractor Record (รอสร้าง)</li>
-                <li>Onboarding (รอเริ่ม)</li>
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 dark:border-emerald-500/20 dark:bg-emerald-500/10">
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                <ShieldIcon className="h-4 w-4" />
-                สถานะหลังสร้าง
-              </h3>
-              <span className="mb-2 inline-flex w-fit items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
-                Pre-boarding
-              </span>
-              <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80">
-                บันทึกสำเร็จแล้ว สามารถเริ่มกระบวนการ Onboarding ได้จากเมนู &quot;เข้าใหม่&quot;
-              </p>
-            </div>
-          </div>
-        </div>
+        <AddContractorStepReview
+          titlePrefix={titlePrefix}
+          fullName={fullName}
+          idOrPassportNumber={idOrPassportNumber}
+          email={email}
+          phone={phone}
+          position={position}
+          positionCode={positionCode}
+          levelRole={levelRole}
+          unitId={unitId}
+          units={units}
+          team={team}
+          workArrangement={workArrangement}
+          startDate={startDate}
+          endDate={endDate}
+          duration={duration}
+          paymentType={paymentType}
+          paymentCycle={paymentCycle}
+          contractValue={contractValue}
+          contractNote={contractNote}
+          workLocation={workLocation}
+          subLocation={subLocation}
+          workAddress={workAddress}
+          submitError={submitError}
+          onEditPersonal={() => setStepIndex(0)}
+          onEditEmployment={() => setStepIndex(1)}
+        />
       )}
 
-      {stepIndex === 2 && createdRow && (
-        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex flex-col items-center gap-2 py-2 text-center">
-            <CheckCircleIcon className="h-9 w-9 text-emerald-500" />
-            {createdRow.inviteUrl ? (
-              <>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">ส่งคำเชิญไปที่ {createdRow.name} แล้ว</p>
-                <p className="max-w-sm text-xs text-zinc-400">
-                  อีเมลนี้ยังไม่มีบัญชี Thunder One — รอการตอบรับคำเชิญก่อนจึงจะเริ่มกระบวนการ Onboarding ได้
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                  สร้างผู้รับเหมา {createdRow.name} เรียบร้อยแล้ว
-                </p>
-                <span className="mt-1 inline-flex w-fit items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
-                  Pre-boarding
-                </span>
-                <p className="max-w-sm text-xs text-zinc-400">
-                  บันทึกสำเร็จแล้ว สามารถเริ่มกระบวนการ Onboarding ได้จากเมนู &quot;เข้าใหม่&quot;
-                </p>
-              </>
-            )}
-            <p className="text-xs text-zinc-400">
-              {createdRow.employeeCode} · {createdRow.position}
-            </p>
-          </div>
-
-          {createdRow.inviteUrl && (
-            <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
-              <input
-                readOnly
-                value={createdRow.inviteUrl}
-                onFocus={(e) => e.currentTarget.select()}
-                className="w-full truncate bg-transparent text-xs text-zinc-600 outline-none dark:text-zinc-300"
-              />
-              <button
-                type="button"
-                onClick={() => navigator.clipboard?.writeText(createdRow.inviteUrl ?? "")}
-                className="shrink-0 rounded-md bg-white px-2.5 py-1 text-xs font-medium text-indigo-600 shadow-sm dark:bg-zinc-900 dark:text-indigo-400"
-              >
-                คัดลอกลิงก์
-              </button>
-            </div>
-          )}
-
-          <div className="mx-auto flex items-center gap-2">
-            <Button variant="secondary" onClick={resetForNext}>
-              เพิ่มผู้รับเหมาคนถัดไป
-            </Button>
-            <Link href="/people/new-hires" className={buttonClasses("primary")}>
-              ไปที่หน้าเข้าใหม่
-            </Link>
-          </div>
-        </div>
-      )}
+      {stepIndex === 2 && createdRow && <AddContractorStepSuccess createdRow={createdRow} onAddNext={resetForNext} />}
 
       {!createdRow && (
         <div className="flex justify-end gap-2">

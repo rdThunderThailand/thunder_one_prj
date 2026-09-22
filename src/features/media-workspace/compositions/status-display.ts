@@ -1,5 +1,6 @@
-import type { BadgeColor } from "@/components/ui/Badge";
 import type { CompositionStatus } from "./types";
+
+type BadgeColor = "green" | "yellow" | "zinc";
 
 /** draft → active ↔ inactive, copied from Playlist's lifecycle (ADR 0049 §10). */
 export function statusBadge(status: CompositionStatus): { color: BadgeColor; label: string } {

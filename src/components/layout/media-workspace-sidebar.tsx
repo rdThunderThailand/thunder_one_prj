@@ -1,11 +1,6 @@
 import Link from "next/link";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { NavConfig, NavItem } from "@/config/nav/types";
-
-const PRIMARY = "oklch(0.58 0.22 262)";
-const PRIMARY_SOFT = "oklch(0.965 0.028 262)";
-const FOREGROUND = "oklch(0.205 0.035 265)";
-const SIDEBAR_FOREGROUND = "oklch(0.129 0.042 264.695)";
-const MUTED = "oklch(0.5 0.03 262)";
 
 function isActivePath(pathname: string, href?: string) {
   if (!href) return false;
@@ -32,7 +27,7 @@ function NavLink({ item, pathname, collapsed }: { item: NavItem; pathname: strin
   const active = isActivePath(pathname, item.href);
   const content = (
     <>
-      <span className="h-4 w-4 shrink-0" style={{ color: MUTED }}>
+      <span className="h-4 w-4 shrink-0 text-muted-foreground">
         {item.icon}
       </span>
       {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
@@ -46,8 +41,7 @@ function NavLink({ item, pathname, collapsed }: { item: NavItem; pathname: strin
   if (!item.href) {
     return (
       <span
-        className={`${className} cursor-not-allowed opacity-60`}
-        style={{ color: MUTED }}
+        className={`${className} cursor-not-allowed text-muted-foreground opacity-60`}
         aria-disabled="true"
         title={collapsed ? item.label : "Not built yet"}
       >
@@ -61,37 +55,22 @@ function NavLink({ item, pathname, collapsed }: { item: NavItem; pathname: strin
       href={item.href}
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}
-      className={`${className} hover:bg-[oklch(0.968_0.007_247.896)]`}
-      style={active ? { background: PRIMARY_SOFT, color: PRIMARY } : { color: SIDEBAR_FOREGROUND }}
+      className={`${className} ${active ? "bg-primary-soft text-primary" : "text-sidebar-foreground hover:bg-accent"}`}
     >
       {content}
     </Link>
   );
 }
 
+// The Figma "Side Bar Brand Block": bare mark + "Thunder One" wordmark +
+// "Media Workspace", composed into one SVG so the proportions can't drift.
 export function MediaWorkspaceBrand({ collapsed }: { collapsed: boolean }) {
-  return (
-    <>
-      <span
-        className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg text-sm font-black italic text-white"
-        style={{ background: PRIMARY }}
-      >
-        T1
-      </span>
-      {!collapsed && (
-        <span className="min-w-0">
-          <span className="block truncate text-[15px] font-extrabold leading-none" style={{ color: FOREGROUND }}>
-            ThunderOne
-          </span>
-          <span
-            className="mt-1 block text-[9px] font-bold uppercase tracking-[0.18em]"
-            style={{ color: MUTED }}
-          >
-            Media workspace
-          </span>
-        </span>
-      )}
-    </>
+  return collapsed ? (
+    // eslint-disable-next-line @next/next/no-img-element -- brand SVG, no optimization needed
+    <img src="/brand/t1-mark.svg" alt="ThunderOne" className="h-8 w-auto" />
+  ) : (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/brand/t1-sidebar-brand-block.svg" alt="ThunderOne — Media Workspace" className="h-10 w-auto" />
   );
 }
 
@@ -104,19 +83,18 @@ export function MediaWorkspaceNav({ nav, pathname, collapsed }: { nav: NavConfig
         href={nav.overviewItem.href!}
         title={collapsed ? nav.overviewItem.label : undefined}
         aria-current={overviewActive ? "page" : undefined}
-        className={`mb-3 flex h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold hover:bg-[oklch(0.968_0.007_247.896)] ${
-          collapsed ? "justify-center" : ""
-        }`}
-        style={overviewActive ? { background: PRIMARY_SOFT, color: PRIMARY } : { color: FOREGROUND }}
+        className={`mb-3 flex h-8 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition-colors ${
+          overviewActive ? "bg-primary-soft text-primary" : "text-sidebar-foreground hover:bg-accent"
+        } ${collapsed ? "justify-center" : ""}`}
       >
-        <span className="h-4 w-4 shrink-0">{nav.overviewItem.icon}</span>
+        <span className={`h-4 w-4 shrink-0 ${overviewActive ? "" : "text-muted-foreground"}`}>{nav.overviewItem.icon}</span>
         {!collapsed && <span>{nav.overviewItem.label}</span>}
       </Link>
 
       {nav.sections.map((section) => (
         <section key={section.label} className="mb-4">
           {!collapsed && (
-            <p className="mb-1.5 px-3 text-[9px] font-bold uppercase" style={{ color: MUTED }}>
+            <p className="mb-1.5 px-3 text-[9px] font-bold uppercase text-muted-foreground">
               {section.label}
             </p>
           )}
@@ -132,17 +110,6 @@ export function MediaWorkspaceNav({ nav, pathname, collapsed }: { nav: NavConfig
 }
 
 export function MediaWorkspaceCollapseIcon({ open }: { open: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M9 4v16" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d={open ? "m14 9 3 3-3 3" : "m16 9-3 3 3 3"}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  const Icon = open ? PanelLeftOpen : PanelLeftClose;
+  return <Icon className="h-4 w-4" aria-hidden="true" />;
 }

@@ -39,8 +39,8 @@ export function ReviewChecklist({
       <Card className="p-4">
         <div className="mb-3">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900">Checklist</h2>
-            <p className="text-xs text-zinc-400">รายการตรวจสอบก่อนเผยแพร่</p>
+            <h2 className="text-[11px] font-bold text-foreground">Checklist</h2>
+            <p className="text-xs text-muted-foreground">รายการตรวจสอบก่อนเผยแพร่</p>
           </div>
         </div>
         <ul className="space-y-2.5">
@@ -55,8 +55,8 @@ export function ReviewChecklist({
         </ul>
       </Card>
 
-      <Card className="border-amber-200 bg-amber-50 p-4 xl:min-h-[162px]">
-        <h2 className="text-sm font-semibold text-zinc-900">Conflicts &amp; warnings</h2>
+      <Card className="border-warning/30 bg-warning-soft p-4 xl:min-h-[162px]">
+        <h2 className="text-[11px] font-bold text-foreground">Conflicts &amp; warnings</h2>
         <div className="mt-3 space-y-3 text-xs">
           {checkingConflicts || conflictsError ? (
             <Warning text={checkingConflicts ? "กำลังตรวจสอบ Priority conflicts" : "ตรวจสอบ Priority conflicts ไม่สำเร็จ — ยัง Publish ได้"} />
@@ -66,7 +66,7 @@ export function ReviewChecklist({
             <Pass text="No schedule conflicts" />
           )}
           {conflicts.map((conflict) => (
-            <Link key={conflict.publication_id} href={`/media-workspace/publications/${conflict.publication_id}`} className="block pl-6 text-zinc-600 underline underline-offset-2">
+            <Link key={conflict.publication_id} href={`/media-workspace/publications/${conflict.publication_id}`} className="block pl-6 text-muted-foreground underline underline-offset-2">
               {conflict.name} ({conflict.priority})
             </Link>
           ))}
@@ -81,17 +81,17 @@ export function ReviewChecklist({
 
 function CheckRow({ label, status }: { label: string; status: EligibilityStatus }) {
   return (
-    <li className="flex items-center justify-between gap-3 text-xs text-zinc-600">
+    <li className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
       <span>{label}</span>
-      {status === "pass" ? <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-500" /> : status === "fail" ? <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" /> : <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-zinc-300" title="Unknown" />}
+      {status === "pass" ? <CheckCircleIcon className="h-4 w-4 shrink-0 text-success" /> : status === "fail" ? <WarningTriangleIcon className="h-4 w-4 shrink-0 text-warning" /> : <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-border" title="Unknown" />}
     </li>
   );
 }
 
 function Warning({ text }: { text: string }) {
-  return <p className="flex items-start gap-2 text-amber-700"><WarningTriangleIcon className="h-4 w-4 shrink-0" />{text}</p>;
+  return <p className="flex items-start gap-2 text-warning"><WarningTriangleIcon className="h-4 w-4 shrink-0" />{text}</p>;
 }
 
 function Pass({ text }: { text: string }) {
-  return <p className="flex items-start gap-2 text-zinc-600"><CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-500" />{text}</p>;
+  return <p className="flex items-start gap-2 text-muted-foreground"><CheckCircleIcon className="h-4 w-4 shrink-0 text-success" />{text}</p>;
 }

@@ -142,7 +142,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
   if (loading) {
     return (
       <Card className="p-6">
-        <p className="text-center text-sm text-zinc-400">กำลังโหลด…</p>
+        <p className="text-center text-sm text-muted-foreground">กำลังโหลด…</p>
       </Card>
     );
   }
@@ -154,7 +154,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
           <NoAccess message={error.message} />
         ) : (
           <Card className="p-6">
-            <p className="text-center text-sm text-red-600 dark:text-red-400">
+            <p className="text-center text-sm text-danger">
               {error ? error.message : "ไม่พบ publication"}
             </p>
           </Card>
@@ -186,7 +186,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
   const drift = publicationDrift(detail);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {/* 1. Header */}
       <PageHeader
         title={detail.name}
@@ -224,7 +224,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     variant="primary"
                     disabled={actionBusy}
                     onClick={handleDelete}
-                    className="bg-red-600 hover:bg-red-500 dark:bg-red-600"
+                    className="bg-danger hover:bg-danger"
                   >
                     {actionBusy ? "กำลังลบ…" : "ยืนยันลบ?"}
                   </Button>
@@ -241,7 +241,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                   variant="ghost"
                   disabled={actionBusy}
                   onClick={() => setConfirming(true)}
-                  className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                  className="text-danger hover:bg-danger-soft"
                 >
                   Delete
                 </Button>
@@ -254,7 +254,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     variant="primary"
                     disabled={actionBusy}
                     onClick={handleCancel}
-                    className="bg-red-600 hover:bg-red-500 dark:bg-red-600"
+                    className="bg-danger hover:bg-danger"
                   >
                     {actionBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
                   </Button>
@@ -271,7 +271,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                   variant="ghost"
                   disabled={actionBusy}
                   onClick={() => setConfirming(true)}
-                  className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                  className="text-danger hover:bg-danger-soft"
                 >
                   Cancel
                 </Button>
@@ -281,21 +281,21 @@ export function PublicationDetailPage({ id }: { id: string }) {
       />
 
       {actionError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{actionError}</p>
+        <p className="text-sm text-danger">{actionError}</p>
       )}
 
       {/* The snapshot rule is not weakened: what is airing is still the frozen copy taken at
           publish. This says the source has moved on since, and offers the one action that
           closes the gap — a deliberate re-publish (ADR 0049 §7). */}
       {drift.length > 0 && (
-        <Card className="border-amber-300 p-5 dark:border-amber-800">
-          <h2 className="text-base font-semibold text-amber-700 dark:text-amber-500">
+        <Card className="border-warning/30 p-5">
+          <h2 className="text-base font-semibold text-warning">
             มีการแก้ไขหลังเผยแพร่
           </h2>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             สิ่งที่ออกจอตอนนี้ยังเป็นเวอร์ชันที่เผยแพร่ไว้ เผยแพร่ซ้ำเพื่อส่งของใหม่ขึ้นจอ
           </p>
-          <ul className="mt-3 list-inside list-disc text-sm text-zinc-700 dark:text-zinc-300">
+          <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground">
             {drift.map((finding, idx) => (
               <li key={idx}>{describeDrift(finding)}</li>
             ))}
@@ -333,12 +333,12 @@ export function PublicationDetailPage({ id }: { id: string }) {
 
       {/* 2. Overview */}
       <Card className="p-5">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
           Overview
         </h2>
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Status</dt>
+            <dt className="text-xs font-medium text-muted-foreground">Status</dt>
             <dd className="mt-1">
               <Badge color={statusColor} variant="pill">
                 {displayStatus}
@@ -346,64 +346,64 @@ export function PublicationDetailPage({ id }: { id: string }) {
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Type</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Type</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {detail.publication_type}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Priority</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Priority</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {detail.priority}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Language</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Language</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {detail.language ?? "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Campaign ID</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Campaign ID</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {detail.campaign_id ?? "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Tags</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Tags</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {detail.tags && detail.tags.length > 0 ? detail.tags.join(", ") : "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Created At</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Created At</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {formatDate(detail.created_at)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Activated At</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Activated At</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {formatDate(detail.activated_at)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Published By</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Published By</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {detail.published_by?.display_name ?? "ไม่ทราบผู้เผยแพร่"}
             </dd>
           </div>
           {detail.created_by && detail.created_by.id !== detail.published_by?.id ? (
             <div>
-              <dt className="text-xs font-medium text-zinc-400">Created By</dt>
-              <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              <dt className="text-xs font-medium text-muted-foreground">Created By</dt>
+              <dd className="mt-1 text-sm text-foreground">
                 {detail.created_by.display_name}
               </dd>
             </div>
           ) : null}
           <div>
-            <dt className="text-xs font-medium text-zinc-400">Job Status</dt>
-            <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <dt className="text-xs font-medium text-muted-foreground">Job Status</dt>
+            <dd className="mt-1 text-sm text-foreground">
               {detail.job_status ?? "—"}
             </dd>
           </div>
@@ -412,16 +412,16 @@ export function PublicationDetailPage({ id }: { id: string }) {
 
       {/* 3. Content */}
       <Card className="p-5">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
           Content
         </h2>
         {playlistError ? (
-          <p className="text-xs text-amber-600 dark:text-amber-500">{playlistError}</p>
+          <p className="text-xs text-warning">{playlistError}</p>
         ) : playlistItems.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-400 dark:border-zinc-800">
+                <tr className="border-b border-border text-xs font-medium text-muted-foreground">
                   <th className="py-2 pr-3">Position</th>
                   <th className="py-2 pr-3">Title / Media Asset ID</th>
                   <th className="py-2 text-right">Duration (s)</th>
@@ -431,15 +431,15 @@ export function PublicationDetailPage({ id }: { id: string }) {
                 {playlistItems.map((item, idx) => (
                   <tr
                     key={item.media_asset_id + idx}
-                    className="border-t border-zinc-100 dark:border-zinc-800"
+                    className="border-t border-border"
                   >
-                    <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="py-2.5 pr-3 text-muted-foreground">
                       {item.position}
                     </td>
-                    <td className="py-2.5 pr-3 font-medium text-zinc-900 dark:text-zinc-100">
+                    <td className="py-2.5 pr-3 font-medium text-foreground">
                       {item.title || item.media_asset_id}
                     </td>
-                    <td className="py-2.5 text-right text-zinc-600 dark:text-zinc-400">
+                    <td className="py-2.5 text-right text-muted-foreground">
                       {item.duration_seconds ?? "—"}
                     </td>
                   </tr>
@@ -448,31 +448,31 @@ export function PublicationDetailPage({ id }: { id: string }) {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">ไม่มีรายการคอนเทนต์</p>
+          <p className="text-sm text-muted-foreground">ไม่มีรายการคอนเทนต์</p>
         )}
       </Card>
 
       {/* 4. Channels */}
       <Card className="p-5">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
           Channels
         </h2>
         {detail.publication_targets && detail.publication_targets.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-400 dark:border-zinc-800">
+                <tr className="border-b border-border text-xs font-medium text-muted-foreground">
                   <th className="py-2 pr-3">Name / Target ID</th>
                   <th className="py-2 text-right">Target Type</th>
                 </tr>
               </thead>
               <tbody>
                 {detail.publication_targets.map((target, idx) => (
-                  <tr key={idx} className="border-t border-zinc-100 dark:border-zinc-800">
-                    <td className="py-2.5 pr-3 font-medium text-zinc-900 dark:text-zinc-100">
+                  <tr key={idx} className="border-t border-border">
+                    <td className="py-2.5 pr-3 font-medium text-foreground">
                       {target.name ?? target.device_id ?? target.channel_id ?? "—"}
                     </td>
-                    <td className="py-2.5 text-right text-zinc-600 dark:text-zinc-400">
+                    <td className="py-2.5 text-right text-muted-foreground">
                       {target.target_type}
                     </td>
                   </tr>
@@ -481,38 +481,38 @@ export function PublicationDetailPage({ id }: { id: string }) {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">ไม่มีเป้าหมายการส่งสื่อ</p>
+          <p className="text-sm text-muted-foreground">ไม่มีเป้าหมายการส่งสื่อ</p>
         )}
       </Card>
 
       {/* 5. Schedule */}
       <Card className="p-5">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
           Schedule
         </h2>
         {detail.schedule ? (
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <dt className="text-xs font-medium text-zinc-400">Starts At</dt>
-              <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              <dt className="text-xs font-medium text-muted-foreground">Starts At</dt>
+              <dd className="mt-1 text-sm text-foreground">
                 {formatDate(detail.schedule.starts_at)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-zinc-400">Ends At</dt>
-              <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              <dt className="text-xs font-medium text-muted-foreground">Ends At</dt>
+              <dd className="mt-1 text-sm text-foreground">
                 {formatDate(detail.schedule.ends_at)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-zinc-400">Timezone</dt>
-              <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              <dt className="text-xs font-medium text-muted-foreground">Timezone</dt>
+              <dd className="mt-1 text-sm text-foreground">
                 {detail.schedule.timezone}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-zinc-400">Recurrence</dt>
-              <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              <dt className="text-xs font-medium text-muted-foreground">Recurrence</dt>
+              <dd className="mt-1 text-sm text-foreground">
                 {detail.schedule.recurrence && "freq" in detail.schedule.recurrence ? (
                   <>
                     <span>Days: {detail.schedule.recurrence.days.join(", ")}</span>
@@ -529,7 +529,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
             </div>
           </dl>
         ) : (
-          <p className="text-sm text-zinc-400">ยังไม่ได้ตั้งเวลา</p>
+          <p className="text-sm text-muted-foreground">ยังไม่ได้ตั้งเวลา</p>
         )}
       </Card>
 

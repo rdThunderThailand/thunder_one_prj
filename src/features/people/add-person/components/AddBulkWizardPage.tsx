@@ -5,23 +5,13 @@ import { useMemo, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { WizardSteps } from "@/components/ui/WizardSteps";
-import {
-  CheckCircleIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  EnvelopeIcon,
-  InfoIcon,
-  PhoneIcon,
-  UploadIcon,
-  UsersIcon,
-} from "@/components/ui/icons";
-import { ApiError } from "@/lib/api/api-error";
+import { ChevronRightIcon } from "@/components/ui/icons";
+import { ApiError, classifyApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
 import {
   createEmployee,
   createMember,
   isPendingInvite,
-  personnelRows,
   type CoreEmployeeResult,
   type CoreInviteResult,
   type CoreMemberRow,
@@ -34,33 +24,14 @@ import { buildStepsFromDoneIndices, type NewHireRow } from "@/features/people/ne
 import { NEW_HIRE_HANDOFF_KEY } from "../handoff";
 import { parseBulkCsvText, type BulkCsvRow, type BulkCsvRowError } from "../bulk-csv";
 import { bulkStep0Schema, bulkStep1Schema, pickDefaultRoleCode, zodErrorsToFieldMap } from "../schemas";
-import { clearFieldError, ErrorText, fieldClasses, inputClasses, labelClasses } from "../form-field";
-
-const POSITION_OPTIONS = Array.from(new Set(personnelRows.map((row) => row.position))).sort((a, b) =>
-  a.localeCompare(b)
-);
-const WORK_LOCATION_OPTIONS = ["สำนักงานใหญ่ (Bangkok Office)", "สาขาเชียงใหม่", "สาขาขอนแก่น", "ทำงานทางไกล (Remote)"];
-const DURATION_OPTIONS = ["3 เดือน", "6 เดือน", "12 เดือน", "ไม่ระบุ"];
-
-function unitLabel(unitId: string, units: Record<string, OrgUnitNode>): string {
-  const unit = units[unitId];
-  if (!unit) return "-";
-  const parent = unit.parentId ? units[unit.parentId] : null;
-  return parent && parent.parentId ? `${parent.name} / ${unit.name}` : unit.name;
-}
+import { clearFieldError } from "../form-field";
+import { DURATION_OPTIONS, ROWS_PER_PAGE, WORK_LOCATION_OPTIONS, unitLabel } from "../wizard-shared";
+import { AddBulkStep1Upload } from "./AddBulkStep1Upload";
+import { AddBulkStep2Employment } from "./AddBulkStep2Employment";
+import { AddBulkStepReview } from "./AddBulkStepReview";
+import { AddBulkStepSuccess } from "./AddBulkStepSuccess";
 
 const WIZARD_STEP_LABELS = ["ข้อมูลพื้นฐาน", "รายละเอียดการจ้างงาน", "ตรวจสอบและเพิ่ม"];
-
-const REQUIRED_COLUMNS = [
-  { en: "first_name*", th: "ชื่อ (ภาษาไทย)", example: "สมชาย", required: true },
-  { en: "last_name*", th: "นามสกุล (ภาษาไทย)", example: "วงศ์ดี", required: true },
-  { en: "email*", th: "อีเมล (สำหรับการเข้าสู่ระบบ)", example: "somchai.wongdee@thunderone.co.th", required: true },
-  { en: "mobile*", th: "เบอร์โทรศัพท์มือถือ", example: "081-234-5678", required: true },
-  { en: "date_of_birth", th: "วันเกิด (ค.ศ.)", example: "1990-01-15", required: false },
-  { en: "id_card", th: "เลขบัตรประชาชน", example: "1-2345-67890-12-3", required: false },
-];
-
-const ROWS_PER_PAGE = 5;
 
 const WORK_ARRANGEMENT_CODE: Record<string, "on_site" | "hybrid" | "remote"> = {
   "On-site": "on_site",
@@ -68,18 +39,13 @@ const WORK_ARRANGEMENT_CODE: Record<string, "on_site" | "hybrid" | "remote"> = {
   Remote: "remote",
 };
 
-interface BulkSubmitResult {
+export interface BulkSubmitResult {
   row: BulkCsvRow;
   name: string;
   outcome: "created" | "invited" | "failed";
   message?: string;
   newHireRow?: NewHireRow;
 }
-
-// Visual counterpart to each field's `required` attribute — same convention
-// as AddEmployeeWizardPage's requiredMark. Only on fields covered by
-// bulkStep0Schema/bulkStep1Schema (../schemas.ts).
-const requiredMark = <span className="text-red-500">*</span>;
 
 function Breadcrumb() {
   return (
@@ -110,6 +76,11 @@ interface AddBulkWizardPageProps {
   /** Real org units, for the หน่วยงาน dropdown — sent as
    *  `default_department_id` on every row's create call when selected. */
   units: Record<string, OrgUnitNode> | null;
+  /** Real distinct `job_title` values from the current roster (`people/
+   *  personnel`'s `derivePositionOptions`) — backs the ตำแหน่งงาน field's
+   *  `<datalist>` autocomplete. `[]` just means no suggestions; the field
+   *  itself is free text, so this never blocks submission. */
+  positionOptions: string[];
 }
 
 // "เพิ่มหลายคนเข้าองค์กร (Bulk)" — full-page 3-step flow, built 2026-09-01
@@ -145,7 +116,12 @@ interface AddBulkWizardPageProps {
 //   accepts either a single object or an array under this key), same as
 //   Employee/Contractor. Failed rows are surfaced in the confirmation
 //   screen's own list instead, never faked into the roster.
-export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageProps) {
+//
+// Step JSX was split into AddBulkStep1Upload/AddBulkStep2Employment/
+// AddBulkStepReview/AddBulkStepSuccess 2026-09-17 (readability audit) —
+// pure presentational extraction, every state/handler below is unchanged
+// from before the split and still lives only here.
+export function AddBulkWizardPage({ roles, tenantId, units, positionOptions }: AddBulkWizardPageProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [tablePage, setTablePage] = useState(1);
 
@@ -208,6 +184,19 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
     [people, tablePage]
   );
 
+  function handleUnitIdChange(value: string) {
+    setUnitId(value);
+    clearFieldError(setErrors, "unitId");
+  }
+  function handlePositionChange(value: string) {
+    setPosition(value);
+    clearFieldError(setErrors, "position");
+  }
+  function handleStartDateChange(value: string) {
+    setStartDate(value);
+    clearFieldError(setErrors, "startDate");
+  }
+
   function validateStep(index: 0 | 1): boolean {
     const schema = index === 0 ? bulkStep0Schema : bulkStep1Schema;
     const data = index === 0 ? { fileName: fileName ?? "" } : { unitId, position, startDate };
@@ -263,6 +252,15 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
     }
   }
 
+  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOver(true);
+  }
+
+  function handleDragLeave() {
+    setDragOver(false);
+  }
+
   function handleDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragOver(false);
@@ -271,6 +269,23 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
 
   function handleFileInput(e: ChangeEvent<HTMLInputElement>) {
     void handleFile(e.target.files?.[0] ?? null);
+  }
+
+  function handleSkipFirstRowChange(checked: boolean) {
+    setSkipFirstRow(checked);
+    if (fileText) applyParsedFile(fileText, checked);
+  }
+
+  function resetForNextImport() {
+    setStepIndex(0);
+    setFileName(null);
+    setFileText(null);
+    setRows([]);
+    setParseErrors([]);
+    setSubmitResults(null);
+    setConfirmed(false);
+    setTablePage(1);
+    setErrors({});
   }
 
   /**
@@ -390,7 +405,11 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
         };
         results.push({ row, name, outcome: pending ? "invited" : "created", newHireRow });
       } catch (err) {
-        const message = err instanceof ApiError ? err.message : "สร้างไม่สำเร็จ กรุณาลองใหม่ภายหลัง";
+        // classifyApiError() (2026-09-17, RBAC audit follow-up) — see
+        // AddEmployeeWizardPage's identical comment for why this replaced a
+        // raw err.message (matters per-row here too: a non-admin's whole
+        // batch would otherwise show Core's raw 403 text on every row).
+        const message = classifyApiError(err, "สร้างไม่สำเร็จ กรุณาลองใหม่ภายหลัง").message;
         results.push({ row, name, outcome: "failed", message });
       }
       setSubmitProgress((p) => p + 1);
@@ -440,676 +459,83 @@ export function AddBulkWizardPage({ roles, tenantId, units }: AddBulkWizardPageP
       </div>
 
       {stepIndex === 0 && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">1. ข้อมูลพื้นฐาน</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-                className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-                  dragOver ? "border-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/5" : "border-zinc-200 dark:border-zinc-700"
-                }`}
-              >
-                <label className="flex cursor-pointer flex-col items-center gap-2">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
-                    <UploadIcon className="h-5 w-5" />
-                  </span>
-                  <span className="text-sm text-zinc-600 dark:text-zinc-300">
-                    ลากไฟล์มาวางที่นี่ หรือ <span className="font-medium text-indigo-600 dark:text-indigo-400">คลิกเพื่อเลือกไฟล์</span>
-                  </span>
-                  <span className="text-xs text-zinc-400">รองรับไฟล์ CSV (.csv) เท่านั้นในขณะนี้</span>
-                  <span className="text-xs text-zinc-400">ขนาดไฟล์ไม่เกิน 10MB</span>
-                  <input type="file" accept=".csv" className="hidden" onChange={handleFileInput} />
-                </label>
-                {parsing && <span className="mt-2 text-xs text-zinc-400">กำลังอ่านไฟล์...</span>}
-                {fileName && !parsing && (
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-                    <CheckIcon className="h-3.5 w-3.5" />
-                    {fileName}
-                  </span>
-                )}
-                <ErrorText message={errors.fileName} />
-                {parseErrors.length > 0 && (
-                  <div className="mt-2 w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50/60 p-2.5 text-left text-xs text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
-                    <p className="mb-1 font-semibold">ข้าม {parseErrors.length} แถวที่ข้อมูลไม่ถูกต้อง:</p>
-                    <ul className="list-inside list-disc space-y-0.5">
-                      {parseErrors.slice(0, 5).map((e, i) => (
-                        <li key={i}>
-                          แถว {e.row}: {e.message}
-                        </li>
-                      ))}
-                    </ul>
-                    {parseErrors.length > 5 && <p className="mt-1">และอีก {parseErrors.length - 5} รายการ</p>}
-                  </div>
-                )}
-                <a
-                  href="/templates/bulk-import-template.csv"
-                  download
-                  className="mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-                >
-                  ↓ ดาวน์โหลดไฟล์ตัวอย่าง (Template)
-                </a>
-              </div>
-
-              <div className="rounded-xl border border-zinc-100 p-4 dark:border-zinc-800">
-                <p className="mb-3 text-xs font-semibold text-zinc-400">ตัวเลือกการนำเข้า</p>
-                <div className="flex flex-col gap-3">
-                  {(
-                    [
-                      { id: "new", label: "เพิ่มบุคคลใหม่ทั้งหมด", sub: "สร้างบุคคลใหม่จากข้อมูลในไฟล์" },
-                      { id: "update", label: "อัปเดตข้อมูลบุคคล", sub: "อัปเดตข้อมูลของบุคคลเดิม (ต้องมีอีเมลหรือรหัสพนักงาน)" },
-                      { id: "mix", label: "ผสม (เพิ่มและอัปเดต)", sub: "เพิ่มบุคคลใหม่ และอัปเดตข้อมูลบุคคลเดิม" },
-                    ] as const
-                  ).map((option) => (
-                    <label key={option.id} className="flex cursor-pointer items-start gap-2 text-sm">
-                      <input
-                        type="radio"
-                        name="import-mode"
-                        checked={importMode === option.id}
-                        onChange={() => setImportMode(option.id)}
-                        className="mt-0.5"
-                      />
-                      <span>
-                        <span className="block font-medium text-zinc-900 dark:text-zinc-50">{option.label}</span>
-                        <span className="block text-xs text-zinc-400">{option.sub}</span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-                <label className="mt-4 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  <input
-                    type="checkbox"
-                    checked={skipFirstRow}
-                    onChange={(e) => {
-                      const next = e.target.checked;
-                      setSkipFirstRow(next);
-                      if (fileText) applyParsedFile(fileText, next);
-                    }}
-                  />
-                  ข้ามแถวแรก (ใช้เป็นหัวตาราง)
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                คอลัมน์ที่จำเป็นในไฟล์ <span className="text-red-500">*</span> จำเป็นต้องมีทุกคอลัมน์
-              </p>
-              <div className="overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-800">
-                <table className="w-full min-w-[560px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-100 text-xs text-zinc-400 dark:border-zinc-800">
-                      <th className="px-4 py-2 font-medium">คอลัมน์ (ชื่อภาษาอังกฤษ)</th>
-                      <th className="px-4 py-2 font-medium">คอลัมน์ (ชื่อภาษาไทย)</th>
-                      <th className="px-4 py-2 font-medium">ตัวอย่างข้อมูล</th>
-                      <th className="px-4 py-2 font-medium">จำเป็น</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {REQUIRED_COLUMNS.map((col) => (
-                      <tr key={col.en} className="border-b border-zinc-50 last:border-0 dark:border-zinc-800/60">
-                        <td className="px-4 py-2 font-mono text-xs text-zinc-700 dark:text-zinc-200">{col.en}</td>
-                        <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{col.th}</td>
-                        <td className="px-4 py-2 text-zinc-400">{col.example}</td>
-                        <td className="px-4 py-2">
-                          {col.required ? <CheckIcon className="h-4 w-4 text-emerald-500" /> : <span className="text-zinc-300">—</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="mt-2 flex items-center gap-1.5 text-xs text-zinc-400">
-                <InfoIcon className="h-3.5 w-3.5" />
-                คุณสามารถเพิ่มคอลัมน์อื่นๆ ได้ในขั้นตอนถัดไป
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปการนำเข้า</h3>
-              <div className="flex flex-col items-center gap-1 py-3 text-center">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400">
-                  <UsersIcon className="h-6 w-6" />
-                </span>
-                <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                  {fileName ? "อัปโหลดไฟล์สำเร็จ" : "ยังไม่มีไฟล์ถูกอัปโหลด"}
-                </p>
-                <p className="text-xs text-zinc-400">
-                  {fileName ? `พบข้อมูลทั้งหมด ${totalCount} รายการ` : "อัปโหลดไฟล์เพื่อดูสรุปจำนวนข้อมูล"}
-                </p>
-              </div>
-              <div className="grid grid-cols-3 divide-x divide-zinc-100 text-center dark:divide-zinc-800">
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{totalCount}</p>
-                  <p className="text-[11px] text-zinc-400">ทั้งหมด</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">0</p>
-                  <p className="text-[11px] text-zinc-400">เพิ่มใหม่</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">0</p>
-                  <p className="text-[11px] text-zinc-400">อัปเดต</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 text-xs text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-                <InfoIcon className="h-4 w-4" />
-                คำแนะนำ
-              </h3>
-              <ul className="list-inside list-disc space-y-1">
-                <li>ใช้ไฟล์ตาม Template ที่ดาวน์โหลด เพื่อให้ระบบอ่านข้อมูลได้ถูกต้อง</li>
-                <li>ข้อมูลที่มี * เป็นข้อมูลที่จำเป็นต่อการสร้างบุคคล</li>
-                <li>ใช้รูปแบบวันที่เป็น ค.ศ. (YYYY-MM-DD)</li>
-                <li>ตรวจสอบอีเมลให้ถูกต้องและไม่ซ้ำกัน</li>
-                <li>ขนาดไฟล์ไม่เกิน 10MB</li>
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ติดปัญหา?</h3>
-              <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">ติดต่อทีม HR Support</p>
-              <div className="flex flex-col gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                <span className="flex items-center gap-1.5">
-                  <EnvelopeIcon className="h-3.5 w-3.5" />
-                  hr.support@thunderone.co.th
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <PhoneIcon className="h-3.5 w-3.5" />
-                  02-123-4567 ต่อ 123
-                </span>
-              </div>
-              <span
-                title="ยังไม่เปิดใช้งาน"
-                className="mt-3 flex cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
-              >
-                คู่มือการใช้งาน
-              </span>
-            </div>
-          </div>
-        </div>
+        <AddBulkStep1Upload
+          fileName={fileName}
+          parsing={parsing}
+          dragOver={dragOver}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onFileInput={handleFileInput}
+          fileNameError={errors.fileName}
+          parseErrors={parseErrors}
+          importMode={importMode}
+          onImportModeChange={setImportMode}
+          skipFirstRow={skipFirstRow}
+          onSkipFirstRowChange={handleSkipFirstRowChange}
+          totalCount={totalCount}
+        />
       )}
 
       {stepIndex === 1 && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">2. รายละเอียดการจ้างงาน</h2>
-                <p className="text-xs text-zinc-400">ระบุข้อมูลการจ้างงานสำหรับบุคคลที่เลือก {totalCount} คน</p>
-              </div>
-              <a
-                href="/templates/bulk-import-template.csv"
-                download
-                className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-              >
-                <UploadIcon className="h-3.5 w-3.5 rotate-180" />
-                ดาวน์โหลดตัวอย่างไฟล์
-              </a>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className={labelClasses}>
-                <span>หน่วยงาน {requiredMark}</span>
-                {unitOptions.length > 0 ? (
-                  <select
-                    value={unitId}
-                    onChange={(e) => {
-                      setUnitId(e.target.value);
-                      clearFieldError(setErrors, "unitId");
-                    }}
-                    className={fieldClasses(!!errors.unitId)}
-                  >
-                    <option value="">ไม่ระบุ</option>
-                    {unitOptions.map((unit) => (
-                      <option key={unit.id} value={unit.id}>
-                        {unitLabel(unit.id, units ?? {})}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <span className="flex cursor-not-allowed items-center rounded-lg border border-dashed border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-700">
-                    ไม่พบข้อมูลหน่วยงาน
-                  </span>
-                )}
-                <ErrorText message={errors.unitId} />
-              </label>
-              <label className={labelClasses}>
-                ทีม (Team)
-                <input value={team} onChange={(e) => setTeam(e.target.value)} className={inputClasses} />
-              </label>
-              <label className={labelClasses}>
-                <span>ตำแหน่งงาน {requiredMark}</span>
-                <input
-                  required
-                  list="bulk-position-options"
-                  value={position}
-                  onChange={(e) => {
-                    setPosition(e.target.value);
-                    clearFieldError(setErrors, "position");
-                  }}
-                  placeholder="พิมพ์เพื่อค้นหา หรือระบุตำแหน่งใหม่"
-                  className={fieldClasses(!!errors.position)}
-                />
-                <datalist id="bulk-position-options">
-                  {POSITION_OPTIONS.map((option) => (
-                    <option key={option} value={option} />
-                  ))}
-                </datalist>
-                <ErrorText message={errors.position} />
-              </label>
-              <label className={labelClasses}>
-                รหัสตำแหน่ง (Position Code)
-                <input
-                  value={positionCode}
-                  onChange={(e) => setPositionCode(e.target.value)}
-                  placeholder="เช่น POS-CEO"
-                  className={inputClasses}
-                />
-              </label>
-              <label className={labelClasses}>
-                ระดับตำแหน่ง (Level)
-                <input
-                  value={levelRole}
-                  onChange={(e) => setLevelRole(e.target.value)}
-                  placeholder="เช่น Executive, Senior"
-                  className={inputClasses}
-                />
-              </label>
-              <label className={labelClasses}>
-                ประเภทการจ้างงาน
-                <select value={employmentType} onChange={(e) => setEmploymentType(e.target.value)} className={inputClasses}>
-                  <option>พนักงานประจำ (Employee)</option>
-                  <option>ผู้รับเหมา (Contractor)</option>
-                </select>
-              </label>
-              <label className={labelClasses}>
-                สถานที่ทำงานหลัก
-                <select value={workLocation} onChange={(e) => setWorkLocation(e.target.value)} className={inputClasses}>
-                  {WORK_LOCATION_OPTIONS.map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-              <label className={labelClasses}>
-                ลักษณะการทำงาน
-                <select value={workArrangement} onChange={(e) => setWorkArrangement(e.target.value)} className={inputClasses}>
-                  <option>On-site</option>
-                  <option>Remote</option>
-                  <option>Hybrid</option>
-                </select>
-              </label>
-              {/* ผู้บังคับบัญชา (Reporting To) removed — see
-                  AddEmployeeWizardPage's identical comment. */}
-              <label className={labelClasses}>
-                <span>วันที่เริ่มงาน {requiredMark}</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    clearFieldError(setErrors, "startDate");
-                  }}
-                  className={fieldClasses(!!errors.startDate)}
-                />
-                <ErrorText message={errors.startDate} />
-              </label>
-              <label className={labelClasses}>
-                วันที่สิ้นสุดสัญญา (คาดการณ์)
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClasses} />
-              </label>
-              <label className={labelClasses}>
-                ระยะเวลาการจ้าง
-                <select value={duration} onChange={(e) => setDuration(e.target.value)} className={inputClasses}>
-                  {DURATION_OPTIONS.map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-              <label className={labelClasses}>
-                วงเงินสัญญา (ต่อปี)
-                <input inputMode="numeric" value={contractValue} onChange={(e) => setContractValue(e.target.value)} placeholder="บาท" className={inputClasses} />
-              </label>
-              <label className={`${labelClasses} sm:col-span-2`}>
-                หมายเหตุ
-                <input value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={200} className={inputClasses} />
-              </label>
-            </div>
-
-            <label className="flex items-start gap-2 rounded-lg bg-zinc-50 p-3 text-xs text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-300">
-              <input type="checkbox" checked={applyToAll} onChange={(e) => setApplyToAll(e.target.checked)} className="mt-0.5" />
-              <span>
-                <span className="block font-medium">ใช้ข้อมูลชุดนี้กับทุกคน</span>
-                <span className="block text-zinc-400">นำข้อมูลการจ้างงานแบบนี้ไปใช้กับบุคคลที่เลือกทั้งหมด {totalCount} คน</span>
-              </span>
-            </label>
-
-            <div>
-              <p className="mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">รายการบุคคลที่นำเข้า ({totalCount} คน)</p>
-              <div className="overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-800">
-                <table className="w-full min-w-[640px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-100 text-xs text-zinc-400 dark:border-zinc-800">
-                      <th className="px-4 py-2 font-medium">ลำดับ</th>
-                      <th className="px-4 py-2 font-medium">ชื่อ-นามสกุล</th>
-                      <th className="px-4 py-2 font-medium">อีเมล</th>
-                      <th className="px-4 py-2 font-medium">ตำแหน่งงาน</th>
-                      <th className="px-4 py-2 font-medium">สถานที่ทำงาน</th>
-                      <th className="px-4 py-2 font-medium">วันที่เริ่มงาน</th>
-                      <th className="px-4 py-2 font-medium">สถานะ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pagedPeople.map((person, i) => {
-                      const index = (tablePage - 1) * ROWS_PER_PAGE + i + 1;
-                      const configured = applyToAll && position.trim().length > 0;
-                      return (
-                        <tr key={person.email} className="border-b border-zinc-50 last:border-0 dark:border-zinc-800/60">
-                          <td className="px-4 py-2 text-zinc-400">{index}</td>
-                          <td className="px-4 py-2 font-medium text-zinc-900 dark:text-zinc-50">{person.name}</td>
-                          <td className="px-4 py-2 text-zinc-500 dark:text-zinc-400">{person.email}</td>
-                          <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{position || "-"}</td>
-                          <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{workLocation}</td>
-                          <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{startDate ? formatThaiDate(startDate) : "-"}</td>
-                          <td className="px-4 py-2">
-                            {configured ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                <CheckIcon className="h-3.5 w-3.5" />
-                                กำหนดแล้ว
-                              </span>
-                            ) : (
-                              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">รอกำหนด</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {pageCount > 1 && (
-                <div className="mt-2 flex items-center justify-between text-xs text-zinc-400">
-                  <span>
-                    แสดง {pagedPeople.length} จาก {totalCount} รายการ
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setTablePage(p)}
-                        className={`h-6 w-6 rounded-md text-xs font-medium ${
-                          p === tablePage
-                            ? "bg-indigo-600 text-white"
-                            : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปการนำเข้า</h3>
-              <div className="grid grid-cols-3 divide-x divide-zinc-100 text-center dark:divide-zinc-800">
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{totalCount}</p>
-                  <p className="text-[11px] text-zinc-400">ทั้งหมด</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">0</p>
-                  <p className="text-[11px] text-zinc-400">เพิ่มใหม่</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">0</p>
-                  <p className="text-[11px] text-zinc-400">อัปเดต</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลการจ้างงานที่จะกำหนด</h3>
-              <ul className="flex flex-col divide-y divide-zinc-100 text-xs dark:divide-zinc-800">
-                {[
-                  ["หน่วยงาน", unitId ? unitLabel(unitId, units ?? {}) : "-"],
-                  ["ทีม (Team)", team || "-"],
-                  ["ตำแหน่งงาน", position || "-"],
-                  ["ประเภทการจ้างงาน", employmentType],
-                  ["ลักษณะการทำงาน", workArrangement],
-                  ["สถานที่ทำงานหลัก", workLocation],
-                  ["วันที่เริ่มงาน", startDate ? formatThaiDate(startDate) : "-"],
-                  ["วันที่สิ้นสุดสัญญา", endDate ? formatThaiDate(endDate) : "-"],
-                  ["ระยะเวลาการจ้าง", duration],
-                  ["วงเงินสัญญา", contractValue ? `${contractValue} บาท/ปี` : "-"],
-                ].map(([label, value]) => (
-                  <li key={label} className="flex items-center justify-between py-1.5">
-                    <span className="text-zinc-400">{label}</span>
-                    <span className="truncate text-right font-medium text-zinc-900 dark:text-zinc-50">{value}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 text-xs text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-                <InfoIcon className="h-4 w-4" />
-                คำแนะนำ
-              </h3>
-              <ul className="list-inside list-disc space-y-1">
-                <li>สามารถแก้ไขรายละเอียดรายบุคคลได้ในขั้นตอนถัดไป</li>
-                <li>กรุณาตรวจสอบวันที่และวงเงินสัญญาให้ถูกต้อง</li>
-                <li>เมื่อสร้างเสร็จแล้ว จะเข้าสู่สถานะ Pre-boarding</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <AddBulkStep2Employment
+          totalCount={totalCount}
+          unitId={unitId}
+          onUnitIdChange={handleUnitIdChange}
+          units={units}
+          unitOptions={unitOptions}
+          team={team}
+          onTeamChange={setTeam}
+          position={position}
+          onPositionChange={handlePositionChange}
+          positionOptions={positionOptions}
+          positionCode={positionCode}
+          onPositionCodeChange={setPositionCode}
+          levelRole={levelRole}
+          onLevelRoleChange={setLevelRole}
+          employmentType={employmentType}
+          onEmploymentTypeChange={setEmploymentType}
+          workLocation={workLocation}
+          onWorkLocationChange={setWorkLocation}
+          workArrangement={workArrangement}
+          onWorkArrangementChange={setWorkArrangement}
+          startDate={startDate}
+          onStartDateChange={handleStartDateChange}
+          endDate={endDate}
+          onEndDateChange={setEndDate}
+          duration={duration}
+          onDurationChange={setDuration}
+          contractValue={contractValue}
+          onContractValueChange={setContractValue}
+          notes={notes}
+          onNotesChange={setNotes}
+          applyToAll={applyToAll}
+          onApplyToAllChange={setApplyToAll}
+          pagedPeople={pagedPeople}
+          tablePage={tablePage}
+          onTablePageChange={setTablePage}
+          pageCount={pageCount}
+          errors={errors}
+        />
       )}
 
       {stepIndex === 2 && !confirmed && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="flex flex-col gap-4 lg:col-span-2">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h2 className="mb-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">3. ตรวจสอบและยืนยันการเพิ่ม</h2>
-              <p className="mb-4 text-xs text-zinc-400">ตรวจสอบข้อมูลทั้งหมด {totalCount} รายการก่อนสร้างบุคคลและส่งคำเชิญ Onboarding</p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/50">
-                  <UsersIcon className="mb-1 h-4 w-4 text-indigo-500" />
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{totalCount} คน</p>
-                  <p className="text-[11px] text-zinc-400">จำนวนทั้งหมด</p>
-                </div>
-                <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/50">
-                  <CheckCircleIcon className="mb-1 h-4 w-4 text-indigo-500" />
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">สร้างบุคคลและส่งคำเชิญ</p>
-                  <p className="text-[11px] text-zinc-400">การดำเนินการ</p>
-                </div>
-                <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/50">
-                  <EnvelopeIcon className="mb-1 h-4 w-4 text-indigo-500" />
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">อีเมล</p>
-                  <p className="text-[11px] text-zinc-400">ช่องทางการเชิญ</p>
-                </div>
-                <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/50">
-                  <InfoIcon className="mb-1 h-4 w-4 text-indigo-500" />
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{startDate ? formatThaiDate(startDate) : "-"}</p>
-                  <p className="text-[11px] text-zinc-400">วันที่เริ่มงาน</p>
-                </div>
-              </div>
-            </div>
-
-            <details className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <summary className="cursor-pointer text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปข้อมูลการจ้างงาน</summary>
-              <ul className="mt-3 flex flex-col divide-y divide-zinc-100 text-xs dark:divide-zinc-800">
-                {[
-                  ["หน่วยงาน", unitId ? unitLabel(unitId, units ?? {}) : "-"],
-                  ["ตำแหน่งงาน", position || "-"],
-                  ["ประเภทการจ้างงาน", employmentType],
-                  ["สถานที่ทำงานหลัก", workLocation],
-                  ["ระยะเวลาการจ้าง", duration],
-                ].map(([label, value]) => (
-                  <li key={label} className="flex items-center justify-between py-1.5">
-                    <span className="text-zinc-400">{label}</span>
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">{value}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
-
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">รายการบุคลากรที่จะเพิ่ม ({totalCount} คน)</p>
-              <div className="overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-800">
-                <table className="w-full min-w-[720px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-100 text-xs text-zinc-400 dark:border-zinc-800">
-                      <th className="px-4 py-2 font-medium">ลำดับ</th>
-                      <th className="px-4 py-2 font-medium">ชื่อ-นามสกุล</th>
-                      <th className="px-4 py-2 font-medium">อีเมล</th>
-                      <th className="px-4 py-2 font-medium">ตำแหน่งงาน</th>
-                      <th className="px-4 py-2 font-medium">หน่วยงาน</th>
-                      <th className="px-4 py-2 font-medium">สถานที่ทำงาน</th>
-                      <th className="px-4 py-2 font-medium">วันที่เริ่มงาน</th>
-                      <th className="px-4 py-2 font-medium">การเชิญ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {people.map((person, i) => (
-                      <tr key={person.email} className="border-b border-zinc-50 last:border-0 dark:border-zinc-800/60">
-                        <td className="px-4 py-2 text-zinc-400">{i + 1}</td>
-                        <td className="px-4 py-2 font-medium text-zinc-900 dark:text-zinc-50">{person.name}</td>
-                        <td className="px-4 py-2 text-zinc-500 dark:text-zinc-400">{person.email}</td>
-                        <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{position || "-"}</td>
-                        <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{unitId ? unitLabel(unitId, units ?? {}) : "-"}</td>
-                        <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{workLocation}</td>
-                        <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{startDate ? formatThaiDate(startDate) : "-"}</td>
-                        <td className="px-4 py-2">
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                            <CheckIcon className="h-3.5 w-3.5" />
-                            อีเมล
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <p className="flex items-start gap-2 rounded-lg bg-indigo-50/60 p-3 text-xs text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
-              <InfoIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              หลังจากยืนยัน ระบบจะสร้างบุคคล และส่งคำเชิญ Onboarding ให้กับบุคคลทั้งหมดผ่านอีเมล
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปการดำเนินการ</h3>
-              <div className="flex flex-col items-center gap-1 py-2 text-center">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400">
-                  <UsersIcon className="h-6 w-6" />
-                </span>
-                <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-50">กำลังจะดำเนินการ</p>
-                <p className="text-xs text-zinc-400">สร้างบุคคล {totalCount} คน และส่งคำเชิญ Onboarding</p>
-              </div>
-              <div className="grid grid-cols-3 divide-x divide-zinc-100 text-center dark:divide-zinc-800">
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{totalCount}</p>
-                  <p className="text-[11px] text-zinc-400">ทั้งหมด</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">0</p>
-                  <p className="text-[11px] text-zinc-400">เพิ่มใหม่</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">0</p>
-                  <p className="text-[11px] text-zinc-400">อัปเดต</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">การตั้งค่าการเชิญ</h3>
-              <ul className="flex flex-col divide-y divide-zinc-100 text-xs dark:divide-zinc-800">
-                {[
-                  ["ช่องทางการเชิญ", "อีเมล"],
-                  ["วันที่เริ่มงาน", startDate ? formatThaiDate(startDate) : "-"],
-                  ["ระยะเวลา Onboarding", duration],
-                  ["บทบาทเริ่มต้น", employmentType],
-                ].map(([label, value]) => (
-                  <li key={label} className="flex items-center justify-between py-1.5">
-                    <span className="text-zinc-400">{label}</span>
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">{value}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 text-xs text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
-              <h3 className="mb-2 text-sm font-semibold">หมายเหตุ</h3>
-              <ul className="list-inside list-disc space-y-1">
-                <li>บุคคลจะได้รับอีเมลพร้อมลิงก์สำหรับยืนยันเข้าใช้งาน</li>
-                <li>เมื่อยืนยันแล้ว สถานะจะเปลี่ยนเป็น &quot;รอการยืนยัน&quot;</li>
-                <li>สามารถติดตามสถานะได้ที่หน้า &quot;เข้าใหม่&quot;</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <AddBulkStepReview
+          totalCount={totalCount}
+          startDate={startDate}
+          unitId={unitId}
+          units={units}
+          position={position}
+          employmentType={employmentType}
+          workLocation={workLocation}
+          duration={duration}
+          people={people}
+        />
       )}
 
-      {stepIndex === 2 && confirmed && (() => {
-        const results = submitResults ?? [];
-        const failedResults = results.filter((r) => r.outcome === "failed");
-        const successCount = results.length - failedResults.length;
-        return (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <CheckCircleIcon className="h-9 w-9 text-emerald-500" />
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-              สร้างสำเร็จ {successCount} จาก {results.length} คน
-            </p>
-            <p className="max-w-sm text-xs text-zinc-400">
-              แต่ละคนจะได้รับอีเมลพร้อมลิงก์ยืนยันเข้าใช้งาน สามารถติดตามสถานะได้ที่หน้า &quot;เข้าใหม่&quot;
-            </p>
-            {failedResults.length > 0 && (
-              <div className="w-full max-w-md rounded-xl border border-red-100 bg-red-50/60 p-3 text-left text-xs text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
-                <p className="mb-1 font-semibold">{failedResults.length} รายการล้มเหลว:</p>
-                <ul className="list-inside list-disc space-y-0.5">
-                  {failedResults.map((r) => (
-                    <li key={r.row.email}>
-                      {r.name} ({r.row.email}) — {r.message}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <div className="mt-1 flex items-center gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setStepIndex(0);
-                  setFileName(null);
-                  setFileText(null);
-                  setRows([]);
-                  setParseErrors([]);
-                  setSubmitResults(null);
-                  setConfirmed(false);
-                  setTablePage(1);
-                  setErrors({});
-                }}
-              >
-                นำเข้าไฟล์ถัดไป
-              </Button>
-              <Link href="/people/new-hires" className={buttonClasses("primary")}>
-                ไปที่หน้าเข้าใหม่
-              </Link>
-            </div>
-          </div>
-        );
-      })()}
+      {stepIndex === 2 && confirmed && (
+        <AddBulkStepSuccess submitResults={submitResults} onImportNext={resetForNextImport} />
+      )}
 
       {!confirmed && (
         <div className="flex justify-end gap-2">

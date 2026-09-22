@@ -209,7 +209,7 @@ export function ChannelsListPage() {
                   }}
                   onChanged={handleChanged}
                 />
-                <div className="shrink-0 border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
+                <div className="shrink-0 border-t border-border px-4 py-3">
                   <Pagination
                     page={page.page}
                     totalPages={page.totalPages}

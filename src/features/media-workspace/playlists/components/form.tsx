@@ -7,7 +7,7 @@ import type { ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "re
 import { ChevronDownIcon } from "@/components/ui/icons";
 
 export const inputClasses =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "h-9 w-full rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 interface FieldProps {
   label: string;
@@ -22,15 +22,15 @@ interface FieldProps {
 export function Field({ label, required, optional, hint, error, children, className = "" }: FieldProps) {
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        {label} {required && <span className="text-red-500">*</span>}
-        {optional && <span className="text-zinc-400">(Optional)</span>}
+      <label className="text-xs font-medium text-muted-foreground">
+        {label} {required && <span className="text-danger">*</span>}
+        {optional && <span className="text-muted-foreground">(Optional)</span>}
       </label>
       {children}
       {error ? (
-        <p className="text-xs font-medium text-red-600">{error}</p>
+        <p className="text-xs font-medium text-danger">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-zinc-400">{hint}</p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   );
@@ -55,13 +55,13 @@ export function Select({ options, placeholder, className = "", ...props }: Selec
           </option>
         ))}
       </select>
-      <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+      <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
     </div>
   );
 }
 
 export function TextArea({ className = "", ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={`${inputClasses} resize-none ${className}`} />;
+  return <textarea {...props} className={`${inputClasses.replace("h-9", "min-h-20")} resize-none ${className}`} />;
 }
 
 /** Segmented control — used for Media Fit and the failure-handling choice. */
@@ -86,15 +86,15 @@ export function OptionGroup<T extends string>({
             type="button"
             onClick={() => onChange(o.value)}
             aria-pressed={selected}
-            className={`rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+            className={`rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
               selected
-                ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
-                : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                ? "border-primary bg-primary-soft text-primary"
+                : "border-border bg-card text-muted-foreground hover:bg-muted"
             }`}
           >
             <span className="font-medium">{o.label}</span>
             {o.description && (
-              <span className="mt-0.5 block text-xs text-zinc-400">{o.description}</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">{o.description}</span>
             )}
           </button>
         );
@@ -118,15 +118,15 @@ export function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="inline-flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300"
+      className="inline-flex items-center gap-2.5 text-xs text-muted-foreground"
     >
       <span
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-          checked ? "bg-indigo-600" : "bg-zinc-300 dark:bg-zinc-700"
+          checked ? "bg-primary" : "bg-border"
         }`}
       >
         <span
-          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-card transition-transform ${
             checked ? "translate-x-4" : "translate-x-0"
           }`}
         />

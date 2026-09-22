@@ -44,16 +44,16 @@ export function PrepareContentStep({
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-zinc-900">Preview</h2>
-            <p className="mt-0.5 text-xs text-zinc-500">ตัวอย่างเนื้อหา</p>
+            <h2 className="text-base font-semibold text-foreground">Preview</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">ตัวอย่างเนื้อหา</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setStep(1)} className="text-xs font-medium text-indigo-600 hover:text-indigo-500">เปลี่ยนคอนเทนต์</button>
+            <button type="button" onClick={() => setStep(1)} className="text-xs font-medium text-primary hover:text-primary">เปลี่ยนคอนเทนต์</button>
             <button
               type="button"
               onClick={openFullPreview}
               disabled={!preview}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
             >
               Full Screen ({preview?.aspectRatio ?? "16:9"}) <ExpandIcon className="h-3.5 w-3.5" />
             </button>
@@ -61,14 +61,14 @@ export function PrepareContentStep({
         </div>
 
         {!hasContent ? (
-          <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400">
+          <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
             <ImageIcon className="h-8 w-8" />
             <p className="text-xs">เลือกคอนเทนต์ในขั้นตอนที่ 1 เพื่อดูตัวอย่าง</p>
           </div>
         ) : error ? (
-          <p className="text-sm text-red-600">โหลด preview ไม่สำเร็จ</p>
+          <p className="text-sm text-danger">โหลด preview ไม่สำเร็จ</p>
         ) : loading || !preview ? (
-          <p className="py-10 text-center text-sm text-zinc-400">กำลังโหลด preview…</p>
+          <p className="py-10 text-center text-sm text-muted-foreground">กำลังโหลด preview…</p>
         ) : (
           <PreviewStage
             zones={preview.zones}
@@ -105,8 +105,8 @@ function QuickEditTools() {
   ];
   return (
     <Card className="p-5">
-      <h2 className="text-base font-semibold text-zinc-900">Quick Edit Tools</h2>
-      <p className="mt-1 text-xs text-zinc-500">เครื่องมือแก้ไขด่วน (ยังไม่เปิดใช้งาน)</p>
+      <h2 className="text-base font-semibold text-foreground">Quick Edit Tools</h2>
+      <p className="mt-1 text-xs text-muted-foreground">เครื่องมือแก้ไขด่วน (ยังไม่เปิดใช้งาน)</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
         {tools.map(({ label, description, icon: Icon }) => (
           <button
@@ -114,14 +114,14 @@ function QuickEditTools() {
             type="button"
             disabled
             title="ยังไม่เปิดใช้งาน"
-            className="flex min-h-20 cursor-not-allowed items-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 text-left opacity-50"
+            className="flex min-h-20 cursor-not-allowed items-center gap-3 rounded-xl border border-border bg-card px-4 text-left opacity-50"
           >
-            <Icon className="h-6 w-6 shrink-0 text-indigo-600" />
+            <Icon className="h-6 w-6 shrink-0 text-primary" />
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-zinc-800">{label}</span>
-              <span className="mt-1 block text-[10px] leading-4 text-zinc-500">{description}</span>
+              <span className="block text-sm font-semibold text-foreground">{label}</span>
+              <span className="mt-1 block text-[10px] leading-4 text-muted-foreground">{description}</span>
             </span>
-            <ArrowRightIcon className="h-4 w-4 shrink-0 text-zinc-400" />
+            <ArrowRightIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
           </button>
         ))}
       </div>
@@ -145,7 +145,7 @@ function PreviewAssetStrip({ preview, assets, onSeek }: { preview: StagePreview;
   const assetsById = useMemo(() => Object.fromEntries(assets.map((asset) => [asset.id, asset])), [assets]);
 
   return (
-    <div className="flex gap-2 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-2">
+    <div className="flex gap-2 overflow-x-auto rounded-xl border border-border bg-muted p-2">
       {items.map((item, index) => {
         const asset = assetsById[item.mediaAssetId];
         const label = asset?.title ?? asset?.file?.original_filename ?? item.label ?? item.zoneName;
@@ -155,7 +155,7 @@ function PreviewAssetStrip({ preview, assets, onSeek }: { preview: StagePreview;
             type="button"
             key={item.key}
             onClick={() => { setSelectedKey(item.key); onSeek(item.startSeconds); }}
-            className={`w-24 shrink-0 overflow-hidden rounded-lg border bg-white text-left ${selected ? "border-indigo-500 ring-1 ring-indigo-200" : "border-zinc-200"}`}
+            className={`w-24 shrink-0 overflow-hidden rounded-lg border bg-card text-left ${selected ? "border-primary ring-1 ring-primary/30" : "border-border"}`}
             title={`${label} · ${item.startSeconds.toFixed(1)}s`}
           >
             <MediaThumb
@@ -167,8 +167,8 @@ function PreviewAssetStrip({ preview, assets, onSeek }: { preview: StagePreview;
               className="aspect-video w-full rounded-none"
             />
             <div className="px-2 py-1">
-              <p className="truncate text-[10px] font-medium text-zinc-700">{label}</p>
-              <p className="truncate text-[9px] text-zinc-400">{item.zoneName}</p>
+              <p className="truncate text-[10px] font-medium text-muted-foreground">{label}</p>
+              <p className="truncate text-[9px] text-muted-foreground">{item.zoneName}</p>
             </div>
           </button>
         );

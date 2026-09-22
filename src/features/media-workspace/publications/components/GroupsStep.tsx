@@ -48,22 +48,22 @@ export function GroupsStep() {
   return (
     <div className="flex flex-col gap-3">
       <div className="relative">
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search channel groups..."
-          className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+          className="w-full rounded-lg border border-border py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
       </div>
 
-      {groups === null && <p className="text-xs text-zinc-400">{error ?? "Loading channel groups..."}</p>}
-      {groups !== null && error && <p className="text-xs text-red-600">{error}</p>}
+      {groups === null && <p className="text-xs text-muted-foreground">{error ?? "Loading channel groups..."}</p>}
+      {groups !== null && error && <p className="text-xs text-danger">{error}</p>}
       {groups !== null && active.length === 0 && (
-        <p className="text-xs text-zinc-400">No Channel Groups available yet — create one first.</p>
+        <p className="text-xs text-muted-foreground">No Channel Groups available yet — create one first.</p>
       )}
       {groups !== null && active.length > 0 && filtered.length === 0 && (
-        <p className="text-xs text-zinc-400">No channel groups match your search.</p>
+        <p className="text-xs text-muted-foreground">No channel groups match your search.</p>
       )}
 
       <div className="flex flex-col gap-2">
@@ -75,12 +75,12 @@ export function GroupsStep() {
               type="button"
               onClick={() => toggle(group)}
               className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                selected ? "border-indigo-400 bg-indigo-50/40 ring-1 ring-indigo-400" : "border-zinc-200 hover:border-zinc-300"
+                selected ? "border-primary/30 bg-primary-soft ring-1 ring-primary" : "border-border hover:border-border"
               }`}
             >
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 ${
-                  selected ? "border-indigo-600 bg-indigo-600 text-white" : "border-zinc-300 bg-white"
+                  selected ? "border-primary bg-primary text-white" : "border-border bg-card"
                 }`}
               >
                 {selected && (
@@ -90,8 +90,8 @@ export function GroupsStep() {
                 )}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-zinc-900">{group.name}</p>
-                <p className="text-xs text-zinc-400">
+                <p className="truncate text-sm font-semibold text-foreground">{group.name}</p>
+                <p className="text-xs text-muted-foreground">
                   {group.member_count} channels · {group.playback_mode === "synchronized" ? "Synchronized" : "Independent"}
                 </p>
               </div>
