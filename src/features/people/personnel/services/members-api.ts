@@ -307,11 +307,26 @@ export interface MemberListPage {
 export interface MemberListQuery {
   page?: number;
   limit?: number;
-  /** The only filter Core supports today — full-text across
-   *  users.email/first_name/last_name/display_name. Every other dropdown on
-   *  PersonnelFilterBar stays decorative until Core adds server-side filters
-   *  for them (flagged as a follow-up, not built). */
+  /** Full-text across users.email/first_name/last_name/display_name. */
   search?: string;
+  /** Real server-side filter since 2026-09-17 (Core commit de57b3e) — one of
+   *  `CoreMemberRow["status"]`'s 5 real values. PersonnelFilterBar's own
+   *  "สถานะการทำงาน" has a 4th, "inactive", that Core has no single status
+   *  for (it's `removed` OR `archived` — see personnel/core-mapper.ts's
+   *  STATUS_MAP); that one option stays client-side-filtered, everything
+   *  else here is a real round trip. */
+  status?: "invited" | "active" | "suspended" | "removed" | "archived";
+  /** Real server-side filter since 2026-09-17 (Core commit de57b3e). Same
+   *  caveat as `status` — PersonnelFilterBar's "inactive" ประเภทบุคลากร
+   *  option is derived from `status`, not a real `member_type` value, so it
+   *  can't be expressed here either. */
+  member_type?: "employee" | "contractor" | "partner" | "guest";
+  /** Real server-side filter since 2026-09-17 (Core commit de57b3e). Not yet
+   *  wired up from PersonnelFilterBar's หน่วยงาน dropdown — that dropdown
+   *  currently works off a display label, not a department id (see
+   *  PersonnelPage.tsx), so switching it to use this needs its own
+   *  follow-up rather than being folded into this pass. */
+  department_id?: string;
 }
 
 export async function getMembers(
@@ -325,6 +340,9 @@ export async function getMembers(
   params.set("page", String(page));
   params.set("limit", String(limit));
   if (query.search) params.set("search", query.search);
+  if (query.status) params.set("status", query.status);
+  if (query.member_type) params.set("member_type", query.member_type);
+  if (query.department_id) params.set("department_id", query.department_id);
 
   const data = await coreGet<{ data: CoreMemberRow[]; count: number }>(
     `/tenants/${tenantId}/members?${params.toString()}`,

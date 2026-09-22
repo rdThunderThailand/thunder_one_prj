@@ -4,6 +4,9 @@ export { PersonnelPage } from "./components/PersonnelPage";
 // their position autocomplete (see core-mapper.ts's own header comment) —
 // replaced the old `personnelRows` mock export 2026-09-17.
 export { derivePositionOptions } from "./core-mapper";
+// PersonnelFilterBar's real-filter round trip (see personnel/page.tsx and
+// core-mapper.ts's own header comment).
+export { WORK_STATUS_TO_CORE_STATUS } from "./core-mapper";
 // Real Core integration, exposed so other people/* features share it rather
 // than each hitting Thunder_Core with their own copy — org-structure's
 // core-mapper.ts resolves `manager_id` against `CoreMemberRow.user_id`;

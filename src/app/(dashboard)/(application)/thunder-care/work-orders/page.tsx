@@ -1,22 +1,9 @@
-import { Button } from "@/components/ui/Button";
-import { SearchIcon } from "@/components/ui/icons";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { MyWorkPage } from "@/features/thunder-care/work-orders";
+import { TechnicianHomePage } from "@/features/thunder-care/work-orders";
 
-// Technician — "My Work" (requirement doc §4.4).
-export default function WorkOrdersPage() {
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="My Work"
-        subtitle="Tuesday, 11 August"
-        actions={
-          <Button variant="secondary">
-            <SearchIcon className="h-4 w-4" /> Scan QR
-          </Button>
-        }
-      />
-      <MyWorkPage />
-    </div>
-  );
+// Thunder Care — "หน้าหลัก" ของ Technician (แทนที่ "My Work" เดิม, redesign
+// ตามผัง "Technician Workflow: Web ↔ Mobile" ที่ผู้ใช้ส่งมา 2569-09-08) — ไม่
+// ใช้ PageHeader ทั่วไปเพราะ TechnicianHomePage มี greeting header ของตัวเอง
+// อยู่แล้ว ตรงตามดีไซน์ใหม่ (เดียวกับ thunder-care/service-ops's ServiceOpsPage).
+export default function WorkOrdersRoute() {
+  return <TechnicianHomePage />;
 }

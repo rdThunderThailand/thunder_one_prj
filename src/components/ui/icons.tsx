@@ -69,14 +69,9 @@ export function PlusIcon({ className = "h-4 w-4" }: IconProps) {
 
 export function SparklesIcon({ className = "h-4 w-4" }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M11 3v4M11 16v4M3 11h4M16 11h4M6 6l2 2M14 14l2 2M18 6l-2 2M8 14l-2 2"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <circle cx="11" cy="11" r="2.5" fill="currentColor" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M12 2C13 9 15 11 22 12C15 13 13 15 12 22C11 15 9 13 2 12C9 11 11 9 12 2Z" />
+      <path d="M19 2C19.3 4.1 19.9 4.7 22 5C19.9 5.3 19.3 5.9 19 8C18.7 5.9 18.1 5.3 16 5C18.1 4.7 18.7 4.1 19 2Z" />
     </svg>
   );
 }
@@ -862,6 +857,18 @@ export function RefreshIcon({ className = "h-4 w-4" }: IconProps) {
         strokeLinecap="round"
       />
       <path d="M17 4v4h-4M7 20v-4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Added 2026-09-19 for stat tiles that need a distinct "offline/error" glyph
+// from WarningTriangleIcon (e.g. media-workspace overview's "Offline" tile,
+// which previously reused CalendarIcon — a content bug, not a style one).
+export function AlertCircleIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 7.5v5M12 16.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }

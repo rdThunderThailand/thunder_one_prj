@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { WizardSteps } from "@/components/ui/WizardSteps";
 import { ChevronRightIcon } from "@/components/ui/icons";
-import { ApiError } from "@/lib/api/api-error";
+import { ApiError, classifyApiError } from "@/lib/api/api-error";
 import { formatDaysUntilThai, formatThaiDate } from "@/lib/thai-date";
 import {
   createEmployee,
@@ -405,7 +405,11 @@ export function AddBulkWizardPage({ roles, tenantId, units, positionOptions }: A
         };
         results.push({ row, name, outcome: pending ? "invited" : "created", newHireRow });
       } catch (err) {
-        const message = err instanceof ApiError ? err.message : "สร้างไม่สำเร็จ กรุณาลองใหม่ภายหลัง";
+        // classifyApiError() (2026-09-17, RBAC audit follow-up) — see
+        // AddEmployeeWizardPage's identical comment for why this replaced a
+        // raw err.message (matters per-row here too: a non-admin's whole
+        // batch would otherwise show Core's raw 403 text on every row).
+        const message = classifyApiError(err, "สร้างไม่สำเร็จ กรุณาลองใหม่ภายหลัง").message;
         results.push({ row, name, outcome: "failed", message });
       }
       setSubmitProgress((p) => p + 1);
