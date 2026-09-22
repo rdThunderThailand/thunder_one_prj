@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { OrgUnitNode } from "@/features/people/org-structure";
 import { LoadFailure } from "@/features/people/shared";
@@ -56,8 +56,6 @@ export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }
   const [viewingRow, setViewingRow] = useState<PersonnelRow | null>(null);
   const [unitFilter, setUnitFilter] = useState("");
   const [positionFilter, setPositionFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState<PersonnelType | "">("");
-  const [workStatusFilter, setWorkStatusFilter] = useState<WorkStatus | "">("");
   const [view, setView] = useState<"list" | "grid">("list");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -75,9 +73,27 @@ export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }
   // (not sub-departments), kept separate from the หน่วยงาน dropdown below
   // (which filters by label) since they're two different entry points into
   // the same roster and can combine without conflicting.
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const departmentIdFilter = searchParams.get("department");
   const departmentName = departmentIdFilter ? (units[departmentIdFilter]?.name ?? departmentIdFilter) : null;
+
+  // ?type=/?status= (2026-09-17) — unlike unit/position below, these two
+  // are real server-side filters now (see this feature's app route), so
+  // they live in the URL rather than local state, the same way `search`
+  // already does via PersonnelFilterBar's commitSearch: changing either
+  // triggers a real Core re-fetch instead of only re-slicing whatever the
+  // current `limit:100` page already happened to contain.
+  const typeFilter = (searchParams.get("type") as PersonnelType | null) ?? "";
+  const workStatusFilter = (searchParams.get("status") as WorkStatus | null) ?? "";
+
+  function setUrlFilter(key: "type" | "status", value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set(key, value);
+    else params.delete(key);
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   const allRows = useMemo(() => fetchedRows ?? [], [fetchedRows]);
 
@@ -135,8 +151,10 @@ export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }
   function handleReset() {
     setUnitFilter("");
     setPositionFilter("");
-    setTypeFilter("");
-    setWorkStatusFilter("");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("type");
+    params.delete("status");
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   return (
@@ -175,7 +193,7 @@ export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }
           groupBy={(row) => row.workStatus}
           labelFor={(key) => WORK_STATUS_LABEL[key as WorkStatus] ?? key}
           onSelectGroup={(status) => {
-            setWorkStatusFilter(status as WorkStatus);
+            setUrlFilter("status", status);
             setActiveTab("roster");
           }}
         />
@@ -189,9 +207,9 @@ export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }
             onPositionChange={setPositionFilter}
             positionOptions={positionOptions}
             type={typeFilter}
-            onTypeChange={setTypeFilter}
+            onTypeChange={(value) => setUrlFilter("type", value)}
             workStatus={workStatusFilter}
-            onWorkStatusChange={setWorkStatusFilter}
+            onWorkStatusChange={(value) => setUrlFilter("status", value)}
             view={view}
             onViewChange={setView}
             onReset={handleReset}

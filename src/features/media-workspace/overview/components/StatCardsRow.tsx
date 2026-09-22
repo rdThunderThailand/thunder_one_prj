@@ -12,6 +12,11 @@ const cards = [
   { key: "offline", label: "Offline", href: "/media-workspace/channels?q=offline", color: "red", Icon: XCircle },
 ] as const;
 
+// 2026-09-19: icon chips matched to the design reference's own pattern — a
+// single neutral bg-muted chip with a semantic-colored icon (not a per-stat
+// pastel background); `.bar` (the mini progress bar at the bottom of each
+// card) keeps a solid semantic fill, that part already matched the
+// reference as-is.
 const colors = {
   indigo: { icon: "bg-primary-soft text-primary", bar: "bg-primary" },
   emerald: { icon: "bg-emerald-50 text-emerald-600", bar: "bg-emerald-500" },

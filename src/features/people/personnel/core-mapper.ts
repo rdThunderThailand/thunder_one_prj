@@ -15,6 +15,19 @@ const STATUS_MAP: Record<CoreMemberRow["status"], WorkStatus> = {
   archived: "inactive",
 };
 
+/** The reverse of STATUS_MAP, for turning PersonnelFilterBar's สถานะการทำงาน
+ *  selection into Core's real `?status=` query param (added 2026-09-17, Core
+ *  commit de57b3e). Deliberately has no "inactive" key — STATUS_MAP collapses
+ *  two real Core statuses (`removed` and `archived`) into it, and `?status=`
+ *  only takes one value, so "inactive" can't be expressed as a single
+ *  server-side filter; callers must fall back to filtering `removed`/
+ *  `archived` rows client-side for that one option. */
+export const WORK_STATUS_TO_CORE_STATUS: Partial<Record<WorkStatus, CoreMemberRow["status"]>> = {
+  invited: "invited",
+  active: "active",
+  "on-leave": "suspended",
+};
+
 /** "removed"/"archived" wins over `member_type`: someone no longer with the
  *  org reads as "inactive" regardless of what kind of member they were,
  *  matching the mockup's own 5th type. */

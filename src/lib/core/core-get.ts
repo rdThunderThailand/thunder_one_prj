@@ -29,10 +29,20 @@ export const coreGet = cache(async function coreGet<T>(path: string, token: stri
       headers: coreAuthHeaders(token),
       cache: "no-store",
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // 2026-09-17: log the status before collapsing to `null` — every
+      // failure (403/500/timeout/etc.) used to look identical to a caller
+      // with no way to tell "no permission" apart from "Core is down"
+      // short of re-deriving it themselves. Not changing the `null`
+      // contract itself (still fails open, callers still degrade the same
+      // way) — just enough to debug from server logs when it happens.
+      console.error(`[coreGet] ${path} -> HTTP ${res.status}`);
+      return null;
+    }
     const body = await res.json().catch(() => null);
     return (body?.data as T) ?? null;
-  } catch {
+  } catch (err) {
+    console.error(`[coreGet] ${path} -> ${err instanceof Error ? err.message : "unknown transport error"}`);
     return null;
   }
 });
