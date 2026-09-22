@@ -6,7 +6,7 @@
 import type { ReactNode } from "react";
 // SettingsIcon/SparklesIcon back these two commented-out nav entries —
 // re-import them if Intelligence/Governance come back.
-import { GridIcon, HomeIcon, ListIcon } from "@/components/ui/icons";
+import { CheckSquareIcon, GridIcon, HomeIcon } from "@/components/ui/icons";
 
 export interface ShellNavItem {
   label: string;
@@ -34,7 +34,7 @@ export const shellNavItems: ShellNavItem[] = [
     label: "งานของฉัน",
     sublabel: "งานและการอนุมัติ",
     href: "/my-work",
-    icon: <ListIcon className="h-4 w-4 shrink-0" />,
+    icon: <CheckSquareIcon className="h-4 w-4 shrink-0" />,
     badge: 3,
   },
   {
