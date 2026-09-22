@@ -2,19 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/lovable/button";
-import { Card } from "@/components/ui/Card";
+import { LayoutInformationCard } from "@/features/media-workspace/compositions/components/LayoutInformationCard";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 // Reused rather than re-written — see docs/layouts/plan-layout-execution.md Task 7 Step 5.
 import { UnsavedLeaveConfirm } from "../../playlists/components/UnsavedLeaveConfirm";
 import { deriveAspectRatio, parseResolution, sameRatio, validateZones } from "../geometry";
-import { evenSplitColumns, splitZone } from "../split-zone";
 import { fetchLayout, upsertLayout } from "../services/layouts-api";
 import { describeSaveError } from "../status-display";
 import { DEFAULT_ASPECT_RATIO, DEFAULT_BACKGROUND, DEFAULT_RESOLUTION, type LayoutDraft, type LayoutZone } from "../types";
 import { LayoutCanvas } from "./LayoutCanvas";
-import { LayoutSettingsStep } from "./LayoutSettingsStep";
+import { LayoutEditorHeader, LayoutEditorToolbar, LayoutZoneOverview } from "./LayoutEditorChrome";
+import { LayoutSettingsPanel } from "./LayoutSettingsPanel";
 import { TemplateRail } from "./TemplateRail";
 import { ZoneProperties } from "./ZoneProperties";
 
@@ -44,12 +43,13 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   const [initial, setInitial] = useState<LayoutDraft>(emptyDraft);
   const [loading, setLoading] = useState(!!layoutId);
   const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
-  const [step, setStep] = useState<1 | 2>(1);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [usageCount, setUsageCount] = useState(0);
+  // Remounting the canvas resets its zoom — the same "Fit to Screen" the Composition editor uses.
+  const [fitSignal, setFitSignal] = useState(0);
 
   useEffect(() => {
     if (!layoutId) return;
@@ -148,12 +148,12 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
 
   if (loadError) {
     return (
-      <Card className="p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <p className="text-sm text-danger">{loadError.message}</p>
         <Button className="mt-4" variant="outline" onClick={() => router.push("/media-workspace/layouts/templates")}>
           กลับไป Templates
         </Button>
-      </Card>
+      </div>
     );
   }
 
@@ -166,37 +166,25 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
         ? "กรุณากรอกชื่อ Layout"
         : null;
 
+  // Full-bleed like the Lovable reference (ADR 0077 focus shell): the negative margin cancels
+  // the dashboard <main> padding so header, toolbar and columns run edge to edge.
   return (
-    <div className="flex flex-col gap-4">
-      <PageHeader
-        title={draft.id ? "Edit Template" : "New Template"}
-        subtitle={step === 1 ? "Choose a template and arrange the Zones." : "Name, aspect ratio, background and status."}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={goBack}>
-              Cancel
-            </Button>
-            {step === 1 ? (
-              <Button
-                onClick={() => setStep(2)}
-                disabled={geometryErrors.length > 0}
-                title={geometryErrors.length > 0 ? saveDisabledReason ?? undefined : undefined}
-              >
-                Next
-              </Button>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => setStep(1)}>
-                  Back
-                </Button>
-                <Button onClick={handleSave} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>
-                  {saving ? "กำลังบันทึก..." : "Save"}
-                </Button>
-              </>
-            )}
-          </div>
-        }
+    <div className="-m-6 flex h-dvh flex-col overflow-hidden bg-background">
+      <div className="shrink-0 border-b border-border bg-card px-4">
+      <LayoutEditorHeader
+        isExisting={!!draft.id}
+        name={draft.name}
+        status={draft.status}
+        referenceResolution={draft.referenceResolution}
+        aspectRatio={draft.aspectRatio}
+        zoneCount={draft.zones.length}
+        isDirty={isDirty}
+        saving={saving}
+        saveDisabledReason={saveDisabledReason}
+        onBack={goBack}
+        onSave={handleSave}
       />
+      </div>
 
       {confirmLeave && (
         <UnsavedLeaveConfirm
@@ -206,96 +194,98 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       )}
 
       {saveError && (
-        <Card className="border-danger/30 p-4">
+        <div className="shrink-0 border-b border-danger/30 bg-danger-soft px-4 py-2">
           <p className="text-sm text-danger">{saveError}</p>
-        </Card>
+        </div>
       )}
 
       {usageCount > 1 && (
-        <Card className="border-warning/30 p-4">
+        <div className="shrink-0 border-b border-warning/30 bg-warning-soft px-4 py-2">
           <p className="text-sm text-warning">Change-all mode: this Template is used by {usageCount} Layouts.</p>
-        </Card>
+        </div>
       )}
 
-      {step === 1 ? (
-        <div className="flex flex-col gap-4">
-          <Card className="p-4">
-            <TemplateRail
-              background={draft.background}
-              onSelect={(zones) => {
-                setDraft((d) => ({ ...d, zones: reindex(zones) }));
-                setSelectedIndex(null);
-              }}
-            />
-          </Card>
+      <div className="min-h-0 flex-1 overflow-x-auto">
+        <div className="flex h-full min-w-[1060px] flex-col">
+          <LayoutEditorToolbar
+            zones={draft.zones}
+            selectedIndex={selectedIndex}
+            onSelectIndex={setSelectedIndex}
+            onChange={(zones) => setDraft((d) => ({ ...d, zones: reindex(zones) }))}
+            onFit={() => setFitSignal((value) => value + 1)}
+          />
+          <div className="grid min-h-0 flex-1 grid-cols-[230px_minmax(560px,1fr)_270px] items-stretch">
+            <aside className="min-h-0 overflow-y-auto border-r border-border bg-card p-3">
+              <TemplateRail
+                background={draft.background}
+                onSelect={(zones) => {
+                  setDraft((d) => ({ ...d, zones: reindex(zones) }));
+                  setSelectedIndex(null);
+                }}
+              />
+            </aside>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
-            <Card className="p-4">
+            <main className="flex min-h-0 flex-col gap-3 overflow-y-auto bg-muted/40 p-3">
               <LayoutCanvas
+                key={fitSignal}
                 zones={draft.zones}
                 background={draft.background}
                 aspectRatio={draft.aspectRatio}
                 referenceResolution={draft.referenceResolution}
+                fillAvailable
                 selectedIndex={selectedIndex}
                 onSelectIndex={setSelectedIndex}
                 onChange={(zones) => setDraft((d) => ({ ...d, zones }))}
               />
-            </Card>
+              <div className="grid shrink-0 grid-cols-2 gap-3">
+                <LayoutInformationCard
+                  name={draft.name}
+                  resolution={draft.referenceResolution}
+                  aspectRatio={draft.aspectRatio}
+                  zoneCount={draft.zones.length}
+                  status={draft.status}
+                />
+                <LayoutZoneOverview
+                  zones={draft.zones}
+                  selectedIndex={selectedIndex}
+                  referenceResolution={draft.referenceResolution}
+                  onSelectIndex={setSelectedIndex}
+                />
+              </div>
+            </main>
 
-            <ZoneProperties
-              zone={selectedZone}
-              referenceResolution={draft.referenceResolution}
-              canRemove={draft.zones.length > 1}
-              onChange={(next) =>
-                setDraft((d) => ({
-                  ...d,
-                  zones: d.zones.map((z, i) => (i === selectedIndex ? next : z)),
-                }))
-              }
-              onRemove={() => {
-                setDraft((d) => ({ ...d, zones: reindex(d.zones.filter((_, i) => i !== selectedIndex)) }));
-                setSelectedIndex(null);
-              }}
-            />
-            <div className="flex flex-wrap gap-2">
-              {selectedIndex !== null && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const next = splitZone(draft.zones, selectedIndex);
-                    if (!next) return;
-                    setDraft((draft) => ({ ...draft, zones: next }));
-                    setSelectedIndex(selectedIndex + 1);
-                  }}
-                >
-                  Split Zone
-                </Button>
-              )}
-              {[2, 3, 4].map((count) => (
-                <Button
-                  key={count}
-                  variant="outline"
-                  onClick={() => {
-                    setDraft((d) => ({ ...d, zones: evenSplitColumns(count) }));
+            <aside className="min-h-0 overflow-y-auto border-l border-border bg-card p-3">
+              {selectedZone && selectedIndex !== null ? (
+                <ZoneProperties
+                  zone={selectedZone}
+                  zoneIndex={selectedIndex}
+                  referenceResolution={draft.referenceResolution}
+                  canRemove={draft.zones.length > 1}
+                  onChange={(next) =>
+                    setDraft((d) => ({
+                      ...d,
+                      zones: d.zones.map((z, i) => (i === selectedIndex ? next : z)),
+                    }))
+                  }
+                  onRemove={() => {
+                    setDraft((d) => ({ ...d, zones: reindex(d.zones.filter((_, i) => i !== selectedIndex)) }));
                     setSelectedIndex(null);
                   }}
-                >
-                  Even split × {count}
-                </Button>
-              ))}
-            </div>
+                />
+              ) : (
+                <LayoutSettingsPanel
+                  name={draft.name}
+                  aspectRatio={draft.aspectRatio}
+                  referenceResolution={draft.referenceResolution}
+                  background={draft.background}
+                  status={draft.status}
+                  onChange={handleSettingsChange}
+                />
+              )}
+            </aside>
           </div>
         </div>
-      ) : (
-        <LayoutSettingsStep
-          name={draft.name}
-          aspectRatio={draft.aspectRatio}
-          referenceResolution={draft.referenceResolution}
-          background={draft.background}
-          status={draft.status}
-          onChange={handleSettingsChange}
-        />
-      )}
+      </div>
     </div>
   );
 }

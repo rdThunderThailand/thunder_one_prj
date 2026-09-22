@@ -16,13 +16,18 @@ export function TemplateRail({
   onSelect: (zones: LayoutZone[]) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-col gap-3">
+      <div>
+        <p className="text-sm font-semibold text-foreground">Presets</p>
+        <p className="text-xs text-muted-foreground">Replaces every Zone on the canvas.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
       <button
         type="button"
         onClick={() => onSelect(BLANK_ZONES)}
-        className="flex w-32 flex-col items-center gap-2 rounded-lg border border-dashed border-border p-3 text-center hover:border-primary/30 hover:bg-primary-soft"
+        className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border p-2 text-center hover:border-primary/30 hover:bg-primary-soft"
       >
-        <span className="flex h-16 w-full items-center justify-center rounded border border-border text-xs text-muted-foreground">
+        <span className="flex aspect-video w-full items-center justify-center rounded border border-border text-xs text-muted-foreground">
           Blank
         </span>
         <span className="text-xs font-medium text-muted-foreground">Start blank</span>
@@ -33,17 +38,18 @@ export function TemplateRail({
           key={template.key}
           type="button"
           onClick={() => onSelect(template.zones)}
-          className="flex w-32 flex-col items-center gap-2 rounded-lg border border-border p-3 text-center hover:border-primary/30 hover:bg-primary-soft"
+          className="flex flex-col items-center gap-2 rounded-lg border border-border p-2 text-center hover:border-primary/30 hover:bg-primary-soft"
         >
           <LayoutWireframe
             zones={template.zones}
             background={background}
             aspectRatio="16:9"
-            className="h-16 w-full rounded border border-border"
+            className="w-full rounded border border-border"
           />
           <span className="text-xs font-medium text-muted-foreground">{template.name}</span>
         </button>
       ))}
+      </div>
     </div>
   );
 }
