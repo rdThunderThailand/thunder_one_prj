@@ -12,6 +12,7 @@ import { shellNavItems } from "@/config/nav/shell";
 import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
 import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
 
 const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
 
@@ -61,7 +62,7 @@ function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed text-slate-800`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-slate-50 text-slate-400 opacity-75 dark:bg-zinc-900`} title="Not built yet">
         {icon}
         {item.label}
         <NavBadge badge={item.badge} />
@@ -92,7 +93,7 @@ function SubLink({ item, active }: { item: NavItem; active: boolean }) {
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed text-slate-800`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-slate-50 text-slate-400 opacity-75 dark:bg-zinc-900`} title="Not built yet">
         {item.label}
       </span>
     );
@@ -103,8 +104,8 @@ function SubLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       className={`${baseClasses} ${
         active
-          ? "text-indigo-600"
-          : "text-slate-800 hover:text-indigo-600"
+          ? "bg-indigo-50 text-indigo-600"
+          : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
       }`}
     >
       {item.label}
@@ -132,7 +133,7 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   }
 
   return (
-    <section className="border-b border-slate-100 pb-4">
+    <section className="border-b border-slate-100 pb-4 last:border-b-0">
       <h2 className="mb-2 px-3 text-3xs font-bold uppercase text-slate-500">{section.label}</h2>
       <button
         type="button"
@@ -219,6 +220,13 @@ function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolea
 // — the existing per-persona sectioned nav, restyled to the light theme.
 function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: string; collapsed: boolean }) {
   const nav = resolveAppNavConfig(appId, pathname);
+  const isMediaWorkspace = appId === "media-workspace";
+
+  if (isMediaWorkspace) {
+    return <MediaWorkspaceNav nav={nav} pathname={pathname} collapsed={collapsed} />;
+  }
+
+  const overviewActive = isActivePath(pathname, nav.overviewItem.href);
 
   if (collapsed) {
     return (
@@ -235,12 +243,18 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
   }
 
   return (
-    <nav className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-2 pt-3 pb-4">
+    <nav className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-2 pt-3 pb-4 tracking-normal">
       <div>
         {/* 2026-09-19: font-bold -> font-semibold + rounded-md -> rounded-xl
             + px-2.5 -> px-3, matching the design reference's pinned
             "Overview" row (14px/600, 12px radius, 12px padding). */}
-        <div className="flex min-h-10 items-center gap-3 rounded-xl bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-600">
+        <div
+          className={`flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+            overviewActive
+              ? "bg-indigo-50 text-indigo-600"
+              : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
+          }`}
+        >
           <span className="h-4 w-4">{nav.overviewItem.icon}</span>
           <Link href={nav.overviewItem.href!} className="flex-1">
             {nav.overviewItem.label}
@@ -324,6 +338,7 @@ function SettingsSidebar({ pathname }: { pathname: string }) {
 export function Sidebar({ tenantName }: { tenantName?: string | null }) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
+  const isMediaWorkspace = activeApp?.id === "media-workspace";
   const [collapsed, setCollapsed] = useState(false);
 
   if (SETTINGS_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
@@ -336,7 +351,9 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
       // off the design reference's own sidebar (exactly 224px wide); this
       // was the single biggest contributor to the whole shell reading as
       // "bloated" next to it, more than any font-size difference.
-      className={`flex h-full shrink-0 flex-col border-r border-[#e6edf9] bg-white transition-[width] duration-150 dark:border-zinc-800 dark:bg-zinc-950 ${
+      className={`flex h-full shrink-0 flex-col border-r ${
+        isMediaWorkspace ? "border-sidebar-border bg-sidebar" : "border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950"
+      } transition-[width] duration-150 ${
         collapsed ? "w-16" : "w-56"
       }`}
     >
@@ -345,16 +362,15 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
         // 2026-09-19: h-[88px] -> h-[68px], matching the reference's own
         // logo-row height (68px, measured); px-10 -> px-5 since the row is
         // no longer wide enough for 40px of padding on each side.
-        className={`flex h-[68px] items-center border-b border-[#e6edf9] hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900 ${
-          // Was previously `px-10 ... ${collapsed ? "justify-center px-2" : ""}`
-          // — both px-10 and px-2 ended up in the class list at once when
-          // collapsed, and px-10 (40px) won the cascade over px-2 (8px),
-          // leaving zero content width in the 80px link for the icon to sit
-          // in (it silently flex-shrank to 0). Made mutually exclusive.
-          collapsed ? "justify-center px-2" : "px-5"
+        className={`flex items-center ${
+          isMediaWorkspace
+            ? `h-[68px] gap-3 border-b border-sidebar-border hover:bg-accent px-4 ${collapsed ? "justify-center px-2" : ""}`
+            : `h-[68px] border-b border-[#e6edf9] hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900 ${collapsed ? "justify-center px-2" : "px-5"}`
         }`}
       >
-        {collapsed ? (
+        {isMediaWorkspace ? (
+          <MediaWorkspaceBrand collapsed={collapsed} />
+        ) : collapsed ? (
           // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
           <img src="/icon.svg" alt="ThunderOne" className="rounded-[9px]" style={{ width: 32, height: 32 }} />
         ) : (
@@ -376,31 +392,50 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
       {/* 2026-09-19: px-5 pb-5 pt-3 + two h-14 (56px) rows -> p-2 + two h-9
           (36px) rows, matching the reference's own compact bottom area
           (57px total, p-2 padding) — was nearly twice as tall. */}
-      <div className="mt-auto border-t border-[#e6edf9] p-2 dark:border-zinc-800">
-        {/* 2026-09-16 shell redesign — tenant name shown for real now (was
-            sr-only-only before); no tenant switcher exists, so this is a
-            static label with a decorative chevron, not a working picker. */}
-        <div
-          className={`mb-2 flex h-9 items-center gap-2.5 rounded-lg border border-[#e6edf9] px-3 text-xs font-semibold text-[#071858] dark:border-zinc-800 dark:text-zinc-200 ${
-            collapsed ? "justify-center" : ""
-          }`}
-          title={collapsed ? (tenantName ?? "Thunder One") : undefined}
-        >
-          <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
-          {!collapsed && (
-            <>
-              <span className="flex-1 truncate">{tenantName ?? "Thunder One"}</span>
-              <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-            </>
-          )}
-        </div>
+      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-sidebar-border p-2" : "border-t border-[#e6edf9] p-2 dark:border-zinc-800"}`}>
+        {isMediaWorkspace ? (
+          !collapsed && <p className="sr-only">{tenantName ?? "Thunder One"}</p>
+        ) : (
+          {/* 2026-09-16 shell redesign — tenant name shown for real now (was
+              sr-only-only before); no tenant switcher exists, so this is a
+              static label with a decorative chevron, not a working picker. */}
+          <div
+            className={`mb-2 flex h-9 items-center gap-2.5 rounded-lg border border-[#e6edf9] px-3 text-xs font-semibold text-[#071858] dark:border-zinc-800 dark:text-zinc-200 ${
+              collapsed ? "justify-center" : ""
+            }`}
+            title={collapsed ? (tenantName ?? "Thunder One") : undefined}
+          >
+            <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate">{tenantName ?? "Thunder One"}</span>
+                <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              </>
+            )}
+          </div>
+        )}
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className={`flex h-9 w-full items-center justify-center gap-2.5 rounded-lg border border-[#e6edf9] text-xs font-semibold text-[#61719e] transition-colors hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900`}
+          className={
+            isMediaWorkspace
+              ? `flex h-9 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-foreground transition-colors hover:bg-accent hover:text-primary ${
+                  collapsed ? "justify-center" : ""
+                }`
+              : "flex h-9 w-full items-center justify-center gap-2.5 rounded-lg border border-[#e6edf9] text-xs font-semibold text-[#61719e] transition-colors hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900"
+          }
         >
-          {collapsed ? <ArrowRightIcon className="h-4 w-4" /> : <ArrowLeftIcon className="h-4 w-4" />}
-          {!collapsed && "ย่อเมนู"}
+          {isMediaWorkspace ? (
+            <>
+              <MediaWorkspaceCollapseIcon open={collapsed} />
+              {!collapsed && "Collapse"}
+            </>
+          ) : (
+            <>
+              {collapsed ? <ArrowRightIcon className="h-4 w-4" /> : <ArrowLeftIcon className="h-4 w-4" />}
+              {!collapsed && "ย่อเมนู"}
+            </>
+          )}
         </button>
       </div>
     </aside>

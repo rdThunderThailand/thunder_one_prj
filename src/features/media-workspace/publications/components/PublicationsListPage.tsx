@@ -25,50 +25,46 @@ import { NoAccess } from "@/components/ui/NoAccess";
 
 export function PublicationsListPage() {
   const router = useRouter();
-  const [drafts, setDrafts] = useState<PublicationListItem[] | null>(null);
-  const [active, setActive] = useState<PublicationListItem[] | null>(null);
-  const [cancelled, setCancelled] = useState<PublicationListItem[] | null>(null);
+  // One read of every row (the RPC accepts a null status); the three tabs are a
+  // client-side split on the stored `status`. Not `effective_status` — that is a
+  // separate clock-aware layer `isPastPublication` applies on top, and the RPC's
+  // own predicate is on `status`.
+  const [items, setItems] = useState<PublicationListItem[] | null>(null);
   const [loading, setLoading] = useState(true);
-  // Per-tab, so one failing list cannot make the other read as empty.
-  const [draftError, setDraftError] = useState<ClassifiedError | null>(null);
-  const [activeError, setActiveError] = useState<ClassifiedError | null>(null);
-  const [cancelledError, setCancelledError] = useState<ClassifiedError | null>(null);
+  // One call, so one error state — a failed load empties every tab together
+  // rather than leaving some silently blank (ADR 0065 §1).
+  const [error, setError] = useState<ClassifiedError | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  const drafts = items?.filter((item) => item.status === "draft") ?? null;
+  const activeRows = items?.filter((item) => item.status === "active") ?? null;
+  const cancelledRows = items?.filter((item) => item.status === "cancelled") ?? null;
+
   // "Active" keeps ADR 0004's meaning (scheduled/active only); ended rows move to
   // "Inactive" alongside cancelled ones instead, per ADR 0015.
-  const activeOnly = active?.filter((item) => !isPastPublication(item)) ?? null;
+  const activeOnly = activeRows?.filter((item) => !isPastPublication(item)) ?? null;
   const inactive =
-    active && cancelled ? [...active.filter(isPastPublication), ...cancelled] : null;
+    activeRows && cancelledRows
+      ? [...activeRows.filter(isPastPublication), ...cancelledRows]
+      : null;
 
   useEffect(() => {
     let alive = true;
 
-    Promise.allSettled([
-      fetchPublications("draft"),
-      fetchPublications("active"),
-      fetchPublications("cancelled"),
-    ]).then(([draftRes, activeRes, cancelledRes]) => {
-      if (!alive) return;
-
-      if (draftRes.status === "fulfilled") setDrafts(draftRes.value);
-      else setDraftError(classifyApiError(draftRes.reason, "โหลดดราฟต์ไม่สำเร็จ"));
-
-      if (activeRes.status === "fulfilled") setActive(activeRes.value);
-      else
-        setActiveError(classifyApiError(activeRes.reason, "โหลด active ไม่สำเร็จ"));
-
-      if (cancelledRes.status === "fulfilled") setCancelled(cancelledRes.value);
-      else
-        setCancelledError(
-          classifyApiError(cancelledRes.reason, "โหลด inactive ไม่สำเร็จ")
-        );
-
-      setLoading(false);
-    });
+    fetchPublications()
+      .then((rows) => {
+        if (!alive) return;
+        setItems(rows);
+        setLoading(false);
+      })
+      .catch((reason) => {
+        if (!alive) return;
+        setError(classifyApiError(reason, "โหลด publication ไม่สำเร็จ"));
+        setLoading(false);
+      });
 
     return () => {
       alive = false;
@@ -80,7 +76,7 @@ export function PublicationsListPage() {
       setBusyId(id);
       setActionError(null);
       await deletePublication(id);
-      setDrafts((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
+      setItems((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
       setConfirmingId(null);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
@@ -94,7 +90,7 @@ export function PublicationsListPage() {
       setBusyId(id);
       setActionError(null);
       await cancelPublication(id);
-      setActive((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
+      setItems((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
       setConfirmingId(null);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
@@ -116,9 +112,8 @@ export function PublicationsListPage() {
   };
 
   const renderTable = (
-    items: PublicationListItem[] | null,
-    tab: "draft" | "active" | "inactive",
-    error: ClassifiedError | null
+    rows: PublicationListItem[] | null,
+    tab: "draft" | "active" | "inactive"
   ) => {
     if (loading) {
       return <p className="py-6 text-center text-sm text-zinc-400">กำลังโหลด…</p>;
@@ -133,7 +128,7 @@ export function PublicationsListPage() {
         </p>
       );
     }
-    if (!items || items.length === 0) {
+    if (!rows || rows.length === 0) {
       return (
         <p className="py-6 text-center text-sm text-zinc-400">
           {tab === "draft"
@@ -161,7 +156,7 @@ export function PublicationsListPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => {
+            {rows.map((item) => {
               const updatedStr = item.updated_at || item.created_at;
               const updatedDisplay = updatedStr ? new Date(updatedStr).toLocaleString() : "—";
               const isConfirming = confirmingId === item.id;
@@ -318,17 +313,17 @@ export function PublicationsListPage() {
             {
               key: "drafts",
               label: `Drafts (${drafts ? drafts.length : 0})`,
-              content: renderTable(drafts, "draft", draftError),
+              content: renderTable(drafts, "draft"),
             },
             {
               key: "active",
               label: `Active (${activeOnly ? activeOnly.length : 0})`,
-              content: renderTable(activeOnly, "active", activeError),
+              content: renderTable(activeOnly, "active"),
             },
             {
               key: "inactive",
               label: `Inactive (${inactive ? inactive.length : 0})`,
-              content: renderTable(inactive, "inactive", cancelledError),
+              content: renderTable(inactive, "inactive"),
             },
           ]}
         />

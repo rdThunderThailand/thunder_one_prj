@@ -1,10 +1,14 @@
 import type { DraftFields } from "./store/usePublicationDraftStore";
 import type { MediaAsset, ScheduleConflict } from "./types";
 import { validateStep } from "./step-validation.ts";
+import { isScheduleFormValid } from "./schedule.ts";
 
 export type EligibilityStatus = "pass" | "fail" | "unknown";
 
+export type EligibilityCheckId = "content" | "targets" | "schedule" | "policy" | "conflicts";
+
 export interface EligibilityCheck {
+  id: EligibilityCheckId;
   status: EligibilityStatus;
 }
 
@@ -17,20 +21,20 @@ export interface PriorityConflictSummary {
   higherPriorityCount: number;
   lowerPriorityCount: number;
   equalPriorityCount: number;
-  /** Equal-priority overlaps where either side is a Composition — these block publish (ticket 09). */
-  blockingOverlapCount: number;
-  hasBlockingConflict: boolean;
+  /** Equal-priority overlaps where either side is a Composition — one screen cannot show both,
+   *  so only the most recently activated Publication airs for the overlap (ADR 0068). */
+  exclusiveOverlapCount: number;
 }
 
 export function summarizePriorityConflicts(conflicts: ScheduleConflict[]): PriorityConflictSummary {
   let higherPriorityCount = 0;
   let lowerPriorityCount = 0;
   let equalPriorityCount = 0;
-  let blockingOverlapCount = 0;
+  let exclusiveOverlapCount = 0;
 
   for (const conflict of conflicts) {
     if (conflict.blocks) {
-      blockingOverlapCount += 1;
+      exclusiveOverlapCount += 1;
     }
     if (conflict.would_be_suppressed) {
       higherPriorityCount += 1;
@@ -45,13 +49,14 @@ export function summarizePriorityConflicts(conflicts: ScheduleConflict[]): Prior
     higherPriorityCount,
     lowerPriorityCount,
     equalPriorityCount,
-    blockingOverlapCount,
-    hasBlockingConflict: higherPriorityCount > 0 || blockingOverlapCount > 0,
+    exclusiveOverlapCount,
   };
 }
 
 export function isAllGatingPassed(checks: EligibilityCheck[]): boolean {
-  return [0, 1, 2, 4].every((idx) => checks[idx]?.status === "pass");
+  return ["content", "targets", "schedule"].every(
+    (id) => checks.find((check) => check.id === id)?.status === "pass",
+  );
 }
 
 export function computeEligibility(params: {
@@ -75,51 +80,44 @@ export function computeEligibility(params: {
   } else if (draft.assetItems.length === 0) {
     contentCheckStatus = "fail";
   } else {
-    let allFound = true;
-    let allApproved = true;
-
-    for (const item of draft.assetItems) {
-      const found = assets.find((a) => a.id === item.media_asset_id);
-      if (!found) {
-        allFound = false;
-        break;
-      }
-      if (found.approval_status !== "approved") {
-        allApproved = false;
-      }
-    }
-
-    if (!allFound) {
-      contentCheckStatus = "unknown";
-    } else if (allApproved) {
-      contentCheckStatus = "pass";
-    } else {
-      contentCheckStatus = "fail";
-    }
+    // Every held item must resolve against the loaded library; an unresolved one reads as
+    // "unknown" until the library load finishes. Approval is no longer a gate (ADR 0073).
+    const allFound = draft.assetItems.every((item) =>
+      assets.some((a) => a.id === item.media_asset_id),
+    );
+    contentCheckStatus = allFound ? "pass" : "unknown";
   }
 
-  const scheduleCheckStatus: EligibilityStatus = validateStep(4, draft).valid ? "pass" : "fail";
-  const channelsCheckStatus: EligibilityStatus = validateStep(3, draft).valid ? "pass" : "fail";
+  // The ver02 Program step (3) gates channels and schedule together; the checklist still
+  // reports them as separate rows, so each reads its own primitive rather than the step.
+  const scheduleCheckStatus: EligibilityStatus = isScheduleFormValid(draft.scheduleForm) ? "pass" : "fail";
+  // A Channel picked directly and one reached through a Channel Group are independent
+  // intents (ADR 0074 §6) — either alone is a complete target selection.
+  const channelsCheckStatus: EligibilityStatus =
+    draft.channelIds.length > 0 || draft.groupIds.length > 0 ? "pass" : "fail";
   const policyCheckStatus: EligibilityStatus = "unknown";
-  const priorityConflicts = summarizePriorityConflicts(conflicts);
+  // ADR 0068: an overlap warns, it never refuses. The check still flags that conflicts exist so
+  // the checklist shows it, but it is read as advice rather than a gate.
   const conflictsCheckStatus: EligibilityStatus =
     checkingConflicts || conflictsError
       ? "unknown"
-      : priorityConflicts.hasBlockingConflict
-      ? "fail"
-      : "pass";
+      : conflicts.some((conflict) => conflict.would_be_suppressed)
+        ? "fail"
+        : "pass";
 
   const checks: EligibilityCheck[] = [
-    { status: contentCheckStatus },
-    { status: scheduleCheckStatus },
-    { status: channelsCheckStatus },
-    { status: policyCheckStatus },
-    { status: conflictsCheckStatus },
+    { id: "content", status: contentCheckStatus },
+    { id: "targets", status: channelsCheckStatus },
+    { id: "schedule", status: scheduleCheckStatus },
+    { id: "policy", status: policyCheckStatus },
+    { id: "conflicts", status: conflictsCheckStatus },
   ];
 
-  const basicInfoOk = validateStep(1, draft).valid;
-  const gateChecks = [checks[0], checks[1], checks[2], checks[4]];
-  const canPublish = basicInfoOk && !loadingRefs && gateChecks.every((c) => c.status === "pass");
+  // Step 2 (Prepare Content) owns the name/type gate after the ver02 re-cut (ADR 0072 §2).
+  const basicInfoOk = validateStep(2, draft).valid;
+  // Content, schedule and channels only — conflicts are advisory (ADR 0068), so the button no
+  // longer waits on a result that cannot block anything.
+  const canPublish = basicInfoOk && !loadingRefs && isAllGatingPassed(checks);
 
   return {
     checks,

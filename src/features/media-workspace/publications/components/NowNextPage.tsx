@@ -2,24 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { requestApi } from "@/lib/api/media-api";
 import { getDemoNowNext } from "../now-next-demo";
 import { timelinePosition, timelineTicks, timelineWindow } from "../now-next-layout";
+import { fetchNowNext } from "../now-next";
 import type { NowNextOccurrence, NowNextResponse, NowNextRow } from "../now-next";
 
 const emptySummary = { scheduled_now_channels: 0, playback_confirmed_channels: 0, upcoming_60m_channels: 0, upcoming_3h_channels: 0, total_active_channels: 0 };
-
-function fetchNowNext(horizon: 60 | 180, includeIdle: boolean, query: string) {
-  const params = new URLSearchParams({ horizon_minutes: String(horizon), include_idle: String(includeIdle) });
-  if (query.trim()) params.set("q", query.trim());
-  return requestApi<NowNextResponse>("GET", `/media/now-next?${params}`);
-}
 
 function formatTime(value: string | null | undefined, timezone: string) {
   if (!value) return "—";
@@ -109,7 +104,17 @@ function ScheduleTimeline({ rows, asOf, horizon, timezone }: { rows: NowNextRow[
 export function NowNextPage() {
   const [horizon, setHorizon] = useState<60 | 180>(60);
   const [includeIdle, setIncludeIdle] = useState(false);
-  const [query, setQuery] = useState("");
+  const urlQuery = useSearchParams().get("q") ?? "";
+  const [query, setQuery] = useState(urlQuery);
+  // A "View Programs →" link only changes the `q` search param on an already-mounted route —
+  // Next.js does not remount the page for that, so a mount-time initial value alone would miss
+  // it. Adjusting state during render (React's documented pattern for this, in place of an
+  // Effect) picks up the new value the moment `urlQuery` itself changes.
+  const [syncedUrlQuery, setSyncedUrlQuery] = useState(urlQuery);
+  if (urlQuery !== syncedUrlQuery) {
+    setSyncedUrlQuery(urlQuery);
+    if (urlQuery) setQuery(urlQuery);
+  }
   const [data, setData] = useState<NowNextResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [demoReason, setDemoReason] = useState<string | null>(null);
@@ -136,9 +141,18 @@ export function NowNextPage() {
         setError("Now & Next backend read model is not available yet");
       }
     });
+    // The mount fetch always runs, even for a tab opened in the background — only the
+    // recurring poll pauses while hidden, so a tab left open all day stops burning it.
     load();
-    const timer = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(timer); };
+    const poll = () => { if (!document.hidden) load(); };
+    const timer = setInterval(poll, 60_000);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [horizon, includeIdle, query]);
 
   const summary = data?.summary ?? emptySummary;

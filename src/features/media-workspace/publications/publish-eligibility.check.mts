@@ -3,9 +3,10 @@
  *
  *     node src/features/media-workspace/publications/publish-eligibility.check.mts
  *
- * Covers priority-aware schedule conflicts, invalid schedules, and conflict-
- * service failures that must block Publish as "unknown" rather than being
- * silently read as "no conflict".
+ * ADR 0068: a schedule overlap warns, it never refuses. Publish is gated only on
+ * content, targets and schedule — conflicts are advisory, so they can
+ * be "fail" or "unknown" while canPublish stays true. Covers the conflict
+ * buckets summarizePriorityConflicts must produce for the warning copy.
  */
 import assert from "node:assert/strict";
 import { computeEligibility, summarizePriorityConflicts } from "./publish-eligibility.ts";
@@ -17,19 +18,20 @@ const validDraft: DraftFields = {
   publicationId: null,
   idempotencyKey: "idem-key-1",
   step: 4,
+  furthestStep: 4,
   basicInfo: {
-    campaignId: "camp-1",
     publicationType: "image",
     name: "Summer promo",
     description: "",
     priorityId: "normal",
-    language: "th",
     tags: [],
   },
   assetItems: [{ media_asset_id: "asset-1", duration_seconds: 10 }],
   playlistId: null,
   compositionId: null,
   channelIds: ["screen-1"],
+  groupIds: [],
+  groupNamesById: {},
   scheduleForm: { ...makeDefaultScheduleForm(), schedule_type: "now" },
 };
 
@@ -44,18 +46,21 @@ const base = {
   checkingConflicts: false,
 };
 
+const statusOf = (result: ReturnType<typeof computeEligibility>, id: (typeof result.checks)[number]["id"]) =>
+  result.checks.find((check) => check.id === id)?.status;
+
 // Everything passing is the only combination that should allow Publish.
 assert.equal(computeEligibility(base).canPublish, true);
 
-// --- conflict-service-failure: must block, and must not read as "no conflict" ---
+// --- conflict-service-failure: advisory only (ADR 0068) — flags "unknown" but never blocks ---
 const conflictFailure = computeEligibility({ ...base, conflictsError: "Network Error" });
-assert.equal(conflictFailure.checks[4].status, "unknown"); // conflicts is index 4
-assert.equal(conflictFailure.canPublish, false);
+assert.equal(statusOf(conflictFailure, "conflicts"), "unknown");
+assert.equal(conflictFailure.canPublish, true);
 
-// Still in flight is the same as failed for gating purposes — no answer yet.
+// Still in flight is also advisory — Publish no longer waits on a conflict result.
 const stillChecking = computeEligibility({ ...base, checkingConflicts: true });
-assert.equal(stillChecking.checks[4].status, "unknown");
-assert.equal(stillChecking.canPublish, false);
+assert.equal(statusOf(stillChecking, "conflicts"), "unknown");
+assert.equal(stillChecking.canPublish, true);
 
 const samePriorityConflict: ScheduleConflict = {
   publication_id: "pub-2",
@@ -70,10 +75,10 @@ const samePriorityConflict: ScheduleConflict = {
   blocks: false,
 };
 
-// Same-tier publications append to the playback loop, so the overlap is advisory.
+// Same-tier publications append to the playback loop — overlap is advisory, Publish allowed.
 const withSamePriority = computeEligibility({ ...base, conflicts: [samePriorityConflict] });
-assert.equal(withSamePriority.checks[4].status, "pass");
-assert.equal(withSamePriority.canPublish, true);
+assert.equal(statusOf(withSamePriority, "conflicts"), "pass");
+assert.equal(withSamePriority.canPublish, true); // but it never blocks
 
 // A higher-priority draft suppresses the lower tier and is allowed to publish.
 const lowerPriorityConflict: ScheduleConflict = {
@@ -84,10 +89,11 @@ const lowerPriorityConflict: ScheduleConflict = {
   would_suppress: true,
 };
 const withLowerPriority = computeEligibility({ ...base, conflicts: [lowerPriorityConflict] });
-assert.equal(withLowerPriority.checks[4].status, "pass");
+assert.equal(statusOf(withLowerPriority, "conflicts"), "pass");
 assert.equal(withLowerPriority.canPublish, true);
 
-// A draft that would be suppressed by a higher tier must remain blocked.
+// ADR 0068: a draft that would be suppressed by a higher tier still publishes — it just
+// will not air during those windows (the higher-priority override behaviour is unchanged).
 const higherPriorityConflict: ScheduleConflict = {
   ...samePriorityConflict,
   publication_id: "pub-high",
@@ -96,57 +102,48 @@ const higherPriorityConflict: ScheduleConflict = {
   would_be_suppressed: true,
 };
 const withHigherPriority = computeEligibility({ ...base, conflicts: [higherPriorityConflict] });
-assert.equal(withHigherPriority.checks[4].status, "fail");
-assert.equal(withHigherPriority.canPublish, false);
+assert.equal(statusOf(withHigherPriority, "conflicts"), "fail");
+assert.equal(withHigherPriority.canPublish, true);
 
-// Any losing conflict blocks the draft, even when it also wins or ties elsewhere.
+// Mixed priorities: still advisory, still publishable.
 const withMixedPriorities = computeEligibility({
   ...base,
   conflicts: [lowerPriorityConflict, samePriorityConflict, higherPriorityConflict],
 });
-assert.equal(withMixedPriorities.checks[4].status, "fail");
-assert.equal(withMixedPriorities.canPublish, false);
+assert.equal(statusOf(withMixedPriorities, "conflicts"), "fail");
+assert.equal(withMixedPriorities.canPublish, true);
 assert.deepEqual(
   summarizePriorityConflicts([lowerPriorityConflict, samePriorityConflict, higherPriorityConflict]),
   {
     higherPriorityCount: 1,
     lowerPriorityCount: 1,
     equalPriorityCount: 1,
-    blockingOverlapCount: 0,
-    hasBlockingConflict: true,
+    exclusiveOverlapCount: 0,
   }
 );
 
-// --- ticket 09: equal-priority overlap where either side is a Composition blocks Publish ---
-const blockingOverlap: ScheduleConflict = {
+// --- ADR 0068: equal-priority overlap where either side is a Composition still publishes,
+// but only the most recently activated publication airs for the overlap ---
+const exclusiveOverlap: ScheduleConflict = {
   ...samePriorityConflict,
   publication_id: "pub-layout",
   name: "Menu board",
   blocks: true,
 };
 
-// On its own: same priority (so no suppress flags), but `blocks` still fails the gate.
-const withBlockingOverlap = computeEligibility({ ...base, conflicts: [blockingOverlap] });
-assert.equal(withBlockingOverlap.checks[4].status, "fail");
-assert.equal(withBlockingOverlap.canPublish, false);
+const withExclusiveOverlap = computeEligibility({ ...base, conflicts: [exclusiveOverlap] });
+assert.equal(statusOf(withExclusiveOverlap, "conflicts"), "pass");
+assert.equal(withExclusiveOverlap.canPublish, true);
 
-// A plain equal-priority overlap alongside a blocking one still fails.
-const withBlockingAndAdvisory = computeEligibility({
-  ...base,
-  conflicts: [samePriorityConflict, blockingOverlap],
-});
-assert.equal(withBlockingAndAdvisory.checks[4].status, "fail");
-assert.equal(withBlockingAndAdvisory.canPublish, false);
-
-assert.deepEqual(summarizePriorityConflicts([samePriorityConflict, blockingOverlap]), {
+// `blocks` is counted on its own axis and does not stop the equal-priority tally.
+assert.deepEqual(summarizePriorityConflicts([samePriorityConflict, exclusiveOverlap]), {
   higherPriorityCount: 0,
   lowerPriorityCount: 0,
   equalPriorityCount: 2,
-  blockingOverlapCount: 1,
-  hasBlockingConflict: true,
+  exclusiveOverlapCount: 1,
 });
 
-// --- invalid schedule: index 1 is the schedule check ---
+// --- invalid schedule ---
 const invalidSchedule = computeEligibility({
   ...base,
   draft: {
@@ -154,24 +151,25 @@ const invalidSchedule = computeEligibility({
     scheduleForm: { ...validDraft.scheduleForm, schedule_type: "later", start_date: "", start_time: "" },
   },
 });
-assert.equal(invalidSchedule.checks[1].status, "fail");
+assert.equal(statusOf(invalidSchedule, "schedule"), "fail");
 assert.equal(invalidSchedule.canPublish, false);
 
 // --- content gate: empty selection fails, unresolved asset id is "unknown" (not silently passed) ---
 const noContent = computeEligibility({ ...base, draft: { ...validDraft, assetItems: [] } });
-assert.equal(noContent.checks[0].status, "fail");
+assert.equal(statusOf(noContent, "content"), "fail");
 assert.equal(noContent.canPublish, false);
 
 const unresolvedAsset = computeEligibility({ ...base, assets: [] }); // asset-1 not found in list
-assert.equal(unresolvedAsset.checks[0].status, "unknown");
+assert.equal(statusOf(unresolvedAsset, "content"), "unknown");
 assert.equal(unresolvedAsset.canPublish, false);
 
+// Approval is no longer a content gate (ADR 0073) — a resolvable asset passes regardless of status.
 const unapprovedAsset = computeEligibility({
   ...base,
   assets: [{ id: "asset-1", approval_status: "pending" }],
 });
-assert.equal(unapprovedAsset.checks[0].status, "fail");
-assert.equal(unapprovedAsset.canPublish, false);
+assert.equal(statusOf(unapprovedAsset, "content"), "pass");
+assert.equal(unapprovedAsset.canPublish, true);
 
 // --- composition content gate: without this branch the assets fallthrough marks a
 // composition draft ineligible even though its content lives on the Composition (ADR 0049 §5) ---
@@ -184,7 +182,7 @@ const compositionNoPick = computeEligibility({
     compositionId: null,
   },
 });
-assert.equal(compositionNoPick.checks[0].status, "fail");
+assert.equal(statusOf(compositionNoPick, "content"), "fail");
 assert.equal(compositionNoPick.canPublish, false);
 
 const compositionPicked = computeEligibility({
@@ -196,16 +194,24 @@ const compositionPicked = computeEligibility({
     compositionId: "composition-1",
   },
 });
-assert.equal(compositionPicked.checks[0].status, "pass");
+assert.equal(statusOf(compositionPicked, "content"), "pass");
 assert.equal(compositionPicked.canPublish, true);
 
-// --- channels gate: index 2 ---
+// --- targets gate ---
 const noChannels = computeEligibility({ ...base, draft: { ...validDraft, channelIds: [] } });
-assert.equal(noChannels.checks[2].status, "fail");
+assert.equal(statusOf(noChannels, "targets"), "fail");
 assert.equal(noChannels.canPublish, false);
 
+// A Group-only target is a complete selection too (ADR 0074 §6) — no direct Channel needed.
+const groupOnly = computeEligibility({
+  ...base,
+  draft: { ...validDraft, channelIds: [], groupIds: ["g-1"] },
+});
+assert.equal(statusOf(groupOnly, "targets"), "pass");
+assert.equal(groupOnly.canPublish, true);
+
 // --- policy row is deliberately neutral in Phase 1 (no Approval Workflow) ---
-assert.equal(computeEligibility(base).checks[3].status, "unknown");
+assert.equal(statusOf(computeEligibility(base), "policy"), "unknown");
 
 // --- loadingRefs blocks Publish even when every check already passes ---
 assert.equal(computeEligibility({ ...base, loadingRefs: true }).canPublish, false);

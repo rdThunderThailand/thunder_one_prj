@@ -1,38 +1,47 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { XIcon } from "@/components/ui/icons";
-import { countOnlineDevices, formatChannelLastSeen } from "../channel-logic";
-import type {
-  ChannelCategory,
-  ChannelLifecycle,
-  ChannelListItem,
-} from "../types";
+import { MediaThumb } from "@/components/ui/MediaThumb";
+import { BoxIcon, EditIcon, MonitorIcon, PlayIcon, UsersIcon, XIcon } from "@/components/ui/icons";
+import { channelTypeKey, channelTypeLabel } from "../channel-logic";
+import { nowPlayingAllNames, nowPlayingRemaining, nowPlayingThumbnail, nowPlayingWindow } from "../now-playing";
+import { fetchChannel } from "../services/channels-api";
+import type { NowNextOccurrence } from "../../publications/now-next";
+import { fetchPublication } from "../../publications/services/publications-api";
+import type { ChannelLifecycle, ChannelListItem, ChannelStatusFilter } from "../types";
+import { ChannelGroupsPickerModal } from "./ChannelGroupsPickerModal";
+import { ChannelStructureTree } from "./ChannelStructureTree";
 
-const categoryLabels: Record<ChannelCategory, string> = {
-  dooh: "DOOH",
-  in_store: "In-store",
-  online: "Online",
-  social: "Social",
+const STATUS_BADGE: Record<ChannelStatusFilter, { label: string; color: BadgeColor }> = {
+  online: { label: "Online", color: "green" },
+  warning: { label: "Warning", color: "yellow" },
+  offline: { label: "Offline", color: "red" },
+  no_player: { label: "No player", color: "zinc" },
 };
 
-const lifecycleBadges: Record<ChannelLifecycle, { label: string; color: BadgeColor }> = {
+const LIFECYCLE_BADGE: Record<ChannelLifecycle, { label: string; color: BadgeColor }> = {
   draft: { label: "Draft", color: "zinc" },
   active: { label: "Active", color: "green" },
   inactive: { label: "Inactive", color: "zinc" },
 };
 
-function latestHeartbeat(channel: ChannelListItem): string | null {
-  return channel.devices.reduce<string | null>((latest, device) => {
-    if (!device.last_heartbeat_at) return latest;
-    if (!latest || Date.parse(device.last_heartbeat_at) > Date.parse(latest)) {
-      return device.last_heartbeat_at;
-    }
-    return latest;
-  }, null);
+// Same stand-ins as ChannelTable: no TV/Kiosk pictograms exist, Monitor covers every
+// screen-like Output Kind and Box covers Kiosk.
+const TYPE_ICON: Record<ReturnType<typeof channelTypeKey>, typeof MonitorIcon> = {
+  screen: MonitorIcon,
+  tv: MonitorIcon,
+  kiosk: BoxIcon,
+  multi: MonitorIcon,
+};
+
+function formatDateTime(iso: string | null): string {
+  if (!iso) return "–";
+  const date = new Date(iso);
+  return `${date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 function DetailItem({ label, value }: { label: string; value: string }) {
@@ -46,17 +55,70 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 
 export function ChannelDetailPanel({
   channel,
+  occurrence,
+  displayTimezone,
+  showAddToGroup = false,
   onClose,
+  onChanged,
 }: {
   channel: ChannelListItem;
+  occurrence: NowNextOccurrence | null | undefined;
+  displayTimezone: string;
+  showAddToGroup?: boolean;
   onClose: () => void;
+  onChanged: (updated: ChannelListItem) => void;
 }) {
-  const lifecycle = lifecycleBadges[channel.lifecycle];
-  const online = countOnlineDevices(channel.devices);
-  const heartbeat = latestHeartbeat(channel);
-  const expectedOutput =
-    [channel.expected_orientation, channel.expected_resolution].filter(Boolean).join(" · ") ||
-    "Not set";
+  const [createdAt, setCreatedAt] = useState<string | null>(null);
+  // Keyed by (device, publication) so a stale result from a previous selection never renders
+  // under a new one — the alternative, resetting state at the top of the effect, is a
+  // synchronous setState-in-effect the lint config here forbids.
+  const [viaGroupsResult, setViaGroupsResult] = useState<{ key: string; groups: string[] } | null>(null);
+  const [managingGroups, setManagingGroups] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetchChannel(channel.id)
+      .then((detail) => alive && setCreatedAt(detail.created_at))
+      .catch(() => alive && setCreatedAt(null));
+    return () => {
+      alive = false;
+    };
+  }, [channel.id]);
+
+  const publicationId = occurrence?.publications[0]?.id;
+  const deviceId = channel.player?.id;
+  const viaGroupsKey = deviceId && publicationId ? `${deviceId}:${publicationId}` : null;
+
+  useEffect(() => {
+    let alive = true;
+    if (!viaGroupsKey || !publicationId || !deviceId) return;
+    fetchPublication(publicationId)
+      .then((detail) => {
+        if (!alive) return;
+        const target = detail.targets?.find((t) => t.device_id === deviceId);
+        if (target?.via_groups?.length) setViaGroupsResult({ key: viaGroupsKey, groups: target.via_groups });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [viaGroupsKey, publicationId, deviceId]);
+
+  const viaGroups = viaGroupsResult?.key === viaGroupsKey ? viaGroupsResult.groups : null;
+
+  const status = STATUS_BADGE[channel.health ?? "no_player"];
+  const lifecycle = LIFECYCLE_BADGE[channel.lifecycle];
+  const TypeIcon = TYPE_ICON[channelTypeKey(channel)];
+  const groups = channel.groups ?? [];
+  const cover = nowPlayingThumbnail(occurrence);
+  const names = nowPlayingAllNames(occurrence);
+  const window_ = nowPlayingWindow(occurrence, displayTimezone);
+  const remaining = nowPlayingRemaining(occurrence);
+  const screens = channel.display_config?.screens ?? [];
+  const resolution =
+    screens.length > 1
+      ? `${channel.expected_resolution ?? "Not set"} (${screens.length} × ${screens[0]!.resolution})`
+      : (channel.expected_resolution ?? "Not set");
   const panelId = `channel-detail-panel-${channel.id}`;
   const titleId = `channel-detail-title-${channel.id}`;
 
@@ -68,107 +130,160 @@ export function ChannelDetailPanel({
       data-testid="channel-detail-panel"
       className="relative overflow-hidden p-5 xl:sticky xl:top-0 xl:self-start"
     >
-      <div className="absolute inset-x-0 top-0 h-1 bg-indigo-600" aria-hidden="true" />
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-400">
-            Channel detail
-          </p>
-          <h2 id={titleId} className="mt-1 truncate text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-            {channel.name}
-          </h2>
-          {channel.description && (
-            <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-400">
-              {channel.description}
-            </p>
-          )}
-        </div>
+      <div className="relative">
+        {cover ? (
+          <MediaThumb url={cover} alt="" className="h-32 w-full rounded-xl" />
+        ) : (
+          <div className="flex h-32 w-full items-center justify-center rounded-xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+            <TypeIcon className="h-8 w-8" />
+          </div>
+        )}
         <button
           type="button"
           aria-label="Close channel detail"
           onClick={onClose}
-          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          className="absolute right-2 top-2 rounded-lg bg-white/90 p-1.5 text-zinc-500 hover:bg-white hover:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:text-zinc-100"
         >
           <XIcon />
         </button>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-y border-zinc-100 py-3 dark:border-zinc-800">
-        <Badge color={lifecycle.color} variant="pill">
-          {lifecycle.label}
-        </Badge>
-        <Badge color={channel.devices.length === 0 ? "zinc" : online === channel.devices.length ? "green" : "red"}>
-          {channel.devices.length === 0 ? "Unassigned" : `${online}/${channel.devices.length} online`}
-        </Badge>
+      <div className="mt-4 flex items-start justify-between gap-3">
+        <h2 id={titleId} className="min-w-0 truncate text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+          {channel.name}
+        </h2>
+        <Badge color={status.color} variant="pill">{status.label}</Badge>
+      </div>
+      <div className="mt-1 flex items-center gap-2">
+        <Badge color={lifecycle.color} variant="pill">{lifecycle.label}</Badge>
+      </div>
+      {channel.description && (
+        <p className="mt-2 text-sm leading-5 text-zinc-500 dark:text-zinc-400">{channel.description}</p>
+      )}
+
+      <div className="mt-4 flex items-center gap-2">
+        {showAddToGroup ? (
+          <button
+            type="button"
+            onClick={() => setManagingGroups(true)}
+            className={buttonClasses("primary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
+          >
+            <UsersIcon />
+            Add to Group
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            title="Open Live View — not available yet"
+            className={buttonClasses("secondary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
+          >
+            <PlayIcon />
+            Open Live View
+          </button>
+        )}
+        <Link
+          href={`/media-workspace/channels/${channel.id}/edit`}
+          className={buttonClasses("secondary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
+        >
+          <EditIcon />
+          Edit Channel
+        </Link>
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-5 py-5">
-        <DetailItem label="Category" value={categoryLabels[channel.category]} />
-        <DetailItem label="Type" value={channel.channel_type?.name ?? "Not set"} />
-        <DetailItem label="Location" value={channel.location?.name ?? "Unassigned"} />
-        <DetailItem label="Expected output" value={expectedOutput} />
-        <DetailItem label="Assigned devices" value={String(channel.devices.length)} />
-        <DetailItem label="Last seen" value={formatChannelLastSeen(heartbeat)} />
-      </dl>
+      <div className="mt-5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Status</h3>
+        <div className="mt-2 flex items-center gap-2">
+          <Badge color={status.color}>{status.label}</Badge>
+        </div>
+        <p className="mt-1 text-xs text-zinc-400">Last updated {formatDateTime(channel.updated_at)}</p>
+      </div>
 
-      <div className="border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Physical Devices
-        </h3>
-        {channel.devices.length === 0 ? (
-          <p className="mt-3 rounded-lg bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500 dark:bg-zinc-950 dark:text-zinc-400">
-            No devices assigned
-          </p>
+      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Now Playing</h3>
+          <Link
+            href={`/media-workspace/publications?q=${encodeURIComponent(channel.name)}`}
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+          >
+            View Programs →
+          </Link>
+        </div>
+        {names.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-400">Nothing scheduled now</p>
         ) : (
-          <ul className="mt-3 space-y-2">
-            {channel.devices.map((device) => (
-              <li
-                key={device.id}
-                className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/50"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                      {device.name}
-                    </p>
-                    <p className="mt-0.5 truncate font-mono text-[11px] text-zinc-400">
-                      {device.code}
-                    </p>
-                  </div>
-                  <Badge
-                    color={
-                      device.health === "online"
-                        ? "green"
-                        : device.health === "warning"
-                          ? "yellow"
-                          : "red"
-                    }
-                  >
-                    {device.health[0].toUpperCase() + device.health.slice(1)}
-                  </Badge>
-                </div>
-                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  Heartbeat · {formatChannelLastSeen(device.last_heartbeat_at)}
+          <div className="mt-2 flex gap-3">
+            <MediaThumb url={cover ?? undefined} alt="" className="h-14 w-20 rounded-lg" />
+            <div className="min-w-0">
+              {names.map((name) => (
+                <p key={name} className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                  {name}
                 </p>
-                {channel.sync_enabled && (
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    {device.sync_phase_error_ms === null
-                      ? "Sync · no report yet"
-                      : `Sync · ${device.sync_phase_error_ms > 0 ? "+" : ""}${device.sync_phase_error_ms} ms · loop ${device.sync_loop_duration_seconds ?? "?"}s`}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
+              ))}
+              <p className="mt-0.5 text-xs text-zinc-400">
+                {window_}
+                {remaining ? ` (${remaining})` : ""}
+              </p>
+              {viaGroups && <p className="mt-0.5 text-xs text-zinc-400">via {viaGroups.join(", ")}</p>}
+            </div>
+          </div>
         )}
       </div>
 
-      <Link
-        href={`/media-workspace/channels/${channel.id}/edit`}
-        className={buttonClasses("primary", "mt-5 w-full")}
-      >
-        Edit Channel
-      </Link>
+      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Channel Structure
+        </h3>
+        <ChannelStructureTree channel={channel} />
+      </div>
+
+      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Groups ({groups.length})
+          </h3>
+          <button
+            type="button"
+            onClick={() => setManagingGroups(true)}
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+          >
+            Manage →
+          </button>
+        </div>
+        {groups.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-400">No Groups yet</p>
+        ) : (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {groups.map((group) => (
+              <Badge key={group.id} variant="pill" color="indigo">{group.name}</Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {managingGroups && (
+        <ChannelGroupsPickerModal
+          channel={channel}
+          onClose={() => setManagingGroups(false)}
+          onSaved={(updated) => {
+            setManagingGroups(false);
+            onChanged(updated);
+          }}
+        />
+      )}
+
+      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Channel Information
+        </h3>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
+          <DetailItem label="Type" value={channelTypeLabel(channel)} />
+          <DetailItem label="Location" value={channel.location?.name ?? "Unassigned"} />
+          <DetailItem label="Resolution" value={resolution} />
+          <DetailItem label="Created" value={formatDateTime(createdAt)} />
+          <DetailItem label="Last Updated" value={formatDateTime(channel.updated_at)} />
+        </dl>
+      </div>
     </Card>
   );
 }

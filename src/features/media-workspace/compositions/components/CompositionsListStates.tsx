@@ -26,9 +26,21 @@ export function SummarySkeleton() {
 
 export function ListSkeleton() {
   return (
-    <div className="space-y-2 py-2">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-10 w-full" />
+    <div className="space-y-3 py-2" aria-hidden="true">
+      <div className="grid grid-cols-[72px_minmax(0,1fr)_64px_92px_96px_96px_180px_132px] gap-4">
+        {Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="h-4 w-full" />)}
+      </div>
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="grid grid-cols-[72px_minmax(0,1fr)_64px_92px_96px_96px_180px_132px] items-center gap-4">
+          <Skeleton className="h-10 w-16" />
+          <div className="space-y-2"><Skeleton className="h-4 w-4/5" /><Skeleton className="h-3 w-24" /></div>
+          <Skeleton className="h-4 w-8" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <Skeleton className="h-4 w-8" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-8 w-full" />
+        </div>
       ))}
     </div>
   );

@@ -1,4 +1,6 @@
 # Epoch-phase synchronized playback
+> **Partially superseded (2026-09-11)** by `0074-channel-one-player-and-channel-group.md`: the synchronization boundary is the Channel Group, not the Channel; `sync_enabled`, `direct_target_conflicts` and the direct-target guard move up one level. The epoch-phase arithmetic itself still stands.
+
 
 **Status:** accepted (2026-08-24) — supersedes ADR 0041. The anchor decision (Decisions §2) is
 superseded by `docs/adr/0043-schedule-anchored-playback-loop.md`; every other decision in this ADR

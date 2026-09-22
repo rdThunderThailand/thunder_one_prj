@@ -1,15 +1,13 @@
 /** Run: node src/features/channels/channel-logic.check.mts */
 import assert from "node:assert/strict";
 import {
-  countOnlineDevices,
+  channelStatus,
+  channelTypeKey,
+  channelTypeLabel,
   filterChannels,
+  findChannelAttention,
   formatChannelLastSeen,
-  getDeviceCompatibility,
-  mergeChannelDeviceCandidates,
-  mergeChannelTypeOptions,
-  shouldConfirmResolutionMismatch,
   summarizeChannels,
-  validateChannelDraft,
 } from "./domain.ts";
 import type { ChannelListItem } from "./domain.ts";
 
@@ -22,26 +20,26 @@ const fixtures: ChannelListItem[] = [
     category: "in_store",
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: { id: "location-central-world", name: "Central World" },
-    devices: [
-      {
-        id: "device-central-world",
-        name: "Entrance Screen",
-        code: "CW-ENTRANCE",
-        health: "online",
-        last_heartbeat_at: "2026-08-20T00:00:00.000Z",
-        orientation: "landscape",
-        resolution: "1920x1080",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-    ],
+    player: {
+      id: "device-central-world",
+      name: "Entrance Screen",
+      code: "CW-ENTRANCE",
+      health: "online",
+      last_heartbeat_at: "2026-08-20T00:00:00.000Z",
+      orientation: "landscape",
+      resolution: "1920x1080",
+      sync_phase_error_ms: null,
+      sync_loop_duration_seconds: null,
+    },
+    health: "online",
+    output_kind: "kiosk",
+    display_config: null,
+    groups: [],
     expected_orientation: "landscape",
     expected_resolution: "1920x1080",
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
-    sync_enabled: false,
-    direct_target_conflicts: [],
   },
   {
     id: "channel-active-dooh",
@@ -51,37 +49,26 @@ const fixtures: ChannelListItem[] = [
     category: "dooh",
     channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
     location: { id: "location-siam", name: "Siam Square" },
-    devices: [
-      {
-        id: "device-siam-north",
-        name: "North LED Screen",
-        code: "SS-LED-NORTH",
-        health: "online",
-        last_heartbeat_at: "2026-08-20T00:00:00.000Z",
-        orientation: "landscape",
-        resolution: "3840x2160",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-      {
-        id: "device-siam-south",
-        name: "South LED Screen",
-        code: "SS-LED-SOUTH",
-        health: "offline",
-        last_heartbeat_at: "2026-08-19T22:00:00.000Z",
-        orientation: "landscape",
-        resolution: "1920x1080",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-    ],
+    player: {
+      id: "device-siam-south",
+      name: "South LED Screen",
+      code: "SS-LED-SOUTH",
+      health: "offline",
+      last_heartbeat_at: "2026-08-19T22:00:00.000Z",
+      orientation: "landscape",
+      resolution: "1920x1080",
+      sync_phase_error_ms: null,
+      sync_loop_duration_seconds: null,
+    },
+    health: "offline",
+    output_kind: "screen",
+    display_config: null,
+    groups: [{ id: "group-siam", name: "Siam Square", playback_mode: "synchronized" }],
     expected_orientation: "landscape",
     expected_resolution: "3840x2160",
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
-    sync_enabled: false,
-    direct_target_conflicts: [],
   },
   {
     id: "channel-draft-dooh",
@@ -91,26 +78,33 @@ const fixtures: ChannelListItem[] = [
     category: "dooh",
     channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
     location: { id: "location-rama-nine", name: "Rama Nine" },
-    devices: [
-      {
-        id: "device-rama-nine",
-        name: "West LED Screen",
-        code: "RN-LED-01",
-        health: "online",
-        last_heartbeat_at: "2026-08-20T00:00:00.000Z",
-        orientation: "portrait",
-        resolution: "1080x1920",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-    ],
+    player: {
+      id: "device-rama-nine",
+      name: "West LED Screen",
+      code: "RN-LED-01",
+      health: "online",
+      last_heartbeat_at: "2026-08-20T00:00:00.000Z",
+      orientation: "portrait",
+      resolution: "1080x1920",
+      sync_phase_error_ms: null,
+      sync_loop_duration_seconds: null,
+    },
+    health: "online",
+    output_kind: "screen",
+    display_config: {
+      mode: "multi",
+      arrangement: { rows: 1, cols: 2 },
+      screens: [
+        { index: 0, resolution: "1080x1920", output: "HDMI 1" },
+        { index: 1, resolution: "1080x1920", output: "HDMI 2" },
+      ],
+    },
+    groups: [],
     expected_orientation: "portrait",
     expected_resolution: "1080x1920",
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
-    sync_enabled: false,
-    direct_target_conflicts: [],
   },
   {
     id: "channel-inactive-in-store",
@@ -120,34 +114,45 @@ const fixtures: ChannelListItem[] = [
     category: "in_store",
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: null,
-    devices: [],
+    player: null,
+    health: null,
+    output_kind: "screen",
+    display_config: null,
+    groups: [],
     expected_orientation: null,
     expected_resolution: null,
     default_playlist: null,
     revision: 1,
     updated_at: "2026-08-20T00:00:00.000Z",
-    sync_enabled: false,
-    direct_target_conflicts: [],
   },
 ];
 
-const allFilters = { search: "", category: "all", lifecycle: "all" } as const;
+const allFilters = { search: "", type: "all", status: "all", lifecycle: "all" } as const;
 
-assert.equal(countOnlineDevices([]), 0);
-assert.equal(countOnlineDevices([{ health: "online" }, { health: "offline" }]), 1);
-assert.equal(countOnlineDevices([{ health: "warning" }]), 0);
+// channelStatus / channelTypeKey / channelTypeLabel — ADR 0074 §4/§3.
+assert.equal(channelStatus(fixtures[0]!), "online");
+assert.equal(channelStatus(fixtures[3]!), "no_player"); // no Player, health: null
+assert.equal(channelTypeKey(fixtures[0]!), "kiosk");
+assert.equal(channelTypeKey(fixtures[2]!), "multi"); // display_config.mode wins over output_kind
+assert.equal(channelTypeLabel(fixtures[0]!), "Kiosk");
+assert.equal(channelTypeLabel(fixtures[1]!), "Screen");
+assert.equal(channelTypeLabel(fixtures[2]!), "Multi-screen");
 
 const summary = summarizeChannels(fixtures);
-assert.deepEqual(summary.lifecycle, { total: 4, draft: 1, active: 2, inactive: 1 });
-assert.equal(summary.unassigned, 1); // the Channel with no devices assigned
-// Rolled up across every fixture Channel, so the tile counts devices and not Channels:
-// four assigned in total, one of them offline.
-assert.deepEqual(summary.devices, { total: 4, online: 3 });
+// health: online, offline, online, null — a Player-less Draft counts only in `total`.
+assert.deepEqual(summary, { total: 4, online: 2, warning: 0, offline: 1 });
+assert.deepEqual(findChannelAttention(fixtures).map(({ device }) => device.id), ["device-siam-south"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "offline" }).map((channel) => channel.id), ["channel-active-dooh"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "attention" }).map((channel) => channel.id), ["channel-active-dooh"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, status: "no_player" }).map((channel) => channel.id), ["channel-inactive-in-store"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "multi" }).map((channel) => channel.id), ["channel-draft-dooh"]);
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "kiosk" }).map((channel) => channel.id), ["channel-active-in-store"]);
 
 assert.deepEqual(
   filterChannels(fixtures, {
     search: "central world",
-    category: "in_store",
+    type: "kiosk",
+    status: "all",
     lifecycle: "active",
   }).map((channel) => channel.id),
   ["channel-active-in-store"],
@@ -164,167 +169,23 @@ assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "ENTRANCE SCR
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, search: "cw-entrance" }).map((channel) => channel.id), [
   "channel-active-in-store",
 ]);
-assert.deepEqual(filterChannels(fixtures, { ...allFilters, category: "social" }).map((channel) => channel.id), [
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "tv" }).map((channel) => channel.id), [
 ]);
-assert.deepEqual(filterChannels(fixtures, { ...allFilters, category: "dooh" }).map((channel) => channel.id), [
+assert.deepEqual(filterChannels(fixtures, { ...allFilters, type: "screen" }).map((channel) => channel.id), [
   "channel-active-dooh",
-  "channel-draft-dooh",
+  "channel-inactive-in-store",
 ]);
 assert.deepEqual(filterChannels(fixtures, { ...allFilters, lifecycle: "draft" }).map((channel) => channel.id), [
   "channel-draft-dooh",
 ]);
 
-assert.deepEqual(
-  validateChannelDraft({
-    name: "",
-    category: "in_store",
-    channel_type_id: "",
-    device_ids: [],
-    confirm_mismatch: false,
-    as_draft: true,
-    sync_enabled: false,
-  }),
-  { name: "กรุณาระบุชื่อ Channel", channel_type_id: "กรุณาเลือก Channel Type" },
-);
-
-const partialProfileDevice = {
-  id: "device-partial",
-  name: "Partial Profile Screen",
-  code: null,
-  health: "online" as const,
-  last_heartbeat_at: null,
-  orientation: "portrait" as const,
-  resolution: null,
-  sync_phase_error_ms: null,
-  sync_loop_duration_seconds: null,
-};
-
-assert.equal(
-  getDeviceCompatibility(partialProfileDevice, "landscape", "1920x1080"),
-  "orientation-mismatch",
-);
-assert.equal(
-  getDeviceCompatibility(
-    { ...partialProfileDevice, orientation: null, resolution: "1280x720" },
-    "landscape",
-    "1920x1080",
-  ),
-  "resolution-mismatch",
-);
-assert.equal(
-  getDeviceCompatibility(
-    { ...partialProfileDevice, resolution: "1280x720" },
-    "landscape",
-    "1920x1080",
-  ),
-  "orientation-mismatch",
-);
-assert.equal(
-  getDeviceCompatibility(
-    { ...partialProfileDevice, orientation: "landscape", resolution: null },
-    "landscape",
-    "1920x1080",
-  ),
-  "profile-unavailable",
-);
-assert.equal(
-  getDeviceCompatibility(
-    { ...partialProfileDevice, orientation: "landscape", resolution: "1920x1080" },
-    "landscape",
-    "1920x1080",
-  ),
-  "compatible",
-);
-assert.equal(getDeviceCompatibility(partialProfileDevice, null, null), "not-checked");
-assert.equal(
-  shouldConfirmResolutionMismatch(
-    [{ ...partialProfileDevice, orientation: null, resolution: "1280x720" }],
-    "1920x1080",
-    new Set(["device-partial"]),
-  ),
-  true,
-);
-assert.equal(
-  shouldConfirmResolutionMismatch(
-    [{ ...partialProfileDevice, orientation: null, resolution: "1280x720" }],
-    "1920x1080",
-    new Set(),
-  ),
-  false,
-);
-assert.equal(
-  shouldConfirmResolutionMismatch(
-    [{ ...partialProfileDevice, orientation: "landscape", resolution: "1920x1080" }],
-    "1920x1080",
-    new Set(),
-  ),
-  false,
-);
-
-assert.deepEqual(
-  mergeChannelDeviceCandidates(
-    [
-      {
-        id: "device-assigned",
-        name: "Live Screen Name",
-        code: null,
-        health: "warning",
-        last_heartbeat_at: "2026-08-20T03:00:00.000Z",
-        orientation: null,
-        resolution: null,
-      },
-    ],
-    [
-      {
-        id: "device-assigned",
-        name: "Assigned Screen Name",
-        code: "CW-01",
-        health: "offline",
-        last_heartbeat_at: "2026-08-19T03:00:00.000Z",
-        orientation: "landscape",
-        resolution: "1920x1080",
-        sync_phase_error_ms: null,
-        sync_loop_duration_seconds: null,
-      },
-    ],
-  ),
-  [
-    {
-      id: "device-assigned",
-      name: "Live Screen Name",
-      code: "CW-01",
-      health: "warning",
-      last_heartbeat_at: "2026-08-20T03:00:00.000Z",
-      orientation: "landscape",
-      resolution: "1920x1080",
-    },
-  ],
-);
-
-const currentInactiveType = {
-  id: "type-current-inactive",
-  code: "legacy_menu_board",
-  name: "Legacy Menu Board",
-  channel_category: "in_store" as const,
-};
-assert.deepEqual(mergeChannelTypeOptions([], currentInactiveType), [
-  { ...currentInactiveType, is_active: false },
-]);
-assert.deepEqual(
-  mergeChannelTypeOptions(
-    [{ ...currentInactiveType, name: "Current Reference Name", is_active: false }],
-    currentInactiveType,
-  ),
-  [{ ...currentInactiveType, name: "Current Reference Name", is_active: false }],
-);
-
 assert.equal(formatChannelLastSeen(null), "Never connected");
 assert.equal(
-  formatChannelLastSeen(fixtures[0]!.devices[0]!.last_heartbeat_at, Date.parse("2026-08-20T00:00:00.000Z")),
+  formatChannelLastSeen(fixtures[0]!.player!.last_heartbeat_at, Date.parse("2026-08-20T00:00:00.000Z")),
   "Last seen just now",
 );
 assert.equal(
-  formatChannelLastSeen(fixtures[0]!.devices[0]!.last_heartbeat_at, Date.parse("2026-08-20T00:01:00.000Z")),
+  formatChannelLastSeen(fixtures[0]!.player!.last_heartbeat_at, Date.parse("2026-08-20T00:01:00.000Z")),
   "Last seen 1m ago",
 );
 

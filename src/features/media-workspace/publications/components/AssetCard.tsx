@@ -4,7 +4,6 @@ import Image from "next/image";
 import { CheckIcon, ListIcon, PlayIcon } from "@/components/ui/icons";
 import { LazyVideo } from "@/components/ui/LazyVideo";
 import { isVideoUrl } from "@/lib/media-kind";
-import { isApprovedAsset } from "../draft-mapping";
 import type { MediaAsset } from "../types";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";
 
@@ -14,6 +13,7 @@ type AssetCardBaseProps = {
   selected: boolean;
   onSelect: () => void;
   disabled?: boolean;
+  aspect?: "square" | "video";
 };
 
 type AssetCardProps =
@@ -21,7 +21,7 @@ type AssetCardProps =
   | (AssetCardBaseProps & { kind: "playlist"; playlist: PlaylistListItem });
 
 export function AssetCard(props: AssetCardProps) {
-  const { previewUrl, thumbnailUrl, selected, onSelect, disabled } = props;
+  const { previewUrl, thumbnailUrl, selected, onSelect, disabled, aspect = "square" } = props;
 
   if (props.kind === "playlist") {
     const { playlist } = props;
@@ -37,7 +37,7 @@ export function AssetCard(props: AssetCardProps) {
             : "border-zinc-200 hover:border-zinc-300"
         } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
-        <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
+        <div className={`relative w-full overflow-hidden bg-zinc-100 flex items-center justify-center ${aspect === "video" ? "aspect-video" : "aspect-square"}`}>
           {thumbnailUrl ? (
             // Captured poster (ADR 0016) — skips the video decode entirely.
             <Image
@@ -103,24 +103,19 @@ export function AssetCard(props: AssetCardProps) {
   const durationLabel = asset.duration_seconds
     ? `${Math.round(asset.duration_seconds)}s`
     : undefined;
-  // An unapproved asset can be shown but not picked: `media_publication_set_content`
-  // refuses to save content containing one, so allowing the pick would only strand
-  // the draft in a state that can never be saved.
-  const approved = isApprovedAsset(asset);
-
   return (
     <button
       type="button"
       onClick={onSelect}
-      disabled={!approved || disabled}
-      title={!approved ? "สื่อนี้ยังไม่ผ่านการอนุมัติ จึงยังเลือกไม่ได้" : disabled ? "ชนิดไฟล์ไม่ตรงกับประเภทของ Publication นี้" : undefined}
+      disabled={disabled}
+      title={disabled ? "ชนิดไฟล์ไม่ตรงกับประเภทของ Publication นี้" : undefined}
       className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition-colors ${
         selected
           ? "border-indigo-500 ring-2 ring-indigo-500/30"
           : "border-zinc-200 hover:border-zinc-300"
-      } ${(!approved || disabled) ? "cursor-not-allowed opacity-50" : ""}`}
+      } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
     >
-      <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 flex items-center justify-center">
+      <div className={`relative w-full overflow-hidden bg-zinc-100 flex items-center justify-center ${aspect === "video" ? "aspect-video" : "aspect-square"}`}>
         {isVideo && thumbnailUrl ? (
           // Captured poster (ADR 0016) — skips the video decode entirely. Videos
           // uploaded before capture existed have no thumbnail yet and fall through
@@ -174,15 +169,6 @@ export function AssetCard(props: AssetCardProps) {
           {kindLabel} · {dimensions}
           {durationLabel ? ` · ${durationLabel}` : ""}
         </p>
-        {approved ? (
-          <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
-            Approved
-          </span>
-        ) : (
-          <span className="inline-flex w-fit items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
-            รออนุมัติ
-          </span>
-        )}
       </div>
     </button>
   );

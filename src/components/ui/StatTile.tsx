@@ -5,6 +5,8 @@ type StatTileColor = "zinc" | "indigo" | "blue" | "amber" | "red" | "emerald";
 interface StatTileProps {
   label: string;
   value: string;
+  /** Small secondary line under the value, e.g. a percentage ("86%"). */
+  hint?: string;
   color?: StatTileColor;
   className?: string;
 }
@@ -18,11 +20,14 @@ const valueColor: Record<StatTileColor, string> = {
   emerald: "text-emerald-600 dark:text-emerald-400",
 };
 
-export function StatTile({ label, value, color = "zinc", className = "" }: StatTileProps) {
+export function StatTile({ label, value, hint, color = "zinc", className = "" }: StatTileProps) {
   return (
     <Card className={`flex flex-col gap-1.5 p-4 ${className}`}>
       <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
-      <span className={`text-2xl font-semibold ${valueColor[color]}`}>{value}</span>
+      <span className={`text-2xl font-semibold ${valueColor[color]}`}>
+        {value}
+        {hint && <span className="ml-1.5 text-sm font-normal text-zinc-400">{hint}</span>}
+      </span>
     </Card>
   );
 }

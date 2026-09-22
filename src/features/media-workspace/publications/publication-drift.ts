@@ -10,23 +10,43 @@
  * fired on every Layout save while missing every real content change.
  */
 
-/** The recorded/live pairs as `media_publication_get` returns them. */
+/** One Channel named in a Group's `added`/`removed` set (ADR 0074 §6). */
+export type PublicationDriftGroupChannel = { channel_id: string; name: string };
+
+/** Reported only for a Group whose live membership no longer matches the snapshot's
+ *  provenance rows — `media_publication_get` omits a Group with no change at all. */
+export type PublicationDriftGroup = {
+  group_id: string;
+  name: string;
+  added: PublicationDriftGroupChannel[];
+  removed: PublicationDriftGroupChannel[];
+};
+
+/** The recorded/live pairs as `media_publication_get` returns them. Both fields are `null`
+ *  outright (not an object of null recorded/live) on a flat Publication's snapshot — the SQL
+ *  only builds the object `WHEN pub.composition_id IS NOT NULL` (ADR 0074 §6). A flat
+ *  Publication targeting a Group gets a non-null `drift_check` too, so this case is real, not
+ *  hypothetical. */
 export type PublicationDriftCheck = {
-  composition_revision: { recorded: number | null; live: number | null };
-  layout_updated_at: { recorded: string | null; live: string | null };
+  composition_revision: { recorded: number | null; live: number | null } | null;
+  layout_updated_at: { recorded: string | null; live: string | null } | null;
   zones: {
     zone_name: string | null;
     playlist_name: string;
     recorded_revision: number | null;
     live_revision: number | null;
   }[];
+  /** Absent on a flat (non-composition) Publication's snapshot, which the backend never
+   *  attaches Group provenance rows to unless it targeted a Group (ADR 0074 §6). */
+  groups?: PublicationDriftGroup[];
 };
 
 /** One thing that changed since publish. `zone_name` is the name as published. */
 export type DriftFinding =
   | { level: "composition" }
   | { level: "layout" }
-  | { level: "playlist"; zoneName: string | null; playlistName: string };
+  | { level: "playlist"; zoneName: string | null; playlistName: string }
+  | { level: "group"; groupName: string; added: string[]; removed: string[] };
 
 /**
  * Every level that no longer matches what is airing, in the order an operator reads them:
@@ -48,10 +68,10 @@ export function publicationDrift(publication: {
 
   const findings: DriftFinding[] = [];
 
-  if (hasChanged(check.composition_revision.recorded, check.composition_revision.live)) {
+  if (check.composition_revision && hasChanged(check.composition_revision.recorded, check.composition_revision.live)) {
     findings.push({ level: "composition" });
   }
-  if (hasChanged(check.layout_updated_at.recorded, check.layout_updated_at.live)) {
+  if (check.layout_updated_at && hasChanged(check.layout_updated_at.recorded, check.layout_updated_at.live)) {
     findings.push({ level: "layout" });
   }
   for (const zone of check.zones) {
@@ -62,6 +82,16 @@ export function publicationDrift(publication: {
         playlistName: zone.playlist_name,
       });
     }
+  }
+  // The backend only lists a Group here when its live membership no longer matches the
+  // snapshot's provenance rows (ADR 0074 §6), so every entry is drift — no hasChanged gate.
+  for (const group of check.groups ?? []) {
+    findings.push({
+      level: "group",
+      groupName: group.name,
+      added: group.added.map((c) => c.name),
+      removed: group.removed.map((c) => c.name),
+    });
   }
 
   return findings;

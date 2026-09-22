@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   draftItemsToContentItems,
   basicInfoToForm,
-  channelIdsToTargets,
+  targetsFromSelection,
 } from "../draft-mapping";
 import { isScheduleFormValid, scheduleFormToPayload } from "../schedule";
 import {
   activatePublication,
   checkScheduleConflicts,
-  fetchCampaigns,
   fetchMediaAssets,
   fetchPublication,
   fetchTags,
@@ -26,7 +25,7 @@ import { selectedChannelDeviceIds } from "../channels-logic";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
 import { classifyApiError, isConflict } from "@/lib/api/api-error";
-import type { Campaign, MediaAsset, Priority, ScheduleConflict, Tag } from "../types";
+import type { MediaAsset, Priority, ScheduleConflict, Tag } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
  * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
@@ -42,9 +41,12 @@ function isStaleDraftError(err: unknown): boolean {
 export function usePublishDraft() {
   const router = useRouter();
   const [channels, setChannels] = useState<ChannelListItem[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
+  // Assets load on their own track from the other refs: the wizard owns the single
+  // read, and AssetLibraryStep's post-upload callback needs to re-run just this one.
+  const [assetsLoading, setAssetsLoading] = useState(true);
+  const [assetsError, setAssetsError] = useState<string | null>(null);
   const [loadingRefs, setLoadingRefs] = useState(true);
   const [channelsError, setChannelsError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -63,23 +65,47 @@ export function usePublishDraft() {
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
   const idempotencyKey = usePublicationDraftStore((s) => s.idempotencyKey);
   const step = usePublicationDraftStore((s) => s.step);
+  const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
+  const groupIds = usePublicationDraftStore((s) => s.groupIds);
+  const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
   const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
 
   const eligibility = computeEligibility({
-    draft: { publicationId, idempotencyKey, step, basicInfo, assetItems, playlistId, compositionId, channelIds, scheduleForm },
+    draft: { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, groupIds, groupNamesById, scheduleForm },
     assets,
     conflicts,
     conflictsError,
-    loadingRefs,
+    // Assets not being in yet must read as "not ready to publish", the same as the
+    // other refs — otherwise a held assetItem briefly shows as unverifiable.
+    loadingRefs: loadingRefs || assetsLoading,
     checkingConflicts,
   });
   const canPublish = eligibility.canPublish;
   const eligibilityChecks = eligibility.checks;
+
+  // The wizard's single Asset-library read. Returns the fresh list so the upload
+  // callback in AssetLibraryStep can await it before selecting the new Asset.
+  const reloadAssets = useCallback(
+    (): Promise<MediaAsset[]> =>
+      fetchMediaAssets()
+        .then((data) => {
+          setAssets(data);
+          setAssetsError(null);
+          return data;
+        })
+        .catch((err) => {
+          setAssets([]);
+          setAssetsError(err instanceof Error ? err.message : "Failed to load assets.");
+          return [];
+        })
+        .finally(() => setAssetsLoading(false)),
+    []
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -91,14 +117,10 @@ export function usePublishDraft() {
         }
         return [];
       }),
-      fetchCampaigns().catch(() => []),
-      fetchMediaAssets().catch(() => []),
       fetchTags().catch(() => []),
-    ]).then(([fetchedChannels, fetchedCampaigns, fetchedAssets, fetchedTags]) => {
+    ]).then(([fetchedChannels, fetchedTags]) => {
       if (isMounted) {
         setChannels(fetchedChannels);
-        setCampaigns(fetchedCampaigns);
-        setAssets(fetchedAssets);
         setTags(fetchedTags);
         setLoadingRefs(false);
       }
@@ -108,6 +130,10 @@ export function usePublishDraft() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    void reloadAssets();
+  }, [reloadAssets]);
 
   const channelIdsStr = channelIds.join(",");
   const daysStr = scheduleForm.days.join(",");
@@ -197,8 +223,17 @@ export function usePublishDraft() {
     if (forPublish && state.basicInfo.publicationType === "composition" && !state.compositionId) {
       throw new Error("กรุณาเลือก Layout ก่อนบันทึก");
     }
+    // ver02 (ADR 0072 §2) runs Choose Content (step 1) before Prepare Content (step 2), where
+    // the name is entered. `media_publication_upsert` refuses an empty name, so a draft with no
+    // name yet has nothing to persist server-side — the selection lives in the localStorage
+    // draft until step 2. Mirrors the same guard in `saveDraft`.
+    if (!forPublish && !state.basicInfo.name.trim()) {
+      return state.publicationId;
+    }
     const targets =
-      forPublish || state.step >= 3 ? channelIdsToTargets(state.channelIds, channels) : undefined;
+      forPublish || state.step >= 3
+        ? targetsFromSelection(state.channelIds, state.groupIds, state.groupNamesById, channels)
+        : undefined;
 
     const basicForm = basicInfoToForm(state.basicInfo, state.playlistId, state.compositionId);
     let res;
@@ -321,9 +356,11 @@ export function usePublishDraft() {
   return {
     channels,
     channelsError,
-    campaigns,
     tags,
     assets,
+    reloadAssets,
+    assetsLoading,
+    assetsError,
     loadingRefs,
     saving,
     error,

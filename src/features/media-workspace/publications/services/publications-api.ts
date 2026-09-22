@@ -31,9 +31,6 @@ function cleanBasicInfoBody(
   if (form.description?.trim()) {
     body.description = form.description.trim();
   }
-  if (form.campaign_id?.trim()) {
-    body.campaign_id = form.campaign_id.trim();
-  }
   if (form.publication_type) {
     body.publication_type = form.publication_type;
   }
@@ -45,9 +42,6 @@ function cleanBasicInfoBody(
   }
   if (form.priority) {
     body.priority = form.priority;
-  }
-  if (form.language?.trim()) {
-    body.language = form.language.trim();
   }
   // Always sent, even when empty: the backend treats a missing `tags` as
   // "leave untouched", so an empty array is the only way to clear them.
@@ -85,11 +79,15 @@ export async function saveBasicInfo(
 }
 
 export async function fetchPublications(
-  status: "draft" | "active" | "cancelled"
+  status?: "draft" | "active" | "cancelled"
 ): Promise<PublicationListItem[]> {
+  // The RPC takes a null status and returns every row (media_publications_list,
+  // predicate `pub.status = p_status OR p_status IS NULL`), so a status-less call
+  // is one request the caller can filter client-side by `status`.
+  const query = status ? `?status=${status}` : "";
   const data = await requestApi<
     { publications?: PublicationListItem[] } | PublicationListItem[]
-  >("GET", `/media/publications?status=${status}`);
+  >("GET", `/media/publications${query}`);
   if (Array.isArray(data)) {
     return data;
   }

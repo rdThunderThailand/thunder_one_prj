@@ -110,6 +110,28 @@ path.
 
 *Save as Template* names the row and flips it to `template`.
 
+> **Amended 2026-09-07 — *Save as Template* copies rather than promotes.**
+>
+> The sentence above describes promotion *in place*: the Layout's own `inline` row is renamed and
+> flipped, so that one row becomes the shared Template. Implemented that way in `c0e7773`, it has a
+> consequence the decision did not weigh — the operator's own geometry becomes shared the moment
+> they save a Template from it, so their very next Zone edit hits §3's shared-Template fork warning
+> on a Layout they never intended to share. *Save as Template* also became a one-shot: once flipped,
+> the button had nothing left to offer.
+>
+> It now **creates a new `template` row from the current geometry** (`media_layout_upsert` with no
+> `layout_id`, Zone ids dropped so the copy owns its own `layout_zones`) and leaves the Layout's
+> `inline` row untouched. `kind` already defaults to `'template'`, so no `media_layout_set_kind`
+> call is needed. The operator stays on the editor with an `Added "<name>" to My Templates`
+> confirmation, and may save again under another name.
+>
+> §2 ("a Template is a shared reference, never a copy") is unaffected: it governs *picking* a
+> Template — choosing one still points at it and never duplicates it. This amendment governs the
+> opposite direction, publishing geometry outward, where a copy is what keeps the two independent.
+>
+> `media_layout_set_kind` stays as specified below; nothing in the merged-editor save path calls it
+> for this any more.
+
 **The mockup's `Total Layouts 89 = Templates 24 + Custom 65` counts Layouts, not geometry rows.** The
 list shows `compositions` (§1), so all three cards count `compositions`, split by the `kind` of the
 `layouts` row each one points at:

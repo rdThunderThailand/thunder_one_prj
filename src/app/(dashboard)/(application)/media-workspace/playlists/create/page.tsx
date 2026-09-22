@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { CreatePlaylistPage } from "@/features/media-workspace/playlists/components/CreatePlaylistPage";
+import { PlaylistEditorPage } from "@/features/media-workspace/playlists";
 
 export default function Page() {
-  return (
-    <Suspense fallback={null}>
-      <CreatePlaylistPage />
-    </Suspense>
-  );
+  return <PlaylistEditorPage />;
 }

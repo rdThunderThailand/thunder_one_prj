@@ -1,194 +1,159 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { buttonClasses, Button } from "@/components/ui/Button";
+import { Button, buttonClasses } from "@/components/ui/Button";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon } from "@/components/ui/icons";
-import { useChannelEditor } from "../hooks/useChannelEditor";
-import type { ChannelCategory } from "../types";
-import { ChannelBasicInfoSection } from "./ChannelBasicInfoSection";
-import { ChannelDeviceAssignmentSection } from "./ChannelDeviceAssignmentSection";
-import { ChannelDisplayExpectationSection } from "./ChannelDisplayExpectationSection";
-import { ChannelEditorSummary } from "./ChannelEditorSummary";
-import {
-  ChannelCompatibilityErrorCard,
-  ChannelSaveErrorCard,
-  EditorLoadError,
-  EditorSkeleton,
-  UnsupportedCategoryState,
-} from "./ChannelEditorStates";
-import { ChannelLifecycleActions } from "./ChannelLifecycleActions";
+import { classifyApiError, isDuplicateName, type ClassifiedError } from "@/lib/api/api-error";
+import { draftFromChannel, step1Valid, step2Valid, toUpdateChannelPayload, type CreateChannelDraft } from "../create-wizard-state";
+import { fetchChannel, fetchChannelReferenceData } from "../services/channels-api";
+import { updateChannelV2 } from "../services/channel-write-api";
+import { fetchChannelPlayerCandidates } from "../services/player-candidates-api";
+import type { ChannelDetail, ChannelLocationOption } from "../types";
+import type { ChannelPlayerCandidate } from "../player-candidates";
+import { ChannelEditorForm } from "./ChannelEditorForm";
+import { EditChannelSidebar } from "./EditChannelSidebar";
+import { EditorLoadError, EditorSkeleton } from "./ChannelEditorStates";
 
-function ChannelEditor({ channelId }: { channelId?: string }) {
-  const editor = useChannelEditor(channelId);
-  const {
-    isEdit,
-    data,
-    form,
-    lifecycle,
-    loadError,
-    unsupportedCategory,
-    saveError,
-    validationErrors,
-    compatibilityError,
-    deviceAlert,
-    resolutionConfirmations,
-    loading,
-    saving,
-    selectedDevices,
-    selectedType,
-    selectedLocation,
-    selectedPlaylist,
-    retryLoad,
-    handleSave,
-    reloadConflict,
-    overwriteConflict,
-    handleLifecycleChanged,
-    updateBasicInfo,
-    updateDisplay,
-    toggleDevice,
-    confirmResolution,
-    onDeleted,
-  } = editor;
+/** `channel_set_devices` refuses removing the Player while a live Publication targets the
+ *  Channel — every other write error goes through `classifyApiError`'s generic path instead. */
+function isPlayerChangeBlocked(message: string): boolean {
+  return message.includes("cannot remove") && message.includes("target this channel");
+}
 
-  const title = isEdit ? "Edit Channel" : "Create Channel";
-  const subtitle = isEdit
-    ? "Update identity, Physical Device assignment and display expectations."
-    : "Configure a physical delivery Channel for future Publications.";
+export function ChannelEditorPage({ channelId }: { channelId: string }) {
+  const router = useRouter();
+  const [channel, setChannel] = useState<ChannelDetail | null>(null);
+  const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
+  const [locations, setLocations] = useState<ChannelLocationOption[]>([]);
+  const [candidates, setCandidates] = useState<ChannelPlayerCandidate[]>([]);
+  const [candidatesLoading, setCandidatesLoading] = useState(true);
+  const [draft, setDraft] = useState<CreateChannelDraft | null>(null);
+  const [nameError, setNameError] = useState<string | undefined>();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // ADR 0037: a Draft is staged and reserves nothing; Create validates the Channel and takes an
-  // exclusive hold on its devices. Both buttons stay visible while the Channel is still a Draft,
-  // because committing it is the same act whether it happens now or on a later visit.
-  const canStage = !isEdit || lifecycle === "draft";
-  const disabled = loading || Boolean(loadError) || Boolean(unsupportedCategory) || saving;
+  const load = () => {
+    fetchChannel(channelId)
+      .then((detail) => {
+        setChannel(detail);
+        setDraft(draftFromChannel(detail));
+        setLoadError(null);
+      })
+      .catch((caught) => setLoadError(classifyApiError(caught, "Could not load this Channel. Try again.")));
+  };
+
+  const refreshCandidates = () => {
+    setCandidatesLoading(true);
+    fetchChannelPlayerCandidates()
+      .then(setCandidates)
+      .catch(() => {})
+      .finally(() => setCandidatesLoading(false));
+  };
+
+  useEffect(() => {
+    load();
+    fetchChannelReferenceData()
+      .then((reference) => setLocations(reference.locations))
+      .catch(() => {});
+    fetchChannelPlayerCandidates()
+      .then(setCandidates)
+      .catch(() => {})
+      .finally(() => setCandidatesLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId]);
+
+  const handleSave = async () => {
+    if (!draft || !channel) return;
+    if (!step1Valid(draft)) {
+      setNameError("Channel name is required");
+      return;
+    }
+    if (!step2Valid(draft)) return;
+    setNameError(undefined);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const updated = await updateChannelV2(channelId, toUpdateChannelPayload(draft, channel.revision));
+      router.push("/media-workspace/channels");
+      return updated;
+    } catch (caught) {
+      if (caught instanceof Error && isDuplicateName(caught.message)) {
+        setNameError("A Channel with this name already exists.");
+      } else if (caught instanceof Error && isPlayerChangeBlocked(caught.message)) {
+        setSaveError("Can't change the Player — an active or scheduled Publication still targets this Channel.");
+      } else {
+        setSaveError(classifyApiError(caught, "Could not save Channel changes. Try again.").message);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const disabled = channel === null || Boolean(loadError) || saving;
 
   return (
     <div data-testid="channel-editor" className="flex flex-col gap-5">
       <PageHeader
-        title={title}
-        subtitle={subtitle}
-        actions={
-          <>
-            <Link href="/media-workspace/channels" className={buttonClasses("secondary")}>
-              <ArrowLeftIcon />
-              Cancel
-            </Link>
-            {canStage && (
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={disabled}
-                onClick={() => void handleSave(true)}
-              >
-                Save as Draft
-              </Button>
-            )}
-            <Button type="submit" form="channel-editor-form" disabled={disabled}>
-              {saving ? "Saving…" : canStage ? "Create Channel" : "Save changes"}
-            </Button>
-          </>
+        title={
+          <span className="inline-flex items-center gap-2">
+            Edit Channel
+            <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-sm font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300">
+              {channel?.display_config?.mode === "multi" ? "Multi-screen" : "Single-screen"}
+            </span>
+          </span>
         }
+        subtitle="Update channel information and screen configuration."
       />
 
-      {loading ? (
+      {channel === null && loadError === null ? (
         <EditorSkeleton />
       ) : loadError?.kind === "forbidden" ? (
         <NoAccess message={loadError.message} />
       ) : loadError ? (
-        <EditorLoadError error={loadError} retrying={loading} onRetry={retryLoad} />
-      ) : unsupportedCategory ? (
-        <UnsupportedCategoryState category={unsupportedCategory} />
-      ) : data ? (
-        <form
-          id="channel-editor-form"
-          aria-describedby={
-            compatibilityError
-              ? "channel-compatibility-error"
-              : saveError
-                ? "channel-save-error"
-                : undefined
-          }
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleSave(canStage ? false : null);
-          }}
-          className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]"
-        >
-          <div className="min-w-0 space-y-5">
+        <EditorLoadError error={loadError} retrying={false} onRetry={load} />
+      ) : channel && draft ? (
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-4">
             {saveError && (
-              <ChannelSaveErrorCard
-                error={saveError}
-                saving={saving}
-                onReload={() => void reloadConflict()}
-                onOverwrite={() => void overwriteConflict()}
-              />
+              <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">
+                {saveError}
+              </p>
             )}
-
-            {compatibilityError && <ChannelCompatibilityErrorCard message={compatibilityError} />}
-
-            <ChannelBasicInfoSection
-              value={form}
-              lifecycle={lifecycle}
-              channelTypes={data.references.channel_types}
-              currentChannelTypeId={data.detail?.channel_type?.id ?? null}
-              locations={data.references.locations}
-              errors={validationErrors}
-              directTargetConflicts={data.detail?.direct_target_conflicts ?? []}
-              onChange={updateBasicInfo}
+            <ChannelEditorForm
+              draft={draft}
+              locations={locations}
+              candidates={candidates}
+              candidatesLoading={candidatesLoading}
+              nameError={nameError}
+              excludeChannelId={channelId}
+              onChange={setDraft}
+              onRefreshCandidates={refreshCandidates}
             />
-
-            <ChannelDeviceAssignmentSection
-              id="channel-device-assignment"
-              alert={deviceAlert}
-              devices={data.devices}
-              selectedIds={form.deviceIds}
-              expectedOrientation={form.orientation}
-              expectedResolution={form.resolution}
-              resolutionConfirmations={resolutionConfirmations}
-              onToggle={toggleDevice}
-              onConfirmResolution={confirmResolution}
-            />
-
-            <ChannelDisplayExpectationSection
-              value={form}
-              playlists={data.playlists}
-              onChange={updateDisplay}
-            />
+            <div className="flex justify-end gap-2 px-1">
+              <Link href="/media-workspace/channels" className={buttonClasses("secondary")}>
+                <ArrowLeftIcon />
+                Cancel
+              </Link>
+              <Button type="button" disabled={disabled} onClick={() => void handleSave()}>
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
+            </div>
           </div>
 
-          <div className="min-w-0 space-y-5">
-            <ChannelEditorSummary
-              lifecycle={lifecycle}
-              category={form.category as ChannelCategory}
-              typeName={
-                selectedType
-                  ? `${selectedType.name}${selectedType.is_active === false ? " (Current — unavailable)" : ""}`
-                  : ""
-              }
-              locationName={selectedLocation?.name ?? ""}
-              orientation={form.orientation}
-              resolution={form.resolution}
-              playlistName={selectedPlaylist?.name ?? ""}
-              selectedDevices={selectedDevices}
-              showOperationalStatus={isEdit}
-            />
-            {isEdit && data.detail && (
-              <ChannelLifecycleActions
-                channelId={data.detail.id}
-                lifecycle={data.detail.lifecycle}
-                revision={data.detail.revision}
-                onChanged={handleLifecycleChanged}
-                onDeleted={onDeleted}
-              />
-            )}
-          </div>
-        </form>
+          <EditChannelSidebar
+            channel={channel}
+            onChanged={(updated) => {
+              setChannel(updated);
+              setDraft(draftFromChannel(updated));
+            }}
+            onDeleted={() => router.push("/media-workspace/channels")}
+          />
+        </div>
       ) : null}
     </div>
   );
-}
-
-export function ChannelEditorPage({ channelId }: { channelId?: string }) {
-  return <ChannelEditor key={channelId ?? "create"} channelId={channelId} />;
 }

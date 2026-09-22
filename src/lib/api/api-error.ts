@@ -63,6 +63,19 @@ export function isDuplicateName(message: string): boolean {
 }
 
 /**
+ * `media_publication_activate`'s first-activation guard (ADR 0074 §5) — an incomplete
+ * synchronized Group, or a direct `device` target inside one. Both already name the Group and
+ * the missing/conflicting Channels in the raw text, so it is shown as-is rather than routed
+ * through the generic "Invalid input:" bucket below, which would otherwise swallow those names.
+ */
+function isIncompleteSyncGroupTarget(message: string): boolean {
+  return (
+    message.includes("synchronized group target is incomplete") ||
+    message.includes("cannot activate a direct device target inside a synchronized group")
+  );
+}
+
+/**
  * `media_publication_set_content` raises this when any item points at an asset that
  * is not `approved`. The UI blocks picking one, so reaching here means the asset lost
  * its approval after it was chosen — the raw wording names neither the asset nor the
@@ -70,6 +83,29 @@ export function isDuplicateName(message: string): boolean {
  */
 function isUnapprovedAsset(message: string): boolean {
   return message.includes("media asset(s) are not approved");
+}
+
+/**
+ * `media_publication_activate`'s codec-quarantine guard (Thunder_Core#66, ADR 0070) — a
+ * `failed` or still-`processing` Asset in the snapshot. The raw text names every offending
+ * file and tells the operator to replace it or wait, so it is shown as-is rather than routed
+ * through the generic "Invalid input:" bucket below, which would otherwise swallow those names.
+ */
+function isQuarantinedAsset(message: string): boolean {
+  return message.includes("cannot activate — replace this file:") || message.includes("wait — conversion in flight:");
+}
+
+/**
+ * A request that never got a response — the browser is offline, the host is
+ * unreachable, or it timed out. Axios reports it as `code: "ERR_NETWORK"` (or
+ * `"ECONNABORTED"` on timeout) with the bare English `message` "Network Error",
+ * none of which an operator should see: the retryable Thai line says the same
+ * thing and names the next action.
+ */
+function isTransportFailure(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const code = (err as { code?: string }).code;
+  return code === "ERR_NETWORK" || code === "ECONNABORTED" || err.message === "Network Error";
 }
 
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
@@ -100,6 +136,14 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
     };
   }
 
+  if (isIncompleteSyncGroupTarget(message)) {
+    return { kind: "rejected", message };
+  }
+
+  if (isQuarantinedAsset(message)) {
+    return { kind: "rejected", message };
+  }
+
   // Everything the API rejects on shape — zod schema failures and the remaining
   // `Invalid input:` RPC guards — arrives worded for whoever wrote the schema
   // ("Too small: expected string to have >=1 characters"). The specific cases worth
@@ -126,6 +170,12 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
   // Without a status we can't tell a rejection from an outage, and guessing
   // "retryable" on a rejected command invites the user to hammer a dead request.
   if (!(err instanceof ApiError)) {
+    if (isTransportFailure(err)) {
+      return {
+        kind: "retryable",
+        message: "เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง",
+      };
+    }
     return { kind: "retryable", message };
   }
 

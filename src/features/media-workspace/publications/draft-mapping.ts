@@ -1,4 +1,4 @@
-import { languageCode, type ScheduleTypeId } from "./mock-data.ts";
+import { type ScheduleTypeId } from "./mock-data.ts";
 import type {
   BasicInfoForm,
   ContentItem,
@@ -34,10 +34,8 @@ export function basicInfoToForm(
   const form: BasicInfoForm = {
     name: basicInfo.name.trim(),
     description: basicInfo.description || undefined,
-    campaign_id: basicInfo.campaignId || undefined,
     publication_type: basicInfo.publicationType as PublicationType,
     priority: basicInfo.priorityId as Priority,
-    language: languageCode(basicInfo.language),
     tags: basicInfo.tags ?? [],
   };
   if (playlistId?.trim()) {
@@ -49,11 +47,13 @@ export function basicInfoToForm(
   return form;
 }
 
-export function channelIdsToTargets(
+export function targetsFromSelection(
   channelIds: string[],
+  groupIds: string[],
+  groupNamesById: Record<string, string>,
   channels: ChannelListItem[],
 ): PublicationTarget[] {
-  return channelIds.map((id) => {
+  const channelTargets: PublicationTarget[] = channelIds.map((id) => {
     const channel = channels.find((c) => c.id === id);
     return {
       target_type: "channel",
@@ -61,6 +61,15 @@ export function channelIdsToTargets(
       name: channel ? channel.name : null,
     };
   });
+  const groupTargets: PublicationTarget[] = groupIds.map((id) => {
+    const group = channels.flatMap((channel) => channel.groups ?? []).find((item) => item.id === id);
+    return {
+      target_type: "group",
+      group_id: id,
+      name: groupNamesById[id] ?? group?.name ?? null,
+    };
+  });
+  return [...channelTargets, ...groupTargets];
 }
 
 export function draftItemsToContentItems(items: DraftAssetItem[]): ContentItem[] {
@@ -76,24 +85,6 @@ export function draftItemsToContentItems(items: DraftAssetItem[]): ContentItem[]
 export function isImageAsset(asset: MediaAsset): boolean {
   if (asset.kind) return asset.kind === "image";
   return !asset.file?.mime_type?.startsWith("video/");
-}
-
-/** `media_publication_set_content` rejects the whole save if any item points at an
- *  asset that is not `approved`, so an unapproved pick makes the draft unsavable. */
-export function isApprovedAsset(asset: MediaAsset): boolean {
-  return asset.approval_status === "approved";
-}
-
-/** Drops items the RPC would reject. Items whose asset is absent from `assets` are
- *  kept — a short or failed library load must not silently wipe a valid selection. */
-export function dropUnapprovedItems(
-  items: DraftAssetItem[],
-  assets: MediaAsset[]
-): DraftAssetItem[] {
-  return items.filter((item) => {
-    const asset = assets.find((a) => a.id === item.media_asset_id);
-    return !asset || isApprovedAsset(asset);
-  });
 }
 
 export const DEFAULT_IMAGE_DURATION_SECONDS = 10;

@@ -163,7 +163,6 @@
   --overlay: oklch(0.12 0.02 260 / 45%);
   --program: oklch(0.25 0.09 252);
 }
-
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
@@ -250,6 +249,7 @@
 @utility focus-ring {
   outline: 2px solid var(--ring);
   outline-offset: 1px;
+}
 }
 
 /* Keeps an element scrollable (e.g. if the sidebar nav ever outgrows the
@@ -365,4 +365,18 @@
 
 @utility bg-delivery-ring {
   background: conic-gradient(var(--success) 0 78%, var(--muted) 78% 100%);
+}
+
+@keyframes grow-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@utility animate-grow-bar {
+  transform-origin: left;
+  animation: grow-bar 700ms ease-out both;
 }

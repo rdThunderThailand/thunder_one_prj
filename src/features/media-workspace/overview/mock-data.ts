@@ -3,57 +3,6 @@
 // - Everything exported here remains an R&D placeholder until the corresponding
 //   monitoring/read-side endpoint exists. Do not present it as live telemetry.
 
-export interface StatCardData {
-  id: string;
-  label: string;
-  value: string;
-  total?: string;
-  delta: string;
-  trend: number[];
-  color: "indigo" | "blue" | "amber" | "emerald" | "red";
-  icon: "monitor" | "paperPlane" | "calendar" | "checkCircle" | "warningTriangle" | "alertCircle";
-  failedLabel?: string;
-  failedProgress?: number;
-}
-
-export const statCards: StatCardData[] = [
-  {
-    id: "total-channels",
-    label: "Total Channels",
-    value: "206",
-    delta: "",
-    trend: [40, 42, 38, 45, 50, 48, 55, 60, 58, 62, 65, 63],
-    color: "indigo",
-    icon: "monitor",
-  },
-  {
-    id: "online-channels",
-    label: "Online",
-    value: "186",
-    delta: "90.3% of total",
-    trend: [30, 35, 33, 40, 45, 42, 48, 50, 55, 52, 58, 60],
-    color: "blue",
-    icon: "paperPlane",
-  },
-  {
-    id: "warning-channels",
-    label: "Warning",
-    value: "12",
-    delta: "5.8% of total",
-    trend: [20, 25, 22, 28, 30, 27, 32, 35, 33, 38, 36, 40],
-    color: "amber",
-    icon: "warningTriangle",
-  },
-  {
-    id: "offline-channels",
-    label: "Offline",
-    value: "8",
-    delta: "3.9% of total",
-    trend: [96, 97, 95, 98, 97, 99, 98, 97, 99, 98, 99, 98.6],
-    color: "red",
-    icon: "alertCircle",
-  },
-];
 
 export interface AlertItemData {
   id: string;
@@ -164,8 +113,8 @@ export interface QuickActionData {
 export const quickActions: QuickActionData[] = [
   { label: "Create Publication", icon: "publication", color: "indigo", href: "/media-workspace/publications/create" },
   { label: "Create Playlist", icon: "playlist", color: "blue", href: "/media-workspace/playlists/create" },
-  { label: "Upload Media", icon: "upload", color: "emerald", href: "/media-workspace/assets" },
-  { label: "Create Campaign", icon: "campaign", color: "amber" },
-  { label: "Schedule Publication", icon: "schedule", color: "violet" },
-  { label: "Add Channel", icon: "channel", color: "teal", href: "/media-workspace/channels/create" },
+  { label: "Create Program", icon: "campaign", color: "amber" },
+  { label: "Upload Media", icon: "upload", color: "emerald", href: "/media-workspace/assets/upload" },
+  { label: "Add Channel", icon: "channel", color: "teal" },
+  { label: "Schedule Program", icon: "schedule", color: "violet" },
 ];

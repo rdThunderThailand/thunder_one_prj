@@ -1,341 +1,123 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { Card } from "@/components/ui/Card";
-import {
-  ChevronDownIcon,
-  FilterIcon,
-  GridIcon,
-  ListIcon,
-  SearchIcon,
-  SparklesIcon,
-  UploadIcon,
-} from "@/components/ui/icons";
+import { useState } from "react";
+import { ArrowRightIcon, ExternalLinkIcon, FolderIcon, GridIcon, ImageIcon, InfoIcon, LightbulbIcon, ListIcon, PlusIcon } from "@/components/ui/icons";
 import { useAssetUpload } from "@/features/media-workspace/assets/useAssetUpload";
-import { assetLibraryTabs } from "../mock-data";
-import { AssetCard } from "./AssetCard";
-import { SelectedAssetList } from "./SelectedAssetList";
-import { ContentSummaryPanel } from "./ContentSummaryPanel";
+import type { MediaAsset, PublicationType, Tag } from "../types";
+import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
+import { assetKind } from "../asset-filter";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import { fetchMediaAssets } from "../services/publications-api";
-import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import type { Campaign, MediaAsset } from "../types";
-import { dropUnapprovedItems, isImageAsset } from "../draft-mapping";
-import { acceptedAssetKind, canSelectAsset, canSelectPlaylist } from "../content-selection.ts";
-import { UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "../upload-limits";
-import { fetchPlaylists } from "@/features/media-workspace/playlists";
-import type { PlaylistListItem } from "@/features/media-workspace/playlists";
+import { Dropzone } from "./Dropzone";
+import { MediaPickerModal } from "./MediaPickerModal";
+import { PlaylistPickerModal } from "./PlaylistPickerModal";
+import { CompositionPickerModal } from "./CompositionPickerModal";
 
-function ToggleSwitch({
-  checked,
-  onChange,
+type Branch = "media" | "playlist" | "composition";
+
+const branchCopy: Record<Branch, { title: string; description: string; detail: string; tone: string; text: string; panel: string }> = {
+  media: { title: "MEDIA", description: "ไฟล์เดี่ยว (ภาพ, วิดีโอ, เสียง, HTML)", detail: "ใช้สำหรับเล่นแบบเดี่ยวบนหน้าจอ", tone: "border-emerald-300", text: "text-emerald-600", panel: "bg-emerald-50/60" },
+  playlist: { title: "PLAYLIST", description: "ลำดับการเล่นเนื้อหา", detail: "เล่นหลายรายการตามลำดับที่กำหนด", tone: "border-blue-300", text: "text-blue-600", panel: "bg-blue-50/60" },
+  composition: { title: "LAYOUT", description: "ออกแบบหลายโซนและการจัดวาง", detail: "แบ่งหน้าจอเป็นหลายส่วนและวางเนื้อหา", tone: "border-violet-300", text: "text-violet-600", panel: "bg-violet-50/60" },
+};
+
+export function AssetLibraryStep({
+  assets,
+  tags,
+  reloadAssets,
+  assetsLoading,
+  assetsError,
+  onContentSelected,
 }: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
+  assets: MediaAsset[];
+  tags: Tag[];
+  reloadAssets: () => Promise<MediaAsset[]>;
+  assetsLoading: boolean;
+  assetsError: string | null;
+  onContentSelected: () => void;
 }) {
+  const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
+  const assetItems = usePublicationDraftStore((s) => s.assetItems);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
+  const compositionId = usePublicationDraftStore((s) => s.compositionId);
+  const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
+  const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
+  const setPlaylistId = usePublicationDraftStore((s) => s.setPlaylistId);
+  const setCompositionId = usePublicationDraftStore((s) => s.setCompositionId);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [playlistPickerOpen, setPlaylistPickerOpen] = useState(false);
+  const [compositionPickerOpen, setCompositionPickerOpen] = useState(false);
+  const publicationType = basicInfo.publicationType;
+
+  const { fileInputRef, uploadPct, uploadError, uploadFile } = useAssetUpload(async (asset, isVideoFile) => {
+    const refreshed = await reloadAssets();
+    const selected = refreshed.find((candidate) => candidate.id === asset?.id) ?? asset;
+    if (!selected) return;
+    // First asset in the branch decides image vs video; a later upload of the other kind is
+    // refused with a reason rather than silently dropped (single-kind publications, ADR 0049 §5).
+    const nextType: PublicationType = isVideoFile ? "video" : "image";
+    if (assetItems.length === 0) {
+      if (publicationType !== nextType) setBasicInfo({ ...basicInfo, publicationType: nextType });
+    } else if (publicationType !== nextType) {
+      window.alert(`Publication นี้เป็น ${publicationType === "video" ? "วิดีโอ" : "รูปภาพ"} — ล้างเนื้อหาที่เลือกก่อนจึงจะเพิ่ม${nextType === "video" ? "วิดีโอ" : "รูปภาพ"}ได้`);
+      return;
+    }
+    setAssetItems(assetItems.some((item) => item.media_asset_id === selected.id) ? assetItems : [...assetItems, {
+      media_asset_id: selected.id,
+      duration_seconds: isVideoFile ? null : DEFAULT_IMAGE_DURATION_SECONDS,
+      transition: "cut",
+    }]);
+    onContentSelected();
+  });
+
+  const selectedBranch: Branch = publicationType === "playlist" ? "playlist" : publicationType === "composition" ? "composition" : "media";
+  const changeBranch = (branch: Branch) => {
+    const nextType = branch === "playlist" ? "playlist" : branch === "composition" ? "composition" : publicationType === "video" ? "video" : "image";
+    if (nextType === publicationType) return true;
+    if ((assetItems.length || playlistId || compositionId) && !window.confirm("Changing content type clears selected content. Schedule and Channels stay. Continue?")) return false;
+    setBasicInfo({ ...basicInfo, publicationType: nextType });
+    return true;
+  };
+
+  const commitMedia = (ids: string[]) => {
+    const firstAsset = ids.flatMap((id) => assets.find((candidate) => candidate.id === id) ?? [])[0];
+    const nextType: PublicationType = firstAsset ? assetKind(firstAsset) : publicationType;
+    if (nextType !== publicationType) setBasicInfo({ ...basicInfo, publicationType: nextType });
+    const previous = new Map(assetItems.map((item) => [item.media_asset_id, item]));
+    setAssetItems(ids.flatMap((id) => {
+      const asset = assets.find((candidate) => candidate.id === id);
+      if (!asset || assetKind(asset) !== nextType) return [];
+      return [previous.get(id) ?? { media_asset_id: id, duration_seconds: isImageAsset(asset) ? DEFAULT_IMAGE_DURATION_SECONDS : null, transition: "cut" }];
+    }));
+    setPickerOpen(false);
+    onContentSelected();
+  };
+
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-        checked ? "bg-indigo-600" : "bg-zinc-200"
-      }`}
-    >
-      <span
-        className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-          checked ? "translate-x-4" : "translate-x-0"
-        }`}
-      />
-    </button>
+    <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div><h1 className="text-xl font-semibold text-zinc-900">STEP 1 — CHOOSE CONTENT</h1><p className="mt-1 text-sm text-zinc-500">เลือกสิ่งที่จะสร้างหรือเผยแพร่</p></div>
+      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_16rem]">
+        {(Object.keys(branchCopy) as Branch[]).map((branch) => {
+          const copy = branchCopy[branch];
+          const selected = selectedBranch === branch;
+          const HeaderIcon = branch === "media" ? ImageIcon : branch === "playlist" ? ListIcon : GridIcon;
+          return <div key={branch} className={`flex min-h-[31rem] flex-col rounded-xl border-2 p-5 ${copy.tone} ${selected ? "ring-2 ring-indigo-500/25" : ""}`}>
+            <button type="button" onClick={() => changeBranch(branch)} className="flex w-full gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+              <HeaderIcon className={`h-12 w-12 shrink-0 ${copy.text}`} />
+              <span><span className={`block text-xl font-bold ${copy.text}`}>{copy.title}</span><span className="mt-1 block text-sm font-medium text-zinc-700">{copy.description}</span><span className="mt-1 block text-sm text-zinc-500">{copy.detail}</span></span>
+            </button>
+            {branch === "media" ? <div className="mt-5 flex flex-1 flex-col gap-3"><Dropzone fileInputRef={fileInputRef} onFileSelected={(file) => void uploadFile(file)} disabled={uploadPct !== null} progress={uploadPct} error={uploadError} /><button type="button" onClick={() => { if (changeBranch("media")) setPickerOpen(true); }} className="flex min-h-16 w-full items-center gap-4 rounded-lg border border-zinc-200 bg-white px-5 text-left text-sm font-semibold text-zinc-800 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><FolderIcon className="h-6 w-6 text-emerald-600" /><span>เลือกจาก Media Library<span className="mt-1 block text-xs font-normal text-zinc-500">เลือกไฟล์ที่มีอยู่แล้ว</span></span></button><div className="mt-auto"><p className="text-sm font-semibold text-zinc-700">รองรับไฟล์</p><div className="mt-2 flex flex-wrap gap-1.5">{["Image", "Video", "Audio", "HTML", "MP4", "JPG", "PNG"].map((type) => <span key={type} className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-600">{type}</span>)}</div></div></div> : branch === "playlist" ? <div className="mt-5 flex flex-1 flex-col gap-4"><button type="button" onClick={() => { if (changeBranch("playlist")) setPlaylistPickerOpen(true); }} className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-zinc-200 bg-white px-5 text-left text-sm font-semibold text-zinc-800 hover:bg-zinc-50"><ListIcon className="h-8 w-8 text-blue-600" /><span className="flex-1">{playlistId ? "เปลี่ยน Playlist" : "เลือก Playlist ที่มีอยู่"}<span className="mt-1 block text-xs font-normal text-zinc-500">เลือกจากรายการที่มีอยู่แล้ว</span></span><ArrowRightIcon /></button><a href="/media-workspace/playlists/create" target="_blank" rel="noreferrer" className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-zinc-200 bg-white px-5 text-left text-sm font-semibold text-zinc-800 hover:bg-zinc-50"><PlusIcon className="h-8 w-8 text-blue-600" /><span className="flex-1">สร้าง Playlist ใหม่<span className="mt-1 block text-xs font-normal text-zinc-500">จัดลำดับเนื้อหาและตั้งค่าการเล่น</span></span><ArrowRightIcon /></a><div className={`mt-auto rounded-lg p-4 ${copy.panel}`}><p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}><InfoIcon />Playlist เหมาะสำหรับ</p><ul className="mt-2 list-disc space-y-1 pl-7 text-xs text-zinc-600"><li>ต้องการเล่นหลายสื่อแบบต่อเนื่อง</li><li>กำหนดลำดับและระยะเวลาได้</li><li>ใช้งานซ้ำได้หลายหน้าจอ</li></ul></div></div> : <div className="mt-5 flex flex-1 flex-col gap-4"><button type="button" onClick={() => { if (changeBranch("composition")) setCompositionPickerOpen(true); }} className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-zinc-200 bg-white px-5 text-left text-sm font-semibold text-zinc-800 hover:bg-zinc-50"><GridIcon className="h-8 w-8 text-violet-600" /><span className="flex-1">{compositionId ? "เปลี่ยน Layout" : "เลือก Layout ที่มีอยู่"}<span className="mt-1 block text-xs font-normal text-zinc-500">เลือกจาก Layout ที่บันทึกไว้</span></span><ArrowRightIcon /></button><a href="/media-workspace/layouts/create" target="_blank" rel="noreferrer" className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-zinc-200 bg-white px-5 text-left text-sm font-semibold text-zinc-800 hover:bg-zinc-50"><PlusIcon className="h-8 w-8 text-violet-600" /><span className="flex-1">สร้าง Layout ใหม่<span className="mt-1 block text-xs font-normal text-zinc-500">ออกแบบการจัดวางและโซนเนื้อหา</span></span><ArrowRightIcon /></a><div className={`mt-auto rounded-lg p-4 ${copy.panel}`}><p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}><InfoIcon />Layout เหมาะสำหรับ</p><ul className="mt-2 list-disc space-y-1 pl-7 text-xs text-zinc-600"><li>แบ่งหน้าจอหลายโซน (Zones)</li><li>แสดงสื่อหลายประเภทพร้อมกัน</li><li>เหมาะกับหน้าจอขนาดใหญ่</li></ul></div></div>}
+          </div>;
+        })}
+        <aside className="rounded-xl border border-zinc-200 p-5"><h2 className="text-lg font-semibold text-zinc-900">ไม่แน่ใจว่าจะเลือกอะไร?</h2><p className="mt-1 text-sm text-zinc-500">นี่คือแนวทางการเลือกประเภทเนื้อหา</p><div className="mt-5 space-y-5"><Guide icon={ImageIcon} tone="text-emerald-600 bg-emerald-50" title="เลือก Media เมื่อ" items={["คุณมีไฟล์เดียวที่ต้องการแสดงผล", "ต้องการใช้ไฟล์ใน Playlist หรือ Layout", "ต้องการอัปโหลดไฟล์เก็บไว้ในคลังสื่อ"]} /><Guide icon={ListIcon} tone="text-blue-600 bg-blue-50" title="เลือก Playlist เมื่อ" items={["ต้องการเล่นสื่อหลายชิ้นต่อกัน", "ต้องการกำหนดเวลา / ระยะเวลาแต่ละชิ้น", "ต้องการบริหารลำดับสื่อ"]} /><Guide icon={GridIcon} tone="text-violet-600 bg-violet-50" title="เลือก Layout เมื่อ" items={["ต้องการแบ่งหน้าจอเป็นหลายส่วน", "ต้องการแสดงสื่อหลายประเภทพร้อมกัน", "เช่น ข่าว + สภาพอากาศ + โฆษณา"]} /></div><div className="mt-5 border-t border-zinc-200 pt-4"><p className="text-sm font-medium text-zinc-800">เรียนรู้เพิ่มเติม</p><a href="#" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-indigo-600">ดูคู่มือการใช้งาน <ExternalLinkIcon /></a></div></aside>
+      </div>
+      <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"><LightbulbIcon className="h-4 w-4 shrink-0" />Tip: คุณสามารถเปลี่ยนประเภทเนื้อหาได้ในขั้นตอนถัดไป</div>
+      {pickerOpen && <MediaPickerModal assets={assets} tags={tags} selectedIds={assetItems.map((item) => item.media_asset_id)} loading={assetsLoading} error={assetsError} onClose={() => setPickerOpen(false)} onSelect={commitMedia} />}
+      {playlistPickerOpen && <PlaylistPickerModal selectedId={playlistId} onClose={() => setPlaylistPickerOpen(false)} onSelect={(id) => { setPlaylistId(id); setPlaylistPickerOpen(false); onContentSelected(); }} />}
+      {compositionPickerOpen && <CompositionPickerModal selectedId={compositionId} onClose={() => setCompositionPickerOpen(false)} onSelect={(id) => { setCompositionId(id); setCompositionPickerOpen(false); onContentSelected(); }} />}
+    </section>
   );
 }
 
-export function AssetLibraryStep({ campaigns = [] }: { campaigns?: Campaign[] }) {
-  const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
-  const assetItems = usePublicationDraftStore((s) => s.assetItems);
-  const toggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
-  const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
-  const playlistId = usePublicationDraftStore((s) => s.playlistId);
-  const setPlaylistId = usePublicationDraftStore((s) => s.setPlaylistId);
-  const publicationType = basicInfo.publicationType;
-
-  const [aiSuggest, setAiSuggest] = useState(true);
-  const [view, setView] = useState<"grid" | "list">("grid");
-
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [playlists, setPlaylists] = useState<PlaylistListItem[]>([]);
-  const [playlistsError, setPlaylistsError] = useState<string | null>(null);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "image" | "video" | "playlist">(() =>
-    publicationType === "image" || publicationType === "video" || publicationType === "playlist"
-      ? publicationType
-      : "all"
-  );
-
-  // ponytail: promise chain, not async/await — react-hooks/set-state-in-effect follows an
-  // async callee into its body and flags the setState calls even though they're post-await.
-  const loadAssets = useCallback(
-    () =>
-      fetchMediaAssets()
-        .then((data) => {
-          setAssets(data);
-          setError(null);
-          // Drafts saved before unapproved assets became unpickable still hold one,
-          // and every save retries the RPC that refuses it — drop them on sight so
-          // the wizard cannot stay stuck on a selection the user can no longer see.
-          const store = usePublicationDraftStore.getState();
-          const kept = dropUnapprovedItems(store.assetItems, data);
-          if (kept.length !== store.assetItems.length) store.setAssetItems(kept);
-        })
-        .catch((err) => {
-          setAssets([]);
-          setError(err instanceof Error ? err.message : "Failed to load assets");
-        })
-        .finally(() => setLoading(false)),
-    []
-  );
-
-  const loadPlaylists = useCallback(
-    () =>
-      fetchPlaylists()
-        .then((data) => {
-          setPlaylists(data);
-          setPlaylistsError(null);
-        })
-        .catch((err) => {
-          setPlaylists([]);
-          setPlaylistsError(err instanceof Error ? err.message : "Failed to load playlists");
-        }),
-    []
-  );
-
-  useEffect(() => {
-    void loadAssets();
-    void loadPlaylists();
-  }, [loadAssets, loadPlaylists]);
-
-  const { fileInputRef, uploadPct, uploadError, handleFilePicked } = useAssetUpload(
-    async (asset, isVideoFile) => {
-      await loadAssets();
-      if (asset?.id && acceptedAssetKind(publicationType) === (isVideoFile ? "video" : "image")) {
-        if (playlistId) setPlaylistId(null);
-        toggleAssetItem({ id: asset.id, isImage: !isVideoFile });
-      }
-    }
-  );
-
-  const filteredAssets = useMemo(() => {
-    if (typeFilter === "playlist") return [];
-    let list = assets;
-    if (typeFilter !== "all") {
-      list = list.filter((asset) => isImageAsset(asset) === (typeFilter === "image"));
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter((asset) => {
-        const filename = asset.file?.original_filename ?? "";
-        const title = asset.title ?? "";
-        return filename.toLowerCase().includes(q) || title.toLowerCase().includes(q);
-      });
-    }
-    return list;
-  }, [assets, searchQuery, typeFilter]);
-
-  const filteredPlaylists = useMemo(() => {
-    if (typeFilter === "image" || typeFilter === "video") return [];
-    let list = playlists;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q));
-    }
-    return list;
-  }, [playlists, searchQuery, typeFilter]);
-
-  const previewIds = useMemo(() => {
-    const ids = filteredAssets.map((a) => a.id);
-    for (const p of filteredPlaylists) {
-      if (p.cover_asset_id) ids.push(p.cover_asset_id);
-    }
-    return ids;
-  }, [filteredAssets, filteredPlaylists]);
-  const previews = usePreviewUrls(previewIds);
-
-  return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div className="flex flex-col gap-4 lg:col-span-2">
-        <Card className="p-4">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="relative min-w-[180px] flex-1">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search assets..."
-                className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-              />
-            </div>
-            <div className="relative">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as "all" | "image" | "video" | "playlist")}
-                className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-              >
-                <option value="all">All Media</option>
-                <option value="image">Images</option>
-                <option value="video">Videos</option>
-                <option value="playlist">Playlists</option>
-              </select>
-              <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
-            </div>
-            <Link
-              href="/media-workspace/playlists/create"
-              target="_blank"
-              className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
-            >
-              สร้าง Playlist ใหม่
-            </Link>
-            {["All Formats", "All Brands", "All Languages"].map((label) => (
-              <div key={label} className="relative">
-                <select className="appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
-                  <option>{label}</option>
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
-              </div>
-            ))}
-            <button className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50">
-              <FilterIcon className="h-3.5 w-3.5" /> Filters
-            </button>
-            <div className="ml-auto flex items-center gap-2 text-sm text-zinc-600">
-              <SparklesIcon className="h-4 w-4 text-indigo-500" />
-              AI Suggest
-              <ToggleSwitch checked={aiSuggest} onChange={setAiSuggest} />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-900">Asset Library</h2>
-              <div className="mt-2 flex items-center gap-4">
-                {assetLibraryTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    disabled={!tab.enabled}
-                    title={!tab.enabled ? "Not built yet" : undefined}
-                    className={`text-sm font-medium ${
-                      tab.enabled
-                        ? "border-b-2 border-indigo-600 pb-1 text-indigo-600"
-                        : "cursor-not-allowed pb-1 text-zinc-300"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex rounded-lg border border-zinc-200 p-0.5">
-                <button
-                  onClick={() => setView("grid")}
-                  className={`rounded-md p-1.5 ${view === "grid" ? "bg-zinc-100 text-zinc-900" : "text-zinc-400"}`}
-                  aria-label="Grid view"
-                >
-                  <GridIcon className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setView("list")}
-                  className={`rounded-md p-1.5 ${view === "list" ? "bg-zinc-100 text-zinc-900" : "text-zinc-400"}`}
-                  aria-label="List view"
-                >
-                  <ListIcon className="h-4 w-4" />
-                </button>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={UPLOAD_ACCEPT_ATTR}
-                onChange={handleFilePicked}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadPct !== null}
-                className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50"
-              >
-                <UploadIcon className="h-3.5 w-3.5" />{" "}
-                {uploadPct !== null ? `Uploading ${uploadPct}%` : "Upload Asset"}
-              </button>
-            </div>
-          </div>
-
-          <p className={`mb-3 text-xs ${uploadError ? "text-red-500" : "text-zinc-400"}`}>
-            {loading
-              ? "Loading assets…"
-              : uploadError
-                ? uploadError
-                : error || playlistsError
-                  ? error || playlistsError
-                  : `${filteredAssets.length + filteredPlaylists.length} items found · ${UPLOAD_ACCEPT_LABEL}`}
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {filteredAssets.map((asset) => {
-              const selectable = canSelectAsset(publicationType, asset);
-              return (
-                <AssetCard
-                  key={asset.id}
-                  kind="asset"
-                  asset={asset}
-                  previewUrl={previews.urls[asset.id]}
-                  thumbnailUrl={previews.thumbnailUrls[asset.id]}
-                  selected={assetItems.some((i) => i.media_asset_id === asset.id)}
-                  onSelect={() => {
-                    if (selectable) {
-                      if (playlistId) setPlaylistId(null);
-                      toggleAssetItem({ id: asset.id, isImage: isImageAsset(asset) });
-                    }
-                  }}
-                  disabled={!selectable}
-                />
-              );
-            })}
-            {filteredPlaylists.map((playlist) => {
-              const selectable = canSelectPlaylist(publicationType);
-              const selected = playlistId === playlist.id;
-              return (
-                <AssetCard
-                  key={playlist.id}
-                  kind="playlist"
-                  playlist={playlist}
-                  previewUrl={playlist.cover_asset_id ? previews.urls[playlist.cover_asset_id] : undefined}
-                  thumbnailUrl={playlist.cover_asset_id ? previews.thumbnailUrls[playlist.cover_asset_id] : undefined}
-                  selected={selected}
-                  onSelect={() => {
-                    if (selectable) {
-                      if (!selected) setAssetItems([]);
-                      setPlaylistId(selected ? null : playlist.id);
-                    }
-                  }}
-                  disabled={!selectable}
-                />
-              );
-            })}
-          </div>
-        </Card>
-
-        <SelectedAssetList assets={assets} previews={previews.urls} />
-      </div>
-
-      <ContentSummaryPanel assets={assets} previews={previews.urls} campaigns={campaigns} />
-    </div>
-  );
+function Guide({ icon: Icon, tone, title, items }: { icon: typeof ImageIcon; tone: string; title: string; items: string[] }) {
+  return <div className="border-b border-zinc-100 pb-5 last:border-0 last:pb-0"><div className="flex items-center gap-3"><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${tone}`}><Icon className="h-5 w-5" /></span><p className="text-sm font-semibold text-zinc-800">{title}</p></div><ul className="mt-2 list-disc space-y-1 pl-12 text-xs leading-5 text-zinc-600">{items.map((item) => <li key={item}>{item}</li>)}</ul></div>;
 }
