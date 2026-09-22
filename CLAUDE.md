@@ -13,3 +13,7 @@ Default canonical vocabulary — no repo-specific overrides. See `docs/agents/tr
 ### Domain docs
 
 Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Versioning & release
+
+SemVer `0.x` in `package.json`; minor per `dev → main` promotion, annotated tag `vX.Y.Z` on `main`. See `docs/agents/versioning.md`.
