@@ -44,7 +44,11 @@ export function ChannelsListPage() {
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  // #115: the dashboard's "Add Channel" quick action links here with ?create=1 so it opens
+  // the same creation flow as this page's own "Create Channel" button, instead of a dead route.
+  const [isCreateOpen, setIsCreateOpen] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("create") === "1",
+  );
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   // Independent of `channels`/`error` above: Now Playing and the Channel Groups tile degrade on
