@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/lovable/button";
-import { Card } from "@/components/ui/Card";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchLayout, upsertLayout } from "@/features/media-workspace/layouts/services/layouts-api";
 import { seedCanvasSettings, takeCreateSeed } from "@/features/media-workspace/layouts/create-seed";
@@ -193,13 +192,20 @@ export function CompositionEditorPage({
   if (loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
   const fatal = loadError ?? data.loadError;
   if (fatal) return (
-    <Card className="p-6">
+    <div className="rounded-lg border border-border bg-card p-6">
       <p className="text-sm text-danger">{fatal.message}</p>
       <Button className="mt-4" variant="outline" onClick={() => router.push(LIST_PATH)}>กลับไป Layouts</Button>
-    </Card>
+    </div>
   );
+  const activeZoneIndex = layout && view.activeZone ? layout.zones.findIndex((z) => z.id === view.activeZone?.id) : -1;
+  const selectedZoneLabel = activeZoneIndex >= 0 && view.activeZone
+    ? `${String.fromCharCode(65 + activeZoneIndex)} · ${view.activeZone.name}`
+    : null;
+  // Full-bleed like the Lovable reference (ADR 0077 focus shell): the negative margin cancels
+  // the dashboard <main> padding so header, toolbar and columns run edge to edge.
   return (
-    <div className="flex flex-col gap-4">
+    <div className="-m-6 flex h-dvh flex-col overflow-hidden bg-background">
+      <div className="shrink-0 border-b border-border bg-card px-4">
       <CompositionEditorHeader
         isExisting={!!id}
         name={name}
@@ -225,6 +231,7 @@ export function CompositionEditorPage({
           router.push(LIST_PATH);
         }, "เปิดใช้งาน Composition ไม่สำเร็จ")}
       />
+      </div>
       <CompositionEditorOverlays
         confirmLeave={confirmLeave}
         onStay={() => setConfirmLeave(false)}
@@ -248,8 +255,8 @@ export function CompositionEditorPage({
         onOpenFullPreview={() => preview.openFullPreview(isDirty)}
       />
       <LayoutTemplatePicker open={pickerOpen} folders={data.folders} tagNames={tags ?? []} hasUnsavedChanges={isDirty} onClose={() => setPickerOpen(false)} onStarted={() => window.location.reload()} />
-      <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-panel">
-      <div className="flex h-[50rem] min-w-[1060px] flex-col">
+      <div className="min-h-0 flex-1 overflow-x-auto">
+      <div className="flex h-full min-w-[1060px] flex-col">
         {layout && (
           <CompositionEditorToolbar
             zones={layout.zones}
@@ -268,6 +275,7 @@ export function CompositionEditorPage({
       <div className="grid min-h-0 flex-1 grid-cols-[230px_minmax(560px,1fr)_270px] items-stretch">
         <CompositionContentBrowser
           binding={view.binding ?? null}
+          selectedZoneLabel={selectedZoneLabel}
           assets={data.assets}
           playlists={data.playlists}
           previews={data.previews}
@@ -275,7 +283,7 @@ export function CompositionEditorPage({
           onChange={setBinding}
         />
         {layout ? (
-          <main className="flex min-h-0 flex-col gap-3 p-3">
+          <main className="flex min-h-0 flex-col gap-3 overflow-y-auto bg-muted/40 p-3">
             <CompositionCanvasPane
               zones={layout.zones} background={settings.background} aspectRatio={settings.aspectRatio}
               referenceResolution={settings.referenceResolution} zonePreviews={preview.zonePreviews}
@@ -287,7 +295,7 @@ export function CompositionEditorPage({
             />
             <div className="grid shrink-0 grid-cols-2 gap-3">
               <LayoutInformationCard name={name} resolution={settings.referenceResolution} aspectRatio={settings.aspectRatio} zoneCount={layout.zones.length} status={status} />
-              <section className="rounded-lg border border-border bg-card p-3 shadow-panel"><ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} /></section>
+              <section className="rounded-lg border border-border bg-card p-3"><ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} /></section>
             </div>
           </main>
         ) : (
@@ -296,13 +304,14 @@ export function CompositionEditorPage({
             <Button onClick={() => setPickerOpen(true)}>+ New Layout</Button>
           </main>
         )}
-        <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-border p-3">
+        <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-border bg-card p-3">
           {view.binding && view.activeZone ? <>
-            <p className="text-sm font-semibold text-foreground">Zone Properties</p>
+            <p className="text-[11px] font-bold text-foreground">Zone Properties</p>
             <ZonePropertiesPanel
               zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null} binding={view.binding}
               onZoneChange={(next) => beginZoneEdit() && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
-              onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} playlistDurations={data.playlistDurations}
+              onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} previews={data.previews}
+              playlists={data.playlists} playlistDurations={data.playlistDurations}
             />
           </> : layout ? (
             <LayoutPropertiesPanel
