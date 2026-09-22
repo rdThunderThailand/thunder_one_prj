@@ -1,13 +1,17 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { ArrowRightIcon, SparklesIcon } from "@/components/ui/icons";
 import { briefTeaser } from "../mock-data";
+import { BriefPanel } from "./BriefPanel";
 
 // A static teaser for an AI-style summary panel — no assistant/insights
 // backend exists anywhere in this app, same honest-preview treatment the
-// retired AskThunderOneCard used. The "ดูว่า Brief ทำอะไรได้" button is
-// inert on purpose (title attr explains why) rather than linking somewhere
-// that doesn't exist yet.
+// retired AskThunderOneCard used. "ดูว่า Brief ทำอะไรได้" opens BriefPanel,
+// an explainer of what the feature will do once built — it doesn't turn the
+// feature itself on (see BriefPanel's own doc comment).
 //
 // 3-column layout matches the Figma mockup exactly (node 396:4560): title
 // block, illustration, promo text + button — rebuilt 2026-09-16 from the
@@ -16,6 +20,8 @@ import { briefTeaser } from "../mock-data";
 // decorative artwork (downloaded from Figma's asset export, not a stock
 // photo standing in for real data — see public/illustrations).
 export function BriefTeaserCard() {
+  const [briefOpen, setBriefOpen] = useState(false);
+
   return (
     <Card className="flex flex-col items-stretch gap-4 p-5 lg:flex-row lg:items-center">
       <div className="flex-1">
@@ -44,14 +50,15 @@ export function BriefTeaserCard() {
         <p className="text-xs text-zinc-400">เตรียมพบกับประสบการณ์ใหม่ ที่จะช่วยให้คุณเห็นภาพรวมองค์กรได้เร็วขึ้น เร็ว ๆ นี้</p>
         <button
           type="button"
-          disabled
-          title="ฟีเจอร์นี้ยังไม่พร้อมใช้งาน"
-          className="flex cursor-not-allowed items-center gap-1.5 text-sm font-medium text-indigo-400"
+          onClick={() => setBriefOpen(true)}
+          className="flex items-center gap-1.5 text-sm font-medium text-indigo-500 hover:text-indigo-600"
         >
           ดูว่า Brief ทำอะไรได้
           <ArrowRightIcon className="h-3.5 w-3.5" />
         </button>
       </div>
+
+      <BriefPanel open={briefOpen} onClose={() => setBriefOpen(false)} />
     </Card>
   );
 }
