@@ -92,7 +92,7 @@ export function ContentInfoRail({
         <div className="flex items-start gap-3">
           <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div>
-            <h2 className="text-sm font-semibold text-primary">Need Help?</h2>
+            <h2 className="text-[11px] font-bold text-primary">Need Help?</h2>
             <p className="mt-1 text-xs leading-5 text-primary">ดูคู่มือการใช้งานหรือขอคำแนะนำ</p>
           </div>
         </div>

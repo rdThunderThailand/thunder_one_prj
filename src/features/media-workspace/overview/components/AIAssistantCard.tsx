@@ -6,7 +6,7 @@ export function AIAssistantCard() {
     <Card className="relative overflow-hidden bg-linear-to-br from-primary to-blue-600 p-4 text-white">
       <div className="mb-2 flex items-center gap-2">
         <SparklesIcon className="h-4 w-4" />
-        <h2 className="text-sm font-semibold">AI Media Assistant</h2>
+        <h2 className="text-[11px] font-bold">AI Media Assistant</h2>
         <span className="rounded-full bg-card/20 px-1.5 py-0.5 text-[10px] font-medium">
           Beta
         </span>

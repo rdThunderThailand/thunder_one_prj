@@ -41,13 +41,13 @@ export function LayoutsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-[10px]">
         <thead>
-          <tr className="border-b border-border text-[9px] font-semibold text-muted-foreground">
-            <SortHeader label="Template" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2 pl-1" />
-            <SortHeader label="Zones" sortKey="zones" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Resolution" sortKey="aspectRatio" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Last Modified" sortKey="updated" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <th className="py-2 pr-1 text-right">Actions</th>
+          <tr className="border-b border-border text-[9px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <SortHeader label="Template" sortKey="name" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Zones" sortKey="zones" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Resolution" sortKey="aspectRatio" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Last Modified" sortKey="updated" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <th className="px-3 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -58,20 +58,20 @@ export function LayoutsTable({
                 key={layout.id}
                 className="border-b border-border last:border-0 hover:bg-muted"
               >
-                <td className="py-3 pl-1">
+                <td className="px-3 py-2.5">
                   <Link href={`/media-workspace/layouts/templates/${layout.id}`} className="flex items-center gap-3">
-                    <LayoutWireframe zones={layout.zones} background={layout.background} aspectRatio={layout.aspect_ratio} programStyle className="h-10 w-16 rounded border border-border" />
-                    <span className="text-[10px] font-semibold text-foreground">{layout.name}</span>
+                    <LayoutWireframe zones={layout.zones} background={layout.background} aspectRatio={layout.aspect_ratio} programStyle className="h-11 w-16 rounded border border-border" />
+                    <span className="truncate text-[11px] font-semibold text-foreground">{layout.name}</span>
                   </Link>
                 </td>
-                <td className="py-3 text-[10px] text-muted-foreground">{layout.zone_count} Zone{layout.zone_count === 1 ? "" : "s"}</td>
-                <td className="py-3 text-[10px] text-muted-foreground">{layout.reference_resolution ?? layout.aspect_ratio}</td>
-                <td className="py-3 text-[10px] text-muted-foreground">
-                  {layout.created_by?.display_name && <span className="block">{layout.created_by.display_name}</span>}
-                  {formatUpdatedAt(layout.updated_at ?? layout.created_at)}
+                <td className="px-3 py-2.5 text-[10px]">{layout.zone_count} Zone{layout.zone_count === 1 ? "" : "s"}</td>
+                <td className="px-3 py-2.5 text-[10px]">{layout.reference_resolution ?? layout.aspect_ratio}</td>
+                <td className="px-3 py-2.5">
+                  {layout.created_by?.display_name && <p className="text-[10px] font-semibold">{layout.created_by.display_name}</p>}
+                  <p className="text-[9px] text-muted-foreground">{formatUpdatedAt(layout.updated_at ?? layout.created_at)}</p>
                 </td>
-                <td className="py-3"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge></td>
-                <td className="py-3 pr-1 text-right">
+                <td className="px-3 py-2.5"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge></td>
+                <td className="px-3 py-2.5 text-right">
                   <RowActions
                     status={layout.status}
                     disabled={busyId === layout.id}
@@ -144,7 +144,7 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSortChange(sortKey)}
-        className="inline-flex items-center gap-1 hover:text-foreground"
+        className="inline-flex items-center gap-1 uppercase hover:text-foreground"
       >
         {label}
         {active && <span aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span>}

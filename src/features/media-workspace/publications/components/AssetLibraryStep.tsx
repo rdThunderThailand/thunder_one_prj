@@ -94,7 +94,7 @@ export function AssetLibraryStep({
 
   return (
     <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <div><h1 className="text-xl font-semibold text-foreground">STEP 1 — CHOOSE CONTENT</h1><p className="mt-1 text-sm text-muted-foreground">เลือกสิ่งที่จะสร้างหรือเผยแพร่</p></div>
+      <div><h1 className="text-xl font-extrabold tracking-tight text-foreground">STEP 1 — CHOOSE CONTENT</h1><p className="mt-1 text-sm text-muted-foreground">เลือกสิ่งที่จะสร้างหรือเผยแพร่</p></div>
       <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_16rem]">
         {(Object.keys(branchCopy) as Branch[]).map((branch) => {
           const copy = branchCopy[branch];

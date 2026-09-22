@@ -93,7 +93,7 @@ export function UploadQueuePage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"><Link href="/media-workspace/assets" className="hover:text-primary">Media Library</Link><span aria-hidden="true">/</span><span>Upload Media</span></div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Upload Media</h1>
+          <h1 className="text-xl font-extrabold tracking-tight text-foreground">Upload Media</h1>
           <p className="mt-1 text-sm text-muted-foreground">Upload and manage your media assets.</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -123,7 +123,7 @@ export function UploadQueuePage() {
 
           <Card className="overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
-              <div><h2 className="text-sm font-semibold text-foreground">Upload Queue ({queue.summary.total} files)</h2><p className="mt-0.5 text-xs text-muted-foreground">Two files upload at a time.</p></div>
+              <div><h2 className="text-[11px] font-bold text-foreground">Upload Queue ({queue.summary.total} files)</h2><p className="mt-0.5 text-xs text-muted-foreground">Two files upload at a time.</p></div>
               {queue.aggregateAction && <Button variant="outline" onClick={runAggregateAction}>{AGGREGATE_LABEL[queue.aggregateAction]}</Button>}
             </div>
 
@@ -157,7 +157,7 @@ export function UploadQueuePage() {
           </Card>
 
           <Card className="overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-border px-4 py-3"><UploadIcon className="h-4 w-4 shrink-0 text-primary" /><h2 className="text-sm font-semibold text-foreground">Upload Summary</h2></div>
+            <div className="flex items-center gap-2 border-b border-border px-4 py-3"><UploadIcon className="h-4 w-4 shrink-0 text-primary" /><h2 className="text-[11px] font-bold text-foreground">Upload Summary</h2></div>
             <dl className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
               {[["Files in queue", queue.summary.total], ["Total size", formatBytes(queue.summary.totalBytes)], ["Completed", queue.summary.completed], ["Uploading", queue.summary.uploading], ["Waiting", queue.summary.staged + queue.summary.waiting], ["Failed", queue.summary.failed]].map(([label, value]) => <div key={label} className="p-4 text-center"><dd className="text-lg font-semibold text-foreground">{value}</dd><dt className="mt-1 text-[11px] text-muted-foreground">{label}</dt></div>)}
             </dl>
@@ -166,7 +166,7 @@ export function UploadQueuePage() {
 
         <aside className="space-y-5">
           <Card className="p-4">
-            <h2 className="text-sm font-semibold text-foreground">Upload to</h2>
+            <h2 className="text-[11px] font-bold text-foreground">Upload to</h2>
             <label className="mt-4 block text-xs font-medium text-muted-foreground" htmlFor="upload-folder">Select folder</label>
             <select id="upload-folder" value={queue.folderId ?? ""} disabled={settingsLocked} onChange={(event) => queue.setFolderId(event.target.value || null)} className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"><option value="">Uncategorized</option>{queue.folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select>
             <label className="mt-4 block text-xs font-medium text-muted-foreground" htmlFor="upload-tag">Tags (optional)</label>
@@ -186,7 +186,7 @@ export function UploadQueuePage() {
           </Card>
 
           <Card className="p-4">
-            <div className="flex items-center gap-2"><LightbulbIcon className="h-4 w-4 shrink-0 text-primary" /><h2 className="text-sm font-semibold text-foreground">Upload Tips</h2></div>
+            <div className="flex items-center gap-2"><LightbulbIcon className="h-4 w-4 shrink-0 text-primary" /><h2 className="text-[11px] font-bold text-foreground">Upload Tips</h2></div>
             <ul className="mt-4 space-y-3 text-xs text-muted-foreground">{[`Use only ${UPLOAD_ACCEPT_LABEL}`, `Keep each file at or below ${MAX_UPLOAD_SIZE_LABEL}`, "No queue limit; two files upload at a time"].map((tip) => <li key={tip} className="flex gap-2"><CheckCircleIcon className="h-4 w-4 shrink-0 text-success" /><span>{tip}</span></li>)}</ul>
           </Card>
 

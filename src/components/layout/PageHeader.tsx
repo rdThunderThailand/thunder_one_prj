@@ -28,7 +28,7 @@ export function PageHeader({ title, subtitle, actions, titleInTopbar = false }: 
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{title}</h1>
+        <h1 className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</h1>
         {subtitle && (
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
         )}

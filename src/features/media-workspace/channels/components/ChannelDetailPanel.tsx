@@ -192,7 +192,7 @@ export function ChannelDetailPanel({
       </div>
 
       <div className="mt-5 border-t border-border pt-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</h3>
+        <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Status</h3>
         <div className="mt-2 flex items-center gap-2">
           <Badge color={status.color}>{status.label}</Badge>
         </div>
@@ -201,7 +201,7 @@ export function ChannelDetailPanel({
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Now Playing</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Now Playing</h3>
           <Link
             href={`/media-workspace/publications?q=${encodeURIComponent(channel.name)}`}
             className="text-xs font-medium text-primary hover:text-primary"
@@ -231,7 +231,7 @@ export function ChannelDetailPanel({
       </div>
 
       <div className="mt-4 border-t border-border pt-4">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
           Channel Structure
         </h3>
         <ChannelStructureTree channel={channel} />
@@ -239,7 +239,7 @@ export function ChannelDetailPanel({
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             Groups ({groups.length})
           </h3>
           <button
@@ -273,7 +273,7 @@ export function ChannelDetailPanel({
       )}
 
       <div className="mt-4 border-t border-border pt-4">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <h3 className="mb-3 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
           Channel Information
         </h3>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4">

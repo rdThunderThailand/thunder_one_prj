@@ -155,7 +155,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
       <span className="truncate text-foreground">{label}</span>
     </nav>
     <div>
-      <h1 className="text-xl font-bold text-foreground">Media Detail</h1>
+      <h1 className="text-xl font-extrabold tracking-tight text-foreground">Media Detail</h1>
       <Link href="/media-workspace/assets" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80">
         <ArrowLeft className="h-3 w-3" />
         Back to Media Library

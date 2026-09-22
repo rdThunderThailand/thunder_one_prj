@@ -16,8 +16,8 @@ import type { ContentFolder, Tag } from "@/types/domain";
 import type { LayoutSettingsDraft } from "../save-composition";
 
 const inputClasses =
-  "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
-const labelClasses = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+  "h-9 w-full rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
+const labelClasses = "text-[9px] font-medium uppercase tracking-wide text-muted-foreground";
 
 export function LayoutPropertiesPanel({
   name,
@@ -88,9 +88,9 @@ export function LayoutPropertiesPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
-      <p className="text-sm font-semibold text-foreground">Layout Properties</p>
+      <p className="text-[11px] font-bold text-foreground">Layout Properties</p>
       <div className="rounded-lg border border-border bg-muted p-1">
-        <button type="button" aria-current="page" className="w-full rounded-md bg-card px-3 py-1.5 text-sm font-medium text-primary shadow-sm">General</button>
+        <button type="button" aria-current="page" className="w-full rounded-md bg-card px-3 py-1.5 text-[9px] font-medium text-primary shadow-sm">General</button>
       </div>
       <div className={`grid items-start gap-4 ${compact ? "" : "md:grid-cols-2 xl:grid-cols-3"}`}>
 

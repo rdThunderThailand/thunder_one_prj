@@ -51,7 +51,7 @@ export function ChannelGroupInspectorSections({
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Program</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Current Program</h3>
           <Link href="/media-workspace/publications" className="text-xs font-medium text-primary hover:text-primary">View Programs →</Link>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">No program scheduled now</p>
@@ -59,7 +59,7 @@ export function ChannelGroupInspectorSections({
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Channels in this Group ({group.member_count})</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Channels in this Group ({group.member_count})</h3>
           <button type="button" onClick={onManageChannels} className="text-xs font-medium text-primary hover:text-primary">Manage Channels →</button>
         </div>
         {group.members.length === 0 ? (
@@ -74,7 +74,7 @@ export function ChannelGroupInspectorSections({
       </div>
 
       <div className="mt-4 border-t border-border pt-4">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Group Information</h3>
+        <h3 className="mb-3 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Group Information</h3>
         <dl>
           <DetailItem label="Group ID" value={group.id} />
           <DetailItem label="Name" value={group.name} />

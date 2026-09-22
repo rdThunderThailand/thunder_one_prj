@@ -41,8 +41,8 @@ function SortHeader({ label, sortKey, sort, onSort, className = "" }: {
   className?: string;
 }) {
   const active = sort.key === sortKey;
-  return <th className={`${className} py-2`} aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
-    <button type="button" onClick={() => onSort(sortKey)}>{label}{active ? ` ${sort.dir === "asc" ? "▲" : "▼"}` : ""}</button>
+  return <th className={`${className} px-3 py-2`} aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+    <button type="button" className="uppercase hover:text-foreground" onClick={() => onSort(sortKey)}>{label}{active ? ` ${sort.dir === "asc" ? "▲" : "▼"}` : ""}</button>
   </th>;
 }
 
@@ -122,17 +122,17 @@ export function CompositionsTable({ rows, folders, sort, inTrash, busyId, previe
     <div className="overflow-x-auto">
       <table className="w-full min-w-220 text-left text-[10px]">
         <thead>
-          <tr className="border-b border-border text-[9px] font-semibold text-muted-foreground">
-            <th className="w-8 py-2 pl-2">
+          <tr className="border-b border-border text-[9px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <th className="w-8 px-3 py-2">
               <Checkbox aria-label="Select all layouts on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} />
             </th>
             <SortHeader label="Layout" sortKey="name" sort={sort} onSort={onSort} />
-            <th className="w-[80px] py-2">Zones</th>
-            <th className="w-[130px] py-2">Resolution</th>
+            <th className="w-[80px] px-3 py-2">Zones</th>
+            <th className="w-[130px] px-3 py-2">Resolution</th>
             <SortHeader label="Last modified" sortKey="updated" sort={sort} onSort={onSort} />
             <SortHeader className="w-[110px]" label="Status" sortKey="status" sort={sort} onSort={onSort} />
             <SortHeader className="w-[100px]" label="Used In" sortKey="usage" sort={sort} onSort={onSort} />
-            <th className="w-[132px] py-2 pr-1 text-right">Actions</th>
+            <th className="w-[132px] px-3 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -140,7 +140,7 @@ export function CompositionsTable({ rows, folders, sort, inTrash, busyId, previe
             const badge = statusBadge(item.status);
             return (
               <tr key={item.id} className="border-b border-border last:border-0">
-                <td className="py-3 pl-2">
+                <td className="px-3 py-2.5">
                   <Checkbox
                     aria-label={`Select ${item.name}`}
                     checked={selectedIds.has(item.id)}
@@ -152,24 +152,24 @@ export function CompositionsTable({ rows, folders, sort, inTrash, busyId, previe
                     }}
                   />
                 </td>
-                <td className="py-3 pr-2 font-medium">
+                <td className="px-3 py-2.5">
                   <div className="flex items-center gap-3">
                     <CompositionLibraryPreview zones={item.previewZones} previews={previews} />
                     <span className="min-w-0">
-                      <span className="block truncate">{item.name}</span>
-                      <span className="block truncate text-[8px] font-normal text-muted-foreground">/{item.folderId ? folders.get(item.folderId) ?? "Folder" : "Uncategorized"} · {item.bound_count}/{item.zone_count} content ready</span>
+                      <span className="block truncate text-[11px] font-semibold">{item.name}</span>
+                      <span className="mt-0.5 block truncate text-[9px] text-muted-foreground">/{item.folderId ? folders.get(item.folderId) ?? "Folder" : "Uncategorized"} · {item.bound_count}/{item.zone_count} content ready</span>
                     </span>
                   </div>
                 </td>
-                <td className="py-3">{item.zone_count} Zone{item.zone_count === 1 ? "" : "s"}</td>
-                <td className="py-3">{item.referenceResolution ?? "—"}</td>
-                <td className="py-3 text-muted-foreground">
-                  <span className="block truncate">{item.createdBy?.displayName ?? "Unknown user"}</span>
-                  <span className="block truncate text-[9px]">{formatDate(item.updated_at ?? item.created_at)}</span>
+                <td className="px-3 py-2.5">{item.zone_count} Zone{item.zone_count === 1 ? "" : "s"}</td>
+                <td className="px-3 py-2.5">{item.referenceResolution ?? "—"}</td>
+                <td className="px-3 py-2.5">
+                  <span className="block truncate font-semibold">{item.createdBy?.displayName ?? "Unknown user"}</span>
+                  <span className="block truncate text-[9px] text-muted-foreground">{formatDate(item.updated_at ?? item.created_at)}</span>
                 </td>
-                <td className="py-3"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge></td>
-                <td className="py-3">{item.usageCount ? `${item.usageCount} Program${item.usageCount === 1 ? "" : "s"}` : "—"}</td>
-                <td className="py-3 pr-1 text-right">
+                <td className="px-3 py-2.5"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge></td>
+                <td className="px-3 py-2.5">{item.usageCount ? `${item.usageCount} Program${item.usageCount === 1 ? "" : "s"}` : "—"}</td>
+                <td className="px-3 py-2.5 text-right">
                   <RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} />
                 </td>
               </tr>

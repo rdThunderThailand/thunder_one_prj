@@ -83,7 +83,7 @@ export function MediaWorkspaceNav({ nav, pathname, collapsed }: { nav: NavConfig
         href={nav.overviewItem.href!}
         title={collapsed ? nav.overviewItem.label : undefined}
         aria-current={overviewActive ? "page" : undefined}
-        className={`mb-3 flex h-8 w-full items-center gap-3 rounded-md px-3 text-left text-xs font-medium transition-colors ${
+        className={`mb-3 flex h-8 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition-colors ${
           overviewActive ? "bg-primary-soft text-primary" : "text-sidebar-foreground hover:bg-accent"
         } ${collapsed ? "justify-center" : ""}`}
       >

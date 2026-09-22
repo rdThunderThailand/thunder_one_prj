@@ -41,7 +41,7 @@ export function ProgramStep({
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Step 3 — Program</h1>
+          <h1 className="text-xl font-extrabold tracking-tight text-foreground">Step 3 — Program</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">กำหนดที่ / เวลา / วิธีเล่น</p>
         </div>
         <DisabledControl label="Load from Template" />

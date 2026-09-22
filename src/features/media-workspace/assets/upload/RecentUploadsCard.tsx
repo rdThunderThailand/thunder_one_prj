@@ -40,7 +40,7 @@ export function RecentUploadsCard({ completedCount }: { completedCount: number }
 
   return (
     <Card className="p-4">
-      <h2 className="text-sm font-semibold text-foreground">Recent Uploads</h2>
+      <h2 className="text-[11px] font-bold text-foreground">Recent Uploads</h2>
       <div className="mt-4 space-y-3">
         {isLoading ? (
           Array.from({ length: 3 }, (_, index) => (

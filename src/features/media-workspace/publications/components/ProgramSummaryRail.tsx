@@ -219,7 +219,7 @@ function ReviewFact({ icon, label, value }: { icon: React.ReactNode; label: stri
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border-t border-border pt-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
       <dl className="flex flex-col gap-2 text-sm">{children}</dl>
     </div>
   );

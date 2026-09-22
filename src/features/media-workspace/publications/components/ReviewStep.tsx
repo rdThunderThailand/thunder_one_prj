@@ -90,7 +90,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Step 4 — Review</h1>
+          <h1 className="text-xl font-extrabold tracking-tight text-foreground">Step 4 — Review</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">ตรวจสอบก่อนเผยแพร่</p>
         </div>
         <Button variant="secondary" onClick={onEditProgram}><EditIcon className="h-4 w-4" /> Edit Program</Button>
@@ -172,7 +172,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
           <Card className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:min-h-[430px]">
             <div className="lg:pr-2">
               <div className="mb-3">
-                <h2 className="text-sm font-semibold text-foreground">Preview on Screen</h2>
+                <h2 className="text-[11px] font-bold text-foreground">Preview on Screen</h2>
                 <p className="text-xs text-muted-foreground">ตัวอย่างการแสดงผลบนหน้าจอ</p>
               </div>
               {preview ? (
@@ -193,7 +193,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
               )}
             </div>
             <div className="flex min-h-full flex-col">
-              <h2 className="text-sm font-semibold text-foreground">Timeline <span className="font-normal text-muted-foreground">(ตัวอย่างลำดับการเล่น)</span></h2>
+              <h2 className="text-[11px] font-bold text-foreground">Timeline <span className="font-normal text-muted-foreground">(ตัวอย่างลำดับการเล่น)</span></h2>
               <p className="mt-0.5 text-xs text-muted-foreground">{startDate || "Schedule date"} · {schedule.timezone}</p>
               <div className="mt-4 flex flex-1 flex-col rounded-xl border border-border bg-muted p-4">
                 <div className="flex justify-between text-[10px] font-medium text-muted-foreground">
@@ -274,7 +274,7 @@ function SummaryCard({
           {index}
         </span>
         <div>
-          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          <h2 className="text-[11px] font-bold text-foreground">{title}</h2>
           <p className="mt-0.5 text-[10px] text-muted-foreground">{subtitle}</p>
         </div>
       </div>

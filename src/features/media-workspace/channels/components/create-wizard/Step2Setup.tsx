@@ -132,7 +132,7 @@ export function Step2Setup({
 
         {selectedPlayer && (
           <div className="mt-4 rounded-lg border border-border p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Player Details</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Player Details</p>
             <dl className="mt-2 grid grid-cols-2 gap-y-1.5 text-sm">
               <dt className="text-muted-foreground">Device ID</dt>
               <dd className="text-right font-mono text-foreground">{selectedPlayer.code}</dd>

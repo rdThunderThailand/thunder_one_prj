@@ -39,7 +39,7 @@ export function ReviewChecklist({
       <Card className="p-4">
         <div className="mb-3">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Checklist</h2>
+            <h2 className="text-[11px] font-bold text-foreground">Checklist</h2>
             <p className="text-xs text-muted-foreground">รายการตรวจสอบก่อนเผยแพร่</p>
           </div>
         </div>
@@ -56,7 +56,7 @@ export function ReviewChecklist({
       </Card>
 
       <Card className="border-warning/30 bg-warning-soft p-4 xl:min-h-[162px]">
-        <h2 className="text-sm font-semibold text-foreground">Conflicts &amp; warnings</h2>
+        <h2 className="text-[11px] font-bold text-foreground">Conflicts &amp; warnings</h2>
         <div className="mt-3 space-y-3 text-xs">
           {checkingConflicts || conflictsError ? (
             <Warning text={checkingConflicts ? "กำลังตรวจสอบ Priority conflicts" : "ตรวจสอบ Priority conflicts ไม่สำเร็จ — ยัง Publish ได้"} />

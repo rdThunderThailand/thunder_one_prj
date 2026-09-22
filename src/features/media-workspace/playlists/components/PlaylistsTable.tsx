@@ -42,6 +42,7 @@ export function PlaylistsTable({
   sort,
   inTrash = false,
   onAction,
+  onPreview,
   onSortChange,
   selectedIds,
   onSelectionChange,
@@ -51,6 +52,7 @@ export function PlaylistsTable({
   sort: Sort;
   inTrash?: boolean;
   onAction: (action: RowAction, playlist: PlaylistListItem) => void;
+  onPreview: (playlist: PlaylistListItem) => void;
   onSortChange: (key: SortKey) => void;
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
@@ -66,15 +68,15 @@ export function PlaylistsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-[10px]">
         <thead>
-          <tr className="border-b border-border text-[9px] font-semibold text-muted-foreground">
-            <th className="w-8 py-2 pl-2"><Checkbox aria-label="Select all playlists on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
-            <SortHeader label="Playlist" sortKey="name" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Duration" sortKey="duration" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <th className="py-2">Items</th>
-            <SortHeader label="Last Modified" sortKey="updated" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="py-2" />
-            <th className="py-2 pr-1 text-right">Actions</th>
+          <tr className="border-b border-border text-[9px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <th className="w-8 px-3 py-2"><Checkbox aria-label="Select all playlists on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
+            <SortHeader label="Playlist" sortKey="name" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Duration" sortKey="duration" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <th className="px-3 py-2">Items</th>
+            <SortHeader label="Last Modified" sortKey="updated" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <th className="px-3 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -88,27 +90,22 @@ export function PlaylistsTable({
                 key={playlist.id}
                 className="border-b border-border last:border-0 hover:bg-muted"
               >
-                <td className="py-3 pl-2"><Checkbox aria-label={`Select ${playlist.name}`} checked={selectedIds.has(playlist.id)} onCheckedChange={(value) => { const next = new Set(selectedIds); if (value === true) next.add(playlist.id); else next.delete(playlist.id); onSelectionChange(next); }} /></td>
-                <td className="py-3">
+                <td className="px-3 py-2.5"><Checkbox aria-label={`Select ${playlist.name}`} checked={selectedIds.has(playlist.id)} onCheckedChange={(value) => { const next = new Set(selectedIds); if (value === true) next.add(playlist.id); else next.delete(playlist.id); onSelectionChange(next); }} /></td>
+                <td className="px-3 py-2.5">
                   <div className="flex items-center gap-3">
                     <MediaThumb
                       url={cover ? previews.urls[cover] : undefined}
                       thumbnailUrl={cover ? previews.thumbnailUrls[cover] : undefined}
                       alt={playlist.name}
-                      className="h-10 w-14"
+                      className="h-11 w-16"
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-[10px] font-semibold text-foreground">
+                      <p className="truncate text-[11px] font-semibold text-foreground">
                         {playlist.name}
                       </p>
-                      <p className="truncate text-[9px] text-muted-foreground">
+                      <p className="mt-0.5 truncate text-[9px] text-muted-foreground">
                         {metadata.info.description || "No description"}
                       </p>
-                      {playlist.created_by?.display_name && (
-                        <p className="truncate text-[8px] text-muted-foreground">
-                          By {playlist.created_by.display_name}
-                        </p>
-                      )}
                       {playlist.tags && playlist.tags.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {playlist.tags.map((tag) => (
@@ -121,28 +118,28 @@ export function PlaylistsTable({
                     </div>
                   </div>
                 </td>
-                <td className="py-3 text-[10px] text-muted-foreground">
+                <td className="px-3 py-2.5 text-[10px]">
                   <Badge variant="outline" className="rounded-full px-2 py-0 text-[9px] font-medium">{(() => {
                     const type = playlistContentType(playlist);
                     return type ? TYPE_LABELS[type] : "—";
                   })()}</Badge>
                 </td>
-                <td className="py-3 text-[10px] text-muted-foreground">
+                <td className="px-3 py-2.5 text-[10px]">
                   {playlist.total_duration_seconds == null
                     ? "—"
                     : formatDuration(playlist.total_duration_seconds)}
                 </td>
-                <td className="py-3 text-[10px] text-muted-foreground">
+                <td className="px-3 py-2.5 text-[10px]">
                   {playlist.item_count.toLocaleString()}
                 </td>
-                <td className="py-3 text-[10px] text-muted-foreground">
-                  {playlist.created_by?.display_name && <span className="block">by {playlist.created_by.display_name}</span>}
-                  {formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}
+                <td className="px-3 py-2.5">
+                  {playlist.created_by?.display_name && <p className="text-[10px] font-semibold">{playlist.created_by.display_name}</p>}
+                  <p className="text-[9px] text-muted-foreground">{formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}</p>
                 </td>
-                <td className="py-3">
+                <td className="px-3 py-2.5">
                   <Badge variant={statusVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge>
                 </td>
-                <td className="py-3 pr-1 text-right">
+                <td className="px-3 py-2.5 text-right">
                   <RowActions
                     playlist={playlist}
                     isDraft={playlist.status === "draft"}
@@ -150,6 +147,7 @@ export function PlaylistsTable({
                     canPermanentDelete={(playlist.publication_count ?? 0) === 0}
                     disabled={busyId === playlist.id}
                     onAction={(action) => onAction(action, playlist)}
+                    onPreview={() => onPreview(playlist)}
                   />
                 </td>
               </tr>
@@ -180,7 +178,7 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSortChange(sortKey)}
-        className="inline-flex items-center gap-1 hover:text-foreground"
+        className="inline-flex items-center gap-1 uppercase hover:text-foreground"
       >
         {label}
         {active && <span aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span>}
@@ -196,6 +194,7 @@ function RowActions({
   canPermanentDelete,
   disabled,
   onAction,
+  onPreview,
 }: {
   playlist: PlaylistListItem;
   isDraft: boolean;
@@ -203,6 +202,7 @@ function RowActions({
   canPermanentDelete: boolean;
   disabled: boolean;
   onAction: (action: RowAction) => void;
+  onPreview: () => void;
 }) {
   const item =
     "block w-full px-3 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted";
@@ -212,14 +212,16 @@ function RowActions({
     <div className="flex items-center justify-end gap-2">
       {!inTrash && (
         <>
-          <Link
-            href={`/media-workspace/preview/playlist/${playlist.id}`}
+          <button
+            type="button"
+            onClick={onPreview}
+            disabled={disabled}
             aria-label={`Preview ${playlist.name}`}
             title="Preview"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft disabled:opacity-50"
           >
             <PlayIcon />
-          </Link>
+          </button>
           <Link
             href={`/media-workspace/playlists/${playlist.id}`}
             aria-label={`Edit ${playlist.name}`}
