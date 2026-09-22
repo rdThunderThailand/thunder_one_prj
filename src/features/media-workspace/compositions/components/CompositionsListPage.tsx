@@ -8,7 +8,7 @@ import { Plus, Trash2, Undo2 } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
-import { LibraryShell } from "../../content-library/LibraryShell";
+import { LibrarySelectionBar, LibraryShell } from "../../content-library/LibraryShell";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchContentFolders, fetchMediaAssets } from "@/lib/api/media-api";
@@ -194,8 +194,7 @@ export function CompositionsListPage() {
   const collectionName = inTrash ? "Trash" : tagId ? library?.facets.tags.find((tag) => tag.id === tagId)?.name ?? "Tag" : collection === "uncategorized" ? "Uncategorized" : collection === "all" ? "All Layouts" : folders.find((folder) => folder.id === collection)?.name ?? "Folder";
   const folderNames = new Map(folders.map((folder) => [folder.id, folder.name]));
   const selectionActions = selectedIds.size > 0 && (
-    <div className="flex flex-wrap items-center gap-1 rounded-md border border-border bg-background p-1 text-[9px]">
-      <strong className="px-2">{selectedIds.size} selected</strong>
+    <LibrarySelectionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
       {inTrash ? (
         <>
           <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
@@ -207,8 +206,7 @@ export function CompositionsListPage() {
           <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Trash</Button>
         </>
       )}
-      <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear</Button>
-    </div>
+    </LibrarySelectionBar>
   );
 
   return (
@@ -230,7 +228,8 @@ export function CompositionsListPage() {
         <SummarySkeleton count={4} />
       )}
       <LibraryShell
-        toolbar={<CompositionsFilters value={filters} referenceResolutions={library?.facets.referenceResolutions ?? []} isGrid={isGrid} onViewChange={setIsGrid} onChange={changeFilters} onClearAll={qs ? reset : undefined} />}
+        toolbar={<CompositionsFilters value={filters} referenceResolutions={library?.facets.referenceResolutions ?? []} isGrid={isGrid} sort={sort} onViewChange={setIsGrid} onChange={changeFilters} onClearAll={qs ? reset : undefined} onSortChange={changeSort} />}
+        selection={selectionActions}
         rail={{
           defaultTab: tagId ? "tags" : "folders",
           folders: (
@@ -247,7 +246,7 @@ export function CompositionsListPage() {
         }}
         title={collectionName}
         meta={pagination ? `${pagination.total.toLocaleString()} layouts` : "…"}
-        headerActions={selectionActions || (inTrash && (
+        headerActions={selectedIds.size === 0 && (inTrash && (
           <>
             <Button variant="outline" size="sm" disabled={batchBusy || !library?.pagination?.total} onClick={() => void runBatch("restore")}><Undo2 className="h-3.5 w-3.5" />Recover All</Button>
             <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy || !library?.pagination?.total} onClick={() => void runBatch("delete")}><Trash2 className="h-3.5 w-3.5" />Delete All</Button>

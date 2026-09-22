@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Folder, Plus, Trash2, Undo2 } from "lucide-react";
+import { Plus, Trash2, Undo2 } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
@@ -20,12 +20,15 @@ import { readListState, writeListState, DEFAULT_STATE, type Collection } from ".
 import type { Sort, SortKey } from "../list-filtering";
 import type { PlaylistListItem } from "../types";
 import { usePlaylistsListData } from "../use-playlists-list-data";
+import { usePlaylistListPreview } from "../use-playlist-list-preview";
+import { PlaylistPreviewModal } from "../../preview/PlaylistPreviewModal";
 import { useTrashBatch } from "../use-trash-batch";
 import { PlaylistsFilters, type FilterState } from "./PlaylistsFilters";
 import { PlaylistsTable, type RowAction } from "./PlaylistsTable";
 import { PlaylistsGrid } from "./PlaylistsGrid";
 import { EmptyTrashDialog } from "./EmptyTrashDialog";
 import { PlaylistsListDialogs, type PlaylistDialogAction } from "./PlaylistsListDialogs";
+import { PlaylistBatchMoveDialog } from "./PlaylistBatchMoveDialog";
 import { PlaylistTagsDialog } from "./PlaylistTagsDialog";
 import { CreatePlaylistDialog } from "./CreatePlaylistDialog";
 import { TagsRail } from "../../content-library/TagsRail";
@@ -53,7 +56,7 @@ export function PlaylistsListPage() {
   const [dialog, setDialog] = useState<{ action: PlaylistDialogAction; target: PlaylistListItem } | null>(null);
   const [tagsTarget, setTagsTarget] = useState<PlaylistListItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [batchMoveOpen, setBatchMoveOpen] = useState(false);
   const isGrid = useSyncExternalStore(subscribeView, readView, () => false);
 
   const inTrash = collection === "trash";
@@ -62,6 +65,7 @@ export function PlaylistsListPage() {
     selectedIds, setSelectedIds, emptyTrashOpen, setEmptyTrashOpen, emptyTrashBusy,
     emptyTrashTargets, emptyTrashLocked, runBatch, handleEmptyTrash,
   } = useTrashBatch({ inTrash, trashed, reload, onError: setActionError });
+  const listPreview = usePlaylistListPreview((reason) => setActionError(classifyApiError(reason, "โหลด Preview ไม่สำเร็จ").message));
 
   const restore = useCallback(() => {
     const s = readListState(new URLSearchParams(window.location.search));
@@ -177,14 +181,9 @@ export function PlaylistsListPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title="Playlists"
-        subtitle="Create and manage playlists for your campaigns and channels."
-        titleInTopbar
-      />
+      <PageHeader title="Playlists" subtitle="Create and manage playlists for your campaigns and channels." titleInTopbar />
 
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button variant="outline" size="sm" className="hidden xl:inline-flex" onClick={() => setCreateFolderOpen(true)}><Folder className="h-3.5 w-3.5" />Create Folder</Button>
         <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="h-3.5 w-3.5" />Create Playlist</Button>
       </div>
 
@@ -209,13 +208,16 @@ export function PlaylistsListPage() {
                 <Button variant="outline" size="sm" className="text-destructive" disabled={emptyTrashBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Delete forever</Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" className="text-destructive" disabled={emptyTrashBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
+              <>
+                <Button variant="outline" size="sm" onClick={() => setBatchMoveOpen(true)}>Move</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={emptyTrashBusy} onClick={() => void runBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
+              </>
             )}
           </LibrarySelectionBar>
         )}
         rail={{
           defaultTab: tagId ? "tags" : "folders",
-          folders: (inAside) => (
+          folders: () => (
             <FeatureFolderRail
               scope="playlist"
               labels={RAIL_LABELS}
@@ -223,8 +225,6 @@ export function PlaylistsListPage() {
               selected={collection}
               counts={counts}
               isLoading={playlists === null && folders.length === 0}
-              createOpen={inAside ? createFolderOpen : undefined}
-              onCreateOpenChange={inAside ? setCreateFolderOpen : undefined}
               onSelect={changeCollection}
               onRefresh={reload}
               onError={(reason) => setActionError(classifyApiError(reason, "อัปเดต Folder ไม่สำเร็จ").message)}
@@ -259,7 +259,7 @@ export function PlaylistsListPage() {
         ) : isGrid && !inTrash ? (
           <PlaylistsGrid rows={rows} />
         ) : (
-          <PlaylistsTable rows={rows} busyId={busyId} sort={sort} inTrash={inTrash} onAction={handleAction} onSortChange={handleSortChange} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
+          <PlaylistsTable rows={rows} busyId={busyId ?? listPreview.busyId} sort={sort} inTrash={inTrash} onAction={handleAction} onPreview={(playlist) => void listPreview.open(playlist.id)} onSortChange={handleSortChange} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
         )}
       </LibraryShell>
 
@@ -272,6 +272,14 @@ export function PlaylistsListPage() {
         onDone={() => { setDialog(null); void reload(); }}
         onError={(message) => { setActionError(message); setDialog(null); }}
       />
+      <PlaylistBatchMoveDialog
+        open={batchMoveOpen}
+        ids={[...selectedIds]}
+        folders={folders}
+        onClose={() => setBatchMoveOpen(false)}
+        onDone={() => { setBatchMoveOpen(false); setSelectedIds(new Set()); void reload(); }}
+        onError={(reason) => { setActionError(classifyApiError(reason, "ย้าย playlist ไม่สำเร็จ").message); setBatchMoveOpen(false); }}
+      />
       <PlaylistTagsDialog
         key={tagsTarget ? `tags:${tagsTarget.id}` : "tags:none"}
         target={tagsTarget}
@@ -279,6 +287,11 @@ export function PlaylistsListPage() {
         onDone={() => { setTagsTarget(null); void reload(); }}
         onError={(message) => { setActionError(message); setTagsTarget(null); }}
       />
+      {listPreview.current && (
+        <PlaylistPreviewModal open onClose={listPreview.close} preview={listPreview.current.preview} assets={listPreview.current.assets} publishDisabledReason={null}
+          onOpenFullPreview={() => window.open(`/media-workspace/preview/playlist/${listPreview.current?.id}`, "_blank", "noopener")}
+          onPublish={() => router.push(`/media-workspace/publications/create?playlistId=${listPreview.current?.id}`)} />
+      )}
       <CreatePlaylistDialog
         key={createOpen ? `create:${collection}` : "create:closed"}
         open={createOpen}

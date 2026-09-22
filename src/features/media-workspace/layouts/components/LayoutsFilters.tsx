@@ -37,7 +37,7 @@ export function LayoutsFilters({
         <SelectTrigger className="h-9 w-30 text-[10px] shadow-none" aria-label="Status"><SelectValue /></SelectTrigger>
         <SelectContent>{STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>)}</SelectContent>
       </Select>
-      {onClearAll && <Button variant="ghost" size="sm" onClick={onClearAll}><X className="h-3.5 w-3.5" />Clear all</Button>}
+      {onClearAll && <Button variant="ghost" size="sm" onClick={onClearAll}><X className="h-3.5 w-3.5" />Clear filters</Button>}
       <LibraryViewToggle isGrid={isGrid} onIsGrid={onViewChange} />
     </>
   );

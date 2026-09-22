@@ -6,11 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LibrarySearch } from "../../content-library/LibraryShell";
 import { LibraryViewToggle } from "../../assets/components/LibraryToolbar";
 import { COMPOSITION_STATUSES } from "../types";
-import type { ListFilters } from "../list-url-state";
+import type { ListFilters, SortKey } from "../list-url-state";
 
 const triggerClass = "h-9 w-30 text-[10px] shadow-none";
 // Radix Select cannot hold an empty-string value.
 const ANY_RESOLUTION = "__any__";
+
+const SORT_LABELS: Record<SortKey, string> = { updated: "Last Modified", name: "Name", status: "Status", usage: "Usage" };
 
 function FilterSelect<T extends string>({ label, value, onChange, items }: { label: string; value: T; onChange: (next: T) => void; items: Array<{ value: T; label: string }> }) {
   return (
@@ -22,13 +24,15 @@ function FilterSelect<T extends string>({ label, value, onChange, items }: { lab
 }
 
 /** Lovable toolbar controls (search + inline selects) on this list's real filters. */
-export function CompositionsFilters({ value, referenceResolutions, isGrid, onChange, onClearAll, onViewChange }: {
+export function CompositionsFilters({ value, referenceResolutions, isGrid, sort, onChange, onClearAll, onViewChange, onSortChange }: {
   value: ListFilters;
   referenceResolutions: string[];
   isGrid: boolean;
+  sort: { key: SortKey; dir: "asc" | "desc" };
   onChange: (next: ListFilters) => void;
   onClearAll?: () => void;
   onViewChange: (next: boolean) => void;
+  onSortChange: (key: SortKey) => void;
 }) {
   return (
     <>
@@ -47,8 +51,14 @@ export function CompositionsFilters({ value, referenceResolutions, isGrid, onCha
         onChange={(next) => onChange({ ...value, referenceResolution: next === ANY_RESOLUTION ? "" : next })}
         items={[{ value: ANY_RESOLUTION, label: "All resolutions" }, ...referenceResolutions.map((resolution) => ({ value: resolution, label: resolution }))]}
       />
-      {onClearAll && <Button variant="ghost" size="sm" onClick={onClearAll}><X className="h-3.5 w-3.5" />Clear all</Button>}
+      {onClearAll && <Button variant="ghost" size="sm" onClick={onClearAll}><X className="h-3.5 w-3.5" />Clear filters</Button>}
       <LibraryViewToggle isGrid={isGrid} onIsGrid={onViewChange} />
+      <Select value={sort.key} onValueChange={(key) => onSortChange(key as SortKey)}>
+        <SelectTrigger className={triggerClass} aria-label="Sort layouts"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => <SelectItem key={key} value={key} className="text-xs">{SORT_LABELS[key]}</SelectItem>)}
+        </SelectContent>
+      </Select>
     </>
   );
 }
