@@ -1,19 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
-import { MediaThumb } from "@/components/ui/MediaThumb";
 import { XIcon } from "@/components/ui/icons";
-import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import { fetchPublication } from "@/features/media-workspace/publications";
-import { decodeMetadata, fetchPlaylist, formatDuration } from "@/features/media-workspace/playlists";
+import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
 import { loadCompositionPreview, type StagePreview } from "./composition-preview";
 import { playlistItemToPreview, playlistPreviewStage } from "./playlist-preview";
-import { PlaylistPreviewPanel } from "./PlaylistPreviewPanel";
+import { PlaylistPreviewContent } from "./PlaylistPreviewContent";
 import { PreviewStage } from "./PreviewStage";
-import { zoneSchedule, type PlaybackPreviewItem, type ZonePreviewFrame, type ZoneSchedule } from "./preview-clock";
 import { initialPreviewSession, reducePreviewSession } from "./preview-session";
 
 export type PreviewSource = "composition" | "publication" | "playlist";
@@ -40,8 +37,6 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
   const [preview, setPreview] = useState<StagePreview | null>(null);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [frame, setFrame] = useState<ZonePreviewFrame | null>(null);
-  const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
 
   useEffect(() => {
     if (!channelName) return;
@@ -93,16 +88,6 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
 
   const loadedPreview = handoff ?? preview;
   const loadedAssets = handoff?.assets ?? assets;
-  const isPlaylist = source === "playlist";
-  const playlistZone = isPlaylist ? loadedPreview?.zones[0] : undefined;
-  const panelItems = useMemo(() => {
-    if (!playlistZone) return [];
-    const durationById = Object.fromEntries(loadedAssets.map((asset) => [asset.id, asset.duration_seconds]));
-    return playlistZone.items.map((item) => ({
-      ...item,
-      durationSeconds: item.durationSeconds ?? durationById[item.mediaAssetId],
-    }));
-  }, [loadedAssets, playlistZone]);
 
   if (channelName && (session.status === "expired" || session.status === "closed")) {
     return <PreviewExpired />;
@@ -110,18 +95,8 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
   if (error) return <p className="p-6 text-sm text-danger" role="alert">{error}</p>;
   if (!loadedPreview) return <p className="p-6 text-sm text-muted-foreground">Loading preview…</p>;
 
-  if (isPlaylist && playlistZone) {
-    return (
-      <PlaylistFullPreview
-        preview={loadedPreview}
-        assets={loadedAssets}
-        items={panelItems}
-        frame={frame}
-        seekRequest={seekRequest}
-        onFrame={setFrame}
-        onSeek={(seconds) => setSeekRequest((current) => ({ seconds, id: (current?.id ?? 0) + 1 }))}
-      />
-    );
+  if (source === "playlist" && loadedPreview.zones[0]) {
+    return <PlaylistFullPreview preview={loadedPreview} assets={loadedAssets} />;
   }
 
   return (
@@ -155,29 +130,8 @@ async function loadPlaylistPreview(id: string): Promise<StagePreview> {
   });
 }
 
-function PlaylistFullPreview({
-  preview,
-  assets,
-  items,
-  frame,
-  seekRequest,
-  onFrame,
-  onSeek,
-}: {
-  preview: StagePreview;
-  assets: MediaAsset[];
-  items: PlaybackPreviewItem[];
-  frame: ZonePreviewFrame | null;
-  seekRequest: { seconds: number; id: number } | null;
-  onFrame: (frame: ZonePreviewFrame | null) => void;
-  onSeek: (seconds: number) => void;
-}) {
+function PlaylistFullPreview({ preview, assets }: { preview: StagePreview; assets: MediaAsset[] }) {
   const zone = preview.zones[0];
-  // ADR 0062 §1: one schedule per Zone, memoised here and read by everything below it.
-  const schedule = useMemo(() => zoneSchedule(items, zone.playback, zone.id), [items, zone.playback, zone.id]);
-  const total = formatDuration(schedule.totalSeconds);
-  // ADR 0061 §2: a Playlist has no geometry of its own, so the operator picks the frame.
-  const [previewMode, setPreviewMode] = useState("16:9");
   return (
     <main className="min-h-full bg-program p-4 text-background sm:p-6">
       <div className="w-full">
@@ -192,10 +146,8 @@ function PlaylistFullPreview({
               <XIcon className="h-5 w-5" />
             </button>
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-semibold text-background">Preview Playlist</h1>
-              <p className="mt-1 text-sm text-background/70">
-                {zone.name} · {items.length} items · Total duration {total}
-              </p>
+              <h1 className="truncate text-xl font-extrabold tracking-tight text-background">Preview Playlist</h1>
+              <p className="mt-1 text-sm text-background/70">{zone.name} · {zone.items.length} items</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -203,88 +155,11 @@ function PlaylistFullPreview({
             <Button disabled title="Publish from Playlist editor">Publish</Button>
           </div>
         </header>
-
-        <div className="grid gap-5 pt-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="min-w-0">
-            <div>
-              <PreviewStage
-                zones={preview.zones}
-                assets={assets}
-                aspectRatio={previewMode}
-                referenceResolution={null}
-                geometryOptions={[]}
-                allowActualSize={false}
-                controlsPlacement="overlay"
-                seekRequest={seekRequest}
-                onFrameChange={onFrame}
-              />
-            </div>
-            <PlaylistTimelineStrip items={items} assets={assets} schedule={schedule} frame={frame} onSeek={onSeek} />
-            <p className="mx-auto mt-5 max-w-3xl rounded-lg border border-background/20 bg-background/10 px-4 py-3 text-center text-sm text-background/70">
-              This is a preview only. Actual playback may vary slightly depending on your screen and network.
-            </p>
-          </section>
-
-          <PlaylistPreviewPanel
-            name={zone.name}
-            items={items}
-            playback={zone.playback}
-            totalSeconds={schedule.totalSeconds}
-            frame={frame}
-            assets={assets}
-            tone="dark"
-            previewMode={previewMode}
-            onPreviewMode={setPreviewMode}
-          />
+        <div className="pt-5">
+          <PlaylistPreviewContent preview={preview} assets={assets} />
         </div>
       </div>
     </main>
-  );
-}
-
-function PlaylistTimelineStrip({
-  items,
-  assets,
-  schedule,
-  frame,
-  onSeek,
-}: {
-  items: PlaybackPreviewItem[];
-  assets: MediaAsset[];
-  schedule: ZoneSchedule;
-  frame: ZonePreviewFrame | null;
-  onSeek: (seconds: number) => void;
-}) {
-  const previews = usePreviewUrls(useMemo(() => items.map((item) => item.mediaAssetId), [items]));
-  const assetById = useMemo(() => Object.fromEntries(assets.map((asset) => [asset.id, asset])), [assets]);
-  return (
-    <section className="mt-5 rounded-xl border border-background/15 bg-background/5 p-4">
-      <h2 className="text-sm font-semibold text-background">
-        Playlist Timeline <span className="font-normal text-background/70">(Total {formatDuration(schedule.totalSeconds)})</span>
-      </h2>
-      <div className="mt-3 flex gap-4 overflow-x-auto pb-2">
-        {items.map((item, index) => {
-          const asset = assetById[item.mediaAssetId];
-          const seconds = item.durationSeconds ?? asset?.duration_seconds ?? null;
-          const active = frame?.item?.mediaAssetId === item.mediaAssetId;
-          return (
-            <button
-              key={item.mediaAssetId}
-              type="button"
-              onClick={() => onSeek(schedule.starts[schedule.order.indexOf(index)] ?? 0)}
-              className="w-48 shrink-0 text-left"
-            >
-              <span className={`relative block overflow-hidden rounded-lg border-2 ${active ? "border-primary" : "border-transparent hover:border-border"}`}>
-                <MediaThumb url={previews.urls[item.mediaAssetId]} kind={asset?.kind} alt={item.label ?? ""} className="h-24 w-full rounded-none" />
-                <span className="absolute left-2 top-2 rounded-md bg-overlay px-2 py-0.5 text-xs font-semibold text-white">{index + 1}</span>
-              </span>
-              <span className="mt-2 block truncate text-sm font-medium text-background">{item.label ?? "Untitled item"}</span>
-              <span className="text-xs text-background/70">{asset?.kind === "video" ? "Video" : "Image"} · {seconds != null ? formatDuration(seconds) : "—"}</span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
   );
 }
 

@@ -28,6 +28,7 @@ export function PreviewStage({
   seekRequest,
   controlsPlacement = "panel",
   frameViewportHeight = "70vh",
+  fillWidth = false,
 }: {
   zones: PlaybackPreviewZone[];
   assets: MediaAsset[];
@@ -50,8 +51,15 @@ export function PreviewStage({
   onFrameChange?: (frame: ZonePreviewFrame | null) => void;
   /** External scrubber target, used by Playlist filmstrip clicks to jump to an item's start. */
   seekRequest?: { seconds: number; id: number } | null;
-  controlsPlacement?: "panel" | "overlay";
+  /** `footer`: the frame fills the host and the controls sit in a flat bar under it (the
+   *  Lovable preview dialog). */
+  controlsPlacement?: "panel" | "overlay" | "footer";
   frameViewportHeight?: string;
+  /** Stretch the frame to the host's full width instead of deriving width from
+   *  `frameViewportHeight` — the aspect ratio still governs height (CSS `aspect-ratio`), so
+   *  non-16:9 content still pillarboxes/letterboxes inside the wider box. Opt-in per host;
+   *  default keeps every other `PreviewStage` call site unchanged. */
+  fillWidth?: boolean;
 }) {
   const [timeSeconds, setTimeSeconds] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -116,9 +124,11 @@ export function PreviewStage({
   // An explicit width, never a stretched one: the frame's only in-flow content is absolutely
   // positioned, so in the full-screen flex column it would otherwise collapse to nothing. Fitting
   // derives the width from the height budget so the aspect ratio survives the clamp.
-  const frameWidth = fitToWindow || !framePixels
-    ? `min(100%, calc(${isFullscreen ? "82vh" : frameViewportHeight} * ${ratioWidth} / ${ratioHeight}))`
-    : `${framePixels[0]}px`;
+  const frameWidth = fillWidth && !isFullscreen
+    ? "100%"
+    : fitToWindow || !framePixels
+      ? `min(100%, calc(${isFullscreen ? "82vh" : frameViewportHeight} * ${ratioWidth} / ${ratioHeight}))`
+      : `${framePixels[0]}px`;
 
   // ponytail: promise chain, not a direct call — react-hooks/set-state-in-effect flags any
   // setState called synchronously in an effect body, same workaround as AssetLibraryStep.
@@ -208,7 +218,7 @@ export function PreviewStage({
   };
   const geometryControls = geometryOptions.length > 0 ? (
     <div className="mb-3 space-y-2">
-      <label className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <label className={`flex flex-wrap items-center gap-2 text-xs ${controlsPlacement === "footer" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
         <span>Preview shape</span>
         <select
           value={selectedGeometry?.id ?? ""}
@@ -261,8 +271,8 @@ export function PreviewStage({
   );
 
   return (
-    <div ref={stageRef} className={isFullscreen ? "flex h-screen flex-col justify-center gap-4 bg-black p-4" : "space-y-4"}>
-      <div className="overflow-auto">
+    <div ref={stageRef} className={isFullscreen ? "flex h-screen flex-col justify-center gap-4 bg-black p-4" : controlsPlacement === "footer" ? "flex h-full min-h-0 flex-col" : "space-y-4"}>
+      <div className={controlsPlacement === "footer" && !isFullscreen ? "flex min-h-0 flex-1 items-center justify-center overflow-auto p-8" : "overflow-auto"}>
         <div
           className="mx-auto overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-inner"
           style={{ aspectRatio: `${ratioWidth} / ${ratioHeight}`, width: frameWidth }}
@@ -343,7 +353,7 @@ export function PreviewStage({
         </div>
       </div>
 
-      {controlsPlacement === "panel" && controls}
+      {controlsPlacement !== "overlay" && controls}
     </div>
   );
 }

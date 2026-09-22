@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/Card";
 import { PLAY_MODES, REPEAT_MODES, START_FROMS, TRANSITIONS, type PlaylistPlayback } from "../types";
 import { Field, Select, inputClasses } from "./form";
 
@@ -17,7 +16,7 @@ export function PlaylistPlaybackSettings({
   onPlayback: (patch: Partial<PlaylistPlayback>) => void;
 }) {
   return (
-    <Card className="flex flex-col gap-3 p-3">
+    <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
       <div>
         <h2 className="text-[11px] font-semibold text-foreground">Playback Settings</h2>
         <p className="mt-0.5 text-[9px] text-muted-foreground">Defaults applied across this playlist.</p>
@@ -69,6 +68,6 @@ export function PlaylistPlaybackSettings({
         Play mode, repeat and start-from reach the player only for a Playlist published on its own —
         a Composition Zone overrides them (ADR 0060 §3b).
       </p>
-    </Card>
+    </div>
   );
 }

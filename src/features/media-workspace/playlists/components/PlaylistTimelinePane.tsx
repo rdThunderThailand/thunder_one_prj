@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
@@ -59,7 +58,7 @@ export function PlaylistTimelinePane({
   const startSeconds = useMemo(() => itemStartSeconds(items, assets, playback), [assets, items, playback]);
 
   return (
-    <Card className="flex flex-none flex-col p-3">
+    <div className="flex flex-none flex-col">
       <div className="mb-3 flex shrink-0 items-end justify-between border-b border-border">
         <span className="border-b-2 border-primary px-3 pb-2 text-[11px] font-semibold text-primary">Timeline</span>
         <span className="text-[10px] text-muted-foreground">Total Duration {total}</span>
@@ -82,6 +81,7 @@ export function PlaylistTimelinePane({
             seekRequest={seekRequest}
             controlsPlacement="overlay"
             frameViewportHeight="34vh"
+            fillWidth
           />
 
           <div className="mt-3 flex justify-between text-[10px] font-medium text-muted-foreground">
@@ -130,6 +130,6 @@ export function PlaylistTimelinePane({
           </div>
         </>
       )}
-    </Card>
+    </div>
   );
 }

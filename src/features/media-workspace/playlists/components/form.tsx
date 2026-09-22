@@ -7,7 +7,7 @@ import type { ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "re
 import { ChevronDownIcon } from "@/components/ui/icons";
 
 export const inputClasses =
-  "w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30";
+  "h-9 w-full rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 interface FieldProps {
   label: string;
@@ -22,7 +22,7 @@ interface FieldProps {
 export function Field({ label, required, optional, hint, error, children, className = "" }: FieldProps) {
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <label className="text-sm font-medium text-muted-foreground">
+      <label className="text-xs font-medium text-muted-foreground">
         {label} {required && <span className="text-danger">*</span>}
         {optional && <span className="text-muted-foreground">(Optional)</span>}
       </label>
@@ -61,7 +61,7 @@ export function Select({ options, placeholder, className = "", ...props }: Selec
 }
 
 export function TextArea({ className = "", ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={`${inputClasses} resize-none ${className}`} />;
+  return <textarea {...props} className={`${inputClasses.replace("h-9", "min-h-20")} resize-none ${className}`} />;
 }
 
 /** Segmented control — used for Media Fit and the failure-handling choice. */
@@ -86,7 +86,7 @@ export function OptionGroup<T extends string>({
             type="button"
             onClick={() => onChange(o.value)}
             aria-pressed={selected}
-            className={`rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+            className={`rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
               selected
                 ? "border-primary bg-primary-soft text-primary"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
@@ -118,7 +118,7 @@ export function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="inline-flex items-center gap-2.5 text-sm text-muted-foreground"
+      className="inline-flex items-center gap-2.5 text-xs text-muted-foreground"
     >
       <span
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${

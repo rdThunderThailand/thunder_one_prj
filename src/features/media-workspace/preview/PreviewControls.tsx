@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ExpandIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
+import { formatDuration } from "@/features/media-workspace/playlists/duration";
 
 const SPEED_OPTIONS = [1, 2, 3];
 
@@ -36,7 +37,8 @@ export function PreviewControls({
   framePixels: [number, number] | null;
   fitToWindow: boolean;
   isFullscreen: boolean;
-  placement?: "panel" | "overlay";
+  /** `footer` is the Lovable preview dialog's bottom bar — flat, on the dark sheet. */
+  placement?: "panel" | "overlay" | "footer";
   onTimeline: (seconds: number) => void;
   onPlaying: (playing: boolean) => void;
   onSpeed: (speed: number) => void;
@@ -45,9 +47,11 @@ export function PreviewControls({
   onFullscreen: () => void;
 }) {
   const isOverlay = placement === "overlay";
+  const isFooter = placement === "footer";
   const controlClass = `flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring/30 ${
-    isOverlay ? "text-white hover:bg-card/15" : "text-muted-foreground hover:bg-muted"
+    isOverlay ? "text-white hover:bg-card/15" : isFooter ? "text-primary-foreground hover:bg-primary-foreground/10" : "text-muted-foreground hover:bg-muted"
   }`;
+  const mutedText = isOverlay ? "text-white/80" : isFooter ? "text-primary-foreground/80" : "text-muted-foreground";
   const overlayVisibility = playing
     ? "translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
     : "translate-y-0 opacity-100";
@@ -56,7 +60,9 @@ export function PreviewControls({
       className={
         isOverlay
           ? `absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/70 to-transparent px-3 pb-3 pt-8 text-white transition duration-200 motion-reduce:transition-none ${overlayVisibility}`
-          : "rounded-lg border border-border bg-muted p-3"
+          : isFooter
+            ? "shrink-0 border-t border-primary-foreground/10 px-5 py-3 text-primary-foreground"
+            : "rounded-lg border border-border bg-muted p-3"
       }
     >
       {conflictCount > 0 && (
@@ -75,8 +81,8 @@ export function PreviewControls({
         >
           {playing ? <PauseGlyph /> : <PlayIcon className="h-4 w-4" />}
         </button>
-        <span className={`shrink-0 text-[11px] tabular-nums ${isOverlay ? "text-white/80" : "text-muted-foreground"}`}>
-          {Math.floor(timeSeconds)}s / {Math.floor(timelineSeconds)}s
+        <span className={`shrink-0 text-[11px] tabular-nums ${mutedText}`}>
+          {isFooter ? `${formatDuration(timeSeconds)} / ${formatDuration(timelineSeconds)}` : `${Math.floor(timeSeconds)}s / ${Math.floor(timelineSeconds)}s`}
         </span>
         <input
           aria-label="Preview timeline"
@@ -97,7 +103,7 @@ export function PreviewControls({
         >
           <VolumeGlyph muted={muted} />
         </button>
-        <span className={`text-xs ${isOverlay ? "text-white/75" : "text-muted-foreground"}`}>
+        <span className={`text-xs ${mutedText}`}>
           {speed}×
         </span>
         <details
@@ -148,6 +154,12 @@ export function PreviewControls({
         >
           <ExpandIcon className="h-4 w-4" />
         </button>
+        {isFooter && (
+          <div className="ml-3 hidden text-right sm:block">
+            <p className="text-[11px] font-semibold">Preview Mode</p>
+            <p className="text-[10px] text-primary-foreground/55">This is a simulation of how your layout will appear on screens.</p>
+          </div>
+        )}
       </div>
     </div>
   );

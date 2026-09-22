@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { ChevronDownIcon, ClipboardIcon, EyeIcon, MoreIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
@@ -55,7 +54,7 @@ export function PlaylistItemsPane({
   };
 
   return (
-    <Card className="flex h-[32rem] min-h-0 flex-col p-5 xl:h-full">
+    <div className="flex h-[32rem] min-h-0 flex-col rounded-xl border border-border bg-card p-5 shadow-panel xl:h-full">
       <div className="mb-1 flex shrink-0 items-center justify-between">
         <h2 className="text-base font-semibold text-foreground">Playlist Items</h2>
         <button
@@ -157,7 +156,7 @@ export function PlaylistItemsPane({
           Drag items to reorder
         </p>
       )}
-    </Card>
+    </div>
   );
 }
 

@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/lovable/button";
-import { Card } from "@/components/ui/Card";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import type { ZonePreviewFrame } from "@/features/media-workspace/preview/preview-clock";
+import { PlaylistPreviewModal } from "@/features/media-workspace/preview/PlaylistPreviewModal";
+import { draftItemToPreview, playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
 import { useUndoableState } from "../use-undoable-state";
 import { usePlaylistPreviewHandoff } from "../use-playlist-preview-handoff";
 import {
@@ -41,6 +42,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [nowPlayingItemId, setNowPlayingItemId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [propTab, setPropTab] = useState<"item" | "playlist">("item");
   const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
 
@@ -110,6 +112,13 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     assets: referencedAssets,
   }));
 
+  // Lovable `playlist-preview`: the sheet reads the live draft; the new-tab handoff stays behind
+  // its "Open full preview" button.
+  const previewStage = useMemo(
+    () => playlistPreviewStage({ name: present.name, items: present.items.map(draftItemToPreview), playback: present.playback }),
+    [present.name, present.items, present.playback],
+  );
+
   const goBack = () => {
     if (row.isDirty) {
       setConfirmLeave(true);
@@ -121,15 +130,21 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   if (row.loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
   if (row.loadError) {
     return (
-      <Card className="p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <p className="text-sm text-danger">{row.loadError.message}</p>
         <Button className="mt-4" variant="outline" onClick={() => router.push(LIST_PATH)}>
           กลับไป Playlists
         </Button>
-      </Card>
+      </div>
     );
   }
 
+  const publish = () => router.push(`/media-workspace/publications/create?playlistId=${row.serverId}`);
+  const publishDisabledReason = !row.serverId
+    ? "บันทึก Playlist ก่อนเผยแพร่"
+    : row.isDirty
+      ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
+      : null;
   const savedLabel = savedStateLabel(row.isDirty, row.lastSavedAt, !!row.serverId);
   const effectiveSelectedItemId = selectedItemId ?? present.items[0]?.mediaAssetId ?? null;
   const selectedItem = present.items.find((i) => i.mediaAssetId === effectiveSelectedItemId) ?? null;
@@ -151,15 +166,9 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         onUndo={history.undo}
         onRedo={history.redo}
         onCancel={goBack}
-        onPreview={openPreview}
-        onPublish={() => router.push(`/media-workspace/publications/create?playlistId=${row.serverId}`)}
-        publishDisabledReason={
-          !row.serverId
-            ? "บันทึก Playlist ก่อนเผยแพร่"
-            : row.isDirty
-              ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
-              : null
-        }
+        onPreview={() => setPreviewOpen(true)}
+        onPublish={publish}
+        publishDisabledReason={publishDisabledReason}
         onSave={row.save}
       />
 
@@ -167,9 +176,9 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />
       )}
       {row.saveError && (
-        <Card className="border-danger/30 p-4">
+        <div className="rounded-lg border border-danger/30 bg-danger-soft p-4">
           <p className="text-sm text-danger">{row.saveError}</p>
-        </Card>
+        </div>
       )}
       {row.conflict && <RevisionConflictCard message={row.conflict} onReload={row.reloadFromServer} />}
 
@@ -187,7 +196,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           onAddItem={() => setDrawerOpen(true)}
         />
 
-        <div className="flex min-h-0 flex-col gap-3 xl:overflow-y-auto">
+        <div className="flex min-h-0 flex-col rounded-xl border border-border bg-card p-3 shadow-panel xl:overflow-y-auto">
           <PlaylistTimelinePane
             name={present.name}
             items={present.items}
@@ -215,6 +224,18 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           onInfoChange={(patch) => setInfo((c) => ({ ...c, ...patch }))}
         />
       </div>
+
+      {previewOpen && (
+        <PlaylistPreviewModal
+          open
+          onClose={() => setPreviewOpen(false)}
+          preview={previewStage}
+          assets={referencedAssets}
+          onOpenFullPreview={openPreview}
+          onPublish={publish}
+          publishDisabledReason={publishDisabledReason}
+        />
+      )}
 
       <AddItemDrawer
         open={drawerOpen}

@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { MediaAsset } from "@/types/domain";
@@ -42,14 +41,14 @@ export function PlaylistPropertiesPane({
   const isVideo = selectedItem ? (selectedItem.kind ?? asset?.kind) === "video" : false;
 
   return (
-    <Card className="flex min-h-[32rem] flex-col overflow-y-auto p-5 xl:h-full xl:min-h-0" aria-label="Playlist properties">
+    <div className="flex min-h-[32rem] flex-col overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-panel xl:h-full xl:min-h-0" aria-label="Playlist properties">
       <div className="mb-4 flex gap-1 border-b border-border">
         {(["item", "playlist"] as const).map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => onTab(key)}
-            className={`border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors ${
+            className={`border-b-2 px-3 py-2 text-xs font-medium capitalize transition-colors ${
               tab === key
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -62,7 +61,7 @@ export function PlaylistPropertiesPane({
 
       {tab === "item" ? (
         !selectedItem ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">เลือก item จากรายการเพื่อแก้ไข</p>
+          <p className="py-10 text-center text-xs text-muted-foreground">เลือก item จากรายการเพื่อแก้ไข</p>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
@@ -73,7 +72,7 @@ export function PlaylistPropertiesPane({
                 className="h-12 w-16"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">
+                <p className="truncate text-xs font-medium text-foreground">
                   {selectedItem.title ?? asset?.title ?? selectedItem.mediaAssetId}
                 </p>
                 <p className="text-xs text-muted-foreground">{isVideo ? "Video" : "Image"}</p>
@@ -82,7 +81,7 @@ export function PlaylistPropertiesPane({
 
             <Field label="Duration">
               {isVideo ? (
-                <p className="text-sm text-muted-foreground">ตามความยาวคลิป</p>
+                <p className="text-xs text-muted-foreground">ตามความยาวคลิป</p>
               ) : (
                 <div className="relative">
                   <input
@@ -90,7 +89,7 @@ export function PlaylistPropertiesPane({
                     min={1}
                     value={selectedItem.durationSeconds ?? ""}
                     onChange={(e) => onItemPatch({ durationSeconds: Math.max(1, Number(e.target.value) || 1) })}
-                    className="w-full rounded-lg border border-border py-2 pl-3 pr-10 text-sm outline-none focus:border-ring"
+                    className="h-9 w-full rounded-lg border border-border pl-3 pr-10 text-xs outline-none focus:border-ring"
                   />
                   <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">sec</span>
                 </div>
@@ -120,14 +119,14 @@ export function PlaylistPropertiesPane({
                       transitionDurationSeconds: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)),
                     })
                   }
-                  className="w-full rounded-lg border border-border py-2 pl-3 pr-10 text-sm outline-none focus:border-ring"
+                  className="h-9 w-full rounded-lg border border-border pl-3 pr-10 text-xs outline-none focus:border-ring"
                 />
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">sec</span>
               </div>
             </Field>
 
             <div className="border-t border-border pt-3">
-              <h3 className="mb-3 text-sm font-semibold text-foreground">
+              <h3 className="mb-3 text-xs font-semibold text-foreground">
                 Display Options
               </h3>
               <div className="flex flex-col gap-3">
@@ -145,7 +144,7 @@ export function PlaylistPropertiesPane({
                       type="color"
                       value={selectedItem.backgroundColor ?? "#000000"}
                       onChange={(e) => onItemPatch({ backgroundColor: e.target.value })}
-                      className="h-10 w-14 rounded-lg border border-border bg-card px-1"
+                      className="h-9 w-12 rounded-lg border border-border bg-card px-1"
                     />
                     {selectedItem.backgroundColor && (
                       <button
@@ -172,7 +171,7 @@ export function PlaylistPropertiesPane({
             <button
               type="button"
               onClick={onItemRemove}
-              className="mt-2 rounded-lg border border-danger/30 py-2 text-sm font-medium text-danger hover:bg-danger-soft"
+              className="mt-2 rounded-lg border border-danger/30 py-2 text-xs font-medium text-danger hover:bg-danger-soft"
             >
               Remove from Playlist
             </button>
@@ -188,6 +187,6 @@ export function PlaylistPropertiesPane({
           />
         </Field>
       )}
-    </Card>
+    </div>
   );
 }
