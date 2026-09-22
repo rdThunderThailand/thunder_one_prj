@@ -18,7 +18,11 @@
  */
 
 @theme inline {
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  /* --font-sans resolves through next/font (src/app/layout.tsx binds Manrope to
+     --font-manrope, with its metric-matched fallback); the bare "Manrope" string
+     would skip that fallback. --font-mono keeps Geist Mono for IDs/serials. */
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono);
   --text-3xs: 0.5rem;
   --text-3xs--line-height: 0.75rem;
   --text-2xs: 0.625rem;
@@ -250,6 +254,21 @@
 
 @utility animate-ring-in {
   animation: ring-in 700ms ease-out both;
+}
+
+/* Overview stat bars grow in from the left on mount (StatCardsRow). */
+@keyframes grow-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@utility animate-grow-bar {
+  transform-origin: left;
+  animation: grow-bar 700ms ease-out both;
 }
 
 /* Keeps an element scrollable (e.g. the sidebar nav) without showing a
