@@ -1,25 +1,37 @@
-// Shared badge/color maps, used by ServiceOpsPage's compact cards and the
-// full Customers/Work Queue/Reports pages alike, so they don't each redefine
-// the same mapping.
+// Shared badge/color maps for thunder-care/service-ops's pages.
 import type { IssueStatus } from "@/features/asset-intelligence/issues";
-import type { CustomerAttentionRow } from "./mock-data";
+import type { BadgeColor } from "@/components/ui/Badge";
+import { EnvelopeIcon, GlobeIcon, HeadsetIcon, PhoneIcon } from "@/components/ui/icons";
+import type { CaseChannel, CasePriority, InboxStatus, SlaRisk } from "./mock-data";
 
+// ยังใช้โดย ReportsPage/WorkQueuePage (นอกขอบเขตการ redesign รอบนี้) — ไม่แตะ
 export const issueStatusBadge: Record<IssueStatus, { color: "red" | "yellow" | "green"; label: string }> = {
   waiting: { color: "red", label: "Waiting" },
   in_progress: { color: "yellow", label: "In Progress" },
   resolved: { color: "green", label: "Resolved" },
 };
 
-type CustomerSeverity = CustomerAttentionRow["severity"];
-
-export const customerDotColor: Record<CustomerSeverity, string> = {
-  red: "bg-red-500",
-  yellow: "bg-amber-500",
-  green: "bg-emerald-500",
+export const priorityBadge: Record<CasePriority, { color: BadgeColor; label: string }> = {
+  high: { color: "red", label: "High" },
+  medium: { color: "yellow", label: "Medium" },
+  low: { color: "blue", label: "Low" },
 };
 
-export const customerActionColor: Record<CustomerSeverity, string> = {
-  red: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
-  yellow: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  green: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+export const slaRiskTextColor: Record<SlaRisk, string> = {
+  ok: "text-zinc-500 dark:text-zinc-400",
+  warning: "text-amber-600 dark:text-amber-400",
+  overdue: "text-red-600 dark:text-red-400",
+};
+
+export const channelIcon: Record<CaseChannel, typeof GlobeIcon> = {
+  web: GlobeIcon,
+  line: HeadsetIcon,
+  phone: PhoneIcon,
+  email: EnvelopeIcon,
+};
+
+export const inboxStatusColor: Record<InboxStatus, BadgeColor> = {
+  unhandled: "zinc",
+  pending_triage: "yellow",
+  waiting_customer: "indigo",
 };
