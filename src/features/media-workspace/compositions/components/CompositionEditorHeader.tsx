@@ -120,7 +120,7 @@ export function CompositionEditorHeader({
   const statusVariant: Record<CompositionStatus, "warning" | "success" | "neutral"> = { draft: "warning", active: "success", inactive: "neutral" };
 
   return (
-    <div className="flex min-h-[70px] shrink-0 flex-wrap items-center justify-between gap-3">
+    <div className="flex min-h-[68px] shrink-0 flex-wrap items-center justify-between gap-3 py-2">
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <button
           type="button"
@@ -131,19 +131,19 @@ export function CompositionEditorHeader({
         >
           <ArrowLeftIcon />
         </button>
-        <div className="min-w-0 flex-1">
-          <p className="mb-1 text-[11px] text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <p className="text-[11px] text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
           <div className="flex min-w-0 items-center gap-2">
           {editing ? <>
-            <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-primary bg-transparent text-lg font-semibold text-foreground outline-none" />
-            <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"><CheckIcon /></button>
+            <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-bold text-foreground outline-none" />
+            <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"><CheckIcon /></button>
           </> : <>
-            <h1 className="min-w-0 break-words text-lg font-semibold leading-tight text-foreground">{name.trim() || "Untitled Layout"}</h1>
-            <button type="button" onClick={() => setEditing(true)} aria-label="แก้ไขชื่อ Layout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><EditIcon /></button>
+            <h1 className="min-w-0 break-words text-sm font-bold leading-tight text-foreground">{name.trim() || "Untitled Layout"}</h1>
+            <button type="button" onClick={() => setEditing(true)} aria-label="แก้ไขชื่อ Layout" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><EditIcon /></button>
           </>}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <Badge variant={statusVariant[status]} className="rounded-full">{status[0].toUpperCase() + status.slice(1)}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={statusVariant[status]} className="rounded-full px-2 py-0 text-[10px]">{status[0].toUpperCase() + status.slice(1)}</Badge>
             <span className="text-xs text-muted-foreground">{referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · {updatedLabel}</span>
           </div>
         </div>

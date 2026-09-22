@@ -8,8 +8,8 @@ export function LayoutInformationCard({ name, resolution, aspectRatio, zoneCount
   status: CompositionStatus;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-3 shadow-panel">
-      <h2 className="text-sm font-semibold">Layout Information</h2>
+    <section className="rounded-lg border border-border bg-card p-3">
+      <h2 className="text-[11px] font-bold">Layout Information</h2>
       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
         <dt className="text-muted-foreground">Name</dt><dd className="truncate font-medium">{name || "Untitled Layout"}</dd>
         <dt className="text-muted-foreground">Resolution</dt><dd>{resolution ?? "Custom"}</dd>

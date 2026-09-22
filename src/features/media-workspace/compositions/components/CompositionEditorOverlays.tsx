@@ -6,7 +6,6 @@
 // still live there because they touch the draft.
 
 import { Button } from "@/components/ui/lovable/button";
-import { Card } from "@/components/ui/Card";
 import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
 import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";
 
@@ -53,9 +52,9 @@ export function CompositionEditorOverlays({
       )}
 
       {saveError && (
-        <Card className="border-danger/30 p-4">
+        <div className="shrink-0 border-b border-danger/30 bg-danger-soft px-4 py-2">
           <p className="text-sm text-danger">{saveError}</p>
-        </Card>
+        </div>
       )}
 
       {templateSavedName && (
@@ -65,12 +64,12 @@ export function CompositionEditorOverlays({
       )}
 
       {sharedTemplateUsage > 1 && (
-        <Card className="flex flex-wrap items-center justify-between gap-3 border-warning/30 p-4">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-warning/30 bg-warning-soft px-4 py-2">
           <p className="text-sm text-warning">
             This Template is used by {sharedTemplateUsage} Layouts. Changing the Zones affects all of them.
           </p>
           <Button variant="secondary" disabled={saving} onClick={onForkLayout}>Make this Layout its own copy</Button>
-        </Card>
+        </div>
       )}
     </>
   );
