@@ -110,7 +110,7 @@ function PreviewVideo({
 
 function Placeholder({ label, style }: { label: string; style?: CSSProperties }) {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-zinc-900 p-3 text-center text-xs text-amber-200" style={style}>
+    <div className="flex h-full w-full items-center justify-center bg-foreground p-3 text-center text-xs text-warning" style={style}>
       {label}
     </div>
   );

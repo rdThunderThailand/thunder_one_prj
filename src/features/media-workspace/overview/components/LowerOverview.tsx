@@ -88,7 +88,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
         label: `Publication “${publication.name}” updated`,
         at: publication.updated_at ?? publication.created_at ?? "",
         icon: CheckCircle2,
-        color: "text-emerald-500",
+        color: "text-success",
       })),
     ]
       .filter((item) => item.at)
@@ -106,9 +106,9 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
 
   const isLoading = channels === null || publications === null;
   const healthRows = [
-    ["Online", data.health.online, "bg-emerald-500", "#22c55e"],
-    ["Warning", data.health.warning, "bg-amber-500", "#f59e0b"],
-    ["Offline", data.health.offline, "bg-red-500", "#ef4444"],
+    ["Online", data.health.online, "bg-success", "#22c55e"],
+    ["Warning", data.health.warning, "bg-warning", "#f59e0b"],
+    ["Offline", data.health.offline, "bg-danger", "#ef4444"],
   ] as const;
 
   return (
@@ -121,22 +121,22 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
           </Link>
         </div>
         {loadFailed ? (
-          <p className="py-10 text-center text-sm text-red-500">Could not load today&apos;s schedule</p>
+          <p className="py-10 text-center text-sm text-danger">Could not load today&apos;s schedule</p>
         ) : isLoading ? (
           <ScheduleSkeleton />
         ) : data.schedule.length === 0 ? (
-          <p className="py-10 text-center text-sm text-zinc-400">No scheduled publications for today</p>
+          <p className="py-10 text-center text-sm text-muted-foreground">No scheduled publications for today</p>
         ) : (
           <ol>
             {data.schedule.map((row) => (
-              <li key={row.id} className="grid grid-cols-[8px_52px_minmax(0,1fr)_auto] items-center gap-3 border-b border-zinc-100 py-4 text-xs last:border-0 dark:border-zinc-800">
+              <li key={row.id} className="grid grid-cols-[8px_52px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border py-4 text-xs last:border-0">
                 <span className={`h-2 w-2 rounded-full ${scheduleDotClass(row)}`} />
-                <time className="font-semibold text-zinc-700 dark:text-zinc-200">{scheduleTime(row)}</time>
+                <time className="font-semibold text-muted-foreground">{scheduleTime(row)}</time>
                 <span className="min-w-0">
-                  <span className="block truncate font-medium text-zinc-800 dark:text-zinc-100">{row.name}</span>
-                  <span className="mt-1 block text-[10px] text-zinc-400">Program</span>
+                  <span className="block truncate font-medium text-foreground">{row.name}</span>
+                  <span className="mt-1 block text-[10px] text-muted-foreground">Program</span>
                 </span>
-                <span className="text-zinc-400">{targetSummary(row.target_summary)}</span>
+                <span className="text-muted-foreground">{targetSummary(row.target_summary)}</span>
               </li>
             ))}
           </ol>
@@ -151,7 +151,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
             </Link>
           </div>
           {loadFailed ? (
-            <p className="py-8 text-center text-sm text-red-500">Could not load channel health</p>
+            <p className="py-8 text-center text-sm text-danger">Could not load channel health</p>
           ) : isLoading ? (
             <div className="flex flex-1 items-center gap-6">
               <Skeleton className="h-36 w-36 shrink-0 rounded-full" />
@@ -166,21 +166,21 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
               <div className="relative shrink-0 animate-ring-in">
                 <DonutChart segments={healthRows.map(([label, value, , color]) => ({ label, value, color }))} size={144} strokeWidth={18} />
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <strong className="text-2xl text-zinc-900 dark:text-zinc-50">{data.total}</strong>
-                  <span className="text-xs text-zinc-400">Total</span>
+                  <strong className="text-2xl text-foreground">{data.total}</strong>
+                  <span className="text-xs text-muted-foreground">Total</span>
                 </div>
               </div>
               <div className="min-w-0 flex-1 space-y-5">
                 {healthRows.map(([label, value, color]) => (
                   <div key={label} className="text-sm">
-                    <div className="mb-1.5 flex justify-between text-zinc-600 dark:text-zinc-400">
+                    <div className="mb-1.5 flex justify-between text-muted-foreground">
                       <span>
                         <i className={`mr-1.5 inline-block h-2 w-2 rounded-full ${color}`} />
                         {label}
                       </span>
-                      <b className="text-zinc-900 dark:text-zinc-50">{value}</b>
+                      <b className="text-foreground">{value}</b>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
                       <div className={`${color} h-full rounded-full`} style={{ width: `${data.total ? (value / data.total) * 100 : 0}%` }} />
                     </div>
                   </div>
@@ -198,7 +198,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
             </Link>
           </div>
           {loadFailed ? (
-            <p className="py-4 text-center text-sm text-red-500">Could not load channel types</p>
+            <p className="py-4 text-center text-sm text-danger">Could not load channel types</p>
           ) : isLoading ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
@@ -206,17 +206,17 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
               ))}
             </div>
           ) : data.types.length === 0 ? (
-            <p className="py-4 text-center text-sm text-zinc-400">No channel types available</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">No channel types available</p>
           ) : (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {data.types.map(([label, count]) => {
                 const Icon = typeIcon(label);
                 return (
-                  <div key={label} className="rounded-lg border border-zinc-100 p-3 text-center dark:border-zinc-800">
+                  <div key={label} className="rounded-lg border border-border p-3 text-center">
                     <Icon className="mx-auto h-5 w-5 text-primary" />
-                    <p className="mt-2 truncate text-xs font-medium text-zinc-600 dark:text-zinc-300">{label}</p>
-                    <p className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">{count}</p>
-                    <p className="mt-1 text-[10px] text-zinc-400">Channels</p>
+                    <p className="mt-2 truncate text-xs font-medium text-muted-foreground">{label}</p>
+                    <p className="mt-1 text-xl font-semibold text-foreground">{count}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">Channels</p>
                   </div>
                 );
               })}
@@ -234,18 +234,18 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
             <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Recent Updates</h2>
           </div>
           {loadFailed ? (
-            <p className="py-2 text-xs text-red-500">Could not load recent updates</p>
+            <p className="py-2 text-xs text-danger">Could not load recent updates</p>
           ) : isLoading ? (
             <ActivitySkeleton />
           ) : data.activity.length === 0 ? (
-            <p className="py-2 text-xs text-zinc-400">No recent updates available</p>
+            <p className="py-2 text-xs text-muted-foreground">No recent updates available</p>
           ) : (
             <ul className="space-y-3">
               {data.activity.map(({ label, at, icon: Icon, color }) => (
                 <li key={`${label}-${at}`} className="flex items-center gap-3 text-xs">
                   <Icon className={`h-4 w-4 shrink-0 ${color}`} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-zinc-700 dark:text-zinc-200">{label}</span>
-                  <time className="text-zinc-400">{formatTime(at)}</time>
+                  <span className="min-w-0 flex-1 truncate font-medium text-muted-foreground">{label}</span>
+                  <time className="text-muted-foreground">{formatTime(at)}</time>
                 </li>
               ))}
             </ul>

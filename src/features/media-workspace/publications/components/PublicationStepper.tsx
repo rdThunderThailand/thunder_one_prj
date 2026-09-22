@@ -20,12 +20,12 @@ export function PublicationStepper({
           <div
             className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
               state === "active"
-                ? "bg-indigo-600 text-white"
+                ? "bg-primary text-white"
                 : state === "complete"
-                  ? "bg-emerald-100 text-emerald-700"
+                  ? "bg-success-soft text-success"
                   : state === "reachable"
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "bg-zinc-100 text-zinc-400"
+                    ? "bg-primary-soft text-primary"
+                    : "bg-muted text-muted-foreground"
             }`}
           >
             {state === "complete" ? <CheckIcon className="h-3.5 w-3.5" /> : item.step}
@@ -34,7 +34,7 @@ export function PublicationStepper({
         const label = (
           <span
             className={`whitespace-nowrap text-xs font-medium ${
-              state === "active" ? "text-zinc-900" : "text-zinc-400"
+              state === "active" ? "text-foreground" : "text-muted-foreground"
             }`}
           >
             {item.label}
@@ -46,7 +46,7 @@ export function PublicationStepper({
               <button
                 type="button"
                 onClick={() => onStepSelect(item.step)}
-                className="flex flex-col items-center gap-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="flex flex-col items-center gap-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
               >
                 {circle}
                 {label}
@@ -58,7 +58,7 @@ export function PublicationStepper({
               </div>
             )}
             {index < wizardSteps.length - 1 && (
-              <div className="mx-3 mb-5 h-px flex-1 bg-zinc-200" />
+              <div className="mx-3 mb-5 h-px flex-1 bg-muted" />
             )}
           </div>
         );

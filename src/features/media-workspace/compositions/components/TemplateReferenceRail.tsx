@@ -21,11 +21,11 @@ export function TemplateReferenceRail({
         onClick={onStartBlank}
         aria-pressed={selectedId === null}
         className={`flex w-36 flex-col gap-2 rounded-lg border border-dashed p-3 text-left transition-colors ${
-          selectedId === null ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10" : "border-zinc-300 hover:border-indigo-400 dark:border-zinc-700"
+          selectedId === null ? "border-primary bg-primary-soft" : "border-border hover:border-primary/30"
         }`}
       >
-        <span className="flex h-20 items-center justify-center rounded border border-zinc-200 text-xs text-zinc-500 dark:border-zinc-700">Blank</span>
-        <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">Start blank</span>
+        <span className="flex h-20 items-center justify-center rounded border border-border text-xs text-muted-foreground">Blank</span>
+        <span className="text-xs font-medium text-foreground">Start blank</span>
       </button>
       {templates.map((template) => {
         const selected = template.id === selectedId;
@@ -37,8 +37,8 @@ export function TemplateReferenceRail({
             aria-pressed={selected}
             className={`flex w-36 flex-col gap-2 rounded-lg border p-3 text-left transition-colors ${
               selected
-                ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10"
-                : "border-zinc-200 hover:border-indigo-400 dark:border-zinc-700"
+                ? "border-primary bg-primary-soft"
+                : "border-border hover:border-primary/30"
             }`}
           >
             <LayoutWireframe
@@ -46,13 +46,13 @@ export function TemplateReferenceRail({
               background={template.background}
               aspectRatio={template.aspect_ratio}
               shouldShowLabels={false}
-              className="h-20 w-full rounded border border-zinc-200 dark:border-zinc-700"
+              className="h-20 w-full rounded border border-border"
             />
-            <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">{template.name}</span>
+            <span className="text-xs font-medium text-foreground">{template.name}</span>
           </button>
         );
       })}
-      {templates.length === 0 && <p className="text-sm text-zinc-500">ไม่มี Template ที่พร้อมใช้งาน</p>}
+      {templates.length === 0 && <p className="text-sm text-muted-foreground">ไม่มี Template ที่พร้อมใช้งาน</p>}
     </div>
   );
 }

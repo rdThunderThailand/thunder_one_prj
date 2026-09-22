@@ -1,24 +1,23 @@
 "use client";
 
-// Zone Properties (ticket 27, ADR 0063 §6; media fit/mute added by ADR 0064): geometry and
-// playback controls. Content lives in the `Insert to Layout` column beside the canvas,
-// matching the editor's visual hierarchy.
-//
-// No editable Duration — it is always the sum of the bound Playlist's items, never a
-// Zone-level number.
+// Zone Properties (ticket 27, ADR 0063 §6; media fit/mute added by ADR 0064): geometry,
+// bound content (ZoneContentList) and playback controls. Adding new content still happens
+// in the `Insert to Layout` column beside the canvas; this panel is for what's already bound.
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/lovable/button";
 import { parseResolution, referencePixels, roundPercent } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
-import type { MediaAsset } from "@/types/domain";
-import { totalZoneDurationSeconds, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
+import type { MediaAsset, PlaylistListItem } from "@/types/domain";
+import { defaultBinding, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
+import { ZoneContentList } from "./ZoneContentList";
 
 const tabClasses = (active: boolean) =>
-  `flex-1 rounded-lg px-3 py-1.5 text-sm font-medium ${active ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300" : "text-zinc-500"}`;
+  `flex-1 rounded-lg px-3 py-1.5 text-[9px] font-medium ${active ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`;
 
 const selectClasses =
-  "mt-1 w-full rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "mt-1 h-9 w-full rounded-lg border border-border bg-card px-2 text-xs text-foreground";
 
 const geometryFields = ["x", "y", "width", "height"] as const;
 
@@ -30,6 +29,8 @@ export function ZonePropertiesPanel({
   onBindingChange,
   onApplyPlaybackToAllZones,
   assets,
+  previews,
+  playlists,
   playlistDurations,
 }: {
   zone: LayoutZone;
@@ -41,17 +42,18 @@ export function ZonePropertiesPanel({
   onBindingChange: (next: ZoneBindingDraft) => void;
   onApplyPlaybackToAllZones: (playback: ZonePlayback) => void;
   assets: MediaAsset[];
+  previews: Record<string, string | undefined>;
+  playlists: PlaylistListItem[];
   playlistDurations: Record<string, number | undefined>;
 }) {
   const [tab, setTab] = useState<"layout" | "content">("content");
   const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
-  const assetDurations = Object.fromEntries(assets.map((a) => [a.id, a.duration_seconds ?? undefined]));
-  const durationSeconds = totalZoneDurationSeconds(binding, assetDurations, playlistDurations);
+  const hasContent = binding.source === "playlist" ? Boolean(binding.playlistId) : binding.assetItems.length > 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Zone name</span>
+        <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Zone name</span>
         <input
           key={zone.id ?? zone.position}
           defaultValue={zone.name}
@@ -67,11 +69,11 @@ export function ZonePropertiesPanel({
           onKeyDown={(event) => {
             if (event.key === "Enter") event.currentTarget.blur();
           }}
-          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          className="h-9 w-full rounded-lg border border-border bg-card px-3 text-xs font-semibold text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
       </label>
 
-      <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+      <div className="flex items-center gap-2 rounded-xl border border-border bg-muted p-1">
         <button type="button" className={tabClasses(tab === "content")} onClick={() => setTab("content")}>Content</button>
         <button type="button" className={tabClasses(tab === "layout")} onClick={() => setTab("layout")}>Geometry</button>
       </div>
@@ -79,7 +81,7 @@ export function ZonePropertiesPanel({
       {tab === "layout" && (
         <div className="grid grid-cols-2 gap-3">
           {geometryFields.map((key) => (
-            <label key={key} className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <label key={key} className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
               {key.toUpperCase()} (%)
               <input
                 type="number"
@@ -92,10 +94,10 @@ export function ZonePropertiesPanel({
                   if (Number.isNaN(raw)) return;
                   onZoneChange({ ...zone, [key]: roundPercent(raw) });
                 }}
-                className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                className="h-9 rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
               />
               {resolution && (
-                <span className="text-[11px] text-zinc-400">
+                <span className="text-[11px] text-muted-foreground">
                   ≈ {referencePixels(zone[key], key === "x" || key === "width" ? resolution[0] : resolution[1])}px
                 </span>
               )}
@@ -106,8 +108,17 @@ export function ZonePropertiesPanel({
 
       {tab === "content" && (
         <div className="flex flex-col gap-4">
+          <ZoneContentList
+            binding={binding}
+            assets={assets}
+            previews={previews}
+            playlists={playlists}
+            playlistDurations={playlistDurations}
+            onBindingChange={onBindingChange}
+          />
+
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs text-zinc-500">
+            <label className="text-xs text-muted-foreground">
               Play mode
               <select
                 value={binding.playback.playMode}
@@ -118,7 +129,7 @@ export function ZonePropertiesPanel({
                 <option value="shuffle">Shuffle</option>
               </select>
             </label>
-            <label className="text-xs text-zinc-500">
+            <label className="text-xs text-muted-foreground">
               Repeat
               <select
                 value={binding.playback.repeat}
@@ -129,7 +140,7 @@ export function ZonePropertiesPanel({
                 <option value="once">Once</option>
               </select>
             </label>
-            <label className="text-xs text-zinc-500">
+            <label className="text-xs text-muted-foreground">
               Start from
               <select
                 value={binding.playback.startFrom}
@@ -140,7 +151,7 @@ export function ZonePropertiesPanel({
                 <option value="resume">Resume</option>
               </select>
             </label>
-            <label className="text-xs text-zinc-500">
+            <label className="text-xs text-muted-foreground">
               Media fit
               <select
                 value={binding.playback.mediaFit}
@@ -154,24 +165,31 @@ export function ZonePropertiesPanel({
             </label>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
             <input
               type="checkbox"
               checked={binding.playback.muted}
               onChange={(e) => onBindingChange({ ...binding, playback: { ...binding.playback, muted: e.target.checked } })}
-              className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600"
+              className="h-4 w-4 rounded border-border text-primary focus:ring-ring/30"
             />
             Mute this Zone
           </label>
 
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-500 dark:text-zinc-400">Duration</span>
-            <span className="font-medium text-zinc-800 dark:text-zinc-100">{durationSeconds}s</span>
-          </div>
-
-          <Button variant="secondary" onClick={() => onApplyPlaybackToAllZones(binding.playback)}>
+          <Button variant="outline" size="sm" onClick={() => onApplyPlaybackToAllZones(binding.playback)}>
             Apply content settings to all Zones
           </Button>
+
+          {hasContent && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive"
+              onClick={() => onBindingChange({ ...defaultBinding(binding.layoutZoneId), playback: binding.playback })}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Remove content
+            </Button>
+          )}
         </div>
       )}
 

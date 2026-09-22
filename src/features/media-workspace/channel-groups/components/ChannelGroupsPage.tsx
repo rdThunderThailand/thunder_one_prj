@@ -80,9 +80,9 @@ export function ChannelGroupsPage() {
       <ChannelGroupsSummaryTiles groups={groups} channels={channels} />
 
       {error && groups === null ? (
-        <Card className="p-6 text-center text-sm text-red-600 dark:text-red-400">{error.message}</Card>
+        <Card className="p-6 text-center text-sm text-danger">{error.message}</Card>
       ) : groups === null || channels === null ? (
-        <Card className="p-6 text-center text-sm text-zinc-400">Loading…</Card>
+        <Card className="p-6 text-center text-sm text-muted-foreground">Loading…</Card>
       ) : (
         <div className={hasSidebar ? "min-h-0 min-w-0 xl:col-start-1 xl:row-start-3" : "flex min-h-0 min-w-0 flex-1"}>
           <Card className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4">

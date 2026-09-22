@@ -6,6 +6,7 @@ import { Bell, CalendarDays, CircleHelp, Search } from "lucide-react";
 import { BellIcon, ChevronDownIcon, HelpIcon, SearchIcon } from "@/components/ui/icons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { resolveActiveApp } from "@/config/apps";
+import { isEditorRoute } from "@/config/nav/editor-routes";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
 import { UserMenu } from "./UserMenu";
@@ -158,5 +159,7 @@ function DefaultTopbar({ userName, roleLabel, notificationCount = 13 }: TopbarPr
 export function Topbar(props: TopbarProps) {
   const pathname = usePathname();
   const isMediaWorkspace = resolveActiveApp(pathname)?.id === "media-workspace";
+  // Editors run in the focus shell (ADR 0077): the page header carries the title and back link.
+  if (isMediaWorkspace && isEditorRoute(pathname)) return null;
   return isMediaWorkspace ? <MediaWorkspaceTopbar {...props} pathname={pathname} /> : <DefaultTopbar {...props} />;
 }

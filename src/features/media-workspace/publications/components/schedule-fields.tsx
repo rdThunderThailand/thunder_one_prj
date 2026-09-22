@@ -5,10 +5,10 @@ import { TIMEZONES, WEEKDAYS } from "../schedule";
 import { delayUnits } from "../mock-data";
 
 const inputBase =
-  "rounded-lg border px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-50 disabled:text-zinc-400";
+  "rounded-lg border px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground";
 
 export function FieldError({ message }: { message?: string }) {
-  return message ? <p className="mt-1 text-xs font-medium text-red-600">{message}</p> : null;
+  return message ? <p className="mt-1 text-xs font-medium text-danger">{message}</p> : null;
 }
 
 /** The date+time input pair the schedule step repeats for start, end and expiry. */
@@ -37,7 +37,7 @@ export function DateTimeInputs({
         disabled={disabled}
         onChange={onDateChange ? (e) => onDateChange(e.target.value) : undefined}
         aria-invalid={!!dateError}
-        className={`${inputBase} ${dateError ? "border-red-400" : "border-zinc-200"}`}
+        className={`${inputBase} ${dateError ? "border-danger" : "border-border"}`}
       />
       <input
         type="time"
@@ -45,7 +45,7 @@ export function DateTimeInputs({
         disabled={disabled}
         onChange={onTimeChange ? (e) => onTimeChange(e.target.value) : undefined}
         aria-invalid={!!timeError}
-        className={`${inputBase} ${timeError ? "border-red-400" : "border-zinc-200"}`}
+        className={`${inputBase} ${timeError ? "border-danger" : "border-border"}`}
       />
     </div>
   );
@@ -71,7 +71,7 @@ export function DateRangeField({
 }) {
   return (
     <div className="mt-4">
-      <label className="mb-1.5 block text-sm font-medium text-zinc-700">{label}</label>
+      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">{label}</label>
       <DateTimeInputs
         date={date}
         time={time}
@@ -104,26 +104,26 @@ export function TimeWindowField({
 }) {
   return (
     <div className="mt-4">
-      <label className="mb-1.5 block text-sm font-medium text-zinc-700">Daily Window</label>
+      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">Daily Window</label>
       <div className="grid grid-cols-2 gap-2.5">
         <input
           type="time"
           value={start}
           onChange={(e) => onStartChange(e.target.value)}
           aria-invalid={!!startError}
-          className={`${inputBase} ${startError ? "border-red-400" : "border-zinc-200"}`}
+          className={`${inputBase} ${startError ? "border-danger" : "border-border"}`}
         />
         <input
           type="time"
           value={end}
           onChange={(e) => onEndChange(e.target.value)}
           aria-invalid={!!endError}
-          className={`${inputBase} ${endError ? "border-red-400" : "border-zinc-200"}`}
+          className={`${inputBase} ${endError ? "border-danger" : "border-border"}`}
         />
       </div>
       <FieldError message={startError} />
       <FieldError message={endError} />
-      <p className="mt-1.5 text-xs text-zinc-500">
+      <p className="mt-1.5 text-xs text-muted-foreground">
         Plays on the selected weekdays, within this daily time window, across the date range above.
       </p>
     </div>
@@ -142,7 +142,7 @@ export function WeekdayChips({
 }) {
   return (
     <div className="mt-4">
-      <label className="mb-1.5 block text-sm font-medium text-zinc-700">Repeat On</label>
+      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">Repeat On</label>
       <div className="flex flex-wrap gap-2">
         {WEEKDAYS.map((w) => {
           const isSelected = selected.includes(w.value);
@@ -153,8 +153,8 @@ export function WeekdayChips({
               onClick={() => onToggle(w.value)}
               className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
                 isSelected
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-600"
-                  : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                  ? "border-primary bg-primary-soft text-primary"
+                  : "border-border text-muted-foreground hover:bg-muted"
               }`}
             >
               {w.label}
@@ -176,12 +176,12 @@ export function TimezoneSelect({
 }) {
   return (
     <div className="mt-4">
-      <label className="mb-1.5 block text-sm font-medium text-zinc-700">Time Zone</label>
+      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">Time Zone</label>
       <div className="relative">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+          className="w-full appearance-none rounded-lg border border-border bg-card py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
         >
           {TIMEZONES.map((tz) => (
             <option key={tz.id} value={tz.id}>
@@ -189,7 +189,7 @@ export function TimezoneSelect({
             </option>
           ))}
         </select>
-        <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       </div>
     </div>
   );
@@ -200,18 +200,18 @@ export function AdvancedScheduleStubs() {
   return (
     <>
       <div>
-        <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-zinc-700">
+        <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
           Publish Order
           <span title="ยังไม่เปิดใช้งาน">
-            <InfoIcon className="h-3.5 w-3.5 text-zinc-400" />
+            <InfoIcon className="h-3.5 w-3.5 text-muted-foreground" />
           </span>
         </p>
         <div className="flex flex-col gap-2">
-          <label title="ยังไม่เปิดใช้งาน" className="flex cursor-not-allowed items-center gap-2 text-sm text-zinc-400">
+          <label title="ยังไม่เปิดใช้งาน" className="flex cursor-not-allowed items-center gap-2 text-sm text-muted-foreground">
             <input type="radio" disabled checked readOnly className="h-4 w-4" />
             Publish to all channels at the same time
           </label>
-          <label title="ยังไม่เปิดใช้งาน" className="flex cursor-not-allowed items-center gap-2 text-sm text-zinc-400">
+          <label title="ยังไม่เปิดใช้งาน" className="flex cursor-not-allowed items-center gap-2 text-sm text-muted-foreground">
             <input type="radio" disabled checked={false} readOnly className="h-4 w-4" />
             Publish to channels in sequence
           </label>
@@ -219,10 +219,10 @@ export function AdvancedScheduleStubs() {
       </div>
 
       <div className="opacity-50">
-        <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-zinc-700">
+        <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
           Delay between channels
           <span title="ยังไม่เปิดใช้งาน">
-            <InfoIcon className="h-3.5 w-3.5 text-zinc-400" />
+            <InfoIcon className="h-3.5 w-3.5 text-muted-foreground" />
           </span>
         </p>
         <div className="flex gap-2">
@@ -231,20 +231,20 @@ export function AdvancedScheduleStubs() {
             disabled
             title="ยังไม่เปิดใช้งาน"
             defaultValue={10}
-            className="w-20 cursor-not-allowed rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 outline-none"
+            className="w-20 cursor-not-allowed rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground outline-none"
           />
           <div className="relative flex-1">
             <select
               disabled
               title="ยังไม่เปิดใช้งาน"
               defaultValue="seconds"
-              className="w-full cursor-not-allowed appearance-none rounded-lg border border-zinc-200 bg-zinc-50 py-2 pl-3 pr-8 text-sm text-zinc-900 outline-none"
+              className="w-full cursor-not-allowed appearance-none rounded-lg border border-border bg-muted py-2 pl-3 pr-8 text-sm text-foreground outline-none"
             >
               {delayUnits.map((u) => (
                 <option key={u} value={u}>{u}</option>
               ))}
             </select>
-            <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
         </div>
       </div>

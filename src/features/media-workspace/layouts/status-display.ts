@@ -1,5 +1,6 @@
-import type { BadgeColor } from "@/components/ui/Badge";
 import type { LayoutStatus } from "./types";
+
+type BadgeColor = "green" | "zinc";
 
 /** Unlike Playlist (ADR 0028), a Layout's status is never derived — it is the stored
  *  column directly, active ↔ inactive with no hard delete (ADR 0044 §6). */

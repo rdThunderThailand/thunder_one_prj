@@ -8,7 +8,7 @@ import { encodeMetadata } from "../metadata";
 import { resolveDraftStatus } from "../resolve-draft-status";
 import type { UndoableState } from "../use-undoable-state";
 import { editorSnapshot, editorStateFromDetail, emptyEditorState, type EditorState } from "../playlist-editor-state";
-import type { PlaylistDetail, PlaylistInfo } from "../types";
+import type { PlaylistDetail, PlaylistInfo, PlaylistStatus } from "../types";
 
 const LIST_PATH = "/media-workspace/playlists";
 const baseline = (state: EditorState, info: PlaylistInfo) => editorSnapshot(state) + JSON.stringify(info);
@@ -30,6 +30,7 @@ export function usePlaylistEditorRow({
   const idempotencyKey = useRef<string | null>(null);
   const [serverId, setServerId] = useState<string | null>(playlistId ?? null);
   const [revision, setRevision] = useState<number | null>(null);
+  const [status, setStatus] = useState<PlaylistStatus>("draft");
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(
     playlistId ? null : baseline(emptyEditorState(), info),
   );
@@ -46,6 +47,7 @@ export function usePlaylistEditorRow({
     setSavedSnapshot(baseline(state, loadedInfo));
     setServerId(detail.id);
     setRevision(rev);
+    setStatus(detail.status);
     setInfo(loadedInfo);
   };
 
@@ -125,5 +127,5 @@ export function usePlaylistEditorRow({
     setConflict(null);
   };
 
-  return { serverId, isDirty, lastSavedAt, loading, loadError, saving, saveError, conflict, save, reloadFromServer };
+  return { serverId, status, isDirty, lastSavedAt, loading, loadError, saving, saveError, conflict, save, reloadFromServer };
 }

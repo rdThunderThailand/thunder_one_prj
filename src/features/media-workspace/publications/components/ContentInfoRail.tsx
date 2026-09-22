@@ -59,13 +59,13 @@ export function ContentInfoRail({
     <div className="flex h-fit flex-col gap-4">
       <Card className="flex flex-col gap-4 p-5">
         <div>
-          <h2 className="text-base font-semibold text-zinc-900">Content Info</h2>
-          <p className="mt-0.5 text-xs text-zinc-500">ข้อมูลเนื้อหา</p>
+          <h2 className="text-base font-semibold text-foreground">Content Info</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">ข้อมูลเนื้อหา</p>
         </div>
         {error ? (
-          <p className="text-sm text-red-600">โหลดข้อมูลคอนเทนต์ไม่สำเร็จ</p>
+          <p className="text-sm text-danger">โหลดข้อมูลคอนเทนต์ไม่สำเร็จ</p>
         ) : loading || !preview ? (
-          <p className="text-sm text-zinc-400">กำลังโหลด…</p>
+          <p className="text-sm text-muted-foreground">กำลังโหลด…</p>
         ) : branch === "media" ? (
           <MediaFacts assetsById={assetsById} />
         ) : branch === "playlist" ? (
@@ -76,27 +76,27 @@ export function ContentInfoRail({
       </Card>
       <Card className="p-5">
         <div>
-          <h2 className="text-base font-semibold text-zinc-900">Checklist</h2>
-          <p className="mt-0.5 text-xs text-zinc-500">ตรวจสอบความพร้อม</p>
+          <h2 className="text-base font-semibold text-foreground">Checklist</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">ตรวจสอบความพร้อม</p>
         </div>
         <ul className="mt-4 space-y-2.5">
           {checks.map((check) => (
-            <li key={check.label} className="flex items-start gap-2 text-xs text-zinc-600">
-              {check.pass ? <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-500" /> : <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />}
+            <li key={check.label} className="flex items-start gap-2 text-xs text-muted-foreground">
+              {check.pass ? <CheckCircleIcon className="h-4 w-4 shrink-0 text-success" /> : <WarningTriangleIcon className="h-4 w-4 shrink-0 text-warning" />}
               {check.label}
             </li>
           ))}
         </ul>
       </Card>
-      <Card className="border-indigo-100 bg-indigo-50/70 p-5">
+      <Card className="border-primary/30 bg-primary-soft p-5">
         <div className="flex items-start gap-3">
-          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
+          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div>
-            <h2 className="text-sm font-semibold text-indigo-900">Need Help?</h2>
-            <p className="mt-1 text-xs leading-5 text-indigo-700">ดูคู่มือการใช้งานหรือขอคำแนะนำ</p>
+            <h2 className="text-[11px] font-bold text-primary">Need Help?</h2>
+            <p className="mt-1 text-xs leading-5 text-primary">ดูคู่มือการใช้งานหรือขอคำแนะนำ</p>
           </div>
         </div>
-        <a href="#" className="mt-4 flex items-center justify-between rounded-lg border border-indigo-100 bg-white px-3 py-2 text-xs font-semibold text-indigo-700">
+        <a href="#" className="mt-4 flex items-center justify-between rounded-lg border border-primary/30 bg-card px-3 py-2 text-xs font-semibold text-primary">
           View Guide <ExternalLinkIcon className="h-3.5 w-3.5" />
         </a>
       </Card>
@@ -107,8 +107,8 @@ export function ContentInfoRail({
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 text-xs">
-      <dt className="shrink-0 text-zinc-500">{label}</dt>
-      <dd className="text-right font-medium text-zinc-900">{value}</dd>
+      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="text-right font-medium text-foreground">{value}</dd>
     </div>
   );
 }
@@ -117,7 +117,7 @@ function MediaFacts({ assetsById }: { assetsById: Record<string, MediaAsset | un
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const setAssetDuration = usePublicationDraftStore((s) => s.setAssetDuration);
 
-  if (assetItems.length === 0) return <p className="text-sm text-zinc-400">ยังไม่ได้เลือกไฟล์</p>;
+  if (assetItems.length === 0) return <p className="text-sm text-muted-foreground">ยังไม่ได้เลือกไฟล์</p>;
 
   return (
     <div className="flex flex-col gap-4">
@@ -127,14 +127,14 @@ function MediaFacts({ assetsById }: { assetsById: Record<string, MediaAsset | un
         const isImage = isImageAsset(asset);
         const filename = asset.file?.original_filename ?? asset.title ?? asset.id;
         return (
-          <dl key={item.media_asset_id} className="flex flex-col gap-2 border-b border-zinc-100 pb-4 last:border-0 last:pb-0">
-            <p className="truncate text-sm font-medium text-zinc-900" title={filename}>{filename}</p>
+          <dl key={item.media_asset_id} className="flex flex-col gap-2 border-b border-border pb-4 last:border-0 last:pb-0">
+            <p className="truncate text-sm font-medium text-foreground" title={filename}>{filename}</p>
             <Row label="ประเภทไฟล์" value={asset.file?.mime_type?.split("/")[1]?.toUpperCase() ?? (isImage ? "IMAGE" : "VIDEO")} />
             <Row label="ขนาดไฟล์" value={formatBytes(asset.file?.file_size_bytes)} />
             <Row label="ความละเอียด" value={formatResolution(asset)} />
             {isImage ? (
               <div className="flex items-center justify-between gap-4 text-sm">
-                <span className="text-zinc-500">ระยะเวลา</span>
+                <span className="text-muted-foreground">ระยะเวลา</span>
                 <span className="flex items-center gap-1.5">
                   <input
                     type="number"
@@ -148,9 +148,9 @@ function MediaFacts({ assetsById }: { assetsById: Record<string, MediaAsset | un
                       setAssetDuration(item.media_asset_id, secs);
                     }}
                     aria-label={`Seconds on screen for ${filename}`}
-                    className="w-16 rounded-lg border border-zinc-200 px-2 py-1 text-sm text-zinc-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-16 rounded-lg border border-border px-2 py-1 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-xs text-zinc-400">วิ</span>
+                  <span className="text-xs text-muted-foreground">วิ</span>
                 </span>
               </div>
             ) : (
@@ -177,7 +177,7 @@ function PlaylistFacts({ preview, assetsById }: { preview: StagePreview; assetsB
       <Row label="ขนาดรวม" value={totals.sizeLabel} />
       <Row label="อัตราส่วนภาพ" value={preview.aspectRatio} />
       <Row label="สถานะ" value={<Badge color="green" variant="dot">พร้อมแสดงตัวอย่าง</Badge>} />
-      <p className="pt-1 text-xs text-zinc-400">
+      <p className="pt-1 text-xs text-muted-foreground">
         แต่ละไฟล์ใน Playlist อาจมีความละเอียดต่างกัน
         {totals.isPartial ? " · บางไฟล์อ่านขนาดไม่ได้ ตัวเลขจึงน้อยกว่าจริง" : ""}
       </p>
@@ -194,7 +194,7 @@ function CompositionFacts({ preview, assetsById }: { preview: StagePreview; asse
       <Row label="อัตราส่วนภาพ" value={preview.aspectRatio} />
       <Row label="Zones" value={String(zones.length)} />
       <Row label="สถานะ" value={<Badge color="green" variant="dot">พร้อมแสดงตัวอย่าง</Badge>} />
-      <div className="mt-1 flex flex-col gap-1.5 border-t border-zinc-100 pt-3">
+      <div className="mt-1 flex flex-col gap-1.5 border-t border-border pt-3">
         {zones.map((zone) => (
           <Row key={zone.id} label={zone.name} value={zone.seconds > 0 ? formatDuration(zone.seconds) : "ยังไม่มีสื่อ"} />
         ))}

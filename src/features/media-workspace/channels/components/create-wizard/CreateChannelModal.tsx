@@ -37,15 +37,15 @@ function WizardProgress({ step }: { step: Exclude<WizardStep, "success"> }) {
             <span
               className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-semibold ${
                 completed || current
-                  ? "border-indigo-500 bg-indigo-600 text-white"
-                  : "border-indigo-300 bg-white text-indigo-500"
+                  ? "border-primary bg-primary text-white"
+                  : "border-primary/30 bg-card text-primary"
               }`}
             >
               {completed ? "✓" : number}
             </span>
-            <span className={`ml-2 text-sm font-medium ${current ? "text-indigo-600" : "text-zinc-500"}`}>{label}</span>
+            <span className={`ml-2 text-sm font-medium ${current ? "text-primary" : "text-muted-foreground"}`}>{label}</span>
             {number < WIZARD_STEPS.length && (
-              <span className={`mx-3 h-px flex-1 ${number < step ? "bg-indigo-300" : "bg-zinc-200"}`} aria-hidden="true" />
+              <span className={`mx-3 h-px flex-1 ${number < step ? "bg-primary-soft" : "bg-muted"}`} aria-hidden="true" />
             )}
           </li>
         );
@@ -206,7 +206,7 @@ export function CreateChannelModal({
         />
       )}
       {submitError && (
-        <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {submitError}
         </p>
       )}

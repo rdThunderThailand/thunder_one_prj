@@ -35,7 +35,7 @@ export function filterTrashedPlaylists(
 
 /** Count by collection key ("all" | "uncategorized" | folderId), folders subtree-inclusive. */
 export function folderCounts(
-  playlists: PlaylistListItem[],
+  playlists: ReadonlyArray<{ folder_id?: string | null }>,
   folders: ContentFolder[]
 ): Record<string, number> {
   const direct = new Map<string, number>();

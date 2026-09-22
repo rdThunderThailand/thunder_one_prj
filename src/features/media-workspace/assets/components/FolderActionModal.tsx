@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/lovable/button";
 import { Modal } from "@/components/ui/Modal";
 import type { ContentFolder } from "@/types/domain";
 
@@ -29,7 +29,7 @@ export function FolderActionModal({
       title={action?.kind === "rename" ? "Rename Folder" : "Move Folder"}
       footer={
         <>
-          <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
           <Button disabled={disabled} onClick={onSubmit}>{busy ? "Saving…" : "Save"}</Button>
         </>
       }
@@ -41,7 +41,7 @@ export function FolderActionModal({
             autoFocus
             value={value}
             onChange={(event) => onValueChange(event.target.value)}
-            className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+            className="w-full rounded-lg border border-border px-3 py-2"
           />
         </label>
       ) : (
@@ -50,7 +50,7 @@ export function FolderActionModal({
           <select
             value={value}
             onChange={(event) => onValueChange(event.target.value)}
-            className="w-full rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+            className="w-full rounded-lg border border-border px-3 py-2"
           >
             <option value="">Root</option>
             {moveTargets.map((folder) => (

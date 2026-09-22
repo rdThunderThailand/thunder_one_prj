@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { buttonClasses } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Modal } from "@/components/ui/Modal";
+import { Plus } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { Pagination } from "@/components/ui/Pagination";
-import { StatTile } from "@/components/ui/StatTile";
+import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
+import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { LibraryShell } from "../../content-library/LibraryShell";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { duplicateLayout, fetchLayouts, setLayoutStatus } from "../services/layouts-api";
 import { copyName, filterLayouts, paginate, sortLayouts, summarize } from "../list-filtering";
@@ -19,8 +19,8 @@ import { readListState, writeListState, DEFAULT_STATE } from "../list-url-state"
 import type { ListFilters, Sort, SortKey } from "../list-filtering";
 import type { LayoutListItem } from "../types";
 import { LayoutsFilters } from "./LayoutsFilters";
-import { LayoutsTable, type RowAction } from "./LayoutsTable";
-import { ListEmpty, ListError, ListSkeleton, SummarySkeleton } from "./LayoutsListStates";
+import { LayoutsGrid, LayoutsTable, type RowAction } from "./LayoutsTable";
+import { LayoutsSummary, ListEmpty, ListError, ListSkeleton, SummarySkeleton } from "./LayoutsListStates";
 
 export function LayoutsListPage() {
   const router = useRouter();
@@ -38,6 +38,7 @@ export function LayoutsListPage() {
   const [perPage, setPerPage] = useState(initial.perPage);
   const [refreshing, setRefreshing] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<LayoutListItem | null>(null);
+  const [isGrid, setIsGrid] = useState(false);
 
   // Keeps the URL in sync with the view (push/replace decided by useListUrlState — a
   // search-typing run collapses into one history step) and restores filters/sort/page
@@ -151,120 +152,64 @@ export function LayoutsListPage() {
   const stats = layouts !== null ? summarize(layouts) : null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Templates"
         subtitle="Create and manage reusable Zone geometry for Layouts."
-        actions={
-          <Link href="/media-workspace/layouts/templates/create" className={buttonClasses("primary")}>
-            + New Template
-          </Link>
-        }
+        titleInTopbar
+        actions={<Link href="/media-workspace/layouts/templates/create" className={buttonVariants({ size: "sm" })}><Plus className="h-3.5 w-3.5" />New Template</Link>}
       />
 
-      {stats === null ? (
-        <SummarySkeleton />
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatTile label="Total Layouts" value={String(stats.total)} />
-          <StatTile label="Active" value={String(stats.active)} color="emerald" />
-          <StatTile label="Inactive" value={String(stats.inactive)} />
-        </div>
-      )}
+      {stats === null ? <SummarySkeleton count={3} /> : <LayoutsSummary stats={stats} />}
 
-      <Card className="flex h-[calc(100vh-345px)] min-h-[420px] flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-zinc-200 p-5 dark:border-zinc-800">
-          <LayoutsFilters
-            value={filters}
-            onClearAll={qs === "" ? undefined : handleClearAll}
-            onChange={(next) => {
-              setFilters(next);
-              setPage(1);
-            }}
-          />
-          {/* กำลังรีเฟรช… shown only during a background reload, not initial load */}
-          {refreshing && layouts !== null && (
-            <p className="text-right text-xs text-zinc-400">กำลังรีเฟรช…</p>
-          )}
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-auto p-5">
-          {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
-
-          {error && layouts !== null && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
-              <p className="text-sm text-red-500">{error.message}</p>
-            </div>
-          )}
-
-          {layouts === null && !error ? (
-            <ListSkeleton />
-          ) : layouts === null && error ? (
-            <ListError message={error.message} onRetry={reload} retrying={refreshing} />
-          ) : rows.length === 0 ? (
-            <ListEmpty
-              cause={layouts!.length === 0 ? "no-layouts" : "no-match"}
-              onClearFilters={handleClearAll}
-            />
-          ) : (
-            <LayoutsTable
-              rows={rows}
-              busyId={busyId}
-              sort={sort}
-              onAction={handleAction}
-              onSortChange={handleSortChange}
-            />
-          )}
-        </div>
-
-        {rows.length > 0 && (
-          <div className="shrink-0 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 [&>div]:mt-0">
-            <Pagination
-              page={currentPage}
-              totalPages={totalPages}
-              perPage={perPage}
-              totalItems={sorted.length}
-              rangeStart={(currentPage - 1) * perPage + 1}
-              rangeEnd={Math.min(currentPage * perPage, sorted.length)}
-              itemLabel="layouts"
-              onPageChange={setPage}
-              onPerPageChange={(next) => {
-                setPerPage(next);
-                setPage(1);
-              }}
-            />
-          </div>
-        )}
-      </Card>
-
-      <Modal
-        open={archiveTarget !== null}
-        onClose={() => setArchiveTarget(null)}
-        title="Archive Layout"
-        footer={
+      <LibraryShell
+        toolbar={
           <>
-            <button
-              type="button"
-              onClick={() => setArchiveTarget(null)}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              ยกเลิก
-            </button>
-            <button
-              type="button"
-              onClick={confirmArchive}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
-            >
-              Archive
-            </button>
+            <LayoutsFilters value={filters} isGrid={isGrid} onViewChange={setIsGrid} onClearAll={qs === "" ? undefined : handleClearAll} onChange={(next) => { setFilters(next); setPage(1); }} />
+            {refreshing && layouts !== null && <span className="ml-auto text-[10px] text-muted-foreground">กำลังรีเฟรช…</span>}
           </>
         }
+        title="All Templates"
+        meta={layouts === null ? "…" : `${sorted.length.toLocaleString()} templates`}
+        footer={rows.length > 0 && (
+          <LibraryPagination page={currentPage} totalPages={totalPages} total={sorted.length} pageSize={perPage} onPage={setPage} itemLabel="templates" perPageOptions={[10, 25, 50]} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
+        )}
       >
-        <p>
-          Archive Layout &ldquo;{archiveTarget?.name}&rdquo;? Layout จะถูกตั้งเป็น Inactive และกู้คืนได้ทีหลัง
-          ไม่มีการลบข้อมูล
-        </p>
-      </Modal>
+        {actionError && <p className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {error && layouts !== null && (
+          <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-3">
+            <p className="text-[10px] text-danger">{error.message}</p>
+          </div>
+        )}
+        {layouts === null && !error ? (
+          <ListSkeleton />
+        ) : layouts === null && error ? (
+          <ListError message={error.message} onRetry={reload} retrying={refreshing} />
+        ) : rows.length === 0 ? (
+          <ListEmpty cause={layouts!.length === 0 ? "no-layouts" : "no-match"} onClearFilters={handleClearAll} />
+        ) : isGrid ? (
+          <LayoutsGrid rows={rows} busyId={busyId} onAction={handleAction} />
+        ) : (
+          <LayoutsTable rows={rows} busyId={busyId} sort={sort} onAction={handleAction} onSortChange={handleSortChange} />
+        )}
+      </LibraryShell>
+
+      <AlertDialog open={archiveTarget !== null} onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive Layout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Archive Layout &ldquo;{archiveTarget?.name}&rdquo;? Layout จะถูกตั้งเป็น Inactive และกู้คืนได้ทีหลัง ไม่มีการลบข้อมูล
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button className="bg-danger hover:bg-danger" onClick={confirmArchive}>Archive</Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

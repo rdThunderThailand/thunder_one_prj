@@ -51,7 +51,7 @@ export function MiniCalendar({
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold text-zinc-900">
+        <p className="text-sm font-semibold text-foreground">
           {MONTH_LABELS[viewMonth]} {viewYear}
         </p>
         <div className="flex items-center gap-1">
@@ -59,7 +59,7 @@ export function MiniCalendar({
             type="button"
             onClick={goPrevMonth}
             aria-label="Previous month"
-            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
@@ -67,7 +67,7 @@ export function MiniCalendar({
             type="button"
             onClick={goNextMonth}
             aria-label="Next month"
-            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <ChevronRightIcon className="h-4 w-4" />
           </button>
@@ -75,7 +75,7 @@ export function MiniCalendar({
       </div>
       <div className="grid grid-cols-7 gap-y-1 text-center">
         {WEEKDAY_LABELS.map((d) => (
-          <span key={d} className="text-xs font-medium text-zinc-400">
+          <span key={d} className="text-xs font-medium text-muted-foreground">
             {d}
           </span>
         ))}
@@ -84,15 +84,15 @@ export function MiniCalendar({
             return <div key={`pad-${i}`} className="h-8 w-8" />;
           }
 
-          let style = "text-zinc-700 hover:bg-zinc-100";
+          let style = "text-muted-foreground hover:bg-muted";
           if (!cell.inMonth) {
-            style = "text-zinc-300";
+            style = "text-muted-foreground";
           } else if (cell.isOverlap) {
-            style = "bg-indigo-50 font-medium text-indigo-600 ring-2 ring-amber-400";
+            style = "bg-primary-soft font-medium text-primary ring-2 ring-warning";
           } else if (cell.isActive) {
-            style = "bg-indigo-50 font-medium text-indigo-600";
+            style = "bg-primary-soft font-medium text-primary";
           } else if (cell.isToday) {
-            style = "ring-1 ring-zinc-300 text-zinc-700 hover:bg-zinc-100";
+            style = "ring-1 ring-ring text-muted-foreground hover:bg-muted";
           }
 
           const isClickable = Boolean(onSelectDate && cell.ymd !== "");
@@ -116,15 +116,15 @@ export function MiniCalendar({
           );
         })}
       </div>
-      <div className="mt-3 flex items-center justify-center gap-4 text-[11px] text-zinc-400">
+      <div className="mt-3 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-indigo-500" /> Active
+          <span className="h-2 w-2 rounded-full bg-primary" /> Active
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-amber-400" /> Conflict
+          <span className="h-2 w-2 rounded-full bg-primary ring-2 ring-warning" /> Conflict
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full ring-1 ring-zinc-400" /> Today
+          <span className="h-2 w-2 rounded-full ring-1 ring-ring" /> Today
         </span>
       </div>
     </div>

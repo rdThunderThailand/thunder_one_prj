@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Archive, FileAudio, FileImage, FileText, FileVideo, Folder, FolderInput, Trash2, Undo2, Upload } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button, buttonClasses } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { ImageIcon, UploadIcon, VideoIcon } from "@/components/ui/icons";
+import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import {
   fetchContentFolders,
   fetchMediaAssets,
@@ -16,63 +16,30 @@ import {
   trashMediaAsset,
 } from "@/lib/api/media-api";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { cn } from "@/lib/utils";
 import { FeatureFolderRail } from "../content-library/FeatureFolderRail";
 import { TagsRail } from "../content-library/TagsRail";
 import { filterByTag, tagCounts } from "../content-library/tag-filtering";
+import { folderCounts } from "../playlists/folder-filtering";
 import type { FolderCollection } from "../content-library/ContentFolderRail";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
 import { AssetCard } from "./components/AssetCard";
-import { AssetTable } from "./components/AssetTable";
-import { LibraryToolbar } from "./components/LibraryToolbar";
+import { LibraryEmpty, LibraryGridSkeleton, LibraryPagination, LibrarySummary, LibrarySummarySkeleton } from "../content-library/LibraryChrome";
+import { LibrarySelectionBar, LibraryShell } from "../content-library/LibraryShell";
+import { LibraryToolbar, type AssetKindFilter } from "./components/LibraryToolbar";
 
 type Collection = FolderCollection;
 const PAGE_SIZE = 12;
-const railTabClass = (active: boolean) =>
-  `rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide ${active ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"}`;
-
-function StatTilesSkeleton() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-hidden="true">
-      {Array.from({ length: 5 }, (_, i) => (
-        <Card key={i} className="flex items-center gap-3 p-4">
-          <Skeleton className="h-10 w-10 rounded-xl" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-7 w-10" />
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function AssetListSkeleton({ isGrid }: { isGrid: boolean }) {
-  if (!isGrid) {
-    return (
-      <div className="space-y-3" aria-hidden="true">
-        {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-24 w-full" />)}
-      </div>
-    );
-  }
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-hidden="true">
-      {Array.from({ length: 12 }, (_, i) => (
-        <Card key={i} className="overflow-hidden">
-          <Skeleton className="h-36 w-full rounded-none" />
-          <div className="space-y-2 p-3">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-7 w-full" />
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
+const EMPTY_COPY = {
+  library: ["No media yet", "Upload media to start building your library."],
+  folder: ["This folder is empty", "Choose another folder or move media here."],
+  trash: ["Trash is empty", "Items you move to Trash will appear here."],
+  search: ["No media found", "Try adjusting your search or filters."],
+} as const;
 
 export function MediaLibraryPage() {
   const [collection, setCollection] = useState<Collection>("all");
-  const [kind, setKind] = useState<"" | "image" | "video">("");
+  const [kind, setKind] = useState<AssetKindFilter>("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
@@ -80,13 +47,18 @@ export function MediaLibraryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGrid, setIsGrid] = useState(true);
-  const [railTab, setRailTab] = useState<"folders" | "tags">("folders");
   const [tagId, setTagId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
+  const [pendingBatch, setPendingBatch] = useState<{ mode: "trash" | "delete"; ids: string[] } | null>(null);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  // Summary cards describe the library, not the Trash — keep the last non-trash fetch.
+  const [libraryAssets, setLibraryAssets] = useState<MediaAsset[]>([]);
 
   const folderId = collection !== "all" && collection !== "uncategorized" && collection !== "trash" ? collection : undefined;
+  const isTrash = collection === "trash";
   const tags = useMemo(() => tagCounts(assets), [assets]);
+  const counts = useMemo(() => folderCounts(assets, folders), [assets, folders]);
   const filteredAssets = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     let result = assets.filter((asset) => {
@@ -104,10 +76,7 @@ export function MediaLibraryPage() {
   const visibleAssets = filteredAssets.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   // One signing call for every card on the page, not one per card (ADR 0067).
-  const previewIds = useMemo(
-    () => [...new Set(visibleAssets.map((asset) => asset.id))],
-    [visibleAssets]
-  );
+  const previewIds = useMemo(() => [...new Set(visibleAssets.map((asset) => asset.id))], [visibleAssets]);
   const previews = usePreviewUrls(previewIds);
 
   const refresh = useCallback(async () => {
@@ -120,6 +89,7 @@ export function MediaLibraryPage() {
       ]);
       setAssets(nextAssets);
       setFolders(nextFolders);
+      if (collection !== "trash") setLibraryAssets(nextAssets);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to load Media Library");
     } finally {
@@ -135,11 +105,10 @@ export function MediaLibraryPage() {
   const selectCollection = (next: Collection) => { setCollection(next); setTagId(null); setSelectedIds(new Set()); setPage(1); };
   const selectTag = (next: string | null) => { setTagId(next); setCollection("all"); setPage(1); };
   const handleSearch = (value: string) => { setSearch(value); setPage(1); };
-  const handleKind = (value: "" | "image" | "video") => { setKind(value); setPage(1); };
+  const handleKind = (value: AssetKindFilter) => { setKind(value); setPage(1); };
+  const toggleSelected = (id: string, checked: boolean) => setSelectedIds((current) => { const next = new Set(current); if (checked) next.add(id); else next.delete(id); return next; });
   const runBatch = async (mode: "trash" | "restore" | "delete", ids: string[]) => {
     if (!ids.length) return;
-    const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
-    if (!window.confirm(`${verb} ${ids.length} media item${ids.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
     setBatchBusy(true);
     const action = mode === "trash" ? trashMediaAsset : mode === "restore" ? restoreMediaAsset : permanentlyDeleteMediaAsset;
     const results = await Promise.allSettled(ids.map(action));
@@ -149,112 +118,145 @@ export function MediaLibraryPage() {
     await refresh();
     setBatchBusy(false);
   };
+  const moveSelected = async (targetFolderId: string | null) => {
+    setBatchBusy(true);
+    const results = await Promise.allSettled([...selectedIds].map((id) => moveMediaAsset(id, targetFolderId)));
+    const failed = results.filter((result) => result.status === "rejected").length;
+    setSelectedIds(new Set());
+    setError(failed ? `${failed} media item${failed === 1 ? "" : "s"} could not be moved.` : null);
+    await refresh();
+    setBatchBusy(false);
+  };
 
-  const statTiles = [
-    { label: "Total files", value: assets.length, icon: "◫" },
-    { label: "Images", value: assets.filter((asset) => asset.kind === "image").length, icon: <ImageIcon /> },
-    { label: "Videos", value: assets.filter((asset) => asset.kind === "video").length, icon: <VideoIcon /> },
-    { label: "Audio", value: "—", icon: "♪", disabled: true },
-    { label: "Documents", value: "—", icon: "▤", disabled: true },
-  ];
+  const collectionName = isTrash ? "Trash" : folderId ? folders.find((folder) => folder.id === folderId)?.name ?? "Folder" : collection === "uncategorized" ? "Uncategorized" : "All Media";
+  const emptyType = search || kind || tagId ? "search" : isTrash ? "trash" : folderId || collection === "uncategorized" ? "folder" : "library";
+  // Only the aside instance is controlled by the header button (see LibraryRail.folders).
+  const folderRail = (inAside: boolean) => (
+    <FeatureFolderRail
+      scope="asset"
+      folders={folders}
+      selected={collection}
+      labels={{ all: "All Media", uncategorized: "Uncategorized", trash: "Trash" }}
+      counts={isTrash ? undefined : counts}
+      createOpen={inAside ? createFolderOpen : undefined}
+      onCreateOpenChange={inAside ? setCreateFolderOpen : undefined}
+      onSelect={selectCollection}
+      onRefresh={() => void refresh()}
+      onError={(reason) => setError(reason instanceof Error ? reason.message : "Unable to update folder")}
+      deleteFolderItems={{
+        loadIds: async (targetFolderId) => (await fetchMediaAssets({ folderId: targetFolderId })).map((asset) => asset.id),
+        move: moveMediaAsset,
+      }}
+      isLoading={loading && folders.length === 0}
+    />
+  );
+  const stats = { total: libraryAssets.length, images: libraryAssets.filter((asset) => asset.kind === "image").length, videos: libraryAssets.filter((asset) => asset.kind === "video").length };
+  const pct = (n: number) => (stats.total ? `${((n / stats.total) * 100).toFixed(1)}% of total` : "—");
 
   return (
-    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Media Library"
-        subtitle="Manage and organize your media assets."
-        actions={<Link href="/media-workspace/assets/upload" className={buttonClasses()}><UploadIcon /> Upload</Link>}
+        subtitle="Manage and organize all your media assets."
+        titleInTopbar
+        actions={
+          <>
+            <Button variant="outline" size="sm" className="hidden xl:inline-flex" onClick={() => setCreateFolderOpen(true)}><Folder className="h-3.5 w-3" />Create Folder</Button>
+            <Link href="/media-workspace/assets/upload" className={buttonVariants({ size: "sm" })}><Upload className="h-3.5 w-3" />Upload</Link>
+          </>
+        }
       />
 
-      {loading && assets.length === 0 ? (
-        <StatTilesSkeleton />
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {statTiles.map((tile) => (
-            <Card key={tile.label} className={`flex items-center gap-3 p-4 ${tile.disabled ? "opacity-55" : ""}`}>
-              <span className="rounded-xl bg-indigo-50 p-3 text-indigo-600 dark:bg-indigo-500/15">{tile.icon}</span>
-              <div>
-                <p className="text-xs text-zinc-500">{tile.label}</p>
-                <p className="text-2xl font-semibold">{tile.value}</p>
-                {tile.disabled && <p className="text-[10px] text-zinc-400">Coming soon</p>}
-              </div>
-            </Card>
-          ))}
-        </div>
+      {loading && assets.length === 0 ? <LibrarySummarySkeleton count={5} /> : (
+        <LibrarySummary
+          label="Media summary"
+          cards={[
+            { label: "Total Files", value: stats.total, detail: "All media", icon: Archive },
+            { label: "Images", value: stats.images, detail: pct(stats.images), icon: FileImage },
+            { label: "Videos", value: stats.videos, detail: pct(stats.videos), icon: FileVideo },
+            { label: "Audio", value: "—", detail: "Coming soon", icon: FileAudio, tone: "text-success bg-success-soft", disabled: true },
+            { label: "Documents", value: "—", detail: "Coming soon", icon: FileText, tone: "text-warning bg-warning-soft", disabled: true },
+          ]}
+        />
       )}
 
-      <Card className="flex min-h-[420px] flex-1 flex-col overflow-hidden">
-        <div className="grid min-h-0 flex-1 md:grid-cols-[210px_minmax(0,1fr)]">
-          <aside className="flex min-h-0 flex-col border-b border-zinc-200 p-3 dark:border-zinc-800 md:border-b-0 md:border-r">
-            <div className="mb-2 flex shrink-0 gap-1 px-1">
-              <button type="button" className={railTabClass(railTab === "folders")} onClick={() => setRailTab("folders")}>Folders</button>
-              <button type="button" className={railTabClass(railTab === "tags")} onClick={() => setRailTab("tags")}>Tags</button>
-            </div>
-            {railTab === "folders" ? <FeatureFolderRail
-              scope="asset"
-              folders={folders}
-              selected={collection}
-              labels={{ all: "All Media", uncategorized: "Uncategorized", trash: "Trash" }}
-              onSelect={selectCollection}
-              onRefresh={() => void refresh()}
-              onError={(reason) => setError(reason instanceof Error ? reason.message : "Unable to update folder")}
-              deleteFolderItems={{
-                loadIds: async (targetFolderId) => (await fetchMediaAssets({ folderId: targetFolderId })).map((asset) => asset.id),
-                move: moveMediaAsset,
-              }}
-              isLoading={loading && folders.length === 0}
-            /> : <TagsRail tags={tags} selected={tagId} onSelect={selectTag} />}
-          </aside>
-
-          <main className="flex min-h-0 flex-col p-5">
-            <LibraryToolbar search={search} onSearch={handleSearch} kind={kind} onKind={handleKind} isGrid={isGrid} onIsGrid={setIsGrid} />
-            <div className="mb-4 flex shrink-0 items-baseline justify-between">
-              <div>
-                <h2 className="font-semibold">{collection === "trash" ? "Trash" : "All Media"}</h2>
-                {loading && assets.length === 0 ? (
-                  <Skeleton className="mt-2 h-4 w-16" />
-                ) : (
-                  <p className="text-sm text-zinc-500">{filteredAssets.length.toLocaleString()} items</p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {collection === "trash" ? <>
-                  <Button variant="secondary" disabled={batchBusy || assets.length === 0} onClick={() => void runBatch("restore", assets.map((asset) => asset.id))}>Recover All</Button>
-                  <Button disabled={batchBusy || assets.length === 0} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", assets.map((asset) => asset.id))}>Delete All</Button>
-                </> : selectedIds.size > 0 ? <Button disabled={batchBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("trash", [...selectedIds])}>Move {selectedIds.size} to Trash</Button> : null}
-                {collection === "trash" && selectedIds.size > 0 && <><Button variant="secondary" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}>Recover Selected</Button><Button disabled={batchBusy} className="bg-red-600 hover:bg-red-500" onClick={() => void runBatch("delete", [...selectedIds])}>Delete Selected</Button></>}
-              </div>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-              {error ? (
-                <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
-              ) : loading && assets.length === 0 ? (
-                <AssetListSkeleton isGrid={isGrid} />
-              ) : visibleAssets.length === 0 ? (
-                <p className="py-20 text-center text-sm text-zinc-500">No media found.</p>
-              ) : isGrid ? (
-                <div className={isGrid ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-4" : "space-y-3"}>
-                  {visibleAssets.map((asset) => (
-                    <AssetCard key={asset.id} asset={asset} trash={collection === "trash"} folders={folders} onRefresh={() => void refresh()} previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} />
-                  ))}
-                </div>
-              ) : (
-                <AssetTable assets={visibleAssets} trash={collection === "trash"} folders={folders} onRefresh={() => void refresh()} previewUrls={previews.urls} thumbnailUrls={previews.thumbnailUrls} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
-              )}
-            </div>
-
-          </main>
-        </div>
-        <div className="flex shrink-0 items-center justify-between border-t border-zinc-200 px-5 py-4 text-sm dark:border-zinc-800">
-          <span>Page {currentPage} of {totalPages}</span>
-          <div className="flex gap-2">
-            <Button variant="secondary" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</Button>
-            <Button variant="secondary" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Next</Button>
+      <LibraryShell
+        toolbar={<LibraryToolbar search={search} onSearch={handleSearch} kind={kind} onKind={handleKind} isGrid={isGrid} onIsGrid={setIsGrid} />}
+        selection={selectedIds.size > 0 && (
+          <LibrarySelectionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+            {isTrash ? (
+              <>
+                <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Restore</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "delete", ids: [...selectedIds] })}><Trash2 className="h-3.5 w-3.5" />Delete Permanently</Button>
+              </>
+            ) : (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={batchBusy}><FolderInput className="h-3.5 w-3.5" />Move to Folder</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="max-h-64 w-44 overflow-y-auto">
+                    <DropdownMenuItem onSelect={() => void moveSelected(null)}>Uncategorized</DropdownMenuItem>
+                    {folders.map((folder) => <DropdownMenuItem key={folder.id} onSelect={() => void moveSelected(folder.id)}>{folder.name}</DropdownMenuItem>)}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "trash", ids: [...selectedIds] })}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
+              </>
+            )}
+          </LibrarySelectionBar>
+        )}
+        rail={{ folders: folderRail, tags: <TagsRail tags={tags} selected={tagId} onSelect={selectTag} /> }}
+        title={collectionName}
+        meta={loading && assets.length === 0 ? "…" : `${filteredAssets.length.toLocaleString()} items`}
+        headerActions={isTrash && assets.length > 0 && (
+          <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "delete", ids: assets.map((asset) => asset.id) })}>
+            <Trash2 className="h-3.5 w-3.5" />
+            Empty Trash
+          </Button>
+        )}
+        footer={<LibraryPagination page={currentPage} totalPages={totalPages} total={filteredAssets.length} pageSize={PAGE_SIZE} onPage={setPage} />}
+      >
+        {error ? (
+          <p className="rounded-lg bg-danger-soft p-3 text-sm text-danger">{error}</p>
+        ) : loading && assets.length === 0 ? (
+          <LibraryGridSkeleton />
+        ) : visibleAssets.length === 0 ? (
+          <LibraryEmpty title={EMPTY_COPY[emptyType][0]} hint={EMPTY_COPY[emptyType][1]} />
+        ) : (
+          <div className={cn("grid gap-3", isGrid ? "sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1")}>
+            {visibleAssets.map((asset) => (
+              <AssetCard key={asset.id} asset={asset} trash={isTrash} folders={folders} onRefresh={() => void refresh()} previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} selected={selectedIds.has(asset.id)} onSelect={(checked) => toggleSelected(asset.id, checked)} view={isGrid ? "grid" : "list"} />
+            ))}
           </div>
-        </div>
-      </Card>
+        )}
+      </LibraryShell>
 
+      <AlertDialog open={pendingBatch !== null} onOpenChange={(open) => { if (!open) setPendingBatch(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{pendingBatch?.mode === "delete" ? "Delete permanently?" : "Move to Trash?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingBatch?.mode === "delete"
+                ? `${pendingBatch.ids.length} item(s) will be permanently deleted. This cannot be undone.`
+                : `${pendingBatch?.ids.length ?? 0} item(s) will be moved to Trash.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={pendingBatch?.mode === "delete" ? "bg-danger hover:bg-danger" : undefined}
+              onClick={() => {
+                if (!pendingBatch) return;
+                const { mode, ids } = pendingBatch;
+                setPendingBatch(null);
+                void runBatch(mode, ids);
+              }}
+            >
+              {pendingBatch?.mode === "delete" ? "Delete Permanently" : "Move to Trash"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

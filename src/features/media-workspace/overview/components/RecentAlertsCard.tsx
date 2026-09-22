@@ -16,7 +16,7 @@ export function RecentAlertsCard({ channels, loadFailed }: { channels: ChannelLi
           <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
-      {loadFailed ? <p className="py-8 text-center text-xs text-red-500">Could not load channel health</p> : channels === null ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-9 w-full" />)}</div> : attention.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center"><CheckCircle2 className="h-6 w-6 text-emerald-500" /><p className="text-xs font-medium text-foreground">All devices are healthy</p></div> : (
+      {loadFailed ? <p className="py-8 text-center text-xs text-danger">Could not load channel health</p> : channels === null ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-9 w-full" />)}</div> : attention.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center"><CheckCircle2 className="h-6 w-6 text-success" /><p className="text-xs font-medium text-foreground">All devices are healthy</p></div> : (
         <ul className="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-hidden">
           {attention.map(({ channel, device }) => {
             const isOffline = device.health === "offline";

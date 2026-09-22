@@ -33,11 +33,11 @@ export function AssetCard(props: AssetCardProps) {
         title={disabled ? "ประเภทเนื้อหานี้ไม่ตรงกับประเภทของ Publication นี้" : undefined}
         className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition-colors ${
           selected
-            ? "border-indigo-500 ring-2 ring-indigo-500/30"
-            : "border-zinc-200 hover:border-zinc-300"
+            ? "border-primary ring-2 ring-primary"
+            : "border-border hover:border-border"
         } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
-        <div className={`relative w-full overflow-hidden bg-zinc-100 flex items-center justify-center ${aspect === "video" ? "aspect-video" : "aspect-square"}`}>
+        <div className={`relative w-full overflow-hidden bg-muted flex items-center justify-center ${aspect === "video" ? "aspect-video" : "aspect-square"}`}>
           {thumbnailUrl ? (
             // Captured poster (ADR 0016) — skips the video decode entirely.
             <Image
@@ -66,25 +66,25 @@ export function AssetCard(props: AssetCardProps) {
               />
             )
           ) : (
-            <ListIcon className="h-6 w-6 text-zinc-300" />
+            <ListIcon className="h-6 w-6 text-muted-foreground" />
           )}
           <span
             className={`absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
               selected
-                ? "border-indigo-500 bg-indigo-500 text-white"
-                : "border-white/80 bg-white/20"
+                ? "border-primary bg-primary text-white"
+                : "border-white/80 bg-card/20"
             }`}
           >
             {selected && <CheckIcon className="h-3 w-3" />}
           </span>
         </div>
         <div className="flex flex-col gap-1 p-2">
-          <p className="truncate text-xs font-medium text-zinc-900">{playlist.name}</p>
-          <p className="text-[11px] text-zinc-400">
+          <p className="truncate text-xs font-medium text-foreground">{playlist.name}</p>
+          <p className="text-[11px] text-muted-foreground">
             {playlist.item_count} items
             {playlist.created_at ? ` · ${new Date(playlist.created_at).toLocaleDateString()}` : ""}
           </p>
-          <span className="inline-flex w-fit items-center rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">
+          <span className="inline-flex w-fit items-center rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-medium text-primary">
             Playlist
           </span>
         </div>
@@ -111,11 +111,11 @@ export function AssetCard(props: AssetCardProps) {
       title={disabled ? "ชนิดไฟล์ไม่ตรงกับประเภทของ Publication นี้" : undefined}
       className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition-colors ${
         selected
-          ? "border-indigo-500 ring-2 ring-indigo-500/30"
-          : "border-zinc-200 hover:border-zinc-300"
+          ? "border-primary ring-2 ring-primary"
+          : "border-border hover:border-border"
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
     >
-      <div className={`relative w-full overflow-hidden bg-zinc-100 flex items-center justify-center ${aspect === "video" ? "aspect-video" : "aspect-square"}`}>
+      <div className={`relative w-full overflow-hidden bg-muted flex items-center justify-center ${aspect === "video" ? "aspect-video" : "aspect-square"}`}>
         {isVideo && thumbnailUrl ? (
           // Captured poster (ADR 0016) — skips the video decode entirely. Videos
           // uploaded before capture existed have no thumbnail yet and fall through
@@ -144,7 +144,7 @@ export function AssetCard(props: AssetCardProps) {
           )
         ) : null}
         {isVideo && (
-          <span className="absolute flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-zinc-900">
+          <span className="absolute flex h-9 w-9 items-center justify-center rounded-full bg-card/90 text-foreground">
             <PlayIcon className="h-4 w-4" />
           </span>
         )}
@@ -156,16 +156,16 @@ export function AssetCard(props: AssetCardProps) {
         <span
           className={`absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
             selected
-              ? "border-indigo-500 bg-indigo-500 text-white"
-              : "border-white/80 bg-white/20"
+              ? "border-primary bg-primary text-white"
+              : "border-white/80 bg-card/20"
           }`}
         >
           {selected && <CheckIcon className="h-3 w-3" />}
         </span>
       </div>
       <div className="flex flex-col gap-1 p-2">
-        <p className="truncate text-xs font-medium text-zinc-900">{filename}</p>
-        <p className="text-[11px] text-zinc-400">
+        <p className="truncate text-xs font-medium text-foreground">{filename}</p>
+        <p className="text-[11px] text-muted-foreground">
           {kindLabel} · {dimensions}
           {durationLabel ? ` · ${durationLabel}` : ""}
         </p>

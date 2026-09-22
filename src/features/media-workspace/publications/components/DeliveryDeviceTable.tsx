@@ -92,14 +92,14 @@ export function DeliveryDeviceTable({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="flex min-w-[200px] flex-1 items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <SearchIcon className="h-4 w-4 shrink-0 text-zinc-400" />
+        <div className="flex min-w-[200px] flex-1 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-sm">
+          <SearchIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="ค้นหา device..."
-            className="w-full bg-transparent text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+            className="w-full bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
         <div className="flex gap-1">
@@ -110,8 +110,8 @@ export function DeliveryDeviceTable({
               onClick={() => setResultFilter(f)}
               className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                 resultFilter === f
-                  ? "bg-indigo-600 text-white"
-                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                  ? "bg-primary text-white"
+                  : "bg-muted text-muted-foreground hover:bg-border/60"
               }`}
             >
               {f === "all" ? "All" : RESULT_LABEL[f]}
@@ -120,12 +120,12 @@ export function DeliveryDeviceTable({
         </div>
       </div>
 
-      {retryError && <p className="mb-2 text-xs text-red-600 dark:text-red-400">{retryError}</p>}
+      {retryError && <p className="mb-2 text-xs text-danger">{retryError}</p>}
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-zinc-100 text-xs font-medium text-zinc-400 dark:border-zinc-800">
+            <tr className="border-b border-border text-xs font-medium text-muted-foreground">
               <th className="py-2 pr-3">Device</th>
               <th className="py-2 pr-3">Delivery</th>
               <th className="py-2 pr-3">Playback</th>
@@ -140,25 +140,25 @@ export function DeliveryDeviceTable({
               return (
                 <Fragment key={target.device_id}>
                   <tr
-                    className="cursor-pointer border-t border-zinc-100 dark:border-zinc-800"
+                    className="cursor-pointer border-t border-border"
                     onClick={() => setExpandedId(isExpanded ? null : target.device_id)}
                   >
-                    <td className="py-2.5 pr-3 font-medium text-zinc-900 dark:text-zinc-100">
+                    <td className="py-2.5 pr-3 font-medium text-foreground">
                       {target.device_name ?? target.device_id}
                       {target.via_groups && target.via_groups.length > 0 && (
-                        <p className="mt-0.5 text-[11px] font-normal text-zinc-400">
+                        <p className="mt-0.5 text-[11px] font-normal text-muted-foreground">
                           via {target.via_groups.join(", ")}
                         </p>
                       )}
                     </td>
-                    <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">{progress.stage2}</td>
-                    <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">{progress.stage3}</td>
+                    <td className="py-2.5 pr-3 text-muted-foreground">{progress.stage2}</td>
+                    <td className="py-2.5 pr-3 text-muted-foreground">{progress.stage3}</td>
                     <td className="py-2.5 pr-3">
                       <Badge color={RESULT_BADGE[progress.result]} variant="pill">
                         {RESULT_LABEL[progress.result]}
                       </Badge>
                     </td>
-                    <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="py-2.5 pr-3 text-muted-foreground">
                       {formatDate(target.updated_at)}
                     </td>
                     <td className="py-2.5 text-right">
@@ -177,36 +177,36 @@ export function DeliveryDeviceTable({
                     </td>
                   </tr>
                   {isExpanded && (
-                    <tr className="border-t border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-                      <td colSpan={6} className="px-3 py-3 text-xs text-zinc-600 dark:text-zinc-400">
+                    <tr className="border-t border-border bg-muted">
+                      <td colSpan={6} className="px-3 py-3 text-xs text-muted-foreground">
                         <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                           <div>
-                            <dt className="text-zinc-400">Error</dt>
-                            <dd className="text-red-600 dark:text-red-400">{target.error_message ?? "—"}</dd>
+                            <dt className="text-muted-foreground">Error</dt>
+                            <dd className="text-danger">{target.error_message ?? "—"}</dd>
                           </div>
                           <div>
-                            <dt className="text-zinc-400">Last Heartbeat</dt>
+                            <dt className="text-muted-foreground">Last Heartbeat</dt>
                             <dd>{formatDate(target.last_heartbeat_at)}</dd>
                           </div>
                           <div>
-                            <dt className="text-zinc-400">Retry Count</dt>
+                            <dt className="text-muted-foreground">Retry Count</dt>
                             <dd>{target.retry_count ?? 0}</dd>
                           </div>
                           <div>
-                            <dt className="text-zinc-400">Last Retried</dt>
+                            <dt className="text-muted-foreground">Last Retried</dt>
                             <dd>{formatDate(target.last_retried_at)}</dd>
                           </div>
                         </dl>
                         {target.file_statuses && Object.keys(target.file_statuses).length > 0 && (
                           <div className="mt-2">
-                            <span className="text-zinc-400">Files</span>
+                            <span className="text-muted-foreground">Files</span>
                             <ul className="mt-1 flex flex-col gap-2">
                               {Object.entries(target.file_statuses).map(([assetId, entry]) => (
-                                <li key={assetId} className="rounded border border-zinc-200 p-2 dark:border-zinc-700">
-                                  <div className="font-medium text-zinc-800 dark:text-zinc-200">
+                                <li key={assetId} className="rounded border border-border p-2">
+                                  <div className="font-medium text-foreground">
                                     Local filename: {entry.file_name ?? "—"}
                                   </div>
-                                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-zinc-500">
+                                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground">
                                     <span>Asset: {assetId}</span>
                                     <span>Status: {entry.status}</span>
                                     <span>Actual bytes on disk: {formatBytes(entry.file_size)}</span>
@@ -221,8 +221,8 @@ export function DeliveryDeviceTable({
                                     <span>Device reported: {formatDate(entry.reported_at)}</span>
                                     <span>Server received: {formatDate(entry.acked_at)}</span>
                                   </div>
-                                  {entry.checksum && <div className="mt-1 break-all text-zinc-400">Checksum: {entry.checksum}</div>}
-                                  {entry.error && <div className="mt-1 text-red-600 dark:text-red-400">{entry.error}</div>}
+                                  {entry.checksum && <div className="mt-1 break-all text-muted-foreground">Checksum: {entry.checksum}</div>}
+                                  {entry.error && <div className="mt-1 text-danger">{entry.error}</div>}
                                 </li>
                               ))}
                             </ul>
@@ -237,7 +237,7 @@ export function DeliveryDeviceTable({
           </tbody>
         </table>
         {rows.length === 0 && (
-          <p className="py-4 text-center text-sm text-zinc-400">ไม่พบ device ที่ตรงกับตัวกรอง</p>
+          <p className="py-4 text-center text-sm text-muted-foreground">ไม่พบ device ที่ตรงกับตัวกรอง</p>
         )}
       </div>
     </div>

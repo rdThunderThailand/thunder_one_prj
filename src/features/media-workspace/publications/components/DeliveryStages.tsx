@@ -12,7 +12,7 @@ export type DeliveryStage = {
 function StageNode({ state, index }: { state: StageState; index: number }) {
   if (state === "complete") {
     return (
-      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success text-white">
         <CheckIcon className="h-4 w-4" />
       </span>
     );
@@ -20,15 +20,15 @@ function StageNode({ state, index }: { state: StageState; index: number }) {
 
   if (state === "active") {
     return (
-      <span className="relative flex h-7 w-7 items-center justify-center rounded-full border-2 border-indigo-500 bg-white dark:bg-zinc-900">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-60" />
-        <span className="relative h-2 w-2 rounded-full bg-indigo-500" />
+      <span className="relative flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-card">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-soft opacity-60" />
+        <span className="relative h-2 w-2 rounded-full bg-primary" />
       </span>
     );
   }
 
   return (
-    <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-zinc-200 bg-white text-xs font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900">
+    <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-border bg-card text-xs font-medium text-muted-foreground">
       {index + 1}
     </span>
   );
@@ -47,8 +47,8 @@ export function DeliveryStages({ stages }: { stages: DeliveryStage[] }) {
               aria-hidden
               className={`relative mt-3.5 h-0.5 flex-1 overflow-hidden rounded-full ${
                 stages[i - 1].state === "complete"
-                  ? "bg-emerald-500"
-                  : "bg-zinc-200 dark:bg-zinc-700"
+                  ? "bg-success"
+                  : "bg-muted"
               } ${stage.state === "active" ? "stage-flow" : ""}`}
             />
           )}
@@ -60,13 +60,13 @@ export function DeliveryStages({ stages }: { stages: DeliveryStage[] }) {
             <span
               className={`text-xs font-medium ${
                 stage.state === "pending"
-                  ? "text-zinc-400"
-                  : "text-zinc-900 dark:text-zinc-100"
+                  ? "text-muted-foreground"
+                  : "text-foreground"
               }`}
             >
               {stage.label}
             </span>
-            <span className="text-[11px] text-zinc-400">{stage.caption}</span>
+            <span className="text-[11px] text-muted-foreground">{stage.caption}</span>
           </li>
         </Fragment>
       ))}

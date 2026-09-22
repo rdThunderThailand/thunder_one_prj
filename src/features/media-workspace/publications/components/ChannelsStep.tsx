@@ -55,14 +55,14 @@ export function ChannelsStep({
           {selectedGroups.map((group) => (
             <div
               key={group.id}
-              className="flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm text-indigo-800"
+              className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary-soft px-3 py-1.5 text-sm text-primary"
             >
               <span>{group.name} · {group.channelCount} channels</span>
               <button
                 type="button"
                 aria-label={`Remove ${group.name}`}
                 onClick={() => setGroupIds(groupIds.filter((id) => id !== group.id))}
-                className="text-indigo-500 hover:text-indigo-800"
+                className="text-primary hover:text-primary"
               >
                 ×
               </button>
@@ -71,24 +71,24 @@ export function ChannelsStep({
         </div>
       )}
 
-      {loadingChannels && <p className="text-xs text-zinc-400">Loading channels...</p>}
-      {!loadingChannels && channelsError && <p className="text-xs text-red-600">{channelsError}</p>}
+      {loadingChannels && <p className="text-xs text-muted-foreground">Loading channels...</p>}
+      {!loadingChannels && channelsError && <p className="text-xs text-danger">{channelsError}</p>}
       {!loadingChannels && !channelsError && channels.length === 0 && (
-        <p className="text-xs text-zinc-400">No Channels available yet — create one first.</p>
+        <p className="text-xs text-muted-foreground">No Channels available yet — create one first.</p>
       )}
 
       <div className="relative">
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search channels..."
-          className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+          className="w-full rounded-lg border border-border py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
       </div>
 
       {(fitCheckFailed || geometryFit.unfitting.length > 0 || geometryFit.unprofiled.length > 0) && (
-        <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning-soft p-3">
           {fitCheckFailed && (
             <FitWarning text="Could not check whether these screens fit the Layout." />
           )}
@@ -125,10 +125,10 @@ export function ChannelsStep({
 function FitWarning({ text, detail }: { text: string; detail?: string }) {
   return (
     <div className="flex items-start gap-2">
-      <WarningTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+      <WarningTriangleIcon className="h-4 w-4 shrink-0 text-warning" />
       <div>
-        <p className="text-xs font-medium text-zinc-900">{text}</p>
-        {detail && <p className="text-[11px] text-zinc-400">{detail}</p>}
+        <p className="text-xs font-medium text-foreground">{text}</p>
+        {detail && <p className="text-[11px] text-muted-foreground">{detail}</p>}
       </div>
     </div>
   );
