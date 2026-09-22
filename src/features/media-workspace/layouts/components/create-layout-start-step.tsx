@@ -70,7 +70,7 @@ function ChoiceCard({
           selected ? "border-[5px] border-primary" : "border-border"
         }`}
       />
-      <span className="ml-5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+      <span className={`ml-5 grid shrink-0 place-items-center rounded-lg bg-primary-soft text-primary ${selectedTemplate ? "h-9 w-16" : "h-9 w-9"}`}>
         {selectedTemplate ? (
           <LayoutWireframe
             zones={selectedTemplate.zones}
