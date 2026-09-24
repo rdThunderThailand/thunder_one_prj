@@ -24,6 +24,7 @@ export const CARD_BY_SCHEDULE_TYPE: Record<ScheduleType, ScheduleTypeId> = {
   later: "schedule-later",
   recurring: "recurring",
   range: "custom-range",
+  monthly: "recurring",
 };
 
 export function basicInfoToForm(

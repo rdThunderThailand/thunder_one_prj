@@ -14,7 +14,14 @@ import type { MediaAsset, ScheduleConflict } from "../types";
 import type { EligibilityCheck, EligibilityStatus } from "../publish-eligibility";
 import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
 import { priorities, publicationTypes } from "../mock-data";
-import { formatReviewTimeRange, getDayTimelinePlacement, utcToZonedParts, WEEKDAYS } from "../schedule";
+import {
+  formatMonthDays,
+  formatReviewTimeRange,
+  getDayTimelinePlacement,
+  isRepeating,
+  utcToZonedParts,
+  WEEKDAYS,
+} from "../schedule";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
@@ -70,17 +77,20 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
   const days =
     schedule.schedule_type === "recurring"
       ? WEEKDAYS.filter((day) => schedule.days.includes(day.value)).map((day) => day.label).join(", ")
-      : null;
+      : schedule.schedule_type === "monthly"
+        ? formatMonthDays(schedule.month_days)
+        : null;
   const reviewTimeRange = formatReviewTimeRange(schedule, now.time);
   const scheduleMode = {
     now: "Publish now",
     later: "Schedule later",
     range: "Date range",
     recurring: "Recurring",
+    monthly: "Monthly",
   }[schedule.schedule_type];
   const endTime = schedule.end_date ? schedule.end_time || "23:59" : "No end time";
-  const timelineStartTime = schedule.schedule_type === "recurring" ? schedule.daily_start : startTime;
-  const timelineEndTime = schedule.schedule_type === "recurring"
+  const timelineStartTime = isRepeating(schedule) ? schedule.daily_start : startTime;
+  const timelineEndTime = isRepeating(schedule)
     ? schedule.daily_end
     : schedule.end_date === startDate
       ? schedule.end_time || "23:59"

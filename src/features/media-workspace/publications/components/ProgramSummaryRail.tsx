@@ -7,7 +7,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
-import { WEEKDAYS } from "../schedule";
+import { formatMonthDays, isRepeating, WEEKDAYS } from "../schedule";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
@@ -102,7 +102,9 @@ export function ProgramSummaryRail({
   const weekdayLabel =
     scheduleForm.schedule_type === "recurring" && scheduleForm.days.length > 0
       ? WEEKDAYS.filter((d) => scheduleForm.days.includes(d.value)).map((d) => d.label).join(", ")
-      : null;
+      : scheduleForm.schedule_type === "monthly"
+        ? formatMonthDays(scheduleForm.month_days)
+        : null;
 
   if (variant === "review") {
     const scheduleLabel = scheduleForm.schedule_type === "now"
@@ -176,7 +178,7 @@ export function ProgramSummaryRail({
         <Row label="Start">{startLabel}</Row>
         <Row label="End">{endLabel}</Row>
         {weekdayLabel && <Row label="Days">{weekdayLabel}</Row>}
-        {scheduleForm.schedule_type === "recurring" && (
+        {isRepeating(scheduleForm) && (
           <Row label="Daily">{allDay ? "All day" : `${scheduleForm.daily_start} – ${scheduleForm.daily_end}`}</Row>
         )}
         <Row label="Timezone">{scheduleForm.timezone}</Row>

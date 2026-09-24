@@ -210,7 +210,8 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // to its default of 1 — the stepper just re-unlocks steps as the operator clicks Next,
       // no migration needed.
       // v11: Group target intent is now persisted alongside Channel ids.
-      name: "thunderone.publications.create-draft.v11",
+      // v12: scheduleForm gained `month_days` (monthly recurrence, Thunder_Core ADR 0012).
+      name: "thunderone.publications.create-draft.v12",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the
