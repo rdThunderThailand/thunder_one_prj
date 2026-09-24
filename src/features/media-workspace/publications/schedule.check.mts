@@ -14,12 +14,15 @@ import assert from "node:assert/strict";
 // Explicit .ts extension: Node's ESM resolver does no extension guessing. Needs
 // allowImportingTsExtensions in tsconfig, which is safe here (noEmit).
 import {
+  buildCalendarMonth,
   classifyPublicationAiring,
   getDayTimelinePlacement,
   formatReviewTimeRange,
   formatScheduleStart,
   isScheduleFormValid,
   makeDefaultScheduleForm,
+  scheduleFormToPayload,
+  scheduleToForm,
   validateScheduleForm,
 } from "./schedule.ts";
 import type { PublicationSchedule, ScheduleForm } from "./types/index.ts";
@@ -188,5 +191,47 @@ assert.deepEqual(
 
 // A fully valid recurring form has no errors at all.
 assert.deepEqual(validateScheduleForm(recurringBase), {});
+
+// --- monthly recurrence (Thunder_Core ADR 0012) ---
+const monthly: PublicationSchedule = {
+  starts_at: "2026-01-01T00:00:00.000Z",
+  ends_at: null,
+  timezone: "Asia/Bangkok",
+  recurrence: { freq: "monthly", month_days: [19, 31], daily_start: "08:00", daily_end: "22:00" },
+};
+assert.equal(classifyPublicationAiring(monthly, at("2026-10-19T03:00:00Z")), "live"); // 19th 10:00
+assert.equal(classifyPublicationAiring(monthly, at("2026-10-20T03:00:00Z")), "next"); // 20th
+assert.equal(classifyPublicationAiring(monthly, at("2026-10-19T15:00:00Z")), "next"); // 19th 22:00, end exclusive
+// Timezone: 18th 18:00Z is the 19th 01:00 in Bangkok (before the window), 18th 23:30Z is 06:30...
+assert.equal(classifyPublicationAiring(monthly, at("2026-10-18T18:00:00Z")), "next");
+// ...and 19th 01:00Z is 08:00 Bangkok: on air, although UTC still says the 19th only by an hour.
+assert.equal(classifyPublicationAiring(monthly, at("2026-10-19T01:00:00Z")), "live");
+// Same instant, schedule in UTC: it is the 18th there, so not an air day.
+assert.equal(classifyPublicationAiring({ ...monthly, timezone: "UTC" }, at("2026-10-18T18:00:00Z")), "next");
+
+// Resume round-trip keeps monthly intact — the bug it guards: a monthly draft reopened in the
+// wizard used to come back as a "range" and save as "plays every day".
+const monthlyForm = scheduleToForm(monthly);
+assert.equal(monthlyForm.schedule_type, "monthly");
+assert.deepEqual(monthlyForm.month_days, [19, 31]);
+assert.deepEqual(validateScheduleForm(monthlyForm), {});
+assert.deepEqual(scheduleFormToPayload(monthlyForm).recurrence, monthly.recurrence);
+assert.equal(scheduleFormToPayload(monthlyForm).starts_at, monthly.starts_at);
+assert.equal(validateScheduleForm({ ...monthlyForm, month_days: [] }).month_days !== undefined, true);
+// Weekly resume is unchanged.
+assert.equal(scheduleToForm(weekly).schedule_type, "recurring");
+assert.deepEqual(scheduleFormToPayload(scheduleToForm(weekly)).recurrence, weekly.recurrence);
+
+// Calendar: [19, 31] in a 30-day month skips the 31st (no roll-over to the 30th).
+const nov = buildCalendarMonth(monthlyForm, [], 2026, 10).flat().filter((d) => d.isActive).map((d) => d.day);
+assert.deepEqual(nov, [19]);
+const dec = buildCalendarMonth(monthlyForm, [], 2026, 11).flat().filter((d) => d.isActive).map((d) => d.day);
+assert.deepEqual(dec, [19, 31]);
+// February of a non-leap year has neither.
+const feb29: ScheduleForm = { ...monthlyForm, month_days: [29] };
+assert.deepEqual(buildCalendarMonth(feb29, [], 2027, 1).flat().filter((d) => d.isActive).length, 0);
+assert.deepEqual(buildCalendarMonth(feb29, [], 2028, 1).flat().filter((d) => d.isActive).map((d) => d.day), [29]);
+
+assert.equal(formatReviewTimeRange(monthlyForm, "10:00"), "08:00 – 22:00");
 
 console.log("schedule.check.mts — all assertions passed");

@@ -83,6 +83,7 @@ export function makeDefaultScheduleForm(): ScheduleForm {
     end_date: "",
     end_time: "",
     days: [],
+    month_days: [],
     daily_start: "09:00",
     daily_end: "17:00",
   };
@@ -90,7 +91,7 @@ export function makeDefaultScheduleForm(): ScheduleForm {
 
 export type ScheduleFieldId =
   | "start_date" | "start_time" | "end_date" | "end_time"
-  | "days" | "daily_start" | "daily_end";
+  | "days" | "month_days" | "daily_start" | "daily_end";
 
 export type ScheduleErrors = Partial<Record<ScheduleFieldId, string>>;
 
@@ -105,6 +106,14 @@ export function validateScheduleForm(form: ScheduleForm): ScheduleErrors {
   if (!form.start_date || !form.start_time) return errors;
 
   if (form.schedule_type === "later") return {}; // expiration is optional
+
+  // Monthly arrives from the API with its end optional, like "later"; only its own
+  // fields need checking (the wizard cannot author it, ADR 0012).
+  if (form.schedule_type === "monthly") {
+    if (form.month_days.length === 0) errors.month_days = "ไม่มีวันที่ของเดือน";
+    if (form.daily_start >= form.daily_end) errors.daily_end = "เวลาจบรายวันต้องอยู่หลังเวลาเริ่ม";
+    return errors;
+  }
 
   // range | recurring both require an end strictly after the start
   if (!form.end_date) errors.end_date = "เลือกวันที่สิ้นสุด";
@@ -160,6 +169,16 @@ export function scheduleFormToPayload(form: ScheduleForm): SchedulePayload {
     return { starts_at, ends_at, timezone, recurrence };
   }
 
+  if (form.schedule_type === "monthly") {
+    const recurrence: Recurrence = {
+      freq: "monthly",
+      month_days: [...form.month_days].sort((a, b) => a - b),
+      daily_start: form.daily_start,
+      daily_end: form.daily_end,
+    };
+    return { starts_at, ends_at, timezone, recurrence };
+  }
+
   // "later" (ends_at optional) and "range" (ends_at required) are both one-time.
   return { starts_at, ends_at, timezone, recurrence: {} };
 }
@@ -173,18 +192,21 @@ export function scheduleToForm(schedule?: PublicationSchedule | null): ScheduleF
   const start = utcToZonedParts(schedule.starts_at, timezone);
   const end = schedule.ends_at ? utcToZonedParts(schedule.ends_at, timezone) : { date: "", time: "" };
   const rec = schedule.recurrence;
-  const isWeekly = !!rec && "freq" in rec && rec.freq === "weekly";
+  const repeats = !!rec && "freq" in rec;
 
   return {
-    schedule_type: isWeekly ? "recurring" : schedule.ends_at ? "range" : "later",
+    schedule_type: repeats
+      ? rec.freq === "monthly" ? "monthly" : "recurring"
+      : schedule.ends_at ? "range" : "later",
     start_date: start.date,
     start_time: start.time,
     timezone,
     end_date: end.date,
     end_time: end.time,
-    days: isWeekly ? rec.days : base.days,
-    daily_start: isWeekly ? rec.daily_start : base.daily_start,
-    daily_end: isWeekly ? rec.daily_end : base.daily_end,
+    days: repeats && rec.freq === "weekly" ? rec.days : base.days,
+    month_days: repeats && rec.freq === "monthly" ? rec.month_days : base.month_days,
+    daily_start: repeats ? rec.daily_start : base.daily_start,
+    daily_end: repeats ? rec.daily_end : base.daily_end,
   };
 }
 
@@ -211,6 +233,11 @@ function ymdDow(ymd: string): number {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
 
+/** Day-of-month for a pure "YYYY-MM-DD". A month without that day simply never matches. */
+function ymdDay(ymd: string): number {
+  return Number(ymd.slice(8, 10));
+}
+
 /** The publication's [start, end|null] window as day strings, in its timezone. */
 function scheduleWindow(form: ScheduleForm): { start: string; end: string | null } {
   if (form.schedule_type === "now") {
@@ -226,6 +253,7 @@ export function isScheduleActiveOn(form: ScheduleForm, ymd: string): boolean {
   if (!start || ymd < start) return false;
   if (end && ymd > end) return false;
   if (form.schedule_type === "recurring") return form.days.includes(ymdDow(ymd));
+  if (form.schedule_type === "monthly") return form.month_days.includes(ymdDay(ymd));
   return true;
 }
 
@@ -274,10 +302,13 @@ export function classifyPublicationAiring(
   const rec = schedule.recurrence;
   if (!rec || !("freq" in rec)) return "live"; // one-off: the whole window is on air
 
-  // Weekly: inside the overall window, but only on listed days and within the
-  // daily time window — both read in the publication's own timezone.
+  // Weekly/monthly: inside the overall window, but only on listed days and within
+  // the daily time window — both read in the publication's own timezone.
   const { date, time } = utcToZonedParts(now.toISOString(), schedule.timezone);
-  if (!rec.days?.includes(ymdDow(date))) return "next";
+  const isAirDay = rec.freq === "monthly"
+    ? rec.month_days?.includes(ymdDay(date))
+    : rec.days?.includes(ymdDow(date));
+  if (!isAirDay) return "next";
   return withinDailyWindow(time, rec.daily_start, rec.daily_end) ? "live" : "next";
 }
 
@@ -325,12 +356,22 @@ export function formatScheduleStart(
 
 /** Time range shown in review surfaces: expiry for one-time schedules, daily window for recurring. */
 export function formatReviewTimeRange(form: ScheduleForm, nowTime: string): string {
-  if (form.schedule_type === "recurring") return `${form.daily_start} – ${form.daily_end}`;
+  if (isRepeating(form)) return `${form.daily_start} – ${form.daily_end}`;
 
   const startTime = form.schedule_type === "now" ? nowTime : form.start_time;
   return form.end_date
     ? `${startTime} – ${form.end_time || "23:59"}`
     : `${startTime} · No end date`;
+}
+
+/** Weekly or monthly: the form carries a daily window rather than a one-time span. */
+export function isRepeating(form: ScheduleForm): boolean {
+  return form.schedule_type === "recurring" || form.schedule_type === "monthly";
+}
+
+/** "Day 1, 15, 31" — the month days of a monthly schedule, ascending. */
+export function formatMonthDays(monthDays: number[]): string {
+  return `Day ${[...monthDays].sort((a, b) => a - b).join(", ")}`;
 }
 
 /** Position one schedule window on a midnight-to-midnight review timeline. */

@@ -184,14 +184,17 @@ export type ContentItem = {
 
 // --- Step 4: Schedule -------------------------------------------------------
 
-export const SCHEDULE_TYPES = ["now", "later", "recurring", "range"] as const;
+// "monthly" has no Play Mode card: it only arrives from the API (e.g. Aurora-migrate drafts)
+// and is kept intact until the operator picks another mode (Thunder_Core ADR 0012).
+export const SCHEDULE_TYPES = ["now", "later", "recurring", "range", "monthly"] as const;
 
 export type ScheduleType = (typeof SCHEDULE_TYPES)[number];
 
-/** `{}` = one-time. Weekly is the only recurring frequency the backend honours. */
+/** `{}` = one-time. Monthly skips a day a month does not have (Thunder_Core ADR 0012). */
 export type Recurrence =
   | Record<string, never>
-  | { freq: "weekly"; days: number[]; daily_start: string; daily_end: string };
+  | { freq: "weekly"; days: number[]; daily_start: string; daily_end: string }
+  | { freq: "monthly"; month_days: number[]; daily_start: string; daily_end: string };
 
 /** Wizard-local step-4 form. Dates/times are wall-clock in `timezone`. */
 export type ScheduleForm = {
@@ -202,8 +205,9 @@ export type ScheduleForm = {
   end_date: string; // "YYYY-MM-DD" — "" means none
   end_time: string; // "HH:MM"
   days: number[]; // recurring only: 0=Sun .. 6=Sat
-  daily_start: string; // recurring only: "HH:MM"
-  daily_end: string; // recurring only: "HH:MM"
+  month_days: number[]; // monthly only: 1..31
+  daily_start: string; // recurring/monthly: "HH:MM"
+  daily_end: string; // recurring/monthly: "HH:MM"
 };
 
 /** Persisted schedule, as returned by set_schedule and media_publication_get. */

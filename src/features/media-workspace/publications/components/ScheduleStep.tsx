@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { CalendarIcon, ChevronDownIcon, LightningIcon, RepeatIcon } from "@/components/ui/icons";
 import { CARD_BY_SCHEDULE_TYPE, SCHEDULE_TYPE_BY_CARD } from "../draft-mapping";
-import { validateScheduleForm, utcToZonedParts } from "../schedule";
+import { formatMonthDays, validateScheduleForm, utcToZonedParts } from "../schedule";
 import {
   AdvancedScheduleStubs,
   DateRangeField,
@@ -52,8 +52,9 @@ export function ScheduleStep({
 
   const activeCardId = CARD_BY_SCHEDULE_TYPE[scheduleForm.schedule_type];
   const isRecurring = scheduleForm.schedule_type === "recurring";
+  const isMonthly = scheduleForm.schedule_type === "monthly";
   const hasEndPicker =
-    scheduleForm.schedule_type === "now" || scheduleForm.schedule_type === "later";
+    scheduleForm.schedule_type === "now" || scheduleForm.schedule_type === "later" || isMonthly;
   const noEndDate = !scheduleForm.end_date;
   const allDay = scheduleForm.daily_start === "00:00" && scheduleForm.daily_end === "23:59";
 
@@ -182,6 +183,21 @@ export function ScheduleStep({
               onTimeChange={(v) => patch({ end_time: v })}
             />
           )}
+        </div>
+      )}
+
+      {isMonthly && (
+        <div className="rounded-lg border border-border bg-muted p-3 text-sm">
+          <p className="font-medium text-foreground">
+            Monthly · {formatMonthDays(scheduleForm.month_days)}
+          </p>
+          <p className="text-muted-foreground">
+            {scheduleForm.daily_start} – {scheduleForm.daily_end} ทุกเดือน · เดือนที่ไม่มีวันนั้นจะข้าม
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            ตารางรายเดือนแก้ไขในหน้านี้ไม่ได้ — เลือก Play Mode อื่นเพื่อแทนที่
+          </p>
+          <FieldError message={fieldErrors.month_days ?? fieldErrors.daily_end} />
         </div>
       )}
 

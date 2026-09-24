@@ -20,6 +20,7 @@ import type { PlaylistDetail, PublicationDetail } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { DeliveryProgress } from "./DeliveryProgress";
+import { formatMonthDays } from "../schedule";
 
 /** Names what changed, so re-publishing is a decision rather than a guess (ADR 0049 §11). */
 function describeDrift(finding: DriftFinding): string {
@@ -515,7 +516,11 @@ export function PublicationDetailPage({ id }: { id: string }) {
               <dd className="mt-1 text-sm text-foreground">
                 {detail.schedule.recurrence && "freq" in detail.schedule.recurrence ? (
                   <>
-                    <span>Days: {detail.schedule.recurrence.days.join(", ")}</span>
+                    <span>
+                      {detail.schedule.recurrence.freq === "monthly"
+                        ? `Monthly: ${formatMonthDays(detail.schedule.recurrence.month_days)}`
+                        : `Days: ${detail.schedule.recurrence.days.join(", ")}`}
+                    </span>
                     <br />
                     <span>
                       Hours: {detail.schedule.recurrence.daily_start}–
