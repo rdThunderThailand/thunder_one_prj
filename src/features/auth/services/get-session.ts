@@ -158,7 +158,7 @@ async function getSessionUncached(): Promise<SessionResult> {
   const rawUserId = typeof user?.id === "string" ? user.id : null;
   const [role, membershipExtras] = await Promise.all([
     resolveRole(membershipsRes, tenantId),
-    resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
+    extrasFromSession(body?.data) ?? resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
   ]);
   const { jobTitle } = membershipExtras;
 
@@ -171,7 +171,27 @@ async function getSessionUncached(): Promise<SessionResult> {
 }
 
 /**
- * Best-effort lookup of two fields neither `/session` nor `/me/memberships`
+ * `/session` carries job_title + Thai names itself once Core adds them
+ * (requested 2026-09-25 to drop the member-search round trip below from
+ * every page load — ~420 ms measured). The fields are additive: `null`
+ * here means "this Core doesn't send them yet", so the caller falls back
+ * to `resolveMembershipExtras`.
+ */
+function extrasFromSession(
+  data: { user?: Record<string, unknown>; membership?: { job_title?: unknown } | null } | undefined
+): { jobTitle: string | null; firstNameTh: string | null; lastNameTh: string | null } | null {
+  if (!data || !("membership" in data)) return null;
+  const text = (value: unknown) => (typeof value === "string" && value.trim() ? value : null);
+  return {
+    jobTitle: text(data.membership?.job_title),
+    firstNameTh: text(data.user?.first_name_th),
+    lastNameTh: text(data.user?.last_name_th),
+  };
+}
+
+/**
+ * Fallback for a Core without the `/session` fields above: best-effort
+ * lookup of two fields neither `/session` nor `/me/memberships`
  * carry: the caller's `job_title` on their current tenant's membership, and
  * their `first_name_th`/`last_name_th` (both live on the `/tenants/:id/
  * members` list row's nested `user` — same shape Personnel already reads,

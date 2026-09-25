@@ -1,91 +1,26 @@
 "use client";
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import dynamic from "next/dynamic";
+import type { DonutChartProps } from "./charts/DonutChartImpl";
 
-export interface DonutSegment {
-  label: string;
-  value: number;
-  color: string;
-}
+export type { DonutSegment } from "./charts/DonutChartImpl";
 
-interface DonutChartProps {
-  segments: DonutSegment[];
-  size?: number;
-  strokeWidth?: number;
-  className?: string;
-}
+// recharts (~340 KB of client JS) is loaded only when a chart actually
+// renders, not with every page that happens to import this module. The
+// wrapper reserves the chart's exact box so nothing shifts while it loads.
+const DonutChartImpl = dynamic(() => import("./charts/DonutChartImpl").then((m) => m.DonutChart), { ssr: false });
 
-export function DonutChart({
-  segments,
-  size = 128,
-  strokeWidth = 18,
-  className = "",
-}: DonutChartProps) {
-  const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
-  // Zero-value slices draw nothing but still take padding. And when a single
-  // slice is the whole chart, Recharts renders an exact 360° sector as a
-  // zero-length arc (start point == end point), so the ring disappears.
-  // Stopping just short of a full turn keeps it visible.
-  const data = segments.filter((s) => s.value > 0);
-  const endAngle = data.length === 1 ? -269.99 : -270;
-  const outerRadius = size / 2;
-  const innerRadius = Math.max(outerRadius - strokeWidth, 0);
-
+export function DonutChart(props: DonutChartProps) {
+  const size = props.size ?? 128;
   return (
     <div
       style={{ width: size, height: size }}
-      className={className}
-      role="img"
-      aria-label="Distribution chart"
+      className={props.className}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="label"
-            cx="50%"
-            cy="50%"
-            innerRadius={innerRadius}
-            outerRadius={outerRadius}
-            startAngle={90}
-            endAngle={endAngle}
-            paddingAngle={data.length > 1 ? 2 : 0}
-            stroke="#ffffff"
-            strokeWidth={2}
-            isAnimationActive={false}
-          >
-            {data.map((segment) => (
-              <Cell key={segment.label} fill={segment.color} />
-            ))}
-          </Pie>
-          {/* Per-slice hover tooltip — the donut is a proper standalone chart
-              (unlike the inline stat-card sparklines), so it gets the
-              interactive layer by default. */}
-          <Tooltip
-            cursor={false}
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const segment = payload[0].payload as DonutSegment;
-              const percent = ((segment.value / total) * 100).toFixed(1);
-              return (
-                <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs shadow-md">
-                  <p className="flex items-center gap-1.5 font-medium text-zinc-900">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: segment.color }}
-                    />
-                    {segment.label}
-                  </p>
-                  <p className="mt-0.5 text-zinc-500">
-                    {segment.value} ({percent}%)
-                  </p>
-                </div>
-              );
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+      <DonutChartImpl
+        {...props}
+        className=""
+      />
     </div>
   );
 }
