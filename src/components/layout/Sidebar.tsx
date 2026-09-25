@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
 import { customerWorkspaceNav } from "@/config/nav/customer-workspace";
@@ -15,6 +15,7 @@ import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
 import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { isEditorRoute } from "@/config/nav/editor-routes";
+import { recordWorkspaceVisit } from "@/lib/workspace-prefs";
 import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
 
 const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
@@ -348,7 +349,14 @@ function SettingsSidebar({ pathname }: { pathname: string }) {
 export function Sidebar({ tenantName }: { tenantName?: string | null }) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
-  const isMediaWorkspace = activeApp?.id === "media-workspace";
+  const activeAppId = activeApp?.id ?? null;
+  const isMediaWorkspace = activeAppId === "media-workspace";
+
+  // Feeds the Workspaces launcher's "Recently Opened" (per-browser only —
+  // lib/workspace-prefs.ts). Fires once per App entered, not per sub-page.
+  useEffect(() => {
+    if (activeAppId) recordWorkspaceVisit(activeAppId);
+  }, [activeAppId]);
   // Editors start collapsed (focus shell, ADR 0077); a click still expands. Any
   // route change resets to the route's default so an editor never pins the
   // list pages collapsed and vice versa.
