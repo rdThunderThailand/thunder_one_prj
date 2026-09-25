@@ -1,22 +1,20 @@
 import { Card } from "@/components/ui/Card";
 import { BoxIcon, ClipboardIcon, MonitorIcon, UsersIcon } from "@/components/ui/icons";
 import type { HomeStats } from "../core-mapper";
-import { orgOverviewMock } from "../mock-data";
 
 /**
- * "ภาพรวมองค์กร" — บุคลากรทั้งหมด/สินทรัพย์ทั้งหมด are real (see
- * `../core-mapper.ts`); จอแสดงผล/คำขอที่เปิดอยู่ stay mock (`../mock-data.ts`'s
- * `orgOverviewMock`, same gap `HomeStatTilesRow` already documents). No
- * fabricated percentage deltas on any tile — same "no historical snapshot,
- * so no invented trend" discipline used everywhere else in this app.
+ * "ภาพรวมองค์กร" — บุคลากรทั้งหมด/สินทรัพย์ทั้งหมด/จอแสดงผล come from
+ * `../core-mapper.ts`'s `HomeStats`; คำขอที่เปิดอยู่ has no Core source
+ * (Thunder Care requests aren't in Core) and always shows "-". No percentage
+ * deltas on any tile — no historical snapshot exists to compute one from.
+ * Async for the same streaming reason as `HomeStatTilesRow`.
  */
 // Chip hues follow the mockup (node 396:4742): people blue, assets purple,
 // displays green, requests red. The node's literal fills were never fetched
 // (Figma MCP rate limit), so the hex pairs reuse the exact fetched values of
 // the same hues from WorkspaceCardsRow (purple) and HomeStatTilesRow (the rest).
-export function OrgOverviewRow({ stats }: { stats: HomeStats | null }) {
-  const displays = orgOverviewMock.find((t) => t.id === "displays");
-  const openRequests = orgOverviewMock.find((t) => t.id === "open-requests");
+export async function OrgOverviewRow({ stats: statsPromise }: { stats: Promise<HomeStats> }) {
+  const stats = await statsPromise;
 
   return (
     <Card className="p-4">
@@ -31,7 +29,7 @@ export function OrgOverviewRow({ stats }: { stats: HomeStats | null }) {
           </span>
           <p className="mt-2 text-xs text-zinc-400">บุคลากรทั้งหมด</p>
           <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-            {stats ? stats.totalHeadcount : "-"}
+            {stats.totalHeadcount ?? "-"}
           </p>
         </div>
         <div>
@@ -40,22 +38,22 @@ export function OrgOverviewRow({ stats }: { stats: HomeStats | null }) {
           </span>
           <p className="mt-2 text-xs text-zinc-400">สินทรัพย์ทั้งหมด</p>
           <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-            {stats?.totalAssets ?? "-"}
+            {stats.totalAssets ?? "-"}
           </p>
         </div>
         <div>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e7faef] text-[#09a96d] dark:bg-emerald-500/10 dark:text-emerald-400">
             <MonitorIcon className="h-4 w-4" />
           </span>
-          <p className="mt-2 text-xs text-zinc-400">{displays?.label}</p>
-          <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{displays?.value ?? "-"}</p>
+          <p className="mt-2 text-xs text-zinc-400">จอแสดงผล</p>
+          <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{stats.displaysTotal ?? "-"}</p>
         </div>
         <div>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#fff0f1] text-[#f42b41] dark:bg-red-500/10 dark:text-red-400">
             <ClipboardIcon className="h-4 w-4" />
           </span>
-          <p className="mt-2 text-xs text-zinc-400">{openRequests?.label}</p>
-          <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{openRequests?.value ?? "-"}</p>
+          <p className="mt-2 text-xs text-zinc-400">คำขอที่เปิดอยู่</p>
+          <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">-</p>
         </div>
       </div>
     </Card>

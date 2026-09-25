@@ -1,15 +1,13 @@
-// R&D placeholder data for the homepage's still-mock sections (2026-09-16
-// redesign, matching the coordinating session's new mockup). Numbers derived
-// from asset-intelligence/thunder-care's own mock generators where it makes
-// sense, rather than inventing separate fake numbers from scratch — same
-// discipline the previous version of this file already used.
+// R&D placeholder data for mission-control's still-mock surfaces: the
+// Insights/Approvals sub-routes (`statCards`, `mockRecommendations`) and the
+// Brief teaser's copy. The homepage itself no longer reads any mock numbers
+// (2026-09-25) — see core-mapper.ts. Numbers here derive from
+// asset-intelligence's own mock generator rather than being invented from
+// scratch.
 import { getMockAssets } from "@/features/asset-intelligence/assets";
-import { getMockWorkOrders } from "@/features/thunder-care/work-orders";
 
 const assets = getMockAssets();
-const workOrders = getMockWorkOrders();
 const attentionAssets = assets.filter((a) => a.status === "attention" || a.status === "critical").length;
-const overdueWorkOrders = workOrders.filter((w) => w.status === "overdue").length;
 
 export interface StatCardData {
   id: string;
@@ -103,91 +101,11 @@ export const briefTeaser = {
   summary: "ThunderOne กำลังพัฒนาการสรุปสิ่งสำคัญ สิ่งที่ต้องติดตาม และงานที่ต้องการความสนใจ",
 };
 
-// Top stat row (HomeStatTilesRow) — "บุคลากรเข้าใหม่" is real (see
-// core-mapper.ts's computeHomeStats). The other 3 stay mock: no "needs
-// attention" status exists on a real Core asset (only Ready/In Use/In
-// Progress/Retired-Cancelled — see asset-list-api.ts's ASSET_LIST_STATUSES),
-// and neither Thunder Care nor Media Workspace has a real Core integration
-// in this app yet for a request-approval count or an online-display count.
-export interface TopStatMock {
-  id: string;
-  label: string;
-  value: number;
-}
-
-export const topStatsMock: TopStatMock[] = [
-  { id: "assets-attention", label: "สินทรัพย์ที่ต้องดูแล", value: attentionAssets },
-  { id: "pending-requests", label: "คำขอที่รออนุมัติ", value: overdueWorkOrders },
-  { id: "displays-online", label: "จอแสดงผลออนไลน์", value: 98 },
-];
-
-// Org overview row (OrgOverviewRow) — "บุคลากรทั้งหมด"/"สินทรัพย์ทั้งหมด" are
-// real (core-mapper.ts). "จอแสดงผล"/"คำขอที่เปิดอยู่" stay mock, same gap as
-// topStatsMock above.
-export interface OrgOverviewMock {
-  id: string;
-  label: string;
-  value: number;
-  deltaLabel: string;
-}
-
-export const orgOverviewMock: OrgOverviewMock[] = [
-  { id: "displays", label: "จอแสดงผล", value: 36, deltaLabel: "▲ 5%" },
-  { id: "open-requests", label: "คำขอที่เปิดอยู่", value: workOrders.length, deltaLabel: "▲ 20%" },
-];
-
-// "งานที่ต้องดำเนินการ" (right rail) — operational task pings. No real
-// cross-App task-queue/approvals-aggregation backend exists, same gap the
-// old NeedsAttentionCard's attentionItems already documented.
-export interface ActionItemData {
-  id: string;
-  title: string;
-  source: string;
-  timeAgo: string;
-  tone: "red" | "blue";
-}
-
-export const actionItems: ActionItemData[] = [
-  { id: "act-1", title: "อนุมัติคำขอซื้ออุปกรณ์ IT", source: "จาก ฝ่ายปฏิบัติการ", timeAgo: "2 ชม. ที่แล้ว", tone: "red" },
-  {
-    id: "act-2",
-    title: "ตรวจสอบสินทรัพย์ที่มีปัญหา",
-    source: `มี ${attentionAssets} รายการที่ต้องดูแล`,
-    timeAgo: "4 ชม. ที่แล้ว",
-    tone: "red",
-  },
-  { id: "act-3", title: "ทบทวนสมาชิกใหม่", source: "ตรวจสอบและอนุมัติการเข้าใช้งาน", timeAgo: "1 วันที่แล้ว", tone: "blue" },
-];
-
-// "ข่าวสารและอัปเดต" (right rail) — static placeholder; no announcements/CMS
-// backend exists anywhere in this app.
-export interface NewsItemData {
-  id: string;
-  title: string;
-  description: string;
-  dateLabel: string;
-}
-
-export const newsItems: NewsItemData[] = [
-  {
-    id: "news-1",
-    title: "อัปเดตฟีเจอร์ Asset Workspace",
-    description: "เพิ่มการแจ้งเตือนอัตโนมัติสำหรับสินทรัพย์",
-    dateLabel: "22 ส.ค. 2025",
-  },
-  {
-    id: "news-2",
-    title: "คู่มือเริ่มใช้งาน Thunder Care",
-    description: "แนวทางการใช้งานสำหรับผู้บริหาร",
-    dateLabel: "20 ส.ค. 2025",
-  },
-  {
-    id: "news-3",
-    title: "เทรนด์เทคโนโลยี Digital Signage",
-    description: "อัปเดตแนวโน้มและกรณีศึกษาล่าสุด",
-    dateLabel: "18 ส.ค. 2025",
-  },
-];
+// Top stat tiles / org overview / "งานที่ต้องดำเนินการ" / "ข่าวสารและอัปเดต":
+// their mocks (`topStatsMock`, `orgOverviewMock`, `actionItems`, `newsItems`)
+// were removed 2026-09-25. The tiles now read real Core data
+// (core-mapper.ts); anything without a Core source renders "-" or an empty
+// state instead of placeholder numbers.
 
 // "กิจกรรมล่าสุด" — real via services/dashboard-api.ts's getRecentLogs; no
 // mock fallback data here (a failed fetch shows an explicit empty state).

@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ClockIcon, MonitorIcon, UsersIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import type { HomeStats } from "../core-mapper";
-import { topStatsMock } from "../mock-data";
 
 // Exact tone hex values pulled from the Figma shell mockup (node 396:4595)
 // rather than the app's generic Tailwind palette — bypasses the shared
@@ -53,44 +52,59 @@ function StatTile({
   );
 }
 
+/** "86%" of total, or "-" when there's nothing to take a percentage of. */
+function onlinePercent(online: number | null, total: number | null): string {
+  if (online === null || total === null || total === 0) return "-";
+  return `${Math.round((online / total) * 100)}%`;
+}
+
+function displaysCaption(online: number | null, total: number | null): string {
+  if (total === null) return "ไม่สามารถโหลดข้อมูลได้";
+  if (total === 0) return "ยังไม่มีจอในระบบ";
+  return `${online} จาก ${total} จอ`;
+}
+
 /**
- * Top 4 stat tiles. Only "บุคลากรเข้าใหม่" (`stats.newHiresThisMonth`) is
- * real — see `../core-mapper.ts`'s `computeHomeStats`. The other 3 come
- * from `topStatsMock` (`../mock-data.ts`'s own header comment explains why
- * each stays mock). Captions stay the honest static unit labels this app
- * already used ("รายการ"/"ออนไลน์") rather than the Figma mockup's example
- * "↑ 1 จากเมื่อวาน"-style deltas — no historical snapshot exists to compute
- * a real trend from, same discipline as people/personnel's own stat tiles.
- * Colors/sizing otherwise match the mockup exactly (node 396:4595).
+ * Top 4 stat tiles, all from `../core-mapper.ts`'s `HomeStats` (see its doc
+ * comment for each source). "คำขอที่รออนุมัติ" has no Core source at all —
+ * Thunder Care requests aren't in Core — so it always shows "-" with a
+ * "ยังไม่มีข้อมูล" caption rather than a placeholder count. Captions stay
+ * plain units, not the mockup's "↑ 1 จากเมื่อวาน" deltas — no historical
+ * snapshot exists to compute a real trend from. Colors/sizing match the
+ * mockup exactly (node 396:4595).
+ *
+ * Async: awaits `stats` inside MissionControlPage's `<Suspense>` so the rest
+ * of the page paints first (`HomeStatTilesSkeleton` is the fallback).
  */
-export function HomeStatTilesRow({ stats }: { stats: HomeStats | null }) {
-  const attention = topStatsMock.find((t) => t.id === "assets-attention");
-  const requests = topStatsMock.find((t) => t.id === "pending-requests");
-  const displays = topStatsMock.find((t) => t.id === "displays-online");
+export async function HomeStatTilesRow({ stats: statsPromise }: { stats: Promise<HomeStats> }) {
+  const stats = await statsPromise;
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <StatTile
         tone="red"
         icon={<WarningTriangleIcon />}
-        label={attention?.label}
-        value={attention?.value ?? "-"}
-        caption="รายการ"
+        label="สินทรัพย์ที่ต้องดูแล"
+        value={stats.assetsNeedingCare ?? "-"}
+        caption={stats.assetsNeedingCare === null ? "ไม่สามารถโหลดข้อมูลได้" : "ซ่อมบำรุง / ติดตั้ง"}
       />
       <StatTile
         tone="amber"
         icon={<ClockIcon />}
-        label={requests?.label}
-        value={requests?.value ?? "-"}
-        caption="รายการ"
+        label="คำขอที่รออนุมัติ"
+        value="-"
+        caption="ยังไม่มีข้อมูล"
       />
       <StatTile
         tone="blue"
         icon={<UsersIcon />}
         label="บุคลากรเข้าใหม่"
-        value={stats ? stats.newHiresThisMonth : "-"}
+        value={stats.newHiresThisMonth ?? "-"}
         caption={
-          <Link href="/people/new-hires" className="font-medium text-[#075df7] hover:text-[#0748c4] dark:text-blue-400">
+          <Link
+            href="/people/new-hires"
+            className="font-medium text-[#075df7] hover:text-[#0748c4] dark:text-blue-400"
+          >
             เดือนนี้ →
           </Link>
         }
@@ -98,10 +112,10 @@ export function HomeStatTilesRow({ stats }: { stats: HomeStats | null }) {
       <StatTile
         tone="green"
         icon={<MonitorIcon />}
-        label={displays?.label}
-        value={`${displays?.value ?? "-"}%`}
+        label="จอแสดงผลออนไลน์"
+        value={onlinePercent(stats.displaysOnline, stats.displaysTotal)}
         valueClassName="text-[#071858] dark:text-zinc-50"
-        caption="ออนไลน์"
+        caption={displaysCaption(stats.displaysOnline, stats.displaysTotal)}
       />
     </div>
   );
