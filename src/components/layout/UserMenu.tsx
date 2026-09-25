@@ -9,12 +9,14 @@ import { ChevronDownIcon, LockIcon, LogoutIcon, SettingsIcon, UserIcon } from "@
 interface UserMenuProps {
   userName: string;
   roleLabel?: string | null;
+  /** Profile picture URL (Session.avatarUrl); initials when null. */
+  avatarUrl?: string | null;
   /** Media Workspace's Topbar (docs/adr/0075 §4) uses the smaller, token-colored
    *  treatment from the Lovable reference instead of the shell's default sizing. */
   variant?: "default" | "compact";
 }
 
-export function UserMenu({ userName, roleLabel, variant = "default" }: UserMenuProps) {
+export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "default" }: UserMenuProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -47,7 +49,7 @@ export function UserMenu({ userName, roleLabel, variant = "default" }: UserMenuP
       >
         {/* 2026-09-19: 44px -> 32px, matching the design reference's own
             avatar size exactly (measured 32x32). */}
-        <Avatar name={userName} size={32} className="shadow-sm" />
+        <Avatar name={userName} src={avatarUrl} size={32} className="shadow-sm" />
         {/* 2026-09-19: matched to the design reference's user-block
             typography direction (bold name, small light role label) — was
             text-base (16px) and a bespoke 12.8px, both noticeably larger

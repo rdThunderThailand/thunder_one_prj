@@ -17,7 +17,7 @@ export default async function DashboardLayout({
   if (session === "forbidden") {
     redirect("/no-access");
   }
-  const { userName, tenantName, jobTitle } = session;
+  const { userName, avatarUrl, tenantName, jobTitle } = session;
   // 2026-09-16 — the Topbar shows the person's real job title (Personnel's
   // own `job_title` field) when their membership has one, not the RBAC
   // access-tier label; falls back to the tier label (e.g. "Company
@@ -28,7 +28,11 @@ export default async function DashboardLayout({
     <div className="flex h-full">
       <Sidebar tenantName={tenantName} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <Topbar userName={userName} roleLabel={roleLabel} />
+        <Topbar
+          userName={userName}
+          roleLabel={roleLabel}
+          avatarUrl={avatarUrl}
+        />
         <main className="flex-1 overflow-y-auto bg-zinc-50 px-6 py-6 dark:bg-zinc-950">
           {children}
         </main>

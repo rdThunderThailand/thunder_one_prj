@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import {
   ArrowRightIcon,
   BuildingIcon,
   CalendarIcon,
-  CameraIcon,
   CheckCircleIcon,
   ChevronDownIcon,
   ClipboardIcon,
@@ -28,6 +26,7 @@ import { formatThaiDate } from "@/lib/thai-date";
 import type { CoreMemberRow } from "@/features/people/personnel/services/members-api";
 import type { CoreMe } from "../services/profile-api";
 import { AddContactChannelModal } from "./AddContactChannelModal";
+import { ProfileAvatarEditor } from "./ProfileAvatarEditor";
 import { EditPhoneModal } from "./EditPhoneModal";
 import { EditProfileModal } from "./EditProfileModal";
 
@@ -223,20 +222,10 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
       ) : (
         <>
           <div className={`flex items-center gap-4 rounded-xl border bg-white p-6 dark:bg-zinc-900 ${BORDER}`}>
-            <div className="relative shrink-0">
-              <Avatar name={fullName} src={me.avatar_url} size={96} />
-              {/* Inert — no photo upload feature exists anywhere in this app
-                  yet, so this stays a disabled affordance rather than a
-                  fake-working button. */}
-              <button
-                type="button"
-                disabled
-                title="ยังไม่รองรับการอัปโหลดรูปภาพ"
-                className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-full border-2 border-white bg-zinc-700 text-white dark:border-zinc-900"
-              >
-                <CameraIcon className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <ProfileAvatarEditor
+              name={fullName}
+              avatarUrl={me.avatar_url}
+            />
             <div>
               <p className={`text-xl font-bold ${TEXT_NAVY}`}>{fullName}</p>
               <p className={`text-sm font-medium ${TEXT_BLUE}`}>{roleName || "-"}</p>
