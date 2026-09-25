@@ -15,7 +15,8 @@ export function ManagerWorkspacesHeader() {
       <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"
-          className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          title="Not built yet"
+          className="flex shrink-0 cursor-not-allowed items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
         >
           Customize
           <SettingsIcon className="h-4 w-4" />
