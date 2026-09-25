@@ -286,48 +286,48 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
 // (back-link + 3 flat items) rather than the regular shell/app nav. No
 // collapse toggle or tenant switcher here — the mockup doesn't have them,
 // and a 3-item settings menu doesn't need to collapse.
+//
+// Sizing/row/active-state tokens now match the main shell nav exactly
+// (w-56, h-[68px] header, indigo-50 active pill, 16px icons) — this used to
+// run its own oversized/solid-blue treatment (300px wide, 88px header,
+// bg-[#0860ef] active fill, 28px icons), which read as a different app once
+// you landed here from anywhere else in the shell.
 function SettingsSidebar({ pathname }: { pathname: string }) {
   return (
-    <aside className="flex h-full w-[300px] shrink-0 flex-col border-r border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <Link
         href="/"
-        className="flex h-[88px] items-center border-b border-[#e6edf9] px-10 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+        className="flex h-[68px] items-center border-b border-[#e6edf9] px-5 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo; no next/image optimization needed */}
-        <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-9 w-auto dark:hidden" />
+        <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-8 w-auto dark:hidden" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-9 w-auto dark:block" />
+        <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-8 w-auto dark:block" />
       </Link>
-      <div className="px-5 py-4">
+      <div className="px-3 pb-1 pt-3">
         <Link
           href="/mission-control"
-          className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400"
+          className="flex items-center gap-2 rounded-[10px] px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-indigo-400"
         >
-          <ArrowLeftIcon className="h-4 w-4" />
+          <ArrowLeftIcon className="h-4 w-4 shrink-0" />
           กลับไป ThunderOne
         </Link>
       </div>
-      {/* Same nav-item tokens as ShellNav below (size/weight/color, active
-          blue + shadow, 28px bare icons) — same design system as the main
-          shell, just without a sublabel/badge/chevron line (Nie,
-          2026-09-16: this sidebar's type/spacing didn't match the shell's). */}
-      <nav className="flex flex-col gap-3 px-5 pt-2">
+      <nav className="flex flex-col gap-0.5 px-2 pt-1">
         {settingsNavItems.map((item) => {
           const active = item.id !== "settings" && (pathname === item.href || pathname.startsWith(`${item.href}/`));
           return (
             <Link
               key={item.id}
               href={item.href}
-              className={`flex items-center gap-5 rounded-lg px-5 py-3.5 transition-colors ${
+              className={`flex h-8 items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium transition-colors ${
                 active
-                  ? "bg-[#0860ef] text-white shadow-[0px_10px_7.5px_#bedbff,0px_4px_3px_#bedbff]"
-                  : "text-[#071858] hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300"
+                  : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600 dark:text-zinc-200 dark:hover:bg-zinc-900"
               }`}
             >
-              <span className={`shrink-0 [&>svg]:h-7 [&>svg]:w-7 ${active ? "text-white" : "text-[#071858] dark:text-zinc-200"}`}>
-                {item.icon}
-              </span>
-              <span className="text-base font-bold">{item.label}</span>
+              <span className="h-4 w-4 shrink-0 text-slate-500">{item.icon}</span>
+              {item.label}
             </Link>
           );
         })}
