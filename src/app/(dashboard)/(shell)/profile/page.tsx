@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 import { resolveRole, resolveRoleLabel } from "@/config/rbac";
 import { ProfilePage } from "@/features/profile";
 import { getMyMembership, getMyProfile } from "@/features/profile/services/profile-api";
 import { getOrganizations, type CoreOrgUnit } from "@/features/people/org-structure/services/organizations-api";
+
+export const metadata: Metadata = { title: "โปรไฟล์ของฉัน" };
 
 function findDepartmentName(units: CoreOrgUnit[], id: string): string | null {
   for (const unit of units) {

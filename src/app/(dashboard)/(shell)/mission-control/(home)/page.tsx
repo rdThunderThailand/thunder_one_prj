@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getAssetSummary } from "@/features/asset-intelligence/assets";
 import { EmployeeMissionControlPage, ManagerMissionControlPage } from "@/features/asset-intelligence/departments";
 import { requireShellAccess, resolveShellVariant, resolveRole } from "@/config/rbac";
@@ -9,6 +10,8 @@ import { MissionControlPage } from "@/features/mission-control";
 import { loadMyWork } from "@/features/my-work/load-my-work";
 import { EMPTY_MY_WORK } from "@/features/my-work/work-items";
 import { getMembers } from "@/features/people/personnel";
+
+export const metadata: Metadata = { title: "หน้าแรก" };
 
 // The dashboard layout already gates this route on tenant access; the
 // session is re-fetched here for the greeting's display name and for the

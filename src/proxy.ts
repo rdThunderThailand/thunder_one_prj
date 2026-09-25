@@ -41,7 +41,10 @@ export const config = {
      * - /api/* (BFF proxy and auth endpoints must remain accessible without proxy redirect)
      * - /_next/* (Next.js internal static files, scripts, and image optimization assets)
      * - Static asset files (favicon, images, etc.)
+     * - Metadata files crawlers and link-preview bots fetch without a session
+     *   (robots.txt, the generated Open Graph image, app icons) — redirecting
+     *   those to /login breaks search indexing rules and link previews.
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|opengraph-image|twitter-image|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
