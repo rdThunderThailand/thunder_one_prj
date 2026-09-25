@@ -27,14 +27,17 @@ export function HomeStatTilesSkeleton() {
 
 export function OrgOverviewSkeleton() {
   return (
-    <Card className="p-4">
+    <Card className="flex flex-col p-4">
       <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ภาพรวมองค์กร</h2>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <div key={i}>
             <Skeleton className="h-9 w-9 rounded-lg" />
-            <Skeleton className="mt-2 h-3 w-14" />
-            <Skeleton className="mt-1.5 h-6 w-8" />
+            <div className="mt-2 min-h-8">
+              <Skeleton className="h-3 w-14" />
+            </div>
+            <Skeleton className="h-6 w-8" />
+            <Skeleton className="mt-1.5 h-3 w-10" />
           </div>
         ))}
       </div>

@@ -7,6 +7,10 @@ import type { ChannelHealthSummary } from "./services/channels-api";
  * is `null` when its source fetch failed — tiles render "-" for it, never a
  * placeholder number. Sources:
  * - `totalHeadcount`/`newHiresThisMonth` — People's roster (`getMembers`).
+ *   `headcountDeltaPercent` = this month's starters vs. the headcount before
+ *   them (`total - newHires`), rounded; it ignores leavers (Core has no
+ *   leave date to subtract) and is `null` when the fetched page doesn't
+ *   hold every member (new hires would be undercounted) or the base is 0.
  * - `totalAssets`/`assetsNeedingCare` — Asset Intelligence's
  *   `GET /tenants/:id/assets/summary`. "Needs care" is Core's derived
  *   `In Progress` status (maintenance / critical / ต้องซ่อม / installing —
@@ -22,6 +26,7 @@ import type { ChannelHealthSummary } from "./services/channels-api";
 export interface HomeStats {
   totalHeadcount: number | null;
   newHiresThisMonth: number | null;
+  headcountDeltaPercent: number | null;
   totalAssets: number | null;
   assetsNeedingCare: number | null;
   displaysTotal: number | null;
@@ -44,9 +49,15 @@ export function computeHomeStats(
   channels: ChannelHealthSummary | null,
   now: Date
 ): HomeStats {
+  const newHires = members ? members.rows.filter((row) => isThisMonth(row.start_date, now)).length : null;
+  const headcountBase = members && newHires !== null ? members.count - newHires : 0;
+  const allMembersFetched = members !== null && members.rows.length >= members.count;
+
   return {
     totalHeadcount: members ? members.count : null,
-    newHiresThisMonth: members ? members.rows.filter((row) => isThisMonth(row.start_date, now)).length : null,
+    newHiresThisMonth: newHires,
+    headcountDeltaPercent:
+      allMembersFetched && newHires !== null && headcountBase > 0 ? Math.round((newHires / headcountBase) * 100) : null,
     totalAssets: assetSummary ? assetSummary.total : null,
     assetsNeedingCare: assetSummary
       ? (assetSummary.byStatus.find((s) => s.status === "In Progress")?.count ?? 0)
