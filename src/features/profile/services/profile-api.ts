@@ -10,9 +10,9 @@
 // `PATCH /api/core/v1/users/{id}` (`updateProfileSchema` in Core's
 // src/lib/core/member-view.ts) only accepts the fields in UpdateProfileInput
 // below — `display_name`/`avatar_url`/`preferred_language`/`timezone` are
-// real to *read* but have NO write path anywhere in Core today. Don't send
-// them in a PATCH body — the schema is `.strict()` and rejects unknown keys
-// with a 400.
+// real to *read* but have no PATCH write path — don't send them in a PATCH
+// body (the schema is `.strict()`, unknown keys → 400). `avatar_url` has its
+// own dedicated upload route instead: `uploadMyAvatar`/`removeMyAvatar` below.
 //
 // `first_name_th`/`last_name_th` real since 2026-09-16 (commit `f15d612`) —
 // both read and write; see `people/personnel`'s `CoreMemberRow.user` comment
@@ -26,6 +26,7 @@
 // PATCH response's own select) caught up. Confirmed end-to-end (write, then
 // read back a fresh value) directly against Core before trusting it here.
 import { coreGet } from "@/lib/core/core-get";
+import { ApiError } from "@/lib/api/api-error";
 import { requestApi } from "@/lib/api/media-api";
 import { getMembers, type CoreMemberRow } from "@/features/people/personnel/services/members-api";
 
@@ -114,4 +115,33 @@ export async function changePassword(input: ChangePasswordInput): Promise<{ upda
 export async function getMyMembership(token: string, tenantId: string, userId: string, email: string): Promise<CoreMemberRow | null> {
   const page = await getMembers(token, tenantId, { search: email, limit: 5 });
   return page?.rows.find((row) => row.user_id === userId) ?? null;
+}
+
+/** Accepted by Core's avatars bucket — checked client-side first so a wrong
+ *  file fails instantly instead of after an upload round-trip. */
+export const AVATAR_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+
+/**
+ * `POST /me/avatar` (multipart, field `file`) — uploads the caller's own
+ * profile picture and sets `users.avatar_url`; returns the new URL. Agreed
+ * with the thunder_core_API session 2026-09-25. Native `fetch`, not
+ * `requestApi`: the shared axios instance forces `Content-Type:
+ * application/json`, which a FormData body can't override (same reason as
+ * asset-intelligence's `uploadAssetAttachment`).
+ */
+export async function uploadMyAvatar(file: File): Promise<string | null> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/proxy/me/avatar", { method: "POST", body: formData });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || (body && typeof body === "object" && "error" in body)) {
+    throw new ApiError((body as { error?: string } | null)?.error ?? `HTTP Error ${res.status}`, res.status);
+  }
+  return (body as { data?: { avatar_url?: string | null } } | null)?.data?.avatar_url ?? null;
+}
+
+/** `DELETE /me/avatar` — removes the picture; initials show again. */
+export async function removeMyAvatar(): Promise<void> {
+  await requestApi<{ avatar_url: null }>("DELETE", "/me/avatar");
 }

@@ -14,6 +14,7 @@ import { UserMenu } from "./UserMenu";
 interface TopbarProps {
   userName: string;
   roleLabel?: string | null;
+  avatarUrl?: string | null;
 }
 
 // Only the Overview route publishes into the title store today (its
@@ -33,7 +34,7 @@ function todayLabel() {
 
 // Media Workspace's header, restyled to match the Lovable reference
 // (docs/adr/0075). Every other App keeps the Topbar below unchanged.
-function MediaWorkspaceTopbar({ userName, roleLabel, pathname }: TopbarProps & { pathname: string }) {
+function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, pathname }: TopbarProps & { pathname: string }) {
   const meta = useSyncExternalStore(subscribePageHeader, getPageHeaderSnapshot, () => null);
   const title = meta?.title ?? fallbackTitle(pathname);
 
@@ -65,7 +66,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, pathname }: TopbarProps & {
             <CircleHelp className="h-4 w-4" />
           </button>
           <div className="hidden items-center border-l border-border pl-3 lg:flex">
-            <UserMenu userName={userName} roleLabel={roleLabel} variant="compact" />
+            <UserMenu userName={userName} roleLabel={roleLabel} avatarUrl={avatarUrl} variant="compact" />
           </div>
         </div>
       </div>
@@ -80,7 +81,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, pathname }: TopbarProps & {
 // Figma-matched treatment rather than the shared `SearchInput` (that
 // component's default look is shared with several thunder-care pages this
 // task shouldn't touch).
-function DefaultTopbar({ userName, roleLabel }: TopbarProps) {
+function DefaultTopbar({ userName, roleLabel, avatarUrl }: TopbarProps) {
   return (
     // 2026-09-19: h-[88px]/px-9/gap-5 -> h-[68px]/px-6/gap-4 — measured off
     // the design reference's own header (69px tall, px-6), and matches the
@@ -118,7 +119,7 @@ function DefaultTopbar({ userName, roleLabel }: TopbarProps) {
           <HelpIcon className="h-5 w-5" />
         </button>
         <div className="border-l border-[#e6edf9] pl-4 dark:border-zinc-800">
-          <UserMenu userName={userName} roleLabel={roleLabel} />
+          <UserMenu userName={userName} roleLabel={roleLabel} avatarUrl={avatarUrl} />
         </div>
       </div>
     </header>
