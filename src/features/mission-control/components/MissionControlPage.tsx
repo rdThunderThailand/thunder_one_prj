@@ -4,7 +4,7 @@ import { ActivityFeedCard } from "./ActivityFeedCard";
 import { BriefTeaserCard } from "./BriefTeaserCard";
 import { HomeBanner } from "./HomeBanner";
 import { HomeHeader } from "./HomeHeader";
-import { ActivityFeedSkeleton, HomeStatTilesSkeleton, OrgOverviewSkeleton } from "./HomeSkeletons";
+import { ActivityFeedSkeleton, HomeStatTilesSkeleton, OrgOverviewSkeleton, TasksCardSkeleton } from "./HomeSkeletons";
 import { HomeStatTilesRow } from "./HomeStatTilesRow";
 import { NewsCard } from "./NewsCard";
 import { OrgOverviewRow } from "./OrgOverviewRow";
@@ -12,6 +12,7 @@ import { TasksCard } from "./TasksCard";
 import { WorkspaceCardsRow } from "./WorkspaceCardsRow";
 import type { HomeStats } from "../core-mapper";
 import type { CoreRecentLog } from "../services/dashboard-api";
+import type { MyWork } from "@/features/my-work";
 
 interface MissionControlPageProps {
   userName: string;
@@ -23,6 +24,9 @@ interface MissionControlPageProps {
   /** `../services/dashboard-api.ts`'s `recentLogs` — backs
    *  `ActivityFeedCard`. Resolves to `null` when the fetch failed. */
   recentLogs: Promise<CoreRecentLog[] | null>;
+  /** features/my-work/load-my-work.ts — backs `TasksCard`, the same items
+   *  as My Work and the Topbar bell. */
+  work: Promise<MyWork>;
 }
 
 // The homepage (CEO/Executive/company_admin/tenant/system default landing —
@@ -31,7 +35,7 @@ interface MissionControlPageProps {
 // coordinating session's new mockup, replacing the old CEO-strategic-brief
 // layout (StrategicBriefCard/DecisionsCard/AskThunderOneCard/
 // TodayScheduleCard — all retired, see mock-data.ts's own header comment).
-export function MissionControlPage({ userName, stats, recentLogs }: MissionControlPageProps) {
+export function MissionControlPage({ userName, stats, recentLogs, work }: MissionControlPageProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* 2026-09-16 — the skyline photo sits absolutely behind this whole
@@ -79,7 +83,9 @@ export function MissionControlPage({ userName, stats, recentLogs }: MissionContr
               </div>
             </div>
             <div className="flex flex-col gap-6">
-              <TasksCard />
+              <Suspense fallback={<TasksCardSkeleton />}>
+                <TasksCard work={work} />
+              </Suspense>
               <NewsCard />
             </div>
           </div>

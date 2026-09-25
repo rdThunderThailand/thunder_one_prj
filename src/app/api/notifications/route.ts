@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveRole, resolveShellVariant } from "@/config/rbac";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
-import { getDraftPublications, getPartnerApplications, getRoster } from "@/features/my-work/services/work-sources-api";
-import { buildMyWork } from "@/features/my-work/work-items";
+import { loadMyWork } from "@/features/my-work/load-my-work";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +20,7 @@ export async function GET() {
   }
 
   const scope = resolveShellVariant(resolveRole(session)) === "employee" ? "personal" : "admin";
-  const [partnerApplications, roster, drafts] = await Promise.all([
-    getPartnerApplications(token),
-    scope === "admin" ? getRoster(token, session.tenantId) : Promise.resolve(null),
-    getDraftPublications(token),
-  ]);
-  const work = buildMyWork({ partnerApplications, roster, drafts }, session.userId, scope);
+  const work = await loadMyWork(token, session.tenantId, session.userId, scope);
 
   return NextResponse.json({
     items: work.items.map(({ id, kind, title, dateNote, href }) => ({ id, kind, title, dateNote, href })),

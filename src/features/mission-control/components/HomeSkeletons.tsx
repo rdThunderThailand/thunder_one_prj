@@ -68,6 +68,29 @@ export function ActivityFeedSkeleton() {
   );
 }
 
+/** `TasksCard`'s `<Suspense>` fallback. */
+export function TasksCardSkeleton() {
+  return (
+    <Card className="p-4">
+      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">งานที่ต้องดำเนินการ</h2>
+      <ul className="flex flex-col gap-3">
+        {[0, 1, 2].map((i) => (
+          <li
+            key={i}
+            className="flex items-start gap-2.5"
+          >
+            <Skeleton className="mt-1.5 h-1.5 w-1.5 rounded-full" />
+            <div className="flex-1">
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="mt-1 h-3 w-24" />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 /** A card with a heading bar and `rows` two-line list rows — the right-rail
  *  Tasks/News shape. */
 function RailCardSkeleton({ rows }: { rows: number }) {

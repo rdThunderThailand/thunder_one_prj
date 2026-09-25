@@ -1,8 +1,8 @@
 import { requireShellAccess, resolveShellVariant, resolveRole } from "@/config/rbac";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 import { EmployeeMyWorkPage, ManagerMyWorkPage, MyWorkPage } from "@/features/my-work";
-import { getDraftPublications, getPartnerApplications, getRoster } from "@/features/my-work/services/work-sources-api";
-import { buildMyWork, EMPTY_MY_WORK, type MyWork, type WorkScope } from "@/features/my-work/work-items";
+import { loadMyWork } from "@/features/my-work/load-my-work";
+import type { WorkScope } from "@/features/my-work/work-items";
 
 // All three variants read the same real `MyWork` (see
 // features/my-work/work-items.ts); only the scope differs — employees get
@@ -21,15 +21,7 @@ export default async function MyWorkRoute() {
   const tenantId = session !== "forbidden" ? session.tenantId : null;
   const userId = session !== "forbidden" ? session.userId : null;
 
-  let work: MyWork = EMPTY_MY_WORK;
-  if (token && tenantId) {
-    const [partnerApplications, roster, drafts] = await Promise.all([
-      getPartnerApplications(token),
-      scope === "admin" ? getRoster(token, tenantId) : Promise.resolve(null),
-      getDraftPublications(token),
-    ]);
-    work = buildMyWork({ partnerApplications, roster, drafts }, userId, scope);
-  }
+  const work = await loadMyWork(token, tenantId, userId, scope);
 
   if (variant === "manager") {
     return (
