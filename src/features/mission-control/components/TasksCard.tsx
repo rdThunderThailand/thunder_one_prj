@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { ArrowRightIcon } from "@/components/ui/icons";
-import { actionItems } from "../mock-data";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ArrowRightIcon, ClipboardIcon } from "@/components/ui/icons";
 
-const DOT_COLOR = { red: "bg-red-500", blue: "bg-blue-500" } as const;
-
-// "งานที่ต้องดำเนินการ" — mock (`../mock-data.ts`'s `actionItems`); no real
-// cross-App task/approval-aggregation backend exists yet. Replaces the old
-// NeedsAttentionCard (same underlying idea, restyled to match the new
-// mockup's dot+time-ago list instead of icon-badge+severity-chip rows).
+// "งานที่ต้องดำเนินการ" — no cross-App task/approval-aggregation source
+// exists in Core yet, so this renders an empty state instead of placeholder
+// tasks (the old `actionItems` mock was removed 2026-09-25). "ดูทั้งหมด" still
+// goes to /my-work, which is a real route.
 export function TasksCard() {
   return (
     <Card className="p-4">
@@ -22,18 +20,12 @@ export function TasksCard() {
           <ArrowRightIcon className="h-3 w-3" />
         </Link>
       </div>
-      <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
-        {actionItems.map((item) => (
-          <li key={item.id} className="flex items-start gap-2.5 py-2.5 first:pt-0 last:pb-0">
-            <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${DOT_COLOR[item.tone]}`} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-zinc-900 dark:text-zinc-50">{item.title}</p>
-              <p className="text-xs text-zinc-400">{item.source}</p>
-            </div>
-            <span className="shrink-0 whitespace-nowrap text-xs text-zinc-400">{item.timeAgo}</span>
-          </li>
-        ))}
-      </ul>
+      <EmptyState
+        icon={ClipboardIcon}
+        title="ยังไม่มีข้อมูลงานที่ต้องดำเนินการ"
+        detail="งานจาก Workspace ต่าง ๆ จะแสดงที่นี่เมื่อระบบพร้อม"
+        compact
+      />
     </Card>
   );
 }

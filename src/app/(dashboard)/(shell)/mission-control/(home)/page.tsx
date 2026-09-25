@@ -2,7 +2,8 @@ import { getAssetSummary } from "@/features/asset-intelligence/assets";
 import { EmployeeMissionControlPage, ManagerMissionControlPage } from "@/features/asset-intelligence/departments";
 import { requireShellAccess, resolveShellVariant, resolveRole } from "@/config/rbac";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
-import { computeHomeStats } from "@/features/mission-control/core-mapper";
+import { computeHomeStats, type HomeStats } from "@/features/mission-control/core-mapper";
+import { getChannelHealthSummary } from "@/features/mission-control/services/channels-api";
 import { getRecentLogs } from "@/features/mission-control/services/dashboard-api";
 import { MissionControlPage } from "@/features/mission-control";
 import { getMembers } from "@/features/people/personnel";
@@ -29,17 +30,29 @@ export default async function MissionControlRoute() {
   const tenantId = session !== "forbidden" ? session.tenantId : null;
 
   if (!token || !tenantId) {
-    return <MissionControlPage userName={userName} stats={null} recentLogs={null} />;
+    return (
+      <MissionControlPage
+        userName={userName}
+        stats={Promise.resolve(computeHomeStats(null, null, null, new Date()))}
+        recentLogs={Promise.resolve(null)}
+      />
+    );
   }
 
-  const [memberPage, assetSummary, recentLogs] = await Promise.all([
+  // Deliberately not awaited: MissionControlPage streams each data section
+  // behind its own <Suspense> skeleton, so the page shell paints right away.
+  const stats: Promise<HomeStats> = Promise.all([
     getMembers(token, tenantId, { limit: 100 }),
     getAssetSummary(token, tenantId),
-    getRecentLogs(token, tenantId),
-  ]);
+    getChannelHealthSummary(token),
+  ]).then(([memberPage, assetSummary, channels]) => computeHomeStats(memberPage, assetSummary, channels, new Date()));
+  const recentLogs = getRecentLogs(token, tenantId);
 
-  const stats =
-    memberPage === null ? null : computeHomeStats(memberPage.rows, memberPage.count, assetSummary?.total ?? null, new Date());
-
-  return <MissionControlPage userName={userName} stats={stats} recentLogs={recentLogs} />;
+  return (
+    <MissionControlPage
+      userName={userName}
+      stats={stats}
+      recentLogs={recentLogs}
+    />
+  );
 }

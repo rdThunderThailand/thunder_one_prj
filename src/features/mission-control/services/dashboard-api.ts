@@ -4,12 +4,13 @@
 //
 // `GET /tenants/:id/dashboard` is a tenant-wide platform dashboard, not a
 // People-specific one — `recentLogs` come from `audit_events`, a generic
-// system audit trail (`action`/`description` strings). people/overview's own
-// services/dashboard-api.ts calls this exact same endpoint for its "today's
-// activity" card; this is a second, independent copy (not a shared import)
-// so mission-control doesn't reach into another feature's internal service
-// file — same "each feature owns its own services/*-api.ts" convention used
-// everywhere else in this app.
+// system audit trail (`action`/`description` strings). Display counts do
+// NOT come from this endpoint's `playerStatus` (it counts the older
+// `devices` table) — see channels-api.ts. people/overview's own
+// services/dashboard-api.ts calls this exact same endpoint for its "today's activity" card; this is a second,
+// independent copy (not a shared import) so mission-control doesn't reach
+// into another feature's internal service file — same "each feature owns its
+// own services/*-api.ts" convention used everywhere else in this app.
 import { coreGet } from "@/lib/core/core-get";
 
 export interface CoreRecentLog {

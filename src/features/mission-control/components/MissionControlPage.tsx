@@ -1,8 +1,10 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import { ActivityFeedCard } from "./ActivityFeedCard";
 import { BriefTeaserCard } from "./BriefTeaserCard";
 import { HomeBanner } from "./HomeBanner";
 import { HomeHeader } from "./HomeHeader";
+import { ActivityFeedSkeleton, HomeStatTilesSkeleton, OrgOverviewSkeleton } from "./HomeSkeletons";
 import { HomeStatTilesRow } from "./HomeStatTilesRow";
 import { NewsCard } from "./NewsCard";
 import { OrgOverviewRow } from "./OrgOverviewRow";
@@ -13,15 +15,14 @@ import type { CoreRecentLog } from "../services/dashboard-api";
 
 interface MissionControlPageProps {
   userName: string;
-  /** Real since 2026-09-16 (`../core-mapper.ts`'s `computeHomeStats`) —
-   *  `null` when the underlying People/Asset fetches failed. Backs 3 of the
-   *  8 stat tiles across `HomeStatTilesRow`/`OrgOverviewRow`; the rest stay
-   *  mock (see those components' own doc comments for exactly which and
-   *  why). */
-  stats: HomeStats | null;
-  /** Real since 2026-09-16 (`../services/dashboard-api.ts`) — backs
-   *  `ActivityFeedCard`. `null` means the fetch failed. */
-  recentLogs: CoreRecentLog[] | null;
+  /** `../core-mapper.ts`'s `computeHomeStats` — backs every number in
+   *  `HomeStatTilesRow`/`OrgOverviewRow`. Passed as an un-awaited promise so
+   *  those sections stream in behind their own `<Suspense>` skeletons while
+   *  the static parts (header, Brief, workspace cards) paint immediately. */
+  stats: Promise<HomeStats>;
+  /** `../services/dashboard-api.ts`'s `recentLogs` — backs
+   *  `ActivityFeedCard`. Resolves to `null` when the fetch failed. */
+  recentLogs: Promise<CoreRecentLog[] | null>;
 }
 
 // The homepage (CEO/Executive/company_admin/tenant/system default landing —
@@ -63,12 +64,18 @@ export function MissionControlPage({ userName, stats, recentLogs }: MissionContr
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="flex flex-col gap-6 lg:col-span-2">
               <BriefTeaserCard />
-              <HomeStatTilesRow stats={stats} />
+              <Suspense fallback={<HomeStatTilesSkeleton />}>
+                <HomeStatTilesRow stats={stats} />
+              </Suspense>
               <WorkspaceCardsRow />
               {/* Side-by-side per the mockup (two ~equal panels), not stacked. */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <OrgOverviewRow stats={stats} />
-                <ActivityFeedCard logs={recentLogs} />
+                <Suspense fallback={<OrgOverviewSkeleton />}>
+                  <OrgOverviewRow stats={stats} />
+                </Suspense>
+                <Suspense fallback={<ActivityFeedSkeleton />}>
+                  <ActivityFeedCard logs={recentLogs} />
+                </Suspense>
               </div>
             </div>
             <div className="flex flex-col gap-6">
