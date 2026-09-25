@@ -10,11 +10,10 @@ import { orgOverviewMock } from "../mock-data";
  * fabricated percentage deltas on any tile — same "no historical snapshot,
  * so no invented trend" discipline used everywhere else in this app.
  */
-// Tone hex values approximate the Figma mockup (node 396:4742) — the exact
-// design-context fetch for this node hit the Figma MCP's rate limit
-// mid-session, so these are read off the mockup screenshot rather than the
-// node's literal fill values (unlike HomeStatTilesRow/WorkspaceCardsRow,
-// which came from an exact fetch).
+// Chip hues follow the mockup (node 396:4742): people blue, assets purple,
+// displays green, requests red. The node's literal fills were never fetched
+// (Figma MCP rate limit), so the hex pairs reuse the exact fetched values of
+// the same hues from WorkspaceCardsRow (purple) and HomeStatTilesRow (the rest).
 export function OrgOverviewRow({ stats }: { stats: HomeStats | null }) {
   const displays = orgOverviewMock.find((t) => t.id === "displays");
   const openRequests = orgOverviewMock.find((t) => t.id === "open-requests");
@@ -36,7 +35,7 @@ export function OrgOverviewRow({ stats }: { stats: HomeStats | null }) {
           </p>
         </div>
         <div>
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#fff5df] text-[#f29a00] dark:bg-amber-500/10 dark:text-amber-400">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f1e8ff] text-[#7117df] dark:bg-violet-500/10 dark:text-violet-400">
             <BoxIcon className="h-4 w-4" />
           </span>
           <p className="mt-2 text-xs text-zinc-400">สินทรัพย์ทั้งหมด</p>
@@ -45,7 +44,7 @@ export function OrgOverviewRow({ stats }: { stats: HomeStats | null }) {
           </p>
         </div>
         <div>
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f7ff] text-[#0ea5e9] dark:bg-sky-500/10 dark:text-sky-400">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e7faef] text-[#09a96d] dark:bg-emerald-500/10 dark:text-emerald-400">
             <MonitorIcon className="h-4 w-4" />
           </span>
           <p className="mt-2 text-xs text-zinc-400">{displays?.label}</p>
