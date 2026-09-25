@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
+import { customerWorkspaceNav } from "@/config/nav/customer-workspace";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import { peopleNav } from "@/config/nav/people";
 import { settingsNavItems } from "@/config/nav/settings";
@@ -26,12 +27,18 @@ function resolveAppNavConfig(appId: string, pathname: string): NavConfig {
   if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
   if (appId === "thunder-care") return resolveThunderCareNav(pathname);
   if (appId === "people") return peopleNav;
+  if (appId === "customer-workspace") return customerWorkspaceNav;
   return mediaWorkspaceNav;
 }
 
 function isActivePath(pathname: string, href?: string) {
   if (!href) return false;
-  if (href === "/media-workspace") return pathname === href;
+  // Exact-match only for Apps whose "overview" href is flat (no further
+  // path segments distinguish it from its own sub-pages) — otherwise the
+  // prefix check below double-highlights both the overview row and
+  // whichever sub-page is actually active, since every sub-page's path
+  // starts with the overview href too.
+  if (href === "/media-workspace" || href === "/customer-workspace") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -379,6 +386,25 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
         ) : collapsed ? (
           // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
           <img src="/icon.svg" alt="ThunderOne" className="rounded-[9px]" style={{ width: 32, height: 32 }} />
+        ) : activeApp?.id === "customer-workspace" ? (
+          // Same "mark + 2-line text stack" layout as Media Workspace's own
+          // t1-sidebar-brand-block.svg (confirmed against a screenshot of it
+          // 2026-09-23) — that asset bakes in the literal string "Media
+          // Workspace" though, so it can't be reused for a different
+          // caption; this rebuilds the same layout with live text/tagline
+          // instead of a second baked-in SVG per App.
+          <div className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/t1-mark.svg" alt="ThunderOne" className="h-8 w-auto" />
+            <div className="flex flex-col justify-center">
+              <span className="text-lg font-extrabold leading-tight tracking-tight">
+                <span className="text-[#010F29] dark:text-zinc-50">Thunder</span>
+                {" "}
+                <span className="text-[#0C60FA]">One</span>
+              </span>
+              <span className="text-xs leading-tight text-zinc-500 dark:text-zinc-400">{activeApp.tagline}</span>
+            </div>
+          </div>
         ) : (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}

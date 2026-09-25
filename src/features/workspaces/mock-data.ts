@@ -58,12 +58,17 @@ export const workspaceTiles: WorkspaceTileData[] = [
     collaboratorsOverflow: 8,
   },
   {
+    // Was an inert "CRM" placeholder tile (no href — the domain had no real
+    // App behind it yet). customer-workspace shipped 2026-09-23 and is now
+    // registered in config/apps.tsx, so this points there instead of
+    // duplicating the concept as a second, separately-named tile.
     id: "crm",
+    href: appHref("customer-workspace"),
     icon: "users",
     iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-    name: "CRM",
-    description: "Manage leads, opportunities, customers and activities.",
-    status: { label: "Updated 15 min ago", kind: "updated" },
+    name: "Customer Workspace",
+    description: "Manage customers, contracts, and renewals in one place.",
+    status: { label: "Active", kind: "active" },
   },
   {
     id: "thunder-care",
@@ -87,6 +92,7 @@ export const workspaceTiles: WorkspaceTileData[] = [
     collaborators: ["May H.", "Nattaya P."],
     collaboratorsOverflow: 3,
   },
+
   {
     id: "projects",
     icon: "clipboard",
@@ -116,7 +122,7 @@ export interface RecentlyOpenedData {
 export const recentlyOpened: RecentlyOpenedData[] = [
   { id: "r-1", icon: "megaphone", iconTone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400", name: "Media Workspace", timeAgo: "2 min ago" },
   { id: "r-2", icon: "box", iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", name: "Asset Intelligence", timeAgo: "1 hour ago" },
-  { id: "r-3", icon: "users", iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400", name: "CRM", timeAgo: "2 hours ago" },
+  { id: "r-3", icon: "users", iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400", name: "Customer Workspace", timeAgo: "2 hours ago" },
   { id: "r-4", icon: "chart", iconTone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400", name: "Analytics", timeAgo: "Yesterday" },
 ];
 
@@ -148,7 +154,7 @@ export interface WorkspaceHealthRow {
 export const workspaceHealth: WorkspaceHealthRow[] = [
   { id: "wh-media", icon: "megaphone", iconTone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400", name: "Media Workspace", status: "Healthy" },
   { id: "wh-asset", icon: "box", iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", name: "Asset Intelligence", status: "Healthy" },
-  { id: "wh-crm", icon: "users", iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400", name: "CRM", status: "Needs attention" },
+  { id: "wh-crm", icon: "users", iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400", name: "Customer Workspace", status: "Healthy" },
   { id: "wh-thunder-care", icon: "headset", iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", name: "Thunder Care", status: "Healthy" },
 ];
 
@@ -215,12 +221,15 @@ export const managerWorkspaceTiles: ManagerWorkspaceTileData[] = [
     roleLabel: "Editor",
   },
   {
+    // Was inert (no href) — customer-workspace is now a real App
+    // (config/apps.tsx), same fix as the CEO variant's "crm" tile above.
     id: "mw-crm",
+    href: "/customer-workspace",
     icon: "users",
     iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
     category: "Customer",
-    name: "CRM Workspace",
-    description: "Manage customers, sales opportunities, and follow-ups.",
+    name: "Customer Workspace",
+    description: "Manage customers, contracts, and renewals in one place.",
     members: ["Ploy S.", "Tan T.", "Fah F."],
     membersOverflow: 15,
     roleLabel: "User",
@@ -276,6 +285,7 @@ export const managerWorkspaceTiles: ManagerWorkspaceTileData[] = [
     membersOverflow: 5,
     roleLabel: "User",
   },
+
   {
     id: "mw-analytics",
     icon: "chart",
@@ -336,7 +346,7 @@ export const managerRecentlyOpened: ManagerRecentlyOpenedData[] = [
   { id: "mro-1", icon: "megaphone", label: "Media Workspace", countLabel: "2 opened" },
   { id: "mro-2", icon: "clipboard", label: "Project", countLabel: "15 opened" },
   { id: "mro-3", icon: "chart", label: "Analytics", countLabel: "1 opened" },
-  { id: "mro-4", icon: "users", label: "CRM", countLabel: "2 opened" },
+  { id: "mro-4", icon: "users", label: "Customer Workspace", countLabel: "2 opened" },
   { id: "mro-5", icon: "box", label: "Document", countLabel: "3 opened" },
 ];
 
@@ -414,12 +424,14 @@ export const employeeWorkspaceTiles: EmployeeWorkspaceTileData[] = [
     roleLabel: "Editor",
   },
   {
+    // Was inert (no href) — same fix as the other 2 variants' CRM tiles.
     id: "ew-crm",
+    href: "/customer-workspace",
     icon: "users",
     iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
     category: "Customer",
-    name: "CRM Workspace",
-    description: "Manage customers, sales opportunities, and follow-ups.",
+    name: "Customer Workspace",
+    description: "Manage customers, contracts, and renewals in one place.",
     members: ["Tan T.", "Fah F."],
     membersOverflow: 6,
     roleLabel: "User",
@@ -459,6 +471,7 @@ export const employeeWorkspaceTiles: EmployeeWorkspaceTileData[] = [
     membersOverflow: 3,
     roleLabel: "User",
   },
+
   {
     id: "ew-analytics",
     icon: "chart",
@@ -544,5 +557,5 @@ export const employeeRecentlyOpened: ManagerRecentlyOpenedData[] = [
   { id: "ero-1", icon: "megaphone", label: "Media Workspace", countLabel: "2 min ago" },
   { id: "ero-2", icon: "clipboard", label: "Project Workspace", countLabel: "1 hour ago" },
   { id: "ero-3", icon: "chart", label: "Analytics Workspace", countLabel: "3 hours ago" },
-  { id: "ero-4", icon: "users", label: "CRM Workspace", countLabel: "Yesterday, 10:30" },
+  { id: "ero-4", icon: "users", label: "Customer Workspace", countLabel: "Yesterday, 10:30" },
 ];
