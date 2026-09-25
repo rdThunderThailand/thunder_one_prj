@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { requireShellAccess, resolveShellVariant, resolveRole } from "@/config/rbac";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 import { EmployeeMyWorkPage, ManagerMyWorkPage, MyWorkPage } from "@/features/my-work";
 import { loadMyWork } from "@/features/my-work/load-my-work";
 import type { WorkScope } from "@/features/my-work/work-items";
+
+export const metadata: Metadata = { title: "งานของฉัน" };
 
 // All three variants read the same real `MyWork` (see
 // features/my-work/work-items.ts); only the scope differs — employees get

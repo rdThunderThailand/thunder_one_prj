@@ -395,7 +395,7 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
           <MediaWorkspaceBrand collapsed={collapsed} />
         ) : collapsed ? (
           // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
-          <img src="/icon.svg" alt="ThunderOne" className="rounded-[9px]" style={{ width: 32, height: 32 }} />
+          <img src="/brand/t1-mark.svg" alt="ThunderOne" style={{ width: 32, height: 32 }} />
         ) : activeApp?.id === "customer-workspace" ? (
           // Same "mark + 2-line text stack" layout as Media Workspace's own
           // t1-sidebar-brand-block.svg (confirmed against a screenshot of it

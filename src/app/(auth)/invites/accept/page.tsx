@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AcceptInviteButton, AcceptInviteForm } from "@/features/auth";
 import { SignOutButton } from "@/features/auth/components/SignOutButton";
 import { getAuthToken } from "@/features/auth/services/get-session";
 import { getCurrentUserEmail, getInviteDetails } from "@/features/auth/services/invites.service";
 import type { InviteStatus } from "@/features/auth/types/auth.types";
+
+export const metadata: Metadata = { title: "ตอบรับคำเชิญ" };
 
 interface PageProps {
   searchParams: Promise<{ token?: string }>;

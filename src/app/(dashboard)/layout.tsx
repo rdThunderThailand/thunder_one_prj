@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
 import { getSession } from "@/features/auth/services/get-session";
+
+// Everything behind login is private tenant data — never index it, even if
+// a crawler somehow gets a session (robots.ts also disallows crawling).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 // Route-group layout for the authenticated dashboard shell. Gates the whole
 // shell on tenant access so a member of no served tenant never reaches a page

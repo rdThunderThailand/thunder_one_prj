@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireShellAccess, resolveShellVariant, resolveRole } from "@/config/rbac";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 import { EmployeeWorkspacesPage, ManagerWorkspacesPage, WorkspacesPage } from "@/features/workspaces";
@@ -7,6 +8,8 @@ import {
   type CoreRecentLog,
   type WorkspaceStats,
 } from "@/features/workspaces/services/workspace-stats-api";
+
+export const metadata: Metadata = { title: "พื้นที่ทำงาน" };
 
 // Every variant shows the same catalog (features/workspaces/catalog.ts) with
 // real per-App stats; only the manager variant also reads the activity log.

@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { resolveShellVariant, resolveRole } from "@/config/rbac";
 import { getSession } from "@/features/auth/services/get-session";
 import { Card } from "@/components/ui/Card";
 import { EmployeeGovernancePage, ManagerGovernancePage } from "@/features/governance";
+
+export const metadata: Metadata = { title: "Governance" };
 
 // Named after the Asset Intelligence requirement doc's "Governance Layer"
 // (ownership/permission/policy/audit), promoted to shell-level —
