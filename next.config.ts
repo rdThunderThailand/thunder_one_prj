@@ -21,6 +21,19 @@ const nextConfig: NextConfig = {
     // a long dev session and eventually OOMs the node process. Disable it.
     turbopackFileSystemCacheForDev: false,
   },
+  // Redirect-only index routes, resolved here before any rendering. As
+  // page.tsx redirects they first ran the whole (dashboard) layout — three
+  // sequential Core calls in getSession() — only to throw the render away,
+  // roughly doubling time-to-first-byte for every tile/sidebar link to them.
+  // The page.tsx files stay as a fallback.
+  async redirects() {
+    return [
+      { source: "/asset-intelligence", destination: "/asset-intelligence/assets", permanent: false },
+      { source: "/thunder-care", destination: "/thunder-care/work-orders", permanent: false },
+      { source: "/media-workspace/compositions", destination: "/media-workspace/layouts", permanent: false },
+      { source: "/media-workspace/compositions/create", destination: "/media-workspace/layouts/create", permanent: false },
+    ];
+  },
   images: {
     remotePatterns: [
       {
