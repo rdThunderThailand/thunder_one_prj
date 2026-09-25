@@ -12,7 +12,7 @@ The homepage — default landing content for CEO/Executive/company_admin/tenant/
   - `WorkspaceCardsRow` — 3 bigger People/Asset/Media cards (real links to each App's `basePath`) plus "ดูทั้งหมด →" to the full `/work-space` launcher. Replaces this page's use of the old compact `WorkspacesRow` tile grid (that component was deleted — confirmed unused anywhere else first).
   - `OrgOverviewRow` — บุคลากรทั้งหมด/สินทรัพย์ทั้งหมด/จอแสดงผล real (`stats`); คำขอที่เปิดอยู่ always "-" (same Thunder Care gap). No % deltas — no historical snapshot to compute them from.
   - `ActivityFeedCard` — real, `GET /tenants/:id/dashboard`'s tenant-wide `recentLogs` (generic `audit_events`, not curated). `null` (fetch failed) and `[]` (loaded, genuinely empty) render distinct states.
-  - `TasksCard` — "งานที่ต้องดำเนินการ", empty state — no cross-App task/approval-aggregation source exists in Core.
+  - `TasksCard` — "งานที่ต้องดำเนินการ": the top 4 of the same items as My Work and the Topbar bell (`features/my-work/load-my-work.ts`, admin scope), streamed behind `TasksCardSkeleton`; empty / couldn't-load states.
   - `NewsCard` — "ข่าวสารและอัปเดต", empty state — no announcements/CMS source exists in Core.
   - `HomeBanner` — the bottom dismissible banner; a real, working dismiss persisted to `localStorage` (not just decorative).
   - `ApprovalsPage` (CEO-04), `InsightsPage` (CEO-05), `ReportsPage` (CEO-05) — unrelated sub-routes (`/mission-control/{approvals,insights,reports}`), not touched by the 2026-09-16 redesign.

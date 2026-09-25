@@ -6,6 +6,8 @@ import { computeHomeStats, type HomeStats } from "@/features/mission-control/cor
 import { getChannelHealthSummary } from "@/features/mission-control/services/channels-api";
 import { getRecentLogs } from "@/features/mission-control/services/dashboard-api";
 import { MissionControlPage } from "@/features/mission-control";
+import { loadMyWork } from "@/features/my-work/load-my-work";
+import { EMPTY_MY_WORK } from "@/features/my-work/work-items";
 import { getMembers } from "@/features/people/personnel";
 
 // The dashboard layout already gates this route on tenant access; the
@@ -35,6 +37,7 @@ export default async function MissionControlRoute() {
         userName={userName}
         stats={Promise.resolve(computeHomeStats(null, null, null, new Date()))}
         recentLogs={Promise.resolve(null)}
+        work={Promise.resolve(EMPTY_MY_WORK)}
       />
     );
   }
@@ -47,12 +50,17 @@ export default async function MissionControlRoute() {
     getChannelHealthSummary(token),
   ]).then(([memberPage, assetSummary, channels]) => computeHomeStats(memberPage, assetSummary, channels, new Date()));
   const recentLogs = getRecentLogs(token, tenantId);
+  // Only the CEO/admin variant reaches here (manager/employee returned above),
+  // so the "admin" scope — same as My Work and the bell for this user.
+  const userId = session !== "forbidden" ? session.userId : null;
+  const work = loadMyWork(token, tenantId, userId, "admin");
 
   return (
     <MissionControlPage
       userName={userName}
       stats={stats}
       recentLogs={recentLogs}
+      work={work}
     />
   );
 }

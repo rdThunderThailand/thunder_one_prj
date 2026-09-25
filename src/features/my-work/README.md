@@ -12,6 +12,7 @@ Cross-App "what's waiting on me" rollup (`/my-work`), in three variants picked b
 | `draft` | `GET /media/publications?status=draft` where `created_by` is this user; a draft's schedule start is its due date | `/media-workspace/publications/:id` |
 | completed | partner applications this user reviewed (`actor_id`) | — |
 
+- `load-my-work.ts` — `loadMyWork(token, tenantId, userId, scope)`, the single loader shared by this page, the Topbar bell (`/api/notifications`) and Mission Control's TasksCard.
 - `work-items.ts` — `buildMyWork` normalizes the sources into one `MyWork` (`items`, `completed`, `available` per kind) plus the due-date helpers (`dueGroup`, `countByGroup`, `sortByUrgency`). `available[kind] === false` means the source failed or this user can't read it — tiles show "-" instead of 0. Scope `admin` (CEO + manager) includes tenant-wide follow-ups; `personal` (employee) only includes what's addressed to the user.
 - Only drafts can carry a real due date; everything else lands in "No due date" — nothing invents a deadline, priority, assignee or project.
 - Cards with no Core source render an `EmptyState`: calendar/schedule, recent documents, goals, announcements ("Important for You"). The "Inbox" tile shows "-". Quick Actions, Customize, Focus mode and the Ask ThunderOne bar are inert previews (not data).
