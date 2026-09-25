@@ -2,11 +2,12 @@
 
 import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CircleHelp, Search } from "lucide-react";
-import { ChevronDownIcon, HelpIcon, SearchIcon } from "@/components/ui/icons";
+import { CalendarDays, CircleHelp } from "lucide-react";
+import { ChevronDownIcon, HelpIcon } from "@/components/ui/icons";
 import { resolveActiveApp } from "@/config/apps";
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
+import { GlobalSearch } from "./GlobalSearch";
 import { NotificationBell } from "./NotificationBell";
 import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
 import { UserMenu } from "./UserMenu";
@@ -46,15 +47,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, pathname }: Topb
           {meta?.subtitle && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta.subtitle}</p>}
         </div>
 
-        <label className="relative mx-auto hidden w-full max-w-md md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="ค้นหาทุกอย่างใน ThunderOne..."
-            className="h-9 w-full rounded-lg border border-border bg-card pl-9 pr-14 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
-          />
-          <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">⌘ K</kbd>
-        </label>
+        <GlobalSearch variant="media" />
 
         <div className="flex items-center gap-2">
           <span className="hidden h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground sm:flex">
@@ -90,15 +83,7 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl }: TopbarProps) {
     <header className="flex h-[68px] items-center gap-4 border-b border-[#e6edf9] bg-white px-6 dark:border-zinc-800 dark:bg-zinc-950">
       {/* h-12/px-4 -> h-9/px-3, icon 24px -> 16px, matching the reference's
           own 36px-tall search bar. */}
-      <div className="flex h-9 w-full max-w-[700px] items-center gap-2.5 rounded-lg bg-[#eff5ff] px-3 dark:bg-zinc-900">
-        <SearchIcon className="h-4 w-4 shrink-0 text-[#6074a9] dark:text-zinc-500" />
-        <input
-          type="text"
-          placeholder="ค้นหาทุกอย่างใน ThunderOne..."
-          className="w-full bg-transparent text-xs text-[#071858] outline-none placeholder:text-[#6074a9] dark:text-zinc-100 dark:placeholder:text-zinc-500"
-        />
-        <kbd className="shrink-0 text-xs text-[#6074a9] dark:text-zinc-500">⌘ K</kbd>
-      </div>
+      <GlobalSearch variant="default" />
       {/* 2026-09-19: text-sm/font-bold -> text-xs/font-semibold, matching
           the design reference's own topbar controls (12px/600) — was
           14px/700, noticeably heavier/larger than the reference. Bell/Help

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -57,12 +58,13 @@ export function ChannelsListPage() {
   const [displayTimezone, setDisplayTimezone] = useState("Asia/Bangkok");
   const [groupCount, setGroupCount] = useState<number | null>(null);
 
-  const [state, setState] = useState(() => {
-    if (typeof window !== "undefined") {
-      return readListState(new URLSearchParams(window.location.search));
-    }
-    return readListState(new URLSearchParams());
-  });
+  // Initial state from useSearchParams(), not window.location: on a client-side
+  // navigation (a <Link> to ".../channels?q=kiosk", or the Topbar search) this
+  // renders before the browser URL updates, so window.location still held the
+  // previous page's query and the incoming ?q= was dropped and then wiped from
+  // the URL. Same source the Playlists/Layouts/Compositions lists use.
+  const searchParams = useSearchParams();
+  const [state, setState] = useState(() => readListState(new URLSearchParams(searchParams.toString())));
 
   const restore = useCallback(() => {
     setState(readListState(new URLSearchParams(window.location.search)));
