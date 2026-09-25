@@ -315,6 +315,7 @@ export function classifyPublicationAiring(
 /** "HH:MM" comparison. An end at or before the start means the window wraps midnight. */
 function withinDailyWindow(time: string, start: string, end: string): boolean {
   if (!start || !end) return true;
+  if (start === "00:00" && end === "23:59") return true;
   return end > start ? time >= start && time < end : time >= start || time < end;
 }
 
