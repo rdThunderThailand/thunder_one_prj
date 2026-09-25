@@ -92,7 +92,18 @@ export const workspaceTiles: WorkspaceTileData[] = [
     collaborators: ["May H.", "Nattaya P."],
     collaboratorsOverflow: 3,
   },
-
+  {
+    // Temporary Ops tool (Nie, 2026-09-23) — real App, real href, but
+    // deliberately small in scope (one page). Not "coming soon" like the
+    // tiles below it.
+    id: "lead-approval",
+    href: appHref("lead-approval"),
+    icon: "clipboard",
+    iconTone: "bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400",
+    name: "Lead Approval",
+    description: "Review and approve incoming tenant leads.",
+    status: { label: "Active", kind: "active" },
+  },
   {
     id: "projects",
     icon: "clipboard",
@@ -285,7 +296,19 @@ export const managerWorkspaceTiles: ManagerWorkspaceTileData[] = [
     membersOverflow: 5,
     roleLabel: "User",
   },
-
+  {
+    // Temporary Ops tool, same as the CEO variant's "lead-approval" tile.
+    id: "mw-lead-approval",
+    href: "/lead-approval",
+    icon: "clipboard",
+    iconTone: "bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400",
+    category: "Operations",
+    name: "Lead Approval",
+    description: "Review and approve incoming tenant leads.",
+    members: ["Golf T."],
+    membersOverflow: 2,
+    roleLabel: "Admin",
+  },
   {
     id: "mw-analytics",
     icon: "chart",
@@ -471,7 +494,19 @@ export const employeeWorkspaceTiles: EmployeeWorkspaceTileData[] = [
     membersOverflow: 3,
     roleLabel: "User",
   },
-
+  {
+    // Temporary Ops tool, same as the other 2 variants' Lead Approval tile.
+    id: "ew-lead-approval",
+    href: "/lead-approval",
+    icon: "clipboard",
+    iconTone: "bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400",
+    category: "Operations",
+    name: "Lead Approval",
+    description: "Review and approve incoming tenant leads.",
+    members: ["Golf T."],
+    membersOverflow: 1,
+    roleLabel: "User",
+  },
   {
     id: "ew-analytics",
     icon: "chart",
