@@ -1,25 +1,37 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
-import { ArrowRightIcon, MoreIcon } from "@/components/ui/icons";
-import { employeeTaskTabs, employeeTasksToday, type EmployeeTaskStatus } from "../mock-data";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ArrowRightIcon, CheckCircleIcon } from "@/components/ui/icons";
+import { dueGroup, formatDate, type CompletedItem, type WorkItem } from "../work-items";
+import { GROUP_META, KIND_META } from "./work-item-meta";
 
-const statusTone: Record<EmployeeTaskStatus, string> = {
-  "In Progress": "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-  "To Do": "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-};
+const TABS = ["Today", "Upcoming", "Completed", "All"] as const;
+type Tab = (typeof TABS)[number];
 
-export function MyTasksCard() {
-  const [activeTab, setActiveTab] = useState<(typeof employeeTaskTabs)[number]>(employeeTaskTabs[0]);
-  const showToday = activeTab === "Today";
+// The employee's own list over `MyWork` — "Today" includes overdue items,
+// "Upcoming" includes items with no due date.
+export function MyTasksCard({ items, completed, nowIso }: { items: WorkItem[]; completed: CompletedItem[]; nowIso: string }) {
+  const [activeTab, setActiveTab] = useState<Tab>("Today");
+  const now = new Date(nowIso);
+  const open = items.filter((item) => item.kind !== "waiting");
+  const visible =
+    activeTab === "Today"
+      ? open.filter((item) => ["overdue", "due-today"].includes(dueGroup(item, now)))
+      : activeTab === "Upcoming"
+        ? open.filter((item) => ["upcoming", "no-due"].includes(dueGroup(item, now)))
+        : open;
 
   return (
     <Card className="p-4">
       <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">My Tasks</h2>
-      <div role="tablist" className="mb-3 flex gap-1 border-b border-zinc-100 dark:border-zinc-800">
-        {employeeTaskTabs.map((tab) => (
+      <div
+        role="tablist"
+        className="mb-3 flex gap-1 border-b border-zinc-100 dark:border-zinc-800"
+      >
+        {TABS.map((tab) => (
           <button
             key={tab}
             type="button"
@@ -37,51 +49,65 @@ export function MyTasksCard() {
         ))}
       </div>
 
-      {showToday ? (
-        <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
-          {employeeTasksToday.map((task) => (
-            <li key={task.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
-              <div className="w-16 shrink-0">
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{task.time}</p>
-                <p className="text-xs text-zinc-400">{task.dueLabel}</p>
-              </div>
-              <div className="min-w-0 flex-1 basis-48">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{task.title}</p>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusTone[task.status]}`}>
-                    {task.status}
-                  </span>
-                </div>
-                <p className="truncate text-xs text-zinc-400">{task.project}</p>
-              </div>
-              <div className="flex items-center -space-x-2">
-                <Avatar name={task.assignee} size={26} className="ring-2 ring-white dark:ring-zinc-900" />
-                {task.assigneesExtra?.map((name) => (
-                  <Avatar key={name} name={name} size={26} className="ring-2 ring-white dark:ring-zinc-900" />
-                ))}
-                {task.assigneesOverflow && task.assigneesOverflow > 0 && (
-                  <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-zinc-100 text-[10px] font-semibold text-zinc-500 ring-2 ring-white dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-900">
-                    +{task.assigneesOverflow}
-                  </span>
-                )}
-                {!task.assigneesExtra && (
-                  <span className="ml-1.5 text-xs text-zinc-500 dark:text-zinc-400">{task.assignee}</span>
-                )}
-              </div>
-              <MoreIcon className="h-4 w-4 shrink-0 text-zinc-300" />
-            </li>
-          ))}
-        </ul>
+      {activeTab === "Completed" ? (
+        completed.length === 0 ? (
+          <EmptyState
+            icon={CheckCircleIcon}
+            title="Nothing completed yet"
+            detail="Work you finish will show here."
+            compact
+          />
+        ) : (
+          <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+            {completed.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-500" />
+                <p className="min-w-0 flex-1 truncate text-sm text-zinc-700 dark:text-zinc-200">{item.title}</p>
+                <span className="shrink-0 text-xs text-zinc-400">{formatDate(item.completedAt)}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : visible.length === 0 ? (
+        <EmptyState
+          icon={CheckCircleIcon}
+          title="You're all caught up"
+          detail="Nothing here needs your attention right now."
+          compact
+        />
       ) : (
-        <p className="py-8 text-center text-sm text-zinc-400" title="Not built yet">
-          Nothing here yet.
-        </p>
+        <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+          {visible.map((item) => {
+            const group = dueGroup(item, now);
+            return (
+              <li
+                key={item.id}
+                className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${KIND_META[item.kind].tone}`}>
+                  {KIND_META[item.kind].icon}
+                </span>
+                <div className="min-w-0 flex-1 basis-48">
+                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{item.title}</p>
+                  <p className="truncate text-xs text-zinc-400">
+                    {item.source} • <span className={group === "no-due" ? "" : GROUP_META[group].text}>{item.dateNote}</span>
+                  </p>
+                </div>
+                <Link
+                  href={item.href}
+                  aria-label={`Open ${item.title}`}
+                  className="shrink-0 text-zinc-400 hover:text-indigo-600"
+                >
+                  <ArrowRightIcon className="h-4 w-4" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
-
-      <button className="mt-3 flex items-center gap-1.5 border-t border-zinc-100 pt-3 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:border-zinc-800 dark:text-indigo-400">
-        View all tasks
-        <ArrowRightIcon className="h-3.5 w-3.5" />
-      </button>
     </Card>
   );
 }

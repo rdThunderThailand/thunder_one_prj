@@ -22,6 +22,12 @@ export function DonutChart({
   className = "",
 }: DonutChartProps) {
   const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
+  // Zero-value slices draw nothing but still take padding. And when a single
+  // slice is the whole chart, Recharts renders an exact 360° sector as a
+  // zero-length arc (start point == end point), so the ring disappears.
+  // Stopping just short of a full turn keeps it visible.
+  const data = segments.filter((s) => s.value > 0);
+  const endAngle = data.length === 1 ? -269.99 : -270;
   const outerRadius = size / 2;
   const innerRadius = Math.max(outerRadius - strokeWidth, 0);
 
@@ -35,7 +41,7 @@ export function DonutChart({
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={segments}
+            data={data}
             dataKey="value"
             nameKey="label"
             cx="50%"
@@ -43,13 +49,13 @@ export function DonutChart({
             innerRadius={innerRadius}
             outerRadius={outerRadius}
             startAngle={90}
-            endAngle={-270}
-            paddingAngle={segments.length > 1 ? 2 : 0}
+            endAngle={endAngle}
+            paddingAngle={data.length > 1 ? 2 : 0}
             stroke="#ffffff"
             strokeWidth={2}
             isAnimationActive={false}
           >
-            {segments.map((segment) => (
+            {data.map((segment) => (
               <Cell key={segment.label} fill={segment.color} />
             ))}
           </Pie>

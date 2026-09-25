@@ -35,7 +35,6 @@ export const shellNavItems: ShellNavItem[] = [
     sublabel: "งานและการอนุมัติ",
     href: "/my-work",
     icon: <CheckSquareIcon className="h-4 w-4 shrink-0" />,
-    badge: 3,
   },
   {
     label: "พื้นที่ทำงาน",
