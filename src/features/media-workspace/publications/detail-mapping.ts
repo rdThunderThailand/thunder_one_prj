@@ -9,6 +9,7 @@ export type ResumedDraft = {
   groupIds: string[];
   groupNamesById: Record<string, string>;
   scheduleForm: ScheduleForm;
+  playlistId: string | null;
   compositionId: string | null;
 };
 
@@ -57,6 +58,7 @@ export function detailToDraft(
     groupIds,
     groupNamesById,
     scheduleForm,
+    playlistId: detail.playlist?.id ?? null,
     compositionId: detail.composition?.id ?? null,
   };
 }

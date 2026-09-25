@@ -209,6 +209,24 @@ assert.equal(classifyPublicationAiring(monthly, at("2026-10-19T01:00:00Z")), "li
 // Same instant, schedule in UTC: it is the 18th there, so not an air day.
 assert.equal(classifyPublicationAiring({ ...monthly, timezone: "UTC" }, at("2026-10-18T18:00:00Z")), "next");
 
+// Exact 00:00-23:59 is the all-day sentinel: the final minute stays live, then
+// the next local calendar day's monthly rule applies. Other 23:59 ends stay exclusive.
+const monthlyAllDay: PublicationSchedule = {
+  ...monthly,
+  timezone: "UTC",
+  recurrence: { freq: "monthly", month_days: [19], daily_start: "00:00", daily_end: "23:59" },
+};
+assert.equal(classifyPublicationAiring(monthlyAllDay, at("2026-10-19T23:59:00Z")), "live");
+assert.equal(classifyPublicationAiring(monthlyAllDay, at("2026-10-19T23:59:59Z")), "live");
+assert.equal(classifyPublicationAiring(monthlyAllDay, at("2026-10-20T00:00:00Z")), "next");
+assert.equal(
+  classifyPublicationAiring({
+    ...monthlyAllDay,
+    recurrence: { freq: "monthly", month_days: [19], daily_start: "09:00", daily_end: "23:59" },
+  }, at("2026-10-19T23:59:00Z")),
+  "next",
+);
+
 // Resume round-trip keeps monthly intact — the bug it guards: a monthly draft reopened in the
 // wizard used to come back as a "range" and save as "plays every day".
 const monthlyForm = scheduleToForm(monthly);

@@ -110,6 +110,7 @@ export function CreatePublicationPage() {
       const draft = detailToDraft(detail, playlist);
 
       setBasicInfo(draft.basicInfo);
+      usePublicationDraftStore.getState().setPlaylistId(draft.playlistId);
       setAssetItems(draft.assetItems);
       setChannelIds(draft.channelIds);
       setGroupIds(draft.groupIds);
