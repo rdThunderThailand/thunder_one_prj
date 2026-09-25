@@ -6,6 +6,7 @@ import { useState } from "react";
 import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
 import { customerWorkspaceNav } from "@/config/nav/customer-workspace";
+import { leadApprovalNav } from "@/config/nav/lead-approval";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import { peopleNav } from "@/config/nav/people";
 import { settingsNavItems } from "@/config/nav/settings";
@@ -28,6 +29,7 @@ function resolveAppNavConfig(appId: string, pathname: string): NavConfig {
   if (appId === "thunder-care") return resolveThunderCareNav(pathname);
   if (appId === "people") return peopleNav;
   if (appId === "customer-workspace") return customerWorkspaceNav;
+  if (appId === "lead-approval") return leadApprovalNav;
   return mediaWorkspaceNav;
 }
 
