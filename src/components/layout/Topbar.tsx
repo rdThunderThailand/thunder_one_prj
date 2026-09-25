@@ -1,20 +1,19 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, CircleHelp, Search } from "lucide-react";
-import { BellIcon, ChevronDownIcon, HelpIcon, SearchIcon } from "@/components/ui/icons";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { CalendarDays, CircleHelp, Search } from "lucide-react";
+import { ChevronDownIcon, HelpIcon, SearchIcon } from "@/components/ui/icons";
 import { resolveActiveApp } from "@/config/apps";
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
+import { NotificationBell } from "./NotificationBell";
 import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
 import { UserMenu } from "./UserMenu";
 
 interface TopbarProps {
   userName: string;
   roleLabel?: string | null;
-  notificationCount?: number;
 }
 
 // Only the Overview route publishes into the title store today (its
@@ -36,7 +35,6 @@ function todayLabel() {
 // (docs/adr/0075). Every other App keeps the Topbar below unchanged.
 function MediaWorkspaceTopbar({ userName, roleLabel, pathname }: TopbarProps & { pathname: string }) {
   const meta = useSyncExternalStore(subscribePageHeader, getPageHeaderSnapshot, () => null);
-  const [bellOpen, setBellOpen] = useState(false);
   const title = meta?.title ?? fallbackTitle(pathname);
 
   return (
@@ -62,26 +60,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, pathname }: TopbarProps & {
             <CalendarDays className="h-3.5 w-3.5 text-primary" />
             {todayLabel()}
           </span>
-          <div className="relative">
-            <button
-              type="button"
-              className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-              aria-label="Notifications"
-              aria-expanded={bellOpen}
-              onClick={() => setBellOpen((open) => !open)}
-            >
-              <Bell className="h-4 w-4" />
-            </button>
-            {bellOpen && (
-              <>
-                <button type="button" aria-hidden="true" tabIndex={-1} className="fixed inset-0 z-10 cursor-default" onClick={() => setBellOpen(false)} />
-                <div className="absolute right-0 top-10 z-20 w-72 rounded-lg border border-border bg-popover p-2 shadow-float">
-                  <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Latest alerts</p>
-                  <EmptyState icon={Bell} title="No alerts yet" detail="There is no dedicated alerts feed yet." compact />
-                </div>
-              </>
-            )}
-          </div>
+          <NotificationBell variant="media" />
           <button type="button" className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground sm:grid" aria-label="Help">
             <CircleHelp className="h-4 w-4" />
           </button>
@@ -101,7 +80,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, pathname }: TopbarProps & {
 // Figma-matched treatment rather than the shared `SearchInput` (that
 // component's default look is shared with several thunder-care pages this
 // task shouldn't touch).
-function DefaultTopbar({ userName, roleLabel, notificationCount = 13 }: TopbarProps) {
+function DefaultTopbar({ userName, roleLabel }: TopbarProps) {
   return (
     // 2026-09-19: h-[88px]/px-9/gap-5 -> h-[68px]/px-6/gap-4 — measured off
     // the design reference's own header (69px tall, px-6), and matches the
@@ -131,17 +110,7 @@ function DefaultTopbar({ userName, roleLabel, notificationCount = 13 }: TopbarPr
           TH
           <ChevronDownIcon className="h-4 w-4 text-[#536999] dark:text-zinc-500" />
         </span>
-        <button
-          className="relative text-[#536999] hover:text-[#071858] dark:text-zinc-400 dark:hover:text-zinc-100"
-          aria-label="Notifications"
-        >
-          <BellIcon className="h-5 w-5" />
-          {notificationCount > 0 && (
-            <span className="absolute -right-1.5 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#fb2c36] px-1 text-[10px] font-medium text-white">
-              {notificationCount}
-            </span>
-          )}
-        </button>
+        <NotificationBell variant="default" />
         <button
           className="text-[#536999] hover:text-[#071858] dark:text-zinc-400 dark:hover:text-zinc-100"
           aria-label="Help"
