@@ -12,6 +12,8 @@ import {
   type CorePartnerApplication,
   type PartnerApplicationStatus,
 } from "../services/partner-applications-api";
+import type { CoreAuroraMigrationRequest } from "../services/aurora-migration-requests-api";
+import { AuroraMigrationRequestsCard } from "./AuroraMigrationRequestsCard";
 
 const STATUS_LABEL: Record<PartnerApplicationStatus, string> = {
   PENDING: "รอตรวจสอบ",
@@ -72,9 +74,13 @@ interface LeadApprovalPageProps {
    *  caller isn't a reviewer — same explicit-error-state discipline as
    *  every other feature in this app, not a silent fallback to mock rows. */
   applications: CorePartnerApplication[] | null;
+  /** `../services/aurora-migration-requests-api.ts`. `null` (not a
+   *  reviewer, or the fetch failed) hides the section entirely — Core's
+   *  handoff asks for a 403 to hide it, not show an error. */
+  auroraRequests: CoreAuroraMigrationRequest[] | null;
 }
 
-export function LeadApprovalPage({ applications }: LeadApprovalPageProps) {
+export function LeadApprovalPage({ applications, auroraRequests }: LeadApprovalPageProps) {
   const router = useRouter();
   const [rows, setRows] = useState(applications ?? []);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -270,6 +276,8 @@ export function LeadApprovalPage({ applications }: LeadApprovalPageProps) {
           </Card>
         </>
       )}
+
+      {auroraRequests !== null ? <AuroraMigrationRequestsCard requests={auroraRequests} /> : null}
     </div>
   );
 }
