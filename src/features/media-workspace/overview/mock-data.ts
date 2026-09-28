@@ -115,6 +115,6 @@ export const quickActions: QuickActionData[] = [
   { label: "Create Playlist", icon: "playlist", color: "blue", href: "/media-workspace/playlists/create" },
   { label: "Create Program", icon: "campaign", color: "amber" },
   { label: "Upload Media", icon: "upload", color: "emerald", href: "/media-workspace/assets/upload" },
-  { label: "Add Channel", icon: "channel", color: "teal" },
+  { label: "Add Channel", icon: "channel", color: "teal", href: "/media-workspace/channels?create=1" },
   { label: "Schedule Program", icon: "schedule", color: "violet" },
 ];

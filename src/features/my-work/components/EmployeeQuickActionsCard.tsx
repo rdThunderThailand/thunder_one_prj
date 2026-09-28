@@ -1,13 +1,12 @@
 import { Card } from "@/components/ui/Card";
 import { ClockIcon, PaperPlaneIcon, PlusIcon, UploadIcon } from "@/components/ui/icons";
-import { employeeQuickActions, type EmployeeQuickActionData } from "../mock-data";
 
-const iconFor: Record<EmployeeQuickActionData["icon"], React.ReactNode> = {
-  createTask: <PlusIcon />,
-  uploadFile: <UploadIcon />,
-  sendMessage: <PaperPlaneIcon />,
-  logTime: <ClockIcon />,
-};
+const employeeQuickActions = [
+  { id: "eqa-1", label: "Create Task", icon: <PlusIcon /> },
+  { id: "eqa-2", label: "Upload File", icon: <UploadIcon /> },
+  { id: "eqa-3", label: "Send Message", icon: <PaperPlaneIcon /> },
+  { id: "eqa-4", label: "Log Time", icon: <ClockIcon /> },
+];
 
 // Decorative — no create/upload/message/time-log flow exists yet.
 export function EmployeeQuickActionsCard() {
@@ -22,7 +21,7 @@ export function EmployeeQuickActionsCard() {
             className="flex cursor-not-allowed flex-col items-center gap-1.5 rounded-lg border border-zinc-100 p-2.5 text-center dark:border-zinc-800"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400">
-              {iconFor[action.icon]}
+              {action.icon}
             </span>
             <span className="text-[11px] leading-tight text-zinc-500 dark:text-zinc-400">{action.label}</span>
           </div>

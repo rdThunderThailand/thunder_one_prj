@@ -5,14 +5,20 @@ import { ScheduleCard } from "./ScheduleCard";
 import { StatTilesRow } from "./StatTilesRow";
 import { WorkQueue } from "./WorkQueue";
 import { WorkSummaryCard } from "./WorkSummaryCard";
+import type { MyWork } from "../work-items";
 
-export function MyWorkPage() {
-  const dataAsOf = new Date().toLocaleString("en-US", {
+// The CEO/admin variant. Every number and row comes from `work`
+// (`../work-items.ts`'s `buildMyWork`, real Core sources); sections with no
+// Core source render empty states.
+export function MyWorkPage({ work, nowIso }: { work: MyWork; nowIso: string }) {
+  const now = new Date(nowIso);
+  const dataAsOf = now.toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Bangkok",
   });
 
   return (
@@ -21,24 +27,30 @@ export function MyWorkPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">
-          <StatTilesRow />
-          <WorkQueue />
+          <StatTilesRow
+            work={work}
+            now={now}
+          />
+          <WorkQueue
+            items={work.items}
+            nowIso={nowIso}
+          />
         </div>
         <div className="flex flex-col gap-4">
           <ScheduleCard />
-          <WorkSummaryCard />
-          <QuickFiltersCard />
-          <RecentlyCompletedCard />
+          <WorkSummaryCard
+            items={work.items}
+            now={now}
+          />
+          <QuickFiltersCard
+            work={work}
+            now={now}
+          />
+          <RecentlyCompletedCard completed={work.completed} />
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
-        <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          All Systems Operational
-        </span>
-        <span>Data as of {dataAsOf}</span>
-      </div>
+      <p className="text-right text-xs text-zinc-400">Data as of {dataAsOf}</p>
     </div>
   );
 }

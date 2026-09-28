@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { SetPasswordForm } from "@/features/auth";
+
+export const metadata: Metadata = { title: "ตั้งรหัสผ่าน" };
 
 // Where Supabase's invite email (Add Employee flow) redirects to — reads
 // the access_token from the URL fragment client-side, see SetPasswordForm.

@@ -46,6 +46,13 @@ export interface CoreMemberRow {
   level_role: string | null;
   default_department_id: string | null;
   start_date: string | null;
+  /** Confirmed real 2026-09-22 by reading `toMemberView` in `thunder_core_API`'s
+   *  `src/lib/core/member-view.ts` directly — already forwarded by
+   *  `GET /tenants/:id/members`, this frontend's type just hadn't caught up
+   *  (personnel doesn't display either yet; profile/services/profile-api.ts's
+   *  `getMyMembership` is the first real reader). */
+  job_type: "full_time" | "part_time" | null;
+  work_arrangement: "on_site" | "hybrid" | "remote" | null;
   role_code: string | null;
   role_type: string | null;
   /** Confirmed 2026-09-15 by reading `MEMBER_SELECT` in `thunder_core_API`'s
@@ -286,8 +293,6 @@ export interface CreateEmployeeInput
 export interface CoreEmployeeResult extends CoreMemberRow {
   default_location_id: string | null;
   lifecycle_stage: string | null;
-  job_type: string | null;
-  work_arrangement: string | null;
   probation_end_date: string | null;
   notes: string | null;
   onboarding: { done: number; total: number };

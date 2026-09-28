@@ -1,172 +1,135 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { ArrowRightIcon, ChevronDownIcon, FilterIcon, MoreIcon } from "@/components/ui/icons";
-import { managerTasks, managerTasksTotalCount, managerWorkTabs, type ManagerTaskRow } from "../mock-data";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ArrowRightIcon, CheckCircleIcon } from "@/components/ui/icons";
+import { dueGroup, formatDate, type WorkItem, type WorkItemKind } from "../work-items";
+import { KIND_META } from "./work-item-meta";
 
-const priorityColor: Record<ManagerTaskRow["priority"], "red" | "yellow" | "zinc"> = {
-  High: "red",
-  Medium: "yellow",
-  Low: "zinc",
-};
+const TABS: { id: string; label: string; kinds: WorkItemKind[] }[] = [
+  { id: "my-tasks", label: "My Tasks", kinds: ["task", "draft"] },
+  { id: "pending-approvals", label: "Pending Approvals", kinds: ["approval"] },
+  { id: "waiting", label: "Waiting on Others", kinds: ["waiting"] },
+];
 
-const statusTone: Record<ManagerTaskRow["status"], string> = {
-  "In Progress": "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-  "Pending Approval": "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  "To Do": "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-  "Waiting on Others": "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
+type RowStatus = "Overdue" | "Pending Approval" | "Waiting on Others" | "To Do";
+
+const statusTone: Record<RowStatus, string> = {
   Overdue: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
+  "Pending Approval": "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+  "Waiting on Others": "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
+  "To Do": "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
 };
 
-const FILTERS = ["Priority", "Status", "Type", "Due Date"];
-
-function AvatarStack({ names, overflow }: { names: string[]; overflow?: number }) {
-  return (
-    <div className="flex items-center -space-x-2">
-      {names.map((name) => (
-        <Avatar key={name} name={name} size={24} className="ring-2 ring-white dark:ring-zinc-900" />
-      ))}
-      {overflow && overflow > 0 && (
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-semibold text-zinc-500 ring-2 ring-white dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-900">
-          +{overflow}
-        </span>
-      )}
-    </div>
-  );
+function rowStatus(item: WorkItem, now: Date): RowStatus {
+  if (dueGroup(item, now) === "overdue") return "Overdue";
+  if (item.kind === "approval") return "Pending Approval";
+  if (item.kind === "waiting") return "Waiting on Others";
+  return "To Do";
 }
 
-export function ManagerTaskList() {
-  const [activeTab, setActiveTab] = useState(managerWorkTabs[0].id);
-  const showTasks = activeTab === "my-tasks";
+// The manager variant's table, fed by `MyWork`. Tabs only exist for kinds
+// Core can actually produce — the old "Assigned by Me"/"Following"/"Saved"
+// tabs had no source and are gone.
+export function ManagerTaskList({ items, nowIso }: { items: WorkItem[]; nowIso: string }) {
+  const [activeTab, setActiveTab] = useState(TABS[0].id);
+  const now = new Date(nowIso);
+  const tab = TABS.find((t) => t.id === activeTab) ?? TABS[0];
+  const rows = items.filter((item) => tab.kinds.includes(item.kind));
 
   return (
     <Card className="p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 pb-3 dark:border-zinc-800">
-        <div role="tablist" className="flex flex-wrap gap-1">
-          {managerWorkTabs.map((tab) => (
+      <div
+        role="tablist"
+        className="mb-3 flex flex-wrap gap-1 border-b border-zinc-100 pb-3 dark:border-zinc-800"
+      >
+        {TABS.map((t) => {
+          const count = items.filter((item) => t.kinds.includes(item.kind)).length;
+          return (
             <button
-              key={tab.id}
+              key={t.id}
               type="button"
               role="tab"
-              aria-selected={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              aria-selected={activeTab === t.id}
+              onClick={() => setActiveTab(t.id)}
               className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
-                activeTab === tab.id
+                activeTab === t.id
                   ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
             >
-              {tab.label}
-              {tab.count !== undefined && (
-                <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                  {tab.count}
-                </span>
+              {t.label}
+              {count > 0 && (
+                <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{count}</span>
               )}
             </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            title="Not built yet"
-            className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
-          >
-            <FilterIcon className="h-3.5 w-3.5" />
-            Filters
-          </button>
-          <button
-            type="button"
-            title="Not built yet"
-            className="flex cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 p-1.5 text-zinc-400 dark:border-zinc-700"
-          >
-            <MoreIcon className="h-4 w-4" />
-          </button>
-        </div>
+          );
+        })}
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2" title="Not built yet">
-        {FILTERS.map((filter) => (
-          <span
-            key={filter}
-            className="flex cursor-not-allowed items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
-          >
-            {filter}
-            <ChevronDownIcon className="h-3 w-3" />
-          </span>
-        ))}
-      </div>
-
-      {showTasks ? (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-100 text-xs text-zinc-400 dark:border-zinc-800">
-                  <th className="w-8 py-2 font-medium" />
-                  <th className="py-2 font-medium">Task</th>
-                  <th className="py-2 font-medium">Project / Workspace</th>
-                  <th className="py-2 font-medium">Priority</th>
-                  <th className="py-2 font-medium">Status</th>
-                  <th className="py-2 font-medium">Due Date</th>
-                  <th className="w-8 py-2" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {managerTasks.map((task) => (
-                  <tr key={task.id} className={task.flagged ? "border-l-2 border-red-500" : ""}>
-                    <td className="py-3 pl-2">
-                      <span className="block h-4 w-4 rounded border border-zinc-300 dark:border-zinc-600" />
-                    </td>
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-zinc-900 dark:text-zinc-50">{task.title}</p>
-                        <AvatarStack names={task.assignees} overflow={task.assigneesOverflow} />
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={CheckCircleIcon}
+          title="Nothing here"
+          detail="Items will appear when there's something for you."
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-100 text-xs text-zinc-400 dark:border-zinc-800">
+                <th className="py-2 font-medium">Item</th>
+                <th className="py-2 font-medium">Source</th>
+                <th className="py-2 font-medium">Status</th>
+                <th className="py-2 font-medium">Due Date</th>
+                <th className="w-8 py-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              {rows.map((item) => {
+                const status = rowStatus(item, now);
+                return (
+                  <tr
+                    key={item.id}
+                    className={status === "Overdue" ? "border-l-2 border-red-500" : ""}
+                  >
+                    <td className="py-3 pl-2 pr-4">
+                      <div className="flex items-center gap-2.5">
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${KIND_META[item.kind].tone}`}>
+                          {KIND_META[item.kind].icon}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-medium text-zinc-900 dark:text-zinc-50">{item.title}</p>
+                          <p className="text-xs text-zinc-400">{item.detail}</p>
+                        </div>
                       </div>
                     </td>
+                    <td className="py-3 pr-4 text-zinc-700 dark:text-zinc-200">{item.source}</td>
                     <td className="py-3 pr-4">
-                      <p className="text-zinc-700 dark:text-zinc-200">{task.project}</p>
-                      <p className="text-xs text-zinc-400">{task.workspace}</p>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <Badge color={priorityColor[task.priority]} variant="pill">
-                        {task.priority}
-                      </Badge>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusTone[task.status]}`}>
-                        {task.status}
+                      <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${statusTone[status]}`}>
+                        {status}
                       </span>
                     </td>
-                    <td className="py-3 pr-4 whitespace-nowrap text-zinc-700 dark:text-zinc-200">
-                      {task.dueDate}
-                      <span className="ml-1 text-xs text-zinc-400">{task.dueTime}</span>
+                    <td className="whitespace-nowrap py-3 pr-4 text-zinc-700 dark:text-zinc-200">
+                      {item.dueAt ? formatDate(item.dueAt) : "-"}
                     </td>
                     <td className="py-3 pr-2 text-right">
-                      <MoreIcon className="ml-auto h-4 w-4 text-zinc-300" />
+                      <Link
+                        href={item.href}
+                        aria-label={`Open ${item.title}`}
+                        className="inline-flex text-zinc-400 hover:text-indigo-600"
+                      >
+                        <ArrowRightIcon className="h-4 w-4" />
+                      </Link>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-xs text-zinc-400">
-              Showing 1-{managerTasks.length} of {managerTasksTotalCount} tasks
-            </span>
-            <button className="flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
-              View all tasks
-              <ArrowRightIcon className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </>
-      ) : (
-        <p className="py-8 text-center text-sm text-zinc-400" title="Not built yet">
-          Nothing here yet.
-        </p>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </Card>
   );

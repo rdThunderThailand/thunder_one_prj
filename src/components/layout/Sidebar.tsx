@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
+import { customerWorkspaceNav } from "@/config/nav/customer-workspace";
+import { leadApprovalNav } from "@/config/nav/lead-approval";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import { peopleNav } from "@/config/nav/people";
 import { settingsNavItems } from "@/config/nav/settings";
@@ -13,6 +15,7 @@ import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
 import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { isEditorRoute } from "@/config/nav/editor-routes";
+import { recordWorkspaceVisit } from "@/lib/workspace-prefs";
 import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
 
 const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
@@ -26,12 +29,19 @@ function resolveAppNavConfig(appId: string, pathname: string): NavConfig {
   if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
   if (appId === "thunder-care") return resolveThunderCareNav(pathname);
   if (appId === "people") return peopleNav;
+  if (appId === "customer-workspace") return customerWorkspaceNav;
+  if (appId === "lead-approval") return leadApprovalNav;
   return mediaWorkspaceNav;
 }
 
 function isActivePath(pathname: string, href?: string) {
   if (!href) return false;
-  if (href === "/media-workspace") return pathname === href;
+  // Exact-match only for Apps whose "overview" href is flat (no further
+  // path segments distinguish it from its own sub-pages) — otherwise the
+  // prefix check below double-highlights both the overview row and
+  // whichever sub-page is actually active, since every sub-page's path
+  // starts with the overview href too.
+  if (href === "/media-workspace" || href === "/customer-workspace") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -286,48 +296,48 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
 // (back-link + 3 flat items) rather than the regular shell/app nav. No
 // collapse toggle or tenant switcher here — the mockup doesn't have them,
 // and a 3-item settings menu doesn't need to collapse.
+//
+// Sizing/row/active-state tokens now match the main shell nav exactly
+// (w-56, h-[68px] header, indigo-50 active pill, 16px icons) — this used to
+// run its own oversized/solid-blue treatment (300px wide, 88px header,
+// bg-[#0860ef] active fill, 28px icons), which read as a different app once
+// you landed here from anywhere else in the shell.
 function SettingsSidebar({ pathname }: { pathname: string }) {
   return (
-    <aside className="flex h-full w-[300px] shrink-0 flex-col border-r border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <Link
         href="/"
-        className="flex h-[88px] items-center border-b border-[#e6edf9] px-10 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+        className="flex h-[68px] items-center border-b border-[#e6edf9] px-5 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo; no next/image optimization needed */}
-        <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-9 w-auto dark:hidden" />
+        <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-8 w-auto dark:hidden" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-9 w-auto dark:block" />
+        <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-8 w-auto dark:block" />
       </Link>
-      <div className="px-5 py-4">
+      <div className="px-3 pb-1 pt-3">
         <Link
           href="/mission-control"
-          className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400"
+          className="flex items-center gap-2 rounded-[10px] px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-indigo-400"
         >
-          <ArrowLeftIcon className="h-4 w-4" />
+          <ArrowLeftIcon className="h-4 w-4 shrink-0" />
           กลับไป ThunderOne
         </Link>
       </div>
-      {/* Same nav-item tokens as ShellNav below (size/weight/color, active
-          blue + shadow, 28px bare icons) — same design system as the main
-          shell, just without a sublabel/badge/chevron line (Nie,
-          2026-09-16: this sidebar's type/spacing didn't match the shell's). */}
-      <nav className="flex flex-col gap-3 px-5 pt-2">
+      <nav className="flex flex-col gap-0.5 px-2 pt-1">
         {settingsNavItems.map((item) => {
           const active = item.id !== "settings" && (pathname === item.href || pathname.startsWith(`${item.href}/`));
           return (
             <Link
               key={item.id}
               href={item.href}
-              className={`flex items-center gap-5 rounded-lg px-5 py-3.5 transition-colors ${
+              className={`flex h-8 items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium transition-colors ${
                 active
-                  ? "bg-[#0860ef] text-white shadow-[0px_10px_7.5px_#bedbff,0px_4px_3px_#bedbff]"
-                  : "text-[#071858] hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300"
+                  : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600 dark:text-zinc-200 dark:hover:bg-zinc-900"
               }`}
             >
-              <span className={`shrink-0 [&>svg]:h-7 [&>svg]:w-7 ${active ? "text-white" : "text-[#071858] dark:text-zinc-200"}`}>
-                {item.icon}
-              </span>
-              <span className="text-base font-bold">{item.label}</span>
+              <span className="h-4 w-4 shrink-0 text-slate-500">{item.icon}</span>
+              {item.label}
             </Link>
           );
         })}
@@ -339,7 +349,14 @@ function SettingsSidebar({ pathname }: { pathname: string }) {
 export function Sidebar({ tenantName }: { tenantName?: string | null }) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
-  const isMediaWorkspace = activeApp?.id === "media-workspace";
+  const activeAppId = activeApp?.id ?? null;
+  const isMediaWorkspace = activeAppId === "media-workspace";
+
+  // Feeds the Workspaces launcher's "Recently Opened" (per-browser only —
+  // lib/workspace-prefs.ts). Fires once per App entered, not per sub-page.
+  useEffect(() => {
+    if (activeAppId) recordWorkspaceVisit(activeAppId);
+  }, [activeAppId]);
   // Editors start collapsed (focus shell, ADR 0077); a click still expands. Any
   // route change resets to the route's default so an editor never pins the
   // list pages collapsed and vice versa.
@@ -378,7 +395,26 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
           <MediaWorkspaceBrand collapsed={collapsed} />
         ) : collapsed ? (
           // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
-          <img src="/icon.svg" alt="ThunderOne" className="rounded-[9px]" style={{ width: 32, height: 32 }} />
+          <img src="/brand/t1-mark.svg" alt="ThunderOne" style={{ width: 32, height: 32 }} />
+        ) : activeApp?.id === "customer-workspace" ? (
+          // Same "mark + 2-line text stack" layout as Media Workspace's own
+          // t1-sidebar-brand-block.svg (confirmed against a screenshot of it
+          // 2026-09-23) — that asset bakes in the literal string "Media
+          // Workspace" though, so it can't be reused for a different
+          // caption; this rebuilds the same layout with live text/tagline
+          // instead of a second baked-in SVG per App.
+          <div className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/t1-mark.svg" alt="ThunderOne" className="h-8 w-auto" />
+            <div className="flex flex-col justify-center">
+              <span className="text-lg font-extrabold leading-tight tracking-tight">
+                <span className="text-[#010F29] dark:text-zinc-50">Thunder</span>
+                {" "}
+                <span className="text-[#0C60FA]">One</span>
+              </span>
+              <span className="text-xs leading-tight text-zinc-500 dark:text-zinc-400">{activeApp.tagline}</span>
+            </div>
+          </div>
         ) : (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}

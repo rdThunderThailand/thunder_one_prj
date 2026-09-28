@@ -16,14 +16,17 @@ const compositionPublication = {
 
 const draft = detailToDraft(compositionPublication);
 assert.equal(draft.compositionId, "composition-1");
+assert.equal(draft.playlistId, null);
 
 const playlistPublication = {
   ...compositionPublication,
   publication_type: "playlist",
   composition: null,
+  playlist: { id: "playlist-1", name: "Existing playlist" },
 } satisfies PublicationDetail;
 
 assert.equal(detailToDraft(playlistPublication).compositionId, null);
+assert.equal(detailToDraft(playlistPublication).playlistId, "playlist-1");
 
 const channel = {
   id: "channel-1",

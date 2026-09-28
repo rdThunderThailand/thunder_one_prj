@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/Card";
-import { ArrowRightIcon } from "@/components/ui/icons";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ArrowRightIcon, ClockIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import type { CoreRecentLog } from "../services/dashboard-api";
 
 const DOT_COLORS = ["bg-indigo-500", "bg-emerald-500", "bg-blue-500", "bg-amber-500"];
@@ -25,7 +26,10 @@ function timeAgo(isoDate: string, now: Date): string {
 // not load" message); `logs.length === 0` means it loaded fine and there's
 // genuinely nothing today (shows a plain empty state) — same distinction
 // people/overview's own TodayActivityCard draws for this exact endpoint.
-export function ActivityFeedCard({ logs }: { logs: CoreRecentLog[] | null }) {
+// Async: awaited inside MissionControlPage's `<Suspense>`
+// (`ActivityFeedSkeleton` is the fallback).
+export async function ActivityFeedCard({ logs: logsPromise }: { logs: Promise<CoreRecentLog[] | null> }) {
+  const logs = await logsPromise;
   const now = new Date();
 
   return (
@@ -41,9 +45,19 @@ export function ActivityFeedCard({ logs }: { logs: CoreRecentLog[] | null }) {
         </button>
       </div>
       {logs === null ? (
-        <p className="py-4 text-center text-sm text-zinc-400">ไม่สามารถโหลดกิจกรรมล่าสุดได้ในขณะนี้</p>
+        <EmptyState
+          icon={WarningTriangleIcon}
+          title="ไม่สามารถโหลดกิจกรรมล่าสุดได้"
+          detail="ลองรีเฟรชหน้านี้อีกครั้งในภายหลัง"
+          compact
+        />
       ) : logs.length === 0 ? (
-        <p className="py-4 text-center text-sm text-zinc-400">ยังไม่มีกิจกรรมล่าสุด</p>
+        <EmptyState
+          icon={ClockIcon}
+          title="ยังไม่มีกิจกรรมล่าสุด"
+          detail="กิจกรรมในองค์กรจะแสดงที่นี่"
+          compact
+        />
       ) : (
         <ul className="flex flex-col gap-3">
           {logs.slice(0, 3).map((log, i) => (

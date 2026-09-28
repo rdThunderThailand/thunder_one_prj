@@ -22,6 +22,9 @@ export interface Session {
   /** `public.users.id` — the same id `created_by` carries on every media row, so the
    *  playlists page can tell "mine" from "everyone's" without a second lookup. */
   userId: string | null;
+  /** `public.users.avatar_url` from `/session` — the profile picture, or
+   *  `null` (initials are shown instead). */
+  avatarUrl: string | null;
   tenantName: string | null;
   /** `public.tenants.id` — needed for any additional tenant-scoped Core call a
    *  page makes beyond session/membership (e.g. `GET /tenants/{id}/assets/*`).
@@ -137,7 +140,7 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
   }
 
   if (sessionRes.status === 401) {
@@ -147,7 +150,7 @@ async function getSessionUncached(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
   }
 
   const body = await sessionRes.json().catch(() => null);
@@ -158,20 +161,41 @@ async function getSessionUncached(): Promise<SessionResult> {
   const rawUserId = typeof user?.id === "string" ? user.id : null;
   const [role, membershipExtras] = await Promise.all([
     resolveRole(membershipsRes, tenantId),
-    resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
+    extrasFromSession(body?.data) ?? resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
   ]);
   const { jobTitle } = membershipExtras;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, tenantName, tenantId, ...role, jobTitle };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
-  return { userName: resolveUserName(user, membershipExtras), userId, tenantName, tenantId, ...role, jobTitle };
+  const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle };
 }
 
 /**
- * Best-effort lookup of two fields neither `/session` nor `/me/memberships`
+ * `/session` carries job_title + Thai names itself once Core adds them
+ * (requested 2026-09-25 to drop the member-search round trip below from
+ * every page load — ~420 ms measured). The fields are additive: `null`
+ * here means "this Core doesn't send them yet", so the caller falls back
+ * to `resolveMembershipExtras`.
+ */
+function extrasFromSession(
+  data: { user?: Record<string, unknown>; membership?: { job_title?: unknown } | null } | undefined
+): { jobTitle: string | null; firstNameTh: string | null; lastNameTh: string | null } | null {
+  if (!data || !("membership" in data)) return null;
+  const text = (value: unknown) => (typeof value === "string" && value.trim() ? value : null);
+  return {
+    jobTitle: text(data.membership?.job_title),
+    firstNameTh: text(data.user?.first_name_th),
+    lastNameTh: text(data.user?.last_name_th),
+  };
+}
+
+/**
+ * Fallback for a Core without the `/session` fields above: best-effort
+ * lookup of two fields neither `/session` nor `/me/memberships`
  * carry: the caller's `job_title` on their current tenant's membership, and
  * their `first_name_th`/`last_name_th` (both live on the `/tenants/:id/
  * members` list row's nested `user` — same shape Personnel already reads,

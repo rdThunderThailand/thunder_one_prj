@@ -1,17 +1,17 @@
 # workspaces
 
-The App launcher (landing page at `/work-space`) — previously a plain grid over `config/apps.tsx`'s `APPS`, now a fuller dashboard: hero banner, workspace tiles, recently-opened, and a health/quick-actions rail.
+The App launcher (`/work-space`), in three variants picked by `config/rbac.ts`'s `resolveShellVariant`: CEO/admin (`WorkspacesPage` — overview dashboard), manager (`ManagerWorkspacesPage` — pinnable directory + activity) and employee (`EmployeeWorkspacesPage` — directory + announcements).
 
-Only Media Workspace, Asset Intelligence, Thunder Care, and People (Workspace) are real Apps with a route behind them (`config/apps.tsx`). Every other tile here (CRM, Projects, Analytics, "More Workspaces") is a "coming soon" placeholder — same convention `mission-control`'s `WorkspacesRow` uses: full visual treatment (icon, description, status text), but the "Open Workspace" affordance is inert rather than a dead link.
+**No mock data since 2026-09-25.**
 
+- `catalog.ts` — `WORKSPACES`, the one list every variant renders (previously three hand-copied mock lists). `href` comes from `config/apps.tsx`; `dataStatus` is a fact about each App: `live` (reads Core), `sample` (exists, still on sample data — Thunder Care, Customer Workspace) or `coming-soon` (no App; inert tile).
+- `services/workspace-stats-api.ts` — one real stat per live App (Media channels/online from `/media/channels`, asset total + in-maintenance from `/assets/summary`, member count, Lead Approval pending count — reviewers only) plus the tenant audit trail for the manager's Recent Activity. Any failed/403 read is `null` → the tile says "Not available".
+- `src/lib/workspace-prefs.ts` — per-browser Recently Opened (the Sidebar records each App the viewer enters) and pins (star on a manager directory tile). Real usage but local to the browser; read via `useSyncExternalStore`, so SSR and first client render both see "nothing yet".
 - `components/` —
-  - `WorkspacesPage` — the landing page, composing everything below
-  - `WorkspacesHeader` — title only, no Customize button (unlike Mission Control/My Work/Intelligence)
-  - `HeroBanner` — "One Platform. Many Workspaces." banner; the stacked-window illustration is decorative CSS, not a real preview
-  - `WorkspaceGrid` — the workspace tiles grid (`Your Workspaces`)
-  - `RecentlyOpenedRow` — a short recently-opened strip
-  - `WorkspaceOverviewCard` — a `DonutChart` breakdown of the tiles by status
-  - `WorkspaceHealthCard` — a per-workspace health list
-  - `QuickActionsCard` — decorative admin actions (no access-management backend exists yet)
-  - `NeedHelpCard` — a static help-center pointer
-- `mock-data.ts` — `workspaceTiles`, `recentlyOpened`, `workspaceOverview`, `workspaceHealth`, `quickActions` — all placeholder, no backend yet
+  - `WorkspaceGrid` (CEO) / `WorkspaceDirectory` (manager + employee; real search, categories, grid/list, optional pinning) — tiles from `catalog.ts` with `WorkspaceStatusLine` (`workspace-ui.tsx`).
+  - `WorkspaceOverviewCard` — workspaces by data status. `WorkspaceHealthCard` — each live App's stat, with its alert chip ("6 offline") or "OK".
+  - `RecentlyOpenedRow`, `PinnedWorkspacesRow` — per-browser prefs; empty states until used.
+  - `RecentActivityCard` — Core audit trail. `AnnouncementsCard` — empty state (no Core source).
+  - `QuickActionsCard` / `QuickAccessCard` — shortcuts to real pages; the ones with no page stay inert.
+  - `HeroBanner`, `NeedHelpCard` — static copy. Customize buttons are inert.
+  - `WorkspacesSkeleton` — `app/(dashboard)/(shell)/work-space/loading.tsx`'s fallback.

@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { requireCeoAccess, resolveRole } from "@/config/rbac";
 import { getSession } from "@/features/auth/services/get-session";
 import { ReportsPage } from "@/features/mission-control";
+
+export const metadata: Metadata = { title: "Reports" };
 
 // CEO — "Reports" (requirement doc CEO-05).
 export default async function CeoReportsRoute() {

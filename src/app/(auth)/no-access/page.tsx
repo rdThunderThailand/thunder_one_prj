@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { SignOutButton } from "@/features/auth/components/SignOutButton";
+
+export const metadata: Metadata = { title: "ไม่มีสิทธิ์เข้าถึง" };
 
 // Sits in the (auth) group, not (dashboard): the dashboard layout redirects
 // here, so living under that layout would loop.

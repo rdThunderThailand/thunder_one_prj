@@ -1,47 +1,24 @@
 "use client";
 
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer } from "recharts";
+import dynamic from "next/dynamic";
+import type { RiskRadarChartProps } from "./charts/RiskRadarChartImpl";
 
-export interface RadarAxisPoint {
-  axis: string;
-  current: number;
-  previous: number;
-}
+export type { RadarAxisPoint } from "./charts/RiskRadarChartImpl";
 
-interface RiskRadarChartProps {
-  data: RadarAxisPoint[];
-  size?: number;
-  className?: string;
-}
+// Lazy recharts — see DonutChart.tsx.
+const RiskRadarChartImpl = dynamic(() => import("./charts/RiskRadarChartImpl").then((m) => m.RiskRadarChart), { ssr: false });
 
-// A two-series radar/spider chart (current vs. a prior baseline) — Recharts
-// under the hood, same pattern as Sparkline/DonutChart. Colors hardcoded
-// (light theme only), matching DonutChart's tooltip.
-export function RiskRadarChart({ data, size = 220, className = "" }: RiskRadarChartProps) {
+export function RiskRadarChart(props: RiskRadarChartProps) {
+  const size = props.size ?? 220;
   return (
-    <div style={{ width: size, height: size }} className={className}>
-      <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={data} outerRadius="68%">
-          <PolarGrid stroke="#e4e4e7" />
-          <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fill: "#71717a" }} />
-          <Radar
-            name="Last month"
-            dataKey="previous"
-            stroke="#a1a1aa"
-            strokeDasharray="4 3"
-            fill="transparent"
-            isAnimationActive={false}
-          />
-          <Radar
-            name="Current"
-            dataKey="current"
-            stroke="#ef4444"
-            fill="#ef4444"
-            fillOpacity={0.25}
-            isAnimationActive={false}
-          />
-        </RadarChart>
-      </ResponsiveContainer>
+    <div
+      style={{ width: size, height: size }}
+      className={props.className}
+    >
+      <RiskRadarChartImpl
+        {...props}
+        className=""
+      />
     </div>
   );
 }
