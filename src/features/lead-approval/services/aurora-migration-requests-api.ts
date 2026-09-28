@@ -3,7 +3,11 @@
 // migration-requests/ in thunder_core_API, wrapping thunder_crm_lineoa's
 // aurora_migration_requests (requests sent from the LINE OA LIFF form). Same
 // TEMPORARY Ops surface as partner-applications-api.ts — keep it lightweight.
-// Read-only for now: the approve route (POST /:id/approve) isn't wired yet.
+//
+// Same server-only vs. client-safe split as partner-applications-api.ts: the
+// list GET is server-only (coreGet); the approve POST is client-safe (goes
+// through /api/proxy) since it's called from a "use client" button.
+import { requestApi } from "@/lib/api/media-api";
 import { coreGet } from "@/lib/core/core-get";
 
 export type AuroraMigrationStatus = "PENDING" | "NEEDS_INFO" | "APPROVED" | "REJECTED";
@@ -47,4 +51,20 @@ export interface CoreAuroraMigrationRequest {
  */
 export async function getAuroraMigrationRequests(token: string): Promise<CoreAuroraMigrationRequest[] | null> {
   return coreGet<CoreAuroraMigrationRequest[]>("/aurora-migration-requests", token);
+}
+
+/**
+ * POST /aurora-migration-requests/:id/approve — valid from PENDING or
+ * NEEDS_INFO. Core checks the caller is a reviewer, then hands off to LINE
+ * OA, which switches the requester's Rich Menu and sends the welcome
+ * message. Returns the updated row (status APPROVED, approved_role,
+ * reviewer). Idempotent for the same role; a different role on an already
+ * approved request is a 409. A 500 means LINE OA was unreachable — retrying
+ * is safe.
+ */
+export async function approveAuroraMigrationRequest(
+  id: string,
+  role: AuroraApprovalRole
+): Promise<CoreAuroraMigrationRequest> {
+  return requestApi<CoreAuroraMigrationRequest>("POST", `/aurora-migration-requests/${id}/approve`, { role });
 }
