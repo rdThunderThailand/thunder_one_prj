@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { StatusBadge } from "@/components/ui/lovable/core";
 import { CheckIcon, EditIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
+import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
 
 /** The editor's title bar: editable name, save state, preview, and the Publication-wizard handoff. */
 export function PlaylistEditorHeader({
@@ -22,6 +23,9 @@ export function PlaylistEditorHeader({
   onPreview,
   onPublish,
   publishDisabledReason,
+  affectedCount,
+  onPublishChanges,
+  onShowPrograms,
   onSave,
 }: {
   name: string;
@@ -39,6 +43,10 @@ export function PlaylistEditorHeader({
   onPreview: () => void;
   onPublish: () => void;
   publishDisabledReason: string | null;
+  /** Active or scheduled Programs Publish Changes would re-publish (ADR 0078). */
+  affectedCount: number;
+  onPublishChanges: () => void;
+  onShowPrograms: () => void;
   onSave: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -113,6 +121,11 @@ export function PlaylistEditorHeader({
               {savedLabel}
             </span>
             <span>Updated {lastUpdatedAt ? lastUpdatedAt.toLocaleTimeString() : "—"}</span>
+            {affectedCount > 0 && (
+              <button type="button" onClick={onShowPrograms} className="font-medium text-primary hover:underline">
+                Used by {affectedCount} program{affectedCount === 1 ? "" : "s"}
+              </button>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -146,17 +159,15 @@ export function PlaylistEditorHeader({
           Preview
         </Button>
         <Button size="sm" onClick={onSave} disabled={saving || name.trim() === ""}>
-          {saving ? "กำลังบันทึก..." : "Save Draft"}
+          {saving ? "กำลังบันทึก..." : "Save"}
         </Button>
-        <Button
-          size="sm"
-          variant="default"
-          onClick={onPublish}
-          disabled={saving || !!publishDisabledReason}
-          title={publishDisabledReason ?? undefined}
-        >
-          Publish →
-        </Button>
+        <PublishSplitButton
+          disabled={saving}
+          hasAffectedPrograms={affectedCount > 0}
+          publishToChannelDisabledReason={publishDisabledReason}
+          onPublishChanges={onPublishChanges}
+          onPublishToChannel={onPublish}
+        />
         </div>
       </div>
     </div>
