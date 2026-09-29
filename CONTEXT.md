@@ -52,6 +52,14 @@ _Note_: Another App in this repo, Asset Intelligence, also has an entity called 
 **Asset** (Asset Intelligence):
 An organization-wide physical asset (laptop, printer, NAS, or media-player hardware) owned end-to-end (register/track/manage/assign) by Asset Intelligence's Asset/IT Manager role — see `src/features/asset-intelligence/assets`. Deliberately shares the name `Asset` with Communication's media-file entity above rather than being renamed to something like `Equipment`, because the two are genuinely related: an Asset of category `media_player_device` is, once assigned, the same physical hardware Communication tracks as a `Device` (below) — see `docs/adr/0024-asset-device-cross-reference-model.md` for the `externalRef` cross-reference field. Namespaced as `features/asset-intelligence/*` (not `features/communication/assets`) to avoid a folder collision — `docs/adr/0034-feature-folders-nest-under-app.md` (originally a flat `ai-` prefix, `docs/adr/0023-asset-intelligence-feature-namespacing.md`). Scoped to three personas — Asset/IT Manager, Department Manager, Employee; its former CEO and Technician personas moved out when Thunder One was introduced — `docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md`.
 
+**Asset Health History** (Asset Intelligence):
+Periodic snapshots of an Asset (Asset Intelligence)'s health score over time, one row per Asset per snapshot, used for trend views. Heartbeat recency is one signal inside the score, not the subject: the history belongs to the Asset, and a Communication `Device` reaches it only through the Asset cross-reference. Only Assets that have ever sent a heartbeat are snapshotted. Each snapshot also keeps the Asset's last heartbeat time as it stood at that moment, so the exact gap can be read back rather than only its score bucket. Deliberately short-lived: only the last 7 days are kept — it answers "how has this Asset been lately", not long-term reporting.
+_Avoid_: device uptime log (downtime spans are Alert Incidents, not this), heartbeat log (individual heartbeats are not kept)
+
+**Offline** (Asset connection status):
+An Asset that has sent at least one heartbeat but none in the last 5 minutes. The same 5-minute line opens a `device_offline` Alert Incident, and the next heartbeat makes the Asset online again.
+_Avoid_: using the stored status as "last known" (it is kept current, not frozen at the last heartbeat)
+
 **Folder**:
 A tenant-wide place for filing one kind of Communication content: Assets, Playlists and operator-facing Layouts each have their own Folder tree, nested to at most five levels. An item belongs to at most one Folder; an empty Folder can be deleted, while `Uncategorized` represents items with no Folder. `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: Tag (many-to-many, a different question and not built), shared content Folder (each feature has its own tree), `asset_folders` (that is Asset Intelligence's physical-asset table, unrelated)
