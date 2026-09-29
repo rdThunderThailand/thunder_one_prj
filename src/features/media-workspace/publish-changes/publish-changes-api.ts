@@ -25,6 +25,13 @@ export function publishChanges(kind: ChangesKind, id: string): Promise<PublishCh
   return requestApi("POST", `/media/${kind}/${id}/publish-changes`);
 }
 
+const REASONS: ReadonlyArray<[RegExp, string]> = [
+  [/composition is not active/, "Layout ไม่ได้อยู่ในสถานะ Active"],
+  [/at least one target/, "ยังไม่ได้เลือก Channel ปลายทาง"],
+  [/quarantin/i, "มีไฟล์ที่ถูกกักกัน (quarantine) อยู่ในเนื้อหา"],
+  [/synchronized/, "Channel Group แบบ synchronized ยังไม่ครบ"],
+];
+
 /** The bulk RPC names the refused Program as `program "<name>" — <reason>` (ADR 0078 §4). Anything
  *  else reaches the operator as a generic line — never the raw backend text (repo rule). */
 export function describePublishChangesError(message: string): { programName: string | null; reason: string } {
@@ -33,12 +40,6 @@ export function describePublishChangesError(message: string): { programName: str
   const [, programName, detail] = match;
   const reason = /unbound/.test(detail)
     ? describeActivateError(detail)
-    : /composition is not active/.test(detail)
-      ? "Layout ไม่ได้อยู่ในสถานะ Active"
-      : /quarantin/i.test(detail)
-        ? "มีไฟล์ที่ถูกกักกัน (quarantine) อยู่ในเนื้อหา"
-        : /synchronized/.test(detail)
-          ? "Channel Group แบบ synchronized ยังไม่ครบ"
-          : "ไม่ผ่านเงื่อนไขการ Publish";
+    : (REASONS.find(([pattern]) => pattern.test(detail))?.[1] ?? "ไม่ผ่านเงื่อนไขการ Publish");
   return { programName, reason };
 }
