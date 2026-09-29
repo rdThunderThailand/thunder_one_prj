@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
+import { getSession } from "@/features/auth/services/get-session";
 import { TENANT_COOKIE, isTenantId } from "@/lib/core/tenant-selection";
 
 export const dynamic = "force-dynamic";
 
-/** Switches the tenant (Sidebar's tenant switcher). Asks Core's /session with
- *  the chosen `x-tenant-id` first, so the cookie is only set for a tenant Core
- *  actually lets this user enter. */
+/** Switches the tenant (Sidebar's tenant switcher). Platform super admins
+ *  only, same as the menu itself. Asks Core's /session with the chosen
+ *  `x-tenant-id` first, so the cookie is only set for a tenant Core actually
+ *  lets this user enter. */
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get("to_at")?.value;
   if (!token) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const session = await getSession();
+  if (session === "forbidden" || !session.isSuperAdmin) {
+    return NextResponse.json({ error: "Only a platform super admin can switch tenants" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);
