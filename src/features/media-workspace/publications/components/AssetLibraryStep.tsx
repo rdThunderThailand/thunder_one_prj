@@ -2,6 +2,16 @@
 
 import { useState } from "react";
 import { ArrowRightIcon, ExternalLinkIcon, FolderIcon, GridIcon, ImageIcon, InfoIcon, LightbulbIcon, ListIcon, PlusIcon } from "@/components/ui/icons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/lovable/alert-dialog";
 import { useAssetUpload } from "@/features/media-workspace/assets/useAssetUpload";
 import type { MediaAsset, PublicationType, Tag } from "../types";
 import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
@@ -46,6 +56,8 @@ export function AssetLibraryStep({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [playlistPickerOpen, setPlaylistPickerOpen] = useState(false);
   const [compositionPickerOpen, setCompositionPickerOpen] = useState(false);
+  const [kindMismatch, setKindMismatch] = useState<PublicationType | null>(null);
+  const [pendingSwitch, setPendingSwitch] = useState<{ nextType: PublicationType; then?: () => void } | null>(null);
   const publicationType = basicInfo.publicationType;
 
   const { fileInputRef, uploadPct, uploadError, uploadFile } = useAssetUpload(async (asset, isVideoFile) => {
@@ -58,7 +70,7 @@ export function AssetLibraryStep({
     if (assetItems.length === 0) {
       if (publicationType !== nextType) setBasicInfo({ ...basicInfo, publicationType: nextType });
     } else if (publicationType !== nextType) {
-      window.alert(`Publication นี้เป็น ${publicationType === "video" ? "วิดีโอ" : "รูปภาพ"} — ล้างเนื้อหาที่เลือกก่อนจึงจะเพิ่ม${nextType === "video" ? "วิดีโอ" : "รูปภาพ"}ได้`);
+      setKindMismatch(nextType);
       return;
     }
     setAssetItems(assetItems.some((item) => item.media_asset_id === selected.id) ? assetItems : [...assetItems, {
@@ -70,12 +82,16 @@ export function AssetLibraryStep({
   });
 
   const selectedBranch: Branch = publicationType === "playlist" ? "playlist" : publicationType === "composition" ? "composition" : "media";
-  const changeBranch = (branch: Branch) => {
-    const nextType = branch === "playlist" ? "playlist" : branch === "composition" ? "composition" : publicationType === "video" ? "video" : "image";
-    if (nextType === publicationType) return true;
-    if ((assetItems.length || playlistId || compositionId) && !window.confirm("Changing content type clears selected content. Schedule and Channels stay. Continue?")) return false;
+  const applySwitch = (nextType: PublicationType, then?: () => void) => {
     setBasicInfo({ ...basicInfo, publicationType: nextType });
-    return true;
+    then?.();
+  };
+  // `then` runs once the switch is applied — immediately, or after the operator confirms the dialog.
+  const changeBranch = (branch: Branch, then?: () => void) => {
+    const nextType: PublicationType = branch === "playlist" ? "playlist" : branch === "composition" ? "composition" : publicationType === "video" ? "video" : "image";
+    if (nextType === publicationType) return then?.();
+    if (assetItems.length || playlistId || compositionId) return setPendingSwitch({ nextType, then });
+    applySwitch(nextType, then);
   };
 
   const commitMedia = (ids: string[]) => {
@@ -105,12 +121,35 @@ export function AssetLibraryStep({
               <HeaderIcon className={`h-12 w-12 shrink-0 ${copy.text}`} />
               <span><span className={`block text-xl font-bold ${copy.text}`}>{copy.title}</span><span className="mt-1 block text-sm font-medium text-muted-foreground">{copy.description}</span><span className="mt-1 block text-sm text-muted-foreground">{copy.detail}</span></span>
             </button>
-            {branch === "media" ? <div className="mt-5 flex flex-1 flex-col gap-3"><Dropzone fileInputRef={fileInputRef} onFileSelected={(file) => void uploadFile(file)} disabled={uploadPct !== null} progress={uploadPct} error={uploadError} /><button type="button" onClick={() => { if (changeBranch("media")) setPickerOpen(true); }} className="flex min-h-16 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"><FolderIcon className="h-6 w-6 text-success" /><span>เลือกจาก Media Library<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกไฟล์ที่มีอยู่แล้ว</span></span></button><div className="mt-auto"><p className="text-sm font-semibold text-muted-foreground">รองรับไฟล์</p><div className="mt-2 flex flex-wrap gap-1.5">{["Image", "Video", "Audio", "HTML", "MP4", "JPG", "PNG"].map((type) => <span key={type} className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">{type}</span>)}</div></div></div> : branch === "playlist" ? <div className="mt-5 flex flex-1 flex-col gap-4"><button type="button" onClick={() => { if (changeBranch("playlist")) setPlaylistPickerOpen(true); }} className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><ListIcon className="h-8 w-8 text-blue-600" /><span className="flex-1">{playlistId ? "เปลี่ยน Playlist" : "เลือก Playlist ที่มีอยู่"}<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกจากรายการที่มีอยู่แล้ว</span></span><ArrowRightIcon /></button><a href="/media-workspace/playlists/create" target="_blank" rel="noreferrer" className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><PlusIcon className="h-8 w-8 text-blue-600" /><span className="flex-1">สร้าง Playlist ใหม่<span className="mt-1 block text-xs font-normal text-muted-foreground">จัดลำดับเนื้อหาและตั้งค่าการเล่น</span></span><ArrowRightIcon /></a><div className={`mt-auto rounded-lg p-4 ${copy.panel}`}><p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}><InfoIcon />Playlist เหมาะสำหรับ</p><ul className="mt-2 list-disc space-y-1 pl-7 text-xs text-muted-foreground"><li>ต้องการเล่นหลายสื่อแบบต่อเนื่อง</li><li>กำหนดลำดับและระยะเวลาได้</li><li>ใช้งานซ้ำได้หลายหน้าจอ</li></ul></div></div> : <div className="mt-5 flex flex-1 flex-col gap-4"><button type="button" onClick={() => { if (changeBranch("composition")) setCompositionPickerOpen(true); }} className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><GridIcon className="h-8 w-8 text-violet-600" /><span className="flex-1">{compositionId ? "เปลี่ยน Layout" : "เลือก Layout ที่มีอยู่"}<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกจาก Layout ที่บันทึกไว้</span></span><ArrowRightIcon /></button><a href="/media-workspace/layouts/create" target="_blank" rel="noreferrer" className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><PlusIcon className="h-8 w-8 text-violet-600" /><span className="flex-1">สร้าง Layout ใหม่<span className="mt-1 block text-xs font-normal text-muted-foreground">ออกแบบการจัดวางและโซนเนื้อหา</span></span><ArrowRightIcon /></a><div className={`mt-auto rounded-lg p-4 ${copy.panel}`}><p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}><InfoIcon />Layout เหมาะสำหรับ</p><ul className="mt-2 list-disc space-y-1 pl-7 text-xs text-muted-foreground"><li>แบ่งหน้าจอหลายโซน (Zones)</li><li>แสดงสื่อหลายประเภทพร้อมกัน</li><li>เหมาะกับหน้าจอขนาดใหญ่</li></ul></div></div>}
+            {branch === "media" ? <div className="mt-5 flex flex-1 flex-col gap-3"><Dropzone fileInputRef={fileInputRef} onFileSelected={(file) => void uploadFile(file)} disabled={uploadPct !== null} progress={uploadPct} error={uploadError} /><button type="button" onClick={() => changeBranch("media", () => setPickerOpen(true))} className="flex min-h-16 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"><FolderIcon className="h-6 w-6 text-success" /><span>เลือกจาก Media Library<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกไฟล์ที่มีอยู่แล้ว</span></span></button><div className="mt-auto"><p className="text-sm font-semibold text-muted-foreground">รองรับไฟล์</p><div className="mt-2 flex flex-wrap gap-1.5">{["Image", "Video", "Audio", "HTML", "MP4", "JPG", "PNG"].map((type) => <span key={type} className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">{type}</span>)}</div></div></div> : branch === "playlist" ? <div className="mt-5 flex flex-1 flex-col gap-4"><button type="button" onClick={() => changeBranch("playlist", () => setPlaylistPickerOpen(true))} className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><ListIcon className="h-8 w-8 text-blue-600" /><span className="flex-1">{playlistId ? "เปลี่ยน Playlist" : "เลือก Playlist ที่มีอยู่"}<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกจากรายการที่มีอยู่แล้ว</span></span><ArrowRightIcon /></button><a href="/media-workspace/playlists/create" target="_blank" rel="noreferrer" className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><PlusIcon className="h-8 w-8 text-blue-600" /><span className="flex-1">สร้าง Playlist ใหม่<span className="mt-1 block text-xs font-normal text-muted-foreground">จัดลำดับเนื้อหาและตั้งค่าการเล่น</span></span><ArrowRightIcon /></a><div className={`mt-auto rounded-lg p-4 ${copy.panel}`}><p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}><InfoIcon />Playlist เหมาะสำหรับ</p><ul className="mt-2 list-disc space-y-1 pl-7 text-xs text-muted-foreground"><li>ต้องการเล่นหลายสื่อแบบต่อเนื่อง</li><li>กำหนดลำดับและระยะเวลาได้</li><li>ใช้งานซ้ำได้หลายหน้าจอ</li></ul></div></div> : <div className="mt-5 flex flex-1 flex-col gap-4"><button type="button" onClick={() => changeBranch("composition", () => setCompositionPickerOpen(true))} className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><GridIcon className="h-8 w-8 text-violet-600" /><span className="flex-1">{compositionId ? "เปลี่ยน Layout" : "เลือก Layout ที่มีอยู่"}<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกจาก Layout ที่บันทึกไว้</span></span><ArrowRightIcon /></button><a href="/media-workspace/layouts/create" target="_blank" rel="noreferrer" className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><PlusIcon className="h-8 w-8 text-violet-600" /><span className="flex-1">สร้าง Layout ใหม่<span className="mt-1 block text-xs font-normal text-muted-foreground">ออกแบบการจัดวางและโซนเนื้อหา</span></span><ArrowRightIcon /></a><div className={`mt-auto rounded-lg p-4 ${copy.panel}`}><p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}><InfoIcon />Layout เหมาะสำหรับ</p><ul className="mt-2 list-disc space-y-1 pl-7 text-xs text-muted-foreground"><li>แบ่งหน้าจอหลายโซน (Zones)</li><li>แสดงสื่อหลายประเภทพร้อมกัน</li><li>เหมาะกับหน้าจอขนาดใหญ่</li></ul></div></div>}
           </div>;
         })}
         <aside className="rounded-xl border border-border p-5"><h2 className="text-lg font-semibold text-foreground">ไม่แน่ใจว่าจะเลือกอะไร?</h2><p className="mt-1 text-sm text-muted-foreground">นี่คือแนวทางการเลือกประเภทเนื้อหา</p><div className="mt-5 space-y-5"><Guide icon={ImageIcon} tone="text-success bg-success-soft" title="เลือก Media เมื่อ" items={["คุณมีไฟล์เดียวที่ต้องการแสดงผล", "ต้องการใช้ไฟล์ใน Playlist หรือ Layout", "ต้องการอัปโหลดไฟล์เก็บไว้ในคลังสื่อ"]} /><Guide icon={ListIcon} tone="text-blue-600 bg-blue-50" title="เลือก Playlist เมื่อ" items={["ต้องการเล่นสื่อหลายชิ้นต่อกัน", "ต้องการกำหนดเวลา / ระยะเวลาแต่ละชิ้น", "ต้องการบริหารลำดับสื่อ"]} /><Guide icon={GridIcon} tone="text-violet-600 bg-violet-50" title="เลือก Layout เมื่อ" items={["ต้องการแบ่งหน้าจอเป็นหลายส่วน", "ต้องการแสดงสื่อหลายประเภทพร้อมกัน", "เช่น ข่าว + สภาพอากาศ + โฆษณา"]} /></div><div className="mt-5 border-t border-border pt-4"><p className="text-sm font-medium text-foreground">เรียนรู้เพิ่มเติม</p><a href="#" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary">ดูคู่มือการใช้งาน <ExternalLinkIcon /></a></div></aside>
       </div>
       <div className="mt-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning"><LightbulbIcon className="h-4 w-4 shrink-0" />Tip: คุณสามารถเปลี่ยนประเภทเนื้อหาได้ในขั้นตอนถัดไป</div>
+      <AlertDialog open={kindMismatch !== null} onOpenChange={(open) => { if (!open) setKindMismatch(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>เพิ่มไฟล์นี้ไม่ได้</AlertDialogTitle>
+            <AlertDialogDescription>Publication นี้เป็น{publicationType === "video" ? "วิดีโอ" : "รูปภาพ"} ล้างเนื้อหาที่เลือกก่อนจึงจะเพิ่ม{kindMismatch === "video" ? "วิดีโอ" : "รูปภาพ"}ได้</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>รับทราบ</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={pendingSwitch !== null} onOpenChange={(open) => { if (!open) setPendingSwitch(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>เปลี่ยนประเภทเนื้อหา?</AlertDialogTitle>
+            <AlertDialogDescription>การเปลี่ยนประเภทจะล้างเนื้อหาที่เลือกไว้ ส่วน Schedule และ Channels จะยังอยู่</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (pendingSwitch) applySwitch(pendingSwitch.nextType, pendingSwitch.then); }}>เปลี่ยนประเภท</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {pickerOpen && <MediaPickerModal assets={assets} tags={tags} selectedIds={assetItems.map((item) => item.media_asset_id)} loading={assetsLoading} error={assetsError} onClose={() => setPickerOpen(false)} onSelect={commitMedia} />}
       {playlistPickerOpen && <PlaylistPickerModal selectedId={playlistId} onClose={() => setPlaylistPickerOpen(false)} onSelect={(id) => { setPlaylistId(id); setPlaylistPickerOpen(false); onContentSelected(); }} />}
       {compositionPickerOpen && <CompositionPickerModal selectedId={compositionId} onClose={() => setCompositionPickerOpen(false)} onSelect={(id) => { setCompositionId(id); setCompositionPickerOpen(false); onContentSelected(); }} />}
