@@ -12,6 +12,7 @@ import { playlistItemToPreview, playlistPreviewStage } from "./playlist-preview"
 import { PlaylistPreviewContent } from "./PlaylistPreviewContent";
 import { PreviewStage } from "./PreviewStage";
 import { initialPreviewSession, reducePreviewSession } from "./preview-session";
+import { publicationPreviewTarget } from "./publication-preview-target";
 
 export type PreviewSource = "composition" | "publication" | "playlist";
 type PreviewHandoff = StagePreview & { source: PreviewSource; id: string; assets: MediaAsset[] };
@@ -112,11 +113,12 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
 }
 
 async function loadCompositionOrPublicationPreview(source: Exclude<PreviewSource, "playlist">, id: string): Promise<StagePreview> {
-  const compositionId = source === "composition"
-    ? id
-    : (await fetchPublication(id)).composition?.id;
-  if (!compositionId) throw new Error("Publication นี้ไม่มี Composition สำหรับ preview");
-  return loadCompositionPreview(compositionId);
+  if (source === "composition") return loadCompositionPreview(id);
+  const target = publicationPreviewTarget(await fetchPublication(id));
+  if (!target) throw new Error("Publication นี้ไม่มีเนื้อหาสำหรับ preview");
+  return target.kind === "composition"
+    ? loadCompositionPreview(target.id)
+    : loadPlaylistPreview(target.id);
 }
 
 async function loadPlaylistPreview(id: string): Promise<StagePreview> {
