@@ -6,18 +6,19 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ChevronRightIcon, ClockIcon } from "@/components/ui/icons";
 import { timeAgo } from "@/lib/time-ago";
 import { useRecentWorkspaces } from "@/lib/workspace-prefs";
-import { findWorkspace } from "../catalog";
+import type { WorkspaceEntry } from "../catalog";
 import { workspaceIcon } from "./workspace-ui";
 
 /**
  * Real per-browser history: the Sidebar records each App this viewer opens
  * (lib/workspace-prefs.ts). Shared by all three variants — `showCount`
  * swaps "2 hours ago" for "Opened 3 times". Empty until the viewer opens a
- * Workspace in this browser.
+ * Workspace in this browser. Looked up in `workspaces`, so history for an
+ * App the tenant can't see is skipped.
  */
-export function RecentlyOpenedRow({ showCount = false }: { showCount?: boolean }) {
+export function RecentlyOpenedRow({ workspaces, showCount = false }: { workspaces: WorkspaceEntry[]; showCount?: boolean }) {
   const recents = useRecentWorkspaces()
-    .map((recent) => ({ recent, workspace: findWorkspace(recent.id) }))
+    .map((recent) => ({ recent, workspace: workspaces.find((w) => w.id === recent.id) }))
     .filter((entry) => entry.workspace?.href);
   const now = new Date();
 

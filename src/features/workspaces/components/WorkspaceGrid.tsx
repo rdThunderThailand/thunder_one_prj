@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { ArrowRightIcon } from "@/components/ui/icons";
-import { WORKSPACES, type WorkspaceEntry } from "../catalog";
+import type { WorkspaceEntry } from "../catalog";
 import type { WorkspaceStats } from "../services/workspace-stats-api";
 import { WorkspaceStatusLine, workspaceIcon } from "./workspace-ui";
 
@@ -50,14 +50,15 @@ function WorkspaceCard({ workspace, stats }: { workspace: WorkspaceEntry; stats:
   return <Card className="flex h-full flex-col p-4 opacity-75">{body}</Card>;
 }
 
-// "Your Workspaces" — every entry in `../catalog.ts`, each with its real
+// "Your Workspaces" — every entry the tenant sees (`../catalog.ts`'s
+// `visibleWorkspaces`), each with its real
 // status line (live stat / sample data / coming soon).
-export function WorkspaceGrid({ stats }: { stats: WorkspaceStats }) {
+export function WorkspaceGrid({ workspaces, stats }: { workspaces: WorkspaceEntry[]; stats: WorkspaceStats }) {
   return (
     <div>
       <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Your Workspaces</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {WORKSPACES.map((workspace) => (
+        {workspaces.map((workspace) => (
           <WorkspaceCard
             key={workspace.id}
             workspace={workspace}
