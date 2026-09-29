@@ -24,7 +24,7 @@ export default async function DashboardLayout({
   if (session === "forbidden") {
     redirect("/no-access");
   }
-  const { userName, avatarUrl, tenantId, tenantName, availableTenants, jobTitle } = session;
+  const { userName, avatarUrl, tenantId, tenantName, availableTenants, isSuperAdmin, jobTitle } = session;
   // 2026-09-16 — the Topbar shows the person's real job title (Personnel's
   // own `job_title` field) when their membership has one, not the RBAC
   // access-tier label; falls back to the tier label (e.g. "Company
@@ -36,7 +36,9 @@ export default async function DashboardLayout({
       <Sidebar
         tenantId={tenantId}
         tenantName={tenantName}
-        availableTenants={availableTenants}
+        // Only a platform super admin gets the tenant switcher (Nie,
+        // 2026-09-29); a member of several tenants still sees a plain label.
+        availableTenants={isSuperAdmin ? availableTenants : []}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Topbar

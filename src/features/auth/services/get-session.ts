@@ -59,6 +59,10 @@ export interface Session {
    * tenants they're an active member of. The Sidebar shows a tenant switcher
    * when there's more than one. Empty when Core doesn't send it. */
   availableTenants: AvailableTenant[];
+  /** Holds Core's `super_admin` role on any membership — Core's own
+   * isPlatformSuperAdmin rule. Only a platform super admin gets the tenant
+   * switcher. */
+  isSuperAdmin: boolean;
 }
 
 export interface AvailableTenant {
@@ -162,7 +166,7 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [] };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false };
   }
 
   if (sessionRes.status === 401) {
@@ -177,7 +181,7 @@ async function getSessionUncached(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [] };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false };
   }
 
   const body = await sessionRes.json().catch(() => null);
@@ -189,19 +193,21 @@ async function getSessionUncached(): Promise<SessionResult> {
   const availableTenants = parseAvailableTenants(body?.data?.available_tenants);
   const userEmail = typeof user?.email === "string" ? user.email : null;
   const rawUserId = typeof user?.id === "string" ? user.id : null;
+  const memberships = await readMemberships(membershipsRes);
+  const isSuperAdmin = memberships.some(hasSuperAdminRole);
   const [role, membershipExtras] = await Promise.all([
-    resolveRole(membershipsRes, tenantId),
+    resolveRole(memberships, tenantId),
     extrasFromSession(body?.data) ?? resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
   ]);
   const { jobTitle } = membershipExtras;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
   const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
-  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants };
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin };
 }
 
 function parseAvailableTenants(value: unknown): AvailableTenant[] {
@@ -301,14 +307,27 @@ interface MembershipRow {
   }[];
 }
 
+async function readMemberships(membershipsRes: Response | null): Promise<MembershipRow[]> {
+  if (!membershipsRes?.ok) return [];
+  const body = await membershipsRes.json().catch(() => null);
+  return Array.isArray(body?.data) ? body.data : [];
+}
+
+/** Same test as Core's isPlatformSuperAdmin: a `super_admin` role code on
+ *  any of the caller's active memberships, whichever tenant it's in. */
+function hasSuperAdminRole(membership: MembershipRow): boolean {
+  return (membership.membership_roles ?? []).some((mr) => {
+    const roles = Array.isArray(mr.roles) ? mr.roles : [mr.roles];
+    return roles.some((role) => role?.code === "super_admin");
+  });
+}
+
 async function resolveRole(
-  membershipsRes: Response | null,
+  memberships: MembershipRow[],
   tenantId: string | null,
 ): Promise<{ roleType: RoleType | null; roleCode: string | null; roleName: string | null }> {
-  if (!membershipsRes?.ok || !tenantId) return NO_ROLE;
+  if (!tenantId) return NO_ROLE;
 
-  const body = await membershipsRes.json().catch(() => null);
-  const memberships: MembershipRow[] = Array.isArray(body?.data) ? body.data : [];
   const membership = memberships.find((m) => m.tenant_id === tenantId);
   if (!membership) return NO_ROLE;
 
