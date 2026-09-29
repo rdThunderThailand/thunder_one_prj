@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
+import { TENANT_COOKIE } from "@/lib/core/tenant-selection";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
     }
 
     cookieStore.set("to_at", authData.access_token, cookieOptions);
+    // A new login starts in Core's default tenant, not the last account's pick.
+    cookieStore.delete(TENANT_COOKIE);
 
     return NextResponse.json({ userId: authData.user_id });
   } catch {

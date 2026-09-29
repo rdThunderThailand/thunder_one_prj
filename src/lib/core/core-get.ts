@@ -7,6 +7,7 @@
 // handling, การ dedupe ด้านล่าง) ต้องแก้ซ้ำหลายจุดเวลามีอะไรเปลี่ยน.
 import { cache } from "react";
 import { env } from "@/config/env";
+import { selectedTenantHeader } from "./tenant-selection";
 
 export function coreAuthHeaders(token: string): Record<string, string> {
   return { "x-api-key": env.coreApiKey, Authorization: `Bearer ${token}` };
@@ -26,7 +27,7 @@ export function coreAuthHeaders(token: string): Record<string, string> {
 export const coreGet = cache(async function coreGet<T>(path: string, token: string): Promise<T | null> {
   try {
     const res = await fetch(`${env.coreApiUrl}/api/core/v1${path}`, {
-      headers: coreAuthHeaders(token),
+      headers: { ...coreAuthHeaders(token), ...(await selectedTenantHeader()) },
       cache: "no-store",
     });
     if (!res.ok) {

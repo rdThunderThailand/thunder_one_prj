@@ -2,6 +2,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
+import { getSelectedTenantId } from "@/lib/core/tenant-selection";
 
 // Core's role_type tier system (thunder_core_prj's src/utils/supabase/rbac.ts).
 // department_admin/tenant/system exist as raw DB values (thunder_core_prj's
@@ -48,6 +49,27 @@ export interface Session {
    * person's actual position reads better under their name than their
    * access tier. */
   jobTitle: string | null;
+  /** This tenant's `tenant_applications.role` for Thunder One — "owner" for
+   * Thunder Enterprise Master, "viewer" for every other tenant today. Decides
+   * which Apps the tenant sees (config/tenant-access.ts). `null` when Core
+   * doesn't send it (older Core) — treated as owner, failing open. */
+  tenantAppRole: string | null;
+  /** Every tenant this user may switch into (Core's `available_tenants`):
+   * all tenants Thunder One serves for a platform super admin, otherwise the
+   * tenants they're an active member of. The Sidebar shows a tenant switcher
+   * when there's more than one. Empty when Core doesn't send it. */
+  availableTenants: AvailableTenant[];
+  /** Holds Core's `super_admin` role on any membership — Core's own
+   * isPlatformSuperAdmin rule. Only a platform super admin gets the tenant
+   * switcher. */
+  isSuperAdmin: boolean;
+}
+
+export interface AvailableTenant {
+  id: string;
+  name: string;
+  /** This tenant's `tenant_applications.role` — "owner" / "viewer". */
+  role: string | null;
 }
 
 /**
@@ -125,9 +147,13 @@ async function getSessionUncached(): Promise<SessionResult> {
     redirect("/login");
   }
 
-  const authHeaders = {
+  // The Sidebar's tenant switcher (lib/core/tenant-selection.ts); Core
+  // resolves /session to this tenant instead of the user's default one.
+  const selectedTenantId = await getSelectedTenantId();
+  const authHeaders: Record<string, string> = {
     "x-api-key": env.coreApiKey,
     Authorization: `Bearer ${token}`,
+    ...(selectedTenantId ? { "x-tenant-id": selectedTenantId } : {}),
   };
 
   let sessionRes: Response;
@@ -140,38 +166,57 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false };
   }
 
   if (sessionRes.status === 401) {
     redirect("/login");
   }
+  // A picked tenant Core no longer lets this user into (membership ended,
+  // tenant unserved): drop the choice rather than lock them out.
+  if (selectedTenantId && (sessionRes.status === 403 || sessionRes.status === 400)) {
+    redirect("/api/auth/tenant");
+  }
   if (sessionRes.status === 403) {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false };
   }
 
   const body = await sessionRes.json().catch(() => null);
   const user = body?.data?.user;
   const tenantId: string | null = body?.data?.tenant?.id ?? null;
   const tenantName: string | null = body?.data?.tenant?.name ?? null;
+  const tenantAppRole: string | null =
+    typeof body?.data?.tenant_application?.role === "string" ? body.data.tenant_application.role : null;
+  const availableTenants = parseAvailableTenants(body?.data?.available_tenants);
   const userEmail = typeof user?.email === "string" ? user.email : null;
   const rawUserId = typeof user?.id === "string" ? user.id : null;
+  const memberships = await readMemberships(membershipsRes);
+  const isSuperAdmin = memberships.some(hasSuperAdminRole);
   const [role, membershipExtras] = await Promise.all([
-    resolveRole(membershipsRes, tenantId),
+    resolveRole(memberships, tenantId),
     extrasFromSession(body?.data) ?? resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
   ]);
   const { jobTitle } = membershipExtras;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
   const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
-  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle };
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin };
+}
+
+function parseAvailableTenants(value: unknown): AvailableTenant[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) =>
+    row && typeof row.id === "string" && typeof row.name === "string"
+      ? [{ id: row.id, name: row.name, role: typeof row.role === "string" ? row.role : null }]
+      : [],
+  );
 }
 
 /**
@@ -262,14 +307,27 @@ interface MembershipRow {
   }[];
 }
 
+async function readMemberships(membershipsRes: Response | null): Promise<MembershipRow[]> {
+  if (!membershipsRes?.ok) return [];
+  const body = await membershipsRes.json().catch(() => null);
+  return Array.isArray(body?.data) ? body.data : [];
+}
+
+/** Same test as Core's isPlatformSuperAdmin: a `super_admin` role code on
+ *  any of the caller's active memberships, whichever tenant it's in. */
+function hasSuperAdminRole(membership: MembershipRow): boolean {
+  return (membership.membership_roles ?? []).some((mr) => {
+    const roles = Array.isArray(mr.roles) ? mr.roles : [mr.roles];
+    return roles.some((role) => role?.code === "super_admin");
+  });
+}
+
 async function resolveRole(
-  membershipsRes: Response | null,
+  memberships: MembershipRow[],
   tenantId: string | null,
 ): Promise<{ roleType: RoleType | null; roleCode: string | null; roleName: string | null }> {
-  if (!membershipsRes?.ok || !tenantId) return NO_ROLE;
+  if (!tenantId) return NO_ROLE;
 
-  const body = await membershipsRes.json().catch(() => null);
-  const memberships: MembershipRow[] = Array.isArray(body?.data) ? body.data : [];
   const membership = memberships.find((m) => m.tenant_id === tenantId);
   if (!membership) return NO_ROLE;
 

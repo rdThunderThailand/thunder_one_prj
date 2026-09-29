@@ -5,6 +5,7 @@ import { MANAGER_QUICK_ACCESS, QuickAccessCard } from "./QuickAccessCard";
 import { RecentActivityCard } from "./RecentActivityCard";
 import { RecentlyOpenedRow } from "./RecentlyOpenedRow";
 import { WorkspaceDirectory } from "./WorkspaceDirectory";
+import type { WorkspaceEntry } from "../catalog";
 import type { CoreRecentLog, WorkspaceStats } from "../services/workspace-stats-api";
 
 // The department_admin / manager_it_asset ("manager") variant of the
@@ -12,10 +13,12 @@ import type { CoreRecentLog, WorkspaceStats } from "../services/workspace-stats-
 // searchable, pinnable directory over `../catalog.ts` rather than the CEO
 // variant's overview dashboard (./WorkspacesPage.tsx).
 export function ManagerWorkspacesPage({
+  workspaces,
   stats,
   activity,
   nowIso,
 }: {
+  workspaces: WorkspaceEntry[];
   stats: WorkspaceStats;
   activity: CoreRecentLog[] | null;
   nowIso: string;
@@ -27,11 +30,15 @@ export function ManagerWorkspacesPage({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div className="flex flex-col gap-6 lg:col-span-3">
           <WorkspaceDirectory
+            workspaces={workspaces}
             stats={stats}
             pinnable
           />
-          <PinnedWorkspacesRow />
-          <RecentlyOpenedRow showCount />
+          <PinnedWorkspacesRow workspaces={workspaces} />
+          <RecentlyOpenedRow
+            workspaces={workspaces}
+            showCount
+          />
         </div>
         <div className="flex flex-col gap-4">
           <QuickAccessCard items={MANAGER_QUICK_ACCESS} />
