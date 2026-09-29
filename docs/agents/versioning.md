@@ -58,6 +58,7 @@ Count **promotions of `dev → main`**, not merges into `main`. Feature branches
 |---|---|---|---|
 | 1 | `v0.1.0` (tagged retroactively on `bca6937`) | #118 | 2026-09-16 |
 | 2 | `v0.2.0` | #139 | 2026-09-22 |
+| 3 | `v0.3.0` | #161 | 2026-09-28 |
 
 Append a row for every release. This table is the only release log we keep.
 
