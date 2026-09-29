@@ -87,10 +87,13 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl }: TopbarProps) {
       {/* 2026-09-19: text-sm/font-bold -> text-xs/font-semibold, matching
           the design reference's own topbar controls (12px/600) — was
           14px/700, noticeably heavier/larger than the reference. Bell/Help
-          icons 28px -> 20px, gap-5 -> gap-4, to match the tighter density. */}
-      <div className="ml-auto flex items-center gap-4">
+          icons 28px -> 20px, gap-5 -> gap-4, to match the tighter density.
+          2026-09-29: every control sits in the same 36px box (like the Media
+          Workspace Topbar) with one gap, so TH / bell / help / divider /
+          profile are spaced evenly — the bare icons made the gaps uneven. */}
+      <div className="ml-auto flex items-center gap-1">
         <span
-          className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-[#536999] dark:text-zinc-400 sm:flex"
+          className="hidden h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[#536999] dark:text-zinc-400 sm:flex"
           title="ยังไม่รองรับการเปลี่ยนภาษา"
         >
           TH
@@ -98,14 +101,21 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl }: TopbarProps) {
         </span>
         <NotificationBell variant="default" />
         <button
-          className="text-[#536999] hover:text-[#071858] dark:text-zinc-400 dark:hover:text-zinc-100"
+          type="button"
+          className="grid h-9 w-9 place-items-center rounded-lg text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
           aria-label="Help"
         >
           <HelpIcon className="h-5 w-5" />
         </button>
-        <div className="border-l border-[#e6edf9] pl-4 dark:border-zinc-800">
-          <UserMenu userName={userName} roleLabel={roleLabel} avatarUrl={avatarUrl} />
-        </div>
+        <span
+          aria-hidden="true"
+          className="mx-2 h-6 w-px bg-[#e6edf9] dark:bg-zinc-800"
+        />
+        <UserMenu
+          userName={userName}
+          roleLabel={roleLabel}
+          avatarUrl={avatarUrl}
+        />
       </div>
     </header>
   );
