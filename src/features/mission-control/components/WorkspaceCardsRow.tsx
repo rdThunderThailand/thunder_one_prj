@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { APPS } from "@/config/apps";
+import { canOpenApp } from "@/config/tenant-access";
 
 // Descriptive copy for the 3 workspaces the homepage highlights — People/
 // Asset/Media, matching the mockup. ThunderCare and the "coming soon" tiles
@@ -67,8 +68,11 @@ const TONES: Record<
 
 const ORDER = ["people", "asset-intelligence", "media-workspace"];
 
-export function WorkspaceCardsRow() {
-  const apps = ORDER.map((id) => APPS.find((app) => app.id === id)).filter((app): app is NonNullable<typeof app> => Boolean(app));
+// `allowedAppIds` — config/tenant-access.ts; null shows all three cards.
+export function WorkspaceCardsRow({ allowedAppIds }: { allowedAppIds: ReadonlySet<string> | null }) {
+  const apps = ORDER.filter((id) => canOpenApp(allowedAppIds, id))
+    .map((id) => APPS.find((app) => app.id === id))
+    .filter((app): app is NonNullable<typeof app> => Boolean(app));
 
   return (
     <div>

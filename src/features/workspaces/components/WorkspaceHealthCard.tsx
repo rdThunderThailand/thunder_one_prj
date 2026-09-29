@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { WORKSPACES } from "../catalog";
+import type { WorkspaceEntry } from "../catalog";
 import type { WorkspaceStats } from "../services/workspace-stats-api";
 import { workspaceIcon } from "./workspace-ui";
 
 // One row per live Workspace with its real stat. The chip is the stat's own
 // alert (e.g. "6 offline") — shown only when there is one; otherwise "OK".
 // No invented "Healthy" judgement for Apps whose read failed.
-export function WorkspaceHealthCard({ stats }: { stats: WorkspaceStats }) {
-  const live = WORKSPACES.filter((w) => w.dataStatus === "live" && w.href);
+export function WorkspaceHealthCard({ workspaces, stats }: { workspaces: WorkspaceEntry[]; stats: WorkspaceStats }) {
+  const live = workspaces.filter((w) => w.dataStatus === "live" && w.href);
 
   return (
     <Card className="p-4">

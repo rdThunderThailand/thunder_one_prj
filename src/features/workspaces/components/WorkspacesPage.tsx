@@ -6,11 +6,20 @@ import { WorkspaceGrid } from "./WorkspaceGrid";
 import { WorkspaceHealthCard } from "./WorkspaceHealthCard";
 import { WorkspaceOverviewCard } from "./WorkspaceOverviewCard";
 import { WorkspacesHeader } from "./WorkspacesHeader";
+import type { WorkspaceEntry } from "../catalog";
 import type { WorkspaceStats } from "../services/workspace-stats-api";
 
-// The CEO/admin variant. Tiles come from `../catalog.ts`, numbers from
+// The CEO/admin variant. Tiles come from `workspaces` (`../catalog.ts`), numbers from
 // `stats` (real Core reads), Recently Opened from this browser's own history.
-export function WorkspacesPage({ stats, nowIso }: { stats: WorkspaceStats; nowIso: string }) {
+export function WorkspacesPage({
+  workspaces,
+  stats,
+  nowIso,
+}: {
+  workspaces: WorkspaceEntry[];
+  stats: WorkspaceStats;
+  nowIso: string;
+}) {
   const dataAsOf = new Date(nowIso).toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -27,12 +36,18 @@ export function WorkspacesPage({ stats, nowIso }: { stats: WorkspaceStats; nowIs
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div className="flex flex-col gap-6 lg:col-span-3">
           <HeroBanner />
-          <WorkspaceGrid stats={stats} />
-          <RecentlyOpenedRow />
+          <WorkspaceGrid
+            workspaces={workspaces}
+            stats={stats}
+          />
+          <RecentlyOpenedRow workspaces={workspaces} />
         </div>
         <div className="flex flex-col gap-4">
-          <WorkspaceOverviewCard />
-          <WorkspaceHealthCard stats={stats} />
+          <WorkspaceOverviewCard workspaces={workspaces} />
+          <WorkspaceHealthCard
+            workspaces={workspaces}
+            stats={stats}
+          />
           <QuickActionsCard />
           <NeedHelpCard />
         </div>

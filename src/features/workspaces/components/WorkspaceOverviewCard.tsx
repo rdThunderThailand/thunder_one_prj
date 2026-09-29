@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
-import { DATA_STATUS_LABEL, WORKSPACES, type WorkspaceDataStatus } from "../catalog";
+import { DATA_STATUS_LABEL, type WorkspaceDataStatus, type WorkspaceEntry } from "../catalog";
 
 const COLORS: Record<WorkspaceDataStatus, string> = {
   live: "#10b981",
@@ -11,11 +11,11 @@ const COLORS: Record<WorkspaceDataStatus, string> = {
 // Workspaces by data status (`../catalog.ts`) — a real breakdown of what's
 // on the platform, replacing the old mock "Active / Updated today / Needs
 // attention / Not used recently" split, which had no usage data behind it.
-export function WorkspaceOverviewCard() {
-  const total = WORKSPACES.length;
+export function WorkspaceOverviewCard({ workspaces }: { workspaces: WorkspaceEntry[] }) {
+  const total = workspaces.length;
   const segments = (Object.keys(COLORS) as WorkspaceDataStatus[]).map((status) => ({
     label: DATA_STATUS_LABEL[status],
-    value: WORKSPACES.filter((w) => w.dataStatus === status).length,
+    value: workspaces.filter((w) => w.dataStatus === status).length,
     color: COLORS[status],
   }));
 

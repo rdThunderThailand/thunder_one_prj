@@ -27,6 +27,8 @@ interface MissionControlPageProps {
   /** features/my-work/load-my-work.ts — backs `TasksCard`, the same items
    *  as My Work and the Topbar bell. */
   work: Promise<MyWork>;
+  /** config/tenant-access.ts — which workspace cards to show; null = all. */
+  allowedAppIds: ReadonlySet<string> | null;
 }
 
 // The homepage (CEO/Executive/company_admin/tenant/system default landing —
@@ -35,7 +37,7 @@ interface MissionControlPageProps {
 // coordinating session's new mockup, replacing the old CEO-strategic-brief
 // layout (StrategicBriefCard/DecisionsCard/AskThunderOneCard/
 // TodayScheduleCard — all retired, see mock-data.ts's own header comment).
-export function MissionControlPage({ userName, stats, recentLogs, work }: MissionControlPageProps) {
+export function MissionControlPage({ userName, stats, recentLogs, work, allowedAppIds }: MissionControlPageProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* 2026-09-16 — the skyline photo sits absolutely behind this whole
@@ -71,7 +73,7 @@ export function MissionControlPage({ userName, stats, recentLogs, work }: Missio
               <Suspense fallback={<HomeStatTilesSkeleton />}>
                 <HomeStatTilesRow stats={stats} />
               </Suspense>
-              <WorkspaceCardsRow />
+              <WorkspaceCardsRow allowedAppIds={allowedAppIds} />
               {/* Side-by-side per the mockup (two ~equal panels), not stacked. */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Suspense fallback={<OrgOverviewSkeleton />}>
