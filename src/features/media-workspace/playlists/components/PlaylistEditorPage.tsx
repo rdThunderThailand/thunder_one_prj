@@ -27,6 +27,9 @@ import { PlaylistPropertiesPane } from "./PlaylistPropertiesPane";
 import { RevisionConflictCard } from "./RevisionConflictCard";
 import { UnsavedLeaveConfirm } from "./UnsavedLeaveConfirm";
 import { usePlaylistEditorRow } from "./usePlaylistEditorRow";
+import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
+import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
+import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
 
 const LIST_PATH = "/media-workspace/playlists";
 
@@ -47,6 +50,8 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
 
   const row = usePlaylistEditorRow({ playlistId, history, info, setInfo });
+  const affected = useAffectedPrograms("playlists", row.serverId);
+  const [publishDialog, setPublishDialog] = useState<"changes" | "list" | null>(null);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -139,6 +144,11 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     );
   }
 
+  // ADR 0078 §6: unsaved edits are saved first, and a failed save stops the flow before any re-publish.
+  const publishPlaylistChanges = async () => {
+    if (row.isDirty && !(await row.save())) throw new Error("save failed");
+    return publishChanges("playlists", row.serverId!);
+  };
   const publish = () => router.push(`/media-workspace/publications/create?playlistId=${row.serverId}`);
   const publishDisabledReason = !row.serverId
     ? "บันทึก Playlist ก่อนเผยแพร่"
@@ -169,8 +179,21 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         onPreview={() => setPreviewOpen(true)}
         onPublish={publish}
         publishDisabledReason={publishDisabledReason}
-        onSave={row.save}
+        affectedCount={affected.programs.length}
+        onPublishChanges={() => setPublishDialog("changes")}
+        onShowPrograms={() => setPublishDialog("list")}
+        onSave={() => void row.save()}
       />
+
+      {publishDialog && (
+        <PublishChangesDialog
+          contentLabel="playlist"
+          programs={affected.programs}
+          onConfirm={publishDialog === "changes" ? publishPlaylistChanges : undefined}
+          onPublished={affected.reload}
+          onClose={() => setPublishDialog(null)}
+        />
+      )}
 
       {confirmLeave && (
         <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />

@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 import { Badge } from "@/components/ui/lovable/badge";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
+import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
 import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
 
@@ -59,6 +60,9 @@ export function CompositionEditorHeader({
   onRedo,
   hasUnsavedChanges,
   onPublish,
+  affectedCount,
+  onPublishChanges,
+  onShowPrograms,
   onSaveDraft,
   onSaveAsTemplate,
   onActivate,
@@ -89,6 +93,10 @@ export function CompositionEditorHeader({
   hasUnsavedChanges: boolean;
   /** The editor has no schedule or target fields, so Publish hands the saved Composition to the wizard. */
   onPublish: () => void;
+  /** Active or scheduled Programs Publish Changes would re-publish (ADR 0078). */
+  affectedCount: number;
+  onPublishChanges: () => void;
+  onShowPrograms: () => void;
   onSaveDraft: () => void;
   onSaveAsTemplate: () => void;
   onActivate: () => void;
@@ -145,6 +153,7 @@ export function CompositionEditorHeader({
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={statusVariant[status]} className="rounded-full px-2 py-0 text-[10px]">{status[0].toUpperCase() + status.slice(1)}</Badge>
             <span className="text-xs text-muted-foreground">{referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · {updatedLabel}</span>
+            {affectedCount > 0 && <button type="button" onClick={onShowPrograms} className="text-xs font-medium text-primary hover:underline">Used by {affectedCount} program{affectedCount === 1 ? "" : "s"}</button>}
           </div>
         </div>
       </div>
@@ -185,14 +194,13 @@ export function CompositionEditorHeader({
               </div>
             </details>}
           </div>
-          <Button
-            size="sm"
-            onClick={onPublish}
-            disabled={saving || !!publishDisabledReason}
-            title={publishDisabledReason ?? undefined}
-          >
-            Publish →
-          </Button>
+          <PublishSplitButton
+            disabled={saving}
+            hasAffectedPrograms={affectedCount > 0}
+            publishToChannelDisabledReason={publishDisabledReason}
+            onPublishChanges={onPublishChanges}
+            onPublishToChannel={onPublish}
+          />
       </div>
     </div>
   );

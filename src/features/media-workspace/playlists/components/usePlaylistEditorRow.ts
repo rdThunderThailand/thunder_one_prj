@@ -66,11 +66,12 @@ export function usePlaylistEditorRow({
 
   const isDirty = savedSnapshot !== null && baseline(history.present, info) !== savedSnapshot;
 
-  const save = async () => {
+  /** Resolves `true` only when the row was written; Publish Changes must not publish on a failed save. */
+  const save = async (): Promise<boolean> => {
     const present = history.present;
     if (!present.name.trim()) {
       setSaveError("กรุณากรอกชื่อ Playlist ก่อนบันทึก");
-      return;
+      return false;
     }
     setSaveError(null);
     setConflict(null);
@@ -106,6 +107,7 @@ export function usePlaylistEditorRow({
       setSavedSnapshot(baseline(present, info));
       setLastSavedAt(new Date());
       toast.success("บันทึกแล้ว");
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       if (isConflict(message)) {
@@ -115,6 +117,7 @@ export function usePlaylistEditorRow({
       } else {
         setSaveError(classifyApiError(err, "บันทึก Playlist ไม่สำเร็จ").message);
       }
+      return false;
     } finally {
       setSaving(false);
     }
