@@ -239,8 +239,8 @@ export function CompositionEditorPage({
         hasUnsavedChanges={isDirty}
         onPublish={() => router.push(`/media-workspace/publications/create?compositionId=${id}`)}
         affectedCount={affected.programs.length}
-        onPublishChanges={() => setPublishDialog("changes")}
-        onShowPrograms={() => setPublishDialog("list")}
+        onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
+        onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
         onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Composition ไม่สำเร็จ")}
         onSaveAsTemplate={() => { setTemplateSavedName(null); setNamingTemplate(true); }}
         onActivate={() => void save(async (result) => {

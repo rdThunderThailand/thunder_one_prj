@@ -180,8 +180,8 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         onPublish={publish}
         publishDisabledReason={publishDisabledReason}
         affectedCount={affected.programs.length}
-        onPublishChanges={() => setPublishDialog("changes")}
-        onShowPrograms={() => setPublishDialog("list")}
+        onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
+        onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
         onSave={() => void row.save()}
       />
 
