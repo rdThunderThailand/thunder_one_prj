@@ -4,6 +4,7 @@ import {
   DEFAULT_CREATE_CHANNEL_DRAFT,
   canvasResolutionFor,
   draftFromChannel,
+  geometryMismatch,
   step1Valid,
   step2Valid,
   toCreateChannelPayload,
@@ -52,6 +53,25 @@ assert.equal(
 );
 
 assert.throws(() => toCreateChannelPayload({ ...DEFAULT_CREATE_CHANNEL_DRAFT, name: "Cafe" }));
+
+const portraitPlayer = {
+  id: "player-1",
+  name: "Lobby Player",
+  orientation: "portrait" as const,
+  resolution: "1080x1920",
+};
+const mismatchDraft = { ...DEFAULT_CREATE_CHANNEL_DRAFT, playerId: portraitPlayer.id, name: "Lobby" };
+assert.match(geometryMismatch(mismatchDraft, portraitPlayer) ?? "", /portrait/);
+assert.match(
+  geometryMismatch(mismatchDraft, { ...portraitPlayer, orientation: "landscape", resolution: "1920x1200" }) ?? "",
+  /1920x1200/,
+);
+assert.equal(geometryMismatch(mismatchDraft, { ...portraitPlayer, orientation: "landscape", resolution: "1920x1080" }), null);
+assert.equal(geometryMismatch(mismatchDraft, { ...portraitPlayer, orientation: null, resolution: null }), null);
+assert.equal(geometryMismatch({ ...mismatchDraft, displayMode: "multi" }, portraitPlayer), null);
+assert.equal(toCreateChannelPayload(mismatchDraft, true).confirm_mismatch, true);
+assert.equal(toCreateChannelPayload(mismatchDraft, false).confirm_mismatch, false);
+assert.equal(toUpdateChannelPayload(mismatchDraft, 4, true).confirm_mismatch, true);
 
 // toUpdateChannelPayload: same shape plus revision/overwrite.
 const updatePayload = toUpdateChannelPayload({ ...DEFAULT_CREATE_CHANNEL_DRAFT, playerId: "player-1", name: "Cafe" }, 4);

@@ -4,6 +4,8 @@ Status: **accepted** (2026-09-12 by the owner, after five review rounds and a ti
 synchronization boundary of ADR 0042; removes Channel Health `Degraded` from ADR 0035; supersedes
 ADR 0039's orientation check for multi-screen Channels only.
 
+The retained single-screen orientation refusal in §3 is superseded by ADR 0079 (2026-09-29): known Player geometry mismatches require explicit operator confirmation.
+
 Two kinds of statement appear below and are labelled: **Design evidence** — a mockup in
 `docs/channels/v02/design/` shows it, and the mockup wins on layout and wording; **Rationale** — a
 data-model or rule decision the mockups do not show, and this ADR wins. Do not read a design label as

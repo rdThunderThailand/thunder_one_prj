@@ -9,7 +9,6 @@ export async function createChannelV2(payload: CreateChannelPayload): Promise<Ch
   const { requestApi } = await import("../../../../lib/api/media-api.ts");
   const body = {
     ...payload,
-    confirm_mismatch: true,
     as_draft: false,
   };
   return parseChannelDetail(await requestApi<unknown>("POST", "/media/channels", body));
@@ -17,9 +16,5 @@ export async function createChannelV2(payload: CreateChannelPayload): Promise<Ch
 
 export async function updateChannelV2(channelId: string, payload: UpdateChannelPayload): Promise<ChannelDetail> {
   const { requestApi } = await import("../../../../lib/api/media-api.ts");
-  const body = {
-    ...payload,
-    confirm_mismatch: true,
-  };
-  return parseChannelDetail(await requestApi<unknown>("PATCH", `/media/channels/${channelId}`, body));
+  return parseChannelDetail(await requestApi<unknown>("PATCH", `/media/channels/${channelId}`, payload));
 }

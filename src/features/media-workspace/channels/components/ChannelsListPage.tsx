@@ -47,9 +47,10 @@ export function ChannelsListPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // #115: the dashboard's "Add Channel" quick action links here with ?create=1 so it opens
   // the same creation flow as this page's own "Create Channel" button, instead of a dead route.
-  const [isCreateOpen, setIsCreateOpen] = useState(
-    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("create") === "1",
-  );
+  // Read from useSearchParams(), not window: a window branch renders false on the server and true
+  // on the client, so ?create=1 hydrated with an extra <dialog>.
+  const searchParams = useSearchParams();
+  const [isCreateOpen, setIsCreateOpen] = useState(() => searchParams.get("create") === "1");
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   // Independent of `channels`/`error` above: Now Playing and the Channel Groups tile degrade on
@@ -63,7 +64,6 @@ export function ChannelsListPage() {
   // renders before the browser URL updates, so window.location still held the
   // previous page's query and the incoming ?q= was dropped and then wiped from
   // the URL. Same source the Playlists/Layouts/Compositions lists use.
-  const searchParams = useSearchParams();
   const [state, setState] = useState(() => readListState(new URLSearchParams(searchParams.toString())));
 
   const restore = useCallback(() => {

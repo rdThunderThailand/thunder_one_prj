@@ -4,6 +4,7 @@ import { arrangementByKey } from "../../display-config";
 import { canvasResolutionFor, type CreateChannelDraft } from "../../create-wizard-state";
 import type { ChannelPlayerCandidate } from "../../player-candidates";
 import type { ChannelLocationOption } from "../../types";
+import { GeometryMismatchWarning } from "../GeometryMismatchWarning";
 
 const OUTPUT_KIND_LABEL: Record<CreateChannelDraft["outputKind"], string> = {
   screen: "Screen",
@@ -60,12 +61,18 @@ export function Step3Review({
   draft,
   locations,
   player,
+  geometryWarning,
+  mismatchConfirmed,
+  onConfirmMismatch,
   onEditChannel,
   onEditSetup,
 }: {
   draft: CreateChannelDraft;
   locations: ChannelLocationOption[];
   player: ChannelPlayerCandidate | null;
+  geometryWarning: string | null;
+  mismatchConfirmed: boolean;
+  onConfirmMismatch: (confirmed: boolean) => void;
   onEditChannel: () => void;
   onEditSetup: () => void;
 }) {
@@ -110,6 +117,15 @@ export function Step3Review({
             <ReviewRow key={screen.index} label={screen.output} value={`Display ${screen.index + 1} · ${screen.resolution}`} />
           ))}
       </ReviewSection>
+
+      {geometryWarning && (
+        <GeometryMismatchWarning
+          id="create-channel-geometry-confirmation"
+          warning={geometryWarning}
+          confirmed={mismatchConfirmed}
+          onConfirmChange={onConfirmMismatch}
+        />
+      )}
 
       <div className="rounded-lg bg-primary-soft p-3 text-xs text-primary">
         <p className="flex items-center gap-2 font-semibold">

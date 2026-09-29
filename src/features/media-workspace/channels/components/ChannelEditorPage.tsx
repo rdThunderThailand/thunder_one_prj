@@ -8,13 +8,14 @@ import { Button, buttonClasses } from "@/components/ui/Button";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import { classifyApiError, isDuplicateName, type ClassifiedError } from "@/lib/api/api-error";
-import { draftFromChannel, step1Valid, step2Valid, toUpdateChannelPayload, type CreateChannelDraft } from "../create-wizard-state";
+import { draftFromChannel, geometryMismatch, step1Valid, step2Valid, toUpdateChannelPayload, type CreateChannelDraft } from "../create-wizard-state";
 import { fetchChannel, fetchChannelReferenceData } from "../services/channels-api";
 import { updateChannelV2 } from "../services/channel-write-api";
 import { fetchChannelPlayerCandidates } from "../services/player-candidates-api";
 import type { ChannelDetail, ChannelLocationOption } from "../types";
 import type { ChannelPlayerCandidate } from "../player-candidates";
 import { ChannelEditorForm } from "./ChannelEditorForm";
+import { GeometryMismatchWarning } from "./GeometryMismatchWarning";
 import { EditChannelSidebar } from "./EditChannelSidebar";
 import { EditorLoadError, EditorSkeleton } from "./ChannelEditorStates";
 
@@ -35,12 +36,19 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
   const [nameError, setNameError] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirmedMismatchKey, setConfirmedMismatchKey] = useState<string | null>(null);
+
+  const selectedPlayer = candidates.find((candidate) => candidate.id === draft?.playerId) ?? null;
+  const geometryWarning = draft ? geometryMismatch(draft, selectedPlayer) : null;
+  const mismatchKey = geometryWarning ? `${draft?.playerId}:${geometryWarning}` : null;
+  const mismatchConfirmed = mismatchKey !== null && confirmedMismatchKey === mismatchKey;
 
   const load = () => {
     fetchChannel(channelId)
       .then((detail) => {
         setChannel(detail);
         setDraft(draftFromChannel(detail));
+        setConfirmedMismatchKey(null);
         setLoadError(null);
       })
       .catch((caught) => setLoadError(classifyApiError(caught, "Could not load this Channel. Try again.")));
@@ -73,11 +81,12 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
       return;
     }
     if (!step2Valid(draft)) return;
+    if (geometryWarning && !mismatchConfirmed) return;
     setNameError(undefined);
     setSaving(true);
     setSaveError(null);
     try {
-      const updated = await updateChannelV2(channelId, toUpdateChannelPayload(draft, channel.revision));
+      const updated = await updateChannelV2(channelId, toUpdateChannelPayload(draft, channel.revision, mismatchConfirmed));
       router.push("/media-workspace/channels");
       return updated;
     } catch (caught) {
@@ -85,6 +94,10 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
         setNameError("A Channel with this name already exists.");
       } else if (caught instanceof Error && isPlayerChangeBlocked(caught.message)) {
         setSaveError("Can't change the Player — an active or scheduled Publication still targets this Channel.");
+      } else if (caught instanceof Error && caught.message.includes("confirm to continue")) {
+        setSaveError("The Player display information changed. Refresh the Player list, review the warning, and confirm again.");
+        setConfirmedMismatchKey(null);
+        refreshCandidates();
       } else {
         setSaveError(classifyApiError(caught, "Could not save Channel changes. Try again.").message);
       }
@@ -133,12 +146,20 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
               onChange={setDraft}
               onRefreshCandidates={refreshCandidates}
             />
+            {geometryWarning && (
+              <GeometryMismatchWarning
+                id="edit-channel-geometry-confirmation"
+                warning={geometryWarning}
+                confirmed={mismatchConfirmed}
+                onConfirmChange={(confirmed) => setConfirmedMismatchKey(confirmed ? mismatchKey : null)}
+              />
+            )}
             <div className="flex justify-end gap-2 px-1">
               <Link href="/media-workspace/channels" className={buttonClasses("secondary")}>
                 <ArrowLeftIcon />
                 Cancel
               </Link>
-              <Button type="button" disabled={disabled} onClick={() => void handleSave()}>
+              <Button type="button" disabled={disabled || Boolean(geometryWarning && !mismatchConfirmed)} onClick={() => void handleSave()}>
                 {saving ? "Saving…" : "Save changes"}
               </Button>
             </div>
@@ -149,6 +170,7 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
             onChanged={(updated) => {
               setChannel(updated);
               setDraft(draftFromChannel(updated));
+              setConfirmedMismatchKey(null);
             }}
             onDeleted={() => router.push("/media-workspace/channels")}
           />

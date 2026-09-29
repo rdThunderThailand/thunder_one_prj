@@ -1,4 +1,5 @@
 import { ARRANGEMENT_OPTIONS, arrangementByKey, autoMapScreens, buildDisplayConfig, canvasResolution } from "./display-config.ts";
+import type { ChannelPlayerCandidate } from "./player-candidates.ts";
 import type { ChannelDetail, ChannelDisplayConfigScreen, ChannelOutputKind } from "./types/index.ts";
 
 export interface CreateChannelDraft {
@@ -47,6 +48,21 @@ export function step2Valid(draft: CreateChannelDraft): boolean {
   return draft.playerId !== null;
 }
 
+export function geometryMismatch(
+  draft: CreateChannelDraft,
+  player: Pick<ChannelPlayerCandidate, "name" | "orientation" | "resolution"> | null,
+): string | null {
+  if (draft.displayMode !== "single" || !player) return null;
+  const [width, height] = draft.screenResolution.split("x").map(Number);
+  const expectedOrientation = width >= height ? "landscape" : "portrait";
+  if ((player.orientation !== null && player.orientation !== expectedOrientation) ||
+      (player.resolution !== null && player.resolution !== draft.screenResolution)) {
+    const reported = [player.resolution, player.orientation].filter(Boolean).join(" · ");
+    return `Channel expects ${draft.screenResolution} (${expectedOrientation}), but ${player.name} reports ${reported}. Playback may be rotated or scaled incorrectly.`;
+  }
+  return null;
+}
+
 export interface CreateChannelPayload {
   name: string;
   description: string | null;
@@ -55,6 +71,7 @@ export interface CreateChannelPayload {
   output_kind: ChannelOutputKind;
   expected_resolution: string | null;
   display_config: ReturnType<typeof buildDisplayConfig> | null;
+  confirm_mismatch: boolean;
   // `channelCreateSchema` (Thunder_Core) declares this `.nullable()` but not `.optional()` — the
   // key must be present or zod 400s. A default playlist has no place in this wizard.
   default_playlist_id: null;
@@ -62,7 +79,7 @@ export interface CreateChannelPayload {
 
 /** The exact body `POST /media/channels` needs — `expected_resolution` xor `display_config`
  *  depending on Display Mode (`media_core.channel_canvas` refuses both being non-null). */
-export function toCreateChannelPayload(draft: CreateChannelDraft): CreateChannelPayload {
+export function toCreateChannelPayload(draft: CreateChannelDraft, confirmedMismatch = false): CreateChannelPayload {
   if (!draft.playerId) throw new Error("toCreateChannelPayload: playerId is required");
   const arrangement = arrangementByKey(draft.arrangementKey);
   return {
@@ -73,6 +90,7 @@ export function toCreateChannelPayload(draft: CreateChannelDraft): CreateChannel
     output_kind: draft.outputKind,
     expected_resolution: draft.displayMode === "single" ? draft.screenResolution : null,
     display_config: draft.displayMode === "multi" ? buildDisplayConfig(arrangement, draft.screens) : null,
+    confirm_mismatch: confirmedMismatch,
     default_playlist_id: null,
   };
 }
@@ -86,8 +104,8 @@ export interface UpdateChannelPayload extends CreateChannelPayload {
  *  `expected_revision`/`overwrite`, same always-present-nullable fields. `overwrite` is always
  *  `false` here: this editor has no conflict-resolution UI, so a stale revision surfaces as an
  *  ordinary save error instead of silently clobbering a concurrent edit. */
-export function toUpdateChannelPayload(draft: CreateChannelDraft, expectedRevision: number): UpdateChannelPayload {
-  return { ...toCreateChannelPayload(draft), expected_revision: expectedRevision, overwrite: false };
+export function toUpdateChannelPayload(draft: CreateChannelDraft, expectedRevision: number, confirmedMismatch = false): UpdateChannelPayload {
+  return { ...toCreateChannelPayload(draft, confirmedMismatch), expected_revision: expectedRevision, overwrite: false };
 }
 
 /** Seeds the editor from the Channel Core v2 already returned — the inverse of
