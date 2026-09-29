@@ -21,6 +21,7 @@ import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { DeliveryProgress } from "./DeliveryProgress";
 import { formatMonthDays } from "../schedule";
+import { publicationPreviewTarget } from "@/features/media-workspace/preview/publication-preview-target";
 
 /** Names what changed, so re-publishing is a decision rather than a guess (ADR 0049 §11). */
 function describeDrift(finding: DriftFinding): string {
@@ -207,7 +208,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
               </Link>
             )}
 
-            {detail.composition && (
+            {publicationPreviewTarget(detail) && (
               <Link
                 href={`/media-workspace/preview/publication/${id}`}
                 target="_blank"

@@ -10,10 +10,13 @@ agents — an agent opening a release PR follows this file literally.
   when someone actually asks "which version am I on").
 - We stay on `0.x` until the frontend has a stable contract against Thunder_Core. Do not bump to
   `1.0.0` without an ADR.
-- **MINOR** (`0.1.0 → 0.2.0`) = every promotion of `dev → main`. One release = one minor, no matter
-  how big.
-- **PATCH** (`0.2.0 → 0.2.1`) = a hotfix merged into `main` directly, bypassing `dev`. Merge `main`
-  back into `dev` right after so the number does not diverge.
+- **MINOR** (`0.1.0 → 0.2.0`) = a release that adds backward-compatible functionality. A minor
+  release may include bug fixes.
+- **PATCH** (`0.2.0 → 0.2.1`) = a release containing only backward-compatible bug fixes (plus
+  release-only docs or metadata), whether it promotes `dev → main` or hotfixes `main` directly.
+  After a direct-to-`main` hotfix, merge `main` back into `dev` so the number does not diverge.
+- Classify the **whole diff since the current `main` release**, not the branch route or the last PR.
+  If that diff includes a feature, use MINOR; if it contains only bug fixes, use PATCH.
 - A version is **immutable once tagged**. Wrong tag → new patch release, never move or delete the
   tag.
 
@@ -32,8 +35,9 @@ what production runs.
 
 1. **Verify `dev`**: `pnpm install --frozen-lockfile && pnpm exec tsc --noEmit && pnpm exec next build`
    — all three exit 0. Fix on `dev` via a normal PR first if not.
-2. **Release-prep PR → `dev`** from branch `release/vX.Y.Z`: bump `package.json` only (plus any
-   release-only docs). Draft, Thai or English as the owner picks. Owner merges.
+2. **Release-prep PR → `dev`** from branch `release/vX.Y.Z`: choose MINOR or PATCH from the diff
+   since the current `main` release, then bump `package.json` only (plus any release-only docs).
+   Draft, Thai or English as the owner picks. Owner merges.
 3. **Release PR `dev → main`**, Draft. Title as above; `#N` is the promotion count (see below).
    Body per `thunder-workflow`, with:
    - the previous release PR and tag, and the commit / PR count since;
@@ -53,6 +57,8 @@ what production runs.
 
 Count **promotions of `dev → main`**, not merges into `main`. Feature branches merged straight to
 `main` before `dev` existed (#6, #14, #15) are not releases.
+The promotion count is independent of the version component: a bugfix-only promotion increments
+the count while bumping PATCH, not MINOR.
 
 | # | Version | PR | Date |
 |---|---|---|---|

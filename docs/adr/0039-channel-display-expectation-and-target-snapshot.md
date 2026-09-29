@@ -1,5 +1,6 @@
 # 0039 — Channel Display Expectation is an assignment gate; the Publication Target Snapshot stays frozen
 > **Partially superseded (2026-09-11)** by `0074-channel-one-player-and-channel-group.md`: `expected_resolution` accepts any `WxH` and orientation is derived from it; the orientation refusal remains for single-screen Channels and is not applied to multi-screen ones.
+> **Geometry gate superseded (2026-09-29)** by `0079-single-screen-player-geometry-mismatch-needs-confirmation.md`: a known single-screen orientation or resolution mismatch requires explicit confirmation instead of a hard block. The historical decision below remains for context.
 
 
 Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and concurrency), this

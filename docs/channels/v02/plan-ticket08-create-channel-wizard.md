@@ -18,9 +18,9 @@ one combined PR for thunder_one_prj at the end, not per ticket.
   (`screen`|`tv`|`kiosk`), `expected_resolution` (single only), `display_config` (multi only,
   `null` for single — sending both is a refusal), `confirm_mismatch`, `as_draft`. No
   `channel_type_id`/`category` needed — server defaults `category` to `dooh` silently when omitted.
-  **Decision (low-stakes, not asked):** always send `confirm_mismatch: true` and `as_draft: false`
-  — the wizard has no mismatch-confirmation UI or draft-save button (D3–D6 don't show one; D0's Key
-  Points say "Create channel and return to All Channels").
+  **Superseded by ADR 0079 (2026-09-29):** send `confirm_mismatch: true` only after an explicit
+  single-screen Player geometry warning is accepted. Keep `as_draft: false`; the wizard has no
+  draft-save button (D0's Key Points say "Create channel and return to All Channels").
 - `GET /media/channels/player-candidates` (`media_channel_player_candidates`) is live and already
   returns exactly what D5 needs: `id, name, code, model, location, registry_status,
   never_connected, health, last_heartbeat_at, orientation, resolution, reserved_by_channel

@@ -4,7 +4,9 @@ import type { SessionResult } from "@/features/auth/services/get-session";
 // Which Apps a tenant may open, keyed on its `tenant_applications.role` for
 // Thunder One (Nie, 2026-09-29). The owner tenant (Thunder Enterprise
 // Master) sees every App; any other tenant — role "viewer" today — sees
-// only the Apps listed here. Like config/rbac.ts this is a courtesy layer:
+// only the Apps listed here — except for a platform super admin, who sees
+// every App in any tenant they switch into (Nie, 2026-09-29). Like
+// config/rbac.ts this is a courtesy layer:
 // Core still enforces tenant boundaries on every request.
 const NON_OWNER_APP_IDS: ReadonlySet<string> = new Set(["media-workspace"]);
 
@@ -15,8 +17,8 @@ const NON_OWNER_LANDING = "/media-workspace";
  *  getSession(). */
 export function resolveAllowedAppIds(session: SessionResult): ReadonlySet<string> | null {
   if (session === "forbidden") return null;
-  const { tenantAppRole } = session;
-  if (tenantAppRole === null || tenantAppRole === "owner") return null;
+  const { tenantAppRole, isSuperAdmin } = session;
+  if (isSuperAdmin || tenantAppRole === null || tenantAppRole === "owner") return null;
   return NON_OWNER_APP_IDS;
 }
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
 import {
   DEFAULT_CREATE_CHANNEL_DRAFT,
+  geometryMismatch,
   step1Valid,
   step2Valid,
   toCreateChannelPayload,
@@ -80,6 +81,7 @@ export function CreateChannelModal({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdChannel, setCreatedChannel] = useState<ChannelDetail | null>(null);
+  const [confirmedMismatchKey, setConfirmedMismatchKey] = useState<string | null>(null);
 
   // Only for the "Refresh" button (a click handler, not an effect body) — the mount fetch below
   // does not call this, so the effect never triggers a synchronous setState through a callee either.
@@ -102,6 +104,9 @@ export function CreateChannelModal({
   }, []);
 
   const selectedPlayer = candidates.find((c) => c.id === draft.playerId) ?? null;
+  const geometryWarning = geometryMismatch(draft, selectedPlayer);
+  const mismatchKey = geometryWarning ? `${draft.playerId}:${geometryWarning}` : null;
+  const mismatchConfirmed = mismatchKey !== null && confirmedMismatchKey === mismatchKey;
 
   const handleNext = () => {
     if (step === 1) {
@@ -117,10 +122,11 @@ export function CreateChannelModal({
   };
 
   const handleSubmit = async () => {
+    if (geometryWarning && !mismatchConfirmed) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const channel = await createChannelV2(toCreateChannelPayload(draft));
+      const channel = await createChannelV2(toCreateChannelPayload(draft, mismatchConfirmed));
       onCreated(channel);
       setCreatedChannel(channel);
       setStep("success");
@@ -128,6 +134,10 @@ export function CreateChannelModal({
       if (caught instanceof Error && isDuplicateName(caught.message)) {
         setSubmitError("A Channel with this name already exists.");
         setStep(1);
+      } else if (caught instanceof Error && caught.message.includes("confirm to continue")) {
+        setSubmitError("The Player display information changed. Refresh the Player list, review the warning, and confirm again.");
+        setConfirmedMismatchKey(null);
+        refreshCandidates();
       } else {
         setSubmitError(classifyApiError(caught, "Could not create Channel. Try again.").message);
       }
@@ -146,7 +156,7 @@ export function CreateChannelModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit()} disabled={submitting}>
+          <Button onClick={() => void handleSubmit()} disabled={submitting || Boolean(geometryWarning && !mismatchConfirmed)}>
             {submitting ? "Creating…" : "Create Channel"}
           </Button>
         </div>
@@ -188,6 +198,9 @@ export function CreateChannelModal({
           draft={draft}
           locations={locations}
           player={selectedPlayer}
+          geometryWarning={geometryWarning}
+          mismatchConfirmed={mismatchConfirmed}
+          onConfirmMismatch={(confirmed) => setConfirmedMismatchKey(confirmed ? mismatchKey : null)}
           onEditChannel={() => setStep(1)}
           onEditSetup={() => setStep(2)}
         />
@@ -201,6 +214,7 @@ export function CreateChannelModal({
           }}
           onCreateAnother={() => {
             setDraft(DEFAULT_CREATE_CHANNEL_DRAFT);
+            setConfirmedMismatchKey(null);
             setStep(1);
           }}
         />

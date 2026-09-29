@@ -138,7 +138,7 @@ export function NotificationBell({ variant }: { variant: "default" | "media" }) 
   const buttonClass =
     variant === "media"
       ? "relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-      : "relative text-[#536999] hover:text-[#071858] dark:text-zinc-400 dark:hover:text-zinc-100";
+      : "relative grid h-9 w-9 place-items-center rounded-lg text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100";
 
   return (
     <div className="relative">
@@ -154,7 +154,7 @@ export function NotificationBell({ variant }: { variant: "default" | "media" }) 
         {unread.length > 0 && (
           <span
             className={`absolute flex h-4 min-w-4 items-center justify-center rounded-full bg-[#fb2c36] px-1 text-[10px] font-medium text-white ${
-              variant === "media" ? "-right-0.5 -top-0.5" : "-right-1.5 -top-2"
+              "-right-0.5 -top-0.5"
             }`}
           >
             {unread.length > 9 ? "9+" : unread.length}

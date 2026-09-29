@@ -28,6 +28,9 @@ import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
 import { LayoutInformationCard } from "./LayoutInformationCard";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
+import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
+import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
+import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
 const LIST_PATH = "/media-workspace/layouts";
 export function CompositionEditorPage({
   compositionId,
@@ -164,6 +167,17 @@ export function CompositionEditorPage({
       absorbLayout(result.refreshedLayout, result.layoutId);
     },
   );
+  const affected = useAffectedPrograms("compositions", id);
+  const [publishDialog, setPublishDialog] = useState<"changes" | "list" | null>(null);
+  // ADR 0078 §6: unsaved edits are saved first, and a failed save stops the flow before any re-publish.
+  const publishCompositionChanges = async () => {
+    if (isDirty) {
+      let isSaved = false;
+      await save(() => { isSaved = true; }, "บันทึก Layout ไม่สำเร็จ");
+      if (!isSaved) throw new Error("save failed");
+    }
+    return publishChanges("compositions", id!);
+  };
   const handleForkLayout = () => {
     if (!id || !window.confirm(`This Template is used by ${sharedTemplateUsage} Layouts. Make this Layout its own copy?`)) return;
     void run(async () => {
@@ -224,6 +238,9 @@ export function CompositionEditorPage({
         canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo}
         hasUnsavedChanges={isDirty}
         onPublish={() => router.push(`/media-workspace/publications/create?compositionId=${id}`)}
+        affectedCount={affected.programs.length}
+        onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
+        onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
         onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Composition ไม่สำเร็จ")}
         onSaveAsTemplate={() => { setTemplateSavedName(null); setNamingTemplate(true); }}
         onActivate={() => void save(async (result) => {
@@ -232,6 +249,15 @@ export function CompositionEditorPage({
         }, "เปิดใช้งาน Composition ไม่สำเร็จ")}
       />
       </div>
+      {publishDialog && (
+        <PublishChangesDialog
+          contentLabel="layout"
+          programs={affected.programs}
+          onConfirm={publishDialog === "changes" ? publishCompositionChanges : undefined}
+          onPublished={affected.reload}
+          onClose={() => setPublishDialog(null)}
+        />
+      )}
       <CompositionEditorOverlays
         confirmLeave={confirmLeave}
         onStay={() => setConfirmLeave(false)}
