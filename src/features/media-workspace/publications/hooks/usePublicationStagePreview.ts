@@ -6,6 +6,7 @@ import { playlistItemToPreview, playlistPreviewStage } from "@/features/media-wo
 import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
 import type { MediaAsset } from "@/types/domain";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { defaultProgramName } from "../default-program-name";
 
 export type PreviewBranch = "media" | "playlist" | "composition";
 
@@ -70,13 +71,14 @@ export function usePublicationStagePreview(assets: MediaAsset[], enabled = true)
     const load =
       branch === "composition"
         ? loadCompositionPreview(key)
-        : fetchPlaylist(key).then((playlist) =>
-            playlistPreviewStage({
+        : fetchPlaylist(key).then((playlist) => ({
+            ...playlistPreviewStage({
               name: playlist.name,
               items: playlist.items.map(playlistItemToPreview),
               playback: decodeMetadata(playlist.metadata).playback,
             }),
-          );
+            contentName: playlist.name,
+          }));
     load
       .then((preview) => alive && setState({ key, preview }))
       .catch(() => alive && setState({ key, error: true }));
@@ -92,5 +94,10 @@ export function usePublicationStagePreview(assets: MediaAsset[], enabled = true)
   // has not arrived yet.
   const loading = enabled && branch !== "media" && hasContent && current === null;
 
-  return { preview, loading, error, hasContent, branch } as const;
+  const contentName =
+    branch === "media"
+      ? defaultProgramName(assetItems.map((item) => assets.find((a) => a.id === item.media_asset_id)?.title))
+      : preview?.contentName;
+
+  return { preview, loading, error, hasContent, branch, contentName } as const;
 }
