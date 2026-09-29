@@ -2,6 +2,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
+import { getSelectedTenantId } from "@/lib/core/tenant-selection";
 
 // Core's role_type tier system (thunder_core_prj's src/utils/supabase/rbac.ts).
 // department_admin/tenant/system exist as raw DB values (thunder_core_prj's
@@ -53,6 +54,18 @@ export interface Session {
    * which Apps the tenant sees (config/tenant-access.ts). `null` when Core
    * doesn't send it (older Core) — treated as owner, failing open. */
   tenantAppRole: string | null;
+  /** Every tenant this user may switch into (Core's `available_tenants`):
+   * all tenants Thunder One serves for a platform super admin, otherwise the
+   * tenants they're an active member of. The Sidebar shows a tenant switcher
+   * when there's more than one. Empty when Core doesn't send it. */
+  availableTenants: AvailableTenant[];
+}
+
+export interface AvailableTenant {
+  id: string;
+  name: string;
+  /** This tenant's `tenant_applications.role` — "owner" / "viewer". */
+  role: string | null;
 }
 
 /**
@@ -130,9 +143,13 @@ async function getSessionUncached(): Promise<SessionResult> {
     redirect("/login");
   }
 
-  const authHeaders = {
+  // The Sidebar's tenant switcher (lib/core/tenant-selection.ts); Core
+  // resolves /session to this tenant instead of the user's default one.
+  const selectedTenantId = await getSelectedTenantId();
+  const authHeaders: Record<string, string> = {
     "x-api-key": env.coreApiKey,
     Authorization: `Bearer ${token}`,
+    ...(selectedTenantId ? { "x-tenant-id": selectedTenantId } : {}),
   };
 
   let sessionRes: Response;
@@ -145,17 +162,22 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [] };
   }
 
   if (sessionRes.status === 401) {
     redirect("/login");
   }
+  // A picked tenant Core no longer lets this user into (membership ended,
+  // tenant unserved): drop the choice rather than lock them out.
+  if (selectedTenantId && (sessionRes.status === 403 || sessionRes.status === 400)) {
+    redirect("/api/auth/tenant");
+  }
   if (sessionRes.status === 403) {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [] };
   }
 
   const body = await sessionRes.json().catch(() => null);
@@ -164,6 +186,7 @@ async function getSessionUncached(): Promise<SessionResult> {
   const tenantName: string | null = body?.data?.tenant?.name ?? null;
   const tenantAppRole: string | null =
     typeof body?.data?.tenant_application?.role === "string" ? body.data.tenant_application.role : null;
+  const availableTenants = parseAvailableTenants(body?.data?.available_tenants);
   const userEmail = typeof user?.email === "string" ? user.email : null;
   const rawUserId = typeof user?.id === "string" ? user.id : null;
   const [role, membershipExtras] = await Promise.all([
@@ -173,12 +196,21 @@ async function getSessionUncached(): Promise<SessionResult> {
   const { jobTitle } = membershipExtras;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
   const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
-  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole };
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants };
+}
+
+function parseAvailableTenants(value: unknown): AvailableTenant[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) =>
+    row && typeof row.id === "string" && typeof row.name === "string"
+      ? [{ id: row.id, name: row.name, role: typeof row.role === "string" ? row.role : null }]
+      : [],
+  );
 }
 
 /**

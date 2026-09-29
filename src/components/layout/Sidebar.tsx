@@ -13,10 +13,12 @@ import { settingsNavItems } from "@/config/nav/settings";
 import { shellNavItems } from "@/config/nav/shell";
 import { resolveThunderCareNav } from "@/config/nav/thunder-care";
 import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
-import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { recordWorkspaceVisit } from "@/lib/workspace-prefs";
+import type { AvailableTenant } from "@/features/auth/services/get-session";
 import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
+import { TenantSwitcher } from "./TenantSwitcher";
 
 const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
 
@@ -346,7 +348,15 @@ function SettingsSidebar({ pathname }: { pathname: string }) {
   );
 }
 
-export function Sidebar({ tenantName }: { tenantName?: string | null }) {
+export function Sidebar({
+  tenantId,
+  tenantName,
+  availableTenants,
+}: {
+  tenantId: string | null;
+  tenantName: string | null;
+  availableTenants: AvailableTenant[];
+}) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
   const activeAppId = activeApp?.id ?? null;
@@ -439,22 +449,14 @@ export function Sidebar({ tenantName }: { tenantName?: string | null }) {
           !collapsed && <p className="sr-only">{tenantName ?? "Thunder One"}</p>
         ) : (
           // 2026-09-16 shell redesign — tenant name shown for real now (was
-          // sr-only-only before); no tenant switcher exists, so this is a
-          // static label with a decorative chevron, not a working picker.
-          <div
-            className={`mb-2 flex h-9 items-center gap-2.5 rounded-lg border border-[#e6edf9] px-3 text-xs font-semibold text-[#071858] dark:border-zinc-800 dark:text-zinc-200 ${
-              collapsed ? "justify-center" : ""
-            }`}
-            title={collapsed ? (tenantName ?? "Thunder One") : undefined}
-          >
-            <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
-            {!collapsed && (
-              <>
-                <span className="flex-1 truncate">{tenantName ?? "Thunder One"}</span>
-                <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-              </>
-            )}
-          </div>
+          // sr-only-only before). A switcher when the user can enter more
+          // than one tenant (./TenantSwitcher.tsx).
+          <TenantSwitcher
+            tenantId={tenantId}
+            tenantName={tenantName}
+            tenants={availableTenants}
+            collapsed={collapsed}
+          />
         )}
         <button
           type="button"

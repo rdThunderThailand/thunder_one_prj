@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
+import { selectedTenantHeader } from "@/lib/core/tenant-selection";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ async function handle(request: Request, ctx: RouteCtx): Promise<NextResponse> {
     if (env.coreApiKey) headersToSend["x-api-key"] = env.coreApiKey;
     const userToken = (await cookies()).get("to_at")?.value;
     if (userToken) headersToSend["Authorization"] = `Bearer ${userToken}`;
+    Object.assign(headersToSend, await selectedTenantHeader());
   }
 
   // Read as bytes, not text — a `.text()`/UTF-8 round trip corrupts any
