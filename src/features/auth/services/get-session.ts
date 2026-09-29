@@ -48,6 +48,11 @@ export interface Session {
    * person's actual position reads better under their name than their
    * access tier. */
   jobTitle: string | null;
+  /** This tenant's `tenant_applications.role` for Thunder One — "owner" for
+   * Thunder Enterprise Master, "viewer" for every other tenant today. Decides
+   * which Apps the tenant sees (config/tenant-access.ts). `null` when Core
+   * doesn't send it (older Core) — treated as owner, failing open. */
+  tenantAppRole: string | null;
 }
 
 /**
@@ -140,7 +145,7 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null };
   }
 
   if (sessionRes.status === 401) {
@@ -150,13 +155,15 @@ async function getSessionUncached(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null };
   }
 
   const body = await sessionRes.json().catch(() => null);
   const user = body?.data?.user;
   const tenantId: string | null = body?.data?.tenant?.id ?? null;
   const tenantName: string | null = body?.data?.tenant?.name ?? null;
+  const tenantAppRole: string | null =
+    typeof body?.data?.tenant_application?.role === "string" ? body.data.tenant_application.role : null;
   const userEmail = typeof user?.email === "string" ? user.email : null;
   const rawUserId = typeof user?.id === "string" ? user.id : null;
   const [role, membershipExtras] = await Promise.all([
@@ -166,12 +173,12 @@ async function getSessionUncached(): Promise<SessionResult> {
   const { jobTitle } = membershipExtras;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
   const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
-  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle };
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole };
 }
 
 /**

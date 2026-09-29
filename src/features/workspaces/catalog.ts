@@ -1,4 +1,5 @@
 import { APPS } from "@/config/apps";
+import { canOpenApp } from "@/config/tenant-access";
 
 /**
  * Every Workspace the launcher shows, in one list shared by all three page
@@ -136,4 +137,11 @@ export const DATA_STATUS_LABEL: Record<WorkspaceDataStatus, string> = {
 
 export function findWorkspace(id: string): WorkspaceEntry | undefined {
   return WORKSPACES.find((w) => w.id === id);
+}
+
+/** The catalog a tenant sees (config/tenant-access.ts): all of it when
+ *  `allowedAppIds` is null, otherwise only the allowed Apps (so no
+ *  coming-soon tiles either). */
+export function visibleWorkspaces(allowedAppIds: ReadonlySet<string> | null): WorkspaceEntry[] {
+  return allowedAppIds === null ? WORKSPACES : WORKSPACES.filter((w) => canOpenApp(allowedAppIds, w.id));
 }

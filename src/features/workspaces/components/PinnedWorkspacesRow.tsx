@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePinnedWorkspaces } from "@/lib/workspace-prefs";
-import { findWorkspace } from "../catalog";
+import type { WorkspaceEntry } from "../catalog";
 import { workspaceIcon } from "./workspace-ui";
 
-// The viewer's own pins (star on a directory tile), stored per browser.
-export function PinnedWorkspacesRow() {
+// The viewer's own pins (star on a directory tile), stored per browser —
+// looked up in `workspaces`, so a pin the tenant can no longer see drops out.
+export function PinnedWorkspacesRow({ workspaces }: { workspaces: WorkspaceEntry[] }) {
   const pinned = usePinnedWorkspaces()
-    .map((id) => findWorkspace(id))
+    .map((id) => workspaces.find((w) => w.id === id))
     .filter((w) => w?.href);
 
   return (

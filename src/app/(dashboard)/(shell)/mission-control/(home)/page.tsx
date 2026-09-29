@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getAssetSummary } from "@/features/asset-intelligence/assets";
 import { EmployeeMissionControlPage, ManagerMissionControlPage } from "@/features/asset-intelligence/departments";
 import { requireShellAccess, resolveShellVariant, resolveRole } from "@/config/rbac";
+import { resolveAllowedAppIds } from "@/config/tenant-access";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 import { computeHomeStats, type HomeStats } from "@/features/mission-control/core-mapper";
 import { getChannelHealthSummary } from "@/features/mission-control/services/channels-api";
@@ -31,6 +32,7 @@ export default async function MissionControlRoute() {
   }
 
   const userName = session === "forbidden" ? "Account" : session.userName;
+  const allowedAppIds = resolveAllowedAppIds(session);
   const token = await getAuthToken();
   const tenantId = session !== "forbidden" ? session.tenantId : null;
 
@@ -41,6 +43,7 @@ export default async function MissionControlRoute() {
         stats={Promise.resolve(computeHomeStats(null, null, null, new Date()))}
         recentLogs={Promise.resolve(null)}
         work={Promise.resolve(EMPTY_MY_WORK)}
+        allowedAppIds={allowedAppIds}
       />
     );
   }
@@ -64,6 +67,7 @@ export default async function MissionControlRoute() {
       stats={stats}
       recentLogs={recentLogs}
       work={work}
+      allowedAppIds={allowedAppIds}
     />
   );
 }

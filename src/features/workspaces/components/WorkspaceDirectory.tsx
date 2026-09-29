@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GridIcon, ListIcon, SearchIcon, StarIcon } from "@/components/ui/icons";
 import { togglePinnedWorkspace, usePinnedWorkspaces } from "@/lib/workspace-prefs";
-import { WORKSPACE_CATEGORIES, WORKSPACES, type WorkspaceCategory, type WorkspaceEntry } from "../catalog";
+import { WORKSPACE_CATEGORIES, type WorkspaceCategory, type WorkspaceEntry } from "../catalog";
 import type { WorkspaceStats } from "../services/workspace-stats-api";
 import { WorkspaceStatusLine, workspaceIcon } from "./workspace-ui";
 
@@ -89,19 +89,27 @@ function WorkspaceTile({
  * `pinnable` adds a per-browser pin toggle (lib/workspace-prefs.ts) that
  * feeds `PinnedWorkspacesRow`.
  */
-export function WorkspaceDirectory({ stats, pinnable = false }: { stats: WorkspaceStats; pinnable?: boolean }) {
+export function WorkspaceDirectory({
+  workspaces,
+  stats,
+  pinnable = false,
+}: {
+  workspaces: WorkspaceEntry[];
+  stats: WorkspaceStats;
+  pinnable?: boolean;
+}) {
   const [category, setCategory] = useState<WorkspaceCategory | "All">("All");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
   const pins = usePinnedWorkspaces();
 
   const query = search.trim().toLowerCase();
-  const visible = WORKSPACES.filter(
+  const visible = workspaces.filter(
     (w) =>
       (category === "All" || w.category === category) &&
       (!query || w.name.toLowerCase().includes(query) || w.description.toLowerCase().includes(query))
   );
-  const categories = ["All", ...WORKSPACE_CATEGORIES.filter((c) => WORKSPACES.some((w) => w.category === c))] as const;
+  const categories = ["All", ...WORKSPACE_CATEGORIES.filter((c) => workspaces.some((w) => w.category === c))] as const;
 
   return (
     <div className="flex flex-col gap-4">
