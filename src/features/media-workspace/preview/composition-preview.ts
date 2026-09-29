@@ -11,6 +11,8 @@ export type StagePreview = {
   zones: PlaybackPreviewZone[];
   aspectRatio: string;
   referenceResolution: string | null;
+  /** Name of the Playlist or Composition this stage was loaded from; loose media has none. */
+  contentName?: string;
 };
 
 /** ADR 0062 §7 (fit/mute overrides added by ADR 0064 §1/§7): one shared mapper for both
@@ -75,6 +77,7 @@ export async function loadCompositionPreview(compositionId: string): Promise<Sta
   return {
     aspectRatio: layout.aspect_ratio,
     referenceResolution: layout.reference_resolution ?? null,
+    contentName: composition.name,
     zones: composition.zones.map((zone) =>
       compositionZonePreview(
         {

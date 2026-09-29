@@ -70,6 +70,9 @@ function serializeDraftFields(draft: Pick<DraftFields, "basicInfo" | "assetItems
 }
 
 interface PublicationDraftStore extends DraftFields {
+  /** Last name the wizard filled in itself (ADR 0078 §10). The name is still "auto" while it is empty or
+   * equals this, so a name the operator typed is never overwritten. */
+  lastAutoName: string;
   savedSnapshot: string;
   explicitlySaved: boolean;
   /** Optimistic-lock counter from the last successful save (docs/adr/0003).
@@ -90,6 +93,7 @@ interface PublicationDraftStore extends DraftFields {
   goNext: (maxStep: number) => void;
   goBack: () => void;
   setBasicInfo: (basicInfo: BasicInfoState) => void;
+  applyAutoName: (name: string) => void;
   setAssetItems: (assetItems: DraftAssetItem[]) => void;
   /** Playlist mode: add if absent, remove if present. Images enter at 10s, videos at null. */
   toggleAssetItem: (asset: { id: string; isImage: boolean }) => void;
@@ -112,6 +116,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
   persist(
     (set, get) => ({
       ...getDefaultDraft(),
+      lastAutoName: "",
       savedSnapshot: serializeDraftFields(getDefaultDraft()),
       explicitlySaved: false,
       revision: null,
@@ -140,6 +145,11 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
           playlistId: typeChanged ? null : s.playlistId,
           compositionId: typeChanged ? null : s.compositionId,
         };
+      }),
+      applyAutoName: (name) => set((s) => {
+        // Decided inside `set`, so a name typed while the content name was still loading is seen.
+        const isAuto = s.basicInfo.name === "" || s.basicInfo.name === s.lastAutoName;
+        return isAuto ? { basicInfo: { ...s.basicInfo, name }, lastAutoName: name } : s;
       }),
       setAssetItems: (assetItems) => set({ assetItems }),
       toggleAssetItem: ({ id, isImage }) => set((s) => {
@@ -183,6 +193,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       cancelDraft: () => {
         set({
           ...getDefaultDraft(),
+          lastAutoName: "",
           savedSnapshot: serializeDraftFields(getDefaultDraft()),
           explicitlySaved: false,
           revision: null,
@@ -211,7 +222,9 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // no migration needed.
       // v11: Group target intent is now persisted alongside Channel ids.
       // v12: scheduleForm gained `month_days` (monthly recurrence, Thunder_Core ADR 0012).
-      name: "thunderone.publications.create-draft.v12",
+      // v13: `lastAutoName` (ADR 0078 §10). A v12 draft has none, so a name the operator typed
+      // there would count as auto-filled and be overwritten; it is dropped instead.
+      name: "thunderone.publications.create-draft.v13",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

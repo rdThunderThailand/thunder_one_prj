@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { ArrowRightIcon, EditIcon, ExpandIcon, ImageIcon, SettingsIcon } from "@/components/ui/icons";
@@ -26,7 +26,11 @@ export function PrepareContentStep({
 }) {
   const setStep = usePublicationDraftStore((s) => s.setStep);
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
-  const { preview, loading, error, hasContent, branch } = usePublicationStagePreview(assets);
+  const { preview, loading, error, hasContent, branch, contentName } = usePublicationStagePreview(assets);
+  const applyAutoName = usePublicationDraftStore((s) => s.applyAutoName);
+  useEffect(() => {
+    if (contentName) applyAutoName(contentName);
+  }, [contentName, applyAutoName]);
   const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
   const { openFullPreview } = usePublicationPreviewHandoff(() =>
     preview ? { preview, assets, publicationId } : null,
