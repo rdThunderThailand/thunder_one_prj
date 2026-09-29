@@ -89,9 +89,9 @@ The facts that shape the decision:
 8. **The modal has four states, following the design:**
    1. Confirm — the affected-Program list.
    2. Publishing — an indeterminate spinner, since one request gives no per-Program progress.
-   3. Updated — "applied to N programs (M channels)". M counts **distinct `channel_id`s across all N
-      Programs**, so a channel shared by two Programs is counted once. Device-only targets are not
-      counted.
+   3. Updated — "applied to N programs (M channels)". M counts **distinct Channels across all N
+      Programs**, so a Channel shared by two Programs is counted once. A Channel reached through a
+      Channel Group counts as well as one targeted directly; device-only targets are not counted.
    4. Failed — the failing Program's name and a mapped reason, such as an unbound Zone, an incomplete
       synchronized group or a quarantined asset. Raw database text is never shown.
 
