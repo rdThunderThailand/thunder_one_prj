@@ -50,11 +50,13 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 ## BE-1 — List read (Thunder_Core)
 
 - [x] Contract settled 2026-09-30 — plan §1 "BE-1 list contract", ADR 0080 precise rules (window-gated Publishing)
-- [ ] Helper `media_core.publication_display_status(...)` per ADR 0080
-- [ ] `media_publications_list` params and response per the plan contract (delivery = `stage3_done`/total, offline, failed from the newest Job)
-- [ ] `EXPLAIN` on the largest tenant
-- [ ] Route `GET /media/publications` passes the new params
-- [ ] Applied to develop (approval) · verified via HTTP · Draft PR
+- [x] Helper `media_core.publication_display_status(...)` per ADR 0080 (develop, 2026-09-30)
+- [x] `media_publications_list` params and response per the plan contract (delivery = `stage3_done`/total, offline, failed from the newest Job) — develop, `prosrc` md5 `cae7d0fe…` matches the migration file
+- [x] `EXPLAIN` on the largest develop tenant (124 rows): 48 ms · prod largest is 34 rows, re-run after the prod apply
+- [x] Route `GET /media/publications` passes the new params; thumbnails signed server-side (`src/lib/core/media-cover-urls.ts`, shared with now-next)
+- [x] Applied to develop · verified via HTTP on :3001 (filters, paging, counts, 400s, signed thumbnails) and, inside a rolled-back transaction, Scheduled / Publishing / Composition cases · Draft PR: Thunder_Core `feat/program-list-read` → `develop`
+- [ ] Not verified: through the FE proxy (FE-A covers it) · Composition on a real tenant row
+- [ ] Applied to prod (R0, separate approval) · `EXPLAIN` on prod
 
 ## FE-A — Programs list (frames 01, 02)
 
