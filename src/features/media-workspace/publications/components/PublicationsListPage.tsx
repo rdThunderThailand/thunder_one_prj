@@ -1,293 +1,245 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FileText } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Badge } from "@/components/ui/Badge";
-import { Button, buttonClasses } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Tabs } from "@/components/ui/Tabs";
+import { PlusIcon, UploadIcon } from "@/components/ui/icons";
+import { NoAccess } from "@/components/ui/NoAccess";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/lovable/alert-dialog";
+import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/lovable/core";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { cn } from "@/lib/utils";
+import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { fetchChannelGroupOptions, fetchChannels } from "../../channels/services/channels-api";
 import {
   cancelPublication,
   deletePublication,
   duplicatePublication,
-  fetchPublications,
+  fetchPublicationsPage,
+  fetchTags,
 } from "../services/publications-api";
+import type { PublicationListItem, PublicationListParams, PublicationsPage } from "../types";
+import { PublicationKpiCards } from "./PublicationKpiCards";
 import {
-  isPastPublication,
-  publicationDisplayStatus,
-  publicationStatusColor,
-} from "../publication-status";
-import type { PublicationListItem } from "../types";
-import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { NoAccess } from "@/components/ui/NoAccess";
+  DEFAULT_FILTERS,
+  PublicationsFilterBar,
+  type FilterOptions,
+  type ListFilters,
+} from "./PublicationsFilterBar";
+import { PublicationsTable } from "./PublicationsTable";
+
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 300;
+
+type Pending = { action: "delete" | "end"; item: PublicationListItem };
+
+const CONFIRM_COPY = {
+  delete: {
+    title: "ลบ Program ดราฟต์นี้?",
+    body: "ลบแล้วกู้คืนไม่ได้",
+    confirm: "ลบ",
+  },
+  end: {
+    title: "จบ Program นี้?",
+    body: "Program จะหยุดออกอากาศบนทุก Channel ที่กำหนดไว้ และเริ่มใหม่ไม่ได้ (ทำสำเนาไปสร้างใหม่แทน)",
+    confirm: "จบ Program",
+  },
+} as const;
+
+function toParams(filters: ListFilters, search: string, page: number): PublicationListParams {
+  const [targetKind, targetId] = filters.target.split(":");
+  return {
+    display_status: filters.status === "all" ? undefined : (filters.status as PublicationListParams["display_status"]),
+    channel_id: targetKind === "channel" ? targetId : undefined,
+    group_id: targetKind === "group" ? targetId : undefined,
+    tag_id: filters.tag === "all" ? undefined : filters.tag,
+    search,
+    sort: filters.sort,
+    page,
+    limit: PAGE_SIZE,
+  };
+}
 
 export function PublicationsListPage() {
   const router = useRouter();
-  // One read of every row (the RPC accepts a null status); the three tabs are a
-  // client-side split on the stored `status`. Not `effective_status` — that is a
-  // separate clock-aware layer `isPastPublication` applies on top, and the RPC's
-  // own predicate is on `status`.
-  const [items, setItems] = useState<PublicationListItem[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  // One call, so one error state — a failed load empties every tab together
-  // rather than leaving some silently blank (ADR 0065 §1).
-  const [error, setError] = useState<ClassifiedError | null>(null);
+  const [filters, setFilters] = useState<ListFilters>(DEFAULT_FILTERS);
+  // The box updates `filters.search` at once; the request follows it after a pause.
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [reloadToken, setReloadToken] = useState(0);
+  const [options, setOptions] = useState<FilterOptions>({ channels: [], groups: [], tags: [] });
+
+  // Result and failure are stamped with the request key they answer, so "loading" is simply
+  // "the latest key has no answer yet" and nothing sets state synchronously inside the effect.
+  const [result, setResult] = useState<{ key: string; page: PublicationsPage } | null>(null);
+  const [failure, setFailure] = useState<{ key: string; error: ClassifiedError } | null>(null);
+
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const params = useMemo(() => toParams(filters, search, page), [filters, search, page]);
+  const requestKey = `${JSON.stringify(params)}#${reloadToken}`;
 
-  const drafts = items?.filter((item) => item.status === "draft") ?? null;
-  const activeRows = items?.filter((item) => item.status === "active") ?? null;
-  const cancelledRows = items?.filter((item) => item.status === "cancelled") ?? null;
-
-  // "Active" keeps ADR 0004's meaning (scheduled/active only); ended rows move to
-  // "Inactive" alongside cancelled ones instead, per ADR 0015.
-  const activeOnly = activeRows?.filter((item) => !isPastPublication(item)) ?? null;
-  const inactive =
-    activeRows && cancelledRows
-      ? [...activeRows.filter(isPastPublication), ...cancelledRows]
-      : null;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(filters.search);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [filters.search]);
 
   useEffect(() => {
     let alive = true;
-
-    fetchPublications()
-      .then((rows) => {
+    Promise.allSettled([fetchChannels(), fetchChannelGroupOptions(), fetchTags()]).then(
+      ([channels, groups, tags]) => {
         if (!alive) return;
-        setItems(rows);
-        setLoading(false);
-      })
-      .catch((reason) => {
-        if (!alive) return;
-        setError(classifyApiError(reason, "โหลด publication ไม่สำเร็จ"));
-        setLoading(false);
-      });
-
+        // A failed option list only narrows the dropdown; the table still works.
+        setOptions({
+          channels: channels.status === "fulfilled" ? channels.value : [],
+          groups: groups.status === "fulfilled" ? groups.value : [],
+          tags: tags.status === "fulfilled" ? tags.value : [],
+        });
+      },
+    );
     return () => {
       alive = false;
     };
   }, []);
 
-  const handleDelete = async (id: string) => {
+  useEffect(() => {
+    let alive = true;
+    fetchPublicationsPage(params)
+      .then((data) => {
+        if (!alive) return;
+        // The last row of the last page was just deleted/ended: step back instead of showing an empty page.
+        if (data.publications.length === 0 && data.total > 0 && params.page && params.page > 1) {
+          setPage(Math.ceil(data.total / PAGE_SIZE));
+          return;
+        }
+        setResult({ key: requestKey, page: data });
+      })
+      .catch((reason) => {
+        if (!alive) return;
+        setFailure({ key: requestKey, error: classifyApiError(reason, "โหลด Program ไม่สำเร็จ") });
+      });
+    return () => {
+      alive = false;
+    };
+    // requestKey already encodes params + reloadToken.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestKey]);
+
+  const data = result?.page ?? null;
+  const error = failure?.key === requestKey ? failure.error : null;
+  const isLoading = !error && result?.key !== requestKey;
+  const isFiltered =
+    filters.search.trim() !== "" || filters.status !== "all" || filters.target !== "all" || filters.tag !== "all";
+
+  const handleFilterChange = (patch: Partial<ListFilters>) => {
+    setFilters((prev) => ({ ...prev, ...patch }));
+    if (!("search" in patch)) setPage(1);
+  };
+
+  const runAction = async (item: PublicationListItem, work: () => Promise<void>, fallback: string) => {
     try {
-      setBusyId(id);
+      setBusyId(item.id);
       setActionError(null);
-      await deletePublication(id);
-      setItems((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
-      setConfirmingId(null);
+      await work();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
+      setActionError(err instanceof Error ? err.message : fallback);
     } finally {
       setBusyId(null);
     }
   };
 
-  const handleCancel = async (id: string) => {
-    try {
-      setBusyId(id);
-      setActionError(null);
-      await cancelPublication(id);
-      setItems((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
-      setConfirmingId(null);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
-    } finally {
-      setBusyId(null);
+  const handleAction = (action: "duplicate" | "delete" | "end", item: PublicationListItem) => {
+    if (action !== "duplicate") {
+      setPending({ action, item });
+      return;
     }
+    void runAction(
+      item,
+      async () => {
+        const res = await duplicatePublication(item.id);
+        router.push(`/media-workspace/publications/create?id=${res.publication_id}`);
+      },
+      "ทำสำเนาไม่สำเร็จ",
+    );
   };
 
-  const handleDuplicate = async (id: string) => {
-    try {
-      setBusyId(id);
-      setActionError(null);
-      const res = await duplicatePublication(id);
-      router.push(`/media-workspace/publications/create?id=${res.publication_id}`);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "ทำสำเนาไม่สำเร็จ");
-      setBusyId(null);
-    }
+  const confirmPending = () => {
+    if (!pending) return;
+    const { action, item } = pending;
+    setPending(null);
+    void runAction(
+      item,
+      async () => {
+        await (action === "delete" ? deletePublication(item.id) : cancelPublication(item.id));
+        setReloadToken((n) => n + 1);
+      },
+      action === "delete" ? "ลบไม่สำเร็จ" : "จบ Program ไม่สำเร็จ",
+    );
   };
 
-  const renderTable = (
-    rows: PublicationListItem[] | null,
-    tab: "draft" | "active" | "inactive"
-  ) => {
-    if (loading) {
-      return <p className="py-6 text-center text-sm text-muted-foreground">กำลังโหลด…</p>;
-    }
+  const clearFilters = () => {
+    setFilters(DEFAULT_FILTERS);
+    setSearch("");
+    setPage(1);
+  };
+
+  const renderBody = () => {
     if (error) {
-      if (error.kind === "forbidden") {
-        return <NoAccess message={error.message} />;
-      }
-      return (
-        <p className="py-6 text-center text-sm text-danger">
-          {error.message}
-        </p>
+      return error.kind === "forbidden" ? (
+        <NoAccess message={error.message} />
+      ) : (
+        <ErrorState
+          title="โหลด Program ไม่สำเร็จ"
+          description={error.message}
+          action={<Button variant="outline" size="sm" onClick={() => setReloadToken((n) => n + 1)}>ลองอีกครั้ง</Button>}
+        />
       );
     }
-    if (!rows || rows.length === 0) {
+    if (isLoading && !data) return <LoadingState rows={5} />;
+    if (!data || data.publications.length === 0) {
       return (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {tab === "draft"
-            ? "ไม่มี publication ดราฟต์"
-            : tab === "active"
-              ? "ไม่มี publication ที่ใช้งานอยู่"
-              : "ไม่มี publication ที่จบหรือถูกยกเลิก"}
-        </p>
+        <EmptyState
+          icon={FileText}
+          title={isFiltered ? "ไม่พบ Program ที่ตรงกับตัวกรอง" : "ยังไม่มี Program"}
+          description={isFiltered ? "ลองเปลี่ยนหรือล้างตัวกรอง" : "สร้าง Program แรกเพื่อเริ่มออกอากาศ"}
+          action={
+            isFiltered ? (
+              <Button variant="outline" size="sm" onClick={clearFilters}>ล้างตัวกรอง</Button>
+            ) : (
+              <Link href="/media-workspace/publications/create" className={buttonVariants({ size: "sm" })}>Create Program</Link>
+            )
+          }
+        />
       );
     }
-
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-border text-xs font-medium text-muted-foreground">
-              <th className="py-2 pr-3">Name</th>
-              <th className="py-2 pr-3">Status</th>
-              <th className="py-2 pr-3">Type</th>
-              <th className="py-2 pr-3">Priority</th>
-              <th className="py-2 pr-3">Items</th>
-              <th className="py-2 pr-3">Created by</th>
-              <th className="py-2 pr-3">Updated</th>
-              <th className="py-2 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((item) => {
-              const updatedStr = item.updated_at || item.created_at;
-              const updatedDisplay = updatedStr ? new Date(updatedStr).toLocaleString() : "—";
-              const isConfirming = confirmingId === item.id;
-              const isBusy = busyId === item.id;
-
-              return (
-                <tr
-                  key={item.id}
-                  className="border-t border-border"
-                >
-                  <td className="py-2.5 pr-3">
-                    <Link
-                      href={`/media-workspace/publications/${item.id}`}
-                      className="font-medium text-foreground hover:text-primary"
-                    >
-                      {item.name}
-                    </Link>
-                  </td>
-                  <td className="py-2.5 pr-3">
-                    <Badge
-                      color={publicationStatusColor(publicationDisplayStatus(item))}
-                      variant="pill"
-                    >
-                      {publicationDisplayStatus(item)}
-                    </Badge>
-                  </td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">
-                    {item.publication_type}
-                  </td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">
-                    {item.priority}
-                  </td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">
-                    {item.item_count ?? 0}
-                  </td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">
-                    {item.created_by?.display_name ?? "—"}
-                  </td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">
-                    {updatedDisplay}
-                  </td>
-                  <td className="py-2.5 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {tab === "draft" && (
-                        <Link
-                          href={`/media-workspace/publications/create?id=${item.id}`}
-                          className={buttonClasses("secondary", "text-xs px-2.5 py-1")}
-                        >
-                          Edit
-                        </Link>
-                      )}
-
-                      {tab === "draft" &&
-                        (isConfirming ? (
-                          <>
-                            <Button
-                              variant="primary"
-                              disabled={isBusy}
-                              onClick={() => handleDelete(item.id)}
-                              className="bg-danger hover:bg-danger text-xs px-2.5 py-1"
-                            >
-                              {isBusy ? "กำลังลบ…" : "ยืนยันลบ?"}
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              disabled={isBusy}
-                              onClick={() => setConfirmingId(null)}
-                              className="text-xs px-2.5 py-1"
-                            >
-                              ไม่
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            disabled={isBusy}
-                            onClick={() => setConfirmingId(item.id)}
-                            className="text-xs text-danger hover:bg-danger-soft px-2.5 py-1"
-                          >
-                            Delete
-                          </Button>
-                        ))}
-
-                      {tab === "active" &&
-                        (isConfirming ? (
-                          <>
-                            <Button
-                              variant="primary"
-                              disabled={isBusy}
-                              onClick={() => handleCancel(item.id)}
-                              className="bg-danger hover:bg-danger text-xs px-2.5 py-1"
-                            >
-                              {isBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              disabled={isBusy}
-                              onClick={() => setConfirmingId(null)}
-                              className="text-xs px-2.5 py-1"
-                            >
-                              ไม่
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            disabled={isBusy}
-                            onClick={() => setConfirmingId(item.id)}
-                            className="text-xs text-danger hover:bg-danger-soft px-2.5 py-1"
-                          >
-                            Cancel
-                          </Button>
-                        ))}
-
-                      {(tab === "active" || tab === "inactive") && !isConfirming && (
-                        <Button
-                          variant="secondary"
-                          disabled={isBusy}
-                          onClick={() => handleDuplicate(item.id)}
-                          className="text-xs px-2.5 py-1"
-                        >
-                          {isBusy ? "กำลังทำสำเนา…" : "Duplicate"}
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className={cn(isLoading && "opacity-60 transition-opacity")}>
+        <PublicationsTable rows={data.publications} busyId={busyId} onAction={handleAction} />
+        <LibraryPagination
+          page={page}
+          totalPages={Math.max(1, Math.ceil(data.total / PAGE_SIZE))}
+          total={data.total}
+          pageSize={PAGE_SIZE}
+          onPage={setPage}
+          itemLabel="programs"
+        />
       </div>
     );
   };
@@ -295,39 +247,49 @@ export function PublicationsListPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Publications"
-        subtitle="จัดการ publication ที่บันทึกและเผยแพร่ไว้"
+        title="Programs"
+        subtitle="จัดการโปรแกรมที่ออกอากาศบนช่องของคุณ"
         actions={
-          <Link href="/media-workspace/publications/create" className={buttonClasses("primary")}>
-            Create Publication
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" disabled title="เร็วๆ นี้" className="gap-1.5">
+              <UploadIcon className="h-4 w-4" />
+              Import Program
+            </Button>
+            <Link href="/media-workspace/publications/create" className={cn(buttonVariants(), "gap-1.5")}>
+              <PlusIcon className="h-4 w-4" />
+              Create Program
+            </Link>
+          </div>
         }
       />
 
-      <Card className="p-5">
-        {actionError && (
-          <p className="mb-3 text-sm text-danger">{actionError}</p>
-        )}
-        <Tabs
-          items={[
-            {
-              key: "drafts",
-              label: `Drafts (${drafts ? drafts.length : 0})`,
-              content: renderTable(drafts, "draft"),
-            },
-            {
-              key: "active",
-              label: `Active (${activeOnly ? activeOnly.length : 0})`,
-              content: renderTable(activeOnly, "active"),
-            },
-            {
-              key: "inactive",
-              label: `Inactive (${inactive ? inactive.length : 0})`,
-              content: renderTable(inactive, "inactive"),
-            },
-          ]}
-        />
-      </Card>
+      <PublicationKpiCards counts={data?.counts_by_status ?? null} />
+
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+        <PublicationsFilterBar value={filters} options={options} onChange={handleFilterChange} />
+        {actionError && <p className="text-sm text-danger">{actionError}</p>}
+        {renderBody()}
+      </div>
+
+      <AlertDialog open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{pending && CONFIRM_COPY[pending.action].title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pending && `${pending.item.name} — ${CONFIRM_COPY[pending.action].body}`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmPending}
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
+            >
+              {pending && CONFIRM_COPY[pending.action].confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

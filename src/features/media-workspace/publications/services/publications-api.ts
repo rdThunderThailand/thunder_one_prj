@@ -1,4 +1,5 @@
 import { requestApi } from "@/lib/api/media-api";
+import { buildPublicationListQuery } from "../publication-list-query";
 
 // Shared media endpoints live in the lib layer; re-exported so existing call sites
 // keep importing from this service.
@@ -10,7 +11,9 @@ import type {
   Publication,
   PublicationDetail,
   PublicationListItem,
+  PublicationListParams,
   PublicationSchedule,
+  PublicationsPage,
   PublicationTarget,
   Recurrence,
   ScheduleConflict,
@@ -100,6 +103,17 @@ export async function fetchPublications(
     return data.publications;
   }
   return [];
+}
+
+/** The paged, filtered read behind the Programs list (BE-1). `fetchPublications` stays for the
+ *  callers that want every row. */
+export async function fetchPublicationsPage(
+  params: PublicationListParams
+): Promise<PublicationsPage> {
+  return requestApi<PublicationsPage>(
+    "GET",
+    `/media/publications${buildPublicationListQuery(params)}`
+  );
 }
 
 export async function fetchPublication(id: string): Promise<PublicationDetail> {
