@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
-import { fetchPlaylist } from "@/features/media-workspace/playlists";
+import { fetchPlaylist, formatDuration } from "@/features/media-workspace/playlists";
 import { fetchComposition } from "@/features/media-workspace/compositions/services/compositions-api";
 import { compositionContent, playlistContent, type ProgramContent, type ProgramEditState } from "../../program-edit";
 import { CompositionPickerModal } from "../CompositionPickerModal";
 import { PlaylistPickerModal } from "../PlaylistPickerModal";
 import { EditCard } from "./EditCard";
+import { ContentPicture } from "./ProgramContentThumb";
+import { useContentSummary, type ContentSummary } from "./use-content-summary";
 
 type Kind = "playlist" | "composition";
 
@@ -15,6 +17,47 @@ const OPTIONS: { kind: Kind; label: string; hint: string }[] = [
   { kind: "playlist", label: "Playlist", hint: "เลือก Playlist เพื่อเล่นสื่อแบบต่อเนื่อง" },
   { kind: "composition", label: "Layout", hint: "เลือก Layout ที่กำหนดรูปแบบการแสดงผล" },
 ];
+
+function metaLine(summary: ContentSummary | null, fallbackCount: number): string {
+  if (summary?.kind === "layout") {
+    const zones = `${summary.zones.length} zone${summary.zones.length === 1 ? "" : "s"}`;
+    return summary.resolution ? `${summary.resolution} · ${zones}` : zones;
+  }
+  const count = summary?.itemCount ?? fallbackCount;
+  const items = `${count} item${count === 1 ? "" : "s"}`;
+  return summary?.kind === "asset" && summary.durationSeconds ? `${items} | Total ${formatDuration(summary.durationSeconds)}` : items;
+}
+
+/** Frame 03: the bound Playlist / Layout with its picture, size and tags. */
+function BoundContent({ content }: { content: ProgramContent }) {
+  const { summary } = useContentSummary(content);
+  return (
+    <div className="flex min-w-0 gap-3">
+      <ContentPicture
+        summary={summary}
+        name={content.name}
+        className="w-28 shrink-0 self-start"
+        isCompact
+      />
+      <div className="flex min-w-0 flex-col gap-1">
+        <p className="truncate text-sm font-semibold text-foreground">{content.name ?? "—"}</p>
+        <p className="text-xs text-muted-foreground">{metaLine(summary, content.items.length)}</p>
+        {summary && summary.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {summary.tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Frame 03 "Content Source": a Playlist | Layout pair. The bound one is selected; the other offers a
@@ -76,16 +119,7 @@ export function ContentSourceCard({
                   <p className="text-xs text-muted-foreground">{option.hint}</p>
                 </div>
               </div>
-              {isOn && (
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{content.name ?? "—"}</p>
-                  {option.kind === "playlist" && content.items.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {content.items.length} item{content.items.length === 1 ? "" : "s"}
-                    </p>
-                  )}
-                </div>
-              )}
+              {isOn && <BoundContent content={content} />}
               <Button
                 variant="outline"
                 size="sm"
