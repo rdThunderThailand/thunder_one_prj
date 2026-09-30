@@ -10,7 +10,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 | # | Repo | Item | Status | Branch / PR | Notes |
 |---|---|---|---|---|---|
 | D | both | Grilling, ADRs, plan, CONTEXT.md | [x] | `feat/program-redesign` (committed, not pushed) | 2026-09-30, two review rounds applied |
-| BE-0 | Core | Poll follows newest Job | [ ] | — | first; own issue + PR; migration needs approval |
+| BE-0 | Core | Poll follows newest Job | [~] | `fix/poll-newest-job`, issue Thunder_Core#132 | first; own issue + PR; migration needs approval |
 | BE-1 | Core | List read: filters/page/counts/thumbnail/delivery | [ ] | — | |
 | FE-A | FE | Programs list page | [ ] | `feat/program-redesign` | needs BE-1 |
 | BE-2 | Core | `media_publication_update_published` | [ ] | — | needs BE-0 |
@@ -32,13 +32,13 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 
 ## BE-0 — Poll follows the newest Job (Thunder_Core)
 
-- [ ] Issue opened (bug is live today: Group membership change + republish, Publish Changes)
-- [ ] Branch off `develop`
-- [ ] Dump live `media_job_poll` from develop (`pg_get_functiondef`) — edit that, not the migration file
-- [ ] Migration: newest Job per Publication first (same rule as `media_core.media_asset_on_air`), then `device_id` membership
-- [ ] **STOP — approval**: list devices/Programs that would switch snapshot after apply (devices whose only matching Job is not the newest)
-- [ ] Applied to develop · `prosrc` dumped back and compared
-- [ ] Verified via the HTTP player jobs route (not RPC directly)
+- [x] Issue opened — Thunder_Core#132 (bug is live today: Group membership change + republish, Publish Changes)
+- [x] Branch off `develop` — `fix/poll-newest-job`
+- [x] Dump live `media_job_poll` from develop (`pg_get_functiondef`) — edit that, not the migration file
+- [x] Migration `20260930100000_job_poll_newest_job_first.sql` (uncommitted): newest Job per Publication first (same rule as `media_core.media_asset_on_air`), then `device_id` membership
+- [x] **STOP — approval**: devices whose only matching Job is not the newest — develop 0 rows, prod 0 rows (2026-09-30)
+- [x] Applied to develop 2026-09-30 · `prosrc` md5 matches the file, single function, ACL unchanged
+- [x] Verified via HTTP `POST /media/player/jobs` on local Core :3001 (develop DB), test device on `zz-ux-66-guard-test`: baseline 1 slot → newest Job without the device → 0 slots → test Job deleted → 1 slot. Not tested: deployed develop backend
 - [ ] Draft PR → `develop`
 
 ## BE-1 — List read (Thunder_Core)
