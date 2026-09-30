@@ -10,7 +10,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 | # | Repo | Item | Status | Branch / PR | Notes |
 |---|---|---|---|---|---|
 | D | both | Grilling, ADRs, plan, CONTEXT.md | [x] | `feat/program-redesign` (committed, not pushed) | 2026-09-30, two review rounds applied |
-| BE-0 | Core | Poll follows newest Job | [~] | `fix/poll-newest-job`, issue Thunder_Core#132 | first; own issue + PR; migration needs approval |
+| BE-0 | Core | Poll follows newest Job | [x] | Thunder_Core#133 + #135 merged into `develop`; FE #179 merged into `dev` | applied develop + prod 2026-09-30; issues #132, #134 |
 | BE-1 | Core | List read: filters/page/counts/thumbnail/delivery | [ ] | — | |
 | FE-A | FE | Programs list page | [ ] | `feat/program-redesign` | needs BE-1 |
 | BE-2 | Core | `media_publication_update_published` | [ ] | — | needs BE-0 |
@@ -40,8 +40,12 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] Applied to develop 2026-09-30 · `prosrc` md5 matches the file, single function, ACL unchanged
 - [x] Verified via HTTP `POST /media/player/jobs` on local Core :3001 (develop DB), test device on `zz-ux-66-guard-test`: baseline 1 slot → newest Job without the device → 0 slots → test Job deleted → 1 slot. Not tested: deployed develop backend
 - [x] Draft PR → `develop` — Thunder_Core#133 (+ rollback file `supabase/rollback/`)
-- [~] Companion guard, Thunder_Core#134: `activate` refuses Targets that resolve to 0 devices (ADR 0080). Branch `fix/activate-zero-devices`, migration `20260930110000` written from live def (md5 `bb0ffb1c…` develop = prod), 0 Programs affected on either. Not applied yet
-- [ ] Apply both to prod (approval) — guard first or together
+- [x] Companion guard, Thunder_Core#134 → PR #135 (merged): `activate` refuses Targets that resolve to 0 devices (ADR 0080). Verified HTTP (`/activate` 400, `/republish` 400, status stays active, Job count unchanged) and UI (wizard message + Publish Changes dialog) on develop; FE messages in thunder_one_prj#179 (merged into `dev`, not yet on `main`)
+- [x] Applied to prod 2026-09-30, guard (#135) first then poll (#133): `prosrc` md5 matches the files (`3e562f00…` activate, `042084e5…` poll), one function each, ACL unchanged. Not exercised on prod with a real device poll. Rollback files in Thunder_Core `supabase/rollback/` (never run)
+- [ ] Layout (composition) Publish Changes through the UI not tested — same RPC and `REASONS` as Playlist
+- [x] Prod smoke test 2026-09-30 (read-only, SQL, no tokens printed): `media_job_poll` called for all 21 non-revoked devices — 21 ok, 0 errors, 8 with content, 2 zoned + 19 flat payloads
+- [ ] **BE-0b** (own issue + PR, after BE-1, before BE-2/FE-B): move `media_now_next_get` (FE-B preview) and `media_schedule_conflicts` (edit-in-place removes devices, so stale Job rows would raise false conflicts) to the newest-Job rule. `media_screen_get` (also lacks a schedule check), `airtime_explain`, `retry_targets`: low priority, separate issue
+- [ ] BE-1 must count delivery/offline/failed from the **newest Job only** (`media_publication_get` already does; `media_publications_list` has no delivery yet, so nothing to migrate)
 
 ## BE-1 — List read (Thunder_Core)
 
@@ -118,3 +122,4 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 ## Log
 
 - 2026-09-30 — Design session: grilling (Q1–Q18), ADR 0080, Core ADR 0014, plan, two external review rounds applied. Poll bug found (BE-0). No code, no DB writes.
+- 2026-09-30 — BE-0 executed: poll fix + zero-device activate guard, develop + prod. FE error copy in #179. See `.docs/SESSIONLOG-be0-poll-newest-job-2026-09-30.md`.
