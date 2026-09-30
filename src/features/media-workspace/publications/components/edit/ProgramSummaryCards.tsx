@@ -6,13 +6,14 @@ import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { fetchComposition } from "@/features/media-workspace/compositions/services/compositions-api";
 import { DEFAULT_TIMEZONE, WEEKDAYS, formatMonthDays, utcToZonedParts } from "../../schedule";
 import { compositionContent, playlistContent, type ProgramContent, type ProgramEditState } from "../../program-edit";
-import type { PublicationSchedule } from "../../types";
+import type { ChannelListItem } from "../../../channels/types";
+import type { PublicationSchedule, PublicationTarget } from "../../types";
 import { CompositionPickerModal } from "../CompositionPickerModal";
 import { PlaylistPickerModal } from "../PlaylistPickerModal";
+import { ChangeTargetModal } from "./ChangeTargetModal";
 import { EditCard } from "./EditCard";
 
-// ponytail: Change Target / Edit Schedule are FE-D / FE-E — their buttons render disabled until those
-// modals exist, so the cards already show what a Program holds today.
+// ponytail: Edit Schedule is FE-E — its button renders disabled until that modal exists.
 const COMING_SOON = "เร็วๆ นี้";
 
 // Frame 03 lists the week Mon → Sun; WEEKDAYS is Sun-first to match Postgres DOW.
@@ -88,12 +89,23 @@ export function ContentSourceCard({
   );
 }
 
-export function TargetCard({ state, error }: { state: ProgramEditState; error?: string }) {
+export function TargetCard({
+  state,
+  channels,
+  error,
+  onChange,
+}: {
+  state: ProgramEditState;
+  channels: ChannelListItem[];
+  error?: string;
+  onChange: (targets: PublicationTarget[]) => void;
+}) {
   const { targets } = state;
-  const channels = targets.filter((t) => t.target_type === "channel").length;
+  const [picking, setPicking] = useState(false);
+  const channelCount = targets.filter((t) => t.target_type === "channel").length;
   const groups = targets.filter((t) => t.target_type === "group").length;
   const summary = [
-    channels > 0 && `${channels} Channel${channels > 1 ? "s" : ""}`,
+    channelCount > 0 && `${channelCount} Channel${channelCount > 1 ? "s" : ""}`,
     groups > 0 && `${groups} Group${groups > 1 ? "s" : ""}`,
   ]
     .filter(Boolean)
@@ -110,8 +122,22 @@ export function TargetCard({ state, error }: { state: ProgramEditState; error?: 
         {targets.map((t) => t.name).filter(Boolean).join(", ")}
       </p>
       <div className="mt-3">
-        <ChangeButton label="Change Target" />
+        <ChangeButton
+          label="Change Target"
+          onClick={() => setPicking(true)}
+        />
       </div>
+      {picking && (
+        <ChangeTargetModal
+          targets={targets}
+          channels={channels}
+          onClose={() => setPicking(false)}
+          onApply={(next) => {
+            setPicking(false);
+            onChange(next);
+          }}
+        />
+      )}
     </EditCard>
   );
 }

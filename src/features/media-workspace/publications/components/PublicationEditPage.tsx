@@ -233,7 +233,9 @@ export function PublicationEditPage({ id }: { id: string }) {
           <div className="grid gap-5 md:grid-cols-2">
             <TargetCard
               state={state}
+              channels={edit.channels}
               error={partError("targets")}
+              onChange={(targets) => edit.patch({ targets })}
             />
             <ScheduleCard
               state={state}
