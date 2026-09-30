@@ -60,14 +60,16 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 
 ## FE-A — Programs list (frames 01, 02)
 
-- [ ] API client + types for the new list params/response
-- [ ] KPI cards: Total, Live, Publishing, Scheduled, Draft (no Paused, no % change)
-- [ ] Filter bar: search, Status, Target, Tag, Created by, Sort; More filters **disabled**
-- [ ] Table: thumbnail, name + content name + tags, badge, target, schedule, deployment/progress, last updated, created by
-- [ ] Actions by status (Draft: Edit/Publish/Duplicate/Delete · Publishing/Scheduled/Live: Open/Duplicate/End · Ended: View/Duplicate) with confirm on destructive
-- [ ] Pagination 10/page
-- [ ] Import Program + grid toggle **disabled** ("เร็วๆ นี้"); header date picker not built
-- [ ] Browser verification (ask first) vs frame 01 · Draft PR → `dev`
+- [x] API client + types (`fetchPublicationsPage`, `PublicationsPage`; old `fetchPublications` untouched)
+- [x] KPI cards: Total, Live, Publishing, Scheduled, Draft (no Paused, no % change)
+- [x] Filter bar: search (300 ms debounce), Status, Target (Channel/Group), Tag, Sort; More filters **disabled**. **Created by hidden** — API supports `created_by` but no readable user list for this role; follow-up if wanted
+- [x] Table: thumbnail (placeholder for Layouts), name + content name + tags, badge, target, schedule range (+ "Next airing" for Scheduled), deployment/progress, updated, created by. Row shows no daily time range / all-day: the list payload has no recurrence, so it is not invented
+- [x] Actions by status with confirm (AlertDialog) on Delete / End · Open/View link to the existing detail page until FE-B
+- [x] Pagination 10/page
+- [x] Import Program + grid toggle disabled ("เร็วๆ นี้")
+- [x] `tsc` + `eslint` clean; `*.check.mts` for query builder and display/actions mapping
+- [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop DB, 124-row tenant): load, Status/Tag/Channel/search filters, paging, empty state, Delete confirm dialog opened and cancelled. **Not verified:** side-by-side vs frame 01 pixel comparison, Duplicate / Delete / End executing, Publishing + Scheduled badges on real rows (none exist on develop), Composition row placeholder, Target = Group with results
+- [ ] Draft PR → `dev`
 
 ## BE-2 — Update a published Program (Thunder_Core)
 
