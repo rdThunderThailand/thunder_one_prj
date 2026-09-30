@@ -1,6 +1,7 @@
 // Public API for the "publications" feature.
 export { CreatePublicationPage } from "./components/CreatePublicationPage";
 export { PublicationsListPage } from "./components/PublicationsListPage";
+export { PublicationEditPage } from "./components/PublicationEditPage";
 export { PublicationDetailPage } from "./components/PublicationDetailPage";
 export { DemoPublicationDetailPage } from "./components/DemoPublicationDetailPage";
 
