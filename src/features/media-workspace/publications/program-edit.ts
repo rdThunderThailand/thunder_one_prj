@@ -193,29 +193,3 @@ export function targetDeviceIds(channels: ChannelLike[], targets: PublicationTar
   }
   return [...ids];
 }
-
-export type EditDisplayStatus = "draft" | "publishing" | "scheduled" | "live" | "ended";
-
-type StatusSource = {
-  status: string;
-  effective_status?: string;
-  playback_window?: { state: "before" | "open" | "between" | "ended" } | null;
-  targets?: { status?: string | null; status_level?: "online" | "warning" | "offline" }[];
-};
-
-const WAITING = new Set(["pending", "downloading", "delivered"]);
-
-// ponytail: `media_publication_get` does not return the SQL `display_status` (ADR 0080), so this
-// mirrors its precedence from fields the detail already carries — upgrade: return
-// `display_status` from the get RPC and delete this.
-export function editDisplayStatus(detail: StatusSource): EditDisplayStatus {
-  if (detail.status === "draft") return "draft";
-  if (detail.status === "cancelled" || detail.effective_status === "ended") return "ended";
-  const windowState = detail.playback_window?.state ?? "open";
-  if (windowState === "ended") return "ended";
-  if (windowState !== "open") return "scheduled";
-  const waiting = (detail.targets ?? []).some(
-    (t) => t.status && WAITING.has(t.status) && t.status_level !== "offline",
-  );
-  return waiting ? "publishing" : "live";
-}

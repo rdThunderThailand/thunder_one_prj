@@ -182,6 +182,8 @@ export type PublicationDetail = {
   status: string;
   /** Clock-aware lifecycle for display: adds scheduled | ended. */
   effective_status?: string;
+  /** ADR 0080 badge, computed by `media_publication_get`. Absent only on a Core that predates it. */
+  display_status?: PublicationDisplayStatus;
   /** Optimistic-lock counter — bumped on every draft write (docs/adr/0003). */
   revision?: number;
   playlist?: { id: string; name: string } | null;

@@ -8,7 +8,6 @@ import {
   buildUpdatePublishedBody,
   compositionContent,
   detailToEditState,
-  editDisplayStatus,
   isProgramDirty,
   parseUpdatePublishedError,
   playlistContent,
@@ -85,17 +84,6 @@ const channels = [
   { id: "c4", player: { id: "d4" }, groups: [] },
 ];
 assert.deepEqual(targetDeviceIds(channels, base.targets).sort(), ["d1", "d2"]);
-
-// 8. display status precedence: Draft, Ended, Publishing (window open + waiting online), Live, Scheduled
-const active = { status: "active", playback_window: { state: "open" as const }, targets: [] };
-assert.equal(editDisplayStatus({ status: "draft" }), "draft");
-assert.equal(editDisplayStatus({ ...active, effective_status: "ended" }), "ended");
-assert.equal(editDisplayStatus({ ...active, status: "cancelled" }), "ended");
-assert.equal(editDisplayStatus(active), "live");
-assert.equal(editDisplayStatus({ ...active, targets: [{ status: "pending", status_level: "online" }] }), "publishing");
-assert.equal(editDisplayStatus({ ...active, targets: [{ status: "pending", status_level: "offline" }] }), "live");
-assert.equal(editDisplayStatus({ ...active, targets: [{ status: "failed", status_level: "online" }] }), "live");
-assert.equal(editDisplayStatus({ ...active, playback_window: { state: "between" } }), "scheduled");
 
 // Change Playlist / Layout: items sorted by position; the other side's id is cleared; the change is dirty.
 const changed = playlistContent({

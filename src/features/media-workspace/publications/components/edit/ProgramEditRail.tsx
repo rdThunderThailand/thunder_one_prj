@@ -14,8 +14,8 @@ import { Badge } from "@/components/ui/lovable/badge";
 import { fetchNowNext, type NowNextRow } from "../../now-next";
 import { DEFAULT_TIMEZONE, utcToZonedParts } from "../../schedule";
 import { DISPLAY_STATUS_LABELS } from "../../publication-list-display";
-import type { EditDisplayStatus, ProgramEditState } from "../../program-edit";
-import { PRIORITIES, type Priority, type PublicationDetail } from "../../types";
+import type { ProgramEditState } from "../../program-edit";
+import { PRIORITIES, type Priority, type PublicationDetail, type PublicationDisplayStatus } from "../../types";
 
 const STATUS_VARIANT = {
   draft: "info",
@@ -36,7 +36,7 @@ function StatusCard({
   channelCount,
   unpublished,
 }: {
-  status: EditDisplayStatus;
+  status: PublicationDisplayStatus;
   channelCount: number;
   unpublished: boolean;
 }) {
@@ -236,7 +236,7 @@ export function ProgramEditRail({
 }: {
   detail: PublicationDetail;
   state: ProgramEditState;
-  status: EditDisplayStatus;
+  status: PublicationDisplayStatus;
   isDirty: boolean;
   readOnly: boolean;
   onPriority: (priority: Priority) => void;

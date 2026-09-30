@@ -8,7 +8,6 @@ import type { ChannelListItem } from "../../channels/types";
 import {
   buildUpdatePublishedBody,
   detailToEditState,
-  editDisplayStatus,
   isProgramDirty,
   parseUpdatePublishedError,
   removedTargetLabels,
@@ -39,6 +38,8 @@ export function useProgramEdit(id: string) {
     let alive = true;
     fetchPublication(id)
       .then(async (pub) => {
+        // Core builds the badge (ADR 0080); an older Core would leave the page loading forever.
+        if (!pub.display_status) throw new Error("Core did not return display_status");
         const playlist = pub.playlist?.id ? await fetchPlaylist(pub.playlist.id) : null;
         const next = detailToEditState(pub, playlist?.items);
         if (!alive) return;
@@ -65,7 +66,7 @@ export function useProgramEdit(id: string) {
     () => (state && baseline ? isProgramDirty(baseline, state) : false),
     [state, baseline],
   );
-  const displayStatus = detail ? editDisplayStatus(detail) : null;
+  const displayStatus = detail?.display_status ?? null;
 
   const patch = useCallback((change: Partial<ProgramEditState>) => {
     setState((prev) => (prev ? { ...prev, ...change } : prev));
