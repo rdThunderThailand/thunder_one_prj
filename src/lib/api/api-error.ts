@@ -108,6 +108,15 @@ function isTransportFailure(err: unknown): boolean {
   return code === "ERR_NETWORK" || code === "ECONNABORTED" || err.message === "Network Error";
 }
 
+/**
+ * `media_publication_activate` raises this when the Targets resolve to no device — a Channel or
+ * Group with no screen (Thunder_Core#134). The raw wording is written for the backend, so it is
+ * replaced with the way out rather than shown as-is or routed through the generic bucket below.
+ */
+function isNoScreensTarget(message: string): boolean {
+  return message.includes("the targets have no screens");
+}
+
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
   const message = err instanceof Error && err.message ? err.message : fallback;
 
@@ -142,6 +151,13 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
 
   if (isQuarantinedAsset(message)) {
     return { kind: "rejected", message };
+  }
+
+  if (isNoScreensTarget(message)) {
+    return {
+      kind: "rejected",
+      message: "ช่องทางหรือกลุ่มที่เลือกยังไม่มีจอ กรุณาเพิ่มจอก่อนเผยแพร่",
+    };
   }
 
   // Everything the API rejects on shape — zod schema failures and the remaining
