@@ -28,6 +28,7 @@ export function publishChanges(kind: ChangesKind, id: string): Promise<PublishCh
 const REASONS: ReadonlyArray<[RegExp, string]> = [
   [/composition is not active/, "Layout ไม่ได้อยู่ในสถานะ Active"],
   [/at least one target/, "ยังไม่ได้เลือก Channel ปลายทาง"],
+  [/targets have no screens/, "Channel หรือ Group ปลายทางยังไม่มีจอ"],
   [/quarantin/i, "มีไฟล์ที่ถูกกักกัน (quarantine) อยู่ในเนื้อหา"],
   [/synchronized/, "Channel Group แบบ synchronized ยังไม่ครบ"],
 ];
