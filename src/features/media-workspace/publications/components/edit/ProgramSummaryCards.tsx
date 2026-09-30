@@ -1,25 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
+import { fetchPlaylist } from "@/features/media-workspace/playlists";
+import { fetchComposition } from "@/features/media-workspace/compositions/services/compositions-api";
 import { DEFAULT_TIMEZONE, WEEKDAYS, formatMonthDays, utcToZonedParts } from "../../schedule";
-import type { ProgramEditState } from "../../program-edit";
-import type { PublicationDetail, PublicationSchedule } from "../../types";
+import { compositionContent, playlistContent, type ProgramContent, type ProgramEditState } from "../../program-edit";
+import type { PublicationSchedule } from "../../types";
+import { CompositionPickerModal } from "../CompositionPickerModal";
+import { PlaylistPickerModal } from "../PlaylistPickerModal";
 import { EditCard } from "./EditCard";
 
-// ponytail: Change Playlist / Target / Schedule are FE-C / FE-D / FE-E — the buttons render disabled
-// until those modals exist, so the cards already show what a Program holds today.
+// ponytail: Change Target / Edit Schedule are FE-D / FE-E — their buttons render disabled until those
+// modals exist, so the cards already show what a Program holds today.
 const COMING_SOON = "เร็วๆ นี้";
 
 // Frame 03 lists the week Mon → Sun; WEEKDAYS is Sun-first to match Postgres DOW.
 const MONDAY_FIRST = [...WEEKDAYS.slice(1), WEEKDAYS[0]];
 
-function ChangeButton({ label }: { label: string }) {
+function ChangeButton({ label, onClick }: { label: string; onClick?: () => void }) {
   return (
     <Button
       variant="outline"
       size="sm"
-      disabled
-      title={COMING_SOON}
+      disabled={!onClick}
+      title={onClick ? undefined : COMING_SOON}
+      onClick={onClick}
     >
       {label}
     </Button>
@@ -28,34 +34,56 @@ function ChangeButton({ label }: { label: string }) {
 
 export function ContentSourceCard({
   state,
-  detail,
   error,
+  onChange,
 }: {
   state: ProgramEditState;
-  detail: PublicationDetail;
   error?: string;
+  onChange: (content: ProgramContent) => void;
 }) {
   const { content } = state;
   const isLayout = content.type === "composition";
-  const name = isLayout ? detail.composition?.name : detail.playlist?.name;
   const kind = isLayout ? "Layout" : content.type === "playlist" ? "Playlist" : content.type;
+  const [picking, setPicking] = useState(false);
+  const [changeError, setChangeError] = useState<string | null>(null);
+
+  // Video / image Programs carry their items directly; switching type or editing items is not offered here.
+  const canChange = content.type === "playlist" || isLayout;
+
+  const select = (id: string) => {
+    setPicking(false);
+    setChangeError(null);
+    const next = isLayout
+      ? fetchComposition(id).then(compositionContent)
+      : fetchPlaylist(id).then(playlistContent);
+    next.then(onChange).catch(() => setChangeError(`Could not load that ${kind}. Try again.`));
+  };
 
   return (
     <EditCard
       step="2. Content Source *"
       hint="เลือก Playlist หรือ Layout อย่างใดอย่างหนึ่ง ในการแสดงผล Program นี้"
-      error={error}
+      error={error ?? changeError ?? undefined}
     >
       <div className="flex items-center justify-between gap-4 rounded-lg border border-primary/40 bg-primary/5 p-4">
         <div className="min-w-0">
           <p className="text-xs font-medium capitalize text-muted-foreground">{kind}</p>
-          <p className="truncate text-sm font-semibold text-foreground">{name ?? "—"}</p>
+          <p className="truncate text-sm font-semibold text-foreground">{content.name ?? "—"}</p>
           {!isLayout && content.items.length > 0 && (
             <p className="text-xs text-muted-foreground">{content.items.length} items</p>
           )}
         </div>
-        <ChangeButton label={isLayout ? "Change Layout" : "Change Playlist"} />
+        <ChangeButton
+          label={isLayout ? "Change Layout" : "Change Playlist"}
+          onClick={canChange ? () => setPicking(true) : undefined}
+        />
       </div>
+      {picking && isLayout && (
+        <CompositionPickerModal selectedId={content.compositionId} onClose={() => setPicking(false)} onSelect={select} />
+      )}
+      {picking && !isLayout && (
+        <PlaylistPickerModal selectedId={content.playlistId} onClose={() => setPicking(false)} onSelect={select} />
+      )}
     </EditCard>
   );
 }

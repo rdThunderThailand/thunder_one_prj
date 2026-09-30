@@ -6,10 +6,12 @@
 import assert from "node:assert/strict";
 import {
   buildUpdatePublishedBody,
+  compositionContent,
   detailToEditState,
   editDisplayStatus,
   isProgramDirty,
   parseUpdatePublishedError,
+  playlistContent,
   removedTargetLabels,
   targetDeviceIds,
 } from "./program-edit.ts";
@@ -94,5 +96,22 @@ assert.equal(editDisplayStatus({ ...active, targets: [{ status: "pending", statu
 assert.equal(editDisplayStatus({ ...active, targets: [{ status: "pending", status_level: "offline" }] }), "live");
 assert.equal(editDisplayStatus({ ...active, targets: [{ status: "failed", status_level: "online" }] }), "live");
 assert.equal(editDisplayStatus({ ...active, playback_window: { state: "between" } }), "scheduled");
+
+// Change Playlist / Layout: items sorted by position; the other side's id is cleared; the change is dirty.
+const changed = playlistContent({
+  id: "pl2",
+  name: "New",
+  items: [
+    { media_asset_id: "b", position: 1 },
+    { media_asset_id: "a", position: 0, transition: "fade" },
+  ],
+});
+assert.deepEqual(changed.items.map((i) => i.media_asset_id), ["a", "b"]);
+assert.equal(changed.items[0].transition, "fade");
+assert.equal(changed.compositionId, null);
+assert.deepEqual(compositionContent({ id: "c2", name: "Lay" }), {
+  type: "composition", name: "Lay", playlistId: null, compositionId: "c2", items: [],
+});
+assert.equal(isProgramDirty(base, { ...base, content: changed }), true);
 
 console.log("program-edit: ok");

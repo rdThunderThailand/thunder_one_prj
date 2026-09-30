@@ -8,7 +8,8 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ClockIcon, ExternalLinkIcon, GridIcon, InfoIcon, LayoutIcon, ListIcon, MonitorIcon, SearchIcon, UsersIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import type { PreviewUrls } from "@/lib/api/media-api";
+import { fetchContentFolders, type PreviewUrls } from "@/lib/api/media-api";
+import type { ContentFolder } from "@/types/domain";
 import { CompositionLibraryPreview } from "@/features/media-workspace/compositions/components/CompositionLibraryPreview";
 import { fetchComposition, fetchCompositionLibrary } from "@/features/media-workspace/compositions/services/compositions-api";
 import type { CompositionDetail, CompositionLibraryItem } from "@/features/media-workspace/compositions/types";
@@ -22,6 +23,8 @@ import {
   publishableCompositions,
   type CompositionPickerFilters,
 } from "../composition-picker-filter";
+import { pickerFolderCounts, pickerFolderMatcher, type PickerFolder } from "../picker-folder";
+import { PickerFolderSection } from "./PickerFolderSection";
 import { PickerDetailPanel, PickerFilterChoice, PickerFilterPanel, PickerFilterSection, type PickerDetailField } from "./PickerPanels";
 
 const PER_PAGE = 9;
@@ -51,6 +54,8 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
   const [items, setItems] = useState<CompositionLibraryItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState(defaultCompositionPickerFilters);
+  const [folders, setFolders] = useState<ContentFolder[]>([]);
+  const [folder, setFolder] = useState<PickerFolder>("all");
   const [stagedId, setStagedId] = useState(selectedId);
   const [detailResult, setDetailResult] = useState<{ id: string; detail: CompositionDetail } | null>(null);
   const [page, setPage] = useState(1);
@@ -68,13 +73,24 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
   }, []);
 
   useEffect(() => {
+    let alive = true;
+    // Folders only narrow the list; without them the picker still works.
+    fetchContentFolders("composition").then((rows) => { if (alive) setFolders(rows); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
     if (!stagedId) return;
     let alive = true;
     fetchComposition(stagedId).then((detail) => { if (alive) setDetailResult({ id: stagedId, detail }); }).catch(() => undefined);
     return () => { alive = false; };
   }, [stagedId]);
 
-  const filtered = useMemo(() => filterCompositionPickerItems(items ?? [], filters), [items, filters]);
+  const filtered = useMemo(
+    () => filterCompositionPickerItems(items ?? [], filters).filter((row) => pickerFolderMatcher(folder, folders)(row.folderId)),
+    [items, filters, folder, folders],
+  );
+  const folderCounts = useMemo(() => pickerFolderCounts((items ?? []).map((row) => row.folderId), folders), [items, folders]);
   const sorted = useMemo(
     () =>
       [...filtered].sort((a, b) => {
@@ -134,8 +150,9 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
         </Link>
       </div>
       <div className="grid h-[min(42rem,calc(100vh-15rem))] min-h-[30rem] grid-cols-[11rem_minmax(0,1fr)_16rem] overflow-hidden border-b border-border">
-        <PickerFilterPanel onClear={() => { setFilters(defaultCompositionPickerFilters); setPage(1); }}>
-          <PickerFilterSection label="Status">
+        <PickerFilterPanel onClear={() => { setFilters(defaultCompositionPickerFilters); setFolder("all"); setPage(1); }}>
+          <PickerFolderSection folders={folders} counts={folderCounts} value={folder} onChange={(next) => { setFolder(next); setPage(1); }} />
+          <PickerFilterSection label="Status" divided>
             <div role="radiogroup" aria-label="Status">
               <PickerFilterChoice checked={filters.status === "all"} label="All Status" onClick={() => update({ status: "all" })} />
               <PickerFilterChoice

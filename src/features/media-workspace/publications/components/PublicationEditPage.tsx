@@ -126,7 +126,10 @@ export function PublicationEditPage({ id }: { id: string }) {
             <ArrowLeftIcon className="h-4 w-4" />
             Go Back
           </Button>
-          <ProgramPreviewButton content={state.content} />
+          <ProgramPreviewButton
+            key={state.content.playlistId ?? state.content.compositionId ?? "items"}
+            content={state.content}
+          />
           {isDraft && (
             <Button
               variant="outline"
@@ -224,8 +227,8 @@ export function PublicationEditPage({ id }: { id: string }) {
           />
           <ContentSourceCard
             state={state}
-            detail={detail}
             error={partError("content")}
+            onChange={(content) => edit.patch({ content })}
           />
           <div className="grid gap-5 md:grid-cols-2">
             <TargetCard

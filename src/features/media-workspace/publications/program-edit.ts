@@ -15,6 +15,8 @@ export type ProgramItemDraft = {
 /** What the Program plays. Only the field matching `type` is meaningful. */
 export type ProgramContent = {
   type: PublicationType;
+  /** Name of the bound Playlist / Layout, kept here so a Change shows the new name before saving. */
+  name: string | null;
   playlistId: string | null;
   compositionId: string | null;
   /** video / image Programs: the backend takes the items, not a Playlist id (BE-2 contract). */
@@ -43,17 +45,37 @@ type PlaylistItemLike = {
   transition?: string | null;
 };
 
-export function detailToEditState(
-  detail: PublicationDetail,
-  playlistItems: PlaylistItemLike[] = [],
-): ProgramEditState {
-  const items = [...playlistItems]
+function toItemDrafts(playlistItems: PlaylistItemLike[]): ProgramItemDraft[] {
+  return [...playlistItems]
     .sort((a, b) => a.position - b.position)
     .map((item) => ({
       media_asset_id: item.media_asset_id,
       duration_seconds: item.duration_seconds ?? null,
       transition: item.transition ?? "cut",
     }));
+}
+
+/** Content after "Change Playlist" — same type, new Playlist. */
+export function playlistContent(playlist: { id: string; name: string; items: PlaylistItemLike[] }): ProgramContent {
+  return {
+    type: "playlist",
+    name: playlist.name,
+    playlistId: playlist.id,
+    compositionId: null,
+    items: toItemDrafts(playlist.items),
+  };
+}
+
+/** Content after "Change Layout" — same type, new Layout. */
+export function compositionContent(composition: { id: string; name: string }): ProgramContent {
+  return { type: "composition", name: composition.name, playlistId: null, compositionId: composition.id, items: [] };
+}
+
+export function detailToEditState(
+  detail: PublicationDetail,
+  playlistItems: PlaylistItemLike[] = [],
+): ProgramEditState {
+  const items = toItemDrafts(playlistItems);
 
   return {
     name: detail.name,
@@ -62,6 +84,7 @@ export function detailToEditState(
     priority: detail.priority,
     content: {
       type: detail.publication_type,
+      name: (detail.publication_type === "composition" ? detail.composition?.name : detail.playlist?.name) ?? null,
       playlistId: detail.playlist?.id ?? null,
       compositionId: detail.composition?.id ?? null,
       items,
