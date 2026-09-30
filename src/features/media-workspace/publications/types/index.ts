@@ -182,6 +182,8 @@ export type PublicationDetail = {
   status: string;
   /** Clock-aware lifecycle for display: adds scheduled | ended. */
   effective_status?: string;
+  /** ADR 0080 badge, computed by `media_publication_get`. Absent only on a Core that predates it. */
+  display_status?: PublicationDisplayStatus;
   /** Optimistic-lock counter — bumped on every draft write (docs/adr/0003). */
   revision?: number;
   playlist?: { id: string; name: string } | null;
@@ -192,6 +194,8 @@ export type PublicationDetail = {
   drift_check?: PublicationDriftCheck | null;
   tags: string[];
   created_at?: string;
+  /** Absent on a backend that does not return it; the Edit page then shows a dash. */
+  updated_at?: string;
   activated_at?: string;
   /** Set only when status is cancelled (migration 067) — the delivery-progress "completed at"
    * for a Cancelled result reads this since no target activity marks a cancellation. */

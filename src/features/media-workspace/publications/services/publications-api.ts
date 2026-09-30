@@ -180,6 +180,20 @@ export async function republishPublication(id: string): Promise<{ job_id?: strin
   );
 }
 
+/** Publish changes on a Scheduled/Live Program (ADR 0080): the whole Program in, a new Job out.
+ *  Continue from the returned `revision` without reloading. */
+export async function updatePublishedPublication(
+  id: string,
+  body: Record<string, unknown>
+): Promise<{
+  publication_id: string;
+  revision: number;
+  job_id: string;
+  target_device_count: number;
+}> {
+  return requestApi("POST", `/media/publications/${id}/update-published`, body);
+}
+
 /** Retries failed/offline-stuck targets. Omit deviceIds to retry every eligible target. */
 export async function retryPublicationTargets(
   id: string,

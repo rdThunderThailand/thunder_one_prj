@@ -27,8 +27,8 @@ const LABELS: Record<RowAction, string> = {
 
 const DESTRUCTIVE: RowAction[] = ["delete", "end"];
 
-// ponytail: the Edit page for a published Program is FE-B — until then Open/View land on the
-// existing read-only detail page. Publish resumes the wizard, which is where a Draft is published.
+// Open/View land on the Edit page (read-only for Ended). Draft Edit/Publish resume the wizard, which
+// is where a Draft's content, targets and schedule are still set.
 function hrefFor(action: RowAction, id: string): string | null {
   switch (action) {
     case "edit":
@@ -36,7 +36,7 @@ function hrefFor(action: RowAction, id: string): string | null {
       return `/media-workspace/publications/create?id=${id}`;
     case "open":
     case "view":
-      return `/media-workspace/publications/${id}`;
+      return `/media-workspace/publications/${id}/edit`;
     default:
       return null;
   }
