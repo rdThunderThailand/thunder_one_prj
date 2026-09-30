@@ -149,8 +149,8 @@ export async function savePublicationContent(
 export async function savePublicationSchedule(
   id: string,
   payload: SchedulePayload
-): Promise<PublicationSchedule> {
-  return requestApi<PublicationSchedule>(
+): Promise<PublicationSchedule & { revision: number }> {
+  return requestApi<PublicationSchedule & { revision: number }>(
     "PUT",
     `/media/publications/${id}/schedule`,
     payload

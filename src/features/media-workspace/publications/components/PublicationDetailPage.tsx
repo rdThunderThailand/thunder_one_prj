@@ -520,7 +520,9 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     <span>
                       {detail.schedule.recurrence.freq === "monthly"
                         ? `Monthly: ${formatMonthDays(detail.schedule.recurrence.month_days)}`
-                        : `Days: ${detail.schedule.recurrence.days.join(", ")}`}
+                        : detail.schedule.recurrence.freq === "dates"
+                          ? `Dates: ${detail.schedule.recurrence.dates.join(", ")}`
+                          : `Days: ${detail.schedule.recurrence.days.join(", ")}`}
                     </span>
                     <br />
                     <span>
