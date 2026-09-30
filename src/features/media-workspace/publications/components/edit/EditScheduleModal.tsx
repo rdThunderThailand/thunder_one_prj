@@ -72,7 +72,7 @@ export function EditScheduleModal({
   const [applyError, setApplyError] = useState<string | null>(null);
 
   const preset = presetOf(draft);
-  const errors = validateDraft(draft);
+  const errors = validateDraft(draft, today);
   const hasErrors = Object.keys(errors).length > 0;
   const update = (change: Partial<ScheduleDraft>) => setDraft((current) => ({ ...current, ...change }));
 

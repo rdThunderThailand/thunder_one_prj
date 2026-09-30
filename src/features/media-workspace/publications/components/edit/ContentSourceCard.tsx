@@ -80,7 +80,9 @@ export function ContentSourceCard({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">{content.name ?? "—"}</p>
                   {option.kind === "playlist" && content.items.length > 0 && (
-                    <p className="text-xs text-muted-foreground">{content.items.length} items</p>
+                    <p className="text-xs text-muted-foreground">
+                      {content.items.length} item{content.items.length === 1 ? "" : "s"}
+                    </p>
                   )}
                 </div>
               )}

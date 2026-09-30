@@ -152,7 +152,7 @@ export function ScheduleConfigFields({
         title={draft.mode === "one-time" ? "Time Range" : "Daily Time Range"}
         hint={draft.mode === "one-time" ? "กำหนดช่วงเวลา (ออกอากาศครั้งเดียว)" : "กำหนดช่วงเวลา (ใช้เหมือนกันทุกวันที่เลือก)"}
       >
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="schedule-start-time">Start time</Label>
             <Input
@@ -198,7 +198,14 @@ export function ScheduleConfigFields({
         <label className="flex items-center gap-2 text-sm text-foreground">
           <Checkbox
             checked={draft.allDay}
-            onCheckedChange={(checked) => onChange({ allDay: checked === true })}
+            // Leaving all day with the 00:00-23:59 sentinel still in the fields would store all day again.
+            onCheckedChange={(checked) =>
+              onChange(
+                checked !== true && draft.dailyStart === "00:00" && draft.dailyEnd === "23:59"
+                  ? { allDay: false, dailyStart: "09:00", dailyEnd: "18:00" }
+                  : { allDay: checked === true },
+              )
+            }
           />
           All day (00:00 – 24:00)
         </label>

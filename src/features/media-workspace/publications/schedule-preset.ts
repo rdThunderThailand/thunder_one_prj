@@ -114,7 +114,8 @@ export function scheduleToDraft(schedule: PublicationSchedule | null, today: str
 
 export type DraftErrors = Partial<Record<"days" | "dates" | "startDate" | "endDate" | "time", string>>;
 
-export function validateDraft(draft: ScheduleDraft): DraftErrors {
+/** `today` ("YYYY-MM-DD" in the draft's zone) rejects a schedule that could never air again. */
+export function validateDraft(draft: ScheduleDraft, today: string): DraftErrors {
   const errors: DraftErrors = {};
   if (draft.mode === "locked") return errors;
   if (!draft.allDay && !(draft.dailyStart < draft.dailyEnd)) errors.time = "End time must be after start time.";
@@ -122,12 +123,15 @@ export function validateDraft(draft: ScheduleDraft): DraftErrors {
     if (draft.days.length === 0) errors.days = "Pick at least one day.";
     if (!draft.startDate) errors.startDate = "Pick a start date.";
     if (draft.endDate && draft.endDate < draft.startDate) errors.endDate = "End date must be on or after the start date.";
+    else if (draft.endDate && draft.endDate < today) errors.endDate = "End date is in the past.";
   }
   if (draft.mode === "dates") {
     if (draft.dates.length === 0) errors.dates = "Pick at least one date.";
     if (draft.dates.length > MAX_DATES) errors.dates = `Pick at most ${MAX_DATES} dates.`;
+    if (draft.dates.length > 0 && draft.dates.every((d) => d < today)) errors.dates = "Pick at least one date from today on.";
   }
   if (draft.mode === "one-time" && !draft.startDate) errors.startDate = "Pick a date.";
+  else if (draft.mode === "one-time" && draft.startDate < today) errors.startDate = "Pick today or a later date.";
   return errors;
 }
 
@@ -193,7 +197,7 @@ export function upcomingDays(draft: ScheduleDraft, from: string, limit: number):
 export function windowLabel(draft: ScheduleDraft): string {
   if (draft.allDay) return "All day (00:00 – 24:00)";
   const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
-  const hours = (minutes(draft.dailyEnd) - minutes(draft.dailyStart)) / 60;
-  const length = Number.isInteger(hours) ? `${hours}` : hours.toFixed(1);
+  const hours = Math.round(((minutes(draft.dailyEnd) - minutes(draft.dailyStart)) / 60) * 10) / 10;
+  const length = `${hours}`;
   return `${draft.dailyStart} – ${draft.dailyEnd} (${length} hour${hours === 1 ? "" : "s"})`;
 }

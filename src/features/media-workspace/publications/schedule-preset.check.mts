@@ -65,11 +65,17 @@ assert.equal(scheduleToDraft(open, TODAY, TZ).locked?.kind, "continuous");
 assert.equal(applyPreset(scheduleToDraft(open, TODAY, TZ), "weekdays", TODAY).locked, null);
 
 // Validation and preview.
-assert.ok(validateDraft({ ...weeklyDraft, days: [] }).days);
-assert.ok(validateDraft({ ...weeklyDraft, dailyStart: "10:00", dailyEnd: "06:00" }).time);
-assert.ok(validateDraft({ ...weeklyDraft, endDate: "2026-09-01" }).endDate);
-assert.ok(validateDraft({ ...weeklyDraft, mode: "dates", dates: [] }).dates);
-assert.deepEqual(validateDraft(weeklyDraft), {});
+assert.ok(validateDraft({ ...weeklyDraft, days: [] }, TODAY).days);
+assert.ok(validateDraft({ ...weeklyDraft, dailyStart: "10:00", dailyEnd: "06:00" }, TODAY).time);
+assert.ok(validateDraft({ ...weeklyDraft, endDate: "2026-09-01" }, TODAY).endDate);
+assert.ok(validateDraft({ ...weeklyDraft, mode: "dates", dates: [] }, TODAY).dates);
+assert.deepEqual(validateDraft(weeklyDraft, TODAY), {});
+// Nothing left to air: a past one-time day, only past custom dates, or a range that already ended.
+assert.ok(validateDraft({ ...weeklyDraft, mode: "one-time", startDate: "2026-09-24" }, TODAY).startDate);
+assert.ok(validateDraft({ ...weeklyDraft, mode: "dates", dates: ["2026-09-24"] }, TODAY).dates);
+assert.deepEqual(validateDraft({ ...weeklyDraft, mode: "dates", dates: ["2026-09-24", "2026-10-05"] }, TODAY), {});
+assert.ok(validateDraft({ ...weeklyDraft, startDate: "2026-09-01", endDate: "2026-09-20" }, TODAY).endDate);
+assert.deepEqual(validateDraft({ ...weeklyDraft, startDate: "2026-09-01" }, TODAY), {}, "a weekly start in the past is fine");
 assert.deepEqual(upcomingDays(weeklyDraft, TODAY, 3), ["2026-10-01", "2026-10-02", "2026-10-05"]);
 assert.equal(windowLabel(weeklyDraft), "06:00 – 10:00 (4 hours)");
 
