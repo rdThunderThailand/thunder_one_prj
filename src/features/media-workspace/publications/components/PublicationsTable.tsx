@@ -65,7 +65,7 @@ export function PublicationsTable({
                 key={item.id}
                 className="border-b border-border last:border-b-0"
               >
-                <td className="px-3 py-3">
+                <td className="max-w-72 px-3 py-3">
                   <div className="flex items-center gap-3">
                     {item.thumbnail_url ? (
                       <MediaThumb
@@ -131,8 +131,8 @@ export function PublicationsTable({
                 <td className="px-3 py-3 text-muted-foreground">
                   {formatUpdatedAt(item.updated_at ?? item.created_at)}
                 </td>
-                <td className="px-3 py-3 text-muted-foreground">{item.created_by?.display_name ?? "—"}</td>
-                <td className="px-3 py-3">
+                <td className="max-w-32 truncate px-3 py-3 text-muted-foreground">{item.created_by?.display_name ?? "—"}</td>
+                <td className="whitespace-nowrap px-3 py-3">
                   <PublicationRowActions
                     item={item}
                     busy={busyId === item.id}

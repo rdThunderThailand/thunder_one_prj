@@ -68,7 +68,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] Pagination 10/page
 - [x] Import Program + grid toggle disabled ("เร็วๆ นี้")
 - [x] `tsc` + `eslint` clean; `*.check.mts` for query builder and display/actions mapping
-- [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop DB, 124-row tenant): load, Status/Tag/Channel/search filters, paging, empty state, Delete confirm dialog opened and cancelled, Duplicate on an Ended row created a Draft copy (`test uxui 03 (Copy)`, left on develop for the user to delete). **Not verified:** side-by-side vs frame 01 pixel comparison, Delete / End executing, Publishing + Scheduled badges on real rows (none exist on develop), Composition row placeholder, Target = Group with results
+- [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop DB, 124-row tenant): load, Status/Tag/Channel/search filters, paging, empty state, Delete confirm dialog opened and cancelled, Duplicate on an Ended row created a Draft copy, then Delete via the confirm dialog removed it (total back to 124). Compared with frame 01 at 1440 px: table overflowed (Actions off-screen) → fixed, now fits. Remaining deltas vs frame: no avatar/role under Created by, no Paused card / % change (by design). **Not verified:** End executing (would end a real Program; the only live one is the protected fixture), Publishing + Scheduled badges on real rows (none exist on develop), Composition row placeholder, Target = Group with results
 - [ ] Draft PR → `dev`
 
 ## BE-2 — Update a published Program (Thunder_Core)
