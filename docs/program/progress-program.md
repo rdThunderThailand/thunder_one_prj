@@ -11,8 +11,9 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 |---|---|---|---|---|---|
 | D | both | Grilling, ADRs, plan, CONTEXT.md | [x] | `feat/program-redesign` (committed, not pushed) | 2026-09-30, two review rounds applied |
 | BE-0 | Core | Poll follows newest Job | [x] | Thunder_Core#133 + #135 merged into `develop`; FE #179 merged into `dev` | applied develop + prod 2026-09-30; issues #132, #134 |
-| BE-1 | Core | List read: filters/page/counts/thumbnail/delivery | [ ] | — | |
-| FE-A | FE | Programs list page | [ ] | `feat/program-redesign` | needs BE-1 |
+| BE-0b | Core | now-next + schedule conflicts follow newest Job | [x] | Thunder_Core#139 merged into `develop` | applied develop + prod 2026-09-30; issue #137, follow-up #138 |
+| BE-1 | Core | List read: filters/page/counts/thumbnail/delivery | [x] | Thunder_Core#136 merged into `develop` | applied develop + prod 2026-09-30; route not on Core `main` yet |
+| FE-A | FE | Programs list page | [x] | thunder_one_prj#180 merged into `dev` | not on `main` yet |
 | BE-2 | Core | `media_publication_update_published` | [ ] | — | needs BE-0 |
 | FE-B | FE | Edit page shell | [ ] | — | needs BE-2 |
 | FE-C | FE | Change Playlist / Layout modals | [ ] | — | needs FE-B |
@@ -44,7 +45,9 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] Applied to prod 2026-09-30, guard (#135) first then poll (#133): `prosrc` md5 matches the files (`3e562f00…` activate, `042084e5…` poll), one function each, ACL unchanged. Not exercised on prod with a real device poll. Rollback files in Thunder_Core `supabase/rollback/` (never run)
 - [ ] Layout (composition) Publish Changes through the UI not tested — same RPC and `REASONS` as Playlist
 - [x] Prod smoke test 2026-09-30 (read-only, SQL, no tokens printed): `media_job_poll` called for all 21 non-revoked devices — 21 ok, 0 errors, 8 with content, 2 zoned + 19 flat payloads
-- [ ] **BE-0b** (own issue + PR, after BE-1, before BE-2/FE-B): move `media_now_next_get` (FE-B preview) and `media_schedule_conflicts` (edit-in-place removes devices, so stale Job rows would raise false conflicts) to the newest-Job rule. `media_screen_get` (also lacks a schedule check), `airtime_explain`, `retry_targets`: low priority, separate issue
+- [x] **BE-0b** (Thunder_Core#137 → PR #139 merged into `develop`, migration `20260930140000_newest_job_readers.sql` + rollback): `media_schedule_conflicts` and `media_now_next_get` (current + per-device `playback_state`) pick the newest Job per Publication first; `now_next_candidates` already did. Impact before apply: 0 stale (device, Program) pairs on develop and prod. Applied develop + prod 2026-09-30: `prosrc` md5 matches the file (`4e64532b…` conflicts, `cf267d58…` now-next), one function each, ACL unchanged. Verified on develop with fixture `zz-be0b-newest-job-test` (BE-2 flow simulated: draft flip → drop a channel → activate): SQL — conflicts drops the removed device, control device still listed; player swap inside a rolled-back transaction gives `not_confirmed` (old rule `playing`/`stale`). HTTP through the FE proxy → Core :3001 — conflicts `[]` / listed, now-next 200. Fixture deleted (14 rows). Prod: read-only now-next smoke on all 3 tenants with channels. Not tested: deployed backend, the swap case over HTTP
+- [ ] `media_screen_get` (also lacks a schedule check), `airtime_explain`, `retry_targets`: low priority, Thunder_Core#138
+- Found in BE-0b, for BE-2: `activate` runs **no** overlap check — conflicts are advisory via `POST /publications/conflicts` (FE calls it first); `media_publication_upsert` is a full replace (name, playlist, targets, schedule on every call)
 - [ ] BE-1 must count delivery/offline/failed from the **newest Job only** (`media_publication_get` already does; `media_publications_list` has no delivery yet, so nothing to migrate)
 
 ## BE-1 — List read (Thunder_Core)
@@ -69,7 +72,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] Import Program + grid toggle disabled ("เร็วๆ นี้")
 - [x] `tsc` + `eslint` clean; `*.check.mts` for query builder and display/actions mapping
 - [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop DB, 124-row tenant): load, Status/Tag/Channel/search filters, paging, empty state, Delete confirm dialog opened and cancelled, Duplicate on an Ended row created a Draft copy, then Delete via the confirm dialog removed it (total back to 124). Compared with frame 01 at 1440 px: table overflowed (Actions off-screen) → fixed, now fits. Remaining deltas vs frame: no avatar/role under Created by, no Paused card / % change (by design). End verified 2026-09-30 on the develop fixture `zz-ux-66-guard-test` (user-approved; it is now **Ended**, cannot be restarted; Live KPI 1→0). **Not verified:** Publishing + Scheduled badges on real rows (none exist on develop), Composition row placeholder, Target = Group with results
-- [ ] Draft PR → `dev`
+- [x] PR → `dev` — thunder_one_prj#180, merged 2026-09-30 (`5f7821d`)
 
 ## BE-2 — Update a published Program (Thunder_Core)
 
