@@ -56,7 +56,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] Route `GET /media/publications` passes the new params; thumbnails signed server-side (`src/lib/core/media-cover-urls.ts`, shared with now-next)
 - [x] Applied to develop · verified via HTTP on :3001 (filters, paging, counts, 400s, signed thumbnails) and, inside a rolled-back transaction, Scheduled / Publishing / Composition cases · Draft PR: Thunder_Core `feat/program-list-read` → `develop`
 - [ ] Not verified: through the FE proxy (FE-A covers it) · Composition on a real tenant row
-- [ ] Applied to prod (R0, separate approval) · `EXPLAIN` on prod
+- [x] Applied to prod 2026-09-30 (approved): `prosrc` md5 matches develop and the file, one overload, service_role only · read-only checks on the largest prod tenant (34 rows): no-param call returns all 34, `total`/`counts_by_status` (live 5, draft 10, ended 19) add up, paging works · `EXPLAIN` 18 ms · route not yet deployed to prod (Core PR #136 waits for merge)
 
 ## FE-A — Programs list (frames 01, 02)
 
