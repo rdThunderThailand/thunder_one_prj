@@ -17,7 +17,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 | BE-2 | Core | `media_publication_update_published` | [x] | Thunder_Core#143 merged into `develop` (`bb9fde3`) | applied develop + prod 2026-09-30; HTTP verified on develop only; route not yet deployed to prod |
 | FE-B | FE | Edit page shell | [ ] | — | BE-2 done; handoff `.docs/HANDOFF-program-redesign-feb-2026-09-30.md` |
 | FE-C | FE | Change Playlist / Layout modals | [ ] | — | needs FE-B |
-| FE-D | FE | Change Target modal | [ ] | — | needs FE-B |
+| FE-D | FE | Change Target modal | [x] | #182 | needs FE-B |
 | BE-3 | Core | Custom-dates recurrence | [ ] | — | ADR 0014 |
 | FE-E | FE | Edit Schedule modal | [ ] | — | needs FE-B, BE-3 |
 
@@ -106,11 +106,13 @@ Branch `feat/program-edit-page` (off `dev`, uncommitted). Model + hook + cards i
 
 ## FE-D — Change Target (frame 07)
 
-- [ ] Tabs All Channels / Channel Groups (reuse `ChannelsStep` / `GroupsStep` logic)
-- [ ] Filters: type, location, status (`health`)
-- [ ] Selected list + Target Summary (Channels, Locations; no screen count)
-- [ ] Locations tab + map **disabled**
-- [ ] Browser verification · Draft PR
+- [x] Tabs All Channels / Channel Groups (own local state; the wizard's `ChannelsStep` / `GroupsStep` are bound to the draft store, so only their data calls and Group rules were reused)
+- [x] Filters: type, location, status (`health`), search
+- [x] Selected list + Target Summary (Channels, Locations; no screen count). A Group's members count toward both
+- [x] Locations tab + map **disabled**
+- [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop DB): filters + counts, Group pick, Apply → card "2 Channels · 1 Group", Save enabled. On a Live fixture `zz-fe-d-live` (`M2 Smoke Channel` + `Channel for Screen 2`, created and activated through the API with approval): removing a Channel → confirm modal says "Will stop playing on 1 channel: M2 Smoke Channel" → Publish → server shows one `publication_target` and the latest Job has one device (`ThunderOne Screen 02`). Then End (`cancelled`)
+- [ ] Not verified: Location facet with more than one Location, Group removal on a Live Program, comparison with frame 07 (no screenshot taken); `device`-type legacy targets pass through Apply untouched (check only)
+- [ ] Draft PR: rides on #182
 
 ## BE-3 — Custom-dates recurrence (Thunder_Core, ADR 0014)
 
