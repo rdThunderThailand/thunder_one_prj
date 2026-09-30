@@ -102,6 +102,21 @@ assert.ok(!offline.message.includes("Network Error"));
 assert.equal(classifyApiError(Object.assign(new Error("timeout of 0ms exceeded"), { code: "ECONNABORTED" }), FALLBACK).message, offline.message);
 assert.equal(classifyApiError(new Error("อะไรบางอย่างพัง"), FALLBACK).message, "อะไรบางอย่างพัง");
 
+// media_publication_activate refuses Targets that resolve to no device (Thunder_Core#134). The
+// backend wording must not reach the screen, and it must not fall into the generic "Invalid input:"
+// line either, which does not tell the operator what to fix.
+const noScreens = classifyApiError(
+  new ApiError(
+    "Invalid input: the targets have no screens — add a screen to the channel or group before publishing",
+    400
+  ),
+  FALLBACK
+);
+assert.equal(noScreens.kind, "rejected");
+assert.ok(noScreens.message.includes("ยังไม่มีจอ"));
+assert.ok(!noScreens.message.includes("targets have no screens"));
+assert.notEqual(noScreens.message, classifyApiError(new ApiError("Invalid input: x", 400), FALLBACK).message);
+
 // The fallback fills in only when there is no message to show.
 assert.equal(classifyApiError(undefined, FALLBACK).message, FALLBACK);
 assert.equal(classifyApiError(new Error(""), FALLBACK).message, FALLBACK);
