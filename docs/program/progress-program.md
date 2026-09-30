@@ -11,12 +11,12 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 |---|---|---|---|---|---|
 | D | both | Grilling, ADRs, plan, CONTEXT.md | [x] | `feat/program-redesign` (committed, not pushed) | 2026-09-30, two review rounds applied |
 | BE-0 | Core | Poll follows newest Job | [x] | Thunder_Core#133 + #135 merged into `develop`; FE #179 merged into `dev` | applied develop + prod 2026-09-30; issues #132, #134 |
-| BE-1 | Core | List read: filters/page/counts/thumbnail/delivery | [x] | Thunder_Core#136 merged into `develop` | applied develop + prod 2026-09-30; route not yet on prod `main` |
-| FE-A | FE | Programs list page | [x] | #180 merged into `dev` | not yet on `main` |
-| BE-0b | Core | Newest-Job readers (`now_next`, `schedule_conflicts`) | [x] | Thunder_Core#139 merged into `develop` | applied develop + prod 2026-09-30 |
+| BE-0b | Core | now-next + schedule conflicts follow newest Job | [x] | Thunder_Core#139 merged into `develop` | applied develop + prod 2026-09-30; issue #137, follow-up #138 |
+| BE-1 | Core | List read: filters/page/counts/thumbnail/delivery | [x] | Thunder_Core#136 merged into `develop` | applied develop + prod 2026-09-30; route not on Core `main` yet |
+| FE-A | FE | Programs list page | [x] | thunder_one_prj#180 merged into `dev` | not on `main` yet |
 | BE-2 | Core | `media_publication_update_published` | [x] | Thunder_Core#143 merged into `develop` (`bb9fde3`) | applied develop + prod 2026-09-30; HTTP verified on develop only; route not yet deployed to prod |
-| FE-B | FE | Edit page shell | [ ] | — | BE-2 done; handoff `.docs/HANDOFF-program-redesign-feb-2026-09-30.md` |
-| FE-C | FE | Change Playlist / Layout modals | [ ] | — | needs FE-B |
+| FE-B | FE | Edit page shell | [x] | #182 | BE-2 done; browser-verified on develop (see FE-B section) |
+| FE-C | FE | Change Playlist / Layout modals | [x] | #182 | Category = Folders added; type switching not built (no entry point in mockups 05/06) |
 | FE-D | FE | Change Target modal | [x] | #182 | needs FE-B |
 | BE-3 | Core | Custom-dates recurrence | [ ] | — | ADR 0014 |
 | FE-E | FE | Edit Schedule modal | [ ] | — | needs FE-B, BE-3 |
@@ -45,7 +45,9 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] Applied to prod 2026-09-30, guard (#135) first then poll (#133): `prosrc` md5 matches the files (`3e562f00…` activate, `042084e5…` poll), one function each, ACL unchanged. Not exercised on prod with a real device poll. Rollback files in Thunder_Core `supabase/rollback/` (never run)
 - [ ] Layout (composition) Publish Changes through the UI not tested — same RPC and `REASONS` as Playlist
 - [x] Prod smoke test 2026-09-30 (read-only, SQL, no tokens printed): `media_job_poll` called for all 21 non-revoked devices — 21 ok, 0 errors, 8 with content, 2 zoned + 19 flat payloads
-- [x] **BE-0b** (Thunder_Core#139, merged; own issue + PR, after BE-1, before BE-2/FE-B): move `media_now_next_get` (FE-B preview) and `media_schedule_conflicts` (edit-in-place removes devices, so stale Job rows would raise false conflicts) to the newest-Job rule. `media_screen_get` (also lacks a schedule check), `airtime_explain`, `retry_targets`: low priority, separate issue
+- [x] **BE-0b** (Thunder_Core#137 → PR #139 merged into `develop`, migration `20260930140000_newest_job_readers.sql` + rollback): `media_schedule_conflicts` and `media_now_next_get` (current + per-device `playback_state`) pick the newest Job per Publication first; `now_next_candidates` already did. Impact before apply: 0 stale (device, Program) pairs on develop and prod. Applied develop + prod 2026-09-30: `prosrc` md5 matches the file (`4e64532b…` conflicts, `cf267d58…` now-next), one function each, ACL unchanged. Verified on develop with fixture `zz-be0b-newest-job-test` (BE-2 flow simulated: draft flip → drop a channel → activate): SQL — conflicts drops the removed device, control device still listed; player swap inside a rolled-back transaction gives `not_confirmed` (old rule `playing`/`stale`). HTTP through the FE proxy → Core :3001 — conflicts `[]` / listed, now-next 200. Fixture deleted (14 rows). Prod: read-only now-next smoke on all 3 tenants with channels. Not tested: deployed backend, the swap case over HTTP
+- [ ] `media_screen_get` (also lacks a schedule check), `airtime_explain`, `retry_targets`: low priority, Thunder_Core#138
+- Found in BE-0b, for BE-2: `activate` runs **no** overlap check — conflicts are advisory via `POST /publications/conflicts` (FE calls it first); `media_publication_upsert` is a full replace (name, playlist, targets, schedule on every call)
 - [ ] BE-1 must count delivery/offline/failed from the **newest Job only** (`media_publication_get` already does; `media_publications_list` has no delivery yet, so nothing to migrate)
 
 ## BE-1 — List read (Thunder_Core)
@@ -70,7 +72,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] Import Program + grid toggle disabled ("เร็วๆ นี้")
 - [x] `tsc` + `eslint` clean; `*.check.mts` for query builder and display/actions mapping
 - [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop DB, 124-row tenant): load, Status/Tag/Channel/search filters, paging, empty state, Delete confirm dialog opened and cancelled, Duplicate on an Ended row created a Draft copy, then Delete via the confirm dialog removed it (total back to 124). Compared with frame 01 at 1440 px: table overflowed (Actions off-screen) → fixed, now fits. Remaining deltas vs frame: no avatar/role under Created by, no Paused card / % change (by design). End verified 2026-09-30 on the develop fixture `zz-ux-66-guard-test` (user-approved; it is now **Ended**, cannot be restarted; Live KPI 1→0). **Not verified:** Publishing + Scheduled badges on real rows (none exist on develop), Composition row placeholder, Target = Group with results
-- [ ] Draft PR → `dev`
+- [x] PR → `dev` — thunder_one_prj#180, merged 2026-09-30 (`5f7821d`)
 
 ## BE-2 — Update a published Program (Thunder_Core)
 
@@ -99,10 +101,12 @@ Branch `feat/program-edit-page` (off `dev`, uncommitted). Model + hook + cards i
 
 ## FE-C — Change Playlist / Layout (frames 05, 06)
 
-- [ ] Extend `PlaylistPickerModal`: folders as categories with counts, search, sort, preview + item list
-- [ ] Extend `CompositionPickerModal`: folders, grid, Layout details panel
-- [ ] "Custom Layout — Create from blank" **disabled**
-- [ ] Browser verification · Draft PR
+- [x] `PlaylistPickerModal` / `CompositionPickerModal` reused (search, sort, preview + item list already existed); added Category = Folders with subtree-inclusive counts + Uncategorized (`picker-folder.ts`, `PickerFolderSection`); the create wizard gets it too, same pickers
+- [x] Change button fetches the picked Playlist / Layout and replaces `content` via `edit.patch`; name shown before saving; Preview is keyed by content id
+- [x] "Custom Layout — Create from blank" **disabled** (not built)
+- [x] Browser-verified 2026-09-30 (develop DB): Category counts and filtering with real folders (`zz-fe-c-folder`), Playlist change ⇄ back returns Save to disabled, Layout picker re-select leaves the page clean
+- [ ] Not verified: switching to a *different* Layout (develop has one), Publish changes after a content change on a Live Program, comparison with frames 05/06; type switching (playlist ↔ layout ↔ video ↔ image) **not built** — no entry point in the mockups
+- [ ] Draft PR: rides on #182
 
 ## FE-D — Change Target (frame 07)
 
