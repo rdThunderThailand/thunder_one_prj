@@ -36,12 +36,23 @@ The list and Edit page show five badges. None of them is stored or used in a gua
 | Badge | Rule |
 |---|---|
 | Draft | stored `draft` |
-| Publishing | `active`, and the newest Job still has a target waiting for delivery on an **online** device (failed counts as finished; offline devices are not waited for) |
-| Live | `active`, delivery settled, and `recurrence_matches(recurrence, timezone, now())` inside `starts_at`–`ends_at` — airing right now |
-| Scheduled | derived `scheduled` (not started — "Starts in 2 days"), **or** `active` and delivery settled but between airings ("Next airing 06:00") |
+| Publishing | `active`, inside an airing window, and the newest Job still has a target waiting for delivery on an **online** device (failed counts as finished; offline devices are not waited for) — due on screen but not there yet |
+| Live | `active`, inside an airing window (`recurrence_matches` within `starts_at`–`ends_at`), and nothing waiting — airing right now |
+| Scheduled | derived `scheduled` (not started — "Starts in 2 days"), **or** `active` between airings ("Next airing 06:00"); delivery progress does not change it |
 | Ended | derived `ended` or stored `cancelled` |
 
 Publishing shows a delivery fact in the lifecycle badge, which CONTEXT.md otherwise keeps apart ("the two status vocabularies never merge"). It is accepted as presentation only; offline and failed targets are shown separately in the Deployment column, never by holding the badge. Because Live and Scheduled depend on the time of day, filtering by badge changes with the clock. Paused is out of scope (no pause/resume exists).
+
+Precise rules (added 2026-09-30, settling BE-1; revised after review the same day):
+
+- **Computed in SQL** by one helper, `media_core.publication_display_status(...)`, next to `publication_effective_status`. The list RPC filters, counts and pages on it; the Edit page reads the same helper later, so the rule lives in one place. Routes stay thin (`zod` + `callMedia`), like every other Core route.
+- **Window** comes from `publication_playback_window(...).state`: `open` → Live or Publishing, `before` or `between` → Scheduled, `ended` → Ended. A `NULL` window (no `starts_at`) counts as `open`, matching `publication_effective_status`, which treats a missing start as active. Next airing is its `next_opens_at`.
+- **Waiting for delivery** is checked only while the window is `open`: a newest-Job target with status `pending`, `downloading` or `delivered` (not yet `playing`; `failed` counts as finished) on a device where `media_core.channel_device_health(last_heartbeat_at) <> 'offline'` (the existing 5-minute helper; `warning` counts as online).
+- **Precedence**: Draft → Ended → Publishing → Live → Scheduled.
+
+Why the window gate: the player in use today sends no download report, so on prod a target goes straight from `pending` to `playing` (2026-09-30: 29 `playing`, 7 `pending`, no `delivered` or `downloading`). A delivery-only rule would hold every Program activated ahead of its start, or outside its daily window, on Publishing until it airs. Gated on the window, the badge means "due on screen but not there yet" and stays correct once players do report `delivered`, since a delivered target that is not `playing` yet still counts as waiting. Delivery ahead of the start is still visible in the Deployment column.
+
+Rejected for BE-1: computing badges in the route (fetch every row, filter in Node — breaks the thin-route pattern and makes `total`/counts drift from the page) or in the browser (ships every row's delivery on each load; the plan already puts filters on the server); keeping the delivery-only rule and waiting for players to send download reports (`delivered`) first (blocks BE-1 on player work with no date).
 
 ## Considered options
 

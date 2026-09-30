@@ -49,9 +49,9 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 
 ## BE-1 — List read (Thunder_Core)
 
-- [ ] `media_publications_list` params: display status, target (channel/group), tag, created_by, search, sort, page, limit
-- [ ] Returns: rows + `counts_by_status` + total; per row thumbnail, content name, delivery summary (delivered/total, offline, failed), next airing
-- [ ] Display status computed per ADR 0080 table (Publishing waits only for online devices; Live uses `recurrence_matches`)
+- [x] Contract settled 2026-09-30 — plan §1 "BE-1 list contract", ADR 0080 precise rules (window-gated Publishing)
+- [ ] Helper `media_core.publication_display_status(...)` per ADR 0080
+- [ ] `media_publications_list` params and response per the plan contract (delivery = `stage3_done`/total, offline, failed from the newest Job)
 - [ ] `EXPLAIN` on the largest tenant
 - [ ] Route `GET /media/publications` passes the new params
 - [ ] Applied to develop (approval) · verified via HTTP · Draft PR

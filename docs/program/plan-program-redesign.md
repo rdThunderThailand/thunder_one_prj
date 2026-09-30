@@ -26,6 +26,38 @@ Status: accepted (2026-09-30, review round 1 applied). Source: `docs/program/fig
 
 Start: **BE-0** (own branch off `develop`), then **BE-1 → FE-A** on `feat/program-redesign`; later sub-projects branch separately.
 
+### BE-1 list contract (settled 2026-09-30)
+
+Badge rules: ADR 0080 "Display status" (precise rules). Everything below is additive — the three current callers (`PublicationsListPage`, `PlaylistPanelTabs`, `OverviewDashboard` with `status=active`) keep working unchanged.
+
+**RPC** `media_publications_list` — migration `DROP FUNCTION IF EXISTS public.media_publications_list(uuid, varchar)` first (adding parameters otherwise leaves an ambiguous overload), then `CREATE`, then `REVOKE ... FROM PUBLIC` and `GRANT EXECUTE ... TO service_role` (today only `service_role` and `postgres` hold it). Edit from `pg_get_functiondef`, not an old migration file.
+
+| Param | Meaning |
+|---|---|
+| `p_tenant_id`, `p_status` | unchanged (stored status; Overview uses it) |
+| `p_display_status` | `draft` / `publishing` / `scheduled` / `live` / `ended` |
+| `p_channel_id` | direct Channel target **or** a member of a targeted Group (same union as `target_summary.channels`) |
+| `p_group_id` | direct Group target |
+| `p_tag_id` | one tag |
+| `p_created_by` | user uuid |
+| `p_search` | trimmed, blank = none; `ILIKE` on Program name **or** content name |
+| `p_sort` | `updated_desc` (default) / `name_asc` / `starts_desc` (`NULLS LAST` — Drafts may have no start) / `created_desc`; every sort ends with `, pub.id` so offset pages never repeat or skip tied rows; anything else raises `Invalid input: sort …` (→ 400) |
+| `p_page`, `p_limit` | offset paging; `p_limit` NULL returns every row |
+
+Query shape: one statement — CTE `base` applies every filter except display status and computes the badge once per row; `counts_by_status` = `count(*) FILTER (...)` over `base` (ignores only `p_display_status`; `p_status` and every other filter still apply); the page = `base` + display-status filter + sort + `LIMIT/OFFSET`.
+
+**Response** keeps `publications` and every existing row field, and adds:
+- top level: `total` (after all filters), `counts_by_status { draft, publishing, scheduled, live, ended }` (ignores only `p_display_status`)
+- per row: `display_status`, `content_name`, `thumbnail_bucket_name` / `thumbnail_storage_key` (same expression as `now_next_candidates`), `next_airing_at` (`playback_window.next_opens_at`), `delivery { total, stage3_done, offline, failed }` from the **newest Job only** (`stage3_done` = `playing`, offline = `media_core.channel_device_health(last_heartbeat_at) = 'offline'`; `null` when no Job)
+
+**Route** `GET /media/publications`: `zod` for the new query params; signs thumbnails with `now-next/cover-urls.ts`, moved to `src/lib` so both routes share it; the storage key never reaches the browser.
+
+Rejected: cursor paging (the mockup needs numbered pages and `total`; badge order shifts with the clock anyway); no server paging; counts in a second RPC (two badge computations that can disagree); redefining `status` as display status (forces a lock-step FE/BE deploy); returning raw storage keys to the FE.
+
+Before merge: `EXPLAIN ANALYZE` (read-only) on the largest prod tenant. Largest tenant: 34 Publications on prod, 124 on develop.
+
+Known, not fixed here: the existing schedule `LATERAL` picks `ORDER BY s.created_at DESC LIMIT 1` with no tie-breaker.
+
 ## 2. Per-screen decisions
 
 ### Programs list (FE-A)
