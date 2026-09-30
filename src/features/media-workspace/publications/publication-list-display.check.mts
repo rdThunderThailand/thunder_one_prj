@@ -10,7 +10,7 @@ import type { PublicationListItem } from "./types";
 
 const base = { id: "p", name: "n", status: "active", publication_type: "playlist", priority: "normal", item_count: 1, tags: [] } as PublicationListItem;
 
-assert.deepEqual(rowActionsFor("draft"), ["edit", "publish", "duplicate", "delete"]);
+assert.deepEqual(rowActionsFor("draft"), ["edit", "publish", "delete"]);
 assert.deepEqual(rowActionsFor("live"), ["open", "duplicate", "end"]);
 assert.deepEqual(rowActionsFor("ended"), ["view", "duplicate"]);
 assert.ok(!rowActionsFor(undefined).includes("delete"));

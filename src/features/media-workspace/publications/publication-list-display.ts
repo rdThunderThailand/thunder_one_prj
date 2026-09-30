@@ -12,11 +12,13 @@ export const DISPLAY_STATUS_LABELS: Record<PublicationDisplayStatus, string> = {
 export type RowAction = "edit" | "open" | "view" | "publish" | "duplicate" | "delete" | "end";
 
 /** Plan §2 "Programs list": actions by badge. Delete only exists for a Draft; a running Program is
- *  ended (cancel), never deleted. The first entry is the row's primary button. */
+ *  ended (cancel), never deleted. The first entry is the row's primary button.
+ *  Draft has no Duplicate although plan §2 lists one: `media_publication_duplicate` refuses a draft
+ *  (400, checked 2026-09-30) and a Draft is edited in place anyway. */
 export function rowActionsFor(status: PublicationDisplayStatus | undefined): RowAction[] {
   switch (status) {
     case "draft":
-      return ["edit", "publish", "duplicate", "delete"];
+      return ["edit", "publish", "delete"];
     case "publishing":
     case "scheduled":
     case "live":
