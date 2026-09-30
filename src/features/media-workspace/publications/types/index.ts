@@ -192,6 +192,8 @@ export type PublicationDetail = {
   drift_check?: PublicationDriftCheck | null;
   tags: string[];
   created_at?: string;
+  /** Absent on a backend that does not return it; the Edit page then shows a dash. */
+  updated_at?: string;
   activated_at?: string;
   /** Set only when status is cancelled (migration 067) — the delivery-progress "completed at"
    * for a Cancelled result reads this since no target activity marks a cancellation. */
