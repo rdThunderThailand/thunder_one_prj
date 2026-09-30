@@ -27,6 +27,8 @@ The Program redesign adds an Edit page for any Program, including a Live one (mo
 
 Fix: the poll selects the newest Job per Publication first, then requires this device to be among that Job's targets — the definition `media_core.media_asset_on_air` already uses. No new state, no backfill. Ships before `update_published` (plan BE-0).
 
+Companion guard (added 2026-09-30, Thunder_Core #134): `media_publication_activate` refuses when the Targets resolve to no device. Its only check was "at least one `publication_targets` row", so a Channel or Group with no screen produced a Job with no targets; once the poll reads the newest Job only, that empty Job would silently take the Program off every screen. Refusing keeps the previous Job on air, since republish and Publish Changes run activate inside their own transaction. Rejected: accept with a warning the UI must confirm (extra FE flow for a Program that reaches no screen), or leave it (screens go dark without notice). The guard ships with or before the poll fix on prod.
+
 ### Display status (UI only)
 
 The list and Edit page show five badges. None of them is stored or used in a guard; stored and derived lifecycle status (ADR 0004) is unchanged.

@@ -39,7 +39,9 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] **STOP — approval**: devices whose only matching Job is not the newest — develop 0 rows, prod 0 rows (2026-09-30)
 - [x] Applied to develop 2026-09-30 · `prosrc` md5 matches the file, single function, ACL unchanged
 - [x] Verified via HTTP `POST /media/player/jobs` on local Core :3001 (develop DB), test device on `zz-ux-66-guard-test`: baseline 1 slot → newest Job without the device → 0 slots → test Job deleted → 1 slot. Not tested: deployed develop backend
-- [ ] Draft PR → `develop`
+- [x] Draft PR → `develop` — Thunder_Core#133 (+ rollback file `supabase/rollback/`)
+- [~] Companion guard, Thunder_Core#134: `activate` refuses Targets that resolve to 0 devices (ADR 0080). Branch `fix/activate-zero-devices`, migration `20260930110000` written from live def (md5 `bb0ffb1c…` develop = prod), 0 Programs affected on either. Not applied yet
+- [ ] Apply both to prod (approval) — guard first or together
 
 ## BE-1 — List read (Thunder_Core)
 
