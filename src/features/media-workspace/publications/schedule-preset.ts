@@ -1,4 +1,4 @@
-import { shiftYmd, utcToZonedParts, ymdDow, zonedToUtcIso } from "./schedule.ts";
+import { DEFAULT_TIMEZONE, shiftYmd, utcToZonedParts, ymdDow, zonedToUtcIso } from "./schedule.ts";
 import type { PublicationSchedule } from "./types/index.ts";
 
 /**
@@ -48,6 +48,14 @@ export const MAX_DATES = 366;
 
 const sameSet = (a: readonly number[], b: readonly number[]) =>
   a.length === b.length && b.every((v) => a.includes(v));
+
+/** "YYYY-MM-DD" of right now in `timezone`. */
+export const todayIn = (timezone: string) => utcToZonedParts(new Date().toISOString(), timezone).date;
+
+/** A new Program: Every day, from today, all day, no end (ADR 0082 §5). Airs from activation. */
+export function defaultScheduleDraft(today: string = todayIn(DEFAULT_TIMEZONE), timezone: string = DEFAULT_TIMEZONE): ScheduleDraft {
+  return { ...applyPreset(scheduleToDraft(null, today, timezone), "everyday", today), allDay: true };
+}
 
 export function presetOf(draft: ScheduleDraft): SchedulePreset | null {
   if (draft.mode === "dates") return "custom-days";
@@ -172,6 +180,8 @@ export function validateDraft(draft: ScheduleDraft, today: string): DraftErrors 
   else if (draft.mode === "one-time" && draft.startDate < today) errors.startDate = "Pick today or a later date.";
   return errors;
 }
+
+export const isDraftValid = (draft: ScheduleDraft) => Object.keys(validateDraft(draft, todayIn(draft.timezone))).length === 0;
 
 function dailyWindow(draft: ScheduleDraft): { start: string; end: string } {
   return draft.allDay ? { start: "00:00", end: "23:59" } : { start: draft.dailyStart, end: draft.dailyEnd };

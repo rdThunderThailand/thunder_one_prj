@@ -4,7 +4,9 @@
  *     node src/features/media-workspace/publications/schedule-preset.check.mts
  */
 import assert from "node:assert/strict";
+import { shiftYmd } from "./schedule.ts";
 import {
+  airsOn,
   applyPreset,
   draftToSchedule,
   presetOf,
@@ -66,6 +68,18 @@ assert.deepEqual(applyPreset(weeklyDraft, "monthly", "2026-10-07").monthDays, [1
 assert.deepEqual(applyPreset({ ...weeklyDraft, startDate: "" }, "monthly", "2026-10-07").monthDays, [7]);
 assert.ok(validateDraft({ ...monthlyDraft, monthDays: [] }, TODAY).monthDays);
 assert.deepEqual(validateDraft(monthlyDraft, TODAY), {});
+
+// Monthly skips a day a month does not have (no roll-over): [19, 31] in a 30-day month airs on the 19th only.
+const m1931 = { ...monthlyDraft, monthDays: [19, 31], endDate: "" };
+const airingIn = (d: typeof m1931, from: string, to: string) => {
+  const days: string[] = [];
+  for (let ymd = from; ymd <= to; ymd = shiftYmd(ymd, 1)) if (airsOn(d, ymd)) days.push(ymd.slice(8));
+  return days;
+};
+assert.deepEqual(airingIn(m1931, "2026-11-01", "2026-11-30"), ["19"]);
+assert.deepEqual(airingIn(m1931, "2026-12-01", "2026-12-31"), ["19", "31"]);
+assert.deepEqual(airingIn({ ...m1931, monthDays: [29] }, "2027-02-01", "2027-02-28"), []);
+assert.deepEqual(airingIn({ ...m1931, monthDays: [29] }, "2028-02-01", "2028-02-29"), ["29"]);
 
 // Continuous: a multi-day one-off with times, no daily window; round-trips.
 const continuous: PublicationSchedule = {

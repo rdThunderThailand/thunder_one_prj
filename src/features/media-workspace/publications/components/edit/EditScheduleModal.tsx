@@ -12,44 +12,12 @@ import {
   scheduleToDraft,
   validateDraft,
   type ScheduleDraft,
-  type SchedulePreset,
 } from "../../schedule-preset";
 import type { PublicationSchedule } from "../../types";
 import { PlaybackPatternField, type PatternChoice } from "./schedule/PlaybackPatternField";
+import { SchedulePresetList } from "./schedule/SchedulePresetList";
 import { ScheduleConfigFields } from "./schedule/ScheduleConfigFields";
 import { SchedulePreviewPane } from "./schedule/SchedulePreviewPane";
-
-// ADR 0082 §2: the same eight presets in the wizard and here; every stored shape maps onto one.
-const PRESETS: { id: SchedulePreset; label: string; hint: string }[] = [
-  { id: "everyday", label: "Every day", hint: "ออกอากาศทุกวัน" },
-  { id: "weekdays", label: "Weekdays", hint: "จันทร์ - ศุกร์" },
-  { id: "weekends", label: "Weekends", hint: "เสาร์ - อาทิตย์" },
-  { id: "date-range", label: "Date range", hint: "กำหนดช่วงวันที่" },
-  { id: "custom-days", label: "Custom days", hint: "เลือกวันเอง" },
-  { id: "monthly", label: "Monthly", hint: "วันเดิมทุกเดือน" },
-  { id: "one-time", label: "One-time only", hint: "ออกอากาศครั้งเดียว" },
-  { id: "continuous", label: "Continuous", hint: "ออกอากาศต่อเนื่องไม่หยุด" },
-];
-
-function PresetRow({ label, hint, isOn, onClick }: { label: string; hint: string; isOn: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={isOn}
-      onClick={onClick}
-      className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left ${
-        isOn ? "border-primary bg-primary/5" : "border-border hover:bg-muted"
-      }`}
-    >
-      <span className={`h-4 w-4 shrink-0 rounded-full border-2 ${isOn ? "border-[5px] border-primary" : "border-border"}`} />
-      <span>
-        <span className="block text-sm font-medium text-foreground">{label}</span>
-        <span className="block text-xs text-muted-foreground">{hint}</span>
-      </span>
-    </button>
-  );
-}
 
 export function EditScheduleModal({
   schedule,
@@ -103,22 +71,11 @@ export function EditScheduleModal({
           <DialogDescription>กำหนดช่วงเวลาออกอากาศของ Program นี้</DialogDescription>
         </DialogHeader>
         <div className="grid lg:grid-cols-[14rem_minmax(0,1fr)_22rem]">
-          <div
-            role="radiogroup"
-            aria-label="Schedule Preset"
-            className="flex flex-col gap-2 border-b border-border p-4 lg:border-b-0 lg:border-r"
-          >
-            <p className="text-sm font-semibold text-foreground">Schedule Preset</p>
-            {PRESETS.map((p) => (
-              <PresetRow
-                key={p.id}
-                label={p.label}
-                hint={p.hint}
-                isOn={preset === p.id}
-                onClick={() => setDraft(applyPreset(draft, p.id, today))}
-              />
-            ))}
-          </div>
+          <SchedulePresetList
+            value={preset}
+            className="border-b border-border p-4 lg:border-b-0 lg:border-r"
+            onSelect={(next) => setDraft(applyPreset(draft, next, today))}
+          />
           <div className="flex flex-col gap-6 border-b border-border p-5 lg:border-b-0 lg:border-r">
             <p className="text-sm font-semibold text-foreground">Schedule Configuration</p>
             <ScheduleConfigFields

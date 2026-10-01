@@ -66,4 +66,18 @@ assert.deepEqual(targetsFromSelection(resumed.channelIds, resumed.groupIds, resu
   { target_type: "group", group_id: "group-1", name: "All Restaurant Screens" },
 ]);
 
+// A resumed draft keeps a custom-dates schedule (it used to come back as `recurring` with no days).
+const datesPublication = {
+  ...compositionPublication,
+  schedule: {
+    starts_at: "2026-11-02T17:00:00.000Z",
+    ends_at: "2026-11-10T17:00:00.000Z",
+    timezone: "Asia/Bangkok",
+    recurrence: { freq: "dates", dates: ["2026-11-03", "2026-11-10"], daily_start: "00:00", daily_end: "23:59" },
+  },
+} satisfies PublicationDetail;
+const resumedDates = detailToDraft(datesPublication, null, "2026-10-01").schedule;
+assert.equal(resumedDates.mode, "dates");
+assert.deepEqual(resumedDates.dates, ["2026-11-03", "2026-11-10"]);
+
 console.log("detail-mapping.check.mts — all assertions passed");

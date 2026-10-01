@@ -106,7 +106,8 @@ export function ScheduleConfigFields({
   onChange: (change: Partial<ScheduleDraft>) => void;
 }) {
   return (
-    <div className="flex flex-col gap-6">
+    // @container: the wizard shows these fields in a narrow column, so they stack by their own width, not the viewport.
+    <div className="@container flex flex-col gap-6">
       {(draft.mode === "weekly" || draft.mode === "monthly") && (
         <Step
           n={1}
@@ -144,7 +145,7 @@ export function ScheduleConfigFields({
             </div>
           )}
           <FieldError message={errors.days ?? errors.monthDays} />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 @sm:grid-cols-2">
             <DateField
               id="schedule-start-date"
               label="Start date"
@@ -198,7 +199,7 @@ export function ScheduleConfigFields({
           title="Start and End"
           hint="ออกอากาศต่อเนื่องตั้งแต่เวลาเริ่ม ไม่มีช่วงเวลาประจำวัน — เล่นข้ามคืน"
         >
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 @sm:grid-cols-2">
             <DateField
               id="schedule-start-date"
               label="Start date"
@@ -242,7 +243,7 @@ export function ScheduleConfigFields({
           title={draft.mode === "one-time" ? "Time Range" : "Daily Time Range"}
           hint={draft.mode === "one-time" ? "กำหนดช่วงเวลา (ออกอากาศครั้งเดียว)" : "กำหนดช่วงเวลา (ใช้เหมือนกันทุกวันที่เลือก)"}
         >
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]">
+          <div className="grid gap-3 @sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="schedule-start-time">Start time</Label>
               <Input

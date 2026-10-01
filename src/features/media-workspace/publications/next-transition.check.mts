@@ -10,7 +10,7 @@
  */
 import assert from "node:assert/strict";
 import { attemptNext, isResumePending } from "./next-transition.ts";
-import { makeDefaultScheduleForm } from "./schedule.ts";
+import { defaultScheduleDraft } from "./schedule-preset.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 
 // Step map (ADR 0072 §2): 1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish.
@@ -32,7 +32,7 @@ const validDraft: DraftFields = {
   channelIds: ["ch-1"],
   groupIds: [],
   groupNamesById: {},
-  scheduleForm: makeDefaultScheduleForm(),
+  schedule: defaultScheduleDraft(),
 };
 
 // Step 1 (Choose Content) is invalid with nothing selected.
