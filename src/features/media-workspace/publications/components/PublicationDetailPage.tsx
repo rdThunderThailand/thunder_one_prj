@@ -21,6 +21,7 @@ import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { DeliveryProgress } from "./DeliveryProgress";
 import { formatMonthDays } from "../schedule";
+import { lastAiringDay } from "../schedule-describe";
 import { publicationPreviewTarget } from "@/features/media-workspace/preview/publication-preview-target";
 
 /** Names what changed, so re-publishing is a decision rather than a guess (ADR 0049 §11). */
@@ -503,7 +504,9 @@ export function PublicationDetailPage({ id }: { id: string }) {
             <div>
               <dt className="text-xs font-medium text-muted-foreground">Ends At</dt>
               <dd className="mt-1 text-sm text-foreground">
-                {formatDate(detail.schedule.ends_at)}
+                {"freq" in detail.schedule.recurrence
+                  ? (lastAiringDay(detail.schedule) ?? "—")
+                  : formatDate(detail.schedule.ends_at)}
               </dd>
             </div>
             <div>

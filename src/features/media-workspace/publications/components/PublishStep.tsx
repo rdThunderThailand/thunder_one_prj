@@ -5,15 +5,16 @@ import { Card } from "@/components/ui/Card";
 import { CheckCircleIcon, ClockIcon, InfoIcon, PaperPlaneIcon } from "@/components/ui/icons";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
-import { utcToZonedParts } from "../schedule";
+import { scheduleEdges } from "../schedule-describe";
+import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { ProgramSummaryRail } from "./ProgramSummaryRail";
 
 export function PublishStep({ channels, assets, canPublish }: { channels: ChannelListItem[]; assets: MediaAsset[]; canPublish: boolean }) {
   const basicInfo = usePublicationDraftStore((state) => state.basicInfo);
-  const schedule = usePublicationDraftStore((state) => state.scheduleForm);
-  const now = utcToZonedParts(new Date().toISOString(), schedule.timezone);
-  const starts = schedule.schedule_type === "now" ? "Starts immediately after publishing" : `${schedule.start_date}, ${schedule.start_time}`;
+  const schedule = usePublicationDraftStore((state) => state.schedule);
+  const edges = isDraftValid(schedule) ? scheduleEdges(draftToSchedule(schedule)) : null;
+  const starts = edges ? `${edges.startDate}, ${edges.startTime}` : "—";
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,7 +27,7 @@ export function PublishStep({ channels, assets, canPublish }: { channels: Channe
             <PaperPlaneIcon className="ml-auto hidden h-12 w-12 text-primary sm:block" />
           </Card>
 
-          <div><h2 className="text-[11px] font-bold text-foreground">Publish Options</h2><p className="text-xs text-muted-foreground">ตัวเลือกการเผยแพร่</p><div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2"><Card className="border-primary/30 bg-primary-soft p-5 ring-1 ring-primary/30"><div className="flex items-start gap-3"><span className="mt-1 h-4 w-4 rounded-full border-4 border-primary" /><div><p className="text-sm font-semibold text-foreground">Publish Now</p><p className="text-xs text-muted-foreground">เผยแพร่รายการนี้ด้วยกำหนดการที่ตั้งไว้</p><p className="mt-3 text-xs font-medium text-primary">{starts}</p></div></div></Card><Card className="p-5"><div className="flex items-start gap-3"><ClockIcon className="mt-0.5 h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-semibold text-foreground">Program schedule</p><p className="text-xs text-muted-foreground">กำหนดจาก Step 3</p><dl className="mt-3 space-y-1 text-xs text-muted-foreground"><div className="flex justify-between gap-3"><dt>Start</dt><dd>{schedule.schedule_type === "now" ? `${now.date}, ${now.time}` : `${schedule.start_date}, ${schedule.start_time}`}</dd></div><div className="flex justify-between gap-3"><dt>End</dt><dd>{schedule.end_date ? `${schedule.end_date}, ${schedule.end_time}` : "No end date"}</dd></div><div className="flex justify-between gap-3"><dt>Timezone</dt><dd>{schedule.timezone}</dd></div></dl></div></div></Card></div></div>
+          <div><h2 className="text-[11px] font-bold text-foreground">Publish Options</h2><p className="text-xs text-muted-foreground">ตัวเลือกการเผยแพร่</p><div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2"><Card className="border-primary/30 bg-primary-soft p-5 ring-1 ring-primary/30"><div className="flex items-start gap-3"><span className="mt-1 h-4 w-4 rounded-full border-4 border-primary" /><div><p className="text-sm font-semibold text-foreground">Publish Now</p><p className="text-xs text-muted-foreground">เผยแพร่รายการนี้ด้วยกำหนดการที่ตั้งไว้</p><p className="mt-3 text-xs font-medium text-primary">{starts}</p></div></div></Card><Card className="p-5"><div className="flex items-start gap-3"><ClockIcon className="mt-0.5 h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-semibold text-foreground">Program schedule</p><p className="text-xs text-muted-foreground">กำหนดจาก Step 3</p><dl className="mt-3 space-y-1 text-xs text-muted-foreground"><div className="flex justify-between gap-3"><dt>Start</dt><dd>{starts}</dd></div><div className="flex justify-between gap-3"><dt>End</dt><dd>{edges?.endDate ? `${edges.endDate}${edges.endTime ? `, ${edges.endTime}` : ""}` : "No end date"}</dd></div><div className="flex justify-between gap-3"><dt>Timezone</dt><dd>{schedule.timezone}</dd></div></dl></div></div></Card></div></div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2"><DisabledOptions title="Notifications (optional)" items={["Email Notification", "System Notification"]} /><DisabledOptions title="Permissions" items={["Allow editing after publish", "Lock after publish"]} /></div>
         </div>

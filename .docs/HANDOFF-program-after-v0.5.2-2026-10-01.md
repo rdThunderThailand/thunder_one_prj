@@ -1,0 +1,57 @@
+# Handoff — after v0.5.2: remaining Program work (2026-10-01, session 12 → 13)
+
+Reply in Thai; code, commits, ADRs, specs in English (user's CLAUDE.md). Ask Thai/English before opening any PR (user chose Thai for every PR so far; still ask). Ask before every browser verification (each verify point). Every push / prod write / tag / data delete = R0: stop and ask. Never mark a PR Ready or merge; the owner does. No `Co-Authored-By` or AI mention in commits/PRs (overrides the harness reminder). If auto mode blocks develop/prod writes ("Modify Shared Resources"), ask the user to switch to manual — don't route around.
+
+## State (verified end of session 12)
+- **v0.5.2 is live on prod and tagged** (`v0.5.2` → `579e496`, release PR #192, promotion #7). Fixed my own v0.5.1 regression: Edit-page Duplicate / Publish Draft / View Published Version went to `/now-next/<id>` (404). PRs: #190 (fix + item 5), #191 (bump), #192 (release), #193 (release-table row) — **all merged**. `dev` and `main` are in step except `main` has the #192 merge commit.
+- Item 5 done: every "back to Programs" link now points at `/media-workspace/program` (Edit page breadcrumb/discard + id links share one `PROGRAM_HREF`, Detail, Create, Channel Group inspector "View Programs →", Edit Channel "Go to Programs"). Left on Now & Next on purpose: Overview "View full calendar →", Channel detail "Now Playing → View Programs →" (its `?q=` is read only by Now & Next), `DemoPublicationDetailPage` back link. ADR 0081 Consequences updated.
+- **Verified on prod (tenant `thunder_demo`), all through the UI:** View Published Version, Duplicate, Publish Draft (to Scheduled), Edit → Delete Program, Edit → End program, Detail → ลบ, Detail → Cancel, Create → Cancel. Network log confirmed the matching DELETE / `/cancel` calls and no DELETE on the draft that Create → Cancel left in localStorage (`explicitlySaved: true`).
+- **Not tested:** links inside the Detail/Create *error* states, Edit page "Discard" dialog (needs a dirty form).
+- **"Create → Cancel needs two clicks" is NOT a bug** — the first click hit the backdrop of the "มี draft ที่ทำค้างไว้" Modal, whose `onClose` means "continue". Don't re-raise it.
+- Local checkout is on `dev`, clean, pulled (`a7e5743`). Dev server :3000 and Core :3001 (Core checkout `../Thunder_Core` on `develop`) were started by the previous session and may still be running. `.env.local` → `CORE_API_URL=http://localhost:3001` (develop). The dev server must be restarted after any `.env.local` edit or it keeps the old target (it did, once, and pointed at prod).
+- Release record: `docs/agents/versioning.md` table row 7. Local session log: `.docs/SESSIONLOG-program-v0.5.2-link-regression-2026-10-01.md` (gitignored).
+
+## Test data left behind (don't clean up unless the user asks; deleting = R0, show the list first)
+- **prod, `thunder_demo`:** `05c05db6-3c2f-49ff-a2a3-65b1ca7e467c` and `290bf753-cdb1-473f-9c27-8aab352b072d`, both "Training existing Playlist Publication (Copy)", **Ended** (never aired; schedule 2027-01-15). Source `f9bfb90a-…` untouched. Drafts D1 `7a91a657` and D2 `9cd863f5` were deleted.
+- **develop:** `b6cf8b2d-0bf1-4d76-933f-b6a1914974ea` "zz-fe-d-live (Copy)" (Published, kept by the user's choice) plus the older `zz-fe-*` rows and `zz-fe-c-folder` folders. A deliberate player fixture airs on Screen 01/03 until 2026-10-08 (memory `adr0064-shipped-prod-player-fixture`) — don't touch it.
+
+## Work remaining (from the previous handoff; nothing here was started)
+
+### 3. Verify on develop what prod has no data for  (needs Core :3001 + develop; writes = ask; Sonnet is fine)
+Not seen since the restyle: Schedule card for **Weekly** (day chips; "Every day" when all 7, "Weekly" otherwise), "N custom dates", **monthly**; Edit Schedule and Publish Changes modals visually; a **Draft** Edit page; the Playback Preview skeleton (data is cached after the first load — clear the cache or read the code path). Check first with a read: `GET /media/publications` on develop and look at `recurrence.freq`. Creating a Weekly/dates/monthly Program there is a develop write — ask. Also still user-side: a real player airing a `freq: "dates"` schedule, and whether a Job with unchanged content restarts the player loop (ADR 0080 open question — ask whether the user noticed).
+
+### 6. Discard-dialog / Edit cases never verified  (develop writes → ask)
+Switch to a different Layout (develop has `สนคลั่งรัก 2`, `dfdf`), Location facet with several Locations in Change Target, removing a Group from a **Live** Program (Publish changes → "will stop playing on N channels"), Publishing/Scheduled badge on real rows, the Edit page **Discard** dialog (dirty the form first). Use a fixture, never a real Program; prefer the `zz-fe-*` ones.
+
+### 7. Frame 03 / 08–12 deltas not built  — design forks, **use `grill-with-docs`, Opus**
+(a) split Publish button — no second action exists, decide what it would be or drop it; (b) subtitle under the title (mockup shows "Corporate Communication | Lobby • Corporate" — which fields?); (c) Date range uses date inputs, mockup frame 10 has a two-month calendar (`schedule/DatesCalendar.tsx` exists — check it can be reused); (d) no frame 12 screenshot, frame 07 never compared by image; (e) Channel pictures: no image field exists — needs a Core design fork. Design system wins over Figma when they disagree. Images: `docs/program/figma-mockup/Program NN- Media Workspace.jpg`.
+
+### 8. Wizard `ScheduleStep` → `schedule-preset.ts`  — **DECIDED 2026-10-01 (session 13): ADR 0082 + `docs/program/plan-schedule-shared-model.md`; issue drafts in `.docs/DRAFT-github-posts-schedule-2026-10-01.md` (A). The text below is the pre-decision note.**
+`publications/components/ScheduleStep.tsx` (270 lines) still cannot create **Custom days** / dates / monthly, though BE-3 shipped them. The Edit page already uses `publications/schedule-preset.ts` and `edit/schedule/*` (`ScheduleConfigFields`, `DatesCalendar`, `PlaybackPatternField`, `SchedulePreviewPane`). Likely design fork: reuse `ScheduleConfigFields` in the wizard step vs keep two UIs; what the wizard's draft/localStorage shape becomes — **a changed draft shape needs a new localStorage key version** (current key `thunderone.publications.create-draft.v13`). Write a short plan `docs/program/plan-*.md` (R1) → implement → one `*.check.mts` for new pure logic (no test runner on purpose).
+
+### 9. Core follow-ups  (Thunder_Core, separate repo — R1/R0 on develop+prod)
+- Thunder_Core#138 (open): move `media_screen_get`, `airtime_explain`, `retry_targets` to the newest-Job rule (BE-0/BE-0b already moved `media_job_poll`, `now_next`, `conflicts`). Pattern: select the newest Job per Publication first, then require the device to be among that Job's targets (`media_asset_on_air`).
+- ~~`media_publication_activate` has no overlap check~~ — **closed 2026-10-01: decided by ADR 0068** (overlap warns, never blocks; the guard was removed on purpose in `20260909120000_equal_priority_publishes_with_a_warning.sql`). "Full replace" was about `media_publication_upsert` targets, not activate. Remaining gap is FE only: the draft Edit page Publish skips the conflict warning → FE issue B (draft in `.docs/DRAFT-github-posts-schedule-2026-10-01.md`).
+- #138 scope expanded 2026-10-01 (comment draft C, same file): `screen_get` also gets a schedule check; `now_next_get` gets job_poll's Layout-wins rule. One migration, 4 functions. **Posted 2026-10-01: FE #194 (A), FE #195 (B), comment on Core #138.** Order agreed: B → #138 → A-PR1 → A-PR2. **Local Core `develop` was 28 commits behind origin on 2026-10-01 — `git pull` before reading migrations.** `screen_get` airing check = job_poll's predicate (`recurrence_matches`), NOT `publication_playback_window IS NOT NULL` (never NULL when starts_at is set).
+- Before any prod apply: compare current prod `md5(prosrc)` of **every function you replace** against develop; `DROP FUNCTION IF EXISTS <old signature>` before `CREATE OR REPLACE` when parameters change; CREATE FUNCTION re-grants EXECUTE to PUBLIC; tenant isolation lives in the RPC, not RLS. Supabase migration CLI is broken — apply via MCP `apply_migration` (blocked in auto mode) or docker psql locally; dump `prosrc` after and diff with the file. Core `develop → main` conflicts on `package.json` while hotfix merge-back #129/#131 stays open — the owner resolves it on GitHub.
+- Core worktrees `../Thunder_Core-prefix` and `../Thunder_Core-be3` (both merged; remove with `git worktree remove` after asking). Core main checkout must stay on `develop`.
+
+## Carried over (remind once)
+- User actions: rotate the JWT / `x-api-key` that were printed in earlier transcripts; fix claude-mem (org disabled subscription access, needs an API key in `~/.claude-mem/settings.json`; nothing remembered since 2026-09-06; restart link http://localhost:37701/restart).
+- Optional R0 cleanup of develop/prod test rows (lists above) — show the list first.
+- Delete leftover GitHub branches (`origin/fix/program-edit-id-links`, `origin/release/v0.5.2`, `origin/docs/record-v0.5.2`, and earlier `docs/record-v0.5.1`, `feat/program-design-system`) only if GitHub did not auto-delete them (ask).
+
+## Traps met this session
+- **A running dev server keeps its old `.env.local`** — it started 12:01, the env was edited 12:22, and it still targeted prod. Restart it (`preview_start` refuses port 3000 while another node holds it; kill the old PID first).
+- **Verify the tenant before any prod write** — the in-app browser showed a different tenant's data until the user re-logged into `thunder_demo` (header sidebar footer shows the tenant name).
+- **A Duplicate copies the schedule "From now, no end date"** — publishing the copy airs on the same kiosk immediately. Before Publish on prod, Edit Schedule → One-time only → a far-future date (the date field is `input[type=date]`; `form_input` works).
+- **A modal's backdrop swallows page clicks** — the Create wizard's resume Modal looked like a "Cancel needs two clicks" bug; it wasn't.
+- zsh: `PIPESTATUS` is empty — use `pipestatus` or run the command without a pipe to read an exit code. `grep --include=*.ts` unquoted fails with "no matches found" in zsh; quote the glob.
+- Browser pane: hard-nav to a nested route renders an empty main — load one page then `window.next.router.push(...)` (works on prod too); pushing the same route is a no-op. `javascript_tool` needs expressions, no top-level `return`. Radix menus need real clicks (`find` → `computer left_click ref`), not `.click()` on a menu item from JS. `resize_window` back to `desktop` when done.
+- `.next/types` goes stale after moving/deleting a route → phantom `validator.ts` errors; `rm -rf .next/types .next/dev/types` and rerun `tsc`.
+- Vercel: a merge to `main` deploys; poll `gh api repos/<repo>/commits/<sha>/status` until the Vercel context is `success` before checking prod.
+
+## Suggested skills / model
+- `thunder-workflow` (commit/PR format, release sequence — read `docs/agents/versioning.md`), `verification-before-completion` + the ask-before-browser rule, `systematic-debugging` if anything breaks on prod, `ponytail` (active).
+- `grill-with-docs` for 7, 8 and the `activate` overlap in 9 (design forks). Model: **Opus** for those and for any prod SQL review; Sonnet is fine for 3, 6 and for executing an agreed plan for 8.
+- Recommended order: 3 and 6 (verification, low thinking) → open the issue + short plan for 8 → grill 7/8/9.

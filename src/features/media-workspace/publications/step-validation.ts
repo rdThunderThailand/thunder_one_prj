@@ -1,7 +1,7 @@
 import type { DraftFields } from "./store/usePublicationDraftStore";
 // Explicit .ts extension so next-transition.check.mts can load this module
 // under Node's ESM resolver, which does no extension guessing.
-import { validateScheduleForm } from "./schedule.ts";
+import { todayIn, validateDraft } from "./schedule-preset.ts";
 import { PUBLICATION_LIMITS } from "../../../config/limits.ts";
 import { publicationTypes } from "./mock-data.ts";
 
@@ -67,7 +67,7 @@ export function validateStep(step: WizardStepId, state: DraftFields): StepValida
     if (state.channelIds.length === 0 && state.groupIds.length === 0) {
       errors.push("กรุณาเลือกช่องทางอย่างน้อย 1 ช่องทาง");
     }
-    errors.push(...Object.values(validateScheduleForm(state.scheduleForm)));
+    errors.push(...Object.values(validateDraft(state.schedule, todayIn(state.schedule.timezone))));
   }
   // steps 4 and 5: no gate.
 

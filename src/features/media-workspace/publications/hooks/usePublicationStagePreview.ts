@@ -22,7 +22,7 @@ const LOOSE_MEDIA_ASPECT = "16:9";
  * Shared by the Prepare Content frame (inline stage + Content Info rail) and the
  * "Preview playback" button so the record is fetched once.
  */
-export function usePublicationStagePreview(assets: MediaAsset[], enabled = true) {
+export function usePublicationStagePreview(assets: MediaAsset[], enabled = true, refreshKey = 0) {
   const publicationType = usePublicationDraftStore((s) => s.basicInfo.publicationType);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
@@ -85,7 +85,7 @@ export function usePublicationStagePreview(assets: MediaAsset[], enabled = true)
     return () => {
       alive = false;
     };
-  }, [enabled, branch, key]);
+  }, [enabled, branch, key, refreshKey]);
 
   const current = state?.key === key ? state : null;
   const preview = branch === "media" ? localPreview : current && "preview" in current ? current.preview : null;

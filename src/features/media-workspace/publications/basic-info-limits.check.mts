@@ -7,7 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { PUBLICATION_LIMITS } from "../../../config/limits.ts";
-import { makeDefaultScheduleForm } from "./schedule.ts";
+import { defaultScheduleDraft } from "./schedule-preset.ts";
 import { stripHtmlTags } from "./sanitize.ts";
 import { validateStep, validateBasicInfo } from "./step-validation.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
@@ -37,7 +37,7 @@ const baseDraft: DraftFields = {
   channelIds: [],
   groupIds: [],
   groupNamesById: {},
-  scheduleForm: makeDefaultScheduleForm(),
+  schedule: defaultScheduleDraft(),
 };
 
 // --- Step 1: Choose Content ---

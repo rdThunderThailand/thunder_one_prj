@@ -13,15 +13,11 @@ import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset, ScheduleConflict } from "../types";
 import type { EligibilityCheck, EligibilityStatus } from "../publish-eligibility";
 import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
+import { compositionZoneDurations } from "../content-info";
 import { priorities, publicationTypes } from "../mock-data";
-import {
-  formatMonthDays,
-  formatReviewTimeRange,
-  getDayTimelinePlacement,
-  isRepeating,
-  utcToZonedParts,
-  WEEKDAYS,
-} from "../schedule";
+import { getDayTimelinePlacement, WEEKDAYS } from "../schedule";
+import { describeSchedule, scheduleEdges } from "../schedule-describe";
+import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
@@ -49,7 +45,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
   const channelIds = usePublicationDraftStore((state) => state.channelIds);
   const groupIds = usePublicationDraftStore((state) => state.groupIds);
   const groupNamesById = usePublicationDraftStore((state) => state.groupNamesById);
-  const schedule = usePublicationDraftStore((state) => state.scheduleForm);
+  const schedule = usePublicationDraftStore((state) => state.schedule);
   const { preview, loading: previewLoading, branch } = usePublicationStagePreview(assets);
   const isPlaylist = basicInfo.publicationType === "playlist";
   const { playlist, coverAssetId, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
@@ -57,11 +53,14 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
   const geometry = useMemo(() => summarizeGeometryFit(channels, channelIds, aspectRatio), [channels, channelIds, aspectRatio]);
   const geometryStatus: EligibilityStatus =
     fitCheckFailed || !aspectRatio || !channelIds.length || geometry.unprofiled.length ? "unknown" : geometry.unfitting.length ? "fail" : "pass";
-  const now = utcToZonedParts(new Date().toISOString(), schedule.timezone);
-  const startDate = schedule.schedule_type === "now" ? now.date : schedule.start_date;
-  const startTime = schedule.schedule_type === "now" ? now.time : schedule.start_time;
+  const stored = isDraftValid(schedule) ? draftToSchedule(schedule) : null;
+  const summary = stored ? describeSchedule(stored) : null;
+  const edges = stored ? scheduleEdges(stored) : null;
+  const startDate = edges?.startDate ?? "";
+  const startTime = edges?.startTime ?? "";
   const selectedAsset = assets.find((asset) => asset.id === assetItems[0]?.media_asset_id);
-  const thumbnailAssetId = isPlaylist ? coverAssetId : selectedAsset?.id ?? preview?.zones[0]?.items[0]?.mediaAssetId;
+  const isComposition = basicInfo.publicationType === "composition";
+  const thumbnailAssetId = isPlaylist ? coverAssetId : selectedAsset?.id ?? preview?.zones.flatMap((zone) => zone.items)[0]?.mediaAssetId;
   const thumbnailIds = useMemo(() => (thumbnailAssetId ? [thumbnailAssetId] : []), [thumbnailAssetId]);
   const thumbnails = usePreviewUrls(thumbnailIds);
   const thumbnailAsset = assets.find((asset) => asset.id === thumbnailAssetId);
@@ -70,32 +69,18 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
     basicInfo.publicationType === "playlist"
       ? playlist?.name ?? (playlistId ? "Selected Playlist" : "—")
       : basicInfo.publicationType === "composition"
-        ? compositionId ? "Selected Layout" : "—"
+        ? preview?.contentName ?? (compositionId ? "Selected Layout" : "—")
         : selectedAsset?.file?.original_filename ?? selectedAsset?.title ?? "—";
+  // A Layout is described by its own geometry and zones, not by whichever asset gives the thumbnail (#199).
+  const layoutZones = isComposition && preview ? compositionZoneDurations(preview, Object.fromEntries(assets.map((asset) => [asset.id, asset]))) : null;
+  const longestZoneSeconds = Math.max(0, ...(layoutZones ?? []).map((zone) => zone.seconds));
   const type = publicationTypes.find((item) => item.id === basicInfo.publicationType)?.label ?? "—";
   const priority = priorities.find((item) => item.id === basicInfo.priorityId)?.label ?? "—";
-  const days =
-    schedule.schedule_type === "recurring"
-      ? WEEKDAYS.filter((day) => schedule.days.includes(day.value)).map((day) => day.label).join(", ")
-      : schedule.schedule_type === "monthly"
-        ? formatMonthDays(schedule.month_days)
-        : null;
-  const reviewTimeRange = formatReviewTimeRange(schedule, now.time);
-  const scheduleMode = {
-    now: "Publish now",
-    later: "Schedule later",
-    range: "Date range",
-    recurring: "Recurring",
-    monthly: "Monthly",
-  }[schedule.schedule_type];
-  const endTime = schedule.end_date ? schedule.end_time || "23:59" : "No end time";
-  const timelineStartTime = isRepeating(schedule) ? schedule.daily_start : startTime;
-  const timelineEndTime = isRepeating(schedule)
-    ? schedule.daily_end
-    : schedule.end_date === startDate
-      ? schedule.end_time || "23:59"
-      : "24:00";
-  const timelinePlacement = getDayTimelinePlacement(timelineStartTime, timelineEndTime);
+  const days = summary?.days.length ? WEEKDAYS.filter((day) => summary.days.includes(day.value)).map((day) => day.label).join(", ") : null;
+  const reviewTimeRange = summary ? summary.hours || summary.range : "—";
+  const scheduleMode = summary?.title ?? "—";
+  const endTime = edges?.endDate ? edges.endTime ?? "23:59" : "No end time";
+  const timelinePlacement = getDayTimelinePlacement(edges?.windowStart ?? "00:00", edges?.windowEnd ?? "24:00");
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
@@ -122,12 +107,21 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                 <p className="truncate text-xs font-semibold text-foreground" title={contentLabel}>{contentLabel}</p>
                 <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-medium text-success">{type}</span>
               </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-                <Row label="Resolution" value={thumbnailAsset ? formatResolution(thumbnailAsset) : preview?.referenceResolution ?? "—"} />
-                <Row label="Duration" value={durationLabel ?? (thumbnailAsset?.duration_seconds ? formatDuration(thumbnailAsset.duration_seconds) : "—")} />
-                <Row label={isPlaylist ? "Items" : "Size"} value={isPlaylist ? String(playlist?.items.length ?? "—") : formatBytes(thumbnailAsset?.file?.file_size_bytes)} />
-                <Row label="Uploaded by" value={thumbnailAsset?.created_by?.display_name ?? "—"} />
-              </div>
+              {isComposition ? (
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+                  <Row label="Resolution" value={preview?.referenceResolution ?? "—"} />
+                  <Row label="Aspect ratio" value={preview?.aspectRatio ?? "—"} />
+                  <Row label="Zones" value={layoutZones ? String(layoutZones.length) : "—"} />
+                  <Row label="Longest zone" value={longestZoneSeconds > 0 ? formatDuration(longestZoneSeconds) : "—"} />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+                  <Row label="Resolution" value={thumbnailAsset ? formatResolution(thumbnailAsset) : preview?.referenceResolution ?? "—"} />
+                  <Row label="Duration" value={durationLabel ?? (thumbnailAsset?.duration_seconds ? formatDuration(thumbnailAsset.duration_seconds) : "—")} />
+                  <Row label={isPlaylist ? "Items" : "Size"} value={isPlaylist ? String(playlist?.items.length ?? "—") : formatBytes(thumbnailAsset?.file?.file_size_bytes)} />
+                  <Row label="Uploaded by" value={thumbnailAsset?.created_by?.display_name ?? "—"} />
+                </div>
+              )}
             </SummaryCard>
             <SummaryCard index={2} title="Where to Play" subtitle="ตำแหน่งที่แสดง" status={statusOf(eligibilityChecks, "targets")} bodyClassName="space-y-3">
               <ReviewTargets
@@ -152,7 +146,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                 </div>
                 <div className="p-3">
                   <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">End</p>
-                  <p className="mt-1 text-xs font-semibold text-foreground">{schedule.end_date || "No end date"}</p>
+                  <p className="mt-1 text-xs font-semibold text-foreground">{edges?.endDate ?? "No end date"}</p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">{endTime}</p>
                 </div>
               </div>

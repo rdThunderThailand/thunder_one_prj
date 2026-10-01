@@ -19,7 +19,7 @@ import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
-import { attemptNext, isResumePending } from "../next-transition";
+import { attemptNext, isResumePending, resumeStep } from "../next-transition";
 import { publicationSeedFromParams, resolveSeed, type SeedChoice } from "../seed-resolver";
 import { DEFAULT_IMAGE_DURATION_SECONDS } from "../draft-mapping";
 import { type WizardStepId } from "../step-validation";
@@ -29,6 +29,12 @@ import { ProgramStep } from "./ProgramStep";
 import { PublicationStepper } from "./PublicationStepper";
 import { PublishStep } from "./PublishStep";
 import { ReviewStep } from "./ReviewStep";
+
+// A re-opened draft lands where it left off (#199) and keeps every step before it reachable.
+function landOnResumeStep() {
+  const step = resumeStep(usePublicationDraftStore.getState());
+  usePublicationDraftStore.setState({ step, furthestStep: step });
+}
 
 // The five ver02 Create steps (ADR 0072 §2):
 //   1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish
@@ -62,7 +68,7 @@ export function CreatePublicationPage() {
   const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
   const setGroupIds = usePublicationDraftStore((s) => s.setGroupIds);
   const setGroupNamesById = usePublicationDraftStore((s) => s.setGroupNamesById);
-  const setScheduleForm = usePublicationDraftStore((s) => s.setScheduleForm);
+  const setSchedule = usePublicationDraftStore((s) => s.setSchedule);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
   const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
 
@@ -115,20 +121,22 @@ export function CreatePublicationPage() {
       setChannelIds(draft.channelIds);
       setGroupIds(draft.groupIds);
       setGroupNamesById(draft.groupNamesById);
-      setScheduleForm(draft.scheduleForm);
+      setSchedule(draft.schedule);
       usePublicationDraftStore.getState().setCompositionId(draft.compositionId);
       setPublicationId(detail.id);
       usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
       usePublicationDraftStore.getState().markSaved();
       usePublicationDraftStore.getState().setExplicitlySaved(true);
     },
-    [setBasicInfo, setAssetItems, setChannelIds, setGroupIds, setGroupNamesById, setScheduleForm, setPublicationId]
+    [setBasicInfo, setAssetItems, setChannelIds, setGroupIds, setGroupNamesById, setSchedule, setPublicationId]
   );
 
   useEffect(() => {
     if (!hasHydrated) return;
     if (!idParam) return;
-    if (idParam === publicationId) return;
+    // Read, not a dependency: the load itself sets publicationId, and re-running on that
+    // would cancel this very effect before it lands on the resume step (#199).
+    if (idParam === usePublicationDraftStore.getState().publicationId) return;
     if (loadedIdRef.current === idParam) return;
 
     loadedIdRef.current = idParam;
@@ -139,7 +147,7 @@ export function CreatePublicationPage() {
       try {
         await loadPublicationIntoDraft(idParam);
         if (!alive) return;
-        setStep(1);
+        landOnResumeStep();
       } catch (err) {
         if (!alive) return;
         setResumeFailure(classifyApiError(err, "โหลด draft ไม่สำเร็จ"));
@@ -155,7 +163,7 @@ export function CreatePublicationPage() {
     return () => {
       alive = false;
     };
-  }, [hasHydrated, idParam, publicationId, loadPublicationIntoDraft, setStep]);
+  }, [hasHydrated, idParam, loadPublicationIntoDraft]);
 
   const [seedChoice, setSeedChoice] = useState<SeedChoice>(null);
   const seedResolvedRef = useRef(false);
@@ -168,7 +176,7 @@ export function CreatePublicationPage() {
     setResumeFailure(null);
     try {
       await loadPublicationIntoDraft(idParam);
-      setStep(1);
+      landOnResumeStep();
     } catch (err) {
       setResumeFailure(classifyApiError(err, "โหลด draft ไม่สำเร็จ"));
     } finally {

@@ -13,19 +13,19 @@ const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)
 const mondayOf = (ymd: string) => shiftYmd(ymd, -((ymdDow(ymd) + 6) % 7));
 
 function daysLine(draft: ScheduleDraft): { label: string; value: string } {
-  if (draft.mode === "locked" && draft.locked) {
-    const rec = draft.locked.schedule.recurrence;
-    return "freq" in rec && rec.freq === "monthly"
-      ? { label: "Monthly", value: formatMonthDays(rec.month_days) }
-      : { label: "Continuous", value: "Plays the whole range, day and night" };
+  if (draft.mode === "continuous") {
+    const from = `${draft.startDate ? SHORT.format(at(draft.startDate)) : "—"} ${draft.startTime}`;
+    const to = draft.endDate ? `${SHORT.format(at(draft.endDate))} ${draft.endTime}` : "no end";
+    return { label: "Continuous", value: `${from} → ${to}` };
   }
   if (draft.mode === "one-time") return { label: "Date", value: draft.startDate ? DAY.format(at(draft.startDate)) : "—" };
   if (draft.mode === "dates") {
     const count = draft.dates.length;
     return { label: "Dates", value: `${count} date${count === 1 ? "" : "s"}: ${draft.dates.map((d) => SHORT.format(at(d))).join(", ")}` };
   }
-  const labels = WEEKDAYS.filter((d) => draft.days.includes(d.value)).map((d) => d.label);
   const range = `${draft.startDate ? SHORT.format(at(draft.startDate)) : "—"} → ${draft.endDate ? SHORT.format(at(draft.endDate)) : "no end date"}`;
+  if (draft.mode === "monthly") return { label: "Monthly", value: `${formatMonthDays(draft.monthDays)} · ${range}` };
+  const labels = WEEKDAYS.filter((d) => draft.days.includes(d.value)).map((d) => d.label);
   return { label: "Days", value: `${labels.join(", ")} (${labels.length} days/week) · ${range}` };
 }
 
@@ -37,7 +37,7 @@ export function SchedulePreviewPane({ draft, today, programName }: { draft: Sche
   const upcoming = upcomingDays(draft, today, LIST_LIMIT);
   const zone = TIMEZONES.find((z) => z.id === draft.timezone)?.label ?? draft.timezone;
   const days = daysLine(draft);
-  const isContinuous = draft.locked?.kind === "continuous";
+  const isContinuous = draft.mode === "continuous";
 
   return (
     <div className="flex flex-col gap-4">

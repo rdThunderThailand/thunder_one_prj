@@ -1,10 +1,4 @@
-import type {
-  PublicationSchedule,
-  Recurrence,
-  ScheduleConflict,
-  ScheduleForm,
-  SchedulePayload,
-} from "./types";
+import type { PublicationSchedule, Recurrence } from "./types";
 
 export const DEFAULT_TIMEZONE = "Asia/Bangkok";
 
@@ -71,166 +65,14 @@ export function utcToZonedParts(iso: string, timeZone: string): { date: string; 
   return { date: `${p.year}-${p.month}-${p.day}`, time: `${hour}:${p.minute}` };
 }
 
-// --- form defaults, validation, and mapping ----------------------------------
-
-export function makeDefaultScheduleForm(): ScheduleForm {
-  const now = utcToZonedParts(new Date().toISOString(), DEFAULT_TIMEZONE);
-  return {
-    schedule_type: "now",
-    start_date: now.date,
-    start_time: now.time,
-    timezone: DEFAULT_TIMEZONE,
-    end_date: "",
-    end_time: "",
-    days: [],
-    month_days: [],
-    daily_start: "09:00",
-    daily_end: "17:00",
-  };
-}
-
-export type ScheduleFieldId =
-  | "start_date" | "start_time" | "end_date" | "end_time"
-  | "days" | "month_days" | "daily_start" | "daily_end";
-
-export type ScheduleErrors = Partial<Record<ScheduleFieldId, string>>;
-
-export function validateScheduleForm(form: ScheduleForm): ScheduleErrors {
-  if (form.schedule_type === "now") return {};
-
-  const errors: ScheduleErrors = {};
-
-  if (!form.start_date) errors.start_date = "เลือกวันที่เริ่ม";
-  if (!form.start_time) errors.start_time = "เลือกเวลาเริ่ม";
-  // Do not evaluate later rules when start is incomplete
-  if (!form.start_date || !form.start_time) return errors;
-
-  if (form.schedule_type === "later") return {}; // expiration is optional
-
-  // Monthly arrives from the API with its end optional, like "later"; only its own
-  // fields need checking (the wizard cannot author it, ADR 0012).
-  if (form.schedule_type === "monthly") {
-    if (form.month_days.length === 0) errors.month_days = "ไม่มีวันที่ของเดือน";
-    if (form.daily_start >= form.daily_end) errors.daily_end = "เวลาจบรายวันต้องอยู่หลังเวลาเริ่ม";
-    return errors;
-  }
-
-  // range | recurring both require an end strictly after the start
-  if (!form.end_date) errors.end_date = "เลือกวันที่สิ้นสุด";
-  if (!form.end_time) errors.end_time = "เลือกเวลาสิ้นสุด";
-  if (!form.end_date || !form.end_time) return errors;
-
-  const start = Date.parse(zonedToUtcIso(form.start_date, form.start_time, form.timezone));
-  const end = Date.parse(zonedToUtcIso(form.end_date, form.end_time, form.timezone));
-  if (end <= start) {
-    errors.end_date = "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
-    return errors;
-  }
-
-  if (form.schedule_type === "recurring") {
-    if (form.days.length === 0) errors.days = "เลือกวันในสัปดาห์อย่างน้อย 1 วัน";
-    if (!form.daily_start) errors.daily_start = "กำหนดช่วงเวลารายวัน";
-    if (!form.daily_end) errors.daily_end = "กำหนดช่วงเวลารายวัน";
-    if (form.daily_start && form.daily_end && form.daily_start >= form.daily_end) {
-      errors.daily_end = "เวลาจบรายวันต้องอยู่หลังเวลาเริ่ม"; // "HH:MM" compares lexically
-    }
-  }
-
-  return errors;
-}
-
-export function isScheduleFormValid(form: ScheduleForm): boolean {
-  return Object.keys(validateScheduleForm(form)).length === 0;
-}
-
-export function scheduleFormToPayload(form: ScheduleForm): SchedulePayload {
-  const timezone = form.timezone;
-
-  if (form.schedule_type === "now") {
-    // Publish Now starts live at activation; an optional expiry may still be set.
-    const ends_at = form.end_date
-      ? zonedToUtcIso(form.end_date, form.end_time || "23:59", timezone)
-      : null;
-    return { starts_at: new Date().toISOString(), ends_at, timezone, recurrence: {} };
-  }
-
-  const starts_at = zonedToUtcIso(form.start_date, form.start_time, timezone);
-  const ends_at = form.end_date
-    ? zonedToUtcIso(form.end_date, form.end_time || "23:59", timezone)
-    : null;
-
-  if (form.schedule_type === "recurring") {
-    const recurrence: Recurrence = {
-      freq: "weekly",
-      days: [...form.days].sort((a, b) => a - b),
-      daily_start: form.daily_start,
-      daily_end: form.daily_end,
-    };
-    return { starts_at, ends_at, timezone, recurrence };
-  }
-
-  if (form.schedule_type === "monthly") {
-    const recurrence: Recurrence = {
-      freq: "monthly",
-      month_days: [...form.month_days].sort((a, b) => a - b),
-      daily_start: form.daily_start,
-      daily_end: form.daily_end,
-    };
-    return { starts_at, ends_at, timezone, recurrence };
-  }
-
-  // "later" (ends_at optional) and "range" (ends_at required) are both one-time.
-  return { starts_at, ends_at, timezone, recurrence: {} };
-}
-
-/** Reverse-map a persisted schedule to the form when resuming a draft. */
-export function scheduleToForm(schedule?: PublicationSchedule | null): ScheduleForm {
-  const base = makeDefaultScheduleForm();
-  if (!schedule) return base;
-
-  const timezone = schedule.timezone || DEFAULT_TIMEZONE;
-  const start = utcToZonedParts(schedule.starts_at, timezone);
-  const end = schedule.ends_at ? utcToZonedParts(schedule.ends_at, timezone) : { date: "", time: "" };
-  const rec = schedule.recurrence;
-  const repeats = !!rec && "freq" in rec;
-
-  return {
-    schedule_type: repeats
-      ? rec.freq === "monthly" ? "monthly" : "recurring"
-      : schedule.ends_at ? "range" : "later",
-    start_date: start.date,
-    start_time: start.time,
-    timezone,
-    end_date: end.date,
-    end_time: end.time,
-    days: repeats && rec.freq === "weekly" ? rec.days : base.days,
-    month_days: repeats && rec.freq === "monthly" ? rec.month_days : base.month_days,
-    daily_start: repeats ? rec.daily_start : base.daily_start,
-    daily_end: repeats ? rec.daily_end : base.daily_end,
-  };
-}
-
-// --- month calendar for the conflict-overlap view ---------------------------
-// Day granularity, in the schedule's own timezone. "YYYY-MM-DD" strings sort
-// chronologically, so all range checks are plain string comparisons.
-
-export type CalendarDay = {
-  ymd: string; // "YYYY-MM-DD"; "" for padding cells outside the month
-  day: number; // day-of-month; 0 for padding cells
-  inMonth: boolean;
-  isActive: boolean; // the publication is scheduled to play this day
-  isOverlap: boolean; // active AND colliding with a conflicting publication
-  isToday: boolean;
-};
-
-function pad2(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
 /** Day-of-week for a pure "YYYY-MM-DD", 0=Sun..6=Sat (timezone-independent). */
 export function ymdDow(ymd: string): number {
   const [y, m, d] = ymd.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
 }
 
 /** Day-of-month for a pure "YYYY-MM-DD". A month without that day simply never matches. */
@@ -238,42 +80,8 @@ function ymdDay(ymd: string): number {
   return Number(ymd.slice(8, 10));
 }
 
-/** The publication's [start, end|null] window as day strings, in its timezone. */
-function scheduleWindow(form: ScheduleForm): { start: string; end: string | null } {
-  if (form.schedule_type === "now") {
-    const today = utcToZonedParts(new Date().toISOString(), form.timezone).date;
-    return { start: today, end: form.end_date || null };
-  }
-  return { start: form.start_date, end: form.end_date || null };
-}
-
-/** Does the publication play on `ymd`? (day granularity, in its timezone) */
-export function isScheduleActiveOn(form: ScheduleForm, ymd: string): boolean {
-  const { start, end } = scheduleWindow(form);
-  if (!start || ymd < start) return false;
-  if (end && ymd > end) return false;
-  if (form.schedule_type === "recurring") return form.days.includes(ymdDow(ymd));
-  if (form.schedule_type === "monthly") return form.month_days.includes(ymdDay(ymd));
-  return true;
-}
-
-/** Does any conflicting publication's window cover `ymd`? */
-export function overlapsConflictOn(
-  ymd: string,
-  conflicts: ScheduleConflict[],
-  timezone: string
-): boolean {
-  return conflicts.some((c) => {
-    const cStart = utcToZonedParts(c.starts_at, timezone).date;
-    const cEnd = c.ends_at ? utcToZonedParts(c.ends_at, timezone).date : null;
-    if (ymd < cStart) return false;
-    if (cEnd && ymd > cEnd) return false;
-    return true;
-  });
-}
-
 // --- airing state, for the Overview "Now & Next" card ------------------------
-// Time-of-day granularity, unlike isScheduleActiveOn above: this answers "on air
+// Time-of-day granularity (the Edit/Create previews are day granularity): this answers "on air
 // at this minute?", so a weekly window of 08:00-17:00 is not live at 22:00.
 
 export type AiringState = "live" | "next" | "ended";
@@ -363,21 +171,6 @@ export function formatScheduleStart(
   return `${dayMonthLabel(start.date)} ${start.time}`;
 }
 
-/** Time range shown in review surfaces: expiry for one-time schedules, daily window for recurring. */
-export function formatReviewTimeRange(form: ScheduleForm, nowTime: string): string {
-  if (isRepeating(form)) return `${form.daily_start} – ${form.daily_end}`;
-
-  const startTime = form.schedule_type === "now" ? nowTime : form.start_time;
-  return form.end_date
-    ? `${startTime} – ${form.end_time || "23:59"}`
-    : `${startTime} · No end date`;
-}
-
-/** Weekly or monthly: the form carries a daily window rather than a one-time span. */
-export function isRepeating(form: ScheduleForm): boolean {
-  return form.schedule_type === "recurring" || form.schedule_type === "monthly";
-}
-
 /** "Day 1, 15, 31" — the month days of a monthly schedule, ascending. */
 export function formatMonthDays(monthDays: number[]): string {
   return `Day ${[...monthDays].sort((a, b) => a - b).join(", ")}`;
@@ -401,45 +194,4 @@ export function getDayTimelinePlacement(startTime: string, endTime: string): {
     leftPercent: toPercent(start),
     widthPercent: toPercent(end - start),
   };
-}
-
-/** Build a month matrix (weeks start Sunday) for the overlap calendar. */
-export function buildCalendarMonth(
-  form: ScheduleForm,
-  conflicts: ScheduleConflict[],
-  viewYear: number,
-  viewMonth: number // 0-based
-): CalendarDay[][] {
-  const todayYmd = utcToZonedParts(new Date().toISOString(), form.timezone).date;
-  const firstDow = new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay();
-  const daysInMonth = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
-
-  const padding = (): CalendarDay => ({
-    ymd: "",
-    day: 0,
-    inMonth: false,
-    isActive: false,
-    isOverlap: false,
-    isToday: false,
-  });
-
-  const cells: CalendarDay[] = [];
-  for (let i = 0; i < firstDow; i++) cells.push(padding());
-  for (let d = 1; d <= daysInMonth; d++) {
-    const ymd = `${viewYear}-${pad2(viewMonth + 1)}-${pad2(d)}`;
-    const isActive = isScheduleActiveOn(form, ymd);
-    cells.push({
-      ymd,
-      day: d,
-      inMonth: true,
-      isActive,
-      isOverlap: isActive && overlapsConflictOn(ymd, conflicts, form.timezone),
-      isToday: ymd === todayYmd,
-    });
-  }
-  while (cells.length % 7 !== 0) cells.push(padding());
-
-  const weeks: CalendarDay[][] = [];
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-  return weeks;
 }

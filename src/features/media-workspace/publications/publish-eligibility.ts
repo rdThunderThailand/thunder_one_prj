@@ -1,7 +1,7 @@
 import type { DraftFields } from "./store/usePublicationDraftStore";
 import type { MediaAsset, ScheduleConflict } from "./types";
 import { validateStep } from "./step-validation.ts";
-import { isScheduleFormValid } from "./schedule.ts";
+import { isDraftValid } from "./schedule-preset.ts";
 
 export type EligibilityStatus = "pass" | "fail" | "unknown";
 
@@ -90,7 +90,7 @@ export function computeEligibility(params: {
 
   // The ver02 Program step (3) gates channels and schedule together; the checklist still
   // reports them as separate rows, so each reads its own primitive rather than the step.
-  const scheduleCheckStatus: EligibilityStatus = isScheduleFormValid(draft.scheduleForm) ? "pass" : "fail";
+  const scheduleCheckStatus: EligibilityStatus = isDraftValid(draft.schedule) ? "pass" : "fail";
   // A Channel picked directly and one reached through a Channel Group are independent
   // intents (ADR 0074 §6) — either alone is a complete target selection.
   const channelsCheckStatus: EligibilityStatus =

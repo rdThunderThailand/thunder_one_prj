@@ -10,7 +10,7 @@
  */
 import assert from "node:assert/strict";
 import { computeEligibility, summarizePriorityConflicts } from "./publish-eligibility.ts";
-import { makeDefaultScheduleForm } from "./schedule.ts";
+import { defaultScheduleDraft } from "./schedule-preset.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 import type { MediaAsset, ScheduleConflict } from "./types/index.ts";
 
@@ -32,7 +32,7 @@ const validDraft: DraftFields = {
   channelIds: ["screen-1"],
   groupIds: [],
   groupNamesById: {},
-  scheduleForm: { ...makeDefaultScheduleForm(), schedule_type: "now" },
+  schedule: defaultScheduleDraft(),
 };
 
 const approvedAsset: MediaAsset = { id: "asset-1", approval_status: "approved" };
@@ -148,7 +148,7 @@ const invalidSchedule = computeEligibility({
   ...base,
   draft: {
     ...validDraft,
-    scheduleForm: { ...validDraft.scheduleForm, schedule_type: "later", start_date: "", start_time: "" },
+    schedule: { ...validDraft.schedule, startDate: "" },
   },
 });
 assert.equal(statusOf(invalidSchedule, "schedule"), "fail");

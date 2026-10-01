@@ -4,7 +4,7 @@ import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 export function hasDraftContent(
   d: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "channelIds" | "groupIds" | "step">
 ): boolean {
-  // Deliberately blind to scheduleForm: makeDefaultScheduleForm() embeds the
+  // Deliberately blind to schedule: defaultScheduleDraft() embeds the
   // current date/time, so it would make every draft look non-empty (docs/adr/0014).
   return Boolean(
     d.basicInfo.name.trim() ||

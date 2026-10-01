@@ -10,9 +10,9 @@ import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { randomUuid } from "@/lib/random-uuid";
-import { makeDefaultScheduleForm } from "../schedule";
+import { defaultScheduleDraft, type ScheduleDraft } from "../schedule-preset";
 import { DEFAULT_IMAGE_DURATION_SECONDS } from "../draft-mapping";
-import type { ScheduleForm, DraftAssetItem } from "../types";
+import type { DraftAssetItem } from "../types";
 import { priorities } from "../mock-data";
 import type { BasicInfoState } from "../components/BasicInfoForm";
 
@@ -45,7 +45,7 @@ export interface DraftFields {
   channelIds: string[];
   groupIds: string[];
   groupNamesById: Record<string, string>;
-  scheduleForm: ScheduleForm;
+  schedule: ScheduleDraft;
 }
 
 function getDefaultDraft(): DraftFields {
@@ -61,12 +61,12 @@ function getDefaultDraft(): DraftFields {
     channelIds: [],
     groupIds: [],
     groupNamesById: {},
-    scheduleForm: makeDefaultScheduleForm(),
+    schedule: defaultScheduleDraft(),
   };
 }
 
-function serializeDraftFields(draft: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "compositionId" | "channelIds" | "groupIds" | "groupNamesById" | "scheduleForm">): string {
-  return JSON.stringify({ basicInfo: draft.basicInfo, assetItems: draft.assetItems, playlistId: draft.playlistId, compositionId: draft.compositionId, channelIds: draft.channelIds, groupIds: draft.groupIds, groupNamesById: draft.groupNamesById, scheduleForm: draft.scheduleForm });
+function serializeDraftFields(draft: Pick<DraftFields, "basicInfo" | "assetItems" | "playlistId" | "compositionId" | "channelIds" | "groupIds" | "groupNamesById" | "schedule">): string {
+  return JSON.stringify({ basicInfo: draft.basicInfo, assetItems: draft.assetItems, playlistId: draft.playlistId, compositionId: draft.compositionId, channelIds: draft.channelIds, groupIds: draft.groupIds, groupNamesById: draft.groupNamesById, schedule: draft.schedule });
 }
 
 interface PublicationDraftStore extends DraftFields {
@@ -107,7 +107,7 @@ interface PublicationDraftStore extends DraftFields {
   setGroupIds: (groupIds: string[]) => void;
   setGroupNamesById: (groupNamesById: Record<string, string>) => void;
   toggleChannelId: (id: string) => void;
-  setScheduleForm: (scheduleForm: ScheduleForm) => void;
+  setSchedule: (schedule: ScheduleDraft) => void;
   /** Resets in-memory state and wipes the persisted draft — used by Cancel. */
   cancelDraft: () => void;
 }
@@ -189,7 +189,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
         const next = channelIds.includes(id) ? channelIds.filter((c) => c !== id) : [...channelIds, id];
         set({ channelIds: next });
       },
-      setScheduleForm: (scheduleForm) => set({ scheduleForm }),
+      setSchedule: (schedule) => set({ schedule }),
       cancelDraft: () => {
         set({
           ...getDefaultDraft(),
@@ -224,7 +224,9 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // v12: scheduleForm gained `month_days` (monthly recurrence, Thunder_Core ADR 0012).
       // v13: `lastAutoName` (ADR 0078 §10). A v12 draft has none, so a name the operator typed
       // there would count as auto-filled and be overwritten; it is dropped instead.
-      name: "thunderone.publications.create-draft.v13",
+      // v14: `scheduleForm` is replaced by `schedule`, a ScheduleDraft shared with the Edit page
+      // (ADR 0082). A v13 draft has no `schedule`, so it is dropped rather than migrated.
+      name: "thunderone.publications.create-draft.v14",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the

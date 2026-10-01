@@ -1,15 +1,17 @@
 "use client";
 
-import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, MonitorIcon, PlayIcon } from "@/components/ui/icons";
-import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
-import { formatMonthDays, isRepeating, WEEKDAYS } from "../schedule";
+import { WEEKDAYS } from "../schedule";
+import { describeSchedule, scheduleEdges } from "../schedule-describe";
+import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 
@@ -31,12 +33,15 @@ export function ProgramSummaryRail({
   title = "Program Summary",
   subtitle = "สรุปการตั้งค่าโปรแกรม",
   variant = "default",
+  refreshKey,
 }: {
   channels: ChannelListItem[];
   assets: MediaAsset[];
   title?: string;
   subtitle?: string;
   variant?: "default" | "review";
+  /** Bumped by the parent after the content's Playlist changed on the same page. */
+  refreshKey?: number;
 }) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -44,18 +49,16 @@ export function ProgramSummaryRail({
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const groupIds = usePublicationDraftStore((s) => s.groupIds);
   const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
-  const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+  const schedule = usePublicationDraftStore((s) => s.schedule);
 
   const isPlaylist = basicInfo.publicationType === "playlist";
-  const { playlist, coverAssetId, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
+  const { playlist, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
+  // Same projection as Prepare Content's stage, so every content type previews here too (#199).
+  // Loaded in the review variant as well — it is where a Layout's name comes from.
+  const { preview, branch, loading } = usePublicationStagePreview(assets, true, refreshKey);
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
-  const previewAssetId = isPlaylist ? coverAssetId : selectedAsset?.id;
-  const previews = usePreviewUrls(previewAssetId && variant === "default" ? [previewAssetId] : []);
-  const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
-  const previewPoster = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
-  const previewAsset = assets.find((a) => a.id === previewAssetId);
-  const isVideo = isVideoPreview(previewAsset, previewUrl);
+  const isVideo = isVideoPreview(selectedAsset, undefined);
 
   const isMismatch =
     selectedAsset &&
@@ -87,29 +90,25 @@ export function ProgramSummaryRail({
     ? playlist
       ? `${playlist.name}${durationLabel ? ` (${durationLabel})` : ""}`
       : "—"
+    : basicInfo.publicationType === "composition"
+    ? preview?.contentName ?? "—"
     : selectedAsset
     ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id
     : "—";
 
-  const startLabel =
-    scheduleForm.schedule_type === "now"
-      ? "Publish now"
-      : `${formatShortDate(scheduleForm.start_date)}${scheduleForm.start_time ? `, ${scheduleForm.start_time}` : ""}`;
-  const endLabel = scheduleForm.end_date
-    ? `${formatShortDate(scheduleForm.end_date)}${scheduleForm.end_time ? `, ${scheduleForm.end_time}` : ""}`
-    : "No end date";
-  const allDay = scheduleForm.daily_start === "00:00" && scheduleForm.daily_end === "23:59";
-  const weekdayLabel =
-    scheduleForm.schedule_type === "recurring" && scheduleForm.days.length > 0
-      ? WEEKDAYS.filter((d) => scheduleForm.days.includes(d.value)).map((d) => d.label).join(", ")
-      : scheduleForm.schedule_type === "monthly"
-        ? formatMonthDays(scheduleForm.month_days)
-        : null;
+  const stored = isDraftValid(schedule) ? draftToSchedule(schedule) : null;
+  const summary = stored ? describeSchedule(stored) : null;
+  const edges = stored ? scheduleEdges(stored) : null;
+  const startLabel = edges ? `${formatShortDate(edges.startDate)}, ${edges.startTime}` : "—";
+  const endLabel = edges?.endDate ? `${formatShortDate(edges.endDate)}${edges.endTime ? `, ${edges.endTime}` : ""}` : "No end date";
+  const weekdayLabel = summary?.days.length
+    ? WEEKDAYS.filter((d) => summary.days.includes(d.value)).map((d) => d.label).join(", ")
+    : schedule.mode === "monthly" || schedule.mode === "dates"
+      ? summary?.title ?? null
+      : null;
 
   if (variant === "review") {
-    const scheduleLabel = scheduleForm.schedule_type === "now"
-      ? scheduleForm.end_date ? `Publish now – ${endLabel}` : "Publish now · No end date"
-      : `${startLabel}${scheduleForm.end_date ? ` – ${endLabel}` : " · No end date"}`;
+    const scheduleLabel = summary ? [summary.title, summary.hours, summary.range].filter(Boolean).join(" · ") : "—";
     const playbackLabel = isPlaylist
       ? "ตามการตั้งค่าของ Playlist"
       : basicInfo.publicationType === "composition"
@@ -140,17 +139,19 @@ export function ProgramSummaryRail({
       <h2 className="text-base font-semibold text-foreground">{title}</h2>
       <p className="-mt-3 text-xs text-muted-foreground">{subtitle}</p>
 
-      {previewUrl ? (
-        <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-muted">
-          {isVideo ? (
-            <video src={previewUrl} poster={previewPoster} controls preload="metadata" className="h-full w-full object-contain" />
-          ) : (
-            <Image src={previewUrl} alt={contentLabel} fill sizes="(min-width: 1024px) 300px, 100vw" className="object-cover" />
-          )}
-        </div>
+      {preview ? (
+        <PreviewStage
+          zones={preview.zones}
+          assets={assets}
+          aspectRatio={preview.aspectRatio}
+          referenceResolution={preview.referenceResolution}
+          allowActualSize={branch !== "playlist"}
+          controlsPlacement="overlay"
+          fillWidth
+        />
       ) : (
         <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
-          <p className="text-xs">ตัวอย่างคอนเทนต์จะแสดงที่นี่</p>
+          <p className="text-xs">{loading ? "กำลังโหลดตัวอย่าง…" : "ตัวอย่างคอนเทนต์จะแสดงที่นี่"}</p>
         </div>
       )}
 
@@ -178,10 +179,8 @@ export function ProgramSummaryRail({
         <Row label="Start">{startLabel}</Row>
         <Row label="End">{endLabel}</Row>
         {weekdayLabel && <Row label="Days">{weekdayLabel}</Row>}
-        {isRepeating(scheduleForm) && (
-          <Row label="Daily">{allDay ? "All day" : `${scheduleForm.daily_start} – ${scheduleForm.daily_end}`}</Row>
-        )}
-        <Row label="Timezone">{scheduleForm.timezone}</Row>
+        {summary?.hours && <Row label="Daily">{summary.hours}</Row>}
+        <Row label="Timezone">{schedule.timezone}</Row>
       </Section>
 
       <Section title="How to Play">
