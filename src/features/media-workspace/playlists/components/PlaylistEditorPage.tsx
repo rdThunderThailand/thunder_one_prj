@@ -149,7 +149,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     if (row.isDirty && !(await row.save())) throw new Error("save failed");
     return publishChanges("playlists", row.serverId!);
   };
-  const publish = () => router.push(`/media-workspace/publications/create?playlistId=${row.serverId}`);
+  const publish = () => router.push(`/media-workspace/program/create?playlistId=${row.serverId}`);
   const publishDisabledReason = !row.serverId
     ? "บันทึก Playlist ก่อนเผยแพร่"
     : row.isDirty

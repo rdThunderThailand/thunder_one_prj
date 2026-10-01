@@ -31,7 +31,7 @@ export function PublishStep({ channels, assets, canPublish }: { channels: Channe
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2"><DisabledOptions title="Notifications (optional)" items={["Email Notification", "System Notification"]} /><DisabledOptions title="Permissions" items={["Allow editing after publish", "Lock after publish"]} /></div>
         </div>
 
-        <div className="flex flex-col gap-4"><ProgramSummaryRail channels={channels} assets={assets} title="Publish Summary" subtitle="สรุปโปรแกรมพร้อมเผยแพร่" /><Card className="p-4"><p className="flex items-start gap-2 text-xs text-primary"><InfoIcon className="h-4 w-4 shrink-0" />หลังจากเผยแพร่ คุณสามารถติดตามกำหนดการได้ที่ <Link href="/media-workspace/publications" className="font-semibold underline">Now &amp; Next</Link></p></Card></div>
+        <div className="flex flex-col gap-4"><ProgramSummaryRail channels={channels} assets={assets} title="Publish Summary" subtitle="สรุปโปรแกรมพร้อมเผยแพร่" /><Card className="p-4"><p className="flex items-start gap-2 text-xs text-primary"><InfoIcon className="h-4 w-4 shrink-0" />หลังจากเผยแพร่ คุณสามารถติดตามกำหนดการได้ที่ <Link href="/media-workspace/now-next" className="font-semibold underline">Now &amp; Next</Link></p></Card></div>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ export default function OverviewPage() {
               AI assistant
             </button>
             <Link
-              href="/media-workspace/publications/create"
+              href="/media-workspace/program/create"
               className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <PlusIcon className="h-3.5 w-3.5" />

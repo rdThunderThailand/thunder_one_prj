@@ -11,7 +11,7 @@ export function DemoPublicationDetailPage({ id }: { id: string }) {
   if (!detail) return <Card className="p-6 text-center text-sm text-danger">Demo publication not found</Card>;
   const { publication, occurrence, channelName } = detail;
   return <div className="flex flex-col gap-4">
-    <PageHeader title={publication.name} subtitle="Publication Detail" actions={<Link className={buttonClasses("secondary")} href="/media-workspace/publications">Back to Now & Next</Link>} />
+    <PageHeader title={publication.name} subtitle="Publication Detail" actions={<Link className={buttonClasses("secondary")} href="/media-workspace/now-next">Back to Now & Next</Link>} />
     <Card className="p-5">
       <div className="flex items-start gap-5">
         <MediaThumb url={publication.thumbnail_url ?? undefined} alt={publication.name} className="h-36 w-60 rounded-xl" />

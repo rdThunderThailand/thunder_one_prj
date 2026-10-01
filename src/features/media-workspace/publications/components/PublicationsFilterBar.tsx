@@ -2,7 +2,6 @@
 
 import { FilterIcon, GridIcon, ListIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
-import { SearchInput } from "@/components/ui/lovable/core";
 import {
   Select,
   SelectContent,
@@ -12,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/lovable/select";
+import { LibrarySearch } from "../../content-library/LibraryShell";
 import { DISPLAY_STATUS_LABELS } from "../publication-list-display";
 import { DISPLAY_STATUSES, type PublicationListSort } from "../types";
 
@@ -45,7 +45,7 @@ const SORT_LABELS: Record<PublicationListSort, string> = {
   created_desc: "Created (newest)",
 };
 
-const triggerClass = "h-9 w-36 text-xs shadow-none";
+const triggerClass = "h-9 w-32 text-[10px] shadow-none";
 const SOON = "เร็วๆ นี้";
 
 // Created by is left out: the API filters on it (`created_by`), but there is no user list this
@@ -60,12 +60,11 @@ export function PublicationsFilterBar({
   onChange: (patch: Partial<ListFilters>) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <SearchInput
+    <div className="flex w-full flex-wrap items-center gap-2">
+      <LibrarySearch
         value={value.search}
-        onChange={(event) => onChange({ search: event.target.value })}
+        onChange={(search) => onChange({ search })}
         placeholder="Search programs…"
-        className="w-60"
       />
       <Select
         value={value.status}
@@ -156,7 +155,7 @@ export function PublicationsFilterBar({
         size="sm"
         disabled
         title={SOON}
-        className="h-9 gap-1.5 text-xs"
+        className="h-9 text-[10px]"
       >
         <FilterIcon className="h-3.5 w-3.5" />
         More filters
@@ -190,7 +189,7 @@ export function PublicationsFilterBar({
           onValueChange={(sort) => onChange({ sort: sort as PublicationListSort })}
         >
           <SelectTrigger
-            className="h-9 w-44 text-xs shadow-none"
+            className="h-9 w-40 text-[10px] shadow-none"
             aria-label="Sort"
           >
             <SelectValue />

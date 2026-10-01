@@ -172,7 +172,7 @@ function PublicationRow({ publication }: { publication: PublicationListItem }) {
   return (
     <li className="flex items-center justify-between gap-2 rounded-lg border border-border p-2">
       <Link
-        href={`/media-workspace/publications/${publication.id}`}
+        href={`/media-workspace/program/${publication.id}`}
         className="min-w-0 flex-1 truncate text-sm text-primary hover:underline"
       >
         {publication.name}

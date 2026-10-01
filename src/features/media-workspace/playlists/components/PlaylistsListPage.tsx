@@ -290,7 +290,7 @@ export function PlaylistsListPage() {
       {listPreview.current && (
         <PlaylistPreviewModal open onClose={listPreview.close} preview={listPreview.current.preview} assets={listPreview.current.assets} publishDisabledReason={null}
           onOpenFullPreview={() => window.open(`/media-workspace/preview/playlist/${listPreview.current?.id}`, "_blank", "noopener")}
-          onPublish={() => router.push(`/media-workspace/publications/create?playlistId=${listPreview.current?.id}`)} />
+          onPublish={() => router.push(`/media-workspace/program/create?playlistId=${listPreview.current?.id}`)} />
       )}
       <CreatePlaylistDialog
         key={createOpen ? `create:${collection}` : "create:closed"}

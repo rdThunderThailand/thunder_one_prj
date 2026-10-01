@@ -15,6 +15,8 @@ import { fetchNowNext, type NowNextRow } from "../../now-next";
 import { DEFAULT_TIMEZONE, utcToZonedParts } from "../../schedule";
 import { DISPLAY_STATUS_LABELS } from "../../publication-list-display";
 import type { ProgramEditState } from "../../program-edit";
+import type { ChannelListItem } from "../../../channels/types";
+import { reachedChannels, selectionFromTargets } from "../../target-picker";
 import { PRIORITIES, type Priority, type PublicationDetail, type PublicationDisplayStatus } from "../../types";
 
 const STATUS_VARIANT = {
@@ -41,16 +43,16 @@ function StatusCard({
   unpublished: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-xs">
-      <h2 className="mb-3 text-base font-semibold text-foreground">Program Status</h2>
+    <div className="rounded-xl border border-border bg-card p-4 shadow-panel">
+      <h2 className="mb-3 text-sm font-bold text-foreground">Program Status</h2>
       <Badge
         variant={STATUS_VARIANT[status]}
-        className="px-3 py-1.5 text-sm"
+        className="rounded-full px-2 py-0 text-[9px]"
       >
         {DISPLAY_STATUS_LABELS[status]}
       </Badge>
       {status === "live" && (
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-xs text-muted-foreground">
           Playing on {channelCount} channel{channelCount === 1 ? "" : "s"}
         </p>
       )}
@@ -69,12 +71,12 @@ function StatusCard({
   );
 }
 
-/** Next hour on one Channel, from Now & Next — what is on screen now and what follows (ADR 0065). */
-function PlaybackPreview({ state }: { state: ProgramEditState }) {
-  const channelTargets = state.targets.filter((t) => t.target_type === "channel" && t.channel_id);
+/** Next hour on one Channel, from Now & Next — what is on screen now and what follows (ADR 0065).
+ *  `channels` are the Channels the targets reach, directly or through a Group. */
+function PlaybackPreview({ channels }: { channels: readonly ChannelListItem[] }) {
   const [channelId, setChannelId] = useState<string | null>(null);
   const [rows, setRows] = useState<NowNextRow[] | null>(null);
-  const selected = channelId ?? channelTargets[0]?.channel_id ?? null;
+  const selected = channelId ?? channels[0]?.id ?? null;
 
   useEffect(() => {
     let alive = true;
@@ -94,11 +96,11 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
   const occurrences = row ? [row.current, ...row.upcoming].filter((o) => o !== null) : [];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-xs">
-      <h2 className="mb-3 text-base font-semibold text-foreground">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-panel">
+      <h2 className="mb-3 text-sm font-bold text-foreground">
         Playback Preview <span className="text-xs font-normal text-muted-foreground">(Next 1 Hour)</span>
       </h2>
-      {channelTargets.length > 0 ? (
+      {channels.length > 0 ? (
         <Select
           value={selected ?? undefined}
           onValueChange={setChannelId}
@@ -107,21 +109,27 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {channelTargets.map((t) => (
+            {channels.map((channel) => (
               <SelectItem
-                key={t.channel_id}
-                value={t.channel_id as string}
+                key={channel.id}
+                value={channel.id}
               >
-                {t.name ?? t.channel_id}
+                {channel.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       ) : (
-        <p className="text-xs text-muted-foreground">Preview follows a Channel target.</p>
+        <p className="text-xs text-muted-foreground">Add a Channel or a Group with Channels as the target to see its next hour.</p>
       )}
-      {rows === null && <p className="text-xs text-muted-foreground">Loading…</p>}
-      {rows !== null && channelTargets.length > 0 && occurrences.length === 0 && (
+      {rows === null && (
+        <div role="status" aria-busy="true" className="flex flex-col gap-2">
+          <span className="sr-only">Loading next hour</span>
+          <div className="h-3 w-full animate-pulse rounded bg-muted" />
+          <div className="h-3 w-4/5 animate-pulse rounded bg-muted" />
+        </div>
+      )}
+      {rows !== null && channels.length > 0 && occurrences.length === 0 && (
         <p className="text-xs text-muted-foreground">Nothing scheduled on this Channel in the next hour.</p>
       )}
       <ul className="flex flex-col gap-2">
@@ -131,7 +139,7 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
           return (
             <li
               key={o.occurrence_id}
-              className="flex items-baseline gap-3 text-sm"
+              className="flex items-baseline gap-3 text-xs"
             >
               <span className="w-24 shrink-0 text-xs text-muted-foreground">
                 {open}{close && ` – ${close}`}
@@ -150,7 +158,7 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2 text-sm">
+    <div className="flex items-center justify-between gap-3 py-2 text-xs">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right text-foreground">{children}</span>
     </div>
@@ -182,8 +190,8 @@ function ProgramInformation({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-xs">
-      <h2 className="mb-2 text-base font-semibold text-foreground">Program Information</h2>
+    <div className="rounded-xl border border-border bg-card p-4 shadow-panel">
+      <h2 className="mb-2 text-sm font-bold text-foreground">Program Information</h2>
       <InfoRow label="Program ID">
         <span className="inline-flex items-center gap-1.5 font-mono text-xs">
           {shortId}
@@ -229,6 +237,7 @@ function ProgramInformation({
 export function ProgramEditRail({
   detail,
   state,
+  channels,
   status,
   isDirty,
   readOnly,
@@ -236,19 +245,21 @@ export function ProgramEditRail({
 }: {
   detail: PublicationDetail;
   state: ProgramEditState;
+  channels: readonly ChannelListItem[];
   status: PublicationDisplayStatus;
   isDirty: boolean;
   readOnly: boolean;
   onPriority: (priority: Priority) => void;
 }) {
+  const reached = reachedChannels(channels, selectionFromTargets(state.targets));
   return (
     <aside className="flex flex-col gap-4">
       <StatusCard
         status={status}
-        channelCount={state.targets.filter((t) => t.target_type === "channel").length}
+        channelCount={reached.length}
         unpublished={isDirty}
       />
-      <PlaybackPreview state={state} />
+      <PlaybackPreview channels={reached} />
       <ProgramInformation
         detail={detail}
         state={state}

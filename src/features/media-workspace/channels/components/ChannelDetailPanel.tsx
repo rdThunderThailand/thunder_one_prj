@@ -203,7 +203,7 @@ export function ChannelDetailPanel({
         <div className="flex items-center justify-between">
           <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Now Playing</h3>
           <Link
-            href={`/media-workspace/publications?q=${encodeURIComponent(channel.name)}`}
+            href={`/media-workspace/now-next?q=${encodeURIComponent(channel.name)}`}
             className="text-xs font-medium text-primary hover:text-primary"
           >
             View Programs →

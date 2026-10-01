@@ -16,7 +16,7 @@ const notEditors = [
   "/media-workspace/layouts",
   "/media-workspace/layouts/templates",
   "/media-workspace/assets/abc",
-  "/media-workspace/publications/create",
+  "/media-workspace/program/create",
   "/media-workspace/channels/abc/edit",
   "/media-workspace/playlists/abc/extra",
 ];

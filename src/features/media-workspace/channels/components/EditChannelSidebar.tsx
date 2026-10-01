@@ -97,7 +97,7 @@ export function EditChannelSidebar({
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Link href="/media-workspace/publications" className={buttonClasses("secondary", "w-full px-2.5 py-2 text-xs text-primary")}>
+          <Link href="/media-workspace/now-next" className={buttonClasses("secondary", "w-full px-2.5 py-2 text-xs text-primary")}>
             <PlayIcon className="h-4 w-4" />
             Go to Programs
           </Link>

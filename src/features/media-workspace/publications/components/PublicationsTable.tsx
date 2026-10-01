@@ -42,18 +42,18 @@ export function PublicationsTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-left text-[10px]">
         <thead>
-          <tr className="border-b border-border text-xs font-medium text-muted-foreground">
+          <tr className="border-b border-border text-[9px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
             {HEADERS.map((header) => (
               <th
                 key={header}
-                className="px-3 py-2.5"
+                className="px-3 py-2"
               >
                 {header}
               </th>
             ))}
-            <th className="px-3 py-2.5 text-right">Actions</th>
+            <th className="px-3 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -63,31 +63,31 @@ export function PublicationsTable({
             return (
               <tr
                 key={item.id}
-                className="border-b border-border last:border-b-0"
+                className="border-b border-border last:border-0 hover:bg-muted"
               >
-                <td className="max-w-72 px-3 py-3">
+                <td className="max-w-72 px-3 py-2.5">
                   <div className="flex items-center gap-3">
                     {item.thumbnail_url ? (
                       <MediaThumb
                         url={item.thumbnail_url}
                         alt=""
-                        className="h-12 w-16"
+                        className="h-11 w-16"
                       />
                     ) : (
                       <div
                         aria-hidden="true"
-                        className="h-12 w-16 shrink-0 rounded bg-muted"
+                        className="h-11 w-16 shrink-0 rounded bg-muted"
                       />
                     )}
                     <div className="min-w-0">
                       <Link
-                        href={`/media-workspace/publications/${item.id}`}
-                        className="block truncate font-medium text-foreground hover:text-primary"
+                        href={`/media-workspace/program/${item.id}`}
+                        className="block truncate text-[11px] font-semibold text-foreground hover:text-primary"
                       >
                         {item.name}
                       </Link>
                       {item.content_name && (
-                        <p className="truncate text-xs text-muted-foreground">{item.content_name}</p>
+                        <p className="truncate text-[9px] text-muted-foreground">{item.content_name}</p>
                       )}
                       {item.tags.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
@@ -95,7 +95,7 @@ export function PublicationsTable({
                             <Badge
                               key={tag}
                               variant="neutral"
-                              className="px-1.5 py-0 text-[10px] font-medium"
+                              className="rounded-full px-1.5 py-0 text-[9px] font-medium"
                             >
                               {tag}
                             </Badge>
@@ -105,34 +105,37 @@ export function PublicationsTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-3 py-3">
+                <td className="px-3 py-2.5">
                   {item.display_status && (
-                    <Badge variant={BADGE_VARIANT[item.display_status]}>
+                    <Badge
+                      variant={BADGE_VARIANT[item.display_status]}
+                      className="rounded-full px-2 py-0 text-[9px]"
+                    >
                       {DISPLAY_STATUS_LABELS[item.display_status]}
                     </Badge>
                   )}
                 </td>
-                <td className="px-3 py-3 text-foreground">{formatTargetSummary(item)}</td>
-                <td className="px-3 py-3">
+                <td className="px-3 py-2.5 text-foreground">{formatTargetSummary(item)}</td>
+                <td className="px-3 py-2.5">
                   <p className="text-foreground">{formatScheduleRange(item)}</p>
-                  {nextAiring && <p className="text-xs text-muted-foreground">{nextAiring}</p>}
+                  {nextAiring && <p className="text-[9px] text-muted-foreground">{nextAiring}</p>}
                 </td>
-                <td className="min-w-40 px-3 py-3">
+                <td className="min-w-40 px-3 py-2.5">
                   <p className="text-foreground">{delivery.label}</p>
-                  {delivery.ratio && <p className="text-xs text-muted-foreground">{delivery.ratio}</p>}
+                  {delivery.ratio && <p className="text-[9px] text-muted-foreground">{delivery.ratio}</p>}
                   {delivery.percent !== null && (
                     <Progress
                       value={delivery.percent}
                       className="mt-1 h-1"
                     />
                   )}
-                  {delivery.problems && <p className="mt-1 text-xs text-warning">{delivery.problems}</p>}
+                  {delivery.problems && <p className="mt-1 text-[9px] text-warning">{delivery.problems}</p>}
                 </td>
-                <td className="px-3 py-3 text-muted-foreground">
+                <td className="px-3 py-2.5 text-muted-foreground">
                   {formatUpdatedAt(item.updated_at ?? item.created_at)}
                 </td>
-                <td className="max-w-32 truncate px-3 py-3 text-muted-foreground">{item.created_by?.display_name ?? "—"}</td>
-                <td className="whitespace-nowrap px-3 py-3">
+                <td className="max-w-32 truncate px-3 py-2.5 text-muted-foreground">{item.created_by?.display_name ?? "—"}</td>
+                <td className="whitespace-nowrap px-3 py-2.5">
                   <PublicationRowActions
                     item={item}
                     busy={busyId === item.id}
