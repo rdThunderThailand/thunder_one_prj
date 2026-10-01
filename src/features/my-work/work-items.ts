@@ -156,7 +156,7 @@ export function buildMyWork(
       title: `Publish draft — ${draft.name}`,
       detail: "Unpublished publication",
       source: "Media Workspace",
-      href: `/media-workspace/publications/${draft.id}`,
+      href: `/media-workspace/program/${draft.id}`,
       dueAt: draft.starts_at ?? null,
       dateNote: draft.starts_at
         ? `Scheduled to start ${formatDate(draft.starts_at)}`

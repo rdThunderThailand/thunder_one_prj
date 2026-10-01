@@ -66,7 +66,7 @@ export function ReviewChecklist({
             <Pass text="No schedule conflicts" />
           )}
           {conflicts.map((conflict) => (
-            <Link key={conflict.publication_id} href={`/media-workspace/publications/${conflict.publication_id}`} className="block pl-6 text-muted-foreground underline underline-offset-2">
+            <Link key={conflict.publication_id} href={`/media-workspace/program/${conflict.publication_id}`} className="block pl-6 text-muted-foreground underline underline-offset-2">
               {conflict.name} ({conflict.priority})
             </Link>
           ))}

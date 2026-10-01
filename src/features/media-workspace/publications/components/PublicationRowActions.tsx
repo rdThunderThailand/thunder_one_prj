@@ -33,10 +33,10 @@ function hrefFor(action: RowAction, id: string): string | null {
   switch (action) {
     case "edit":
     case "publish":
-      return `/media-workspace/publications/create?id=${id}`;
+      return `/media-workspace/program/create?id=${id}`;
     case "open":
     case "view":
-      return `/media-workspace/publications/${id}/edit`;
+      return `/media-workspace/program/${id}/edit`;
     default:
       return null;
   }
@@ -60,7 +60,7 @@ export function PublicationRowActions({
       {primaryHref && (
         <Link
           href={primaryHref}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-8 text-xs")}
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-14 px-0 text-[10px]")}
         >
           {LABELS[primary]}
         </Link>

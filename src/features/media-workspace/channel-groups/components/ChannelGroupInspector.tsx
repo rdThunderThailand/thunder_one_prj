@@ -117,7 +117,7 @@ export function ChannelGroupInspector({
       )}
 
       <div className="mt-4 flex flex-nowrap items-center gap-2">
-        <Link href={`/media-workspace/publications/create?group=${group.id}`} className={buttonClasses("primary", "min-w-0 flex-1 whitespace-nowrap px-3")}>
+        <Link href={`/media-workspace/program/create?group=${group.id}`} className={buttonClasses("primary", "min-w-0 flex-1 whitespace-nowrap px-3")}>
           <PlusIcon />
           Create Program
         </Link>

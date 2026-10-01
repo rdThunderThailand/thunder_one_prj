@@ -18,10 +18,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/lovable/core";
+import { EmptyState, ErrorState } from "@/components/ui/lovable/core";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { cn } from "@/lib/utils";
-import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { LibraryPagination, LibraryRowsSkeleton } from "../../content-library/LibraryChrome";
+import { LibraryShell } from "../../content-library/LibraryShell";
 import { fetchChannelGroupOptions, fetchChannels } from "../../channels/services/channels-api";
 import {
   cancelPublication,
@@ -174,7 +175,7 @@ export function PublicationsListPage() {
       item,
       async () => {
         const res = await duplicatePublication(item.id);
-        router.push(`/media-workspace/publications/create?id=${res.publication_id}`);
+        router.push(`/media-workspace/program/create?id=${res.publication_id}`);
       },
       "ทำสำเนาไม่สำเร็จ",
     );
@@ -212,7 +213,7 @@ export function PublicationsListPage() {
         />
       );
     }
-    if (isLoading && !data) return <LoadingState rows={5} />;
+    if (isLoading && !data) return <LibraryRowsSkeleton />;
     if (!data || data.publications.length === 0) {
       return (
         <EmptyState
@@ -223,7 +224,7 @@ export function PublicationsListPage() {
             isFiltered ? (
               <Button variant="outline" size="sm" onClick={clearFilters}>ล้างตัวกรอง</Button>
             ) : (
-              <Link href="/media-workspace/publications/create" className={buttonVariants({ size: "sm" })}>Create Program</Link>
+              <Link href="/media-workspace/program/create" className={buttonVariants({ size: "sm" })}>Create Program</Link>
             )
           }
         />
@@ -249,27 +250,31 @@ export function PublicationsListPage() {
       <PageHeader
         title="Programs"
         subtitle="จัดการโปรแกรมที่ออกอากาศบนช่องของคุณ"
+        titleInTopbar
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" disabled title="เร็วๆ นี้" className="gap-1.5">
-              <UploadIcon className="h-4 w-4" />
+          <>
+            <Button variant="outline" size="sm" disabled title="เร็วๆ นี้">
+              <UploadIcon className="h-3.5 w-3.5" />
               Import Program
             </Button>
-            <Link href="/media-workspace/publications/create" className={cn(buttonVariants(), "gap-1.5")}>
-              <PlusIcon className="h-4 w-4" />
+            <Link href="/media-workspace/program/create" className={buttonVariants({ size: "sm" })}>
+              <PlusIcon className="h-3.5 w-3.5" />
               Create Program
             </Link>
-          </div>
+          </>
         }
       />
 
       <PublicationKpiCards counts={data?.counts_by_status ?? null} />
 
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-        <PublicationsFilterBar value={filters} options={options} onChange={handleFilterChange} />
-        {actionError && <p className="text-sm text-danger">{actionError}</p>}
+      <LibraryShell
+        toolbar={<PublicationsFilterBar value={filters} options={options} onChange={handleFilterChange} />}
+        title="All Programs"
+        meta={data ? `${data.total.toLocaleString()} programs` : "…"}
+      >
+        {actionError && <p className="mb-3 text-[10px] text-danger">{actionError}</p>}
         {renderBody()}
-      </div>
+      </LibraryShell>
 
       <AlertDialog open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
         <AlertDialogContent>

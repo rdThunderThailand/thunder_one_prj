@@ -116,7 +116,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
       <Card className="flex min-h-[509px] flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:row-span-2">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Today&apos;s Schedule</h2>
-          <Link href="/media-workspace/publications" className="text-xs font-medium text-primary hover:underline">
+          <Link href="/media-workspace/now-next" className="text-xs font-medium text-primary hover:underline">
             View full calendar →
           </Link>
         </div>

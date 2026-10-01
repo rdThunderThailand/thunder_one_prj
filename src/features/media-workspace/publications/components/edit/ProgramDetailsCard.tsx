@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText } from "lucide-react";
 import { useState } from "react";
 import { XIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/lovable/input";
@@ -32,6 +33,7 @@ export function ProgramDetailsCard({
   return (
     <EditCard
       step="1. Program Details"
+      icon={FileText}
       error={error}
     >
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">

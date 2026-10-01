@@ -11,7 +11,7 @@ export interface QuickAccessItem {
 }
 
 export const MANAGER_QUICK_ACCESS: QuickAccessItem[] = [
-  { id: "create-publication", label: "Create Publication", icon: <MegaphoneIcon />, href: "/media-workspace/publications/create" },
+  { id: "create-publication", label: "Create Publication", icon: <MegaphoneIcon />, href: "/media-workspace/program/create" },
   { id: "upload-media", label: "Upload Media", icon: <UploadIcon />, href: "/media-workspace/assets/upload" },
   { id: "my-work", label: "My Work", icon: <CheckCircleIcon />, href: "/my-work" },
   { id: "reports", label: "View Reports", icon: <ChartIcon />, href: null },
@@ -19,7 +19,7 @@ export const MANAGER_QUICK_ACCESS: QuickAccessItem[] = [
 ];
 
 export const EMPLOYEE_QUICK_ACCESS: QuickAccessItem[] = [
-  { id: "create-publication", label: "Create Publication", icon: <MegaphoneIcon />, href: "/media-workspace/publications/create" },
+  { id: "create-publication", label: "Create Publication", icon: <MegaphoneIcon />, href: "/media-workspace/program/create" },
   { id: "upload-media", label: "Upload Media", icon: <UploadIcon />, href: "/media-workspace/assets/upload" },
   { id: "my-work", label: "My Work", icon: <CheckCircleIcon />, href: "/my-work" },
   { id: "calendar", label: "Calendar", icon: <CalendarIcon />, href: null },
