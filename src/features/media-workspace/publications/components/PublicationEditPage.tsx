@@ -103,13 +103,11 @@ export function PublicationEditPage({ id }: { id: string }) {
       .then((copy) => router.push(`${PROGRAM_HREF}/${copy.publication_id}/edit`))
       .catch(() => setActionError("Duplicate failed. Try again."));
 
-  const publishDraft = () =>
-    edit.saveDraft(true).then((failed) => failed === null && router.push(`${PROGRAM_HREF}/${id}`));
-
-  const publishChanges = () =>
-    edit.publishChanges().then((failed) => {
+  const confirmPublish = () =>
+    (isDraft ? edit.saveDraft(true) : edit.publishChanges()).then((failed) => {
       // Only a `[publish]` failure is explained inside the modal; every other outcome closes it.
       if (failed?.part !== "publish") setPublishOpen(false);
+      if (isDraft && failed === null) router.push(`${PROGRAM_HREF}/${id}`);
     });
 
   return (
@@ -149,7 +147,7 @@ export function PublicationEditPage({ id }: { id: string }) {
             <Button
               size="sm"
               disabled={!canPublish}
-              onClick={publishDraft}
+              onClick={() => setPublishOpen(true)}
             >
               Publish
             </Button>
@@ -270,12 +268,13 @@ export function PublicationEditPage({ id }: { id: string }) {
       <PublishChangesDialog
         open={publishOpen}
         onClose={() => setPublishOpen(false)}
+        isFirstPublish={isDraft}
         checkConflicts={edit.checkConflicts}
-        removedTargets={edit.removedTargets}
-        contentNotes={contentNotes}
+        removedTargets={isDraft ? [] : edit.removedTargets}
+        contentNotes={isDraft ? [] : contentNotes}
         publishError={failure?.part === "publish" ? failure.message : null}
         busy={busy}
-        onConfirm={publishChanges}
+        onConfirm={confirmPublish}
       />
 
       <AlertDialog
