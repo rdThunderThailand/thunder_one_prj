@@ -15,6 +15,8 @@ import { fetchNowNext, type NowNextRow } from "../../now-next";
 import { DEFAULT_TIMEZONE, utcToZonedParts } from "../../schedule";
 import { DISPLAY_STATUS_LABELS } from "../../publication-list-display";
 import type { ProgramEditState } from "../../program-edit";
+import type { ChannelListItem } from "../../../channels/types";
+import { reachedChannels, selectionFromTargets } from "../../target-picker";
 import { PRIORITIES, type Priority, type PublicationDetail, type PublicationDisplayStatus } from "../../types";
 
 const STATUS_VARIANT = {
@@ -69,12 +71,12 @@ function StatusCard({
   );
 }
 
-/** Next hour on one Channel, from Now & Next — what is on screen now and what follows (ADR 0065). */
-function PlaybackPreview({ state }: { state: ProgramEditState }) {
-  const channelTargets = state.targets.filter((t) => t.target_type === "channel" && t.channel_id);
+/** Next hour on one Channel, from Now & Next — what is on screen now and what follows (ADR 0065).
+ *  `channels` are the Channels the targets reach, directly or through a Group. */
+function PlaybackPreview({ channels }: { channels: readonly ChannelListItem[] }) {
   const [channelId, setChannelId] = useState<string | null>(null);
   const [rows, setRows] = useState<NowNextRow[] | null>(null);
-  const selected = channelId ?? channelTargets[0]?.channel_id ?? null;
+  const selected = channelId ?? channels[0]?.id ?? null;
 
   useEffect(() => {
     let alive = true;
@@ -98,7 +100,7 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
       <h2 className="mb-3 text-sm font-bold text-foreground">
         Playback Preview <span className="text-xs font-normal text-muted-foreground">(Next 1 Hour)</span>
       </h2>
-      {channelTargets.length > 0 ? (
+      {channels.length > 0 ? (
         <Select
           value={selected ?? undefined}
           onValueChange={setChannelId}
@@ -107,21 +109,21 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {channelTargets.map((t) => (
+            {channels.map((channel) => (
               <SelectItem
-                key={t.channel_id}
-                value={t.channel_id as string}
+                key={channel.id}
+                value={channel.id}
               >
-                {t.name ?? t.channel_id}
+                {channel.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       ) : (
-        <p className="text-xs text-muted-foreground">Preview follows a Channel target.</p>
+        <p className="text-xs text-muted-foreground">Add a Channel or a Group with Channels as the target to see its next hour.</p>
       )}
       {rows === null && <p className="text-xs text-muted-foreground">Loading…</p>}
-      {rows !== null && channelTargets.length > 0 && occurrences.length === 0 && (
+      {rows !== null && channels.length > 0 && occurrences.length === 0 && (
         <p className="text-xs text-muted-foreground">Nothing scheduled on this Channel in the next hour.</p>
       )}
       <ul className="flex flex-col gap-2">
@@ -229,6 +231,7 @@ function ProgramInformation({
 export function ProgramEditRail({
   detail,
   state,
+  channels,
   status,
   isDirty,
   readOnly,
@@ -236,19 +239,21 @@ export function ProgramEditRail({
 }: {
   detail: PublicationDetail;
   state: ProgramEditState;
+  channels: readonly ChannelListItem[];
   status: PublicationDisplayStatus;
   isDirty: boolean;
   readOnly: boolean;
   onPriority: (priority: Priority) => void;
 }) {
+  const reached = reachedChannels(channels, selectionFromTargets(state.targets));
   return (
     <aside className="flex flex-col gap-4">
       <StatusCard
         status={status}
-        channelCount={state.targets.filter((t) => t.target_type === "channel").length}
+        channelCount={reached.length}
         unpublished={isDirty}
       />
-      <PlaybackPreview state={state} />
+      <PlaybackPreview channels={reached} />
       <ProgramInformation
         detail={detail}
         state={state}

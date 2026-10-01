@@ -258,6 +258,7 @@ export function PublicationEditPage({ id }: { id: string }) {
         <ProgramEditRail
           detail={detail}
           state={state}
+          channels={edit.channels}
           status={displayStatus}
           isDirty={isDirty}
           readOnly={isEnded}
