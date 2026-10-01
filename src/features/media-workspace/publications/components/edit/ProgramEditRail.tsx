@@ -122,7 +122,13 @@ function PlaybackPreview({ channels }: { channels: readonly ChannelListItem[] })
       ) : (
         <p className="text-xs text-muted-foreground">Add a Channel or a Group with Channels as the target to see its next hour.</p>
       )}
-      {rows === null && <p className="text-xs text-muted-foreground">Loading…</p>}
+      {rows === null && (
+        <div role="status" aria-busy="true" className="flex flex-col gap-2">
+          <span className="sr-only">Loading next hour</span>
+          <div className="h-3 w-full animate-pulse rounded bg-muted" />
+          <div className="h-3 w-4/5 animate-pulse rounded bg-muted" />
+        </div>
+      )}
       {rows !== null && channels.length > 0 && occurrences.length === 0 && (
         <p className="text-xs text-muted-foreground">Nothing scheduled on this Channel in the next hour.</p>
       )}

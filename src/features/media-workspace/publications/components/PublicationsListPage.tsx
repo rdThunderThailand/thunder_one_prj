@@ -18,10 +18,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/lovable/core";
+import { EmptyState, ErrorState } from "@/components/ui/lovable/core";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { cn } from "@/lib/utils";
-import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { LibraryPagination, LibraryRowsSkeleton } from "../../content-library/LibraryChrome";
 import { LibraryShell } from "../../content-library/LibraryShell";
 import { fetchChannelGroupOptions, fetchChannels } from "../../channels/services/channels-api";
 import {
@@ -213,7 +213,7 @@ export function PublicationsListPage() {
         />
       );
     }
-    if (isLoading && !data) return <LoadingState rows={5} />;
+    if (isLoading && !data) return <LibraryRowsSkeleton />;
     if (!data || data.publications.length === 0) {
       return (
         <EmptyState

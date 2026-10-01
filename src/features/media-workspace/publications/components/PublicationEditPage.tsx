@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/lovable/dropdown-menu";
-import { LoadingState, ErrorState } from "@/components/ui/lovable/core";
+import { ErrorState } from "@/components/ui/lovable/core";
 import {
   cancelPublication,
   deletePublication,
@@ -36,6 +36,7 @@ import { CONFIRM_COPY } from "./edit/confirm-copy";
 import { ProgramBreadcrumb } from "./edit/ProgramBreadcrumb";
 import { ProgramDetailsCard } from "./edit/ProgramDetailsCard";
 import { ProgramEditRail } from "./edit/ProgramEditRail";
+import { ProgramEditSkeleton } from "./edit/ProgramEditSkeleton";
 import { ProgramPreviewButton } from "./edit/ProgramPreviewButton";
 import { PublishChangesDialog } from "./edit/PublishChangesDialog";
 import { ContentSourceCard } from "./edit/ContentSourceCard";
@@ -64,7 +65,7 @@ export function PublicationEditPage({ id }: { id: string }) {
     return <ErrorState description={edit.loadError.message} />;
   }
   if (!detail || !state || !displayStatus) {
-    return <LoadingState />;
+    return <ProgramEditSkeleton />;
   }
 
   const isDraft = displayStatus === "draft";
