@@ -2,7 +2,7 @@
 // Only export what other layers (app routes / other features) are allowed to consume.
 export { PlaylistsListPage } from "./components/PlaylistsListPage";
 export { PlaylistEditorPage } from "./components/PlaylistEditorPage";
-export { fetchPlaylist, fetchPlaylists } from "./services/playlists-api";
+export { fetchPlaylist, fetchPlaylists, setPlaylistPlayMode } from "./services/playlists-api";
 // Read-side display helpers — publications' Step 5 preview needs a playlist's name,
 // cover and duration without re-deriving them from raw metadata.
 export { decodeMetadata, resolveCoverAssetId } from "./metadata";

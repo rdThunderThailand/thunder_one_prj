@@ -9,12 +9,14 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { CalendarIcon, ClockIcon, ExternalLinkIcon, GridIcon, ListIcon, SearchIcon, UsersIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { fetchPlaylist, fetchPlaylists } from "@/lib/api/media-api";
-import type { PlaylistDetail, PlaylistListItem } from "@/types/domain";
+import { fetchContentFolders, fetchPlaylist, fetchPlaylists } from "@/lib/api/media-api";
+import type { ContentFolder, PlaylistDetail, PlaylistListItem } from "@/types/domain";
 import { formatDuration } from "../../playlists/duration";
 import { decodeMetadata } from "../../playlists/metadata";
 import { playlistDisplayStatus, statusBadge } from "../../playlists/status-display";
 import { defaultPlaylistPickerFilters, filterPlaylistPickerItems, type PlaylistPickerFilters } from "../playlist-picker-filter";
+import { pickerFolderCounts, pickerFolderMatcher, type PickerFolder } from "../picker-folder";
+import { PickerFolderSection } from "./PickerFolderSection";
 import { PickerDetailPanel, PickerFilterChoice, PickerFilterPanel, PickerFilterSection, type PickerDetailField } from "./PickerPanels";
 
 const PER_PAGE = 9;
@@ -34,6 +36,8 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
   const [playlists, setPlaylists] = useState<PlaylistListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState(defaultPlaylistPickerFilters);
+  const [folders, setFolders] = useState<ContentFolder[]>([]);
+  const [folder, setFolder] = useState<PickerFolder>("all");
   const [stagedId, setStagedId] = useState(selectedId);
   const [detailResult, setDetailResult] = useState<{ id: string; detail: PlaylistDetail } | null>(null);
   const [page, setPage] = useState(1);
@@ -48,13 +52,24 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
   }, []);
 
   useEffect(() => {
+    let alive = true;
+    // Folders only narrow the list; without them the picker still works.
+    fetchContentFolders("playlist").then((rows) => { if (alive) setFolders(rows); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
     if (!stagedId) return;
     let alive = true;
     fetchPlaylist(stagedId).then((detail) => { if (alive) setDetailResult({ id: stagedId, detail }); }).catch(() => undefined);
     return () => { alive = false; };
   }, [stagedId]);
 
-  const filtered = useMemo(() => filterPlaylistPickerItems(playlists ?? [], filters), [playlists, filters]);
+  const filtered = useMemo(
+    () => filterPlaylistPickerItems(playlists ?? [], filters).filter((row) => pickerFolderMatcher(folder, folders)(row.folder_id)),
+    [playlists, filters, folder, folders],
+  );
+  const folderCounts = useMemo(() => pickerFolderCounts((playlists ?? []).map((row) => row.folder_id), folders), [playlists, folders]);
   const sorted = useMemo(
     () =>
       [...filtered].sort((a, b) => {
@@ -121,8 +136,9 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
         </Link>
       </div>
       <div className="grid h-[min(42rem,calc(100vh-15rem))] min-h-[30rem] grid-cols-[11rem_minmax(0,1fr)_16rem] overflow-hidden border-b border-border">
-        <PickerFilterPanel onClear={() => { setFilters(defaultPlaylistPickerFilters); setPage(1); }}>
-          <PickerFilterSection label="Status">
+        <PickerFilterPanel onClear={() => { setFilters(defaultPlaylistPickerFilters); setFolder("all"); setPage(1); }}>
+          <PickerFolderSection folders={folders} counts={folderCounts} value={folder} onChange={(next) => { setFolder(next); setPage(1); }} />
+          <PickerFilterSection label="Status" divided>
             <div role="radiogroup" aria-label="Status">
               <PickerFilterChoice checked={filters.status === "all"} label="All Status" onClick={() => update({ status: "all" })} />
               <PickerFilterChoice

@@ -50,3 +50,6 @@ next-env.d.ts
 /index.js
 /mainView.js
 /mainWindow.js
+
+# Program redesign mockups: only the downscaled JPEGs are committed
+docs/program/figma-mockup/*.png

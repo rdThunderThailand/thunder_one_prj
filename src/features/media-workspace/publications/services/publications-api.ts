@@ -1,4 +1,5 @@
 import { requestApi } from "@/lib/api/media-api";
+import { buildPublicationListQuery } from "../publication-list-query";
 
 // Shared media endpoints live in the lib layer; re-exported so existing call sites
 // keep importing from this service.
@@ -10,7 +11,9 @@ import type {
   Publication,
   PublicationDetail,
   PublicationListItem,
+  PublicationListParams,
   PublicationSchedule,
+  PublicationsPage,
   PublicationTarget,
   Recurrence,
   ScheduleConflict,
@@ -102,6 +105,17 @@ export async function fetchPublications(
   return [];
 }
 
+/** The paged, filtered read behind the Programs list (BE-1). `fetchPublications` stays for the
+ *  callers that want every row. */
+export async function fetchPublicationsPage(
+  params: PublicationListParams
+): Promise<PublicationsPage> {
+  return requestApi<PublicationsPage>(
+    "GET",
+    `/media/publications${buildPublicationListQuery(params)}`
+  );
+}
+
 export async function fetchPublication(id: string): Promise<PublicationDetail> {
   return requestApi<PublicationDetail>("GET", `/media/publications/${id}`);
 }
@@ -135,8 +149,8 @@ export async function savePublicationContent(
 export async function savePublicationSchedule(
   id: string,
   payload: SchedulePayload
-): Promise<PublicationSchedule> {
-  return requestApi<PublicationSchedule>(
+): Promise<PublicationSchedule & { revision: number }> {
+  return requestApi<PublicationSchedule & { revision: number }>(
     "PUT",
     `/media/publications/${id}/schedule`,
     payload
@@ -164,6 +178,20 @@ export async function republishPublication(id: string): Promise<{ job_id?: strin
     "POST",
     `/media/publications/${id}/republish`
   );
+}
+
+/** Publish changes on a Scheduled/Live Program (ADR 0080): the whole Program in, a new Job out.
+ *  Continue from the returned `revision` without reloading. */
+export async function updatePublishedPublication(
+  id: string,
+  body: Record<string, unknown>
+): Promise<{
+  publication_id: string;
+  revision: number;
+  job_id: string;
+  target_device_count: number;
+}> {
+  return requestApi("POST", `/media/publications/${id}/update-published`, body);
 }
 
 /** Retries failed/offline-stuck targets. Omit deviceIds to retry every eligible target. */

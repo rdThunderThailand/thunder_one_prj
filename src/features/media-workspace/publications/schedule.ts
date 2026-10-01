@@ -228,7 +228,7 @@ function pad2(n: number): string {
 }
 
 /** Day-of-week for a pure "YYYY-MM-DD", 0=Sun..6=Sat (timezone-independent). */
-function ymdDow(ymd: string): number {
+export function ymdDow(ymd: string): number {
   const [y, m, d] = ymd.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
@@ -305,11 +305,19 @@ export function classifyPublicationAiring(
   // Weekly/monthly: inside the overall window, but only on listed days and within
   // the daily time window — both read in the publication's own timezone.
   const { date, time } = utcToZonedParts(now.toISOString(), schedule.timezone);
-  const isAirDay = rec.freq === "monthly"
-    ? rec.month_days?.includes(ymdDay(date))
-    : rec.days?.includes(ymdDow(date));
-  if (!isAirDay) return "next";
+  if (!recurrenceAirsOn(rec, date)) return "next";
   return withinDailyWindow(time, rec.daily_start, rec.daily_end) ? "live" : "next";
+}
+
+/** Does a weekly / monthly / dates recurrence air on this local "YYYY-MM-DD"? Mirrors Thunder_Core's
+ *  `media_core.recurrence_airs_on` (ADR 0012, 0014); the daily window is checked separately. */
+export function recurrenceAirsOn(recurrence: Recurrence, ymd: string): boolean {
+  if (!("freq" in recurrence)) return true;
+  // `in` does not narrow away the `{}` member (it has an index signature), so narrow by hand.
+  const rec = recurrence as Exclude<Recurrence, Record<string, never>>;
+  if (rec.freq === "dates") return rec.dates.includes(ymd);
+  if (rec.freq === "monthly") return rec.month_days.includes(ymdDay(ymd));
+  return rec.days.includes(ymdDow(ymd));
 }
 
 /** "HH:MM" comparison. An end at or before the start means the window wraps midnight. */
@@ -319,7 +327,7 @@ function withinDailyWindow(time: string, start: string, end: string): boolean {
   return end > start ? time >= start && time < end : time >= start || time < end;
 }
 
-function shiftYmd(ymd: string, days: number): string {
+export function shiftYmd(ymd: string, days: number): string {
   const [y, m, d] = ymd.split("-").map(Number);
   const t = new Date(Date.UTC(y, m - 1, d + days));
   return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-${pad2(t.getUTCDate())}`;

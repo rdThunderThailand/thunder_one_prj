@@ -77,6 +77,50 @@ export type PublicationListItem = {
   created_by?: { id: string; display_name: string } | null;
   created_at?: string;
   updated_at?: string;
+  /** Server-computed badge (docs/adr/0080 "Display status") — display it, never recompute. */
+  display_status?: PublicationDisplayStatus;
+  /** Playlist or Layout name. */
+  content_name?: string | null;
+  /** Signed for 1 h by the route; null for Layout rows (no cover exists) and empty Playlists. */
+  thumbnail_url?: string | null;
+  next_airing_at?: string | null;
+  /** From the newest Job only; null for a Program that never had one. */
+  delivery?: PublicationListDelivery | null;
+};
+
+export const DISPLAY_STATUSES = ["draft", "publishing", "scheduled", "live", "ended"] as const;
+
+export type PublicationDisplayStatus = (typeof DISPLAY_STATUSES)[number];
+
+export type PublicationListDelivery = {
+  total: number;
+  stage3_done: number;
+  offline: number;
+  failed: number;
+};
+
+export const LIST_SORTS = ["updated_desc", "name_asc", "starts_desc", "created_desc"] as const;
+
+export type PublicationListSort = (typeof LIST_SORTS)[number];
+
+/** Query for `GET /media/publications` (BE-1). `limit` omitted = every row, for the old callers. */
+export type PublicationListParams = {
+  display_status?: PublicationDisplayStatus;
+  channel_id?: string;
+  group_id?: string;
+  tag_id?: string;
+  search?: string;
+  sort?: PublicationListSort;
+  page?: number;
+  limit?: number;
+};
+
+export type PublicationsPage = {
+  publications: PublicationListItem[];
+  /** After every filter, including the badge. */
+  total: number;
+  /** Ignores only `display_status`, so the KPI cards stay put while a badge filter is on. */
+  counts_by_status: Record<PublicationDisplayStatus, number>;
 };
 
 /** Per-file ack detail, keyed by media_asset_id. Diagnostic only — see migration 084. */
@@ -138,6 +182,8 @@ export type PublicationDetail = {
   status: string;
   /** Clock-aware lifecycle for display: adds scheduled | ended. */
   effective_status?: string;
+  /** ADR 0080 badge, computed by `media_publication_get`. Absent only on a Core that predates it. */
+  display_status?: PublicationDisplayStatus;
   /** Optimistic-lock counter — bumped on every draft write (docs/adr/0003). */
   revision?: number;
   playlist?: { id: string; name: string } | null;
@@ -148,6 +194,8 @@ export type PublicationDetail = {
   drift_check?: PublicationDriftCheck | null;
   tags: string[];
   created_at?: string;
+  /** Absent on a backend that does not return it; the Edit page then shows a dash. */
+  updated_at?: string;
   activated_at?: string;
   /** Set only when status is cancelled (migration 067) — the delivery-progress "completed at"
    * for a Cancelled result reads this since no target activity marks a cancellation. */
@@ -194,7 +242,9 @@ export type ScheduleType = (typeof SCHEDULE_TYPES)[number];
 export type Recurrence =
   | Record<string, never>
   | { freq: "weekly"; days: number[]; daily_start: string; daily_end: string }
-  | { freq: "monthly"; month_days: number[]; daily_start: string; daily_end: string };
+  | { freq: "monthly"; month_days: number[]; daily_start: string; daily_end: string }
+  /** Custom days (Thunder_Core ADR 0014): local "YYYY-MM-DD" dates in `timezone`, stored sorted and unique. */
+  | { freq: "dates"; dates: string[]; daily_start: string; daily_end: string };
 
 /** Wizard-local step-4 form. Dates/times are wall-clock in `timezone`. */
 export type ScheduleForm = {

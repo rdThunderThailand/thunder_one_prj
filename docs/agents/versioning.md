@@ -65,6 +65,7 @@ the count while bumping PATCH, not MINOR.
 | 1 | `v0.1.0` (tagged retroactively on `bca6937`) | #118 | 2026-09-16 |
 | 2 | `v0.2.0` | #139 | 2026-09-22 |
 | 3 | `v0.3.0` | #161 | 2026-09-28 |
+| 4 | `v0.4.0` | #177 | 2026-09-29 |
 
 Append a row for every release. This table is the only release log we keep.
 
