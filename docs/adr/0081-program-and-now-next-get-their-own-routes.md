@@ -24,5 +24,5 @@ Two operator-facing pages shared one route prefix with the API's noun: the Progr
 
 ## Consequences
 
-- Links that meant "the Programs list" but pointed at `/media-workspace/publications` (Now & Next) keep their behaviour and now point at `/now-next`: `PublicationEditPage` `LIST_HREF`, detail page back links, Channel inspector "View Programs →", the `?q=` link in `ChannelDetailPanel`. Whether any of them should go to `/program` is a separate UI decision.
+- Links that meant "the Programs list" but pointed at `/media-workspace/publications` (Now & Next) were first kept as-is and pointed at `/now-next`. v0.5.2 decided they mean Programs and repointed them to `/program`: `PublicationEditPage` (breadcrumb, discard, and the Duplicate / Publish / View Published Version id links, now one `PROGRAM_HREF`), `PublicationDetailPage` and `CreatePublicationPage` back/cancel/after-save targets, Channel Group inspector "View Programs →", Edit Channel sidebar "Go to Programs". Still Now & Next on purpose: `LowerOverview` "View full calendar →" (a schedule view), `ChannelDetailPanel` "Now Playing → View Programs →" (its `?q=` filter is read only by Now & Next), `DemoPublicationDetailPage` back link.
 - Ships as v0.5.1 together with the Ended-page button fix (owner's call, same PR).

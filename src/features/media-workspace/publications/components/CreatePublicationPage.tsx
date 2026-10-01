@@ -291,7 +291,7 @@ export function CreatePublicationPage() {
       }
     }
     state.cancelDraft();
-    router.push("/media-workspace/now-next");
+    router.push("/media-workspace/program");
   };
 
   const handleCancelClick = () => {
@@ -375,7 +375,7 @@ export function CreatePublicationPage() {
               {retrying ? "กำลังโหลด…" : "ลองใหม่"}
             </Button>
           )}
-          <Link href="/media-workspace/now-next" className={buttonClasses("secondary")}>
+          <Link href="/media-workspace/program" className={buttonClasses("secondary")}>
             กลับไปยังรายการ
           </Link>
         </div>

@@ -44,7 +44,7 @@ import { ScheduleCard, TargetCard } from "./edit/ProgramSummaryCards";
 
 type PendingAction = "discard" | "end" | "delete" | null;
 
-const LIST_HREF = "/media-workspace/now-next";
+const PROGRAM_HREF = "/media-workspace/program";
 
 export function PublicationEditPage({ id }: { id: string }) {
   const router = useRouter();
@@ -87,24 +87,24 @@ export function PublicationEditPage({ id }: { id: string }) {
 
   const goBack = () => {
     setLeaveTo(null);
-    return isDirty ? setPending("discard") : router.push(LIST_HREF);
+    return isDirty ? setPending("discard") : router.push(PROGRAM_HREF);
   };
 
   const confirmPending = () => {
     const action = pending;
     setPending(null);
-    if (action === "discard") return router.push(leaveTo ?? LIST_HREF);
+    if (action === "discard") return router.push(leaveTo ?? PROGRAM_HREF);
     const run = action === "end" ? cancelPublication(id) : deletePublication(id);
-    run.then(() => router.push(LIST_HREF)).catch(() => setActionError("Action failed. Try again."));
+    run.then(() => router.push(PROGRAM_HREF)).catch(() => setActionError("Action failed. Try again."));
   };
 
   const duplicate = () =>
     duplicatePublication(id)
-      .then((copy) => router.push(`${LIST_HREF}/${copy.publication_id}/edit`))
+      .then((copy) => router.push(`${PROGRAM_HREF}/${copy.publication_id}/edit`))
       .catch(() => setActionError("Duplicate failed. Try again."));
 
   const publishDraft = () =>
-    edit.saveDraft(true).then((failed) => failed === null && router.push(`${LIST_HREF}/${id}`));
+    edit.saveDraft(true).then((failed) => failed === null && router.push(`${PROGRAM_HREF}/${id}`));
 
   const publishChanges = () =>
     edit.publishChanges().then((failed) => {
@@ -117,7 +117,7 @@ export function PublicationEditPage({ id }: { id: string }) {
       <PageHeader title={`Edit Program: ${detail.name}`} titleInTopbar />
       <header className="flex flex-wrap items-center justify-between gap-3">
         <ProgramBreadcrumb
-          listHref={LIST_HREF}
+          listHref={PROGRAM_HREF}
           name={detail.name}
           status={displayStatus}
         />
@@ -178,7 +178,7 @@ export function PublicationEditPage({ id }: { id: string }) {
               {!isDraft && <DropdownMenuItem onSelect={duplicate}>Duplicate Program</DropdownMenuItem>}
               {!isDraft && (
                 <DropdownMenuItem asChild>
-                  <Link href={`${LIST_HREF}/${id}`}>View Published Version</Link>
+                  <Link href={`${PROGRAM_HREF}/${id}`}>View Published Version</Link>
                 </DropdownMenuItem>
               )}
               {isDraft && (
