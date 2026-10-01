@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
 import type { PlayMode } from "@/features/media-workspace/playlists/types";
 import { fetchAffectedPrograms } from "@/features/media-workspace/publish-changes/publish-changes-api";
@@ -22,10 +22,19 @@ export function PlaybackPatternField({
   playlistId,
   choice,
   onChange,
+  disabled = false,
+  showIndex = true,
+  note,
 }: {
   playlistId: string | null;
   choice: PatternChoice | null;
   onChange: (choice: PatternChoice) => void;
+  /** Locks the radios while the parent is saving. */
+  disabled?: boolean;
+  /** The numbered badge belongs to the Edit modal's three steps. */
+  showIndex?: boolean;
+  /** Replaces the default "changes the Playlist itself" warning (the wizard saves on its own Apply). */
+  note?: ReactNode;
 }) {
   const [programCount, setProgramCount] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
@@ -48,14 +57,16 @@ export function PlaybackPatternField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playlistId]);
 
-  const isDisabled = !playlistId || !choice;
+  const isDisabled = !playlistId || !choice || disabled;
   const isChanged = choice !== null && choice.selected !== choice.original;
 
   return (
     <section className="flex gap-3">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-        3
-      </span>
+      {showIndex && (
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+          3
+        </span>
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Playback Pattern (Optional)</h3>
@@ -94,7 +105,8 @@ export function PlaybackPatternField({
           })}
         </div>
         {failed && <p className="text-xs text-danger">Could not load the Playlist&apos;s playback settings.</p>}
-        {isChanged && (
+        {isChanged && note}
+        {isChanged && !note && (
           <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
             This changes the Playlist itself
             {programCount !== null && ` — used by ${programCount} active or scheduled Program${programCount === 1 ? "" : "s"}`}.

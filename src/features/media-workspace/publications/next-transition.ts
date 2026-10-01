@@ -35,6 +35,16 @@ export async function attemptNext(
 }
 
 /**
+ * Where a re-opened server draft lands: the first gated step it still fails,
+ * else Review. The server keeps no "furthest step", and every Next saves, so a
+ * draft may have been saved from any step — validation is the only honest signal.
+ */
+export function resumeStep(state: DraftFields): WizardStepId {
+  const gated: WizardStepId[] = [1, 2, 3];
+  return gated.find((step) => !validateStep(step, state).valid) ?? 4;
+}
+
+/**
  * True while a `?id=` draft is still being fetched, so the wizard can render
  * nothing instead of one frame of the previous draft's values.
  */

@@ -30,7 +30,9 @@ export function describeSchedule(schedule: PublicationSchedule): ScheduleSummary
       return { title: "One time", hours: "All day", range: start.date, days: [] };
     }
     const from = `${start.date} ${start.time}`;
-    return { title: "One time", hours: "", range: end ? `${from} – ${end.date} ${end.time}` : `From ${from} · No end date`, days: [] };
+    // Same split as scheduleToDraft (ADR 0082 §4): a one-off ending on its start day is one-time.
+    const title = end?.date === start.date ? "One time" : "Continuous";
+    return { title, hours: "", range: end ? `${from} – ${end.date} ${end.time}` : `From ${from} · No end date`, days: [] };
   }
 
   const last = lastAiringDay(schedule);

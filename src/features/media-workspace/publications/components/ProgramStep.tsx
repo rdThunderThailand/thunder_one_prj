@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
 import { ChevronDownIcon } from "@/components/ui/icons";
 import type { MediaAsset, ScheduleConflict } from "../types";
@@ -37,6 +37,9 @@ export function ProgramStep({
   conflictsError,
   showFieldErrors,
 }: ProgramStepProps) {
+  // Bumped when How to Play changes the Playlist's pattern, so the rail reloads its preview (ADR 0083).
+  const [playlistRevision, setPlaylistRevision] = useState(0);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
@@ -49,7 +52,7 @@ export function ProgramStep({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 min-[1400px]:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
             <ProgramColumn index={1} title="Where to Play" subtitle="เลือกช่องทาง / หน้าจอ">
               <WhereToPlayPanel
                 channels={channels}
@@ -70,14 +73,14 @@ export function ProgramStep({
             </ProgramColumn>
 
             <ProgramColumn index={3} title="How to Play" subtitle="ตั้งค่าการเล่น">
-              <HowToPlayPanel assets={assets} />
+              <HowToPlayPanel assets={assets} onPlaylistChanged={() => setPlaylistRevision((n) => n + 1)} />
             </ProgramColumn>
           </div>
 
           <AdditionalSettings />
         </div>
 
-        <ProgramSummaryRail channels={channels} assets={assets} />
+        <ProgramSummaryRail channels={channels} assets={assets} refreshKey={playlistRevision} />
       </div>
     </div>
   );
