@@ -17,13 +17,13 @@ const COMING_SOON = "เร็วๆ นี้";
 // Frame 03 lists the week Mon → Sun; WEEKDAYS is Sun-first to match Postgres DOW.
 const MONDAY_FIRST = [...WEEKDAYS.slice(1), WEEKDAYS[0]];
 
-function ChangeButton({ label, onClick }: { label: string; onClick?: () => void }) {
+function ChangeButton({ label, disabled, onClick }: { label: string; disabled?: boolean; onClick?: () => void }) {
   return (
     <Button
       variant="outline"
       size="sm"
-      disabled={!onClick}
-      title={onClick ? undefined : COMING_SOON}
+      disabled={disabled || !onClick}
+      title={onClick || disabled ? undefined : COMING_SOON}
       onClick={onClick}
     >
       {label}
@@ -34,11 +34,13 @@ function ChangeButton({ label, onClick }: { label: string; onClick?: () => void 
 export function TargetCard({
   state,
   channels,
+  disabled,
   error,
   onChange,
 }: {
   state: ProgramEditState;
   channels: ChannelListItem[];
+  disabled?: boolean;
   error?: string;
   onChange: (targets: PublicationTarget[]) => void;
 }) {
@@ -67,6 +69,7 @@ export function TargetCard({
       <div className="mt-3">
         <ChangeButton
           label="Change Target"
+          disabled={disabled}
           onClick={() => setPicking(true)}
         />
       </div>
@@ -124,10 +127,12 @@ function describe(schedule: PublicationSchedule): { title: string; time: string;
 
 export function ScheduleCard({
   state,
+  disabled,
   error,
   onChange,
 }: {
   state: ProgramEditState;
+  disabled?: boolean;
   error?: string;
   onChange: (schedule: PublicationSchedule) => void;
 }) {
@@ -137,6 +142,7 @@ export function ScheduleCard({
   const editButton = (
     <ChangeButton
       label="Edit Schedule"
+      disabled={disabled}
       onClick={() => setEditing(true)}
     />
   );

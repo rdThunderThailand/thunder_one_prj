@@ -236,18 +236,21 @@ export function PublicationEditPage({ id }: { id: string }) {
           />
           <ContentSourceCard
             state={state}
+            disabled={isEnded}
             error={partError("content")}
             onChange={(content) => edit.patch({ content })}
           />
           <div className="grid gap-5 md:grid-cols-2">
             <TargetCard
               state={state}
+              disabled={isEnded}
               channels={edit.channels}
               error={partError("targets")}
               onChange={(targets) => edit.patch({ targets })}
             />
             <ScheduleCard
               state={state}
+              disabled={isEnded}
               error={partError("schedule")}
               onChange={(schedule) => edit.patch({ schedule })}
             />

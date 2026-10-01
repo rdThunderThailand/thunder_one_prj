@@ -66,10 +66,12 @@ function BoundContent({ content }: { content: ProgramContent }) {
  */
 export function ContentSourceCard({
   state,
+  disabled,
   error,
   onChange,
 }: {
   state: ProgramEditState;
+  disabled?: boolean;
   error?: string;
   onChange: (content: ProgramContent) => void;
 }) {
@@ -124,6 +126,7 @@ export function ContentSourceCard({
                 variant="outline"
                 size="sm"
                 className="self-start"
+                disabled={disabled}
                 onClick={() => setPicking(option.kind)}
               >
                 {isOn ? `Change ${option.label}` : `Use a ${option.label}`}
