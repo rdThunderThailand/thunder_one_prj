@@ -9,7 +9,7 @@
  * store is a type-only import, so no zustand/React ever loads.
  */
 import assert from "node:assert/strict";
-import { attemptNext, isResumePending } from "./next-transition.ts";
+import { attemptNext, isResumePending, resumeStep } from "./next-transition.ts";
 import { defaultScheduleDraft } from "./schedule-preset.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 
@@ -107,5 +107,11 @@ assert.equal(isResumePending("pub-1", null, null), true); // fetch in flight
 assert.equal(isResumePending("pub-1", "pub-1", null), false); // fetch settled
 assert.equal(isResumePending("pub-1", null, "pub-1"), false); // already in store
 assert.equal(isResumePending("pub-2", "pub-1", "pub-1"), true); // switched drafts
+
+// Re-opening a server draft lands on the first step it still fails, else Review (#199).
+assert.equal(resumeStep(validDraft), 4);
+assert.equal(resumeStep(noContent), 1);
+assert.equal(resumeStep(noName), 2);
+assert.equal(resumeStep({ ...validDraft, channelIds: [] }), 3);
 
 console.log("next-transition.check.mts — all assertions passed");

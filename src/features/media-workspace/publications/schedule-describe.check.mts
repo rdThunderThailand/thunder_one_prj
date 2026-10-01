@@ -46,6 +46,10 @@ const allDay: PublicationSchedule = {
 assert.deepEqual(describeSchedule(allDay), { title: "One time", hours: "All day", range: "2026-10-03", days: [] });
 const timed: PublicationSchedule = { ...allDay, starts_at: "2026-10-03T03:00:00.000Z", ends_at: "2026-10-05T11:00:00.000Z" };
 assert.equal(describeSchedule(timed).range, "2026-10-03 10:00 – 2026-10-05 18:00");
+// A one-off past its start day, or open-ended, is Continuous — the same split scheduleToDraft makes (#199).
+assert.equal(describeSchedule(timed).title, "Continuous");
+assert.equal(describeSchedule({ ...timed, ends_at: null }).title, "Continuous");
+assert.equal(describeSchedule({ ...timed, ends_at: "2026-10-03T11:00:00.000Z" }).title, "One time");
 
 // Monthly.
 const monthly: PublicationSchedule = {

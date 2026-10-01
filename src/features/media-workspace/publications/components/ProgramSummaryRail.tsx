@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, MonitorIcon, PlayIcon } from "@/components/ui/icons";
-import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
@@ -12,6 +11,7 @@ import { describeSchedule, scheduleEdges } from "../schedule-describe";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 
@@ -49,15 +49,13 @@ export function ProgramSummaryRail({
   const schedule = usePublicationDraftStore((s) => s.schedule);
 
   const isPlaylist = basicInfo.publicationType === "playlist";
-  const { playlist, coverAssetId, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
+  const { playlist, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
+  // Same projection as Prepare Content's stage, so every content type previews here too (#199).
+  // Loaded in the review variant as well — it is where a Layout's name comes from.
+  const { preview, branch } = usePublicationStagePreview(assets);
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
-  const previewAssetId = isPlaylist ? coverAssetId : selectedAsset?.id;
-  const previews = usePreviewUrls(previewAssetId && variant === "default" ? [previewAssetId] : []);
-  const previewUrl = previewAssetId ? previews.urls[previewAssetId] : undefined;
-  const previewPoster = previewAssetId ? previews.thumbnailUrls[previewAssetId] : undefined;
-  const previewAsset = assets.find((a) => a.id === previewAssetId);
-  const isVideo = isVideoPreview(previewAsset, previewUrl);
+  const isVideo = isVideoPreview(selectedAsset, undefined);
 
   const isMismatch =
     selectedAsset &&
@@ -89,6 +87,8 @@ export function ProgramSummaryRail({
     ? playlist
       ? `${playlist.name}${durationLabel ? ` (${durationLabel})` : ""}`
       : "—"
+    : basicInfo.publicationType === "composition"
+    ? preview?.contentName ?? "—"
     : selectedAsset
     ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id
     : "—";
@@ -136,14 +136,16 @@ export function ProgramSummaryRail({
       <h2 className="text-base font-semibold text-foreground">{title}</h2>
       <p className="-mt-3 text-xs text-muted-foreground">{subtitle}</p>
 
-      {previewUrl ? (
-        <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-muted">
-          {isVideo ? (
-            <video src={previewUrl} poster={previewPoster} controls preload="metadata" className="h-full w-full object-contain" />
-          ) : (
-            <Image src={previewUrl} alt={contentLabel} fill sizes="(min-width: 1024px) 300px, 100vw" className="object-cover" />
-          )}
-        </div>
+      {preview ? (
+        <PreviewStage
+          zones={preview.zones}
+          assets={assets}
+          aspectRatio={preview.aspectRatio}
+          referenceResolution={preview.referenceResolution}
+          allowActualSize={branch !== "playlist"}
+          controlsPlacement="overlay"
+          fillWidth
+        />
       ) : (
         <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
           <p className="text-xs">ตัวอย่างคอนเทนต์จะแสดงที่นี่</p>
