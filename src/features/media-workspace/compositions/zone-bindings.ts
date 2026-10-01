@@ -74,6 +74,18 @@ export function applyPlaybackToAll(
   });
 }
 
+/** Sets the play mode of the named Zones' bindings and nothing else; a name with no binding is ignored. */
+export function withZonePlayModes(
+  bindings: ZoneBindingDraft[],
+  changes: Record<string, ZonePlayback["playMode"]>,
+): ZoneBindingDraft[] {
+  return bindings.map((binding) =>
+    binding.layoutZoneId in changes
+      ? { ...binding, playback: { ...binding.playback, playMode: changes[binding.layoutZoneId] } }
+      : binding,
+  );
+}
+
 /** Replace the draft for `next`'s Zone, or append it if that Zone has none yet. */
 export const upsertBinding = (prev: ZoneBindingDraft[], next: ZoneBindingDraft): ZoneBindingDraft[] =>
   prev.some((b) => b.layoutZoneId === next.layoutZoneId)

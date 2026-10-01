@@ -7,6 +7,9 @@ import { decodeMetadata } from "@/features/media-workspace/playlists";
 import type { DraftAssetItem, MediaAsset } from "../types";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
+import { compositionZonePlayback } from "../content-info";
+import { LayoutZonePlayModeControl } from "./LayoutZonePlayModeControl";
 import { PlaylistPatternControl } from "./PlaylistPatternControl";
 import { SelectedAssetList } from "./SelectedAssetList";
 
@@ -14,7 +17,7 @@ import { SelectedAssetList } from "./SelectedAssetList";
  *  order / repeat are the player's defaults, shown READ-ONLY (nothing stores them — see the
  *  persistence note in plan-create-wizard.md). Playlist / Composition show their source's own
  *  values with a link to its editor. */
-export function HowToPlayPanel({ assets, onPlaylistChanged }: { assets: MediaAsset[]; onPlaylistChanged?: () => void }) {
+export function HowToPlayPanel({ assets, onContentChanged, refreshKey }: { assets: MediaAsset[]; onContentChanged?: () => void; refreshKey?: number }) {
   const type = usePublicationDraftStore((s) => s.basicInfo.publicationType);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
@@ -24,8 +27,8 @@ export function HowToPlayPanel({ assets, onPlaylistChanged }: { assets: MediaAss
   const moveAssetItem = usePublicationDraftStore((s) => s.moveAssetItem);
   const toggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
 
-  if (type === "playlist") return <PlaylistHowTo playlistId={playlistId} onPlaylistChanged={onPlaylistChanged} />;
-  if (type === "composition") return <CompositionHowTo compositionId={compositionId} />;
+  if (type === "playlist") return <PlaylistHowTo playlistId={playlistId} onPlaylistChanged={onContentChanged} />;
+  if (type === "composition") return <CompositionHowTo compositionId={compositionId} assets={assets} refreshKey={refreshKey} onLayoutChanged={onContentChanged} />;
 
   if (assetItems.length === 0) {
     return <p className="text-xs text-muted-foreground">เลือกคอนเทนต์ในขั้นตอนที่ 1 เพื่อตั้งค่าการเล่น</p>;
@@ -148,14 +151,29 @@ function ReadOnlyField({ label, value, capitalize = false }: { label: string; va
   );
 }
 
-function CompositionHowTo({ compositionId }: { compositionId: string | null }) {
+function CompositionHowTo({
+  compositionId,
+  assets,
+  refreshKey,
+  onLayoutChanged,
+}: {
+  compositionId: string | null;
+  assets: MediaAsset[];
+  refreshKey?: number;
+  onLayoutChanged?: () => void;
+}) {
+  const { preview, loading, error } = usePublicationStagePreview(assets, true, refreshKey);
+
   if (!compositionId) return <p className="text-xs text-muted-foreground">ยังไม่ได้เลือก Layout</p>;
+  if (error) return <p className="text-xs text-danger">โหลดข้อมูล Layout ไม่สำเร็จ</p>;
+  if (loading || !preview) return <p className="text-xs text-muted-foreground">กำลังโหลด…</p>;
+
+  const zones = compositionZonePlayback(preview, Object.fromEntries(assets.map((asset) => [asset.id, asset])));
 
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs text-muted-foreground">
-        การเล่นของแต่ละโซนเป็นไปตามที่ตั้งค่าไว้ใน Layout นี้
-      </p>
+    <div className="flex flex-col gap-3">
+      <p className="text-xs text-muted-foreground">การเล่นของแต่ละโซนเป็นไปตามที่ตั้งค่าไว้ใน Layout นี้</p>
+      <LayoutZonePlayModeControl compositionId={compositionId} zones={zones} onLayoutChanged={onLayoutChanged} />
       <Link
         href={`/media-workspace/layouts/${compositionId}`}
         className="text-xs font-medium text-primary hover:text-primary"

@@ -37,8 +37,8 @@ export function ProgramStep({
   conflictsError,
   showFieldErrors,
 }: ProgramStepProps) {
-  // Bumped when How to Play changes the Playlist's pattern, so the rail reloads its preview (ADR 0083).
-  const [playlistRevision, setPlaylistRevision] = useState(0);
+  // Bumped when How to Play changes the Playlist's or Layout's playback, so the rail reloads its preview (ADR 0083).
+  const [contentRevision, setContentRevision] = useState(0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -73,14 +73,14 @@ export function ProgramStep({
             </ProgramColumn>
 
             <ProgramColumn index={3} title="How to Play" subtitle="ตั้งค่าการเล่น">
-              <HowToPlayPanel assets={assets} onPlaylistChanged={() => setPlaylistRevision((n) => n + 1)} />
+              <HowToPlayPanel assets={assets} refreshKey={contentRevision} onContentChanged={() => setContentRevision((n) => n + 1)} />
             </ProgramColumn>
           </div>
 
           <AdditionalSettings />
         </div>
 
-        <ProgramSummaryRail channels={channels} assets={assets} refreshKey={playlistRevision} />
+        <ProgramSummaryRail channels={channels} assets={assets} refreshKey={contentRevision} />
       </div>
     </div>
   );
