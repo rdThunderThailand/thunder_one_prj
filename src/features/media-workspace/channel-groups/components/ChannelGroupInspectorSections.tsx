@@ -52,7 +52,7 @@ export function ChannelGroupInspectorSections({
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
           <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Current Program</h3>
-          <Link href="/media-workspace/now-next" className="text-xs font-medium text-primary hover:text-primary">View Programs →</Link>
+          <Link href="/media-workspace/program" className="text-xs font-medium text-primary hover:text-primary">View Programs →</Link>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">No program scheduled now</p>
       </div>

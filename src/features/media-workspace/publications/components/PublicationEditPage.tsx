@@ -44,7 +44,6 @@ import { ScheduleCard, TargetCard } from "./edit/ProgramSummaryCards";
 
 type PendingAction = "discard" | "end" | "delete" | null;
 
-const LIST_HREF = "/media-workspace/now-next";
 const PROGRAM_HREF = "/media-workspace/program";
 
 export function PublicationEditPage({ id }: { id: string }) {
@@ -88,15 +87,15 @@ export function PublicationEditPage({ id }: { id: string }) {
 
   const goBack = () => {
     setLeaveTo(null);
-    return isDirty ? setPending("discard") : router.push(LIST_HREF);
+    return isDirty ? setPending("discard") : router.push(PROGRAM_HREF);
   };
 
   const confirmPending = () => {
     const action = pending;
     setPending(null);
-    if (action === "discard") return router.push(leaveTo ?? LIST_HREF);
+    if (action === "discard") return router.push(leaveTo ?? PROGRAM_HREF);
     const run = action === "end" ? cancelPublication(id) : deletePublication(id);
-    run.then(() => router.push(LIST_HREF)).catch(() => setActionError("Action failed. Try again."));
+    run.then(() => router.push(PROGRAM_HREF)).catch(() => setActionError("Action failed. Try again."));
   };
 
   const duplicate = () =>
@@ -118,7 +117,7 @@ export function PublicationEditPage({ id }: { id: string }) {
       <PageHeader title={`Edit Program: ${detail.name}`} titleInTopbar />
       <header className="flex flex-wrap items-center justify-between gap-3">
         <ProgramBreadcrumb
-          listHref={LIST_HREF}
+          listHref={PROGRAM_HREF}
           name={detail.name}
           status={displayStatus}
         />
