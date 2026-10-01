@@ -1,6 +1,6 @@
 # 0082 — The Create wizard and the Edit page share one schedule model
 
-Status: accepted (2026-10-01, grilling session after v0.5.2). Amends ADR 0072 (wizard step 3 "When to Play") and `docs/program/plan-program-redesign.md` FE-E ("Wizard `ScheduleStep` is untouched").
+Status: accepted (2026-10-01, grilling session after v0.5.2). **§6 superseded by ADR 0083.** Amends ADR 0072 (wizard step 3 "When to Play") and `docs/program/plan-program-redesign.md` FE-E ("Wizard `ScheduleStep` is untouched").
 
 ## Context
 
