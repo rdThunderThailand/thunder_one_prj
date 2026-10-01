@@ -52,7 +52,7 @@ export function ProgramStep({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-6 min-[1400px]:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
             <ProgramColumn index={1} title="Where to Play" subtitle="เลือกช่องทาง / หน้าจอ">
               <WhereToPlayPanel
                 channels={channels}
