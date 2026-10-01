@@ -105,7 +105,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       setActionBusy(true);
       setActionError(null);
       await deletePublication(id);
-      router.push("/media-workspace/now-next");
+      router.push("/media-workspace/program");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
       setActionBusy(false);
@@ -117,7 +117,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       setActionBusy(true);
       setActionError(null);
       await cancelPublication(id);
-      router.push("/media-workspace/now-next");
+      router.push("/media-workspace/program");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
       setActionBusy(false);
@@ -162,7 +162,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
           </Card>
         )}
         <div className="mt-4 flex justify-center">
-          <Link href="/media-workspace/now-next" className={buttonClasses("secondary")}>
+          <Link href="/media-workspace/program" className={buttonClasses("secondary")}>
             กลับไปยังรายการ
           </Link>
         </div>
@@ -195,7 +195,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
         subtitle={`Status: ${displayStatus}`}
         actions={
           <div className="flex items-center gap-2">
-            <Link href="/media-workspace/now-next" className={buttonClasses("secondary")}>
+            <Link href="/media-workspace/program" className={buttonClasses("secondary")}>
               กลับ
             </Link>
 
