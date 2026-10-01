@@ -53,16 +53,52 @@ const oneTime = draftToSchedule({ ...applyPreset(weeklyDraft, "one-time", TODAY)
 assert.deepEqual(oneTime, { starts_at: "2026-10-04T17:00:00.000Z", ends_at: "2026-10-05T17:00:00.000Z", timezone: TZ, recurrence: {} });
 assert.equal(presetOf(scheduleToDraft(oneTime, TODAY, TZ)), "one-time");
 
-// Monthly and open-ended one-offs are kept verbatim until a preset is picked.
-const monthly: PublicationSchedule = { ...weekly, recurrence: { freq: "monthly", month_days: [1, 15], daily_start: "08:00", daily_end: "09:00" } };
+// Monthly: stored as `monthly`, round-trips, and applying the preset seeds the start day.
+const monthly: PublicationSchedule = {
+  ...weekly,
+  recurrence: { freq: "monthly", month_days: [1, 15, 31], daily_start: "08:00", daily_end: "09:00" },
+};
 const monthlyDraft = scheduleToDraft(monthly, TODAY, TZ);
-assert.equal(monthlyDraft.locked?.kind, "monthly");
-assert.equal(presetOf(monthlyDraft), null);
-assert.equal(draftToSchedule(monthlyDraft), monthly);
+assert.equal(presetOf(monthlyDraft), "monthly");
+assert.deepEqual(roundTrip(monthly), monthly);
 assert.deepEqual(upcomingDays(monthlyDraft, TODAY, 2), ["2026-10-01", "2026-10-15"]);
-const open: PublicationSchedule = { starts_at: "2026-09-30T02:00:00Z", ends_at: null, timezone: TZ, recurrence: {} };
-assert.equal(scheduleToDraft(open, TODAY, TZ).locked?.kind, "continuous");
-assert.equal(applyPreset(scheduleToDraft(open, TODAY, TZ), "weekdays", TODAY).locked, null);
+assert.deepEqual(applyPreset(weeklyDraft, "monthly", "2026-10-07").monthDays, [1], "seeds from the start date (01 here)");
+assert.deepEqual(applyPreset({ ...weeklyDraft, startDate: "" }, "monthly", "2026-10-07").monthDays, [7]);
+assert.ok(validateDraft({ ...monthlyDraft, monthDays: [] }, TODAY).monthDays);
+assert.deepEqual(validateDraft(monthlyDraft, TODAY), {});
+
+// Continuous: a multi-day one-off with times, no daily window; round-trips.
+const continuous: PublicationSchedule = {
+  starts_at: "2026-10-03T03:00:00.000Z", // 3 Oct 10:00 +07
+  ends_at: "2026-10-05T11:00:00.000Z", // 5 Oct 18:00 +07
+  timezone: TZ,
+  recurrence: {},
+};
+const continuousDraft = scheduleToDraft(continuous, TODAY, TZ);
+assert.equal(presetOf(continuousDraft), "continuous");
+assert.deepEqual(
+  [continuousDraft.startDate, continuousDraft.startTime, continuousDraft.endDate, continuousDraft.endTime],
+  ["2026-10-03", "10:00", "2026-10-05", "18:00"],
+);
+assert.deepEqual(roundTrip(continuous), continuous);
+assert.deepEqual(upcomingDays(continuousDraft, "2026-10-01", 5), ["2026-10-03", "2026-10-04", "2026-10-05"]);
+assert.deepEqual(validateDraft(continuousDraft, TODAY), {});
+assert.ok(validateDraft({ ...continuousDraft, endDate: "2026-10-03", endTime: "09:00" }, TODAY).endDate, "end before start");
+// An open-ended one-off is Continuous with no end; picking another preset overwrites it.
+const open: PublicationSchedule = { starts_at: "2026-09-30T02:00:00.000Z", ends_at: null, timezone: TZ, recurrence: {} };
+const openDraft = scheduleToDraft(open, TODAY, TZ);
+assert.equal(presetOf(openDraft), "continuous");
+assert.equal(openDraft.endDate, "");
+assert.deepEqual(roundTrip(open), open);
+assert.equal(presetOf(applyPreset(openDraft, "weekdays", TODAY)), "weekdays");
+// A same-day Continuous (14:00-18:00) is the same stored data as One-time and reads back as One-time.
+const sameDay: PublicationSchedule = { starts_at: "2026-10-03T07:00:00Z", ends_at: "2026-10-03T11:00:00Z", timezone: TZ, recurrence: {} };
+assert.equal(presetOf(scheduleToDraft(sameDay, TODAY, TZ)), "one-time");
+// An end at exactly 00:00 does not air on that day.
+assert.equal(
+  upcomingDays({ ...continuousDraft, endDate: "2026-10-05", endTime: "00:00" }, "2026-10-01", 5).includes("2026-10-05"),
+  false,
+);
 
 // Validation and preview.
 assert.ok(validateDraft({ ...weeklyDraft, days: [] }, TODAY).days);

@@ -1,0 +1,45 @@
+import { DEFAULT_TIMEZONE, formatMonthDays, shiftYmd, utcToZonedParts } from "./schedule.ts";
+import type { PublicationSchedule } from "./types/index.ts";
+
+/** The summary lines of a stored schedule; every screen that prints one uses this (ADR 0082 §7). */
+export type ScheduleSummary = { title: string; hours: string; range: string; days: number[] };
+
+/**
+ * Last local day a recurring schedule can air, "YYYY-MM-DD", or null when open-ended. `ends_at` of an
+ * all-day recurring schedule is the midnight after its last day, so that midnight reads back a day earlier.
+ * A one-off keeps its own end moment (its times are part of the summary), so it is not covered here.
+ */
+export function lastAiringDay(schedule: PublicationSchedule): string | null {
+  const zone = schedule.timezone || DEFAULT_TIMEZONE;
+  const rule = schedule.recurrence;
+  if ("freq" in rule && rule.freq === "dates") return [...rule.dates].sort().at(-1) ?? null;
+  if (!schedule.ends_at) return null;
+  const end = utcToZonedParts(schedule.ends_at, zone);
+  return end.time === "00:00" ? shiftYmd(end.date, -1) : end.date;
+}
+
+export function describeSchedule(schedule: PublicationSchedule): ScheduleSummary {
+  const zone = schedule.timezone || DEFAULT_TIMEZONE;
+  const start = utcToZonedParts(schedule.starts_at, zone);
+  const rule = schedule.recurrence;
+
+  if (!("freq" in rule)) {
+    const end = schedule.ends_at ? utcToZonedParts(schedule.ends_at, zone) : null;
+    // A one-off ending at the next midnight is the all-day one-time shape.
+    if (end && start.time === "00:00" && end.time === "00:00" && end.date === shiftYmd(start.date, 1)) {
+      return { title: "One time", hours: "All day", range: start.date, days: [] };
+    }
+    const from = `${start.date} ${start.time}`;
+    return { title: "One time", hours: "", range: end ? `${from} – ${end.date} ${end.time}` : `From ${from} · No end date`, days: [] };
+  }
+
+  const last = lastAiringDay(schedule);
+  const hours = `${rule.daily_start} – ${rule.daily_end}`;
+  const range = last ? (last === start.date ? start.date : `${start.date} – ${last}`) : `From ${start.date} · No end date`;
+  if (rule.freq === "weekly") return { title: rule.days.length === 7 ? "Every day" : "Weekly", hours, range, days: rule.days };
+  if (rule.freq === "dates") {
+    const count = rule.dates.length;
+    return { title: `${count} custom date${count === 1 ? "" : "s"}`, hours, range, days: [] };
+  }
+  return { title: formatMonthDays(rule.month_days), hours, range, days: [] };
+}
