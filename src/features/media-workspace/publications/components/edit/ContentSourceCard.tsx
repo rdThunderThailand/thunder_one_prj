@@ -1,5 +1,6 @@
 "use client";
 
+import { PlaySquare } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { fetchPlaylist, formatDuration } from "@/features/media-workspace/playlists";
@@ -90,6 +91,7 @@ export function ContentSourceCard({
   return (
     <EditCard
       step="2. Content Source *"
+      icon={PlaySquare}
       hint="เลือก Playlist หรือ Layout อย่างใดอย่างหนึ่ง ในการแสดงผล Program นี้"
       error={error ?? changeError ?? undefined}
     >

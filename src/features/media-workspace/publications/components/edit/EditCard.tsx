@@ -1,13 +1,16 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 /** The numbered card frame shared by the four Edit sections (mockup 03). */
 export function EditCard({
   step,
+  icon: Icon,
   hint,
   error,
   children,
 }: {
   step: string;
+  /** Frame 03's tile beside each section title. */
+  icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   hint?: string;
   /** A backend error tagged for this card (`[details]`, `[content]`, …). */
   error?: string;
@@ -15,9 +18,14 @@ export function EditCard({
 }) {
   return (
     <section className="rounded-xl border border-border bg-card p-4 shadow-panel">
-      <header className="mb-4">
-        <h2 className="text-sm font-bold text-foreground">{step}</h2>
-        {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
+      <header className="mb-4 flex items-start gap-3">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+          <Icon className="h-4 w-4" strokeWidth={1.8} />
+        </span>
+        <div>
+          <h2 className="text-sm font-bold text-foreground">{step}</h2>
+          {hint && <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>}
+        </div>
       </header>
       {error && (
         <p
