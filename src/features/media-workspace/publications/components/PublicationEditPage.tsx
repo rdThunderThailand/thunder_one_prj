@@ -45,6 +45,7 @@ import { ScheduleCard, TargetCard } from "./edit/ProgramSummaryCards";
 type PendingAction = "discard" | "end" | "delete" | null;
 
 const LIST_HREF = "/media-workspace/now-next";
+const PROGRAM_HREF = "/media-workspace/program";
 
 export function PublicationEditPage({ id }: { id: string }) {
   const router = useRouter();
@@ -100,11 +101,11 @@ export function PublicationEditPage({ id }: { id: string }) {
 
   const duplicate = () =>
     duplicatePublication(id)
-      .then((copy) => router.push(`${LIST_HREF}/${copy.publication_id}/edit`))
+      .then((copy) => router.push(`${PROGRAM_HREF}/${copy.publication_id}/edit`))
       .catch(() => setActionError("Duplicate failed. Try again."));
 
   const publishDraft = () =>
-    edit.saveDraft(true).then((failed) => failed === null && router.push(`${LIST_HREF}/${id}`));
+    edit.saveDraft(true).then((failed) => failed === null && router.push(`${PROGRAM_HREF}/${id}`));
 
   const publishChanges = () =>
     edit.publishChanges().then((failed) => {
@@ -178,7 +179,7 @@ export function PublicationEditPage({ id }: { id: string }) {
               {!isDraft && <DropdownMenuItem onSelect={duplicate}>Duplicate Program</DropdownMenuItem>}
               {!isDraft && (
                 <DropdownMenuItem asChild>
-                  <Link href={`${LIST_HREF}/${id}`}>View Published Version</Link>
+                  <Link href={`${PROGRAM_HREF}/${id}`}>View Published Version</Link>
                 </DropdownMenuItem>
               )}
               {isDraft && (
