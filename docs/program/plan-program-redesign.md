@@ -84,7 +84,7 @@ Known, not fixed here: the existing schedule `LATERAL` picks `ORDER BY s.created
 - Day chips always editable; the highlighted preset is derived from the chosen days (all 7 = Every day, Mon–Fri = Weekdays, Sat–Sun = Weekends, anything else = no highlight).
 - Existing monthly schedules open with a disabled, selected **Monthly** preset and its summary; picking another preset overwrites it.
 - Playback Pattern: Sequential/Shuffle edit the bound Playlist's `play_mode` with a "used by N Programs" warning; other fields disabled; whole section disabled for Layout content (ADR 0080 §6).
-- Wizard `ScheduleStep` is untouched in this plan; follow-up issue to move it onto the shared helper.
+- Wizard `ScheduleStep` is untouched in this plan; follow-up issue to move it onto the shared helper. **Superseded by ADR 0082** (one model, 8 presets incl. Monthly and Continuous, no locked state) — `plan-schedule-shared-model.md`.
 
 ## 3. CONTEXT.md
 
