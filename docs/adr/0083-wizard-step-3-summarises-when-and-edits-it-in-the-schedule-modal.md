@@ -30,6 +30,11 @@ Facts about the playback pattern:
    - After a successful write the step's content preview reloads the Playlist, so the rail plays the new pattern without leaving the step.
    - Layout and Media Programs are unchanged.
 5. **The modal opened from the wizard hides its Playback Pattern section**, so the pattern has one place to change in the wizard.
+6. **Layout Programs: each Zone's play mode is editable in How to Play** (added 2026-10-01, second grilling round). How to Play lists every Zone read-only — name, cycle length, play mode, repeat, own media fit, muted — and each Zone bound to content gets a Sequential / Shuffle choice. One **Apply** for the whole Layout:
+   - Same rule as item 4: a fresh `affected-programs` count for the Composition, a confirmation when it is above 0, no write when the count fails, the "saved immediately, not undone by abandoning this draft" note.
+   - The write re-reads the Composition (`fetchComposition`) at Apply, changes only the play mode of the Zones the operator changed, and saves through `setCompositionZones` with the revision it just read. A revision conflict is reported and nothing is overwritten.
+   - Zone playback lives on the Composition's Zone binding and wins over the Zone Playlist's own (`activate` copies `composition_zones.playback` into the snapshot), so this writes the Layout only, never a Playlist.
+   - Repeat, start from, media fit and muted stay read-only here; they remain in the Layout editor.
 
 ## Rejected
 
@@ -42,6 +47,10 @@ Facts about the playback pattern:
 - **Playback Pattern in both the modal and How to Play**: two controls for one value.
 - **Return the draft from the modal unchanged (`onApplyDraft`)**: keeps a same-day Continuous as Continuous until Save, but the summary, rail and Review format the stored shape and would already say One-time — two labels for one draft until Save normalises it anyway.
 - **Reuse the affected-Program count loaded with the field**: stale by Apply time; a Program published meanwhile would skip the confirmation.
+- **Layout How to Play read-only** (built first): the owner wanted the change on this step, like the Playlist.
+- **Apply per Zone**: `set_zones` replaces every Zone at once, so per-Zone Apply means several writes and revisions racing each other.
+- **Write with the revision loaded with the preview**: would overwrite edits made in the Layout editor since the step opened.
+- **Every Zone playback field editable**: grows the wizard into a Layout editor; play mode matches what the Playlist side offers.
 
 ## Consequences
 
@@ -49,4 +58,5 @@ Facts about the playback pattern:
 - `ScheduleStep` shrinks to the summary; the modal gains two optional props (initial draft, hide Playback Pattern). The Edit page's use of the modal is unchanged.
 - The Apply decision (fresh count → write / confirm / refuse, cancel, failure keeps the selection) lives in one React-free function with a runnable check, like `attemptNext`.
 - Wizard step 3 still does not match Figma frame 3 (already noted in ADR 0082).
+- A Layout Apply rewrites every bound Zone's playback (the RPC full-replaces). Zones whose stored playback is null are written with the defaults Core already applies (`sequential`, `loop`, `first`, `fit`, not muted) — the same as any Layout editor save — so what airs does not change for Zones the operator did not touch.
 - No Core change and no localStorage shape change.

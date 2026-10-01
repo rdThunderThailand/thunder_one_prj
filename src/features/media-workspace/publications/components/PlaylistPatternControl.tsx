@@ -1,21 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/lovable/alert-dialog";
+import { useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { setPlaylistPlayMode } from "@/features/media-workspace/playlists";
 import { fetchAffectedPrograms } from "@/features/media-workspace/publish-changes/publish-changes-api";
 import { applyPlaybackPattern } from "../playback-pattern-apply";
 import { PlaybackPatternField, type PatternChoice } from "./edit/schedule/PlaybackPatternField";
+import { SharedWriteNote, useSharedWriteConfirm } from "./SharedWriteConfirm";
 
 /** How to Play for a Playlist Program: the Playlist's Playback Pattern, changed in place with its own
  *  Apply (ADR 0083). The write goes to the shared Playlist immediately, so it re-counts the Programs
@@ -30,16 +21,9 @@ export function PlaylistPatternControl({
   const [choice, setChoice] = useState<PatternChoice | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [asking, setAsking] = useState<number | null>(null);
-  const answer = useRef<((confirmed: boolean) => void) | null>(null);
+  const { confirm, dialog } = useSharedWriteConfirm("Playlist");
 
   const isChanged = choice !== null && choice.selected !== choice.original;
-
-  const settle = (confirmed: boolean) => {
-    answer.current?.(confirmed);
-    answer.current = null;
-    setAsking(null);
-  };
 
   const apply = async () => {
     if (!choice || saving) return;
@@ -49,11 +33,7 @@ export function PlaylistPatternControl({
     setError(null);
     const outcome = await applyPlaybackPattern({
       fetchCount: () => fetchAffectedPrograms("playlists", id).then((affected) => affected.programCount),
-      confirm: (count) =>
-        new Promise<boolean>((resolve) => {
-          answer.current = resolve;
-          setAsking(count);
-        }),
+      confirm,
       write: () => setPlaylistPlayMode(id, mode),
     });
     setSaving(false);
@@ -75,11 +55,7 @@ export function PlaylistPatternControl({
         onChange={setChoice}
         disabled={saving}
         showIndex={false}
-        note={
-          <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
-            การเปลี่ยนนี้บันทึกลง Playlist ทันทีเมื่อกด Apply และจะไม่ย้อนกลับแม้ทิ้ง draft นี้
-          </p>
-        }
+        note={<SharedWriteNote subject="Playlist" />}
       />
       {error && <p role="alert" className="text-xs text-danger">{error}</p>}
       {isChanged && (
@@ -92,22 +68,7 @@ export function PlaylistPatternControl({
         </Button>
       )}
 
-      <AlertDialog open={asking !== null} onOpenChange={(open) => !open && settle(false)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>เปลี่ยนรูปแบบการเล่นของ Playlist?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Playlist นี้ถูกใช้โดย {asking} Program ที่ active หรือ scheduled อยู่ การกด Apply จะบันทึกรูปแบบใหม่ลง Playlist ทันที
-              แม้ภายหลังจะทิ้ง draft นี้ ค่าที่บันทึกแล้วก็จะยังอยู่ Program ที่เผยแพร่แล้วจะใช้รูปแบบใหม่เมื่อมีการ Publish Changes
-              ที่ครอบคลุม Program นั้น
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-            <AlertDialogAction onClick={() => settle(true)}>Apply</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {dialog}
     </div>
   );
 }

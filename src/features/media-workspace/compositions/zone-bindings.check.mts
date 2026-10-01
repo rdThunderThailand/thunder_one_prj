@@ -14,6 +14,7 @@ import {
   toSetZonesPayload,
   totalZoneDurationSeconds,
   withIdempotencyKeys,
+  withZonePlayModes,
   type ZoneBindingDraft,
 } from "./zone-bindings.ts";
 import type { CompositionZone } from "./types/index.ts";
@@ -261,5 +262,25 @@ assert.equal(again[0]!.idempotencyKey, keyed[0]!.idempotencyKey);
 // Nothing to do at all is also identity.
 const nothingToMint = [alreadySaved, empty];
 assert.equal(withIdempotencyKeys(nothingToMint), nothingToMint);
+
+// withZonePlayModes (#199): only the named Zones change, and only their play mode.
+{
+  const custom = {
+    ...DEFAULT_ZONE_PLAYBACK,
+    repeat: "once" as const,
+    startFrom: "resume" as const,
+    mediaFit: "fill" as const,
+    muted: true,
+  };
+  const before: ZoneBindingDraft[] = [
+    { layoutZoneId: "zone-main", source: "playlist", playlistId: "pl-1", assetItems: [], playback: custom },
+    { layoutZoneId: "zone-side", source: "playlist", playlistId: "pl-2", assetItems: [], playback: { ...custom, playMode: "shuffle" } },
+  ];
+  const after = withZonePlayModes(before, { "zone-main": "shuffle", "zone-gone": "shuffle" });
+  assert.deepEqual(after[0].playback, { ...custom, playMode: "shuffle" }); // mode changed, nothing else
+  assert.deepEqual(after[1], before[1]); // untouched Zone is deep-equal
+  assert.equal(after.length, 2); // a key with no binding is ignored, not appended
+  assert.equal(before[0].playback.playMode, "sequential"); // input not mutated
+}
 
 console.log("zone-bindings.check.mts — withIdempotencyKeys assertions passed");

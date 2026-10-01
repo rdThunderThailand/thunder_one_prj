@@ -32,3 +32,26 @@ export function compositionZoneDurations(preview: StagePreview, assetsById: Asse
     return { id: zone.id, name: zone.name, seconds: zoneSchedule(items, zone.playback, zone.id).totalSeconds };
   });
 }
+
+export type ZonePlayback = ZoneDuration & {
+  playMode: "sequential" | "shuffle";
+  repeat: "loop" | "once";
+  /** The Zone's own media-fit override (ADR 0064); null when it inherits. */
+  fit: string | null;
+  isMuted: boolean;
+  /** A Zone with no items has nothing to play, so its play mode is not offered for editing. */
+  hasContent: boolean;
+};
+
+/** What the Create wizard's How to Play shows for a Layout: each Zone's resolved playback, read-only. */
+export function compositionZonePlayback(preview: StagePreview, assetsById: AssetsById): ZonePlayback[] {
+  const durations = compositionZoneDurations(preview, assetsById);
+  return preview.zones.map((zone, index) => ({
+    ...durations[index],
+    playMode: zone.playback?.playMode ?? "sequential",
+    repeat: zone.playback?.repeat ?? "loop",
+    fit: zone.playback?.zoneMediaFitOverride ?? null,
+    isMuted: zone.playback?.zoneMuted ?? false,
+    hasContent: zone.items.length > 0,
+  }));
+}
