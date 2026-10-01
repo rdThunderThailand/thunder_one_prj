@@ -40,7 +40,7 @@ function BoundContent({ content }: { content: ProgramContent }) {
         isCompact
       />
       <div className="flex min-w-0 flex-col gap-1">
-        <p className="truncate text-sm font-semibold text-foreground">{content.name ?? "—"}</p>
+        <p className="truncate text-xs font-semibold text-foreground">{content.name ?? "—"}</p>
         <p className="text-xs text-muted-foreground">{metaLine(summary, content.items.length)}</p>
         {summary && summary.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -94,7 +94,7 @@ export function ContentSourceCard({
       error={error ?? changeError ?? undefined}
     >
       {isMedia && (
-        <p className="mb-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm text-foreground">
+        <p className="mb-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-xs text-foreground">
           <span className="font-semibold capitalize">{content.type}</span> · {content.items.length} item
           {content.items.length === 1 ? "" : "s"} — pick a Playlist or Layout below to replace them.
         </p>
@@ -117,7 +117,7 @@ export function ContentSourceCard({
               <div className="flex items-start gap-3">
                 <span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${isOn ? "border-[5px] border-primary" : "border-border"}`} />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{option.label}</p>
+                  <p className="text-xs font-semibold text-foreground">{option.label}</p>
                   <p className="text-xs text-muted-foreground">{option.hint}</p>
                 </div>
               </div>

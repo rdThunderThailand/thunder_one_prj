@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { ArrowLeftIcon, MoreIcon } from "@/components/ui/icons";
 import {
   AlertDialog,
@@ -14,7 +15,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
-import { Badge } from "@/components/ui/lovable/badge";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import {
   DropdownMenu,
@@ -32,7 +32,6 @@ import {
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useProgramEdit } from "../hooks/useProgramEdit";
 import { publicationDrift } from "../publication-drift";
-import { DISPLAY_STATUS_LABELS } from "../publication-list-display";
 import { CONFIRM_COPY } from "./edit/confirm-copy";
 import { ProgramBreadcrumb } from "./edit/ProgramBreadcrumb";
 import { ProgramDetailsCard } from "./edit/ProgramDetailsCard";
@@ -113,35 +112,32 @@ export function PublicationEditPage({ id }: { id: string }) {
     });
 
   return (
-    <div className="flex flex-col gap-5">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <ProgramBreadcrumb
-            listHref={LIST_HREF}
-            name={detail.name}
-          />
-          <h1 className="flex items-center gap-3 text-2xl font-bold text-foreground">
-            Edit Program: {detail.name}
-            <Badge variant={displayStatus === "live" ? "success" : "neutral"}>
-              {DISPLAY_STATUS_LABELS[displayStatus]}
-            </Badge>
-          </h1>
-        </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={`Edit Program: ${detail.name}`} titleInTopbar />
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <ProgramBreadcrumb
+          listHref={LIST_HREF}
+          name={detail.name}
+          status={displayStatus}
+        />
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={goBack}
           >
-            <ArrowLeftIcon className="h-4 w-4" />
+            <ArrowLeftIcon className="h-3.5 w-3.5" />
             Go Back
           </Button>
           <ProgramPreviewButton
             key={state.content.playlistId ?? state.content.compositionId ?? "items"}
             content={state.content}
+            size="sm"
           />
           {isDraft && (
             <Button
               variant="outline"
+              size="sm"
               disabled={!canPublish || !isDirty}
               onClick={() => edit.saveDraft(false)}
             >
@@ -150,6 +146,7 @@ export function PublicationEditPage({ id }: { id: string }) {
           )}
           {isDraft && (
             <Button
+              size="sm"
               disabled={!canPublish}
               onClick={publishDraft}
             >
@@ -158,6 +155,7 @@ export function PublicationEditPage({ id }: { id: string }) {
           )}
           {!isDraft && !isEnded && (
             <Button
+              size="sm"
               disabled={!canPublish || !isDirty}
               onClick={() => setPublishOpen(true)}
             >
@@ -169,6 +167,7 @@ export function PublicationEditPage({ id }: { id: string }) {
               <Button
                 variant="outline"
                 size="icon"
+                className="h-8 w-8"
                 aria-label="More actions"
               >
                 <MoreIcon className="h-4 w-4" />
@@ -226,8 +225,8 @@ export function PublicationEditPage({ id }: { id: string }) {
         </p>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex flex-col gap-5">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex flex-col gap-4">
           <ProgramDetailsCard
             state={state}
             disabled={isEnded}
@@ -240,7 +239,7 @@ export function PublicationEditPage({ id }: { id: string }) {
             error={partError("content")}
             onChange={(content) => edit.patch({ content })}
           />
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <TargetCard
               state={state}
               disabled={isEnded}

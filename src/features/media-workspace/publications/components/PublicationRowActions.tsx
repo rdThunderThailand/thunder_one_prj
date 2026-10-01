@@ -60,7 +60,7 @@ export function PublicationRowActions({
       {primaryHref && (
         <Link
           href={primaryHref}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-8 text-xs")}
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-14 px-0 text-[10px]")}
         >
           {LABELS[primary]}
         </Link>

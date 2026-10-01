@@ -14,15 +14,15 @@ export function EditCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-xs">
+    <section className="rounded-xl border border-border bg-card p-4 shadow-panel">
       <header className="mb-4">
-        <h2 className="text-base font-semibold text-foreground">{step}</h2>
-        {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+        <h2 className="text-sm font-bold text-foreground">{step}</h2>
+        {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
       </header>
       {error && (
         <p
           role="alert"
-          className="mb-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger"
+          className="mb-3 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger"
         >
           {error}
         </p>

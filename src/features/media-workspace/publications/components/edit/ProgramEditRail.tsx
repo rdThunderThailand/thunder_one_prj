@@ -41,16 +41,16 @@ function StatusCard({
   unpublished: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-xs">
-      <h2 className="mb-3 text-base font-semibold text-foreground">Program Status</h2>
+    <div className="rounded-xl border border-border bg-card p-4 shadow-panel">
+      <h2 className="mb-3 text-sm font-bold text-foreground">Program Status</h2>
       <Badge
         variant={STATUS_VARIANT[status]}
-        className="px-3 py-1.5 text-sm"
+        className="rounded-full px-2 py-0 text-[9px]"
       >
         {DISPLAY_STATUS_LABELS[status]}
       </Badge>
       {status === "live" && (
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-xs text-muted-foreground">
           Playing on {channelCount} channel{channelCount === 1 ? "" : "s"}
         </p>
       )}
@@ -94,8 +94,8 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
   const occurrences = row ? [row.current, ...row.upcoming].filter((o) => o !== null) : [];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-xs">
-      <h2 className="mb-3 text-base font-semibold text-foreground">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-panel">
+      <h2 className="mb-3 text-sm font-bold text-foreground">
         Playback Preview <span className="text-xs font-normal text-muted-foreground">(Next 1 Hour)</span>
       </h2>
       {channelTargets.length > 0 ? (
@@ -131,7 +131,7 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
           return (
             <li
               key={o.occurrence_id}
-              className="flex items-baseline gap-3 text-sm"
+              className="flex items-baseline gap-3 text-xs"
             >
               <span className="w-24 shrink-0 text-xs text-muted-foreground">
                 {open}{close && ` – ${close}`}
@@ -150,7 +150,7 @@ function PlaybackPreview({ state }: { state: ProgramEditState }) {
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2 text-sm">
+    <div className="flex items-center justify-between gap-3 py-2 text-xs">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right text-foreground">{children}</span>
     </div>
@@ -182,8 +182,8 @@ function ProgramInformation({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-xs">
-      <h2 className="mb-2 text-base font-semibold text-foreground">Program Information</h2>
+    <div className="rounded-xl border border-border bg-card p-4 shadow-panel">
+      <h2 className="mb-2 text-sm font-bold text-foreground">Program Information</h2>
       <InfoRow label="Program ID">
         <span className="inline-flex items-center gap-1.5 font-mono text-xs">
           {shortId}

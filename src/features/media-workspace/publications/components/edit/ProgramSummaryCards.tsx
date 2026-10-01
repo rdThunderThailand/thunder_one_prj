@@ -61,7 +61,7 @@ export function TargetCard({
       hint="กำหนด Channel หรือ Channel Group ที่ต้องการแสดง Program นี้"
       error={error}
     >
-      <p className="text-sm font-semibold text-foreground">{summary || "No target"}</p>
+      <p className="text-xs font-semibold text-foreground">{summary || "No target"}</p>
       <p className="mt-0.5 text-xs text-muted-foreground">
         {targets.map((t) => t.name).filter(Boolean).join(", ")}
       </p>
@@ -157,7 +157,7 @@ export function ScheduleCard({
         <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-foreground">{view.title}</p>
+              <p className="text-xs font-semibold text-foreground">{view.title}</p>
               {view.time && <p className="text-xs text-muted-foreground">{view.time}</p>}
             </div>
             {editButton}
@@ -181,7 +181,7 @@ export function ScheduleCard({
         </div>
       ) : (
         <div className="flex items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">Not scheduled</p>
+          <p className="text-xs text-muted-foreground">Not scheduled</p>
           {editButton}
         </div>
       )}
