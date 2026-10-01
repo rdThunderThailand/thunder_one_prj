@@ -43,3 +43,42 @@ export function describeSchedule(schedule: PublicationSchedule): ScheduleSummary
   }
   return { title: formatMonthDays(rule.month_days), hours, range, days: [] };
 }
+
+/** The first and last moment of a stored schedule plus the time window drawn on a day timeline (Review step). */
+export type ScheduleEdges = {
+  startDate: string;
+  startTime: string;
+  /** Inclusive last day; null = no end. */
+  endDate: string | null;
+  endTime: string | null;
+  windowStart: string;
+  windowEnd: string;
+};
+
+export function scheduleEdges(schedule: PublicationSchedule): ScheduleEdges {
+  const zone = schedule.timezone || DEFAULT_TIMEZONE;
+  const start = utcToZonedParts(schedule.starts_at, zone);
+  const rule = schedule.recurrence;
+  if ("freq" in rule) {
+    return {
+      startDate: start.date,
+      startTime: rule.daily_start,
+      endDate: lastAiringDay(schedule),
+      endTime: lastAiringDay(schedule) ? rule.daily_end : null,
+      windowStart: rule.daily_start,
+      windowEnd: rule.daily_end,
+    };
+  }
+  const end = schedule.ends_at ? utcToZonedParts(schedule.ends_at, zone) : null;
+  const sameDay = end?.date === start.date;
+  // A one-off closing at midnight ends on the previous day.
+  const endDate = end ? (end.time === "00:00" ? shiftYmd(end.date, -1) : end.date) : null;
+  return {
+    startDate: start.date,
+    startTime: start.time,
+    endDate,
+    endTime: end ? (end.time === "00:00" ? "23:59" : end.time) : null,
+    windowStart: start.time,
+    windowEnd: sameDay && end ? end.time : "24:00",
+  };
+}

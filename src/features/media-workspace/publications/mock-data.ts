@@ -84,20 +84,4 @@ export interface ChannelItem {
   resolution?: string;
 }
 
-export type ScheduleTypeId = "publish-now" | "schedule-later" | "recurring" | "custom-range";
-
-export interface ScheduleTypeOption {
-  id: ScheduleTypeId;
-  label: string;
-  sublabel: string;
-  enabled: boolean;
-}
-
-export const scheduleTypes: ScheduleTypeOption[] = [
-  { id: "publish-now", label: "Publish Now", sublabel: "เผยแพร่ทันที", enabled: true },
-  { id: "schedule-later", label: "Schedule Later", sublabel: "กำหนดเวลาภายหลัง", enabled: true },
-  { id: "recurring", label: "Recurring Schedule", sublabel: "ตั้งเวลาซ้ำ", enabled: true },
-  { id: "custom-range", label: "Custom Date Range", sublabel: "กำหนดช่วงเวลาเอง", enabled: true },
-];
-
 export const delayUnits = ["seconds", "minutes", "hours"];

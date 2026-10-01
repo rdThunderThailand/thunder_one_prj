@@ -7,7 +7,9 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
-import { formatMonthDays, isRepeating, WEEKDAYS } from "../schedule";
+import { WEEKDAYS } from "../schedule";
+import { describeSchedule, scheduleEdges } from "../schedule-describe";
+import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
@@ -44,7 +46,7 @@ export function ProgramSummaryRail({
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const groupIds = usePublicationDraftStore((s) => s.groupIds);
   const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
-  const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+  const schedule = usePublicationDraftStore((s) => s.schedule);
 
   const isPlaylist = basicInfo.publicationType === "playlist";
   const { playlist, coverAssetId, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
@@ -91,25 +93,19 @@ export function ProgramSummaryRail({
     ? selectedAsset.file?.original_filename ?? selectedAsset.title ?? selectedAsset.id
     : "—";
 
-  const startLabel =
-    scheduleForm.schedule_type === "now"
-      ? "Publish now"
-      : `${formatShortDate(scheduleForm.start_date)}${scheduleForm.start_time ? `, ${scheduleForm.start_time}` : ""}`;
-  const endLabel = scheduleForm.end_date
-    ? `${formatShortDate(scheduleForm.end_date)}${scheduleForm.end_time ? `, ${scheduleForm.end_time}` : ""}`
-    : "No end date";
-  const allDay = scheduleForm.daily_start === "00:00" && scheduleForm.daily_end === "23:59";
-  const weekdayLabel =
-    scheduleForm.schedule_type === "recurring" && scheduleForm.days.length > 0
-      ? WEEKDAYS.filter((d) => scheduleForm.days.includes(d.value)).map((d) => d.label).join(", ")
-      : scheduleForm.schedule_type === "monthly"
-        ? formatMonthDays(scheduleForm.month_days)
-        : null;
+  const stored = isDraftValid(schedule) ? draftToSchedule(schedule) : null;
+  const summary = stored ? describeSchedule(stored) : null;
+  const edges = stored ? scheduleEdges(stored) : null;
+  const startLabel = edges ? `${formatShortDate(edges.startDate)}, ${edges.startTime}` : "—";
+  const endLabel = edges?.endDate ? `${formatShortDate(edges.endDate)}${edges.endTime ? `, ${edges.endTime}` : ""}` : "No end date";
+  const weekdayLabel = summary?.days.length
+    ? WEEKDAYS.filter((d) => summary.days.includes(d.value)).map((d) => d.label).join(", ")
+    : schedule.mode === "monthly" || schedule.mode === "dates"
+      ? summary?.title ?? null
+      : null;
 
   if (variant === "review") {
-    const scheduleLabel = scheduleForm.schedule_type === "now"
-      ? scheduleForm.end_date ? `Publish now – ${endLabel}` : "Publish now · No end date"
-      : `${startLabel}${scheduleForm.end_date ? ` – ${endLabel}` : " · No end date"}`;
+    const scheduleLabel = summary ? [summary.title, summary.hours, summary.range].filter(Boolean).join(" · ") : "—";
     const playbackLabel = isPlaylist
       ? "ตามการตั้งค่าของ Playlist"
       : basicInfo.publicationType === "composition"
@@ -178,10 +174,8 @@ export function ProgramSummaryRail({
         <Row label="Start">{startLabel}</Row>
         <Row label="End">{endLabel}</Row>
         {weekdayLabel && <Row label="Days">{weekdayLabel}</Row>}
-        {isRepeating(scheduleForm) && (
-          <Row label="Daily">{allDay ? "All day" : `${scheduleForm.daily_start} – ${scheduleForm.daily_end}`}</Row>
-        )}
-        <Row label="Timezone">{scheduleForm.timezone}</Row>
+        {summary?.hours && <Row label="Daily">{summary.hours}</Row>}
+        <Row label="Timezone">{schedule.timezone}</Row>
       </Section>
 
       <Section title="How to Play">

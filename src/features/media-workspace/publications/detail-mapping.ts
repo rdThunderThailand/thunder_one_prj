@@ -1,6 +1,7 @@
-import type { PlaylistDetail, PublicationDetail, ScheduleForm, DraftAssetItem } from "./types";
+import type { PlaylistDetail, PublicationDetail, DraftAssetItem } from "./types";
 import type { BasicInfoState } from "./components/BasicInfoForm";
-import { scheduleToForm } from "./schedule.ts";
+import { DEFAULT_TIMEZONE } from "./schedule.ts";
+import { scheduleToDraft, todayIn, type ScheduleDraft } from "./schedule-preset.ts";
 
 export type ResumedDraft = {
   basicInfo: BasicInfoState;
@@ -8,7 +9,7 @@ export type ResumedDraft = {
   channelIds: string[];
   groupIds: string[];
   groupNamesById: Record<string, string>;
-  scheduleForm: ScheduleForm;
+  schedule: ScheduleDraft;
   playlistId: string | null;
   compositionId: string | null;
 };
@@ -16,6 +17,7 @@ export type ResumedDraft = {
 export function detailToDraft(
   detail: PublicationDetail,
   playlist?: PlaylistDetail | null,
+  today: string = todayIn(detail.schedule?.timezone || DEFAULT_TIMEZONE),
 ): ResumedDraft {
   const basicInfo: BasicInfoState = {
     publicationType: detail.publication_type,
@@ -49,7 +51,7 @@ export function detailToDraft(
       .map((t) => [t.group_id as string, t.name as string]),
   );
 
-  const scheduleForm = scheduleToForm(detail.schedule);
+  const schedule = scheduleToDraft(detail.schedule ?? null, today, detail.schedule?.timezone || DEFAULT_TIMEZONE);
 
   return {
     basicInfo,
@@ -57,7 +59,7 @@ export function detailToDraft(
     channelIds,
     groupIds,
     groupNamesById,
-    scheduleForm,
+    schedule,
     playlistId: detail.playlist?.id ?? null,
     compositionId: detail.composition?.id ?? null,
   };

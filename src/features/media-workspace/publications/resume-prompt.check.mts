@@ -4,7 +4,7 @@
  *     node src/features/publications/resume-prompt.check.mts
  */
 import assert from "node:assert/strict";
-import { makeDefaultScheduleForm } from "./schedule.ts";
+import { defaultScheduleDraft } from "./schedule-preset.ts";
 import { hasDraftContent, shouldShowResumePrompt } from "./resume-prompt.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 
@@ -26,7 +26,7 @@ const baseDraft: DraftFields = {
   channelIds: [],
   groupIds: [],
   groupNamesById: {},
-  scheduleForm: makeDefaultScheduleForm(),
+  schedule: defaultScheduleDraft(),
 };
 
 // 1. default/empty draft → hasDraftContent is false
@@ -51,7 +51,7 @@ assert.equal(hasDraftContent({ ...baseDraft, groupIds: ["group-1"] }), true);
 // 7. playlistId: "pl-1" → true
 assert.equal(hasDraftContent({ ...baseDraft, playlistId: "pl-1" }), true);
 
-// scheduleForm cannot influence the answer: the Pick type keeps it out of the signature,
+// schedule cannot influence the answer: the Pick type keeps it out of the signature,
 // so the compiler enforces that invariant and no runtime assertion can add to it.
 
 // 9. shouldShowResumePrompt with hadContentAtHydration true, not edit mode, not dismissed → true

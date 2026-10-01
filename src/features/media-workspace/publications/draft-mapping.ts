@@ -1,4 +1,3 @@
-import { type ScheduleTypeId } from "./mock-data.ts";
 import type {
   BasicInfoForm,
   ContentItem,
@@ -6,26 +5,10 @@ import type {
   Priority,
   PublicationTarget,
   PublicationType,
-  ScheduleType,
   DraftAssetItem,
 } from "./types";
 import type { ChannelListItem } from "../channels/types";
 import type { BasicInfoState } from "./components/BasicInfoForm";
-
-export const SCHEDULE_TYPE_BY_CARD: Record<ScheduleTypeId, ScheduleType> = {
-  "publish-now": "now",
-  "schedule-later": "later",
-  recurring: "recurring",
-  "custom-range": "range",
-};
-
-export const CARD_BY_SCHEDULE_TYPE: Record<ScheduleType, ScheduleTypeId> = {
-  now: "publish-now",
-  later: "schedule-later",
-  recurring: "recurring",
-  range: "custom-range",
-  monthly: "recurring",
-};
 
 export function basicInfoToForm(
   basicInfo: BasicInfoState,

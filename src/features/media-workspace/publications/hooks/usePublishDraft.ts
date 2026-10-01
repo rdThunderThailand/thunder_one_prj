@@ -8,7 +8,7 @@ import {
   basicInfoToForm,
   targetsFromSelection,
 } from "../draft-mapping";
-import { isScheduleFormValid, scheduleFormToPayload } from "../schedule";
+import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import {
   activatePublication,
   checkScheduleConflicts,
@@ -25,7 +25,7 @@ import { selectedChannelDeviceIds } from "../channels-logic";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
 import { classifyApiError, isConflict } from "@/lib/api/api-error";
-import type { MediaAsset, Priority, ScheduleConflict, Tag } from "../types";
+import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
  * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
@@ -71,12 +71,12 @@ export function usePublishDraft() {
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const groupIds = usePublicationDraftStore((s) => s.groupIds);
   const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
-  const scheduleForm = usePublicationDraftStore((s) => s.scheduleForm);
+  const schedule = usePublicationDraftStore((s) => s.schedule);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
 
   const eligibility = computeEligibility({
-    draft: { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, groupIds, groupNamesById, scheduleForm },
+    draft: { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, groupIds, groupNamesById, schedule },
     assets,
     conflicts,
     conflictsError,
@@ -136,12 +136,14 @@ export function usePublishDraft() {
   }, [reloadAssets]);
 
   const channelIdsStr = channelIds.join(",");
-  const daysStr = scheduleForm.days.join(",");
+  // The stored shape is the one thing a conflict depends on: any field of any preset
+  // (month days, dates, Continuous times) that changes it re-triggers the check.
+  const scheduleKey = isDraftValid(schedule) ? JSON.stringify(draftToSchedule(schedule)) : "";
 
   useEffect(() => {
     let cancelled = false;
 
-    if (channelIds.length === 0 || !isScheduleFormValid(scheduleForm)) {
+    if (channelIds.length === 0 || scheduleKey === "") {
       // Deferred by a tick on purpose: this repo's lint (React Compiler rules)
       // rejects a synchronous setState inside an effect body.
       const resetTimer = setTimeout(() => {
@@ -159,7 +161,7 @@ export function usePublishDraft() {
 
     const timer = setTimeout(() => {
       setCheckingConflicts(true);
-      const payload = scheduleFormToPayload(scheduleForm);
+      const payload = JSON.parse(scheduleKey) as PublicationSchedule;
       checkScheduleConflicts({
         publication_id: publicationId,
         device_ids: selectedChannelDeviceIds(channels, channelIds),
@@ -193,17 +195,8 @@ export function usePublishDraft() {
     publicationId,
     channels,
     channelIds,
-    scheduleForm,
     channelIdsStr,
-    daysStr,
-    scheduleForm.schedule_type,
-    scheduleForm.start_date,
-    scheduleForm.start_time,
-    scheduleForm.timezone,
-    scheduleForm.end_date,
-    scheduleForm.end_time,
-    scheduleForm.daily_start,
-    scheduleForm.daily_end,
+    scheduleKey,
     basicInfo.priorityId,
   ]);
 
@@ -274,10 +267,9 @@ export function usePublishDraft() {
       await savePublicationContent(newId, contentItems);
     }
 
-    const form = state.scheduleForm;
-    const savedSchedule = forPublish || (state.step >= 4 && isScheduleFormValid(form));
+    const savedSchedule = forPublish || (state.step >= 4 && isDraftValid(state.schedule));
     if (savedSchedule) {
-      await savePublicationSchedule(newId, scheduleFormToPayload(form));
+      await savePublicationSchedule(newId, draftToSchedule(state.schedule));
     }
 
     // `set_content`/`set_schedule` bump `revision` server-side too (ADR 0003) but
