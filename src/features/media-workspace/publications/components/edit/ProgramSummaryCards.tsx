@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { CalendarClock, Clock3, Radio, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/lovable/button";
-import { DEFAULT_TIMEZONE, WEEKDAYS, formatMonthDays, utcToZonedParts } from "../../schedule";
+import { WEEKDAYS } from "../../schedule";
+import { describeSchedule } from "../../schedule-describe";
 import type { ProgramEditState } from "../../program-edit";
 import type { ChannelListItem } from "../../../channels/types";
 import type { PublicationSchedule, PublicationTarget } from "../../types";
@@ -105,46 +106,6 @@ export function TargetCard({
   );
 }
 
-function describe(schedule: PublicationSchedule): { title: string; time: string; range: string; days: number[] } {
-  const zone = schedule.timezone || DEFAULT_TIMEZONE;
-  const start = utcToZonedParts(schedule.starts_at, zone);
-  const end = schedule.ends_at ? utcToZonedParts(schedule.ends_at, zone) : null;
-  const range = end ? `${start.date} – ${end.date}` : `From ${start.date} · No end date`;
-  const rule = schedule.recurrence as {
-    freq?: string;
-    days?: number[];
-    month_days?: number[];
-    dates?: string[];
-    daily_start?: string;
-    daily_end?: string;
-  };
-
-  if (rule.freq === "weekly") {
-    const days = rule.days ?? [];
-    return { title: days.length === 7 ? "Every day" : "Weekly", time: `${rule.daily_start} – ${rule.daily_end}`, range, days };
-  }
-  if (rule.freq === "dates") {
-    const count = rule.dates?.length ?? 0;
-    return {
-      title: `${count} custom date${count === 1 ? "" : "s"}`,
-      time: `${rule.daily_start} – ${rule.daily_end}`,
-      range,
-      days: [],
-    };
-  }
-  if (rule.freq === "monthly") {
-    return {
-      title: formatMonthDays(rule.month_days ?? []),
-      time: `${rule.daily_start} – ${rule.daily_end}`,
-      range,
-      days: [],
-    };
-  }
-  // One-time: the window is the whole range, so the times belong next to their dates.
-  const from = `${start.date} ${start.time}`;
-  return { title: "One time", time: "", range: end ? `${from} – ${end.date} ${end.time}` : `From ${from} · No end date`, days: [] };
-}
-
 export function ScheduleCard({
   state,
   disabled,
@@ -157,7 +118,7 @@ export function ScheduleCard({
   onChange: (schedule: PublicationSchedule) => void;
 }) {
   const schedule = state.schedule;
-  const view = schedule ? describe(schedule) : null;
+  const view = schedule ? describeSchedule(schedule) : null;
   const [editing, setEditing] = useState(false);
   const editButton = (
     <ChangeButton
@@ -180,7 +141,7 @@ export function ScheduleCard({
             <SummaryTile icon={Clock3} />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-foreground">{view.title}</p>
-              {view.time && <p className="text-[10px] text-muted-foreground">{view.time}</p>}
+              {view.hours && <p className="text-[10px] text-muted-foreground">{view.hours}</p>}
               <p className="text-[10px] text-muted-foreground">{view.range}</p>
             </div>
             {editButton}
