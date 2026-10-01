@@ -33,12 +33,15 @@ export function ProgramSummaryRail({
   title = "Program Summary",
   subtitle = "สรุปการตั้งค่าโปรแกรม",
   variant = "default",
+  refreshKey,
 }: {
   channels: ChannelListItem[];
   assets: MediaAsset[];
   title?: string;
   subtitle?: string;
   variant?: "default" | "review";
+  /** Bumped by the parent after the content's Playlist changed on the same page. */
+  refreshKey?: number;
 }) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -52,7 +55,7 @@ export function ProgramSummaryRail({
   const { playlist, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
   // Same projection as Prepare Content's stage, so every content type previews here too (#199).
   // Loaded in the review variant as well — it is where a Layout's name comes from.
-  const { preview, branch } = usePublicationStagePreview(assets);
+  const { preview, branch, loading } = usePublicationStagePreview(assets, true, refreshKey);
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const isVideo = isVideoPreview(selectedAsset, undefined);
@@ -148,7 +151,7 @@ export function ProgramSummaryRail({
         />
       ) : (
         <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
-          <p className="text-xs">ตัวอย่างคอนเทนต์จะแสดงที่นี่</p>
+          <p className="text-xs">{loading ? "กำลังโหลดตัวอย่าง…" : "ตัวอย่างคอนเทนต์จะแสดงที่นี่"}</p>
         </div>
       )}
 

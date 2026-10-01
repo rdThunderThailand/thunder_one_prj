@@ -7,13 +7,14 @@ import { decodeMetadata } from "@/features/media-workspace/playlists";
 import type { DraftAssetItem, MediaAsset } from "../types";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
+import { PlaylistPatternControl } from "./PlaylistPatternControl";
 import { SelectedAssetList } from "./SelectedAssetList";
 
 /** Frame 3 "3. How to Play". Loose media gets item order + per-item transition (SHIP); play
  *  order / repeat are the player's defaults, shown READ-ONLY (nothing stores them — see the
  *  persistence note in plan-create-wizard.md). Playlist / Composition show their source's own
  *  values with a link to its editor. */
-export function HowToPlayPanel({ assets }: { assets: MediaAsset[] }) {
+export function HowToPlayPanel({ assets, onPlaylistChanged }: { assets: MediaAsset[]; onPlaylistChanged?: () => void }) {
   const type = usePublicationDraftStore((s) => s.basicInfo.publicationType);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
@@ -23,7 +24,7 @@ export function HowToPlayPanel({ assets }: { assets: MediaAsset[] }) {
   const moveAssetItem = usePublicationDraftStore((s) => s.moveAssetItem);
   const toggleAssetItem = usePublicationDraftStore((s) => s.toggleAssetItem);
 
-  if (type === "playlist") return <PlaylistHowTo playlistId={playlistId} />;
+  if (type === "playlist") return <PlaylistHowTo playlistId={playlistId} onPlaylistChanged={onPlaylistChanged} />;
   if (type === "composition") return <CompositionHowTo compositionId={compositionId} />;
 
   if (assetItems.length === 0) {
@@ -90,7 +91,7 @@ function LooseMediaHowTo({
   );
 }
 
-function PlaylistHowTo({ playlistId }: { playlistId: string | null }) {
+function PlaylistHowTo({ playlistId, onPlaylistChanged }: { playlistId: string | null; onPlaylistChanged?: () => void }) {
   const { playlist, failed } = usePlaylistPreview(playlistId, Boolean(playlistId));
 
   if (!playlistId) return <p className="text-xs text-muted-foreground">ยังไม่ได้เลือก Playlist</p>;
@@ -98,12 +99,11 @@ function PlaylistHowTo({ playlistId }: { playlistId: string | null }) {
   if (!playlist) return <p className="text-xs text-muted-foreground">กำลังโหลด…</p>;
 
   const { playback } = decodeMetadata(playlist.metadata);
-  const playOrder = playback.playMode === "shuffle" ? "Shuffle · สุ่มลำดับ" : "Play in Order · เล่นตามลำดับ";
   const repeat = playback.repeat === "once" ? "Play Once · เล่นครั้งเดียว" : "Repeat All · วนซ้ำทั้งหมด";
 
   return (
     <div className="flex flex-col gap-4">
-      <ReadOnlyField label="Play Order" value={playOrder} />
+      <PlaylistPatternControl playlistId={playlistId} onPlaylistChanged={onPlaylistChanged} />
       <ReadOnlyField label="Repeat" value={repeat} />
       <div className="grid grid-cols-2 gap-3">
         <ReadOnlyField label="Transition" value={playback.defaultTransition ?? "fade"} capitalize />

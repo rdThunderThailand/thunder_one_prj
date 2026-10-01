@@ -21,21 +21,27 @@ import { SchedulePreviewPane } from "./schedule/SchedulePreviewPane";
 
 export function EditScheduleModal({
   schedule,
+  initialDraft,
   playlistId,
+  hidePlaybackPattern = false,
   programName,
   onClose,
   onApply,
 }: {
   schedule: PublicationSchedule | null;
+  /** The Create wizard's own draft; takes the place of `schedule` so an invalid draft keeps its values. */
+  initialDraft?: ScheduleDraft;
   /** The bound Playlist; null for a Layout / media Program (Playback Pattern disabled). */
   playlistId: string | null;
+  /** The wizard changes the Playlist's pattern in its own How to Play box (ADR 0083). */
+  hidePlaybackPattern?: boolean;
   programName: string;
   onClose: () => void;
   onApply: (schedule: PublicationSchedule) => void;
 }) {
-  const timezone = schedule?.timezone || DEFAULT_TIMEZONE;
+  const timezone = initialDraft?.timezone || schedule?.timezone || DEFAULT_TIMEZONE;
   const [today] = useState(() => utcToZonedParts(new Date().toISOString(), timezone).date);
-  const [draft, setDraft] = useState<ScheduleDraft>(() => scheduleToDraft(schedule, today, timezone));
+  const [draft, setDraft] = useState<ScheduleDraft>(() => initialDraft ?? scheduleToDraft(schedule, today, timezone));
   const [pattern, setPattern] = useState<PatternChoice | null>(null);
   const [busy, setBusy] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
@@ -47,7 +53,7 @@ export function EditScheduleModal({
 
   const apply = async () => {
     setApplyError(null);
-    if (playlistId && pattern && pattern.selected !== pattern.original) {
+    if (!hidePlaybackPattern && playlistId && pattern && pattern.selected !== pattern.original) {
       setBusy(true);
       try {
         await setPlaylistPlayMode(playlistId, pattern.selected);
@@ -85,11 +91,13 @@ export function EditScheduleModal({
               isDateRange={preset === "date-range"}
               onChange={update}
             />
-            <PlaybackPatternField
-              playlistId={playlistId}
-              choice={pattern}
-              onChange={setPattern}
-            />
+            {!hidePlaybackPattern && (
+              <PlaybackPatternField
+                playlistId={playlistId}
+                choice={pattern}
+                onChange={setPattern}
+              />
+            )}
           </div>
           <div className="p-5">
             <SchedulePreviewPane
