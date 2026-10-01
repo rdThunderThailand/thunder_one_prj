@@ -81,7 +81,7 @@ export function PublicationsTable({
                     )}
                     <div className="min-w-0">
                       <Link
-                        href={`/media-workspace/publications/${item.id}`}
+                        href={`/media-workspace/program/${item.id}`}
                         className="block truncate font-medium text-foreground hover:text-primary"
                       >
                         {item.name}

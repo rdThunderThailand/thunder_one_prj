@@ -80,7 +80,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
           </div>
         </div>
       </div>
-      <Link href={`/media-workspace/publications/${model.id}`} className="mt-auto flex items-center justify-end gap-1 text-[10px] font-semibold text-primary hover:underline">
+      <Link href={`/media-workspace/program/${model.id}`} className="mt-auto flex items-center justify-end gap-1 text-[10px] font-semibold text-primary hover:underline">
         {isNow ? "View program details" : "View schedule"}
         <ArrowRight className="h-3 w-3" />
       </Link>

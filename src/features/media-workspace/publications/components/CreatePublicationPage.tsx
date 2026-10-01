@@ -244,7 +244,7 @@ export function CreatePublicationPage() {
       }
       setStep(2);
     }
-    if (seed) router.replace("/media-workspace/publications/create");
+    if (seed) router.replace("/media-workspace/program/create");
   }, [assets, assetsLoading, hadContentAtHydration, hasHydrated, idParam, router, seed, seedChoice, setAssetItems, setBasicInfo, setStep]);
 
   const [conflictBusy, setConflictBusy] = useState(false);
@@ -291,7 +291,7 @@ export function CreatePublicationPage() {
       }
     }
     state.cancelDraft();
-    router.push("/media-workspace/publications");
+    router.push("/media-workspace/now-next");
   };
 
   const handleCancelClick = () => {
@@ -375,7 +375,7 @@ export function CreatePublicationPage() {
               {retrying ? "กำลังโหลด…" : "ลองใหม่"}
             </Button>
           )}
-          <Link href="/media-workspace/publications" className={buttonClasses("secondary")}>
+          <Link href="/media-workspace/now-next" className={buttonClasses("secondary")}>
             กลับไปยังรายการ
           </Link>
         </div>

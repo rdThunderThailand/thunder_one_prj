@@ -33,10 +33,10 @@ function hrefFor(action: RowAction, id: string): string | null {
   switch (action) {
     case "edit":
     case "publish":
-      return `/media-workspace/publications/create?id=${id}`;
+      return `/media-workspace/program/create?id=${id}`;
     case "open":
     case "view":
-      return `/media-workspace/publications/${id}/edit`;
+      return `/media-workspace/program/${id}/edit`;
     default:
       return null;
   }

@@ -111,7 +111,7 @@ export interface QuickActionData {
 }
 
 export const quickActions: QuickActionData[] = [
-  { label: "Create Publication", icon: "publication", color: "indigo", href: "/media-workspace/publications/create" },
+  { label: "Create Publication", icon: "publication", color: "indigo", href: "/media-workspace/program/create" },
   { label: "Create Playlist", icon: "playlist", color: "blue", href: "/media-workspace/playlists/create" },
   { label: "Create Program", icon: "campaign", color: "amber" },
   { label: "Upload Media", icon: "upload", color: "emerald", href: "/media-workspace/assets/upload" },

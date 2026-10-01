@@ -174,7 +174,7 @@ export function PublicationsListPage() {
       item,
       async () => {
         const res = await duplicatePublication(item.id);
-        router.push(`/media-workspace/publications/create?id=${res.publication_id}`);
+        router.push(`/media-workspace/program/create?id=${res.publication_id}`);
       },
       "ทำสำเนาไม่สำเร็จ",
     );
@@ -223,7 +223,7 @@ export function PublicationsListPage() {
             isFiltered ? (
               <Button variant="outline" size="sm" onClick={clearFilters}>ล้างตัวกรอง</Button>
             ) : (
-              <Link href="/media-workspace/publications/create" className={buttonVariants({ size: "sm" })}>Create Program</Link>
+              <Link href="/media-workspace/program/create" className={buttonVariants({ size: "sm" })}>Create Program</Link>
             )
           }
         />
@@ -255,7 +255,7 @@ export function PublicationsListPage() {
               <UploadIcon className="h-4 w-4" />
               Import Program
             </Button>
-            <Link href="/media-workspace/publications/create" className={cn(buttonVariants(), "gap-1.5")}>
+            <Link href="/media-workspace/program/create" className={cn(buttonVariants(), "gap-1.5")}>
               <PlusIcon className="h-4 w-4" />
               Create Program
             </Link>

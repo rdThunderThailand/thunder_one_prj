@@ -9,7 +9,7 @@ Cross-App "what's waiting on me" rollup (`/my-work`), in three variants picked b
 | `approval` | `GET /partner-applications`, status `PENDING` (reviewers only; 403 → unavailable) | `/lead-approval` |
 | `task` | `GET /tenants/:id/members?include=onboarding` — active members with unfinished onboarding (progress only; Core's step labels are still placeholders) | `/people/new-hires` |
 | `waiting` | same roster read — members still in `invited` status | `/people/personnel` |
-| `draft` | `GET /media/publications?status=draft` where `created_by` is this user; a draft's schedule start is its due date | `/media-workspace/publications/:id` |
+| `draft` | `GET /media/publications?status=draft` where `created_by` is this user; a draft's schedule start is its due date | `/media-workspace/program/:id` |
 | completed | partner applications this user reviewed (`actor_id`) | — |
 
 - `load-my-work.ts` — `loadMyWork(token, tenantId, userId, scope)`, the single loader shared by this page, the Topbar bell (`/api/notifications`) and Mission Control's TasksCard.

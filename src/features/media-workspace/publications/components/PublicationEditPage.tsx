@@ -44,7 +44,7 @@ import { ScheduleCard, TargetCard } from "./edit/ProgramSummaryCards";
 
 type PendingAction = "discard" | "end" | "delete" | null;
 
-const LIST_HREF = "/media-workspace/publications";
+const LIST_HREF = "/media-workspace/now-next";
 
 export function PublicationEditPage({ id }: { id: string }) {
   const router = useRouter();

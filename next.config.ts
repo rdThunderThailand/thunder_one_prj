@@ -32,6 +32,10 @@ const nextConfig: NextConfig = {
       { source: "/thunder-care", destination: "/thunder-care/work-orders", permanent: false },
       { source: "/media-workspace/compositions", destination: "/media-workspace/layouts", permanent: false },
       { source: "/media-workspace/compositions/create", destination: "/media-workspace/layouts/create", permanent: false },
+      // ADR 0081: the old Publication routes. Order matters — `manage` before the catch-all.
+      { source: "/media-workspace/publications/manage", destination: "/media-workspace/program", permanent: true },
+      { source: "/media-workspace/publications", destination: "/media-workspace/now-next", permanent: true },
+      { source: "/media-workspace/publications/:path*", destination: "/media-workspace/program/:path*", permanent: true },
     ];
   },
   images: {

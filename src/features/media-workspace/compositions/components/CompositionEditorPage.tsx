@@ -237,7 +237,7 @@ export function CompositionEditorPage({
         onPreview={() => setPreviewOpen(true)}
         canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo}
         hasUnsavedChanges={isDirty}
-        onPublish={() => router.push(`/media-workspace/publications/create?compositionId=${id}`)}
+        onPublish={() => router.push(`/media-workspace/program/create?compositionId=${id}`)}
         affectedCount={affected.programs.length}
         onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
         onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
