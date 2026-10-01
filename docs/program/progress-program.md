@@ -9,17 +9,19 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 
 | # | Repo | Item | Status | Branch / PR | Notes |
 |---|---|---|---|---|---|
-| D | both | Grilling, ADRs, plan, CONTEXT.md | [x] | `feat/program-redesign` (committed, not pushed) | 2026-09-30, two review rounds applied |
+| D | both | Grilling, ADRs, plan, CONTEXT.md | [x] | `feat/program-redesign`, docs reached `dev` | 2026-09-30, two review rounds applied |
 | BE-0 | Core | Poll follows newest Job | [x] | Thunder_Core#133 + #135 merged into `develop`; FE #179 merged into `dev` | applied develop + prod 2026-09-30; issues #132, #134 |
 | BE-0b | Core | now-next + schedule conflicts follow newest Job | [x] | Thunder_Core#139 merged into `develop` | applied develop + prod 2026-09-30; issue #137, follow-up #138 |
 | BE-1 | Core | List read: filters/page/counts/thumbnail/delivery | [x] | Thunder_Core#136 merged into `develop` | applied develop + prod 2026-09-30; route not on Core `main` yet |
 | FE-A | FE | Programs list page | [x] | thunder_one_prj#180 merged into `dev` | not on `main` yet |
+| BE-2b | Core | `media_publication_get` returns `display_status` + `updated_at` | [x] | Thunder_Core#144 merged into `develop` | applied develop + prod 2026-09-30, `prosrc` md5 `bb14cd42…` on both; prod checked by SQL only |
 | BE-2 | Core | `media_publication_update_published` | [x] | Thunder_Core#143 merged into `develop` (`bb9fde3`) | applied develop + prod 2026-09-30; HTTP verified on develop only; route not yet deployed to prod |
 | FE-B | FE | Edit page shell | [x] | #182 | BE-2 done; browser-verified on develop (see FE-B section) |
 | FE-C | FE | Change Playlist / Layout modals | [x] | #182 | Category = Folders added; type switching not built (no entry point in mockups 05/06) |
 | FE-D | FE | Change Target modal | [x] | #182 | needs FE-B |
-| BE-3 | Core | Custom-dates recurrence | [ ] | — | ADR 0014 |
-| FE-E | FE | Edit Schedule modal | [ ] | — | needs FE-B, BE-3 |
+| BE-3 | Core | Custom-dates recurrence | [x] | Thunder_Core#146 (Draft) | applied develop + prod 2026-09-30; brought the missed all-day fix to prod |
+| FE-E | FE | Edit Schedule modal | [x] | `feat/program-edit-polish` | browser-verified on develop incl. a Live Program |
+| FE-B2 | FE | Frame 03 polish + Draft save fix + FE-C type switch | [x] | `feat/program-edit-polish` | breadcrumb, leave guard, content thumbnail, Channel initials; Draft Save now writes targets + schedule |
 
 ## D — Design (done)
 
@@ -29,7 +31,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 - [x] Plan `docs/program/plan-program-redesign.md`
 - [x] CONTEXT.md:127 — list + Edit page say "Program"
 - [x] Mockups downscaled to JPEG (4.1MB); PNGs git-ignored
-- [x] Docs committed on `feat/program-redesign` (not pushed)
+- [x] Docs committed on `feat/program-redesign` and merged into `dev`
 
 ## BE-0 — Poll follows the newest Job (Thunder_Core)
 
@@ -84,7 +86,7 @@ Decisions: ADR 0080 (this repo), Thunder_Core ADR 0014. Mockups: `docs/program/f
 
 ## FE-B — Edit page (frames 03, 04)
 
-Branch `feat/program-edit-page` (off `dev`, uncommitted). Model + hook + cards in `publications/program-edit.ts`, `hooks/useProgramEdit.ts`, `components/PublicationEditPage.tsx`, `components/edit/`.
+Merged into `dev` via #182. Model + hook + cards in `publications/program-edit.ts`, `hooks/useProgramEdit.ts`, `components/PublicationEditPage.tsx`, `components/edit/`.
 
 - [x] Route `/media-workspace/publications/[id]/edit`; list Open/View link to it
 - [x] Sections: Program Details (editable), Content Source / Target / Schedule (summaries; Change buttons disabled until FE-C/D/E)
@@ -93,11 +95,11 @@ Branch `feat/program-edit-page` (off `dev`, uncommitted). Model + hook + cards i
 - [x] Discard-changes dialog on Go Back (+ `beforeunload`); **sidebar/link navigation is not intercepted**
 - [x] ⋮ menu: Duplicate, View published version, Delete (Draft) / End program
 - [x] Preview modal — header Preview loads the Playlist / Layout stage on first click and reuses `PlaybackPreviewModal` (opened on an Ended Playlist Program: 77 s timeline, media rendered). Its chrome still says "Preview Layout" for a Playlist; **Layout Program not tried**
-- [ ] Badge: derived on the FE (`editDisplayStatus`) because `media_publication_get` returns no `display_status`; `updated_at` is not returned either ("Last updated" shows a dash)
+- [x] Badge reads `display_status` and "Last updated" reads `updated_at`, both from `media_publication_get` (Core#144). Not verified: Publishing / Scheduled badge through the new RPC
 - [x] `tsc` + `eslint` clean; `program-edit.check.mts` passes
 - [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop DB): Ended page read-only; Draft page renders, edit → dirty, Go Back → Discard dialog, Stay keeps edits. Live fixture `zz-fe-b-test` (tenant ThunderOne, playlist `test`, `M2 Smoke Channel` + `Channel for Screen 2`, created and activated through the API with approval): page shows Live, rename → confirm modal → Publish → `update-published` 200, name/revision changed on the server, Publish changes disabled again; a second publish without reload (returned revision reused) worked; ⋮ menu for Live = Duplicate / View Published Version / End program; End → confirm → redirected to the list, status `cancelled`. Second round, same day: Draft **Save** (rev bumped, targets + schedule kept) and **Publish** (→ active, lands on the detail page); **stale revision** (another `update-published` in between → page banner + Reload link, modal closes, edits kept); ⋮ **Duplicate** → new Draft edit page; **Delete** on that Draft (confirm, then 404). **Not verified:** removed-target warning and "removed device stops receiving" (Change Target is FE-D), Publishing badge, Layout Program, comparison with frames 03/04 at 1440 px. Test rows `zz-fe-b-test round2` and `zz-fe-b-draft by-other2` are left Ended on develop (cleanup = R0)
 - [x] Frame 03 comparison 2026-09-30 (**structural only** — the Browser pane would not paint, so no screenshot; measured DOM at 1440 px on a Live fixture `zz-fe-b-visual`, since Ended): main column 828 + rail 320 as in the frame. Fixed: "Playing on N channels" under Live, week shown Mon → Sun, destructive red on Discard / End / Delete. **Remaining deltas vs frame 03:** no 1920×1080 preview thumbnail + "Open Preview" beside Program Details; Content Source shows the bound source only, not the Playlist / Layout radio pair (FE-C); no Channel thumbnails in Target; no breadcrumb or subtitle; Publish is a plain button, not a split button; Program ID is 8 chars (by design)
-- [ ] Draft PR → `dev`
+- [x] PR → `dev` — thunder_one_prj#182, merged 2026-09-30
 
 ## FE-C — Change Playlist / Layout (frames 05, 06)
 
@@ -105,8 +107,9 @@ Branch `feat/program-edit-page` (off `dev`, uncommitted). Model + hook + cards i
 - [x] Change button fetches the picked Playlist / Layout and replaces `content` via `edit.patch`; name shown before saving; Preview is keyed by content id
 - [x] "Custom Layout — Create from blank" **disabled** (not built)
 - [x] Browser-verified 2026-09-30 (develop DB): Category counts and filtering with real folders (`zz-fe-c-folder`), Playlist change ⇄ back returns Save to disabled, Layout picker re-select leaves the page clean
-- [ ] Not verified: switching to a *different* Layout (develop has one), Publish changes after a content change on a Live Program, comparison with frames 05/06; type switching (playlist ↔ layout ↔ video ↔ image) **not built** — no entry point in the mockups
-- [ ] Draft PR: rides on #182
+- [x] Type switching Playlist ⇄ Layout (user, 2026-09-30): frame 03's Playlist | Layout radio pair is the entry point; the other card offers its picker and picking switches the type. Video / image Programs show their items and may switch to either. Verified: Draft Playlist → Layout → Save → back (server type and ids swap); Live fixture Playlist → Layout → Publish changes (`composition`, new Job, same device)
+- [ ] Not verified: switching to a *different* Layout (develop has one), comparison with frames 05/06
+- [x] PR: rode on #182 (merged)
 
 ## FE-D — Change Target (frame 07)
 
@@ -116,28 +119,45 @@ Branch `feat/program-edit-page` (off `dev`, uncommitted). Model + hook + cards i
 - [x] Locations tab + map **disabled**
 - [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop DB): filters + counts, Group pick, Apply → card "2 Channels · 1 Group", Save enabled. On a Live fixture `zz-fe-d-live` (`M2 Smoke Channel` + `Channel for Screen 2`, created and activated through the API with approval): removing a Channel → confirm modal says "Will stop playing on 1 channel: M2 Smoke Channel" → Publish → server shows one `publication_target` and the latest Job has one device (`ThunderOne Screen 02`). Then End (`cancelled`)
 - [ ] Not verified: Location facet with more than one Location, Group removal on a Live Program, comparison with frame 07 (no screenshot taken); `device`-type legacy targets pass through Apply untouched (check only)
-- [ ] Draft PR: rides on #182
+- [x] PR: rode on #182 (merged)
+
+## FE-B2 — Frame 03 polish + Draft save fix
+
+- [x] Breadcrumb `Programs › name › Edit`; Discard dialog now also catches in-app links (sidebar, breadcrumb) via `useLeaveGuard` (capture-phase click on same-origin anchors)
+- [x] Content thumbnail beside Program Details: Playlist cover (same rule as the Playlists page) or the Layout's zone plan with its resolution (Layouts have no cover); "Open Preview" reuses `ProgramPreviewButton`
+- [x] Target card: Channel initials, max 6 + "+N" — Channels have no image field anywhere (checked develop catalog), user chose initials 2026-09-30
+- [-] Split Publish button: no second action exists — kept a single button (user, 2026-09-30) · subtitle under the title: no source field in the mockup, skipped
+- [x] **Bug found and fixed**: Draft Save sent details only, so Change Target / Edit Schedule on a Draft were silently dropped. `saveDraft` now sends `targets` and `PUT /schedule` when they changed (verified: `publication_targets` and schedule on the server after Save)
+- [x] Browser-verified 2026-09-30 (localhost:3000 → Core :3001, develop): leave guard (sidebar → dialog, Stay keeps edits, breadcrumb → Discard navigates), thumbnails via DOM at 1440 px (no screenshot: pane hidden). **Not verified:** pixel comparison with frame 03
 
 ## BE-3 — Custom-dates recurrence (Thunder_Core, ADR 0014)
 
-- [ ] Re-check `recurrence` readers in the live catalog
-- [ ] `recurrence_matches` `dates` branch
-- [ ] `media_publication_set_schedule` validation (1–366 dates, dedupe/sort, `starts_at`/`ends_at` from first/last)
-- [ ] `media_schedule_conflicts` overlap with `dates`
-- [ ] `publication_playback_window` next airing from the array (no scan)
-- [ ] Applied to develop (approval) · verified via HTTP · Draft PR (commit ADR 0014 here)
+Branch `feat/recurrence-custom-dates` in worktree `../Thunder_Core-be3` (uncommitted), migration `20260930180000_recurrence_custom_dates.sql` + rollback.
+
+- [x] Re-checked `recurrence` readers in the live catalog: only `recurrence_matches`, `publication_playback_window`, `media_publication_set_schedule`, `media_schedule_conflicts` branch on the shape; `media_job_poll` reads only `daily_start` and never sends recurrence to the Player; routes pass `recurrence` through loosely (no Core route change)
+- [x] New helper `media_core.recurrence_airs_on(rec, date)` shared by `recurrence_matches` and `media_schedule_conflicts`
+- [x] `set_schedule`: 1–366 real dates (`pg_input_is_valid`), dedupe/sort, `starts_at`/`ends_at` computed from the first/last window
+- [x] `media_schedule_conflicts`: dates × weekly / monthly / dates overlap
+- [x] `publication_playback_window`: next airing from the array (no scan)
+- [x] Applied to develop 2026-09-30 (approved), plus a follow-up `set_schedule` fix (invalid date gave 500). `prosrc` md5 matches the file for all 5 functions, one overload each, ACL unchanged. Regression: 768 real-schedule results + 1008 synthetic weekly/monthly/one-off results identical before/after. SQL: far-apart dates find the next airing, window edges, all-day, timezone. HTTP `PUT /schedule` on :3001: sort/dedupe, computed range, invalid date / `days` mixed in / empty / 367 dates → 400, weekly unchanged. Conflicts: 8 cases in a rolled-back block. **Not verified:** prod (not applied), conflicts over HTTP (no active Program on develop), `update-published` with `dates` on a Live Program
+- [x] **Prod gap found before applying:** prod `recurrence_matches` / `publication_playback_window` predated `20260925062707_all_day_recurrence_sentinel` (on Core `main`, never applied to the prod DB). User approved applying BE-3 anyway, which carries that fix (prod had 1 all-day schedule, a Draft)
+- [x] Applied to prod 2026-09-30: md5 of all 5 functions = file = develop, one overload, ACL unchanged; regression fingerprint of 300 non-all-day real results + synthetic set identical; all-day last minute now airs; far-apart dates find the next airing. Not run: device poll smoke on prod
+- [x] Conflicts + `update-published` over HTTP on a Live fixture `zz-fe-e-live` (develop; created after the user switched the session to manual approval): dates overlap listed, other device 0; Every day → Custom days → Publish changes → Scheduled with next airing 3 Nov 06:00; then Playlist → Layout → Publish changes; 3 Jobs, same device; fixture Ended (`cancelled`)
+- [x] Draft PR — Thunder_Core#146 (ADR 0014 committed with it)
 
 ## FE-E — Edit Schedule (frames 08–12)
 
-- [ ] Shared preset ⇄ recurrence helper + one `*.check.mts`
-- [ ] Presets: Every day, Weekdays, Weekends, Custom days, Date range, One-time (no Recurring); highlight derived from days
-- [ ] Existing monthly → disabled selected "Monthly" + summary
-- [ ] Time range, all-day, timezone; preview (week/list/day) + summary
-- [ ] Playback Pattern: Sequential/Shuffle edits Playlist `play_mode` with "used by N Programs"; other fields disabled; section disabled for Layout content
-- [ ] Browser verification · Draft PR
+- [x] `schedule-preset.ts` (preset ⇄ stored shape, validation, upcoming days) + `schedule-preset.check.mts`; `recurrenceAirsOn` shared in `schedule.ts`
+- [x] Presets Every day / Weekdays / Weekends / Custom days / Date range / One-time; highlight derived (7 days + end date = Date range, no end = Every day — user 2026-09-30); day chips + optional Start/End date row for weekly (user chose to add it)
+- [x] Monthly and open-ended one-offs open as a locked, selected row ("Monthly" / "Continuous"); picking a preset replaces them
+- [x] Time range, all-day, timezone; preview List + Week grid; summary
+- [x] Playback Pattern: Sequential / Shuffle writes the bound Playlist's `play_mode` on Apply (`setPlaylistPlayMode`, revision-checked) with "used by N active or scheduled Programs" (`affected-programs`); Repeat single item disabled; section disabled for Layout content
+- [x] Browser-verified 2026-09-30 on develop: locked Continuous row, Weekdays (chips, list, week grid), Custom days (toggle on/off, sorted) → Apply → Save → server has `freq: dates` and the computed range; reopen keeps Custom days; errors for time, empty dates, end before start; One-time; Cancel leaves the page clean; Playlist `test` play_mode shuffle → sequential via the modal (Playlist revision 3 → 5, other metadata untouched). Live Program verified on `zz-fe-e-live` (see BE-3). **Not verified:** comparison with frames 08–12 by screenshot
 - [ ] Follow-up issue: move wizard `ScheduleStep` onto the shared helper
 
 ## Log
 
 - 2026-09-30 — Design session: grilling (Q1–Q18), ADR 0080, Core ADR 0014, plan, two external review rounds applied. Poll bug found (BE-0). No code, no DB writes.
 - 2026-09-30 — BE-0 executed: poll fix + zero-device activate guard, develop + prod. FE error copy in #179. See `.docs/SESSIONLOG-be0-poll-newest-job-2026-09-30.md`.
+- 2026-09-30 — BE-0b, BE-1, BE-2, FE-A/B/C/D shipped to `dev` / `develop` (FE #180, #182; Core #136, #139, #143, #144). Pre-release check: all 10 functions of the 7 unreleased Core migrations exist on prod with the same `prosrc` md5 as develop. Next: release v0.5.0. See `.docs/SESSIONLOG-program-fe-c-2026-09-30.md`, `-fe-d-`.
+- 2026-09-30 — Frame 03 polish, Draft save fix, BE-3 on develop, FE-E. Test leftovers on develop: Draft `zz-fe-c-layout-draft` now targets `Channel for Screen 1` (schedule restored); Playlist `test` stores `play_mode: sequential` explicitly; `zz-fe-e-live` Ended.

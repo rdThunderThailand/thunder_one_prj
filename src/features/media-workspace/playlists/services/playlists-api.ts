@@ -1,5 +1,6 @@
 import { fetchPlaylist, requestApi } from "@/lib/api/media-api";
-import type { MediaFit, PlaylistStatus, Transition } from "../types";
+import { decodeMetadata, encodeMetadata } from "../metadata";
+import type { MediaFit, PlaylistStatus, PlayMode, Transition } from "../types";
 
 // Reads (fetchPlaylist, fetchPlaylists) live in src/lib/api/media-api.ts — see
 // docs/adr/0020 — since publications reads playlists too and a feature service
@@ -103,6 +104,19 @@ export async function duplicatePlaylist(
  * `active` publication points at the playlist, naming it, so a caller must surface that
  * message — see `describeDeleteError`. Reversible via `restorePlaylist`.
  */
+/** Changes only the Playlist's play mode (Program Edit Schedule, plan §2 FE-E); every other metadata
+ *  field is written back unchanged. Refused with a revision conflict if the Playlist moved meanwhile. */
+export async function setPlaylistPlayMode(id: string, playMode: PlayMode): Promise<void> {
+  const playlist = await fetchPlaylist(id);
+  const metadata = decodeMetadata(playlist.metadata);
+  await upsertPlaylist({
+    playlistId: id,
+    name: playlist.name,
+    metadata: encodeMetadata({ ...metadata, playback: { ...metadata.playback, playMode } }),
+    expectedRevision: playlist.revision,
+  });
+}
+
 export async function deletePlaylist(id: string): Promise<void> {
   await requestApi<unknown>("DELETE", `/media/playlists/${id}`);
 }

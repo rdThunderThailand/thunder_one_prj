@@ -28,7 +28,15 @@ async function loadPreview(content: ProgramContent): Promise<StagePreview> {
 }
 
 /** Loads the Program's stage on first click, so opening the Edit page costs no preview fetch. */
-export function ProgramPreviewButton({ content }: { content: ProgramContent }) {
+export function ProgramPreviewButton({
+  content,
+  label = "Preview",
+  size,
+}: {
+  content: ProgramContent;
+  label?: string;
+  size?: "sm";
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -53,11 +61,12 @@ export function ProgramPreviewButton({ content }: { content: ProgramContent }) {
     <>
       <Button
         variant="outline"
+        size={size}
         disabled={loading}
         onClick={show}
         title={failed ? "Preview failed to load — click to retry" : undefined}
       >
-        {loading ? "Loading…" : failed ? "Retry preview" : "Preview"}
+        {loading ? "Loading…" : failed ? "Retry preview" : label}
       </Button>
       {loaded && (
         <PlaybackPreviewModal

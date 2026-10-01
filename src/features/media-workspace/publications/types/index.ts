@@ -242,7 +242,9 @@ export type ScheduleType = (typeof SCHEDULE_TYPES)[number];
 export type Recurrence =
   | Record<string, never>
   | { freq: "weekly"; days: number[]; daily_start: string; daily_end: string }
-  | { freq: "monthly"; month_days: number[]; daily_start: string; daily_end: string };
+  | { freq: "monthly"; month_days: number[]; daily_start: string; daily_end: string }
+  /** Custom days (Thunder_Core ADR 0014): local "YYYY-MM-DD" dates in `timezone`, stored sorted and unique. */
+  | { freq: "dates"; dates: string[]; daily_start: string; daily_end: string };
 
 /** Wizard-local step-4 form. Dates/times are wall-clock in `timezone`. */
 export type ScheduleForm = {

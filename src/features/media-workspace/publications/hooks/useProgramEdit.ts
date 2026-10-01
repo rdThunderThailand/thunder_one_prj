@@ -20,6 +20,7 @@ import {
   checkScheduleConflicts,
   fetchPublication,
   saveBasicInfo,
+  savePublicationSchedule,
   updatePublishedPublication,
 } from "../services/publications-api";
 import type { PublicationDetail, ScheduleConflict } from "../types";
@@ -122,11 +123,13 @@ export function useProgramEdit(id: string) {
     [run, state, detail, id],
   );
 
-  /** Draft: writes the details only — content, targets and schedule are still saved by the wizard. */
+  /** Draft: details + bound Playlist / Layout, and targets / schedule when they changed. Video / image
+   *  items are still saved by the wizard. The schedule call runs last: it moves the revision on. */
   const saveDraft = useCallback(
     (thenActivate: boolean) =>
       run(async () => {
-        if (!state || !detail) throw new Error("Program is not loaded");
+        if (!state || !detail || !baseline) throw new Error("Program is not loaded");
+        const changed = (key: "targets" | "schedule") => JSON.stringify(state[key]) !== JSON.stringify(baseline[key]);
         const saved = await saveBasicInfo(
           {
             name: state.name.trim(),
@@ -138,14 +141,18 @@ export function useProgramEdit(id: string) {
             composition_id: state.content.compositionId ?? undefined,
           },
           id,
-          undefined,
+          changed("targets") ? state.targets : undefined,
           detail.revision,
         );
-        setDetail({ ...detail, revision: saved.revision ?? detail.revision });
+        let revision = saved.revision ?? detail.revision;
+        if (state.schedule && changed("schedule")) {
+          revision = (await savePublicationSchedule(id, state.schedule)).revision;
+        }
+        setDetail({ ...detail, revision });
         setBaseline(state);
         if (thenActivate) await activatePublication(id);
       }),
-    [run, state, detail, id],
+    [run, state, detail, baseline, id],
   );
 
   return {

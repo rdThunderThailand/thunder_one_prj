@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, MoreIcon } from "@/components/ui/icons";
@@ -29,15 +29,18 @@ import {
   deletePublication,
   duplicatePublication,
 } from "../services/publications-api";
+import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useProgramEdit } from "../hooks/useProgramEdit";
 import { publicationDrift } from "../publication-drift";
 import { DISPLAY_STATUS_LABELS } from "../publication-list-display";
 import { CONFIRM_COPY } from "./edit/confirm-copy";
+import { ProgramBreadcrumb } from "./edit/ProgramBreadcrumb";
 import { ProgramDetailsCard } from "./edit/ProgramDetailsCard";
 import { ProgramEditRail } from "./edit/ProgramEditRail";
 import { ProgramPreviewButton } from "./edit/ProgramPreviewButton";
 import { PublishChangesDialog } from "./edit/PublishChangesDialog";
-import { ContentSourceCard, ScheduleCard, TargetCard } from "./edit/ProgramSummaryCards";
+import { ContentSourceCard } from "./edit/ContentSourceCard";
+import { ScheduleCard, TargetCard } from "./edit/ProgramSummaryCards";
 
 type PendingAction = "discard" | "end" | "delete" | null;
 
@@ -50,14 +53,13 @@ export function PublicationEditPage({ id }: { id: string }) {
   const [pending, setPending] = useState<PendingAction>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [leaveTo, setLeaveTo] = useState<string | null>(null);
 
-  // The browser's own leave prompt covers reload / tab close; Go Back uses the Discard dialog.
-  useEffect(() => {
-    if (!isDirty) return;
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [isDirty]);
+  // Reload / tab close use the browser prompt; Go Back and any in-app link use the Discard dialog.
+  useLeaveGuard(isDirty, (href) => {
+    setLeaveTo(href);
+    setPending("discard");
+  });
 
   if (edit.loadError) {
     return <ErrorState description={edit.loadError.message} />;
@@ -83,12 +85,15 @@ export function PublicationEditPage({ id }: { id: string }) {
         : []
       : ["The Playlist may have newer content than the published version; publishing picks up its current content."];
 
-  const goBack = () => (isDirty ? setPending("discard") : router.push(LIST_HREF));
+  const goBack = () => {
+    setLeaveTo(null);
+    return isDirty ? setPending("discard") : router.push(LIST_HREF);
+  };
 
   const confirmPending = () => {
     const action = pending;
     setPending(null);
-    if (action === "discard") return router.push(LIST_HREF);
+    if (action === "discard") return router.push(leaveTo ?? LIST_HREF);
     const run = action === "end" ? cancelPublication(id) : deletePublication(id);
     run.then(() => router.push(LIST_HREF)).catch(() => setActionError("Action failed. Try again."));
   };
@@ -111,6 +116,10 @@ export function PublicationEditPage({ id }: { id: string }) {
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
+          <ProgramBreadcrumb
+            listHref={LIST_HREF}
+            name={detail.name}
+          />
           <h1 className="flex items-center gap-3 text-2xl font-bold text-foreground">
             Edit Program: {detail.name}
             <Badge variant={displayStatus === "live" ? "success" : "neutral"}>
@@ -240,6 +249,7 @@ export function PublicationEditPage({ id }: { id: string }) {
             <ScheduleCard
               state={state}
               error={partError("schedule")}
+              onChange={(schedule) => edit.patch({ schedule })}
             />
           </div>
         </div>
