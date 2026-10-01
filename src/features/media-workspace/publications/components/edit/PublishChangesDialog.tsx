@@ -15,6 +15,7 @@ import type { ScheduleConflict } from "../../types";
 type ConflictState = { status: "checking" } | { status: "failed" } | { status: "done"; list: ScheduleConflict[] };
 
 function ConfirmBody({
+  isFirstPublish,
   checkConflicts,
   removedTargets,
   contentNotes,
@@ -23,6 +24,7 @@ function ConfirmBody({
   onCancel,
   onConfirm,
 }: {
+  isFirstPublish: boolean;
   checkConflicts: () => Promise<ScheduleConflict[]>;
   removedTargets: string[];
   contentNotes: string[];
@@ -52,10 +54,11 @@ function ConfirmBody({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Publish changes?</DialogTitle>
+        <DialogTitle>{isFirstPublish ? "Publish Program?" : "Publish changes?"}</DialogTitle>
         <DialogDescription>
-          This updates the published Program. Every change is published together, and screens
-          switch to the new version on their next poll.
+          {isFirstPublish
+            ? "This publishes the Program. Screens start playing it on their next poll."
+            : "This updates the published Program. Every change is published together, and screens switch to the new version on their next poll."}
         </DialogDescription>
       </DialogHeader>
       <div className="flex flex-col gap-3 text-sm">
@@ -128,6 +131,7 @@ export function PublishChangesDialog({
 }: {
   open: boolean;
   onClose: () => void;
+  isFirstPublish: boolean;
   checkConflicts: () => Promise<ScheduleConflict[]>;
   removedTargets: string[];
   contentNotes: string[];
