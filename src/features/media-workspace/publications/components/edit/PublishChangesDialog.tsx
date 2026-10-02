@@ -81,7 +81,7 @@ function ConfirmBody({
         )}
         {conflicts.status === "failed" && (
           <p className="text-muted-foreground">
-            Could not check schedule conflicts. You can still publish; the server re-checks.
+            Could not check schedule conflicts. You can still publish.
           </p>
         )}
         {conflicts.status === "done" && conflicts.list.length > 0 && (
@@ -115,7 +115,7 @@ function ConfirmBody({
         </Button>
         <Button
           onClick={onConfirm}
-          disabled={busy || conflicts.status === "checking"}
+          disabled={busy}
         >
           {busy ? "Publishing…" : "Publish"}
         </Button>
