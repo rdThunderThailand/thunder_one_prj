@@ -1,30 +1,20 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode, type Ref } from "react";
 import { ExpandIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/lovable/button";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup,
+  DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/lovable/dropdown-menu";
 import { formatDuration } from "@/features/media-workspace/playlists/duration";
 
 const SPEED_OPTIONS = [1, 2, 3];
 
 export function PreviewControls({
-  conflictCount,
-  geometryControls,
-  timeSeconds,
-  timelineSeconds,
-  muted,
-  playing,
-  speed,
-  allowActualSize,
-  framePixels,
-  fitToWindow,
-  isFullscreen,
-  placement = "panel",
-  onTimeline,
-  onPlaying,
-  onSpeed,
-  onMuted,
-  onFitToWindow,
-  onFullscreen,
+  conflictCount, geometryControls, timeSeconds, timelineSeconds, muted, playing, speed,
+  allowActualSize, framePixels, fitToWindow, isFullscreen, placement = "panel",
+  bodyRef, portalContainer, onTimeline, onPlaying, onSpeed, onMuted, onFitToWindow, onFullscreen,
 }: {
   conflictCount: number;
   geometryControls: ReactNode;
@@ -37,8 +27,9 @@ export function PreviewControls({
   framePixels: [number, number] | null;
   fitToWindow: boolean;
   isFullscreen: boolean;
-  /** `footer` is the Lovable preview dialog's bottom bar — flat, on the dark sheet. */
   placement?: "panel" | "overlay" | "footer";
+  bodyRef?: Ref<HTMLDivElement>;
+  portalContainer?: HTMLElement | null;
   onTimeline: (seconds: number) => void;
   onPlaying: (playing: boolean) => void;
   onSpeed: (speed: number) => void;
@@ -46,116 +37,119 @@ export function PreviewControls({
   onFitToWindow: (fit: boolean) => void;
   onFullscreen: () => void;
 }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isOverlay = placement === "overlay";
   const isFooter = placement === "footer";
-  const controlClass = `flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring/30 ${
-    isOverlay ? "text-white hover:bg-card/15" : isFooter ? "text-primary-foreground hover:bg-primary-foreground/10" : "text-muted-foreground hover:bg-muted"
-  }`;
-  const mutedText = isOverlay ? "text-white/80" : isFooter ? "text-primary-foreground/80" : "text-muted-foreground";
-  const overlayVisibility = playing
-    ? "translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
+  const isDark = isOverlay || isFooter;
+  const controlClass = isDark ? "text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" : "";
+  const mutedText = isDark ? "text-primary-foreground/80" : "text-muted-foreground";
+  const timeLabel = isFooter
+    ? `${formatDuration(timeSeconds)} / ${formatDuration(timelineSeconds)}`
+    : `${Math.floor(timeSeconds)}s / ${Math.floor(timelineSeconds)}s`;
+  const overlayVisibility = playing && !isMenuOpen
+    ? "translate-y-2 opacity-0 group-hover/preview-stage:translate-y-0 group-hover/preview-stage:opacity-100 group-focus-within/preview-stage:translate-y-0 group-focus-within/preview-stage:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:opacity-100 [@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100"
     : "translate-y-0 opacity-100";
+
+  useEffect(() => {
+    let alive = true;
+    Promise.resolve().then(() => alive && setIsMenuOpen(false));
+    return () => { alive = false; };
+  }, [placement, portalContainer]);
+
   return (
     <div
-      className={
-        isOverlay
-          ? `absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/70 to-transparent px-3 pb-3 pt-8 text-white transition duration-200 motion-reduce:transition-none ${overlayVisibility}`
-          : isFooter
-            ? "shrink-0 border-t border-primary-foreground/10 px-5 py-3 text-primary-foreground"
-            : "rounded-lg border border-border bg-muted p-3"
-      }
+      data-preview-controls={placement}
+      className={isOverlay
+        ? `absolute inset-x-0 bottom-0 rounded-b-xl border border-transparent bg-gradient-to-t from-foreground/85 via-foreground/70 to-transparent px-3 pb-3 pt-8 text-primary-foreground transition duration-200 motion-reduce:transition-none ${overlayVisibility}`
+        : isFooter
+          ? "shrink-0 border-t border-primary-foreground/10 px-5 py-3 text-primary-foreground"
+          : "rounded-lg border border-border bg-muted p-3"}
     >
-      {conflictCount > 0 && (
-        <p className="mb-3 rounded-md border border-warning/30 bg-warning-soft px-2.5 py-2 text-xs text-warning" role="status">
-          Preview shows this draft alone. {conflictCount} other publication{conflictCount === 1 ? "" : "s"} may merge on the same screen.
-        </p>
-      )}
-      {geometryControls}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className={controlClass}
-          aria-label={playing ? "Pause preview" : "Play preview"}
-          title={playing ? "Pause" : "Play"}
-          onClick={() => onPlaying(!playing)}
-        >
-          {playing ? <PauseGlyph /> : <PlayIcon className="h-4 w-4" />}
-        </button>
-        <span className={`shrink-0 text-[11px] tabular-nums ${mutedText}`}>
-          {isFooter ? `${formatDuration(timeSeconds)} / ${formatDuration(timelineSeconds)}` : `${Math.floor(timeSeconds)}s / ${Math.floor(timelineSeconds)}s`}
-        </span>
-        <input
-          aria-label="Preview timeline"
-          type="range"
-          min="0"
-          max={timelineSeconds}
-          step="0.1"
-          value={timeSeconds}
-          onChange={(event) => onTimeline(Number(event.target.value))}
-          className="h-1 min-w-20 flex-1 accent-primary"
-        />
-        <button
-          type="button"
-          className={controlClass}
-          aria-label={muted ? "Unmute preview" : "Mute preview"}
-          title={muted ? "Unmute" : "Mute"}
-          onClick={() => onMuted(!muted)}
-        >
-          <VolumeGlyph muted={muted} />
-        </button>
-        <span className={`text-xs ${mutedText}`}>
-          {speed}×
-        </span>
-        <details
-          className="relative inline-block shrink-0 text-left"
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-              event.currentTarget.removeAttribute("open");
-            }
-          }}
-        >
-          <summary
-            aria-label="Playback speed"
-            title="Playback options"
-            className={`${controlClass} cursor-pointer list-none`}
-          >
-            <MoreIcon className="h-4 w-4" />
-          </summary>
-          <div className="absolute bottom-full right-0 z-20 mb-2 w-40 overflow-hidden rounded-lg border border-border bg-card py-1 text-foreground shadow-lg">
-            {SPEED_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={`block w-full px-3 py-2 text-left text-sm hover:bg-muted ${
-                  speed === option ? "font-semibold text-primary" : ""
-                }`}
-                onClick={() => onSpeed(option)}
-              >
-                {option}×
-              </button>
-            ))}
-            {allowActualSize && framePixels && (
-              <button
-                type="button"
-                className="block w-full border-t border-border px-3 py-2 text-left text-sm hover:bg-muted"
-                onClick={() => onFitToWindow(!fitToWindow)}
-              >
-                {fitToWindow ? `Actual size (${framePixels[0]}×${framePixels[1]})` : "Fit to window"}
-              </button>
-            )}
+      <div ref={bodyRef} className="@container/preview-controls min-w-0">
+        {conflictCount > 0 && (
+          <p className="mb-3 rounded-md border border-warning/30 bg-warning-soft px-2.5 py-2 text-xs text-warning" role="status">
+            Preview shows this draft alone. {conflictCount} other publication{conflictCount === 1 ? "" : "s"} may merge on the same screen.
+          </p>
+        )}
+        {geometryControls}
+        <div className="flex min-w-0 flex-col gap-2 @min-[24rem]/preview-controls:flex-row @min-[24rem]/preview-controls:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-2 @max-[9.5rem]/preview-controls:flex-wrap">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={controlClass}
+              aria-label={playing ? "Pause preview" : "Play preview"}
+              title={playing ? "Pause" : "Play"}
+              onClick={() => onPlaying(!playing)}
+            >
+              {playing ? <PauseGlyph /> : <PlayIcon className="h-4 w-4" />}
+            </Button>
+            <span className={`min-w-0 max-w-[min(8rem,35%)] shrink truncate text-[11px] tabular-nums @max-[9.5rem]/preview-controls:max-w-[calc(100%-2.5rem)] ${mutedText}`} title={timeLabel} aria-label={timeLabel}>
+              {timeLabel}
+            </span>
+            <input
+              aria-label="Preview timeline"
+              type="range"
+              min="0"
+              max={timelineSeconds}
+              step="0.1"
+              value={timeSeconds}
+              onChange={(event) => onTimeline(Number(event.target.value))}
+              className="h-1 min-w-0 flex-1 accent-primary @max-[9.5rem]/preview-controls:basis-full"
+            />
           </div>
-        </details>
-        <button
-          type="button"
-          className={controlClass}
-          aria-label={isFullscreen ? "Exit full screen" : "Full screen"}
-          title={isFullscreen ? "Exit full screen" : "Full screen"}
-          onClick={onFullscreen}
-        >
-          <ExpandIcon className="h-4 w-4" />
-        </button>
+          <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2 @min-[9.5rem]/preview-controls:flex-nowrap">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={controlClass}
+              aria-label={muted ? "Unmute preview" : "Mute preview"}
+              title={muted ? "Unmute" : "Mute"}
+              onClick={() => onMuted(!muted)}
+            >
+              <VolumeGlyph muted={muted} />
+            </Button>
+            <span className={`text-xs ${mutedText}`} aria-label={`Playback speed ${speed}×`}>
+              {speed}×
+            </span>
+            <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" className={controlClass} aria-label="Playback options" title="Playback options">
+                  <MoreIcon className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="end" portalContainer={portalContainer}>
+                <DropdownMenuRadioGroup value={String(speed)} onValueChange={(value) => onSpeed(Number(value))}>
+                  {SPEED_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem key={option} value={String(option)}>
+                      {option}×
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+                {allowActualSize && framePixels && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => onFitToWindow(!fitToWindow)}>
+                      {fitToWindow ? `Actual size (${framePixels[0]}×${framePixels[1]})` : "Fit to window"}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={controlClass}
+              aria-label={isFullscreen ? "Exit full screen" : "Full screen"}
+              title={isFullscreen ? "Exit full screen" : "Full screen"}
+              onClick={onFullscreen}
+            >
+              <ExpandIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
         {isFooter && (
-          <div className="ml-3 hidden text-right sm:block">
+          <div className="mt-2 text-right">
             <p className="text-[11px] font-semibold">Preview Mode</p>
             <p className="text-[10px] text-primary-foreground/55">This is a simulation of how your layout will appear on screens.</p>
           </div>
@@ -177,7 +171,7 @@ function PauseGlyph() {
 function VolumeGlyph({ muted }: { muted: boolean }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
-      <path d="M4 10v4h4l5 4V6l-5 4H4Z" fill="currentColor" />
+      <path d="M4 10v4h4l5 4H4Z" fill="currentColor" />
       {muted ? (
         <path d="m16 9 4 6m0-6-4 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       ) : (
