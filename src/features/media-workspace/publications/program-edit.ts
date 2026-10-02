@@ -5,6 +5,7 @@ import type {
   PublicationTarget,
   PublicationType,
 } from "./types";
+import type { checkScheduleConflicts } from "./services/publications-api";
 
 export type ProgramItemDraft = {
   media_asset_id: string;
@@ -192,4 +193,26 @@ export function targetDeviceIds(channels: ChannelLike[], targets: PublicationTar
     }
   }
   return [...ids];
+}
+
+/** Each dialog open resolves Channel/Group membership afresh; failed lookup stays a failed check. */
+export async function checkEditConflicts(
+  publicationId: string,
+  state: Pick<ProgramEditState, "schedule" | "targets" | "priority">,
+  loadChannels: () => Promise<ChannelLike[]>,
+  check: typeof checkScheduleConflicts,
+) {
+  if (!state.schedule) return [];
+  const channels = state.targets.some((target) => target.target_type !== "device")
+    ? await loadChannels()
+    : [];
+  return check({
+    publication_id: publicationId,
+    device_ids: targetDeviceIds(channels, state.targets),
+    starts_at: state.schedule.starts_at,
+    ends_at: state.schedule.ends_at,
+    recurrence: state.schedule.recurrence,
+    timezone: state.schedule.timezone,
+    priority: state.priority,
+  });
 }

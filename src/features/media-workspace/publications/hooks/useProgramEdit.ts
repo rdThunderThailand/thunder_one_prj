@@ -7,11 +7,11 @@ import { fetchChannels } from "../../channels/services/channels-api";
 import type { ChannelListItem } from "../../channels/types";
 import {
   buildUpdatePublishedBody,
+  checkEditConflicts,
   detailToEditState,
   isProgramDirty,
   parseUpdatePublishedError,
   removedTargetLabels,
-  targetDeviceIds,
   type ProgramEditState,
   type UpdatePublishedFailure,
 } from "../program-edit";
@@ -80,17 +80,9 @@ export function useProgramEdit(id: string) {
   );
 
   const checkConflicts = useCallback(async (): Promise<ScheduleConflict[]> => {
-    if (!state?.schedule) return [];
-    return checkScheduleConflicts({
-      publication_id: id,
-      device_ids: targetDeviceIds(channels, state.targets),
-      starts_at: state.schedule.starts_at,
-      ends_at: state.schedule.ends_at,
-      recurrence: state.schedule.recurrence,
-      timezone: state.schedule.timezone,
-      priority: state.priority,
-    });
-  }, [id, state, channels]);
+    if (!state) return [];
+    return checkEditConflicts(id, state, fetchChannels, checkScheduleConflicts);
+  }, [id, state]);
 
   /** Runs a write; resolves `null` on success, otherwise the failure (also kept in `failure`). */
   const run = useCallback(async (action: () => Promise<void>): Promise<UpdatePublishedFailure | null> => {

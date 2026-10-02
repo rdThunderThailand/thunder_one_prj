@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import {
   buildUpdatePublishedBody,
+  checkEditConflicts,
   compositionContent,
   detailToEditState,
   isProgramDirty,
@@ -84,6 +85,35 @@ const channels = [
   { id: "c4", player: { id: "d4" }, groups: [] },
 ];
 assert.deepEqual(targetDeviceIds(channels, base.targets).sort(), ["d1", "d2"]);
+
+// Each open uses current Channel membership; unavailable metadata must not mean "no conflicts".
+let lookups = 0;
+const requests: Parameters<Parameters<typeof checkEditConflicts>[3]>[0][] = [];
+const loadChannels = async () => {
+  lookups += 1;
+  return lookups === 1 ? channels : [{ ...channels[0], player: { id: "d5" } }];
+};
+const checkConflicts = async (input: (typeof requests)[number]) => {
+  requests.push(input);
+  return [];
+};
+await checkEditConflicts("p1", base, loadChannels, checkConflicts);
+await checkEditConflicts("p1", { ...base, priority: "high" }, loadChannels, checkConflicts);
+assert.equal(lookups, 2);
+assert.deepEqual(requests.map((request) => request.device_ids.sort()), [["d1", "d2"], ["d5"]]);
+assert.equal(requests[1].priority, "high");
+assert.equal(requests[1].publication_id, "p1");
+assert.equal(requests[1].starts_at, base.schedule!.starts_at);
+const unavailable = async () => { throw new Error("Channel metadata unavailable"); };
+await assert.rejects(checkEditConflicts("p1", base, unavailable, checkConflicts), /metadata unavailable/);
+assert.equal(requests.length, 2, "Failed metadata must not submit an empty device check");
+await checkEditConflicts("p1", {
+  ...base,
+  targets: [{ target_type: "device", device_id: "d7" }],
+}, unavailable, checkConflicts);
+assert.deepEqual(requests[2].device_ids, ["d7"], "Direct device must bypass Channel lookup");
+await checkEditConflicts("p1", { ...base, schedule: null }, unavailable, checkConflicts);
+assert.equal(requests.length, 3, "Missing schedule must retain the existing no-check behavior");
 
 // Change Playlist / Layout: items sorted by position; the other side's id is cleared; the change is dirty.
 const changed = playlistContent({
