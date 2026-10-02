@@ -16,6 +16,11 @@ export type GeometryOption = {
 
 export const UNKNOWN_GEOMETRY_ID = "unknown";
 
+/** Keep 70px for controls padding/borders and the Zone banner above the measured body. */
+export function canOverlayPreviewControls(frameHeight: number, bodyHeight: number): boolean {
+  return frameHeight >= bodyHeight + 70;
+}
+
 /** Groups the selected Devices' reported geometries by the `WxH` string alone — orientation is
  *  `width > height`, not a third key, so `1080x1920` and `1920x1080` separate on their own.
  *  Devices reporting nothing parseable collapse into a single `Unknown (n)` group.
