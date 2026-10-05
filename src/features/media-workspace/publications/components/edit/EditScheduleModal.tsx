@@ -24,6 +24,7 @@ export function EditScheduleModal({
   initialDraft,
   playlistId,
   hidePlaybackPattern = false,
+  showDateRangeCalendar = false,
   programName,
   onClose,
   onApply,
@@ -35,6 +36,8 @@ export function EditScheduleModal({
   playlistId: string | null;
   /** The wizard changes the Playlist's pattern in its own How to Play box (ADR 0083). */
   hidePlaybackPattern?: boolean;
+  /** Edit page only; the Create wizard retains its current date fields. */
+  showDateRangeCalendar?: boolean;
   programName: string;
   onClose: () => void;
   onApply: (schedule: PublicationSchedule) => void;
@@ -89,6 +92,7 @@ export function EditScheduleModal({
               errors={errors}
               today={today}
               isDateRange={preset === "date-range"}
+              showDateRangeCalendar={showDateRangeCalendar}
               onChange={update}
             />
             {!hidePlaybackPattern && (
