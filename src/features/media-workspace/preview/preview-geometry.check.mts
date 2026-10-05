@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { defaultGeometry, editorGeometryOptions, groupDeviceGeometries, resolveFrameAspectRatio, resolveFramePixels } from "./preview-geometry.ts";
+import { canOverlayPreviewControls, defaultGeometry, editorGeometryOptions, groupDeviceGeometries, resolveFrameAspectRatio, resolveFramePixels } from "./preview-geometry.ts";
 
 // Duplicate geometries collapse into one counted option; Unknown trails the parseable groups.
 const grouped = groupDeviceGeometries(["1920x1080", "1080x1920", "1920x1080", null, "garbage", "1920x1080"]);
@@ -30,5 +30,13 @@ assert.deepEqual(resolveFramePixels(grouped[0], "1920x1080"), [1080, 1920]);
 assert.deepEqual(resolveFramePixels(grouped[2], "1920x1080"), [1920, 1080]);
 assert.equal(resolveFramePixels(grouped[2], null), null);
 assert.equal(resolveFramePixels(null, null), null);
+
+// One/two-row controls and extra geometry/warnings all count toward the same height budget.
+assert.equal(canOverlayPreviewControls(102, 32), true);
+assert.equal(canOverlayPreviewControls(101.9, 32), false);
+assert.equal(canOverlayPreviewControls(142, 72), true);
+assert.equal(canOverlayPreviewControls(141.9, 72), false);
+assert.equal(canOverlayPreviewControls(150, 100), false);
+assert.equal(canOverlayPreviewControls(220, 150), true);
 
 console.log("preview-geometry.check.mts OK");
