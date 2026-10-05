@@ -12,6 +12,7 @@ import {
   isProgramDirty,
   parseUpdatePublishedError,
   playlistContent,
+  programEditSubtitle,
   removedTargetLabels,
   targetDeviceIds,
 } from "./program-edit.ts";
@@ -34,6 +35,9 @@ const detail = {
 } as PublicationDetail;
 
 const base = detailToEditState(detail);
+assert.equal(programEditSubtitle(base), "Playlist: PL · 1 Channel · 1 Group");
+assert.equal(programEditSubtitle({ ...base, content: compositionContent({ id: "layout", name: "New Layout" }), targets: [] }), "Layout: New Layout · No target");
+assert.equal(programEditSubtitle({ ...base, targets: [{ target_type: "device", device_id: "d1" }, { target_type: "device", device_id: "d2" }] }), "Playlist: PL · 2 Devices");
 
 // 1. untouched state is not dirty; any edit is
 assert.equal(isProgramDirty(base, detailToEditState(detail)), false);

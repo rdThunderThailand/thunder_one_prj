@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TIMEZONES, WEEKDAYS } from "../../../schedule";
 import type { DraftErrors, ScheduleDraft } from "../../../schedule-preset";
 import { DatesCalendar } from "./DatesCalendar";
+import { DateRangeCalendar } from "./DateRangeCalendar";
 import { MonthDaysGrid } from "./MonthDaysGrid";
 
 const MONDAY_FIRST = [...WEEKDAYS.slice(1), WEEKDAYS[0]];
@@ -97,12 +98,14 @@ export function ScheduleConfigFields({
   errors,
   today,
   isDateRange,
+  showDateRangeCalendar = false,
   onChange,
 }: {
   draft: ScheduleDraft;
   errors: DraftErrors;
   today: string;
   isDateRange: boolean;
+  showDateRangeCalendar?: boolean;
   onChange: (change: Partial<ScheduleDraft>) => void;
 }) {
   return (
@@ -161,6 +164,14 @@ export function ScheduleConfigFields({
             />
           </div>
           <FieldError message={errors.startDate ?? errors.endDate} />
+          {isDateRange && showDateRangeCalendar && (
+            <DateRangeCalendar
+              startDate={draft.startDate}
+              endDate={draft.endDate}
+              today={today}
+              onChange={onChange}
+            />
+          )}
         </Step>
       )}
       {draft.mode === "dates" && (
@@ -192,7 +203,6 @@ export function ScheduleConfigFields({
           <FieldError message={errors.startDate} />
         </Step>
       )}
-
       {draft.mode === "continuous" && (
         <Step
           n={1}
@@ -236,7 +246,6 @@ export function ScheduleConfigFields({
           </div>
         </Step>
       )}
-
       {draft.mode !== "continuous" && (
         <Step
           n={2}

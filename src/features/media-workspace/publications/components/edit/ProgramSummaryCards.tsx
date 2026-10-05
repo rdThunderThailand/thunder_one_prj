@@ -173,6 +173,7 @@ export function ScheduleCard({
       {editing && (
         <EditScheduleModal
           schedule={schedule}
+          showDateRangeCalendar
           playlistId={state.content.type === "playlist" ? state.content.playlistId : null}
           programName={state.name}
           onClose={() => setEditing(false)}

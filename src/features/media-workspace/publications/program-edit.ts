@@ -39,6 +39,19 @@ export type ProgramEditState = {
   schedule: PublicationSchedule | null;
 };
 
+/** Staged content and direct target counts; Group membership totals are not inferred. */
+export function programEditSubtitle(state: ProgramEditState): string {
+  const contentLabel = state.content.type === "composition" ? "Layout" : "Playlist";
+  const content = state.content.type === "composition" || state.content.type === "playlist"
+    ? `${contentLabel}: ${state.content.name || "Not selected"}`
+    : `Media: ${state.content.items.length} item${state.content.items.length === 1 ? "" : "s"}`;
+  const counts = [["channel", "Channel"], ["group", "Group"], ["device", "Device"]].flatMap(([type, label]) => {
+    const count = state.targets.filter((target) => target.target_type === type).length;
+    return count ? [`${count} ${label}${count === 1 ? "" : "s"}`] : [];
+  });
+  return [content, ...(counts.length ? counts : ["No target"])].join(" · ");
+}
+
 type PlaylistItemLike = {
   media_asset_id: string;
   position: number;
