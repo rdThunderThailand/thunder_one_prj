@@ -58,22 +58,25 @@ function Block({ segment, date, now, selected, onSelect }: { segment: CalendarSe
       aria-label={`${name}, ${range}`}
       aria-pressed={selected}
       onClick={onSelect}
-      className={`absolute top-1.5 h-[46px] overflow-hidden rounded-md border px-2 py-1 text-left outline-none transition-shadow hover:ring-2 hover:ring-primary/30 focus-visible:ring-2 focus-visible:ring-ring/30 ${PRIORITY_STYLES[segment.priority].block} ${selected ? "ring-2 ring-primary" : ""}`}
+      className={`absolute top-1.5 h-[46px] overflow-clip rounded-md border px-2 py-1 text-left outline-none transition-shadow hover:ring-2 hover:ring-primary/30 focus-visible:ring-2 focus-visible:ring-ring/30 ${PRIORITY_STYLES[segment.priority].block} ${selected ? "ring-2 ring-primary" : ""}`}
       style={{ left: `${position.left}%`, width: `${position.width}%` }}
     >
-      <div className="flex items-center gap-1 text-xs font-semibold">
-        <ContentKindIcon
-          kind={first.content.kind}
-          className="h-3 w-3 shrink-0"
-        />
-        <span className="truncate">{name}</span>
-        {isNowBlock(segment, now) && (
-          <span className="ml-auto shrink-0 rounded bg-primary px-1 text-[9px] font-semibold text-primary-foreground">Now</span>
-        )}
-      </div>
-      <div className="truncate text-[10px] opacity-75">
-        {range}
-        {hidden > 0 && ` · +${hidden} hidden`}
+      {/* Sticky so the label stays in view when a long block starts left of the scrolled grid. */}
+      <div className="sticky left-[208px] w-max max-w-full">
+        <div className="flex items-center gap-1 text-xs font-semibold">
+          <ContentKindIcon
+            kind={first.content.kind}
+            className="h-3 w-3 shrink-0"
+          />
+          <span className="truncate">{name}</span>
+          {isNowBlock(segment, now) && (
+            <span className="ml-auto shrink-0 rounded bg-primary px-1 text-[9px] font-semibold text-primary-foreground">Now</span>
+          )}
+        </div>
+        <div className="truncate text-[10px] opacity-75">
+          {range}
+          {hidden > 0 && ` · +${hidden} hidden`}
+        </div>
       </div>
     </button>
   );
