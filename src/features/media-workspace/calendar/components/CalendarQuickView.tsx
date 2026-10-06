@@ -13,11 +13,12 @@ function ContentLine({ publication }: { publication: CalendarPublication }) {
   const href = contentHref(content);
   const name = content.name ?? publication.content_name ?? CONTENT_KIND_LABELS[content.kind];
   return (
-    <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+    <div className="flex min-w-0 items-center gap-1.5 text-xs text-foreground">
       <ContentKindIcon
         kind={content.kind}
-        className="h-3.5 w-3.5 shrink-0"
+        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
       />
+      <span className="shrink-0 text-muted-foreground">{CONTENT_KIND_LABELS[content.kind]} ·</span>
       {href ? (
         <Link
           href={href}
@@ -64,22 +65,21 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
         className="h-20 w-32"
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {isNowBlock(segment, now) && <Badge variant="success">Now</Badge>}
-          <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${priority.block}`}>{priority.label}</span>
+          <Link
+            href={`/media-workspace/program/${first.id}`}
+            className="truncate text-lg font-semibold text-foreground hover:text-primary"
+          >
+            {first.name}
+            {isLoop && <span className="font-normal text-muted-foreground"> +{others.length} in loop</span>}
+          </Link>
         </div>
-        <Link
-          href={`/media-workspace/program/${first.id}`}
-          className="truncate text-lg font-semibold text-foreground hover:text-primary"
-        >
-          {first.name}
-          {isLoop && <span className="font-normal text-muted-foreground"> +{others.length} in loop</span>}
-        </Link>
         <p className="text-sm tabular-nums text-foreground">
           {clockLabel(segment.opens_at, date)} – {clockLabel(segment.closes_at, date)}
           <span className="text-muted-foreground"> ({formatDuration(Date.parse(segment.closes_at) - Date.parse(segment.opens_at))})</span>
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="truncate text-xs text-muted-foreground">
           {channel ? (
             <Link
               href={`/media-workspace/channels?channel=${channel.id}`}
@@ -92,44 +92,69 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
           )}
           {channel?.location_name && ` · ${channel.location_name}`}
         </p>
-        {!isLoop && <ContentLine publication={first} />}
+      </div>
+      <dl className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 text-xs lg:w-72">
+        <dt className="text-muted-foreground">Priority</dt>
+        <dd>
+          <span className={`rounded-md border px-2 py-0.5 font-medium ${priority.block}`}>{priority.label}</span>
+        </dd>
+        {isLoop ? (
+          <>
+            <dt className="text-muted-foreground">Loop</dt>
+            <dd className="flex min-w-0 flex-col gap-1">
+              {segment.publications.map((publication) => {
+                const action = programAction(publication, returnTo, now);
+                return (
+                  <span
+                    key={publication.id}
+                    className="flex min-w-0 items-center gap-2"
+                  >
+                    <Link
+                      href={`/media-workspace/program/${publication.id}`}
+                      className="truncate font-medium text-foreground hover:text-primary"
+                    >
+                      {publication.name}
+                    </Link>
+                    <Link
+                      href={action.href}
+                      className="shrink-0 text-primary hover:underline"
+                    >
+                      {action.label}
+                    </Link>
+                  </span>
+                );
+              })}
+            </dd>
+          </>
+        ) : (
+          <>
+            <dt className="text-muted-foreground">Content</dt>
+            <dd className="min-w-0">
+              <ContentLine publication={first} />
+            </dd>
+          </>
+        )}
         {wider && (
-          <p className="text-xs text-muted-foreground">
-            Part of {clockLabel(wider.opens_at, date)}–{wider.closes_at ? clockLabel(wider.closes_at, date) : "open end"}
-          </p>
+          <>
+            <dt className="text-muted-foreground">Part of</dt>
+            <dd className="text-foreground">
+              {clockLabel(wider.opens_at, date)}–{wider.closes_at ? clockLabel(wider.closes_at, date) : "open end"}
+            </dd>
+          </>
         )}
         {segment.suppressed.length > 0 && (
-          <p className="text-xs text-muted-foreground">
-            Hidden: {segment.suppressed.slice(0, 2).map((item) => item.name).join(", ")}
-            {segment.suppressed.length > 2 && ` +${segment.suppressed.length - 2} more`}
-          </p>
+          <>
+            <dt className="text-muted-foreground">Hidden</dt>
+            <dd
+              className="truncate text-foreground"
+              title={segment.suppressed.map((item) => item.name).join(", ")}
+            >
+              {segment.suppressed[0].name}
+              {segment.suppressed.length > 1 && ` +${segment.suppressed.length - 1} more`}
+            </dd>
+          </>
         )}
-        {isLoop && (
-          <ul className="mt-2 flex flex-col gap-2">
-            {segment.publications.map((publication) => (
-              <li
-                key={publication.id}
-                className="flex min-w-0 items-center justify-between gap-3"
-              >
-                <div className="min-w-0">
-                  <Link
-                    href={`/media-workspace/program/${publication.id}`}
-                    className="block truncate text-sm font-medium text-foreground hover:text-primary"
-                  >
-                    {publication.name}
-                  </Link>
-                  <ContentLine publication={publication} />
-                </div>
-                <EditButton
-                  publication={publication}
-                  returnTo={returnTo}
-                  now={now}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      </dl>
       {!isLoop && (
         <EditButton
           publication={first}
