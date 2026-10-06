@@ -8,6 +8,7 @@ import { resolveActiveApp } from "@/config/apps";
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import { HelpTrigger } from "@/features/help/components/HelpTrigger";
+import type { HelpSupportConfig } from "@/features/help/support";
 import { GlobalSearch } from "./GlobalSearch";
 import { NotificationBell } from "./NotificationBell";
 import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
@@ -17,8 +18,8 @@ interface TopbarProps {
   userName: string;
   roleLabel?: string | null;
   avatarUrl?: string | null;
-  /** Help "Contact Support" destination, read from env on the server (config/env.ts). */
-  helpSupportUrl?: string;
+  /** Help panel Support Channels, read from env on the server (config/env.ts). */
+  helpSupport?: HelpSupportConfig;
 }
 
 // Only the Overview route publishes into the title store today (its
@@ -38,7 +39,7 @@ function todayLabel() {
 
 // Media Workspace's header, restyled to match the Lovable reference
 // (docs/adr/0075). Every other App keeps the Topbar below unchanged.
-function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupportUrl, pathname }: TopbarProps & { pathname: string }) {
+function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, pathname }: TopbarProps & { pathname: string }) {
   const meta = useSyncExternalStore(subscribePageHeader, getPageHeaderSnapshot, () => null);
   const title = meta?.title ?? fallbackTitle(pathname);
 
@@ -61,7 +62,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupportUrl, 
           {/* Visible on phones too: Help's mobile surface is the full-screen drawer (Help Spec AC-025). */}
           <HelpTrigger
             className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-            supportUrl={helpSupportUrl}
+            support={helpSupport}
           >
             <CircleHelp className="h-4 w-4" />
           </HelpTrigger>
@@ -81,7 +82,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupportUrl, 
 // Figma-matched treatment rather than the shared `SearchInput` (that
 // component's default look is shared with several thunder-care pages this
 // task shouldn't touch).
-function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupportUrl }: TopbarProps) {
+function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport }: TopbarProps) {
   return (
     // 2026-09-19: h-[88px]/px-9/gap-5 -> h-[68px]/px-6/gap-4 — measured off
     // the design reference's own header (69px tall, px-6), and matches the
@@ -109,7 +110,7 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupportUrl }: Topba
         <NotificationBell variant="default" />
         <HelpTrigger
           className="grid h-9 w-9 place-items-center rounded-lg text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-          supportUrl={helpSupportUrl}
+          support={helpSupport}
         >
           <HelpIcon className="h-5 w-5" />
         </HelpTrigger>

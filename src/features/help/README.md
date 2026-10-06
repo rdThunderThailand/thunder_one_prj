@@ -58,7 +58,12 @@ route; a direct visitor gets "Go to ThunderOne".
 - Authoring, review and publishing UI, and the audit trail (D-G8-02, D-G8-04, AC-014): the spec
   keeps administration out of end-user Help. Lifecycle fields are modelled; nothing writes them.
 - `USE_CASE_MAPPINGS` is empty: there are no canonical Media Workspace UC IDs in this repo yet.
-- Contact Support shows only when `NEXT_PUBLIC_HELP_SUPPORT_URL` is set. The FigJam Support tab also shows Live Chat,
-  Email, Phone and System Status; none of those channels exist yet, so the panel does not show them.
-- The "Watch quick walkthrough" video on About this page is not built: there is no walkthrough content.
+- The panel has no language switch: it follows the shell's `<html lang>` (the shell owns language).
+  The public Help Center keeps its own TH/EN switch because it has no shell.
+- Support tab channels (Live Chat, Email, Phone + hours, contact form, status page) each appear only
+  when configured: `NEXT_PUBLIC_HELP_SUPPORT_CHAT_URL`, `_EMAIL`, `_PHONE`, `_HOURS`, `NEXT_PUBLIC_HELP_SUPPORT_URL`,
+  `NEXT_PUBLIC_HELP_STATUS_URL`. The FigJam "Online" badge and "All Systems Operational" are not shown:
+  nothing reports chat availability or system status to the app yet, so the status card links out instead.
+- Not built from the FigJam panel: the "Watch quick walkthrough" video, per-step screenshots, the
+  "5–7 min" duration chip and the UC id chip (no video, screenshots, durations or Media UC ids exist yet).
 - Editor routes run without a Topbar (ADR 0077), so the `?` entry is not offered there.

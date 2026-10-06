@@ -3,13 +3,14 @@
 import { useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import type { HelpSupportConfig } from "../support";
 import { HelpDrawer } from "./HelpDrawer";
 
 /**
  * The shell's ? Help entry (Platform Shell dependency, Help Spec §5). Each Topbar variant keeps its
  * own button styling; the panel and its HelpContext are the same everywhere (D-G7-02).
  */
-export function HelpTrigger({ className, supportUrl, children }: { className: string; supportUrl?: string; children: React.ReactNode }) {
+export function HelpTrigger({ className, support, children }: { className: string; support?: HelpSupportConfig; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -26,7 +27,7 @@ export function HelpTrigger({ className, supportUrl, children }: { className: st
       >
         {children}
       </button>
-      <HelpDrawer open={open} onOpenChange={setOpen} pathname={pathname} supportUrl={supportUrl} triggerRef={triggerRef} />
+      <HelpDrawer open={open} onOpenChange={setOpen} pathname={pathname} support={support} triggerRef={triggerRef} />
     </>
   );
 }

@@ -46,7 +46,14 @@ export default async function DashboardLayout({
           userName={userName}
           roleLabel={roleLabel}
           avatarUrl={avatarUrl}
-          helpSupportUrl={env.helpSupportUrl || undefined}
+          helpSupport={{
+            contactUrl: env.helpSupportUrl || undefined,
+            chatUrl: env.helpSupportChatUrl || undefined,
+            email: env.helpSupportEmail || undefined,
+            phone: env.helpSupportPhone || undefined,
+            hours: env.helpSupportHours || undefined,
+            statusUrl: env.helpStatusUrl || undefined,
+          }}
         />
         <main className="flex-1 overflow-y-auto bg-zinc-50 px-6 py-6 dark:bg-zinc-950">
           {children}
