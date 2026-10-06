@@ -100,5 +100,7 @@ assert.deepEqual(lanes[1].spans, [
   { opens_at: at("11:00"), closes_at: at("11:30"), winners: ["C"] },
 ]);
 assert.deepEqual(overriddenLanes(rowOf(first)), []);
+// A Core without the BE-C migration sends no spans: no lanes, no crash.
+assert.deepEqual(overriddenLanes(rowOf({ ...first, suppressed: [{ id: "x", name: "x", priority: "low" }] })), []);
 
 console.log("calendar-day: ok");

@@ -65,6 +65,7 @@ export function overriddenLanes(row: CalendarRow): OverriddenLane[] {
   for (const segment of ordered) {
     const winners = segment.publications.map((publication) => publication.name);
     for (const item of segment.suppressed) {
+      if (!item.spans) continue;
       const lane = lanes.get(item.id) ?? { id: item.id, name: item.name, priority: item.priority, spans: [] };
       lanes.set(item.id, lane);
       for (const span of item.spans) {
