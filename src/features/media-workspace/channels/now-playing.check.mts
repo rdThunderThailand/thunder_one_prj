@@ -17,7 +17,7 @@ const single: NowNextOccurrence = {
   remaining_seconds: 4800, // 1h 20m
   priority: "normal",
   output_kind: "publication",
-  publications: [{ id: "pub-1", name: "Lunch Menu Publication", publication_type: "playlist", content_name: "Lunch Menu", thumbnail_url: "https://cdn/lunch.jpg" }],
+  publications: [{ id: "pub-1", name: "Lunch Menu Publication", publication_type: "playlist", content_name: "Lunch Menu", thumbnail_url: "https://cdn/lunch.jpg", content: { kind: "other", id: null, name: null } }],
   scheduled_now: true,
   playback_state: "confirmed",
   suppressed: [],
@@ -28,16 +28,16 @@ const merged: NowNextOccurrence = {
   occurrence_id: "occ-2",
   output_kind: "merged_loop",
   publications: [
-    { id: "pub-1", name: "Lunch Menu Publication", publication_type: "playlist", content_name: "Lunch Menu", thumbnail_url: null },
-    { id: "pub-2", name: "Promo Publication", publication_type: "playlist", content_name: "Promo Loop" },
-    { id: "pub-3", name: "Weather Publication", publication_type: "playlist", content_name: null },
+    { id: "pub-1", name: "Lunch Menu Publication", publication_type: "playlist", content_name: "Lunch Menu", thumbnail_url: null, content: { kind: "other", id: null, name: null } },
+    { id: "pub-2", name: "Promo Publication", publication_type: "playlist", content_name: "Promo Loop", content: { kind: "other", id: null, name: null } },
+    { id: "pub-3", name: "Weather Publication", publication_type: "playlist", content_name: null, content: { kind: "other", id: null, name: null } },
   ],
 };
 
 const rows: NowNextRow[] = [
   {
     row_type: "channel",
-    channel: { id: "channel-1", name: "Cafe Menu Board" },
+    channel: { id: "channel-1", name: "Cafe Menu Board", location_name: null, output_kind: "screen", expected_resolution: null },
     device: null,
     devices: [],
     current: single,
@@ -46,7 +46,7 @@ const rows: NowNextRow[] = [
   },
   {
     row_type: "channel",
-    channel: { id: "channel-2", name: "Idle Channel" },
+    channel: { id: "channel-2", name: "Idle Channel", location_name: null, output_kind: "screen", expected_resolution: null },
     device: null,
     devices: [],
     current: null,
@@ -55,7 +55,7 @@ const rows: NowNextRow[] = [
   },
   {
     row_type: "channel",
-    channel: { id: "channel-3", name: "Merged Loop Channel" },
+    channel: { id: "channel-3", name: "Merged Loop Channel", location_name: null, output_kind: "screen", expected_resolution: null },
     device: null,
     devices: [],
     current: merged,
@@ -87,7 +87,7 @@ assert.equal(nowPlayingName(null), "–");
 assert.equal(nowPlayingName(undefined), "–");
 assert.equal(nowPlayingName({ ...single, publications: [] }), "–");
 assert.equal(
-  nowPlayingName({ ...single, publications: [{ id: "p", name: "Fallback Name", publication_type: "image", content_name: null }] }),
+  nowPlayingName({ ...single, publications: [{ id: "p", name: "Fallback Name", publication_type: "image", content_name: null, content: { kind: "other", id: null, name: null } }] }),
   "Fallback Name",
 );
 

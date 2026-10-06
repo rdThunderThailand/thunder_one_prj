@@ -13,7 +13,7 @@ import { fetchChannels } from "../services/channels-api";
 import type { ChannelListItem } from "../types";
 
 type Tab = "channels" | "groups";
-type Option = { scope: ChannelScope; label: string; count?: number; disabled?: boolean };
+type Option = { scope: ChannelScope; label: string; count?: number; hint?: string };
 
 /** "All Channels ▾" trigger + popover (ADR 0084 §2). The scope is applied only on Apply. */
 export function ChannelScopePicker({ value, onApply }: { value: ChannelScope; onApply: (scope: ChannelScope) => void }) {
@@ -45,7 +45,8 @@ export function ChannelScopePicker({ value, onApply }: { value: ChannelScope; on
     scope: { kind: "group", id: group.id } as const,
     label: group.name,
     count: group.members.length,
-    disabled: group.status === "disabled",
+    // Disabled Groups stay selectable: their members still play (ADR 0084 §6, ADR 0074).
+    hint: group.status === "disabled" ? "Disabled" : undefined,
   }));
   const needle = search.trim().toLowerCase();
   const visible = (tab === "channels" ? channelOptions : groupOptions).filter((option) =>
@@ -123,17 +124,17 @@ export function ChannelScopePicker({ value, onApply }: { value: ChannelScope; on
           {visible.map((option) => (
             <label
               key={option.scope.kind === "all" ? "all" : option.scope.id}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
+              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
             >
               <input
                 type="radio"
                 name="channel-scope"
                 className="accent-primary"
                 checked={sameScope(option.scope, draft)}
-                disabled={option.disabled}
                 onChange={() => setDraft(option.scope)}
               />
               <span className="flex-1 truncate">{option.label}</span>
+              {option.hint && <span className="text-xs text-muted-foreground">{option.hint}</span>}
               {option.count !== undefined && <span className="text-xs text-muted-foreground">{option.count}</span>}
             </label>
           ))}
