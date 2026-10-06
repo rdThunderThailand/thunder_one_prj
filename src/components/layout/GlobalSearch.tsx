@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Image as ImageIcon, LayoutGrid, Loader2, MonitorPlay, Search, TriangleAlert, User } from "lucide-react";
 import { SearchIcon } from "@/components/ui/icons";
+import { isModShortcut, MOD_ARIA, MOD_LABEL, type ShortcutPlatform } from "@/lib/keyboard-shortcut";
 import { matchPages } from "./search-index";
 
-// The Topbar's search: the search bar opens a command palette (also ⌘K /
-// Ctrl+K from anywhere). Pages match instantly from the nav config
+// The Topbar's search: the search bar opens a command palette (also ⌘K on
+// Apple devices, Ctrl+K elsewhere, from anywhere — lib/keyboard-shortcut). Pages match instantly from the nav config
 // (search-index.ts); people, Media files and channels come from
 // /api/search, debounced, with the previous request aborted on every
 // keystroke. ↑/↓ move, Enter opens, Esc closes.
@@ -72,7 +73,7 @@ function GroupIcon({ group, hit }: { group: GroupKey; hit: Hit }) {
   return <Icon className="h-4 w-4" />;
 }
 
-export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
+export function GlobalSearch({ variant, platform }: { variant: "default" | "media"; platform: ShortcutPlatform }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -80,17 +81,19 @@ export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
   const listRef = useRef<HTMLDivElement>(null);
   const remote = useRemoteSearch(query);
 
-  // ⌘K / Ctrl+K from anywhere in the app.
+  // ⌘K (Apple) / Ctrl+K (Windows, Linux) from anywhere in the app.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      if (isModShortcut(event, "k", platform)) {
         event.preventDefault();
         setOpen((o) => !o);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [platform]);
+
+  const shortcut = `${MOD_LABEL[platform]} K`;
 
   const groups = useMemo(() => {
     const pages = matchPages(query).map((p) => ({ id: p.href, title: p.title, subtitle: p.context, href: p.href }));
@@ -143,20 +146,22 @@ export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
         {variant === "media" ? (
           <button
             type="button"
+            aria-keyshortcuts={`${MOD_ARIA[platform]}+K`}
             className="relative mx-auto hidden h-9 w-full max-w-md items-center rounded-lg border border-border bg-card pl-9 pr-14 text-left text-xs text-muted-foreground hover:border-primary/40 md:flex"
           >
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             ค้นหาทุกอย่างใน ThunderOne...
-            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">⌘ K</kbd>
+            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
           </button>
         ) : (
           <button
             type="button"
+            aria-keyshortcuts={`${MOD_ARIA[platform]}+K`}
             className="flex h-9 w-full max-w-[700px] items-center gap-2.5 rounded-lg bg-[#eff5ff] px-3 text-left hover:bg-[#e6effd] dark:bg-zinc-900"
           >
             <SearchIcon className="h-4 w-4 shrink-0 text-[#6074a9] dark:text-zinc-500" />
             <span className="w-full text-xs text-[#6074a9] dark:text-zinc-500">ค้นหาทุกอย่างใน ThunderOne...</span>
-            <kbd className="shrink-0 text-xs text-[#6074a9] dark:text-zinc-500">⌘ K</kbd>
+            <kbd className="shrink-0 whitespace-nowrap text-xs text-[#6074a9] dark:text-zinc-500 pointer-coarse:hidden">{shortcut}</kbd>
           </button>
         )}
       </Dialog.Trigger>

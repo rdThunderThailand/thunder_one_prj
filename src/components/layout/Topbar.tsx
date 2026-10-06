@@ -12,6 +12,7 @@ import type { HelpSupportConfig } from "@/features/help/support";
 import type { AppLocale } from "@/lib/app-locale";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { GlobalSearch } from "./GlobalSearch";
+import type { ShortcutPlatform } from "@/lib/keyboard-shortcut";
 import { NotificationBell } from "./NotificationBell";
 import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
 import { UserMenu } from "./UserMenu";
@@ -24,6 +25,8 @@ interface TopbarProps {
   helpSupport?: HelpSupportConfig;
   /** The user's primary language: device cookie, then users.preferred_language (lib/app-locale). */
   locale: AppLocale;
+  /** ⌘ (Apple) or Ctrl (everything else) for the search shortcut, from the request (lib/keyboard-shortcut). */
+  shortcutPlatform: ShortcutPlatform;
 }
 
 // Only the Overview route publishes into the title store today (its
@@ -43,7 +46,7 @@ function todayLabel() {
 
 // Media Workspace's header, restyled to match the Lovable reference
 // (docs/adr/0075). Every other App keeps the Topbar below unchanged.
-function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale, pathname }: TopbarProps & { pathname: string }) {
+function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale, shortcutPlatform, pathname }: TopbarProps & { pathname: string }) {
   const meta = useSyncExternalStore(subscribePageHeader, getPageHeaderSnapshot, () => null);
   const title = meta?.title ?? fallbackTitle(pathname);
 
@@ -55,7 +58,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, loc
           {meta?.subtitle && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta.subtitle}</p>}
         </div>
 
-        <GlobalSearch variant="media" />
+        <GlobalSearch variant="media" platform={shortcutPlatform} />
 
         <div className="flex items-center gap-2">
           <span className="hidden h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground sm:flex">
@@ -87,7 +90,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, loc
 // Figma-matched treatment rather than the shared `SearchInput` (that
 // component's default look is shared with several thunder-care pages this
 // task shouldn't touch).
-function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: TopbarProps) {
+function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale, shortcutPlatform }: TopbarProps) {
   return (
     // 2026-09-19: h-[88px]/px-9/gap-5 -> h-[68px]/px-6/gap-4 — measured off
     // the design reference's own header (69px tall, px-6), and matches the
@@ -96,7 +99,7 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: 
     <header className="flex h-[68px] items-center gap-4 border-b border-[#e6edf9] bg-white px-6 dark:border-zinc-800 dark:bg-zinc-950">
       {/* h-12/px-4 -> h-9/px-3, icon 24px -> 16px, matching the reference's
           own 36px-tall search bar. */}
-      <GlobalSearch variant="default" />
+      <GlobalSearch variant="default" platform={shortcutPlatform} />
       {/* 2026-09-19: text-sm/font-bold -> text-xs/font-semibold, matching
           the design reference's own topbar controls (12px/600) — was
           14px/700, noticeably heavier/larger than the reference. Bell/Help

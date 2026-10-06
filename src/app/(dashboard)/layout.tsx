@@ -5,7 +5,9 @@ import { Topbar } from "@/components/layout/Topbar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
 import { env } from "@/config/env";
 import { getSession } from "@/features/auth/services/get-session";
+import { headers } from "next/headers";
 import { getAppLocale } from "@/lib/app-locale.server";
+import { platformFromHeaders } from "@/lib/keyboard-shortcut";
 
 // Everything behind login is private tenant data — never index it, even if
 // a crawler somehow gets a session (robots.ts also disallows crawling).
@@ -49,6 +51,7 @@ export default async function DashboardLayout({
           roleLabel={roleLabel}
           avatarUrl={avatarUrl}
           locale={locale}
+          shortcutPlatform={platformFromHeaders(await headers())}
           helpSupport={{
             contactUrl: env.helpSupportUrl || undefined,
             chatUrl: env.helpSupportChatUrl || undefined,
