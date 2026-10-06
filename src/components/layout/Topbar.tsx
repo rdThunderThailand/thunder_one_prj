@@ -22,7 +22,7 @@ interface TopbarProps {
   avatarUrl?: string | null;
   /** Help panel Support Channels, read from env on the server (config/env.ts). */
   helpSupport?: HelpSupportConfig;
-  /** The shell language from the t1_lang cookie (lib/app-locale). */
+  /** The user's primary language: device cookie, then users.preferred_language (lib/app-locale). */
   locale: AppLocale;
 }
 

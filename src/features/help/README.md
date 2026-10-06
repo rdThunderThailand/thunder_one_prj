@@ -58,7 +58,8 @@ route; a direct visitor gets "Go to ThunderOne".
 - Authoring, review and publishing UI, and the audit trail (D-G8-02, D-G8-04, AC-014): the spec
   keeps administration out of end-user Help. Lifecycle fields are modelled; nothing writes them.
 - `USE_CASE_MAPPINGS` is empty: there are no canonical Media Workspace UC IDs in this repo yet.
-- The panel has no language switch: it follows the shell's `<html lang>` (the shell owns language).
+- The panel has no language switch: it follows the shell's `<html lang>`. The shell switch is the user's primary
+  language for the whole app (`src/lib/app-locale.ts`, `users.preferred_language`).
   The public Help Center keeps its own TH/EN switch because it has no shell.
 - Support tab channels (Live Chat, Email, Phone + hours, contact form, status page) each appear only
   when configured: `NEXT_PUBLIC_HELP_SUPPORT_CHAT_URL`, `_EMAIL`, `_PHONE`, `_HOURS`, `NEXT_PUBLIC_HELP_SUPPORT_URL`,

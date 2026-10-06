@@ -32,7 +32,7 @@ export default async function DashboardLayout({
   // access-tier label; falls back to the tier label (e.g. "Company
   // Administrator") only for members with no job_title set.
   const roleLabel = jobTitle ?? resolveRoleLabel(resolveRole(session));
-  const locale = await getAppLocale();
+  const locale = await getAppLocale(session.preferredLanguage);
 
   return (
     <div className="flex h-full">
