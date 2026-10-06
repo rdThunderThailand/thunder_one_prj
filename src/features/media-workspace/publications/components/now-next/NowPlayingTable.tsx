@@ -136,7 +136,8 @@ function NextCell({ row, timeZone }: { row: NowNextRow; timeZone: string }) {
 
 function RowMenu({ row, returnTo }: { row: NowNextRow; returnTo: string }) {
   const edit = editProgramHref(row, returnTo);
-  if (!edit) return null;
+  const calendar = row.channel ? `/media-workspace/calendar?channel=${row.channel.id}` : null;
+  if (!edit && !calendar) return null;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -150,9 +151,16 @@ function RowMenu({ row, returnTo }: { row: NowNextRow; returnTo: string }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={edit}>Edit Program</Link>
-        </DropdownMenuItem>
+        {edit && (
+          <DropdownMenuItem asChild>
+            <Link href={edit}>Edit Program</Link>
+          </DropdownMenuItem>
+        )}
+        {calendar && (
+          <DropdownMenuItem asChild>
+            <Link href={calendar}>Open in Calendar</Link>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

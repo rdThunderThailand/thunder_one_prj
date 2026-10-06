@@ -5,7 +5,7 @@ Last updated: 2026-10-06.
 
 ## Where we are
 
-**S1 FE done + browser-verified. BE-A applied to develop, Core Draft PR #165 open. BE-B applied to develop + HTTP-verified, local commit only. Next: FE-B1 (Calendar page). FE has NO PR by user choice (one PR for S1+S2 when everything is done).**
+**S1 FE done + browser-verified. BE-A applied to develop, Core Draft PR #165 open. BE-B applied to develop + HTTP-verified, local commit only. FE-B1 + FE-B2 code done (tsc, eslint, 2 checks clean) but NOT browser-verified yet. FE has NO PR by user choice (one PR for S1+S2 when everything is done).**
 
 FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is on someone else's `codex/core-142-mutation-guards` with uncommitted edits — use a worktree off `origin/develop`).
 
@@ -19,7 +19,7 @@ FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is o
 | FE-A2 Now & Next redraw | **done** | `publications/components/now-next/` (page, KPI cards, table, timeline, cover, icons) + `now-next-view.ts` + check; demo data + `DemoPublicationDetailPage` deleted. Browser (develop): All / Group scope + URL + Back, stale Group id → All + notice, ⋮ Edit Program → editor → Go Back returns, 1440 px render. **Deliberately left out until the Calendar route exists (S2): "Open Calendar →" and ⋮ "Open in Calendar"** (they would 404). **Not compared** with the Figma frame (no frame link; board image only) |
 | FE-A3 Channel deep link | **done** | `/channels?channel=<id>` opens the panel; "View Programs →" → `/now-next?channel=<id>`. Verified in browser; Overview + editor rail (other `fetchNowNext` callers) still render |
 | BE-B Core: `effective_segments` + `media_calendar_get` + `GET /media/calendar` | **applied to develop, HTTP-verified** | Core worktree branch `feat/calendar-read-model` (stacked on `feat/now-next-group-scope`; local commit, **not pushed, no PR**). Migration `20261006100000_calendar_read_model`. Parity query (plan §4) on develop: empty = parity, but develop has only 1 current Channel row so this is weak evidence. HTTP: unscoped / group / channel scopes, both → 400, >31 days → 400, to≤from → 400, missing from / no offset → 400, foreign Group → 404. 1 day = 96 ms, 30 days = 377 ms (tiny tenant). First migration attempt failed atomically on `cardinality(uuid)` (fixed with `n_winners`). **Not exercised: priority overlap cuts, merged loop, weekly daily windows, "part of" occurrence — develop has no fixtures for them** |
-| FE-B1 / FE-B2 | not started | FE-B1 may begin: BE-B is deployed to develop DB (local Core worktree :3012 serves the route) |
+| FE-B1 / FE-B2 | **code done, unverified in browser** | `src/features/media-workspace/calendar/` (api, `calendar-day` + check, `calendar-url` + check, `CalendarPage/Toolbar/Grid/QuickView`), route `/media-workspace/calendar`, nav link, links added: Now & Next "Open Calendar" (carries scope) + ⋮ "Open in Calendar" (Channel rows), Overview "View full calendar". `DatesCalendar` month helpers exported and reused; `PRIORITY_STYLES` exported from `UpNextTimeline`. Date popover = month grid + native `<input type=date>`. **Not done**: browser run of plan §7 Calendar checklist (ask the user first); BE-B overlap / merged loop / daily-window cases still need fixtures |
 
 ## Resume here (next session)
 
@@ -45,3 +45,4 @@ FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is o
 - 2026-10-06 — FE-A2/A3 built and verified. Picker fix: disabled Groups stay selectable (ADR 0084 §6). Timeline tick row moved below the Now pill.
 - 2026-10-06 — BE-B written, applied to develop (approved), verified; route + cover signing + check added in Core.
 - 2026-10-06 — Handoff written to `/tmp/thunder-handoff-calendar-fe/HANDOFF.md`.
+- 2026-10-06 — FE-B1/B2 written in one pass (Quick View is small), committed locally; waiting for the user's choice on browser verification.

@@ -84,6 +84,7 @@ export function NowNextPage() {
   const error = failed?.key === key ? failed.message : null;
   const rows = data?.rows ?? [];
   const query = searchParams.toString();
+  const calendarQuery = writeChannelScope(scope, new URLSearchParams()).toString();
   const returnTo = query ? `${pathname}?${query}` : pathname;
 
   return (
@@ -121,13 +122,22 @@ export function NowNextPage() {
         title="Now Playing"
         subtitle="What each Channel is playing, and what follows"
         action={
-          <Link
-            href="/media-workspace/channels"
-            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-          >
-            View all channels
-            <ArrowRightIcon className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/media-workspace/calendar${calendarQuery ? `?${calendarQuery}` : ""}`}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
+              Open Calendar
+              <ArrowRightIcon className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              href="/media-workspace/channels"
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
+              View all channels
+              <ArrowRightIcon className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         }
       >
         {error && <ErrorState description={error} />}

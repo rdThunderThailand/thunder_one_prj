@@ -7,7 +7,7 @@ import { timelinePosition, timelineTicks, timelineWindow } from "../../now-next-
 const HORIZON = 180;
 
 // ADR 0084 §8: block colour follows Publication Priority, from the status tokens.
-const PRIORITY_STYLES: Record<NowNextPriority, { label: string; block: string; dot: string }> = {
+export const PRIORITY_STYLES: Record<NowNextPriority, { label: string; block: string; dot: string }> = {
   urgent: { label: "Urgent", block: "border-danger/30 bg-danger-soft text-danger", dot: "bg-danger" },
   high: { label: "High", block: "border-warning/30 bg-warning-soft text-warning", dot: "bg-warning" },
   normal: { label: "Normal", block: "border-primary/30 bg-primary-soft text-primary", dot: "bg-primary" },
