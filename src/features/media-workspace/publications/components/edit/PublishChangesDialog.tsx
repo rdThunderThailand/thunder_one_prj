@@ -64,7 +64,7 @@ function ConfirmBody({
       <div className="flex flex-col gap-3 text-sm">
         {removedTargets.length > 0 && (
           <p className="rounded-lg bg-warning-soft px-3 py-2 text-warning">
-            Will stop playing on {removedTargets.length} channel{removedTargets.length > 1 ? "s" : ""}:{" "}
+            Will remove {removedTargets.length} target{removedTargets.length > 1 ? "s" : ""}:{" "}
             {removedTargets.join(", ")}
           </p>
         )}
@@ -81,7 +81,7 @@ function ConfirmBody({
         )}
         {conflicts.status === "failed" && (
           <p className="text-muted-foreground">
-            Could not check schedule conflicts. You can still publish; the server re-checks.
+            Could not check schedule conflicts. You can still publish.
           </p>
         )}
         {conflicts.status === "done" && conflicts.list.length > 0 && (
@@ -115,7 +115,7 @@ function ConfirmBody({
         </Button>
         <Button
           onClick={onConfirm}
-          disabled={busy || conflicts.status === "checking"}
+          disabled={busy}
         >
           {busy ? "Publishing…" : "Publish"}
         </Button>

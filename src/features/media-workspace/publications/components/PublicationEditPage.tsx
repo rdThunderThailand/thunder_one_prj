@@ -25,6 +25,7 @@ import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useProgramEdit } from "../hooks/useProgramEdit";
 import { publicationDrift } from "../publication-drift";
 import { safeReturnTo } from "../return-to";
+import { programEditSubtitle } from "../program-edit";
 import { CONFIRM_COPY } from "./edit/confirm-copy";
 import { ProgramBreadcrumb } from "./edit/ProgramBreadcrumb";
 import { ProgramDetailsCard } from "./edit/ProgramDetailsCard";
@@ -37,9 +38,7 @@ import { ContentSourceCard } from "./edit/ContentSourceCard";
 import { ScheduleCard, TargetCard } from "./edit/ProgramSummaryCards";
 
 type PendingAction = "discard" | "end" | "delete" | null;
-
 const PROGRAM_HREF = "/media-workspace/program";
-
 export function PublicationEditPage({ id }: { id: string }) {
   const router = useRouter();
   // Set by Now & Next / Calendar so Go Back, Discard, End and a successful publish land where the operator started.
@@ -51,13 +50,11 @@ export function PublicationEditPage({ id }: { id: string }) {
   const [publishOpen, setPublishOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
-
   // Reload / tab close use the browser prompt; Go Back and any in-app link use the Discard dialog.
   useLeaveGuard(isDirty, (href) => {
     setLeaveTo(href);
     setPending("discard");
   });
-
   if (edit.loadError) {
     return <ErrorState description={edit.loadError.message} />;
   }
@@ -86,7 +83,6 @@ export function PublicationEditPage({ id }: { id: string }) {
     setLeaveTo(null);
     return isDirty ? setPending("discard") : router.push(exitHref);
   };
-
   const confirmPending = () => {
     const action = pending;
     setPending(null);
@@ -94,12 +90,10 @@ export function PublicationEditPage({ id }: { id: string }) {
     const run = action === "end" ? cancelPublication(id) : deletePublication(id);
     run.then(() => router.push(action === "delete" ? PROGRAM_HREF : exitHref)).catch(() => setActionError("Action failed. Try again."));
   };
-
   const duplicate = () =>
     duplicatePublication(id)
       .then((copy) => router.push(`${PROGRAM_HREF}/${copy.publication_id}/edit`))
       .catch(() => setActionError("Duplicate failed. Try again."));
-
   const confirmPublish = () =>
     (isDraft ? edit.saveDraft(true) : edit.publishChanges()).then((failed) => {
       // Only a `[publish]` failure is explained inside the modal; every other outcome closes it.
@@ -109,7 +103,11 @@ export function PublicationEditPage({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title={`Edit Program: ${detail.name}`} titleInTopbar />
+      <PageHeader
+        title={`Edit Program: ${detail.name}`}
+        subtitle={programEditSubtitle(state)}
+        titleInTopbar
+      />
       <header className="flex flex-wrap items-center justify-between gap-3">
         <ProgramBreadcrumb
           listHref={PROGRAM_HREF}

@@ -5,7 +5,8 @@ import { deviceFit, parseAspectRatio } from "@/features/media-workspace/layouts/
 import { fetchPreviewUrls } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import { PreviewControls } from "./PreviewControls";
-import { PreviewSurface } from "./PreviewSurface";
+import { PreviewZones } from "./PreviewZones";
+import { usePreviewControlsLayout } from "./use-preview-controls-layout";
 import { previewFrameAt, zoneSchedule, type PlaybackPreviewZone, type ZonePreviewFrame, type ZoneSchedule } from "./preview-clock";
 import { defaultGeometry, resolveFrameAspectRatio, resolveFramePixels, type GeometryOption } from "./preview-geometry";
 
@@ -67,8 +68,8 @@ export function PreviewStage({
   const [speed, setSpeed] = useState(1);
   const [geometryId, setGeometryId] = useState<string | null>(null);
   const [fitToWindow, setFitToWindow] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const { stageRef, frameRef, controlsBodyRef, canOverlay, fullscreenContext, toggleFullscreen } = usePreviewControlsLayout(controlsPlacement === "overlay");
+  const isFullscreen = fullscreenContext.isStageFullscreen;
   const [urls, setUrls] = useState<Record<string, string | undefined>>({});
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string | undefined>>({});
   const [previewLoadState, setPreviewLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -121,9 +122,6 @@ export function PreviewStage({
   // Zones stretch into it; PreviewSurface resolves each item's own media_fit inside that box.
   const geometryFit = selectedGeometry ? deviceFit(selectedGeometry.resolution, aspectRatio) : "fits";
   const framePixels = resolveFramePixels(selectedGeometry, referenceResolution);
-  // An explicit width, never a stretched one: the frame's only in-flow content is absolutely
-  // positioned, so in the full-screen flex column it would otherwise collapse to nothing. Fitting
-  // derives the width from the height budget so the aspect ratio survives the clamp.
   const frameWidth = fillWidth && !isFullscreen
     ? "100%"
     : fitToWindow || !framePixels
@@ -200,30 +198,20 @@ export function PreviewStage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [singleZoneFrameKey, onFrameChange]);
 
-  useEffect(() => {
-    const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
-  }, []);
-
-  const toggleFullscreen = () => {
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
-    else void stageRef.current?.requestFullscreen?.().catch(() => undefined);
-  };
-
   const setTimelineTime = (next: number) => {
     setTimeSeconds(next);
     initialTime.current = next;
     startedAt.current = performance.now();
   };
+  const controlsPosition = controlsPlacement === "overlay" && !canOverlay ? "panel" : controlsPlacement;
   const geometryControls = geometryOptions.length > 0 ? (
     <div className="mb-3 space-y-2">
-      <label className={`flex flex-wrap items-center gap-2 text-xs ${controlsPlacement === "footer" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+      <label className={`flex flex-wrap items-center gap-2 text-xs ${controlsPosition === "panel" ? "text-muted-foreground" : "text-primary-foreground/70"}`}>
         <span>Preview shape</span>
         <select
           value={selectedGeometry?.id ?? ""}
           onChange={(event) => setGeometryId(event.target.value)}
-          className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground"
+          className="min-w-0 max-w-full rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground"
         >
           {geometryOptions.map((option) => (
             <option key={option.id} value={option.id}>{option.label}</option>
@@ -256,8 +244,10 @@ export function PreviewStage({
       allowActualSize={allowActualSize}
       framePixels={framePixels}
       fitToWindow={fitToWindow}
-      isFullscreen={isFullscreen}
-      placement={controlsPlacement}
+      isFullscreen={fullscreenContext.owner !== null}
+      placement={controlsPosition}
+      bodyRef={controlsBodyRef}
+      portalContainer={fullscreenContext.owner}
       onTimeline={setTimelineTime}
       onPlaying={(next) => {
         if (next && timeSeconds >= timelineSeconds) setTimelineTime(0);
@@ -271,85 +261,36 @@ export function PreviewStage({
   );
 
   return (
-    <div ref={stageRef} className={isFullscreen ? "flex h-screen flex-col justify-center gap-4 bg-black p-4" : controlsPlacement === "footer" ? "flex h-full min-h-0 flex-col" : "space-y-4"}>
+    <div ref={stageRef} className={isFullscreen ? "flex h-screen flex-col justify-center gap-4 bg-foreground p-4" : controlsPlacement === "footer" ? "flex h-full min-h-0 flex-col" : "space-y-4"}>
       <div className={controlsPlacement === "footer" && !isFullscreen ? "flex min-h-0 flex-1 items-center justify-center overflow-auto p-8" : "overflow-auto"}>
         <div
-          className="mx-auto overflow-hidden rounded-xl border border-zinc-800 bg-black shadow-inner"
-          style={{ aspectRatio: `${ratioWidth} / ${ratioHeight}`, width: frameWidth }}
+          className="group/preview-stage relative mx-auto"
+          style={{ width: frameWidth }}
         >
-        <div className="group relative h-full w-full">
-          {resolvedZones.map((zone, zoneIndex) => {
-            const frame = previewFrameAt(schedules[zoneIndex], zone.items, timeSeconds);
-            const zoneTimeSeconds = frame.ended
-              ? frame.loopDurationSeconds
-              : frame.loopDurationSeconds > 0
-                ? timeSeconds % frame.loopDurationSeconds
-                : 0;
-            const transition = frame.transition;
-            return (
-              <div
-                key={zone.id}
-                className="absolute overflow-hidden border border-white/25 bg-foreground"
-                style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
-              >
-                <div className="relative h-full w-full">
-                  {/* ADR 0062 §5: both surfaces mount for the width of the fade, opacity a pure
-                     function of `frame.transition.progress` — never a CSS mount animation. The
-                     outgoing surface never plays; it holds its frozen last frame. */}
-                  {transition && (
-                    <PreviewSurface
-                      key={`out-${transition.outgoingIndex}`}
-                      item={transition.outgoingItem}
-                      asset={assetsById[transition.outgoingItem.mediaAssetId]}
-                      url={urls[transition.outgoingItem.mediaAssetId]}
-                      posterUrl={thumbnailUrls[transition.outgoingItem.mediaAssetId]}
-                      playing={false}
-                      speed={speed}
-                      muted={muted}
-                      offsetSeconds={transition.outgoingOffsetSeconds}
-                      loadState={previewLoadState}
-                      defaultMediaFit={zone.playback?.mediaFit}
-                      zoneMediaFit={zone.playback?.zoneMediaFitOverride}
-                      style={{ position: "absolute", inset: 0, opacity: 1 - transition.progress }}
-                    />
-                  )}
-                  <PreviewSurface
-                    key={frame.itemIndex ?? "empty"}
-                    item={frame.item}
-                    asset={frame.item ? assetsById[frame.item.mediaAssetId] : undefined}
-                    url={frame.item ? urls[frame.item.mediaAssetId] : undefined}
-                    posterUrl={frame.item ? thumbnailUrls[frame.item.mediaAssetId] : undefined}
-                    playing={transition ? false : playing}
-                    speed={speed}
-                    muted={muted}
-                    offsetSeconds={frame.offsetSeconds}
-                    loadState={previewLoadState}
-                    defaultMediaFit={zone.playback?.mediaFit}
-                    zoneMediaFit={zone.playback?.zoneMediaFitOverride}
-                    style={transition ? { position: "absolute", inset: 0, opacity: transition.progress } : undefined}
-                  />
-                </div>
-                <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent px-2 py-1 text-[10px] font-medium text-white">
-                  <span className="flex items-center gap-1">
-                    {zone.name}
-                    {/* ADR 0064 §7: a state label only — the preview stays silent regardless of
-                       this setting (browser autoplay policy), so it is never wired to audio. */}
-                    {zone.playback?.zoneMuted && <span title="This Zone is set to mute">🔇</span>}
-                  </span>
-                  <span>
-                    {frame.ended
-                      ? "Ended"
-                      : frame.loopDurationSeconds
-                        ? `${Math.floor(zoneTimeSeconds)}s / ${Math.floor(frame.loopDurationSeconds)}s`
-                        : "Needs duration"}
-                  </span>
-                </div>
+          <div
+            ref={frameRef}
+            className="relative w-full overflow-hidden rounded-xl border border-border bg-foreground shadow-inner"
+            style={{ aspectRatio: `${ratioWidth} / ${ratioHeight}` }}
+          >
+            <PreviewZones
+              zones={resolvedZones}
+              schedules={schedules}
+              assetsById={assetsById}
+              urls={urls}
+              thumbnailUrls={thumbnailUrls}
+              timeSeconds={timeSeconds}
+              playing={playing}
+              speed={speed}
+              muted={muted}
+              loadState={previewLoadState}
+            />
+            {resolvedZones.length === 0 && (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                No Zones to preview
               </div>
-            );
-          })}
-          {resolvedZones.length === 0 && <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No Zones to preview</div>}
-          {controlsPlacement === "overlay" && controls}
+            )}
           </div>
+          {controlsPlacement === "overlay" && controls}
         </div>
       </div>
 

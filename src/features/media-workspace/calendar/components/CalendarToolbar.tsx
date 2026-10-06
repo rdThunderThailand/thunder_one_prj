@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/lovable/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { ChannelScopePicker } from "../../channels/components/ChannelScopePicker";
 import type { ChannelScope } from "../../channels/channel-scope";
-import { addMonths, HEADERS, MONTH, monthCells } from "../../publications/components/edit/schedule/DatesCalendar";
+import { addMonths, monthCells } from "../../publications/calendar-month";
+import { HEADERS, MONTH } from "../../publications/components/edit/schedule/DatesCalendar";
 import { shiftYmd } from "../../publications/schedule";
 import { todayYmd } from "../calendar-day";
 

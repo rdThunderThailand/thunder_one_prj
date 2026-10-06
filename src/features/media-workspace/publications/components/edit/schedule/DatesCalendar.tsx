@@ -2,24 +2,10 @@
 
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
-import { shiftYmd, ymdDow } from "../../../schedule";
+import { addMonths, monthCells } from "../../../calendar-month";
 
 export const HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export const MONTH = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
-
-/** Monday-first cells of the month holding `firstOfMonth`; null pads the leading gap. */
-export function monthCells(firstOfMonth: string): (string | null)[] {
-  const lead = (ymdDow(firstOfMonth) + 6) % 7;
-  const cells: (string | null)[] = Array(lead).fill(null);
-  for (let ymd = firstOfMonth; ymd.slice(0, 7) === firstOfMonth.slice(0, 7); ymd = shiftYmd(ymd, 1)) cells.push(ymd);
-  return cells;
-}
-
-export const addMonths = (firstOfMonth: string, n: number) => {
-  const [y, m] = firstOfMonth.split("-").map(Number);
-  const d = new Date(Date.UTC(y, m - 1 + n, 1));
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
-};
 
 /** Frame 10 "Select Custom Days": click a day to add or remove it. */
 export function DatesCalendar({
