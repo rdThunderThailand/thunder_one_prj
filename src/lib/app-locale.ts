@@ -1,6 +1,7 @@
 // The user's primary language for the whole app, owned by the shell (Topbar LanguageSwitch).
 //
-// Source of truth is Core's `public.users.preferred_language`. Core reads it today (`/session`,
+// Source of truth is Core's `public.users.preferred_language`, stored as a BCP 47 tag like
+// `tenants.locale` ("th-TH", "en-US"; decided 2026-10-06 — older rows hold "th"). Core reads it today (`/session`,
 // `/me`) but `PATCH /users/:id` does not accept it yet (strict schema → 400, checked 2026-10-06), so:
 // - the switch writes the `t1_lang` cookie (this device) and *tries* Core; the moment Core accepts
 //   the field the choice is saved to the account with no change here (`/api/me/language`);
@@ -14,6 +15,9 @@ export type AppLocale = (typeof APP_LOCALES)[number];
 export const DEFAULT_APP_LOCALE: AppLocale = "th";
 export const LOCALE_COOKIE = "t1_lang";
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/** How each app locale is stored in `users.preferred_language` (same form as `tenants.locale`). */
+export const LANGUAGE_TAG: Record<AppLocale, string> = { th: "th-TH", en: "en-US" };
 
 export function parseAppLocale(value: unknown): AppLocale | null {
   return typeof value === "string" && (APP_LOCALES as readonly string[]).includes(value) ? (value as AppLocale) : null;
@@ -31,7 +35,7 @@ export function languageFromTag(value: unknown): AppLocale | null {
 
 /**
  * Which language to render in. The device's latest choice wins while Core cannot store it, then
- * the user's saved preference, then the tenant's locale, then Thai.
+ * the user's saved preference, then the tenant's locale, then Thai (`th-TH`).
  */
 export function resolveAppLocale(sources: { device?: unknown; user?: unknown; tenant?: unknown }): AppLocale {
   return (

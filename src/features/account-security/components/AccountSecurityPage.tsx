@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/icons";
 import type { CoreMe } from "@/features/profile/services/profile-api";
 import { ChangePasswordModal } from "./ChangePasswordModal";
+import { languageFromTag } from "@/lib/app-locale";
 
 interface AccountSecurityPageProps {
   /** Same real `GET /me` data Profile uses — see `../README.md`. */
@@ -81,7 +82,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
   const thaiName = me ? [me.first_name_th, me.last_name_th].filter(Boolean).join(" ") : "";
   const englishName = me ? [me.first_name, me.last_name].filter(Boolean).join(" ") : "";
   const fullName = me
-    ? (me.preferred_language === "th" && thaiName) || englishName || me.display_name || me.email
+    ? (languageFromTag(me.preferred_language) === "th" && thaiName) || englishName || me.display_name || me.email
     : "-";
 
   async function copyUsername() {

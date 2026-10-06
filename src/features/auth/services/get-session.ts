@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
 import { getSelectedTenantId } from "@/lib/core/tenant-selection";
+import { languageFromTag } from "@/lib/app-locale";
 
 // Core's role_type tier system (thunder_core_prj's src/utils/supabase/rbac.ts).
 // department_admin/tenant/system exist as raw DB values (thunder_core_prj's
@@ -63,7 +64,7 @@ export interface Session {
    * isPlatformSuperAdmin rule. Only a platform super admin gets the tenant
    * switcher. */
   isSuperAdmin: boolean;
-  /** `public.users.preferred_language` as Core stores it ("th", "en"), or `null`. The user's
+  /** `public.users.preferred_language` as Core stores it ("th-TH", "en-US"; older rows "th"), or `null`. The user's
    * primary language for the whole app; `getAppLocale(session.preferredLanguage)` turns it into
    * the render language (lib/app-locale). */
   preferredLanguage: string | null;
@@ -388,7 +389,7 @@ function resolveUserName(
   user: Record<string, unknown>,
   extras: { firstNameTh: string | null; lastNameTh: string | null },
 ): string {
-  const preferredLanguage = typeof user.preferred_language === "string" ? user.preferred_language : null;
+  const preferredLanguage = languageFromTag(user.preferred_language);
   const thaiName = [extras.firstNameTh, extras.lastNameTh].filter(Boolean).join(" ");
   if (preferredLanguage === "th" && thaiName) return thaiName;
 

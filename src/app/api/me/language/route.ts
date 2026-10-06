@@ -3,15 +3,23 @@ import { cookies } from "next/headers";
 import { env } from "@/config/env";
 import { coreAuthHeaders, coreGet } from "@/lib/core/core-get";
 import { selectedTenantHeader } from "@/lib/core/tenant-selection";
-import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, parseAppLocale, type SaveLanguageResult } from "@/lib/app-locale";
+import {
+  LANGUAGE_TAG,
+  LOCALE_COOKIE,
+  LOCALE_COOKIE_MAX_AGE,
+  languageFromTag,
+  parseAppLocale,
+  type SaveLanguageResult,
+} from "@/lib/app-locale";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Save the user's primary language (Topbar LanguageSwitch).
  *
- * Always sets the `t1_lang` cookie, then tries to write `public.users.preferred_language` through
- * Core's `PATCH /users/:id`. Core's `updateProfileSchema` does not accept that key yet (400
+ * Always sets the `t1_lang` cookie, then tries to write `public.users.preferred_language` (as a
+ * BCP 47 tag, `LANGUAGE_TAG`: "th-TH" / "en-US") through Core's `PATCH /users/:id` for the caller's
+ * own id — only the account owner may change it. Core's `updateProfileSchema` does not accept that key yet (400
  * "unrecognized_keys", checked 2026-10-06), so `saved` is false today and the device cookie carries
  * the choice. Once Core accepts the key, `saved` turns true with no change here.
  */
@@ -31,13 +39,13 @@ export async function PUT(request: Request) {
 
   const me = await coreGet<{ id?: unknown; preferred_language?: unknown }>("/me", token);
   if (typeof me?.id !== "string") return NextResponse.json(result);
-  if (me.preferred_language === locale) return NextResponse.json({ ...result, saved: true });
+  if (languageFromTag(me.preferred_language) === locale) return NextResponse.json({ ...result, saved: true });
 
   try {
     const res = await fetch(`${env.coreApiUrl}/api/core/v1/users/${encodeURIComponent(me.id)}`, {
       method: "PATCH",
       headers: { ...coreAuthHeaders(token), ...(await selectedTenantHeader()), "Content-Type": "application/json" },
-      body: JSON.stringify({ preferred_language: locale }),
+      body: JSON.stringify({ preferred_language: LANGUAGE_TAG[locale] }),
       cache: "no-store",
     });
     result.saved = res.ok;
