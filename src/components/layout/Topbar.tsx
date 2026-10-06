@@ -3,12 +3,14 @@
 import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { CalendarDays, CircleHelp } from "lucide-react";
-import { ChevronDownIcon, HelpIcon } from "@/components/ui/icons";
+import { HelpIcon } from "@/components/ui/icons";
 import { resolveActiveApp } from "@/config/apps";
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
 import { HelpTrigger } from "@/features/help/components/HelpTrigger";
 import type { HelpSupportConfig } from "@/features/help/support";
+import type { AppLocale } from "@/lib/app-locale";
+import { LanguageSwitch } from "./LanguageSwitch";
 import { GlobalSearch } from "./GlobalSearch";
 import { NotificationBell } from "./NotificationBell";
 import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
@@ -20,6 +22,8 @@ interface TopbarProps {
   avatarUrl?: string | null;
   /** Help panel Support Channels, read from env on the server (config/env.ts). */
   helpSupport?: HelpSupportConfig;
+  /** The shell language from the t1_lang cookie (lib/app-locale). */
+  locale: AppLocale;
 }
 
 // Only the Overview route publishes into the title store today (its
@@ -39,7 +43,7 @@ function todayLabel() {
 
 // Media Workspace's header, restyled to match the Lovable reference
 // (docs/adr/0075). Every other App keeps the Topbar below unchanged.
-function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, pathname }: TopbarProps & { pathname: string }) {
+function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale, pathname }: TopbarProps & { pathname: string }) {
   const meta = useSyncExternalStore(subscribePageHeader, getPageHeaderSnapshot, () => null);
   const title = meta?.title ?? fallbackTitle(pathname);
 
@@ -58,6 +62,8 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, pat
             <CalendarDays className="h-3.5 w-3.5 text-primary" />
             {todayLabel()}
           </span>
+          {/* ADR 0075 §5 removed a non-functional TH pill from this header; this switch works (sets the app language). */}
+          <LanguageSwitch initialLocale={locale} className="hidden text-muted-foreground hover:bg-accent hover:text-foreground sm:flex" />
           <NotificationBell variant="media" />
           {/* Visible on phones too: Help's mobile surface is the full-screen drawer (Help Spec AC-025). */}
           <HelpTrigger
@@ -76,13 +82,12 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, pat
 }
 
 // 2026-09-16 shell redesign — dropped the date pill (not in the new
-// mockup); added a language indicator. No i18n library exists anywhere in
-// this repo, so it's a static, non-interactive label (honest about what it
-// is) rather than a fake working switcher. Search bar is a bespoke,
+// mockup); added a language indicator. 2026-10-06: the indicator is now a
+// working switch (LanguageSwitch) that sets the app language. Search bar is a bespoke,
 // Figma-matched treatment rather than the shared `SearchInput` (that
 // component's default look is shared with several thunder-care pages this
 // task shouldn't touch).
-function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport }: TopbarProps) {
+function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: TopbarProps) {
   return (
     // 2026-09-19: h-[88px]/px-9/gap-5 -> h-[68px]/px-6/gap-4 — measured off
     // the design reference's own header (69px tall, px-6), and matches the
@@ -100,13 +105,10 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport }: TopbarPr
           Workspace Topbar) with one gap, so TH / bell / help / divider /
           profile are spaced evenly — the bare icons made the gaps uneven. */}
       <div className="ml-auto flex items-center gap-1">
-        <span
-          className="hidden h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[#536999] dark:text-zinc-400 sm:flex"
-          title="ยังไม่รองรับการเปลี่ยนภาษา"
-        >
-          TH
-          <ChevronDownIcon className="h-4 w-4 text-[#536999] dark:text-zinc-500" />
-        </span>
+        <LanguageSwitch
+          initialLocale={locale}
+          className="hidden text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 sm:flex"
+        />
         <NotificationBell variant="default" />
         <HelpTrigger
           className="grid h-9 w-9 place-items-center rounded-lg text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"

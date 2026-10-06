@@ -5,6 +5,7 @@ import { Topbar } from "@/components/layout/Topbar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
 import { env } from "@/config/env";
 import { getSession } from "@/features/auth/services/get-session";
+import { getAppLocale } from "@/lib/app-locale.server";
 
 // Everything behind login is private tenant data — never index it, even if
 // a crawler somehow gets a session (robots.ts also disallows crawling).
@@ -31,6 +32,7 @@ export default async function DashboardLayout({
   // access-tier label; falls back to the tier label (e.g. "Company
   // Administrator") only for members with no job_title set.
   const roleLabel = jobTitle ?? resolveRoleLabel(resolveRole(session));
+  const locale = await getAppLocale();
 
   return (
     <div className="flex h-full">
@@ -46,6 +48,7 @@ export default async function DashboardLayout({
           userName={userName}
           roleLabel={roleLabel}
           avatarUrl={avatarUrl}
+          locale={locale}
           helpSupport={{
             contactUrl: env.helpSupportUrl || undefined,
             chatUrl: env.helpSupportChatUrl || undefined,

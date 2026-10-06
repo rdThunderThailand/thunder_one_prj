@@ -2,7 +2,7 @@
 // rather than trusted, so a hand-edited URL can only ever narrow to a valid view.
 
 import { helpHref, sanitizeFrom, type HelpQuery } from "./navigation.ts";
-import { parseContentType, resolveLocale } from "./repository.ts";
+import { parseContentType, parseLocale, resolveLocale } from "./repository.ts";
 import { LOCALES, type ContentType, type Locale, type WorkspaceKey } from "./types.ts";
 
 export type SearchParams = Record<string, string | string[] | undefined>;
@@ -21,10 +21,11 @@ function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export function readHelpParams(sp: SearchParams): HelpParams {
+/** `fallbackLocale` is the shell language (cookie) used when the URL has no `?lang`. */
+export function readHelpParams(sp: SearchParams, fallbackLocale?: Locale): HelpParams {
   const workspace = first(sp.workspace);
   return {
-    locale: resolveLocale(sp.lang),
+    locale: parseLocale(sp.lang) ?? fallbackLocale ?? resolveLocale(undefined),
     from: sanitizeFrom(sp.from),
     q: (first(sp.q) ?? "").trim().slice(0, 200),
     workspace: WORKSPACES.includes(workspace as WorkspaceKey) ? (workspace as WorkspaceKey) : null,
