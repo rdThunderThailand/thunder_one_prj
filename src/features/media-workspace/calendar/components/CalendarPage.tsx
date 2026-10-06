@@ -60,7 +60,11 @@ export function CalendarPage() {
     // Only today moves; other days are static until the operator edits a Program (ADR 0085 §6).
     if (date !== todayYmd()) return () => void (alive = false);
     const poll = () => {
-      if (!document.hidden) load();
+      if (document.hidden) return;
+      // A wall display left on "today" follows the clock past midnight instead of polling yesterday.
+      const today = todayYmd();
+      if (today !== date) setState((current) => ({ ...current, date: today }));
+      else load();
     };
     const timer = setInterval(poll, POLL_MS);
     document.addEventListener("visibilitychange", poll);
