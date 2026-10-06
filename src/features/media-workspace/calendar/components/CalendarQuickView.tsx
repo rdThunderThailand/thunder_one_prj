@@ -32,55 +32,53 @@ function ContentLine({ publication }: { publication: CalendarPublication }) {
   );
 }
 
-function ProgramLine({ publication, returnTo, now }: { publication: CalendarPublication; returnTo: string; now: number }) {
+function EditButton({ publication, returnTo, now }: { publication: CalendarPublication; returnTo: string; now: number }) {
   const action = programAction(publication, returnTo, now);
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <ProgramCover
-        publication={publication}
-        className="h-10 w-16"
-      />
-      <div className="min-w-0 flex-1">
-        <Link
-          href={`/media-workspace/program/${publication.id}`}
-          className="block truncate text-sm font-semibold text-foreground hover:text-primary"
-        >
-          {publication.name}
-        </Link>
-        <ContentLine publication={publication} />
-      </div>
-      <Button
-        asChild
-        variant="outline"
-        size="sm"
-      >
-        <Link href={action.href}>{action.label}</Link>
-      </Button>
-    </div>
+    <Button
+      asChild
+      variant="outline"
+      size="sm"
+    >
+      <Link href={action.href}>{action.label}</Link>
+    </Button>
   );
 }
 
-/** Docked under the grid (ADR 0085 §9). `date` is the displayed day, for "24:00" at its closing midnight. */
+/** Docked under the grid (ADR 0085 §9), laid out as the frame draws it: cover · details · Edit · Next Program. `date` is the displayed day, for "24:00" at its closing midnight. */
 export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: CalendarRow; segment: CalendarSegment; date: string; now: number; returnTo: string }) {
   const { channel } = row;
+  const [first, ...others] = segment.publications;
   const priority = PRIORITY_STYLES[segment.priority];
   const wider = partOf(segment);
   const next = nextBlock(row, segment);
   const [nextProgram] = next?.publications ?? [];
+  const isLoop = others.length > 0;
   return (
     <section
       aria-label="Program details"
-      className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-panel lg:flex-row lg:items-start"
+      className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-panel lg:flex-row lg:items-center"
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
+      <ProgramCover
+        publication={first}
+        className="h-20 w-32"
+      />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           {isNowBlock(segment, now) && <Badge variant="success">Now</Badge>}
-          <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${priority.block}`}>{priority.label} priority</span>
-          <span className="text-sm font-semibold tabular-nums text-foreground">
-            {clockLabel(segment.opens_at, date)} – {clockLabel(segment.closes_at, date)}
-          </span>
-          <span className="text-xs text-muted-foreground">{formatDuration(Date.parse(segment.closes_at) - Date.parse(segment.opens_at))}</span>
+          <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${priority.block}`}>{priority.label}</span>
         </div>
+        <Link
+          href={`/media-workspace/program/${first.id}`}
+          className="truncate text-lg font-semibold text-foreground hover:text-primary"
+        >
+          {first.name}
+          {isLoop && <span className="font-normal text-muted-foreground"> +{others.length} in loop</span>}
+        </Link>
+        <p className="text-sm tabular-nums text-foreground">
+          {clockLabel(segment.opens_at, date)} – {clockLabel(segment.closes_at, date)}
+          <span className="text-muted-foreground"> ({formatDuration(Date.parse(segment.closes_at) - Date.parse(segment.opens_at))})</span>
+        </p>
         <p className="text-xs text-muted-foreground">
           {channel ? (
             <Link
@@ -94,14 +92,7 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
           )}
           {channel?.location_name && ` · ${channel.location_name}`}
         </p>
-        {segment.publications.map((publication) => (
-          <ProgramLine
-            key={publication.id}
-            publication={publication}
-            returnTo={returnTo}
-            now={now}
-          />
-        ))}
+        {!isLoop && <ContentLine publication={first} />}
         {wider && (
           <p className="text-xs text-muted-foreground">
             Part of {clockLabel(wider.opens_at, date)}–{wider.closes_at ? clockLabel(wider.closes_at, date) : "open end"}
@@ -113,8 +104,40 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
             {segment.suppressed.length > 2 && ` +${segment.suppressed.length - 2} more`}
           </p>
         )}
+        {isLoop && (
+          <ul className="mt-2 flex flex-col gap-2">
+            {segment.publications.map((publication) => (
+              <li
+                key={publication.id}
+                className="flex min-w-0 items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <Link
+                    href={`/media-workspace/program/${publication.id}`}
+                    className="block truncate text-sm font-medium text-foreground hover:text-primary"
+                  >
+                    {publication.name}
+                  </Link>
+                  <ContentLine publication={publication} />
+                </div>
+                <EditButton
+                  publication={publication}
+                  returnTo={returnTo}
+                  now={now}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-      <div className="lg:w-64 lg:border-l lg:border-border lg:pl-4">
+      {!isLoop && (
+        <EditButton
+          publication={first}
+          returnTo={returnTo}
+          now={now}
+        />
+      )}
+      <div className="lg:w-60 lg:border-l lg:border-border lg:pl-4">
         <p className="mb-2 text-xs text-muted-foreground">Next Program</p>
         {next && nextProgram ? (
           <div className="flex min-w-0 items-center gap-2">
@@ -126,9 +149,7 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
               >
                 {nextProgram.name}
               </Link>
-              <p className="text-xs text-muted-foreground">
-                Starts {clockLabel(next.opens_at, date)}
-              </p>
+              <p className="text-xs text-muted-foreground">Starts {clockLabel(next.opens_at, date)}</p>
             </div>
           </div>
         ) : (
