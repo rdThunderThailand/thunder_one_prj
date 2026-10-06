@@ -1,0 +1,592 @@
+// Help content SSOT for the Media Workspace pilot (Help Product Definition §4: "Media Workspace as
+// the first pilot content pack"). Public Help Center, Search and the contextual drawer all read
+// this one set (D-G7-04). UI terms are copied from the approved screens in this repo — when a
+// screen's wording changes, the Guide that names it changes in the same PR.
+//
+// A few records are deliberately not public, so the delivery rules stay visible in data:
+// - `now-next-playback-states`: EN is still DRAFT → EN requests show "translation unavailable" (AC-010)
+// - `channel-group-playback-mode`: DRAFT/IN REVIEW → never delivered (AC-008)
+// - `publish-from-playlist-page`: ARCHIVED → never delivered, never deleted (AC-015)
+
+import type { Guide } from "../types";
+
+const UPDATED = "2026-10-06";
+
+export const GUIDES: Guide[] = [
+  {
+    guideId: "GDE-0001",
+    publicSlug: "get-started-with-media-workspace",
+    contentType: "getting-started",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0001",
+        locale: "th",
+        title: "เริ่มต้นใช้งาน Media Workspace",
+        summary: "ภาพรวมขั้นตอนตั้งแต่อัปโหลดสื่อจนถึงตรวจว่าเนื้อหาเล่นอยู่บนจอ",
+        keywords: ["เริ่มต้น", "media workspace", "ภาพรวม", "overview"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "Media Workspace ใช้จัดการเนื้อหาที่เล่นบนจอแสดงผลของคุณ งานหลักมีสี่ขั้น ทำตามลำดับนี้ได้เลย" },
+          {
+            type: "steps",
+            items: [
+              { title: "อัปโหลดสื่อเข้า Media Library", text: "รองรับไฟล์ JPG, PNG และ MP4" },
+              { title: "จัดสื่อเป็น Playlist", text: "Playlist คือลำดับของสื่อพร้อมระยะเวลาแสดงของแต่ละรายการ" },
+              { title: "สร้าง Program", text: "Program กำหนดว่าจะเล่นเนื้อหาอะไร ที่ช่องไหน และเมื่อไร" },
+              { title: "ตรวจที่ Now & Next", text: "ดูว่าแต่ละช่องกำลังเล่นอะไร และเครื่องเล่นยืนยันการเล่นแล้วหรือยัง" },
+            ],
+          },
+          { type: "note", tone: "info", title: "ดูความช่วยเหลือของหน้าที่เปิดอยู่", text: "กดปุ่ม ? ที่แถบด้านบนได้ทุกหน้า ระบบจะแสดงคู่มือที่ตรงกับหน้านั้นโดยไม่ต้องออกจากงาน" },
+        ],
+      },
+      en: {
+        guideId: "GDE-0001",
+        locale: "en",
+        title: "Get started with Media Workspace",
+        summary: "The path from uploading media to checking that it plays on screen.",
+        keywords: ["get started", "media workspace", "overview"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "Media Workspace manages the content that plays on your displays. The core work is four steps, in this order." },
+          {
+            type: "steps",
+            items: [
+              { title: "Upload media to the Media Library", text: "JPG, PNG and MP4 files are supported." },
+              { title: "Arrange media into a Playlist", text: "A Playlist is an ordered sequence of media, each with its own duration." },
+              { title: "Create a Program", text: "A Program decides what plays, on which Channels, and when." },
+              { title: "Check Now & Next", text: "See what each Channel is playing and whether its player has confirmed playback." },
+            ],
+          },
+          { type: "note", tone: "info", title: "Help for the page you are on", text: "Press ? in the top bar on any page to see the guides for that page without leaving your work." },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0002",
+    publicSlug: "create-a-playlist",
+    contentType: "how-to",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0002",
+        locale: "th",
+        title: "สร้างเพลย์ลิสต์",
+        summary: "สร้าง Playlist ใหม่ เพิ่มสื่อ และตั้งค่าการเล่น",
+        keywords: ["playlist", "เพลย์ลิสต์", "สร้าง", "create playlist", "playback settings"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 3,
+        updatedAt: UPDATED,
+        body: [
+          { type: "heading", text: "ภาพรวม" },
+          { type: "paragraph", text: "Playlist คือรายการสื่อที่เล่นตามลำดับ แต่ละรายการมีระยะเวลาแสดงของตัวเอง Playlist ไม่ได้กำหนดเวลาหรือช่องที่จะเล่น ส่วนนั้นอยู่ที่ Program" },
+          { type: "heading", text: "สิ่งที่ต้องเตรียม" },
+          { type: "list", items: ["มีสื่ออยู่ใน Media Library แล้ว", "มีสิทธิ์สร้าง Playlist"] },
+          { type: "heading", text: "ขั้นตอน" },
+          {
+            type: "steps",
+            items: [
+              { title: "ไปที่ Playlists", text: "ในเมนูด้านซ้าย หมวด Content เลือก Playlists" },
+              { title: "กด Create Playlist", text: "ใส่ Playlist name และเลือก Folder (ไม่เลือกจะอยู่ใน Uncategorized) แล้วกด Next" },
+              { title: "เพิ่มสื่อ", text: "ในหน้าแก้ไข กด Add Item แล้วเลือกสื่อจาก Media Library" },
+              { title: "ตั้งค่าการเล่น", text: "ที่ Playback Settings กำหนด Play Mode, Repeat, Start Playback From และ Default Transition" },
+              { title: "บันทึก", text: "กด Save เมื่อเรียบร้อย" },
+            ],
+          },
+          { type: "note", tone: "info", title: "ข้อควรรู้", text: "แก้ Playlist ได้ตลอด ถ้าต้องการให้ไปเล่นบนจอ ให้เลือก Playlist นี้ตอนสร้าง Program" },
+        ],
+      },
+      en: {
+        guideId: "GDE-0002",
+        locale: "en",
+        title: "Create a Playlist",
+        summary: "Create a new Playlist, add media and set how it plays.",
+        keywords: ["playlist", "create playlist", "playback settings"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 3,
+        updatedAt: UPDATED,
+        body: [
+          { type: "heading", text: "Overview" },
+          { type: "paragraph", text: "A Playlist is a list of media that plays in order, each item with its own duration. A Playlist does not decide when or where it plays; a Program does." },
+          { type: "heading", text: "Before you start" },
+          { type: "list", items: ["You have media in the Media Library.", "You have permission to create Playlists."] },
+          { type: "heading", text: "Steps" },
+          {
+            type: "steps",
+            items: [
+              { title: "Go to Playlists", text: "In the left menu, under Content, select Playlists." },
+              { title: "Select Create Playlist", text: "Enter a Playlist name and choose a Folder (leave it empty for Uncategorized), then select Next." },
+              { title: "Add media", text: "In the editor, select Add Item and pick media from the Media Library." },
+              { title: "Set playback", text: "Under Playback Settings, set Play Mode, Repeat, Start Playback From and Default Transition." },
+              { title: "Save", text: "Select Save when you are done." },
+            ],
+          },
+          { type: "note", tone: "info", title: "Good to know", text: "You can keep editing a Playlist. To put it on screen, choose it when you create a Program." },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0003",
+    publicSlug: "upload-media",
+    contentType: "how-to",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0003",
+        locale: "th",
+        title: "อัปโหลดสื่อเข้า Media Library",
+        summary: "อัปโหลดรูปภาพและวิดีโอ และติดตามสถานะใน Upload Queue",
+        keywords: ["อัปโหลด", "upload", "media library", "คลังสื่อ", "jpg", "png", "mp4", "วิดีโอ"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 2,
+        updatedAt: UPDATED,
+        body: [
+          { type: "heading", text: "ขั้นตอน" },
+          {
+            type: "steps",
+            items: [
+              { title: "ไปที่ Media Library", text: "ในเมนูด้านซ้าย หมวด Content เลือก Media Library" },
+              { title: "กด Upload Media", text: "ลากไฟล์มาวาง หรือเลือกไฟล์จากเครื่อง รองรับ JPG, PNG และ MP4" },
+              { title: "ติดตาม Upload Queue", text: "ไฟล์แต่ละรายการแสดงสถานะ Waiting, Uploading, Completed หรือ Failed" },
+            ],
+          },
+          { type: "note", tone: "info", title: "ล้างคิวไม่ลบสื่อ", text: "การล้างหรือปิดรายการใน Upload Queue ไม่ลบสื่อที่อัปโหลดสำเร็จแล้ว" },
+          { type: "note", tone: "warning", title: "วิดีโอที่เครื่องเล่นเปิดไม่ได้", text: "วิดีโอที่ใช้ codec หรือโปรไฟล์ที่เครื่องเล่นถอดรหัสไม่ได้จะถูกปฏิเสธตอนอัปโหลด ให้แปลงไฟล์เป็น MP4 (H.264) ก่อนแล้วอัปโหลดใหม่" },
+        ],
+      },
+      en: {
+        guideId: "GDE-0003",
+        locale: "en",
+        title: "Upload media to the Media Library",
+        summary: "Upload images and videos, and follow them in the Upload Queue.",
+        keywords: ["upload", "media library", "jpg", "png", "mp4", "video"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 2,
+        updatedAt: UPDATED,
+        body: [
+          { type: "heading", text: "Steps" },
+          {
+            type: "steps",
+            items: [
+              { title: "Go to Media Library", text: "In the left menu, under Content, select Media Library." },
+              { title: "Select Upload Media", text: "Drag files in or choose them from your computer. JPG, PNG and MP4 are supported." },
+              { title: "Follow the Upload Queue", text: "Each file shows its status: Waiting, Uploading, Completed or Failed." },
+            ],
+          },
+          { type: "note", tone: "info", title: "Clearing the queue keeps your media", text: "Clearing or dismissing Upload Queue entries never removes media that has already uploaded." },
+          { type: "note", tone: "warning", title: "Videos the player cannot decode", text: "A video whose codec or profile the players cannot decode is refused on upload. Convert it to MP4 (H.264) and upload it again." },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0004",
+    publicSlug: "create-a-program",
+    contentType: "how-to",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0004",
+        locale: "th",
+        title: "สร้างโปรแกรมเพื่อเผยแพร่เนื้อหา",
+        summary: "เลือกเนื้อหา ช่องที่จะเล่น และเวลา แล้วเผยแพร่",
+        keywords: ["program", "โปรแกรม", "เผยแพร่", "publish", "create program", "schedule"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 2,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "Program คือสิ่งที่ตัดสินว่าเนื้อหาไหนเล่นที่ช่องใดและเมื่อไร การสร้างมีห้าขั้นในตัวช่วยสร้าง" },
+          { type: "heading", text: "ขั้นตอน" },
+          {
+            type: "steps",
+            items: [
+              { title: "ไปที่ Programs แล้วกด Create Program", text: "อยู่ในหมวด Programming ของเมนูด้านซ้าย" },
+              { title: "Choose Content", text: "เลือกสื่อ, Playlist หรือ Layout ที่จะเล่น" },
+              { title: "Prepare Content", text: "ตรวจรายละเอียดของเนื้อหาที่เลือก" },
+              { title: "Program", text: "เลือกช่องหรือกลุ่มช่องที่จะเล่น กำหนดเวลาและลำดับความสำคัญ" },
+              { title: "Review แล้ว Publish", text: "ตรวจรายการตรวจสอบ ถ้าผ่านทั้งหมดกด Publish" },
+            ],
+          },
+          { type: "note", tone: "info", text: "หลังเผยแพร่ ไปที่ Now & Next เพื่อดูว่าเครื่องเล่นยืนยันการเล่นแล้วหรือยัง" },
+        ],
+      },
+      en: {
+        guideId: "GDE-0004",
+        locale: "en",
+        title: "Create a Program to publish content",
+        summary: "Pick the content, the Channels and the time, then publish.",
+        keywords: ["program", "publish", "create program", "schedule"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 2,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "A Program decides which content plays on which Channels and when. The wizard has five steps." },
+          { type: "heading", text: "Steps" },
+          {
+            type: "steps",
+            items: [
+              { title: "Go to Programs and select Create Program", text: "It is under Programming in the left menu." },
+              { title: "Choose Content", text: "Pick the media, Playlist or Layout to play." },
+              { title: "Prepare Content", text: "Check the details of the content you picked." },
+              { title: "Program", text: "Choose the Channels or Channel Groups, the schedule and the priority." },
+              { title: "Review, then Publish", text: "Go through the checklist. When everything passes, select Publish." },
+            ],
+          },
+          { type: "note", tone: "info", text: "After publishing, open Now & Next to see whether the players have confirmed playback." },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0005",
+    publicSlug: "playlist-vs-program",
+    contentType: "concept",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0005",
+        locale: "th",
+        title: "Playlist ต่างจาก Program อย่างไร",
+        summary: "Playlist กำหนดว่าเล่นอะไรตามลำดับไหน Program กำหนดว่าเล่นที่ไหนและเมื่อไร",
+        keywords: ["playlist", "program", "ความต่าง", "แนวคิด", "concept"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "heading", text: "Playlist" },
+          { type: "paragraph", text: "ลำดับของสื่อพร้อมระยะเวลาแสดงและการเปลี่ยนภาพของแต่ละรายการ ไม่มีเวลาเริ่มหรือช่องปลายทางในตัว" },
+          { type: "heading", text: "Program" },
+          { type: "paragraph", text: "ผูกเนื้อหา (สื่อเดี่ยว, Playlist หรือ Layout) เข้ากับช่องหรือกลุ่มช่อง และตารางเวลา ทุกการตัดสินว่าอะไรเล่นที่ไหนเมื่อไรเกิดที่ Program" },
+          { type: "note", tone: "info", text: "Playlist เดียวใช้ได้กับหลาย Program เช่น เล่นที่สาขาหนึ่งช่วงเช้า และอีกสาขาช่วงเย็น" },
+        ],
+      },
+      en: {
+        guideId: "GDE-0005",
+        locale: "en",
+        title: "Playlist vs Program",
+        summary: "A Playlist decides what plays and in what order; a Program decides where and when.",
+        keywords: ["playlist", "program", "difference", "concept"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "heading", text: "Playlist" },
+          { type: "paragraph", text: "An ordered sequence of media, with each item's duration and transition. It carries no start time and no target Channel." },
+          { type: "heading", text: "Program" },
+          { type: "paragraph", text: "Binds content (a single media item, a Playlist or a Layout) to Channels or Channel Groups and a schedule. Every decision about what plays where and when is made here." },
+          { type: "note", tone: "info", text: "One Playlist can be used by many Programs, for example mornings at one branch and evenings at another." },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0006",
+    publicSlug: "channel-status",
+    contentType: "reference",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0006",
+        locale: "th",
+        title: "สถานะของช่อง",
+        summary: "ความหมายของ Online, Warning, Offline และ No player",
+        keywords: ["channel", "ช่อง", "สถานะ", "online", "offline", "warning", "no player", "player"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "แต่ละช่อง (Channel) มีเครื่องเล่น (Player) หนึ่งเครื่อง สถานะของช่องคือสุขภาพของเครื่องเล่นนั้น" },
+          {
+            type: "list",
+            items: [
+              "Online: เครื่องเล่นติดต่อกับระบบตามปกติ",
+              "Warning: ไม่ได้รับสัญญาณจากเครื่องเล่นเกิน 2 นาที",
+              "Offline: ไม่ได้รับสัญญาณจากเครื่องเล่นเกิน 5 นาที",
+              "No player: ช่องที่ยังเป็น Draft และยังไม่ได้เลือกเครื่องเล่น",
+            ],
+          },
+        ],
+      },
+      en: {
+        guideId: "GDE-0006",
+        locale: "en",
+        title: "Channel status",
+        summary: "What Online, Warning, Offline and No player mean.",
+        keywords: ["channel", "status", "online", "offline", "warning", "no player", "player"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "Each Channel is driven by one Player. A Channel's status is that Player's health." },
+          {
+            type: "list",
+            items: [
+              "Online: the Player is in contact as expected.",
+              "Warning: no heartbeat from the Player for over 2 minutes.",
+              "Offline: no heartbeat from the Player for over 5 minutes.",
+              "No player: a Draft Channel that has no Player picked yet.",
+            ],
+          },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0007",
+    publicSlug: "now-next-playback-states",
+    contentType: "reference",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0007",
+        locale: "th",
+        title: "สถานะการเล่นใน Now & Next",
+        summary: "Scheduled Now, Playback Confirmed และ Playback stale ต่างกันอย่างไร",
+        keywords: ["now & next", "now next", "scheduled now", "playback confirmed", "playback stale", "สถานะการเล่น"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "Now & Next แยกสิ่งที่ตารางเวลาบอกออกจากหลักฐานว่าเล่นจริง" },
+          {
+            type: "list",
+            items: [
+              "Scheduled Now: ตารางเวลาของ Program เปิดอยู่ ณ ตอนนี้",
+              "Playback Confirmed: ตารางเปิดอยู่ เครื่องเล่นรายงานว่ากำลังเล่น และยังติดต่อกับระบบอยู่",
+              "Playback stale: เครื่องเล่นเคยยืนยันการเล่น แต่การยืนยันนั้นเก่าเกินไป",
+            ],
+          },
+        ],
+      },
+      en: {
+        guideId: "GDE-0007",
+        locale: "en",
+        title: "Playback states in Now & Next",
+        summary: "How Scheduled Now, Playback Confirmed and Playback stale differ.",
+        keywords: ["now & next", "scheduled now", "playback confirmed", "playback stale"],
+        publicationStatus: "DRAFT",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [{ type: "paragraph", text: "Draft — not reviewed yet." }],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0008",
+    publicSlug: "why-cant-i-publish",
+    contentType: "troubleshooting",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0008",
+        locale: "th",
+        title: "ทำไมเผยแพร่ไม่ได้",
+        summary: "สาเหตุที่พบบ่อยเมื่อปุ่ม Publish ใช้ไม่ได้ และวิธีแก้",
+        keywords: ["publish", "เผยแพร่ไม่ได้", "error", "program", "ปัญหา", "conflict"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "ขั้น Review ของตัวช่วยสร้าง Program จะบอกว่ารายการไหนยังไม่ผ่าน ตรวจตามนี้" },
+          {
+            type: "steps",
+            items: [
+              { title: "มีช่วงเวลาซ้อนกับ Program ที่สำคัญกว่า", text: "ถ้า Program อื่นที่มีลำดับความสำคัญสูงกว่าใช้เครื่องเล่นเดียวกันในช่วงเวลาเดียวกัน จะเผยแพร่ไม่ได้ ปรับเวลา ช่อง หรือลำดับความสำคัญ" },
+              { title: "Layout ยังไม่พร้อม", text: "Layout ที่เลือกต้องเป็น Active และทุก Zone ต้องมีเนื้อหา" },
+              { title: "เครื่องเล่นไม่รองรับ Layout หลาย Zone", text: "เครื่องเล่นที่ยังไม่รายงานความสามารถนี้จะรับ Layout หลาย Zone ไม่ได้ ใช้สื่อเดี่ยวหรือ Playlist แทน" },
+              { title: "มีวิดีโอที่เครื่องเล่นเปิดไม่ได้", text: "วิดีโอที่ถูกกักไว้เผยแพร่ไม่ได้ แปลงไฟล์เป็น MP4 (H.264) แล้วอัปโหลดใหม่" },
+            ],
+          },
+        ],
+      },
+      en: {
+        guideId: "GDE-0008",
+        locale: "en",
+        title: "Why can't I publish?",
+        summary: "Common reasons Publish is blocked, and how to fix them.",
+        keywords: ["publish", "cannot publish", "error", "program", "problem", "conflict"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "The Review step of the Program wizard shows which checks have not passed. Go through these." },
+          {
+            type: "steps",
+            items: [
+              { title: "It overlaps a higher-priority Program", text: "If a higher-priority Program uses the same player at the same time, publishing is blocked. Change the time, the Channels or the priority." },
+              { title: "The Layout is not ready", text: "The selected Layout must be Active, with content in every Zone." },
+              { title: "The player cannot play multi-Zone Layouts", text: "A player that has not reported this capability cannot receive a multi-Zone Layout. Use a single media item or a Playlist instead." },
+              { title: "A video cannot be played", text: "A quarantined video cannot be published. Convert it to MP4 (H.264) and upload it again." },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0009",
+    publicSlug: "content-not-playing",
+    contentType: "troubleshooting",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0009",
+        locale: "th",
+        title: "เนื้อหาไม่ขึ้นบนจอ",
+        summary: "ไล่ตรวจจาก Now & Next ไปจนถึงสถานะเครื่องเล่น",
+        keywords: ["ไม่เล่น", "ไม่ขึ้น", "not playing", "จอดำ", "offline", "now & next", "ปัญหา"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          {
+            type: "steps",
+            items: [
+              { title: "เปิด Now & Next", text: "หาช่องที่มีปัญหา ดูว่าเป็น Scheduled Now หรือไม่ ถ้าไม่ใช่ แปลว่าตารางเวลายังไม่ถึงหรือหมดแล้ว" },
+              { title: "ดูว่ามี Program ที่สำคัญกว่าทับอยู่หรือไม่", text: "Program ที่มีลำดับความสำคัญสูงกว่าจะแทนที่ทั้งจอในช่วงที่ซ้อนกัน" },
+              { title: "ตรวจสถานะช่อง", text: "ไปที่ All Channels ถ้าช่องเป็น Offline ให้ตรวจไฟและเครือข่ายของเครื่องเล่น" },
+              { title: "รอการยืนยันการเล่น", text: "เครื่องเล่นรายงานเข้าระบบประมาณทุกนาที ถ้าเพิ่งเผยแพร่ อาจต้องรอสักครู่ก่อนเห็น Playback Confirmed" },
+            ],
+          },
+          { type: "note", tone: "info", text: "ตารางเวลาประเมินตามเขตเวลาเดียวที่ตั้งไว้ใน Program (ค่าเริ่มต้น Asia/Bangkok)" },
+        ],
+      },
+      en: {
+        guideId: "GDE-0009",
+        locale: "en",
+        title: "Content is not playing",
+        summary: "Work through Now & Next down to the player's status.",
+        keywords: ["not playing", "black screen", "offline", "now & next", "problem"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          {
+            type: "steps",
+            items: [
+              { title: "Open Now & Next", text: "Find the Channel and check for Scheduled Now. If it is not there, the schedule has not started yet or has ended." },
+              { title: "Look for a higher-priority Program", text: "A higher-priority Program takes the whole screen while they overlap." },
+              { title: "Check the Channel status", text: "Go to All Channels. If the Channel is Offline, check the player's power and network." },
+              { title: "Wait for playback confirmation", text: "Players report in about once a minute. Right after publishing, Playback Confirmed may take a moment to appear." },
+            ],
+          },
+          { type: "note", tone: "info", text: "A schedule runs in the single time zone set on its Program (Asia/Bangkok by default)." },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0010",
+    publicSlug: "using-thunderone-help",
+    contentType: "getting-started",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0010",
+        locale: "th",
+        title: "วิธีใช้ศูนย์ช่วยเหลือ ThunderOne",
+        summary: "เปิดความช่วยเหลือของหน้าที่ทำงานอยู่ ค้นหา หรือเลือกดูตามหมวด",
+        keywords: ["help", "ช่วยเหลือ", "วิธีใช้", "ค้นหา"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          {
+            type: "list",
+            items: [
+              "กดปุ่ม ? ที่แถบด้านบน เพื่อดูคู่มือของหน้าที่เปิดอยู่โดยไม่ต้องออกจากงาน",
+              "ในศูนย์ช่วยเหลือ ค้นหาด้วยคำที่เห็นบนหน้าจอ หรือเลือกดูตาม Workspace และประเภทเนื้อหา",
+              "สลับภาษาไทยและอังกฤษได้ที่มุมขวาบน คู่มือเดียวกันจะแสดงในภาษาที่เลือก",
+            ],
+          },
+        ],
+      },
+      en: {
+        guideId: "GDE-0010",
+        locale: "en",
+        title: "How to use ThunderOne Help",
+        summary: "Open help for the page you are on, search, or browse by category.",
+        keywords: ["help", "how to", "search"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          {
+            type: "list",
+            items: [
+              "Press ? in the top bar to see the guides for the page you are on, without leaving your work.",
+              "In the Help Center, search with the words you see on screen, or browse by Workspace and content type.",
+              "Switch between Thai and English at the top right. The same guide shows in the language you pick.",
+            ],
+          },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0011",
+    publicSlug: "channel-group-playback-mode",
+    contentType: "concept",
+    lifecycleStatus: "IN REVIEW",
+    locales: {
+      th: {
+        guideId: "GDE-0011",
+        locale: "th",
+        title: "โหมดการเล่นของกลุ่มช่อง",
+        summary: "Synchronized กับ Independent",
+        keywords: ["channel group", "synchronized"],
+        publicationStatus: "IN REVIEW",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [{ type: "paragraph", text: "อยู่ระหว่างตรวจทาน" }],
+      },
+      en: {
+        guideId: "GDE-0011",
+        locale: "en",
+        title: "Channel Group playback mode",
+        summary: "Synchronized vs independent.",
+        keywords: ["channel group", "synchronized"],
+        publicationStatus: "DRAFT",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [{ type: "paragraph", text: "Draft." }],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0012",
+    publicSlug: "publish-from-playlist-page",
+    contentType: "how-to",
+    lifecycleStatus: "ARCHIVED",
+    locales: {
+      th: {
+        guideId: "GDE-0012",
+        locale: "th",
+        title: "เผยแพร่จากหน้า Playlist (เลิกใช้)",
+        summary: "ขั้นตอนเดิมก่อนมีตัวช่วยสร้าง Program",
+        keywords: ["publish", "playlist"],
+        publicationStatus: "ARCHIVED",
+        revisionVersion: 4,
+        updatedAt: "2026-09-01",
+        body: [{ type: "paragraph", text: "ขั้นตอนนี้ถูกแทนที่ด้วยการสร้าง Program แล้ว" }],
+      },
+      en: {
+        guideId: "GDE-0012",
+        locale: "en",
+        title: "Publish from the Playlist page (retired)",
+        summary: "The flow before the Program wizard existed.",
+        keywords: ["publish", "playlist"],
+        publicationStatus: "ARCHIVED",
+        revisionVersion: 4,
+        updatedAt: "2026-09-01",
+        body: [{ type: "paragraph", text: "This flow was replaced by creating a Program." }],
+      },
+    },
+  },
+];

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
+import { env } from "@/config/env";
 import { getSession } from "@/features/auth/services/get-session";
 
 // Everything behind login is private tenant data — never index it, even if
@@ -45,6 +46,7 @@ export default async function DashboardLayout({
           userName={userName}
           roleLabel={roleLabel}
           avatarUrl={avatarUrl}
+          helpSupportUrl={env.helpSupportUrl || undefined}
         />
         <main className="flex-1 overflow-y-auto bg-zinc-50 px-6 py-6 dark:bg-zinc-950">
           {children}

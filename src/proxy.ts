@@ -20,7 +20,11 @@ export function proxy(request: NextRequest) {
     pathname === "/set-password" ||
     pathname === "/invites/accept";
 
-  if (!token && !isAuthPage) {
+  // Public Help Center: readable with or without a session, and never redirects a token-holder
+  // away (Help Spec D-G7-01 — Public Help is Auth-independent; AC-007, AC-019).
+  const isPublicHelp = pathname === "/help" || pathname.startsWith("/help/");
+
+  if (!token && !isAuthPage && !isPublicHelp) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

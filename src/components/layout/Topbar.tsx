@@ -7,6 +7,7 @@ import { ChevronDownIcon, HelpIcon } from "@/components/ui/icons";
 import { resolveActiveApp } from "@/config/apps";
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
+import { HelpTrigger } from "@/features/help/components/HelpTrigger";
 import { GlobalSearch } from "./GlobalSearch";
 import { NotificationBell } from "./NotificationBell";
 import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
@@ -16,6 +17,8 @@ interface TopbarProps {
   userName: string;
   roleLabel?: string | null;
   avatarUrl?: string | null;
+  /** Help "Contact Support" destination, read from env on the server (config/env.ts). */
+  helpSupportUrl?: string;
 }
 
 // Only the Overview route publishes into the title store today (its
@@ -35,7 +38,7 @@ function todayLabel() {
 
 // Media Workspace's header, restyled to match the Lovable reference
 // (docs/adr/0075). Every other App keeps the Topbar below unchanged.
-function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, pathname }: TopbarProps & { pathname: string }) {
+function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupportUrl, pathname }: TopbarProps & { pathname: string }) {
   const meta = useSyncExternalStore(subscribePageHeader, getPageHeaderSnapshot, () => null);
   const title = meta?.title ?? fallbackTitle(pathname);
 
@@ -55,9 +58,13 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, pathname }: Topb
             {todayLabel()}
           </span>
           <NotificationBell variant="media" />
-          <button type="button" className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground sm:grid" aria-label="Help">
+          {/* Visible on phones too: Help's mobile surface is the full-screen drawer (Help Spec AC-025). */}
+          <HelpTrigger
+            className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+            supportUrl={helpSupportUrl}
+          >
             <CircleHelp className="h-4 w-4" />
-          </button>
+          </HelpTrigger>
           <div className="hidden items-center border-l border-border pl-3 lg:flex">
             <UserMenu userName={userName} roleLabel={roleLabel} avatarUrl={avatarUrl} variant="compact" />
           </div>
@@ -74,7 +81,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, pathname }: Topb
 // Figma-matched treatment rather than the shared `SearchInput` (that
 // component's default look is shared with several thunder-care pages this
 // task shouldn't touch).
-function DefaultTopbar({ userName, roleLabel, avatarUrl }: TopbarProps) {
+function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupportUrl }: TopbarProps) {
   return (
     // 2026-09-19: h-[88px]/px-9/gap-5 -> h-[68px]/px-6/gap-4 — measured off
     // the design reference's own header (69px tall, px-6), and matches the
@@ -100,13 +107,12 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl }: TopbarProps) {
           <ChevronDownIcon className="h-4 w-4 text-[#536999] dark:text-zinc-500" />
         </span>
         <NotificationBell variant="default" />
-        <button
-          type="button"
+        <HelpTrigger
           className="grid h-9 w-9 place-items-center rounded-lg text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-          aria-label="Help"
+          supportUrl={helpSupportUrl}
         >
           <HelpIcon className="h-5 w-5" />
-        </button>
+        </HelpTrigger>
         <span
           aria-hidden="true"
           className="mx-2 h-6 w-px bg-[#e6edf9] dark:bg-zinc-800"
