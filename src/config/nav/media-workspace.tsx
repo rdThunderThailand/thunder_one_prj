@@ -45,7 +45,7 @@ export const mediaWorkspaceNav: NavConfig = {
       items: [
         { label: "Programs", href: "/media-workspace/program", icon: <PlaySquare className={iconClass} /> },
         { label: "Now & Next", href: "/media-workspace/now-next", icon: <Clock3 className={iconClass} /> },
-        { label: "Calendar", icon: <CalendarDays className={iconClass} /> },
+        { label: "Calendar", href: "/media-workspace/calendar", icon: <CalendarDays className={iconClass} /> },
       ],
     },
     {

@@ -44,12 +44,14 @@ export function ChannelsListPage() {
   const [channels, setChannels] = useState<ChannelListItem[] | null>(null);
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [retrying, setRetrying] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  // Now & Next links here with ?channel=<id> to open that Channel's panel. The list-state hook then rewrites
+  // the URL without it, so a reload loses the panel (ADR 0084 §7); an id outside the list selects nothing.
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get("channel"));
   // #115: the dashboard's "Add Channel" quick action links here with ?create=1 so it opens
   // the same creation flow as this page's own "Create Channel" button, instead of a dead route.
   // Read from useSearchParams(), not window: a window branch renders false on the server and true
   // on the client, so ?create=1 hydrated with an extra <dialog>.
-  const searchParams = useSearchParams();
   const [isCreateOpen, setIsCreateOpen] = useState(() => searchParams.get("create") === "1");
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
 

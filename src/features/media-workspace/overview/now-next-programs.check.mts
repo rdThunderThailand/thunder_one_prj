@@ -9,6 +9,7 @@ const pub = (id: string, name: string): Publication => ({
   name,
   publication_type: "playlist",
   content_name: null,
+  content: { kind: "other", id: null, name: null },
   thumbnail_url: `${id}.jpg`,
 });
 
@@ -28,7 +29,7 @@ const occurrence = (publications: Publication[], over: Partial<NowNextOccurrence
 
 const row = (over: Partial<NowNextRow> = {}): NowNextRow => ({
   row_type: "channel",
-  channel: { id: "channel", name: "Channel" },
+  channel: { id: "channel", name: "Channel", location_name: null, output_kind: "screen", expected_resolution: null },
   device: null,
   devices: [],
   current: null,
