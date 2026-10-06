@@ -1,10 +1,11 @@
 // The user's primary language for the whole app, owned by the shell (Topbar LanguageSwitch).
 //
 // Source of truth is Core's `public.users.preferred_language`, stored as a BCP 47 tag like
-// `tenants.locale` ("th-TH", "en-US"; decided 2026-10-06 — older rows hold "th"). Core reads it today (`/session`,
-// `/me`) but `PATCH /users/:id` does not accept it yet (strict schema → 400, checked 2026-10-06), so:
-// - the switch writes the `t1_lang` cookie (this device) and *tries* Core; the moment Core accepts
-//   the field the choice is saved to the account with no change here (`/api/me/language`);
+// `tenants.locale` ("th-TH", "en-US"; decided 2026-10-06 — rows not yet migrated hold "th").
+// Core reads it (`/session`, `/me`) and, since 2026-10-06, writes it through `PATCH /users/:id`
+// (owner only; "th-TH" | "en-US", anything else 400). So:
+// - the switch saves it to the account through `/api/me/language` and writes the `t1_lang` cookie
+//   as this device's copy (it also covers public pages and a Core outage);
 // - login seeds the cookie from `preferred_language`, so a new device or a new login starts in the
 //   user's language;
 // - `<html lang>` carries the current language so anything that follows the shell (the Help panel,
@@ -46,7 +47,7 @@ export function resolveAppLocale(sources: { device?: unknown; user?: unknown; te
   );
 }
 
-/** The result of `PUT /api/me/language`. `saved` is false while Core has no write path for it. */
+/** The result of `PUT /api/me/language`. `saved` is false when Core could not store it. */
 export interface SaveLanguageResult {
   locale: AppLocale;
   saved: boolean;

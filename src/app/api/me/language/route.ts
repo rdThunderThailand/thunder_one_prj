@@ -19,9 +19,9 @@ export const dynamic = "force-dynamic";
  *
  * Always sets the `t1_lang` cookie, then tries to write `public.users.preferred_language` (as a
  * BCP 47 tag, `LANGUAGE_TAG`: "th-TH" / "en-US") through Core's `PATCH /users/:id` for the caller's
- * own id — only the account owner may change it. Core's `updateProfileSchema` does not accept that key yet (400
- * "unrecognized_keys", checked 2026-10-06), so `saved` is false today and the device cookie carries
- * the choice. Once Core accepts the key, `saved` turns true with no change here.
+ * own id — Core allows only the account owner (403 otherwise) and only "th-TH" | "en-US" (400
+ * otherwise); verified end to end 2026-10-06. `saved` is false when Core is unreachable or refuses;
+ * the device cookie still carries the choice then.
  */
 export async function PUT(request: Request) {
   const body = await request.json().catch(() => null);
