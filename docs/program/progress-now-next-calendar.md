@@ -5,7 +5,7 @@ Last updated: 2026-10-06.
 
 ## Where we are
 
-**S1 FE code done and browser-verified on develop data (FE-R, FE-A1, FE-A2, FE-A3). Nothing pushed, no PRs. Open: Core push + Draft PR, prod migration (R0), S1 FE PR, then S2.**
+**S1 FE done + browser-verified. BE-A applied to develop, Core Draft PR #165 open. BE-B applied to develop + HTTP-verified, local commit only. Next: FE-B1 (Calendar page). FE has NO PR by user choice (one PR for S1+S2 when everything is done).**
 
 FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is on someone else's `codex/core-142-mutation-guards` with uncommitted edits — use a worktree off `origin/develop`).
 
@@ -20,6 +20,14 @@ FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is o
 | FE-A3 Channel deep link | **done** | `/channels?channel=<id>` opens the panel; "View Programs →" → `/now-next?channel=<id>`. Verified in browser; Overview + editor rail (other `fetchNowNext` callers) still render |
 | BE-B Core: `effective_segments` + `media_calendar_get` + `GET /media/calendar` | **applied to develop, HTTP-verified** | Core worktree branch `feat/calendar-read-model` (stacked on `feat/now-next-group-scope`; local commit, **not pushed, no PR**). Migration `20261006100000_calendar_read_model`. Parity query (plan §4) on develop: empty = parity, but develop has only 1 current Channel row so this is weak evidence. HTTP: unscoped / group / channel scopes, both → 400, >31 days → 400, to≤from → 400, missing from / no offset → 400, foreign Group → 404. 1 day = 96 ms, 30 days = 377 ms (tiny tenant). First migration attempt failed atomically on `cardinality(uuid)` (fixed with `n_winners`). **Not exercised: priority overlap cuts, merged loop, weekly daily windows, "part of" occurrence — develop has no fixtures for them** |
 | FE-B1 / FE-B2 | not started | FE-B1 may begin: BE-B is deployed to develop DB (local Core worktree :3012 serves the route) |
+
+## Resume here (next session)
+
+1. Read this file, then `plan-now-next-calendar.md` §5 (FE-B1/B2) and ADR 0085. Handoff: `/tmp/thunder-handoff-calendar-fe/HANDOFF.md`.
+2. Branches: FE `feat/now-next-s1-fe` (tip `77cef85`+, nothing pushed). Core worktree `/Users/arty/Desktop/Thunder/project/Thunder_Core-now-next` on `feat/calendar-read-model` (stacked on `feat/now-next-group-scope` = PR #165).
+3. **Temporary local setup that must be undone at the end:** FE `.env.local` `CORE_API_URL=http://localhost:3012` (original `:3001`, backup `/tmp/env.local.bak`); Core worktree runs `next dev --webpack -p 3012` (log `/tmp/core3012.log`; restart: `cd` into the worktree, `npx next dev --webpack -p 3012`). The FE dev server (preview `dev`, :3000) must be restarted after any `.env.local` change. Login in the Browser pane is the user's.
+4. Decisions by the user: Core PR for BE-A opened early (done); **BE-A/BE-B migrations to prod wait for the release**; **FE PR only when S1+S2 are all done** (Thai or English: ask); Calendar links ("Open Calendar →", ⋮ "Open in Calendar", Overview "View full calendar →") are added in FE-B1/B2 because the route did not exist in S1.
+5. Open offers: fixture-based test of BE-B (priority overlap, merged loop, daily window) needs `zz-` rows on develop (R0, list first); Figma frame link for pixel comparison; Vercel check on Core PR #165 fails only because the git author lacks Vercel project access.
 
 ## Open questions for the user
 
@@ -36,3 +44,4 @@ FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is o
 - 2026-10-06 — BE-A migration applied to develop; verified over HTTP. **Temporary local setup**: FE `.env.local` `CORE_API_URL` → `http://localhost:3012` (backup `/tmp/env.local.bak`, original `:3001`); Core worktree runs `next dev --webpack -p 3012` (its `node_modules` is a symlink to `../Thunder_Core/node_modules`, Turbopack rejects that). Restore before finishing.
 - 2026-10-06 — FE-A2/A3 built and verified. Picker fix: disabled Groups stay selectable (ADR 0084 §6). Timeline tick row moved below the Now pill.
 - 2026-10-06 — BE-B written, applied to develop (approved), verified; route + cover signing + check added in Core.
+- 2026-10-06 — Handoff written to `/tmp/thunder-handoff-calendar-fe/HANDOFF.md`.
