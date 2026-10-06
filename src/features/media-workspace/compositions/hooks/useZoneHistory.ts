@@ -10,6 +10,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
+import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
+import { isModShortcut, isTypingTarget } from "@/lib/keyboard-shortcut";
 
 export function useZoneHistory(zones: LayoutZone[], onChange: (next: LayoutZone[]) => void) {
   const [past, setPast] = useState<LayoutZone[][]>([]);
@@ -47,24 +49,26 @@ export function useZoneHistory(zones: LayoutZone[], onChange: (next: LayoutZone[
     });
   }, [onChange]);
 
+  // Undo ⌘Z / Ctrl+Z; redo ⇧⌘Z on Apple, Ctrl+Y or Ctrl+Shift+Z elsewhere (lib/keyboard-shortcut).
+  // Text fields keep their own undo: a Zone name being typed is not rolled back as geometry.
+  const platform = useShortcutPlatform();
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!event.metaKey && !event.ctrlKey) return;
-      const key = event.key.toLowerCase();
-      if (key === "z" && event.shiftKey) {
+      if (isTypingTarget(event.target)) return;
+      if (
+        isModShortcut(event, "z", platform, { shift: true }) ||
+        (platform === "other" && isModShortcut(event, "y", platform))
+      ) {
         event.preventDefault();
         redo();
-      } else if (key === "z") {
+      } else if (isModShortcut(event, "z", platform)) {
         event.preventDefault();
         undo();
-      } else if (key === "y") {
-        event.preventDefault();
-        redo();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, platform]);
 
   return { checkpoint, undo, redo, canUndo: past.length > 0, canRedo: future.length > 0 };
 }

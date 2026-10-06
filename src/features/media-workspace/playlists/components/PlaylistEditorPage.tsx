@@ -30,6 +30,8 @@ import { usePlaylistEditorRow } from "./usePlaylistEditorRow";
 import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
 import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
 import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
+import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
+import { isModShortcut, isTypingTarget } from "@/lib/keyboard-shortcut";
 
 const LIST_PATH = "/media-workspace/playlists";
 
@@ -53,18 +55,23 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const affected = useAffectedPrograms("playlists", row.serverId);
   const [publishDialog, setPublishDialog] = useState<"changes" | "list" | null>(null);
 
+  // Undo ⌘Z / Ctrl+Z; redo ⇧⌘Z on Apple, Ctrl+Y or Ctrl+Shift+Z elsewhere (lib/keyboard-shortcut).
+  const shortcutPlatform = useShortcutPlatform();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") return;
-      const target = event.target as HTMLElement | null;
-      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      if (isTypingTarget(event.target)) return;
+      const redo =
+        isModShortcut(event, "z", shortcutPlatform, { shift: true }) ||
+        (shortcutPlatform === "other" && isModShortcut(event, "y", shortcutPlatform));
+      const undo = !redo && isModShortcut(event, "z", shortcutPlatform);
+      if (!redo && !undo) return;
       event.preventDefault();
-      if (event.shiftKey) history.redo();
+      if (redo) history.redo();
       else history.undo();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [history]);
+  }, [history, shortcutPlatform]);
 
   useEffect(() => {
     if (!row.isDirty) return;

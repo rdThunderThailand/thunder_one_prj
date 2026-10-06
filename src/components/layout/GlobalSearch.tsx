@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Image as ImageIcon, LayoutGrid, Loader2, MonitorPlay, Search, TriangleAlert, User } from "lucide-react";
 import { SearchIcon } from "@/components/ui/icons";
-import { isModShortcut, MOD_ARIA, MOD_LABEL, type ShortcutPlatform } from "@/lib/keyboard-shortcut";
+import { isModShortcut, isSlashShortcut, isTypingTarget, MOD_LABEL, shortcutAria } from "@/lib/keyboard-shortcut";
+import { useShortcutPlatform } from "./ShortcutPlatform";
 import { matchPages } from "./search-index";
 
 // The Topbar's search: the search bar opens a command palette (also ⌘K on
-// Apple devices, Ctrl+K elsewhere, from anywhere — lib/keyboard-shortcut). Pages match instantly from the nav config
+// Apple devices, Ctrl+K elsewhere, and "/" outside text fields — from anywhere;
+// lib/keyboard-shortcut). Pages match instantly from the nav config
 // (search-index.ts); people, Media files and channels come from
 // /api/search, debounced, with the previous request aborted on every
 // keystroke. ↑/↓ move, Enter opens, Esc closes.
@@ -73,7 +75,8 @@ function GroupIcon({ group, hit }: { group: GroupKey; hit: Hit }) {
   return <Icon className="h-4 w-4" />;
 }
 
-export function GlobalSearch({ variant, platform }: { variant: "default" | "media"; platform: ShortcutPlatform }) {
+export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
+  const platform = useShortcutPlatform();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -81,12 +84,16 @@ export function GlobalSearch({ variant, platform }: { variant: "default" | "medi
   const listRef = useRef<HTMLDivElement>(null);
   const remote = useRemoteSearch(query);
 
-  // ⌘K (Apple) / Ctrl+K (Windows, Linux) from anywhere in the app.
+  // ⌘K (Apple) / Ctrl+K (Windows, Linux) toggles from anywhere; "/" opens it
+  // unless the person is typing somewhere.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (isModShortcut(event, "k", platform)) {
         event.preventDefault();
         setOpen((o) => !o);
+      } else if (isSlashShortcut(event) && !isTypingTarget(event.target)) {
+        event.preventDefault();
+        setOpen(true);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -146,7 +153,7 @@ export function GlobalSearch({ variant, platform }: { variant: "default" | "medi
         {variant === "media" ? (
           <button
             type="button"
-            aria-keyshortcuts={`${MOD_ARIA[platform]}+K`}
+            aria-keyshortcuts={`${shortcutAria(platform, "k")} /`}
             className="relative mx-auto hidden h-9 w-full max-w-md items-center rounded-lg border border-border bg-card pl-9 pr-14 text-left text-xs text-muted-foreground hover:border-primary/40 md:flex"
           >
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -156,7 +163,7 @@ export function GlobalSearch({ variant, platform }: { variant: "default" | "medi
         ) : (
           <button
             type="button"
-            aria-keyshortcuts={`${MOD_ARIA[platform]}+K`}
+            aria-keyshortcuts={`${shortcutAria(platform, "k")} /`}
             className="flex h-9 w-full max-w-[700px] items-center gap-2.5 rounded-lg bg-[#eff5ff] px-3 text-left hover:bg-[#e6effd] dark:bg-zinc-900"
           >
             <SearchIcon className="h-4 w-4 shrink-0 text-[#6074a9] dark:text-zinc-500" />
