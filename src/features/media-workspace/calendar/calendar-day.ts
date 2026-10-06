@@ -1,5 +1,6 @@
 import { DEFAULT_TIMEZONE, shiftYmd, utcToZonedParts } from "../publications/schedule.ts";
 import { formatClock } from "../publications/now-next-view.ts";
+import type { NowNextPriority } from "../publications/now-next.ts";
 import type { CalendarPublication, CalendarRow, CalendarSegment } from "./calendar-api.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -16,7 +17,7 @@ export function dayRange(ymd: string): { from: string; to: string } {
 }
 
 /** Left offset and width of a block as a share of the 24 h grid, 0–100. */
-export function blockPosition(segment: CalendarSegment, ymd: string): { left: number; width: number } {
+export function blockPosition(segment: Pick<CalendarSegment, "opens_at" | "closes_at">, ymd: string): { left: number; width: number } {
   const start = dayStartMs(ymd);
   const opens = Math.max(start, Date.parse(segment.opens_at));
   const closes = Math.min(start + DAY_MS, Date.parse(segment.closes_at));
@@ -46,6 +47,38 @@ export function nextBlock(row: CalendarRow, segment: CalendarSegment): CalendarS
 export function defaultBlock(row: CalendarRow, now: number): CalendarSegment | null {
   const sorted = [...row.segments].sort((a, b) => Date.parse(a.opens_at) - Date.parse(b.opens_at));
   return sorted.find((segment) => isNowBlock(segment, now)) ?? sorted.find((segment) => Date.parse(segment.opens_at) > now) ?? sorted.at(-1) ?? null;
+}
+
+export type OverriddenLane = {
+  id: string;
+  name: string;
+  priority: NowNextPriority;
+  spans: Array<{ opens_at: string; closes_at: string; winners: string[] }>;
+};
+
+const RANK: Record<NowNextPriority, number> = { urgent: 4, high: 3, normal: 2, low: 1 };
+
+/** One lane per overridden Program: its spans joined across blocks, touching spans merged, each naming who won. */
+export function overriddenLanes(row: CalendarRow): OverriddenLane[] {
+  const lanes = new Map<string, OverriddenLane>();
+  const ordered = [...row.segments].sort((a, b) => Date.parse(a.opens_at) - Date.parse(b.opens_at));
+  for (const segment of ordered) {
+    const winners = segment.publications.map((publication) => publication.name);
+    for (const item of segment.suppressed) {
+      const lane = lanes.get(item.id) ?? { id: item.id, name: item.name, priority: item.priority, spans: [] };
+      lanes.set(item.id, lane);
+      for (const span of item.spans) {
+        const last = lane.spans.at(-1);
+        if (last && Date.parse(last.closes_at) === Date.parse(span.opens_at)) {
+          last.closes_at = span.closes_at;
+          last.winners = [...new Set([...last.winners, ...winners])];
+        } else {
+          lane.spans.push({ ...span, winners });
+        }
+      }
+    }
+  }
+  return [...lanes.values()].sort((a, b) => RANK[b.priority] - RANK[a.priority] || a.name.localeCompare(b.name));
 }
 
 /** The wider occurrence this block is cut from (by a higher tier or the day edge), or null. */

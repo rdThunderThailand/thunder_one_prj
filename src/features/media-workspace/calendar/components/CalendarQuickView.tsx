@@ -144,7 +144,7 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
         )}
         {segment.suppressed.length > 0 && (
           <>
-            <dt className="text-muted-foreground">Hidden</dt>
+            <dt className="text-muted-foreground">Overridden</dt>
             <dd
               className="truncate text-foreground"
               title={segment.suppressed.map((item) => item.name).join(", ")}

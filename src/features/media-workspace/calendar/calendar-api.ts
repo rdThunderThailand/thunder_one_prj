@@ -10,7 +10,8 @@ export type CalendarSegment = {
   priority: NowNextPriority;
   output_kind: "publication" | "merged_loop";
   publications: CalendarPublication[];
-  suppressed: Array<{ id: string; name: string; priority: string }>;
+  /** Programs scheduled in this block but overridden, with the spans where they were (ADR 0085 Rev.2 §10). */
+  suppressed: Array<{ id: string; name: string; priority: NowNextPriority; spans: Array<{ opens_at: string; closes_at: string }> }>;
   /** The Program's whole occurrence when this block is only part of it; null for a merged loop. */
   occurrence: { opens_at: string; closes_at: string | null } | null;
 };

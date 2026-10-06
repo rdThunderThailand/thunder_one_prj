@@ -280,6 +280,15 @@ table, Up Next timeline).
 - Poll every 60 s only when the date is today, paused while hidden (same pattern as Now & Next). A 404 for
   the scope id → reset to All with a notice.
 
+**BE-C / FE-B3 — Overridden lanes (ADR 0085 Rev.2 §10).** Core: a new migration `CREATE OR REPLACE`s
+`media_core.effective_segments` (same signature, so grants stay) so that each `suppressed` entry is
+`{id, name, priority, spans: [{opens_at, closes_at}]}`: one span per cut in which it was active but not playing,
+neighbouring cuts joined; rollback restores the BE-B body. Apply to develop is R0; prod with the release.
+FE: `CalendarSegment.suppressed[].spans`; `calendar-day.ts` `overriddenLanes(row)` joins spans by Program across
+blocks, merges touching spans, names the winner per span (+ check); `CalendarGrid` ▸ toggle in the row header
+(only when the row has lanes), expanded lanes below the effective lane, hatched muted spans → `/program/<id>`
+with title "Overridden by <winner>". Wording "+N overridden" / "Overridden:".
+
 **FE-B2 — Quick View** (ADR 0085 §9), docked under the grid; selection in component state (cleared on date or
 scope change). Edit Program → `/program/<id>/edit?returnTo=<current calendar URL>`; **View Program**
 (`/program/<id>`) instead when the publication's `schedule_ends_at` is in the past. Overview "View full

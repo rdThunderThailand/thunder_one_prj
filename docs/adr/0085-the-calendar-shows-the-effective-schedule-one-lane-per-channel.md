@@ -1,7 +1,8 @@
 # 0085 — The Calendar shows the effective schedule, one lane per Channel
 
 Status: accepted (2026-10-06, grilling session on the FigJam board "Now & Next → Calendar → Program Editor";
-scrutiny round 1 applied). Fills the "Schedule Preview/Calendar" slot ADR 0057 left open. Companion: ADR 0084.
+scrutiny round 1 applied). Rev.2 (2026-10-06, before release): overridden Programs can be shown in expandable
+lanes (§1, §2, §10). Fills the "Schedule Preview/Calendar" slot ADR 0057 left open. Companion: ADR 0084.
 Plan: `docs/program/plan-now-next-calendar.md`.
 
 ## Context
@@ -34,7 +35,8 @@ Facts established before deciding:
 1. **Effective, not intent.** A block is what Now & Next's rules say that Channel plays at that time, after
    priority suppression, the Layout winner rule and equal-tier merging — so today's row and Now & Next's
    Up Next agree. One lane per row, as drawn. A Program that is scheduled but suppressed is not a block; it
-   is counted on the block that hides it ("+N hidden") and named in the Quick View. Like Now & Next, the
+   is counted on the block that hides it ("+N overridden"), named in the Quick View, and drawn in its own
+   lane when the row is expanded (§10). Like Now & Next, the
    Calendar does not apply the player's playable-items check, so it is an approximation of the screen: a
    top-tier Program whose snapshot has no playable items is drawn as winning, although the player would
    skip it.
@@ -43,7 +45,8 @@ Facts established before deciding:
    change — its `starts_at` and `ends_at`, and in its Schedule's time zone each local daily start, daily end
    and midnight — and decides each cut with the player's instant test above. Winners per cut follow the
    Now & Next rules; neighbouring cuts with the same winners merge. `public.media_calendar_get(tenant, from,
-   to, channel_id?, group_id?)` builds rows from it; `GET /media/calendar` exposes it. A range is at most
+   to, channel_id?, group_id?)` builds rows from it; each `suppressed` entry carries the `spans` in which that
+   Program was scheduled but overridden (Rev.2); `GET /media/calendar` exposes it. A range is at most
    31 days. Day boundaries are Asia/Bangkok midnights.
 3. **A fourth copy of the rules, guarded.** `effective_segments` is new and used by the Calendar only;
    `media_now_next_get` is not rewritten. A read-only parity check — Now & Next's next 3 hours against
@@ -78,17 +81,32 @@ Facts established before deciding:
    replaced by that one Content line — they need the current item, which nothing reports, and are
    meaningless for a future block. A merged loop lists each member Program with its own Edit. A block that
    is part of a longer occurrence (cut by a higher tier or by the day edge) adds "part of 08:00–11:00"; a
-   block that hides others adds "Also scheduled (hidden): <name> · <priority>". **Edit Program** opens the
+   block that hides others adds "Overridden: <name>". **Edit Program** opens the
    editor with `returnTo` (ADR 0084 §9); for a Program whose Schedule has ended it reads **View Program**
    (the editor is read-only then, ADR 0080 §4). Next Program is the next block on the same row that day,
    else "Nothing else today". The crossed-out icon button is dropped.
+
+10. **Overridden lanes (Rev.2).** A row that overrides anything in the range shows a ▸ toggle in its header
+    (the rest of the header still opens the Quick View). Expanded, one thin lane per overridden Program sits
+    under the effective lane, drawing only the spans where it was scheduled but not playing, hatched and muted;
+    the spans where it does play are already in the effective lane. A span links to the Program's detail page
+    with the tooltip "Overridden by <winner>". The expanded state is component state, not URL. The API adds
+    `spans: [{opens_at, closes_at}]` to each `suppressed` entry of a block (per cut, clipped to the block); the
+    page joins them by Program across blocks and merges touching spans. Why: operators asked "I scheduled it,
+    why is it not on screen?" — a count answers *that* something is hidden, the lane answers *when*.
 
 ## Rejected
 
 - **Intent view** — every active Program's occurrences, overlaps stacked in sub-lanes. Far simpler SQL,
   but it cannot say what plays at 14:00 and rows grow away from the frame whenever Programs overlap.
 - **Hybrid** — intent blocks with the suppressed ones drawn faded in the same lane: overlapping blocks in
-  one lane are unreadable.
+  one lane are unreadable. Rev.2 keeps this rejected: overridden Programs get their own lanes, on demand.
+- **Overridden lanes: a row-level `overridden` list in `media_calendar_get`** (Rev.2) — answers the question
+  directly but needs the cut logic a second time (a fifth copy of the rules); per-block `spans` reuse it.
+- **Overridden lanes: draw the whole scheduled occurrence and highlight the overridden part** (Rev.2) —
+  repeats what the effective lane already shows and makes the lane busier. **A global "Show overridden"
+  switch** — expands rows that have nothing to show. **Quick View for an overridden span** — the Quick View
+  describes what plays; the detail page describes the Program.
 - **Find boundaries from `next_opens_at`** (Now & Next's method) — sees one future occurrence per Program,
   not a day.
 - **Enumerate whole occurrences and clip them by hand** (this ADR's first draft) — re-implements the window,

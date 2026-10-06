@@ -4,7 +4,7 @@
  *     node src/features/media-workspace/calendar/calendar-day.check.mts
  */
 import assert from "node:assert/strict";
-import { blockPosition, defaultBlock, clockLabel, dayRange, formatDuration, programAction, initialScrollPercent, isNowBlock, nextBlock, nowPercent, partOf, todayYmd } from "./calendar-day.ts";
+import { blockPosition, defaultBlock, overriddenLanes, clockLabel, dayRange, formatDuration, programAction, initialScrollPercent, isNowBlock, nextBlock, nowPercent, partOf, todayYmd } from "./calendar-day.ts";
 import type { CalendarRow, CalendarSegment } from "./calendar-api.ts";
 
 const seg = (opens: string, closes: string, occurrence: CalendarSegment["occurrence"] = null): CalendarSegment => ({
@@ -75,5 +75,30 @@ assert.deepEqual(programAction(pub(null), back, now), {
 });
 assert.equal(programAction(pub(at("12:00")), back, now).label, "Edit Program");
 assert.deepEqual(programAction(pub(at("09:00")), back, now), { label: "View Program", href: "/media-workspace/program/p1" });
+
+// Overridden lanes: spans joined across blocks; touching spans merge and collect every winner.
+const win = (name: string) => ({ name }) as CalendarSegment["publications"][number];
+const hide = (id: string, priority: CalendarSegment["priority"], spans: Array<[string, string]>) => ({
+  id,
+  name: id,
+  priority,
+  spans: spans.map(([opens, closes]) => ({ opens_at: at(opens), closes_at: at(closes) })),
+});
+const lanes = overriddenLanes(
+  rowOf(
+    { ...seg(at("09:00"), at("10:00")), publications: [win("B")], suppressed: [hide("low-1", "low", [["09:00", "10:00"]])] },
+    { ...seg(at("08:00"), at("09:00")), publications: [win("A")], suppressed: [hide("low-1", "low", [["08:00", "09:00"]]), hide("normal-1", "normal", [["08:30", "09:00"]])] },
+    { ...seg(at("11:00"), at("12:00")), publications: [win("C")], suppressed: [hide("low-1", "low", [["11:00", "11:30"]])] },
+  ),
+);
+assert.deepEqual(
+  lanes.map((lane) => lane.id),
+  ["normal-1", "low-1"],
+);
+assert.deepEqual(lanes[1].spans, [
+  { opens_at: at("08:00"), closes_at: at("10:00"), winners: ["A", "B"] },
+  { opens_at: at("11:00"), closes_at: at("11:30"), winners: ["C"] },
+]);
+assert.deepEqual(overriddenLanes(rowOf(first)), []);
 
 console.log("calendar-day: ok");
