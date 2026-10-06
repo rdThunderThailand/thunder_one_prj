@@ -589,4 +589,110 @@ export const GUIDES: Guide[] = [
       },
     },
   },
+  {
+    guideId: "GDE-0013",
+    publicSlug: "create-a-layout",
+    contentType: "how-to",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0013",
+        locale: "th",
+        title: "สร้าง Layout",
+        summary: "แบ่งจอเป็นหลาย Zone และใส่เนื้อหาให้แต่ละ Zone",
+        keywords: ["layout", "เลย์เอาต์", "zone", "template", "แบ่งจอ", "new layout"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "Layout แบ่งจอเป็น Zone และกำหนดว่าแต่ละ Zone เล่นอะไร ใช้เมื่อต้องการแสดงหลายเนื้อหาพร้อมกันบนจอเดียว" },
+          { type: "heading", text: "ขั้นตอน" },
+          {
+            type: "steps",
+            items: [
+              { title: "ไปที่ Layouts แล้วกด New Layout", text: "อยู่ในหมวด Content ของเมนูด้านซ้าย" },
+              { title: "เลือกจาก Template Picker", text: "เลือก Template ที่มีรูปแบบ Zone อยู่แล้ว หรือเริ่มจาก Blank Layout" },
+              { title: "ใส่เนื้อหาให้แต่ละ Zone", text: "เลือก Zone แล้วเพิ่ม Playlist หรือสื่อ" },
+              { title: "บันทึก", text: "กด Save Layout เพื่อเก็บเป็นร่าง หรือ Save & Activate เมื่อทุก Zone มีเนื้อหาแล้ว" },
+            ],
+          },
+          { type: "note", tone: "info", text: "Program เลือกได้เฉพาะ Layout ที่ Active แล้ว" },
+        ],
+      },
+      en: {
+        guideId: "GDE-0013",
+        locale: "en",
+        title: "Create a Layout",
+        summary: "Split the screen into Zones and give each Zone its content.",
+        keywords: ["layout", "zone", "template", "split screen", "new layout"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "A Layout splits the screen into Zones and decides what plays in each one. Use it to show several pieces of content on one screen at once." },
+          { type: "heading", text: "Steps" },
+          {
+            type: "steps",
+            items: [
+              { title: "Go to Layouts and select New Layout", text: "It is under Content in the left menu." },
+              { title: "Choose from the Template Picker", text: "Pick a Template that already has Zones, or start from Blank Layout." },
+              { title: "Give each Zone its content", text: "Select a Zone, then add a Playlist or media." },
+              { title: "Save", text: "Select Save Layout to keep a draft, or Save & Activate once every Zone has content." },
+            ],
+          },
+          { type: "note", tone: "info", text: "A Program can only use a Layout that is Active." },
+        ],
+      },
+    },
+  },
+  {
+    guideId: "GDE-0014",
+    publicSlug: "channel-is-offline",
+    contentType: "troubleshooting",
+    lifecycleStatus: "PUBLISHED",
+    locales: {
+      th: {
+        guideId: "GDE-0014",
+        locale: "th",
+        title: "ช่องออฟไลน์",
+        summary: "วิธีตรวจสอบและแก้ไขเมื่อช่องเป็น Offline",
+        keywords: ["offline", "ออฟไลน์", "channel", "ช่อง", "player", "heartbeat", "เครือข่าย"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "ช่องเป็น Offline เมื่อระบบไม่ได้รับสัญญาณจากเครื่องเล่นของช่องนั้นเกิน 5 นาที" },
+          {
+            type: "steps",
+            items: [
+              { title: "ตรวจไฟของเครื่องเล่น", text: "ดูว่าเครื่องเล่นและจอเปิดอยู่" },
+              { title: "ตรวจเครือข่าย", text: "เครื่องเล่นต้องเชื่อมต่ออินเทอร์เน็ตได้" },
+              { title: "รอการรายงานรอบถัดไป", text: "เมื่อเครื่องเล่นกลับมาส่งสัญญาณ สถานะจะเปลี่ยนเป็น Online เอง" },
+            ],
+          },
+        ],
+      },
+      en: {
+        guideId: "GDE-0014",
+        locale: "en",
+        title: "Channel is offline",
+        summary: "How to check and fix a Channel that shows Offline.",
+        keywords: ["offline", "channel", "player", "heartbeat", "network"],
+        publicationStatus: "PUBLISHED",
+        revisionVersion: 1,
+        updatedAt: UPDATED,
+        body: [
+          { type: "paragraph", text: "A Channel is Offline when the platform has had no heartbeat from its Player for over 5 minutes." },
+          {
+            type: "steps",
+            items: [
+              { title: "Check the Player's power", text: "Make sure the Player and its screen are on." },
+              { title: "Check the network", text: "The Player needs an internet connection." },
+              { title: "Wait for the next report", text: "Once the Player sends a heartbeat again, the status returns to Online by itself." },
+            ],
+          },
+        ],
+      },
+    },
+  },
 ];

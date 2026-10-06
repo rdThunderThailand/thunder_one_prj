@@ -11,6 +11,20 @@ export const CONTEXT_MAPPINGS: ContextMapping[] = [
   { workspaceKey: "media", screenKey: "media.playlist-editor", objectType: "playlist", guideId: "GDE-0009", relationshipType: "TROUBLESHOOTING" },
 
   // Screen level.
+  { workspaceKey: "media", screenKey: "media.overview", guideId: "GDE-0003", relationshipType: "PRIMARY" },
+  { workspaceKey: "media", screenKey: "media.overview", guideId: "GDE-0002", relationshipType: "PRIMARY" },
+  { workspaceKey: "media", screenKey: "media.overview", guideId: "GDE-0013", relationshipType: "PRIMARY" },
+  { workspaceKey: "media", screenKey: "media.overview", guideId: "GDE-0004", relationshipType: "PRIMARY" },
+  { workspaceKey: "media", screenKey: "media.overview", guideId: "GDE-0007", relationshipType: "RELATED" },
+  { workspaceKey: "media", screenKey: "media.overview", guideId: "GDE-0014", relationshipType: "TROUBLESHOOTING" },
+  { workspaceKey: "media", screenKey: "media.overview", guideId: "GDE-0009", relationshipType: "TROUBLESHOOTING" },
+  { workspaceKey: "media", screenKey: "media.overview", guideId: "GDE-0008", relationshipType: "TROUBLESHOOTING" },
+
+  { workspaceKey: "media", screenKey: "media.layout-editor", objectType: "layout", guideId: "GDE-0013", relationshipType: "PRIMARY" },
+  { workspaceKey: "media", screenKey: "media.layouts", guideId: "GDE-0013", relationshipType: "PRIMARY" },
+  { workspaceKey: "media", screenKey: "media.layouts", guideId: "GDE-0004", relationshipType: "RELATED" },
+  { workspaceKey: "media", screenKey: "media.layouts", guideId: "GDE-0008", relationshipType: "TROUBLESHOOTING" },
+
   { workspaceKey: "media", screenKey: "media.playlists", guideId: "GDE-0002", relationshipType: "PRIMARY" },
   { workspaceKey: "media", screenKey: "media.playlists", guideId: "GDE-0005", relationshipType: "RELATED" },
   { workspaceKey: "media", screenKey: "media.playlists", guideId: "GDE-0004", relationshipType: "RELATED" },
@@ -30,6 +44,7 @@ export const CONTEXT_MAPPINGS: ContextMapping[] = [
   { workspaceKey: "media", screenKey: "media.now-next", guideId: "GDE-0009", relationshipType: "TROUBLESHOOTING" },
 
   { workspaceKey: "media", screenKey: "media.channels", guideId: "GDE-0006", relationshipType: "PRIMARY" },
+  { workspaceKey: "media", screenKey: "media.channels", guideId: "GDE-0014", relationshipType: "TROUBLESHOOTING" },
   { workspaceKey: "media", screenKey: "media.channels", guideId: "GDE-0009", relationshipType: "TROUBLESHOOTING" },
   { workspaceKey: "media", screenKey: "media.channel-groups", guideId: "GDE-0011", relationshipType: "PRIMARY" },
 
@@ -55,7 +70,11 @@ export const GUIDE_RELATIONSHIPS: GuideRelationship[] = [
   { sourceGuideId: "GDE-0004", targetGuideId: "GDE-0007", relationshipType: "RELATED" },
   { sourceGuideId: "GDE-0004", targetGuideId: "GDE-0011", relationshipType: "RELATED" },
   { sourceGuideId: "GDE-0004", targetGuideId: "GDE-0008", relationshipType: "TROUBLESHOOTING" },
+  { sourceGuideId: "GDE-0006", targetGuideId: "GDE-0014", relationshipType: "TROUBLESHOOTING" },
   { sourceGuideId: "GDE-0006", targetGuideId: "GDE-0009", relationshipType: "TROUBLESHOOTING" },
+  { sourceGuideId: "GDE-0013", targetGuideId: "GDE-0004", relationshipType: "RELATED" },
+  { sourceGuideId: "GDE-0013", targetGuideId: "GDE-0008", relationshipType: "TROUBLESHOOTING" },
+  { sourceGuideId: "GDE-0014", targetGuideId: "GDE-0006", relationshipType: "RELATED" },
   { sourceGuideId: "GDE-0007", targetGuideId: "GDE-0006", relationshipType: "RELATED" },
   { sourceGuideId: "GDE-0007", targetGuideId: "GDE-0009", relationshipType: "TROUBLESHOOTING" },
   { sourceGuideId: "GDE-0008", targetGuideId: "GDE-0004", relationshipType: "RELATED" },

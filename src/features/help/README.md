@@ -11,7 +11,7 @@ settings. It reads no business data and writes nothing (D-G7-03).
 | HLP-001 Home | `/help` → `HelpHomePage` | Search, Browse by Workspace, Browse by Content Type, Recommended |
 | HLP-002 Search Results | `/help/search?q=` → `HelpSearchPage` | Active-locale PUBLISHED only; empty `q` shows Recommended |
 | HLP-003 Article | `/help/guides/[slug]` → `HelpArticlePage` | Public, shareable, no login |
-| HLP-004 Contextual Drawer | `HelpTrigger` in `Topbar` → `HelpDrawer` | Read-only; desktop drawer, mobile full-screen |
+| HLP-004 Contextual Help | `HelpTrigger` in `Topbar` → `HelpDrawer` | Dropdown panel under `?` (FigJam Media Help Dashboard): tabs This page / Guides / Support. This page = About + Common tasks (Primary + Related) + Troubleshooting. Non-modal, read-only; full-screen on phones |
 | HLP-005 Browse | `/help/browse?workspace=&type=` → `HelpBrowsePage` | Filters over one Guide set |
 | HLP-006 No Results | `NoResults`, `NoGuides` | Recovery: new search, browse, support |
 | HLP-007 Loading | `loading.tsx` + `*Skeleton` | |
@@ -58,5 +58,7 @@ route; a direct visitor gets "Go to ThunderOne".
 - Authoring, review and publishing UI, and the audit trail (D-G8-02, D-G8-04, AC-014): the spec
   keeps administration out of end-user Help. Lifecycle fields are modelled; nothing writes them.
 - `USE_CASE_MAPPINGS` is empty: there are no canonical Media Workspace UC IDs in this repo yet.
-- Contact Support shows only when `NEXT_PUBLIC_HELP_SUPPORT_URL` is set.
+- Contact Support shows only when `NEXT_PUBLIC_HELP_SUPPORT_URL` is set. The FigJam Support tab also shows Live Chat,
+  Email, Phone and System Status; none of those channels exist yet, so the panel does not show them.
+- The "Watch quick walkthrough" video on About this page is not built: there is no walkthrough content.
 - Editor routes run without a Topbar (ADR 0077), so the `?` entry is not offered there.

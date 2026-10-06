@@ -101,6 +101,22 @@ const COPY = {
   drawerErrorTitle: { th: "โหลดความช่วยเหลือไม่สำเร็จ", en: "Unable to load help content" },
   drawerErrorText: { th: "หน้าที่คุณทำงานอยู่ไม่ได้รับผลกระทบ", en: "The page you are working on is not affected." },
   close: { th: "ปิด", en: "Close" },
+  tabThisPage: { th: "หน้านี้", en: "This page" },
+  tabGuides: { th: "คู่มือ", en: "Guides" },
+  tabSupport: { th: "ช่วยเหลือ", en: "Support" },
+  searchGuides: { th: "ค้นหาคู่มือ…", en: "Search guides…" },
+  aboutThisPage: { th: "เกี่ยวกับหน้านี้", en: "About this page" },
+  generalAbout: { th: "คู่มือการใช้งาน ThunderOne สำหรับทุกพื้นที่ทำงาน", en: "Guides for using ThunderOne across every workspace." },
+  commonTasks: { th: "งานที่ทำบ่อย", en: "Common tasks" },
+  commonSupportTopics: { th: "หัวข้อที่ถามบ่อย", en: "Common support topics" },
+  usefulLinks: { th: "ลิงก์ที่มีประโยชน์", en: "Useful links" },
+  supportCardTitle: { th: "ติดต่อทีมสนับสนุน", en: "Contact our support team" },
+  supportCardText: { th: "ต้องการความช่วยเหลือเพิ่มเติม? ทีมของเราพร้อมช่วย", en: "Need more help? Our team is here to assist you." },
+  supportNotConfigured: { th: "ยังไม่ได้ตั้งค่าช่องทางติดต่อ ลองดูหัวข้อด้านล่างหรือเปิดศูนย์ช่วยเหลือ", en: "No support channel is set up yet. Try the topics below or open the Help Center." },
+  helpCenterLinkText: { th: "คู่มือการใช้งานทั้งหมด", en: "Every guide, in one place" },
+  backToThisPage: { th: "กลับไปหน้านี้", en: "Back to this page" },
+  backToGuides: { th: "กลับไปคู่มือ", en: "Back to guides" },
+  backToSupport: { th: "กลับไปช่วยเหลือ", en: "Back to support" },
 } satisfies Record<string, Record<Locale, string>>;
 
 export type CopyKey = keyof typeof COPY;
