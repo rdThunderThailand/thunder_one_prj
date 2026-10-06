@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Link from "next/link";
 import { BoxIcon, MonitorIcon } from "@/components/ui/icons";
 import { ContentKindIcon } from "../../publications/components/now-next/ContentKindIcon";
 import { PRIORITY_STYLES } from "../../publications/components/now-next/UpNextTimeline";
 import type { CalendarRow, CalendarSegment } from "../calendar-api";
-import { blockPosition, clockLabel, initialScrollPercent, isNowBlock, nowPercent } from "../calendar-day";
+import { blockPosition, clockLabel, defaultBlock, initialScrollPercent, isNowBlock, nowPercent } from "../calendar-day";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const LANE_PX = 24 * 80;
@@ -15,32 +14,36 @@ const OUTPUT_KIND_LABELS = { screen: "Screen", tv: "TV", kiosk: "Kiosk" } as con
 export const rowKey = (row: CalendarRow) => `${row.row_type}-${row.channel?.id ?? row.device?.id}`;
 export const blockKey = (row: CalendarRow, segment: CalendarSegment) => `${rowKey(row)}|${segment.opens_at}`;
 
-function RowHeader({ row }: { row: CalendarRow }) {
+function RowHeader({ row, selected, onSelect }: { row: CalendarRow; selected: boolean; onSelect: () => void }) {
   const { channel, device } = row;
   const Icon = channel?.output_kind === "kiosk" ? BoxIcon : MonitorIcon;
   const detail = channel
     ? [OUTPUT_KIND_LABELS[channel.output_kind], channel.location_name].filter(Boolean).join(" · ")
     : "Direct Media Device";
-  return (
-    <div className="sticky left-0 z-20 flex w-[200px] shrink-0 items-center gap-2 border-r border-border bg-card px-3 py-2">
+  const className = `sticky left-0 z-20 flex h-[58px] w-[200px] shrink-0 items-center gap-2 border-r border-border px-3 text-left ${selected ? "bg-muted" : "bg-card"}`;
+  const content = (
+    <>
       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
         <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0">
-        {channel ? (
-          <Link
-            href={`/media-workspace/channels?channel=${channel.id}`}
-            className="block truncate text-sm font-semibold text-foreground hover:text-primary"
-          >
-            {channel.name}
-          </Link>
-        ) : (
-          <span className="block truncate text-sm font-semibold text-foreground">{device?.name ?? "Media Device"}</span>
-        )}
+        <span className="block truncate text-sm font-semibold text-foreground">{channel?.name ?? device?.name ?? "Media Device"}</span>
         <p className="truncate text-[11px] text-muted-foreground">{detail}</p>
-        {channel?.expected_resolution && <p className="truncate text-[11px] text-muted-foreground">{channel.expected_resolution}</p>}
       </div>
-    </div>
+    </>
+  );
+  // A lane with no blocks has nothing to show in Quick View, so its header is plain.
+  if (row.segments.length === 0) return <div className={className}>{content}</div>;
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={`Show details for ${channel?.name ?? device?.name ?? "Media Device"}`}
+      onClick={onSelect}
+      className={`${className} outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/30`}
+    >
+      {content}
+    </button>
   );
 }
 
@@ -142,7 +145,14 @@ export function CalendarGrid({
             key={rowKey(row)}
             className="flex border-t border-border first:border-t-0"
           >
-            <RowHeader row={row} />
+            <RowHeader
+              row={row}
+              selected={row.segments.some((segment) => blockKey(row, segment) === selectedKey)}
+              onSelect={() => {
+                const target = defaultBlock(row, now);
+                if (target) onSelect(blockKey(row, target));
+              }}
+            />
             <div
               className="relative h-[58px]"
               style={{ width: LANE_PX }}

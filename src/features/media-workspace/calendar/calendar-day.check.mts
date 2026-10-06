@@ -4,7 +4,7 @@
  *     node src/features/media-workspace/calendar/calendar-day.check.mts
  */
 import assert from "node:assert/strict";
-import { blockPosition, clockLabel, dayRange, formatDuration, programAction, initialScrollPercent, isNowBlock, nextBlock, nowPercent, partOf, todayYmd } from "./calendar-day.ts";
+import { blockPosition, defaultBlock, clockLabel, dayRange, formatDuration, programAction, initialScrollPercent, isNowBlock, nextBlock, nowPercent, partOf, todayYmd } from "./calendar-day.ts";
 import type { CalendarRow, CalendarSegment } from "./calendar-api.ts";
 
 const seg = (opens: string, closes: string, occurrence: CalendarSegment["occurrence"] = null): CalendarSegment => ({
@@ -41,6 +41,13 @@ const soon = seg(at("09:00"), at("10:00"));
 const row: CalendarRow = { row_type: "channel", channel: null, device: null, segments: [later, first, soon] };
 assert.equal(nextBlock(row, first), soon);
 assert.equal(nextBlock(row, later), null);
+
+const airing = seg(at("09:30"), at("10:30"));
+const rowOf = (...segments: CalendarSegment[]): CalendarRow => ({ row_type: "channel", channel: null, device: null, segments });
+assert.equal(defaultBlock(rowOf(first, airing, later), now), airing); // airs now (10:00)
+assert.equal(defaultBlock(rowOf(first, later), now), later); // nothing now: next to start
+assert.equal(defaultBlock(rowOf(first), now), first); // all in the past: the last one
+assert.equal(defaultBlock(rowOf(), now), null);
 
 assert.equal(partOf(seg(at("08:00"), at("09:00"))), null);
 assert.equal(partOf(seg(at("08:00"), at("09:00"), { opens_at: at("08:00"), closes_at: at("09:00") })), null);

@@ -8,31 +8,26 @@ import { contentHref } from "../../publications/now-next-view";
 import type { CalendarPublication, CalendarRow, CalendarSegment } from "../calendar-api";
 import { clockLabel, formatDuration, isNowBlock, nextBlock, partOf, programAction } from "../calendar-day";
 
-const OUTPUT_KIND_LABELS = { screen: "Screen", tv: "TV", kiosk: "Kiosk" } as const;
-
 function ContentLine({ publication }: { publication: CalendarPublication }) {
   const { content } = publication;
   const href = contentHref(content);
   const name = content.name ?? publication.content_name ?? CONTENT_KIND_LABELS[content.kind];
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
       <ContentKindIcon
         kind={content.kind}
-        className="h-4 w-4 shrink-0 text-muted-foreground"
+        className="h-3.5 w-3.5 shrink-0"
       />
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">Content · {CONTENT_KIND_LABELS[content.kind]}</p>
-        {href ? (
-          <Link
-            href={href}
-            className="block truncate text-sm font-medium text-foreground hover:text-primary"
-          >
-            {name}
-          </Link>
-        ) : (
-          <span className="block truncate text-sm font-medium text-foreground">{name}</span>
-        )}
-      </div>
+      {href ? (
+        <Link
+          href={href}
+          className="truncate hover:text-primary"
+        >
+          {name}
+        </Link>
+      ) : (
+        <span className="truncate">{name}</span>
+      )}
     </div>
   );
 }
@@ -43,12 +38,12 @@ function ProgramLine({ publication, returnTo, now }: { publication: CalendarPubl
     <div className="flex min-w-0 items-center gap-3">
       <ProgramCover
         publication={publication}
-        className="h-12 w-20"
+        className="h-10 w-16"
       />
       <div className="min-w-0 flex-1">
         <Link
           href={`/media-workspace/program/${publication.id}`}
-          className="block truncate font-semibold text-foreground hover:text-primary"
+          className="block truncate text-sm font-semibold text-foreground hover:text-primary"
         >
           {publication.name}
         </Link>
@@ -72,9 +67,6 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
   const wider = partOf(segment);
   const next = nextBlock(row, segment);
   const [nextProgram] = next?.publications ?? [];
-  const where = channel
-    ? [channel.name, channel.location_name, OUTPUT_KIND_LABELS[channel.output_kind], channel.expected_resolution].filter(Boolean).join(" · ")
-    : `${row.device?.name ?? "Media Device"} · Direct Media Device`;
   return (
     <section
       aria-label="Program details"
@@ -87,9 +79,21 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
           <span className="text-sm font-semibold tabular-nums text-foreground">
             {clockLabel(segment.opens_at, date)} – {clockLabel(segment.closes_at, date)}
           </span>
-          <span className="text-xs text-muted-foreground">({formatDuration(Date.parse(segment.closes_at) - Date.parse(segment.opens_at))})</span>
+          <span className="text-xs text-muted-foreground">{formatDuration(Date.parse(segment.closes_at) - Date.parse(segment.opens_at))}</span>
         </div>
-        <p className="text-xs text-muted-foreground">{where}</p>
+        <p className="text-xs text-muted-foreground">
+          {channel ? (
+            <Link
+              href={`/media-workspace/channels?channel=${channel.id}`}
+              className="hover:text-primary"
+            >
+              {channel.name}
+            </Link>
+          ) : (
+            (row.device?.name ?? "Media Device")
+          )}
+          {channel?.location_name && ` · ${channel.location_name}`}
+        </p>
         {segment.publications.map((publication) => (
           <ProgramLine
             key={publication.id}
@@ -105,7 +109,8 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
         )}
         {segment.suppressed.length > 0 && (
           <p className="text-xs text-muted-foreground">
-            Also scheduled (hidden): {segment.suppressed.map((item) => `${item.name} · ${item.priority}`).join(", ")}
+            Hidden: {segment.suppressed.slice(0, 2).map((item) => item.name).join(", ")}
+            {segment.suppressed.length > 2 && ` +${segment.suppressed.length - 2} more`}
           </p>
         )}
       </div>
@@ -122,7 +127,7 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
                 {nextProgram.name}
               </Link>
               <p className="text-xs text-muted-foreground">
-                Starts {clockLabel(next.opens_at, date)} ({formatDuration(Date.parse(next.closes_at) - Date.parse(next.opens_at))})
+                Starts {clockLabel(next.opens_at, date)}
               </p>
             </div>
           </div>

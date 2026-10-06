@@ -42,6 +42,12 @@ export function nextBlock(row: CalendarRow, segment: CalendarSegment): CalendarS
   );
 }
 
+/** The block a row opens in Quick View: the one airing now, else the next to start, else the last of the day. */
+export function defaultBlock(row: CalendarRow, now: number): CalendarSegment | null {
+  const sorted = [...row.segments].sort((a, b) => Date.parse(a.opens_at) - Date.parse(b.opens_at));
+  return sorted.find((segment) => isNowBlock(segment, now)) ?? sorted.find((segment) => Date.parse(segment.opens_at) > now) ?? sorted.at(-1) ?? null;
+}
+
 /** The wider occurrence this block is cut from (by a higher tier or the day edge), or null. */
 export function partOf(segment: CalendarSegment): { opens_at: string; closes_at: string | null } | null {
   const { occurrence } = segment;
