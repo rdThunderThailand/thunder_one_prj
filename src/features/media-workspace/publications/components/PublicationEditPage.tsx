@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ArrowLeftIcon, MoreIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon } from "@/components/ui/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,13 +15,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/lovable/dropdown-menu";
 import { ErrorState } from "@/components/ui/lovable/core";
 import {
   cancelPublication,
@@ -32,9 +24,11 @@ import {
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useProgramEdit } from "../hooks/useProgramEdit";
 import { publicationDrift } from "../publication-drift";
+import { safeReturnTo } from "../return-to";
 import { CONFIRM_COPY } from "./edit/confirm-copy";
 import { ProgramBreadcrumb } from "./edit/ProgramBreadcrumb";
 import { ProgramDetailsCard } from "./edit/ProgramDetailsCard";
+import { ProgramEditMenu } from "./edit/ProgramEditMenu";
 import { ProgramEditRail } from "./edit/ProgramEditRail";
 import { ProgramEditSkeleton } from "./edit/ProgramEditSkeleton";
 import { ProgramPreviewButton } from "./edit/ProgramPreviewButton";
@@ -48,6 +42,9 @@ const PROGRAM_HREF = "/media-workspace/program";
 
 export function PublicationEditPage({ id }: { id: string }) {
   const router = useRouter();
+  // Set by Now & Next / Calendar so Go Back, Discard, End and a successful publish land where the operator started.
+  const returnTo = safeReturnTo(useSearchParams().get("returnTo"));
+  const exitHref = returnTo ?? PROGRAM_HREF;
   const edit = useProgramEdit(id);
   const { detail, state, displayStatus, isDirty, busy, failure } = edit;
   const [pending, setPending] = useState<PendingAction>(null);
@@ -87,15 +84,15 @@ export function PublicationEditPage({ id }: { id: string }) {
 
   const goBack = () => {
     setLeaveTo(null);
-    return isDirty ? setPending("discard") : router.push(PROGRAM_HREF);
+    return isDirty ? setPending("discard") : router.push(exitHref);
   };
 
   const confirmPending = () => {
     const action = pending;
     setPending(null);
-    if (action === "discard") return router.push(leaveTo ?? PROGRAM_HREF);
+    if (action === "discard") return router.push(leaveTo ?? exitHref);
     const run = action === "end" ? cancelPublication(id) : deletePublication(id);
-    run.then(() => router.push(PROGRAM_HREF)).catch(() => setActionError("Action failed. Try again."));
+    run.then(() => router.push(action === "delete" ? PROGRAM_HREF : exitHref)).catch(() => setActionError("Action failed. Try again."));
   };
 
   const duplicate = () =>
@@ -107,7 +104,7 @@ export function PublicationEditPage({ id }: { id: string }) {
     (isDraft ? edit.saveDraft(true) : edit.publishChanges()).then((failed) => {
       // Only a `[publish]` failure is explained inside the modal; every other outcome closes it.
       if (failed?.part !== "publish") setPublishOpen(false);
-      if (isDraft && failed === null) router.push(`${PROGRAM_HREF}/${id}`);
+      if (failed === null && (returnTo || isDraft)) router.push(returnTo ?? `${PROGRAM_HREF}/${id}`);
     });
 
   return (
@@ -161,45 +158,14 @@ export function PublicationEditPage({ id }: { id: string }) {
               Publish changes
             </Button>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                aria-label="More actions"
-              >
-                <MoreIcon className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {!isDraft && <DropdownMenuItem onSelect={duplicate}>Duplicate Program</DropdownMenuItem>}
-              {!isDraft && (
-                <DropdownMenuItem asChild>
-                  <Link href={`${PROGRAM_HREF}/${id}`}>View Published Version</Link>
-                </DropdownMenuItem>
-              )}
-              {isDraft && (
-                <DropdownMenuItem
-                  className="text-danger focus:text-danger"
-                  onSelect={() => setPending("delete")}
-                >
-                  Delete Program
-                </DropdownMenuItem>
-              )}
-              {!isDraft && !isEnded && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-danger focus:text-danger"
-                    onSelect={() => setPending("end")}
-                  >
-                    End program
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ProgramEditMenu
+            isDraft={isDraft}
+            isEnded={isEnded}
+            detailHref={`${PROGRAM_HREF}/${id}`}
+            onDuplicate={duplicate}
+            onDelete={() => setPending("delete")}
+            onEnd={() => setPending("end")}
+          />
         </div>
       </header>
 
