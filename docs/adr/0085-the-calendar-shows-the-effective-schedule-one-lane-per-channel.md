@@ -120,6 +120,10 @@ Facts established before deciding:
 
 ## Consequences
 
+- Rev.2: Program covers come from one helper, `media_core.publication_cover` (Core `20261006130000`), used by
+  `now_next_candidates` and `media_publications_list`. A Layout Program's cover is its first zone's (by
+  position) Playlist cover, a stand-in until a rendered Layout preview exists (issue #230).
+
 - Four implementations of the resolution rules (`media_job_poll`, `media_now_next_get`,
   `media_publication_airtime_explain`, `effective_segments`); the parity check guards the pair the operator
   sees side by side.

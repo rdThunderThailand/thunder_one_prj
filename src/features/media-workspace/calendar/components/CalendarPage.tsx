@@ -113,13 +113,13 @@ export function CalendarPage() {
       {notice && (
         <p
           role="status"
-          className="rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning"
+          className="rounded-lg bg-warning-soft px-4 py-3 text-xs text-warning"
         >
           {notice}
         </p>
       )}
       {date < todayYmd() && (
-        <p className="rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
+        <p className="rounded-lg bg-muted px-4 py-3 text-xs text-muted-foreground">
           Past days show the current schedule, not what actually played — see Playback Proof.
         </p>
       )}
@@ -133,7 +133,7 @@ export function CalendarPage() {
           </div>
         )}
         {data && rows.length === 0 && (
-          <p className="px-5 py-12 text-center text-sm text-muted-foreground">No Programs are scheduled on this day.</p>
+          <p className="px-5 py-12 text-center text-xs text-muted-foreground">No Programs are scheduled on this day.</p>
         )}
         {data && rows.length > 0 && (
           <CalendarGrid

@@ -25,8 +25,8 @@ function Panel({ title, subtitle, action, children }: { title: string; subtitle?
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-panel">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
-          <h2 className="font-semibold text-foreground">{title}</h2>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          <h2 className="text-sm font-bold text-foreground">{title}</h2>
+          {subtitle && <p className="text-[9px] text-muted-foreground">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -95,7 +95,7 @@ export function NowNextPage() {
         titleInTopbar
         actions={
           <>
-            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
               <span className="h-2 w-2 animate-pulse rounded-full bg-success" />
               Auto-refresh · as of {data ? formatClock(data.as_of, data.display_timezone) : "—"}
             </span>
@@ -112,7 +112,7 @@ export function NowNextPage() {
       {notice && (
         <p
           role="status"
-          className="rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning"
+          className="rounded-lg bg-warning-soft px-4 py-3 text-xs text-warning"
         >
           {notice}
         </p>
@@ -125,14 +125,14 @@ export function NowNextPage() {
           <div className="flex items-center gap-4">
             <Link
               href={`/media-workspace/calendar${calendarQuery ? `?${calendarQuery}` : ""}`}
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
             >
               Open Calendar
               <ArrowRightIcon className="h-3.5 w-3.5" />
             </Link>
             <Link
               href="/media-workspace/channels"
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
             >
               View all channels
               <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -149,7 +149,7 @@ export function NowNextPage() {
           </div>
         )}
         {data && rows.length === 0 && (
-          <p className="px-5 py-12 text-center text-sm text-muted-foreground">Nothing is playing or scheduled in the next 3 hours.</p>
+          <p className="px-5 py-12 text-center text-xs text-muted-foreground">Nothing is playing or scheduled in the next 3 hours.</p>
         )}
         {data && rows.length > 0 && (
           <NowPlayingTable

@@ -29,14 +29,14 @@ function ChannelCell({ row }: { row: NowNextRow }) {
         {channel ? (
           <Link
             href={`/media-workspace/channels?channel=${channel.id}`}
-            className="block truncate font-semibold text-foreground hover:text-primary"
+            className="block truncate text-[11px] font-semibold text-foreground hover:text-primary"
           >
             {channel.name}
           </Link>
         ) : (
-          <span className="block truncate font-semibold text-foreground">{device?.name ?? "Media Device"}</span>
+          <span className="block truncate text-[11px] font-semibold text-foreground">{device?.name ?? "Media Device"}</span>
         )}
-        <p className="truncate text-xs text-muted-foreground">{detail}</p>
+        <p className="truncate text-[9px] text-muted-foreground">{detail}</p>
       </div>
     </div>
   );
@@ -52,12 +52,12 @@ function ProgramCell({ row }: { row: NowNextRow }) {
       <div className="min-w-0">
         <Link
           href={`/media-workspace/program/${first.id}`}
-          className="block truncate font-medium text-foreground hover:text-primary"
+          className="block truncate text-[11px] font-semibold text-foreground hover:text-primary"
         >
           {first.name}
         </Link>
         {publications.length > 1 && (
-          <p className="text-xs text-muted-foreground">+{publications.length - 1} in loop</p>
+          <p className="text-[9px] text-muted-foreground">+{publications.length - 1} in loop</p>
         )}
       </div>
     </div>
@@ -74,16 +74,16 @@ function ContentCell({ row }: { row: NowNextRow }) {
     <div className="flex min-w-0 items-center gap-2">
       <ContentKindIcon kind={content.kind} className="h-4 w-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{CONTENT_KIND_LABELS[content.kind]}</p>
+        <p className="text-[9px] text-muted-foreground">{CONTENT_KIND_LABELS[content.kind]}</p>
         {href ? (
           <Link
             href={href}
-            className="block truncate font-medium text-foreground hover:text-primary"
+            className="block truncate text-[11px] font-semibold text-foreground hover:text-primary"
           >
             {name}
           </Link>
         ) : (
-          <span className="block truncate font-medium text-foreground">{name}</span>
+          <span className="block truncate text-[11px] font-semibold text-foreground">{name}</span>
         )}
       </div>
     </div>
@@ -95,7 +95,7 @@ function RemainingCell({ row, asOf }: { row: NowNextRow; asOf: string }) {
   const percent = elapsedPercent(row.current, asOf);
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="font-medium tabular-nums text-foreground">{formatRemaining(row.current.remaining_seconds)}</span>
+      <span className="text-[11px] font-semibold tabular-nums text-foreground">{formatRemaining(row.current.remaining_seconds)}</span>
       {percent !== null && (
         <Progress
           value={percent}
@@ -111,7 +111,7 @@ function NextCell({ row, timeZone }: { row: NowNextRow; timeZone: string }) {
   if (!next) return EMPTY;
   if (next.kind === "continues") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+      <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
         <RepeatIcon className="h-3.5 w-3.5" />
         Continues
       </span>
@@ -124,11 +124,11 @@ function NextCell({ row, timeZone }: { row: NowNextRow; timeZone: string }) {
       <div className="min-w-0">
         <Link
           href={`/media-workspace/program/${first.id}`}
-          className="block truncate font-medium text-foreground hover:text-primary"
+          className="block truncate text-[11px] font-semibold text-foreground hover:text-primary"
         >
           {first.name}
         </Link>
-        <p className="text-xs text-muted-foreground">Starts {formatClock(next.occurrence.opens_at, timeZone)}</p>
+        <p className="text-[9px] text-muted-foreground">Starts {formatClock(next.occurrence.opens_at, timeZone)}</p>
       </div>
     </div>
   );
@@ -171,13 +171,13 @@ const HEADERS = ["Channel", "Status", "Program", "Content", "Time remaining", "N
 export function NowPlayingTable({ rows, asOf, timeZone, returnTo }: { rows: NowNextRow[]; asOf: string; timeZone: string; returnTo: string }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[1000px] text-left text-sm">
+      <table className="w-full min-w-[1000px] text-left text-[10px]">
         <thead>
-          <tr className="text-xs text-muted-foreground">
+          <tr className="text-[9px] text-muted-foreground">
             {HEADERS.map((header, index) => (
               <th
                 key={index}
-                className="px-4 py-3 font-medium"
+                className="px-4 py-3 font-bold"
               >
                 {header}
               </th>
@@ -196,7 +196,7 @@ export function NowPlayingTable({ rows, asOf, timeZone, returnTo }: { rows: NowN
                 <td className="px-4 py-3">
                   <Badge variant={status.tone}>{status.label}</Badge>
                   {row.channel?.expected_resolution && (
-                    <p className="mt-1 text-xs text-muted-foreground">{row.channel.expected_resolution}</p>
+                    <p className="mt-1 text-[9px] text-muted-foreground">{row.channel.expected_resolution}</p>
                   )}
                 </td>
                 <td className="px-4 py-3"><ProgramCell row={row} /></td>

@@ -35,7 +35,7 @@ export function OverriddenLanes({ lanes, date, laneWidth, nowLeft }: { lanes: Ov
     >
       <div className="sticky left-0 z-20 flex h-8 w-[200px] shrink-0 items-center border-r border-border bg-card pl-12 pr-3">
         <span
-          className="truncate text-[11px] text-muted-foreground"
+          className="truncate text-[10px] text-muted-foreground"
           title={`${lane.name} · ${lane.priority}`}
         >
           {lane.name}
@@ -55,7 +55,7 @@ export function OverriddenLanes({ lanes, date, laneWidth, nowLeft }: { lanes: Ov
               href={`/media-workspace/program/${lane.id}`}
               title={`${lane.name} · ${range} · Overridden by ${span.winners.join(", ")}`}
               aria-label={`${lane.name}, ${range}, overridden by ${span.winners.join(", ")}`}
-              className="absolute top-1 flex h-6 items-center overflow-clip rounded border border-dashed border-border px-1.5 text-[10px] text-muted-foreground outline-none hover:border-foreground/40 focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="absolute top-1 flex h-6 items-center overflow-clip rounded border border-dashed border-border px-1.5 text-[9px] text-muted-foreground outline-none hover:border-foreground/40 focus-visible:ring-2 focus-visible:ring-ring/30"
               style={{ left: `${position.left}%`, width: `${position.width}%`, backgroundImage: HATCH }}
             >
               <span className="sticky left-[208px] truncate">Overridden · {range}</span>

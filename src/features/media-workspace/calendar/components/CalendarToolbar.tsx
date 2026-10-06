@@ -53,7 +53,7 @@ function DatePopover({ date, onChange }: { date: string; onChange: (ymd: string)
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
-          <p className="text-sm font-semibold text-foreground">{MONTH.format(new Date(`${month}T00:00:00Z`))}</p>
+          <p className="text-xs font-bold text-foreground">{MONTH.format(new Date(`${month}T00:00:00Z`))}</p>
           <button
             type="button"
             aria-label="Next month"
@@ -67,7 +67,7 @@ function DatePopover({ date, onChange }: { date: string; onChange: (ymd: string)
           {HEADERS.map((day) => (
             <span
               key={day}
-              className="py-1 text-xs text-muted-foreground"
+              className="py-1 text-[10px] text-muted-foreground"
             >
               {day}
             </span>
@@ -93,7 +93,7 @@ function DatePopover({ date, onChange }: { date: string; onChange: (ymd: string)
             ),
           )}
         </div>
-        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+        <label className="flex flex-col gap-1 text-[10px] font-semibold text-muted-foreground">
           Go to date
           <Input
             type="date"
