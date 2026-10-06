@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BoxIcon, ChevronDownIcon, ChevronRightIcon, MonitorIcon } from "@/components/ui/icons";
-import { ContentKindIcon } from "../../publications/components/now-next/ContentKindIcon";
+import { ProgramCover } from "../../publications/components/now-next/ProgramCover";
 import { PRIORITY_STYLES } from "../../publications/components/now-next/UpNextTimeline";
 import type { CalendarRow, CalendarSegment } from "../calendar-api";
 import { blockPosition, clockLabel, defaultBlock, initialScrollPercent, isNowBlock, nowPercent, overriddenLanes } from "../calendar-day";
@@ -97,20 +97,23 @@ function Block({ segment, date, now, selected, onSelect }: { segment: CalendarSe
       style={{ left: `${position.left}%`, width: `${position.width}%` }}
     >
       {/* Sticky so the label stays in view when a long block starts left of the scrolled grid. */}
-      <div className="sticky left-[208px] w-max max-w-full">
-        <div className="flex items-center gap-1 text-xs font-semibold">
-          <ContentKindIcon
-            kind={first.content.kind}
-            className="h-3 w-3 shrink-0"
-          />
-          <span className="truncate">{name}</span>
-          {isNowBlock(segment, now) && (
-            <span className="ml-auto shrink-0 rounded bg-primary px-1 text-[9px] font-semibold text-primary-foreground">Now</span>
-          )}
-        </div>
-        <div className="truncate text-[10px] opacity-75">
-          {range}
-          {hidden > 0 && ` · +${hidden} overridden`}
+      <div className="sticky left-[208px] flex w-max max-w-full items-center gap-2">
+        {/* Frame: the Program's cover leads the block; ProgramCover falls back to the content-kind icon. */}
+        <ProgramCover
+          publication={first}
+          className="h-8 w-8"
+        />
+        <div className="min-w-0">
+          <div className="flex items-center gap-1 text-xs font-semibold">
+            <span className="truncate">{name}</span>
+            {isNowBlock(segment, now) && (
+              <span className="shrink-0 rounded bg-primary px-1 text-[9px] font-semibold text-primary-foreground">Now</span>
+            )}
+          </div>
+          <div className="truncate text-[10px] opacity-75">
+            {range}
+            {hidden > 0 && ` · +${hidden} overridden`}
+          </div>
         </div>
       </div>
     </button>
