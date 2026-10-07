@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -26,6 +26,7 @@ import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
 import { classifyApiError, isConflict } from "@/lib/api/api-error";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
+import { DraftSaveError, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
 
 /** The two backend rejections that mean "the persisted draft id is no longer usable":
  * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
@@ -49,6 +50,7 @@ export function usePublishDraft() {
   const [assetsError, setAssetsError] = useState<string | null>(null);
   const [loadingRefs, setLoadingRefs] = useState(true);
   const [channelsError, setChannelsError] = useState<string | null>(null);
+  const channelsRequest = useRef<Promise<{ channels: ChannelListItem[]; failed: boolean }> | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -110,17 +112,20 @@ export function usePublishDraft() {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([
-      fetchChannels().catch((err) => {
+    // #228: saves await this same read, including its failure result.
+    const channelRead = fetchChannels().then((channels) => ({ channels, failed: false })).catch(() => {
         if (isMounted) {
-          setChannelsError(err instanceof Error ? err.message : "Failed to load channels.");
+          setChannelsError("โหลด Channels ไม่สำเร็จ กรุณาโหลดหน้าใหม่ก่อนบันทึก");
         }
-        return [];
-      }),
+        return { channels: [], failed: true };
+      });
+    channelsRequest.current = channelRead;
+    Promise.all([
+      channelRead,
       fetchTags().catch(() => []),
     ]).then(([fetchedChannels, fetchedTags]) => {
       if (isMounted) {
-        setChannels(fetchedChannels);
+        setChannels(fetchedChannels.channels);
         setTags(fetchedTags);
         setLoadingRefs(false);
       }
@@ -201,15 +206,16 @@ export function usePublishDraft() {
   ]);
 
   /**
-   * Persists basic info → content → schedule and returns the publication id.
+   * Persists basic info → content → schedule with the fields captured for this request.
    * `forPublish` forces the targets and the schedule to be sent regardless of
    * which step the user is on: activation is refused without either. On a plain
-   * draft save, targets only go from step 3 onwards — the backend treats a
+   * draft save, targets go once Program has been reached — the backend treats a
    * received `targets` as authoritative, so sending an empty array earlier would
    * wipe targets that were already saved.
    */
-  const persistDraft = async (forPublish: boolean): Promise<string | null> => {
+  const persistDraft = async (forPublish: boolean): Promise<DraftPersistResult> => {
     const state = usePublicationDraftStore.getState();
+    const policy = draftSavePolicy(state, forPublish);
     // A composition draft may be saved before step 2 picks a Composition — the backend allows it
     // (media_publication_upsert, ADR 0049 §12, revised 2026-08-26) exactly like an unpicked
     // Playlist. Publishing still requires it; that guard stays.
@@ -220,12 +226,14 @@ export function usePublishDraft() {
     // the name is entered. `media_publication_upsert` refuses an empty name, so a draft with no
     // name yet has nothing to persist server-side — the selection lives in the localStorage
     // draft until step 2. Mirrors the same guard in `saveDraft`.
-    if (!forPublish && !state.basicInfo.name.trim()) {
-      return state.publicationId;
+    if (!policy.shouldPersist) return { kind: "skipped" };
+    const channelResult = policy.sendTargets ? await channelsRequest.current : null;
+    if (policy.sendTargets && (!channelResult || channelResult.failed)) {
+      throw new DraftSaveError("โหลด Channels ไม่สำเร็จ กรุณาโหลดหน้าใหม่ก่อนบันทึก");
     }
     const targets =
-      forPublish || state.step >= 3
-        ? targetsFromSelection(state.channelIds, state.groupIds, state.groupNamesById, channels)
+      policy.sendTargets
+        ? targetsFromSelection(state.channelIds, state.groupIds, state.groupNamesById, channelResult?.channels ?? [])
         : undefined;
 
     const basicForm = basicInfoToForm(state.basicInfo, state.playlistId, state.compositionId);
@@ -267,7 +275,7 @@ export function usePublishDraft() {
       await savePublicationContent(newId, contentItems);
     }
 
-    const savedSchedule = forPublish || (state.step >= 4 && isDraftValid(state.schedule));
+    const savedSchedule = policy.sendSchedule;
     if (savedSchedule) {
       await savePublicationSchedule(newId, draftToSchedule(state.schedule));
     }
@@ -282,7 +290,7 @@ export function usePublishDraft() {
       }
     }
 
-    return newId;
+    return { kind: "saved", publicationId: newId, draft: state, isComplete: policy.isComplete };
   };
 
   const saveDraft = async (): Promise<string | null> => {
@@ -300,11 +308,13 @@ export function usePublishDraft() {
     setSaving(true);
     setError(null);
     try {
-      const resId = await persistDraft(false);
-      usePublicationDraftStore.getState().markSaved();
+      const result = await persistDraft(false);
+      if (result.kind === "saved") router.replace(`/media-workspace/program/create?id=${encodeURIComponent(result.publicationId)}`);
+      const complete = requireCompleteDraftSave(result);
+      usePublicationDraftStore.getState().markSaved(complete.draft);
       usePublicationDraftStore.getState().setExplicitlySaved(true);
       toast.success("บันทึกร่างแล้ว");
-      return resId;
+      return complete.publicationId;
     } catch (err) {
       const classified = classifyApiError(err, "Failed to save draft.");
       // The revision-conflict banner already shows this — avoid saying it twice.
@@ -323,8 +333,8 @@ export function usePublishDraft() {
     setError(null);
     const state = usePublicationDraftStore.getState();
     try {
-      const newId = await persistDraft(true);
-      if (!newId) return;
+      const result = requireCompleteDraftSave(await persistDraft(true));
+      const newId = result.publicationId;
       await activatePublication(newId);
       setPublishedId(newId);
       state.cancelDraft();

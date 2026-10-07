@@ -79,7 +79,7 @@ interface PublicationDraftStore extends DraftFields {
    * `null` until the first save/load — omitting `expected_revision` on that
    * first write is what `media_publication_upsert` treats as "no check". */
   revision: number | null;
-  markSaved: () => void;
+  markSaved: (draft?: DraftFields) => void;
   setExplicitlySaved: (v: boolean) => void;
   setRevision: (revision: number | null) => void;
   setPublicationId: (id: string | null) => void;
@@ -120,7 +120,8 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       savedSnapshot: serializeDraftFields(getDefaultDraft()),
       explicitlySaved: false,
       revision: null,
-      markSaved: () => set((s) => ({ savedSnapshot: serializeDraftFields(s) })),
+      // #228: snapshot the request, not edits made while it was in flight.
+      markSaved: (draft) => set((s) => ({ savedSnapshot: serializeDraftFields(draft ?? s) })),
       setExplicitlySaved: (explicitlySaved) => set({ explicitlySaved }),
       setRevision: (revision) => set({ revision }),
       setPublicationId: (publicationId) => set({ publicationId }),
@@ -256,7 +257,9 @@ export function useHasHydratedDraft() {
 }
 
 export function useIsDraftDirty(): boolean {
-  return usePublicationDraftStore(
-    (s) => serializeDraftFields(s) !== s.savedSnapshot
-  );
+  return usePublicationDraftStore(isDraftDirty);
+}
+
+export function isDraftDirty(state: DraftFields & { savedSnapshot: string }): boolean {
+  return serializeDraftFields(state) !== state.savedSnapshot;
 }
