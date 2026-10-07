@@ -31,6 +31,10 @@ assert.equal(
   describeSaveError("Invalid input: cannot change the layout of an active composition"),
   "เปลี่ยน Layout ไม่ได้ขณะ Composition กำลัง Active",
 );
+assert.equal(
+  describeSaveError("Invalid input: zone is used by composition(s) Lobby, Menu"),
+  "ลบ Zone ไม่ได้ — Template นี้ยังถูกใช้ใน: Lobby, Menu",
+);
 assert.equal(describeSaveError("Invalid input: something else"), "บันทึก Composition ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
 
 // Unbound-Zone names come straight from the RPC's own message.

@@ -49,8 +49,11 @@ export const MAX_DATES = 366;
 const sameSet = (a: readonly number[], b: readonly number[]) =>
   a.length === b.length && b.every((v) => a.includes(v));
 
+/** Right now in `timezone`: `date` "YYYY-MM-DD", `time` "HH:MM". */
+export const nowIn = (timezone: string) => utcToZonedParts(new Date().toISOString(), timezone);
+
 /** "YYYY-MM-DD" of right now in `timezone`. */
-export const todayIn = (timezone: string) => utcToZonedParts(new Date().toISOString(), timezone).date;
+export const todayIn = (timezone: string) => nowIn(timezone).date;
 
 /** A new Program: Every day, from today, all day, no end (ADR 0082 §5). Airs from activation. */
 export function defaultScheduleDraft(today: string = todayIn(DEFAULT_TIMEZONE), timezone: string = DEFAULT_TIMEZONE): ScheduleDraft {
@@ -148,21 +151,25 @@ export function scheduleToDraft(schedule: PublicationSchedule | null, today: str
 
 export type DraftErrors = Partial<Record<"days" | "dates" | "monthDays" | "startDate" | "endDate" | "time", string>>;
 
-function validateContinuous(draft: ScheduleDraft, today: string): DraftErrors {
+function validateContinuous(draft: ScheduleDraft, today: string, nowTime: string): DraftErrors {
   const errors: DraftErrors = {};
   if (!draft.startDate) errors.startDate = "Pick a start date.";
   if (!draft.endDate) return errors;
   const startKey = `${draft.startDate} ${draft.startTime}`;
   const endKey = `${draft.endDate} ${draft.endTime}`;
   if (endKey <= startKey) errors.endDate = "End must be after the start.";
-  else if (draft.endDate < today) errors.endDate = "End date is in the past.";
+  else if (endKey <= `${today} ${nowTime}`) errors.endDate = "End is in the past.";
   return errors;
 }
 
-/** `today` ("YYYY-MM-DD" in the draft's zone) rejects a schedule that could never air again. */
-export function validateDraft(draft: ScheduleDraft, today: string): DraftErrors {
+/**
+ * `today` ("YYYY-MM-DD" in the draft's zone) rejects a schedule that could never air again;
+ * `nowTime` ("HH:MM", same zone) also catches an end earlier today (#222). A start in the past
+ * stays valid — a recurring or Live Program legitimately has one.
+ */
+export function validateDraft(draft: ScheduleDraft, today: string, nowTime = "00:00"): DraftErrors {
   const errors: DraftErrors = {};
-  if (draft.mode === "continuous") return validateContinuous(draft, today);
+  if (draft.mode === "continuous") return validateContinuous(draft, today, nowTime);
   if (!draft.allDay && !(draft.dailyStart < draft.dailyEnd)) errors.time = "End time must be after start time.";
   if (draft.mode === "weekly" || draft.mode === "monthly") {
     if (draft.mode === "weekly" && draft.days.length === 0) errors.days = "Pick at least one day.";
@@ -178,10 +185,19 @@ export function validateDraft(draft: ScheduleDraft, today: string): DraftErrors 
   }
   if (draft.mode === "one-time" && !draft.startDate) errors.startDate = "Pick a date.";
   else if (draft.mode === "one-time" && draft.startDate < today) errors.startDate = "Pick today or a later date.";
+  else if (draft.mode === "one-time" && draft.startDate === today && !draft.allDay && draft.dailyEnd <= nowTime) {
+    errors.time = "This time has already passed today.";
+  }
   return errors;
 }
 
-export const isDraftValid = (draft: ScheduleDraft) => Object.keys(validateDraft(draft, todayIn(draft.timezone))).length === 0;
+/** `validateDraft` against the current moment in the draft's own zone. */
+export function validateDraftNow(draft: ScheduleDraft): DraftErrors {
+  const now = nowIn(draft.timezone);
+  return validateDraft(draft, now.date, now.time);
+}
+
+export const isDraftValid = (draft: ScheduleDraft) => Object.keys(validateDraftNow(draft)).length === 0;
 
 function dailyWindow(draft: ScheduleDraft): { start: string; end: string } {
   return draft.allDay ? { start: "00:00", end: "23:59" } : { start: draft.dailyStart, end: draft.dailyEnd };

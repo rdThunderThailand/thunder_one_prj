@@ -25,6 +25,7 @@ import { CompositionContentBrowser } from "./CompositionContentBrowser";
 import { CompositionEditorHeader } from "./CompositionEditorHeader";
 import { CompositionEditorToolbar } from "./CompositionEditorToolbar";
 import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
+import { CompositionEditorSkeleton } from "./CompositionEditorSkeleton";
 import { LayoutInformationCard } from "./LayoutInformationCard";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
@@ -112,8 +113,10 @@ export function CompositionEditorPage({
   useEffect(() => {
     if (!compositionId) return;
     let alive = true;
+    // #223: geometry is part of the load — without it the editor renders the empty Template Picker state.
     loadCompositionDraft(compositionId)
-      .then((draft) => {
+      .then((draft) => fetchLayout(draft.detail.layout_id).then((loaded) => ({ draft, loaded })))
+      .then(({ draft, loaded }) => {
         if (!alive) return;
         setId(draft.detail.id);
         setName(draft.detail.name);
@@ -126,9 +129,7 @@ export function CompositionEditorPage({
         setSavedAt(draft.detail.updated_at ? new Date(draft.detail.updated_at) : null);
         setInitialSnapshot(draft.snapshot);
         data.absorbPlaylistDetails(draft.slices);
-        void fetchLayout(draft.detail.layout_id)
-          .then((loaded) => alive && data.setLayouts((current) => [...current.filter((candidate) => candidate.id !== loaded.id), loaded]))
-          .catch(() => undefined);
+        data.setLayouts((current) => [...current.filter((candidate) => candidate.id !== loaded.id), loaded]);
       })
       .catch((err) => alive && setLoadError(classifyApiError(err, "โหลด Layout ไม่สำเร็จ")))
       .finally(() => alive && setLoading(false));
@@ -143,7 +144,7 @@ export function CompositionEditorPage({
     }
     setBindings((prev) => upsertBinding(prev, next));
   };
-  const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, canUndo, canRedo } =
+  const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, reset: resetHistory, canUndo, canRedo } =
     useZoneEditGuard(layout?.zones ?? [], sharedTemplateUsage, setEditedZones);
   const applyPlaybackToAllZones = (playback: ZonePlayback) =>
     setBindings((prev) => applyPlaybackToAll(view.layoutZoneIds, prev, playback));
@@ -151,6 +152,7 @@ export function CompositionEditorPage({
     if (saved) data.setLayouts((current) => [...current.filter((c) => c.id !== saved.id), saved]);
     if (savedId) setLayoutId(savedId);
     setBlankZones(null); setEditedZones(null); setLayoutSettings(null);
+    resetHistory();
   };
   const { save, run, saving, saveError } = useCompositionSave(
     () => ({
@@ -190,6 +192,7 @@ export function CompositionEditorPage({
       setEditedZones(null);
       setLayoutSettings(null);
       resetApproval();
+      resetHistory();
     }, "สร้าง Layout ส่วนตัวไม่สำเร็จ");
   };
   const saveAsTemplate = (templateName: string) => {
@@ -203,7 +206,7 @@ export function CompositionEditorPage({
       setTemplateSavedName(templateName);
     }, "บันทึกเป็น Template ไม่สำเร็จ");
   };
-  if (loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
+  if (loading) return <CompositionEditorSkeleton />;
   const fatal = loadError ?? data.loadError;
   if (fatal) return (
     <div className="rounded-lg border border-border bg-card p-6">
