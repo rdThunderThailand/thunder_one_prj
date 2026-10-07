@@ -2,7 +2,8 @@
 
 Status: accepted (2026-10-06, grilling session on the FigJam board "Now & Next → Calendar → Program Editor";
 scrutiny round 1 applied). Rev.2 (2026-10-06, before release): overridden Programs can be shown in expandable
-lanes (§1, §2, §10). Fills the "Schedule Preview/Calendar" slot ADR 0057 left open. Companion: ADR 0084.
+lanes (§1, §2, §10). Rev.3 (2026-10-07, after release v0.8.0): "part of" dropped, whole-day blocks read
+"All day", the Now chip is one colour (§9, §11). Fills the "Schedule Preview/Calendar" slot ADR 0057 left open. Companion: ADR 0084.
 Plan: `docs/program/plan-now-next-calendar.md`.
 
 ## Context
@@ -79,9 +80,9 @@ Facts established before deciding:
    applies, a Priority chip, the block's time and duration, Channel · Location · resolution, and
    **Content: kind + name** linked as in ADR 0084 §7. The frame's File / Source / Playlist fields are
    replaced by that one Content line — they need the current item, which nothing reports, and are
-   meaningless for a future block. A merged loop lists each member Program with its own Edit. A block that
-   is part of a longer occurrence (cut by a higher tier or by the day edge) adds "part of 08:00–11:00"; a
-   block that hides others adds "Overridden: <name>". **Edit Program** opens the
+   meaningless for a future block. A merged loop lists each member Program with its own Edit. ~~A block that
+   is part of a longer occurrence (cut by a higher tier or by the day edge) adds "part of 08:00–11:00";~~
+   (removed in Rev.3, §11) A block that hides others adds "Overridden: <name>". **Edit Program** opens the
    editor with `returnTo` (ADR 0084 §9); for a Program whose Schedule has ended it reads **View Program**
    (the editor is read-only then, ADR 0080 §4). Next Program is the next block on the same row that day,
    else "Nothing else today". The crossed-out icon button is dropped.
@@ -94,6 +95,15 @@ Facts established before deciding:
     `spans: [{opens_at, closes_at}]` to each `suppressed` entry of a block (per cut, clipped to the block); the
     page joins them by Program across blocks and merges touching spans. Why: operators asked "I scheduled it,
     why is it not on screen?" — a count answers *that* something is hidden, the lane answers *when*.
+
+11. **Time labels (Rev.3).** A block, Quick View header or overridden span that covers the whole displayed
+    day reads **All day** (no duration); anything shorter keeps `HH:MM–HH:MM`, including a block that touches
+    only one edge (10:00–24:00). The rule looks at the block only, not at the Program's schedule. "Part of"
+    is gone: on prod it fired every day for every Program without an end (cut at midnight) and the owner could
+    not read it; the grid already shows a higher tier cutting a block, and the Program page holds the full
+    schedule. **Now** stays the word for "scheduled now", in the primary colour on both the block and the Quick
+    View — it is not playback evidence; **Live** stays reserved for a Player-confirmed row (ADR 0084 §3).
+    Showing Live in the Calendar needs playback state in `GET /media/calendar` and is a separate issue.
 
 ## Rejected
 
@@ -115,6 +125,10 @@ Facts established before deciding:
   with Now & Next on the same rows; both move together if it is ever added.
 - **Rewrite Now & Next onto the new helper now** — one rule set fewer, but it reopens a verified
   production RPC inside a feature that does not need it.
+- **Keep the wider occurrence as an "Airs: 6 Oct 15:11 → No end date" row or a muted line under the block
+  time** (Rev.3) — readable with dates, but still a second range to interpret next to the block's own.
+  **"Live" in green for the current block** (Rev.3) — the same screen would contradict Now & Next, where
+  Live means a Player confirmed it.
 - **Week / Month on the same grid; Drafts as ghost blocks; playback evidence on blocks; File / Source in
   Quick View** — see items 7, 5, 6 and 9.
 
@@ -123,6 +137,9 @@ Facts established before deciding:
 - Rev.2: Program covers come from one helper, `media_core.publication_cover` (Core `20261006130000`), used by
   `now_next_candidates` and `media_publications_list`. A Layout Program's cover is its first zone's (by
   position) Playlist cover, a stand-in until a rendered Layout preview exists (issue #230).
+
+- Rev.3: `occurrence` stays in `GET /media/calendar` (and the plan §4 parity query uses it), but the page
+  no longer reads it.
 
 - Four implementations of the resolution rules (`media_job_poll`, `media_now_next_get`,
   `media_publication_airtime_explain`, `effective_segments`); the parity check guards the pair the operator

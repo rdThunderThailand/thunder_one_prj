@@ -4,7 +4,7 @@
  *     node src/features/media-workspace/calendar/calendar-day.check.mts
  */
 import assert from "node:assert/strict";
-import { blockPosition, defaultBlock, overriddenLanes, clockLabel, dayRange, formatDuration, programAction, initialScrollPercent, isNowBlock, nextBlock, nowPercent, partOf, todayYmd } from "./calendar-day.ts";
+import { blockPosition, defaultBlock, overriddenLanes, clockLabel, dayRange, formatDuration, programAction, initialScrollPercent, isNowBlock, nextBlock, nowPercent, rangeLabel, todayYmd } from "./calendar-day.ts";
 import type { CalendarRow, CalendarSegment } from "./calendar-api.ts";
 
 const seg = (opens: string, closes: string, occurrence: CalendarSegment["occurrence"] = null): CalendarSegment => ({
@@ -49,19 +49,17 @@ assert.equal(defaultBlock(rowOf(first, later), now), later); // nothing now: nex
 assert.equal(defaultBlock(rowOf(first), now), first); // all in the past: the last one
 assert.equal(defaultBlock(rowOf(), now), null);
 
-assert.equal(partOf(seg(at("08:00"), at("09:00"))), null);
-assert.equal(partOf(seg(at("08:00"), at("09:00"), { opens_at: at("08:00"), closes_at: at("09:00") })), null);
-const cut = { opens_at: at("08:00"), closes_at: at("11:00") };
-assert.equal(partOf(seg(at("08:00"), at("09:00"), cut)), cut);
-const open = { opens_at: at("08:00"), closes_at: null };
-assert.equal(partOf(seg(at("08:00"), at("09:00"), open)), open);
-
 assert.equal(initialScrollPercent("2026-10-07", now), (8 / 24) * 100);
 assert.ok(Math.abs(initialScrollPercent("2026-10-06", now) - (9 / 24) * 100) < 1e-9);
 
 assert.equal(clockLabel(at("09:05"), "2026-10-06"), "09:05");
 assert.equal(clockLabel(at("00:00", "2026-10-07"), "2026-10-06"), "24:00");
 assert.equal(clockLabel(at("00:00"), "2026-10-06"), "00:00");
+
+const nextMidnight = at("00:00", "2026-10-07");
+assert.equal(rangeLabel(at("00:00"), nextMidnight, "2026-10-06"), "All day");
+assert.equal(rangeLabel(at("10:00"), nextMidnight, "2026-10-06"), "10:00–24:00"); // touches one edge only
+assert.equal(rangeLabel(at("00:00"), at("08:00"), "2026-10-06", " – "), "00:00 – 08:00");
 
 assert.equal(formatDuration(25 * 60_000), "25 min");
 assert.equal(formatDuration(120 * 60_000), "2 h");
