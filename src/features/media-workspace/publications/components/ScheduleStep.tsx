@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { WEEKDAYS } from "../schedule";
 import { describeSchedule } from "../schedule-describe";
-import { draftToSchedule, scheduleToDraft, todayIn, validateDraft } from "../schedule-preset";
+import { draftToSchedule, scheduleToDraft, todayIn, validateDraftNow } from "../schedule-preset";
 import type { ScheduleConflict } from "../types";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { EditScheduleModal } from "./edit/EditScheduleModal";
@@ -31,7 +31,7 @@ export function ScheduleStep({
   const [today] = useState(() => todayIn(schedule.timezone));
   const [editing, setEditing] = useState(false);
 
-  const messages = Object.values(validateDraft(schedule, today));
+  const messages = Object.values(validateDraftNow(schedule));
   const isInvalid = messages.length > 0;
   const stored = isInvalid ? null : draftToSchedule(schedule);
   const summary = stored ? describeSchedule(stored) : null;
