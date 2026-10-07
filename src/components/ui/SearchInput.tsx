@@ -19,9 +19,6 @@ export function SearchInput({
         placeholder={placeholder}
         className="w-full bg-transparent outline-none placeholder:text-zinc-400"
       />
-      <kbd className="shrink-0 rounded border border-zinc-200 px-1.5 py-0.5 text-[10px] text-zinc-400 dark:border-zinc-700">
-        ⌘K
-      </kbd>
     </div>
   );
 }

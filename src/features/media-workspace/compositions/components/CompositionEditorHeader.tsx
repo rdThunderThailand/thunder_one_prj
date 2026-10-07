@@ -11,6 +11,8 @@ import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from 
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
 import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
+import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
+import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 
 /** One row of the split button's menu. Closes the `<details>` it lives in on the way out, so
  *  the menu is not left hanging over the page the operator just navigated away from. */
@@ -101,6 +103,13 @@ export function CompositionEditorHeader({
   onSaveAsTemplate: () => void;
   onActivate: () => void;
 }) {
+  const shortcutPlatform = useShortcutPlatform();
+  const undoKeys = shortcutLabel(shortcutPlatform, "z");
+  const redoKeys = shortcutPlatform === "apple" ? shortcutLabel(shortcutPlatform, "z", { shift: true }) : shortcutLabel(shortcutPlatform, "y");
+  const redoAria =
+    shortcutPlatform === "apple"
+      ? shortcutAria(shortcutPlatform, "z", { shift: true })
+      : `${shortcutAria(shortcutPlatform, "y")} ${shortcutAria(shortcutPlatform, "z", { shift: true })}`;
   const [editing, setEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   // ADR 0063 §2: `Unsaved` until the first write, `Last saved HH:MM` after. The frames'
@@ -159,8 +168,8 @@ export function CompositionEditorHeader({
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
           <div role="group" aria-label="Edit history" className="flex overflow-hidden rounded-lg border border-border bg-card">
-            <button type="button" disabled={!canUndo} onClick={onUndo} aria-label="Undo" title="Undo (Ctrl/Cmd+Z)" className="grid h-8 w-8 place-items-center border-r border-border text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><UndoIcon /></button>
-            <button type="button" disabled={!canRedo} onClick={onRedo} aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)" className="grid h-8 w-8 place-items-center text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><RedoIcon /></button>
+            <button type="button" disabled={!canUndo} onClick={onUndo} aria-label="Undo" title={`Undo (${undoKeys})`} aria-keyshortcuts={shortcutAria(shortcutPlatform, "z")} className="grid h-8 w-8 place-items-center border-r border-border text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><UndoIcon /></button>
+            <button type="button" disabled={!canRedo} onClick={onRedo} aria-label="Redo" title={`Redo (${redoKeys})`} aria-keyshortcuts={redoAria} className="grid h-8 w-8 place-items-center text-muted-foreground hover:bg-muted disabled:text-muted-foreground"><RedoIcon /></button>
           </div>
           <Button size="sm" variant="secondary" onClick={onPreview} disabled={!canPreview}><EyeIcon /> Preview</Button>
           <Button size="sm" variant="secondary" onClick={onSaveAsTemplate} disabled={saving || !!saveDisabledReason} title={saveDisabledReason ?? undefined}>

@@ -1,3 +1,4 @@
+import { ShortcutKey } from "@/components/layout/ShortcutPlatform";
 import { LightningIcon, SparklesIcon } from "@/components/ui/icons";
 import { CompanyGoalsCard } from "./CompanyGoalsCard";
 import { EmployeeActivityCard } from "./EmployeeActivityCard";
@@ -41,7 +42,7 @@ export function EmployeeMissionControlPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/40 px-4 py-3 text-sm dark:border-indigo-500/20 dark:bg-indigo-500/5">
         <span className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
           <LightningIcon className="h-4 w-4 text-indigo-500" />
-          Tip: Use the Command Palette (⌘K) to quickly find tasks, documents, or people.
+          Tip: Use the Command Palette (<ShortcutKey letter="K" className="font-sans" />) to quickly find tasks, documents, or people.
         </span>
         <span
           title="Not built yet"

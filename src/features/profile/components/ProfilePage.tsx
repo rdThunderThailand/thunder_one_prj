@@ -29,6 +29,7 @@ import { AddContactChannelModal } from "./AddContactChannelModal";
 import { ProfileAvatarEditor } from "./ProfileAvatarEditor";
 import { EditPhoneModal } from "./EditPhoneModal";
 import { EditProfileModal } from "./EditProfileModal";
+import { languageFromTag } from "@/lib/app-locale";
 
 type Tab = "personal" | "work" | "contact";
 
@@ -192,7 +193,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
   const thaiName = me ? [me.first_name_th, me.last_name_th].filter(Boolean).join(" ") : "";
   const englishName = me ? [me.first_name, me.last_name].filter(Boolean).join(" ") : "";
   const fullName = me
-    ? (me.preferred_language === "th" && thaiName) || englishName || me.display_name || me.email
+    ? (languageFromTag(me.preferred_language) === "th" && thaiName) || englishName || me.display_name || me.email
     : "-";
 
   async function copyToClipboard(text: string, setCopied: (v: boolean) => void) {
@@ -269,7 +270,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                     <Row label="วันเดือนปีเกิด" value={me.date_of_birth ? formatThaiDate(me.date_of_birth) : ""} />
                     <Row
                       label="ภาษา"
-                      value={me.preferred_language ? (LANGUAGE_LABEL[me.preferred_language] ?? me.preferred_language) : ""}
+                      value={me.preferred_language ? (LANGUAGE_LABEL[languageFromTag(me.preferred_language) ?? ""] ?? me.preferred_language) : ""}
                     />
                   </div>
 
@@ -515,7 +516,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                 <div className="divide-y divide-[#e5edf9] dark:divide-zinc-800">
                   <Row
                     label="ภาษาในระบบ"
-                    value={me.preferred_language ? (LANGUAGE_LABEL[me.preferred_language] ?? me.preferred_language) : ""}
+                    value={me.preferred_language ? (LANGUAGE_LABEL[languageFromTag(me.preferred_language) ?? ""] ?? me.preferred_language) : ""}
                   />
                   <Row label="โซนเวลา (Timezone)" value={me.timezone ?? ""} />
                 </div>

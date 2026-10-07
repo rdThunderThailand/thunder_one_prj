@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
 import { getSelectedTenantId } from "@/lib/core/tenant-selection";
+import { languageFromTag } from "@/lib/app-locale";
 
 // Core's role_type tier system (thunder_core_prj's src/utils/supabase/rbac.ts).
 // department_admin/tenant/system exist as raw DB values (thunder_core_prj's
@@ -63,6 +64,10 @@ export interface Session {
    * isPlatformSuperAdmin rule. Only a platform super admin gets the tenant
    * switcher. */
   isSuperAdmin: boolean;
+  /** `public.users.preferred_language` as Core stores it ("th-TH", "en-US"; older rows "th"), or `null`. The user's
+   * primary language for the whole app; `getAppLocale(session.preferredLanguage)` turns it into
+   * the render language (lib/app-locale). */
+  preferredLanguage: string | null;
 }
 
 export interface AvailableTenant {
@@ -166,7 +171,7 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false, preferredLanguage: null };
   }
 
   if (sessionRes.status === 401) {
@@ -181,7 +186,7 @@ async function getSessionUncached(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false, preferredLanguage: null };
   }
 
   const body = await sessionRes.json().catch(() => null);
@@ -202,12 +207,13 @@ async function getSessionUncached(): Promise<SessionResult> {
   const { jobTitle } = membershipExtras;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin, preferredLanguage: null };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
   const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
-  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin };
+  const preferredLanguage = typeof user.preferred_language === "string" ? user.preferred_language : null;
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin, preferredLanguage };
 }
 
 function parseAvailableTenants(value: unknown): AvailableTenant[] {
@@ -383,7 +389,7 @@ function resolveUserName(
   user: Record<string, unknown>,
   extras: { firstNameTh: string | null; lastNameTh: string | null },
 ): string {
-  const preferredLanguage = typeof user.preferred_language === "string" ? user.preferred_language : null;
+  const preferredLanguage = languageFromTag(user.preferred_language);
   const thaiName = [extras.firstNameTh, extras.lastNameTh].filter(Boolean).join(" ");
   if (preferredLanguage === "th" && thaiName) return thaiName;
 
