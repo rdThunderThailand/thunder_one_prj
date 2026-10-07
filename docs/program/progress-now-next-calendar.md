@@ -1,11 +1,11 @@
 # Progress — Now & Next refresh + Calendar
 
 Read this first when resuming. Plan: [`plan-now-next-calendar.md`](plan-now-next-calendar.md) · ADRs 0084 / 0085 · handoff: `/tmp/thunder-handoff-now-next-calendar/HANDOFF.md`.
-Last updated: 2026-10-06.
+Last updated: 2026-10-07.
 
 ## Where we are
 
-**S1 FE done + browser-verified. BE-A applied to develop, Core Draft PR #165 open. BE-B applied to develop + HTTP-verified, local commit only. FE-B1 + FE-B2 code done (tsc, eslint, 2 checks clean) but NOT browser-verified yet. FE has NO PR by user choice (one PR for S1+S2 when everything is done).**
+**FE #232 (S1+S2) MERGED into `dev` 2026-10-06 (after merging `origin/dev`, resolving `calendar-month` move). Core #165 (BE-A) and #166 (BE-B/C/D, stacked) still Draft/OPEN; all 4 migrations are on develop only, prod untouched. FE on `dev` calls Calendar / group-scope routes that deployed Core `develop` does not have until #165 → #166 merge. Vercel check on both Core PRs fails only because the git author lacks Vercel team access.**
 
 FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is on someone else's `codex/core-142-mutation-guards` with uncommitted edits — use a worktree off `origin/develop`).
 
@@ -50,3 +50,4 @@ FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is o
 - 2026-10-06 — FE-B1/B2 written in one pass (Quick View is small), committed locally; waiting for the user's choice on browser verification.
 - 2026-10-06 — Rev.2 overridden lanes: ADR 0085 Rev.2, BE-C applied to develop (approved), FE lanes, browser-verified.
 - 2026-10-06 — BE-D Layout cover applied to develop (approved); FE cover in blocks, type scale; issue #230 opened.
+- 2026-10-07 — #232: merged `origin/dev` (conflicts in `PublicationEditPage.tsx`, `DatesCalendar.tsx`; `monthCells`/`addMonths` now live in `publications/calendar-month.ts`, `CalendarToolbar` repointed). Browser-verified against Core `feat/calendar-read-model` (develop DB): Calendar render, date popover, Quick View `returnTo`, Go Back, Edit Schedule Custom days / Date range, Now & Next. Not exercised: End program / Publish changes. #232 merged. Next: merge Core #165 → #166, verify on deployed develop, then release (R0).
