@@ -90,4 +90,4 @@ export const GUIDE_RELATIONSHIPS: GuideRelationship[] = [
 export const USE_CASE_MAPPINGS: UseCaseMapping[] = [];
 
 /** Guides offered on the Help Center Home. A content decision, not ranking. */
-export const RECOMMENDED_GUIDE_IDS = ["GDE-0002", "GDE-0003", "GDE-0004", "GDE-0008"];
+export const RECOMMENDED_GUIDE_IDS = ["GDE-0002", "GDE-0004", "GDE-0006", "GDE-0003"];

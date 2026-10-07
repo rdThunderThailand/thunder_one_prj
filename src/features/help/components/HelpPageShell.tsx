@@ -1,11 +1,13 @@
+import Image from "next/image";
 import Link from "next/link";
-import { LifeBuoy, Search } from "lucide-react";
+import { BookOpen, LifeBuoy, Search } from "lucide-react";
 import { env } from "@/config/env";
 import { cn } from "@/lib/utils";
 import { LOCALE_NAME, t } from "../copy";
 import { helpHref } from "../navigation";
 import { LOCALES, type Locale } from "../types";
 import { ExitButton } from "./ExitButton";
+import { SUPPORT_ICON } from "./help-art";
 
 export interface ShellProps {
   locale: Locale;
@@ -118,20 +120,29 @@ export function LocaleSwitch({ locale, hrefs, className }: { locale: Locale; hre
   );
 }
 
-/** Escalation, shown only when a Support destination is configured (UC-008). Never a Content Type (AC-024). */
+/**
+ * "Still need help?" strip (FigJam Home). Browse all guides is always offered; Contact Support only
+ * when a Support destination is configured (UC-008). Never a Content Type (AC-024).
+ */
 export function SupportBand({ locale }: { locale: Locale }) {
-  if (!env.helpSupportUrl) return null;
   return (
-    <section className="border-t border-border bg-surface-subtle">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-6 sm:px-6">
-        <span aria-hidden="true" className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary">
-          <LifeBuoy className="h-5 w-5" />
-        </span>
+    <section className="mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-primary-soft/60 px-5 py-4">
+        <Image src={SUPPORT_ICON} alt="" width={44} height={44} className="shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">{t("stillNeedHelp", locale)}</p>
+          <p className="text-base font-bold">{t("stillNeedHelp", locale)}</p>
           <p className="text-xs text-muted-foreground">{t("stillNeedHelpText", locale)}</p>
         </div>
-        <SupportLink locale={locale} />
+        <div className="flex flex-wrap items-center gap-2">
+          <SupportLink locale={locale} variant="outline" />
+          <Link
+            href={helpHref("/browse", { lang: locale })}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-4 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+          >
+            <BookOpen aria-hidden="true" className="h-3.5 w-3.5" />
+            {t("browseAllGuides", locale)}
+          </Link>
+        </div>
       </div>
     </section>
   );
