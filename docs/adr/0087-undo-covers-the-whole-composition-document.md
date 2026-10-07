@@ -42,8 +42,9 @@ Save would then write a shared Template (`save-composition.ts:90`) without the s
 **Ids a save has stored are never undone.** A save writes `idempotencyKey` and the inline `playlistId`
 into the bindings (`onBindingsChanged`) and may fail after that. A restore keeps the `idempotencyKey`
 and inline `playlistId` that the current binding for the same Zone already holds, only when both the
-restored and the current binding have `source: 'assets'`. A `source: 'playlist'` binding is restored as
-it was, since its `playlistId` names a saved Playlist the operator picked. Otherwise a retry
+restored and the current binding have `source: 'assets'`. The `playlistId` is kept only when the restored binding has items to put in it, so undoing the
+first add never binds an empty Zone to the stored Playlist. A `source: 'playlist'` binding is restored
+as it was, since its `playlistId` names a saved Playlist the operator picked. Otherwise a retry
 after Undo would create a second inline Playlist (ADR 0063 §2, 3b).
 
 The Composition's name, tags and folder are not in the snapshot. They are text inputs with the
