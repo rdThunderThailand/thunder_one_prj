@@ -143,7 +143,7 @@ export function CompositionEditorPage({
     }
     setBindings((prev) => upsertBinding(prev, next));
   };
-  const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, canUndo, canRedo } =
+  const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, reset: resetHistory, canUndo, canRedo } =
     useZoneEditGuard(layout?.zones ?? [], sharedTemplateUsage, setEditedZones);
   const applyPlaybackToAllZones = (playback: ZonePlayback) =>
     setBindings((prev) => applyPlaybackToAll(view.layoutZoneIds, prev, playback));
@@ -151,6 +151,7 @@ export function CompositionEditorPage({
     if (saved) data.setLayouts((current) => [...current.filter((c) => c.id !== saved.id), saved]);
     if (savedId) setLayoutId(savedId);
     setBlankZones(null); setEditedZones(null); setLayoutSettings(null);
+    resetHistory();
   };
   const { save, run, saving, saveError } = useCompositionSave(
     () => ({
@@ -190,6 +191,7 @@ export function CompositionEditorPage({
       setEditedZones(null);
       setLayoutSettings(null);
       resetApproval();
+      resetHistory();
     }, "สร้าง Layout ส่วนตัวไม่สำเร็จ");
   };
   const saveAsTemplate = (templateName: string) => {

@@ -47,9 +47,18 @@ export function useZoneHistory(zones: LayoutZone[], onChange: (next: LayoutZone[
     });
   }, [onChange]);
 
+  /** Drops both stacks — after a save or fork the old snapshots carry Zone ids that no longer exist. */
+  const reset = useCallback(() => {
+    setPast([]);
+    setFuture([]);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!event.metaKey && !event.ctrlKey) return;
+      // Leave text fields their own undo.
+      const target = event.target as HTMLElement | null;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
       const key = event.key.toLowerCase();
       if (key === "z" && event.shiftKey) {
         event.preventDefault();
@@ -66,5 +75,5 @@ export function useZoneHistory(zones: LayoutZone[], onChange: (next: LayoutZone[
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
 
-  return { checkpoint, undo, redo, canUndo: past.length > 0, canRedo: future.length > 0 };
+  return { checkpoint, undo, redo, reset, canUndo: past.length > 0, canRedo: future.length > 0 };
 }
