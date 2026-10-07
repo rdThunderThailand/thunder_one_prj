@@ -6,7 +6,7 @@ import { ProgramCover } from "../../publications/components/now-next/ProgramCove
 import { PRIORITY_STYLES } from "../../publications/components/now-next/UpNextTimeline";
 import { contentHref } from "../../publications/now-next-view";
 import type { CalendarPublication, CalendarRow, CalendarSegment } from "../calendar-api";
-import { clockLabel, formatDuration, isNowBlock, nextBlock, partOf, programAction } from "../calendar-day";
+import { clockLabel, formatDuration, isNowBlock, nextBlock, programAction, rangeLabel } from "../calendar-day";
 
 function ContentLine({ publication }: { publication: CalendarPublication }) {
   const { content } = publication;
@@ -51,7 +51,7 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
   const { channel } = row;
   const [first, ...others] = segment.publications;
   const priority = PRIORITY_STYLES[segment.priority];
-  const wider = partOf(segment);
+  const range = rangeLabel(segment.opens_at, segment.closes_at, date, " – ");
   const next = nextBlock(row, segment);
   const [nextProgram] = next?.publications ?? [];
   const isLoop = others.length > 0;
@@ -66,7 +66,7 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex min-w-0 items-center gap-2">
-          {isNowBlock(segment, now) && <Badge variant="success">Now</Badge>}
+          {isNowBlock(segment, now) && <Badge>Now</Badge>}
           <Link
             href={`/media-workspace/program/${first.id}`}
             className="truncate text-sm font-bold text-foreground hover:text-primary"
@@ -76,8 +76,10 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
           </Link>
         </div>
         <p className="text-[11px] tabular-nums text-foreground">
-          {clockLabel(segment.opens_at, date)} – {clockLabel(segment.closes_at, date)}
-          <span className="text-muted-foreground"> ({formatDuration(Date.parse(segment.closes_at) - Date.parse(segment.opens_at))})</span>
+          {range}
+          {range !== "All day" && (
+            <span className="text-muted-foreground"> ({formatDuration(Date.parse(segment.closes_at) - Date.parse(segment.opens_at))})</span>
+          )}
         </p>
         <p className="truncate text-[10px] text-muted-foreground">
           {channel ? (
@@ -131,14 +133,6 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
             <dt className="text-muted-foreground">Content</dt>
             <dd className="min-w-0">
               <ContentLine publication={first} />
-            </dd>
-          </>
-        )}
-        {wider && (
-          <>
-            <dt className="text-muted-foreground">Part of</dt>
-            <dd className="text-foreground">
-              {clockLabel(wider.opens_at, date)}–{wider.closes_at ? clockLabel(wider.closes_at, date) : "open end"}
             </dd>
           </>
         )}

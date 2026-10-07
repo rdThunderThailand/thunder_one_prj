@@ -1,6 +1,6 @@
 # Plan — Release Now & Next refresh + Calendar to prod
 
-Status: **Option B (selective Core release) chosen by the owner 2026-10-07**; plan travels with the FE release-prep PR. Nothing below has been run on prod. Every step marked R0 waits for an explicit yes.
+Status: **EXECUTED 2026-10-07** — migrations A→D applied, Core #169 + FE #234 merged, both tagged `v0.8.0`. Option B (selective Core release) was chosen by the owner; plan travels with the FE release-prep PR. Nothing below has been run on prod. Every step marked R0 waits for an explicit yes.
 Core release branch `release/v0.8.0` (off `main`, local until approved): `af45b8b`, `ca1a0e2`, `c4dce80`, `92a0258` = 13 files, +2362, exactly BE-A/B/C/D + `/media/calendar` route; migrations and rollbacks byte-identical to `develop`. The BE-A cherry-pick conflicted only on a rollback file of `newest_job_readers_rest` (not on `main`) — dropped. BE-A's rollback pre-image md5 for `media_now_next_get` is `23acd948…` = prod today. tsc shows no error in the calendar / now-next files; `cover-urls.check.mts` passes.
 Context: [`progress-now-next-calendar.md`](progress-now-next-calendar.md), ADR 0084 / 0085, [`../agents/versioning.md`](../agents/versioning.md).
 

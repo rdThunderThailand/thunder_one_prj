@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { blockPosition, clockLabel, type OverriddenLane } from "../calendar-day";
+import { blockPosition, rangeLabel, type OverriddenLane } from "../calendar-day";
 
 const HOURS = Array.from({ length: 23 }, (_, index) => index + 1);
 // Muted diagonal hatching from the current text colour, so it follows the theme tokens.
@@ -48,7 +48,7 @@ export function OverriddenLanes({ lanes, date, laneWidth, nowLeft }: { lanes: Ov
         <LaneGuides nowLeft={nowLeft} />
         {lane.spans.map((span) => {
           const position = blockPosition(span, date);
-          const range = `${clockLabel(span.opens_at, date)}–${clockLabel(span.closes_at, date)}`;
+          const range = rangeLabel(span.opens_at, span.closes_at, date);
           return (
             <Link
               key={span.opens_at}
