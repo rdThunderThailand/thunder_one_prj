@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Plus, Trash2, Undo2 } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
@@ -135,7 +136,10 @@ export function CompositionsListPage() {
       return;
     }
     if (action === "restore") {
-      void runImmediate(item, () => restoreComposition(item.id), "กู้คืน Layout ไม่สำเร็จ");
+      void runImmediate(item, async () => {
+        const { name } = await restoreComposition(item.id);
+        if (name !== item.name) toast.info(`กู้คืนเป็น '${name}' เพราะมีชื่อนี้อยู่แล้ว`);
+      }, "กู้คืน Layout ไม่สำเร็จ");
       return;
     }
     setDialogAction(action);
@@ -166,7 +170,9 @@ export function CompositionsListPage() {
     return [first, ...rest].flatMap((result) => result.data);
   };
   const runBatch = async (mode: "trash" | "restore" | "delete", ids?: string[]) => {
-    const targets = ids ?? (await loadAllTrash()).map((item) => item.id);
+    const trash = ids ? [] : await loadAllTrash();
+    const targets = ids ?? trash.map((item) => item.id);
+    const namesBefore = new Map([...(library?.data ?? []), ...trash].map((item) => [item.id, item.name]));
     if (!targets.length) return;
     const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
     if (!window.confirm(`${verb} ${targets.length} layout${targets.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
@@ -182,7 +188,15 @@ export function CompositionsListPage() {
           (("trashed" in result.value && !result.value.trashed) || ("deleted" in result.value && !result.value.deleted))),
     ).length;
     setSelectedIds(new Set());
-    setActionError(failed ? `${failed} layout${failed === 1 ? "" : "s"} could not be updated because it is in use.` : null);
+    if (mode === "restore") {
+      // ADR 0088 §2: restore renames on a clash instead of failing.
+      const renamed = results.filter((result, index) =>
+        result.status === "fulfilled" && result.value && "name" in result.value && result.value.name !== namesBefore.get(targets[index])).length;
+      if (renamed) toast.info(`${renamed} รายการถูกเปลี่ยนชื่อเพราะมีชื่อนี้อยู่แล้ว`);
+      setActionError(failed ? `กู้คืนไม่สำเร็จ ${failed} รายการ` : null);
+    } else {
+      setActionError(failed ? `${failed} layout${failed === 1 ? "" : "s"} could not be updated because it is in use.` : null);
+    }
     reload();
     setBatchBusy(false);
   };

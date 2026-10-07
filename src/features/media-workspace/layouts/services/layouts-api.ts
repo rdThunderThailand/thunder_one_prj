@@ -60,6 +60,21 @@ export async function upsertLayout(
   return requestApi("POST", "/media/layouts", body);
 }
 
+/** ADR 0088 §4: a Composition's own layout, created and made `inline` in one transaction. The
+ *  server names it `comp:<id>`, so the Composition name never reaches `layouts.name`. */
+export async function createInlineLayout(
+  input: Omit<UpsertLayoutInput, "layoutId" | "name">
+): Promise<{ layout_id: string; zone_count: number }> {
+  return requestApi("POST", "/media/layouts", {
+    kind: "inline",
+    aspect_ratio: input.aspectRatio,
+    reference_resolution: input.referenceResolution ?? null,
+    background: input.background,
+    status: input.status ?? "active",
+    zones: input.zones,
+  });
+}
+
 export async function setLayoutStatus(
   id: string,
   status: LayoutStatus
