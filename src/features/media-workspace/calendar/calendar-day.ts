@@ -82,15 +82,6 @@ export function overriddenLanes(row: CalendarRow): OverriddenLane[] {
   return [...lanes.values()].sort((a, b) => RANK[b.priority] - RANK[a.priority] || a.name.localeCompare(b.name));
 }
 
-/** The wider occurrence this block is cut from (by a higher tier or the day edge), or null. */
-export function partOf(segment: CalendarSegment): { opens_at: string; closes_at: string | null } | null {
-  const { occurrence } = segment;
-  if (!occurrence) return null;
-  const opensEarlier = Date.parse(occurrence.opens_at) < Date.parse(segment.opens_at);
-  const closesLater = occurrence.closes_at === null || Date.parse(occurrence.closes_at) > Date.parse(segment.closes_at);
-  return opensEarlier || closesLater ? occurrence : null;
-}
-
 /** Where the grid opens, as a share of its width: just before now on today, else 08:00. */
 export function initialScrollPercent(ymd: string, now: number): number {
   const current = nowPercent(ymd, now);
@@ -100,6 +91,13 @@ export function initialScrollPercent(ymd: string, now: number): number {
 /** `HH:MM` in Bangkok; the day's closing midnight reads "24:00" so a block never seems to end before it starts. */
 export function clockLabel(iso: string, ymd: string): string {
   return Date.parse(iso) >= dayStartMs(ymd) + DAY_MS ? "24:00" : formatClock(iso, DEFAULT_TIMEZONE);
+}
+
+/** "All day" when the range covers the whole day (ADR 0085 Rev.3), else `HH:MM–HH:MM` joined by `separator`. */
+export function rangeLabel(opensAt: string, closesAt: string, ymd: string, separator = "–"): string {
+  const start = dayStartMs(ymd);
+  if (Date.parse(opensAt) <= start && Date.parse(closesAt) >= start + DAY_MS) return "All day";
+  return `${clockLabel(opensAt, ymd)}${separator}${clockLabel(closesAt, ymd)}`;
 }
 
 /** "25 min", "2 h", "2 h 15 min". */

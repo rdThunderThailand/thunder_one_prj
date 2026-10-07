@@ -5,7 +5,7 @@ import { BoxIcon, ChevronDownIcon, ChevronRightIcon, MonitorIcon } from "@/compo
 import { ProgramCover } from "../../publications/components/now-next/ProgramCover";
 import { PRIORITY_STYLES } from "../../publications/components/now-next/UpNextTimeline";
 import type { CalendarRow, CalendarSegment } from "../calendar-api";
-import { blockPosition, clockLabel, defaultBlock, initialScrollPercent, isNowBlock, nowPercent, overriddenLanes } from "../calendar-day";
+import { blockPosition, defaultBlock, initialScrollPercent, isNowBlock, nowPercent, overriddenLanes, rangeLabel } from "../calendar-day";
 import { LaneGuides, OverriddenLanes } from "./OverriddenLanes";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
@@ -84,7 +84,7 @@ function Block({ segment, date, now, selected, onSelect }: { segment: CalendarSe
   const [first] = segment.publications;
   const isLoop = segment.publications.length > 1;
   const name = isLoop ? `${first.name} +${segment.publications.length - 1}` : first.name;
-  const range = `${clockLabel(segment.opens_at, date)}–${clockLabel(segment.closes_at, date)}`;
+  const range = rangeLabel(segment.opens_at, segment.closes_at, date);
   const hidden = segment.suppressed.length;
   return (
     <button
