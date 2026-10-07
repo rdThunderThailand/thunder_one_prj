@@ -15,6 +15,7 @@ export function DraftResumePrompt(props: {
   open: boolean;
   label: string;
   hasServerDraft: boolean;
+  dropsSchedule: boolean;
   busy: boolean;
   waiting: boolean;
   conflict: boolean;
@@ -32,6 +33,11 @@ export function DraftResumePrompt(props: {
               ? "บันทึกการแก้ไขของ draft เดิมก่อนเริ่ม Program ใหม่ โดย draft เดิมยังอยู่ในหน้า Programs"
               : "การเริ่มใหม่จะทำให้ชื่อ คำอธิบาย และ tags ที่ยังไม่บันทึกสูญหาย ส่วน draft ที่เคยบันทึกยังอยู่ในหน้า Programs"}
           </AlertDialogDescription>
+          {props.dropsSchedule && (
+            <AlertDialogDescription>
+              Schedule ที่แก้ไว้ใน draft เดิมยังไม่ถูกต้อง จะไม่ถูกบันทึก
+            </AlertDialogDescription>
+          )}
         </AlertDialogHeader>
         {props.error && (
           <p role="alert" className="text-sm text-danger">{props.error}</p>

@@ -7,13 +7,13 @@ import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { classifyApiError } from "@/lib/api/api-error";
 import { hasUnfinishedDraft, shouldShowResumePrompt } from "../resume-prompt";
 import { resolveSeed, type PublicationSeed } from "../seed-resolver";
-import { DraftSaveError, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
+import { DraftSaveError, draftSavePolicy, type DraftPersistResult } from "../draft-save-policy";
 import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
 import { isDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import type { MediaAsset, PublicationType } from "../types";
 
 const CREATE_URL = "/media-workspace/program/create";
-type Entry = { seed: PublicationSeed | null; isEditMode: boolean; unfinished: boolean; hasServerDraft: boolean };
+type Entry = { seed: PublicationSeed | null; isEditMode: boolean; unfinished: boolean; hasServerDraft: boolean; dropsSchedule: boolean };
 type ReadySeed = { name: string; publicationType: PublicationType };
 
 function applySeed(seed: PublicationSeed, ready: ReadySeed) {
@@ -66,6 +66,7 @@ export function useCreateDraftEntry(input: {
       isEditMode: Boolean(input.idParam),
       unfinished: hasUnfinishedDraft(state, isDraftDirty(state)),
       hasServerDraft: Boolean(state.publicationId),
+      dropsSchedule: Boolean(state.publicationId) && !draftSavePolicy(state, false).isComplete,
     };
     // ADR 0086 §5: capture once; our own URL replacements never start a new visit.
     void Promise.resolve().then(() => {
@@ -141,8 +142,10 @@ export function useCreateDraftEntry(input: {
         if (input.loadingChannels) throw new DraftSaveError("กำลังโหลด Channels กรุณารอสักครู่");
         if (input.channelsError) throw new DraftSaveError(input.channelsError);
         if (!state.basicInfo.name.trim()) throw new DraftSaveError("กรุณากรอกชื่อ Program ก่อนบันทึกร่าง");
-        // ADR 0086 §3: save like a stepper jump, without validateStep.
-        const saved = requireCompleteDraftSave(await input.persistDraft(false));
+        // ADR 0086 §3: save like a stepper jump, without validateStep. An invalid schedule is
+        // dropped rather than blocking: choosing the new content overrides it.
+        const saved = await input.persistDraft(false);
+        if (saved.kind === "skipped") throw new DraftSaveError("กรุณากรอกชื่อ Program ก่อนบันทึกร่าง");
         state.markSaved(saved.draft);
         if (isDraftDirty(usePublicationDraftStore.getState())) {
           throw new DraftSaveError("มีการแก้ไขระหว่างบันทึก กรุณาลองอีกครั้งหรือทำต่อจาก draft เดิม");
@@ -174,6 +177,7 @@ export function useCreateDraftEntry(input: {
       open: shouldShowResumePrompt({ hadUnfinishedWorkAtHydration: entry?.unfinished ?? false, isEditMode: entry?.isEditMode ?? true, dismissed }),
       label: entry?.seed ? readySeed?.name ? `Use ${readySeed.name}` : genericLabel : "Start a new Program",
       hasServerDraft: entry?.hasServerDraft ?? false,
+      dropsSchedule: entry?.dropsSchedule ?? false,
       busy,
       waiting: Boolean(entry?.seed && !readySeed) || Boolean(entry?.hasServerDraft && input.loadingChannels),
       conflict: conflict || Boolean(input.revisionConflict),

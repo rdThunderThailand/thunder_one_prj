@@ -66,10 +66,12 @@ A skipped empty-name save never marks the draft saved; Next from step 1 can stil
   - If the save cannot run or fails, stay on the prompt and show why:
     - an empty name, which `persistDraft` today skips silently;
     - a network or server error;
-    - an invalid schedule after Program has been reached: save the other fields, but do not
-      `markSaved`, clear the draft, or apply the seed. Continue the previous draft to fix it;
     - a revision conflict. Only "Continue the previous draft" is offered then, because the
       reload/overwrite banner sits behind the prompt.
+  - An invalid schedule after Program has been reached does not block. Save the other fields, drop
+    the schedule edit, and go on: choosing the new content overrides it. A schedule that passed its
+    time while the draft was parked would otherwise force the operator to fix a draft they are
+    leaving. The prompt says up front that the schedule will not be saved.
   - Wait for the Channel list to load before saving, because targets are built from it.
   - Then `cancelDraft()`, apply the seed, and go to step 2.
 - **Secondary — "Continue the previous draft"**
@@ -161,6 +163,7 @@ reaches it at the moment they decide to stop, beside the button they would other
 - Sending the schedule once step 3 has been reached means an invalid schedule is still held back.
   Every save caller leaves the snapshot unchanged after such a partial save, so a draft parked on
   step 3 (or taken Back to an earlier step) with pending invalid schedule edits stays dirty, and
-  the prompt in §2 asks. The primary action keeps the prompt open rather than losing those edits.
+  the prompt in §2 asks. The primary action then drops those schedule edits (§3); the rest of the
+  draft is saved.
 - `ChannelGroupInspector.tsx:120` links to `/create?group=<id>`, which the page never reads. It behaves
   as a blank `/create` and falls under §5. That is out of scope here.
