@@ -5,9 +5,9 @@ Last updated: 2026-10-07.
 
 ## Where we are
 
-**FE #232 (S1+S2) MERGED into `dev` 2026-10-06 (after merging `origin/dev`, resolving `calendar-month` move). Core #165 (BE-A) and #166 (BE-B/C/D, stacked) still Draft/OPEN; all 4 migrations are on develop only, prod untouched. FE on `dev` calls Calendar / group-scope routes that deployed Core `develop` does not have until #165 → #166 merge. Vercel check on both Core PRs fails only because the git author lacks Vercel team access.**
+**RELEASED to prod 2026-10-07 as `v0.8.0` (FE #234, Core #169 selective; both tagged `v0.8.0`).** Prod migrations BE-A → B → C → D applied 2026-10-07 (md5 of all 6 functions = files, 1 overload, ACL postgres + service_role). Order used: migrations → Core deploy → FE deploy. Prod checks (read-only, owner account): Calendar for today shows 6 real Channels, Quick View, Group scope (`group_id` → 200), Edit Program → Go Back via `returnTo`, Programs list (total 34, covers load), Now & Next. **Not verified on prod:** overridden lanes (no overlapping real Programs), End program / Publish changes, midnight rollover, Figma comparison, Quick View of a priority-cut block.
 
-FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is on someone else's `codex/core-142-mutation-guards` with uncommitted edits — use a worktree off `origin/develop`).
+Open: Core `develop` still `0.7.0` (release-prep + back-merge PR), develop `zz-cal-*` fixtures (delete = R0, list first), video poster at upload (issue), `Part of 15:11–open end` wording on an all-day block not checked against the design.
 
 ## Tickets
 
@@ -51,3 +51,4 @@ FE branch `feat/now-next-s1-fe` (off `dev`). Core not touched yet (checkout is o
 - 2026-10-06 — Rev.2 overridden lanes: ADR 0085 Rev.2, BE-C applied to develop (approved), FE lanes, browser-verified.
 - 2026-10-06 — BE-D Layout cover applied to develop (approved); FE cover in blocks, type scale; issue #230 opened.
 - 2026-10-07 — #232: merged `origin/dev` (conflicts in `PublicationEditPage.tsx`, `DatesCalendar.tsx`; `monthCells`/`addMonths` now live in `publications/calendar-month.ts`, `CalendarToolbar` repointed). Browser-verified against Core `feat/calendar-read-model` (develop DB): Calendar render, date popover, Quick View `returnTo`, Go Back, Edit Schedule Custom days / Date range, Now & Next. Not exercised: End program / Publish changes. #232 merged. Next: merge Core #165 → #166, verify on deployed develop, then release (R0).
+- 2026-10-07 — Released `v0.8.0`: prod migrations A→D applied, Core #169 merged + tagged (`9a3d6cb`), FE #234 merged + tagged (`59a7fda`). Read-only prod verification as listed under "Where we are". Release plan: `plan-release-now-next-calendar.md`.
