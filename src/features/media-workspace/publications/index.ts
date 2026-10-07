@@ -3,7 +3,6 @@ export { CreatePublicationPage } from "./components/CreatePublicationPage";
 export { PublicationsListPage } from "./components/PublicationsListPage";
 export { PublicationEditPage } from "./components/PublicationEditPage";
 export { PublicationDetailPage } from "./components/PublicationDetailPage";
-export { DemoPublicationDetailPage } from "./components/DemoPublicationDetailPage";
 
 // Read-side surface for other features — the Overview dashboard consumes these.
 // Keep the list minimal: it is the only sanctioned way in from outside, and the

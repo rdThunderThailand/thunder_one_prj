@@ -58,6 +58,7 @@ export function CreatePublicationPage() {
   const step = usePublicationDraftStore((s) => s.step);
   const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
+  const draftName = usePublicationDraftStore((s) => s.basicInfo.name);
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
   const goBack = usePublicationDraftStore((s) => s.goBack);
 
@@ -206,6 +207,7 @@ export function CreatePublicationPage() {
     canPublish,
     eligibilityChecks,
     persistDraft,
+    saveDraft,
     saveStatus,
     setSaveStatus,
     savingNext,
@@ -334,6 +336,8 @@ export function CreatePublicationPage() {
     }
     setSavingNext(false);
     if (outcome.kind === "saved") {
+      // The server now holds this draft — later edits are what counts as unsaved (#226).
+      usePublicationDraftStore.getState().markSaved();
       setSaveStatus("saved");
       setError(null); // clear a stale error from a prior failed attempt (e.g. Retry succeeding)
       goNextAction(MAX_BUILT_STEP);
@@ -342,6 +346,23 @@ export function CreatePublicationPage() {
       // The revision-conflict banner already shows this — avoid saying it twice.
       if (!isConflict(outcome.message)) setError(outcome.message);
     }
+  };
+
+  // #226: a stepper jump on a server draft saves first, like Next — otherwise a content change
+  // made before the jump lives only in this browser.
+  const handleStepSelect = async (target: number) => {
+    if (publicationId && isDirty) {
+      try {
+        await persistDraft(false);
+        usePublicationDraftStore.getState().markSaved();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "บันทึก draft ไม่สำเร็จ";
+        // The revision-conflict banner already shows a conflict.
+        if (!isConflict(message)) setError(message);
+        return;
+      }
+    }
+    setStep(target);
   };
 
   const isLastStep = step === wizardSteps.length;
@@ -404,6 +425,15 @@ export function CreatePublicationPage() {
       <PageHeader
         title="Create Publication"
         subtitle="สร้างและเผยแพร่สื่อไปยังทุกช่องทางของคุณ"
+        actions={
+          <Button
+            variant="secondary"
+            disabled={saving || !draftName.trim()}
+            onClick={() => void saveDraft()}
+          >
+            {saving ? "Saving…" : "Save draft"}
+          </Button>
+        }
       />
 
       <Modal
@@ -478,7 +508,7 @@ export function CreatePublicationPage() {
       )}
 
       <Card className="p-5">
-        <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={setStep} />
+        <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={(target) => void handleStepSelect(target)} />
       </Card>
 
       {/* Step 1 — Choose Content */}
@@ -489,7 +519,7 @@ export function CreatePublicationPage() {
           reloadAssets={reloadAssets}
           assetsLoading={assetsLoading}
           assetsError={assetsError}
-          onContentSelected={() => goNextAction(MAX_BUILT_STEP)}
+          onContentSelected={() => void handleNext()}
         />
       )}
 

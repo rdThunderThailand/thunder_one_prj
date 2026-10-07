@@ -49,6 +49,12 @@ export function useZoneHistory(zones: LayoutZone[], onChange: (next: LayoutZone[
     });
   }, [onChange]);
 
+  /** Drops both stacks — after a save or fork the old snapshots carry Zone ids that no longer exist. */
+  const reset = useCallback(() => {
+    setPast([]);
+    setFuture([]);
+  }, []);
+
   // Undo ⌘Z / Ctrl+Z; redo ⇧⌘Z on Apple, Ctrl+Y or Ctrl+Shift+Z elsewhere (lib/keyboard-shortcut).
   // Text fields keep their own undo: a Zone name being typed is not rolled back as geometry.
   const platform = useShortcutPlatform();
@@ -70,5 +76,5 @@ export function useZoneHistory(zones: LayoutZone[], onChange: (next: LayoutZone[
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo, platform]);
 
-  return { checkpoint, undo, redo, canUndo: past.length > 0, canRedo: future.length > 0 };
+  return { checkpoint, undo, redo, reset, canUndo: past.length > 0, canRedo: future.length > 0 };
 }

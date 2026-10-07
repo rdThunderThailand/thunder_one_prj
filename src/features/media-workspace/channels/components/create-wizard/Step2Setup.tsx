@@ -1,11 +1,14 @@
-import { RESOLUTIONS, resolutionLabel } from "@/features/media-workspace/playlists";
+import { RESOLUTIONS, parseResolution, resolutionLabel } from "@/features/media-workspace/playlists";
 import { Badge } from "@/components/ui/Badge";
 import { MonitorIcon } from "@/components/ui/icons";
-import { ARRANGEMENT_OPTIONS } from "../../display-config";
+import { ARRANGEMENT_OPTIONS, arrangementByKey } from "../../display-config";
 import { canvasResolutionFor, withAutoMappedScreens, type CreateChannelDraft } from "../../create-wizard-state";
 import type { ChannelPlayerCandidate } from "../../player-candidates";
 import { OutputMappingTable } from "./OutputMappingTable";
 import { PlayerPickerField } from "./PlayerPickerField";
+
+/** Tallest the Preview Layout gets, so portrait and 3 × 1 arrangements don't push the form down. */
+const PREVIEW_MAX_HEIGHT_PX = 220;
 
 const fieldClasses =
   "w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30";
@@ -28,6 +31,12 @@ export function Step2Setup({
 }) {
   const canvas = canvasResolutionFor(draft);
   const selectedPlayer = candidates.find((c) => c.id === draft.playerId) ?? null;
+  // #224: the preview follows the real arrangement and the canvas proportions, single-screen included.
+  const grid = draft.displayMode === "multi" ? arrangementByKey(draft.arrangementKey) : { rows: 1, cols: 1 };
+  const previewScreens = draft.displayMode === "multi"
+    ? draft.screens
+    : [{ index: 0, resolution: draft.screenResolution }];
+  const canvasSize = parseResolution(canvas) ?? { width: 16, height: 9 };
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -97,22 +106,28 @@ export function Step2Setup({
           </div>
         </div>
 
-        {draft.displayMode === "multi" && (
-          <div>
-            <p className="mt-4 text-sm font-medium text-muted-foreground">Preview Layout</p>
-            <div className="mt-2 flex overflow-hidden rounded-lg border border-border">
-              {draft.screens.map((screen) => (
-                <div
-                  key={screen.index}
-                  className="flex-1 border-r border-border bg-muted px-2 py-4 text-center last:border-r-0"
-                >
-                  <p className="text-xs font-semibold text-muted-foreground">Display {screen.index + 1}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">{screen.resolution}</p>
-                </div>
-              ))}
-            </div>
+        <div>
+          <p className="mt-4 text-sm font-medium text-muted-foreground">Preview Layout</p>
+          <div
+            className="mt-2 grid gap-px overflow-hidden rounded-lg border border-border bg-border"
+            style={{
+              aspectRatio: `${canvasSize.width} / ${canvasSize.height}`,
+              width: `min(100%, ${(PREVIEW_MAX_HEIGHT_PX * canvasSize.width) / canvasSize.height}px)`,
+              gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
+            }}
+          >
+            {previewScreens.map((screen) => (
+              <div
+                key={screen.index}
+                className="flex min-w-0 flex-col items-center justify-center bg-muted px-1 text-center"
+              >
+                <p className="text-xs font-semibold text-muted-foreground">Display {screen.index + 1}</p>
+                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{screen.resolution}</p>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       <div>

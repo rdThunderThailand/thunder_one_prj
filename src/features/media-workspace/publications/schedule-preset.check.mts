@@ -126,6 +126,14 @@ assert.ok(validateDraft({ ...weeklyDraft, mode: "dates", dates: ["2026-09-24"] }
 assert.deepEqual(validateDraft({ ...weeklyDraft, mode: "dates", dates: ["2026-09-24", "2026-10-05"] }, TODAY), {});
 assert.ok(validateDraft({ ...weeklyDraft, startDate: "2026-09-01", endDate: "2026-09-20" }, TODAY).endDate);
 assert.deepEqual(validateDraft({ ...weeklyDraft, startDate: "2026-09-01" }, TODAY), {}, "a weekly start in the past is fine");
+// #222: an end earlier today is in the past too — one-time window and continuous end.
+const oneTimeToday = { ...weeklyDraft, mode: "one-time" as const, startDate: TODAY, dailyStart: "09:00", dailyEnd: "11:00" };
+assert.ok(validateDraft(oneTimeToday, TODAY, "15:00").time);
+assert.deepEqual(validateDraft(oneTimeToday, TODAY, "10:00"), {}, "still airing");
+assert.deepEqual(validateDraft({ ...oneTimeToday, allDay: true }, TODAY, "15:00"), {});
+const continuousToday = { ...continuousDraft, startDate: "2026-09-01", startTime: "00:00", endDate: TODAY, endTime: "09:00" };
+assert.ok(validateDraft(continuousToday, TODAY, "15:00").endDate);
+assert.deepEqual(validateDraft(continuousToday, TODAY, "08:00"), {});
 assert.deepEqual(upcomingDays(weeklyDraft, TODAY, 3), ["2026-10-01", "2026-10-02", "2026-10-05"]);
 assert.equal(windowLabel(weeklyDraft), "06:00 – 10:00 (4 hours)");
 

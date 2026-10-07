@@ -34,7 +34,8 @@ function FieldError({ message }: { message?: string }) {
   return message ? <p className="text-xs text-danger">{message}</p> : null;
 }
 
-function DateField({ id, label, value, optional, onChange }: { id: string; label: string; value: string; optional?: boolean; onChange: (v: string) => void }) {
+/** `min` only on end dates and single-day dates — a recurring start may already be in the past (#222). */
+function DateField({ id, label, value, optional, min, onChange }: { id: string; label: string; value: string; optional?: boolean; min?: string; onChange: (v: string) => void }) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>
@@ -45,6 +46,7 @@ function DateField({ id, label, value, optional, onChange }: { id: string; label
         id={id}
         type="date"
         value={value}
+        min={min}
         onChange={(event) => onChange(event.target.value)}
       />
     </div>
@@ -159,6 +161,7 @@ export function ScheduleConfigFields({
               id="schedule-end-date"
               label="End date"
               optional={!isDateRange}
+              min={today}
               value={draft.endDate}
               onChange={(endDate) => onChange({ endDate })}
             />
@@ -197,6 +200,7 @@ export function ScheduleConfigFields({
           <DateField
             id="schedule-date"
             label="Date"
+            min={today}
             value={draft.startDate}
             onChange={(startDate) => onChange({ startDate })}
           />
@@ -226,6 +230,7 @@ export function ScheduleConfigFields({
               id="schedule-end-date"
               label="End date"
               optional
+              min={today}
               value={draft.endDate}
               onChange={(endDate) => onChange({ endDate })}
             />
