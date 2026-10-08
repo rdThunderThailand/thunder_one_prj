@@ -5,8 +5,8 @@
 
 **เอกสาร API (Swagger):** ดู `POST /media/player/jobs` และ `POST /media/player/playback` ใน Swagger ของ Core v1
 ที่ <https://thundercore.vercel.app/api-docs/v1> (tag **Media**) หน้านั้นแสดงของ production จะเห็นฟิลด์ใหม่หลัง
-release เท่านั้น ระหว่างนี้ให้ดูไฟล์ที่อัปเดตแล้วบน branch:
-<https://github.com/rdThunderThailand/Thunder_Core/blob/feat/playback-proof/public/swagger-core-v1.json>
+release เท่านั้น ระหว่างนี้ให้ดูไฟล์บน `develop`:
+<https://github.com/rdThunderThailand/Thunder_Core/blob/develop/public/swagger-core-v1.json>
 ถ้าเอกสารนี้กับ Swagger ไม่ตรงกัน ให้ถามทีม server อย่าเดาเอง
 
 ## สรุปในประโยคเดียว
