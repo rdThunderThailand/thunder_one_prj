@@ -4,8 +4,8 @@ For: Player team (Android / Windows). Why: `docs/adr/0089-playback-proof-records
 
 **API reference (Swagger):** `POST /media/player/jobs` and `POST /media/player/playback` in the Core v1
 Swagger — <https://thundercore.vercel.app/api-docs/v1> (tag **Media**). That page shows production, so it
-lists the new fields only after the release; until then read the updated file on the branch:
-<https://github.com/rdThunderThailand/Thunder_Core/blob/feat/playback-proof/public/swagger-core-v1.json>.
+lists the new fields only after the release; until then read the file on `develop`:
+<https://github.com/rdThunderThailand/Thunder_Core/blob/develop/public/swagger-core-v1.json>.
 If this spec and Swagger disagree, ask the server team — do not guess.
 
 ## In one sentence
