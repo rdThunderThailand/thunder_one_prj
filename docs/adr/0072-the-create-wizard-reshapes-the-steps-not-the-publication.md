@@ -76,6 +76,8 @@ So the picker's "create new" affordance navigates to the real editor, and the ed
 existing `?compositionId=` seeding parameter generalizes to `?playlistId=` / `?assetId=`; no
 `returnTo` round-trip is needed, because the editor's own save is the handoff.
 
+> Superseded by `0086-an-editor-seed-wins-over-the-local-create-draft.md` (the paragraph below).
+
 Arriving this way with a draft already in localStorage uses the existing resume prompt: the operator
 chooses between continuing that draft and starting fresh, and only a fresh start is seeded. A draft
 is never overwritten silently.
