@@ -15,12 +15,13 @@ import { setCompositionStatus } from "../services/compositions-api";
 import { forkLayoutForComposition, type LayoutSettingsDraft } from "../save-composition";
 import { draftSnapshot, loadCompositionDraft, resolveCreateSeed } from "../load-composition-draft";
 import type { CompositionStatus } from "../types";
-import { applyPlaybackToAll, upsertBinding, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
+import { applyPlaybackToAll, durationEditKey, keepStoredIds, upsertBinding, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
 import { useCompositionEditorData } from "../hooks/useCompositionEditorData";
 import { useCompositionPreview } from "../hooks/useCompositionPreview";
 import { useCompositionSave } from "../hooks/useCompositionSave";
 import { useEditorLayout } from "../hooks/useEditorLayout";
-import { useZoneEditGuard } from "../hooks/useZoneEditGuard";
+import { useZoneEditGuard, zoneEditKey } from "../hooks/useZoneEditGuard";
+import type { EditorSnapshot } from "../hooks/useZoneHistory";
 import { CompositionCanvasPane, ZoneOverview } from "./CompositionCanvasPane";
 import { CompositionContentBrowser } from "./CompositionContentBrowser";
 import { CompositionEditorHeader } from "./CompositionEditorHeader";
@@ -139,21 +140,31 @@ export function CompositionEditorPage({
   }, [compositionId]);
   const preview = useCompositionPreview({ compositionId: id, layout, bindings, ...data });
   const isDirty = editedZones !== null || layoutSettings !== null || draftSnapshot({ name, layoutId, bindings, folderId, tags }) !== initialSnapshot;
+  // ADR 0087 §1: Undo/Redo restore the raw draft state, keeping the ids a save already stored.
+  const restoreSnapshot = (snapshot: EditorSnapshot) => {
+    setEditedZones(snapshot.editedZones);
+    setLayoutSettings(snapshot.layoutSettings);
+    setBindings((current) => keepStoredIds(snapshot.bindings, current));
+  };
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const { beginZoneEdit, checkpoint, resetApproval, undo, redo, reset: resetHistory, canUndo, canRedo } =
+    useZoneEditGuard({ editedZones, layoutSettings, bindings }, sharedTemplateUsage, restoreSnapshot, () => confirm({
+      title: "Change a shared Template?",
+      description: `This Template is used by ${sharedTemplateUsage} Layouts. Changing it affects all of them. After you confirm, make the edit again.`,
+      confirmLabel: "Continue editing",
+    }));
+  // ADR 0087 §2: a binding change is one step; a duration typed into one row is one step per focus.
   const setBinding = (next: ZoneBindingDraft) => {
+    checkpoint(durationEditKey(bindings.find((binding) => binding.layoutZoneId === next.layoutZoneId), next) ?? undefined);
     if (next.playlistId && !Object.hasOwn(data.playlistItemsById, next.playlistId)) {
       data.hydratePlaylist(next.playlistId);
     }
     setBindings((prev) => upsertBinding(prev, next));
   };
-  const { confirm, dialog: confirmDialog } = useConfirmDialog();
-  const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, reset: resetHistory, canUndo, canRedo } =
-    useZoneEditGuard(layout?.zones ?? [], sharedTemplateUsage, setEditedZones, () => confirm({
-      title: "Change a shared Template?",
-      description: `This Template is used by ${sharedTemplateUsage} Layouts. Changing it affects all of them. After you confirm, make the edit again.`,
-      confirmLabel: "Continue editing",
-    }));
-  const applyPlaybackToAllZones = (playback: ZonePlayback) =>
+  const applyPlaybackToAllZones = (playback: ZonePlayback) => {
+    checkpoint();
     setBindings((prev) => applyPlaybackToAll(view.layoutZoneIds, prev, playback));
+  };
   const absorbLayout = (saved: LayoutListItem | null, savedId = saved?.id) => {
     if (saved) data.setLayouts((current) => [...current.filter((c) => c.id !== saved.id), saved]);
     if (savedId) setLayoutId(savedId);
@@ -351,7 +362,7 @@ export function CompositionEditorPage({
             <p className="text-[11px] font-bold text-foreground">Zone Properties</p>
             <ZonePropertiesPanel
               zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null} binding={view.binding}
-              onZoneChange={(next) => beginZoneEdit() && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
+              onZoneChange={(next) => beginZoneEdit(zoneEditKey(view.activeZone, next)) && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
               onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} previews={data.previews}
               playlists={data.playlists} playlistDurations={data.playlistDurations}
             />
@@ -360,7 +371,7 @@ export function CompositionEditorPage({
               compact name={name} onNameChange={setName} folders={data.folders}
               folderId={folderId ?? null} onFolderChange={setFolderId}
               tags={tags ?? []} onTagsChange={setTags} settings={settings}
-              onSettingsChange={(next) => confirmGeometryChange() && setLayoutSettings(next)}
+              onSettingsChange={(next) => beginZoneEdit(next.background !== settings.background ? "background" : undefined) && setLayoutSettings(next)}
               sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
             />
           ) : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}

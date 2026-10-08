@@ -11,7 +11,7 @@
 // they need the Composition to exist, and safe there because both replace wholesale — a
 // retry sets the same folder and the same tag set, so neither adds a recovery hole.
 
-import { fetchLayout, setLayoutKind, upsertLayout } from "@/features/media-workspace/layouts/services/layouts-api";
+import { createInlineLayout, fetchLayout, upsertLayout } from "@/features/media-workspace/layouts/services/layouts-api";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
 import { setPlaylistItems, upsertPlaylist } from "@/features/media-workspace/playlists/services/playlists-api";
 import { fetchComposition, forkCompositionLayout, moveComposition, setCompositionTags, setCompositionZones, upsertComposition } from "./services/compositions-api";
@@ -111,8 +111,9 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
     zoneIds = refreshedLayout.zones.flatMap((zone) => (zone.id ? [zone.id] : []));
   }
 
-  // No geometry yet — a blank canvas or a copied preset. Created as a template so the row
-  // has an id, then flipped to private `inline` geometry (ADR 0063 §2 steps 1–2).
+  // No geometry yet — a blank canvas or a copied preset. Created as private `inline` geometry
+  // in one call (ADR 0088 §4, replacing ADR 0063 §2 steps 1–2), so the Composition name never
+  // lands in `layouts.name` and a failure leaves no row behind.
   //
   // `editedZones` wins over `blankZones`: on this path the canvas edits (drag, Split, align,
   // duplicate) are made against the client-minted seed, so ignoring them here would discard
@@ -120,8 +121,7 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
   if (blankZones) {
     const zones = editedZones ?? blankZones;
     if (!layoutId) {
-      const created = await upsertLayout({
-        name: input.name.trim() || "Untitled Layout",
+      const created = await createInlineLayout({
         aspectRatio: layoutSettings?.aspectRatio ?? "16:9",
         referenceResolution: layoutSettings?.referenceResolution ?? null,
         background: layoutSettings?.background ?? "#000000",
@@ -129,15 +129,14 @@ export async function persistComposition(input: PersistInput): Promise<PersistRe
         zones: zones.map(({ name, x, y, width, height }) => ({ name, x, y, width, height })),
       });
       layoutId = created.layout_id;
-      // Step 1's id, banked before step 2 can fail: the retry arrives holding it and resumes
-      // at step 2 instead of leaving a second orphan `kind='template'` row behind.
+      // Banked before anything later can fail: the retry arrives holding it and resumes at the
+      // fetch below instead of creating a second layout.
       input.onLayoutCreated?.(layoutId);
     }
     // ponytail: a resume skips the write above, so geometry edited between the failed attempt
     // and the retry rides on the next save rather than this one — harmless while the Zone
     // count is unchanged, since the remap below is positional. Rewriting on resume needs the
     // server's Zone ids, which only exist after the fetch that follows.
-    await setLayoutKind(layoutId, "inline");
     refreshedLayout = await fetchLayout(layoutId);
     input.onLayoutSaved?.(refreshedLayout);
     bindings = remapZoneBindings(bindings, zones, refreshedLayout.zones);
