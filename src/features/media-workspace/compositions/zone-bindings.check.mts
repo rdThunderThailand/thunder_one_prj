@@ -6,8 +6,10 @@ import {
   applyPlaybackToAll,
   bindingsFromCompositionZones,
   defaultBinding,
+  durationEditKey,
   findUnboundZoneIds,
   isComplete,
+  keepStoredIds,
   remapZoneBindings,
   reorderAssetItem,
   toCompositionUpsertPayload,
@@ -281,6 +283,34 @@ assert.equal(withIdempotencyKeys(nothingToMint), nothingToMint);
   assert.deepEqual(after[1], before[1]); // untouched Zone is deep-equal
   assert.equal(after.length, 2); // a key with no binding is ignored, not appended
   assert.equal(before[0].playback.playMode, "sequential"); // input not mutated
+}
+
+// ADR 0087 §1: an undo keeps the ids a save stored, but never binds an empty Zone to a Playlist.
+{
+  const item = { media_asset_id: "a1", duration_seconds: null, transition: "cut" as const };
+  const stored: ZoneBindingDraft = { layoutZoneId: "z", source: "assets", playlistId: "pl-inline", idempotencyKey: "key-1", assetItems: [item], playback: DEFAULT_ZONE_PLAYBACK };
+  const older: ZoneBindingDraft = { ...stored, playlistId: null, idempotencyKey: undefined, assetItems: [item, { ...item, media_asset_id: "a2" }] };
+  const [kept] = keepStoredIds([older], [stored]);
+  assert.equal(kept.playlistId, "pl-inline");
+  assert.equal(kept.idempotencyKey, "key-1");
+  assert.equal(kept.assetItems.length, 2); // content itself is restored
+  const [empty] = keepStoredIds([{ ...older, assetItems: [] }], [stored]);
+  assert.equal(empty.playlistId, null); // an empty Zone is not bound to the stored Playlist
+  assert.equal(empty.idempotencyKey, "key-1");
+  const picked: ZoneBindingDraft = { ...stored, source: "playlist", playlistId: "pl-picked", idempotencyKey: undefined, assetItems: [] };
+  assert.deepEqual(keepStoredIds([picked], [stored]), [picked]); // a picked Playlist is restored as it was
+  assert.deepEqual(keepStoredIds([older], []), [older]); // no current binding, nothing to keep
+}
+
+// ADR 0087 §2: typing a duration is one continuous edit; any other binding change is not.
+{
+  const img = (id: string, seconds: number) => ({ media_asset_id: id, duration_seconds: seconds, transition: "cut" as const });
+  const base: ZoneBindingDraft = { layoutZoneId: "z", source: "assets", playlistId: null, assetItems: [img("a", 10), img("b", 5)], playback: DEFAULT_ZONE_PLAYBACK };
+  assert.equal(durationEditKey(base, { ...base, assetItems: [img("a", 12), img("b", 5)] }), "duration:z:a");
+  assert.equal(durationEditKey(base, { ...base, assetItems: [img("b", 5), img("a", 10)] }), null); // reorder
+  assert.equal(durationEditKey(base, { ...base, assetItems: [img("a", 10)] }), null); // remove
+  assert.equal(durationEditKey(base, { ...base, playback: { ...base.playback, muted: false } }), null); // setting
+  assert.equal(durationEditKey(undefined, base), null);
 }
 
 console.log("zone-bindings.check.mts — withIdempotencyKeys assertions passed");
