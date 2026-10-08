@@ -9,6 +9,7 @@ import { Plus, Trash2, Undo2 } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import { LibrarySelectionBar, LibraryShell } from "../../content-library/LibraryShell";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
@@ -54,6 +55,7 @@ export function CompositionsListPage() {
   const [previewBusyId, setPreviewBusyId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [batchMoveOpen, setBatchMoveOpen] = useState(false);
   const restoreUrlState = useCallback(() => {
     const next = readListState(new URLSearchParams(window.location.search));
@@ -175,7 +177,13 @@ export function CompositionsListPage() {
     const namesBefore = new Map([...(library?.data ?? []), ...trash].map((item) => [item.id, item.name]));
     if (!targets.length) return;
     const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
-    if (!window.confirm(`${verb} ${targets.length} layout${targets.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
+    const confirmed = await confirm({
+      title: `${verb} ${targets.length} layout${targets.length === 1 ? "" : "s"}?`,
+      description: mode === "delete" ? "This cannot be undone." : mode === "trash" ? `You can recover ${targets.length === 1 ? "it" : "them"} from Trash.` : "Layouts whose name is taken will be renamed.",
+      confirmLabel: verb,
+      isDestructive: mode !== "restore",
+    });
+    if (!confirmed) return;
     setBatchBusy(true);
     const action = mode === "trash" ? trashComposition : mode === "restore" ? restoreComposition : permanentlyDeleteComposition;
     const results = await Promise.allSettled(targets.map((id) => action(id)));
@@ -307,6 +315,7 @@ export function CompositionsListPage() {
         />
       )}
       <CompositionLibraryDialogs key={`${dialogAction}:${dialogTarget?.id ?? ""}`} action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
+      {confirmDialog}
       <CompositionBatchMoveDialog key={batchMoveOpen ? [...selectedIds].join(":") : "closed"} open={batchMoveOpen} ids={[...selectedIds]} folders={folders} onClose={() => setBatchMoveOpen(false)} onDone={() => { setBatchMoveOpen(false); setSelectedIds(new Set()); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "ย้าย Layout ไม่สำเร็จ").message); setBatchMoveOpen(false); }} />
     </div>
   );

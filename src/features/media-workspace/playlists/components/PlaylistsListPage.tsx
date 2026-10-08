@@ -63,7 +63,7 @@ export function PlaylistsListPage() {
   const { playlists, trashed, folders, error, refreshing, reload } = usePlaylistsListData(inTrash);
   const {
     selectedIds, setSelectedIds, emptyTrashOpen, setEmptyTrashOpen, emptyTrashBusy,
-    emptyTrashTargets, emptyTrashLocked, runBatch, handleEmptyTrash,
+    emptyTrashTargets, emptyTrashLocked, runBatch, handleEmptyTrash, confirmDialog,
   } = useTrashBatch({ inTrash, trashed, reload, onError: setActionError });
   const listPreview = usePlaylistListPreview((reason) => setActionError(classifyApiError(reason, "โหลด Preview ไม่สำเร็จ").message));
 
@@ -301,6 +301,7 @@ export function PlaylistsListPage() {
         onCreated={(playlistId) => router.push(`/media-workspace/playlists/${playlistId}`)}
         onError={(message) => { setActionError(message); setCreateOpen(false); }}
       />
+      {confirmDialog}
       <EmptyTrashDialog open={emptyTrashOpen} busy={emptyTrashBusy} targets={emptyTrashTargets.length} locked={emptyTrashLocked} onOpenChange={setEmptyTrashOpen} onConfirm={handleEmptyTrash} />
     </div>
   );

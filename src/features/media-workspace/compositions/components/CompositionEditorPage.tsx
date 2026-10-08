@@ -9,6 +9,7 @@ import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/compone
 import { deriveAspectRatio, parseResolution } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
 import { PlaybackPreviewDialog } from "@/features/media-workspace/preview/PlaybackPreviewDialog";
+import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
 import { setCompositionStatus } from "../services/compositions-api";
 import { forkLayoutForComposition, type LayoutSettingsDraft } from "../save-composition";
@@ -145,8 +146,13 @@ export function CompositionEditorPage({
     setLayoutSettings(snapshot.layoutSettings);
     setBindings((current) => keepStoredIds(snapshot.bindings, current));
   };
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const { beginZoneEdit, checkpoint, resetApproval, undo, redo, reset: resetHistory, canUndo, canRedo } =
-    useZoneEditGuard({ editedZones, layoutSettings, bindings }, sharedTemplateUsage, restoreSnapshot);
+    useZoneEditGuard({ editedZones, layoutSettings, bindings }, sharedTemplateUsage, restoreSnapshot, () => confirm({
+      title: "Change a shared Template?",
+      description: `This Template is used by ${sharedTemplateUsage} Layouts. Changing it affects all of them. After you confirm, make the edit again.`,
+      confirmLabel: "Continue editing",
+    }));
   // ADR 0087 §2: a binding change is one step; a duration typed into one row is one step per focus.
   const setBinding = (next: ZoneBindingDraft) => {
     checkpoint(durationEditKey(bindings.find((binding) => binding.layoutZoneId === next.layoutZoneId), next) ?? undefined);
@@ -191,8 +197,14 @@ export function CompositionEditorPage({
     }
     return publishChanges("compositions", id!);
   };
-  const handleForkLayout = () => {
-    if (!id || !window.confirm(`This Template is used by ${sharedTemplateUsage} Layouts. Make this Layout its own copy?`)) return;
+  const handleForkLayout = async () => {
+    if (!id) return;
+    const confirmed = await confirm({
+      title: "Make this Layout its own copy?",
+      description: `This Template is used by ${sharedTemplateUsage} Layouts. This Layout gets a private copy, so later edits no longer affect the others.`,
+      confirmLabel: "Make a copy",
+    });
+    if (!confirmed) return;
     void run(async () => {
       const forked = await forkLayoutForComposition(id, revision);
       setLayoutId(forked.layout.id);
@@ -284,6 +296,7 @@ export function CompositionEditorPage({
         saveError={saveError} sharedTemplateUsage={sharedTemplateUsage} saving={saving}
         onForkLayout={handleForkLayout}
       />
+      {confirmDialog}
       <PlaybackPreviewDialog
         open={previewOpen} onClose={() => setPreviewOpen(false)}
         zones={preview.playbackPreviewZones} assets={data.assets}

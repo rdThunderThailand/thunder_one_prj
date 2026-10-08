@@ -14,6 +14,7 @@ import { DEFAULT_ASPECT_RATIO, DEFAULT_BACKGROUND, DEFAULT_RESOLUTION, type Layo
 import { LayoutCanvas } from "./LayoutCanvas";
 import { LayoutEditorHeader, LayoutEditorToolbar, LayoutZoneOverview } from "./LayoutEditorChrome";
 import { LayoutSettingsPanel } from "./LayoutSettingsPanel";
+import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import { TemplateRail } from "./TemplateRail";
 import { ZoneProperties } from "./ZoneProperties";
 
@@ -45,6 +46,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [usageCount, setUsageCount] = useState(0);
@@ -97,14 +99,19 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       if (nextRes) {
         const nextAspectRatio = deriveAspectRatio(nextRes[0], nextRes[1]);
         const ratioChanged = !!prevRes && !sameRatio(prevRes, nextRes);
-        const confirmMessage =
-          usageCount > 0
-            ? `This changes the aspect ratio and will affect ${usageCount} Composition(s) using this Template. Zone percentages are kept as-is.`
-            : "This changes the aspect ratio. Zone percentages are kept as-is.";
-        if (ratioChanged && draft.zones.length > 0 && !window.confirm(confirmMessage)) {
+        const applyNext = () => setDraft((d) => ({ ...d, ...next, aspectRatio: nextAspectRatio }));
+        if (ratioChanged && draft.zones.length > 0) {
+          void confirm({
+            title: "Change the aspect ratio?",
+            description:
+              usageCount > 0
+                ? `This changes the aspect ratio and will affect ${usageCount} Composition(s) using this Template. Zone percentages are kept as-is.`
+                : "This changes the aspect ratio. Zone percentages are kept as-is.",
+            confirmLabel: "Change",
+          }).then((confirmed) => { if (confirmed) applyNext(); });
           return;
         }
-        setDraft((d) => ({ ...d, ...next, aspectRatio: nextAspectRatio }));
+        applyNext();
         return;
       }
     }
@@ -120,7 +127,14 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   };
 
   const handleSave = async () => {
-    if (usageCount > 1 && !window.confirm(`This Template is used by ${usageCount} Layouts. Changing the Zones affects all of them.`)) return;
+    if (usageCount > 1) {
+      const confirmed = await confirm({
+        title: "Save changes to a shared Template?",
+        description: `This Template is used by ${usageCount} Layouts. Changing the Zones affects all of them.`,
+        confirmLabel: "Save",
+      });
+      if (!confirmed) return;
+    }
     setSaveError(null);
     setSaving(true);
     try {
@@ -186,6 +200,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       />
       </div>
 
+      {confirmDialog}
       {confirmLeave && (
         <UnsavedLeaveConfirm
           onStay={() => setConfirmLeave(false)}
