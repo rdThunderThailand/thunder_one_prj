@@ -65,8 +65,8 @@ A tenant-wide place for filing one kind of Communication content: Assets, Playli
 _Avoid_: Tag (many-to-many, a different question and not built), shared content Folder (each feature has its own tree), `asset_folders` (that is Asset Intelligence's physical-asset table, unrelated)
 
 **Trash**:
-A virtual collection of soft-deleted Assets, Playlists or operator-facing Layouts, separate within each feature and never a Folder row. Restoring returns an item to its former Folder when possible or to `Uncategorized`; permanent deletion is an explicit, dependency-checked action available only from Trash. `docs/adr/0056-nested-feature-folders-and-trash.md`.
-_Avoid_: Archive, Trash Folder
+A virtual collection of soft-deleted Assets, Playlists or operator-facing Layouts, separate within each feature and never a Folder row. Recovering returns an item to its former Folder when possible or to `Uncategorized`; Permanent delete is an explicit, dependency-checked action available only from Trash. `docs/adr/0056-nested-feature-folders-and-trash.md`.
+_Avoid_: Archive, Trash Folder, Restore (in UI copy — the contract keeps `*_restore`), Delete forever
 
 **Media Detail**:
 The read view for one Communication Asset, opened from its Media Library preview or title. It presents persisted Asset/File facts and supported actions only; Usage, Asset Tags, Versions and Activity History remain unavailable until their own tenant-scoped contracts exist. `docs/adr/0056-nested-feature-folders-and-trash.md`.
