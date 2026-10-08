@@ -68,7 +68,7 @@ export const mediaWorkspaceNav: NavConfig = {
     {
       label: "Reports & Analytics",
       items: [
-        { label: "Reports", icon: <BarChart3 className={iconClass} /> },
+        { label: "Playback Proof", href: "/media-workspace/playback-proof", icon: <BarChart3 className={iconClass} /> },
         { label: "Analytics", icon: <TrendingUp className={iconClass} /> },
       ],
     },
