@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import Link from "next/link";
+import { CalendarCog, Eye, FilePenLine, type LucideIcon } from "lucide-react";
 import { MoreIcon } from "@/components/ui/icons";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import {
@@ -26,6 +27,13 @@ const LABELS: Record<RowAction, string> = {
 };
 
 const DESTRUCTIVE: RowAction[] = ["delete", "end"];
+
+/** QA 2026-10-08 #8: the primary action is an icon, one per kind of edit, named by tooltip + aria-label. */
+const PRIMARY_ICONS: Partial<Record<RowAction, { icon: LucideIcon; label: string }>> = {
+  edit: { icon: FilePenLine, label: "แก้ไข Draft" },
+  open: { icon: CalendarCog, label: "แก้ไข Program" },
+  view: { icon: Eye, label: "ดู Program" },
+};
 
 // Open/View land on the Edit page (read-only for Ended). Draft Edit/Publish resume the wizard, which
 // is where a Draft's content, targets and schedule are still set.
@@ -54,15 +62,18 @@ export function PublicationRowActions({
 }) {
   const [primary, ...rest] = rowActionsFor(item.display_status);
   const primaryHref = hrefFor(primary, item.id);
+  const primaryIcon = PRIMARY_ICONS[primary];
 
   return (
     <div className="flex items-center justify-end gap-1">
-      {primaryHref && (
+      {primaryHref && primaryIcon && (
         <Link
           href={primaryHref}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-14 px-0 text-[10px]")}
+          title={primaryIcon.label}
+          aria-label={`${primaryIcon.label}: ${item.name}`}
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8 text-muted-foreground hover:text-primary")}
         >
-          {LABELS[primary]}
+          <primaryIcon.icon className="h-4 w-4" />
         </Link>
       )}
       <DropdownMenu>
