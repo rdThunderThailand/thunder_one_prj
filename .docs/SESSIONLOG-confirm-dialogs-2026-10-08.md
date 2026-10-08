@@ -25,23 +25,21 @@
 - บันทึก Composition blank: `POST /media/layouts` 201 → `POST /media/compositions` 201 → `PUT zones` / `PATCH` / `PUT tags` 200; layout ที่ได้ `kind: inline`, ชื่อ `comp:<id>` (ไม่ใช่ชื่อ Composition) = พฤติกรรม ADR 0088 §4 ของ Core v0.9.0
 - Trash แล้วสร้างใหม่ด้วยชื่อเดิม (#229): สร้างได้ 201 ไม่ชน
 - ข้อควรจำ: คลิกด้วยพิกัดใน browser pane ที่ resize แล้วพลาดได้ (ครั้งแรกคิดว่าเป็นบั๊กทั้งที่ไม่ใช่) — ใช้ JS `.click()` หรือ ref และดู network ก่อนสรุป
-- **ข้อมูลทดสอบที่เหลือบน prod (ผู้ใช้สั่งเก็บไว้ก่อน ห้ามลบเองเพราะ R0):** ชื่อ `zz-v090-check` — Composition `1fc67a78-81e9-4739-8a18-9a6e82b25c88` (Trash), `7df5c3fb-fedd-473f-8afb-e7b8e35607b8` (active); inline layout `a0f5ab88-3215-4d7b-9d96-41c363d0c7f2`, `ffd4d147-468c-4d0e-8af4-cccd3a55d280`
+- Contextual Help panel (ปุ่ม `?` ใน Topbar) บน prod ผ่าน: เปิดได้ 3 แท็บ (หน้านี้ / คู่มือ / ช่วยเหลือ) เนื้อหาตรงกับหน้า Layouts
+- ข้อมูลทดสอบ `zz-v090-check` (Composition 2 + inline layout 2) ลบถาวรแล้วบน prod หลังผู้ใช้อนุมัติรายการ — ตรวจ GET คืน 404 ทั้ง 4 id (inline layout หายตาม Composition) ส่วน `LED TEST #7202 copy` ใน Trash ไม่ใช่ของเรา ไม่ได้แตะ
 
 ## ยังไม่ได้ verify
 - #250 สี่จุด: บันทึก shared Template, "Make own copy", guard geometry บน shared Template, "Leave and create a Template?" (develop ไม่มี fixture) และ merge กับ #245 (Undo) ยังไม่ได้ลองใน browser
-- **Contextual Help panel** (`?` ใน Topbar) บน prod ยังไม่ได้เช็ก
 - ไม่ได้ตรวจซ้ำว่า md5 ของ `prosrc` บน prod ตรงไฟล์ migration ทั้ง 4 ของ #172/#174 (อ้างผลจากเซสชันก่อน)
 - การยิง `POST /layouts` โดยไม่มี auth ไปที่ `thundercore.vercel.app` ตอบ 401 แต่ prod FE ใช้ `api.thunder.co.th` จึงไม่นับเป็นหลักฐานว่า deploy แล้ว
 
 ## เจออะไร / ข้อควรจำ
 - `useZoneEditGuard` เป็น sync gate → modal (async) ทำให้การแก้ครั้งแรกบน shared Template ถูกปฏิเสธระหว่าง modal เปิด แล้วผู้ใช้ต้องแก้ซ้ำ (ถามครั้งเดียวต่อ session)
 - #243 ปุ่มเปลี่ยนภาษาพึ่ง Core #167 ซึ่งไม่ได้ release → บน prod ภาษาถูกเก็บใน cookie ของเครื่อง (`saved: false`) ตามที่ #243 ออกแบบให้ degrade
-- ตาราง Managed releases ของ Core ไม่มีแถว 0.7.0 และแถว 0.8.0 อยู่ผิดลำดับ — ไม่ได้แก้
+- ตาราง Managed releases ของ Core ไม่มีแถว 0.7.0 และแถว 0.8.0 อยู่ผิดลำดับ — แก้แล้วใน Core#180
 - Core checkout มีไฟล์แก้ค้างของคนอื่น → ใช้ git worktree ใน `/private/tmp/claude-501/` แทน (ลบหมดแล้ว)
 
 ## ค้าง
-- merge FE#253 / Core#178
-- Core back-merge `main → develop` (ทำหลัง Core#178)
+- merge Core#179 (back-merge), Core#180 (ตารางเวอร์ชัน), FE#254 (SESSIONLOG นี้)
 - #162 / #167 รอ apply migration บน prod ก่อนจึง release ได้
-- ตรวจ prod หลัง login (ข้างบน)
 - ยังค้างจาก handoff: issue #248, #249, ลบ `zz-mw003-zones` บน develop (R0 ถามก่อน)
