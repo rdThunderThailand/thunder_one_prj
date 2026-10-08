@@ -155,8 +155,9 @@ export async function trashComposition(
   return requestApi("DELETE", `/media/compositions/${id}`);
 }
 
-export async function restoreComposition(id: string): Promise<void> {
-  await requestApi("POST", `/media/compositions/${id}/restore`);
+/** ADR 0088 §2: the name it was restored under — " (2)" etc. when a live one holds the old name. */
+export async function restoreComposition(id: string): Promise<{ name: string }> {
+  return requestApi("POST", `/media/compositions/${id}/restore`);
 }
 
 export async function permanentlyDeleteComposition(
