@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/lovable/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { classifyApiError } from "@/lib/api/api-error";
+import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import type { ContentFolder } from "@/types/domain";
 import { writeCreateSeed, type CreateSeed } from "../create-seed";
 import { fetchLayouts } from "../services/layouts-api";
@@ -94,6 +95,7 @@ export function LayoutTemplatePicker({
   hasUnsavedChanges?: boolean;
 }) {
   const router = useRouter();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [step, setStep] = useState<"start" | "templates">("start");
   const [choice, setChoice] = useState<StartChoice>("blank");
   const [details, setDetails] = useState<StartDetails>(INITIAL_DETAILS);
@@ -168,10 +170,20 @@ export function LayoutTemplatePicker({
     setStep("start");
   };
 
-  const createTemplate = () => {
-    if (hasUnsavedChanges && !window.confirm("You have unsaved Layout changes. Leave and create a Template?")) return;
+  const goCreateTemplate = () => {
     resetAndClose();
     router.push("/media-workspace/layouts/templates/create");
+  };
+  const createTemplate = () => {
+    if (!hasUnsavedChanges) {
+      goCreateTemplate();
+      return;
+    }
+    void confirm({
+      title: "Leave and create a Template?",
+      description: "You have unsaved Layout changes.",
+      confirmLabel: "Leave",
+    }).then((confirmed) => { if (confirmed) goCreateTemplate(); });
   };
 
   const footer = step === "start" ? (
@@ -283,6 +295,7 @@ export function LayoutTemplatePicker({
           )}
         </div>
         <DialogFooter>{footer}</DialogFooter>
+        {confirmDialog}
       </DialogContent>
     </Dialog>
   );

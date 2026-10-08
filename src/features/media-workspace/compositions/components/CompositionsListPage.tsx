@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Plus, Trash2, Undo2 } from "lucide-react";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
+import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import { LibrarySelectionBar, LibraryShell } from "../../content-library/LibraryShell";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
@@ -53,6 +55,7 @@ export function CompositionsListPage() {
   const [previewBusyId, setPreviewBusyId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [batchMoveOpen, setBatchMoveOpen] = useState(false);
   const restoreUrlState = useCallback(() => {
     const next = readListState(new URLSearchParams(window.location.search));
@@ -135,7 +138,10 @@ export function CompositionsListPage() {
       return;
     }
     if (action === "restore") {
-      void runImmediate(item, () => restoreComposition(item.id), "กู้คืน Layout ไม่สำเร็จ");
+      void runImmediate(item, async () => {
+        const { name } = await restoreComposition(item.id);
+        if (name !== item.name) toast.info(`กู้คืนเป็น '${name}' เพราะมีชื่อนี้อยู่แล้ว`);
+      }, "กู้คืน Layout ไม่สำเร็จ");
       return;
     }
     setDialogAction(action);
@@ -166,10 +172,18 @@ export function CompositionsListPage() {
     return [first, ...rest].flatMap((result) => result.data);
   };
   const runBatch = async (mode: "trash" | "restore" | "delete", ids?: string[]) => {
-    const targets = ids ?? (await loadAllTrash()).map((item) => item.id);
+    const trash = ids ? [] : await loadAllTrash();
+    const targets = ids ?? trash.map((item) => item.id);
+    const namesBefore = new Map([...(library?.data ?? []), ...trash].map((item) => [item.id, item.name]));
     if (!targets.length) return;
     const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
-    if (!window.confirm(`${verb} ${targets.length} layout${targets.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
+    const confirmed = await confirm({
+      title: `${verb} ${targets.length} layout${targets.length === 1 ? "" : "s"}?`,
+      description: mode === "delete" ? "This cannot be undone." : mode === "trash" ? `You can recover ${targets.length === 1 ? "it" : "them"} from Trash.` : "Layouts whose name is taken will be renamed.",
+      confirmLabel: verb,
+      isDestructive: mode !== "restore",
+    });
+    if (!confirmed) return;
     setBatchBusy(true);
     const action = mode === "trash" ? trashComposition : mode === "restore" ? restoreComposition : permanentlyDeleteComposition;
     const results = await Promise.allSettled(targets.map((id) => action(id)));
@@ -182,7 +196,15 @@ export function CompositionsListPage() {
           (("trashed" in result.value && !result.value.trashed) || ("deleted" in result.value && !result.value.deleted))),
     ).length;
     setSelectedIds(new Set());
-    setActionError(failed ? `${failed} layout${failed === 1 ? "" : "s"} could not be updated because it is in use.` : null);
+    if (mode === "restore") {
+      // ADR 0088 §2: restore renames on a clash instead of failing.
+      const renamed = results.filter((result, index) =>
+        result.status === "fulfilled" && result.value && "name" in result.value && result.value.name !== namesBefore.get(targets[index])).length;
+      if (renamed) toast.info(`${renamed} รายการถูกเปลี่ยนชื่อเพราะมีชื่อนี้อยู่แล้ว`);
+      setActionError(failed ? `กู้คืนไม่สำเร็จ ${failed} รายการ` : null);
+    } else {
+      setActionError(failed ? `${failed} layout${failed === 1 ? "" : "s"} could not be updated because it is in use.` : null);
+    }
     reload();
     setBatchBusy(false);
   };
@@ -293,6 +315,7 @@ export function CompositionsListPage() {
         />
       )}
       <CompositionLibraryDialogs key={`${dialogAction}:${dialogTarget?.id ?? ""}`} action={dialogAction} target={dialogTarget} folders={folders} onClose={closeDialog} onDone={() => { closeDialog(); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "อัปเดต Layout ไม่สำเร็จ").message); closeDialog(); }} />
+      {confirmDialog}
       <CompositionBatchMoveDialog key={batchMoveOpen ? [...selectedIds].join(":") : "closed"} open={batchMoveOpen} ids={[...selectedIds]} folders={folders} onClose={() => setBatchMoveOpen(false)} onDone={() => { setBatchMoveOpen(false); setSelectedIds(new Set()); reload(); }} onError={(reason) => { setActionError(classifyApiError(reason, "ย้าย Layout ไม่สำเร็จ").message); setBatchMoveOpen(false); }} />
     </div>
   );

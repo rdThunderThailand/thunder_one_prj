@@ -5,7 +5,7 @@
  */
 import assert from "node:assert/strict";
 import { defaultScheduleDraft } from "./schedule-preset.ts";
-import { hasDraftContent, shouldShowResumePrompt } from "./resume-prompt.ts";
+import { hasDraftContent, hasUnfinishedDraft, shouldShowResumePrompt } from "./resume-prompt.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 
 const baseDraft: DraftFields = {
@@ -54,25 +54,44 @@ assert.equal(hasDraftContent({ ...baseDraft, playlistId: "pl-1" }), true);
 // schedule cannot influence the answer: the Pick type keeps it out of the signature,
 // so the compiler enforces that invariant and no runtime assertion can add to it.
 
-// 9. shouldShowResumePrompt with hadContentAtHydration true, not edit mode, not dismissed → true
+// Never-saved content matters, while saved drafts rely on the saved snapshot.
+const namedDraft = { ...baseDraft, basicInfo: { ...baseDraft.basicInfo, name: "Summer promo" } };
+assert.equal(hasUnfinishedDraft(baseDraft, false), false);
+assert.equal(hasUnfinishedDraft(baseDraft, true), false, "default schedule dirtiness is not unfinished work");
+assert.equal(hasUnfinishedDraft(namedDraft, false), true);
+assert.equal(hasUnfinishedDraft({ ...namedDraft, publicationId: "pub-1" }, false), false);
+assert.equal(hasUnfinishedDraft({ ...namedDraft, publicationId: "pub-1" }, true), true);
+assert.equal(hasUnfinishedDraft({ ...baseDraft, publicationId: "pub-1" }, true), true);
+
+// Capture once: later edits cannot trigger a prompt for an empty arrival.
+const hadUnfinishedWorkAtHydration = hasUnfinishedDraft(baseDraft, false);
+assert.equal(hasUnfinishedDraft(namedDraft, true), true);
 assert.equal(
-  shouldShowResumePrompt({ hadContentAtHydration: true, isEditMode: false, dismissed: false }),
+  shouldShowResumePrompt({ hadUnfinishedWorkAtHydration, isEditMode: false, dismissed: false }),
+  false,
+);
+
+// A dirty arrival keeps prompting until explicitly dismissed, even if later clean.
+const dirtyAtHydration = hasUnfinishedDraft({ ...namedDraft, publicationId: "pub-1" }, true);
+assert.equal(hasUnfinishedDraft({ ...namedDraft, publicationId: "pub-1" }, false), false);
+assert.equal(
+  shouldShowResumePrompt({ hadUnfinishedWorkAtHydration: dirtyAtHydration, isEditMode: false, dismissed: false }),
   true
 );
 
 // 10. three ways it goes false
 assert.equal(
-  shouldShowResumePrompt({ hadContentAtHydration: false, isEditMode: false, dismissed: false }),
+  shouldShowResumePrompt({ hadUnfinishedWorkAtHydration: false, isEditMode: false, dismissed: false }),
   false,
   "no content → false"
 );
 assert.equal(
-  shouldShowResumePrompt({ hadContentAtHydration: true, isEditMode: true, dismissed: false }),
+  shouldShowResumePrompt({ hadUnfinishedWorkAtHydration: true, isEditMode: true, dismissed: false }),
   false,
   "edit mode → false"
 );
 assert.equal(
-  shouldShowResumePrompt({ hadContentAtHydration: true, isEditMode: false, dismissed: true }),
+  shouldShowResumePrompt({ hadUnfinishedWorkAtHydration: true, isEditMode: false, dismissed: true }),
   false,
   "dismissed → false"
 );

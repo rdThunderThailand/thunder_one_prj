@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ShortcutPlatformProvider } from "@/components/layout/ShortcutPlatform";
 import { Topbar } from "@/components/layout/Topbar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
+import { env } from "@/config/env";
 import { getSession } from "@/features/auth/services/get-session";
+import { headers } from "next/headers";
+import { getAppLocale } from "@/lib/app-locale.server";
+import { platformFromHeaders } from "@/lib/keyboard-shortcut";
 
 // Everything behind login is private tenant data — never index it, even if
 // a crawler somehow gets a session (robots.ts also disallows crawling).
@@ -30,27 +35,41 @@ export default async function DashboardLayout({
   // access-tier label; falls back to the tier label (e.g. "Company
   // Administrator") only for members with no job_title set.
   const roleLabel = jobTitle ?? resolveRoleLabel(resolveRole(session));
+  const locale = await getAppLocale(session.preferredLanguage);
+  // ⌘ on Apple devices, Ctrl elsewhere, for every shortcut hint in the shell (lib/keyboard-shortcut).
+  const shortcutPlatform = platformFromHeaders(await headers());
 
   return (
-    <div className="flex h-full">
-      <Sidebar
-        tenantId={tenantId}
-        tenantName={tenantName}
-        // Only a platform super admin gets the tenant switcher (Nie,
-        // 2026-09-29); a member of several tenants still sees a plain label.
-        availableTenants={isSuperAdmin ? availableTenants : []}
-      />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <Topbar
-          userName={userName}
-          roleLabel={roleLabel}
-          avatarUrl={avatarUrl}
+    <ShortcutPlatformProvider platform={shortcutPlatform}>
+      <div className="flex h-full">
+        <Sidebar
+          tenantId={tenantId}
+          tenantName={tenantName}
+          // Only a platform super admin gets the tenant switcher (Nie,
+          // 2026-09-29); a member of several tenants still sees a plain label.
+          availableTenants={isSuperAdmin ? availableTenants : []}
         />
-        <main className="flex-1 overflow-y-auto bg-zinc-50 px-6 py-6 dark:bg-zinc-950">
-          {children}
-        </main>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <Topbar
+            userName={userName}
+            roleLabel={roleLabel}
+            avatarUrl={avatarUrl}
+            locale={locale}
+            helpSupport={{
+              contactUrl: env.helpSupportUrl || undefined,
+              chatUrl: env.helpSupportChatUrl || undefined,
+              email: env.helpSupportEmail || undefined,
+              phone: env.helpSupportPhone || undefined,
+              hours: env.helpSupportHours || undefined,
+              statusUrl: env.helpStatusUrl || undefined,
+            }}
+          />
+          <main className="flex-1 overflow-y-auto bg-zinc-50 px-6 py-6 dark:bg-zinc-950">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ShortcutPlatformProvider>
   );
 }
 

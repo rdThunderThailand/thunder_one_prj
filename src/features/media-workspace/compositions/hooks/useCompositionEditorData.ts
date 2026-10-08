@@ -81,7 +81,11 @@ export function useCompositionEditorData() {
     Promise.all([fetchLayouts(), fetchMediaAssets().catch(() => []), fetchPlaylists(), fetchContentFolders("composition").catch(() => [])])
       .then(([allLayouts, allAssets, allPlaylists, allFolders]) => {
         if (!alive) return;
-        setLayouts(allLayouts.filter((layout) => layout.status === "active"));
+        // Merge, never replace: the editor may already have added the Composition's own inline
+        // layout (not in this Template list). Replacing raced it away when the Composition loaded
+        // first, leaving `layout` null and the editor on "Start from the Template Picker".
+        const active = allLayouts.filter((layout) => layout.status === "active");
+        setLayouts((current) => [...active, ...current.filter((row) => !active.some((layout) => layout.id === row.id))]);
         setAssets(allAssets);
         setPlaylists(allPlaylists);
         setFolders(allFolders);

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { classifyApiError } from "@/lib/api/api-error";
 import { permanentlyDeletePlaylist, restorePlaylist } from "@/lib/api/media-api";
+import { useConfirmDialog } from "../content-library/useConfirmDialog";
 import { deletePlaylist } from "./services/playlists-api";
 import type { PlaylistListItem } from "./types";
 
@@ -13,6 +14,7 @@ export function useTrashBatch({ inTrash, trashed, reload, onError }: {
   reload: () => Promise<unknown>;
   onError: (message: string | null) => void;
 }) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
   const [emptyTrashBusy, setEmptyTrashBusy] = useState(false);
@@ -46,7 +48,13 @@ export function useTrashBatch({ inTrash, trashed, reload, onError }: {
   const runBatch = async (mode: "trash" | "restore" | "delete", ids: string[]) => {
     if (!ids.length) return;
     const verb = mode === "trash" ? "Move" : mode === "restore" ? "Recover" : "Permanently delete";
-    if (!window.confirm(`${verb} ${ids.length} playlist${ids.length === 1 ? "" : "s"}?${mode === "delete" ? " This cannot be undone." : ""}`)) return;
+    const confirmed = await confirm({
+      title: `${verb} ${ids.length} playlist${ids.length === 1 ? "" : "s"}?`,
+      description: mode === "delete" ? "This cannot be undone." : `You can recover ${ids.length === 1 ? "it" : "them"} from Trash.`,
+      confirmLabel: verb,
+      isDestructive: mode !== "restore",
+    });
+    if (!confirmed) return;
     setEmptyTrashBusy(true);
     const action = mode === "trash" ? deletePlaylist : mode === "restore" ? restorePlaylist : permanentlyDeletePlaylist;
     const results = await Promise.allSettled(ids.map((id) => action(id)));
@@ -61,5 +69,5 @@ export function useTrashBatch({ inTrash, trashed, reload, onError }: {
     setEmptyTrashBusy(false);
   };
 
-  return { selectedIds, setSelectedIds, emptyTrashOpen, setEmptyTrashOpen, emptyTrashBusy, emptyTrashTargets, emptyTrashLocked, runBatch, handleEmptyTrash };
+  return { selectedIds, setSelectedIds, emptyTrashOpen, setEmptyTrashOpen, emptyTrashBusy, emptyTrashTargets, emptyTrashLocked, runBatch, handleEmptyTrash, confirmDialog };
 }

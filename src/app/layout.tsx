@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Manrope } from "next/font/google";
 import { Toaster } from "sonner";
+import { getAppLocale } from "@/lib/app-locale.server";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -61,14 +62,15 @@ export const viewport: Viewport = {
   themeColor: "#075df7",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <html
-      lang="th"
+      // The user's language (lib/app-locale): the cookie, seeded at login from preferred_language.
+      lang={await getAppLocale()}
       className={`${manrope.variable} ${geistMono.variable} h-full`}
     >
       <body className="h-full flex flex-col">

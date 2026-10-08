@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/lovable/button";
 import { StatusBadge } from "@/components/ui/lovable/core";
 import { CheckIcon, EditIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
+import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
+import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 
 /** The editor's title bar: editable name, save state, preview, and the Publication-wizard handoff. */
 export function PlaylistEditorHeader({
@@ -49,6 +51,14 @@ export function PlaylistEditorHeader({
   onShowPrograms: () => void;
   onSave: () => void;
 }) {
+  // ⌘Z / ⇧⌘Z on Apple; Ctrl+Z / Ctrl+Y elsewhere (Ctrl+Shift+Z works too).
+  const shortcutPlatform = useShortcutPlatform();
+  const undoKeys = shortcutLabel(shortcutPlatform, "z");
+  const redoKeys = shortcutPlatform === "apple" ? shortcutLabel(shortcutPlatform, "z", { shift: true }) : shortcutLabel(shortcutPlatform, "y");
+  const redoAria =
+    shortcutPlatform === "apple"
+      ? shortcutAria(shortcutPlatform, "z", { shift: true })
+      : `${shortcutAria(shortcutPlatform, "y")} ${shortcutAria(shortcutPlatform, "z", { shift: true })}`;
   const [editing, setEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const displayName = name.trim() || "Untitled Playlist";
@@ -133,8 +143,9 @@ export function PlaylistEditorHeader({
           type="button"
           onClick={onUndo}
           disabled={!canUndo}
-          aria-label="ย้อนกลับ (⌘Z)"
-          title="ย้อนกลับ (⌘Z)"
+          aria-label={`ย้อนกลับ (${undoKeys})`}
+          title={`ย้อนกลับ (${undoKeys})`}
+          aria-keyshortcuts={shortcutAria(shortcutPlatform, "z")}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
         >
           <UndoIcon className="h-4 w-4" />
@@ -143,8 +154,9 @@ export function PlaylistEditorHeader({
           type="button"
           onClick={onRedo}
           disabled={!canRedo}
-          aria-label="ทำซ้ำ (⇧⌘Z)"
-          title="ทำซ้ำ (⇧⌘Z)"
+          aria-label={`ทำซ้ำ (${redoKeys})`}
+          title={`ทำซ้ำ (${redoKeys})`}
+          aria-keyshortcuts={redoAria}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
         >
           <RedoIcon className="h-4 w-4" />

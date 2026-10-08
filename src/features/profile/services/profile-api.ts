@@ -9,9 +9,11 @@
 // thunder_core_API directly (2026-09-16). Writing is far narrower:
 // `PATCH /api/core/v1/users/{id}` (`updateProfileSchema` in Core's
 // src/lib/core/member-view.ts) only accepts the fields in UpdateProfileInput
-// below — `display_name`/`avatar_url`/`preferred_language`/`timezone` are
-// real to *read* but have no PATCH write path — don't send them in a PATCH
-// body (the schema is `.strict()`, unknown keys → 400). `avatar_url` has its
+// below — `display_name`/`avatar_url`/`timezone` are real to *read* but have
+// no PATCH write path — don't send them in a PATCH body (the schema is
+// `.strict()`, unknown keys → 400). `preferred_language` is writable since
+// 2026-10-06 (owner only, "th-TH" | "en-US"), but only through the shell's
+// language switch (`/api/me/language`), never from a profile form. `avatar_url` has its
 // own dedicated upload route instead: `uploadMyAvatar`/`removeMyAvatar` below.
 //
 // `first_name_th`/`last_name_th` real since 2026-09-16 (commit `f15d612`) —

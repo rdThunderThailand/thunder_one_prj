@@ -10,7 +10,6 @@ import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon, ArrowRightIcon, PaperPlaneIcon } from "@/components/ui/icons";
 import { wizardSteps } from "../mock-data";
 import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import { hasDraftContent, shouldShowResumePrompt } from "../resume-prompt";
 import { Modal } from "@/components/ui/Modal";
 import { usePublishDraft } from "../hooks/usePublishDraft";
 import { useLayoutAspectRatio } from "../hooks/useLayoutAspectRatio";
@@ -20,8 +19,11 @@ import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending, resumeStep } from "../next-transition";
-import { publicationSeedFromParams, resolveSeed, type SeedChoice } from "../seed-resolver";
-import { DEFAULT_IMAGE_DURATION_SECONDS } from "../draft-mapping";
+import { publicationSeedFromParams } from "../seed-resolver";
+import { requireCompleteDraftSave } from "../draft-save-policy";
+import { useCreateDraftEntry } from "../hooks/useCreateDraftEntry";
+import { DraftResumePrompt } from "./DraftResumePrompt";
+import { Button as LovableButton } from "@/components/ui/lovable/button";
 import { type WizardStepId } from "../step-validation";
 import { ContentStep } from "./ContentStep";
 import { PrepareContentStep } from "./PrepareContentStep";
@@ -58,6 +60,7 @@ export function CreatePublicationPage() {
   const step = usePublicationDraftStore((s) => s.step);
   const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
+  const draftName = usePublicationDraftStore((s) => s.basicInfo.name);
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
   const goBack = usePublicationDraftStore((s) => s.goBack);
 
@@ -79,18 +82,7 @@ export function CreatePublicationPage() {
   const [showFieldErrors, setShowFieldErrors] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
-  const [dismissedResume, setDismissedResume] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
-
-  // Captured once, the first time we render with a rehydrated store. Anything the operator
-  // types afterwards must not change this answer.
-  const hadContentAtHydrationRef = useRef<boolean | null>(null);
-  // eslint-disable-next-line react-hooks/refs
-  if (hasHydrated && hadContentAtHydrationRef.current === null) {
-    hadContentAtHydrationRef.current = hasDraftContent(usePublicationDraftStore.getState());
-  }
-  // eslint-disable-next-line react-hooks/refs
-  const hadContentAtHydration = hadContentAtHydrationRef.current ?? false;
 
   // Derived, not state: `resumedId` only settles once the fetch has finished, so
   // the wizard never paints the *previous* draft's values before ?id= replaces
@@ -165,9 +157,6 @@ export function CreatePublicationPage() {
     };
   }, [hasHydrated, idParam, loadPublicationIntoDraft]);
 
-  const [seedChoice, setSeedChoice] = useState<SeedChoice>(null);
-  const seedResolvedRef = useRef(false);
-
   const [retrying, setRetrying] = useState(false);
 
   const handleRetryResume = async () => {
@@ -206,54 +195,30 @@ export function CreatePublicationPage() {
     canPublish,
     eligibilityChecks,
     persistDraft,
+    saveDraft,
     saveStatus,
     setSaveStatus,
     savingNext,
     setSavingNext,
   } = usePublishDraft();
 
-  // Editor Publish actions hand one saved content id to the wizard. Hold it pending until the
-  // resume choice is made so Continue never mutates an existing draft (ADR 0072 §3).
-  useEffect(() => {
-    if (!hasHydrated || seedResolvedRef.current) return;
-    if (seed?.kind === "asset" && assetsLoading) return;
+  const entry = useCreateDraftEntry({
+    hasHydrated, idParam, seed, assets, assetsLoading, assetsError,
+    loadingChannels: loadingRefs, channelsError, revisionConflict, setRevisionConflict, persistDraft,
+  });
 
-    const resolution = resolveSeed({
-      seedPresent: Boolean(seed),
-      isEditMode: Boolean(idParam),
-      draftHasContent: hadContentAtHydration,
-      choice: seedChoice,
-    });
-    if (resolution === "wait") return;
-
-    const selectedAsset = seed?.kind === "asset" ? assets.find((asset) => asset.id === seed.id) : null;
-    if (resolution === "apply" && seed?.kind === "asset" && !selectedAsset) return;
-
-    seedResolvedRef.current = true;
-    if (resolution === "apply" && seed) {
-      const store = usePublicationDraftStore.getState();
-      const publicationType =
-        seed.kind === "composition"
-          ? "composition"
-          : seed.kind === "playlist"
-            ? "playlist"
-            : selectedAsset?.kind === "video"
-              ? "video"
-              : "image";
-      setBasicInfo({ ...store.basicInfo, publicationType });
-      if (seed.kind === "composition") store.setCompositionId(seed.id);
-      if (seed.kind === "playlist") store.setPlaylistId(seed.id);
-      if (seed.kind === "asset") {
-        setAssetItems([{
-          media_asset_id: seed.id,
-          duration_seconds: publicationType === "image" ? DEFAULT_IMAGE_DURATION_SECONDS : null,
-          transition: "cut",
-        }]);
-      }
-      setStep(2);
+  const persistForNavigation = async () => {
+    const result = await persistDraft(false);
+    if (result.kind === "skipped") {
+      if (step !== 1 || publicationId) requireCompleteDraftSave(result);
+      return false;
     }
-    if (seed) router.replace("/media-workspace/program/create");
-  }, [assets, assetsLoading, hadContentAtHydration, hasHydrated, idParam, router, seed, seedChoice, setAssetItems, setBasicInfo, setStep]);
+    router.replace(`/media-workspace/program/create?id=${encodeURIComponent(result.publicationId)}`);
+    // ADR 0086 §2: a withheld invalid schedule stays dirty but must not block the way back to fix it.
+    if (!result.isComplete) return false;
+    usePublicationDraftStore.getState().markSaved(result.draft);
+    return true;
+  };
 
   const [conflictBusy, setConflictBusy] = useState(false);
 
@@ -312,17 +277,18 @@ export function CreatePublicationPage() {
 
   const handleNext = async () => {
     if (savingNext) return;
+    let didSave = false;
     const outcome = await attemptNext(
       step as WizardStepId,
       usePublicationDraftStore.getState(),
-      () => {
+      async () => {
         // Only reached when the step validates, so the "saving" flip and the
         // stale-error clear both land at the same moment they used to.
         setValidationErrors([]);
         setShowFieldErrors(false);
         setSavingNext(true);
         setSaveStatus("saving");
-        return persistDraft(false);
+        didSave = await persistForNavigation();
       }
     );
 
@@ -334,7 +300,7 @@ export function CreatePublicationPage() {
     }
     setSavingNext(false);
     if (outcome.kind === "saved") {
-      setSaveStatus("saved");
+      setSaveStatus(didSave ? "saved" : "idle");
       setError(null); // clear a stale error from a prior failed attempt (e.g. Retry succeeding)
       goNextAction(MAX_BUILT_STEP);
     } else {
@@ -342,6 +308,22 @@ export function CreatePublicationPage() {
       // The revision-conflict banner already shows this — avoid saying it twice.
       if (!isConflict(outcome.message)) setError(outcome.message);
     }
+  };
+
+  // #226: a stepper jump on a server draft saves first, like Next — otherwise a content change
+  // made before the jump lives only in this browser.
+  const handleStepSelect = async (target: number) => {
+    if (publicationId && isDirty) {
+      try {
+        await persistForNavigation();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "บันทึก draft ไม่สำเร็จ";
+        // The revision-conflict banner already shows a conflict.
+        if (!isConflict(message)) setError(message);
+        return;
+      }
+    }
+    setStep(target);
   };
 
   const isLastStep = step === wizardSteps.length;
@@ -359,7 +341,7 @@ export function CreatePublicationPage() {
   // Avoid flashing step-1 defaults before a restored draft (possibly on a
   // later step) loads from localStorage.
   if (!hasHydrated) return null;
-  if (resumePending) {
+  if (resumePending || entry.isInitializing) {
     return (
       <Card className="p-6">
         <p className="text-center text-sm text-muted-foreground">กำลังโหลด draft…</p>
@@ -391,14 +373,7 @@ export function CreatePublicationPage() {
     );
   }
 
-  const displayError = error || resumeError;
-
-  // Arriving with ?id= means the operator deliberately opened an existing draft — never prompt there.
-  const showResumePrompt = shouldShowResumePrompt({
-    hadContentAtHydration,
-    isEditMode: Boolean(idParam),
-    dismissed: dismissedResume,
-  });
+  const displayError = error || resumeError || entry.seedError;
   return (
     <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-6">
       <PageHeader
@@ -406,24 +381,7 @@ export function CreatePublicationPage() {
         subtitle="สร้างและเผยแพร่สื่อไปยังทุกช่องทางของคุณ"
       />
 
-      <Modal
-        open={showResumePrompt}
-        onClose={() => { setSeedChoice("continue"); setDismissedResume(true); }}
-        title="มี draft ที่ทำค้างไว้"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => { usePublicationDraftStore.getState().cancelDraft(); setSeedChoice("fresh"); setDismissedResume(true); }}>
-              เริ่มใหม่
-            </Button>
-            <Button variant="primary" onClick={() => { setSeedChoice("continue"); setDismissedResume(true); }}>
-              ทำต่อ
-            </Button>
-          </>
-        }
-      >
-        <p>เจอร่าง publication ที่ทำค้างไว้ในเครื่องนี้ — จะทำต่อจากเดิม หรือเริ่มใหม่?</p>
-        <p>เริ่มใหม่จะล้างเฉพาะร่างในเครื่อง ร่างที่เคยบันทึกขึ้นระบบแล้วยังอยู่ในหน้า Publications</p>
-      </Modal>
+      <DraftResumePrompt {...entry.prompt} />
 
       <Modal
         open={(step === 1 || step === 3) && validationErrors.length > 0}
@@ -478,7 +436,7 @@ export function CreatePublicationPage() {
       )}
 
       <Card className="p-5">
-        <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={setStep} />
+        <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={(target) => void handleStepSelect(target)} />
       </Card>
 
       {/* Step 1 — Choose Content */}
@@ -489,7 +447,7 @@ export function CreatePublicationPage() {
           reloadAssets={reloadAssets}
           assetsLoading={assetsLoading}
           assetsError={assetsError}
-          onContentSelected={() => goNextAction(MAX_BUILT_STEP)}
+          onContentSelected={() => void handleNext()}
         />
       )}
 
@@ -529,7 +487,7 @@ export function CreatePublicationPage() {
       {step === 5 && <PublishStep channels={channels} assets={assets} canPublish={canPublish} />}
 
       <Card className="mt-auto flex flex-col gap-3 p-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           {step > 1 ? (
             <Button variant="secondary" onClick={goBack}>
               <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
@@ -537,7 +495,7 @@ export function CreatePublicationPage() {
           ) : (
             <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>Cancel</Button>
           )}
-          <div className="flex flex-1 items-center gap-3">
+          <div className="flex min-w-48 flex-1 items-center gap-3">
             <span className="whitespace-nowrap text-xs text-muted-foreground">
               {step} of {wizardSteps.length} steps completed
             </span>
@@ -548,6 +506,13 @@ export function CreatePublicationPage() {
               />
             </div>
           </div>
+          <LovableButton
+            variant="outline"
+            disabled={saving || !draftName.trim()}
+            onClick={() => void saveDraft()}
+          >
+            {saving ? "Saving…" : "Save draft"}
+          </LovableButton>
           {isLastStep ? (
             <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish}>
               <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}

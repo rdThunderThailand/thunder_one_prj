@@ -148,6 +148,35 @@ export function withIdempotencyKeys(bindings: ZoneBindingDraft[]): ZoneBindingDr
   return bindings.map((binding) => (missing(binding) ? { ...binding, idempotencyKey: crypto.randomUUID() } : binding));
 }
 
+/** ADR 0087 §1: an undo/redo restores bindings as they were, except the ids a save has already
+ *  stored. A Zone still on `assets` keeps its current idempotency key, and keeps its current
+ *  inline `playlistId` when the restored binding has items to put in it — an empty binding
+ *  stays unbound. A `playlist` binding is restored untouched: its id is the operator's pick. */
+export function keepStoredIds(restored: ZoneBindingDraft[], current: ZoneBindingDraft[]): ZoneBindingDraft[] {
+  return restored.map((binding) => {
+    const now = current.find((candidate) => candidate.layoutZoneId === binding.layoutZoneId);
+    if (!now || binding.source !== "assets" || now.source !== "assets") return binding;
+    return {
+      ...binding,
+      idempotencyKey: now.idempotencyKey ?? binding.idempotencyKey,
+      playlistId: binding.assetItems.length > 0 ? (now.playlistId ?? binding.playlistId) : binding.playlistId,
+    };
+  });
+}
+
+/** ADR 0087 §2: a duration typed into one asset row is a continuous edit — the same Zone and
+ *  the same row keep one undo step. Returns that row's key, or null for any other change. */
+export function durationEditKey(prev: ZoneBindingDraft | undefined, next: ZoneBindingDraft): string | null {
+  if (!prev || prev.assetItems.length !== next.assetItems.length) return null;
+  const changed = next.assetItems.filter((item, index) => {
+    const before = prev.assetItems[index]!;
+    return before.media_asset_id === item.media_asset_id && before.duration_seconds !== item.duration_seconds;
+  });
+  const sameOrder = next.assetItems.every((item, index) => item.media_asset_id === prev.assetItems[index]!.media_asset_id);
+  const sameRest = JSON.stringify({ ...prev, assetItems: [] }) === JSON.stringify({ ...next, assetItems: [] });
+  return sameOrder && sameRest && changed.length === 1 ? `duration:${next.layoutZoneId}:${changed[0]!.media_asset_id}` : null;
+}
+
 export type SetZonesPayload = {
   zones: Array<{
     layout_zone_id: string;
