@@ -109,11 +109,14 @@ export function TargetCard({
 export function ScheduleCard({
   state,
   disabled,
+  isStartLocked = false,
   error,
   onChange,
 }: {
   state: ProgramEditState;
   disabled?: boolean;
+  /** Live / Publishing: the modal edits only the end (ADR 0090). */
+  isStartLocked?: boolean;
   error?: string;
   onChange: (schedule: PublicationSchedule) => void;
 }) {
@@ -174,6 +177,7 @@ export function ScheduleCard({
         <EditScheduleModal
           schedule={schedule}
           showDateRangeCalendar
+          isStartLocked={isStartLocked}
           playlistId={state.content.type === "playlist" ? state.content.playlistId : null}
           programName={state.name}
           onClose={() => setEditing(false)}

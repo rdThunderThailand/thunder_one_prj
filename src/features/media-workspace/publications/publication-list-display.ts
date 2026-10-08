@@ -1,4 +1,4 @@
-import { DEFAULT_TIMEZONE, utcToZonedParts } from "./schedule.ts";
+import { DEFAULT_TIMEZONE, formatDmy, utcToZonedParts } from "./schedule.ts";
 import type { PublicationDisplayStatus, PublicationListItem } from "./types";
 
 export const DISPLAY_STATUS_LABELS: Record<PublicationDisplayStatus, string> = {
@@ -31,21 +31,13 @@ export function rowActionsFor(status: PublicationDisplayStatus | undefined): Row
   }
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** "YYYY-MM-DD" -> "12 May 2025" (no Date object, so no viewer-timezone shift). */
-function formatYmd(ymd: string): string {
-  const [year, month, day] = ymd.split("-");
-  return `${Number(day)} ${MONTHS[Number(month) - 1]} ${year}`;
-}
-
 export function formatScheduleRange(item: PublicationListItem): string {
   if (!item.starts_at) return "Not scheduled";
   const zone = item.timezone || DEFAULT_TIMEZONE;
   const start = utcToZonedParts(item.starts_at, zone).date;
-  if (!item.ends_at) return `From ${formatYmd(start)}`;
+  if (!item.ends_at) return `From ${formatDmy(start)}`;
   const end = utcToZonedParts(item.ends_at, zone).date;
-  return start === end ? formatYmd(start) : `${formatYmd(start)} – ${formatYmd(end)}`;
+  return start === end ? formatDmy(start) : `${formatDmy(start)} – ${formatDmy(end)}`;
 }
 
 /** Second schedule line. Only `Scheduled` has a future airing worth naming; for the other badges
@@ -57,7 +49,7 @@ export function formatNextAiring(item: PublicationListItem): string | null {
   const today = utcToZonedParts(new Date().toISOString(), zone).date;
   return next.date === today
     ? `Next airing ${next.time}`
-    : `Next airing ${formatYmd(next.date)} ${next.time}`;
+    : `Next airing ${formatDmy(next.date)} ${next.time}`;
 }
 
 export function formatTargetSummary(item: PublicationListItem): string {

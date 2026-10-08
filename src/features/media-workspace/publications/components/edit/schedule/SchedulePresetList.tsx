@@ -21,7 +21,7 @@ function PresetRow({ label, hint, isOn, onClick }: { label: string; hint: string
       role="radio"
       aria-checked={isOn}
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left ${
+      className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left disabled:cursor-not-allowed disabled:opacity-50 ${
         isOn ? "border-primary bg-primary/5" : "border-border hover:bg-muted"
       }`}
     >

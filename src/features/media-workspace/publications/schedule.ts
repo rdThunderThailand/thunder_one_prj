@@ -141,14 +141,11 @@ export function shiftYmd(ymd: string, days: number): string {
   return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-${pad2(t.getUTCDate())}`;
 }
 
-function dayMonthLabel(ymd: string): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  // timeZone UTC because `ymd` is already wall-clock in the schedule's own zone.
-  return new Intl.DateTimeFormat("th-TH", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(y, m - 1, d)));
+/** "YYYY-MM-DD" -> "08/10/2026": the one date format every schedule surface prints (QA 2026-10-08 #20).
+ *  String-only, so the viewer's timezone never shifts a wall-clock day. */
+export function formatDmy(ymd: string): string {
+  const [year, month, day] = ymd.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 /** The card's "Start Time" cell: a daily window when weekly, else the start instant. */
@@ -168,7 +165,7 @@ export function formatScheduleStart(
   if (start.date === today) return `วันนี้ ${start.time}`;
   if (start.date === shiftYmd(today, 1)) return `พรุ่งนี้ ${start.time}`;
   if (start.date === shiftYmd(today, -1)) return `เมื่อวาน ${start.time}`;
-  return `${dayMonthLabel(start.date)} ${start.time}`;
+  return `${formatDmy(start.date)} ${start.time}`;
 }
 
 /** "Day 1, 15, 31" — the month days of a monthly schedule, ascending. */

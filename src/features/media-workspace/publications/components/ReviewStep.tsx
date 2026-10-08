@@ -15,7 +15,7 @@ import type { EligibilityCheck, EligibilityStatus } from "../publish-eligibility
 import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
 import { compositionZoneDurations } from "../content-info";
 import { priorities, publicationTypes } from "../mock-data";
-import { getDayTimelinePlacement, WEEKDAYS } from "../schedule";
+import { formatDmy, getDayTimelinePlacement, WEEKDAYS } from "../schedule";
 import { describeSchedule, scheduleEdges } from "../schedule-describe";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
@@ -56,7 +56,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
   const stored = isDraftValid(schedule) ? draftToSchedule(schedule) : null;
   const summary = stored ? describeSchedule(stored) : null;
   const edges = stored ? scheduleEdges(stored) : null;
-  const startDate = edges?.startDate ?? "";
+  const startDate = edges ? formatDmy(edges.startDate) : "";
   const startTime = edges?.startTime ?? "";
   const selectedAsset = assets.find((asset) => asset.id === assetItems[0]?.media_asset_id);
   const isComposition = basicInfo.publicationType === "composition";
@@ -146,7 +146,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                 </div>
                 <div className="p-3">
                   <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">End</p>
-                  <p className="mt-1 text-xs font-semibold text-foreground">{edges?.endDate ?? "No end date"}</p>
+                  <p className="mt-1 text-xs font-semibold text-foreground">{edges?.endDate ? formatDmy(edges.endDate) : "No end date"}</p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">{endTime}</p>
                 </div>
               </div>
