@@ -18,8 +18,8 @@ long, and what failed"). If the Player does not report it, the report cannot sho
 
 ## ⚠️ Order of work
 
-The server must first put the ids on every poll slot (ticket A2b). Start coding now, but **testing
-against develop works only after A2b is on develop** — the server team will tell you.
+The server side is live on **develop and production** (release v0.10.0, 2026-10-08): every poll slot
+carries the ids and `/media/player/playback` accepts the new fields. Test against develop first.
 
 ## The full loop
 
@@ -103,6 +103,20 @@ Rules:
   You retried and gave up → one `failed` record.
 - `publication_snapshot_id` and `snapshot_zone_id` go together: both, or neither.
 - Leaving out `outcome` means `played` (that is how today's Players are read).
+
+### Which `failure_reason`
+
+| value | when | signal you likely already have |
+|---|---|---|
+| `decode_error` | the file opens but cannot be decoded | a codec error (e.g. MediaCodec on Android, Media Foundation on Windows) |
+| `file_missing` | the file is not on the device and cannot be downloaded | not in the local cache, or downloading `file.url` returns 403 / 404 |
+| `file_corrupt` | the file is there but damaged | checksum differs from `file.checksum` in the poll — **`file.checksum` can be `null`**; then use a failed read of the file instead |
+| `playback_stalled` | it started but stopped moving | no new frame / no playback progress for **10 seconds** in a row |
+| `other` | anything else | put the detail in `failure_message` |
+
+**Stall rule:** 10 seconds without progress counts as stalled on every platform. Retrying inside the slot
+is still allowed; report `playback_stalled` only if the slot is given up (see "Retries are not separate
+records" above). Short network hiccups under 10 seconds are not failures.
 
 ## Step 4 — the upload
 
