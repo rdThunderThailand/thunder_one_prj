@@ -9,6 +9,7 @@ import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/compone
 import { deriveAspectRatio, parseResolution } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
 import { PlaybackPreviewDialog } from "@/features/media-workspace/preview/PlaybackPreviewDialog";
+import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
 import { setCompositionStatus } from "../services/compositions-api";
 import { forkLayoutForComposition, type LayoutSettingsDraft } from "../save-composition";
@@ -144,8 +145,13 @@ export function CompositionEditorPage({
     }
     setBindings((prev) => upsertBinding(prev, next));
   };
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const { confirmGeometryChange, beginZoneEdit, resetApproval, undo, redo, reset: resetHistory, canUndo, canRedo } =
-    useZoneEditGuard(layout?.zones ?? [], sharedTemplateUsage, setEditedZones);
+    useZoneEditGuard(layout?.zones ?? [], sharedTemplateUsage, setEditedZones, () => confirm({
+      title: "Change a shared Template?",
+      description: `This Template is used by ${sharedTemplateUsage} Layouts. Changing it affects all of them. After you confirm, make the edit again.`,
+      confirmLabel: "Continue editing",
+    }));
   const applyPlaybackToAllZones = (playback: ZonePlayback) =>
     setBindings((prev) => applyPlaybackToAll(view.layoutZoneIds, prev, playback));
   const absorbLayout = (saved: LayoutListItem | null, savedId = saved?.id) => {
@@ -180,8 +186,14 @@ export function CompositionEditorPage({
     }
     return publishChanges("compositions", id!);
   };
-  const handleForkLayout = () => {
-    if (!id || !window.confirm(`This Template is used by ${sharedTemplateUsage} Layouts. Make this Layout its own copy?`)) return;
+  const handleForkLayout = async () => {
+    if (!id) return;
+    const confirmed = await confirm({
+      title: "Make this Layout its own copy?",
+      description: `This Template is used by ${sharedTemplateUsage} Layouts. This Layout gets a private copy, so later edits no longer affect the others.`,
+      confirmLabel: "Make a copy",
+    });
+    if (!confirmed) return;
     void run(async () => {
       const forked = await forkLayoutForComposition(id, revision);
       setLayoutId(forked.layout.id);
@@ -273,6 +285,7 @@ export function CompositionEditorPage({
         saveError={saveError} sharedTemplateUsage={sharedTemplateUsage} saving={saving}
         onForkLayout={handleForkLayout}
       />
+      {confirmDialog}
       <PlaybackPreviewDialog
         open={previewOpen} onClose={() => setPreviewOpen(false)}
         zones={preview.playbackPreviewZones} assets={data.assets}

@@ -6,7 +6,7 @@
 // asked before anything travels to a shared Template, and Undo always has a checkpoint to
 // return to once they say yes.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
 import { useZoneHistory } from "./useZoneHistory";
 
@@ -14,14 +14,25 @@ export function useZoneEditGuard(
   zones: LayoutZone[],
   sharedTemplateUsage: number,
   onChange: (next: LayoutZone[]) => void,
+  /** Opens the shared-Template modal and resolves with the operator's answer. */
+  askApproval: () => Promise<boolean>,
 ) {
   const [approved, setApproved] = useState(false);
+  const isAsking = useRef(false);
   const history = useZoneHistory(zones, onChange);
 
+  // The modal is async but every caller needs an answer now, so the first edit on a shared Template
+  // is refused while the modal is open; after a yes the operator repeats the edit (asked once a session).
   const confirmGeometryChange = (): boolean => {
     if (sharedTemplateUsage > 1 && !approved) {
-      if (!window.confirm(`This Template is used by ${sharedTemplateUsage} Layouts. Changing it affects all of them.`)) return false;
-      setApproved(true);
+      if (!isAsking.current) {
+        isAsking.current = true;
+        void askApproval().then((confirmed) => {
+          isAsking.current = false;
+          if (confirmed) setApproved(true);
+        });
+      }
+      return false;
     }
     return true;
   };
