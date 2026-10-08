@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { Badge } from "@/components/ui/lovable/badge";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { EditIcon, MoreIcon, PlayIcon, TrashIcon, UndoIcon } from "@/components/ui/icons";
 import { actionsForComposition, type CompositionLibraryAction } from "../library-actions";
 import type { CompositionLibraryItem } from "../types";
@@ -52,8 +53,8 @@ const labels: Record<CompositionLibraryAction, string> = {
   deactivate: "Set inactive",
   move: "Move",
   trash: "Move to Trash",
-  restore: "Restore",
-  "delete-forever": "Delete forever",
+  restore: "Recover",
+  "delete-forever": "Permanent delete",
 };
 const badgeVariant = (color: string) => color === "green" ? "success" : color === "yellow" ? "warning" : "neutral";
 
@@ -80,26 +81,33 @@ function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }
     </button>
   ))}</div>;
 
-  const itemClass = "block w-full px-3 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted disabled:opacity-50";
   return <div className="flex items-center justify-end gap-2">
     <button type="button" disabled={previewing} onClick={() => onPreview(item)} aria-label={`Preview ${item.name}`} title={previewing ? "Loading preview…" : "Preview"} className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft disabled:cursor-wait disabled:text-primary"><PlayIcon /></button>
     <Link href={`/media-workspace/layouts/${item.id}`} aria-label={`Edit ${item.name}`} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"><EditIcon /></Link>
-    <details className="relative" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.removeAttribute("open"); }}>
-      <summary
+    {/* QA 2026-10-08 #10: portalled, so the table's overflow cannot clip it. */}
+    <DropdownMenu>
+      <DropdownMenuTrigger
         aria-label={`More actions for ${item.name}`}
-        role="button"
-        onKeyDown={(event) => {
-          if (event.key !== "Enter" && event.key !== " ") return;
-          event.preventDefault();
-          const details = event.currentTarget.parentElement as HTMLDetailsElement | null;
-          if (details) details.open = !details.open;
-        }}
-        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-      ><MoreIcon /></summary>
-      <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
-        {actions.map((action) => <button key={action} type="button" disabled={disabled} onClick={() => onAction(action, item)} className={`${itemClass} ${action === "trash" ? "text-danger" : ""}`}>{labels[action]}</button>)}
-      </div>
-    </details>
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+      >
+        <MoreIcon />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-40"
+      >
+        {actions.map((action) => (
+          <DropdownMenuItem
+            key={action}
+            disabled={disabled}
+            className={action === "trash" ? "text-danger focus:text-danger" : undefined}
+            onSelect={() => onAction(action, item)}
+          >
+            {labels[action]}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   </div>;
 }
 

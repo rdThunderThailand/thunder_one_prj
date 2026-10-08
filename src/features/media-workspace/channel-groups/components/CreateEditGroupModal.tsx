@@ -101,7 +101,7 @@ export function CreateEditGroupModal({
         <div className="flex flex-col gap-4">
         <Input
           name="group-name"
-          label="Group Name *"
+          label={<>Group Name <span className="text-danger">*</span></>}
           value={name}
           error={nameError}
           placeholder="e.g. All Restaurant Screens"

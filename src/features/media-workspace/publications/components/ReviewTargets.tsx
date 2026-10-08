@@ -37,7 +37,8 @@ export function ReviewTargets({
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-[0.75fr_1fr_1.2fr] gap-1 rounded-lg bg-muted p-1" role="tablist" aria-label="Review target type">
+      {/* QA 2026-10-08 #18: fixed fr columns + nowrap overflowed the narrow Review card; wrap instead. */}
+      <div className="flex flex-wrap gap-1 rounded-lg bg-muted p-1" role="tablist" aria-label="Review target type">
         <TargetTabButton label="Screens" active={activeTab === "screens"} disabled onClick={() => undefined} />
         <TargetTabButton label={`Channels (${impactedChannels.length})`} active={activeTab === "channels"} onClick={() => setActiveTab("channels")} />
         <TargetTabButton label={`Groups (${selectedGroups.length})`} active={activeTab === "groups"} onClick={() => setActiveTab("groups")} />
@@ -94,7 +95,7 @@ function TargetTabButton({ label, active, disabled = false, onClick }: { label: 
       disabled={disabled}
       title={disabled ? "ยังไม่เปิดใช้งาน" : undefined}
       onClick={onClick}
-      className={`whitespace-nowrap rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${active ? "bg-card text-foreground shadow-sm" : disabled ? "cursor-not-allowed text-muted-foreground" : "text-muted-foreground hover:text-foreground"}`}
+      className={`flex-1 whitespace-nowrap rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${active ? "bg-card text-foreground shadow-sm" : disabled ? "cursor-not-allowed text-muted-foreground" : "text-muted-foreground hover:text-foreground"}`}
     >
       {label}
     </button>

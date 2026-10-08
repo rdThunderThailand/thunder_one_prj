@@ -59,7 +59,7 @@ export function LayoutSettingsPanel({
         <p className="text-xs text-muted-foreground">No zone selected</p>
       </div>
       <div className="flex flex-col gap-1.5">
-        <label className={labelClasses}>Layout name *</label>
+        <label className={labelClasses}>Layout name <span className="text-danger">*</span></label>
         <input value={name} onChange={(e) => set({ name: e.target.value })} className={inputClasses} />
       </div>
 

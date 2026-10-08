@@ -69,7 +69,8 @@ export function TargetCard({
 
   return (
     <EditCard
-      step="3. Target *"
+      step="3. Target"
+      isRequired
       icon={Radio}
       hint="กำหนด Channel หรือ Channel Group ที่ต้องการแสดง Program นี้"
       error={error}
@@ -133,7 +134,8 @@ export function ScheduleCard({
 
   return (
     <EditCard
-      step="4. Schedule *"
+      step="4. Schedule"
+      isRequired
       icon={CalendarClock}
       hint="กำหนดช่วงเวลาออกอากาศของ Program นี้"
       error={error}

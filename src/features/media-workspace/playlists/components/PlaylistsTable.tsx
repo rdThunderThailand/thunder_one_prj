@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/lovable/badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { EditIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";
@@ -204,9 +205,7 @@ function RowActions({
   onAction: (action: RowAction) => void;
   onPreview: () => void;
 }) {
-  const item =
-    "block w-full px-3 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted";
-  const danger = `${item} text-danger hover:bg-danger-soft`;
+  const danger = "text-danger focus:text-danger";
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -232,72 +231,64 @@ function RowActions({
           </Link>
         </>
       )}
-      <details
-        className="relative inline-block text-left"
-        onClick={(e) => e.stopPropagation()}
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-            e.currentTarget.removeAttribute("open");
-          }
-        }}
-      >
-        <summary
-          aria-label={`More actions for ${playlist.name}`}
-          role="button"
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            const details = event.currentTarget.parentElement as HTMLDetailsElement | null;
-            if (details) details.open = !details.open;
-          }}
-          className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <MoreIcon />
-        </summary>
-        <div className="absolute right-0 z-10 mt-1 w-48 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
-        {inTrash ? (
-          <>
-            <button type="button" className={item} disabled={disabled} onClick={() => onAction("restore")}>
-              Restore
-            </button>
-            {/* #40: a playlist that has ever been published can never be permanently
-                deleted (publications.playlist_id is ON DELETE RESTRICT) — explain it
-                rather than offer a button that always fails. */}
-            {canPermanentDelete ? (
-              <button type="button" className={danger} disabled={disabled} onClick={() => onAction("permanent-delete")}>
-                Delete permanently
-              </button>
+      {/* QA 2026-10-08 #10: a portalled menu, so the table's overflow cannot clip it. The span stops
+          clicks (React bubbles them out of the portal too) from reaching the row. */}
+      <span onClick={(event) => event.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`More actions for ${playlist.name}`}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <MoreIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-48"
+          >
+            {inTrash ? (
+              <>
+                <DropdownMenuItem disabled={disabled} onSelect={() => onAction("restore")}>
+                  Recover
+                </DropdownMenuItem>
+                {/* #40: a playlist that has ever been published can never be permanently
+                    deleted (publications.playlist_id is ON DELETE RESTRICT) — explain it
+                    rather than offer a button that always fails. */}
+                {canPermanentDelete ? (
+                  <DropdownMenuItem className={danger} disabled={disabled} onSelect={() => onAction("permanent-delete")}>
+                    Permanent delete
+                  </DropdownMenuItem>
+                ) : (
+                  <p className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                    Permanent delete unavailable — this playlist has been published.
+                  </p>
+                )}
+              </>
             ) : (
-              <p className="px-3 py-1.5 text-[10px] text-muted-foreground">
-                Can&rsquo;t delete permanently — this playlist has been published.
-              </p>
+              <>
+                {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
+                    moves the badge to Inactive, not Active, until a publication references it. */}
+                {isDraft && (
+                  <DropdownMenuItem disabled={disabled} onSelect={() => onAction("mark-ready")}>
+                    Mark as ready
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem disabled={disabled} onSelect={() => onAction("duplicate")}>
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={disabled} onSelect={() => onAction("move")}>
+                  Move to folder…
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={disabled} onSelect={() => onAction("tags")}>
+                  Edit tags…
+                </DropdownMenuItem>
+                <DropdownMenuItem className={danger} disabled={disabled} onSelect={() => onAction("delete")}>
+                  Move to Trash
+                </DropdownMenuItem>
+              </>
             )}
-          </>
-        ) : (
-          <>
-            {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
-                moves the badge to Inactive, not Active, until a publication references it. */}
-            {isDraft && (
-              <button type="button" className={item} disabled={disabled} onClick={() => onAction("mark-ready")}>
-                Mark as ready
-              </button>
-            )}
-            <button type="button" className={item} disabled={disabled} onClick={() => onAction("duplicate")}>
-              Duplicate
-            </button>
-            <button type="button" className={item} disabled={disabled} onClick={() => onAction("move")}>
-              Move to folder…
-            </button>
-            <button type="button" className={item} disabled={disabled} onClick={() => onAction("tags")}>
-              Edit tags…
-            </button>
-            <button type="button" className={danger} disabled={disabled} onClick={() => onAction("delete")}>
-              Move to Trash
-            </button>
-          </>
-        )}
-        </div>
-      </details>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </span>
     </div>
   );
 }

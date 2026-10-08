@@ -86,6 +86,7 @@ export function LayoutTemplatePicker({
   onClose,
   onStarted,
   hasUnsavedChanges = false,
+  initialFolderId = "",
 }: {
   open: boolean;
   folders: ContentFolder[];
@@ -94,12 +95,14 @@ export function LayoutTemplatePicker({
   /** Same-route callers can reload after the seed is written instead of pushing to themselves. */
   onStarted?: () => void;
   hasUnsavedChanges?: boolean;
+  /** The Folder the Layouts list was showing; "" = Uncategorized (QA 2026-10-08 #12). */
+  initialFolderId?: string;
 }) {
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [step, setStep] = useState<"start" | "templates">("start");
   const [choice, setChoice] = useState<StartChoice>("blank");
-  const [details, setDetails] = useState<StartDetails>(INITIAL_DETAILS);
+  const [details, setDetails] = useState<StartDetails>({ ...INITIAL_DETAILS, folderId: initialFolderId });
   const [templates, setTemplates] = useState<LayoutListItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [group, setGroup] = useState<GroupKey>("recommended");
@@ -130,7 +133,7 @@ export function LayoutTemplatePicker({
   const resetAndClose = () => {
     setStep("start");
     setChoice("blank");
-    setDetails(INITIAL_DETAILS);
+    setDetails({ ...INITIAL_DETAILS, folderId: initialFolderId });
     setGroup("recommended");
     setFilters(DEFAULT_PICKER_FILTERS);
     setSelectedId(null);

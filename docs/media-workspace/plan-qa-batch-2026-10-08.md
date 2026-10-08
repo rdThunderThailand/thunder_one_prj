@@ -32,7 +32,8 @@ Draft-shape note: if 5 or 20 changes the persisted `ScheduleDraft`, bump the dra
 - **14** Remove the top "Fit to screen" next to Delete Zone; keep the bottom one.
 - **15** New Layout modal: clicking "From template" opens the Template Picker at once (no Next). `layouts/components/create-layout-start-step.tsx`.
 - **16** Template Picker: Template Details panel scrolls on its own so the whole detail is reachable. `layouts/components/LayoutTemplatePicker.tsx`.
-- **21** Repro first (browser): find the save-as-template path that names the Template without `SaveAsTemplateDialog` (Template editor `/layouts/templates`, Manage Templates). Route it through the existing dialog.
+- **21** **Done (data, no code).** No UI path skips `SaveAsTemplateDialog`. The "random" names were Aurora-import rows: `kind = 'template'` named `comp:<uuid v5>` (not their own id). Renamed by owner approval 2026-10-08, 1 row each: develop `f5274da2…` → `4 Zones 7680x1080`; prod `1e7623c1…` → `Full Screen 1920x1080` (still used by "LED TEST #7202" + copy). Prod now has 0 `comp:%` templates. Follow-up: the Aurora import should name templates (or create them `inline`).
+- **9 / 4 / 14 / 15 / 16** done; 4 gates on `status === "draft"` (the wizard picker's rule, which also allows Inactive), not on Active only.
 
 ## D. Channels (item 2)
 

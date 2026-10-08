@@ -220,7 +220,7 @@ export function CompositionsListPage() {
       {inTrash ? (
         <>
           <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
-          <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Delete forever</Button>
+          <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Permanent delete</Button>
         </>
       ) : (
         <>
@@ -294,7 +294,9 @@ export function CompositionsListPage() {
         )}
       </LibraryShell>
       <LayoutTemplatePicker
+        key={pickerOpen ? `picker:${collection}` : "picker:closed"}
         open={pickerOpen}
+        initialFolderId={collection !== "all" && collection !== "uncategorized" && collection !== "trash" ? collection : ""}
         folders={folders}
         tagNames={library?.facets.tags.map((tag) => tag.name) ?? []}
         onClose={() => setPickerOpen(false)}

@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { EditIcon, MonitorIcon, MoreIcon, PlusIcon, XIcon } from "@/components/ui/icons";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { classifyApiError } from "@/lib/api/api-error";
 import { deleteChannelGroup, isGroupInUse, updateChannelGroup } from "../services/channel-groups-api";
 import { memberHealthCounts } from "../channel-groups-logic";
@@ -125,51 +126,42 @@ export function ChannelGroupInspector({
           <EditIcon />
           Edit Group
         </button>
-        <div className="relative">
-          <button
-            type="button"
+        {/* QA 2026-10-08 #10: portalled, so the inspector's scroll area cannot clip it. */}
+        <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+          <PopoverTrigger
             aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
             className="rounded-lg border border-border p-2.5 text-muted-foreground hover:bg-muted"
           >
             <MoreIcon />
-          </button>
-          {menuOpen && (
-            <>
-              <button
-                type="button"
-                aria-hidden="true"
-                tabIndex={-1}
-                className="fixed inset-0 z-10 cursor-default"
-                onClick={() => setMenuOpen(false)}
-              />
-              <div role="menu" className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-border bg-card py-1 shadow-lg">
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={busy}
-                  onClick={() => void toggleStatus()}
-                  className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed"
-                >
-                  {group.status === "active" ? "Disable Group" : "Enable Group"}
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={busy}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setConfirmingDelete(true);
-                  }}
-                  className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed"
-                >
-                  Delete Group
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+          </PopoverTrigger>
+          <PopoverContent
+            role="menu"
+            align="end"
+            className="w-44 p-0 py-1"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              disabled={busy}
+              onClick={() => void toggleStatus()}
+              className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed"
+            >
+              {group.status === "active" ? "Disable Group" : "Enable Group"}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={busy}
+              onClick={() => {
+                setMenuOpen(false);
+                setConfirmingDelete(true);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed"
+            >
+              Delete Group
+            </button>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <ChannelGroupInspectorSections

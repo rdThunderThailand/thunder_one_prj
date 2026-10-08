@@ -124,13 +124,13 @@ export function TrashDialog({ asset, open, onOpenChange }: DialogProps) {
     onOpenChange(false);
     router.push("/media-workspace/assets");
     toast.success(`${label} moved to Trash`, {
-      description: "The file can be restored later.",
+      description: "The file can be recovered later.",
       action: {
         label: "Undo",
         onClick: () => {
           void restoreMediaAsset(asset.id)
-            .then(() => toast.success("Media restored", { description: `${label} is back in the library.` }))
-            .catch((reason) => toast.error(classifyApiError(reason, "Unable to restore media").message));
+            .then(() => toast.success("Media recovered", { description: `${label} is back in the library.` }))
+            .catch((reason) => toast.error(classifyApiError(reason, "Unable to recover media").message));
         },
       },
     });
@@ -140,7 +140,7 @@ export function TrashDialog({ asset, open, onOpenChange }: DialogProps) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Move to Trash?</DialogTitle>
-          <DialogDescription>{label} will be moved to Trash and can be restored later.</DialogDescription>
+          <DialogDescription>{label} will be moved to Trash and can be recovered later.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
