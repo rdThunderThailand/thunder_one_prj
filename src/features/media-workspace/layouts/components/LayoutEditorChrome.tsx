@@ -6,7 +6,7 @@
 
 import { Badge } from "@/components/ui/lovable/badge";
 import { Button } from "@/components/ui/lovable/button";
-import { ArrowLeftIcon, ExpandIcon, LayoutIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, LayoutIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { duplicateZone } from "../align-zones";
 import { parseResolution, referencePixels } from "../geometry";
 import { evenSplitColumns, splitZone } from "../split-zone";
@@ -58,13 +58,12 @@ export function LayoutEditorHeader({ isExisting, name, status, referenceResoluti
   );
 }
 
-export function LayoutEditorToolbar({ zones, selectedIndex, onSelectIndex, onChange, onFit }: {
+export function LayoutEditorToolbar({ zones, selectedIndex, onSelectIndex, onChange }: {
   zones: LayoutZone[];
   selectedIndex: number | null;
   onSelectIndex: (index: number | null) => void;
   /** Receives Zones with `position` already dense — every helper below reindexes. */
   onChange: (zones: LayoutZone[]) => void;
-  onFit: () => void;
 }) {
   const hasSelection = selectedIndex !== null && selectedIndex < zones.length;
   const add = () => {
@@ -101,7 +100,6 @@ export function LayoutEditorToolbar({ zones, selectedIndex, onSelectIndex, onCha
       ))}
       <span className="mx-1 h-6 w-px bg-border" aria-hidden="true" />
       <Button size="sm" variant="ghost" className="text-danger" disabled={!hasSelection || zones.length <= 1} onClick={remove}><TrashIcon /> Delete Zone</Button>
-      <Button size="sm" variant="outline" onClick={onFit}><ExpandIcon /> Fit to Screen</Button>
       <span className="ml-auto whitespace-nowrap text-[11px] text-muted-foreground">{hasSelection ? `Selected: Zone ${zoneLetter(selectedIndex)}` : "No zone selected"}</span>
     </div>
   );
