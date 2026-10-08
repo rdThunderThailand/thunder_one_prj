@@ -10,6 +10,7 @@ import {
   toCreateChannelPayload,
   toUpdateChannelPayload,
   withAutoMappedScreens,
+  withPlayer,
 } from "./create-wizard-state.ts";
 import type { ChannelDetail } from "./types/index.ts";
 
@@ -69,6 +70,12 @@ assert.match(
 assert.equal(geometryMismatch(mismatchDraft, { ...portraitPlayer, orientation: "landscape", resolution: "1920x1080" }), null);
 assert.equal(geometryMismatch(mismatchDraft, { ...portraitPlayer, orientation: null, resolution: null }), null);
 assert.equal(geometryMismatch({ ...mismatchDraft, displayMode: "multi" }, portraitPlayer), null);
+// withPlayer: a single-screen Channel takes the Player's reported size, so there is nothing to confirm.
+const picked = withPlayer(DEFAULT_CREATE_CHANNEL_DRAFT, portraitPlayer);
+assert.equal(picked.screenResolution, "1080x1920");
+assert.equal(geometryMismatch(picked, portraitPlayer), null);
+assert.equal(withPlayer(DEFAULT_CREATE_CHANNEL_DRAFT, { ...portraitPlayer, resolution: null }).screenResolution, "1920x1080");
+assert.equal(withPlayer({ ...DEFAULT_CREATE_CHANNEL_DRAFT, displayMode: "multi" }, portraitPlayer).screenResolution, "1920x1080");
 assert.equal(toCreateChannelPayload(mismatchDraft, true).confirm_mismatch, true);
 assert.equal(toCreateChannelPayload(mismatchDraft, false).confirm_mismatch, false);
 assert.equal(toUpdateChannelPayload(mismatchDraft, 4, true).confirm_mismatch, true);

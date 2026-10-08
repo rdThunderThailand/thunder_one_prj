@@ -2,7 +2,7 @@ import { RESOLUTIONS, parseResolution, resolutionLabel } from "@/features/media-
 import { Badge } from "@/components/ui/Badge";
 import { MonitorIcon } from "@/components/ui/icons";
 import { ARRANGEMENT_OPTIONS, arrangementByKey } from "../../display-config";
-import { canvasResolutionFor, withAutoMappedScreens, type CreateChannelDraft } from "../../create-wizard-state";
+import { canvasResolutionFor, withAutoMappedScreens, withPlayer, type CreateChannelDraft } from "../../create-wizard-state";
 import type { ChannelPlayerCandidate } from "../../player-candidates";
 import { OutputMappingTable } from "./OutputMappingTable";
 import { PlayerPickerField } from "./PlayerPickerField";
@@ -93,6 +93,10 @@ export function Step2Setup({
               onChange={(event) => onChange(withAutoMappedScreens({ ...draft, screenResolution: event.target.value }))}
               className={fieldClasses}
             >
+              {/* A Player can report a size outside the preset list (withPlayer); keep it selectable. */}
+              {!RESOLUTIONS.some((option) => option.value === draft.screenResolution) && (
+                <option value={draft.screenResolution}>{resolutionLabel(draft.screenResolution)}</option>
+              )}
               {RESOLUTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {resolutionLabel(option.value)}
@@ -140,7 +144,7 @@ export function Step2Setup({
             selectedId={draft.playerId}
             loading={candidatesLoading}
             excludeChannelId={excludeChannelId}
-            onSelect={(candidate) => onChange({ ...draft, playerId: candidate.id })}
+            onSelect={(candidate) => onChange(withPlayer(draft, candidate))}
             onRefresh={onRefreshCandidates}
           />
         </div>
