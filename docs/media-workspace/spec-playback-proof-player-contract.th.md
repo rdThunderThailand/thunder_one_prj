@@ -19,8 +19,8 @@ server เอา record พวกนี้ไปทำรายงาน Playbac
 
 ## ⚠️ ลำดับการทำงาน
 
-ฝั่ง server ต้องแก้ poll ให้ส่ง id ครบทุก slot ก่อน (ticket A2b) ทีม Player เริ่มเขียนโค้ดได้เลย
-แต่ **ทดสอบกับ develop ได้จริงหลังจาก A2b ขึ้น develop แล้ว** — ทีม server จะแจ้งอีกครั้ง
+ฝั่ง server ขึ้นแล้วทั้ง **develop และ production** (release v0.10.0, 2026-10-08): poll ส่ง id ครบทุก slot
+และ `/media/player/playback` รับฟิลด์ใหม่แล้ว ให้ทดสอบกับ develop ก่อน
 
 ## Flow ครบ loop
 
@@ -105,6 +105,20 @@ server เอา record พวกนี้ไปทำรายงาน Playbac
 - **retry ไม่นับเป็น record แยก** — ล้มแล้ว retry จนเล่นได้ → `played` 1 อัน · retry จนยอมแพ้แล้วข้าม → `failed` 1 อัน
 - `publication_snapshot_id` กับ `snapshot_zone_id` ต้องมาคู่กัน: มีทั้งคู่ หรือไม่มีทั้งคู่
 - ถ้าไม่ใส่ `outcome` server จะถือว่าเป็น `played` (Player รุ่นปัจจุบันจึงยังใช้ได้)
+
+### เลือก `failure_reason` ยังไง
+
+| ค่า | ใช้เมื่อ | สัญญาณที่ Player น่าจะมีอยู่แล้ว |
+|---|---|---|
+| `decode_error` | เปิดไฟล์ได้แต่ถอดรหัสไม่ได้ | error จาก codec (เช่น MediaCodec บน Android, Media Foundation บน Windows) |
+| `file_missing` | ไม่มีไฟล์ในเครื่องและโหลดไม่ได้ | หาไม่เจอใน cache หรือดาวน์โหลด `file.url` ได้ 403 / 404 |
+| `file_corrupt` | มีไฟล์แต่ไฟล์เสีย | checksum ไม่ตรงกับ `file.checksum` ใน poll — **`file.checksum` อาจเป็น `null`** กรณีนั้นให้ดูจากการอ่านไฟล์ไม่สำเร็จแทน |
+| `playback_stalled` | เริ่มเล่นแล้วแต่ค้าง | ไม่มีภาพใหม่ / ตำแหน่งการเล่นไม่ขยับติดต่อกัน **10 วินาที** |
+| `other` | กรณีอื่นทั้งหมด | ใส่รายละเอียดใน `failure_message` |
+
+**กติกาเรื่องค้าง:** ไม่ขยับ 10 วินาทีถือว่าค้าง ใช้ตัวเลขเดียวกันทุกแพลตฟอร์ม ระหว่างนั้น retry ใน slot เดิมได้
+และรายงาน `playback_stalled` เฉพาะตอนยอมแพ้แล้วข้าม slot (ตามกติกา "retry ไม่นับเป็น record แยก" ข้างบน)
+เน็ตกระตุกสั้นๆ ไม่ถึง 10 วินาทีไม่นับเป็นความล้มเหลว
 
 ## ข้อ 4 — การอัปโหลด
 
