@@ -18,12 +18,12 @@ assert.ok(!rowActionsFor(undefined).includes("delete"));
 // 2025-05-12 17:00Z is already 13 May 00:00 in Bangkok — the range must read in the Program's zone.
 assert.equal(
   formatScheduleRange({ ...base, timezone: "Asia/Bangkok", starts_at: "2025-05-12T17:00:00Z", ends_at: "2025-05-31T16:00:00Z" }),
-  "13 May 2025 – 31 May 2025"
+  "13/05/2025 – 31/05/2025"
 );
 assert.equal(formatScheduleRange({ ...base, starts_at: null }), "Not scheduled");
 assert.equal(
   formatScheduleRange({ ...base, timezone: "UTC", starts_at: "2025-05-12T00:00:00Z", ends_at: null }),
-  "From 12 May 2025"
+  "From 12/05/2025"
 );
 
 assert.equal(formatTargetSummary({ ...base, target_summary: { channels: 1, devices: 2 } }), "1 Channel · 2 Devices");

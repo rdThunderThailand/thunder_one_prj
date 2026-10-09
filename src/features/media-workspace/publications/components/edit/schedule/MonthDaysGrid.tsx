@@ -15,11 +15,11 @@ export function MonthDaysGrid({ value, onChange }: { value: number[]; onChange: 
               type="button"
               aria-pressed={isOn}
               onClick={() => onChange(isOn ? value.filter((d) => d !== day) : [...value, day])}
-              className={
+              className={`disabled:cursor-not-allowed disabled:opacity-50 ${
                 isOn
                   ? "rounded-md bg-primary py-1.5 text-sm font-medium text-primary-foreground"
                   : "rounded-md bg-muted py-1.5 text-sm text-muted-foreground hover:text-foreground"
-              }
+              }`}
             >
               {day}
             </button>

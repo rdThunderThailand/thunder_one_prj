@@ -22,7 +22,8 @@ const draft: DraftFields = {
   channelIds: ["ch-1"],
   groupIds: [],
   groupNamesById: {},
-  schedule: defaultScheduleDraft("2026-10-07"),
+  // Today: a past start is invalid since ADR 0090, so a fixed date would rot.
+  schedule: defaultScheduleDraft(),
 };
 
 assert.deepEqual(draftSavePolicy(draft, false), {

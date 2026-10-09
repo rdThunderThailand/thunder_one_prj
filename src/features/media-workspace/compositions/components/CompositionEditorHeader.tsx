@@ -33,7 +33,7 @@ function MenuItem({ label, reason, disabled, onSelect }: {
         if (menu) menu.open = false;
         onSelect();
       }}
-      className="rounded px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
+      className="rounded px-3 py-2 text-left text-sm text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
     >
       {label}
     </button>
@@ -123,11 +123,15 @@ export function CompositionEditorHeader({
   const activateDisabledReason = saveDisabledReason
     ?? (!isComplete ? `ยังไม่ได้ผูก Content ให้ ${unboundZoneNames.length} Zone: ${unboundZoneNames.join(", ")}` : null);
   const saveState = saveAction(status);
+  // QA 2026-10-08 #4: a Draft Layout cannot air, so the wizard would refuse it at the end; say so
+  // here instead. Same rule as the wizard's Layout picker (non-draft), which also offers Inactive.
   const publishDisabledReason = !isExisting
     ? "บันทึก Layout ก่อนเผยแพร่"
     : hasUnsavedChanges
       ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
-      : null;
+      : status === "draft"
+        ? `Activate Layout ก่อนเผยแพร่${isComplete ? "" : ` — ยังไม่ผูก Content ${unboundZoneNames.length} Zone`}`
+        : null;
 
   const commitName = () => {
     onNameChange(inputRef.current?.value ?? name);

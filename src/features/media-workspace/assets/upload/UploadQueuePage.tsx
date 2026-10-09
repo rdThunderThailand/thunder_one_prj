@@ -47,9 +47,10 @@ function QueuedFilePreview({ file }: { file: File }) {
   return null;
 }
 
-export function UploadQueuePage() {
+/** `initialFolderId`: the Folder the library was showing when Upload was pressed (QA 2026-10-08 #12). */
+export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: string | null }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const queue = useUploadQueue();
+  const queue = useUploadQueue(initialFolderId);
   const stagedItems = queue.items.filter((item) => item.state === "staged");
   const canStart = stagedItems.length > 0 && stagedItems.every((item) => item.title.trim());
   const settingsLocked = queue.items.some((item) => item.state === "waiting" || item.state === "uploading");

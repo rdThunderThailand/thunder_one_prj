@@ -6,7 +6,7 @@ import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
-import { WEEKDAYS } from "../schedule";
+import { formatDmy, WEEKDAYS } from "../schedule";
 import { describeSchedule, scheduleEdges } from "../schedule-describe";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { isVideoPreview } from "../preview-kind";
@@ -14,15 +14,6 @@ import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { publicationTypeIcons } from "./publicationTypeIcons";
-
-function formatShortDate(iso: string) {
-  if (!iso) return "";
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 /** Frame 3 Program Summary rail — the read-only running total of the draft as the
  *  operator fills the three columns. Adapted from ScheduleStep's former Publication
@@ -99,8 +90,8 @@ export function ProgramSummaryRail({
   const stored = isDraftValid(schedule) ? draftToSchedule(schedule) : null;
   const summary = stored ? describeSchedule(stored) : null;
   const edges = stored ? scheduleEdges(stored) : null;
-  const startLabel = edges ? `${formatShortDate(edges.startDate)}, ${edges.startTime}` : "—";
-  const endLabel = edges?.endDate ? `${formatShortDate(edges.endDate)}${edges.endTime ? `, ${edges.endTime}` : ""}` : "No end date";
+  const startLabel = edges ? `${formatDmy(edges.startDate)}, ${edges.startTime}` : "—";
+  const endLabel = edges?.endDate ? `${formatDmy(edges.endDate)}${edges.endTime ? `, ${edges.endTime}` : ""}` : "No end date";
   const weekdayLabel = summary?.days.length
     ? WEEKDAYS.filter((d) => summary.days.includes(d.value)).map((d) => d.label).join(", ")
     : schedule.mode === "monthly" || schedule.mode === "dates"

@@ -69,7 +69,7 @@ export function ChannelEditorForm({
     <div className="space-y-4">
       <EditorSection number={1} title="Basic Information" subtitle="Tell us about this channel.">
         <div className="grid gap-4 md:grid-cols-[128px_minmax(0,1fr)] md:items-center">
-          <label htmlFor="channel-name" className="text-sm font-medium text-muted-foreground">Channel Name *</label>
+          <label htmlFor="channel-name" className="text-sm font-medium text-muted-foreground">Channel Name <span className="text-danger">*</span></label>
           <div>
             <input
               id="channel-name"
@@ -82,7 +82,7 @@ export function ChannelEditorForm({
             {nameError && <p id="channel-name-error" className="mt-1 text-xs text-danger">{nameError}</p>}
           </div>
 
-          <label htmlFor="channel-output-kind" className="text-sm font-medium text-muted-foreground">Type *</label>
+          <label htmlFor="channel-output-kind" className="text-sm font-medium text-muted-foreground">Type <span className="text-danger">*</span></label>
           <select
             id="channel-output-kind"
             value={draft.outputKind}

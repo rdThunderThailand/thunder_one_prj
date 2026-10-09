@@ -29,7 +29,6 @@ export function CompositionCanvasPane({
   onChange,
   lockedZoneIds,
   hiddenZoneIds,
-  fitSignal,
 }: {
   zones: LayoutZone[];
   background: string;
@@ -44,14 +43,12 @@ export function CompositionCanvasPane({
   onChange: (zones: LayoutZone[]) => void;
   lockedZoneIds: ReadonlySet<string>;
   hiddenZoneIds: ReadonlySet<string>;
-  fitSignal: number;
 }) {
   const activeIndex = zones.findIndex((zone) => zone.id === activeZoneId);
 
   return (
       <div className="flex h-full min-h-0 flex-col">
         <LayoutCanvas
-          key={fitSignal}
           zones={zones}
           background={background}
           aspectRatio={aspectRatio}

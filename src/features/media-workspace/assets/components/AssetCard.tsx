@@ -79,10 +79,10 @@ export function AssetMenu({ asset, trash, folders, onRefresh }: {
           </DropdownMenuItem>
           {trash ? (
             <>
-              <DropdownMenuItem onSelect={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}><Undo2 />Restore</DropdownMenuItem>
+              <DropdownMenuItem onSelect={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}><Undo2 />Recover</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setConfirmMode("delete")}>
-                <Trash2 />Delete Permanently
+                <Trash2 />Permanent delete
               </DropdownMenuItem>
             </>
           ) : (
@@ -109,7 +109,7 @@ export function AssetMenu({ asset, trash, folders, onRefresh }: {
       <AlertDialog open={confirmMode !== null} onOpenChange={(open) => { if (!open) setConfirmMode(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{confirmMode === "delete" ? "Delete permanently?" : "Move to Trash?"}</AlertDialogTitle>
+            <AlertDialogTitle>{confirmMode === "delete" ? "Permanent delete?" : "Move to Trash?"}</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmMode === "delete" ? `Permanently delete ${label}? This cannot be undone.` : `Move ${label} to Trash?`}
             </AlertDialogDescription>
@@ -125,7 +125,7 @@ export function AssetMenu({ asset, trash, folders, onRefresh }: {
                 onRefresh();
               }}
             >
-              {confirmMode === "delete" ? "Delete Permanently" : "Move to Trash"}
+              {confirmMode === "delete" ? "Permanent delete" : "Move to Trash"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -195,7 +195,7 @@ export function AssetCard({ asset, trash, folders, onRefresh, previewUrl, thumbn
         <div className="flex gap-2 border-t border-border p-2.5">
           <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px]" onClick={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}>
             <Undo2 className="h-3 w-3" />
-            Restore
+            Recover
           </Button>
           <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px] text-destructive" onClick={() => setDeleteOpen(true)}>
             <Trash2 className="h-3 w-3" />
@@ -206,7 +206,7 @@ export function AssetCard({ asset, trash, folders, onRefresh, previewUrl, thumbn
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete permanently?</AlertDialogTitle>
+            <AlertDialogTitle>Permanent delete?</AlertDialogTitle>
             <AlertDialogDescription>Permanently delete {label}? This cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -218,7 +218,7 @@ export function AssetCard({ asset, trash, folders, onRefresh, previewUrl, thumbn
                 onRefresh();
               }}
             >
-              Delete Permanently
+              Permanent delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

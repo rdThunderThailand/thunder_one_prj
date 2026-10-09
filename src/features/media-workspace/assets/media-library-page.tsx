@@ -162,7 +162,7 @@ export function MediaLibraryPage() {
         actions={
           <>
             <Button variant="outline" size="sm" className="hidden xl:inline-flex" onClick={() => setCreateFolderOpen(true)}><Folder className="h-3.5 w-3" />Create Folder</Button>
-            <Link href="/media-workspace/assets/upload" className={buttonVariants({ size: "sm" })}><Upload className="h-3.5 w-3" />Upload</Link>
+            <Link href={folderId ? `/media-workspace/assets/upload?folder=${folderId}` : "/media-workspace/assets/upload"} className={buttonVariants({ size: "sm" })}><Upload className="h-3.5 w-3" />Upload</Link>
           </>
         }
       />
@@ -186,8 +186,8 @@ export function MediaLibraryPage() {
           <LibrarySelectionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
             {isTrash ? (
               <>
-                <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Restore</Button>
-                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "delete", ids: [...selectedIds] })}><Trash2 className="h-3.5 w-3.5" />Delete Permanently</Button>
+                <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "delete", ids: [...selectedIds] })}><Trash2 className="h-3.5 w-3.5" />Permanent delete</Button>
               </>
             ) : (
               <>
@@ -234,7 +234,7 @@ export function MediaLibraryPage() {
       <AlertDialog open={pendingBatch !== null} onOpenChange={(open) => { if (!open) setPendingBatch(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{pendingBatch?.mode === "delete" ? "Delete permanently?" : "Move to Trash?"}</AlertDialogTitle>
+            <AlertDialogTitle>{pendingBatch?.mode === "delete" ? "Permanent delete?" : "Move to Trash?"}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingBatch?.mode === "delete"
                 ? `${pendingBatch.ids.length} item(s) will be permanently deleted. This cannot be undone.`
@@ -252,7 +252,7 @@ export function MediaLibraryPage() {
                 void runBatch(mode, ids);
               }}
             >
-              {pendingBatch?.mode === "delete" ? "Delete Permanently" : "Move to Trash"}
+              {pendingBatch?.mode === "delete" ? "Permanent delete" : "Move to Trash"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -2,7 +2,7 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/lovable/button";
-import { ClipboardIcon, EyeIcon, ExpandIcon, LayoutIcon, LockIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
+import { ClipboardIcon, EyeIcon, LayoutIcon, LockIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { ALIGN_EDGES, alignZone, duplicateZone, type AlignEdge } from "@/features/media-workspace/layouts/align-zones";
 import { splitZone } from "@/features/media-workspace/layouts/split-zone";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
@@ -18,7 +18,6 @@ export function CompositionEditorToolbar({
   onChangeStart,
   onChange,
   onDelete,
-  onFit,
 }: {
   zones: LayoutZone[];
   activeZoneId: string | null;
@@ -30,7 +29,6 @@ export function CompositionEditorToolbar({
   onChangeStart: () => boolean;
   onChange: (zones: LayoutZone[]) => void;
   onDelete: () => void;
-  onFit: () => void;
 }) {
   const activeIndex = zones.findIndex((zone) => zone.id === activeZoneId);
   const activeZone = activeIndex < 0 ? null : zones[activeIndex];
@@ -95,7 +93,6 @@ export function CompositionEditorToolbar({
       <Button size="sm" variant="ghost" disabled={activeIndex < 0} aria-pressed={isHidden} onClick={() => toggle(onHiddenZoneIds)}><EyeIcon /> Hide</Button>
       <Button size="sm" variant="ghost" disabled={activeIndex < 0} onClick={duplicate}><ClipboardIcon /> Duplicate</Button>
       <Button size="sm" variant="ghost" className="text-danger" disabled={zones.length <= 1 || activeIndex < 0} onClick={onDelete}><TrashIcon /> Delete Zone</Button>
-      <Button size="sm" variant="outline" onClick={onFit}><ExpandIcon /> Fit to Screen</Button>
       <span className="ml-auto whitespace-nowrap text-[11px] text-muted-foreground">{activeZone ? `Selected: Zone ${String.fromCharCode(65 + activeIndex)}` : "No zone selected"}</span>
     </div>
   );

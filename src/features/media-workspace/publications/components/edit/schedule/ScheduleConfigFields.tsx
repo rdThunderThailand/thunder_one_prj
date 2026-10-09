@@ -1,99 +1,17 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { Input } from "@/components/ui/lovable/input";
 import { Label } from "@/components/ui/lovable/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
-import { TIMEZONES, WEEKDAYS } from "../../../schedule";
+import { WEEKDAYS } from "../../../schedule";
 import type { DraftErrors, ScheduleDraft } from "../../../schedule-preset";
+import { DatePickerField } from "./DatePickerField";
 import { DatesCalendar } from "./DatesCalendar";
 import { DateRangeCalendar } from "./DateRangeCalendar";
 import { MonthDaysGrid } from "./MonthDaysGrid";
+import { EndDateToggle, FieldError, Step, TimeField, TimezoneField } from "./schedule-field-parts";
 
 const MONDAY_FIRST = [...WEEKDAYS.slice(1), WEEKDAYS[0]];
-
-function Step({ n, title, hint, children }: { n: number; title: string; hint: string; children: ReactNode }) {
-  return (
-    <section className="flex gap-3">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-        {n}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground">{hint}</p>
-        </div>
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function FieldError({ message }: { message?: string }) {
-  return message ? <p className="text-xs text-danger">{message}</p> : null;
-}
-
-/** `min` only on end dates and single-day dates — a recurring start may already be in the past (#222). */
-function DateField({ id, label, value, optional, min, onChange }: { id: string; label: string; value: string; optional?: boolean; min?: string; onChange: (v: string) => void }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>
-        {label}
-        {optional && <span className="font-normal text-muted-foreground"> (optional)</span>}
-      </Label>
-      <Input
-        id={id}
-        type="date"
-        value={value}
-        min={min}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </div>
-  );
-}
-
-function TimezoneField({ value, onChange }: { value: string; onChange: (timezone: string) => void }) {
-  const zones = TIMEZONES.some((z) => z.id === value) ? TIMEZONES : [...TIMEZONES, { id: value, label: value }];
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label>Time Zone</Label>
-      <Select
-        value={value}
-        onValueChange={onChange}
-      >
-        <SelectTrigger aria-label="Time Zone">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {zones.map((zone) => (
-            <SelectItem
-              key={zone.id}
-              value={zone.id}
-            >
-              {zone.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-function TimeField({ id, label, value, disabled, onChange }: { id: string; label: string; value: string; disabled?: boolean; onChange: (v: string) => void }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="time"
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </div>
-  );
-}
 
 export function ScheduleConfigFields({
   draft,
@@ -101,6 +19,7 @@ export function ScheduleConfigFields({
   today,
   isDateRange,
   showDateRangeCalendar = false,
+  isStartLocked = false,
   onChange,
 }: {
   draft: ScheduleDraft;
@@ -108,6 +27,8 @@ export function ScheduleConfigFields({
   today: string;
   isDateRange: boolean;
   showDateRangeCalendar?: boolean;
+  /** Live Program: everything but the end is read-only (ADR 0090). `<fieldset disabled>` locks the rest natively. */
+  isStartLocked?: boolean;
   onChange: (change: Partial<ScheduleDraft>) => void;
 }) {
   return (
@@ -119,55 +40,59 @@ export function ScheduleConfigFields({
           title={draft.mode === "monthly" ? "Select Days of the Month" : isDateRange ? "Select Date Range" : "Select Days"}
           hint={isDateRange ? "เลือกช่วงวันที่ต้องการออกอากาศ" : "เลือกวันที่ออกอากาศ"}
         >
-          {draft.mode === "monthly" && (
-            <MonthDaysGrid
-              value={draft.monthDays}
-              onChange={(monthDays) => onChange({ monthDays })}
-            />
-          )}
-          {draft.mode === "weekly" && !isDateRange && (
-            <div className="flex flex-wrap gap-1.5">
-              {MONDAY_FIRST.map((day) => {
-                const isOn = draft.days.includes(day.value);
-                return (
-                  <button
-                    key={day.value}
-                    type="button"
-                    aria-pressed={isOn}
-                    onClick={() =>
-                      onChange({ days: isOn ? draft.days.filter((d) => d !== day.value) : [...draft.days, day.value] })
-                    }
-                    className={
-                      isOn
-                        ? "rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
-                        : "rounded-md bg-muted px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
-                    }
-                  >
-                    {day.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <fieldset
+            disabled={isStartLocked}
+            className="contents"
+          >
+            {draft.mode === "monthly" && (
+              <MonthDaysGrid
+                value={draft.monthDays}
+                onChange={(monthDays) => onChange({ monthDays })}
+              />
+            )}
+            {draft.mode === "weekly" && !isDateRange && (
+              <div className="flex flex-wrap gap-1.5">
+                {MONDAY_FIRST.map((day) => {
+                  const isOn = draft.days.includes(day.value);
+                  return (
+                    <button
+                      key={day.value}
+                      type="button"
+                      aria-pressed={isOn}
+                      onClick={() =>
+                        onChange({ days: isOn ? draft.days.filter((d) => d !== day.value) : [...draft.days, day.value] })
+                      }
+                      className={`disabled:cursor-not-allowed disabled:opacity-50 ${
+                        isOn
+                          ? "rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+                          : "rounded-md bg-muted px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </fieldset>
           <FieldError message={errors.days ?? errors.monthDays} />
           <div className="grid gap-3 @sm:grid-cols-2">
-            <DateField
+            <DatePickerField
               id="schedule-start-date"
               label="Start date"
+              min={today}
+              disabled={isStartLocked}
               value={draft.startDate}
               onChange={(startDate) => onChange({ startDate })}
             />
-            <DateField
-              id="schedule-end-date"
-              label="End date"
-              optional={!isDateRange}
-              min={today}
-              value={draft.endDate}
-              onChange={(endDate) => onChange({ endDate })}
-            />
           </div>
+          <EndDateToggle
+            draft={draft}
+            today={today}
+            onChange={onChange}
+          />
           <FieldError message={errors.startDate ?? errors.endDate} />
-          {isDateRange && showDateRangeCalendar && (
+          {isDateRange && showDateRangeCalendar && !isStartLocked && (
             <DateRangeCalendar
               startDate={draft.startDate}
               endDate={draft.endDate}
@@ -183,11 +108,16 @@ export function ScheduleConfigFields({
           title="Select Custom Days"
           hint="เลือกวันที่ต้องการออกอากาศ"
         >
-          <DatesCalendar
-            dates={draft.dates}
-            today={today}
-            onChange={(dates) => onChange({ dates })}
-          />
+          <fieldset
+            disabled={isStartLocked}
+            className="contents"
+          >
+            <DatesCalendar
+              dates={draft.dates}
+              today={today}
+              onChange={(dates) => onChange({ dates })}
+            />
+          </fieldset>
           <FieldError message={errors.dates} />
         </Step>
       )}
@@ -197,10 +127,11 @@ export function ScheduleConfigFields({
           title="Select Date"
           hint="เลือกวันที่ต้องการออกอากาศ"
         >
-          <DateField
+          <DatePickerField
             id="schedule-date"
             label="Date"
             min={today}
+            disabled={isStartLocked}
             value={draft.startDate}
             onChange={(startDate) => onChange({ startDate })}
           />
@@ -214,38 +145,39 @@ export function ScheduleConfigFields({
           hint="ออกอากาศต่อเนื่องตั้งแต่เวลาเริ่ม ไม่มีช่วงเวลาประจำวัน — เล่นข้ามคืน"
         >
           <div className="grid gap-3 @sm:grid-cols-2">
-            <DateField
+            <DatePickerField
               id="schedule-start-date"
               label="Start date"
+              min={today}
+              disabled={isStartLocked}
               value={draft.startDate}
               onChange={(startDate) => onChange({ startDate })}
             />
             <TimeField
               id="schedule-start-time"
               label="Start time"
+              disabled={isStartLocked}
               value={draft.startTime}
               onChange={(startTime) => onChange({ startTime })}
             />
-            <DateField
-              id="schedule-end-date"
-              label="End date"
-              optional
-              min={today}
-              value={draft.endDate}
-              onChange={(endDate) => onChange({ endDate })}
-            />
+          </div>
+          <EndDateToggle
+            draft={draft}
+            today={today}
+            onChange={onChange}
+          >
             <TimeField
               id="schedule-end-time"
               label="End time"
               value={draft.endTime}
-              disabled={!draft.endDate}
               onChange={(endTime) => onChange({ endTime })}
             />
-          </div>
+          </EndDateToggle>
           <FieldError message={errors.startDate ?? errors.endDate} />
           <div className="max-w-xs">
             <TimezoneField
               value={draft.timezone}
+              disabled={isStartLocked}
               onChange={(timezone) => onChange({ timezone })}
             />
           </div>
@@ -257,46 +189,53 @@ export function ScheduleConfigFields({
           title={draft.mode === "one-time" ? "Time Range" : "Daily Time Range"}
           hint={draft.mode === "one-time" ? "กำหนดช่วงเวลา (ออกอากาศครั้งเดียว)" : "กำหนดช่วงเวลา (ใช้เหมือนกันทุกวันที่เลือก)"}
         >
-          <div className="grid gap-3 @sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="schedule-start-time">Start time</Label>
-              <Input
-                id="schedule-start-time"
-                type="time"
-                value={draft.allDay ? "00:00" : draft.dailyStart}
-                disabled={draft.allDay}
-                onChange={(event) => onChange({ dailyStart: event.target.value })}
+          <fieldset
+            disabled={isStartLocked}
+            className="contents"
+          >
+            <div className="grid gap-3 @sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="schedule-start-time">Start time</Label>
+                <Input
+                  id="schedule-start-time"
+                  type="time"
+                  value={draft.allDay ? "00:00" : draft.dailyStart}
+                  disabled={draft.allDay}
+                  onChange={(event) => onChange({ dailyStart: event.target.value })}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="schedule-end-time">End time</Label>
+                <Input
+                  id="schedule-end-time"
+                  type="time"
+                  value={draft.allDay ? "23:59" : draft.dailyEnd}
+                  disabled={draft.allDay}
+                  onChange={(event) => onChange({ dailyEnd: event.target.value })}
+                />
+              </div>
+              {/* Explicit too: Radix Select opens on pointerdown, which a disabled fieldset does not stop. */}
+              <TimezoneField
+                value={draft.timezone}
+                disabled={isStartLocked}
+                onChange={(timezone) => onChange({ timezone })}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="schedule-end-time">End time</Label>
-              <Input
-                id="schedule-end-time"
-                type="time"
-                value={draft.allDay ? "23:59" : draft.dailyEnd}
-                disabled={draft.allDay}
-                onChange={(event) => onChange({ dailyEnd: event.target.value })}
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <Checkbox
+                checked={draft.allDay}
+                // Leaving all day with the 00:00-23:59 sentinel still in the fields would store all day again.
+                onCheckedChange={(checked) =>
+                  onChange(
+                    checked !== true && draft.dailyStart === "00:00" && draft.dailyEnd === "23:59"
+                      ? { allDay: false, dailyStart: "09:00", dailyEnd: "18:00" }
+                      : { allDay: checked === true },
+                  )
+                }
               />
-            </div>
-            <TimezoneField
-              value={draft.timezone}
-              onChange={(timezone) => onChange({ timezone })}
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <Checkbox
-              checked={draft.allDay}
-              // Leaving all day with the 00:00-23:59 sentinel still in the fields would store all day again.
-              onCheckedChange={(checked) =>
-                onChange(
-                  checked !== true && draft.dailyStart === "00:00" && draft.dailyEnd === "23:59"
-                    ? { allDay: false, dailyStart: "09:00", dailyEnd: "18:00" }
-                    : { allDay: checked === true },
-                )
-              }
-            />
-            All day (00:00 – 24:00)
-          </label>
+              All day (00:00 – 24:00)
+            </label>
+          </fieldset>
           <FieldError message={errors.time} />
         </Step>
       )}

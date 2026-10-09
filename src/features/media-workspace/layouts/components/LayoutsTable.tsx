@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/lovable/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { MoreIcon } from "@/components/ui/icons";
 import type { Sort, SortKey } from "../list-filtering";
 import { statusBadge } from "../status-display";
@@ -153,8 +154,8 @@ function SortHeader({
   );
 }
 
-// ponytail: native <details> menu — no outside-click dismiss, no positioning library.
-// Swap to the popover API if the open menu ever gets in the way.
+// QA 2026-10-08 #10: portalled menu (replaces the native <details> one), so the table's overflow
+// cannot clip it. The span keeps clicks — React bubbles them out of the portal — off the row.
 function RowActions({
   status,
   disabled,
@@ -164,47 +165,38 @@ function RowActions({
   disabled: boolean;
   onAction: (action: RowAction) => void;
 }) {
-  const item =
-    "block w-full px-3 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted";
-
   return (
-    <details
-      className="relative inline-block text-left"
-      onClick={(e) => e.stopPropagation()}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          e.currentTarget.removeAttribute("open");
-        }
-      }}
-    >
-      <summary
-        aria-label="Actions"
-        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-      >
-        <MoreIcon />
-      </summary>
-      <div className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
-        <button type="button" className={item} onClick={() => onAction("edit")}>
-          Edit
-        </button>
-        <button type="button" className={item} disabled={disabled} onClick={() => onAction("duplicate")}>
-          Duplicate
-        </button>
-        {status === "active" ? (
-          <button
-            type="button"
-            className={`${item} text-danger hover:bg-danger-soft`}
-            disabled={disabled}
-            onClick={() => onAction("archive")}
-          >
-            Archive
-          </button>
-        ) : (
-          <button type="button" className={item} disabled={disabled} onClick={() => onAction("restore")}>
-            Restore
-          </button>
-        )}
-      </div>
-    </details>
+    <span onClick={(event) => event.stopPropagation()}>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label="Actions"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <MoreIcon />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-40"
+        >
+          <DropdownMenuItem onSelect={() => onAction("edit")}>Edit</DropdownMenuItem>
+          <DropdownMenuItem disabled={disabled} onSelect={() => onAction("duplicate")}>
+            Duplicate
+          </DropdownMenuItem>
+          {status === "active" ? (
+            <DropdownMenuItem
+              className="text-danger focus:text-danger"
+              disabled={disabled}
+              onSelect={() => onAction("archive")}
+            >
+              Archive
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem disabled={disabled} onSelect={() => onAction("restore")}>
+              Restore
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </span>
   );
 }

@@ -90,7 +90,8 @@ export function ContentSourceCard({
 
   return (
     <EditCard
-      step="2. Content Source *"
+      step="2. Content Source"
+      isRequired
       icon={PlaySquare}
       hint="เลือก Playlist หรือ Layout อย่างใดอย่างหนึ่ง ในการแสดงผล Program นี้"
       error={error ?? changeError ?? undefined}

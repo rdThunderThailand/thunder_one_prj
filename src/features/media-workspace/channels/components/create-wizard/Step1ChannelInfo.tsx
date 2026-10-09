@@ -60,7 +60,7 @@ export function Step1ChannelInfo({
         <div className="mt-3 grid gap-4 md:grid-cols-2">
           <Input
             name="create-channel-name"
-            label="Channel Name *"
+            label={<>Channel Name <span className="text-danger">*</span></>}
             value={draft.name}
             error={nameError}
             placeholder="e.g. Cafe Menu Board"

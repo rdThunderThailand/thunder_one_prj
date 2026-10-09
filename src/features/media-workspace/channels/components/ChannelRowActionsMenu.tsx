@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MoreIcon } from "@/components/ui/icons";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { classifyApiError } from "@/lib/api/api-error";
 import { deactivateChannel } from "../services/channels-api";
 import type { ChannelListItem } from "../types";
@@ -38,66 +39,49 @@ export function ChannelRowActionsMenu({
     }
   };
 
+  // QA 2026-10-08 #10: a portalled Popover (not a Radix menu — it stays open to show an error),
+  // so the table's overflow cannot clip it. The span keeps clicks off the row.
   return (
-    <div className="relative inline-block" onKeyDown={(event) => event.key === "Escape" && setIsOpen(false)}>
-      <button
-        type="button"
-        aria-label={`More actions for ${channel.name}`}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        onClick={(event) => {
-          event.stopPropagation();
-          setIsOpen((open) => !open);
-        }}
-        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-      >
-        <MoreIcon />
-      </button>
-
-      {isOpen && (
-        <>
+    <span onClick={(event) => event.stopPropagation()}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger
+          aria-label={`More actions for ${channel.name}`}
+          aria-haspopup="menu"
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        >
+          <MoreIcon />
+        </PopoverTrigger>
+        <PopoverContent
+          role="menu"
+          align="end"
+          className="w-48 p-0 py-1"
+        >
           <button
             type="button"
-            aria-hidden="true"
-            tabIndex={-1}
-            className="fixed inset-0 z-10 cursor-default"
-            onClick={(event) => {
-              event.stopPropagation();
-              setIsOpen(false);
-            }}
-          />
-          <div
-            role="menu"
-            onClick={(event) => event.stopPropagation()}
-            className="absolute right-0 z-20 mt-1 w-48 rounded-lg border border-border bg-card py-1 shadow-lg"
+            role="menuitem"
+            disabled
+            title="Duplicate Channel — not available yet"
+            className="w-full px-3 py-2 text-left text-sm text-muted-foreground disabled:cursor-not-allowed"
           >
-            <button
-              type="button"
-              role="menuitem"
-              disabled
-              title="Duplicate Channel — not available yet"
-              className="w-full px-3 py-2 text-left text-sm text-muted-foreground disabled:cursor-not-allowed"
-            >
-              Duplicate Channel
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              disabled={!canDisable || pending}
-              title={canDisable ? undefined : "Channel is not active"}
-              onClick={() => void disable()}
-              className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
-            >
-              {pending ? "Disabling…" : "Disable Channel"}
-            </button>
-            {error && (
-              <p role="alert" className="px-3 py-2 text-xs text-danger">
-                {error}
-              </p>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+            Duplicate Channel
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={!canDisable || pending}
+            title={canDisable ? undefined : "Channel is not active"}
+            onClick={() => void disable()}
+            className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
+          >
+            {pending ? "Disabling…" : "Disable Channel"}
+          </button>
+          {error && (
+            <p role="alert" className="px-3 py-2 text-xs text-danger">
+              {error}
+            </p>
+          )}
+        </PopoverContent>
+      </Popover>
+    </span>
   );
 }

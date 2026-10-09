@@ -205,7 +205,7 @@ export function PlaylistsListPage() {
             {inTrash ? (
               <>
                 <Button variant="outline" size="sm" disabled={emptyTrashBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
-                <Button variant="outline" size="sm" className="text-destructive" disabled={emptyTrashBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Delete forever</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={emptyTrashBusy} onClick={() => void runBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Permanent delete</Button>
               </>
             ) : (
               <>

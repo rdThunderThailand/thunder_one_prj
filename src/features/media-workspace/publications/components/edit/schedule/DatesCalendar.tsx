@@ -72,7 +72,7 @@ export function DatesCalendar({
               onClick={() => toggle(ymd)}
               className={
                 dates.includes(ymd)
-                  ? "h-8 rounded-md bg-primary text-sm font-semibold text-primary-foreground"
+                  ? "h-8 rounded-md bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-50"
                   : "h-8 rounded-md text-sm text-foreground hover:bg-muted disabled:text-muted-foreground disabled:hover:bg-transparent"
               }
             >

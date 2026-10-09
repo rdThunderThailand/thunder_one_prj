@@ -20,6 +20,7 @@ import {
 import type { LayoutListItem } from "../types";
 import { CreateLayoutStartStep, type StartChoice, type StartDetails } from "./create-layout-start-step";
 import { LayoutWireframe } from "./LayoutWireframe";
+import { TemplateDetailsPanel } from "./TemplateDetailsPanel";
 
 const GROUPS = [
   { key: "recommended", label: "Recommended" },
@@ -85,6 +86,7 @@ export function LayoutTemplatePicker({
   onClose,
   onStarted,
   hasUnsavedChanges = false,
+  initialFolderId = "",
 }: {
   open: boolean;
   folders: ContentFolder[];
@@ -93,12 +95,14 @@ export function LayoutTemplatePicker({
   /** Same-route callers can reload after the seed is written instead of pushing to themselves. */
   onStarted?: () => void;
   hasUnsavedChanges?: boolean;
+  /** The Folder the Layouts list was showing; "" = Uncategorized (QA 2026-10-08 #12). */
+  initialFolderId?: string;
 }) {
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [step, setStep] = useState<"start" | "templates">("start");
   const [choice, setChoice] = useState<StartChoice>("blank");
-  const [details, setDetails] = useState<StartDetails>(INITIAL_DETAILS);
+  const [details, setDetails] = useState<StartDetails>({ ...INITIAL_DETAILS, folderId: initialFolderId });
   const [templates, setTemplates] = useState<LayoutListItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [group, setGroup] = useState<GroupKey>("recommended");
@@ -129,7 +133,7 @@ export function LayoutTemplatePicker({
   const resetAndClose = () => {
     setStep("start");
     setChoice("blank");
-    setDetails(INITIAL_DETAILS);
+    setDetails({ ...INITIAL_DETAILS, folderId: initialFolderId });
     setGroup("recommended");
     setFilters(DEFAULT_PICKER_FILTERS);
     setSelectedId(null);
@@ -225,11 +229,12 @@ export function LayoutTemplatePicker({
               selectedTemplate={pickedTemplate}
               resolutionLocked={choice === "template" && !!pickedTemplate}
               onTemplateChange={() => setStep("templates")}
-              onChoiceChange={setChoice}
+              // QA 2026-10-08 #15: choosing "From Template" opens the picker at once, not after Next.
+              onChoiceChange={(next) => { setChoice(next); if (next === "template" && !pickedTemplate) setStep("templates"); }}
               onDetailsChange={setDetails}
             />
           ) : (
-            <div className="grid h-full overflow-hidden rounded-lg border border-border lg:grid-cols-[180px_minmax(0,1fr)_280px]">
+            <div className="grid h-full overflow-hidden rounded-lg border border-border lg:grid-cols-[180px_minmax(0,1fr)_280px] lg:grid-rows-[minmax(0,1fr)]">
           <aside className="flex flex-col border-b border-border bg-muted p-3 lg:border-b-0 lg:border-r">
             <nav aria-label="Template groups" className="space-y-1">
               {GROUPS.map((item) => (
@@ -279,18 +284,7 @@ export function LayoutTemplatePicker({
             </div>
           </section>
 
-          <aside className="flex flex-col border-t border-border bg-muted p-4 lg:border-l lg:border-t-0">
-            <p className="mb-3 text-sm font-semibold text-foreground">Template Details</p>
-            <div className="min-h-0 flex-1">{selected ? (
-              <div className="space-y-3">
-                <LayoutWireframe zones={selected.zones} background="var(--program)" aspectRatio={selected.aspectRatio} programStyle className="w-full rounded-lg border border-border" />
-                <div><p className="font-semibold text-foreground">{selected.name}</p><p className="mt-1 text-xs text-muted-foreground">{selected.zoneCount} Zones · {selected.orientation}</p></div>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs"><dt className="text-muted-foreground">Resolution</dt><dd>{selected.referenceResolution ?? "Not set"}</dd><dt className="text-muted-foreground">Aspect ratio</dt><dd>{selected.aspectRatio}</dd><dt className="text-muted-foreground">On use</dt><dd>{selected.behaviour === "copied" ? "Copied" : "Shared"}</dd></dl>
-                {selected.useCases.length > 0 && <div className="flex flex-wrap gap-1">{selected.useCases.map((useCase) => <span key={useCase} className="rounded-full bg-primary-soft px-2 py-1 text-[11px] text-primary">{useCase}</span>)}</div>}
-                {selected.description && <p className="text-xs leading-5 text-muted-foreground">{selected.description}</p>}
-              </div>
-            ) : <p className="text-sm text-muted-foreground">Select a template to see its details.</p>}</div>
-          </aside>
+          <TemplateDetailsPanel selected={selected} />
             </div>
           )}
         </div>

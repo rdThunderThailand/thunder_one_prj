@@ -50,8 +50,6 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [usageCount, setUsageCount] = useState(0);
-  // Remounting the canvas resets its zoom — the same "Fit to Screen" the Composition editor uses.
-  const [fitSignal, setFitSignal] = useState(0);
 
   useEffect(() => {
     if (!layoutId) return;
@@ -227,7 +225,6 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
             selectedIndex={selectedIndex}
             onSelectIndex={setSelectedIndex}
             onChange={(zones) => setDraft((d) => ({ ...d, zones: reindex(zones) }))}
-            onFit={() => setFitSignal((value) => value + 1)}
           />
           <div className="grid min-h-0 flex-1 grid-cols-[230px_minmax(560px,1fr)_270px] items-stretch">
             <aside className="min-h-0 overflow-y-auto border-r border-border bg-card p-3">
@@ -242,7 +239,6 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
 
             <main className="flex min-h-0 flex-col gap-3 overflow-y-auto bg-muted/40 p-3">
               <LayoutCanvas
-                key={fitSignal}
                 zones={draft.zones}
                 background={draft.background}
                 aspectRatio={draft.aspectRatio}
