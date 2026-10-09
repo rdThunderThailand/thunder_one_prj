@@ -6,7 +6,7 @@ import { File, FileVideo, FolderInput, Image as ImageIcon, MoreHorizontal, Play,
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Button } from "@/components/ui/lovable/button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
+import { Badge } from "@/components/ui/lovable/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,13 +18,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/lovable/dropdown-menu";
-import {
-  moveMediaAsset,
-  permanentlyDeleteMediaAsset,
-  restoreMediaAsset,
-  trashMediaAsset,
-} from "@/lib/api/media-api";
+import { toast } from "sonner";
+import { classifyApiError } from "@/lib/api/api-error";
+import { moveMediaAsset, restoreMediaAsset, trashMediaAsset } from "@/lib/api/media-api";
 import { cn } from "@/lib/utils";
+import { DeleteAssetsDialog, TrashAssetsDialog } from "./AssetUsageDialogs";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
 
 export function formatBytes(bytes?: number) {
@@ -56,81 +54,58 @@ const formatDate = (value?: string) => {
 export const assetLabel = (asset: MediaAsset) => asset.title ?? asset.file?.original_filename ?? "Untitled asset";
 
 /** Lovable `MediaMenu`, limited to the actions this repo actually has. */
-export function AssetMenu({ asset, trash, folders, onRefresh }: {
+export function AssetMenu({ asset, trash, folders, hasHistory, onRefresh, onTrash, onDelete }: {
   asset: MediaAsset;
   trash: boolean;
   folders: ContentFolder[];
+  // Broadcast history cannot be cleared, so Permanent delete is offered only when it can succeed (ADR 0091).
+  hasHistory: boolean;
   onRefresh: () => void;
+  onTrash: () => void;
+  onDelete: () => void;
 }) {
   const label = assetLabel(asset);
-  const [confirmMode, setConfirmMode] = useState<"trash" | "delete" | null>(null);
   const move = async (folderId: string | null) => { await moveMediaAsset(asset.id, folderId); onRefresh(); };
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Actions for ${label}`} onClick={(event) => event.stopPropagation()}>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
-          <DropdownMenuItem asChild>
-            <Link href={`/media-workspace/assets/${asset.id}`}><File />View Details</Link>
-          </DropdownMenuItem>
-          {trash ? (
-            <>
-              <DropdownMenuItem onSelect={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}><Undo2 />Recover</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setConfirmMode("delete")}>
-                <Trash2 />Permanent delete
-              </DropdownMenuItem>
-            </>
-          ) : (
-            <>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger><FolderInput />Move to Folder</DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent className="max-h-64 w-44 overflow-y-auto">
-                    <DropdownMenuItem disabled={!asset.folder_id} onSelect={() => void move(null)}>Uncategorized</DropdownMenuItem>
-                    {folders.map((folder) => (
-                      <DropdownMenuItem key={folder.id} disabled={asset.folder_id === folder.id} onSelect={() => void move(folder.id)}>{folder.name}</DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setConfirmMode("trash")}>
-                <Trash2 />Move to Trash
-              </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <AlertDialog open={confirmMode !== null} onOpenChange={(open) => { if (!open) setConfirmMode(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{confirmMode === "delete" ? "Permanent delete?" : "Move to Trash?"}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmMode === "delete" ? `Permanently delete ${label}? This cannot be undone.` : `Move ${label} to Trash?`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className={confirmMode === "delete" ? "bg-danger hover:bg-danger" : undefined}
-              onClick={async () => {
-                if (confirmMode === "delete") await permanentlyDeleteMediaAsset(asset.id);
-                if (confirmMode === "trash") await trashMediaAsset(asset.id);
-                setConfirmMode(null);
-                onRefresh();
-              }}
-            >
-              {confirmMode === "delete" ? "Permanent delete" : "Move to Trash"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Actions for ${label}`} onClick={(event) => event.stopPropagation()}>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem asChild>
+          <Link href={`/media-workspace/assets/${asset.id}`}><File />View Details</Link>
+        </DropdownMenuItem>
+        {trash ? (
+          <>
+            <DropdownMenuItem onSelect={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}><Undo2 />Recover</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive focus:text-destructive" disabled={hasHistory} onSelect={onDelete}>
+              <Trash2 />Permanent delete
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger><FolderInput />Move to Folder</DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent className="max-h-64 w-44 overflow-y-auto">
+                  <DropdownMenuItem disabled={!asset.folder_id} onSelect={() => void move(null)}>Uncategorized</DropdownMenuItem>
+                  {folders.map((folder) => (
+                    <DropdownMenuItem key={folder.id} disabled={asset.folder_id === folder.id} onSelect={() => void move(folder.id)}>{folder.name}</DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={onTrash}>
+              <Trash2 />Move to Trash
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -152,10 +127,12 @@ export function AssetPreview({ asset, previewUrl, thumbnailUrl }: { asset: Media
   );
 }
 
-export function AssetCard({ asset, trash, folders, onRefresh, previewUrl, thumbnailUrl, selected, onSelect, view }: {
+export function AssetCard({ asset, trash, folders, hasHistory = false, onRefresh, previewUrl, thumbnailUrl, selected, onSelect, view }: {
   asset: MediaAsset;
   trash: boolean;
   folders: ContentFolder[];
+  /** Trash only: the Asset has aired, so Permanent delete would be refused. */
+  hasHistory?: boolean;
   onRefresh: () => void;
   // Signed once for the whole page by the list that owns these cards (ADR 0067).
   previewUrl?: string;
@@ -166,7 +143,16 @@ export function AssetCard({ asset, trash, folders, onRefresh, previewUrl, thumbn
 }) {
   const label = assetLabel(asset);
   const href = `/media-workspace/assets/${asset.id}`;
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirm, setConfirm] = useState<"trash" | "delete" | null>(null);
+  const items = [{ id: asset.id, label }];
+  const moveToTrash = async () => {
+    try {
+      await trashMediaAsset(asset.id);
+      onRefresh();
+    } catch (reason) {
+      toast.error(classifyApiError(reason, "Unable to move media to Trash").message);
+    }
+  };
   return (
     <article
       className={cn(
@@ -189,7 +175,7 @@ export function AssetCard({ asset, trash, folders, onRefresh, previewUrl, thumbn
             {formatFormat(asset)} · {formatBytes(asset.file?.file_size_bytes)} · {formatDate(asset.created_at)}
           </p>
         </div>
-        <AssetMenu asset={asset} trash={trash} folders={folders} onRefresh={onRefresh} />
+        <AssetMenu asset={asset} trash={trash} folders={folders} hasHistory={hasHistory} onRefresh={onRefresh} onTrash={() => setConfirm("trash")} onDelete={() => setConfirm("delete")} />
       </div>
       {trash && (
         <div className="flex gap-2 border-t border-border p-2.5">
@@ -197,32 +183,19 @@ export function AssetCard({ asset, trash, folders, onRefresh, previewUrl, thumbn
             <Undo2 className="h-3 w-3" />
             Recover
           </Button>
-          <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px] text-destructive" onClick={() => setDeleteOpen(true)}>
+          <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px] text-destructive" disabled={hasHistory} onClick={() => setConfirm("delete")}>
             <Trash2 className="h-3 w-3" />
             Delete
           </Button>
         </div>
       )}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Permanent delete?</AlertDialogTitle>
-            <AlertDialogDescription>Permanently delete {label}? This cannot be undone.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-danger hover:bg-danger"
-              onClick={async () => {
-                await permanentlyDeleteMediaAsset(asset.id);
-                onRefresh();
-              }}
-            >
-              Permanent delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {trash && hasHistory && (
+        <div className="border-t border-border px-2.5 py-1.5">
+          <Badge variant="neutral" className="px-1.5 py-0 text-[8px]">Has broadcast history</Badge>
+        </div>
+      )}
+      <TrashAssetsDialog items={items} open={confirm === "trash"} onOpenChange={(open) => { if (!open) setConfirm(null); }} onConfirm={() => void moveToTrash()} />
+      <DeleteAssetsDialog items={items} open={confirm === "delete"} onOpenChange={(open) => { if (!open) setConfirm(null); }} onDone={onRefresh} />
     </article>
   );
 }

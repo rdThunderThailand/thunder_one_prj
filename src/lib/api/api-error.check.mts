@@ -7,7 +7,7 @@
  * *.check.mts files here. api-error.ts imports nothing, so this loads clean.
  */
 import assert from "node:assert/strict";
-import { ApiError, classifyApiError, isConflict, isDuplicateName } from "./api-error.ts";
+import { ApiError, classifyApiError, isConflict, isDuplicateName, trashedAssetNames } from "./api-error.ts";
 
 const FALLBACK = "Failed to save draft.";
 
@@ -116,6 +116,22 @@ assert.equal(noScreens.kind, "rejected");
 assert.ok(noScreens.message.includes("ยังไม่มีจอ"));
 assert.ok(!noScreens.message.includes("targets have no screens"));
 assert.notEqual(noScreens.message, classifyApiError(new ApiError("Invalid input: x", 400), FALLBACK).message);
+
+// ADR 0091: a trashed Asset in the snapshot is refused by name, in Thai, never as the raw RPC text.
+const trashedRaw = "Invalid input: cannot activate — remove or restore from Trash: Predator.mp4, sample.mp4";
+assert.equal(trashedAssetNames(trashedRaw), "Predator.mp4, sample.mp4");
+// reasons are joined with "; " — only the Trash part is taken
+assert.equal(
+  trashedAssetNames("Invalid input: cannot activate — replace this file: A.mp4; remove or restore from Trash: B.mp4; wait — conversion in flight: C.mp4"),
+  "B.mp4"
+);
+assert.equal(trashedAssetNames("Invalid input: the targets have no screens"), null);
+const trashed = classifyApiError(new ApiError(trashedRaw, 400), FALLBACK);
+assert.equal(trashed.kind, "rejected");
+assert.ok(trashed.message.includes("Predator.mp4, sample.mp4"));
+assert.ok(trashed.message.includes("ถังขยะ"));
+assert.ok(!trashed.message.includes("cannot activate"));
+assert.ok(!trashed.message.includes("Invalid input"));
 
 // The fallback fills in only when there is no message to show.
 assert.equal(classifyApiError(undefined, FALLBACK).message, FALLBACK);
