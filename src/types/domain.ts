@@ -83,6 +83,35 @@ export type MediaAsset = {
   };
 };
 
+/** ADR 0091: where one Asset is used. Trashed Playlists/Layouts and ended Programs are not Usage. */
+export type AssetUsageRef = { id: string; name: string };
+
+export type AssetUsage = {
+  playlists: AssetUsageRef[];
+  layouts: Array<AssetUsageRef & { viaPlaylists: AssetUsageRef[] }>;
+  programs: Array<AssetUsageRef & {
+    status: "draft" | "scheduled" | "active";
+    startsAt: string | null;
+    endsAt: string | null;
+    onAir: boolean;
+  }>;
+  /** Playlists using the Asset as cover — informational, never a blocker. */
+  coverOf: AssetUsageRef[];
+  /** Broadcast history: a Publish Job snapshot or playback log names the Asset. */
+  history: boolean;
+};
+
+/** What stopped a Permanent delete. Unlike Usage this keeps trashed and ended references. */
+export type AssetDeleteBlockers = {
+  playlists: Array<AssetUsageRef & { trashed: boolean }>;
+  layouts: Array<AssetUsageRef & { trashed: boolean }>;
+  programs: Array<AssetUsageRef & { status: string }>;
+  history: boolean;
+};
+
+/** `deleted` is absent when an older Core route that ignores the RPC result answers. */
+export type PermanentDeleteResult = { deleted?: boolean; blockers?: AssetDeleteBlockers };
+
 export type ContentFolder = {
   id: string;
   parent_id: string | null;

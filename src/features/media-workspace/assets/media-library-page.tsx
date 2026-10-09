@@ -5,13 +5,11 @@ import Link from "next/link";
 import { Archive, FileAudio, FileImage, FileText, FileVideo, Folder, FolderInput, Trash2, Undo2, Upload } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import {
   fetchContentFolders,
   fetchMediaAssets,
   moveMediaAsset,
-  permanentlyDeleteMediaAsset,
   restoreMediaAsset,
   trashMediaAsset,
 } from "@/lib/api/media-api";
@@ -23,7 +21,9 @@ import { filterByTag, tagCounts } from "../content-library/tag-filtering";
 import { folderCounts } from "../playlists/folder-filtering";
 import type { FolderCollection } from "../content-library/ContentFolderRail";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
-import { AssetCard } from "./components/AssetCard";
+import { AssetCard, assetLabel } from "./components/AssetCard";
+import { DeleteAssetsDialog, TrashAssetsDialog } from "./components/AssetUsageDialogs";
+import { useAssetUsage } from "./useAssetUsage";
 import { LibraryEmpty, LibraryGridSkeleton, LibraryPagination, LibrarySummary, LibrarySummarySkeleton } from "../content-library/LibraryChrome";
 import { LibrarySelectionBar, LibraryShell } from "../content-library/LibraryShell";
 import { LibraryToolbar, type AssetKindFilter } from "./components/LibraryToolbar";
@@ -50,7 +50,9 @@ export function MediaLibraryPage() {
   const [tagId, setTagId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
+  // `pendingBatch` outlives the dialog's close animation; `batchOpen` is what opens it.
   const [pendingBatch, setPendingBatch] = useState<{ mode: "trash" | "delete"; ids: string[] } | null>(null);
+  const [batchOpen, setBatchOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   // Summary cards describe the library, not the Trash — keep the last non-trash fetch.
   const [libraryAssets, setLibraryAssets] = useState<MediaAsset[]>([]);
@@ -78,6 +80,10 @@ export function MediaLibraryPage() {
   // One signing call for every card on the page, not one per card (ADR 0067).
   const previewIds = useMemo(() => [...new Set(visibleAssets.map((asset) => asset.id))], [visibleAssets]);
   const previews = usePreviewUrls(previewIds);
+  // Trash only: which cards have aired and so cannot be permanently deleted (ADR 0091 Decision 5).
+  const { usage: trashUsage } = useAssetUsage(previewIds, isTrash);
+  const batchItems = (pendingBatch?.ids ?? []).map((id) => ({ id, label: assetLabel(assets.find((asset) => asset.id === id) ?? { id }) }));
+  const askBatch = (mode: "trash" | "delete", ids: string[]) => { setPendingBatch({ mode, ids }); setBatchOpen(true); };
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -107,10 +113,10 @@ export function MediaLibraryPage() {
   const handleSearch = (value: string) => { setSearch(value); setPage(1); };
   const handleKind = (value: AssetKindFilter) => { setKind(value); setPage(1); };
   const toggleSelected = (id: string, checked: boolean) => setSelectedIds((current) => { const next = new Set(current); if (checked) next.add(id); else next.delete(id); return next; });
-  const runBatch = async (mode: "trash" | "restore" | "delete", ids: string[]) => {
+  const runBatch = async (mode: "trash" | "restore", ids: string[]) => {
     if (!ids.length) return;
     setBatchBusy(true);
-    const action = mode === "trash" ? trashMediaAsset : mode === "restore" ? restoreMediaAsset : permanentlyDeleteMediaAsset;
+    const action = mode === "trash" ? trashMediaAsset : restoreMediaAsset;
     const results = await Promise.allSettled(ids.map(action));
     const failed = results.filter((result) => result.status === "rejected").length;
     setSelectedIds(new Set());
@@ -187,7 +193,7 @@ export function MediaLibraryPage() {
             {isTrash ? (
               <>
                 <Button variant="outline" size="sm" disabled={batchBusy} onClick={() => void runBatch("restore", [...selectedIds])}><Undo2 className="h-3.5 w-3.5" />Recover</Button>
-                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "delete", ids: [...selectedIds] })}><Trash2 className="h-3.5 w-3.5" />Permanent delete</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => askBatch("delete", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Permanent delete</Button>
               </>
             ) : (
               <>
@@ -200,7 +206,7 @@ export function MediaLibraryPage() {
                     {folders.map((folder) => <DropdownMenuItem key={folder.id} onSelect={() => void moveSelected(folder.id)}>{folder.name}</DropdownMenuItem>)}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "trash", ids: [...selectedIds] })}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
+                <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => askBatch("trash", [...selectedIds])}><Trash2 className="h-3.5 w-3.5" />Move to Trash</Button>
               </>
             )}
           </LibrarySelectionBar>
@@ -209,7 +215,7 @@ export function MediaLibraryPage() {
         title={collectionName}
         meta={loading && assets.length === 0 ? "…" : `${filteredAssets.length.toLocaleString()} items`}
         headerActions={isTrash && assets.length > 0 && (
-          <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => setPendingBatch({ mode: "delete", ids: assets.map((asset) => asset.id) })}>
+          <Button variant="outline" size="sm" className="text-destructive" disabled={batchBusy} onClick={() => askBatch("delete", assets.map((asset) => asset.id))}>
             <Trash2 className="h-3.5 w-3.5" />
             Empty Trash
           </Button>
@@ -225,38 +231,24 @@ export function MediaLibraryPage() {
         ) : (
           <div className={cn("grid gap-3", isGrid ? "sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1")}>
             {visibleAssets.map((asset) => (
-              <AssetCard key={asset.id} asset={asset} trash={isTrash} folders={folders} onRefresh={() => void refresh()} previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} selected={selectedIds.has(asset.id)} onSelect={(checked) => toggleSelected(asset.id, checked)} view={isGrid ? "grid" : "list"} />
+              <AssetCard key={asset.id} asset={asset} trash={isTrash} folders={folders} hasHistory={trashUsage?.[asset.id]?.history === true} onRefresh={() => void refresh()} previewUrl={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} selected={selectedIds.has(asset.id)} onSelect={(checked) => toggleSelected(asset.id, checked)} view={isGrid ? "grid" : "list"} />
             ))}
           </div>
         )}
       </LibraryShell>
 
-      <AlertDialog open={pendingBatch !== null} onOpenChange={(open) => { if (!open) setPendingBatch(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{pendingBatch?.mode === "delete" ? "Permanent delete?" : "Move to Trash?"}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingBatch?.mode === "delete"
-                ? `${pendingBatch.ids.length} item(s) will be permanently deleted. This cannot be undone.`
-                : `${pendingBatch?.ids.length ?? 0} item(s) will be moved to Trash.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className={pendingBatch?.mode === "delete" ? "bg-danger hover:bg-danger" : undefined}
-              onClick={() => {
-                if (!pendingBatch) return;
-                const { mode, ids } = pendingBatch;
-                setPendingBatch(null);
-                void runBatch(mode, ids);
-              }}
-            >
-              {pendingBatch?.mode === "delete" ? "Permanent delete" : "Move to Trash"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TrashAssetsDialog
+        items={batchItems}
+        open={batchOpen && pendingBatch?.mode === "trash"}
+        onOpenChange={setBatchOpen}
+        onConfirm={() => void runBatch("trash", pendingBatch?.ids ?? [])}
+      />
+      <DeleteAssetsDialog
+        items={batchItems}
+        open={batchOpen && pendingBatch?.mode === "delete"}
+        onOpenChange={setBatchOpen}
+        onDone={() => { setSelectedIds(new Set()); void refresh(); }}
+      />
     </div>
   );
 }

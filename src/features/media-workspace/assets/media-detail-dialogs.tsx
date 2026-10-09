@@ -13,6 +13,7 @@ import { moveMediaAsset, restoreMediaAsset, trashMediaAsset } from "@/lib/api/me
 import type { ContentFolder, MediaAsset } from "@/types/domain";
 import { folderPath } from "../content-library/folder-tree";
 import { MediaPreview, assetLabel } from "./media-detail-preview";
+import { TrashUsageNotice } from "./components/AssetUsageDialogs";
 
 type DialogProps = { asset: MediaAsset; open: boolean; onOpenChange: (open: boolean) => void };
 
@@ -142,6 +143,7 @@ export function TrashDialog({ asset, open, onOpenChange }: DialogProps) {
           <DialogTitle>Move to Trash?</DialogTitle>
           <DialogDescription>{label} will be moved to Trash and can be recovered later.</DialogDescription>
         </DialogHeader>
+        <TrashUsageNotice items={[{ id: asset.id, label }]} />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

@@ -96,6 +96,19 @@ function isQuarantinedAsset(message: string): boolean {
 }
 
 /**
+ * `media_publication_activate` refuses a snapshot that holds a trashed Asset (ADR 0091 Decision 2).
+ * Returns the file names it lists, or null when the message is about something else. The names are
+ * the operator's own titles, so they are safe to show; the surrounding English is not.
+ */
+export function trashedAssetNames(message: string): string | null {
+  const match = /remove or restore from Trash: ([^;]+)/.exec(message);
+  return match ? match[1].trim() : null;
+}
+
+export const trashedAssetMessage = (names: string) =>
+  `มีไฟล์ที่อยู่ในถังขยะ (${names}) กรุณานำออกจาก Playlist/Layout หรือกู้คืนไฟล์ก่อนเผยแพร่`;
+
+/**
  * A request that never got a response — the browser is offline, the host is
  * unreachable, or it timed out. Axios reports it as `code: "ERR_NETWORK"` (or
  * `"ECONNABORTED"` on timeout) with the bare English `message` "Network Error",
@@ -151,6 +164,11 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
 
   if (isQuarantinedAsset(message)) {
     return { kind: "rejected", message };
+  }
+
+  const trashedNames = trashedAssetNames(message);
+  if (trashedNames) {
+    return { kind: "rejected", message: trashedAssetMessage(trashedNames) };
   }
 
   if (isNoScreensTarget(message)) {

@@ -1,3 +1,4 @@
+import { trashedAssetMessage, trashedAssetNames } from "@/lib/api/api-error";
 import { requestApi } from "@/lib/api/media-api";
 import { describeActivateError } from "../compositions/status-display";
 
@@ -39,8 +40,11 @@ export function describePublishChangesError(message: string): { programName: str
   const match = /program "(.+)" — ([\s\S]*)$/.exec(message);
   if (!match) return { programName: null, reason: "Publish ไม่สำเร็จ ยังไม่มีการเปลี่ยนแปลงกับ Program ใดเลย" };
   const [, programName, detail] = match;
-  const reason = /unbound/.test(detail)
-    ? describeActivateError(detail)
-    : (REASONS.find(([pattern]) => pattern.test(detail))?.[1] ?? "ไม่ผ่านเงื่อนไขการ Publish");
+  const trashedNames = trashedAssetNames(detail);
+  const reason = trashedNames
+    ? trashedAssetMessage(trashedNames)
+    : /unbound/.test(detail)
+      ? describeActivateError(detail)
+      : (REASONS.find(([pattern]) => pattern.test(detail))?.[1] ?? "ไม่ผ่านเงื่อนไขการ Publish");
   return { programName, reason };
 }
