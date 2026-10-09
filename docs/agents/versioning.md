@@ -77,6 +77,7 @@ the count while bumping PATCH, not MINOR.
 | 13 | `v0.9.0` | #252 | 2026-10-08 |
 | 14 | `v0.10.0` | #258 | 2026-10-08 |
 | 15 | `v0.11.0` | #266 | 2026-10-09 |
+| 16 | `v0.12.0` | #271 | 2026-10-09 |
 
 Append a row for every release. This table is the only release log we keep.
 
