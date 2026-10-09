@@ -4,7 +4,7 @@
  *     node src/features/media-workspace/publications/schedule-describe.check.mts
  */
 import assert from "node:assert/strict";
-import { describeSchedule, lastAiringDay } from "./schedule-describe.ts";
+import { describeSchedule, lastAiringDay, scheduleEdges } from "./schedule-describe.ts";
 import type { PublicationSchedule } from "./types/index.ts";
 
 const TZ = "Asia/Bangkok"; // UTC+7, no DST
@@ -50,6 +50,15 @@ assert.equal(describeSchedule(timed).range, "03/10/2026 10:00 – 05/10/2026 18:
 assert.equal(describeSchedule(timed).title, "Continuous");
 assert.equal(describeSchedule({ ...timed, ends_at: null }).title, "Continuous");
 assert.equal(describeSchedule({ ...timed, ends_at: "2026-10-03T11:00:00.000Z" }).title, "One time");
+
+// Edges agree with the summary: a Continuous ending at midnight keeps that midnight; only the
+// all-day one-time shape reads back as its own day until 23:59.
+const toMidnight: PublicationSchedule = { ...allDay, starts_at: "2026-10-20T08:48:00.000Z", ends_at: "2026-11-04T17:00:00.000Z" };
+assert.equal(describeSchedule(toMidnight).range, "20/10/2026 15:48 – 05/11/2026 00:00");
+assert.equal(scheduleEdges(toMidnight).endDate, "2026-11-05");
+assert.equal(scheduleEdges(toMidnight).endTime, "00:00");
+assert.equal(scheduleEdges(allDay).endDate, "2026-10-03");
+assert.equal(scheduleEdges(allDay).endTime, "23:59");
 
 // Monthly.
 const monthly: PublicationSchedule = {

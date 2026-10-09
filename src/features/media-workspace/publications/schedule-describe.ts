@@ -75,13 +75,14 @@ export function scheduleEdges(schedule: PublicationSchedule): ScheduleEdges {
   }
   const end = schedule.ends_at ? utcToZonedParts(schedule.ends_at, zone) : null;
   const sameDay = end?.date === start.date;
-  // A one-off closing at midnight ends on the previous day.
-  const endDate = end ? (end.time === "00:00" ? shiftYmd(end.date, -1) : end.date) : null;
+  // Only the all-day one-time shape (midnight to next midnight) reads back as its own day until 23:59;
+  // any other one-off shows the end moment as entered, like describeSchedule.
+  const isAllDayOneTime = !!end && start.time === "00:00" && end.time === "00:00" && end.date === shiftYmd(start.date, 1);
   return {
     startDate: start.date,
     startTime: start.time,
-    endDate,
-    endTime: end ? (end.time === "00:00" ? "23:59" : end.time) : null,
+    endDate: end ? (isAllDayOneTime ? start.date : end.date) : null,
+    endTime: end ? (isAllDayOneTime ? "23:59" : end.time) : null,
     windowStart: start.time,
     windowEnd: sameDay && end ? end.time : "24:00",
   };
