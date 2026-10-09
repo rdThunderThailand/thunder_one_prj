@@ -150,7 +150,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                   <p className="mt-0.5 text-[11px] text-muted-foreground">{endTime}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+              <div className="grid grid-cols-1 gap-y-2.5">
                 <Row label="Play window" value={reviewTimeRange} />
                 <Row label="Timezone" value={schedule.timezone} />
                 {days && <Row label="Active days" value={days} />}
