@@ -41,7 +41,7 @@ Can create/manage Assets, Playlists, Publications, and Channels, assign existing
 Read-only across content and Monitoring. Cannot see the Audit Log.
 
 **Asset** (Communication):
-A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG and MP4 (WebP was dropped by `docs/adr/0070-*.md`). A video whose codec or H.264 profile the players cannot decode is refused on intake (`docs/adr/0070-*.md`); automatic repair through a Rendition is proposed, not built. Removing one sends it to Trash and hides it from new selections without breaking existing playback; permanent deletion is allowed only from Trash and remains blocked while a live reference or any Publish Job snapshot requires it. `docs/adr/0056-nested-feature-folders-and-trash.md`.
+A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG and MP4 (WebP was dropped by `docs/adr/0070-*.md`). A video whose codec or H.264 profile the players cannot decode is refused on intake (`docs/adr/0070-*.md`); automatic repair through a Rendition is proposed, not built. Removing one sends it to Trash and hides it from new selections without breaking existing playback, and a trashed Asset cannot enter a new Publish Job (`docs/adr/0091-*.md`); permanent deletion is allowed only from Trash and remains blocked while a live reference or any Publish Job snapshot requires it. `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: Video, media file, content (when a specific entity is meant)
 
 **Rendition**:
@@ -68,8 +68,16 @@ _Avoid_: Tag (many-to-many, a different question and not built), shared content 
 A virtual collection of soft-deleted Assets, Playlists or operator-facing Layouts, separate within each feature and never a Folder row. Recovering returns an item to its former Folder when possible or to `Uncategorized`; Permanent delete is an explicit, dependency-checked action available only from Trash. `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: Archive, Trash Folder, Restore (in UI copy — the contract keeps `*_restore`), Delete forever
 
+**Asset Usage**:
+The Playlists, Layouts and not-yet-ended Programs that currently reference an Asset, directly or through a Playlist, Composition or the newest Publish Job's snapshot. Trashed Playlists/Layouts and Ended or Cancelled Programs are not Usage; being a Playlist cover is shown alongside but is not Usage. Moving an in-use Asset to Trash warns but is allowed. `docs/adr/0091-asset-trash-warns-with-usage-and-permanent-delete-names-blockers.md`.
+_Avoid_: references, dependencies, usage count (when meaning the list)
+
+**Broadcast history**:
+The evidence that an Asset has aired: any Publish Job snapshot or playback log that names it. It is kept as Playback Proof, so an Asset with Broadcast history cannot be permanently deleted. `docs/adr/0091-asset-trash-warns-with-usage-and-permanent-delete-names-blockers.md`.
+_Avoid_: past usage
+
 **Media Detail**:
-The read view for one Communication Asset, opened from its Media Library preview or title. It presents persisted Asset/File facts and supported actions only; Usage, Asset Tags, Versions and Activity History remain unavailable until their own tenant-scoped contracts exist. `docs/adr/0056-nested-feature-folders-and-trash.md`.
+The read view for one Communication Asset, opened from its Media Library preview or title. It presents persisted Asset/File facts, its Asset Usage, and supported actions only; Asset Tags, Versions and Activity History remain unavailable until their own tenant-scoped contracts exist. `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: fabricated usage counts, inferred technical metadata
 
 **Upload Queue**:
