@@ -34,19 +34,8 @@ import type { ContentFolder, MediaAsset } from "@/types/domain";
 import { folderPath } from "../content-library/folder-tree";
 import { FullscreenDialog, MoveToFolderDialog, TrashDialog } from "./media-detail-dialogs";
 import { InlineRename } from "./media-detail-rename";
+import { UsagePanel } from "./components/UsagePanel";
 import { KindIcon, MediaPreview, SectionCard, assetLabel, formatBytes, formatDate, formatDuration, type Icon } from "./media-detail-preview";
-
-function UsagePanel() {
-  return (
-    <section className="rounded-xl border border-border bg-card p-4 shadow-panel" aria-label="Usage">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-bold">Usage (Where it&apos;s used)</h2>
-        <Badge variant="neutral">Coming soon</Badge>
-      </div>
-      <p className="mt-3 rounded-lg bg-muted p-3 text-[11px] leading-5 text-muted-foreground">Usage counts will appear when a tenant-scoped usage contract is available.</p>
-    </section>
-  );
-}
 
 export function MediaDetailPage({ assetId }: { assetId: string }) {
   const [asset, setAsset] = useState<MediaAsset | null>(null);
@@ -205,7 +194,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
           </div>
         </div>
         <div id="media-usage">
-          <UsagePanel />
+          <UsagePanel assetId={assetId} />
         </div>
       </section>
 
