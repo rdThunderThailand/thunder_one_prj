@@ -124,16 +124,22 @@ assert.deepEqual(validateDraft(weeklyDraft, TODAY), {});
 assert.ok(validateDraft({ ...weeklyDraft, mode: "one-time", startDate: "2026-09-24" }, TODAY).startDate);
 assert.ok(validateDraft({ ...weeklyDraft, mode: "dates", dates: ["2026-09-24"] }, TODAY).dates);
 assert.deepEqual(validateDraft({ ...weeklyDraft, mode: "dates", dates: ["2026-09-24", "2026-10-05"] }, TODAY), {});
-assert.ok(validateDraft({ ...weeklyDraft, startDate: "2026-09-01", endDate: "2026-09-20" }, TODAY).endDate);
-assert.deepEqual(validateDraft({ ...weeklyDraft, startDate: "2026-09-01" }, TODAY), {}, "a weekly start in the past is fine");
+assert.ok(validateDraft({ ...weeklyDraft, startDate: "2026-09-01", endDate: "2026-09-20" }, TODAY, "00:00", true).endDate);
+// ADR 0090: a past start is rejected wherever the start is editable, and kept when it is locked (Live).
+assert.ok(validateDraft({ ...weeklyDraft, startDate: "2026-09-01" }, TODAY).startDate, "a weekly start in the past");
+assert.deepEqual(validateDraft({ ...weeklyDraft, startDate: "2026-09-01" }, TODAY, "00:00", true), {}, "a Live start in the past");
+assert.ok(validateDraft({ ...monthlyDraft, startDate: "2026-09-01" }, TODAY).startDate, "a monthly start in the past");
+assert.ok(validateDraft({ ...continuousDraft, startDate: "2026-09-30" }, TODAY).startDate, "a continuous start in the past");
+assert.deepEqual(validateDraft({ ...continuousDraft, startDate: "2026-09-30" }, TODAY, "00:00", true), {}, "a Live continuous start");
 // #222: an end earlier today is in the past too — one-time window and continuous end.
 const oneTimeToday = { ...weeklyDraft, mode: "one-time" as const, startDate: TODAY, dailyStart: "09:00", dailyEnd: "11:00" };
 assert.ok(validateDraft(oneTimeToday, TODAY, "15:00").time);
 assert.deepEqual(validateDraft(oneTimeToday, TODAY, "10:00"), {}, "still airing");
 assert.deepEqual(validateDraft({ ...oneTimeToday, allDay: true }, TODAY, "15:00"), {});
 const continuousToday = { ...continuousDraft, startDate: "2026-09-01", startTime: "00:00", endDate: TODAY, endTime: "09:00" };
-assert.ok(validateDraft(continuousToday, TODAY, "15:00").endDate);
-assert.deepEqual(validateDraft(continuousToday, TODAY, "08:00"), {});
+// A Live continuous Program (start locked, ADR 0090) whose end is earlier today.
+assert.ok(validateDraft(continuousToday, TODAY, "15:00", true).endDate);
+assert.deepEqual(validateDraft(continuousToday, TODAY, "08:00", true), {});
 assert.deepEqual(upcomingDays(weeklyDraft, TODAY, 3), ["2026-10-01", "2026-10-02", "2026-10-05"]);
 assert.equal(windowLabel(weeklyDraft), "06:00 – 10:00 (4 hours)");
 

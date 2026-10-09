@@ -69,7 +69,8 @@ export function TargetCard({
 
   return (
     <EditCard
-      step="3. Target *"
+      step="3. Target"
+      isRequired
       icon={Radio}
       hint="กำหนด Channel หรือ Channel Group ที่ต้องการแสดง Program นี้"
       error={error}
@@ -109,11 +110,14 @@ export function TargetCard({
 export function ScheduleCard({
   state,
   disabled,
+  isStartLocked = false,
   error,
   onChange,
 }: {
   state: ProgramEditState;
   disabled?: boolean;
+  /** Live / Publishing: the modal edits only the end (ADR 0090). */
+  isStartLocked?: boolean;
   error?: string;
   onChange: (schedule: PublicationSchedule) => void;
 }) {
@@ -130,7 +134,8 @@ export function ScheduleCard({
 
   return (
     <EditCard
-      step="4. Schedule *"
+      step="4. Schedule"
+      isRequired
       icon={CalendarClock}
       hint="กำหนดช่วงเวลาออกอากาศของ Program นี้"
       error={error}
@@ -174,6 +179,7 @@ export function ScheduleCard({
         <EditScheduleModal
           schedule={schedule}
           showDateRangeCalendar
+          isStartLocked={isStartLocked}
           playlistId={state.content.type === "playlist" ? state.content.playlistId : null}
           programName={state.name}
           onClose={() => setEditing(false)}

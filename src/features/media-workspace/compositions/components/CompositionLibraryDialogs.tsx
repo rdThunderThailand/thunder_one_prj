@@ -102,7 +102,7 @@ export function CompositionLibraryDialogs({
     <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button>
     {isTrashBlocked
       ? <Button type="button" disabled={busy} onClick={() => void viewPrograms()}>{busy ? "Loading…" : "View Programs"}</Button>
-      : <Button type="button" disabled={busy || (action === "duplicate" && !value.trim())} onClick={() => void submit()} className={action === "trash" || action === "delete-forever" ? "bg-danger hover:bg-danger" : ""}>{busy ? "Saving…" : action === "delete-forever" ? "Delete forever" : action === "trash" ? "Move to Trash" : "Save"}</Button>}
+      : <Button type="button" disabled={busy || (action === "duplicate" && !value.trim())} onClick={() => void submit()} className={action === "trash" || action === "delete-forever" ? "bg-danger hover:bg-danger" : ""}>{busy ? "Saving…" : action === "delete-forever" ? "Permanent delete" : action === "trash" ? "Move to Trash" : "Save"}</Button>}
     </DialogFooter></DialogContent></Dialog>;
 }
 

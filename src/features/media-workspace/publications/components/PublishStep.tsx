@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { CheckCircleIcon, ClockIcon, InfoIcon, PaperPlaneIcon } from "@/components/ui/icons";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
+import { formatDmy } from "../schedule";
 import { scheduleEdges } from "../schedule-describe";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
@@ -14,7 +15,7 @@ export function PublishStep({ channels, assets, canPublish }: { channels: Channe
   const basicInfo = usePublicationDraftStore((state) => state.basicInfo);
   const schedule = usePublicationDraftStore((state) => state.schedule);
   const edges = isDraftValid(schedule) ? scheduleEdges(draftToSchedule(schedule)) : null;
-  const starts = edges ? `${edges.startDate}, ${edges.startTime}` : "—";
+  const starts = edges ? `${formatDmy(edges.startDate)}, ${edges.startTime}` : "—";
 
   return (
     <div className="flex flex-col gap-6">

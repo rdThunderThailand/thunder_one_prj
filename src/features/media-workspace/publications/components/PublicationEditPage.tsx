@@ -64,6 +64,8 @@ export function PublicationEditPage({ id }: { id: string }) {
 
   const isDraft = displayStatus === "draft";
   const isEnded = displayStatus === "ended";
+  // ADR 0090: on air, only the schedule's end may move.
+  const isOnAir = displayStatus === "live" || displayStatus === "publishing";
   const canPublish = state.name.trim().length > 0 && !busy;
   const partError = (part: string) => (failure?.part === part ? failure.message : undefined);
   const pageError = failure?.isStale
@@ -213,6 +215,7 @@ export function PublicationEditPage({ id }: { id: string }) {
             <ScheduleCard
               state={state}
               disabled={isEnded}
+              isStartLocked={isOnAir}
               error={partError("schedule")}
               onChange={(schedule) => edit.patch({ schedule })}
             />

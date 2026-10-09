@@ -25,12 +25,12 @@ import {
 let nextId = 0;
 const newId = () => String(nextId++);
 
-export function useUploadQueue() {
+export function useUploadQueue(initialFolderId: string | null = null) {
   const [items, setItems] = useState<UploadItem[]>([]);
   const [rejections, setRejections] = useState<string[]>([]);
   const [folders, setFolders] = useState<ContentFolder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [folderId, setFolderId] = useState<string | null>(null);
+  const [folderId, setFolderId] = useState<string | null>(initialFolderId);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [started, setStarted] = useState(false);
 

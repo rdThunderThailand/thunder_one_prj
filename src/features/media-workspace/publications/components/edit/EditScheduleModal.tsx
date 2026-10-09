@@ -25,6 +25,7 @@ export function EditScheduleModal({
   playlistId,
   hidePlaybackPattern = false,
   showDateRangeCalendar = false,
+  isStartLocked = false,
   programName,
   onClose,
   onApply,
@@ -38,6 +39,8 @@ export function EditScheduleModal({
   hidePlaybackPattern?: boolean;
   /** Edit page only; the Create wizard retains its current date fields. */
   showDateRangeCalendar?: boolean;
+  /** Edit page of a Live / Publishing Program: only the end stays editable (ADR 0090). */
+  isStartLocked?: boolean;
   programName: string;
   onClose: () => void;
   onApply: (schedule: PublicationSchedule) => void;
@@ -50,7 +53,7 @@ export function EditScheduleModal({
   const [applyError, setApplyError] = useState<string | null>(null);
 
   const preset = presetOf(draft);
-  const errors = validateDraftNow(draft);
+  const errors = validateDraftNow(draft, isStartLocked);
   const hasErrors = Object.keys(errors).length > 0;
   const update = (change: Partial<ScheduleDraft>) => setDraft((current) => ({ ...current, ...change }));
 
@@ -80,19 +83,30 @@ export function EditScheduleModal({
           <DialogDescription>กำหนดช่วงเวลาออกอากาศของ Program นี้</DialogDescription>
         </DialogHeader>
         <div className="grid lg:grid-cols-[14rem_minmax(0,1fr)_22rem]">
-          <SchedulePresetList
-            value={preset}
-            className="border-b border-border p-4 lg:border-b-0 lg:border-r"
-            onSelect={(next) => setDraft(applyPreset(draft, next, today))}
-          />
+          <fieldset
+            disabled={isStartLocked}
+            className="contents"
+          >
+            <SchedulePresetList
+              value={preset}
+              className="border-b border-border p-4 lg:border-b-0 lg:border-r"
+              onSelect={(next) => setDraft(applyPreset(draft, next, today))}
+            />
+          </fieldset>
           <div className="flex flex-col gap-6 border-b border-border p-5 lg:border-b-0 lg:border-r">
             <p className="text-sm font-semibold text-foreground">Schedule Configuration</p>
+            {isStartLocked && (
+              <p className="rounded-lg bg-info-soft px-3 py-2 text-xs text-info">
+                Program นี้กำลังออกอากาศ — แก้ได้เฉพาะวันและเวลาสิ้นสุด ถ้าต้องการเปลี่ยนรูปแบบให้สร้าง Program ใหม่
+              </p>
+            )}
             <ScheduleConfigFields
               draft={draft}
               errors={errors}
               today={today}
               isDateRange={preset === "date-range"}
               showDateRangeCalendar={showDateRangeCalendar}
+              isStartLocked={isStartLocked}
               onChange={update}
             />
             {!hidePlaybackPattern && (

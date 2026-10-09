@@ -48,6 +48,17 @@ export function step2Valid(draft: CreateChannelDraft): boolean {
   return draft.playerId !== null;
 }
 
+/** QA 2026-10-08 #2: picking a single-screen Player that reports its screen size takes that size,
+ *  so the ADR 0079 warning only appears when the operator then picks another. Unknown size (null)
+ *  leaves the field as it was; multi-screen is untouched — the Player reports one display, not the canvas. */
+export function withPlayer(
+  draft: CreateChannelDraft,
+  player: Pick<ChannelPlayerCandidate, "id" | "resolution">,
+): CreateChannelDraft {
+  const next = { ...draft, playerId: player.id };
+  return draft.displayMode === "single" && player.resolution ? { ...next, screenResolution: player.resolution } : next;
+}
+
 export function geometryMismatch(
   draft: CreateChannelDraft,
   player: Pick<ChannelPlayerCandidate, "name" | "orientation" | "resolution"> | null,

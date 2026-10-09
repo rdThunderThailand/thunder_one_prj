@@ -39,10 +39,10 @@ export const DEFAULT_FILTERS: ListFilters = {
 };
 
 const SORT_LABELS: Record<PublicationListSort, string> = {
-  updated_desc: "Updated (newest)",
-  name_asc: "Name (A–Z)",
-  starts_desc: "Start date (latest)",
-  created_desc: "Created (newest)",
+  updated_desc: "Last updated: newest first",
+  name_asc: "Name: A → Z",
+  starts_desc: "Start date: newest first",
+  created_desc: "Created: newest first",
 };
 
 const triggerClass = "h-9 w-32 text-[10px] shadow-none";
@@ -189,7 +189,7 @@ export function PublicationsFilterBar({
           onValueChange={(sort) => onChange({ sort: sort as PublicationListSort })}
         >
           <SelectTrigger
-            className="h-9 w-40 text-[10px] shadow-none"
+            className="h-9 w-48 text-[10px] shadow-none"
             aria-label="Sort"
           >
             <SelectValue />

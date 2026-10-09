@@ -151,9 +151,12 @@ export function scheduleToDraft(schedule: PublicationSchedule | null, today: str
 
 export type DraftErrors = Partial<Record<"days" | "dates" | "monthDays" | "startDate" | "endDate" | "time", string>>;
 
-function validateContinuous(draft: ScheduleDraft, today: string, nowTime: string): DraftErrors {
+const PAST_START = "Start date can't be in the past.";
+
+function validateContinuous(draft: ScheduleDraft, today: string, nowTime: string, isStartLocked: boolean): DraftErrors {
   const errors: DraftErrors = {};
   if (!draft.startDate) errors.startDate = "Pick a start date.";
+  else if (!isStartLocked && draft.startDate < today) errors.startDate = PAST_START;
   if (!draft.endDate) return errors;
   const startKey = `${draft.startDate} ${draft.startTime}`;
   const endKey = `${draft.endDate} ${draft.endTime}`;
@@ -164,17 +167,18 @@ function validateContinuous(draft: ScheduleDraft, today: string, nowTime: string
 
 /**
  * `today` ("YYYY-MM-DD" in the draft's zone) rejects a schedule that could never air again;
- * `nowTime` ("HH:MM", same zone) also catches an end earlier today (#222). A start in the past
- * stays valid — a recurring or Live Program legitimately has one.
+ * `nowTime` ("HH:MM", same zone) also catches an end earlier today (#222). A start before today is
+ * rejected unless `isStartLocked` — a Live Program keeps its past start and edits only its end (ADR 0090).
  */
-export function validateDraft(draft: ScheduleDraft, today: string, nowTime = "00:00"): DraftErrors {
+export function validateDraft(draft: ScheduleDraft, today: string, nowTime = "00:00", isStartLocked = false): DraftErrors {
   const errors: DraftErrors = {};
-  if (draft.mode === "continuous") return validateContinuous(draft, today, nowTime);
+  if (draft.mode === "continuous") return validateContinuous(draft, today, nowTime, isStartLocked);
   if (!draft.allDay && !(draft.dailyStart < draft.dailyEnd)) errors.time = "End time must be after start time.";
   if (draft.mode === "weekly" || draft.mode === "monthly") {
     if (draft.mode === "weekly" && draft.days.length === 0) errors.days = "Pick at least one day.";
     if (draft.mode === "monthly" && draft.monthDays.length === 0) errors.monthDays = "Pick at least one day of the month.";
     if (!draft.startDate) errors.startDate = "Pick a start date.";
+    else if (!isStartLocked && draft.startDate < today) errors.startDate = PAST_START;
     if (draft.endDate && draft.endDate < draft.startDate) errors.endDate = "End date must be on or after the start date.";
     else if (draft.endDate && draft.endDate < today) errors.endDate = "End date is in the past.";
   }
@@ -192,9 +196,9 @@ export function validateDraft(draft: ScheduleDraft, today: string, nowTime = "00
 }
 
 /** `validateDraft` against the current moment in the draft's own zone. */
-export function validateDraftNow(draft: ScheduleDraft): DraftErrors {
+export function validateDraftNow(draft: ScheduleDraft, isStartLocked = false): DraftErrors {
   const now = nowIn(draft.timezone);
-  return validateDraft(draft, now.date, now.time);
+  return validateDraft(draft, now.date, now.time, isStartLocked);
 }
 
 export const isDraftValid = (draft: ScheduleDraft) => Object.keys(validateDraftNow(draft)).length === 0;

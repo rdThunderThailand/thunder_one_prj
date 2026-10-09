@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { ChevronDownIcon, ClipboardIcon, EyeIcon, MoreIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { MediaAsset } from "@/types/domain";
@@ -177,49 +178,44 @@ function ItemActions({
   onMoveDown: () => void;
   onRemove: () => void;
 }) {
-  const item =
-    "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:text-muted-foreground";
-  const normalItem = `${item} text-muted-foreground hover:bg-primary-soft hover:text-primary`;
+  // QA 2026-10-08 #10: portalled, so the items pane's scroll area cannot clip it. The span keeps
+  // clicks — React bubbles them out of the portal — off the row.
   return (
-    <details
-      className="relative inline-block text-left"
-      onClick={(event) => event.stopPropagation()}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-          event.currentTarget.removeAttribute("open");
-        }
-      }}
-    >
-      <summary
-        aria-label={`Actions for ${label}`}
-        className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-      >
-        <MoreIcon className="h-4 w-4" />
-      </summary>
-      <div className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg">
-        <button type="button" className={normalItem} onClick={onPreview}>
-          <EyeIcon className="h-4 w-4" /> Preview
-        </button>
-        <button type="button" className={normalItem} disabled>
-          <SearchIcon className="h-4 w-4" /> Replace
-        </button>
-        <button type="button" className={normalItem} disabled>
-          <ClipboardIcon className="h-4 w-4" /> Duplicate
-        </button>
-        <button type="button" className={normalItem} disabled={!canMoveUp} onClick={onMoveUp}>
-          <ChevronDownIcon className="h-4 w-4 rotate-180" /> Move Up
-        </button>
-        <button type="button" className={normalItem} disabled={!canMoveDown} onClick={onMoveDown}>
-          <ChevronDownIcon className="h-4 w-4" /> Move Down
-        </button>
-        <button
-          type="button"
-          className={`${item} text-danger hover:bg-danger-soft hover:text-danger`}
-          onClick={onRemove}
+    <span onClick={(event) => event.stopPropagation()}>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={`Actions for ${label}`}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          <TrashIcon className="h-4 w-4" /> Remove from Playlist
-        </button>
-      </div>
-    </details>
+          <MoreIcon className="h-4 w-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-52"
+        >
+          <DropdownMenuItem onSelect={onPreview}>
+            <EyeIcon className="h-4 w-4" /> Preview
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled>
+            <SearchIcon className="h-4 w-4" /> Replace
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled>
+            <ClipboardIcon className="h-4 w-4" /> Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={!canMoveUp} onSelect={onMoveUp}>
+            <ChevronDownIcon className="h-4 w-4 rotate-180" /> Move Up
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={!canMoveDown} onSelect={onMoveDown}>
+            <ChevronDownIcon className="h-4 w-4" /> Move Down
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-danger focus:text-danger"
+            onSelect={onRemove}
+          >
+            <TrashIcon className="h-4 w-4" /> Remove from Playlist
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </span>
   );
 }

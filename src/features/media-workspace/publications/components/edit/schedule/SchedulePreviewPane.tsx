@@ -2,28 +2,27 @@
 
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
-import { TIMEZONES, WEEKDAYS, formatMonthDays, shiftYmd, ymdDow } from "../../../schedule";
+import { TIMEZONES, WEEKDAYS, formatDmy, formatMonthDays, shiftYmd, ymdDow } from "../../../schedule";
 import { airsOn, upcomingDays, windowLabel, type ScheduleDraft } from "../../../schedule-preset";
 
 const LIST_LIMIT = 10;
-const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-const SHORT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
-const at = (ymd: string) => new Date(`${ymd}T00:00:00Z`);
+const WEEKDAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" });
+const dayLabel = (ymd: string) => `${WEEKDAY.format(new Date(`${ymd}T00:00:00Z`))} ${formatDmy(ymd)}`;
 const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 const mondayOf = (ymd: string) => shiftYmd(ymd, -((ymdDow(ymd) + 6) % 7));
 
 function daysLine(draft: ScheduleDraft): { label: string; value: string } {
   if (draft.mode === "continuous") {
-    const from = `${draft.startDate ? SHORT.format(at(draft.startDate)) : "—"} ${draft.startTime}`;
-    const to = draft.endDate ? `${SHORT.format(at(draft.endDate))} ${draft.endTime}` : "no end";
+    const from = `${draft.startDate ? formatDmy(draft.startDate) : "—"} ${draft.startTime}`;
+    const to = draft.endDate ? `${formatDmy(draft.endDate)} ${draft.endTime}` : "no end";
     return { label: "Continuous", value: `${from} → ${to}` };
   }
-  if (draft.mode === "one-time") return { label: "Date", value: draft.startDate ? DAY.format(at(draft.startDate)) : "—" };
+  if (draft.mode === "one-time") return { label: "Date", value: draft.startDate ? dayLabel(draft.startDate) : "—" };
   if (draft.mode === "dates") {
     const count = draft.dates.length;
-    return { label: "Dates", value: `${count} date${count === 1 ? "" : "s"}: ${draft.dates.map((d) => SHORT.format(at(d))).join(", ")}` };
+    return { label: "Dates", value: `${count} date${count === 1 ? "" : "s"}: ${draft.dates.map((d) => formatDmy(d)).join(", ")}` };
   }
-  const range = `${draft.startDate ? SHORT.format(at(draft.startDate)) : "—"} → ${draft.endDate ? SHORT.format(at(draft.endDate)) : "no end date"}`;
+  const range = `${draft.startDate ? formatDmy(draft.startDate) : "—"} → ${draft.endDate ? formatDmy(draft.endDate) : "no end date"}`;
   if (draft.mode === "monthly") return { label: "Monthly", value: `${formatMonthDays(draft.monthDays)} · ${range}` };
   const labels = WEEKDAYS.filter((d) => draft.days.includes(d.value)).map((d) => d.label);
   return { label: "Days", value: `${labels.join(", ")} (${labels.length} days/week) · ${range}` };
@@ -65,7 +64,7 @@ export function SchedulePreviewPane({ draft, today, programName }: { draft: Sche
               key={ymd}
               className="flex items-center gap-3 text-xs"
             >
-              <span className="w-28 shrink-0 text-muted-foreground">{DAY.format(at(ymd))}</span>
+              <span className="w-28 shrink-0 text-muted-foreground">{dayLabel(ymd)}</span>
               <span className="shrink-0 rounded bg-muted px-2 py-1 text-foreground">
                 {isContinuous ? "All day" : `${daily.start} – ${daily.end}`}
               </span>
@@ -88,7 +87,7 @@ export function SchedulePreviewPane({ draft, today, programName }: { draft: Sche
               <ChevronLeftIcon className="h-4 w-4" />
             </button>
             <span className="font-medium text-foreground">
-              {SHORT.format(at(weekOf))} – {SHORT.format(at(shiftYmd(weekOf, 6)))}
+              {formatDmy(weekOf)} – {formatDmy(shiftYmd(weekOf, 6))}
             </span>
             <button
               type="button"

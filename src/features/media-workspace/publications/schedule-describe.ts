@@ -1,4 +1,4 @@
-import { DEFAULT_TIMEZONE, formatMonthDays, shiftYmd, utcToZonedParts } from "./schedule.ts";
+import { DEFAULT_TIMEZONE, formatDmy, formatMonthDays, shiftYmd, utcToZonedParts } from "./schedule.ts";
 import type { PublicationSchedule } from "./types/index.ts";
 
 /** The summary lines of a stored schedule; every screen that prints one uses this (ADR 0082 §7). */
@@ -27,17 +27,19 @@ export function describeSchedule(schedule: PublicationSchedule): ScheduleSummary
     const end = schedule.ends_at ? utcToZonedParts(schedule.ends_at, zone) : null;
     // A one-off ending at the next midnight is the all-day one-time shape.
     if (end && start.time === "00:00" && end.time === "00:00" && end.date === shiftYmd(start.date, 1)) {
-      return { title: "One time", hours: "All day", range: start.date, days: [] };
+      return { title: "One time", hours: "All day", range: formatDmy(start.date), days: [] };
     }
-    const from = `${start.date} ${start.time}`;
+    const from = `${formatDmy(start.date)} ${start.time}`;
     // Same split as scheduleToDraft (ADR 0082 §4): a one-off ending on its start day is one-time.
     const title = end?.date === start.date ? "One time" : "Continuous";
-    return { title, hours: "", range: end ? `${from} – ${end.date} ${end.time}` : `From ${from} · No end date`, days: [] };
+    return { title, hours: "", range: end ? `${from} – ${formatDmy(end.date)} ${end.time}` : `From ${from} · No end date`, days: [] };
   }
 
   const last = lastAiringDay(schedule);
   const hours = `${rule.daily_start} – ${rule.daily_end}`;
-  const range = last ? (last === start.date ? start.date : `${start.date} – ${last}`) : `From ${start.date} · No end date`;
+  const range = last
+    ? (last === start.date ? formatDmy(start.date) : `${formatDmy(start.date)} – ${formatDmy(last)}`)
+    : `From ${formatDmy(start.date)} · No end date`;
   if (rule.freq === "weekly") return { title: rule.days.length === 7 ? "Every day" : "Weekly", hours, range, days: rule.days };
   if (rule.freq === "dates") {
     const count = rule.dates.length;

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { InfoIcon } from "@/components/ui/icons";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
 import { isSyncConflict, setChannelGroupMembers } from "../services/channel-groups-api";
 import type { ChannelListItem, ChannelStatusFilter } from "../../channels/types";
@@ -47,34 +48,34 @@ function AddToGroupMenu({
   };
 
   return (
-    <div className="relative inline-block" onClick={(event) => event.stopPropagation()}>
-      <Button type="button" variant="secondary" onClick={() => setOpen((v) => !v)} className="!px-2.5 !py-1.5 text-xs">
-        Add to Group
-      </Button>
-      {open && (
-        <>
-          <button type="button" aria-hidden="true" tabIndex={-1} className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-border bg-card py-1 shadow-lg">
-            {groups.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-muted-foreground">No Channel Groups yet.</p>
-            ) : (
-              groups.map((group) => (
-                <button
-                  key={group.id}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void addTo(group)}
-                  className="block w-full truncate px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed"
-                >
-                  {group.name}
-                </button>
-              ))
-            )}
-            {error && <p className="px-3 py-2 text-xs text-danger">{error}</p>}
-          </div>
-        </>
-      )}
-    </div>
+    // QA 2026-10-08 #10: portalled, so the table's overflow cannot clip the list of Groups.
+    <span onClick={(event) => event.stopPropagation()}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="secondary" className="!px-2.5 !py-1.5 text-xs">
+            Add to Group
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-56 p-0 py-1">
+          {groups.length === 0 ? (
+            <p className="px-3 py-2 text-xs text-muted-foreground">No Channel Groups yet.</p>
+          ) : (
+            groups.map((group) => (
+              <button
+                key={group.id}
+                type="button"
+                disabled={busy}
+                onClick={() => void addTo(group)}
+                className="block w-full truncate px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed"
+              >
+                {group.name}
+              </button>
+            ))
+          )}
+          {error && <p className="px-3 py-2 text-xs text-danger">{error}</p>}
+        </PopoverContent>
+      </Popover>
+    </span>
   );
 }
 

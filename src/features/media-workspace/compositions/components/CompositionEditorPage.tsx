@@ -66,7 +66,6 @@ export function CompositionEditorPage({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [lockedZoneIds, setLockedZoneIds] = useState<Set<string>>(() => new Set());
   const [hiddenZoneIds, setHiddenZoneIds] = useState<Set<string>>(() => new Set());
-  const [fitSignal, setFitSignal] = useState(0);
   const view = useEditorLayout({
     layouts: data.layouts, layoutId, name, blankZones, editedZones, layoutSettings, bindings,
   });
@@ -322,7 +321,6 @@ export function CompositionEditorPage({
             onChangeStart={beginZoneEdit}
             onChange={setEditedZones}
             onDelete={() => { if (layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
-            onFit={() => setFitSignal((value) => value + 1)}
           />
         )}
       <div className="grid min-h-0 flex-1 grid-cols-[230px_minmax(560px,1fr)_270px] items-stretch">
@@ -344,7 +342,6 @@ export function CompositionEditorPage({
               onChangeStart={beginZoneEdit} onChange={setEditedZones}
               lockedZoneIds={lockedZoneIds}
               hiddenZoneIds={hiddenZoneIds}
-              fitSignal={fitSignal}
             />
             <div className="grid shrink-0 grid-cols-2 gap-3">
               <LayoutInformationCard name={name} resolution={settings.referenceResolution} aspectRatio={settings.aspectRatio} zoneCount={layout.zones.length} status={status} />
