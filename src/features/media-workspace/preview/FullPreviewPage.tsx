@@ -107,6 +107,7 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
         assets={loadedAssets}
         aspectRatio={loadedPreview.aspectRatio}
         referenceResolution={loadedPreview.referenceResolution}
+        background={loadedPreview.background}
       />
     </main>
   );

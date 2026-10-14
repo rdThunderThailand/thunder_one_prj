@@ -5,7 +5,7 @@ import { PreviewSurface } from "./PreviewSurface";
 import { previewFrameAt, type PlaybackPreviewZone, type ZoneSchedule } from "./preview-clock";
 
 export function PreviewZones({
-  zones, schedules, assetsById, urls, thumbnailUrls, timeSeconds, playing, speed, muted, loadState,
+  zones, schedules, assetsById, urls, thumbnailUrls, timeSeconds, playing, speed, muted, loadState, background,
 }: {
   zones: PlaybackPreviewZone[];
   schedules: ZoneSchedule[];
@@ -17,6 +17,7 @@ export function PreviewZones({
   speed: number;
   muted: boolean;
   loadState: "idle" | "loading" | "ready" | "error";
+  background?: string;
 }) {
   return zones.map((zone, zoneIndex) => {
     const frame = previewFrameAt(schedules[zoneIndex], zone.items, timeSeconds);
@@ -31,11 +32,12 @@ export function PreviewZones({
       <div
         key={zone.id}
         className="absolute overflow-hidden border border-primary-foreground/25 bg-foreground"
-        style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
+        style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%`, backgroundColor: background }}
         title={`${nameLabel} · ${timeLabel}`}
       >
         <div className="relative h-full w-full">
-          {/* ADR 0062 §5: preserve both surfaces during fades and freeze the outgoing frame. */}
+          {/* ADR 0094: both surfaces stay mounted during a fade; the outgoing one holds its last frame
+              while the incoming one plays from its own start. */}
           {transition && (
             <PreviewSurface
               key={`out-${transition.outgoingIndex}`}
@@ -59,7 +61,7 @@ export function PreviewZones({
             asset={frame.item ? assetsById[frame.item.mediaAssetId] : undefined}
             url={frame.item ? urls[frame.item.mediaAssetId] : undefined}
             posterUrl={frame.item ? thumbnailUrls[frame.item.mediaAssetId] : undefined}
-            playing={transition ? false : playing}
+            playing={playing}
             speed={speed}
             muted={muted}
             offsetSeconds={frame.offsetSeconds}

@@ -28,6 +28,7 @@ export function PlaybackPreviewModal({
   canOpenFullPreview = false,
   onOpenFullPreview,
   editHref,
+  background,
 }: {
   open: boolean;
   onClose: () => void;
@@ -42,6 +43,7 @@ export function PlaybackPreviewModal({
   canOpenFullPreview?: boolean;
   onOpenFullPreview?: () => void;
   editHref?: string;
+  background?: string;
 }) {
   return (
     <PreviewModalChrome
@@ -86,6 +88,7 @@ export function PlaybackPreviewModal({
           previewUrls={previewUrls}
           geometryOptions={geometryOptions}
           referenceResolution={referenceResolution}
+          background={background}
           active={open}
           controlsPlacement="footer"
           frameViewportHeight="calc(96vh - 190px)"
