@@ -302,6 +302,7 @@ export function CompositionEditorPage({
         aspectRatio={layout?.aspect_ratio} previewUrls={data.previews}
         geometryOptions={editorGeometryOptions(layout?.reference_resolution)}
         referenceResolution={layout?.reference_resolution ?? null}
+        background={settings.background}
         layoutName={name}
         canOpenFullPreview={!!id && !!layout}
         onOpenFullPreview={() => preview.openFullPreview(isDirty)}

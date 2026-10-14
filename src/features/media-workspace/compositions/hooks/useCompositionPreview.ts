@@ -37,7 +37,7 @@ export function useCompositionPreview({
   playlistPlaybackById,
 }: {
   compositionId: string | null;
-  layout: Pick<LayoutListItem, "zones" | "aspect_ratio" | "reference_resolution"> | null;
+  layout: Pick<LayoutListItem, "zones" | "aspect_ratio" | "reference_resolution" | "background"> | null;
   bindings: ZoneBindingDraft[];
   assets: MediaAsset[];
   playlists: PlaylistListItem[];
@@ -117,6 +117,7 @@ export function useCompositionPreview({
       assets: assets.filter((asset) => assetIds.has(asset.id)),
       aspectRatio: layout.aspect_ratio,
       referenceResolution: layout.reference_resolution ?? null,
+      background: layout.background,
     };
   }, [assets, compositionId, layout, playbackPreviewZones]);
 

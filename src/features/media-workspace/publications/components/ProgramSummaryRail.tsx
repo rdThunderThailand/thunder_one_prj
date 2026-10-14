@@ -136,6 +136,7 @@ export function ProgramSummaryRail({
           assets={assets}
           aspectRatio={preview.aspectRatio}
           referenceResolution={preview.referenceResolution}
+          background={preview.background}
           allowActualSize={branch !== "playlist"}
           controlsPlacement="overlay"
           fillWidth

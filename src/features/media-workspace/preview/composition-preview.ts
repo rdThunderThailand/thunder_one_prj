@@ -11,6 +11,8 @@ export type StagePreview = {
   zones: PlaybackPreviewZone[];
   aspectRatio: string;
   referenceResolution: string | null;
+  /** The Layout's `background`, painted under every Zone; a Playlist has none and stays black. */
+  background?: string;
   /** Name of the Playlist or Composition this stage was loaded from; loose media has none. */
   contentName?: string;
 };
@@ -77,6 +79,7 @@ export async function loadCompositionPreview(compositionId: string): Promise<Sta
   return {
     aspectRatio: layout.aspect_ratio,
     referenceResolution: layout.reference_resolution ?? null,
+    background: layout.background,
     contentName: composition.name,
     zones: composition.zones.map((zone) =>
       compositionZonePreview(

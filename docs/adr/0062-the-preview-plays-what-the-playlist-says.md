@@ -1,6 +1,6 @@
 # The preview plays what the Playlist says
 
-**Status:** accepted · **Date:** 2026-09-04
+**Status:** accepted · **Date:** 2026-09-04 · §5 timing superseded by ADR 0094 (a fade adds no time)
 **Supersedes:** ADR 0061 §7 (play mode, repeat, start-from and transition are stated, not played)
 **Constrained by:** ADR 0051 §2 (one code path), ADR 0051 §4 (every frame a pure function of one `t`)
 **Issue:** #42

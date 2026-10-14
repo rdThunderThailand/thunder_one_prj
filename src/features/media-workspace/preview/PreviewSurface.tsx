@@ -40,6 +40,8 @@ export function PreviewSurface({
   style?: CSSProperties;
 }) {
   const fitClass = FIT_CLASS[zoneMediaFit ?? item?.mediaFit ?? defaultMediaFit ?? "fit"] ?? FIT_CLASS.fit;
+  // The element's own background fills whatever `fit` leaves uncovered, over the Zone's Layout colour.
+  const mediaStyle = item?.backgroundColor ? { ...style, backgroundColor: item.backgroundColor } : style;
 
   if (!item) return <Placeholder label="Unbound Zone" style={style} />;
   if (!asset) return <Placeholder label={item.label ?? "Missing asset"} style={style} />;
@@ -57,7 +59,7 @@ export function PreviewSurface({
         muted={muted}
         offsetSeconds={offsetSeconds}
         fitClass={fitClass}
-        style={style}
+        style={mediaStyle}
       />
     );
   }
@@ -68,7 +70,7 @@ export function PreviewSurface({
       src={url}
       alt={asset.title ?? asset.file?.original_filename ?? item.label ?? "Preview asset"}
       className={`h-full w-full ${fitClass}`}
-      style={style}
+      style={mediaStyle}
     />
   );
 }

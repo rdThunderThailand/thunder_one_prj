@@ -79,6 +79,7 @@ export function PrepareContentStep({
             assets={assets}
             aspectRatio={preview.aspectRatio}
             referenceResolution={preview.referenceResolution}
+            background={preview.background}
             allowActualSize={branch !== "playlist"}
             seekRequest={seekRequest}
             controlsPlacement="overlay"

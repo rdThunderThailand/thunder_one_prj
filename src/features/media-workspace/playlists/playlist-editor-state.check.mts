@@ -37,13 +37,11 @@ assert.deepEqual(itemStartSeconds([
   { mediaAssetId: "asset-c", durationSeconds: 5, transition: "cut" },
 ], [{ id: "asset-b", duration_seconds: 20 }], { ...pb, repeat: "loop" }), [0, 10, 30]);
 
-// ADR 0062 §5 / issue #47: the default transition is fade/1s, so a 3-item playlist's total
-// moves from 30s to 32s (two incoming transitions, `once` has no wrap) once transitions are
-// counted — "one schedule" now backs the editor's header too.
+// ADR 0094: a fade overlaps the start of its incoming item and adds no time, so the editor's total
+// is media-only for `once` and `loop` alike — the loop_duration the device receives.
 const fadeItems = ["a", "b", "c"].map((id) => ({ mediaAssetId: id, durationSeconds: 10, transition: "fade" as const }));
-assert.equal(totalItemsDurationSeconds(fadeItems, [], { ...pb, repeat: "once" }), 32);
-assert.deepEqual(itemStartSeconds(fadeItems, [], { ...pb, repeat: "once" }), [0, 10, 21]);
-// `loop` adds the wrap fade back into item 0 (§3/§5) — one more transition than `once`.
-assert.equal(totalItemsDurationSeconds(fadeItems, [], { ...pb, repeat: "loop" }), 33);
+assert.equal(totalItemsDurationSeconds(fadeItems, [], { ...pb, repeat: "once" }), 30);
+assert.deepEqual(itemStartSeconds(fadeItems, [], { ...pb, repeat: "once" }), [0, 10, 20]);
+assert.equal(totalItemsDurationSeconds(fadeItems, [], { ...pb, repeat: "loop" }), 30);
 
 console.log("playlist-editor-state.check.mts OK");

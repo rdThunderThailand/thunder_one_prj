@@ -310,6 +310,7 @@ export function CompositionsListPage() {
           aspectRatio={preview.aspectRatio}
           geometryOptions={editorGeometryOptions(preview.referenceResolution)}
           referenceResolution={preview.referenceResolution}
+          background={preview.background}
           layoutName={previewTarget.name}
           editHref={`/media-workspace/layouts/${encodeURIComponent(previewTarget.id)}`}
           canOpenFullPreview

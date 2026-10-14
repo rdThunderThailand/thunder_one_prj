@@ -30,6 +30,7 @@ export function PreviewStage({
   controlsPlacement = "panel",
   frameViewportHeight = "70vh",
   fillWidth = false,
+  background,
 }: {
   zones: PlaybackPreviewZone[];
   assets: MediaAsset[];
@@ -61,6 +62,8 @@ export function PreviewStage({
    *  non-16:9 content still pillarboxes/letterboxes inside the wider box. Opt-in per host;
    *  default keeps every other `PreviewStage` call site unchanged. */
   fillWidth?: boolean;
+  /** The Layout's `background` under every Zone; unset (a Playlist) keeps the frame black. */
+  background?: string;
 }) {
   const [timeSeconds, setTimeSeconds] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -270,9 +273,10 @@ export function PreviewStage({
           <div
             ref={frameRef}
             className="relative w-full overflow-hidden rounded-xl border border-border bg-foreground shadow-inner"
-            style={{ aspectRatio: `${ratioWidth} / ${ratioHeight}` }}
+            style={{ aspectRatio: `${ratioWidth} / ${ratioHeight}`, backgroundColor: background }}
           >
             <PreviewZones
+              background={background}
               zones={resolvedZones}
               schedules={schedules}
               assetsById={assetsById}

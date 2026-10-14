@@ -50,21 +50,26 @@ const withOverrides = playlistPreviewStage({
 assert.equal(withOverrides.zones[0].items[0].transitionDurationSeconds, 2);
 assert.equal(withOverrides.zones[0].items[0].mediaFit, "fill");
 
+// ADR 0094: the item background survives the stage too, and an unset one stays null (paint none).
+const withBackground = playlistPreviewStage({ name: "x", items: [{ mediaAssetId: "a", durationSeconds: 5, backgroundColor: "#ff0000" }] });
+assert.equal(withBackground.zones[0].items[0].backgroundColor, "#ff0000");
+assert.equal(withOverrides.zones[0].items[0].backgroundColor, null);
+
 // draftItemToPreview: camelCase DraftItem -> canonical shape, `fit` renamed to `mediaFit`.
 assert.deepEqual(
-  draftItemToPreview({ mediaAssetId: "a", title: "Intro", durationSeconds: 10, transition: "cut", transitionDurationSeconds: 3, fit: "stretch" }),
-  { mediaAssetId: "a", title: "Intro", durationSeconds: 10, transition: "cut", transitionDurationSeconds: 3, mediaFit: "stretch" },
+  draftItemToPreview({ mediaAssetId: "a", title: "Intro", durationSeconds: 10, transition: "cut", transitionDurationSeconds: 3, fit: "stretch", backgroundColor: "#112233" }),
+  { mediaAssetId: "a", title: "Intro", durationSeconds: 10, transition: "cut", transitionDurationSeconds: 3, mediaFit: "stretch", backgroundColor: "#112233" },
 );
 // Missing optional fields resolve to null, not undefined — a dropped field must not silently vanish.
 assert.deepEqual(
   draftItemToPreview({ mediaAssetId: "b", durationSeconds: null, transition: null }),
-  { mediaAssetId: "b", title: null, durationSeconds: null, transition: null, transitionDurationSeconds: null, mediaFit: null },
+  { mediaAssetId: "b", title: null, durationSeconds: null, transition: null, transitionDurationSeconds: null, mediaFit: null, backgroundColor: null },
 );
 
 // playlistItemToPreview: snake_case PlaylistItem -> canonical shape.
 assert.deepEqual(
-  playlistItemToPreview({ media_asset_id: "c", title: "Outro", duration_seconds: 8, transition: "fade", transition_duration_seconds: 1.5, fit: "fit" }),
-  { mediaAssetId: "c", title: "Outro", durationSeconds: 8, transition: "fade", transitionDurationSeconds: 1.5, mediaFit: "fit" },
+  playlistItemToPreview({ media_asset_id: "c", title: "Outro", duration_seconds: 8, transition: "fade", transition_duration_seconds: 1.5, fit: "fit", background_color: "#11223380" }),
+  { mediaAssetId: "c", title: "Outro", durationSeconds: 8, transition: "fade", transitionDurationSeconds: 1.5, mediaFit: "fit", backgroundColor: "#11223380" },
 );
 
 console.log("playlist-preview.check.mts OK");

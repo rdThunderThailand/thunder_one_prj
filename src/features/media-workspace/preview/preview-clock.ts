@@ -6,6 +6,8 @@ export type PlaybackPreviewItem = {
   /** Per-item override — undefined inherits the Playlist default (ADR 0062 §5). */
   transitionDurationSeconds?: number | null;
   mediaFit?: string | null;
+  /** Per-item and nullable: `null` paints none, so the Layout background shows (ADR 0060 §5a). */
+  backgroundColor?: string | null;
 };
 
 export type PlaybackPreviewSettings = {
@@ -60,7 +62,7 @@ export type ZonePreviewFrame = {
 const duration = (item: PlaybackPreviewItem) => Math.max(0, item.durationSeconds ?? 0);
 
 /** ADR 0062 §5: kind falls back item → Playlist default → "fade"; length falls back item → Playlist
- *  default → 1s, and a "cut" always costs 0 regardless of any stored number. */
+ *  default → 1s, and a "cut" is always 0 regardless of any stored number. */
 function transitionLength(item: PlaybackPreviewItem, playback: PlaybackPreviewSettings | undefined): number {
   const kind = item.transition ?? playback?.defaultTransition ?? "fade";
   if (kind === "cut") return 0;
@@ -103,9 +105,10 @@ function seededShuffle(indexes: number[], seed: string): number[] {
  * `seed` is the Zone id: shuffle must reproduce the same order for the same Zone on every render,
  * scrub and reload (ADR 0062 §2).
  *
- * `fades[k]` is the resolved incoming-transition length of `items[order[k]]`, for every `k`
- * including `0` — but `k = 0`'s fade is never applied inside the cycle (there is nothing to fade
- * from at the start), only reused for the loop's wrap window (§5).
+ * ADR 0094: a transition adds no time. `starts` and `totalSeconds` are media durations alone —
+ * the same `start_offset` / `loop_duration` the device receives — and `fades[k]` is the incoming
+ * crossfade of `items[order[k]]`, played over the first seconds of that item's own slot (capped at
+ * its duration). `fades[0]` is the loop's wrap on the device (last item into the first).
  */
 export function zoneSchedule(
   items: PlaybackPreviewItem[],
@@ -117,19 +120,16 @@ export function zoneSchedule(
   const authoredOrder = items.map((_, index) => index);
   const order = playback?.playMode === "shuffle" && n > 1 ? seededShuffle(authoredOrder, seed) : authoredOrder;
 
-  const fades = order.map((itemIndex) => transitionLength(items[itemIndex], playback));
+  const fades = order.map((itemIndex) => Math.min(transitionLength(items[itemIndex], playback), duration(items[itemIndex])));
 
   const starts: number[] = [];
   let cursor = 0;
   for (let k = 0; k < n; k += 1) {
     starts.push(cursor);
-    cursor += duration(items[order[k]]) + (k > 0 ? fades[k] : 0);
+    cursor += duration(items[order[k]]);
   }
 
-  const wrapFade = repeat === "loop" && n > 1 ? fades[0] : 0;
-  const totalSeconds = cursor + wrapFade;
-
-  return { order, starts, fades, totalSeconds, repeat };
+  return { order, starts, fades, totalSeconds: cursor, repeat };
 }
 
 /** The selected item is derived entirely from shared preview time, never a Zone-local timer
@@ -171,25 +171,6 @@ export function previewFrameAt(
     };
   }
 
-  const wrapFade = repeat === "loop" && n > 1 ? fades[0] : 0;
-  if (wrapFade > 0 && time >= totalSeconds - wrapFade) {
-    const outgoingIndex = order[n - 1];
-    const incomingIndex = order[0];
-    return {
-      item: items[incomingIndex] ?? null,
-      itemIndex: incomingIndex,
-      offsetSeconds: 0,
-      loopDurationSeconds: totalSeconds,
-      ended: false,
-      transition: {
-        outgoingItem: items[outgoingIndex],
-        outgoingIndex,
-        outgoingOffsetSeconds: duration(items[outgoingIndex]),
-        progress: (time - (totalSeconds - wrapFade)) / wrapFade,
-      },
-    };
-  }
-
   let k = 0;
   for (let i = 1; i < n; i += 1) {
     if (starts[i] <= time) k = i;
@@ -198,30 +179,26 @@ export function previewFrameAt(
 
   const itemIndex = order[k];
   const relative = time - starts[k];
+  // ponytail: the loop's wrap fade (fades[0], last → first) is not drawn — the clock hands every
+  // cycle the same t, so a fade at t = 0 would park the paused preview on the last item. The device
+  // still crossfades at the wrap; pass the unwrapped time in here if the preview must show it.
   const fade = k > 0 ? fades[k] : 0;
-  if (fade > 0 && relative < fade) {
-    const outgoingIndex = order[k - 1];
-    return {
-      item: items[itemIndex] ?? null,
-      itemIndex,
-      offsetSeconds: 0,
-      loopDurationSeconds: totalSeconds,
-      ended: false,
-      transition: {
-        outgoingItem: items[outgoingIndex],
-        outgoingIndex,
-        outgoingOffsetSeconds: duration(items[outgoingIndex]),
-        progress: relative / fade,
-      },
-    };
-  }
+  const outgoingIndex = order[k - 1];
 
   return {
     item: items[itemIndex] ?? null,
     itemIndex,
-    offsetSeconds: Math.max(0, relative - fade),
+    offsetSeconds: relative,
     loopDurationSeconds: totalSeconds,
     ended: false,
-    transition: null,
+    // The outgoing item holds its last frame while the incoming one plays from its own start.
+    transition: fade > 0 && relative < fade
+      ? {
+          outgoingItem: items[outgoingIndex],
+          outgoingIndex,
+          outgoingOffsetSeconds: duration(items[outgoingIndex]),
+          progress: relative / fade,
+        }
+      : null,
   };
 }

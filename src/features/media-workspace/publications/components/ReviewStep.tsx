@@ -185,6 +185,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                   assets={assets}
                   aspectRatio={preview.aspectRatio}
                   referenceResolution={preview.referenceResolution}
+                  background={preview.background}
                   allowActualSize={branch !== "playlist"}
                   controlsPlacement="overlay"
                   frameViewportHeight="36vh"
