@@ -76,6 +76,7 @@ export function ProgramPreviewButton({
           assets={loaded.assets}
           aspectRatio={loaded.preview.aspectRatio}
           referenceResolution={loaded.preview.referenceResolution}
+          background={loaded.preview.background}
           layoutName={loaded.preview.contentName}
         />
       )}

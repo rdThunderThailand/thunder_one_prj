@@ -53,6 +53,7 @@ export function PublicationPlaybackPreviewButton({
           conflictCount={conflictCount}
           geometryOptions={geometryOptions}
           referenceResolution={preview.referenceResolution}
+          background={preview.background}
         />
       )}
     </>

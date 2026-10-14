@@ -13,6 +13,8 @@ export type PlaylistPreviewItem = {
   /** Per-item override — undefined inherits the Playlist default (ADR 0062 §5). */
   transitionDurationSeconds?: number | null;
   mediaFit?: string | null;
+  /** Per-item and nullable: `null` paints none, so the Layout background shows (ADR 0060 §5a). */
+  backgroundColor?: string | null;
 };
 
 /** Playlist-level playback, `metadata.playback` in the editor. `transitionDuration` is counted in
@@ -36,6 +38,7 @@ export function draftItemToPreview(item: {
   transition?: string | null;
   transitionDurationSeconds?: number | null;
   fit?: string | null;
+  backgroundColor?: string;
 }): PlaylistPreviewItem {
   return {
     mediaAssetId: item.mediaAssetId,
@@ -44,6 +47,7 @@ export function draftItemToPreview(item: {
     transition: item.transition ?? null,
     transitionDurationSeconds: item.transitionDurationSeconds ?? null,
     mediaFit: item.fit ?? null,
+    backgroundColor: item.backgroundColor ?? null,
   };
 }
 
@@ -55,6 +59,7 @@ export function playlistItemToPreview(item: {
   transition?: string | null;
   transition_duration_seconds?: number | null;
   fit?: string | null;
+  background_color?: string | null;
 }): PlaylistPreviewItem {
   return {
     mediaAssetId: item.media_asset_id,
@@ -63,6 +68,7 @@ export function playlistItemToPreview(item: {
     transition: item.transition ?? null,
     transitionDurationSeconds: item.transition_duration_seconds ?? null,
     mediaFit: item.fit ?? null,
+    backgroundColor: item.background_color ?? null,
   };
 }
 
@@ -112,6 +118,7 @@ export function playlistPreviewStage({
           transition: item.transition ?? null,
           transitionDurationSeconds: item.transitionDurationSeconds ?? null,
           mediaFit: item.mediaFit ?? null,
+          backgroundColor: item.backgroundColor ?? null,
         })),
       },
     ],

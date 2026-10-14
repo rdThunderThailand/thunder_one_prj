@@ -69,8 +69,8 @@ function toScheduleSettings(playback: PlaylistPlayback) {
   };
 }
 
-/** Loop length for the header — media plus transitions, the same rule `zoneSchedule()` gives the
- *  preview (ADR 0062 §1/§5). */
+/** Loop length for the header — media durations only, since a transition overlaps its incoming
+ *  item (ADR 0094); the same rule `zoneSchedule()` gives the preview and the device. */
 export function totalItemsDurationSeconds(items: DraftItem[], assets: MediaAsset[], playback: PlaylistPlayback): number {
   return zoneSchedule(toScheduleItems(items, assets), toScheduleSettings(playback), EDITOR_SCHEDULE_SEED).totalSeconds;
 }
