@@ -43,9 +43,9 @@ const CHECKLIST = [
 // own workspace-brand colors) — kept literal rather than routed through the
 // shared semantic tokens so the identity stays recognizable next to those cards.
 const SOURCES = [
-  { icon: UsersIcon, label: "People", sub: "บุคลากรและองค์กร", chipBg: "bg-[#e7f2ff]", iconColor: "text-[#075df7]" },
-  { icon: BoxIcon, label: "Asset", sub: "ทรัพย์สินและ Thunder Care", chipBg: "bg-[#e5faf0]", iconColor: "text-[#09a96d]" },
-  { icon: VideoIcon, label: "Media", sub: "สื่อและจอแสดงผล", chipBg: "bg-[#f1e8ff]", iconColor: "text-[#7117df]" },
+  { icon: UsersIcon, label: "People", sub: "บุคลากรและองค์กร", chipBg: "bg-accent", iconColor: "text-primary" },
+  { icon: BoxIcon, label: "Asset", sub: "ทรัพย์สินและ Thunder Care", chipBg: "bg-success-muted", iconColor: "text-t1-green-700" },
+  { icon: VideoIcon, label: "Media", sub: "สื่อและจอแสดงผล", chipBg: "bg-in-progress-muted", iconColor: "text-t1-purple-700" },
 ];
 
 // Explainer slide-over for the still-in-development Brief feature — opened

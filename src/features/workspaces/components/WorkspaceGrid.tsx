@@ -12,8 +12,8 @@ function WorkspaceCard({ workspace, stats }: { workspace: WorkspaceEntry; stats:
         {workspaceIcon(workspace.icon)}
       </span>
       <div className="mt-3 flex-1">
-        <p className="font-semibold text-zinc-900 dark:text-zinc-50">{workspace.name}</p>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{workspace.description}</p>
+        <p className="font-semibold text-foreground">{workspace.name}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{workspace.description}</p>
       </div>
       <div className="mt-4">
         <WorkspaceStatusLine
@@ -21,10 +21,10 @@ function WorkspaceCard({ workspace, stats }: { workspace: WorkspaceEntry; stats:
           stat={stats[workspace.id]}
         />
       </div>
-      <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+      <div className="mt-4 border-t border-border pt-3">
         <span
           className={`flex items-center gap-1 text-sm font-medium ${
-            workspace.href ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-300 dark:text-zinc-700"
+            workspace.href ? "text-primary" : "text-t1-gray-400"
           }`}
         >
           {workspace.href ? "Open Workspace" : "Coming soon"}
@@ -41,7 +41,7 @@ function WorkspaceCard({ workspace, stats }: { workspace: WorkspaceEntry; stats:
         target="_blank"
         rel="noopener noreferrer"
       >
-        <Card className="flex h-full flex-col p-4 transition-colors hover:border-indigo-200 dark:hover:border-indigo-800">
+        <Card className="flex h-full flex-col p-4 transition-colors hover:border-t1-blue-200">
           {body}
         </Card>
       </Link>
@@ -56,7 +56,7 @@ function WorkspaceCard({ workspace, stats }: { workspace: WorkspaceEntry; stats:
 export function WorkspaceGrid({ workspaces, stats }: { workspaces: WorkspaceEntry[]; stats: WorkspaceStats }) {
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Your Workspaces</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Your Workspaces</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {workspaces.map((workspace) => (
           <WorkspaceCard
