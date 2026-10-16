@@ -25,7 +25,7 @@ export function PopularReportsCard() {
           </li>
         ))}
       </ul>
-      <button className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 text-sm font-medium text-primary hover:text-primary">
+      <button className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 text-sm font-medium text-primary hover:text-accent-foreground">
         ดูรายงานทั้งหมด
         <ArrowRightIcon className="h-3.5 w-3.5" />
       </button>

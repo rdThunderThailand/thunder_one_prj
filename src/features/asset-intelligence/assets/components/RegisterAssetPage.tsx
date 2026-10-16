@@ -62,7 +62,7 @@ export function RegisterAssetPage() {
       </p>
       <button
         onClick={() => setConfirmed(true)}
-        className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary"
+        className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
       >
         Confirm Receipt
       </button>

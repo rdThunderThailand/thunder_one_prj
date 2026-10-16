@@ -7,7 +7,7 @@ export function PopularArticlesCard() {
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">บทความยอดนิยม</h2>
-        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary">
+        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground">
           ดูทั้งหมด
           <ArrowRightIcon className="h-3 w-3" />
         </button>

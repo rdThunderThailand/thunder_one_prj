@@ -30,7 +30,7 @@ export function ReturnDetailPanel() {
           </div>
           <p className="text-xs text-t1-gray-400">{returnDetail.docTypeLabel}</p>
         </div>
-        <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400">
+        <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
           <XIcon className="h-4 w-4" />
         </button>
       </div>

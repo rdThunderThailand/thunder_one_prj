@@ -14,7 +14,7 @@ export function RecentArticlesCard() {
           </li>
         ))}
       </ul>
-      <button className="mt-3 flex items-center gap-1 border-t border-border pt-3 text-xs font-medium text-primary hover:text-primary">
+      <button className="mt-3 flex items-center gap-1 border-t border-border pt-3 text-xs font-medium text-primary hover:text-accent-foreground">
         ดูทั้งหมด
         <ArrowRightIcon className="h-3 w-3" />
       </button>

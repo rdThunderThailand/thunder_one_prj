@@ -48,7 +48,7 @@ export function WarrantyDetailPanel() {
             <p className="text-xs text-t1-gray-400">{warrantyDetail.location}</p>
           </div>
         </div>
-        <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400">
+        <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
           <XIcon className="h-4 w-4" />
         </button>
       </div>
@@ -94,7 +94,7 @@ export function WarrantyDetailPanel() {
                   <dt className="text-xs text-t1-gray-400">{row.label}</dt>
                   <dd className="text-foreground">
                     {row.href ? (
-                      <a href={row.href} className="flex items-center gap-1 text-primary hover:text-primary">
+                      <a href={row.href} className="flex items-center gap-1 text-primary hover:text-accent-foreground">
                         {row.value}
                         <ArrowRightIcon className="h-3 w-3 -rotate-45" />
                       </a>

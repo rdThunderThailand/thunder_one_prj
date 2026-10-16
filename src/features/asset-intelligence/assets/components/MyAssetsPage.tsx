@@ -56,7 +56,7 @@ function PendingAcknowledgementBanner({ count }: { count: number }) {
       </p>
       <Link
         href="/asset-intelligence/my-assets/scan-qr"
-        className="shrink-0 rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-warning"
+        className="shrink-0 rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-warning/90"
       >
         Register now
       </Link>

@@ -26,13 +26,13 @@ export function RecentReportsCard() {
               </div>
               <p className="truncate text-xs text-t1-gray-400">{report.createdLabel}</p>
             </div>
-            <button type="button" title="Not built yet" className="shrink-0 cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400">
+            <button type="button" title="Not built yet" className="shrink-0 cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
               <MoreIcon className="h-4 w-4" />
             </button>
           </li>
         ))}
       </ul>
-      <button className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 text-sm font-medium text-primary hover:text-primary">
+      <button className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 text-sm font-medium text-primary hover:text-accent-foreground">
         ดูประวัติรายงานทั้งหมด
         <ArrowRightIcon className="h-3.5 w-3.5" />
       </button>

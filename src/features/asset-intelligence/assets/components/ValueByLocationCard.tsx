@@ -24,7 +24,7 @@ export function ValueByLocationCard() {
           </li>
         ))}
       </ul>
-      <button className="mt-3 flex items-center gap-1 text-xs font-medium text-primary hover:text-primary">
+      <button className="mt-3 flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground">
         ดูรายงานละเอียด
         <ArrowRightIcon className="h-3 w-3" />
       </button>

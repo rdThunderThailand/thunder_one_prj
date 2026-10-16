@@ -22,7 +22,7 @@ export function DashboardNotificationsCard() {
           </li>
         ))}
       </ul>
-      <button className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 text-xs font-medium text-primary hover:text-primary">
+      <button className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 text-xs font-medium text-primary hover:text-accent-foreground">
         ดูการแจ้งเตือนทั้งหมด
         <ArrowRightIcon className="h-3 w-3" />
       </button>

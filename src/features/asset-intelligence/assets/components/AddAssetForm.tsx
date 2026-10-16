@@ -66,7 +66,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
           </p>
           <button
             onClick={onClose}
-            className="shrink-0 text-xs font-medium text-primary hover:text-primary"
+            className="shrink-0 text-xs font-medium text-primary hover:text-accent-foreground"
           >
             Close
           </button>

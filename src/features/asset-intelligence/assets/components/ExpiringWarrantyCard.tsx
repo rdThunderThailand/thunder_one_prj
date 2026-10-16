@@ -37,7 +37,7 @@ export function ExpiringWarrantyCard() {
           </tbody>
         </table>
       </div>
-      <button className="mt-3 flex items-center gap-1 self-end text-xs font-medium text-primary hover:text-primary">
+      <button className="mt-3 flex items-center gap-1 self-end text-xs font-medium text-primary hover:text-accent-foreground">
         ดูทั้งหมด 50 รายการ
         <ArrowRightIcon className="h-3 w-3" />
       </button>

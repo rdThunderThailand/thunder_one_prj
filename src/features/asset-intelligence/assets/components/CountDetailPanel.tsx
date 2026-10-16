@@ -30,7 +30,7 @@ export function CountDetailPanel() {
           </div>
           <p className="text-xs text-t1-gray-400">{countDetail.planName}</p>
         </div>
-        <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400">
+        <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
           <XIcon className="h-4 w-4" />
         </button>
       </div>
@@ -78,7 +78,7 @@ export function CountDetailPanel() {
             ))}
           </ul>
         </div>
-        <button className="mt-3 flex items-center gap-1 text-xs font-medium text-primary hover:text-primary">
+        <button className="mt-3 flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground">
           ดูรายละเอียดผลการตรวจนับ
           <ArrowRightIcon className="h-3 w-3" />
         </button>

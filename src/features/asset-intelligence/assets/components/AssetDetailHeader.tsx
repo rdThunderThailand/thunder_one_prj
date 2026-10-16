@@ -37,13 +37,13 @@ export function AssetDetailHeader({ asset }: { asset: AssetListRow }) {
                 {ASSET_STATUS_LABEL_TH[asset.status]}
               </Badge>
               <span className="text-sm text-muted-foreground">{asset.id}</span>
-              <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400">
+              <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
                 <ClipboardIcon className="h-3.5 w-3.5" />
               </button>
-              <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400">
+              <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
                 <StarIcon className="h-3.5 w-3.5" />
               </button>
-              <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400">
+              <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
                 <MoreIcon className="h-3.5 w-3.5" />
               </button>
             </div>

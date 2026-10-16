@@ -64,7 +64,7 @@ function DepartmentCell({ asset }: { asset: Asset }) {
           const dept = mockDepartments.find((d) => d.id === departmentId);
           setPassedTo(dept?.name ?? departmentId);
         }}
-        className="rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary"
+        className="rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
       >
         Pass to Department
       </button>
