@@ -11,12 +11,14 @@ async function AssetQrCode({ assetId }: { assetId: string }) {
   const svg = await QRCode.toString(assetId, {
     type: "svg",
     margin: 1,
-    color: { dark: "#18181b", light: "#0000" },
+    // The QR renderer writes literal colours into the SVG, so a CSS variable cannot be used here;
+    // #111827 is the design system's `foreground`.
+    color: { dark: "#111827", light: "#0000" },
   });
 
   return (
     <div
-      className="aspect-square w-full max-w-[180px] rounded-lg border border-zinc-200 bg-white p-2 dark:border-zinc-700 [&_svg]:h-full [&_svg]:w-full [&_svg]:dark:invert"
+      className="aspect-square w-full max-w-[180px] rounded-lg border border-border bg-card p-2 [&_svg]:h-full [&_svg]:w-full [&_svg]:"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
@@ -43,13 +45,13 @@ export async function AssetIdentityCard({ asset }: { asset: AssetDetail }) {
 
   return (
     <Card className="flex h-full flex-col p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Asset Identity</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Asset Identity</h2>
 
       <div className="mb-3 flex flex-col items-center gap-2">
         <AssetQrCode assetId={asset.id} />
         <span
           title="Not built yet"
-          className="cursor-not-allowed text-xs font-medium text-indigo-600 dark:text-indigo-400"
+          className="cursor-not-allowed text-xs font-medium text-primary"
         >
           พิมพ์ Label
         </span>
@@ -58,12 +60,12 @@ export async function AssetIdentityCard({ asset }: { asset: AssetDetail }) {
       <dl className="flex flex-col gap-2 text-sm">
         {fields.map((field) => (
           <div key={field.label} className="flex items-center justify-between gap-2">
-            <dt className="text-xs text-zinc-400">{field.label}</dt>
-            <dd className="truncate text-right text-zinc-700 dark:text-zinc-200">{field.value}</dd>
+            <dt className="text-xs text-t1-gray-400">{field.label}</dt>
+            <dd className="truncate text-right text-foreground">{field.value}</dd>
           </div>
         ))}
         <div className="flex items-center justify-between gap-2">
-          <dt className="text-xs text-zinc-400">สถานะ</dt>
+          <dt className="text-xs text-t1-gray-400">สถานะ</dt>
           <dd>
             <Badge variant="pill" color={ASSET_STATUS_BADGE_COLOR[asset.status]}>
               {ASSET_STATUS_LABEL_TH[asset.status]}
@@ -75,13 +77,13 @@ export async function AssetIdentityCard({ asset }: { asset: AssetDetail }) {
       <div className="mt-4 flex gap-2">
         <span
           title="Not built yet"
-          className="flex flex-1 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 py-2 text-sm font-semibold text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+          className="flex flex-1 cursor-not-allowed items-center justify-center rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground"
         >
           ดาวน์โหลด PNG
         </span>
         <span
           title="Not built yet"
-          className="flex flex-1 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 py-2 text-sm font-semibold text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+          className="flex flex-1 cursor-not-allowed items-center justify-center rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground"
         >
           สร้างใหม่
         </span>

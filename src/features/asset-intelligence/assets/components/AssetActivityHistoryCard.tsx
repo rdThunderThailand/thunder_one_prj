@@ -26,29 +26,29 @@ function formatTimestamp(value: string): string {
 export function AssetActivityHistoryCard({ activity }: { activity: AssetActivityEntry[] | null }) {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ประวัติการดำเนินการ</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">ประวัติการดำเนินการ</h2>
       {activity === null ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-6 text-center text-zinc-400">
+        <div className="flex flex-col items-center justify-center gap-2 py-6 text-center text-t1-gray-400">
           <InfoIcon className="h-5 w-5" />
           <p className="text-sm">ไม่สามารถโหลดประวัติการดำเนินการได้ในขณะนี้</p>
         </div>
       ) : activity.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-6 text-center text-zinc-400">
+        <div className="flex flex-col items-center justify-center gap-2 py-6 text-center text-t1-gray-400">
           <InfoIcon className="h-5 w-5" />
           <p className="text-sm">ยังไม่มีประวัติการดำเนินการสำหรับทรัพย์สินนี้</p>
         </div>
       ) : (
-        <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+        <ul className="flex flex-col divide-y divide-border">
           {activity.map((entry, i) => (
             <li key={i} className="flex items-start justify-between gap-4 py-2.5 text-sm">
               <div>
-                <p className="font-medium text-zinc-700 dark:text-zinc-200">
+                <p className="font-medium text-foreground">
                   {ACTIVITY_LABEL_TH[entry.action] ?? entry.action}
                 </p>
-                {entry.detail && <p className="text-xs text-zinc-400">{entry.detail}</p>}
-                <p className="text-xs text-zinc-400">{entry.actor ?? "ไม่ทราบผู้ดำเนินการ"}</p>
+                {entry.detail && <p className="text-xs text-t1-gray-400">{entry.detail}</p>}
+                <p className="text-xs text-t1-gray-400">{entry.actor ?? "ไม่ทราบผู้ดำเนินการ"}</p>
               </div>
-              <span className="shrink-0 whitespace-nowrap text-xs text-zinc-400">{formatTimestamp(entry.timestamp)}</span>
+              <span className="shrink-0 whitespace-nowrap text-xs text-t1-gray-400">{formatTimestamp(entry.timestamp)}</span>
             </li>
           ))}
         </ul>

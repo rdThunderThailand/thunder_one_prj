@@ -16,7 +16,7 @@ function DonutRing({ percent }: { percent: number }) {
   const offset = circumference * (1 - percent / 100);
   return (
     <svg viewBox="0 0 40 40" className="h-11 w-11 shrink-0 -rotate-90">
-      <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="4" className="text-indigo-100 dark:text-indigo-500/20" />
+      <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="4" className="text-primary" />
       <circle
         cx="20"
         cy="20"
@@ -27,7 +27,7 @@ function DonutRing({ percent }: { percent: number }) {
         strokeLinecap="round"
         strokeDasharray={circumference}
         strokeDashoffset={offset}
-        className="text-indigo-500"
+        className="text-primary"
       />
     </svg>
   );
@@ -47,15 +47,15 @@ export function HeroStatTilesRow() {
               </span>
             )}
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{tile.label}</p>
+          <p className="text-xs text-muted-foreground">{tile.label}</p>
           <p>
-            <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{tile.value}</span>
-            {tile.unit && <span className="ml-0.5 text-sm text-zinc-400">{tile.unit}</span>}
+            <span className="text-2xl font-semibold text-foreground">{tile.value}</span>
+            {tile.unit && <span className="ml-0.5 text-sm text-t1-gray-400">{tile.unit}</span>}
           </p>
           {tile.deltaLabel ? (
-            <p className="text-xs font-medium text-emerald-500">{tile.deltaLabel}</p>
+            <p className="text-xs font-medium text-success">{tile.deltaLabel}</p>
           ) : (
-            <p className="text-xs text-zinc-400">{tile.sublabel}</p>
+            <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>
           )}
         </Card>
       ))}

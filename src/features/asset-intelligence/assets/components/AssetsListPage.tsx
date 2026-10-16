@@ -40,7 +40,7 @@ function DepartmentCell({ asset }: { asset: Asset }) {
 
   if (passedTo) {
     return (
-      <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+      <span className="flex items-center gap-1.5 text-t1-green-700">
         <CheckCircleIcon className="h-4 w-4" /> Passed to {passedTo}
       </span>
     );
@@ -51,7 +51,7 @@ function DepartmentCell({ asset }: { asset: Asset }) {
       <select
         value={departmentId}
         onChange={(e) => setDepartmentId(e.target.value)}
-        className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+        className="rounded-lg border border-border bg-card px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
       >
         {mockDepartments.map((dept) => (
           <option key={dept.id} value={dept.id}>
@@ -64,7 +64,7 @@ function DepartmentCell({ asset }: { asset: Asset }) {
           const dept = mockDepartments.find((d) => d.id === departmentId);
           setPassedTo(dept?.name ?? departmentId);
         }}
-        className="rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-indigo-500"
+        className="rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary"
       >
         Pass to Department
       </button>
@@ -78,7 +78,7 @@ export function AssetsListPage() {
   return (
     <Card className="overflow-hidden">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <thead className="border-b border-border text-xs text-muted-foreground">
           <tr>
             <th className="px-4 py-3 font-medium">Tag</th>
             <th className="px-4 py-3 font-medium">Category</th>
@@ -87,11 +87,11 @@ export function AssetsListPage() {
             <th className="px-4 py-3 font-medium">Department</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+        <tbody className="divide-y divide-border">
           {assets.map((asset) => (
             <tr key={asset.id}>
-              <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">{asset.tag}</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+              <td className="px-4 py-3 font-medium text-foreground">{asset.tag}</td>
+              <td className="px-4 py-3 text-muted-foreground">
                 {categoryLabel[asset.category] ?? asset.category}
               </td>
               <td className="px-4 py-3">
@@ -99,8 +99,8 @@ export function AssetsListPage() {
                   {asset.status}
                 </Badge>
               </td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{asset.healthScore}</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+              <td className="px-4 py-3 text-muted-foreground">{asset.healthScore}</td>
+              <td className="px-4 py-3 text-muted-foreground">
                 <DepartmentCell asset={asset} />
               </td>
             </tr>

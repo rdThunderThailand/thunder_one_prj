@@ -9,7 +9,7 @@ import { createAsset } from "../services/assets-api";
 import type { CreateAssetDeviceResult } from "../types";
 
 const inputClasses =
-  "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
 
 /** `undefined` for a blank field so the server's own default applies, rather
  *  than sending an empty string that would override it. */
@@ -60,28 +60,28 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
     return (
       <Card className="flex flex-col gap-3 p-4">
         <div className="flex items-center gap-3">
-          <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-500" />
-          <p className="flex-1 text-sm text-zinc-600 dark:text-zinc-300">
+          <CheckCircleIcon className="h-5 w-5 shrink-0 text-success" />
+          <p className="flex-1 text-sm text-muted-foreground">
             {result.asset.device_name} registered.
           </p>
           <button
             onClick={onClose}
-            className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-500"
+            className="shrink-0 text-xs font-medium text-primary hover:text-primary"
           >
             Close
           </button>
         </div>
-        <div className="rounded-lg bg-zinc-50 p-3 text-xs dark:bg-zinc-800/50">
-          <p className="mb-2 font-medium text-zinc-700 dark:text-zinc-300">
+        <div className="rounded-lg bg-muted p-3 text-xs">
+          <p className="mb-2 font-medium text-foreground">
             Device credentials — save these now, they won&apos;t be shown again:
           </p>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono">
-            <dt className="text-zinc-500 dark:text-zinc-400">mqtt_client_id</dt>
-            <dd className="break-all text-zinc-900 dark:text-zinc-100">
+            <dt className="text-muted-foreground">mqtt_client_id</dt>
+            <dd className="break-all text-foreground">
               {result.credentials.mqtt_client_id}
             </dd>
-            <dt className="text-zinc-500 dark:text-zinc-400">access_token</dt>
-            <dd className="break-all text-zinc-900 dark:text-zinc-100">
+            <dt className="text-muted-foreground">access_token</dt>
+            <dd className="break-all text-foreground">
               {result.credentials.access_token}
             </dd>
           </dl>
@@ -131,7 +131,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
     <Card className="p-4">
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             Device Name
             <input
               required
@@ -141,7 +141,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             Device Type
             <input
               value={deviceType}
@@ -150,7 +150,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             Serial Number
             <input
               value={serialNumber}
@@ -158,7 +158,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             MAC Address
             <input
               value={macAddress}
@@ -167,7 +167,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             Model
             <input
               value={model}
@@ -175,7 +175,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             Tags
             <input
               value={tags}
@@ -184,7 +184,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             Site
             <input
               value={site}
@@ -192,7 +192,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             Zone
             <input
               value={zone}
@@ -202,18 +202,18 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
           </label>
         </div>
 
-        <div className="border-t border-zinc-100 pt-3 dark:border-zinc-800">
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <div className="border-t border-border pt-3">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             Asset List fields
             <span
               title="Core's create-asset endpoint doesn't accept these yet — collected here so the form is ready once it does; they won't show up in the real list until then."
-              className="cursor-help text-zinc-300"
+              className="cursor-help text-t1-gray-400"
             >
               ⓘ
             </span>
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
               Category
               <input
                 value={assetCategory}
@@ -222,7 +222,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
                 className={inputClasses}
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
               Owner Name
               <input
                 value={ownerName}
@@ -230,7 +230,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
                 className={inputClasses}
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
               Value (THB)
               <input
                 type="number"
@@ -241,7 +241,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
                 className={inputClasses}
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
               Received Date
               <input
                 type="date"
@@ -253,7 +253,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        {error && <p className="text-xs text-error">{error}</p>}
         <div className="flex items-center gap-2">
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? "Adding..." : "Add Asset"}

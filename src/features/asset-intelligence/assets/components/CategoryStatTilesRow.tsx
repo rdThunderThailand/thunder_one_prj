@@ -18,9 +18,9 @@ export function CategoryStatTilesRow() {
           <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tile.iconTone}`}>
             {iconFor[tile.icon]}
           </span>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{tile.label}</p>
-          <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{tile.value}</p>
-          <p className="text-xs text-zinc-400">{tile.sublabel}</p>
+          <p className="text-xs text-muted-foreground">{tile.label}</p>
+          <p className="text-2xl font-semibold text-foreground">{tile.value}</p>
+          <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>
         </Card>
       ))}
     </div>

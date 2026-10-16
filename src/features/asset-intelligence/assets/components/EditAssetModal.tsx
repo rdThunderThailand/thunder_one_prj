@@ -9,7 +9,7 @@ import { updateAsset } from "../services/assets-api";
 import type { AssetListRow } from "../services/asset-list-api";
 
 const inputClasses =
-  "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
 
 function errorMessage(err: unknown): string {
   if (err instanceof ApiError) {
@@ -88,23 +88,23 @@ export function EditAssetModal({ asset, onClose }: { asset: AssetListRow; onClos
       }
     >
       <form id="edit-asset-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           ชื่อทรัพย์สิน
           <input required value={name} onChange={(e) => setName(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           Serial Number
           <input value={serial} onChange={(e) => setSerial(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           ประเภททรัพย์สิน
           <input value={category} onChange={(e) => setCategory(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           ผู้ใช้ / ผู้รับผิดชอบ
           <input value={owner} onChange={(e) => setOwner(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           มูลค่า (THB)
           <input
             type="number"
@@ -115,7 +115,7 @@ export function EditAssetModal({ asset, onClose }: { asset: AssetListRow; onClos
             className={inputClasses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           วันที่รับเข้า
           <input
             type="date"
@@ -124,7 +124,7 @@ export function EditAssetModal({ asset, onClose }: { asset: AssetListRow; onClos
             className={inputClasses}
           />
         </label>
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        {error && <p className="text-xs text-error">{error}</p>}
       </form>
     </Modal>
   );
