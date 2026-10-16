@@ -15,10 +15,10 @@ export function KnowledgeCategoriesRow() {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">หมวดหมู่ความรู้</h2>
+        <h2 className="text-sm font-semibold text-foreground">หมวดหมู่ความรู้</h2>
         <span
           title="Not built yet"
-          className="flex cursor-not-allowed items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+          className="flex cursor-not-allowed items-center gap-1 text-sm font-medium text-primary"
         >
           ดูทั้งหมด
           <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -30,9 +30,9 @@ export function KnowledgeCategoriesRow() {
             <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${category.iconTone}`}>
               {iconFor[category.icon]}
             </span>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{category.label}</p>
-            <p className="text-xs text-zinc-400">{category.description}</p>
-            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{category.count} รายการ</p>
+            <p className="text-sm font-semibold text-foreground">{category.label}</p>
+            <p className="text-xs text-t1-gray-400">{category.description}</p>
+            <p className="text-xs font-medium text-muted-foreground">{category.count} รายการ</p>
           </Card>
         ))}
       </div>

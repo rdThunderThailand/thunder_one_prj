@@ -215,9 +215,9 @@ export function PersonnelPage({ rows: fetchedRows, totalCount, tenantId, units }
             onReset={handleReset}
           />
           {departmentName && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              กรองตามหน่วยงาน: <span className="font-medium text-zinc-900 dark:text-zinc-50">{departmentName}</span>{" "}
-              <Link href="/people/personnel" className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+            <p className="text-sm text-muted-foreground">
+              กรองตามหน่วยงาน: <span className="font-medium text-foreground">{departmentName}</span>{" "}
+              <Link href="/people/personnel" className="text-primary hover:text-accent-foreground">
                 ล้างตัวกรอง
               </Link>
             </p>

@@ -19,7 +19,7 @@ export const departureStatTiles: DepartureStatTile[] = [
   {
     id: "total",
     icon: "users",
-    iconTone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+    iconTone: "bg-info-muted text-t1-blue-700",
     label: "ทั้งหมด",
     value: "7",
     sublabel: "รายการ",
@@ -27,7 +27,7 @@ export const departureStatTiles: DepartureStatTile[] = [
   {
     id: "in-progress",
     icon: "clock",
-    iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+    iconTone: "bg-warning-muted text-t1-amber-700",
     label: "กำลังดำเนินการ",
     value: "4",
     sublabel: "57.1%",
@@ -35,7 +35,7 @@ export const departureStatTiles: DepartureStatTile[] = [
   {
     id: "due-soon",
     icon: "calendar",
-    iconTone: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
+    iconTone: "bg-in-progress-muted text-t1-purple-700",
     label: "ถึงกำหนดออก",
     value: "2",
     sublabel: "28.6%",
@@ -43,7 +43,7 @@ export const departureStatTiles: DepartureStatTile[] = [
   {
     id: "completed",
     icon: "check",
-    iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+    iconTone: "bg-success-muted text-t1-green-700",
     label: "เสร็จสิ้น",
     value: "1",
     sublabel: "14.3%",
@@ -51,7 +51,7 @@ export const departureStatTiles: DepartureStatTile[] = [
   {
     id: "cancelled",
     icon: "cancelled",
-    iconTone: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    iconTone: "bg-muted text-muted-foreground",
     label: "ยกเลิก",
     value: "0",
     sublabel: "0%",

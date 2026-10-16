@@ -46,12 +46,12 @@ export function NewHireSidebar({ rows }: NewHireSidebarProps) {
   return (
     <div className="flex flex-col gap-4">
       <Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปภาพรวม</h3>
-        <dl className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+        <h3 className="mb-3 text-sm font-semibold text-foreground">สรุปภาพรวม</h3>
+        <dl className="flex flex-col divide-y divide-border">
           {summaryStats.map((stat) => (
             <div key={stat.id} className="flex items-center justify-between py-2 text-sm">
-              <dt className="text-zinc-500 dark:text-zinc-400">{stat.label}</dt>
-              <dd className="font-semibold text-zinc-900 dark:text-zinc-50">{stat.value}</dd>
+              <dt className="text-muted-foreground">{stat.label}</dt>
+              <dd className="font-semibold text-foreground">{stat.value}</dd>
             </div>
           ))}
         </dl>

@@ -29,9 +29,9 @@ export function ContractorStatTilesRow({ rows }: ContractorStatTilesRowProps) {
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {tiles.map((tile) => (
         <Card key={tile.id} className="flex flex-col gap-1 p-4">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{tile.label}</p>
-          <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{tile.value}</span>
-          <p className="text-xs text-zinc-400">{tile.sublabel}</p>
+          <p className="text-xs text-muted-foreground">{tile.label}</p>
+          <span className="text-2xl font-semibold text-foreground">{tile.value}</span>
+          <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>
         </Card>
       ))}
     </div>
