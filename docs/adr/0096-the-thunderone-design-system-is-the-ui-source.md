@@ -37,7 +37,9 @@ but stores colours as HSL triplets, so it can replace that block but not be laye
 6. **Navigation and vocabulary** follow this repo's nav config where the `media` profile disagrees
    (reported in #2): Channel groups and Playback proof exist; PA / Audio, Kiosks, Monitoring and
    Analytics render as "Not built yet"; there is no Settings group.
-7. **Thai text** keeps the OS fallback until the design system names a Thai face (OD-05).
+7. **Thai text** uses Noto Sans Thai (amended 2026-10-16, owner): loaded with `next/font`, Thai subset
+   only, after Manrope in `--font-sans`. A local choice while OD-05 is open; if the design system names
+   another face, switch to it. The design system repo is never changed from here.
 
 ## Alternatives
 

@@ -22,10 +22,11 @@ reviewing a screen. Where the skill and this file disagree, this file wins.
 - No raw palette classes (`zinc-*`, `indigo-*`, `bg-white` …), hex literals or new `dark:` variants.
   Prefer the design system names (`error`, `success-muted`, `accent`) over the temporary aliases
   (`danger`, `*-soft`, `primary-soft`). In CSS use `var(--color-x)`, never `var(--x)` (HSL triplets).
-- Icons: `@ant-design/icons` through `T1Icon` / `MediaIcon` once plan P3 lands; until then keep the
-  existing `icons.tsx` / `lucide-react` imports and add no new lucide icons.
+- Icons: import from `src/components/ui/icons.tsx` (antd glyphs; platform concepts via `T1Icon`,
+  Media concepts per the `media` profile map). Add a missing concept there; never import
+  `@ant-design/icons` or SVG paths in feature code.
 - Components: reuse `src/components/ui/lovable/` primitives; Lovable is no longer a visual source.
 - Nav and terms follow `src/config/nav/media-workspace.tsx` where the profile disagrees (ADR 0096 §6).
-- Thai text: no Thai face yet (OD-05); do not add one locally.
+- Thai text: Noto Sans Thai via `next/font` after Manrope (ADR 0096 §7, local until OD-05 closes).
 - Do not run the design system's setup CLI here. Update by re-copying the skill and
   `src/design-system/` from a newer tag in one PR.

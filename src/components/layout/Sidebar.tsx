@@ -312,9 +312,7 @@ function SettingsSidebar({ pathname }: { pathname: string }) {
         className="flex h-[68px] items-center border-b border-[#e6edf9] px-5 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo; no next/image optimization needed */}
-        <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-8 w-auto dark:hidden" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-8 w-auto dark:block" />
+        <img src="/brand/thunderone-logo-horizontal-color.svg" alt="ThunderOne" className="h-10 w-auto" />
       </Link>
       <div className="px-3 pb-1 pt-3">
         <Link
@@ -405,33 +403,12 @@ export function Sidebar({
           <MediaWorkspaceBrand collapsed={collapsed} />
         ) : collapsed ? (
           // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
-          <img src="/brand/t1-mark.svg" alt="ThunderOne" style={{ width: 32, height: 32 }} />
-        ) : activeApp?.id === "customer-workspace" ? (
-          // Same "mark + 2-line text stack" layout as Media Workspace's own
-          // t1-sidebar-brand-block.svg (confirmed against a screenshot of it
-          // 2026-09-23) — that asset bakes in the literal string "Media
-          // Workspace" though, so it can't be reused for a different
-          // caption; this rebuilds the same layout with live text/tagline
-          // instead of a second baked-in SVG per App.
-          <div className="flex items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/t1-mark.svg" alt="ThunderOne" className="h-8 w-auto" />
-            <div className="flex flex-col justify-center">
-              <span className="text-lg font-extrabold leading-tight tracking-tight">
-                <span className="text-[#010F29] dark:text-zinc-50">Thunder</span>
-                {" "}
-                <span className="text-[#0C60FA]">One</span>
-              </span>
-              <span className="text-xs leading-tight text-zinc-500 dark:text-zinc-400">{activeApp.tagline}</span>
-            </div>
-          </div>
+          <img src="/brand/thunderone-mark-t1-dark.svg" alt="ThunderOne" className="h-8 w-8 max-w-none" />
         ) : (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-8 w-auto dark:hidden" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-8 w-auto dark:block" />
-          </>
+          // Every App shows the design system's horizontal lockup (DS-10, brand.md); the wordmark is
+          // never re-typed as live text.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/brand/thunderone-logo-horizontal-color.svg" alt="ThunderOne" className="h-10 w-auto" />
         )}
       </Link>
 

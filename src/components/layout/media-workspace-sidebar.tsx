@@ -65,15 +65,15 @@ function NavLink({ item, pathname, collapsed }: { item: NavItem; pathname: strin
   );
 }
 
-// The Figma "Side Bar Brand Block": bare mark + "Thunder One" wordmark +
-// "Media Workspace", composed into one SVG so the proportions can't drift.
+// Logos come from the design system's brand assets (DS-10, brand.md): the horizontal colour
+// lockup in the 224×68 logo block, the T1 mark tile when the sidebar is collapsed.
 export function MediaWorkspaceBrand({ collapsed }: { collapsed: boolean }) {
   return collapsed ? (
     // eslint-disable-next-line @next/next/no-img-element -- brand SVG, no optimization needed
-    <img src="/brand/t1-mark.svg" alt="ThunderOne" className="h-8 w-auto" />
+    <img src="/brand/thunderone-mark-t1-dark.svg" alt="ThunderOne" className="h-8 w-8 max-w-none" />
   ) : (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src="/brand/t1-sidebar-brand-block.svg" alt="ThunderOne — Media Workspace" className="h-10 w-auto" />
+    <img src="/brand/thunderone-logo-horizontal-color.svg" alt="ThunderOne" className="h-10 w-auto" />
   );
 }
 
