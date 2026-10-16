@@ -74,15 +74,15 @@ export function RegisterForm() {
         value={confirmPassword}
         onChange={(event) => setConfirmPassword(event.target.value)}
       />
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Creating account..." : "Create account"}
       </Button>
-      <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-medium text-indigo-600 hover:text-indigo-500"
+          className="font-medium text-primary hover:text-accent-foreground"
         >
           Sign in
         </Link>

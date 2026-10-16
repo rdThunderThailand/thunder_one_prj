@@ -307,10 +307,10 @@ export interface PolicyFrameworkCategoryData {
 }
 
 export const policyFrameworkCategories: PolicyFrameworkCategoryData[] = [
-  { id: "pf-1", icon: "building", iconTone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400", name: "Corporate Governance", policyCount: 5 },
-  { id: "pf-2", icon: "lock", iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", name: "Information Security", policyCount: 8 },
-  { id: "pf-3", icon: "users", iconTone: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400", name: "People & Culture", policyCount: 6 },
-  { id: "pf-4", icon: "document", iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400", name: "Finance & Compliance", policyCount: 7 },
+  { id: "pf-1", icon: "building", iconTone: "bg-info-muted text-t1-blue-700", name: "Corporate Governance", policyCount: 5 },
+  { id: "pf-2", icon: "lock", iconTone: "bg-success-muted text-t1-green-700", name: "Information Security", policyCount: 8 },
+  { id: "pf-3", icon: "users", iconTone: "bg-in-progress-muted text-t1-purple-700", name: "People & Culture", policyCount: 6 },
+  { id: "pf-4", icon: "document", iconTone: "bg-warning-muted text-t1-amber-700", name: "Finance & Compliance", policyCount: 7 },
 ];
 
 export const employeeComplianceByArea: ComplianceAreaData[] = [

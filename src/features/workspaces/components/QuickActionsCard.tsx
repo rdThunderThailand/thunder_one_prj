@@ -15,27 +15,27 @@ const ACTIONS: { id: string; label: string; icon: ReactNode; href: string | null
 export function QuickActionsCard() {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Quick Actions</h2>
-      <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Quick Actions</h2>
+      <ul className="flex flex-col divide-y divide-border">
         {ACTIONS.map((action) => (
           <li key={action.id}>
             {action.href ? (
               <Link
                 href={action.href}
-                className="flex items-center gap-2.5 py-2.5 text-sm text-zinc-700 hover:text-indigo-600 dark:text-zinc-200"
+                className="flex items-center gap-2.5 py-2.5 text-sm text-foreground hover:text-primary"
               >
-                <span className="text-zinc-400">{action.icon}</span>
+                <span className="text-t1-gray-400">{action.icon}</span>
                 <span className="flex-1">{action.label}</span>
-                <ChevronRightIcon className="h-3.5 w-3.5 text-zinc-300" />
+                <ChevronRightIcon className="h-3.5 w-3.5 text-t1-gray-400" />
               </Link>
             ) : (
               <div
                 title="Not built yet"
-                className="flex cursor-not-allowed items-center gap-2.5 py-2.5 text-sm text-zinc-400"
+                className="flex cursor-not-allowed items-center gap-2.5 py-2.5 text-sm text-t1-gray-400"
               >
                 <span>{action.icon}</span>
                 <span className="flex-1">{action.label}</span>
-                <ChevronRightIcon className="h-3.5 w-3.5 text-zinc-300" />
+                <ChevronRightIcon className="h-3.5 w-3.5 text-t1-gray-400" />
               </div>
             )}
           </li>

@@ -21,7 +21,7 @@ export function WorkspaceOverviewCard({ workspaces }: { workspaces: WorkspaceEnt
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Workspace Overview</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Workspace Overview</h2>
       <div className="flex items-center gap-4">
         <div className="relative shrink-0">
           <DonutChart
@@ -30,8 +30,8 @@ export function WorkspaceOverviewCard({ workspaces }: { workspaces: WorkspaceEnt
             strokeWidth={16}
           />
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{total}</span>
-            <span className="text-[10px] text-zinc-400">Total</span>
+            <span className="text-xl font-semibold text-foreground">{total}</span>
+            <span className="text-[10px] text-t1-gray-400">Total</span>
           </div>
         </div>
         <ul className="flex-1 space-y-1.5 text-sm">
@@ -40,14 +40,14 @@ export function WorkspaceOverviewCard({ workspaces }: { workspaces: WorkspaceEnt
               key={segment.label}
               className="flex items-center justify-between gap-2"
             >
-              <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
                 <span
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: segment.color }}
                 />
                 {segment.label}
               </span>
-              <span className="shrink-0 font-medium text-zinc-900 dark:text-zinc-50">
+              <span className="shrink-0 font-medium text-foreground">
                 {segment.value} ({Math.round((segment.value / total) * 100)}%)
               </span>
             </li>

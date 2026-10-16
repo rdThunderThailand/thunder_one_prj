@@ -5,20 +5,20 @@ import type { HomeStats } from "../core-mapper";
 
 // Exact tone hex values pulled from the Figma shell mockup (node 396:4595)
 // rather than the app's generic Tailwind palette — bypasses the shared
-// `Card` component (its default `border-zinc-200` would fight a tone
+// `Card` component (its default `border-border` would fight a tone
 // border at equal Tailwind specificity) in favor of a hand-built tile.
 const TONES = {
-  red: { border: "border-[#ffe4e7] dark:border-red-500/20", chipBg: "bg-[#fff0f1] dark:bg-red-500/10", text: "text-[#f42b41] dark:text-red-400" },
-  amber: { border: "border-[#f9ebc6] dark:border-amber-500/20", chipBg: "bg-[#fff5df] dark:bg-amber-500/10", text: "text-[#f29a00] dark:text-amber-400" },
-  blue: { border: "border-[#e3efff] dark:border-blue-500/20", chipBg: "bg-[#eaf4ff] dark:bg-blue-500/10", text: "text-[#075df7] dark:text-blue-400" },
-  green: { border: "border-[#daf5eb] dark:border-emerald-500/20", chipBg: "bg-[#e7faef] dark:bg-emerald-500/10", text: "text-[#09a96d] dark:text-emerald-400" },
+  red: { border: "border-error/30", chipBg: "bg-error-muted", text: "text-error" },
+  amber: { border: "border-warning/30", chipBg: "bg-warning-muted", text: "text-warning" },
+  blue: { border: "border-t1-blue-100", chipBg: "bg-accent", text: "text-primary" },
+  green: { border: "border-success/30", chipBg: "bg-success-muted", text: "text-t1-green-700" },
 } as const;
 
 /** Plain informational caption (no real trend backing it) vs. a colored
  *  signed delta — the Figma mockup itself only tone-colors captions that
  *  carry an actual ↑/↓ arrow; plain captions ("ค้างมา 2 วัน") stay neutral
  *  gray-blue there too, so this isn't a deviation from the design. */
-const NEUTRAL_CAPTION = "text-[#6b7a9e] dark:text-zinc-400";
+const NEUTRAL_CAPTION = "text-muted-foreground";
 
 function StatTile({
   tone,
@@ -38,7 +38,7 @@ function StatTile({
   const c = TONES[tone];
   return (
     <div
-      className={`flex flex-col gap-1 rounded-[10px] border bg-gradient-to-br from-white to-[#f8fbff] p-[18px] dark:from-zinc-900 dark:to-zinc-900 ${c.border}`}
+      className={`flex flex-col gap-1 rounded-[10px] border bg-gradient-to-br from-t1-white to-t1-gray-50 p-[18px] ${c.border}`}
     >
       <div className="flex items-center gap-3">
         <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${c.chipBg} ${c.text} [&>svg]:h-6 [&>svg]:w-6`}>
@@ -103,7 +103,7 @@ export async function HomeStatTilesRow({ stats: statsPromise }: { stats: Promise
         caption={
           <Link
             href="/people/new-hires"
-            className="font-medium text-[#075df7] hover:text-[#0748c4] dark:text-blue-400"
+            className="font-medium text-primary hover:text-accent-foreground"
           >
             เดือนนี้ →
           </Link>
@@ -114,7 +114,7 @@ export async function HomeStatTilesRow({ stats: statsPromise }: { stats: Promise
         icon={<MonitorIcon />}
         label="จอแสดงผลออนไลน์"
         value={onlinePercent(stats.displaysOnline, stats.displaysTotal)}
-        valueClassName="text-[#071858] dark:text-zinc-50"
+        valueClassName="text-foreground"
         caption={displaysCaption(stats.displaysOnline, stats.displaysTotal)}
       />
     </div>

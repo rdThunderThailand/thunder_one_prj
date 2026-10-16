@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <>
-      <h1 className="mb-6 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+      <h1 className="mb-6 text-lg font-semibold text-foreground">
         Sign in to your workspace
       </h1>
       <Suspense fallback={null}>

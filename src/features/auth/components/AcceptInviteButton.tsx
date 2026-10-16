@@ -29,7 +29,7 @@ export function AcceptInviteButton({ token }: { token: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
       <Button onClick={handleAccept} disabled={pending} className="w-full">
         {pending ? "Joining..." : "Accept & join"}
       </Button>

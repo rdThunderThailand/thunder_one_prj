@@ -53,7 +53,7 @@ export function WorkspacesPage({
         </div>
       </div>
 
-      <p className="text-right text-xs text-zinc-400">Data as of {dataAsOf} (ICT)</p>
+      <p className="text-right text-xs text-t1-gray-400">Data as of {dataAsOf} (ICT)</p>
     </div>
   );
 }

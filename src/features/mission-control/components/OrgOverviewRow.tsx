@@ -20,12 +20,12 @@ export async function OrgOverviewRow({ stats: statsPromise }: { stats: Promise<H
 
   return (
     <Card className="flex flex-col p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ภาพรวมองค์กร</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">ภาพรวมองค์กร</h2>
       {/* Icon-then-label-then-number-then-delta, stacked top-down per item —
           the mockup's own per-item order (node 396:4748's children). */}
       <div className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
         <OverviewItem
-          chipClassName="bg-[#eaf4ff] text-[#075df7] dark:bg-blue-500/10 dark:text-blue-400"
+          chipClassName="bg-accent text-primary"
           icon={<UsersIcon className="h-4 w-4" />}
           label="บุคลากรทั้งหมด"
           value={stats.totalHeadcount}
@@ -33,19 +33,19 @@ export async function OrgOverviewRow({ stats: statsPromise }: { stats: Promise<H
           deltaTitle="คนที่เริ่มงานเดือนนี้ เทียบกับจำนวนคนต้นเดือน (ยังไม่หักคนที่ออก)"
         />
         <OverviewItem
-          chipClassName="bg-[#f1e8ff] text-[#7117df] dark:bg-violet-500/10 dark:text-violet-400"
+          chipClassName="bg-in-progress-muted text-t1-purple-700"
           icon={<BoxIcon className="h-4 w-4" />}
           label="สินทรัพย์ทั้งหมด"
           value={stats.totalAssets}
         />
         <OverviewItem
-          chipClassName="bg-[#e7faef] text-[#09a96d] dark:bg-emerald-500/10 dark:text-emerald-400"
+          chipClassName="bg-success-muted text-t1-green-700"
           icon={<MonitorIcon className="h-4 w-4" />}
           label="จอแสดงผล"
           value={stats.displaysTotal}
         />
         <OverviewItem
-          chipClassName="bg-[#fff0f1] text-[#f42b41] dark:bg-red-500/10 dark:text-red-400"
+          chipClassName="bg-error-muted text-error"
           icon={<ClipboardIcon className="h-4 w-4" />}
           label="คำขอที่เปิดอยู่"
           value={null}
@@ -83,12 +83,12 @@ function OverviewItem({
       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${chipClassName}`}>
         {icon}
       </span>
-      <p className="mt-2 line-clamp-2 min-h-8 text-xs leading-4 text-zinc-400">{label}</p>
-      <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{value ?? "-"}</p>
+      <p className="mt-2 line-clamp-2 min-h-8 text-xs leading-4 text-t1-gray-400">{label}</p>
+      <p className="text-xl font-semibold text-foreground">{value ?? "-"}</p>
       <p
         title={deltaTitle}
         className={`mt-0.5 text-xs font-medium ${
-          deltaPercent !== null && deltaPercent > 0 ? "text-[#09a96d] dark:text-emerald-400" : "text-zinc-400"
+          deltaPercent !== null && deltaPercent > 0 ? "text-t1-green-700" : "text-t1-gray-400"
         }`}
       >
         {deltaPercent === null ? "–" : deltaPercent > 0 ? `▲ ${deltaPercent}%` : "0%"}

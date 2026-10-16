@@ -38,31 +38,31 @@ const TONES: Record<
   { cardTo: string; border: string; chipBg: string; iconColor: string; titleColor: string; buttonBg: string; buttonText: string }
 > = {
   people: {
-    cardTo: "to-[#f2f8ff] dark:to-zinc-900",
-    border: "border-[#e5edf9] dark:border-zinc-800",
-    chipBg: "bg-[#e7f2ff] dark:bg-blue-500/10",
-    iconColor: "text-[#075df7] dark:text-blue-400",
-    titleColor: "text-[#075df7] dark:text-blue-400",
-    buttonBg: "bg-[#e4f1ff] hover:bg-[#d5e8ff] dark:bg-blue-500/10 dark:hover:bg-blue-500/20",
-    buttonText: "text-[#0760ed] dark:text-blue-400",
+    cardTo: "to-accent",
+    border: "border-border",
+    chipBg: "bg-accent",
+    iconColor: "text-primary",
+    titleColor: "text-primary",
+    buttonBg: "bg-accent hover:bg-t1-blue-50",
+    buttonText: "text-primary",
   },
   "asset-intelligence": {
-    cardTo: "to-[#eefdf7] dark:to-zinc-900",
-    border: "border-[#e5edf9] dark:border-zinc-800",
-    chipBg: "bg-[#e5faf0] dark:bg-emerald-500/10",
-    iconColor: "text-[#09a96d] dark:text-emerald-400",
-    titleColor: "text-[#09a96d] dark:text-emerald-400",
-    buttonBg: "bg-[#def8ed] hover:bg-[#cdf3e2] dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20",
-    buttonText: "text-[#08a96d] dark:text-emerald-400",
+    cardTo: "to-success-muted",
+    border: "border-border",
+    chipBg: "bg-success-muted",
+    iconColor: "text-t1-green-700",
+    titleColor: "text-t1-green-700",
+    buttonBg: "bg-success-muted hover:bg-success/20",
+    buttonText: "text-t1-green-700",
   },
   "media-workspace": {
-    cardTo: "to-[#f9f2ff] dark:to-zinc-900",
-    border: "border-[#e5edf9] dark:border-zinc-800",
-    chipBg: "bg-[#f1e8ff] dark:bg-violet-500/10",
-    iconColor: "text-[#7117df] dark:text-violet-400",
-    titleColor: "text-[#071858] dark:text-zinc-50",
-    buttonBg: "bg-[#f0e4ff] hover:bg-[#e6d2ff] dark:bg-violet-500/10 dark:hover:bg-violet-500/20",
-    buttonText: "text-[#7117df] dark:text-violet-400",
+    cardTo: "to-in-progress-muted",
+    border: "border-border",
+    chipBg: "bg-in-progress-muted",
+    iconColor: "text-t1-purple-700",
+    titleColor: "text-foreground",
+    buttonBg: "bg-in-progress-muted hover:bg-in-progress/20",
+    buttonText: "text-t1-purple-700",
   },
 };
 
@@ -77,10 +77,10 @@ export function WorkspaceCardsRow({ allowedAppIds }: { allowedAppIds: ReadonlySe
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-xl font-black tracking-tight text-[#071858] dark:text-zinc-50">พื้นที่ทำงานของคุณ</h2>
+        <h2 className="text-xl font-black tracking-tight text-foreground">พื้นที่ทำงานของคุณ</h2>
         <Link
           href="/work-space"
-          className="flex items-center gap-1 text-sm font-bold text-[#0760ed] hover:text-[#0748c4] dark:text-blue-400"
+          className="flex items-center gap-1 text-sm font-bold text-primary hover:text-accent-foreground"
         >
           ดูทั้งหมด
           <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -99,7 +99,7 @@ export function WorkspaceCardsRow({ allowedAppIds }: { allowedAppIds: ReadonlySe
               href={app.basePath}
               target="_blank"
               rel="noopener noreferrer"
-              className={`group flex flex-col gap-3 rounded-[10px] border bg-gradient-to-br from-white p-[22px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:from-zinc-900 ${tone.border} ${tone.cardTo}`}
+              className={`group flex flex-col gap-3 rounded-[10px] border bg-gradient-to-br from-t1-white p-[22px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${tone.border} ${tone.cardTo}`}
             >
               <div className="flex items-start gap-3">
                 <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] ${tone.chipBg} ${tone.iconColor} transition-transform duration-200 group-hover:scale-105 [&>svg]:h-6 [&>svg]:w-6`}>
@@ -107,10 +107,10 @@ export function WorkspaceCardsRow({ allowedAppIds }: { allowedAppIds: ReadonlySe
                 </span>
                 <div>
                   <p className={`text-lg font-black tracking-tight ${tone.titleColor}`}>{TITLES[app.id]}</p>
-                  <p className="text-sm text-[#5e71a2] dark:text-zinc-400">{SUBLABELS[app.id]}</p>
+                  <p className="text-sm text-muted-foreground">{SUBLABELS[app.id]}</p>
                 </div>
               </div>
-              <p className="text-sm text-[#536a9c] dark:text-zinc-400">{DESCRIPTIONS[app.id]}</p>
+              <p className="text-sm text-muted-foreground">{DESCRIPTIONS[app.id]}</p>
               <span
                 className={`mt-auto flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-center text-sm font-bold ${tone.buttonBg} ${tone.buttonText}`}
               >

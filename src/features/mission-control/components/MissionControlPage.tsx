@@ -57,7 +57,7 @@ export function MissionControlPage({ userName, stats, recentLogs, work, allowedA
             sizes="100vw"
             className="object-cover object-right"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/70 via-white/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-t1-white/70 via-t1-white/20 to-transparent" />
         </div>
 
         <div className="relative z-10">
