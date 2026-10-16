@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Manrope } from "next/font/google";
+import { Geist_Mono, Manrope, Noto_Sans_Thai } from "next/font/google";
 import { Toaster } from "sonner";
 import { getAppLocale } from "@/lib/app-locale.server";
 import "./globals.css";
@@ -12,6 +12,13 @@ const geistMono = Geist_Mono({
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
+});
+
+// Manrope has no Thai glyphs; Thai text falls through to this face (ADR 0096 §7) instead of
+// whatever the OS provides. Only the Thai subset: Latin always resolves to Manrope first.
+const notoSansThai = Noto_Sans_Thai({
+  variable: "--font-noto-sans-thai",
+  subsets: ["thai"],
 });
 
 const SITE_NAME = "ThunderOne";
@@ -71,7 +78,7 @@ export default async function RootLayout({
     <html
       // The user's language (lib/app-locale): the cookie, seeded at login from preferred_language.
       lang={await getAppLocale()}
-      className={`${manrope.variable} ${geistMono.variable} h-full`}
+      className={`${manrope.variable} ${notoSansThai.variable} ${geistMono.variable} h-full`}
     >
       <body className="h-full flex flex-col">
         {children}

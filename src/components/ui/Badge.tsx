@@ -10,34 +10,34 @@ interface BadgeProps {
   className?: string;
 }
 
+// Status colours come from the design system's status tokens (DS-04): green = success,
+// yellow = warning, red = error, blue = info, indigo = in progress, zinc = neutral. Text uses the
+// 700 step of the same primitive ramp so 12px labels keep AA contrast on the muted fill.
 const dotColor: Record<BadgeColor, string> = {
-  green: "bg-emerald-500",
-  yellow: "bg-amber-500",
-  red: "bg-red-500",
-  blue: "bg-blue-500",
-  indigo: "bg-indigo-500",
-  zinc: "bg-zinc-400",
+  green: "bg-success",
+  yellow: "bg-warning",
+  red: "bg-error",
+  blue: "bg-info",
+  indigo: "bg-in-progress",
+  zinc: "bg-t1-gray-400",
 };
 
 const dotTextColor: Record<BadgeColor, string> = {
-  green: "text-emerald-700 dark:text-emerald-400",
-  yellow: "text-amber-700 dark:text-amber-400",
-  red: "text-red-700 dark:text-red-400",
-  blue: "text-blue-700 dark:text-blue-400",
-  indigo: "text-indigo-700 dark:text-indigo-400",
-  zinc: "text-zinc-600 dark:text-zinc-400",
+  green: "text-t1-green-700",
+  yellow: "text-t1-amber-700",
+  red: "text-t1-red-700",
+  blue: "text-t1-blue-700",
+  indigo: "text-t1-purple-700",
+  zinc: "text-muted-foreground",
 };
 
 const pillClasses: Record<BadgeColor, string> = {
-  green:
-    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-  yellow:
-    "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-  red: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
-  blue: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",
-  indigo:
-    "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400",
-  zinc: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  green: "bg-success-muted text-t1-green-700",
+  yellow: "bg-warning-muted text-t1-amber-700",
+  red: "bg-error-muted text-t1-red-700",
+  blue: "bg-info-muted text-t1-blue-700",
+  indigo: "bg-in-progress-muted text-t1-purple-700",
+  zinc: "bg-muted text-muted-foreground",
 };
 
 export function Badge({

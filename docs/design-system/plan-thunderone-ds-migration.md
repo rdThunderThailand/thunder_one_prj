@@ -103,6 +103,11 @@ editor and the Edit tags dialog: every icon box matches its class and the svg fi
 4. Verify: icon size/alignment on shell, Overview, one list page, one editor, dialogs.
 
 ### P4 — Shell conformance
+**Status 2026-10-16:** done on branch `style/thunderone-ds-shell`. Header 69px, sidebar 224px and nav order
+already matched. Added Noto Sans Thai (ADR 0096 §7); legacy `Badge` now uses status tokens (DS-04);
+sidebars use the design system logos (horizontal colour, T1 mark tile when collapsed) copied to
+`public/brand/` and covered by `design-system.check.mts`. Old logo files stay (not deleted). Not done:
+auth (`t1-logo-stacked`) and Help header still use the old logos; shell-level DS-11 states unchecked.
 Header 69px, nav groups/order from the profile within the routes that exist, logos from
 `assets/brand/`, status chips through the profile's status mapping (DS-04), DS-11 states on the
 shell-level surfaces. Verify against the skill's shell table.

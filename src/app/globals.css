@@ -22,8 +22,9 @@
 
 @theme inline {
   /* next/font binds Manrope to --font-manrope with a metric-matched fallback; the design system's
-     bare 'Manrope' would skip it. --font-mono keeps Geist Mono for IDs/serials. */
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+     bare 'Manrope' would skip it. Noto Sans Thai covers Thai until the design system names a face
+     (OD-05). --font-mono keeps Geist Mono for IDs/serials. */
+  --font-sans: var(--font-manrope), var(--font-noto-sans-thai), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --text-3xs: 0.5rem;
   --text-3xs--line-height: 0.75rem;
