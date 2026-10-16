@@ -43,11 +43,11 @@ export function Pagination({
   onPerPageChange: (perPage: number) => void;
 }) {
   const arrow =
-    "flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 disabled:opacity-40 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800";
+    "flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground disabled:opacity-40 hover:bg-muted";
 
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-      <p className="text-zinc-500 dark:text-zinc-400">
+      <p className="text-muted-foreground">
         Showing {rangeStart} to {rangeEnd} of {totalItems} {itemLabel}
       </p>
 
@@ -64,7 +64,7 @@ export function Pagination({
 
         {pageNumbers(page, totalPages).map((n, i) =>
           n === "gap" ? (
-            <span key={`gap-${i}`} className="px-1 text-zinc-400">
+            <span key={`gap-${i}`} className="px-1 text-t1-gray-400">
               …
             </span>
           ) : (
@@ -75,8 +75,8 @@ export function Pagination({
               onClick={() => onPageChange(n)}
               className={`h-8 min-w-8 rounded-lg px-2 ${
                 n === page
-                  ? "bg-indigo-600 text-white"
-                  : "border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-muted-foreground hover:bg-muted"
               }`}
             >
               {n}
@@ -98,7 +98,7 @@ export function Pagination({
           aria-label="Rows per page"
           value={perPage}
           onChange={(e) => onPerPageChange(Number(e.target.value))}
-          className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
+          className="h-8 rounded-lg border border-border bg-card px-2 text-sm outline-none focus:border-primary"
         >
           {perPageOptions.map((n) => (
             <option key={n} value={n}>
