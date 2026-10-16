@@ -1,4 +1,5 @@
 # 0075 — Design tokens come from the Lovable reference; the page title lives in the Topbar
+> Visual parts (§1 token values, §9 icons) superseded by ADR 0096 (2026-10-16).
 
 Status: **accepted** (2026-09-18 by the owner, after a three-round grilling). Branch `style/lovable-tokens`.
 

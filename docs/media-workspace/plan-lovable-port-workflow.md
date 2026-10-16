@@ -1,3 +1,5 @@
+> **Superseded by ADR 0096 (2026-10-16):** the ThunderOne design system is the visual source; Lovable is no longer ported from.
+
 # Plan — Lovable → thunder_one_prj port workflow
 
 Status: **rev 3, [DECIDED] on the four §6 questions; R1–R6 wording reviewed — ready to move into

@@ -1,6 +1,6 @@
 # The ThunderOne design system is the target; the Lovable treatment stays until OD-01 and OD-04 close
 
-**Status:** accepted · 2026-10-16
+**Status:** superseded by ADR 0096 (2026-10-16)
 **Amends:** ADR 0075 (tokens, icons), ADR 0076 (component source) — both stay in force for visuals until the trigger below
 **Source:** grilling with the owner, 2026-10-16
 **Related:** design system repo `rdThunderThailand/-thunder-design-system` tag `v0.2.0`, vendored skill `.claude/skills/thunderone-ui/`
