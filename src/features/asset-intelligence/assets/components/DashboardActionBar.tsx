@@ -23,7 +23,7 @@ export function DashboardActionBar() {
             <Link
               key={item.id}
               href={item.href}
-              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-t1-gray-50"
             >
               {body}
             </Link>

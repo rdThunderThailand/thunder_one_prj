@@ -77,7 +77,7 @@ export function AssetRelatedDocumentsCard({
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-foreground">Related Documents</h2>
-        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
+        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-t1-gray-50">
           <UploadIcon className="h-3.5 w-3.5" />
           {uploading ? "กำลังอัปโหลด..." : "แนบไฟล์"}
           <input ref={fileInputRef} type="file" className="hidden" disabled={uploading} onChange={handleFileChange} />

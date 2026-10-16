@@ -71,7 +71,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
             Close
           </button>
         </div>
-        <div className="rounded-lg bg-muted p-3 text-xs">
+        <div className="rounded-lg bg-t1-gray-50 p-3 text-xs">
           <p className="mb-2 font-medium text-foreground">
             Device credentials — save these now, they won&apos;t be shown again:
           </p>

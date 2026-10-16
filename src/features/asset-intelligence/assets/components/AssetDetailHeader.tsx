@@ -60,7 +60,7 @@ export function AssetDetailHeader({ asset }: { asset: AssetListRow }) {
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-t1-gray-50"
           >
             <EditIcon className="h-4 w-4" />
             แก้ไข

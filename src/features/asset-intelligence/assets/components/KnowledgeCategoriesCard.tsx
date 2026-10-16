@@ -41,7 +41,7 @@ export function KnowledgeCategoriesCard() {
               className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
                 active === category.id
                   ? "bg-accent font-medium text-accent-foreground"
-                  : "text-muted-foreground hover:bg-muted"
+                  : "text-muted-foreground hover:bg-t1-gray-50"
               }`}
             >
               <span className={category.iconTone}>{iconFor[category.icon]}</span>

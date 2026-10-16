@@ -37,7 +37,7 @@ function AssetCard({ asset }: { asset: Asset }) {
         </Badge>
         <button
           onClick={() => setReporting((v) => !v)}
-          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
+          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-t1-gray-50"
         >
           {reporting ? "Cancel" : "Report a problem"}
         </button>

@@ -37,7 +37,7 @@ export function AssetRegistryTableControls({ page, pageSize, total, totalPages, 
           {page > 1 ? (
             <Link
               href={pageHref(filterQuery, page - 1)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted"
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-t1-gray-50"
             >
               <ChevronLeftIcon className="h-3.5 w-3.5" />
             </Link>
@@ -56,7 +56,7 @@ export function AssetRegistryTableControls({ page, pageSize, total, totalPages, 
                   className={`flex h-7 w-7 items-center justify-center rounded-lg text-sm ${
                     p === page
                       ? "bg-primary text-primary-foreground"
-                      : "border border-border text-muted-foreground hover:bg-muted"
+                      : "border border-border text-muted-foreground hover:bg-t1-gray-50"
                   }`}
                 >
                   {p}
@@ -66,7 +66,7 @@ export function AssetRegistryTableControls({ page, pageSize, total, totalPages, 
           {page < totalPages ? (
             <Link
               href={pageHref(filterQuery, page + 1)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted"
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-t1-gray-50"
             >
               <ChevronRightIcon className="h-3.5 w-3.5" />
             </Link>
