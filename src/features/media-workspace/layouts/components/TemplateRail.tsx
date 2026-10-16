@@ -25,7 +25,7 @@ export function TemplateRail({
       <button
         type="button"
         onClick={() => onSelect(BLANK_ZONES)}
-        className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border p-2 text-center hover:border-primary/30 hover:bg-primary-soft"
+        className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border p-2 text-center hover:border-primary/30 hover:bg-accent"
       >
         <span className="flex aspect-video w-full items-center justify-center rounded border border-border text-xs text-muted-foreground">
           Blank
@@ -38,7 +38,7 @@ export function TemplateRail({
           key={template.key}
           type="button"
           onClick={() => onSelect(template.zones)}
-          className="flex flex-col items-center gap-2 rounded-lg border border-border p-2 text-center hover:border-primary/30 hover:bg-primary-soft"
+          className="flex flex-col items-center gap-2 rounded-lg border border-border p-2 text-center hover:border-primary/30 hover:bg-accent"
         >
           <LayoutWireframe
             zones={template.zones}

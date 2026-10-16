@@ -104,7 +104,7 @@ export function PlaylistSidePanel({
 
       {error && (
         <div>
-          <p className="text-sm text-danger">{error}</p>
+          <p className="text-sm text-error">{error}</p>
           <button
             type="button"
             onClick={() => {
@@ -171,7 +171,7 @@ export function PlaylistSidePanel({
           <>
             <Button
               variant="primary"
-              className="bg-danger hover:bg-danger"
+              className="bg-error hover:bg-error"
               disabled={busy}
               onClick={onDelete}
             >
@@ -184,7 +184,7 @@ export function PlaylistSidePanel({
         ) : (
           <Button
             variant="ghost"
-            className="text-danger hover:bg-danger-soft"
+            className="text-error hover:bg-error-muted"
             disabled={busy}
             onClick={() => setConfirmingDelete(true)}
           >

@@ -112,7 +112,7 @@ export function ChannelGroupInspector({
       )}
 
       {error && (
-        <p role="alert" className="mt-3 text-sm text-danger">
+        <p role="alert" className="mt-3 text-sm text-error">
           {error}
         </p>
       )}
@@ -156,7 +156,7 @@ export function ChannelGroupInspector({
                 setMenuOpen(false);
                 setConfirmingDelete(true);
               }}
-              className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-muted disabled:cursor-not-allowed"
             >
               Delete Group
             </button>

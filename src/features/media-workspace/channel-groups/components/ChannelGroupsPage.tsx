@@ -80,7 +80,7 @@ export function ChannelGroupsPage() {
       <ChannelGroupsSummaryTiles groups={groups} channels={channels} />
 
       {error && groups === null ? (
-        <Card className="p-6 text-center text-sm text-danger">{error.message}</Card>
+        <Card className="p-6 text-center text-sm text-error">{error.message}</Card>
       ) : groups === null || channels === null ? (
         <Card className="p-6 text-center text-sm text-muted-foreground">Loading…</Card>
       ) : (

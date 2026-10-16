@@ -51,7 +51,7 @@ export function ReviewTargets({
             const isDirect = channelIds.includes(source.id);
             return (
               <div key={source.id} className="flex items-center gap-2 rounded-lg border border-border bg-muted px-2.5 py-2">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-accent text-primary">
                   <MonitorIcon className="h-3.5 w-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -60,7 +60,7 @@ export function ReviewTargets({
                     {isDirect ? "Direct" : inheritedGroups.map((group) => group.name).join(", ")} · {item?.subLabel}
                   </p>
                 </div>
-                <span className={`h-2 w-2 shrink-0 rounded-full ${item?.status === "online" ? "bg-success" : item?.status === "warning" ? "bg-warning" : "bg-danger"}`} title={item?.status} />
+                <span className={`h-2 w-2 shrink-0 rounded-full ${item?.status === "online" ? "bg-success" : item?.status === "warning" ? "bg-warning" : "bg-error"}`} title={item?.status} />
               </div>
             );
           })}
@@ -72,7 +72,7 @@ export function ReviewTargets({
         <div className="space-y-1.5">
           {selectedGroups.map((group) => (
             <div key={group.id} className="flex items-center gap-2 rounded-lg border border-border bg-muted px-2.5 py-2">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-violet-50 text-violet-600">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-t1-purple-50 text-t1-purple-700">
                 <UsersIcon className="h-3.5 w-3.5" />
               </span>
               <p className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground" title={group.name}>{group.name}</p>

@@ -101,7 +101,7 @@ export function CreateEditGroupModal({
         <div className="flex flex-col gap-4">
         <Input
           name="group-name"
-          label={<>Group Name <span className="text-danger">*</span></>}
+          label={<>Group Name <span className="text-error">*</span></>}
           value={name}
           error={nameError}
           placeholder="e.g. All Restaurant Screens"
@@ -132,7 +132,7 @@ export function CreateEditGroupModal({
                   aria-pressed={selected}
                   className={`flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-colors ${
                     selected
-                      ? "border-primary bg-primary-soft"
+                      ? "border-primary bg-accent"
                       : "border-border hover:border-border"
                   }`}
                 >
@@ -170,7 +170,7 @@ export function CreateEditGroupModal({
                 ))
               )}
             </div>
-            <div className="mt-3 flex gap-2 rounded-lg bg-primary-soft px-3 py-2 text-xs text-primary">
+            <div className="mt-3 flex gap-2 rounded-lg bg-accent px-3 py-2 text-xs text-primary">
               <InfoIcon className="h-4 w-4 shrink-0" />
               You can add or remove channels later from the group details.
             </div>
@@ -178,7 +178,7 @@ export function CreateEditGroupModal({
         )}
 
         {group && (
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-primary-soft px-3 py-3 text-sm text-primary">
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-accent px-3 py-3 text-sm text-primary">
             <div className="flex min-w-0 gap-2">
               <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <p>You can manage which channels belong to this group from the Manage Channels action.</p>
@@ -190,7 +190,7 @@ export function CreateEditGroupModal({
         )}
 
         {error && (
-          <p role="alert" className="text-sm text-danger">
+          <p role="alert" className="text-sm text-error">
             {error}
           </p>
         )}

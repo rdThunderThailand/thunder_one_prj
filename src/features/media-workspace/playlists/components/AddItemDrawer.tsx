@@ -158,7 +158,7 @@ export function AddItemDrawer({
                 <input value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} placeholder="Search playlists..." className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-ring" />
               </div>
               {playlists.filter((playlist) => playlist.name.toLowerCase().includes(playlistQuery.trim().toLowerCase())).map((playlist) => (
-                <button key={playlist.id} type="button" onClick={() => setPlaylistId(playlist.id)} className={`flex items-center gap-3 rounded-xl border p-3 text-left ${playlistId === playlist.id ? "border-primary bg-primary-soft" : "border-border"}`}>
+                <button key={playlist.id} type="button" onClick={() => setPlaylistId(playlist.id)} className={`flex items-center gap-3 rounded-xl border p-3 text-left ${playlistId === playlist.id ? "border-primary bg-accent" : "border-border"}`}>
                   <MediaThumb url={playlistPreviews[playlist.id]?.url} thumbnailUrl={playlistPreviews[playlist.id]?.thumbnailUrl} alt={`${playlist.name} thumbnail`} className="h-12 w-20" />
                   <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{playlist.name}</span><span className="text-xs text-muted-foreground">{playlist.item_count} items · {playlist.status}</span></span>
                 </button>

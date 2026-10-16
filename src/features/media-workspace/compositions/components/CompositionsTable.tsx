@@ -75,15 +75,15 @@ function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }
       onClick={() => onAction(action, item)}
       aria-label={`${labels[action]} ${item.name}`}
       title={labels[action]}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-40 ${action === "delete-forever" ? "text-danger hover:bg-danger-soft" : "text-primary hover:bg-primary-soft"}`}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-40 ${action === "delete-forever" ? "text-error hover:bg-error-muted" : "text-primary hover:bg-accent"}`}
     >
       {action === "restore" ? <UndoIcon /> : <TrashIcon />}
     </button>
   ))}</div>;
 
   return <div className="flex items-center justify-end gap-2">
-    <button type="button" disabled={previewing} onClick={() => onPreview(item)} aria-label={`Preview ${item.name}`} title={previewing ? "Loading preview…" : "Preview"} className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft disabled:cursor-wait disabled:text-primary"><PlayIcon /></button>
-    <Link href={`/media-workspace/layouts/${item.id}`} aria-label={`Edit ${item.name}`} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"><EditIcon /></Link>
+    <button type="button" disabled={previewing} onClick={() => onPreview(item)} aria-label={`Preview ${item.name}`} title={previewing ? "Loading preview…" : "Preview"} className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-accent disabled:cursor-wait disabled:text-primary"><PlayIcon /></button>
+    <Link href={`/media-workspace/layouts/${item.id}`} aria-label={`Edit ${item.name}`} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-accent"><EditIcon /></Link>
     {/* QA 2026-10-08 #10: portalled, so the table's overflow cannot clip it. */}
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -100,7 +100,7 @@ function RowActions({ item, inTrash, disabled, previewing, onPreview, onAction }
           <DropdownMenuItem
             key={action}
             disabled={disabled}
-            className={action === "trash" ? "text-danger focus:text-danger" : undefined}
+            className={action === "trash" ? "text-error focus:text-error" : undefined}
             onSelect={() => onAction(action, item)}
           >
             {labels[action]}

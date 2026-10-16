@@ -157,7 +157,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
           <NoAccess message={error.message} />
         ) : (
           <Card className="p-6">
-            <p className="text-center text-sm text-danger">
+            <p className="text-center text-sm text-error">
               {error ? error.message : "ไม่พบ publication"}
             </p>
           </Card>
@@ -227,7 +227,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     variant="primary"
                     disabled={actionBusy}
                     onClick={handleDelete}
-                    className="bg-danger hover:bg-danger"
+                    className="bg-error hover:bg-error"
                   >
                     {actionBusy ? "กำลังลบ…" : "ยืนยันลบ?"}
                   </Button>
@@ -244,7 +244,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                   variant="ghost"
                   disabled={actionBusy}
                   onClick={() => setConfirming(true)}
-                  className="text-danger hover:bg-danger-soft"
+                  className="text-error hover:bg-error-muted"
                 >
                   Delete
                 </Button>
@@ -257,7 +257,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     variant="primary"
                     disabled={actionBusy}
                     onClick={handleCancel}
-                    className="bg-danger hover:bg-danger"
+                    className="bg-error hover:bg-error"
                   >
                     {actionBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
                   </Button>
@@ -274,7 +274,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                   variant="ghost"
                   disabled={actionBusy}
                   onClick={() => setConfirming(true)}
-                  className="text-danger hover:bg-danger-soft"
+                  className="text-error hover:bg-error-muted"
                 >
                   Cancel
                 </Button>
@@ -284,7 +284,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       />
 
       {actionError && (
-        <p className="text-sm text-danger">{actionError}</p>
+        <p className="text-sm text-error">{actionError}</p>
       )}
 
       {/* The snapshot rule is not weakened: what is airing is still the frozen copy taken at

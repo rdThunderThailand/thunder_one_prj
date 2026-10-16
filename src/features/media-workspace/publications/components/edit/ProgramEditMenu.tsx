@@ -41,7 +41,7 @@ export function ProgramEditMenu({ isDraft, isEnded, detailHref, onDuplicate, onD
         )}
         {isDraft && (
           <DropdownMenuItem
-            className="text-danger focus:text-danger"
+            className="text-error focus:text-error"
             onSelect={onDelete}
           >
             Delete Program
@@ -51,7 +51,7 @@ export function ProgramEditMenu({ isDraft, isEnded, detailHref, onDuplicate, onD
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-danger focus:text-danger"
+              className="text-error focus:text-error"
               onSelect={onEnd}
             >
               End program

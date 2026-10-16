@@ -110,7 +110,7 @@ export function DeliveryDeviceTable({
               onClick={() => setResultFilter(f)}
               className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                 resultFilter === f
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-border/60"
               }`}
             >
@@ -120,7 +120,7 @@ export function DeliveryDeviceTable({
         </div>
       </div>
 
-      {retryError && <p className="mb-2 text-xs text-danger">{retryError}</p>}
+      {retryError && <p className="mb-2 text-xs text-error">{retryError}</p>}
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -182,7 +182,7 @@ export function DeliveryDeviceTable({
                         <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                           <div>
                             <dt className="text-muted-foreground">Error</dt>
-                            <dd className="text-danger">{target.error_message ?? "—"}</dd>
+                            <dd className="text-error">{target.error_message ?? "—"}</dd>
                           </div>
                           <div>
                             <dt className="text-muted-foreground">Last Heartbeat</dt>
@@ -222,7 +222,7 @@ export function DeliveryDeviceTable({
                                     <span>Server received: {formatDate(entry.acked_at)}</span>
                                   </div>
                                   {entry.checksum && <div className="mt-1 break-all text-muted-foreground">Checksum: {entry.checksum}</div>}
-                                  {entry.error && <div className="mt-1 text-danger">{entry.error}</div>}
+                                  {entry.error && <div className="mt-1 text-error">{entry.error}</div>}
                                 </li>
                               ))}
                             </ul>

@@ -184,7 +184,7 @@ function RowActions({
           </DropdownMenuItem>
           {status === "active" ? (
             <DropdownMenuItem
-              className="text-danger focus:text-danger"
+              className="text-error focus:text-error"
               disabled={disabled}
               onSelect={() => onAction("archive")}
             >

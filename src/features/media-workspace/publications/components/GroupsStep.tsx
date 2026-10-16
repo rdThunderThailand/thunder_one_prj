@@ -58,7 +58,7 @@ export function GroupsStep() {
       </div>
 
       {groups === null && <p className="text-xs text-muted-foreground">{error ?? "Loading channel groups..."}</p>}
-      {groups !== null && error && <p className="text-xs text-danger">{error}</p>}
+      {groups !== null && error && <p className="text-xs text-error">{error}</p>}
       {groups !== null && active.length === 0 && (
         <p className="text-xs text-muted-foreground">No Channel Groups available yet — create one first.</p>
       )}
@@ -75,12 +75,12 @@ export function GroupsStep() {
               type="button"
               onClick={() => toggle(group)}
               className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                selected ? "border-primary/30 bg-primary-soft ring-1 ring-primary" : "border-border hover:border-border"
+                selected ? "border-primary/30 bg-accent ring-1 ring-primary" : "border-border hover:border-border"
               }`}
             >
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 ${
-                  selected ? "border-primary bg-primary text-white" : "border-border bg-card"
+                  selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"
                 }`}
               >
                 {selected && (

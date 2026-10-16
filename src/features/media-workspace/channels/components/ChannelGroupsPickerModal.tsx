@@ -130,7 +130,7 @@ export function ChannelGroupsPickerModal({
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-danger">
+          <p role="alert" className="text-sm text-error">
             {error}
           </p>
         )}

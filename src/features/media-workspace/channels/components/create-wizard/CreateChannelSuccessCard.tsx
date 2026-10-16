@@ -11,8 +11,8 @@ export function CreateChannelSuccessCard({
   onCreateAnother: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-success/30 bg-success-soft p-6 text-center">
-      <span className="grid h-14 w-14 place-items-center rounded-full bg-success text-white">
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-success/30 bg-success-muted p-6 text-center">
+      <span className="grid h-14 w-14 place-items-center rounded-full bg-success text-success-foreground">
         <CheckCircleIcon className="h-8 w-8" />
       </span>
       <h3 className="text-lg font-semibold text-foreground">Channel Created!</h3>

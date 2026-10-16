@@ -157,7 +157,7 @@ export function CompositionEditorHeader({
           <div className="flex min-w-0 items-center gap-2">
           {editing ? <>
             <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-bold text-foreground outline-none" />
-            <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"><CheckIcon /></button>
+            <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-accent"><CheckIcon /></button>
           </> : <>
             <h1 className="min-w-0 break-words text-sm font-bold leading-tight text-foreground">{name.trim() || "Untitled Layout"}</h1>
             <button type="button" onClick={() => setEditing(true)} aria-label="แก้ไขชื่อ Layout" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><EditIcon /></button>

@@ -107,7 +107,7 @@ export function PublicationRowActions({
             ) : (
               <DropdownMenuItem
                 key={action}
-                className={isDestructive ? "text-danger focus:text-danger" : undefined}
+                className={isDestructive ? "text-error focus:text-error" : undefined}
                 onSelect={() => onAction(action as "duplicate" | "delete" | "end", item)}
               >
                 {LABELS[action]}

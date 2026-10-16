@@ -99,7 +99,7 @@ export function LayoutEditorToolbar({ zones, selectedIndex, onSelectIndex, onCha
         </Button>
       ))}
       <span className="mx-1 h-6 w-px bg-border" aria-hidden="true" />
-      <Button size="sm" variant="ghost" className="text-danger" disabled={!hasSelection || zones.length <= 1} onClick={remove}><TrashIcon /> Delete Zone</Button>
+      <Button size="sm" variant="ghost" className="text-error" disabled={!hasSelection || zones.length <= 1} onClick={remove}><TrashIcon /> Delete Zone</Button>
       <span className="ml-auto whitespace-nowrap text-[11px] text-muted-foreground">{hasSelection ? `Selected: Zone ${zoneLetter(selectedIndex)}` : "No zone selected"}</span>
     </div>
   );
@@ -121,7 +121,7 @@ export function LayoutZoneOverview({ zones, selectedIndex, referenceResolution, 
           type="button"
           aria-pressed={index === selectedIndex}
           onClick={() => onSelectIndex(index)}
-          className={`grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2 py-2 text-left text-xs ${index === selectedIndex ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"}`}
+          className={`grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2 py-2 text-left text-xs ${index === selectedIndex ? "bg-accent text-primary" : "bg-muted text-muted-foreground"}`}
         >
           <span className="grid h-7 w-7 place-items-center rounded-md border border-border bg-card font-semibold text-foreground">{zoneLetter(index)}</span>
           <span className="truncate font-medium">{zone.name}</span>

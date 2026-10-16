@@ -62,7 +62,7 @@ export function ZoneProperties({
           type="button"
           disabled={!canRemove}
           onClick={onRemove}
-          className="text-xs font-medium text-danger hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground"
+          className="text-xs font-medium text-error hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground"
         >
           Remove
         </button>

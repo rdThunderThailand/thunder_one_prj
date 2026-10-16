@@ -279,9 +279,9 @@ export function CompositionsListPage() {
         )}
       >
         {library?.isLegacyResponse && (
-          <p className="mb-3 rounded-lg bg-warning-soft p-3 text-[10px] text-warning">Layouts Library filters and summary need the Core read-model rollout.</p>
+          <p className="mb-3 rounded-lg bg-warning-muted p-3 text-[10px] text-warning">Layouts Library filters and summary need the Core read-model rollout.</p>
         )}
-        {actionError && <p role="alert" className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {actionError && <p role="alert" className="mb-3 text-[10px] text-error">{actionError}</p>}
         {error && <ListError message={error.message} onRetry={reload} retrying={false} />}
         {!library ? (
           error ? null : <ListSkeleton />

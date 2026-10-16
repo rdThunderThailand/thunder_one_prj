@@ -57,7 +57,7 @@ export function PlaylistPatternControl({
         showIndex={false}
         note={<SharedWriteNote subject="Playlist" />}
       />
-      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="text-xs text-error">{error}</p>}
       {isChanged && (
         <Button
           variant="outline"

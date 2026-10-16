@@ -20,11 +20,11 @@ export function PublicationStepper({
           <div
             className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
               state === "active"
-                ? "bg-primary text-white"
+                ? "bg-primary text-primary-foreground"
                 : state === "complete"
-                  ? "bg-success-soft text-success"
+                  ? "bg-success-muted text-success"
                   : state === "reachable"
-                    ? "bg-primary-soft text-primary"
+                    ? "bg-accent text-primary"
                     : "bg-muted text-muted-foreground"
             }`}
           >

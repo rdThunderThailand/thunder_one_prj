@@ -18,7 +18,7 @@ export function UnsavedLeaveConfirm({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onStay}>อยู่ต่อ</AlertDialogCancel>
-          <AlertDialogAction className="bg-danger hover:bg-danger" onClick={onLeave}>ออกโดยไม่บันทึก</AlertDialogAction>
+          <AlertDialogAction className="bg-error hover:bg-error" onClick={onLeave}>ออกโดยไม่บันทึก</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

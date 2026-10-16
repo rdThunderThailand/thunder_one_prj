@@ -271,7 +271,7 @@ export function PublicationsListPage() {
         title="All Programs"
         meta={data ? `${data.total.toLocaleString()} programs` : "…"}
       >
-        {actionError && <p className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {actionError && <p className="mb-3 text-[10px] text-error">{actionError}</p>}
         {renderBody()}
       </LibraryShell>
 
@@ -287,7 +287,7 @@ export function PublicationsListPage() {
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmPending}
-              className="bg-danger text-danger-foreground hover:bg-danger/90"
+              className="bg-error text-error-foreground hover:bg-error/90"
             >
               {pending && CONFIRM_COPY[pending.action].confirm}
             </AlertDialogAction>

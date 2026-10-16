@@ -78,7 +78,7 @@ function ChannelRow({
       onClick={() => onSelect(channel)}
       className={`cursor-pointer border-b border-border transition-colors last:border-0 ${
         selected
-          ? "bg-primary-soft shadow-[inset_3px_0_0_#4f46e5]"
+          ? "bg-accent shadow-[inset_3px_0_0_var(--color-primary)]"
           : "hover:bg-muted"
       }`}
     >

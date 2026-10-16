@@ -75,7 +75,7 @@ export function PlaylistsListDialogs({
     {action === "permanent-delete" && <p>Permanently delete &ldquo;{target?.name}&rdquo;? This cannot be undone.</p>}
       <DialogFooter>
         <Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button>
-        <Button type="button" disabled={busy} onClick={() => void submit()} className={destructive ? "bg-danger hover:bg-danger" : ""}>
+        <Button type="button" disabled={busy} onClick={() => void submit()} className={destructive ? "bg-error hover:bg-error" : ""}>
           {busy ? "กำลังทำรายการ…" : action === "move" ? "Save" : action === "trash" ? "Move to Trash" : "Permanent delete"}
         </Button>
       </DialogFooter>

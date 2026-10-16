@@ -38,7 +38,7 @@ function ReviewSection({
     <section className="rounded-lg border border-border p-3">
       <div className="flex items-center justify-between gap-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-soft text-primary">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent text-primary">
             <Icon />
           </span>
           {title}
@@ -127,7 +127,7 @@ export function Step3Review({
         />
       )}
 
-      <div className="rounded-lg bg-primary-soft p-3 text-xs text-primary">
+      <div className="rounded-lg bg-accent p-3 text-xs text-primary">
         <p className="flex items-center gap-2 font-semibold">
           <CheckCircleIcon className="h-4 w-4" />
           What&apos;s Next?

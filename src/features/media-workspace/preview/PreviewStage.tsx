@@ -223,12 +223,12 @@ export function PreviewStage({
         <span>· frame {frameAspectRatio}</span>
       </label>
       {geometryFit === "unknown" && (
-        <p className="rounded-md border border-warning/30 bg-warning-soft px-2.5 py-2 text-xs text-warning" role="status">
+        <p className="rounded-md border border-warning/30 bg-warning-muted px-2.5 py-2 text-xs text-warning" role="status">
           These targets report no screen geometry. Previewing at {frameAspectRatio} from the Layout instead.
         </p>
       )}
       {(geometryFit === "orientation-mismatch" || geometryFit === "aspect-mismatch") && (
-        <p className="rounded-md border border-warning/30 bg-warning-soft px-2.5 py-2 text-xs text-warning" role="status">
+        <p className="rounded-md border border-warning/30 bg-warning-muted px-2.5 py-2 text-xs text-warning" role="status">
           This target is a different shape from the Layout ({aspectRatio}). Zones stretch to fill it — check the framing before publishing.
         </p>
       )}
