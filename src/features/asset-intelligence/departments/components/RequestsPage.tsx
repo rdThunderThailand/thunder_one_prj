@@ -47,7 +47,7 @@ function RequestRow({
           </button>
           <button
             onClick={() => setStatus("rejected")}
-            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-t1-gray-50"
           >
             Reject
           </button>

@@ -39,7 +39,7 @@ export function EmployeeAttentionCard() {
               <p className="truncate text-xs text-muted-foreground">{item.subtitle}</p>
               <p className="text-xs text-t1-gray-400">{item.meta}</p>
             </div>
-            <button className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted">
+            <button className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-t1-gray-50">
               {item.actionLabel}
             </button>
             <MoreIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />

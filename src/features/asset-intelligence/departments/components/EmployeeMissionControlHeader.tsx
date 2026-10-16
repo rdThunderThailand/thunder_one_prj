@@ -11,7 +11,7 @@ export function EmployeeMissionControlHeader() {
       </div>
       <button
         type="button"
-        className="flex shrink-0 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+        className="flex shrink-0 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-t1-gray-50"
       >
         Customize
         <SettingsIcon className="h-4 w-4" />

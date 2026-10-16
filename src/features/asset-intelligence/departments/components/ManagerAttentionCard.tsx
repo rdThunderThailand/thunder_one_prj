@@ -16,8 +16,8 @@ const statusBadge: Record<ManagerAttentionItem["status"], { label: string; tone:
 };
 
 const actionButton: Record<ManagerAttentionItem["status"], string> = {
-  overdue: "border border-border text-foreground hover:bg-muted",
-  "at-risk": "border border-border text-foreground hover:bg-muted",
+  overdue: "border border-border text-foreground hover:bg-t1-gray-50",
+  "at-risk": "border border-border text-foreground hover:bg-t1-gray-50",
   waiting: "bg-primary text-primary-foreground hover:bg-primary/90",
 };
 
