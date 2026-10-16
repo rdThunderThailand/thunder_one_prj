@@ -28,26 +28,26 @@ export function PersonnelGroupedView({ rows, groupBy, labelFor, onSelectGroup }:
   const groups = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
 
   if (groups.length === 0) {
-    return <Card className="p-10 text-center text-sm text-zinc-400">ไม่มีข้อมูล</Card>;
+    return <Card className="p-10 text-center text-sm text-t1-gray-400">ไม่มีข้อมูล</Card>;
   }
 
   return (
     <Card className="overflow-hidden">
-      <ul className="divide-y divide-zinc-100 dark:divide-zinc-900">
+      <ul className="divide-y divide-border">
         {groups.map(([key, count]) => (
           <li key={key}>
             <button
               type="button"
               onClick={() => onSelectGroup(key)}
-              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-muted"
             >
               <span className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
                   <UsersIcon className="h-4 w-4" />
                 </span>
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">{labelFor ? labelFor(key) : key}</span>
+                <span className="font-medium text-foreground">{labelFor ? labelFor(key) : key}</span>
               </span>
-              <span className="flex items-center gap-1.5 text-zinc-400">
+              <span className="flex items-center gap-1.5 text-t1-gray-400">
                 {count} คน
                 <ChevronRightIcon className="h-3.5 w-3.5" />
               </span>

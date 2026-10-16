@@ -30,24 +30,24 @@ export function TodayActivityCard({ logs }: TodayActivityCardProps) {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">กิจกรรมวันนี้</h2>
-        <button type="button" className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">กิจกรรมวันนี้</h2>
+        <button type="button" className="text-xs font-medium text-primary hover:text-primary">
           ดูปฏิทินทั้งหมด
         </button>
       </div>
       {logs === null ? (
         <LoadFailure message="ไม่สามารถโหลดกิจกรรมได้ในขณะนี้" compact />
       ) : logs.length === 0 ? (
-        <p className="flex flex-1 items-center justify-center text-center text-xs text-zinc-400">ไม่มีกิจกรรมวันนี้</p>
+        <p className="flex flex-1 items-center justify-center text-center text-xs text-t1-gray-400">ไม่มีกิจกรรมวันนี้</p>
       ) : (
-        <ul className="flex flex-1 flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+        <ul className="flex flex-1 flex-col divide-y divide-border">
           {logs.map((log) => (
             <li key={log.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-              <span className="w-12 shrink-0 text-xs font-medium text-zinc-400">{formatTime(log.created_at)}</span>
+              <span className="w-12 shrink-0 text-xs font-medium text-t1-gray-400">{formatTime(log.created_at)}</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{log.description}</p>
+                <p className="truncate text-sm font-medium text-foreground">{log.description}</p>
               </div>
-              <span className="shrink-0 text-xs font-medium text-zinc-500 dark:text-zinc-400">{log.action}</span>
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">{log.action}</span>
             </li>
           ))}
         </ul>

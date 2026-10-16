@@ -122,11 +122,11 @@ export function AddContractorStep2Employment({
 }: AddContractorStep2EmploymentProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">2. ข้อมูลการจ้างงานและสัญญา</h2>
+      <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm lg:col-span-2">
+        <h2 className="text-sm font-semibold text-foreground">2. ข้อมูลการจ้างงานและสัญญา</h2>
 
         <div>
-          <p className="mb-2 text-xs font-semibold text-zinc-400">ตำแหน่งและหน้าที่</p>
+          <p className="mb-2 text-xs font-semibold text-t1-gray-400">ตำแหน่งและหน้าที่</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className={labelClasses}>
               <span>ตำแหน่งงาน {requiredMark}</span>
@@ -159,7 +159,7 @@ export function AddContractorStep2Employment({
               ) : (
                 <span
                   title="ไม่สามารถโหลดรายชื่อหน่วยงานจาก Core ได้ในขณะนี้ — จะสร้างผู้รับเหมาโดยไม่ระบุหน่วยงาน"
-                  className="flex cursor-not-allowed items-center rounded-lg border border-dashed border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-700"
+                  className="flex cursor-not-allowed items-center rounded-lg border border-dashed border-border px-3 py-2 text-sm text-t1-gray-400"
                 >
                   ไม่พบข้อมูลหน่วยงาน
                 </span>
@@ -216,7 +216,7 @@ export function AddContractorStep2Employment({
                   ))}
                 </select>
               ) : (
-                <span className="rounded-lg border border-dashed border-red-200 px-3 py-2 text-sm text-red-500 dark:border-red-500/30">
+                <span className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-error">
                   ไม่พบบทบาทที่ใช้ได้จาก Core
                 </span>
               )}
@@ -225,7 +225,7 @@ export function AddContractorStep2Employment({
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold text-zinc-400">ประเภทและระยะเวลาการจ้าง</p>
+          <p className="mb-2 text-xs font-semibold text-t1-gray-400">ประเภทและระยะเวลาการจ้าง</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className={labelClasses}>
               ประเภทการจ้างงาน
@@ -243,7 +243,7 @@ export function AddContractorStep2Employment({
               วันที่เริ่มงาน
               <input type="date" value={startDate} onChange={(e) => onStartDateChange(e.target.value)} className={inputClasses} />
               {startDate && (
-                <span className="text-[11px] font-normal text-zinc-400">
+                <span className="text-[11px] font-normal text-t1-gray-400">
                   {formatThaiDate(startDate)} ({formatDaysUntilThai(startDate)})
                 </span>
               )}
@@ -264,7 +264,7 @@ export function AddContractorStep2Employment({
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold text-zinc-400">ข้อมูลสัญญา</p>
+          <p className="mb-2 text-xs font-semibold text-t1-gray-400">ข้อมูลสัญญา</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className={labelClasses}>
               เลขที่สัญญา / PO No.
@@ -317,7 +317,7 @@ export function AddContractorStep2Employment({
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold text-zinc-400">สถานที่และการปฏิบัติงาน</p>
+          <p className="mb-2 text-xs font-semibold text-t1-gray-400">สถานที่และการปฏิบัติงาน</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className={labelClasses}>
               สถานที่ทำงานหลัก
@@ -346,19 +346,19 @@ export function AddContractorStep2Employment({
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปข้อมูลที่กรอก</h3>
+            <h3 className="text-sm font-semibold text-foreground">สรุปข้อมูลที่กรอก</h3>
             <EditLink onClick={onEditStep1} />
           </div>
-          <p className="mb-2 text-xs font-medium text-zinc-400">ข้อมูลส่วนบุคคล</p>
+          <p className="mb-2 text-xs font-medium text-t1-gray-400">ข้อมูลส่วนบุคคล</p>
           <SummaryRow label="ชื่อ-นามสกุล" value={`${titlePrefix} ${fullName}`} />
           <SummaryRow label="อีเมล" value={email} />
           <SummaryRow label="เบอร์โทรศัพท์" value={phone} />
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลที่จะสร้าง</h3>
-          <ul className="flex flex-col gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">ข้อมูลที่จะสร้าง</h3>
+          <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
             <li>Contractor Record (รอสร้าง)</li>
             <li>Onboarding (รอเริ่ม)</li>
           </ul>

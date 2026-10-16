@@ -9,8 +9,8 @@ export function OverviewHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">สวัสดีตอนเช้า 👋</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">ภาพรวมงานบุคลากรและความสำคัญของวันนี้</p>
+        <h1 className="text-2xl font-semibold text-foreground">สวัสดีตอนเช้า 👋</h1>
+        <p className="mt-1 text-sm text-muted-foreground">ภาพรวมงานบุคลากรและความสำคัญของวันนี้</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Button variant="secondary">

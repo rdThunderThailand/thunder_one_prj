@@ -12,7 +12,7 @@ import { updateMember } from "../services/members-api";
 import type { PersonnelRow } from "../mock-data";
 
 const inputClasses =
-  "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
 
 function errorMessage(err: unknown): string {
   if (err instanceof ApiError) {
@@ -121,17 +121,17 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
             have it; mock rows never do). */}
         {row.userId && (
           <>
-            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
               ชื่อ (ไทย)
               <input value={firstNameTh} onChange={(e) => setFirstNameTh(e.target.value)} className={inputClasses} />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
               นามสกุล (ไทย)
               <input value={lastNameTh} onChange={(e) => setLastNameTh(e.target.value)} className={inputClasses} />
             </label>
           </>
         )}
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           หน่วยงาน
           <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} className={inputClasses}>
             <option value="">ไม่ระบุ</option>
@@ -142,11 +142,11 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           ตำแหน่งงาน
           <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           วันที่เริ่มงาน
           <input
             type="date"
@@ -155,7 +155,7 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
             className={inputClasses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           รหัสตำแหน่ง (Position Code)
           <input
             value={positionCode}
@@ -164,7 +164,7 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
             className={inputClasses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           ระดับตำแหน่ง (Level)
           <input
             value={levelRole}
@@ -173,7 +173,7 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
             className={inputClasses}
           />
         </label>
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        {error && <p className="text-xs text-error">{error}</p>}
       </form>
     </Modal>
   );

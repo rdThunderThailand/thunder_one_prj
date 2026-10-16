@@ -71,16 +71,16 @@ const DONE_INDICES_ON_SUBMIT = [0, 1, 2, 3, 4, 5, 6, 7];
 
 function Breadcrumb() {
   return (
-    <nav className="flex items-center gap-1.5 text-xs text-zinc-400">
-      <Link href="/people" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+    <nav className="flex items-center gap-1.5 text-xs text-t1-gray-400">
+      <Link href="/people" className="hover:text-muted-foreground">
         ภาพรวม
       </Link>
       <ChevronRightIcon className="h-3 w-3" />
-      <Link href="/people/add" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+      <Link href="/people/add" className="hover:text-muted-foreground">
         เพิ่มคน
       </Link>
       <ChevronRightIcon className="h-3 w-3" />
-      <span className="text-zinc-600 dark:text-zinc-300">เพิ่มพนักงานใหม่</span>
+      <span className="text-muted-foreground">เพิ่มพนักงานใหม่</span>
     </nav>
   );
 }
@@ -486,8 +486,8 @@ export function AddEmployeeWizardPage({ tenantId, roles, units, positionOptions 
         <div className="flex flex-col gap-3">
           <Breadcrumb />
           <div>
-            <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">เพิ่มพนักงานใหม่ (Employee)</h1>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">กรอกข้อมูลเพื่อเพิ่มพนักงานเข้าสู่องค์กร</p>
+            <h1 className="text-2xl font-semibold text-foreground">เพิ่มพนักงานใหม่ (Employee)</h1>
+            <p className="mt-1 text-sm text-muted-foreground">กรอกข้อมูลเพื่อเพิ่มพนักงานเข้าสู่องค์กร</p>
           </div>
         </div>
         <Link href="/people/add" className={buttonClasses("secondary")}>
@@ -495,7 +495,7 @@ export function AddEmployeeWizardPage({ tenantId, roles, units, positionOptions 
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <WizardSteps steps={WIZARD_STEP_LABELS} currentIndex={stepIndex} />
       </div>
 

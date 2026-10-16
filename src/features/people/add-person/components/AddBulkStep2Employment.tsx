@@ -94,16 +94,16 @@ export function AddBulkStep2Employment({
 }: AddBulkStep2EmploymentProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm lg:col-span-2">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">2. รายละเอียดการจ้างงาน</h2>
-            <p className="text-xs text-zinc-400">ระบุข้อมูลการจ้างงานสำหรับบุคคลที่เลือก {totalCount} คน</p>
+            <h2 className="text-sm font-semibold text-foreground">2. รายละเอียดการจ้างงาน</h2>
+            <p className="text-xs text-t1-gray-400">ระบุข้อมูลการจ้างงานสำหรับบุคคลที่เลือก {totalCount} คน</p>
           </div>
           <a
             href="/templates/bulk-import-template.csv"
             download
-            className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary"
           >
             <UploadIcon className="h-3.5 w-3.5 rotate-180" />
             ดาวน์โหลดตัวอย่างไฟล์
@@ -123,7 +123,7 @@ export function AddBulkStep2Employment({
                 ))}
               </select>
             ) : (
-              <span className="flex cursor-not-allowed items-center rounded-lg border border-dashed border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-700">
+              <span className="flex cursor-not-allowed items-center rounded-lg border border-dashed border-border px-3 py-2 text-sm text-t1-gray-400">
                 ไม่พบข้อมูลหน่วยงาน
               </span>
             )}
@@ -231,20 +231,20 @@ export function AddBulkStep2Employment({
           </label>
         </div>
 
-        <label className="flex items-start gap-2 rounded-lg bg-zinc-50 p-3 text-xs text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-300">
+        <label className="flex items-start gap-2 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
           <input type="checkbox" checked={applyToAll} onChange={(e) => onApplyToAllChange(e.target.checked)} className="mt-0.5" />
           <span>
             <span className="block font-medium">ใช้ข้อมูลชุดนี้กับทุกคน</span>
-            <span className="block text-zinc-400">นำข้อมูลการจ้างงานแบบนี้ไปใช้กับบุคคลที่เลือกทั้งหมด {totalCount} คน</span>
+            <span className="block text-t1-gray-400">นำข้อมูลการจ้างงานแบบนี้ไปใช้กับบุคคลที่เลือกทั้งหมด {totalCount} คน</span>
           </span>
         </label>
 
         <div>
-          <p className="mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">รายการบุคคลที่นำเข้า ({totalCount} คน)</p>
-          <div className="overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-800">
+          <p className="mb-2 text-sm font-medium text-foreground">รายการบุคคลที่นำเข้า ({totalCount} คน)</p>
+          <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
-                <tr className="border-b border-zinc-100 text-xs text-zinc-400 dark:border-zinc-800">
+                <tr className="border-b border-border text-xs text-t1-gray-400">
                   <th className="px-4 py-2 font-medium">ลำดับ</th>
                   <th className="px-4 py-2 font-medium">ชื่อ-นามสกุล</th>
                   <th className="px-4 py-2 font-medium">อีเมล</th>
@@ -259,21 +259,21 @@ export function AddBulkStep2Employment({
                   const index = (tablePage - 1) * ROWS_PER_PAGE + i + 1;
                   const configured = applyToAll && position.trim().length > 0;
                   return (
-                    <tr key={person.email} className="border-b border-zinc-50 last:border-0 dark:border-zinc-800/60">
-                      <td className="px-4 py-2 text-zinc-400">{index}</td>
-                      <td className="px-4 py-2 font-medium text-zinc-900 dark:text-zinc-50">{person.name}</td>
-                      <td className="px-4 py-2 text-zinc-500 dark:text-zinc-400">{person.email}</td>
-                      <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{position || "-"}</td>
-                      <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{workLocation}</td>
-                      <td className="px-4 py-2 text-zinc-600 dark:text-zinc-300">{startDate ? formatThaiDate(startDate) : "-"}</td>
+                    <tr key={person.email} className="border-b border-border last:border-0">
+                      <td className="px-4 py-2 text-t1-gray-400">{index}</td>
+                      <td className="px-4 py-2 font-medium text-foreground">{person.name}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{person.email}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{position || "-"}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{workLocation}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{startDate ? formatThaiDate(startDate) : "-"}</td>
                       <td className="px-4 py-2">
                         {configured ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-t1-green-700">
                             <CheckIcon className="h-3.5 w-3.5" />
                             กำหนดแล้ว
                           </span>
                         ) : (
-                          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">รอกำหนด</span>
+                          <span className="text-xs font-medium text-t1-amber-700">รอกำหนด</span>
                         )}
                       </td>
                     </tr>
@@ -283,7 +283,7 @@ export function AddBulkStep2Employment({
             </table>
           </div>
           {pageCount > 1 && (
-            <div className="mt-2 flex items-center justify-between text-xs text-zinc-400">
+            <div className="mt-2 flex items-center justify-between text-xs text-t1-gray-400">
               <span>
                 แสดง {pagedPeople.length} จาก {totalCount} รายการ
               </span>
@@ -295,8 +295,8 @@ export function AddBulkStep2Employment({
                     onClick={() => onTablePageChange(p)}
                     className={`h-6 w-6 rounded-md text-xs font-medium ${
                       p === tablePage
-                        ? "bg-indigo-600 text-white"
-                        : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted"
                     }`}
                   >
                     {p}
@@ -309,26 +309,26 @@ export function AddBulkStep2Employment({
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปการนำเข้า</h3>
-          <div className="grid grid-cols-3 divide-x divide-zinc-100 text-center dark:divide-zinc-800">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">สรุปการนำเข้า</h3>
+          <div className="grid grid-cols-3 divide-x divide-border text-center">
             <div>
-              <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{totalCount}</p>
-              <p className="text-[11px] text-zinc-400">ทั้งหมด</p>
+              <p className="text-lg font-semibold text-foreground">{totalCount}</p>
+              <p className="text-[11px] text-t1-gray-400">ทั้งหมด</p>
             </div>
             <div>
-              <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">0</p>
-              <p className="text-[11px] text-zinc-400">เพิ่มใหม่</p>
+              <p className="text-lg font-semibold text-foreground">0</p>
+              <p className="text-[11px] text-t1-gray-400">เพิ่มใหม่</p>
             </div>
             <div>
-              <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">0</p>
-              <p className="text-[11px] text-zinc-400">อัปเดต</p>
+              <p className="text-lg font-semibold text-foreground">0</p>
+              <p className="text-[11px] text-t1-gray-400">อัปเดต</p>
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลการจ้างงานที่จะกำหนด</h3>
-          <ul className="flex flex-col divide-y divide-zinc-100 text-xs dark:divide-zinc-800">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">ข้อมูลการจ้างงานที่จะกำหนด</h3>
+          <ul className="flex flex-col divide-y divide-border text-xs">
             {[
               ["หน่วยงาน", unitId ? unitLabel(unitId, units ?? {}) : "-"],
               ["ทีม (Team)", team || "-"],
@@ -342,8 +342,8 @@ export function AddBulkStep2Employment({
               ["วงเงินสัญญา", contractValue ? `${contractValue} บาท/ปี` : "-"],
             ].map(([label, value]) => (
               <li key={label} className="flex items-center justify-between py-1.5">
-                <span className="text-zinc-400">{label}</span>
-                <span className="truncate text-right font-medium text-zinc-900 dark:text-zinc-50">{value}</span>
+                <span className="text-t1-gray-400">{label}</span>
+                <span className="truncate text-right font-medium text-foreground">{value}</span>
               </li>
             ))}
           </ul>

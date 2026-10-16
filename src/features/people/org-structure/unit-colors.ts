@@ -7,12 +7,12 @@
 // hash, so the chart stays visually differentiated without needing a code
 // change every time Core's data introduces a new type value.
 const PALETTE: { bg: string; text: string; darkBg: string; darkText: string }[] = [
-  { bg: "bg-indigo-50", text: "text-indigo-600", darkBg: "dark:bg-indigo-500/10", darkText: "dark:text-indigo-400" },
-  { bg: "bg-emerald-50", text: "text-emerald-600", darkBg: "dark:bg-emerald-500/10", darkText: "dark:text-emerald-400" },
-  { bg: "bg-amber-50", text: "text-amber-600", darkBg: "dark:bg-amber-500/10", darkText: "dark:text-amber-400" },
-  { bg: "bg-sky-50", text: "text-sky-600", darkBg: "dark:bg-sky-500/10", darkText: "dark:text-sky-400" },
-  { bg: "bg-rose-50", text: "text-rose-600", darkBg: "dark:bg-rose-500/10", darkText: "dark:text-rose-400" },
-  { bg: "bg-purple-50", text: "text-purple-600", darkBg: "dark:bg-purple-500/10", darkText: "dark:text-purple-400" },
+  { bg: "bg-accent", text: "text-primary", darkBg: "", darkText: "" },
+  { bg: "bg-success-muted", text: "text-t1-green-700", darkBg: "", darkText: "" },
+  { bg: "bg-warning-muted", text: "text-t1-amber-700", darkBg: "", darkText: "" },
+  { bg: "bg-info-muted", text: "text-t1-blue-700", darkBg: "", darkText: "" },
+  { bg: "bg-error-muted", text: "text-t1-red-700", darkBg: "", darkText: "" },
+  { bg: "bg-in-progress-muted", text: "text-t1-purple-700", darkBg: "", darkText: "" },
 ];
 
 // Fixed assignments for the three type values actually observed in real

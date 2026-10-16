@@ -82,8 +82,8 @@ export function AddContractorStep1Personal({
 }: AddContractorStep1PersonalProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">1. ข้อมูลส่วนบุคคล (Personal Information)</h2>
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm lg:col-span-2">
+        <h2 className="text-sm font-semibold text-foreground">1. ข้อมูลส่วนบุคคล (Personal Information)</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label className={labelClasses}>
             คำนำหน้าชื่อ
@@ -206,8 +206,8 @@ export function AddContractorStep1Personal({
             />
           </label>
         </div>
-        <details className="rounded-lg border border-zinc-100 p-3 dark:border-zinc-800">
-          <summary className="cursor-pointer text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <details className="rounded-lg border border-border p-3">
+          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
             ข้อมูลเพิ่มเติม (ถ้ามี)
           </summary>
           <label className={`${labelClasses} mt-2`}>
@@ -226,20 +226,20 @@ export function AddContractorStep1Personal({
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">รูปภาพผู้รับเหมา (ถ้ามี)</h3>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">รูปภาพผู้รับเหมา (ถ้ามี)</h3>
           <div
             title="ยังไม่เปิดใช้งาน"
-            className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border border-dashed border-zinc-200 py-6 text-center dark:border-zinc-700"
+            className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border border-dashed border-border py-6 text-center"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-t1-gray-400">
               <ImageIcon className="h-5 w-5" />
             </span>
-            <span className="text-xs font-medium text-indigo-500">อัปโหลดรูปภาพ</span>
-            <span className="text-[11px] text-zinc-400">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 2MB)</span>
+            <span className="text-xs font-medium text-primary">อัปโหลดรูปภาพ</span>
+            <span className="text-[11px] text-t1-gray-400">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 2MB)</span>
           </div>
         </div>
-        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 text-xs text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
+        <div className="rounded-2xl border border-primary bg-accent/50 p-5 text-xs text-accent-foreground">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
             <InfoIcon className="h-4 w-4" />
             คำแนะนำ
@@ -250,9 +250,9 @@ export function AddContractorStep1Personal({
             <li>ข้อมูลนี้จะถูกใช้ในกระบวนการ Onboarding และการออกเอกสารสัญญา</li>
           </ul>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลที่จะสร้าง</h3>
-          <ul className="flex flex-col gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">ข้อมูลที่จะสร้าง</h3>
+          <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
             <li>Person Profile — โปรไฟล์บุคคลพื้นฐาน</li>
             <li>Contractor Record (รอสร้าง) — บันทึกผู้รับเหมา</li>
             <li>Onboarding (รอเริ่ม) — กระบวนการเตรียมความพร้อม</li>

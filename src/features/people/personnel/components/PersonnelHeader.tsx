@@ -20,13 +20,13 @@ export function PersonnelHeader({ rows }: PersonnelHeaderProps) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">บุคลากร</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">จัดการข้อมูลบุคลากรทั้งหมดขององค์กร</p>
+        <h1 className="text-2xl font-semibold text-foreground">บุคลากร</h1>
+        <p className="mt-1 text-sm text-muted-foreground">จัดการข้อมูลบุคลากรทั้งหมดขององค์กร</p>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <span
           title="Not built yet"
-          className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+          className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground"
         >
           รายงาน
         </span>
@@ -34,7 +34,7 @@ export function PersonnelHeader({ rows }: PersonnelHeaderProps) {
           type="button"
           disabled={!rows}
           onClick={() => rows && exportPersonnelCsv(rows)}
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
         >
           <UploadIcon className="h-4 w-4 rotate-180" />
           Export

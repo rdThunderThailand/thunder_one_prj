@@ -42,13 +42,13 @@ export function OrgStructurePage({ units, rootUnitId }: OrgStructurePageProps) {
           <LoadFailure message="ไม่สามารถโหลดโครงสร้างองค์กรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
         )
       ) : activeView !== "chart" ? (
-        <div className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
+        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-t1-gray-400">
           ยังไม่มีข้อมูลสำหรับแท็บนี้
         </div>
       ) : units === null ? (
         <LoadFailure message="ไม่สามารถโหลดโครงสร้างองค์กรได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
       ) : isEmpty ? (
-        <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
+        <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-t1-gray-400">
           ยังไม่มีการตั้งค่าหน่วยงานสำหรับองค์กรนี้ กรุณาตั้งค่าหน่วยงานก่อนเริ่มใช้งานผังองค์กร
         </p>
       ) : rootUnitId ? (

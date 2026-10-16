@@ -30,8 +30,8 @@ interface OrgDetailPanelProps {
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="shrink-0 text-zinc-500 dark:text-zinc-400">{label}</dt>
-      <dd className="text-right text-zinc-900 dark:text-zinc-50">{value}</dd>
+      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="text-right text-foreground">{value}</dd>
     </div>
   );
 }
@@ -43,8 +43,8 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
   if (!unit) {
     return (
       <Card className="flex h-full min-h-[240px] flex-col items-center justify-center gap-2 p-8 text-center">
-        <UsersIcon className="h-6 w-6 text-zinc-300" />
-        <p className="text-sm text-zinc-400">เลือกหน่วยงานในแผนผังเพื่อดูรายละเอียด</p>
+        <UsersIcon className="h-6 w-6 text-t1-gray-400" />
+        <p className="text-sm text-t1-gray-400">เลือกหน่วยงานในแผนผังเพื่อดูรายละเอียด</p>
       </Card>
     );
   }
@@ -58,9 +58,9 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
           <UsersIcon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">{unit.name}</p>
+          <p className="truncate text-base font-semibold text-foreground">{unit.name}</p>
           {unit.headName && (
-            <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="truncate text-xs text-muted-foreground">
               {unit.headTitle}: {unit.headName}
             </p>
           )}
@@ -68,21 +68,21 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             Active
           </Badge>
         </div>
-        <div className="flex shrink-0 items-center gap-2 text-zinc-400">
+        <div className="flex shrink-0 items-center gap-2 text-t1-gray-400">
           <button
             type="button"
             title="Not built yet"
-            className="cursor-not-allowed hover:text-zinc-600 dark:hover:text-zinc-300"
+            className="cursor-not-allowed hover:text-muted-foreground"
           >
             <MoreIcon className="h-4 w-4" />
           </button>
-          <button type="button" onClick={onClose} aria-label="Close" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+          <button type="button" onClick={onClose} aria-label="Close" className="hover:text-muted-foreground">
             <XIcon className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-3 overflow-x-auto border-b border-zinc-100 text-sm dark:border-zinc-800">
+      <div className="mt-4 flex items-center gap-3 overflow-x-auto border-b border-border text-sm">
         {DETAIL_TABS.map((tab) => (
           <button
             key={tab}
@@ -90,8 +90,8 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             onClick={() => setActiveTab(tab)}
             className={`shrink-0 border-b-2 px-0.5 pb-2 font-medium transition-colors ${
               activeTab === tab
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab}
@@ -109,17 +109,17 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
               value={unit.positionsCount !== null ? `${unit.positionsCount} ตำแหน่ง` : "-"}
             />
             <div className="flex items-center justify-between gap-3">
-              <dt className="shrink-0 text-zinc-500 dark:text-zinc-400">อัตราการครองอัตรา</dt>
+              <dt className="shrink-0 text-muted-foreground">อัตราการครองอัตรา</dt>
               <dd className="flex w-32 items-center gap-2">
                 {unit.fillRate !== null ? (
                   <>
                     <ProgressBar value={unit.fillRate} className="flex-1" />
-                    <span className="w-9 shrink-0 text-right text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="w-9 shrink-0 text-right text-xs text-muted-foreground">
                       {unit.fillRate}%
                     </span>
                   </>
                 ) : (
-                  <span className="text-xs text-zinc-300 dark:text-zinc-600">-</span>
+                  <span className="text-xs text-t1-gray-400">-</span>
                 )}
               </dd>
             </div>
@@ -129,16 +129,16 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
         <div className="flex flex-1 flex-col gap-4 pt-4">
           <dl className="space-y-3 text-sm">
             <div className="flex items-start justify-between gap-3">
-              <dt className="shrink-0 pt-0.5 text-zinc-500 dark:text-zinc-400">หัวหน้าหน่วยงาน</dt>
+              <dt className="shrink-0 pt-0.5 text-muted-foreground">หัวหน้าหน่วยงาน</dt>
               <dd className="text-right">
                 {unit.headName ? (
                   <span className="flex items-center gap-2 text-left">
                     <Avatar name={unit.headName} src={unit.headAvatarUrl} size={28} />
                     <span>
-                      <span className="block text-zinc-900 dark:text-zinc-50">{unit.headName}</span>
-                      {unit.headTitle && <span className="block text-xs text-zinc-400">{unit.headTitle}</span>}
+                      <span className="block text-foreground">{unit.headName}</span>
+                      {unit.headTitle && <span className="block text-xs text-t1-gray-400">{unit.headTitle}</span>}
                       {unit.headEmail && (
-                        <span className="flex items-center gap-1 text-xs text-zinc-400">
+                        <span className="flex items-center gap-1 text-xs text-t1-gray-400">
                           <EnvelopeIcon className="h-3 w-3" />
                           {unit.headEmail}
                         </span>
@@ -146,7 +146,7 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
                     </span>
                   </span>
                 ) : (
-                  <span className="text-zinc-300 dark:text-zinc-600">ยังไม่ได้ตั้งหัวหน้าหน่วยงาน</span>
+                  <span className="text-t1-gray-400">ยังไม่ได้ตั้งหัวหน้าหน่วยงาน</span>
                 )}
               </dd>
             </div>
@@ -155,17 +155,17 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
           </dl>
 
           {unit.childIds.length > 0 && (
-            <div className="border-t border-zinc-100 pt-4 dark:border-zinc-800">
+            <div className="border-t border-border pt-4">
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">หน่วยงานย่อย</h3>
+                <h3 className="text-sm font-semibold text-foreground">หน่วยงานย่อย</h3>
                 <span
                   title="Not built yet"
-                  className="cursor-not-allowed text-xs font-medium text-indigo-600 dark:text-indigo-400"
+                  className="cursor-not-allowed text-xs font-medium text-primary"
                 >
                   ดูทั้งหมด
                 </span>
               </div>
-              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <ul className="divide-y divide-border">
                 {unit.childIds.map((childId) => {
                   const child = units[childId];
                   return (
@@ -173,10 +173,10 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
                       <button
                         type="button"
                         onClick={() => onSelect(childId)}
-                        className="flex w-full items-center justify-between gap-2 py-2 text-left text-sm hover:text-indigo-600 dark:hover:text-indigo-400"
+                        className="flex w-full items-center justify-between gap-2 py-2 text-left text-sm hover:text-primary"
                       >
-                        <span className="text-zinc-700 dark:text-zinc-200">{child.name}</span>
-                        <span className="flex items-center gap-1.5 text-zinc-400">
+                        <span className="text-foreground">{child.name}</span>
+                        <span className="flex items-center gap-1.5 text-t1-gray-400">
                           {child.employeeCount} คน
                           <ChevronRightIcon className="h-3.5 w-3.5" />
                         </span>
@@ -188,18 +188,18 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             </div>
           )}
 
-          <div className="mt-auto flex flex-col gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">การดำเนินการ</h3>
+          <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4">
+            <h3 className="text-sm font-semibold text-foreground">การดำเนินการ</h3>
             <Link
               href="/people/add/employee"
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-indigo-200 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-primary py-2 text-sm font-medium text-primary hover:bg-accent"
             >
               <PlusIcon className="h-3.5 w-3.5" />
               เพิ่มคนในหน่วยงานนี้
             </Link>
             <Link
               href={`/people/personnel?department=${unit.id}`}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-foreground hover:bg-muted"
             >
               <UsersIcon className="h-3.5 w-3.5" />
               ดูบุคลากรในหน่วยงานนี้
@@ -207,7 +207,7 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             <button
               type="button"
               onClick={() => exportUnitSubtreeCsv(unit, units)}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-foreground hover:bg-muted"
             >
               <UploadIcon className="h-3.5 w-3.5 rotate-180" />
               Export โครงสร้างนี้
@@ -215,14 +215,14 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             <button
               type="button"
               title="Not built yet"
-              className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-zinc-200 py-2 text-sm font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+              className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-muted-foreground"
             >
               แก้ไขหน่วยงาน
             </button>
             <button
               type="button"
               title="Not built yet"
-              className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-red-200 py-2 text-sm font-medium text-red-500 dark:border-red-500/30"
+              className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-error"
             >
               ลบหน่วยงาน
             </button>

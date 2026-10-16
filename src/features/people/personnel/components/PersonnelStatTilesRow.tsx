@@ -23,23 +23,23 @@ export function PersonnelStatTilesRow({ totalCount, contractorCount, newHiresThi
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
       <Card className="flex flex-col gap-1 p-4">
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">พนักงานทั้งหมด</p>
-        <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{totalCount}</span>
-        <p className="text-xs text-zinc-400">คน</p>
+        <p className="text-xs text-muted-foreground">พนักงานทั้งหมด</p>
+        <span className="text-2xl font-semibold text-foreground">{totalCount}</span>
+        <p className="text-xs text-t1-gray-400">คน</p>
       </Card>
 
       <Card className="flex flex-col gap-1 p-4">
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">ผู้ปฏิบัติงานภายนอก</p>
-        <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{contractorCount}</span>
-        <p className="text-xs text-zinc-400">คน</p>
+        <p className="text-xs text-muted-foreground">ผู้ปฏิบัติงานภายนอก</p>
+        <span className="text-2xl font-semibold text-foreground">{contractorCount}</span>
+        <p className="text-xs text-t1-gray-400">คน</p>
       </Card>
 
       <Card className="flex flex-col gap-1 p-4">
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">เข้าใหม่ (เดือนนี้)</p>
-        <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{newHiresThisMonth}</span>
+        <p className="text-xs text-muted-foreground">เข้าใหม่ (เดือนนี้)</p>
+        <span className="text-2xl font-semibold text-foreground">{newHiresThisMonth}</span>
         <Link
           href="/people/new-hires"
-          className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary"
         >
           ดูรายละเอียด
           <ArrowRightIcon className="h-3 w-3" />
@@ -47,14 +47,14 @@ export function PersonnelStatTilesRow({ totalCount, contractorCount, newHiresThi
       </Card>
 
       <Card className="flex flex-col gap-1 p-4">
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">ออกจากองค์กร (เดือนนี้)</p>
+        <p className="text-xs text-muted-foreground">ออกจากองค์กร (เดือนนี้)</p>
         {/* No offboarding/departure entity exists in Core at all — showing an
             honest "-" rather than a fabricated count, same discipline as
             asset-intelligence/assets's AllAssetsPage. */}
-        <span className="text-2xl font-semibold text-zinc-400 dark:text-zinc-500">-</span>
+        <span className="text-2xl font-semibold text-t1-gray-400">-</span>
         <Link
           href="/people/departures"
-          className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary"
         >
           ดูรายละเอียด
           <ArrowRightIcon className="h-3 w-3" />

@@ -34,12 +34,12 @@ export function LoadFailure({ message, compact = false }: LoadFailureProps) {
   if (compact) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-        <p className="text-xs text-zinc-400">{message}</p>
+        <p className="text-xs text-t1-gray-400">{message}</p>
         <button
           type="button"
           onClick={handleRetry}
           disabled={retrying}
-          className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 disabled:opacity-50 dark:text-indigo-400"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary disabled:opacity-50"
         >
           <RefreshIcon className={`h-3 w-3 ${retrying ? "animate-spin" : ""}`} />
           ลองใหม่
@@ -49,13 +49,13 @@ export function LoadFailure({ message, compact = false }: LoadFailureProps) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-200 p-10 text-center dark:border-zinc-800">
-      <p className="text-sm text-zinc-400">{message}</p>
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-10 text-center">
+      <p className="text-sm text-t1-gray-400">{message}</p>
       <button
         type="button"
         onClick={handleRetry}
         disabled={retrying}
-        className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
       >
         <RefreshIcon className={`h-3.5 w-3.5 ${retrying ? "animate-spin" : ""}`} />
         ลองใหม่

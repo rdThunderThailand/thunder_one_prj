@@ -23,7 +23,7 @@ interface PersonnelGridViewProps {
 // source: both views read the exact same `rows` prop from PersonnelPage.
 export function PersonnelGridView({ rows, onEditRow, onViewRow }: PersonnelGridViewProps) {
   if (rows.length === 0) {
-    return <Card className="p-10 text-center text-sm text-zinc-400">ไม่พบบุคลากรตามเงื่อนไขที่เลือก</Card>;
+    return <Card className="p-10 text-center text-sm text-t1-gray-400">ไม่พบบุคลากรตามเงื่อนไขที่เลือก</Card>;
   }
 
   return (
@@ -34,14 +34,14 @@ export function PersonnelGridView({ rows, onEditRow, onViewRow }: PersonnelGridV
             <div className="flex min-w-0 items-center gap-2.5">
               <Avatar name={row.name} src={row.avatarUrl} size={40} />
               <div className="min-w-0">
-                <p className="truncate font-medium text-zinc-900 dark:text-zinc-50">{row.name}</p>
-                <p className="truncate text-xs text-zinc-400">{row.email}</p>
+                <p className="truncate font-medium text-foreground">{row.name}</p>
+                <p className="truncate text-xs text-t1-gray-400">{row.email}</p>
               </div>
             </div>
             <button
               type="button"
               title="ยังไม่เปิดใช้งาน"
-              className="shrink-0 cursor-not-allowed text-zinc-300 hover:text-zinc-400 dark:text-zinc-600"
+              className="shrink-0 cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400"
             >
               <MoreIcon className="h-4 w-4" />
             </button>
@@ -53,39 +53,39 @@ export function PersonnelGridView({ rows, onEditRow, onViewRow }: PersonnelGridV
           </div>
           <dl className="space-y-1.5 text-xs">
             <div className="flex justify-between gap-2">
-              <dt className="text-zinc-400">รหัสพนักงาน</dt>
-              <dd className="text-zinc-700 dark:text-zinc-200">{row.employeeCode}</dd>
+              <dt className="text-t1-gray-400">รหัสพนักงาน</dt>
+              <dd className="text-foreground">{row.employeeCode}</dd>
             </div>
             <div className="flex justify-between gap-2">
-              <dt className="text-zinc-400">ตำแหน่ง</dt>
-              <dd className="truncate text-zinc-700 dark:text-zinc-200">
+              <dt className="text-t1-gray-400">ตำแหน่ง</dt>
+              <dd className="truncate text-foreground">
                 {row.position}
-                {row.levelRole && <span className="text-zinc-400"> · {row.levelRole}</span>}
+                {row.levelRole && <span className="text-t1-gray-400"> · {row.levelRole}</span>}
               </dd>
             </div>
             <div className="flex justify-between gap-2">
-              <dt className="text-zinc-400">หน่วยงาน</dt>
-              <dd className="truncate text-zinc-700 dark:text-zinc-200">{row.unit}</dd>
+              <dt className="text-t1-gray-400">หน่วยงาน</dt>
+              <dd className="truncate text-foreground">{row.unit}</dd>
             </div>
             <div className="flex justify-between gap-2">
-              <dt className="text-zinc-400">เริ่มงาน</dt>
-              <dd className="text-zinc-700 dark:text-zinc-200">
+              <dt className="text-t1-gray-400">เริ่มงาน</dt>
+              <dd className="text-foreground">
                 {row.startDateLabel} {row.tenureLabel && row.tenureLabel !== "-" ? `(${row.tenureLabel})` : ""}
               </dd>
             </div>
           </dl>
-          <div className="mt-auto flex gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+          <div className="mt-auto flex gap-2 border-t border-border pt-3">
             <button
               type="button"
               onClick={() => onViewRow(row)}
-              className="flex-1 rounded-lg border border-zinc-200 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="flex-1 rounded-lg border border-border py-1.5 text-xs font-medium text-foreground hover:bg-muted"
             >
               ดูรายละเอียด
             </button>
             <button
               type="button"
               onClick={() => onEditRow(row)}
-              className="flex-1 rounded-lg border border-zinc-200 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="flex-1 rounded-lg border border-border py-1.5 text-xs font-medium text-foreground hover:bg-muted"
             >
               แก้ไข
             </button>
