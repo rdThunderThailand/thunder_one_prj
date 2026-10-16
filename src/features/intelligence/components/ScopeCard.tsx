@@ -19,7 +19,7 @@ export function ScopeCard() {
             onClick={() => setActive(option.id)}
             className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
               active === option.id
-                ? "border-primary bg-accent text-primary"
+                ? "border-t1-blue-200 bg-accent text-primary"
                 : "border-border text-muted-foreground hover:bg-muted"
             }`}
           >

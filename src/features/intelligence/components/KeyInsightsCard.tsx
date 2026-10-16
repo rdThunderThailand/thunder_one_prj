@@ -12,7 +12,7 @@ const iconFor: Record<KeyInsightData["icon"], React.ReactNode> = {
 // tinted "AI" panel, distinct from the plain white cards around it.
 export function KeyInsightsCard() {
   return (
-    <div className="rounded-2xl border border-primary bg-accent/40 p-4">
+    <div className="rounded-2xl border border-t1-blue-100 bg-accent/40 p-4">
       <div className="mb-3 flex items-center gap-2">
         <SparklesIcon className="h-4 w-4 text-primary" />
         <h2 className="text-sm font-semibold text-foreground">Key Insights for You</h2>

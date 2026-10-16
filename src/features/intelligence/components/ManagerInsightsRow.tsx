@@ -78,7 +78,7 @@ export function ManagerInsightsRow() {
               <button
                 className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold ${
                   insight.kind === "opportunity"
-                    ? "border border-border text-t1-green-700 hover:bg-success-muted"
+                    ? "border border-success/30 text-t1-green-700 hover:bg-success-muted"
                     : "bg-primary text-primary-foreground hover:bg-primary/90"
                 }`}
               >

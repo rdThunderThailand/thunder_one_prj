@@ -12,7 +12,7 @@ export function DoFirstCard({ items, now }: { items: WorkItem[]; now: Date }) {
   const group = dueGroup(item, now);
 
   return (
-    <div className="rounded-2xl border border-border bg-warning-muted/50 p-4">
+    <div className="rounded-2xl border border-warning/30 bg-warning-muted/50 p-4">
       <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
         <StarIcon
           className="h-4 w-4 text-warning"

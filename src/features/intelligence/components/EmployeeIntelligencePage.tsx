@@ -42,7 +42,7 @@ export function EmployeeIntelligencePage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary bg-accent/40 px-4 py-3 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-t1-blue-100 bg-accent/40 px-4 py-3 text-sm">
         <span className="flex items-center gap-2 text-foreground">
           <SparklesIcon className="h-4 w-4 text-primary" />
           Tip: ถาม ThunderOne AI ได้ทุกเรื่องที่เกี่ยวกับงาน เอกสาร หรือข้อมูลของคุณ
