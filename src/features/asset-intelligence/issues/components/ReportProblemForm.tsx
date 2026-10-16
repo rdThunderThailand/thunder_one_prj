@@ -18,7 +18,7 @@ export function ReportProblemForm({ assetTag }: ReportProblemFormProps) {
 
   if (submitted) {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+      <div className="flex items-center gap-2 rounded-lg bg-success-muted px-3 py-2.5 text-sm text-t1-green-700">
         <CheckCircleIcon className="h-4 w-4 shrink-0" />
         Sent to Thunder Care Service Operations.
       </div>
@@ -39,11 +39,11 @@ export function ReportProblemForm({ assetTag }: ReportProblemFormProps) {
         onChange={(e) => setDescription(e.target.value)}
         placeholder={`Describe the problem with ${assetTag}...`}
         rows={2}
-        className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground placeholder:text-t1-gray-400 focus:border-primary focus:outline-none"
       />
       <button
         type="submit"
-        className="self-start rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+        className="self-start rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary"
       >
         Send Report
       </button>

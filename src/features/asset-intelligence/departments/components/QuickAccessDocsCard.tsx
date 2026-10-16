@@ -14,8 +14,8 @@ export function QuickAccessDocsCard() {
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Frequently Used Documents &amp; Links</h2>
-        <button className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">Frequently Used Documents &amp; Links</h2>
+        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary">
           View all
           <ArrowRightIcon className="h-3 w-3" />
         </button>
@@ -25,12 +25,12 @@ export function QuickAccessDocsCard() {
           <div
             key={doc.id}
             title="Not built yet"
-            className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border border-zinc-100 p-4 text-center dark:border-zinc-800"
+            className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border border-border p-4 text-center"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-primary">
               {iconFor[doc.icon]}
             </span>
-            <span className="text-xs font-medium text-zinc-700 dark:text-zinc-200">{doc.label}</span>
+            <span className="text-xs font-medium text-foreground">{doc.label}</span>
           </div>
         ))}
       </div>

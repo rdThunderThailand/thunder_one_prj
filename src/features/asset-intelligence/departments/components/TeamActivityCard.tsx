@@ -6,8 +6,8 @@ export function TeamActivityCard() {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Team Activity</h2>
-        <button className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">Team Activity</h2>
+        <button className="text-xs font-medium text-primary hover:text-primary">
           View all
         </button>
       </div>
@@ -16,12 +16,12 @@ export function TeamActivityCard() {
           <li key={item.id} className="flex items-start gap-2.5">
             <Avatar name={item.name} size={26} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-zinc-700 dark:text-zinc-200">
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">{item.name}</span> {item.action}{" "}
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">{item.target}</span>
+              <p className="truncate text-sm text-foreground">
+                <span className="font-medium text-foreground">{item.name}</span> {item.action}{" "}
+                <span className="font-medium text-foreground">{item.target}</span>
               </p>
             </div>
-            <span className="shrink-0 text-xs text-zinc-400">{item.timeAgo}</span>
+            <span className="shrink-0 text-xs text-t1-gray-400">{item.timeAgo}</span>
           </li>
         ))}
       </ul>

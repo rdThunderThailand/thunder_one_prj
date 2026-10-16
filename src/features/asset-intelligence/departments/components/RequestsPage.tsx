@@ -33,21 +33,21 @@ function RequestRow({
   return (
     <Card className="flex items-center gap-3 p-4">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{requesterName}</p>
-        <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
+        <p className="text-sm font-medium text-foreground">{requesterName}</p>
+        <p className="truncate text-xs text-muted-foreground">{description}</p>
       </div>
-      <span className="shrink-0 text-xs text-zinc-400">{requestedAt}</span>
+      <span className="shrink-0 text-xs text-t1-gray-400">{requestedAt}</span>
       {status === "waiting_it" ? (
         <div className="flex shrink-0 items-center gap-2">
           <button
             onClick={() => setStatus("approved")}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary"
           >
             Approve
           </button>
           <button
             onClick={() => setStatus("rejected")}
-            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
           >
             Reject
           </button>

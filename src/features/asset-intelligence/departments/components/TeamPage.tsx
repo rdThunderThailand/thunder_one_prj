@@ -11,14 +11,14 @@ export function TeamPage() {
         const assetCount = departmentAssets.filter((a) => a.assigneeId === member.id).length;
         return (
           <Card key={member.id} className="flex items-center gap-3 p-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
               <UsersIcon />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{member.name}</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{member.role}</p>
+              <p className="text-sm font-medium text-foreground">{member.name}</p>
+              <p className="text-xs text-muted-foreground">{member.role}</p>
             </div>
-            <span className="shrink-0 text-sm text-zinc-500 dark:text-zinc-400">
+            <span className="shrink-0 text-sm text-muted-foreground">
               {assetCount} asset{assetCount === 1 ? "" : "s"}
             </span>
           </Card>

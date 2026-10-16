@@ -25,14 +25,14 @@ function StatusTimeline({ status }: { status: IssueStatus }) {
           <div className="flex items-center gap-1.5">
             <span
               className={`h-2.5 w-2.5 rounded-full ${
-                index <= currentIndex ? "bg-indigo-600" : "bg-zinc-200 dark:bg-zinc-700"
+                index <= currentIndex ? "bg-primary" : "bg-muted"
               }`}
             />
             <span
               className={`text-xs ${
                 index <= currentIndex
-                  ? "font-medium text-zinc-900 dark:text-zinc-50"
-                  : "text-zinc-400"
+                  ? "font-medium text-foreground"
+                  : "text-t1-gray-400"
               }`}
             >
               {step.label}
@@ -40,7 +40,7 @@ function StatusTimeline({ status }: { status: IssueStatus }) {
           </div>
           {index < STEPS.length - 1 && (
             <span
-              className={`h-px w-6 ${index < currentIndex ? "bg-indigo-600" : "bg-zinc-200 dark:bg-zinc-700"}`}
+              className={`h-px w-6 ${index < currentIndex ? "bg-primary" : "bg-muted"}`}
             />
           )}
         </div>
@@ -54,7 +54,7 @@ export function MyServiceStatusPage() {
 
   if (myIssues.length === 0) {
     return (
-      <Card className="p-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <Card className="p-6 text-sm text-muted-foreground">
         You haven&apos;t reported any problems yet.
       </Card>
     );
@@ -66,17 +66,17 @@ export function MyServiceStatusPage() {
         <Card key={issue.id} className="flex flex-col gap-3 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                 {issue.assetTag}
                 <Badge color={severityColor[issue.severity]} variant="pill">
                   {issue.severity}
                 </Badge>
               </p>
-              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {issue.description}
               </p>
             </div>
-            <span className="shrink-0 text-xs text-zinc-400">{issue.reportedAt}</span>
+            <span className="shrink-0 text-xs text-t1-gray-400">{issue.reportedAt}</span>
           </div>
           <StatusTimeline status={issue.status} />
         </Card>

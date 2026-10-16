@@ -17,8 +17,8 @@ function ApprovalRow({ asset }: { asset: Asset }) {
   if (acknowledged) {
     return (
       <Card className="flex items-center gap-3 p-4">
-        <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-500" />
-        <p className="text-sm text-zinc-600 dark:text-zinc-300">
+        <CheckCircleIcon className="h-5 w-5 shrink-0 text-success" />
+        <p className="text-sm text-muted-foreground">
           {asset.tag} acknowledged into the department.
         </p>
       </Card>
@@ -28,14 +28,14 @@ function ApprovalRow({ asset }: { asset: Asset }) {
   return (
     <Card className="flex items-center gap-3 p-4">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{asset.tag}</p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm font-medium text-foreground">{asset.tag}</p>
+        <p className="text-xs text-muted-foreground">
           {asset.model ?? asset.category} · transferred from Asset Manager
         </p>
       </div>
       <button
         onClick={() => setAcknowledged(true)}
-        className="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+        className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary"
       >
         Acknowledge
       </button>
@@ -48,7 +48,7 @@ export function ApprovalsPage() {
 
   if (pending.length === 0) {
     return (
-      <Card className="p-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <Card className="p-6 text-sm text-muted-foreground">
         Nothing waiting on your acknowledgement right now.
       </Card>
     );

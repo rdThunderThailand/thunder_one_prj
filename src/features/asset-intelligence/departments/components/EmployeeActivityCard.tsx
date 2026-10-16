@@ -10,17 +10,17 @@ const iconFor: Record<EmployeeActivityItem["icon"], React.ReactNode> = {
 };
 
 const tone: Record<EmployeeActivityItem["icon"], string> = {
-  approve: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400",
-  upload: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400",
-  comment: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400",
+  approve: "bg-success-muted text-success",
+  upload: "bg-info-muted text-info",
+  comment: "bg-in-progress-muted text-in-progress",
 };
 
 export function EmployeeActivityCard() {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Recent Activity</h2>
-        <button className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">Recent Activity</h2>
+        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary">
           View all
           <ArrowRightIcon className="h-3 w-3" />
         </button>
@@ -30,11 +30,11 @@ export function EmployeeActivityCard() {
           <li key={item.id} className="flex items-center gap-2.5">
             <Avatar name={item.name} size={26} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-zinc-700 dark:text-zinc-200">
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">{item.name}</span> {item.action}{" "}
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">{item.target}</span>
+              <p className="truncate text-sm text-foreground">
+                <span className="font-medium text-foreground">{item.name}</span> {item.action}{" "}
+                <span className="font-medium text-foreground">{item.target}</span>
               </p>
-              <p className="text-xs text-zinc-400">{item.timeAgo}</p>
+              <p className="text-xs text-t1-gray-400">{item.timeAgo}</p>
             </div>
             <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${tone[item.icon]}`}>
               {iconFor[item.icon]}
