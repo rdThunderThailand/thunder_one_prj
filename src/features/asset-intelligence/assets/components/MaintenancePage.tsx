@@ -14,7 +14,7 @@ export function MaintenancePage() {
   return (
     <Card className="overflow-hidden">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <thead className="border-b border-border text-xs text-muted-foreground">
           <tr>
             <th className="px-4 py-3 font-medium">Asset</th>
             <th className="px-4 py-3 font-medium">Vendor</th>
@@ -22,12 +22,12 @@ export function MaintenancePage() {
             <th className="px-4 py-3 font-medium">Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+        <tbody className="divide-y divide-border">
           {agreements.map((ma) => (
             <tr key={ma.id}>
-              <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">{ma.assetTag}</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{ma.vendorName}</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{ma.expiryDate}</td>
+              <td className="px-4 py-3 font-medium text-foreground">{ma.assetTag}</td>
+              <td className="px-4 py-3 text-muted-foreground">{ma.vendorName}</td>
+              <td className="px-4 py-3 text-muted-foreground">{ma.expiryDate}</td>
               <td className="px-4 py-3">
                 <Badge color={statusBadge[ma.status].color} variant="pill">
                   {statusBadge[ma.status].label}

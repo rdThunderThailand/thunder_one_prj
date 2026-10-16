@@ -34,26 +34,26 @@ export function WarrantyDetailPanel() {
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-start justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-t1-gray-400">
             <ImageIcon className="h-4 w-4" />
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{warrantyDetail.assetTag}</p>
+              <p className="text-sm font-semibold text-foreground">{warrantyDetail.assetTag}</p>
               <Badge variant="pill" color="green">
                 {warrantyDetail.status}
               </Badge>
             </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{warrantyDetail.assetName}</p>
-            <p className="text-xs text-zinc-400">{warrantyDetail.location}</p>
+            <p className="text-xs text-muted-foreground">{warrantyDetail.assetName}</p>
+            <p className="text-xs text-t1-gray-400">{warrantyDetail.location}</p>
           </div>
         </div>
-        <button title="Not built yet" className="cursor-not-allowed text-zinc-300 hover:text-zinc-400">
+        <button title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
           <XIcon className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="mb-4 flex items-center gap-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="mb-4 flex items-center gap-4 border-b border-border">
         {TABS.map((tab) => (
           <button
             key={tab}
@@ -61,8 +61,8 @@ export function WarrantyDetailPanel() {
             onClick={() => setActive(tab)}
             className={`border-b-2 px-0.5 pb-2 text-sm font-medium transition-colors ${
               active === tab
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab}
@@ -71,30 +71,30 @@ export function WarrantyDetailPanel() {
       </div>
 
       {active !== TABS[1] ? (
-        <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-zinc-200 p-8 text-center text-sm text-zinc-400 dark:border-zinc-800">
+        <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-border p-8 text-center text-sm text-t1-gray-400">
           ยังไม่มีข้อมูลสำหรับแท็บนี้
         </div>
       ) : (
         <>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">ข้อมูล Warranty</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-t1-gray-400">ข้อมูล Warranty</p>
           <dl className="flex flex-col gap-2.5 text-sm">
             {warrantyInfoRows.map((row) => (
               <div key={row.label} className="flex flex-col gap-0.5">
-                <dt className="text-xs text-zinc-400">{row.label}</dt>
-                <dd className="text-zinc-700 dark:text-zinc-200">{row.value}</dd>
+                <dt className="text-xs text-t1-gray-400">{row.label}</dt>
+                <dd className="text-foreground">{row.value}</dd>
               </div>
             ))}
           </dl>
 
-          <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">ข้อมูลการติดต่อ</p>
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-t1-gray-400">ข้อมูลการติดต่อ</p>
             <dl className="flex flex-col gap-2.5 text-sm">
               {contactRows.map((row) => (
                 <div key={row.label} className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-zinc-400">{row.label}</dt>
-                  <dd className="text-zinc-700 dark:text-zinc-200">
+                  <dt className="text-xs text-t1-gray-400">{row.label}</dt>
+                  <dd className="text-foreground">
                     {row.href ? (
-                      <a href={row.href} className="flex items-center gap-1 text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+                      <a href={row.href} className="flex items-center gap-1 text-primary hover:text-accent-foreground">
                         {row.value}
                         <ArrowRightIcon className="h-3 w-3 -rotate-45" />
                       </a>
@@ -108,17 +108,17 @@ export function WarrantyDetailPanel() {
           </div>
 
           <div className="mt-4 flex flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Quick Action</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-t1-gray-400">Quick Action</p>
             <div className="flex gap-2">
               <span
                 title="Not built yet"
-                className="flex flex-1 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 py-2 text-sm font-semibold text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+                className="flex flex-1 cursor-not-allowed items-center justify-center rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground"
               >
                 สร้างเคลมใหม่
               </span>
               <span
                 title="Not built yet"
-                className="flex flex-1 cursor-not-allowed items-center justify-center rounded-lg bg-indigo-300 py-2 text-sm font-semibold text-white dark:bg-indigo-500/40"
+                className="flex flex-1 cursor-not-allowed items-center justify-center rounded-lg bg-t1-blue-300 py-2 text-sm font-semibold text-primary-foreground"
               >
                 แก้ไขสัญญา
               </span>

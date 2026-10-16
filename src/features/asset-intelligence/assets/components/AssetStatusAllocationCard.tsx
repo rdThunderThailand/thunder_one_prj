@@ -15,10 +15,10 @@ function formatLocation(asset: AssetListRow): string {
 export function AssetStatusAllocationCard({ asset }: { asset: AssetListRow }) {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">สถานะและการจัดสรร</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">สถานะและการจัดสรร</h2>
       <dl className="flex flex-col gap-3 text-sm">
         <div className="flex flex-col gap-0.5">
-          <dt className="text-xs text-zinc-400">สถานะทรัพย์สิน</dt>
+          <dt className="text-xs text-t1-gray-400">สถานะทรัพย์สิน</dt>
           <dd>
             <Badge variant="pill" color={ASSET_STATUS_BADGE_COLOR[asset.status]}>
               {ASSET_STATUS_LABEL_TH[asset.status]}
@@ -26,14 +26,14 @@ export function AssetStatusAllocationCard({ asset }: { asset: AssetListRow }) {
           </dd>
         </div>
         <div className="flex flex-col gap-0.5">
-          <dt className="text-xs text-zinc-400">สถานที่ปัจจุบัน</dt>
-          <dd className="text-zinc-700 dark:text-zinc-200">{formatLocation(asset)}</dd>
+          <dt className="text-xs text-t1-gray-400">สถานที่ปัจจุบัน</dt>
+          <dd className="text-foreground">{formatLocation(asset)}</dd>
         </div>
         <div className="flex flex-col gap-0.5">
-          <dt className="text-xs text-zinc-400">ผู้ถือครองปัจจุบัน</dt>
-          <dd className="text-zinc-700 dark:text-zinc-200">
+          <dt className="text-xs text-t1-gray-400">ผู้ถือครองปัจจุบัน</dt>
+          <dd className="text-foreground">
             {asset.owner ?? "—"}
-            {asset.department && <span className="text-xs text-zinc-400"> · {asset.department}</span>}
+            {asset.department && <span className="text-xs text-t1-gray-400"> · {asset.department}</span>}
           </dd>
         </div>
       </dl>

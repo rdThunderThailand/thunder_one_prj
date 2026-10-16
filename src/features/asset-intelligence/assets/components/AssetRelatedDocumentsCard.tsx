@@ -76,28 +76,28 @@ export function AssetRelatedDocumentsCard({
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Related Documents</h2>
-        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800">
+        <h2 className="text-sm font-semibold text-foreground">Related Documents</h2>
+        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-t1-gray-50">
           <UploadIcon className="h-3.5 w-3.5" />
           {uploading ? "กำลังอัปโหลด..." : "แนบไฟล์"}
           <input ref={fileInputRef} type="file" className="hidden" disabled={uploading} onChange={handleFileChange} />
         </label>
       </div>
 
-      {error && <p className="mb-2 text-xs text-red-500">{error}</p>}
+      {error && <p className="mb-2 text-xs text-error">{error}</p>}
 
       {attachments === null ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center text-zinc-400">
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center text-t1-gray-400">
           <InfoIcon className="h-5 w-5" />
           <p className="text-sm">ไม่สามารถโหลดเอกสารแนบได้ในขณะนี้</p>
         </div>
       ) : attachments.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center text-zinc-400">
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center text-t1-gray-400">
           <InfoIcon className="h-5 w-5" />
           <p className="text-sm">ยังไม่มีเอกสารแนบสำหรับทรัพย์สินนี้</p>
         </div>
       ) : (
-        <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+        <ul className="flex flex-col divide-y divide-border">
           {attachments.map((doc) => (
             <li key={doc.id} className="flex items-center justify-between gap-2 py-2 text-sm">
               <div className="min-w-0">
@@ -106,14 +106,14 @@ export function AssetRelatedDocumentsCard({
                     href={doc.fileUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="block truncate font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                    className="block truncate font-medium text-primary hover:underline"
                   >
                     {doc.fileName}
                   </a>
                 ) : (
-                  <p className="truncate font-medium text-zinc-700 dark:text-zinc-200">{doc.fileName}</p>
+                  <p className="truncate font-medium text-foreground">{doc.fileName}</p>
                 )}
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-t1-gray-400">
                   {doc.docType ? `${doc.docType} · ` : ""}
                   {formatDate(doc.uploadedAt)}
                   {doc.uploadedBy ? ` · ${doc.uploadedBy}` : ""}
@@ -124,7 +124,7 @@ export function AssetRelatedDocumentsCard({
                 onClick={() => handleDelete(doc.id)}
                 disabled={deletingId === doc.id}
                 title="ลบเอกสาร"
-                className="shrink-0 text-zinc-300 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="shrink-0 text-t1-gray-400 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <TrashIcon className="h-4 w-4" />
               </button>

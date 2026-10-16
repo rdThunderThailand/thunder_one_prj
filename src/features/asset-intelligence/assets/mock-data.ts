@@ -31,7 +31,7 @@ export const heroStatTiles: HeroStatTileData[] = [
     sublabel: "ความพร้อม",
     deltaLabel: "▲ 7% จากเดือนที่แล้ว",
     icon: "readiness",
-    iconTone: "text-indigo-500",
+    iconTone: "text-primary",
     viz: { type: "donut", percent: 72 },
   },
   {
@@ -40,7 +40,7 @@ export const heroStatTiles: HeroStatTileData[] = [
     value: "2,458",
     sublabel: "รายการ",
     icon: "box",
-    iconTone: "bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400",
+    iconTone: "bg-accent text-primary",
   },
   {
     id: "ready",
@@ -49,7 +49,7 @@ export const heroStatTiles: HeroStatTileData[] = [
     sublabel: "75.0% ของทั้งหมด",
     deltaLabel: "▲ 5.2%",
     icon: "checkCircle",
-    iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400",
+    iconTone: "bg-success-muted text-success",
   },
   {
     id: "in-use",
@@ -57,7 +57,7 @@ export const heroStatTiles: HeroStatTileData[] = [
     value: "312",
     sublabel: "12.7% ของทั้งหมด",
     icon: "wrench",
-    iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400",
+    iconTone: "bg-info-muted text-info",
   },
   {
     id: "in-progress",
@@ -65,7 +65,7 @@ export const heroStatTiles: HeroStatTileData[] = [
     value: "98",
     sublabel: "4.0% ของทั้งหมด",
     icon: "truck",
-    iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400",
+    iconTone: "bg-in-progress-muted text-in-progress",
   },
   {
     id: "retired",
@@ -73,17 +73,17 @@ export const heroStatTiles: HeroStatTileData[] = [
     value: "206",
     sublabel: "8.3% ของทั้งหมด",
     icon: "xCircle",
-    iconTone: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400",
+    iconTone: "bg-error-muted text-error",
   },
 ];
 
 export const assetStatusOverview = {
   total: 2458,
   segments: [
-    { label: "พร้อมใช้งาน", value: 1842, percentLabel: "75.0%", color: "#6366f1" },
-    { label: "อยู่ระหว่างใช้งาน", value: 312, percentLabel: "12.7%", color: "#3b82f6" },
-    { label: "ระหว่างดำเนินการ", value: 98, percentLabel: "4.0%", color: "#a855f7" },
-    { label: "หมดสภาพ / ยกเลิก", value: 206, percentLabel: "8.3%", color: "#ef4444" },
+    { label: "พร้อมใช้งาน", value: 1842, percentLabel: "75.0%", color: "var(--color-primary)" },
+    { label: "อยู่ระหว่างใช้งาน", value: 312, percentLabel: "12.7%", color: "var(--color-t1-blue-400)" },
+    { label: "ระหว่างดำเนินการ", value: 98, percentLabel: "4.0%", color: "var(--color-in-progress)" },
+    { label: "หมดสภาพ / ยกเลิก", value: 206, percentLabel: "8.3%", color: "var(--color-error)" },
   ],
 };
 
@@ -245,11 +245,11 @@ export interface AllocationStatTileData {
 }
 
 export const allocationStatTiles: AllocationStatTileData[] = [
-  { id: "total", label: "จัดสรรทั้งหมด", value: "568", sublabel: "จัดแล้วทั้งหมด", icon: "users", iconTone: "bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400" },
-  { id: "in-use", label: "จัดสรรใช้งานอยู่", value: "482", sublabel: "84.9% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "pending-delivery", label: "รอการส่งมอบ", value: "42", sublabel: "7.4% ของทั้งหมด", icon: "clock", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400" },
-  { id: "pending-return", label: "รอการคืน", value: "32", sublabel: "5.6% ของทั้งหมด", icon: "repeat", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "overdue", label: "เกินกำหนดคืน", value: "12", sublabel: "ดูรายการ", icon: "warning", iconTone: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400" },
+  { id: "total", label: "จัดสรรทั้งหมด", value: "568", sublabel: "จัดแล้วทั้งหมด", icon: "users", iconTone: "bg-accent text-primary" },
+  { id: "in-use", label: "จัดสรรใช้งานอยู่", value: "482", sublabel: "84.9% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-success-muted text-success" },
+  { id: "pending-delivery", label: "รอการส่งมอบ", value: "42", sublabel: "7.4% ของทั้งหมด", icon: "clock", iconTone: "bg-warning-muted text-warning" },
+  { id: "pending-return", label: "รอการคืน", value: "32", sublabel: "5.6% ของทั้งหมด", icon: "repeat", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "overdue", label: "เกินกำหนดคืน", value: "12", sublabel: "ดูรายการ", icon: "warning", iconTone: "bg-error-muted text-error" },
 ];
 
 export const allocationTabs = ["จัดสรรใช้งานอยู่", "รอการส่งมอบ", "รอการคืน", "ประวัติการจัดสรรทั้งหมด"] as const;
@@ -334,11 +334,11 @@ export interface ReturnStatTileData {
 }
 
 export const returnStatTiles: ReturnStatTileData[] = [
-  { id: "pending-return", label: "รอการคืน", value: "128", sublabel: "25.6% ของทั้งหมด", icon: "repeat", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
-  { id: "pending-delivery", label: "รอส่งมอบ", value: "36", sublabel: "7.2% ของทั้งหมด", icon: "truck", iconTone: "bg-teal-50 text-teal-500 dark:bg-teal-500/10 dark:text-teal-400" },
-  { id: "in-progress", label: "ดำเนินการอยู่", value: "74", sublabel: "14.8% ของทั้งหมด", icon: "clipboard", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "completed", label: "เสร็จสมบูรณ์", value: "512", sublabel: "76.8% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "overdue", label: "เกินกำหนด", value: "12", sublabel: "ดูรายการ", icon: "warning", iconTone: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400" },
+  { id: "pending-return", label: "รอการคืน", value: "128", sublabel: "25.6% ของทั้งหมด", icon: "repeat", iconTone: "bg-info-muted text-info" },
+  { id: "pending-delivery", label: "รอส่งมอบ", value: "36", sublabel: "7.2% ของทั้งหมด", icon: "truck", iconTone: "bg-success-muted text-success" },
+  { id: "in-progress", label: "ดำเนินการอยู่", value: "74", sublabel: "14.8% ของทั้งหมด", icon: "clipboard", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "completed", label: "เสร็จสมบูรณ์", value: "512", sublabel: "76.8% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-success-muted text-success" },
+  { id: "overdue", label: "เกินกำหนด", value: "12", sublabel: "ดูรายการ", icon: "warning", iconTone: "bg-error-muted text-error" },
 ];
 
 export const returnTabs = ["รอการคืน", "รอส่งมอบ", "ดำเนินการอยู่", "เสร็จสมบูรณ์", "เกินกำหนด"] as const;
@@ -432,11 +432,11 @@ export interface TransferStatTileData {
 }
 
 export const transferStatTiles: TransferStatTileData[] = [
-  { id: "total", label: "รายการโอนย้ายทั้งหมด", value: "96", sublabel: "จากเดือนที่แล้ว", deltaLabel: "▲ 8.5%", icon: "repeat", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
-  { id: "completed", label: "ดำเนินการเสร็จสิ้น", value: "48", sublabel: "50.0% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "pending", label: "รอดำเนินการ", value: "36", sublabel: "37.5% ของทั้งหมด", icon: "clock", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400" },
-  { id: "in-progress", label: "อยู่ระหว่างดำเนินการ", value: "8", sublabel: "8.3% ของทั้งหมด", icon: "truck", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "cancelled", label: "ยกเลิก", value: "4", sublabel: "4.2% ของทั้งหมด", icon: "xCircle", iconTone: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400" },
+  { id: "total", label: "รายการโอนย้ายทั้งหมด", value: "96", sublabel: "จากเดือนที่แล้ว", deltaLabel: "▲ 8.5%", icon: "repeat", iconTone: "bg-info-muted text-info" },
+  { id: "completed", label: "ดำเนินการเสร็จสิ้น", value: "48", sublabel: "50.0% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-success-muted text-success" },
+  { id: "pending", label: "รอดำเนินการ", value: "36", sublabel: "37.5% ของทั้งหมด", icon: "clock", iconTone: "bg-warning-muted text-warning" },
+  { id: "in-progress", label: "อยู่ระหว่างดำเนินการ", value: "8", sublabel: "8.3% ของทั้งหมด", icon: "truck", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "cancelled", label: "ยกเลิก", value: "4", sublabel: "4.2% ของทั้งหมด", icon: "xCircle", iconTone: "bg-error-muted text-error" },
 ];
 
 export const transferTabs = ["รอดำเนินการ", "อยู่ระหว่างดำเนินการ", "เสร็จสิ้น", "ยกเลิก", "ทั้งหมด"] as const;
@@ -552,11 +552,11 @@ export interface CountStatTileData {
 }
 
 export const countStatTiles: CountStatTileData[] = [
-  { id: "total", label: "แผนการตรวจนับทั้งหมด", value: "24", sublabel: "ทั้งหมด", icon: "clipboard", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
-  { id: "completed", label: "ดำเนินการแล้ว", value: "16", sublabel: "66.7% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "in-progress", label: "อยู่ระหว่างดำเนินการ", value: "6", sublabel: "25.0% ของทั้งหมด", icon: "clock", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400" },
-  { id: "pending-approval", label: "รออนุมัติ", value: "2", sublabel: "8.3% ของทั้งหมด", icon: "box", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "discrepancy", label: "พบความคลาดเคลื่อน", value: "3", sublabel: "12.5% ของทั้งหมด", icon: "warning", iconTone: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400" },
+  { id: "total", label: "แผนการตรวจนับทั้งหมด", value: "24", sublabel: "ทั้งหมด", icon: "clipboard", iconTone: "bg-info-muted text-info" },
+  { id: "completed", label: "ดำเนินการแล้ว", value: "16", sublabel: "66.7% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-success-muted text-success" },
+  { id: "in-progress", label: "อยู่ระหว่างดำเนินการ", value: "6", sublabel: "25.0% ของทั้งหมด", icon: "clock", iconTone: "bg-warning-muted text-warning" },
+  { id: "pending-approval", label: "รออนุมัติ", value: "2", sublabel: "8.3% ของทั้งหมด", icon: "box", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "discrepancy", label: "พบความคลาดเคลื่อน", value: "3", sublabel: "12.5% ของทั้งหมด", icon: "warning", iconTone: "bg-error-muted text-error" },
 ];
 
 export const countTabs = ["แผนการตรวจนับ", "กำลังดำเนินการ", "รออนุมัติผล", "ประวัติการตรวจนับ"] as const;
@@ -627,10 +627,10 @@ export const countDetail = {
   ownerDepartment: "IT Department",
   resultTotal: 320,
   resultSegments: [
-    { label: "พบครบ", value: 310, percentLabel: "96.9%", color: "#10b981" },
-    { label: "ไม่พบ", value: 6, percentLabel: "1.9%", color: "#ef4444" },
-    { label: "พบเพิ่ม", value: 2, percentLabel: "0.6%", color: "#3b82f6" },
-    { label: "รอการตรวจสอบ", value: 2, percentLabel: "0.6%", color: "#a1a1aa" },
+    { label: "พบครบ", value: 310, percentLabel: "96.9%", color: "var(--color-success)" },
+    { label: "ไม่พบ", value: 6, percentLabel: "1.9%", color: "var(--color-error)" },
+    { label: "พบเพิ่ม", value: 2, percentLabel: "0.6%", color: "var(--color-t1-blue-400)" },
+    { label: "รอการตรวจสอบ", value: 2, percentLabel: "0.6%", color: "var(--color-t1-gray-400)" },
   ] satisfies CountResultSegment[],
   history: [
     { id: "ch-1", label: "สร้างแผนการตรวจนับ", by: "โดย ปวารี จันทรา", timestamp: "05 ก.พ. 2569 09:10", tone: "emerald" },
@@ -658,11 +658,11 @@ export interface CategoryStatTileData {
 }
 
 export const categoryStatTiles: CategoryStatTileData[] = [
-  { id: "total", label: "ประเภททรัพย์สินทั้งหมด", value: "28", sublabel: "ทั้งหมด", icon: "box", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
-  { id: "active", label: "ใช้งานอยู่", value: "25", sublabel: "89.3% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "inactive", label: "ไม่ได้ใช้", value: "3", sublabel: "10.7% ของทั้งหมด", icon: "boxInactive", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400" },
-  { id: "total-assets", label: "ทรัพย์สินทั้งหมด", value: "12,846", sublabel: "รวมทุกประเภท", icon: "grid", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "total-value", label: "มูลค่ารวม (THB)", value: "2.35M", sublabel: "ราคาทุนรวม", icon: "chart", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
+  { id: "total", label: "ประเภททรัพย์สินทั้งหมด", value: "28", sublabel: "ทั้งหมด", icon: "box", iconTone: "bg-info-muted text-info" },
+  { id: "active", label: "ใช้งานอยู่", value: "25", sublabel: "89.3% ของทั้งหมด", icon: "checkCircle", iconTone: "bg-success-muted text-success" },
+  { id: "inactive", label: "ไม่ได้ใช้", value: "3", sublabel: "10.7% ของทั้งหมด", icon: "boxInactive", iconTone: "bg-warning-muted text-warning" },
+  { id: "total-assets", label: "ทรัพย์สินทั้งหมด", value: "12,846", sublabel: "รวมทุกประเภท", icon: "grid", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "total-value", label: "มูลค่ารวม (THB)", value: "2.35M", sublabel: "ราคาทุนรวม", icon: "chart", iconTone: "bg-info-muted text-info" },
 ];
 
 export const categoryFilterOptions = {
@@ -742,12 +742,12 @@ export interface LocationStatTileData {
 }
 
 export const locationStatTiles: LocationStatTileData[] = [
-  { id: "locations", label: "สถานที่", value: "15", sublabel: "ทั้งหมด", icon: "building", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
-  { id: "buildings", label: "อาคาร", value: "48", sublabel: "ใช้งานอยู่ 46", icon: "buildingGreen", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "floors", label: "ชั้น", value: "136", sublabel: "ใช้งานอยู่ 128", icon: "buildingAmber", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400" },
-  { id: "rooms", label: "ห้อง / พื้นที่", value: "512", sublabel: "ใช้งานอยู่ 486", icon: "grid", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "value", label: "มูลค่าสินทรัพย์ (THB)", value: "2.35M", sublabel: "ในทุกสถานที่", icon: "currency", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
-  { id: "utilization", label: "พื้นที่ใช้งาน", value: "96%", sublabel: "486 / 512", icon: "gauge", iconTone: "bg-teal-50 text-teal-500 dark:bg-teal-500/10 dark:text-teal-400" },
+  { id: "locations", label: "สถานที่", value: "15", sublabel: "ทั้งหมด", icon: "building", iconTone: "bg-info-muted text-info" },
+  { id: "buildings", label: "อาคาร", value: "48", sublabel: "ใช้งานอยู่ 46", icon: "buildingGreen", iconTone: "bg-success-muted text-success" },
+  { id: "floors", label: "ชั้น", value: "136", sublabel: "ใช้งานอยู่ 128", icon: "buildingAmber", iconTone: "bg-warning-muted text-warning" },
+  { id: "rooms", label: "ห้อง / พื้นที่", value: "512", sublabel: "ใช้งานอยู่ 486", icon: "grid", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "value", label: "มูลค่าสินทรัพย์ (THB)", value: "2.35M", sublabel: "ในทุกสถานที่", icon: "currency", iconTone: "bg-info-muted text-info" },
+  { id: "utilization", label: "พื้นที่ใช้งาน", value: "96%", sublabel: "486 / 512", icon: "gauge", iconTone: "bg-success-muted text-success" },
 ];
 
 export const locationFilterOptions = {
@@ -858,12 +858,12 @@ export interface WarrantyStatTileData {
 }
 
 export const warrantyStatTiles: WarrantyStatTileData[] = [
-  { id: "total", label: "ทรัพย์สินทั้งหมด", value: "1,248", sublabel: "100%", icon: "shield", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
-  { id: "in-warranty", label: "อยู่ในประกัน", value: "856", sublabel: "68.6%", icon: "checkCircle", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "expiring", label: "ใกล้หมดอายุ (≤ 60 วัน)", value: "142", sublabel: "11.4%", icon: "clock", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400" },
-  { id: "expired", label: "หมดอายุแล้ว", value: "126", sublabel: "10.1%", icon: "warning", iconTone: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400" },
-  { id: "contracts", label: "สัญญาบริการ Active", value: "38", sublabel: "Active", icon: "clipboard", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "coverage-value", label: "มูลค่าความคุ้มครอง (THB)", value: "1.24M", sublabel: "THB", icon: "currency", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
+  { id: "total", label: "ทรัพย์สินทั้งหมด", value: "1,248", sublabel: "100%", icon: "shield", iconTone: "bg-info-muted text-info" },
+  { id: "in-warranty", label: "อยู่ในประกัน", value: "856", sublabel: "68.6%", icon: "checkCircle", iconTone: "bg-success-muted text-success" },
+  { id: "expiring", label: "ใกล้หมดอายุ (≤ 60 วัน)", value: "142", sublabel: "11.4%", icon: "clock", iconTone: "bg-warning-muted text-warning" },
+  { id: "expired", label: "หมดอายุแล้ว", value: "126", sublabel: "10.1%", icon: "warning", iconTone: "bg-error-muted text-error" },
+  { id: "contracts", label: "สัญญาบริการ Active", value: "38", sublabel: "Active", icon: "clipboard", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "coverage-value", label: "มูลค่าความคุ้มครอง (THB)", value: "1.24M", sublabel: "THB", icon: "currency", iconTone: "bg-info-muted text-info" },
 ];
 
 export const warrantyTabs = ["ภาพรวม", "ทรัพย์สิน (Warranty)", "สัญญาบริการ", "ประวัติการเคลม", "Lifecycle"] as const;
@@ -944,12 +944,12 @@ export interface ReportStatTileData {
 }
 
 export const reportStatTiles: ReportStatTileData[] = [
-  { id: "total", label: "ทรัพย์สินทั้งหมด", value: "1,248", sublabel: "100%", icon: "box", iconTone: "bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400" },
-  { id: "in-use", label: "ใช้งานอยู่", value: "1,072", sublabel: "85.9%", icon: "checkCircle", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "maintenance", label: "ซ่อมบำรุง / รออะไหล่", value: "126", sublabel: "10.1%", icon: "wrench", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400" },
-  { id: "expired", label: "หมดอายุ / เสีย", value: "50", sublabel: "4.0%", icon: "warning", iconTone: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400" },
-  { id: "contracts", label: "เอกสารสัญญา", value: "38", sublabel: "3.0%", icon: "clipboard", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "total-value", label: "มูลค่ารวม (THB)", value: "2.35M", sublabel: "ทั้งองค์กร", icon: "currency", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
+  { id: "total", label: "ทรัพย์สินทั้งหมด", value: "1,248", sublabel: "100%", icon: "box", iconTone: "bg-accent text-primary" },
+  { id: "in-use", label: "ใช้งานอยู่", value: "1,072", sublabel: "85.9%", icon: "checkCircle", iconTone: "bg-success-muted text-success" },
+  { id: "maintenance", label: "ซ่อมบำรุง / รออะไหล่", value: "126", sublabel: "10.1%", icon: "wrench", iconTone: "bg-warning-muted text-warning" },
+  { id: "expired", label: "หมดอายุ / เสีย", value: "50", sublabel: "4.0%", icon: "warning", iconTone: "bg-error-muted text-error" },
+  { id: "contracts", label: "เอกสารสัญญา", value: "38", sublabel: "3.0%", icon: "clipboard", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "total-value", label: "มูลค่ารวม (THB)", value: "2.35M", sublabel: "ทั้งองค์กร", icon: "currency", iconTone: "bg-info-muted text-info" },
 ];
 
 export const reportFilterOptions = {
@@ -961,22 +961,22 @@ export const reportFilterOptions = {
 export const categoryDistribution = {
   total: 1248,
   segments: [
-    { label: "คอมพิวเตอร์ / Laptop", value: 481, percentLabel: "38.5%", color: "#6366f1" },
-    { label: "อุปกรณ์สำนักงาน", value: 243, percentLabel: "19.5%", color: "#10b981" },
-    { label: "เครื่องพิมพ์ / Scanner", value: 140, percentLabel: "11.2%", color: "#f59e0b" },
-    { label: "โทรศัพท์มือถือ / Tablet", value: 116, percentLabel: "9.3%", color: "#3b82f6" },
-    { label: "อุปกรณ์เครือข่าย", value: 89, percentLabel: "7.1%", color: "#a855f7" },
-    { label: "อื่นๆ", value: 179, percentLabel: "14.4%", color: "#a1a1aa" },
+    { label: "คอมพิวเตอร์ / Laptop", value: 481, percentLabel: "38.5%", color: "var(--color-primary)" },
+    { label: "อุปกรณ์สำนักงาน", value: 243, percentLabel: "19.5%", color: "var(--color-success)" },
+    { label: "เครื่องพิมพ์ / Scanner", value: 140, percentLabel: "11.2%", color: "var(--color-warning)" },
+    { label: "โทรศัพท์มือถือ / Tablet", value: 116, percentLabel: "9.3%", color: "var(--color-t1-blue-400)" },
+    { label: "อุปกรณ์เครือข่าย", value: 89, percentLabel: "7.1%", color: "var(--color-in-progress)" },
+    { label: "อื่นๆ", value: 179, percentLabel: "14.4%", color: "var(--color-t1-gray-400)" },
   ],
 };
 
 export const usageStatusDistribution = {
   total: 1248,
   segments: [
-    { label: "ใช้งานอยู่", value: 1072, percentLabel: "85.9%", color: "#10b981" },
-    { label: "ซ่อมบำรุง / รอซ่อม", value: 126, percentLabel: "10.1%", color: "#f59e0b" },
-    { label: "หมดอายุ", value: 40, percentLabel: "3.2%", color: "#ef4444" },
-    { label: "ไม่ได้ใช้งาน", value: 10, percentLabel: "0.8%", color: "#a1a1aa" },
+    { label: "ใช้งานอยู่", value: 1072, percentLabel: "85.9%", color: "var(--color-success)" },
+    { label: "ซ่อมบำรุง / รอซ่อม", value: 126, percentLabel: "10.1%", color: "var(--color-warning)" },
+    { label: "หมดอายุ", value: 40, percentLabel: "3.2%", color: "var(--color-error)" },
+    { label: "ไม่ได้ใช้งาน", value: 10, percentLabel: "0.8%", color: "var(--color-t1-gray-400)" },
   ],
 };
 
@@ -998,8 +998,8 @@ export const valueByLocation: LocationValueRow[] = [
 export const purchaseTrend = {
   xKey: "month",
   series: [
-    { key: "fy2569", label: "ปีงบประมาณ 2569", color: "#6366f1" },
-    { key: "fy2568", label: "ปีงบประมาณ 2568", color: "#a1a1aa" },
+    { key: "fy2569", label: "ปีงบประมาณ 2569", color: "var(--color-primary)" },
+    { key: "fy2568", label: "ปีงบประมาณ 2568", color: "var(--color-t1-gray-400)" },
   ],
   data: [
     { month: "ต.ค.", fy2569: 120000, fy2568: 90000 },
@@ -1082,11 +1082,11 @@ export interface KnowledgeStatTileData {
 }
 
 export const knowledgeStatTiles: KnowledgeStatTileData[] = [
-  { id: "articles", label: "บทความทั้งหมด", value: "128", sublabel: "+12 บทความใหม่", icon: "book", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400" },
-  { id: "guides", label: "คู่มือ / SOP", value: "24", sublabel: "อัปเดตล่าสุด 10 พ.ค. 2569", icon: "document", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  { id: "videos", label: "วิดีโอสาธิต", value: "18", sublabel: "+2 วิดีโอใหม่", icon: "play", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400" },
-  { id: "faq", label: "คำถามที่พบบ่อย", value: "36", sublabel: "ครอบคลุม 9 หมวด", icon: "question", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400" },
-  { id: "downloads", label: "เอกสารดาวน์โหลด", value: "56", sublabel: "เทมเพลต & ฟอร์ม", icon: "download", iconTone: "bg-teal-50 text-teal-500 dark:bg-teal-500/10 dark:text-teal-400" },
+  { id: "articles", label: "บทความทั้งหมด", value: "128", sublabel: "+12 บทความใหม่", icon: "book", iconTone: "bg-info-muted text-info" },
+  { id: "guides", label: "คู่มือ / SOP", value: "24", sublabel: "อัปเดตล่าสุด 10 พ.ค. 2569", icon: "document", iconTone: "bg-success-muted text-success" },
+  { id: "videos", label: "วิดีโอสาธิต", value: "18", sublabel: "+2 วิดีโอใหม่", icon: "play", iconTone: "bg-warning-muted text-warning" },
+  { id: "faq", label: "คำถามที่พบบ่อย", value: "36", sublabel: "ครอบคลุม 9 หมวด", icon: "question", iconTone: "bg-in-progress-muted text-in-progress" },
+  { id: "downloads", label: "เอกสารดาวน์โหลด", value: "56", sublabel: "เทมเพลต & ฟอร์ม", icon: "download", iconTone: "bg-success-muted text-success" },
 ];
 
 export const knowledgeFilterOptions = {
@@ -1105,16 +1105,16 @@ export interface KnowledgeCategoryData {
 }
 
 export const knowledgeCategories: KnowledgeCategoryData[] = [
-  { id: "kc-all", icon: "book", iconTone: "text-indigo-500", label: "ทั้งหมด", count: 128 },
-  { id: "kc-start", icon: "rocket", iconTone: "text-blue-500", label: "เริ่มต้นใช้งาน", count: 12 },
-  { id: "kc-management", icon: "document", iconTone: "text-emerald-500", label: "การจัดการทรัพย์สิน", count: 24 },
-  { id: "kc-allocation", icon: "box", iconTone: "text-purple-500", label: "การจัดสรร & โอนย้าย", count: 18 },
-  { id: "kc-count", icon: "search", iconTone: "text-amber-500", label: "การตรวจนับ", count: 12 },
-  { id: "kc-maintenance", icon: "wrench", iconTone: "text-teal-500", label: "การบำรุงรักษา", count: 11 },
-  { id: "kc-warranty", icon: "shield", iconTone: "text-red-500", label: "Warranty & Lifecycle", count: 15 },
-  { id: "kc-reports", icon: "chart", iconTone: "text-blue-500", label: "รายงาน & วิเคราะห์", count: 12 },
-  { id: "kc-policy", icon: "clipboard", iconTone: "text-purple-500", label: "นโยบาย & แนวปฏิบัติ", count: 8 },
-  { id: "kc-system", icon: "settings", iconTone: "text-zinc-500", label: "ระบบ & การตั้งค่า", count: 6 },
+  { id: "kc-all", icon: "book", iconTone: "text-primary", label: "ทั้งหมด", count: 128 },
+  { id: "kc-start", icon: "rocket", iconTone: "text-info", label: "เริ่มต้นใช้งาน", count: 12 },
+  { id: "kc-management", icon: "document", iconTone: "text-success", label: "การจัดการทรัพย์สิน", count: 24 },
+  { id: "kc-allocation", icon: "box", iconTone: "text-in-progress", label: "การจัดสรร & โอนย้าย", count: 18 },
+  { id: "kc-count", icon: "search", iconTone: "text-warning", label: "การตรวจนับ", count: 12 },
+  { id: "kc-maintenance", icon: "wrench", iconTone: "text-success", label: "การบำรุงรักษา", count: 11 },
+  { id: "kc-warranty", icon: "shield", iconTone: "text-error", label: "Warranty & Lifecycle", count: 15 },
+  { id: "kc-reports", icon: "chart", iconTone: "text-info", label: "รายงาน & วิเคราะห์", count: 12 },
+  { id: "kc-policy", icon: "clipboard", iconTone: "text-in-progress", label: "นโยบาย & แนวปฏิบัติ", count: 8 },
+  { id: "kc-system", icon: "settings", iconTone: "text-muted-foreground", label: "ระบบ & การตั้งค่า", count: 6 },
 ];
 
 export interface FeaturedArticleData {
@@ -1130,11 +1130,11 @@ export interface FeaturedArticleData {
 }
 
 export const featuredArticles: FeaturedArticleData[] = [
-  { id: "fa-1", icon: "book", iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400", title: "การลงทะเบียนทรัพย์สินใหม่", tag: "เริ่มต้นใช้งาน", tagTone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400", author: "Asset Admin", dateLabel: "10 พ.ค. 2569", views: "1.2K" },
-  { id: "fa-2", icon: "document", iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400", title: "แนวปฏิบัติการจัดสรรทรัพย์สินให้พนักงาน", tag: "การจัดสรร & โอนย้าย", tagTone: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400", author: "Asset Admin", dateLabel: "8 พ.ค. 2569", views: "856" },
-  { id: "fa-3", icon: "play", iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400", title: "วิธีใช้แอป Mobile สำหรับตรวจนับทรัพย์สิน", tag: "การตรวจนับ", tagTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400", author: "Asset Admin", dateLabel: "5 พ.ค. 2569", views: "642" },
-  { id: "fa-4", icon: "question", iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400", title: "FAQ: การคืนและส่งมอบทรัพย์สิน", tag: "คำถามที่พบบ่อย", tagTone: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300", author: "Asset Admin", dateLabel: "3 พ.ค. 2569", views: "521" },
-  { id: "fa-5", icon: "wrench", iconTone: "bg-teal-50 text-teal-500 dark:bg-teal-500/10 dark:text-teal-400", title: "แนวทางการบำรุงรักษาอุปกรณ์ IT เบื้องต้น", tag: "การบำรุงรักษา", tagTone: "bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400", author: "Asset Admin", dateLabel: "30 เม.ย. 2569", views: "408" },
+  { id: "fa-1", icon: "book", iconTone: "bg-info-muted text-info", title: "การลงทะเบียนทรัพย์สินใหม่", tag: "เริ่มต้นใช้งาน", tagTone: "bg-info-muted text-t1-blue-700", author: "Asset Admin", dateLabel: "10 พ.ค. 2569", views: "1.2K" },
+  { id: "fa-2", icon: "document", iconTone: "bg-success-muted text-success", title: "แนวปฏิบัติการจัดสรรทรัพย์สินให้พนักงาน", tag: "การจัดสรร & โอนย้าย", tagTone: "bg-in-progress-muted text-t1-purple-700", author: "Asset Admin", dateLabel: "8 พ.ค. 2569", views: "856" },
+  { id: "fa-3", icon: "play", iconTone: "bg-warning-muted text-warning", title: "วิธีใช้แอป Mobile สำหรับตรวจนับทรัพย์สิน", tag: "การตรวจนับ", tagTone: "bg-warning-muted text-t1-amber-700", author: "Asset Admin", dateLabel: "5 พ.ค. 2569", views: "642" },
+  { id: "fa-4", icon: "question", iconTone: "bg-in-progress-muted text-in-progress", title: "FAQ: การคืนและส่งมอบทรัพย์สิน", tag: "คำถามที่พบบ่อย", tagTone: "bg-muted text-muted-foreground", author: "Asset Admin", dateLabel: "3 พ.ค. 2569", views: "521" },
+  { id: "fa-5", icon: "wrench", iconTone: "bg-success-muted text-success", title: "แนวทางการบำรุงรักษาอุปกรณ์ IT เบื้องต้น", tag: "การบำรุงรักษา", tagTone: "bg-success-muted text-t1-green-700", author: "Asset Admin", dateLabel: "30 เม.ย. 2569", views: "408" },
 ];
 
 export interface QuickAccessLinkData {

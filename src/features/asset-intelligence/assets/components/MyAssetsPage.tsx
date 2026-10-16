@@ -23,12 +23,12 @@ function AssetCard({ asset }: { asset: Asset }) {
   return (
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           <BoxIcon />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{asset.tag}</p>
-          <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm font-medium text-foreground">{asset.tag}</p>
+          <p className="truncate text-xs text-muted-foreground">
             {asset.model ?? asset.category}
           </p>
         </div>
@@ -37,7 +37,7 @@ function AssetCard({ asset }: { asset: Asset }) {
         </Badge>
         <button
           onClick={() => setReporting((v) => !v)}
-          className="shrink-0 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-t1-gray-50"
         >
           {reporting ? "Cancel" : "Report a problem"}
         </button>
@@ -49,14 +49,14 @@ function AssetCard({ asset }: { asset: Asset }) {
 
 function PendingAcknowledgementBanner({ count }: { count: number }) {
   return (
-    <Card className="flex items-center gap-3 border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
-      <WarningTriangleIcon className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-      <p className="flex-1 text-sm text-amber-800 dark:text-amber-300">
+    <Card className="flex items-center gap-3 border-warning/30 bg-warning-muted p-4">
+      <WarningTriangleIcon className="h-5 w-5 shrink-0 text-t1-amber-700" />
+      <p className="flex-1 text-sm text-t1-amber-700">
         You have {count} asset{count > 1 ? "s" : ""} waiting for your confirmation.
       </p>
       <Link
         href="/asset-intelligence/my-assets/scan-qr"
-        className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-500"
+        className="shrink-0 rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-warning/90"
       >
         Register now
       </Link>
@@ -75,9 +75,9 @@ export function MyAssetsPage() {
       {active.map((asset) => (
         <AssetCard key={asset.id} asset={asset} />
       ))}
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-sm text-muted-foreground">
         Need help?{" "}
-        <span className="font-medium text-indigo-600 dark:text-indigo-400">Contact IT Support</span>
+        <span className="font-medium text-primary">Contact IT Support</span>
       </p>
     </div>
   );

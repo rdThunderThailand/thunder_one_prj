@@ -31,7 +31,7 @@ export function KnowledgeCategoriesCard() {
 
   return (
     <Card className="p-3">
-      <h2 className="mb-2 px-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">หมวดหมู่</h2>
+      <h2 className="mb-2 px-1 text-sm font-semibold text-foreground">หมวดหมู่</h2>
       <ul className="flex flex-col gap-0.5">
         {knowledgeCategories.map((category) => (
           <li key={category.id}>
@@ -40,18 +40,18 @@ export function KnowledgeCategoriesCard() {
               onClick={() => setActive(category.id)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
                 active === category.id
-                  ? "bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
-                  : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  ? "bg-accent font-medium text-accent-foreground"
+                  : "text-muted-foreground hover:bg-t1-gray-50"
               }`}
             >
               <span className={category.iconTone}>{iconFor[category.icon]}</span>
               <span className="flex-1 truncate text-left">{category.label}</span>
-              <span className="shrink-0 text-xs text-zinc-400">{category.count}</span>
+              <span className="shrink-0 text-xs text-t1-gray-400">{category.count}</span>
             </button>
           </li>
         ))}
       </ul>
-      <button className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10">
+      <button className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium text-primary hover:bg-accent">
         ดูทุกหมวดหมู่ →
       </button>
     </Card>
