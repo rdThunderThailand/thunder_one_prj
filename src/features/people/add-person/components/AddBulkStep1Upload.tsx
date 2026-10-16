@@ -81,7 +81,7 @@ export function AddBulkStep1Upload({
             )}
             <ErrorText message={fileNameError} />
             {parseErrors.length > 0 && (
-              <div className="mt-2 w-full max-w-sm rounded-lg border border-border bg-warning-muted/60 p-2.5 text-left text-xs text-t1-amber-700">
+              <div className="mt-2 w-full max-w-sm rounded-lg border border-warning/30 bg-warning-muted/60 p-2.5 text-left text-xs text-t1-amber-700">
                 <p className="mb-1 font-semibold">ข้าม {parseErrors.length} แถวที่ข้อมูลไม่ถูกต้อง:</p>
                 <ul className="list-inside list-disc space-y-0.5">
                   {parseErrors.slice(0, 5).map((e, i) => (
@@ -198,7 +198,7 @@ export function AddBulkStep1Upload({
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-primary bg-accent/50 p-5 text-xs text-accent-foreground">
+        <div className="rounded-2xl border border-t1-blue-100 bg-accent/50 p-5 text-xs text-accent-foreground">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
             <InfoIcon className="h-4 w-4" />
             คำแนะนำ

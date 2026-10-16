@@ -25,7 +25,7 @@ export function AddBulkStepSuccess({ submitResults, onImportNext }: AddBulkStepS
         แต่ละคนจะได้รับอีเมลพร้อมลิงก์ยืนยันเข้าใช้งาน สามารถติดตามสถานะได้ที่หน้า &quot;เข้าใหม่&quot;
       </p>
       {failedResults.length > 0 && (
-        <div className="w-full max-w-md rounded-xl border border-border bg-error-muted/60 p-3 text-left text-xs text-t1-red-700">
+        <div className="w-full max-w-md rounded-xl border border-error/30 bg-error-muted/60 p-3 text-left text-xs text-t1-red-700">
           <p className="mb-1 font-semibold">{failedResults.length} รายการล้มเหลว:</p>
           <ul className="list-inside list-disc space-y-0.5">
             {failedResults.map((r) => (

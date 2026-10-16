@@ -168,7 +168,7 @@ export function AddBulkStepReview({
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl border border-primary bg-accent/50 p-5 text-xs text-accent-foreground">
+        <div className="rounded-2xl border border-t1-blue-100 bg-accent/50 p-5 text-xs text-accent-foreground">
           <h3 className="mb-2 text-sm font-semibold">หมายเหตุ</h3>
           <ul className="list-inside list-disc space-y-1">
             <li>บุคคลจะได้รับอีเมลพร้อมลิงก์สำหรับยืนยันเข้าใช้งาน</li>

@@ -164,7 +164,7 @@ export function ChangeDetailPanel({ change, onApprove, onReject, onClose }: Chan
                 <button
                   type="button"
                   onClick={() => onReject(change.id)}
-                  className="flex-1 rounded-lg border border-border py-2 text-sm font-medium text-error hover:bg-error-muted"
+                  className="flex-1 rounded-lg border border-error/30 py-2 text-sm font-medium text-error hover:bg-error-muted"
                 >
                   ปฏิเสธ
                 </button>

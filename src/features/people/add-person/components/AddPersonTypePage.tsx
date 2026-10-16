@@ -102,7 +102,7 @@ export function AddPersonTypePage() {
             </p>
           </div>
         </div>
-        <div className="flex max-w-sm items-start gap-2 rounded-xl border border-primary bg-accent/60 p-3 text-xs text-accent-foreground">
+        <div className="flex max-w-sm items-start gap-2 rounded-xl border border-t1-blue-100 bg-accent/60 p-3 text-xs text-accent-foreground">
           <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
             <span className="font-medium">เลือกประเภทที่ถูกต้อง</span>
@@ -132,7 +132,7 @@ export function AddPersonTypePage() {
             <Link
               key={card.id}
               href={card.href}
-              className="group flex flex-col items-start gap-2 rounded-2xl border border-primary bg-card p-5 shadow-sm transition-colors hover:border-primary"
+              className="group flex flex-col items-start gap-2 rounded-2xl border border-t1-blue-200 bg-card p-5 shadow-sm transition-colors hover:border-primary"
             >
               {body}
               <ArrowRightIcon className="h-4 w-4 self-end text-primary transition-transform group-hover:translate-x-0.5" />
@@ -203,7 +203,7 @@ export function AddPersonTypePage() {
               <Link
                 key={action.label}
                 href={action.href}
-                className="flex items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-primary hover:bg-accent/50"
+                className="flex items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-t1-blue-300 hover:bg-accent/50"
               >
                 {body}
               </Link>

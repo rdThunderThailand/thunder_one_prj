@@ -121,7 +121,7 @@ export function PositionDetailPanel({ rows, selectedId, onClose }: PositionDetai
         <button
           type="button"
           title="ยังไม่เปิดใช้งาน"
-          className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-error"
+          className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-error/30 py-2 text-sm font-medium text-error"
         >
           ยกเลิกตำแหน่ง
         </button>

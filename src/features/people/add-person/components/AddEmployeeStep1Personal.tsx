@@ -211,7 +211,7 @@ export function AddEmployeeStep1Personal({
             <span className="text-[11px] text-t1-gray-400">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 2MB)</span>
           </div>
         </div>
-        <div className="rounded-2xl border border-primary bg-accent/50 p-5 text-xs text-accent-foreground">
+        <div className="rounded-2xl border border-t1-blue-100 bg-accent/50 p-5 text-xs text-accent-foreground">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
             <InfoIcon className="h-4 w-4" />
             คำแนะนำ

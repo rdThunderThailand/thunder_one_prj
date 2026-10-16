@@ -269,7 +269,7 @@ export function AddEmployeeStep2Employment({
                   ))}
                 </select>
               ) : (
-                <span className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-error">
+                <span className="rounded-lg border border-dashed border-error/30 px-3 py-2 text-sm text-error">
                   ไม่พบบทบาทที่ใช้ได้จาก Core
                 </span>
               )}
@@ -349,7 +349,7 @@ export function AddEmployeeStep2Employment({
           <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />
           <SummaryRow label="วันที่เริ่มงาน" value={startDate ? formatThaiDate(startDate) : ""} />
         </div>
-        <div className="rounded-2xl border border-primary bg-accent/50 p-5 text-xs text-accent-foreground">
+        <div className="rounded-2xl border border-t1-blue-100 bg-accent/50 p-5 text-xs text-accent-foreground">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
             <InfoIcon className="h-4 w-4" />
             คำแนะนำ

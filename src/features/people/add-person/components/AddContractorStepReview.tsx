@@ -134,7 +134,7 @@ export function AddContractorStepReview({
             <li>Onboarding (รอเริ่ม)</li>
           </ul>
         </div>
-        <div className="rounded-2xl border border-border bg-success-muted/50 p-5">
+        <div className="rounded-2xl border border-success/30 bg-success-muted/50 p-5">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-t1-green-700">
             <ShieldIcon className="h-4 w-4" />
             สถานะหลังสร้าง

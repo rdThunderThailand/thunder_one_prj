@@ -29,7 +29,7 @@ export function PositionsHeader() {
         </span>
         <span
           title="ยังไม่เปิดใช้งาน"
-          className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+          className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-t1-blue-300 px-4 py-2.5 text-sm font-medium text-primary-foreground"
         >
           <PlusIcon className="h-4 w-4" />
           เพิ่มตำแหน่งงาน

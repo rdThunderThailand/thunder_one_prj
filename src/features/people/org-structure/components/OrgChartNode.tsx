@@ -36,8 +36,8 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
         <div
           className={`flex min-w-[188px] items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${
             selected
-              ? "border-primary bg-accent"
-              : "border-border bg-card hover:border-primary"
+              ? "border-t1-blue-300 bg-accent"
+              : "border-border bg-card hover:border-t1-blue-200"
           }`}
         >
           <button type="button" onClick={() => onSelect(unitId)} className="flex min-w-0 flex-1 items-start gap-2.5">
@@ -83,7 +83,7 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
               setCollapsed((c) => !c);
             }}
             title={collapsed ? `ขยาย (${unit.childIds.length} หน่วยงานย่อย)` : "พับหน่วยงานย่อย"}
-            className="absolute -bottom-2.5 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:border-primary hover:text-primary"
+            className="absolute -bottom-2.5 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:border-t1-blue-300 hover:text-primary"
           >
             <ChevronDownIcon className={`h-3 w-3 transition-transform ${collapsed ? "-rotate-90" : ""}`} />
           </button>

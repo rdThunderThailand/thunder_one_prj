@@ -192,7 +192,7 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             <h3 className="text-sm font-semibold text-foreground">การดำเนินการ</h3>
             <Link
               href="/people/add/employee"
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-primary py-2 text-sm font-medium text-primary hover:bg-accent"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-t1-blue-200 py-2 text-sm font-medium text-primary hover:bg-accent"
             >
               <PlusIcon className="h-3.5 w-3.5" />
               เพิ่มคนในหน่วยงานนี้
@@ -222,7 +222,7 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             <button
               type="button"
               title="Not built yet"
-              className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-error"
+              className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-error/30 py-2 text-sm font-medium text-error"
             >
               ลบหน่วยงาน
             </button>

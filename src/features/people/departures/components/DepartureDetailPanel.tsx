@@ -141,7 +141,7 @@ export function DepartureDetailPanel({ selectedId, onClose }: DepartureDetailPan
             </span>
             <span
               title="Not built yet"
-              className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-medium text-primary-foreground"
+              className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-t1-blue-300 py-2 text-sm font-medium text-primary-foreground"
             >
               ดำเนินการขั้นตอนถัดไป
             </span>

@@ -8,7 +8,7 @@ export function KnowledgeNeedHelpCard() {
       <p className="text-sm text-muted-foreground">ยังหาคำตอบไม่เจอ? ติดต่อทีม HR ได้เลย</p>
       <span
         title="Not built yet"
-        className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-medium text-primary-foreground"
+        className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-t1-blue-300 py-2 text-sm font-medium text-primary-foreground"
       >
         <HeadsetIcon className="h-4 w-4" />
         ติดต่อ HR

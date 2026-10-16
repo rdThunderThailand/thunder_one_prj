@@ -216,7 +216,7 @@ export function AddContractorStep2Employment({
                   ))}
                 </select>
               ) : (
-                <span className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-error">
+                <span className="rounded-lg border border-dashed border-error/30 px-3 py-2 text-sm text-error">
                   ไม่พบบทบาทที่ใช้ได้จาก Core
                 </span>
               )}
