@@ -63,7 +63,7 @@ function ConfirmBody({
       </DialogHeader>
       <div className="flex flex-col gap-3 text-sm">
         {removedTargets.length > 0 && (
-          <p className="rounded-lg bg-warning-soft px-3 py-2 text-warning">
+          <p className="rounded-lg bg-warning-muted px-3 py-2 text-warning">
             Will remove {removedTargets.length} target{removedTargets.length > 1 ? "s" : ""}:{" "}
             {removedTargets.join(", ")}
           </p>
@@ -85,7 +85,7 @@ function ConfirmBody({
           </p>
         )}
         {conflicts.status === "done" && conflicts.list.length > 0 && (
-          <ul className="flex flex-col gap-1.5 rounded-lg bg-warning-soft px-3 py-2 text-warning">
+          <ul className="flex flex-col gap-1.5 rounded-lg bg-warning-muted px-3 py-2 text-warning">
             {conflicts.list.map((c) => (
               <li key={c.publication_id}>
                 Overlaps “{c.name}” ({c.priority})
@@ -99,7 +99,7 @@ function ConfirmBody({
         {publishError && (
           <p
             role="alert"
-            className="rounded-lg bg-danger-soft px-3 py-2 text-danger"
+            className="rounded-lg bg-error-muted px-3 py-2 text-error"
           >
             {publishError}
           </p>

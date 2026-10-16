@@ -27,7 +27,7 @@ export function Step({ n, title, hint, children }: { n: number; title: string; h
 }
 
 export function FieldError({ message }: { message?: string }) {
-  return message ? <p className="text-xs text-danger">{message}</p> : null;
+  return message ? <p className="text-xs text-error">{message}</p> : null;
 }
 
 export function TimezoneField({ value, disabled, onChange }: { value: string; disabled?: boolean; onChange: (timezone: string) => void }) {

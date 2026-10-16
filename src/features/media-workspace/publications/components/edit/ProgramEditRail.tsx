@@ -57,7 +57,7 @@ function StatusCard({
         </p>
       )}
       {unpublished && status !== "draft" && status !== "ended" && (
-        <p className="mt-3 rounded-lg bg-info-soft px-3 py-2 text-xs text-info">
+        <p className="mt-3 rounded-lg bg-info-muted px-3 py-2 text-xs text-info">
           Changes will be applied after publishing. Current playback will continue until the new
           schedule takes effect.
         </p>

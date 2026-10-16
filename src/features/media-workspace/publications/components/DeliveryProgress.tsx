@@ -182,7 +182,7 @@ export function DeliveryProgress({
           <Button variant="secondary" onClick={handleRetryAll} disabled={retrying}>
             {retrying ? "กำลัง Retry…" : "Retry Failed/Offline"}
           </Button>
-          {retryError && <span className="text-xs text-danger">{retryError}</span>}
+          {retryError && <span className="text-xs text-error">{retryError}</span>}
         </div>
       )}
 

@@ -10,7 +10,7 @@ export function RevisionConflictCard({
   onReload: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-warning/30 bg-warning-soft p-4">
+    <div className="rounded-lg border border-warning/30 bg-warning-muted p-4">
       <p className="text-sm text-warning">{message}</p>
       <Button className="mt-2" variant="outline" onClick={onReload}>
         โหลดใหม่

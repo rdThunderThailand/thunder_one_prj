@@ -98,7 +98,7 @@ export function PlaylistEditorHeader({
                   type="button"
                   onClick={commitName}
                   aria-label="ยืนยันชื่อ Playlist"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-accent"
                 >
                   <CheckIcon className="h-5 w-5" />
                 </button>
@@ -124,8 +124,8 @@ export function PlaylistEditorHeader({
             <span
               className={`rounded-full px-2 py-0.5 font-medium ${
                 isUnsaved
-                  ? "bg-warning-soft text-warning"
-                  : "bg-success-soft text-success"
+                  ? "bg-warning-muted text-warning"
+                  : "bg-success-muted text-success"
               }`}
             >
               {savedLabel}

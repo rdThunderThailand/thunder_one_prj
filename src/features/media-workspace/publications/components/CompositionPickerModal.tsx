@@ -119,7 +119,7 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
       <div className="flex min-w-0 items-center gap-3">
         <span className="shrink-0 text-xs font-medium text-muted-foreground">{stagedId ? "1 item selected" : "0 items selected"}</span>
         {selected && (
-          <span className="inline-flex max-w-64 items-center gap-2 rounded-lg border border-primary/30 bg-primary-soft px-2 py-1 text-xs text-muted-foreground">
+          <span className="inline-flex max-w-64 items-center gap-2 rounded-lg border border-primary/30 bg-accent px-2 py-1 text-xs text-muted-foreground">
             <span className="truncate">{selected.name}</span>
             <button type="button" onClick={() => setStagedId(null)} aria-label={`Remove ${selected.name}`} className="text-muted-foreground hover:text-foreground">×</button>
           </span>
@@ -127,7 +127,7 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
       </div>
       <div className="flex shrink-0 gap-2">
         <button type="button" onClick={onClose} className="rounded-lg border border-border px-5 py-2 text-sm font-medium text-muted-foreground hover:bg-muted">Cancel</button>
-        <button type="button" disabled={!stagedId} onClick={() => stagedId && onSelect(stagedId)} className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary disabled:opacity-50">Select →</button>
+        <button type="button" disabled={!stagedId} onClick={() => stagedId && onSelect(stagedId)} className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary disabled:opacity-50">Select →</button>
       </div>
     </div>
   );
@@ -215,8 +215,8 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
                 <option value="name">Sort by: Name</option>
               </select>
               <div className="flex rounded-lg border border-border p-0.5">
-                <button type="button" onClick={() => setView("grid")} aria-label="Grid view" className={`rounded p-1.5 ${view === "grid" ? "bg-primary-soft text-primary" : "text-muted-foreground"}`}><GridIcon /></button>
-                <button type="button" onClick={() => setView("list")} aria-label="List view" className={`rounded p-1.5 ${view === "list" ? "bg-primary-soft text-primary" : "text-muted-foreground"}`}><ListIcon /></button>
+                <button type="button" onClick={() => setView("grid")} aria-label="Grid view" className={`rounded p-1.5 ${view === "grid" ? "bg-accent text-primary" : "text-muted-foreground"}`}><GridIcon /></button>
+                <button type="button" onClick={() => setView("list")} aria-label="List view" className={`rounded p-1.5 ${view === "list" ? "bg-accent text-primary" : "text-muted-foreground"}`}><ListIcon /></button>
               </div>
             </div>
           </div>
@@ -329,16 +329,16 @@ function LayoutRow({ item, selected, previews, onSelect }: CardProps) {
     <button
       type="button"
       onClick={onSelect}
-      className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${selected ? "border-primary bg-primary-soft ring-1 ring-primary/30" : "border-border hover:border-border hover:bg-muted"}`}
+      className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${selected ? "border-primary bg-accent ring-1 ring-primary/30" : "border-border hover:border-border hover:bg-muted"}`}
     >
-      <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${selected ? "border-primary bg-primary text-white" : "border-border bg-card"}`}>
+      <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
         {selected ? "✓" : ""}
       </span>
       <CompositionLibraryPreview zones={item.previewZones} referenceResolution={item.referenceResolution} previews={previews} className="h-12 w-20 rounded-lg" />
       <span className="min-w-0">
         <span className="flex items-center gap-2">
           <span className="truncate text-sm font-semibold text-foreground">{item.name}</span>
-          {item.tags?.[0] && <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-600">{item.tags[0].name}</span>}
+          {item.tags?.[0] && <span className="shrink-0 rounded-full bg-t1-purple-50 px-2 py-0.5 text-[10px] font-medium text-t1-purple-700">{item.tags[0].name}</span>}
         </span>
         <span className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted-foreground">
           <span>{compositionLayoutDisplayName(item)}</span>

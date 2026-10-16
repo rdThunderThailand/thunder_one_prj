@@ -171,7 +171,7 @@ export function PlaylistPropertiesPane({
             <button
               type="button"
               onClick={onItemRemove}
-              className="mt-2 rounded-lg border border-danger/30 py-2 text-xs font-medium text-danger hover:bg-danger-soft"
+              className="mt-2 rounded-lg border border-error/30 py-2 text-xs font-medium text-error hover:bg-error-muted"
             >
               Remove from Playlist
             </button>

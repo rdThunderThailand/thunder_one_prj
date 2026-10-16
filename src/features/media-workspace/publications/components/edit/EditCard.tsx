@@ -22,13 +22,13 @@ export function EditCard({
   return (
     <section className="rounded-xl border border-border bg-card p-4 shadow-panel">
       <header className="mb-4 flex items-start gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent text-primary">
           <Icon className="h-4 w-4" strokeWidth={1.8} />
         </span>
         <div>
           <h2 className="text-sm font-bold text-foreground">
             {step}
-            {isRequired && <span className="text-danger"> *</span>}
+            {isRequired && <span className="text-error"> *</span>}
           </h2>
           {hint && <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>}
         </div>
@@ -36,7 +36,7 @@ export function EditCard({
       {error && (
         <p
           role="alert"
-          className="mb-3 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger"
+          className="mb-3 rounded-lg bg-error-muted px-3 py-2 text-xs text-error"
         >
           {error}
         </p>

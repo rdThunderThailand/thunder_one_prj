@@ -114,7 +114,7 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
         title={
           <span className="inline-flex items-center gap-2">
             Edit Channel
-            <span className="rounded-full bg-primary-soft px-2.5 py-1 text-sm font-medium text-primary">
+            <span className="rounded-full bg-accent px-2.5 py-1 text-sm font-medium text-primary">
               {channel?.display_config?.mode === "multi" ? "Multi-screen" : "Single-screen"}
             </span>
           </span>
@@ -132,7 +132,7 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
         <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-4">
             {saveError && (
-              <p role="alert" className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+              <p role="alert" className="rounded-lg border border-error/30 bg-error-muted px-3 py-2 text-sm text-error">
                 {saveError}
               </p>
             )}

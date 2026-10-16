@@ -21,7 +21,7 @@ export function TemplateReferenceRail({
         onClick={onStartBlank}
         aria-pressed={selectedId === null}
         className={`flex w-36 flex-col gap-2 rounded-lg border border-dashed p-3 text-left transition-colors ${
-          selectedId === null ? "border-primary bg-primary-soft" : "border-border hover:border-primary/30"
+          selectedId === null ? "border-primary bg-accent" : "border-border hover:border-primary/30"
         }`}
       >
         <span className="flex h-20 items-center justify-center rounded border border-border text-xs text-muted-foreground">Blank</span>
@@ -37,7 +37,7 @@ export function TemplateReferenceRail({
             aria-pressed={selected}
             className={`flex w-36 flex-col gap-2 rounded-lg border p-3 text-left transition-colors ${
               selected
-                ? "border-primary bg-primary-soft"
+                ? "border-primary bg-accent"
                 : "border-border hover:border-primary/30"
             }`}
           >

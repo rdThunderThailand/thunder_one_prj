@@ -12,7 +12,7 @@ import type { LayoutZone } from "../types";
 
 // Zone fill cycles by position — role is gone (ADR 0049 §2), so colour is purely for telling
 // adjacent Zones apart, not for meaning.
-const ZONE_FILL = ["fill-violet-500/70", "fill-sky-500/70", "fill-amber-500/70", "fill-zinc-400/70"];
+const ZONE_FILL = ["fill-t1-purple-500/70", "fill-t1-blue-400/70", "fill-t1-amber-500/70", "fill-t1-gray-400/70"];
 
 interface LayoutWireframeProps {
   zones: LayoutZone[];
@@ -67,8 +67,8 @@ export function LayoutWireframe({
               width={zone.width}
               height={zone.height}
               className={programStyle
-                ? "fill-transparent stroke-white/70 stroke-[0.5]"
-                : `${ZONE_FILL[index % ZONE_FILL.length]} ${isSelected ? "stroke-primary stroke-[1.5]" : "stroke-white/70 stroke-[0.5]"}`}
+                ? "fill-transparent stroke-t1-white/70 stroke-[0.5]"
+                : `${ZONE_FILL[index % ZONE_FILL.length]} ${isSelected ? "stroke-primary stroke-[1.5]" : "stroke-t1-white/70 stroke-[0.5]"}`}
             />
             {shouldShowLabels && (
               <text
@@ -76,7 +76,7 @@ export function LayoutWireframe({
                 y={zone.y + zone.height / 2}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="pointer-events-none fill-white text-[4px] font-semibold"
+                className="pointer-events-none fill-t1-white text-[4px] font-semibold"
               >
                 {zone.name}
               </text>

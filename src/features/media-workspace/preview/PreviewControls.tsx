@@ -67,7 +67,7 @@ export function PreviewControls({
     >
       <div ref={bodyRef} className="@container/preview-controls min-w-0">
         {conflictCount > 0 && (
-          <p className="mb-3 rounded-md border border-warning/30 bg-warning-soft px-2.5 py-2 text-xs text-warning" role="status">
+          <p className="mb-3 rounded-md border border-warning/30 bg-warning-muted px-2.5 py-2 text-xs text-warning" role="status">
             Preview shows this draft alone. {conflictCount} other publication{conflictCount === 1 ? "" : "s"} may merge on the same screen.
           </p>
         )}

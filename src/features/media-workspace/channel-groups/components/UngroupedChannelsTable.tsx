@@ -72,7 +72,7 @@ function AddToGroupMenu({
               </button>
             ))
           )}
-          {error && <p className="px-3 py-2 text-xs text-danger">{error}</p>}
+          {error && <p className="px-3 py-2 text-xs text-error">{error}</p>}
         </PopoverContent>
       </Popover>
     </span>
@@ -114,7 +114,7 @@ export function UngroupedChannelsTable({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3 rounded-lg bg-primary-soft px-4 py-3 text-sm">
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-accent px-4 py-3 text-sm">
         <span className="flex items-center gap-2 text-primary">
           <InfoIcon className="h-4 w-4 shrink-0" />
           {selected.size > 0
@@ -161,7 +161,7 @@ export function UngroupedChannelsTable({
                     }
                   }}
                   className={`cursor-pointer border-b border-border last:border-0 hover:bg-muted ${
-                    selectedChannelId === channel.id ? "bg-primary-soft" : ""
+                    selectedChannelId === channel.id ? "bg-accent" : ""
                   }`}
                 >
                   <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>

@@ -12,7 +12,7 @@ export function GeometryMismatchWarning({
   onConfirmChange: (confirmed: boolean) => void;
 }) {
   return (
-    <div role="alert" className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-foreground">
+    <div role="alert" className="rounded-lg border border-warning/30 bg-warning-muted p-3 text-sm text-foreground">
       <p className="font-semibold text-warning">Player display does not match this Channel</p>
       <p className="mt-1">{warning}</p>
       <div className="mt-3 flex items-start gap-2">

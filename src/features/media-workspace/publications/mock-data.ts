@@ -32,7 +32,7 @@ export const priorities: PriorityOption[] = [
   { id: "low", label: "Low", color: "bg-border" },
   { id: "normal", label: "Normal", color: "bg-success" },
   { id: "high", label: "High", color: "bg-warning" },
-  { id: "urgent", label: "Urgent", color: "bg-danger" },
+  { id: "urgent", label: "Urgent", color: "bg-error" },
 ];
 
 export const wizardSteps = [

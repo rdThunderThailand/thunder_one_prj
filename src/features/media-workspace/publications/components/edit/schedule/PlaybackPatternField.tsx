@@ -104,10 +104,10 @@ export function PlaybackPatternField({
             );
           })}
         </div>
-        {failed && <p className="text-xs text-danger">Could not load the Playlist&apos;s playback settings.</p>}
+        {failed && <p className="text-xs text-error">Could not load the Playlist&apos;s playback settings.</p>}
         {isChanged && note}
         {isChanged && !note && (
-          <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
+          <p className="rounded-md bg-warning-muted px-3 py-2 text-xs text-warning">
             This changes the Playlist itself
             {programCount !== null && ` — used by ${programCount} active or scheduled Program${programCount === 1 ? "" : "s"}`}.
             It is saved when you apply; other Programs pick it up on their next Publish Changes.

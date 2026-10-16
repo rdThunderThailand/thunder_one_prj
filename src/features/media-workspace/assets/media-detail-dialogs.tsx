@@ -74,7 +74,7 @@ export function MoveToFolderDialog({
                   onClick={() => setDestination(option.id)}
                   className={cn(
                     "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[11px] font-medium",
-                    destination === option.id ? "bg-primary-soft text-primary" : "hover:bg-muted",
+                    destination === option.id ? "bg-accent text-primary" : "hover:bg-muted",
                   )}
                 >
                   <ChevronRight className="h-3 w-3 text-muted-foreground" />

@@ -30,7 +30,7 @@ function EditorSection({
   return (
     <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
       <div className="flex items-start gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-white">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
           {number}
         </span>
         <div>
@@ -69,20 +69,20 @@ export function ChannelEditorForm({
     <div className="space-y-4">
       <EditorSection number={1} title="Basic Information" subtitle="Tell us about this channel.">
         <div className="grid gap-4 md:grid-cols-[128px_minmax(0,1fr)] md:items-center">
-          <label htmlFor="channel-name" className="text-sm font-medium text-muted-foreground">Channel Name <span className="text-danger">*</span></label>
+          <label htmlFor="channel-name" className="text-sm font-medium text-muted-foreground">Channel Name <span className="text-error">*</span></label>
           <div>
             <input
               id="channel-name"
               value={draft.name}
               onChange={(event) => onChange({ ...draft, name: event.target.value })}
-              className={`${fieldClasses} ${nameError ? "border-danger focus:border-danger" : ""}`}
+              className={`${fieldClasses} ${nameError ? "border-error focus:border-error" : ""}`}
               aria-invalid={Boolean(nameError)}
               aria-describedby={nameError ? "channel-name-error" : undefined}
             />
-            {nameError && <p id="channel-name-error" className="mt-1 text-xs text-danger">{nameError}</p>}
+            {nameError && <p id="channel-name-error" className="mt-1 text-xs text-error">{nameError}</p>}
           </div>
 
-          <label htmlFor="channel-output-kind" className="text-sm font-medium text-muted-foreground">Type <span className="text-danger">*</span></label>
+          <label htmlFor="channel-output-kind" className="text-sm font-medium text-muted-foreground">Type <span className="text-error">*</span></label>
           <select
             id="channel-output-kind"
             value={draft.outputKind}
@@ -136,7 +136,7 @@ export function ChannelEditorForm({
                   onClick={() => onChange(withAutoMappedScreens({ ...draft, displayMode: mode }))}
                   className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
                     selected
-                      ? "border-primary bg-primary-soft text-primary"
+                      ? "border-primary bg-accent text-primary"
                       : "border-border text-muted-foreground hover:border-border"
                   }`}
                 >

@@ -108,7 +108,7 @@ export function PlaylistItemsPane({
                   setDropId(null);
                 }}
                 className={`mb-1 flex cursor-grab items-center gap-2 rounded-lg p-2 transition-colors active:cursor-grabbing ${
-                  isSelected ? "bg-primary-soft" : "hover:bg-muted hover:shadow-sm"
+                  isSelected ? "bg-accent" : "hover:bg-muted hover:shadow-sm"
                 } ${
                   dropId === item.mediaAssetId && draggedId !== item.mediaAssetId
                     ? "ring-2 ring-primary/30"
@@ -148,7 +148,7 @@ export function PlaylistItemsPane({
       <button
         type="button"
         onClick={onAddItem}
-        className="mt-3 flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary/30 py-2 text-sm font-medium text-primary hover:bg-primary-soft"
+        className="mt-3 flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary/30 py-2 text-sm font-medium text-primary hover:bg-accent"
       >
         <PlusIcon className="h-4 w-4" /> Add Item
       </button>
@@ -209,7 +209,7 @@ function ItemActions({
             <ChevronDownIcon className="h-4 w-4" /> Move Down
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-danger focus:text-danger"
+            className="text-error focus:text-error"
             onSelect={onRemove}
           >
             <TrashIcon className="h-4 w-4" /> Remove from Playlist

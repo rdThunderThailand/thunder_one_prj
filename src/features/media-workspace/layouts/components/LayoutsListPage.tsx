@@ -175,10 +175,10 @@ export function LayoutsListPage() {
           <LibraryPagination page={currentPage} totalPages={totalPages} total={sorted.length} pageSize={perPage} onPage={setPage} itemLabel="templates" perPageOptions={[10, 25, 50]} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
         )}
       >
-        {actionError && <p className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {actionError && <p className="mb-3 text-[10px] text-error">{actionError}</p>}
         {error && layouts !== null && (
-          <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-3">
-            <p className="text-[10px] text-danger">{error.message}</p>
+          <div className="mb-3 rounded-lg border border-error/30 bg-error-muted p-3">
+            <p className="text-[10px] text-error">{error.message}</p>
           </div>
         )}
         {layouts === null && !error ? (
@@ -205,7 +205,7 @@ export function LayoutsListPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
             <AlertDialogAction asChild>
-              <Button className="bg-danger hover:bg-danger" onClick={confirmArchive}>Archive</Button>
+              <Button className="bg-error hover:bg-error" onClick={confirmArchive}>Archive</Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

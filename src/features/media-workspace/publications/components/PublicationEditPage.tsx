@@ -172,7 +172,7 @@ export function PublicationEditPage({ id }: { id: string }) {
       {(pageError || actionError) && (
         <p
           role="alert"
-          className="rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger"
+          className="rounded-lg bg-error-muted px-4 py-3 text-sm text-error"
         >
           {pageError ?? actionError}
         </p>

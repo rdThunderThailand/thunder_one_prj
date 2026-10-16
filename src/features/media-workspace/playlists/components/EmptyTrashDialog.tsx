@@ -20,7 +20,7 @@ export function EmptyTrashDialog({ open, busy, targets, locked, onOpenChange, on
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
-          <AlertDialogAction disabled={busy || targets === 0} onClick={(event) => { event.preventDefault(); void onConfirm(); }} className="bg-danger hover:bg-danger">
+          <AlertDialogAction disabled={busy || targets === 0} onClick={(event) => { event.preventDefault(); void onConfirm(); }} className="bg-error hover:bg-error">
             {busy ? "กำลังลบ…" : "Empty Trash"}
           </AlertDialogAction>
         </AlertDialogFooter>

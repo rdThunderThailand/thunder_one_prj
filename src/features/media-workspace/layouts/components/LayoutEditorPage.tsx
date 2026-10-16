@@ -161,7 +161,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   if (loadError) {
     return (
       <div className="rounded-lg border border-border bg-card p-6">
-        <p className="text-sm text-danger">{loadError.message}</p>
+        <p className="text-sm text-error">{loadError.message}</p>
         <Button className="mt-4" variant="outline" onClick={() => router.push("/media-workspace/layouts/templates")}>
           กลับไป Templates
         </Button>
@@ -207,13 +207,13 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       )}
 
       {saveError && (
-        <div className="shrink-0 border-b border-danger/30 bg-danger-soft px-4 py-2">
-          <p className="text-sm text-danger">{saveError}</p>
+        <div className="shrink-0 border-b border-error/30 bg-error-muted px-4 py-2">
+          <p className="text-sm text-error">{saveError}</p>
         </div>
       )}
 
       {usageCount > 1 && (
-        <div className="shrink-0 border-b border-warning/30 bg-warning-soft px-4 py-2">
+        <div className="shrink-0 border-b border-warning/30 bg-warning-muted px-4 py-2">
           <p className="text-sm text-warning">Change-all mode: this Template is used by {usageCount} Layouts.</p>
         </div>
       )}

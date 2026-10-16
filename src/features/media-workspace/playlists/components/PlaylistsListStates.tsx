@@ -21,8 +21,8 @@ export function PlaylistsSummary({ stats, items, duration }: { stats: { total: n
       label="Playlist summary"
       cards={[
         { label: "Total Playlists", value: stats.total, detail: "All playlists", icon: ListMusic },
-        { label: "Active", value: stats.active, detail: "Ready to publish", icon: CheckCircle2, tone: "text-success bg-success-soft" },
-        { label: "Scheduled", value: stats.draft, detail: "Not yet ready", icon: FileEdit, tone: "text-warning bg-warning-soft" },
+        { label: "Active", value: stats.active, detail: "Ready to publish", icon: CheckCircle2, tone: "text-success bg-success-muted" },
+        { label: "Scheduled", value: stats.draft, detail: "Not yet ready", icon: FileEdit, tone: "text-warning bg-warning-muted" },
         { label: "Inactive", value: stats.inactive, detail: "Paused", icon: PauseCircle, tone: "text-muted-foreground bg-muted" },
         { label: "Total Items", value: items, detail: "Across playlists", icon: Layers3 },
         { label: "Total Duration", value: duration, detail: "Across playlists", icon: Clock3 },

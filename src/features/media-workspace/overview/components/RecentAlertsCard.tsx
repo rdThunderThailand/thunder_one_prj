@@ -21,7 +21,7 @@ export function RecentAlertsCard({ channels, loadFailed }: { channels: ChannelLi
           <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
-      {loadFailed ? <p className="py-8 text-center text-xs text-danger">Could not load channel health</p> : channels === null ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-9 w-full" />)}</div> : attention.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center"><CheckCircle2 className="h-6 w-6 text-success" /><p className="text-xs font-medium text-foreground">All devices are healthy</p></div> : (
+      {loadFailed ? <p className="py-8 text-center text-xs text-error">Could not load channel health</p> : channels === null ? <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-9 w-full" />)}</div> : attention.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center"><CheckCircle2 className="h-6 w-6 text-success" /><p className="text-xs font-medium text-foreground">All devices are healthy</p></div> : (
         <ul className="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-hidden">
           {attention.map(({ channel, device }) => {
             const isOffline = device.health === "offline";
@@ -34,7 +34,7 @@ export function RecentAlertsCard({ channels, loadFailed }: { channels: ChannelLi
                   aria-label={`Open ${channel.name}`}
                   className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md py-2 transition-colors hover:bg-muted/60"
                 >
-                  <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${isOffline ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning"}`}>
+                  <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${isOffline ? "bg-error-muted text-error" : "bg-warning-muted text-warning"}`}>
                     <Icon className="h-3.5 w-3.5" />
                   </span>
                   <span className="min-w-0">

@@ -98,7 +98,7 @@ function PlaylistTimelineStrip({ items, assets, schedule, frame, onSeek }: {
               onClick={() => onSeek(schedule.starts[schedule.order.indexOf(index)] ?? 0)}
               className="w-36 shrink-0 text-left"
             >
-              <span className={`relative block aspect-video overflow-hidden rounded-lg border-2 bg-black ${active ? "border-primary" : "border-transparent hover:border-primary-foreground/30"}`}>
+              <span className={`relative block aspect-video overflow-hidden rounded-lg border-2 bg-t1-black ${active ? "border-primary" : "border-transparent hover:border-primary-foreground/30"}`}>
                 <MediaThumb url={previews.urls[item.mediaAssetId]} kind={asset?.kind} alt={item.label ?? ""} className="h-full w-full rounded-none" />
                 <span className="absolute left-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded bg-overlay px-1 text-[10px] font-bold text-primary-foreground">{index + 1}</span>
               </span>
