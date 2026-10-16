@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api/api-error";
 import { formatThaiDate } from "@/lib/thai-date";
 import {
   approveAuroraMigrationRequest,
+  setAuroraMigrationRequestInvited,
   type AuroraApprovalRole,
   type AuroraMigrationStatus,
   type CoreAuroraMigrationRequest,
@@ -48,6 +49,16 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการอนุมัติ";
 }
 
+// The invite flag never touches LINE OA, so approve's 409/5xx wording doesn't apply.
+function inviteErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.status === 401) return "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่";
+    if (err.status === 403) return "บัญชีนี้ไม่มีสิทธิ์แก้สถานะการ invite";
+    if (err.status === 404) return "ไม่พบคำขอนี้แล้ว กำลังโหลดรายการใหม่";
+  }
+  return "บันทึกสถานะการ invite ไม่สำเร็จ ลองอีกครั้ง";
+}
+
 // created_at is UTC — same Bangkok-date conversion LeadApprovalPage uses.
 function bangkokIsoDate(timestamp: string): string {
   return new Date(timestamp).toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
@@ -82,6 +93,7 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
   const [rows, setRows] = useState(requests);
   const [roleById, setRoleById] = useState<Record<string, AuroraApprovalRole>>({});
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [invitingId, setInvitingId] = useState<string | null>(null);
   // router.refresh() (on a 404/409) re-renders the server route with fresh
   // `requests`; useState ignores new initial values, so re-seed here.
   const [seenRequests, setSeenRequests] = useState(requests);
@@ -104,6 +116,20 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
     }
   }
 
+  async function setInvited(row: CoreAuroraMigrationRequest, invited: boolean) {
+    setInvitingId(row.id);
+    try {
+      const updated = await setAuroraMigrationRequestInvited(row.id, invited);
+      setRows((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      toast.success(invited ? `บันทึกว่า invite ${updated.reference_no} แล้ว` : `บันทึกว่ายังไม่ invite ${updated.reference_no}`);
+    } catch (err) {
+      toast.error(inviteErrorMessage(err));
+      if (err instanceof ApiError && err.status === 404) router.refresh();
+    } finally {
+      setInvitingId(null);
+    }
+  }
+
   return (
     <Card className="p-4">
       <div>
@@ -115,7 +141,7 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
         <p className="py-10 text-center text-sm text-zinc-400">ยังไม่มีคำขอย้ายระบบ Aurora เข้ามา</p>
       ) : (
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-left text-sm">
+          <table className="w-full min-w-[1220px] text-left text-sm">
             <thead>
               <tr className="border-b border-zinc-100 text-xs text-zinc-400">
                 <th className="py-2 pr-3 font-medium">เลขอ้างอิง</th>
@@ -125,6 +151,7 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
                 <th className="py-2 pr-3 font-medium">ไซต์</th>
                 <th className="py-2 pr-3 font-medium">วันที่ส่งคำขอ</th>
                 <th className="py-2 pr-3 font-medium">สถานะ</th>
+                <th className="py-2 pr-3 font-medium">การ invite</th>
                 <th className="py-2 font-medium">การดำเนินการ</th>
               </tr>
             </thead>
@@ -170,6 +197,27 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
                     ) : null}
                     {row.reviewer ? (
                       <p className="text-xs text-zinc-400">โดย {row.reviewer.name ?? row.reviewer.email ?? "-"}</p>
+                    ) : null}
+                  </td>
+                  <td className="py-3 pr-3">
+                    <select
+                      value={row.invited_at ? "INVITED" : "NOT_INVITED"}
+                      disabled={invitingId === row.id}
+                      onChange={(event) => setInvited(row, event.target.value === "INVITED")}
+                      aria-label={`สถานะการ invite ของ ${row.reference_no}`}
+                      className={`rounded-lg border px-2 py-1.5 text-xs font-medium focus:border-blue-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                        row.invited_at ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                      }`}
+                    >
+                      <option value="NOT_INVITED">
+                        ยังไม่ invite
+                      </option>
+                      <option value="INVITED">
+                        invite แล้ว
+                      </option>
+                    </select>
+                    {row.invited_at ? (
+                      <p className="mt-1 text-xs text-zinc-400">{formatThaiDate(bangkokIsoDate(row.invited_at))}</p>
                     ) : null}
                   </td>
                   <td className="py-3">
