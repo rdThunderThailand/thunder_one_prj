@@ -43,7 +43,7 @@ export function Pagination({
   onPerPageChange: (perPage: number) => void;
 }) {
   const arrow =
-    "flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground disabled:opacity-40 hover:bg-muted";
+    "flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground disabled:opacity-40 hover:bg-t1-gray-50";
 
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -76,7 +76,7 @@ export function Pagination({
               className={`h-8 min-w-8 rounded-lg px-2 ${
                 n === page
                   ? "bg-primary text-primary-foreground"
-                  : "border border-border text-muted-foreground hover:bg-muted"
+                  : "border border-border text-muted-foreground hover:bg-t1-gray-50"
               }`}
             >
               {n}
