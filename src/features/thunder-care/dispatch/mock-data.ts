@@ -65,10 +65,10 @@ export interface WorkStatusSlice {
 }
 
 export const workStatusBreakdown: WorkStatusSlice[] = [
-  { label: "รอจัดสรร", value: 18, color: "#f59e0b" },
-  { label: "กำลังดำเนินการ", value: 23, color: "#3b82f6" },
-  { label: "เสร็จแล้ว", value: 12, color: "#10b981" },
-  { label: "ยกเลิก", value: 2, color: "#a1a1aa" },
+  { label: "รอจัดสรร", value: 18, color: "var(--color-warning)" },
+  { label: "กำลังดำเนินการ", value: 23, color: "var(--color-t1-blue-400)" },
+  { label: "เสร็จแล้ว", value: 12, color: "var(--color-success)" },
+  { label: "ยกเลิก", value: 2, color: "var(--color-t1-gray-400)" },
 ];
 
 export interface SlaRiskSummary {
