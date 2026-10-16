@@ -10,7 +10,7 @@ import type { Issue } from "../types";
 export function ResolvedIssuesList({ issues }: { issues: Issue[] }) {
   if (issues.length === 0) {
     return (
-      <Card className="p-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <Card className="p-6 text-sm text-muted-foreground">
         Nothing resolved yet.
       </Card>
     );
@@ -18,22 +18,22 @@ export function ResolvedIssuesList({ issues }: { issues: Issue[] }) {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+      <h2 className="mb-3 text-sm font-semibold text-foreground">
         Recently Resolved
       </h2>
-      <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-900">
+      <ul className="flex flex-col divide-y divide-border">
         {issues.map((issue) => (
           <li key={issue.id} className="flex items-center gap-3 py-2.5">
-            <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-500" />
+            <CheckCircleIcon className="h-4 w-4 shrink-0 text-success" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
+              <p className="truncate text-sm font-medium text-foreground">
                 {issue.assetTag}
               </p>
-              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="truncate text-xs text-muted-foreground">
                 {issue.description}
               </p>
             </div>
-            <span className="shrink-0 text-xs text-zinc-400">{issue.resolvedAt}</span>
+            <span className="shrink-0 text-xs text-t1-gray-400">{issue.resolvedAt}</span>
           </li>
         ))}
       </ul>
