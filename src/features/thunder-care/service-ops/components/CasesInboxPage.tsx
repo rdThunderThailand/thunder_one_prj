@@ -209,7 +209,7 @@ export function CasesInboxPage() {
                     <tr
                       key={row.id}
                       onClick={() => setSelectedId(row.id)}
-                      className={`cursor-pointer ${selectedId === row.id ? "bg-accent/60" : "hover:bg-muted"}`}
+                      className={`cursor-pointer ${selectedId === row.id ? "bg-accent/60" : "hover:bg-t1-gray-50"}`}
                     >
                       <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
                         <input type="checkbox" className="rounded border-border" disabled title="ยังไม่เปิดใช้งาน" />

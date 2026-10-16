@@ -298,7 +298,7 @@ function CaseListItem({
       disabled={dispatched}
       className={`flex w-full flex-col gap-1 rounded-xl border p-3 text-left transition ${
         dispatched
-          ? "cursor-not-allowed border-border bg-muted opacity-60"
+          ? "cursor-not-allowed border-border bg-t1-gray-50 opacity-60"
           : active
             ? "border-t1-blue-300 bg-accent/50"
             : "border-border hover:border-t1-gray-300"

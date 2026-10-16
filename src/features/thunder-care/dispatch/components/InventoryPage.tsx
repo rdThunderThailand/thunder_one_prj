@@ -225,7 +225,7 @@ export function InventoryPage() {
                   <tr
                     key={item.code}
                     onClick={() => setSelectedCode(item.code)}
-                    className={`cursor-pointer ${selectedCode === item.code ? "bg-accent/60" : "hover:bg-muted"}`}
+                    className={`cursor-pointer ${selectedCode === item.code ? "bg-accent/60" : "hover:bg-t1-gray-50"}`}
                   >
                     <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" className="rounded border-border" disabled title="ยังไม่เปิดใช้งาน" />

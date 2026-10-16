@@ -95,7 +95,7 @@ function TrackingTable({
             <tr
               key={row.id}
               onClick={() => onSelect(row.id)}
-              className={`cursor-pointer ${selectedId === row.id ? "bg-accent/60" : "hover:bg-muted"}`}
+              className={`cursor-pointer ${selectedId === row.id ? "bg-accent/60" : "hover:bg-t1-gray-50"}`}
             >
               <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
                 <input type="checkbox" className="rounded border-border" disabled title="ยังไม่เปิดใช้งาน" />
@@ -169,7 +169,7 @@ function TrackingDetailPanel({ row }: { row: TrackingRow }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg bg-muted p-3">
+      <div className="flex items-center justify-between rounded-lg bg-t1-gray-50 p-3">
         <div className="flex items-center gap-2">
           <Avatar name={row.assignee.name} size={28} />
           <div className="min-w-0">

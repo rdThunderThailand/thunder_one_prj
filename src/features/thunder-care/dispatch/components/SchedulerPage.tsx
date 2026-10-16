@@ -69,7 +69,7 @@ export function SchedulerPage() {
               type="button"
               onClick={() => setView(key)}
               className={`px-3 py-1.5 text-sm font-medium first:rounded-l-lg last:rounded-r-lg ${
-                view === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                view === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-t1-gray-50"
               }`}
             >
               {key === "day" ? "วัน" : key === "week" ? "สัปดาห์" : "เดือน"}

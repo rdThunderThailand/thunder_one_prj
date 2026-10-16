@@ -119,7 +119,7 @@ function DetailPanel({ row }: { row: InProgressRow }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg bg-muted p-3">
+      <div className="flex items-center justify-between rounded-lg bg-t1-gray-50 p-3">
         <span className="text-sm font-medium text-foreground">{row.assignee}</span>
         <PhoneIcon className="h-4 w-4 text-t1-gray-400" />
       </div>
@@ -205,7 +205,7 @@ export function InProgressPage() {
                   <tr
                     key={row.woId}
                     onClick={() => setSelectedId(row.woId)}
-                    className={`cursor-pointer ${selectedId === row.woId ? "bg-accent/60" : "hover:bg-muted"}`}
+                    className={`cursor-pointer ${selectedId === row.woId ? "bg-accent/60" : "hover:bg-t1-gray-50"}`}
                   >
                     <td className="px-2 py-2">
                       <p className="font-medium text-primary">{row.woId}</p>
