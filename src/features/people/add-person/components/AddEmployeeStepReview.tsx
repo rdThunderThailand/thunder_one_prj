@@ -62,7 +62,7 @@ export function AddEmployeeStepReview({
       <p className="text-xs text-t1-gray-400">ตรวจสอบข้อมูลก่อนเพิ่มพนักงานใหม่เข้าสู่องค์กร</p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl bg-muted p-4">
+        <div className="rounded-xl bg-t1-gray-50 p-4">
           <p className="mb-1 text-xs font-semibold text-t1-gray-400">ข้อมูลส่วนบุคคล</p>
           <SummaryRow label="ชื่อ-นามสกุล" value={`${titlePrefix} ${fullName}`} />
           <SummaryRow label="ชื่อ (อังกฤษ)" value={`${firstNameEn} ${lastNameEn}`.trim()} />
@@ -72,7 +72,7 @@ export function AddEmployeeStepReview({
           <SummaryRow label="อีเมล" value={email} />
           <SummaryRow label="เบอร์โทรศัพท์" value={phone} />
         </div>
-        <div className="rounded-xl bg-muted p-4">
+        <div className="rounded-xl bg-t1-gray-50 p-4">
           <p className="mb-1 text-xs font-semibold text-t1-gray-400">การจ้างงานและตำแหน่ง</p>
           <SummaryRow label="รหัสพนักงาน" value={employeeCode} />
           <SummaryRow label="รหัสตำแหน่ง" value={positionCode} />

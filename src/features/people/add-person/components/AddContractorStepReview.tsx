@@ -69,7 +69,7 @@ export function AddContractorStepReview({
         <p className="text-xs text-t1-gray-400">ตรวจสอบข้อมูลทั้งหมดก่อนสร้างผู้รับเหมา</p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-xl bg-muted p-4">
+          <div className="rounded-xl bg-t1-gray-50 p-4">
             <div className="mb-1 flex items-center justify-between">
               <p className="text-xs font-semibold text-t1-gray-400">ข้อมูลส่วนบุคคล</p>
               <EditLink onClick={onEditPersonal} />
@@ -79,7 +79,7 @@ export function AddContractorStepReview({
             <SummaryRow label="อีเมล" value={email} />
             <SummaryRow label="เบอร์โทรศัพท์มือถือ" value={phone} />
           </div>
-          <div className="rounded-xl bg-muted p-4">
+          <div className="rounded-xl bg-t1-gray-50 p-4">
             <div className="mb-1 flex items-center justify-between">
               <p className="text-xs font-semibold text-t1-gray-400">ตำแหน่งและหน้าที่</p>
               <EditLink onClick={onEditEmployment} />
@@ -89,7 +89,7 @@ export function AddContractorStepReview({
             <SummaryRow label="ระดับตำแหน่ง" value={levelRole} />
             <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />
           </div>
-          <div className="rounded-xl bg-muted p-4">
+          <div className="rounded-xl bg-t1-gray-50 p-4">
             <div className="mb-1 flex items-center justify-between">
               <p className="text-xs font-semibold text-t1-gray-400">ประเภทและรายละเอียดการจ้าง</p>
               <EditLink onClick={onEditEmployment} />
@@ -100,7 +100,7 @@ export function AddContractorStepReview({
             <SummaryRow label="วันที่สิ้นสุด (คาดการณ์)" value={endDate ? formatThaiDate(endDate) : ""} />
             <SummaryRow label="ระยะเวลาการจ้าง" value={duration} />
           </div>
-          <div className="rounded-xl bg-muted p-4">
+          <div className="rounded-xl bg-t1-gray-50 p-4">
             <div className="mb-1 flex items-center justify-between">
               <p className="text-xs font-semibold text-t1-gray-400">ข้อมูลสัญญา</p>
               <EditLink onClick={onEditEmployment} />
@@ -110,7 +110,7 @@ export function AddContractorStepReview({
             <SummaryRow label="มูลค่าสัญญา" value={contractValue ? `${contractValue} บาท` : ""} />
             <SummaryRow label="หมายเหตุสัญญา" value={contractNote} />
           </div>
-          <div className="rounded-xl bg-muted p-4 sm:col-span-2">
+          <div className="rounded-xl bg-t1-gray-50 p-4 sm:col-span-2">
             <div className="mb-1 flex items-center justify-between">
               <p className="text-xs font-semibold text-t1-gray-400">สถานที่และการปฏิบัติงาน</p>
               <EditLink onClick={onEditEmployment} />

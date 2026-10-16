@@ -48,7 +48,7 @@ export function DepartureTable({ rows, selectedId, onSelect }: DepartureTablePro
               key={row.id}
               onClick={() => onSelect(row.id)}
               className={`cursor-pointer ${
-                row.id === selectedId ? "bg-accent/60" : "hover:bg-muted"
+                row.id === selectedId ? "bg-accent/60" : "hover:bg-t1-gray-50"
               }`}
             >
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>

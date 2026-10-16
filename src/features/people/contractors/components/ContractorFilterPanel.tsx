@@ -90,7 +90,7 @@ export function ContractorFilterPanel({
         <button
           type="button"
           onClick={onClear}
-          className="flex items-center justify-center rounded-lg border border-border py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+          className="flex items-center justify-center rounded-lg border border-border py-2 text-sm font-medium text-muted-foreground hover:bg-t1-gray-50"
         >
           ล้างตัวกรอง
         </button>

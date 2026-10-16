@@ -231,7 +231,7 @@ export function AddBulkStep2Employment({
           </label>
         </div>
 
-        <label className="flex items-start gap-2 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+        <label className="flex items-start gap-2 rounded-lg bg-t1-gray-50 p-3 text-xs text-muted-foreground">
           <input type="checkbox" checked={applyToAll} onChange={(e) => onApplyToAllChange(e.target.checked)} className="mt-0.5" />
           <span>
             <span className="block font-medium">ใช้ข้อมูลชุดนี้กับทุกคน</span>

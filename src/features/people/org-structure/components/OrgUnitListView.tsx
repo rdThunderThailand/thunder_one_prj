@@ -50,7 +50,7 @@ export function OrgUnitListView({ units, onSelect }: OrgUnitListViewProps) {
             <tr
               key={unit.id}
               onClick={() => onSelect(unit.id)}
-              className="cursor-pointer hover:bg-muted"
+              className="cursor-pointer hover:bg-t1-gray-50"
             >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2" style={{ paddingLeft: indent(units, unit) * 20 }}>

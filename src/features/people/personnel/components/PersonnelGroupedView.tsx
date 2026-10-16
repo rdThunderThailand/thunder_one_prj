@@ -39,7 +39,7 @@ export function PersonnelGroupedView({ rows, groupBy, labelFor, onSelectGroup }:
             <button
               type="button"
               onClick={() => onSelectGroup(key)}
-              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-muted"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-t1-gray-50"
             >
               <span className="flex items-center gap-2.5">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">

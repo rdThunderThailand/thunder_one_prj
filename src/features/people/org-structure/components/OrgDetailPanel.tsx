@@ -199,7 +199,7 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             </Link>
             <Link
               href={`/people/personnel?department=${unit.id}`}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-foreground hover:bg-muted"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-foreground hover:bg-t1-gray-50"
             >
               <UsersIcon className="h-3.5 w-3.5" />
               ดูบุคลากรในหน่วยงานนี้
@@ -207,7 +207,7 @@ export function OrgDetailPanel({ units, selectedId, onSelect, onClose }: OrgDeta
             <button
               type="button"
               onClick={() => exportUnitSubtreeCsv(unit, units)}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-foreground hover:bg-muted"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-foreground hover:bg-t1-gray-50"
             >
               <UploadIcon className="h-3.5 w-3.5 rotate-180" />
               Export โครงสร้างนี้

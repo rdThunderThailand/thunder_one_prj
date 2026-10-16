@@ -27,7 +27,7 @@ export function OrgStructureHeader({ activeView, onChangeView, units, rootUnitId
           type="button"
           disabled={!canExport}
           onClick={() => units && rootUnitId && exportOrgTreeCsv(units, rootUnitId)}
-          className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-t1-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <UploadIcon className="h-4 w-4 rotate-180" />
           Export

@@ -45,7 +45,7 @@ export function AddContractorStepSuccess({ createdRow, onAddNext }: AddContracto
       </div>
 
       {createdRow.inviteUrl && (
-        <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-lg bg-muted p-3">
+        <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-lg bg-t1-gray-50 p-3">
           <input
             readOnly
             value={createdRow.inviteUrl}

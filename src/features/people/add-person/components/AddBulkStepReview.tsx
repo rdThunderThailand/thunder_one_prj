@@ -41,22 +41,22 @@ export function AddBulkStepReview({
           <h2 className="mb-1 text-sm font-semibold text-foreground">3. ตรวจสอบและยืนยันการเพิ่ม</h2>
           <p className="mb-4 text-xs text-t1-gray-400">ตรวจสอบข้อมูลทั้งหมด {totalCount} รายการก่อนสร้างบุคคลและส่งคำเชิญ Onboarding</p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-xl bg-muted p-3">
+            <div className="rounded-xl bg-t1-gray-50 p-3">
               <UsersIcon className="mb-1 h-4 w-4 text-primary" />
               <p className="text-lg font-semibold text-foreground">{totalCount} คน</p>
               <p className="text-[11px] text-t1-gray-400">จำนวนทั้งหมด</p>
             </div>
-            <div className="rounded-xl bg-muted p-3">
+            <div className="rounded-xl bg-t1-gray-50 p-3">
               <CheckCircleIcon className="mb-1 h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">สร้างบุคคลและส่งคำเชิญ</p>
               <p className="text-[11px] text-t1-gray-400">การดำเนินการ</p>
             </div>
-            <div className="rounded-xl bg-muted p-3">
+            <div className="rounded-xl bg-t1-gray-50 p-3">
               <EnvelopeIcon className="mb-1 h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">อีเมล</p>
               <p className="text-[11px] text-t1-gray-400">ช่องทางการเชิญ</p>
             </div>
-            <div className="rounded-xl bg-muted p-3">
+            <div className="rounded-xl bg-t1-gray-50 p-3">
               <InfoIcon className="mb-1 h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">{startDate ? formatThaiDate(startDate) : "-"}</p>
               <p className="text-[11px] text-t1-gray-400">วันที่เริ่มงาน</p>

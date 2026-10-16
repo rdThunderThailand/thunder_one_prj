@@ -61,7 +61,7 @@ export function PersonnelTableControls({
             type="button"
             onClick={() => onPageChange(Math.max(1, page - 1))}
             disabled={page <= 1}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:text-t1-gray-400"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-t1-gray-50 disabled:cursor-not-allowed disabled:text-t1-gray-400"
           >
             <ChevronLeftIcon className="h-3.5 w-3.5" />
           </button>
@@ -73,7 +73,7 @@ export function PersonnelTableControls({
             type="button"
             onClick={() => onPageChange(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:text-t1-gray-400"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-t1-gray-50 disabled:cursor-not-allowed disabled:text-t1-gray-400"
           >
             <ChevronRightIcon className="h-3.5 w-3.5" />
           </button>

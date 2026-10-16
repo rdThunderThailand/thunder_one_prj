@@ -30,7 +30,7 @@ export function PolicyTable() {
         </thead>
         <tbody className="divide-y divide-border">
           {policyRows.map((row) => (
-            <tr key={row.id} className="hover:bg-muted">
+            <tr key={row.id} className="hover:bg-t1-gray-50">
               <td className="px-4 py-3">
                 <p className="font-medium text-foreground">{row.title}</p>
                 <p className="truncate text-xs text-t1-gray-400">{row.description}</p>

@@ -55,7 +55,7 @@ export function LoadFailure({ message, compact = false }: LoadFailureProps) {
         type="button"
         onClick={handleRetry}
         disabled={retrying}
-        className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+        className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-t1-gray-50 disabled:opacity-50"
       >
         <RefreshIcon className={`h-3.5 w-3.5 ${retrying ? "animate-spin" : ""}`} />
         ลองใหม่

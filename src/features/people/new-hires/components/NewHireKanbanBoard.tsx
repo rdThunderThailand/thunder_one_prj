@@ -74,7 +74,7 @@ function HireCard({
           onChange={(e) => {
             if (e.target.value) onMoveStage(e.target.value as NewHireStatus);
           }}
-          className="mt-2 w-full cursor-pointer rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground"
+          className="mt-2 w-full cursor-pointer rounded-md border border-border bg-t1-gray-50 px-2 py-1 text-xs text-muted-foreground"
         >
           <option value="">ย้ายไปยัง...</option>
           {DRAGGABLE_STATUSES.filter((s) => s !== hire.status).map((s) => (

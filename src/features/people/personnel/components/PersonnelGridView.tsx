@@ -78,14 +78,14 @@ export function PersonnelGridView({ rows, onEditRow, onViewRow }: PersonnelGridV
             <button
               type="button"
               onClick={() => onViewRow(row)}
-              className="flex-1 rounded-lg border border-border py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+              className="flex-1 rounded-lg border border-border py-1.5 text-xs font-medium text-foreground hover:bg-t1-gray-50"
             >
               ดูรายละเอียด
             </button>
             <button
               type="button"
               onClick={() => onEditRow(row)}
-              className="flex-1 rounded-lg border border-border py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+              className="flex-1 rounded-lg border border-border py-1.5 text-xs font-medium text-foreground hover:bg-t1-gray-50"
             >
               แก้ไข
             </button>

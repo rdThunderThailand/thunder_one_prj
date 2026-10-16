@@ -35,7 +35,7 @@ export function AddEmployeeStepSuccess({ createdRow, employmentType, onAddNext }
       </div>
 
       {createdRow.inviteUrl && (
-        <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-lg bg-muted p-3">
+        <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-lg bg-t1-gray-50 p-3">
           <input
             readOnly
             value={createdRow.inviteUrl}
@@ -52,7 +52,7 @@ export function AddEmployeeStepSuccess({ createdRow, employmentType, onAddNext }
         </div>
       )}
 
-      <div className="mx-auto w-full max-w-md rounded-lg bg-muted p-3">
+      <div className="mx-auto w-full max-w-md rounded-lg bg-t1-gray-50 p-3">
         <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
           <span>ความคืบหน้า</span>
           <span>{createdRow.progress}%</span>
