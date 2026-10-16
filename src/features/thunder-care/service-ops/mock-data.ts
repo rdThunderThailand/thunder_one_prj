@@ -191,11 +191,11 @@ export interface IssueCategorySlice {
 
 // สีอิงจากชุดสีที่ใช้อยู่แล้วในโปรเจกต์ (indigo/blue/amber/emerald/zinc)
 export const issueCategoryBreakdown: IssueCategorySlice[] = [
-  { label: "ระบบปรับอากาศ", value: 6, color: "#6366f1" },
-  { label: "เครื่องใช้ไฟฟ้า/Internet", value: 4, color: "#3b82f6" },
-  { label: "AV/Display", value: 3, color: "#f59e0b" },
-  { label: "เครื่องพิมพ์", value: 2, color: "#10b981" },
-  { label: "อื่นๆ", value: 3, color: "#a1a1aa" },
+  { label: "ระบบปรับอากาศ", value: 6, color: "var(--color-primary)" },
+  { label: "เครื่องใช้ไฟฟ้า/Internet", value: 4, color: "var(--color-t1-blue-400)" },
+  { label: "AV/Display", value: 3, color: "var(--color-warning)" },
+  { label: "เครื่องพิมพ์", value: 2, color: "var(--color-success)" },
+  { label: "อื่นๆ", value: 3, color: "var(--color-t1-gray-400)" },
 ];
 
 export interface ChannelBreakdownRow {
