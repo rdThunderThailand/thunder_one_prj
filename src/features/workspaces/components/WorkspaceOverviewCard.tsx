@@ -3,9 +3,9 @@ import { DonutChart } from "@/components/ui/DonutChart";
 import { DATA_STATUS_LABEL, type WorkspaceDataStatus, type WorkspaceEntry } from "../catalog";
 
 const COLORS: Record<WorkspaceDataStatus, string> = {
-  live: "#10b981",
-  sample: "#f59e0b",
-  "coming-soon": "#a1a1aa",
+  live: "var(--color-success)",
+  sample: "var(--color-warning)",
+  "coming-soon": "var(--color-t1-gray-400)",
 };
 
 // Workspaces by data status (`../catalog.ts`) — a real breakdown of what's

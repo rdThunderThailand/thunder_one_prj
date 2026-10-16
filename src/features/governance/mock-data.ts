@@ -69,10 +69,10 @@ export const complianceByArea: ComplianceAreaData[] = [
 export const riskOverview = {
   total: 14,
   segments: [
-    { label: "High Risk", value: 3, color: "#ef4444" },
-    { label: "Medium Risk", value: 7, color: "#f59e0b" },
-    { label: "Low Risk", value: 4, color: "#10b981" },
-    { label: "Accepted Risk", value: 0, color: "#a1a1aa" },
+    { label: "High Risk", value: 3, color: "var(--color-error)" },
+    { label: "Medium Risk", value: 7, color: "var(--color-warning)" },
+    { label: "Low Risk", value: 4, color: "var(--color-success)" },
+    { label: "Accepted Risk", value: 0, color: "var(--color-t1-gray-400)" },
   ],
 };
 
@@ -324,10 +324,10 @@ export const employeeComplianceByArea: ComplianceAreaData[] = [
 export const employeeRiskOverview = {
   total: 7,
   segments: [
-    { label: "High Risk", value: 1, color: "#ef4444" },
-    { label: "Medium Risk", value: 3, color: "#f59e0b" },
-    { label: "Low Risk", value: 3, color: "#eab308" },
-    { label: "Accepted Risk", value: 0, color: "#10b981" },
+    { label: "High Risk", value: 1, color: "var(--color-error)" },
+    { label: "Medium Risk", value: 3, color: "var(--color-warning)" },
+    { label: "Low Risk", value: 3, color: "var(--color-t1-amber-300)" },
+    { label: "Accepted Risk", value: 0, color: "var(--color-success)" },
   ],
 };
 

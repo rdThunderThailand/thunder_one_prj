@@ -19,8 +19,8 @@ export function TrainingAwarenessCard() {
         <div className="relative shrink-0">
           <DonutChart
             segments={[
-              { label: "Completed", value: trainingCompletion.percent, color: "#10b981" },
-              { label: "Remaining", value: 100 - trainingCompletion.percent, color: "#e4e4e7" },
+              { label: "Completed", value: trainingCompletion.percent, color: "var(--color-success)" },
+              { label: "Remaining", value: 100 - trainingCompletion.percent, color: "var(--color-border)" },
             ]}
             size={88}
             strokeWidth={12}
