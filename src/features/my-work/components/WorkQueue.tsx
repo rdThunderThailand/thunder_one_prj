@@ -96,7 +96,7 @@ export function WorkQueue({ items, nowIso }: { items: WorkItem[]; nowIso: string
                         className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
                           item.kind === "approval"
                             ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                            : "border border-border text-foreground hover:bg-muted"
+                            : "border border-border text-foreground hover:bg-t1-gray-50"
                         }`}
                       >
                         {item.kind === "approval" ? "Review" : "Open"}

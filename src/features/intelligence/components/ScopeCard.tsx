@@ -20,7 +20,7 @@ export function ScopeCard() {
             className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
               active === option.id
                 ? "border-t1-blue-200 bg-accent text-primary"
-                : "border-border text-muted-foreground hover:bg-muted"
+                : "border-border text-muted-foreground hover:bg-t1-gray-50"
             }`}
           >
             {option.label}

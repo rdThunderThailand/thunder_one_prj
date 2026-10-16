@@ -11,7 +11,7 @@ export function AskThunderOneInsightCard() {
         <h2 className="text-sm font-semibold text-foreground">Ask ThunderOne</h2>
       </div>
 
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-t1-gray-400">
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-t1-gray-50 px-3 py-2 text-sm text-t1-gray-400">
         <span className="flex-1 truncate">Ask a question to ThunderOne...</span>
         <PaperPlaneIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
       </div>

@@ -12,7 +12,7 @@ export function AskThunderOneBar() {
         <p className="text-sm font-medium text-foreground">Ask ThunderOne AI</p>
         <p className="truncate text-xs text-t1-gray-400">Ask, summarize, search tasks, documents, or anything you need</p>
       </div>
-      <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-t1-gray-400">
+      <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-t1-gray-50 px-3 py-2 text-sm text-t1-gray-400">
         <span className="flex-1 truncate">Ask anything...</span>
         <PaperPlaneIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
       </div>

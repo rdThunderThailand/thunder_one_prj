@@ -15,7 +15,7 @@ export function AskThunderOneRail() {
         </span>
       </div>
 
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-t1-gray-400">
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-t1-gray-50 px-3 py-2 text-sm text-t1-gray-400">
         <span className="flex-1 truncate">Ask anything about your organization...</span>
         <PaperPlaneIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
       </div>
@@ -26,7 +26,7 @@ export function AskThunderOneRail() {
           <li
             key={suggestion.id}
             title="Not built yet"
-            className="cursor-not-allowed rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground"
+            className="cursor-not-allowed rounded-lg bg-t1-gray-50 px-3 py-2 text-sm text-muted-foreground"
           >
             {suggestion.text}
           </li>

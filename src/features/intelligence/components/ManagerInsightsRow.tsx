@@ -71,7 +71,7 @@ export function ManagerInsightsRow() {
 
             <div className="mt-4 flex flex-1 items-end gap-2">
               {insight.secondaryActionLabel && (
-                <button className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted">
+                <button className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-t1-gray-50">
                   {insight.secondaryActionLabel}
                 </button>
               )}
