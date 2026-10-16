@@ -1,11 +1,18 @@
-import { BookMarked, BookOpenText, Lightbulb, Rocket, Wrench, type LucideIcon } from "lucide-react";
+import {
+  BookmarkIcon as BookMarked,
+  BookIcon as BookOpenText,
+  LightbulbIcon as Lightbulb,
+  RocketIcon as Rocket,
+  ToolIcon as Wrench,
+  type Icon,
+} from "@/components/ui/icons";
 import { Badge } from "@/components/ui/lovable/badge";
 import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_LABEL, LOCALE_NAME, WORKSPACE_LABEL, t } from "../copy";
 import type { GuideCard } from "../repository";
 import type { ContentType, Locale, WorkspaceKey } from "../types";
 
-const ICONS: Record<ContentType, LucideIcon> = {
+const ICONS: Record<ContentType, Icon> = {
   "getting-started": Rocket,
   "how-to": BookOpenText,
   concept: Lightbulb,
@@ -30,7 +37,7 @@ export function ContentTypeIcon({ type, size = "md", className }: { type: Conten
         className,
       )}
     >
-      <Icon className={size === "lg" ? "h-5 w-5" : "h-4 w-4"} strokeWidth={1.8} />
+      <Icon className={size === "lg" ? "h-5 w-5" : "h-4 w-4"} />
     </span>
   );
 }

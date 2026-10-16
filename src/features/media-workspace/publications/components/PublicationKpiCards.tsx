@@ -1,4 +1,10 @@
-import { CalendarClock, FileEdit, PlaySquare, Radio, UploadCloud } from "lucide-react";
+import {
+  ScheduleIcon as CalendarClock,
+  EditIcon as FileEdit,
+  PlaySquareIcon as PlaySquare,
+  BroadcastIcon as Radio,
+  UploadIcon as UploadCloud,
+} from "@/components/ui/icons";
 import { LibrarySummary, LibrarySummarySkeleton } from "../../content-library/LibraryChrome";
 import type { PublicationsPage } from "../types";
 

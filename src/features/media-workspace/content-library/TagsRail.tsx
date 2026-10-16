@@ -1,4 +1,4 @@
-import { Tag } from "lucide-react";
+import { TagIcon as Tag } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 export type TagCount = { id: string; name: string; count: number };

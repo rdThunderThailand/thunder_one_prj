@@ -1,8 +1,7 @@
 "use client";
 
-import { FileText } from "lucide-react";
+import { FileTextIcon as FileText, XIcon } from "@/components/ui/icons";
 import { useState } from "react";
-import { XIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/lovable/input";
 import { Label } from "@/components/ui/lovable/label";
 import { Textarea } from "@/components/ui/lovable/textarea";

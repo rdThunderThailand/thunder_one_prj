@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText } from "lucide-react";
+import { FileTextIcon as FileText, PlusIcon, UploadIcon } from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PlusIcon, UploadIcon } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
 import {
   AlertDialog,

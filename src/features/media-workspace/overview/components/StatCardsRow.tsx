@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Gauge, Monitor, XCircle } from "lucide-react";
+import {
+  WarningTriangleIcon as AlertTriangle,
+  CheckCircleIcon as CheckCircle2,
+  GaugeIcon as Gauge,
+  MonitorIcon as Monitor,
+  XCircleIcon as XCircle,
+} from "@/components/ui/icons";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";

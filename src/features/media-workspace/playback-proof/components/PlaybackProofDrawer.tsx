@@ -2,7 +2,10 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ExternalLink, FileImage } from "lucide-react";
+import {
+  ExternalLinkIcon as ExternalLink,
+  FileImageIcon as FileImage,
+} from "@/components/ui/icons";
 import { Badge } from "@/components/ui/lovable/badge";
 import { Button } from "@/components/ui/lovable/button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/lovable/sheet";

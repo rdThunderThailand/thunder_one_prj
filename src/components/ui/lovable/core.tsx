@@ -1,5 +1,9 @@
 import * as React from "react";
-import { AlertTriangle, Search, type LucideIcon } from "lucide-react";
+import {
+  WarningTriangleIcon as AlertTriangle,
+  SearchIcon as Search,
+  type Icon,
+} from "@/components/ui/icons";
 
 import { Badge, type BadgeProps } from "@/components/ui/lovable/badge";
 import { Button, type ButtonProps } from "@/components/ui/lovable/button";
@@ -88,7 +92,7 @@ export function EmptyState({
   compact = false,
   className,
 }: {
-  icon: LucideIcon;
+  icon: Icon;
   title: string;
   description: string;
   action?: React.ReactNode;
@@ -99,7 +103,7 @@ export function EmptyState({
     <div className={cn("grid place-items-center px-6 text-center", compact ? "min-h-28 py-4" : "min-h-52 py-8", className)}>
       <div className="max-w-sm">
         <span aria-hidden="true" className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-muted text-muted-foreground">
-          <Icon className="h-4 w-4" strokeWidth={1.8} />
+          <Icon className="h-4 w-4" />
         </span>
         <h3 className="mt-3 text-sm font-semibold">{title}</h3>
         <p className="mt-1 text-xs text-muted-foreground">{description}</p>

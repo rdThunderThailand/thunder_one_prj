@@ -4,7 +4,12 @@
 // item, reorder, tweak an image's seconds, or drop the whole binding. Playlist Zones stay
 // read-only here (edit at the Playlist editor); assets Zones are the Zone's own inline list.
 
-import { ChevronDown, ChevronUp, ExternalLink, X } from "lucide-react";
+import {
+  ChevronDownIcon as ChevronDown,
+  ChevronUpIcon as ChevronUp,
+  ExternalLinkIcon as ExternalLink,
+  XIcon as X,
+} from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { formatDuration } from "@/features/media-workspace/playlists";
 import type { MediaAsset, PlaylistListItem } from "@/types/domain";

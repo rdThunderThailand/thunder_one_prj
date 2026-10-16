@@ -3,8 +3,17 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileText, Image as ImageIcon, LayoutGrid, Loader2, MonitorPlay, Search, TriangleAlert, User } from "lucide-react";
-import { SearchIcon } from "@/components/ui/icons";
+import {
+  FileTextIcon as FileText,
+  ImageIcon,
+  GridIcon as LayoutGrid,
+  SpinnerIcon as Loader2,
+  MonitorPlayIcon as MonitorPlay,
+  SearchIcon as Search,
+  WarningTriangleIcon as TriangleAlert,
+  UserIcon as User,
+  SearchIcon,
+} from "@/components/ui/icons";
 import { isModShortcut, isSlashShortcut, isTypingTarget, MOD_LABEL, shortcutAria } from "@/lib/keyboard-shortcut";
 import { useShortcutPlatform } from "./ShortcutPlatform";
 import { matchPages } from "./search-index";

@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CircleCheck, CircleX, Monitor, Timer } from "lucide-react";
+import {
+  CheckCircleIcon as CircleCheck,
+  XCircleIcon as CircleX,
+  MonitorIcon as Monitor,
+  TimerIcon as Timer,
+} from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ErrorState } from "@/components/ui/lovable/core";
 import { useListUrlState } from "@/hooks/use-list-url-state";

@@ -1,7 +1,11 @@
 "use client";
 
 import type { ComponentType, ReactNode } from "react";
-import { ChevronLeft, ChevronRight, FileImage } from "lucide-react";
+import {
+  ChevronLeftIcon as ChevronLeft,
+  ChevronRightIcon as ChevronRight,
+  FileImageIcon as FileImage,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { cn } from "@/lib/utils";

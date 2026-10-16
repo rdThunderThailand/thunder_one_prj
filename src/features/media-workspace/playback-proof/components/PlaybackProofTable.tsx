@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileImage } from "lucide-react";
+import { FileImageIcon as FileImage } from "@/components/ui/icons";
 import { LazyVideo } from "@/components/ui/LazyVideo";
 import { Badge } from "@/components/ui/lovable/badge";
 import { isVideoUrl } from "@/lib/media-kind";

@@ -1,7 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ChevronRight, Folder, FolderOpen, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  ChevronRightIcon as ChevronRight,
+  FolderIcon as Folder,
+  FolderOpenIcon as FolderOpen,
+  MoreIcon as MoreHorizontal,
+  TrashIcon as Trash2,
+} from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/lovable/button";
 import {

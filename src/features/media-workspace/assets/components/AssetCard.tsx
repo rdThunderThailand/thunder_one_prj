@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { File, FileVideo, FolderInput, Image as ImageIcon, MoreHorizontal, Play, Trash2, Undo2 } from "lucide-react";
+import {
+  FileIcon as File,
+  VideoIcon as FileVideo,
+  FolderMoveIcon as FolderInput,
+  ImageIcon,
+  MoreIcon as MoreHorizontal,
+  PlayIcon as Play,
+  TrashIcon as Trash2,
+  UndoIcon as Undo2,
+} from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Button } from "@/components/ui/lovable/button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";

@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Archive, FileAudio, FileImage, FileText, FileVideo, Folder, FolderInput, Trash2, Undo2, Upload } from "lucide-react";
+import {
+  ArchiveIcon as Archive,
+  AudioIcon as FileAudio,
+  FileImageIcon as FileImage,
+  FileTextIcon as FileText,
+  VideoIcon as FileVideo,
+  FolderIcon as Folder,
+  FolderMoveIcon as FolderInput,
+  TrashIcon as Trash2,
+  UndoIcon as Undo2,
+  UploadIcon as Upload,
+} from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";

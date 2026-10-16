@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Monitor, Radio } from "lucide-react";
+import {
+  ArrowRightIcon as ArrowRight,
+  CheckCircleIcon as CheckCircle2,
+  MonitorIcon as Monitor,
+  BroadcastIcon as Radio,
+} from "@/components/ui/icons";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Skeleton } from "@/components/ui/Skeleton";

@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { Bell, CheckCircle2, ClipboardList, Clock, Image as ImageIcon, TriangleAlert } from "lucide-react";
-import { BellIcon } from "@/components/ui/icons";
+import {
+  BellIcon as Bell,
+  CheckCircleIcon as CheckCircle2,
+  ClipboardIcon as ClipboardList,
+  ClockIcon as Clock,
+  ImageIcon,
+  WarningTriangleIcon as TriangleAlert,
+  BellIcon,
+} from "@/components/ui/icons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 

@@ -5,7 +5,7 @@
 // in the `Insert to Layout` column beside the canvas; this panel is for what's already bound.
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { TrashIcon as Trash2 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { parseResolution, referencePixels, roundPercent } from "@/features/media-workspace/layouts/geometry";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid2X2, LayoutList } from "lucide-react";
+import { GridIcon as Grid2X2, ListIcon as LayoutList } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { LibrarySearch } from "../../content-library/LibraryShell";

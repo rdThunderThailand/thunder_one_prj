@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Pencil, X } from "lucide-react";
+import { CheckIcon as Check, EditIcon as Pencil, XIcon as X } from "@/components/ui/icons";
 import { Badge } from "@/components/ui/lovable/badge";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";

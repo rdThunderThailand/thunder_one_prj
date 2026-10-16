@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ChevronRight, Search } from "lucide-react";
+import {
+  ArrowRightIcon as ArrowRight,
+  ChevronRightIcon as ChevronRight,
+  SearchIcon as Search,
+} from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_HINT, CONTENT_TYPE_LABEL, WORKSPACE_LABEL, guideCount, t } from "../copy";
 import { guideHref, helpHref } from "../navigation";

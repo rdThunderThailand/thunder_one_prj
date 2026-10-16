@@ -5,20 +5,20 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { unstable_catchError, type ErrorInfo } from "next/error";
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
-  ArrowLeft,
-  ArrowRight,
-  BookOpen,
-  ChevronRight,
-  Clock,
-  ExternalLink,
-  Mail,
-  MessageCircle,
-  MessagesSquare,
-  Phone,
-  Search,
-  Activity,
-  X,
-} from "lucide-react";
+  ArrowLeftIcon as ArrowLeft,
+  ArrowRightIcon as ArrowRight,
+  BookIcon as BookOpen,
+  ChevronRightIcon as ChevronRight,
+  ClockIcon as Clock,
+  ExternalLinkIcon as ExternalLink,
+  EnvelopeIcon as Mail,
+  MessageIcon as MessageCircle,
+  CommentsIcon as MessagesSquare,
+  PhoneIcon as Phone,
+  SearchIcon as Search,
+  ActivityIcon as Activity,
+  XIcon as X,
+} from "@/components/ui/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
 import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_LABEL, LOCALE_NAME, formatDate, t } from "../copy";
@@ -591,7 +591,7 @@ function TaskRows({ cards, locale, onOpen, boxed = false }: { cards: GuideCard[]
                 <IconBox icon={Icon} />
               ) : (
                 <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center text-primary">
-                  <Icon className="h-5 w-5" strokeWidth={1.8} />
+                  <Icon className="h-5 w-5" />
                 </span>
               )}
               <RowText card={card} />

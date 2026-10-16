@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import {
+  ArrowLeftIcon as ArrowLeft,
+  ExternalLinkIcon as ExternalLink,
+} from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { t } from "../copy";
 import { RETURN_STORAGE_KEY, parseStoredReturn, returnTarget } from "../navigation";

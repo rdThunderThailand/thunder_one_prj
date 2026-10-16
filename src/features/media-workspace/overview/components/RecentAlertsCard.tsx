@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, TriangleAlert, XCircle } from "lucide-react";
+import {
+  ArrowRightIcon as ArrowRight,
+  CheckCircleIcon as CheckCircle2,
+  WarningTriangleIcon as TriangleAlert,
+  XCircleIcon as XCircle,
+} from "@/components/ui/icons";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { channelTypeLabel, findChannelAttention, formatChannelLastSeen, type ChannelListItem } from "@/features/media-workspace/channels";

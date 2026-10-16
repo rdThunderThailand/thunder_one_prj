@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, Globe } from "lucide-react";
+import {
+  CheckIcon as Check,
+  ChevronDownIcon as ChevronDown,
+  GlobeIcon as Globe,
+} from "@/components/ui/icons";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { APP_LOCALES, applyAppLocale, type AppLocale } from "@/lib/app-locale";
 import { cn } from "@/lib/utils";
