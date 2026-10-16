@@ -9,30 +9,30 @@ export const KIND_META: Record<WorkItemKind, { label: string; icon: ReactNode; t
   approval: {
     label: "Approval",
     icon: <CheckCircleIcon />,
-    tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+    tone: "bg-success-muted text-t1-green-700",
   },
   task: {
     label: "Task",
     icon: <ClipboardIcon />,
-    tone: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
+    tone: "bg-accent text-primary",
   },
   draft: {
     label: "Draft",
     icon: <ImageIcon />,
-    tone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+    tone: "bg-info-muted text-t1-blue-700",
   },
   waiting: {
     label: "Waiting on others",
     icon: <ClockIcon />,
-    tone: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
+    tone: "bg-in-progress-muted text-t1-purple-700",
   },
 };
 
 export const GROUP_META: Record<DueGroup, { label: string; text: string; color: string }> = {
-  overdue: { label: "Overdue", text: "text-red-500", color: "#ef4444" },
-  "due-today": { label: "Due today", text: "text-amber-500", color: "#f59e0b" },
-  upcoming: { label: "Upcoming", text: "text-zinc-400", color: "#6366f1" },
-  "no-due": { label: "No due date", text: "text-zinc-400", color: "#a1a1aa" },
+  overdue: { label: "Overdue", text: "text-error", color: "var(--color-error)" },
+  "due-today": { label: "Due today", text: "text-warning", color: "var(--color-warning)" },
+  upcoming: { label: "Upcoming", text: "text-t1-gray-400", color: "var(--color-primary)" },
+  "no-due": { label: "No due date", text: "text-t1-gray-400", color: "var(--color-t1-gray-400)" },
 };
 
 export const GROUP_ORDER: DueGroup[] = ["overdue", "due-today", "upcoming", "no-due"];

@@ -14,8 +14,8 @@ export function DataSourcesCard() {
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Data Sources</h2>
-        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+        <h2 className="text-sm font-semibold text-foreground">Data Sources</h2>
+        <span className="rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-medium text-t1-green-700">
           All connected
         </span>
       </div>
@@ -27,14 +27,14 @@ export function DataSourcesCard() {
             >
               {iconFor[source.icon]}
             </span>
-            <span className="min-w-0 flex-1 truncate text-sm text-zinc-700 dark:text-zinc-200">{source.name}</span>
-            <span className="shrink-0 text-xs text-zinc-400">{source.syncedLabel}</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-foreground">{source.name}</span>
+            <span className="shrink-0 text-xs text-t1-gray-400">{source.syncedLabel}</span>
           </li>
         ))}
       </ul>
       <button
         type="button"
-        className="mt-3 flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+        className="mt-3 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-accent-foreground"
       >
         View all data sources
         <ArrowRightIcon className="h-3.5 w-3.5" />

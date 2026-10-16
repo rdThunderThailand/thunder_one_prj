@@ -30,7 +30,7 @@ export function WorkQueue({ items, nowIso }: { items: WorkItem[]; nowIso: string
     <Card className="p-4">
       <div
         role="tablist"
-        className="flex flex-wrap gap-1 border-b border-zinc-100 pb-3 dark:border-zinc-800"
+        className="flex flex-wrap gap-1 border-b border-border pb-3"
       >
         {TABS.map((tab) => {
           const count = tab.key === "all" ? items.length : items.filter((item) => item.kind === tab.key).length;
@@ -43,12 +43,12 @@ export function WorkQueue({ items, nowIso }: { items: WorkItem[]; nowIso: string
               onClick={() => setActiveTab(tab.key)}
               className={`rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "bg-accent text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {tab.label}
-              <span className="ml-1 text-xs text-zinc-400">{count}</span>
+              <span className="ml-1 text-xs text-t1-gray-400">{count}</span>
             </button>
           );
         })}
@@ -73,7 +73,7 @@ export function WorkQueue({ items, nowIso }: { items: WorkItem[]; nowIso: string
                 <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${GROUP_META[group].text}`}>
                   {GROUP_META[group].label} ({groupItems.length})
                 </p>
-                <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+                <ul className="flex flex-col divide-y divide-border">
                   {groupItems.map((item) => (
                     <li
                       key={item.id}
@@ -85,8 +85,8 @@ export function WorkQueue({ items, nowIso }: { items: WorkItem[]; nowIso: string
                         {KIND_META[item.kind].icon}
                       </span>
                       <div className="min-w-0 flex-1 basis-64">
-                        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{item.title}</p>
-                        <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">
+                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                        <p className="truncate text-sm text-muted-foreground">
                           {item.detail} • {item.source}
                         </p>
                         <p className={`text-xs font-medium ${GROUP_META[group].text}`}>{item.dateNote}</p>
@@ -95,8 +95,8 @@ export function WorkQueue({ items, nowIso }: { items: WorkItem[]; nowIso: string
                         href={item.href}
                         className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
                           item.kind === "approval"
-                            ? "bg-indigo-600 text-white hover:bg-indigo-500"
-                            : "border border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "border border-border text-foreground hover:bg-muted"
                         }`}
                       >
                         {item.kind === "approval" ? "Review" : "Open"}

@@ -14,11 +14,11 @@ interface TileSpec {
 }
 
 const TILES: TileSpec[] = [
-  { id: "tasks", label: "Tasks", icon: <ListIcon />, tone: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400", kind: "task", sublabel: "To do" },
-  { id: "approvals", label: "Approvals", icon: <CheckCircleIcon />, tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", kind: "approval", sublabel: "Waiting for you" },
-  { id: "drafts", label: "Drafts", icon: <ImageIcon />, tone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400", kind: "draft", sublabel: "Unpublished" },
-  { id: "waiting", label: "Waiting", icon: <ClockIcon />, tone: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400", kind: "waiting", sublabel: "Pending response" },
-  { id: "inbox", label: "Inbox", icon: <EnvelopeIcon />, tone: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400", kind: null, sublabel: "No data source yet" },
+  { id: "tasks", label: "Tasks", icon: <ListIcon />, tone: "bg-accent text-primary", kind: "task", sublabel: "To do" },
+  { id: "approvals", label: "Approvals", icon: <CheckCircleIcon />, tone: "bg-success-muted text-t1-green-700", kind: "approval", sublabel: "Waiting for you" },
+  { id: "drafts", label: "Drafts", icon: <ImageIcon />, tone: "bg-info-muted text-t1-blue-700", kind: "draft", sublabel: "Unpublished" },
+  { id: "waiting", label: "Waiting", icon: <ClockIcon />, tone: "bg-in-progress-muted text-t1-purple-700", kind: "waiting", sublabel: "Pending response" },
+  { id: "inbox", label: "Inbox", icon: <EnvelopeIcon />, tone: "bg-muted text-muted-foreground", kind: null, sublabel: "No data source yet" },
 ];
 
 /**
@@ -42,14 +42,14 @@ export function StatTilesRow({ work, now }: { work: MyWork; now: Date }) {
               <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tile.tone}`}>
                 {tile.icon}
               </span>
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{tile.label}</span>
+              <span className="text-sm font-medium text-foreground">{tile.label}</span>
             </div>
-            <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+            <span className="text-2xl font-semibold text-foreground">
               {available ? items.length : "-"}
             </span>
-            <p className="text-xs text-zinc-400">{tile.kind !== null && !available ? "Not available" : tile.sublabel}</p>
+            <p className="text-xs text-t1-gray-400">{tile.kind !== null && !available ? "Not available" : tile.sublabel}</p>
             {overdue > 0 && (
-              <p className="flex items-center gap-1 text-xs font-medium text-red-500">
+              <p className="flex items-center gap-1 text-xs font-medium text-error">
                 <WarningTriangleIcon className="h-3 w-3" />
                 {overdue} overdue
               </p>

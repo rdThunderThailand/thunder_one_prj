@@ -7,7 +7,7 @@ import { CalendarIcon } from "@/components/ui/icons";
 export function MyCalendarCard() {
   return (
     <Card className="p-4">
-      <h2 className="mb-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">My Calendar</h2>
+      <h2 className="mb-1 text-sm font-semibold text-foreground">My Calendar</h2>
       <EmptyState
         icon={CalendarIcon}
         title="No calendar connected"

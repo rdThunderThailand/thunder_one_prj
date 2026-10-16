@@ -26,10 +26,10 @@ export function MyTasksCard({ items, completed, nowIso }: { items: WorkItem[]; c
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">My Tasks</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">My Tasks</h2>
       <div
         role="tablist"
-        className="mb-3 flex gap-1 border-b border-zinc-100 dark:border-zinc-800"
+        className="mb-3 flex gap-1 border-b border-border"
       >
         {TABS.map((tab) => (
           <button
@@ -40,8 +40,8 @@ export function MyTasksCard({ items, completed, nowIso }: { items: WorkItem[]; c
             onClick={() => setActiveTab(tab)}
             className={`border-b-2 px-2.5 py-2 text-sm font-medium transition-colors ${
               activeTab === tab
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab}
@@ -58,15 +58,15 @@ export function MyTasksCard({ items, completed, nowIso }: { items: WorkItem[]; c
             compact
           />
         ) : (
-          <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="flex flex-col divide-y divide-border">
             {completed.map((item) => (
               <li
                 key={item.id}
                 className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
               >
-                <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-500" />
-                <p className="min-w-0 flex-1 truncate text-sm text-zinc-700 dark:text-zinc-200">{item.title}</p>
-                <span className="shrink-0 text-xs text-zinc-400">{formatDate(item.completedAt)}</span>
+                <CheckCircleIcon className="h-4 w-4 shrink-0 text-success" />
+                <p className="min-w-0 flex-1 truncate text-sm text-foreground">{item.title}</p>
+                <span className="shrink-0 text-xs text-t1-gray-400">{formatDate(item.completedAt)}</span>
               </li>
             ))}
           </ul>
@@ -79,7 +79,7 @@ export function MyTasksCard({ items, completed, nowIso }: { items: WorkItem[]; c
           compact
         />
       ) : (
-        <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+        <ul className="flex flex-col divide-y divide-border">
           {visible.map((item) => {
             const group = dueGroup(item, now);
             return (
@@ -91,15 +91,15 @@ export function MyTasksCard({ items, completed, nowIso }: { items: WorkItem[]; c
                   {KIND_META[item.kind].icon}
                 </span>
                 <div className="min-w-0 flex-1 basis-48">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{item.title}</p>
-                  <p className="truncate text-xs text-zinc-400">
+                  <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                  <p className="truncate text-xs text-t1-gray-400">
                     {item.source} • <span className={group === "no-due" ? "" : GROUP_META[group].text}>{item.dateNote}</span>
                   </p>
                 </div>
                 <Link
                   href={item.href}
                   aria-label={`Open ${item.title}`}
-                  className="shrink-0 text-zinc-400 hover:text-indigo-600"
+                  className="shrink-0 text-t1-gray-400 hover:text-primary"
                 >
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>

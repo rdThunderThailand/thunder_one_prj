@@ -16,11 +16,11 @@ export function RecommendedActionsRow() {
           <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${action.iconTone}`}>
             {iconFor[action.icon]}
           </span>
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{action.title}</p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{action.detail}</p>
+          <p className="text-sm font-semibold text-foreground">{action.title}</p>
+          <p className="text-xs text-muted-foreground">{action.detail}</p>
           <span
             title="Not built yet"
-            className="mt-1 inline-flex w-fit cursor-not-allowed items-center rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-semibold text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+            className="mt-1 inline-flex w-fit cursor-not-allowed items-center rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground"
           >
             {action.actionLabel}
           </span>

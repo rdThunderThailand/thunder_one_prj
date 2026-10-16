@@ -27,14 +27,14 @@ export function StrategicObjectivesCard() {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center gap-2">
-        <SparklesIcon className="h-4 w-4 text-indigo-500" />
-        <h2 className="flex-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+        <SparklesIcon className="h-4 w-4 text-primary" />
+        <h2 className="flex-1 text-sm font-semibold text-foreground">
           Strategic Objectives Progress
         </h2>
-        <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">View report</span>
+        <span className="text-xs font-medium text-primary">View report</span>
       </div>
 
-      <ul className="flex flex-1 flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+      <ul className="flex flex-1 flex-col divide-y divide-border">
         {objectives.map((objective) => (
           <li key={objective.id} className="py-3 first:pt-0 last:pb-0">
             <div className="flex items-center gap-3">
@@ -44,10 +44,10 @@ export function StrategicObjectivesCard() {
                 {iconFor[objective.icon]}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{objective.title}</p>
-                <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{objective.detail}</p>
+                <p className="truncate text-sm font-medium text-foreground">{objective.title}</p>
+                <p className="truncate text-xs text-muted-foreground">{objective.detail}</p>
               </div>
-              <span className="shrink-0 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              <span className="shrink-0 text-sm font-semibold text-foreground">
                 {objective.percent}%
               </span>
               <Badge color={statusColor[objective.status]} variant="pill" className="shrink-0">
@@ -61,7 +61,7 @@ export function StrategicObjectivesCard() {
 
       <button
         type="button"
-        className="mt-3 flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+        className="mt-3 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-accent-foreground"
       >
         View all objectives
         <ArrowRightIcon className="h-3.5 w-3.5" />
