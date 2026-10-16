@@ -1,0 +1,143 @@
+/* ThunderOne global CSS for Ant Design projects. Import once at the app root.
+   GENERATED from skills/thunderone-ui/tokens.json by scripts/build.mjs. Do not edit by hand. */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --t1-bg-primary: #F9FAFB;
+  --t1-bg-primary-strong: #F3F4F6;
+  --t1-bg-secondary: #E5E7EB;
+  --t1-bg-tertiary: #D1D5DB;
+  --t1-bg-inverse: #111827;
+  --t1-bg-brand: #286EF9;
+  --t1-surface-default: #FFFFFF;
+  --t1-surface-raised: #E5E7EB;
+  --t1-surface-overlay: #111827;
+  --t1-text-primary: #111827;
+  --t1-text-secondary: #374151;
+  --t1-text-tertiary: #9CA3AF;
+  --t1-text-inverse: #FFFFFF;
+  --t1-text-brand: #0551DE;
+  --t1-border-default: #D1D5DB;
+  --t1-border-subtle: #E5E7EB;
+  --t1-border-strong: #9CA3AF;
+  --t1-border-brand: #0551DE;
+  --t1-border-focus: #0444BB;
+  --t1-action-primary: #286EF9;
+  --t1-action-primary-hover: #0551DE;
+  --t1-action-primary-pressed: #0444BB;
+  --t1-action-subdued-menu: #E9F4FF;
+  --t1-action-subdued: #E8F0FE;
+  --t1-action-subdued-2: #DEE9FE;
+  --t1-action-subdued-hover: #BBD2FE;
+  --t1-action-subdued-pressed: #98BCFD;
+  --t1-action-secondary: #E5E7EB;
+  --t1-action-destructive: #EF4444;
+  --t1-status-success: #10B981;
+  --t1-status-success-bg: #ECFDF5;
+  --t1-status-warning: #F59E0B;
+  --t1-status-warning-bg: #FFFBEB;
+  --t1-status-error: #EF4444;
+  --t1-status-error-bg: #FEF2F2;
+  --t1-status-info: #286EF9;
+  --t1-status-info-bg: #DEE9FE;
+  --t1-status-in-progress: #8B5CF6;
+  --t1-status-in-progress-bg: #F5F3FF;
+  --t1-radius-xs: 4px;
+  --t1-radius-sm: 6px;
+  --t1-radius-md: 10px;
+  --t1-radius-lg: 12px;
+  --t1-radius-xl: 16px;
+  --t1-radius-pill: 9999px;
+  --t1-shadow-card: 0px 1px 2px rgba(15, 23, 39, 0.04);
+  --t1-shadow-control: 0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --t1-shadow-ring: 0px 0px 0px 4px #FFFFFF;
+  --t1-shadow-dropdown: 0px 6px 16px rgba(0, 0, 0, 0.08), 0px 3px 6px -4px rgba(0, 0, 0, 0.12), 0px 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --t1-font: 'Manrope', system-ui, sans-serif;
+  --t1-sidebar: 224px; --t1-header: 69px;
+  --t1-content-px: 24px; --t1-content-pt: 20px;
+  --t1-card-padding: 16px; --t1-gap: 12px;
+  color-scheme: light;
+}
+
+/* Deprecated --mw-* aliases for projects migrating from mw-theme 0.1. Removed in the next major. */
+:root {
+  --mw-bg-primary: var(--t1-bg-primary);
+  --mw-bg-primary-strong: var(--t1-bg-primary-strong);
+  --mw-bg-secondary: var(--t1-bg-secondary);
+  --mw-bg-tertiary: var(--t1-bg-tertiary);
+  --mw-bg-inverse: var(--t1-bg-inverse);
+  --mw-bg-brand: var(--t1-bg-brand);
+  --mw-surface-default: var(--t1-surface-default);
+  --mw-surface-raised: var(--t1-surface-raised);
+  --mw-surface-overlay: var(--t1-surface-overlay);
+  --mw-text-primary: var(--t1-text-primary);
+  --mw-text-secondary: var(--t1-text-secondary);
+  --mw-text-tertiary: var(--t1-text-tertiary);
+  --mw-text-inverse: var(--t1-text-inverse);
+  --mw-text-brand: var(--t1-text-brand);
+  --mw-border-default: var(--t1-border-default);
+  --mw-border-subtle: var(--t1-border-subtle);
+  --mw-border-strong: var(--t1-border-strong);
+  --mw-border-brand: var(--t1-border-brand);
+  --mw-border-focus: var(--t1-border-focus);
+  --mw-action-primary: var(--t1-action-primary);
+  --mw-action-primary-hover: var(--t1-action-primary-hover);
+  --mw-action-primary-pressed: var(--t1-action-primary-pressed);
+  --mw-action-subdued-menu: var(--t1-action-subdued-menu);
+  --mw-action-subdued: var(--t1-action-subdued);
+  --mw-action-subdued-2: var(--t1-action-subdued-2);
+  --mw-action-subdued-hover: var(--t1-action-subdued-hover);
+  --mw-action-subdued-pressed: var(--t1-action-subdued-pressed);
+  --mw-action-secondary: var(--t1-action-secondary);
+  --mw-action-destructive: var(--t1-action-destructive);
+  --mw-status-success: var(--t1-status-success);
+  --mw-status-success-bg: var(--t1-status-success-bg);
+  --mw-status-warning: var(--t1-status-warning);
+  --mw-status-warning-bg: var(--t1-status-warning-bg);
+  --mw-status-error: var(--t1-status-error);
+  --mw-status-error-bg: var(--t1-status-error-bg);
+  --mw-status-info: var(--t1-status-info);
+  --mw-status-info-bg: var(--t1-status-info-bg);
+  --mw-status-in-progress: var(--t1-status-in-progress);
+  --mw-status-in-progress-bg: var(--t1-status-in-progress-bg);
+  --mw-radius-xs: var(--t1-radius-xs);
+  --mw-radius-sm: var(--t1-radius-sm);
+  --mw-radius-md: var(--t1-radius-md);
+  --mw-radius-lg: var(--t1-radius-lg);
+  --mw-radius-xl: var(--t1-radius-xl);
+  --mw-radius-pill: var(--t1-radius-pill);
+  --mw-shadow-card: var(--t1-shadow-card);
+  --mw-shadow-control: var(--t1-shadow-control);
+  --mw-shadow-ring: var(--t1-shadow-ring);
+  --mw-shadow-dropdown: var(--t1-shadow-dropdown);
+  --mw-font: var(--t1-font);
+  --mw-sidebar: var(--t1-sidebar);
+  --mw-header: var(--t1-header);
+  --mw-content-px: var(--t1-content-px);
+  --mw-content-pt: var(--t1-content-pt);
+  --mw-card-padding: var(--t1-card-padding);
+  --mw-gap: var(--t1-gap);
+}
+
+body { margin: 0; background: var(--t1-bg-primary); color: var(--t1-text-primary); font-family: var(--t1-font); }
+
+/* Scrollbars: thin, token-colored, everywhere */
+* { scrollbar-width: thin; scrollbar-color: var(--t1-border-default) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--t1-border-default); border-radius: 9999px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; background-clip: padding-box; }
+/* Sidebar nav: scrollbar hidden until hover. Put .t1-scroll-quiet on the nav scroll area. (.mw-* = deprecated alias) */
+.t1-scroll-quiet, .mw-scroll-quiet { scrollbar-gutter: stable; scrollbar-color: transparent transparent; overscroll-behavior: contain; }
+.t1-scroll-quiet:hover, .t1-scroll-quiet:focus-within, .mw-scroll-quiet:hover, .mw-scroll-quiet:focus-within { scrollbar-color: var(--t1-border-default) transparent; }
+.t1-scroll-quiet::-webkit-scrollbar-thumb, .mw-scroll-quiet::-webkit-scrollbar-thumb { background: transparent; background-clip: padding-box; }
+.t1-scroll-quiet:hover::-webkit-scrollbar-thumb, .t1-scroll-quiet:focus-within::-webkit-scrollbar-thumb, .mw-scroll-quiet:hover::-webkit-scrollbar-thumb, .mw-scroll-quiet:focus-within::-webkit-scrollbar-thumb { background: var(--t1-border-default); background-clip: padding-box; }
+/* Horizontal chip / segmented rows on phones: swipe, no visible scrollbar */
+.t1-scroll-x, .mw-scroll-x { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.t1-scroll-x::-webkit-scrollbar, .mw-scroll-x::-webkit-scrollbar { display: none; }
+
+/* Sidebar menu group titles: uppercase labels as in Figma */
+.ant-menu-item-group-title { font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+/* Numbers that line up */
+.t1-num, .mw-num, .ant-statistic-content { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

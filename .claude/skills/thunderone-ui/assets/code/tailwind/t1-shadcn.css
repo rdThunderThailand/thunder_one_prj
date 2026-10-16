@@ -1,0 +1,71 @@
+/* ThunderOne — shadcn/ui theme for Tailwind v3 (Lovable default stack).
+   Paste below the @tailwind lines in src/index.css, replacing the old :root / .dark blocks.
+   GENERATED from skills/thunderone-ui/tokens.json by scripts/build.mjs. Do not edit by hand. */
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --background: 210 20% 98%; /* #F9FAFB */
+    --foreground: 220.9 39.3% 11%; /* #111827 */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 220.9 39.3% 11%; /* #111827 */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 220.9 39.3% 11%; /* #111827 */
+    --primary: 219.9 94.6% 56.7%; /* #286EF9 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+    --secondary: 220 14.3% 95.9%; /* #F3F4F6 */
+    --secondary-foreground: 220.9 39.3% 11%; /* #111827 */
+    --muted: 220 14.3% 95.9%; /* #F3F4F6 */
+    --muted-foreground: 216.9 19.1% 26.7%; /* #374151 */
+    --accent: 210 100% 95.7%; /* #E9F4FF */
+    --accent-foreground: 219 95.6% 44.5%; /* #0551DE */
+    --destructive: 0 84.2% 60.2%; /* #EF4444 */
+    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+    --border: 220 13% 91%; /* #E5E7EB */
+    --input: 216 12.2% 83.9%; /* #D1D5DB */
+    --ring: 219 95.8% 37.5%; /* #0444BB */
+    --sidebar-background: 0 0% 100%; /* #FFFFFF */
+    --sidebar-foreground: 216.9 19.1% 26.7%; /* #374151 */
+    --sidebar-primary: 219.9 94.6% 56.7%; /* #286EF9 */
+    --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
+    --sidebar-accent: 210 100% 95.7%; /* #E9F4FF */
+    --sidebar-accent-foreground: 219.9 94.6% 56.7%; /* #286EF9 */
+    --sidebar-border: 220 13% 91%; /* #E5E7EB */
+    --sidebar-ring: 219 95.8% 37.5%; /* #0444BB */
+    --success: 160.1 84.1% 39.4%; /* #10B981 */
+    --success-foreground: 0 0% 100%; /* #FFFFFF */
+    --success-muted: 151.8 81% 95.9%; /* #ECFDF5 */
+    --warning: 37.7 92.1% 50.2%; /* #F59E0B */
+    --warning-foreground: 220.9 39.3% 11%; /* #111827 */
+    --warning-muted: 48 100% 96.1%; /* #FFFBEB */
+    --error: 0 84.2% 60.2%; /* #EF4444 */
+    --error-foreground: 0 0% 100%; /* #FFFFFF */
+    --error-muted: 0 85.7% 97.3%; /* #FEF2F2 */
+    --info: 219.9 94.6% 56.7%; /* #286EF9 */
+    --info-foreground: 0 0% 100%; /* #FFFFFF */
+    --info-muted: 219.4 94.1% 93.3%; /* #DEE9FE */
+    --in-progress: 258.3 89.5% 66.3%; /* #8B5CF6 */
+    --in-progress-muted: 250 100% 97.6%; /* #F5F3FF */
+    --radius: 12px;
+    color-scheme: light;
+  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground font-sans antialiased; }
+  .num, td, th { font-variant-numeric: tabular-nums; }
+}
+
+/* Scrollbars: thin, token-colored, everywhere */
+* { scrollbar-width: thin; scrollbar-color: hsl(var(--input)) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--input)); border-radius: 9999px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; background-clip: padding-box; }
+/* Sidebar nav: scrollbar hidden until hover. Put .t1-scroll-quiet on the nav scroll area. (.mw-* = deprecated alias) */
+.t1-scroll-quiet, .mw-scroll-quiet { scrollbar-gutter: stable; scrollbar-color: transparent transparent; overscroll-behavior: contain; }
+.t1-scroll-quiet:hover, .t1-scroll-quiet:focus-within, .mw-scroll-quiet:hover, .mw-scroll-quiet:focus-within { scrollbar-color: hsl(var(--input)) transparent; }
+.t1-scroll-quiet::-webkit-scrollbar-thumb, .mw-scroll-quiet::-webkit-scrollbar-thumb { background: transparent; background-clip: padding-box; }
+.t1-scroll-quiet:hover::-webkit-scrollbar-thumb, .t1-scroll-quiet:focus-within::-webkit-scrollbar-thumb, .mw-scroll-quiet:hover::-webkit-scrollbar-thumb, .mw-scroll-quiet:focus-within::-webkit-scrollbar-thumb { background: hsl(var(--input)); background-clip: padding-box; }
+/* Horizontal chip / segmented rows on phones: swipe, no visible scrollbar */
+.t1-scroll-x, .mw-scroll-x { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.t1-scroll-x::-webkit-scrollbar, .mw-scroll-x::-webkit-scrollbar { display: none; }
