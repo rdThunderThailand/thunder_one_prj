@@ -32,9 +32,9 @@ export function PageHeader({ title, subtitle, actions, titleInTopbar = false }: 
             page title (20px/extrabold/tight tracking) and subtitle
             (10px) — was text-2xl/font-semibold (24px/600) and text-sm
             (14px), both noticeably heavier/larger than the reference. */}
-        <h1 className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</h1>
+        <h1 className="text-xl font-extrabold tracking-tight text-foreground">{title}</h1>
         {subtitle && (
-          <p className="mt-1 text-2xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+          <p className="mt-1 text-2xs text-muted-foreground">{subtitle}</p>
         )}
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
