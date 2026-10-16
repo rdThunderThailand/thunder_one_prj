@@ -158,7 +158,7 @@ export function MyWorkListPage() {
                       type="button"
                       disabled
                       title="ยังไม่เปิดใช้งาน"
-                      className={`cursor-not-allowed rounded-lg px-2.5 py-1 text-xs font-medium text-primary-foreground ${job.status === "done" ? "bg-t1-gray-300" : "bg-primary"}`}
+                      className={`cursor-not-allowed rounded-lg px-2.5 py-1 text-xs font-medium text-primary-foreground ${job.status === "done" ? "bg-t1-gray-300" : "bg-t1-blue-300"}`}
                     >
                       {primaryActionLabel(job)}
                     </button>

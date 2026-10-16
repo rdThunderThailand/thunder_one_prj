@@ -64,7 +64,7 @@ function StatsRow() {
 function ActionBar() {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+      <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg bg-t1-blue-300 px-4 py-2 text-sm font-medium text-primary-foreground">
         + สร้าง Work Order
       </button>
       {["จัดสรรงาน", "เปลี่ยนผู้รับผิดชอบ", "เปลี่ยน Priority", "..."].map((label) => (
@@ -104,7 +104,7 @@ function FilterSidebar() {
         ช่วงเวลาแจ้ง
         <input disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground" value="21/05/2569 - 21/05/2569" readOnly />
       </label>
-      <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+      <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg bg-t1-blue-300 px-4 py-2 text-sm font-medium text-primary-foreground">
         ค้นหา
       </button>
       <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg border border-border px-4 py-2 text-sm text-t1-gray-400">

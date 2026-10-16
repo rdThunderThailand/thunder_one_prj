@@ -168,7 +168,7 @@ export function CompletedWorkPage() {
                 </select>
               </label>
             ))}
-            <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+            <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg bg-t1-blue-300 px-4 py-2 text-sm font-medium text-primary-foreground">
               ค้นหา
             </button>
           </Card>

@@ -300,7 +300,7 @@ function CaseListItem({
         dispatched
           ? "cursor-not-allowed border-border bg-muted opacity-60"
           : active
-            ? "border-primary bg-accent/50"
+            ? "border-t1-blue-300 bg-accent/50"
             : "border-border hover:border-t1-gray-300"
       }`}
     >
