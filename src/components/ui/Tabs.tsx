@@ -29,7 +29,7 @@ export function Tabs({ items, defaultKey, activeKey, onChange }: TabsProps) {
     <div>
       <div
         role="tablist"
-        className="flex gap-1 border-b border-zinc-100 dark:border-zinc-800"
+        className="flex gap-1 border-b border-border"
       >
         {items.map((item) => (
           <button
@@ -39,8 +39,8 @@ export function Tabs({ items, defaultKey, activeKey, onChange }: TabsProps) {
             onClick={() => selectTab(item.key)}
             className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
               currentKey === item.key
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {item.label}

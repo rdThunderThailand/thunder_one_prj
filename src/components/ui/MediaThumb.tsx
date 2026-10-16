@@ -26,7 +26,7 @@ const FIT_CLASS: Record<NonNullable<MediaThumbProps["fit"]>, string> = {
 
 export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className, fit = "fill" }: MediaThumbProps) {
   const box = className ?? "h-14 w-14";
-  const base = `shrink-0 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800 ${box}`;
+  const base = `shrink-0 overflow-hidden rounded bg-muted ${box}`;
   const fitClass = FIT_CLASS[fit];
   // Callers that know the asset pass kind/mimeType. Playlist covers know only a
   // cover_asset_id, so for them the URL's extension is the only signal available — without
@@ -42,7 +42,7 @@ export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className, 
 
   if (!url || imgFailed) {
     return (
-      <div className={`${base} flex items-center justify-center text-[10px] font-medium uppercase text-zinc-400`}>
+      <div className={`${base} flex items-center justify-center text-[10px] font-medium uppercase text-t1-gray-400`}>
         {kind ?? "file"}
       </div>
     );

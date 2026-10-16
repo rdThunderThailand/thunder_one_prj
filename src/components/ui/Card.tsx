@@ -2,7 +2,7 @@ import type { HTMLAttributes } from "react";
 
 // 2026-09-19: matched to the design reference's own card treatment (border,
 // radius, shadow, and hover state all measured directly off it) — was a
-// flat rounded-2xl/border-zinc-200/shadow-sm box with no hover feedback.
+// flat rounded-2xl/border-border/shadow-sm box with no hover feedback.
 export function Card({
   className = "",
   ...props

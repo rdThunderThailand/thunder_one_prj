@@ -31,16 +31,16 @@ export function LineTrendChart({ data, series, xKey, compactYAxis, className = "
     <div className={className}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid stroke="#f0f0f2" vertical={false} />
-          <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: "#a1a1aa" }} axisLine={false} tickLine={false} />
+          <CartesianGrid stroke="var(--color-t1-gray-100)" vertical={false} />
+          <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: "var(--color-t1-gray-400)" }} axisLine={false} tickLine={false} />
           <YAxis
-            tick={{ fontSize: 11, fill: "#a1a1aa" }}
+            tick={{ fontSize: 11, fill: "var(--color-t1-gray-400)" }}
             axisLine={false}
             tickLine={false}
             width={40}
             tickFormatter={compactYAxis ? formatCompact : undefined}
           />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#e4e4e7" }} />
+          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "var(--color-border)" }} />
           {series.map((s) => (
             <Line
               key={s.key}
