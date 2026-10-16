@@ -50,7 +50,7 @@ export function MyWorkPage({ work, nowIso }: { work: MyWork; nowIso: string }) {
         </div>
       </div>
 
-      <p className="text-right text-xs text-zinc-400">Data as of {dataAsOf}</p>
+      <p className="text-right text-xs text-t1-gray-400">Data as of {dataAsOf}</p>
     </div>
   );
 }

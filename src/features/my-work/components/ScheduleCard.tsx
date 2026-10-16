@@ -7,7 +7,7 @@ import { CalendarIcon } from "@/components/ui/icons";
 export function ScheduleCard() {
   return (
     <Card className="p-4">
-      <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Today&apos;s Schedule
       </h2>
       <EmptyState

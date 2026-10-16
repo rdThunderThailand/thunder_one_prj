@@ -19,10 +19,10 @@ export function EmployeeIntelStatTiles() {
             <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tile.iconTone}`}>
               {iconFor[tile.icon]}
             </span>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{tile.label}</p>
+            <p className="text-sm text-muted-foreground">{tile.label}</p>
           </div>
-          <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{tile.value}</p>
-          <p className="text-xs text-zinc-400">{tile.sublabel}</p>
+          <p className="text-2xl font-semibold text-foreground">{tile.value}</p>
+          <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>
           <p className={`text-xs font-medium ${tile.trendColor}`}>{tile.deltaLabel}</p>
           <Sparkline data={tile.trend} className={`h-8 w-full ${tile.trendColor}`} />
         </Card>

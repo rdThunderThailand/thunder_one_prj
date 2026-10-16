@@ -38,7 +38,7 @@ export function MyWorkSkeleton() {
           </div>
 
           <Card className="p-4">
-            <div className="flex gap-2 border-b border-zinc-100 pb-3 dark:border-zinc-800">
+            <div className="flex gap-2 border-b border-border pb-3">
               {[0, 1, 2, 3, 4].map((i) => (
                 <Skeleton
                   key={i}
@@ -46,7 +46,7 @@ export function MyWorkSkeleton() {
                 />
               ))}
             </div>
-            <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+            <ul className="flex flex-col divide-y divide-border">
               {[0, 1, 2, 3].map((i) => (
                 <li
                   key={i}

@@ -8,7 +8,7 @@ import { formatDate, type CompletedItem } from "../work-items";
 export function RecentlyCompletedCard({ completed }: { completed: CompletedItem[] }) {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Recently Completed
       </h2>
       {completed.length === 0 ? (
@@ -25,10 +25,10 @@ export function RecentlyCompletedCard({ completed }: { completed: CompletedItem[
               key={item.id}
               className="flex items-start gap-2.5"
             >
-              <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-success" />
               <div className="min-w-0">
-                <p className="truncate text-sm text-zinc-700 dark:text-zinc-200">{item.title}</p>
-                <p className="text-xs text-zinc-400">{formatDate(item.completedAt)}</p>
+                <p className="truncate text-sm text-foreground">{item.title}</p>
+                <p className="text-xs text-t1-gray-400">{formatDate(item.completedAt)}</p>
               </div>
             </li>
           ))}

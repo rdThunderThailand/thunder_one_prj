@@ -17,10 +17,10 @@ const TABS: { id: string; label: string; kinds: WorkItemKind[] }[] = [
 type RowStatus = "Overdue" | "Pending Approval" | "Waiting on Others" | "To Do";
 
 const statusTone: Record<RowStatus, string> = {
-  Overdue: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
-  "Pending Approval": "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  "Waiting on Others": "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
-  "To Do": "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  Overdue: "bg-error-muted text-t1-red-700",
+  "Pending Approval": "bg-warning-muted text-t1-amber-700",
+  "Waiting on Others": "bg-in-progress-muted text-t1-purple-700",
+  "To Do": "bg-muted text-muted-foreground",
 };
 
 function rowStatus(item: WorkItem, now: Date): RowStatus {
@@ -43,7 +43,7 @@ export function ManagerTaskList({ items, nowIso }: { items: WorkItem[]; nowIso: 
     <Card className="p-4">
       <div
         role="tablist"
-        className="mb-3 flex flex-wrap gap-1 border-b border-zinc-100 pb-3 dark:border-zinc-800"
+        className="mb-3 flex flex-wrap gap-1 border-b border-border pb-3"
       >
         {TABS.map((t) => {
           const count = items.filter((item) => t.kinds.includes(item.kind)).length;
@@ -56,13 +56,13 @@ export function ManagerTaskList({ items, nowIso }: { items: WorkItem[]; nowIso: 
               onClick={() => setActiveTab(t.id)}
               className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
                 activeTab === t.id
-                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "bg-accent text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {t.label}
               {count > 0 && (
-                <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{count}</span>
+                <span className="rounded-full bg-error px-1.5 py-0.5 text-[10px] font-semibold text-error-foreground">{count}</span>
               )}
             </button>
           );
@@ -79,7 +79,7 @@ export function ManagerTaskList({ items, nowIso }: { items: WorkItem[]; nowIso: 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-100 text-xs text-zinc-400 dark:border-zinc-800">
+              <tr className="border-b border-border text-xs text-t1-gray-400">
                 <th className="py-2 font-medium">Item</th>
                 <th className="py-2 font-medium">Source</th>
                 <th className="py-2 font-medium">Status</th>
@@ -87,13 +87,13 @@ export function ManagerTaskList({ items, nowIso }: { items: WorkItem[]; nowIso: 
                 <th className="w-8 py-2" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-border">
               {rows.map((item) => {
                 const status = rowStatus(item, now);
                 return (
                   <tr
                     key={item.id}
-                    className={status === "Overdue" ? "border-l-2 border-red-500" : ""}
+                    className={status === "Overdue" ? "border-l-2 border-error" : ""}
                   >
                     <td className="py-3 pl-2 pr-4">
                       <div className="flex items-center gap-2.5">
@@ -101,25 +101,25 @@ export function ManagerTaskList({ items, nowIso }: { items: WorkItem[]; nowIso: 
                           {KIND_META[item.kind].icon}
                         </span>
                         <div className="min-w-0">
-                          <p className="font-medium text-zinc-900 dark:text-zinc-50">{item.title}</p>
-                          <p className="text-xs text-zinc-400">{item.detail}</p>
+                          <p className="font-medium text-foreground">{item.title}</p>
+                          <p className="text-xs text-t1-gray-400">{item.detail}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 pr-4 text-zinc-700 dark:text-zinc-200">{item.source}</td>
+                    <td className="py-3 pr-4 text-foreground">{item.source}</td>
                     <td className="py-3 pr-4">
                       <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${statusTone[status]}`}>
                         {status}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap py-3 pr-4 text-zinc-700 dark:text-zinc-200">
+                    <td className="whitespace-nowrap py-3 pr-4 text-foreground">
                       {item.dueAt ? formatDate(item.dueAt) : "-"}
                     </td>
                     <td className="py-3 pr-2 text-right">
                       <Link
                         href={item.href}
                         aria-label={`Open ${item.title}`}
-                        className="inline-flex text-zinc-400 hover:text-indigo-600"
+                        className="inline-flex text-t1-gray-400 hover:text-primary"
                       >
                         <ArrowRightIcon className="h-4 w-4" />
                       </Link>
