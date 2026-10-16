@@ -1,11 +1,11 @@
 "use client";
 
-import { FileVideo, Image as ImageIcon, type LucideProps } from "lucide-react";
+import { VideoIcon as FileVideo, ImageIcon, type IconProps } from "@/components/ui/icons";
 import type { ComponentType } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import type { MediaAsset } from "@/types/domain";
 
-export type Icon = ComponentType<Pick<LucideProps, "className" | "strokeWidth">>;
+export type Icon = ComponentType<IconProps>;
 
 export function assetLabel(asset: MediaAsset) {
   return asset.title ?? asset.file?.original_filename ?? "Untitled asset";
@@ -47,14 +47,14 @@ export function MediaPreview({ asset, previewUrl, thumbnailUrl }: { asset: Media
 
 export function KindIcon({ asset, className = "" }: { asset: MediaAsset; className?: string }) {
   const Ico: Icon = asset.kind === "video" ? FileVideo : ImageIcon;
-  return <Ico className={className} strokeWidth={1.8} />;
+  return <Ico className={className} />;
 }
 
 export function SectionCard({ title, icon: Ico, rows }: { title: string; icon: Icon; rows: Array<[string, string | undefined]> }) {
   return (
     <article className="rounded-xl border border-border bg-card p-4 shadow-panel">
       <h3 className="flex items-center gap-2 text-xs font-bold">
-        <Ico className="h-4 w-4 text-primary" strokeWidth={1.8} />
+        <Ico className="h-4 w-4 text-primary" />
         {title}
       </h3>
       <div className="mt-3 divide-y divide-border">

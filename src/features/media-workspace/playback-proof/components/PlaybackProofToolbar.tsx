@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download } from "lucide-react";
+import { DownloadIcon as Download } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { SearchInput } from "@/components/ui/lovable/core";
 import { Input } from "@/components/ui/lovable/input";

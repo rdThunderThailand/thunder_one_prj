@@ -3,7 +3,11 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ChevronRight, Folder, Search } from "lucide-react";
+import {
+  ChevronRightIcon as ChevronRight,
+  FolderIcon as Folder,
+  SearchIcon as Search,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";

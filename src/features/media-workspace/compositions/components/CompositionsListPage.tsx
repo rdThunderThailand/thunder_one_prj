@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Plus, Trash2, Undo2 } from "lucide-react";
+import { PlusIcon as Plus, TrashIcon as Trash2, UndoIcon as Undo2 } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";

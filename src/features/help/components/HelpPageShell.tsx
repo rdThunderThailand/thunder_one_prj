@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, LifeBuoy, Search } from "lucide-react";
+import {
+  BookIcon as BookOpen,
+  HelpIcon as LifeBuoy,
+  SearchIcon as Search,
+} from "@/components/ui/icons";
 import { env } from "@/config/env";
 import { cn } from "@/lib/utils";
 import { LOCALE_NAME, t } from "../copy";

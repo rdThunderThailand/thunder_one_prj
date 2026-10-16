@@ -2,8 +2,11 @@
 
 import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CircleHelp } from "lucide-react";
-import { HelpIcon } from "@/components/ui/icons";
+import {
+  CalendarIcon as CalendarDays,
+  HelpIcon as CircleHelp,
+  HelpIcon,
+} from "@/components/ui/icons";
 import { resolveActiveApp } from "@/config/apps";
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";

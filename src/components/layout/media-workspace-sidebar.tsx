@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  PanelCloseIcon as PanelLeftClose,
+  PanelOpenIcon as PanelLeftOpen,
+} from "@/components/ui/icons";
 import type { NavConfig, NavItem } from "@/config/nav/types";
 
 function isActivePath(pathname: string, href?: string) {

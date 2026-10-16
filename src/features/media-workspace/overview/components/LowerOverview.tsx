@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { CheckCircle2, LayoutGrid, Megaphone, Monitor, Radio } from "lucide-react";
+import {
+  CheckCircleIcon as CheckCircle2,
+  GridIcon as LayoutGrid,
+  MegaphoneIcon as Megaphone,
+  MonitorIcon as Monitor,
+  BroadcastIcon as Radio,
+} from "@/components/ui/icons";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
 import { Skeleton } from "@/components/ui/Skeleton";

@@ -3,24 +3,24 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
-  Calendar,
-  ChevronRight,
-  Copy,
-  Download,
-  FileText,
-  Folder,
-  FolderInput,
-  Image as ImageIcon,
-  Link2,
-  Maximize2,
-  MoreHorizontal,
-  Ratio,
-  RefreshCw,
-  Tag,
-  Trash2,
-  User,
-} from "lucide-react";
+  ArrowLeftIcon as ArrowLeft,
+  CalendarIcon as Calendar,
+  ChevronRightIcon as ChevronRight,
+  CopyIcon as Copy,
+  DownloadIcon as Download,
+  FileTextIcon as FileText,
+  FolderIcon as Folder,
+  FolderMoveIcon as FolderInput,
+  ImageIcon,
+  LinkIcon as Link2,
+  ExpandIcon as Maximize2,
+  MoreIcon as MoreHorizontal,
+  RatioIcon as Ratio,
+  RefreshIcon as RefreshCw,
+  TagIcon as Tag,
+  TrashIcon as Trash2,
+  UserIcon as User,
+} from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/lovable/badge";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
@@ -184,7 +184,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
               {facts.map(([Ico, factLabel, value]) => (
                 <div key={factLabel} className="flex items-center justify-between gap-4 py-2.5 text-[11px]">
                   <span className="flex items-center gap-2 text-muted-foreground">
-                    <Ico className="h-3.5 w-3.5" strokeWidth={1.8} />
+                    <Ico className="h-3.5 w-3.5" />
                     {factLabel}
                   </span>
                   <strong className="min-w-0 truncate">{value}</strong>

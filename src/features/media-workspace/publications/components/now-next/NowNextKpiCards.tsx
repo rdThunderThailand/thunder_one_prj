@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, Clock, Radio, Timer } from "lucide-react";
+import {
+  ScheduleIcon as CalendarClock,
+  ClockIcon as Clock,
+  BroadcastIcon as Radio,
+  TimerIcon as Timer,
+} from "@/components/ui/icons";
 import { LibrarySummary, LibrarySummarySkeleton } from "../../../content-library/LibraryChrome";
 import type { NowNextResponse } from "../../now-next";
 

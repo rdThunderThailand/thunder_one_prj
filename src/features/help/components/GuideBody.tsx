@@ -1,4 +1,4 @@
-import { AlertTriangle, Info } from "lucide-react";
+import { WarningTriangleIcon as AlertTriangle, InfoIcon as Info } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import type { GuideBlock } from "../types";
 

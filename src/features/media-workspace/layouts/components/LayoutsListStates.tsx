@@ -1,7 +1,11 @@
 // Presentational blocks extracted from LayoutsListPage.tsx so that file stays inside the
 // 300-line rule. No data-fetching, no side-effects here.
 
-import { CheckCircle2, LayoutTemplate, PauseCircle } from "lucide-react";
+import {
+  CheckCircleIcon as CheckCircle2,
+  LayoutIcon as LayoutTemplate,
+  PauseCircleIcon as PauseCircle,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { LibraryEmpty, LibrarySummary } from "../../content-library/LibraryChrome";
 

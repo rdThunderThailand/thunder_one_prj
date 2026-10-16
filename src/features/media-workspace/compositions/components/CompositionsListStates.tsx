@@ -1,7 +1,12 @@
 // Presentational blocks extracted from CompositionsListPage.tsx so that file stays inside
 // the 300-line rule. No data-fetching, no side-effects here.
 
-import { AlertCircle, LayoutTemplate, PencilRuler, SquareStack } from "lucide-react";
+import {
+  AlertCircleIcon as AlertCircle,
+  LayoutIcon as LayoutTemplate,
+  DesignIcon as PencilRuler,
+  LayersIcon as SquareStack,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { LibraryEmpty, LibrarySummary } from "../../content-library/LibraryChrome";
 

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Plus, Trash2, Undo2 } from "lucide-react";
+import { PlusIcon as Plus, TrashIcon as Trash2, UndoIcon as Undo2 } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";

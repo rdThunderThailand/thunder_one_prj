@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { CalendarClock, FilePlus2, Grid2x2Plus, ListVideo, Megaphone, Upload } from "lucide-react";
+import {
+  ScheduleIcon as CalendarClock,
+  FilePlusIcon as FilePlus2,
+  AppAddIcon as Grid2x2Plus,
+  PlaylistIcon as ListVideo,
+  MegaphoneIcon as Megaphone,
+  UploadIcon as Upload,
+} from "@/components/ui/icons";
 import { Card } from "@/components/ui/Card";
 import { quickActions, type QuickActionIcon } from "../mock-data";
 

@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 // edited by hand: a stale or edited copy would let the app drift from the skill agents follow.
 const pairs = [
   ["t1-tailwind-v4.css", "tailwind/t1-tailwind-v4.css"],
+  ["t1-icons.tsx", "t1-icons.tsx"],
 ];
 
 for (const [copy, source] of pairs) {

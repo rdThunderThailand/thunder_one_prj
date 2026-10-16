@@ -68,10 +68,10 @@ Every phase ends with `tsc --noEmit`, `eslint`, `next build` and — where pixel
 check (owner chooses run / checklist / skip before each, CLAUDE.md §3). One PR per phase into `dev`,
 Draft until verified.
 
-### P1 — Wait on the design system team (no work in this repo)
-#2 asks the DS team to resolve the v4 layering note, the `media` profile nav, and (by extension)
-OD-01/04/05. P2–P5 do not depend on it: they follow v0.2.0 under DS-14. When the DS team releases a
-new tag, re-vendor the skill and the `src/design-system/` copies in one PR.
+### P1 — No upstream work (owner decision 2026-10-16)
+The design system repo is the company's shared source: this repo never changes it and does not wait
+on it. Gaps are handled locally and recorded as deviations in ADR 0096 / `AGENTS.md`; when the design
+system ships a new tag, re-vendor in one PR. #2 stays open for the DS team to act on if they choose.
 
 ### P2 — Foundation in this repo (tokens, font, docs)
 **Status 2026-10-16:** done on branch `style/thunderone-ds-foundation` (not committed). tsc, eslint,
@@ -88,6 +88,13 @@ Playlist editor and the Add Item drawer: every measured colour and border matche
 5. Verify: every main route renders with the new palette; no unstyled surface (missing token).
 
 ### P3 — Icons
+**Status 2026-10-16:** done on branch `style/thunderone-ds-icons` (not committed). `@ant-design/icons` 6.3.4
+added, `lucide-react` removed (62 files rewritten, 0 left). `icons.tsx` is a client module (antd creates a
+React context) whose exports wrap the antd glyph in a Tailwind-controlled span, because antd injects an
+unlayered `.anticon { display: inline-flex }` that would beat `hidden` / `sm:block`. `MediaIcon`
+(`workspaces/media.tsx`) is not copied: it imports the antd theme, and antd is not installed; the profile
+map is applied in `icons.tsx` and the Media nav instead. Browser-checked shell, Overview, Playlists list,
+editor and the Edit tags dialog: every icon box matches its class and the svg fills it.
 1. Add `@ant-design/icons` (D5). Copy `t1-icons.tsx` + `workspaces/media.tsx` (from P2).
 2. Re-implement the 74 `icons.tsx` exports on antd icons, keeping names and the `className` API
    (antd renders a `span.anticon` with a `1em` svg → size via the wrapper class).
