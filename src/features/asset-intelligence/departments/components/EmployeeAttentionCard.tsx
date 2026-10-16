@@ -46,7 +46,7 @@ export function EmployeeAttentionCard() {
           </li>
         ))}
       </ul>
-      <button className="mt-3 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary">
+      <button className="mt-3 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-accent-foreground">
         View all ({employeeAttentionItems.length})
         <ArrowRightIcon className="h-3.5 w-3.5" />
       </button>

@@ -43,7 +43,7 @@ export function ReportProblemForm({ assetTag }: ReportProblemFormProps) {
       />
       <button
         type="submit"
-        className="self-start rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary"
+        className="self-start rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
       >
         Send Report
       </button>

@@ -9,7 +9,7 @@ export function NowNextCard() {
         <h2 className="text-sm font-semibold text-foreground">Now &amp; Next</h2>
         <button
           type="button"
-          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground"
         >
           View full calendar
           <ArrowRightIcon className="h-3 w-3" />

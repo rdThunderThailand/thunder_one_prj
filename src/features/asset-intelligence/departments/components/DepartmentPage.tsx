@@ -36,7 +36,7 @@ function NeedsAttentionCard() {
                 {row.subtitle} · Assigned: {row.assignee}
               </p>
             </div>
-            <button className="shrink-0 text-xs font-medium text-primary hover:text-primary">
+            <button className="shrink-0 text-xs font-medium text-primary hover:text-accent-foreground">
               Review
             </button>
           </li>
@@ -82,7 +82,7 @@ export function DepartmentPage() {
       </div>
       <Link
         href="/asset-intelligence/departments/assets"
-        className="self-start text-sm font-medium text-primary hover:text-primary"
+        className="self-start text-sm font-medium text-primary hover:text-accent-foreground"
       >
         View all department assets →
       </Link>

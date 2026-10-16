@@ -7,7 +7,7 @@ export function EmployeeScheduleCard() {
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Today&apos;s Schedule</h2>
-        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary">
+        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground">
           View calendar
           <ArrowRightIcon className="h-3 w-3" />
         </button>

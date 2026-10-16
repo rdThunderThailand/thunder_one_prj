@@ -18,7 +18,7 @@ const statusBadge: Record<ManagerAttentionItem["status"], { label: string; tone:
 const actionButton: Record<ManagerAttentionItem["status"], string> = {
   overdue: "border border-border text-foreground hover:bg-muted",
   "at-risk": "border border-border text-foreground hover:bg-muted",
-  waiting: "bg-primary text-primary-foreground hover:bg-primary",
+  waiting: "bg-primary text-primary-foreground hover:bg-primary/90",
 };
 
 export function ManagerAttentionCard() {
@@ -65,7 +65,7 @@ export function ManagerAttentionCard() {
 
       <button
         type="button"
-        className="mt-3 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary"
+        className="mt-3 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-accent-foreground"
       >
         View all ({managerAttentionItems.length})
         <ArrowRightIcon className="h-3.5 w-3.5" />

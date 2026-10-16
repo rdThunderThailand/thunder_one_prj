@@ -9,7 +9,7 @@ export function ManagerDecisionsCard() {
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Decisions Today</h2>
-        <button className="text-xs font-medium text-primary hover:text-primary">
+        <button className="text-xs font-medium text-primary hover:text-accent-foreground">
           View all
         </button>
       </div>
@@ -23,7 +23,7 @@ export function ManagerDecisionsCard() {
               <p className="truncate text-sm font-medium text-foreground">{decision.title}</p>
               <p className="truncate text-xs text-t1-gray-400">{decision.detail}</p>
             </div>
-            <button className="shrink-0 rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary">
+            <button className="shrink-0 rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90">
               Decide
             </button>
           </li>

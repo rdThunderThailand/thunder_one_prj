@@ -35,7 +35,7 @@ function ApprovalRow({ asset }: { asset: Asset }) {
       </div>
       <button
         onClick={() => setAcknowledged(true)}
-        className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary"
+        className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
       >
         Acknowledge
       </button>

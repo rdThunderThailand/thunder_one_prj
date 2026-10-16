@@ -7,7 +7,7 @@ export function EmployeeInsightsCard() {
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Insights for You</h2>
-        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary">
+        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground">
           View more
           <ArrowRightIcon className="h-3 w-3" />
         </button>
@@ -36,7 +36,7 @@ export function EmployeeInsightsCard() {
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">{employeeRecommendation.title}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{employeeRecommendation.detail}</p>
-            <button className="mt-1.5 flex items-center gap-1 text-xs font-medium text-primary hover:text-primary">
+            <button className="mt-1.5 flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground">
               {employeeRecommendation.linkLabel}
               <ArrowRightIcon className="h-3 w-3" />
             </button>

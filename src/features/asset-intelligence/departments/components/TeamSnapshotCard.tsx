@@ -29,7 +29,7 @@ export function TeamSnapshotCard() {
         <h2 className="text-sm font-semibold text-foreground">Team Snapshot</h2>
         <button
           type="button"
-          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground"
         >
           View team report
           <ArrowRightIcon className="h-3 w-3" />

@@ -8,7 +8,7 @@ export function TeamGoalsCard() {
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Team Goals</h2>
-        <button className="text-xs font-medium text-primary hover:text-primary">
+        <button className="text-xs font-medium text-primary hover:text-accent-foreground">
           View all
         </button>
       </div>
