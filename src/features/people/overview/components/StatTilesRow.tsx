@@ -79,7 +79,7 @@ export function StatTilesRow({ totalHeadcount, newHiresThisMonth, onboardingCoun
           {tile.sublabel && <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>}
           <Link
             href={tile.href}
-            className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary"
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground"
           >
             ดูรายละเอียด
             <ArrowRightIcon className="h-3 w-3" />

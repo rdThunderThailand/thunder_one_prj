@@ -41,7 +41,7 @@ export function PersonnelGridView({ rows, onEditRow, onViewRow }: PersonnelGridV
             <button
               type="button"
               title="ยังไม่เปิดใช้งาน"
-              className="shrink-0 cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400"
+              className="shrink-0 cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground"
             >
               <MoreIcon className="h-4 w-4" />
             </button>

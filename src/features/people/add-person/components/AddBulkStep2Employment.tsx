@@ -103,7 +103,7 @@ export function AddBulkStep2Employment({
           <a
             href="/templates/bulk-import-template.csv"
             download
-            className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary"
+            className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-accent-foreground"
           >
             <UploadIcon className="h-3.5 w-3.5 rotate-180" />
             ดาวน์โหลดตัวอย่างไฟล์

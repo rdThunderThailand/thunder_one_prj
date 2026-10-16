@@ -26,7 +26,7 @@ export function OnboardingStatusCard({ summary, rows }: OnboardingStatusCardProp
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">สถานะ Onboarding</h2>
-        <button type="button" className="text-xs font-medium text-primary hover:text-primary">
+        <button type="button" className="text-xs font-medium text-primary hover:text-accent-foreground">
           ดูทั้งหมด
         </button>
       </div>

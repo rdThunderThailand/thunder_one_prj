@@ -96,7 +96,7 @@ export function AddBulkStep1Upload({
             <a
               href="/templates/bulk-import-template.csv"
               download
-              className="mt-1 text-xs font-medium text-primary hover:text-primary"
+              className="mt-1 text-xs font-medium text-primary hover:text-accent-foreground"
             >
               ↓ ดาวน์โหลดไฟล์ตัวอย่าง (Template)
             </a>

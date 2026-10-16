@@ -70,7 +70,7 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
           <button
             type="button"
             title="ยังไม่เปิดใช้งาน"
-            className="shrink-0 cursor-not-allowed text-t1-gray-400 hover:text-t1-gray-400"
+            className="shrink-0 cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground"
           >
             <MoreIcon className="h-3.5 w-3.5" />
           </button>

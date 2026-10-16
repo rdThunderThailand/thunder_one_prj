@@ -39,7 +39,7 @@ export function LoadFailure({ message, compact = false }: LoadFailureProps) {
           type="button"
           onClick={handleRetry}
           disabled={retrying}
-          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary disabled:opacity-50"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground disabled:opacity-50"
         >
           <RefreshIcon className={`h-3 w-3 ${retrying ? "animate-spin" : ""}`} />
           ลองใหม่

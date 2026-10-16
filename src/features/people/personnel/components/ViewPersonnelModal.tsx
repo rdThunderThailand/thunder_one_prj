@@ -49,7 +49,7 @@ export function ViewPersonnelModal({ row, onClose, onEdit }: ViewPersonnelModalP
         <button
           type="button"
           onClick={onEdit}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           แก้ไขข้อมูล
         </button>

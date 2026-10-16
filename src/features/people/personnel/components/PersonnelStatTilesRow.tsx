@@ -39,7 +39,7 @@ export function PersonnelStatTilesRow({ totalCount, contractorCount, newHiresThi
         <span className="text-2xl font-semibold text-foreground">{newHiresThisMonth}</span>
         <Link
           href="/people/new-hires"
-          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground"
         >
           ดูรายละเอียด
           <ArrowRightIcon className="h-3 w-3" />
@@ -54,7 +54,7 @@ export function PersonnelStatTilesRow({ totalCount, contractorCount, newHiresThi
         <span className="text-2xl font-semibold text-t1-gray-400">-</span>
         <Link
           href="/people/departures"
-          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground"
         >
           ดูรายละเอียด
           <ArrowRightIcon className="h-3 w-3" />

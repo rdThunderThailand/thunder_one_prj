@@ -171,7 +171,7 @@ export function ChangeDetailPanel({ change, onApprove, onReject, onClose }: Chan
                 <button
                   type="button"
                   onClick={() => onApprove(change.id)}
-                  className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground hover:bg-primary"
+                  className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   อนุมัติ
                 </button>
