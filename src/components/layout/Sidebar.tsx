@@ -75,7 +75,7 @@ function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed select-none bg-muted text-t1-gray-400 opacity-75`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-t1-gray-50 text-t1-gray-400 opacity-75`} title="Not built yet">
         {icon}
         {item.label}
         <NavBadge badge={item.badge} />
@@ -106,7 +106,7 @@ function SubLink({ item, active }: { item: NavItem; active: boolean }) {
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed select-none bg-muted text-t1-gray-400 opacity-75`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-t1-gray-50 text-t1-gray-400 opacity-75`} title="Not built yet">
         {item.label}
       </span>
     );
@@ -309,7 +309,7 @@ function SettingsSidebar({ pathname }: { pathname: string }) {
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-card">
       <Link
         href="/"
-        className="flex h-[68px] items-center border-b border-border px-5 hover:bg-muted"
+        className="flex h-[68px] items-center border-b border-border px-5 hover:bg-t1-gray-50"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo; no next/image optimization needed */}
         <img src="/brand/thunderone-logo-horizontal-color.svg" alt="ThunderOne" className="h-10 w-auto" />
@@ -396,7 +396,7 @@ export function Sidebar({
         className={`flex items-center ${
           isMediaWorkspace
             ? `h-[68px] gap-3 border-b border-sidebar-border hover:bg-accent px-4 ${collapsed ? "justify-center px-2" : ""}`
-            : `h-[68px] border-b border-border hover:bg-muted ${collapsed ? "justify-center px-2" : "px-5"}`
+            : `h-[68px] border-b border-border hover:bg-t1-gray-50 ${collapsed ? "justify-center px-2" : "px-5"}`
         }`}
       >
         {isMediaWorkspace ? (
@@ -443,7 +443,7 @@ export function Sidebar({
               ? `flex h-9 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-foreground transition-colors hover:bg-accent hover:text-primary ${
                   collapsed ? "justify-center" : ""
                 }`
-              : "flex h-9 w-full items-center justify-center gap-2.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted"
+              : "flex h-9 w-full items-center justify-center gap-2.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground transition-colors hover:bg-t1-gray-50"
           }
         >
           {isMediaWorkspace ? (

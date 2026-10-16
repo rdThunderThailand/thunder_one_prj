@@ -44,7 +44,7 @@ export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "def
         className={
           compact
             ? "flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-accent"
-            : "flex items-center gap-3 rounded-lg px-1.5 py-1 hover:bg-muted"
+            : "flex items-center gap-3 rounded-lg px-1.5 py-1 hover:bg-t1-gray-50"
         }
       >
         {/* 2026-09-19: 44px -> 32px, matching the design reference's own
@@ -83,7 +83,7 @@ export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "def
               href="/profile"
               role="menuitem"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-t1-gray-50"
             >
               <UserIcon className="h-4 w-4 text-t1-gray-400" />
               โปรไฟล์ของฉัน
@@ -92,7 +92,7 @@ export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "def
               href="/account-security"
               role="menuitem"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-t1-gray-50"
             >
               <LockIcon className="h-4 w-4 text-t1-gray-400" />
               บัญชีและความปลอดภัย
@@ -103,7 +103,7 @@ export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "def
               href="/profile"
               role="menuitem"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-t1-gray-50"
             >
               <SettingsIcon className="h-4 w-4 text-t1-gray-400" />
               การตั้งค่าส่วนบุคคล

@@ -145,7 +145,7 @@ export function NotificationBell({ variant }: { variant: "default" | "media" }) 
   const buttonClass =
     variant === "media"
       ? "relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-      : "relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground";
+      : "relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-t1-gray-50 hover:text-foreground";
 
   return (
     <div className="relative">

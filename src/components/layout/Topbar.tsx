@@ -110,11 +110,11 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: 
       <div className="ml-auto flex items-center gap-1">
         <LanguageSwitch
           initialLocale={locale}
-          className="hidden text-muted-foreground hover:bg-muted hover:text-foreground sm:flex"
+          className="hidden text-muted-foreground hover:bg-t1-gray-50 hover:text-foreground sm:flex"
         />
         <NotificationBell variant="default" />
         <HelpTrigger
-          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-t1-gray-50 hover:text-foreground"
           support={helpSupport}
         >
           <HelpIcon className="h-5 w-5" />

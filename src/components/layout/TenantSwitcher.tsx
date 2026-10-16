@@ -71,7 +71,7 @@ export function TenantSwitcher({ tenantId, tenantName, tenants, collapsed }: Ten
         aria-haspopup="menu"
         aria-expanded={isOpen}
         title={collapsed ? label : undefined}
-        className={`${rowClasses} text-left transition-colors hover:bg-muted`}
+        className={`${rowClasses} text-left transition-colors hover:bg-t1-gray-50`}
       >
         <BuildingIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
         {!collapsed && (
@@ -110,7 +110,7 @@ export function TenantSwitcher({ tenantId, tenantName, tenants, collapsed }: Ten
                   className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors disabled:opacity-60 ${
                     current
                       ? "font-semibold text-primary"
-                      : "text-foreground hover:bg-muted"
+                      : "text-foreground hover:bg-t1-gray-50"
                   }`}
                 >
                   <span className="flex-1 truncate">{tenant.name}</span>
