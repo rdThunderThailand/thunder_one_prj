@@ -37,7 +37,7 @@ export function ReturnDeliveryHeader() {
           </span>
           <span
             title="Not built yet"
-            className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+            className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-t1-blue-300 px-4 py-2.5 text-sm font-medium text-primary-foreground"
           >
             <PlusIcon className="h-4 w-4" />
             สร้างรายการใหม่

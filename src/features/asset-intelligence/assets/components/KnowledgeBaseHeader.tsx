@@ -21,7 +21,7 @@ export function KnowledgeBaseHeader() {
         </div>
         <span
           title="Not built yet"
-          className="flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+          className="flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg bg-t1-blue-300 px-4 py-2.5 text-sm font-medium text-primary-foreground"
         >
           <PlusIcon className="h-4 w-4" />
           สร้างบทความใหม่

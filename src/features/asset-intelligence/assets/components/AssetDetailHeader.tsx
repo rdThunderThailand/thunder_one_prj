@@ -67,7 +67,7 @@ export function AssetDetailHeader({ asset }: { asset: AssetListRow }) {
           </button>
           <span
             title="Not built yet"
-            className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+            className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-t1-blue-300 px-4 py-2.5 text-sm font-medium text-primary-foreground"
           >
             การดำเนินการ
             <ChevronDownIcon className="h-3.5 w-3.5" />

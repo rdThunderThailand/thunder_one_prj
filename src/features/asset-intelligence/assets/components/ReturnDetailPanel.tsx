@@ -97,7 +97,7 @@ export function ReturnDetailPanel() {
       <div className="mt-4 flex flex-col gap-2">
         <span
           title="Not built yet"
-          className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground"
+          className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-t1-blue-300 py-2 text-sm font-semibold text-primary-foreground"
         >
           ดำเนินการต่อ
           <ChevronDownIcon className="h-3.5 w-3.5" />

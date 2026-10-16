@@ -117,7 +117,7 @@ export function CategoryDetailPanel() {
             </span>
             <span
               title="Not built yet"
-              className="flex cursor-not-allowed items-center justify-center rounded-lg border border-border py-2 text-sm font-semibold text-error"
+              className="flex cursor-not-allowed items-center justify-center rounded-lg border border-error/30 py-2 text-sm font-semibold text-error"
             >
               ปิดการใช้งาน
             </span>

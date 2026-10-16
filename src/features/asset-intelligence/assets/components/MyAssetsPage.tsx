@@ -49,7 +49,7 @@ function AssetCard({ asset }: { asset: Asset }) {
 
 function PendingAcknowledgementBanner({ count }: { count: number }) {
   return (
-    <Card className="flex items-center gap-3 border-border bg-warning-muted p-4">
+    <Card className="flex items-center gap-3 border-warning/30 bg-warning-muted p-4">
       <WarningTriangleIcon className="h-5 w-5 shrink-0 text-t1-amber-700" />
       <p className="flex-1 text-sm text-t1-amber-700">
         You have {count} asset{count > 1 ? "s" : ""} waiting for your confirmation.

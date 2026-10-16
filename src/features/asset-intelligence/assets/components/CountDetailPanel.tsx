@@ -110,7 +110,7 @@ export function CountDetailPanel() {
         </span>
         <span
           title="Not built yet"
-          className="flex cursor-not-allowed items-center justify-center rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground"
+          className="flex cursor-not-allowed items-center justify-center rounded-lg bg-t1-blue-300 py-2 text-sm font-semibold text-primary-foreground"
         >
           พิมพ์รายงาน
         </span>

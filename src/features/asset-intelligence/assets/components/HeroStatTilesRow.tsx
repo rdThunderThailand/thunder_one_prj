@@ -16,7 +16,7 @@ function DonutRing({ percent }: { percent: number }) {
   const offset = circumference * (1 - percent / 100);
   return (
     <svg viewBox="0 0 40 40" className="h-11 w-11 shrink-0 -rotate-90">
-      <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="4" className="text-primary" />
+      <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="4" className="text-t1-blue-100" />
       <circle
         cx="20"
         cy="20"
