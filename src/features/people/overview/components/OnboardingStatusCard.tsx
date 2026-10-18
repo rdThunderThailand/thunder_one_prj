@@ -25,23 +25,23 @@ export function OnboardingStatusCard({ summary, rows }: OnboardingStatusCardProp
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">สถานะ Onboarding</h2>
-        <button type="button" className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">สถานะ Onboarding</h2>
+        <button type="button" className="text-xs font-medium text-primary hover:text-accent-foreground">
           ดูทั้งหมด
         </button>
       </div>
 
-      <dl className="mb-3 grid grid-cols-4 gap-2 border-b border-zinc-100 pb-3 dark:border-zinc-800">
+      <dl className="mb-3 grid grid-cols-4 gap-2 border-b border-border pb-3">
         {summaryItems.map(({ key, label }) => (
           <div key={key}>
-            <dt className="text-[11px] text-zinc-400">{label}</dt>
-            <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{summary[key]}</dd>
+            <dt className="text-[11px] text-t1-gray-400">{label}</dt>
+            <dd className="text-lg font-semibold text-foreground">{summary[key]}</dd>
           </div>
         ))}
       </dl>
 
       {rows.length === 0 ? (
-        <p className="flex flex-1 items-center justify-center text-center text-xs text-zinc-400">
+        <p className="flex flex-1 items-center justify-center text-center text-xs text-t1-gray-400">
           ไม่มีใครกำลัง Onboarding อยู่
         </p>
       ) : (
@@ -50,13 +50,13 @@ export function OnboardingStatusCard({ summary, rows }: OnboardingStatusCardProp
             <li key={row.id} className="flex items-center gap-3">
               <Avatar name={row.name} size={28} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{row.name}</p>
-                <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="truncate text-sm font-medium text-foreground">{row.name}</p>
+                <p className="truncate text-xs text-muted-foreground">
                   {row.role} · เริ่ม {row.startDateLabel}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <ProgressBar value={row.progress} className="flex-1" />
-                  <span className="w-8 shrink-0 text-right text-xs text-zinc-400">{row.progress}%</span>
+                  <span className="w-8 shrink-0 text-right text-xs text-t1-gray-400">{row.progress}%</span>
                 </div>
               </div>
             </li>

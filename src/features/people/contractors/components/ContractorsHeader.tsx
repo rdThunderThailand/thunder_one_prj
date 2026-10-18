@@ -4,12 +4,12 @@ import { ChevronRightIcon, PlusIcon } from "@/components/ui/icons";
 
 function Breadcrumb() {
   return (
-    <nav className="flex items-center gap-1.5 text-xs text-zinc-400">
-      <Link href="/people" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+    <nav className="flex items-center gap-1.5 text-xs text-t1-gray-400">
+      <Link href="/people" className="hover:text-muted-foreground">
         หน้าหลัก
       </Link>
       <ChevronRightIcon className="h-3 w-3" />
-      <span className="text-zinc-600 dark:text-zinc-300">ผู้ปฏิบัติงานภายนอก</span>
+      <span className="text-muted-foreground">ผู้ปฏิบัติงานภายนอก</span>
     </nav>
   );
 }
@@ -22,10 +22,10 @@ export function ContractorsHeader() {
       <Breadcrumb />
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-2xl font-semibold text-foreground">
             ผู้ปฏิบัติงานภายนอก (Contractor)
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             บริหารจัดการผู้ปฏิบัติงานภายนอกและสัญญาจ้าง
           </p>
         </div>

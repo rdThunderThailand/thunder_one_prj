@@ -9,7 +9,7 @@ const INERT_FILTERS = ["บริษัท / ผู้ว่าจ้าง", "�
 const INERT_DATE_FILTERS = ["วันที่เริ่มสัญญา", "วันที่สิ้นสุดสัญญา"];
 
 const selectClasses =
-  "cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300";
+  "cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground focus:border-primary focus:outline-none";
 
 interface ContractorFilterPanelProps {
   search: string;
@@ -35,23 +35,23 @@ export function ContractorFilterPanel({
 }: ContractorFilterPanelProps) {
   return (
     <Card className="flex flex-col gap-4 p-4">
-      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">ตัวกรองด่วน</h3>
+      <h3 className="text-sm font-semibold text-foreground">ตัวกรองด่วน</h3>
 
       <div className="flex flex-col gap-1">
-        <span className="text-xs text-zinc-400">ค้นหา</span>
-        <div className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700">
-          <SearchIcon className="h-4 w-4 shrink-0 text-zinc-400" />
+        <span className="text-xs text-t1-gray-400">ค้นหา</span>
+        <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+          <SearchIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
           <input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="ค้นหาชื่อ, ตำแหน่ง..."
-            className="flex-1 bg-transparent text-zinc-700 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-200"
+            className="flex-1 bg-transparent text-foreground placeholder:text-t1-gray-400 focus:outline-none"
           />
         </div>
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-xs text-zinc-400">หน่วยงาน</span>
+        <span className="text-xs text-t1-gray-400">หน่วยงาน</span>
         <select value={unit} onChange={(e) => onUnitChange(e.target.value)} className={selectClasses}>
           <option value="">ทั้งหมด</option>
           {unitOptions.map((option) => (
@@ -64,10 +64,10 @@ export function ContractorFilterPanel({
 
       {INERT_FILTERS.map((label) => (
         <div key={label} className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-400">{label}</span>
+          <span className="text-xs text-t1-gray-400">{label}</span>
           <span
             title="Core ยังไม่มีข้อมูลนี้เก็บไว้"
-            className="flex cursor-not-allowed items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-700"
+            className="flex cursor-not-allowed items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm text-t1-gray-400"
           >
             ทั้งหมด
           </span>
@@ -76,10 +76,10 @@ export function ContractorFilterPanel({
 
       {INERT_DATE_FILTERS.map((label) => (
         <div key={label} className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-400">{label}</span>
+          <span className="text-xs text-t1-gray-400">{label}</span>
           <span
             title="Core ยังไม่มีข้อมูลนี้เก็บไว้ระดับ list"
-            className="flex cursor-not-allowed items-center gap-2 rounded-lg border border-dashed border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-700"
+            className="flex cursor-not-allowed items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-t1-gray-400"
           >
             เลือกวันที่
           </span>
@@ -90,7 +90,7 @@ export function ContractorFilterPanel({
         <button
           type="button"
           onClick={onClear}
-          className="flex items-center justify-center rounded-lg border border-zinc-200 py-2 text-sm font-medium text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          className="flex items-center justify-center rounded-lg border border-border py-2 text-sm font-medium text-muted-foreground hover:bg-t1-gray-50"
         >
           ล้างตัวกรอง
         </button>

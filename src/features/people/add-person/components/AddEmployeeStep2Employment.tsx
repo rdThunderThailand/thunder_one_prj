@@ -7,7 +7,7 @@ import { requiredMark, SummaryRow } from "../wizard-parts";
 import { EMPLOYMENT_TYPE_OPTIONS, SALARY_BAND_OPTIONS, WORK_LOCATION_OPTIONS, unitLabel } from "../wizard-shared";
 
 const referenceOnlyNote = (
-  <span className="text-[11px] font-normal text-zinc-400">ข้อมูลอ้างอิง ยังไม่บันทึกในระบบ</span>
+  <span className="text-[11px] font-normal text-t1-gray-400">ข้อมูลอ้างอิง ยังไม่บันทึกในระบบ</span>
 );
 
 interface AddEmployeeStep2EmploymentProps {
@@ -119,11 +119,11 @@ export function AddEmployeeStep2Employment({
 }: AddEmployeeStep2EmploymentProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">2. ข้อมูลการจ้างงานและตำแหน่ง</h2>
+      <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm lg:col-span-2">
+        <h2 className="text-sm font-semibold text-foreground">2. ข้อมูลการจ้างงานและตำแหน่ง</h2>
 
         <div>
-          <p className="mb-2 text-xs font-semibold text-zinc-400">ข้อมูลการจ้างงาน</p>
+          <p className="mb-2 text-xs font-semibold text-t1-gray-400">ข้อมูลการจ้างงาน</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className={labelClasses}>
               ประเภทการจ้างงาน
@@ -141,7 +141,7 @@ export function AddEmployeeStep2Employment({
                 placeholder="เช่น EMP-0001"
                 className={inputClasses}
               />
-              <span className="text-[11px] font-normal text-zinc-400">เว้นว่างได้หากยังไม่มีรหัสพนักงาน</span>
+              <span className="text-[11px] font-normal text-t1-gray-400">เว้นว่างได้หากยังไม่มีรหัสพนักงาน</span>
             </label>
             <label className={labelClasses}>
               รหัสตำแหน่ง (Position Code)
@@ -186,7 +186,7 @@ export function AddEmployeeStep2Employment({
                 className={fieldClasses(!!errors.startDate)}
               />
               {startDate && (
-                <span className="text-[11px] font-normal text-zinc-400">
+                <span className="text-[11px] font-normal text-t1-gray-400">
                   {formatThaiDate(startDate)} ({formatDaysUntilThai(startDate)})
                 </span>
               )}
@@ -209,7 +209,7 @@ export function AddEmployeeStep2Employment({
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold text-zinc-400">ตำแหน่งและโครงสร้างองค์กร</p>
+          <p className="mb-2 text-xs font-semibold text-t1-gray-400">ตำแหน่งและโครงสร้างองค์กร</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className={labelClasses}>
               <span>ตำแหน่งงาน {requiredMark}</span>
@@ -242,7 +242,7 @@ export function AddEmployeeStep2Employment({
               ) : (
                 <span
                   title="ไม่สามารถโหลดรายชื่อหน่วยงานจาก Core ได้ในขณะนี้ — จะสร้างพนักงานใหม่โดยไม่ระบุหน่วยงาน"
-                  className="flex cursor-not-allowed items-center rounded-lg border border-dashed border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-700"
+                  className="flex cursor-not-allowed items-center rounded-lg border border-dashed border-border px-3 py-2 text-sm text-t1-gray-400"
                 >
                   ไม่พบข้อมูลหน่วยงาน
                 </span>
@@ -269,7 +269,7 @@ export function AddEmployeeStep2Employment({
                   ))}
                 </select>
               ) : (
-                <span className="rounded-lg border border-dashed border-red-200 px-3 py-2 text-sm text-red-500 dark:border-red-500/30">
+                <span className="rounded-lg border border-dashed border-error/30 px-3 py-2 text-sm text-error">
                   ไม่พบบทบาทที่ใช้ได้จาก Core
                 </span>
               )}
@@ -297,7 +297,7 @@ export function AddEmployeeStep2Employment({
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold text-zinc-400">ข้อมูลการจ้างงานเพิ่มเติม</p>
+          <p className="mb-2 text-xs font-semibold text-t1-gray-400">ข้อมูลการจ้างงานเพิ่มเติม</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className={labelClasses}>
               ประเภทสัญญาจ้าง
@@ -337,19 +337,19 @@ export function AddEmployeeStep2Employment({
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">สรุปข้อมูลที่กรอก</h3>
-          <p className="mb-2 text-xs font-medium text-zinc-400">ข้อมูลส่วนบุคคล</p>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">สรุปข้อมูลที่กรอก</h3>
+          <p className="mb-2 text-xs font-medium text-t1-gray-400">ข้อมูลส่วนบุคคล</p>
           <SummaryRow label="ชื่อ-นามสกุล" value={`${titlePrefix} ${fullName}`} />
           <SummaryRow label="เลขบัตรประชาชน" value={idCardNumber} />
           <SummaryRow label="อีเมล" value={email} />
-          <p className="mt-3 mb-2 text-xs font-medium text-zinc-400">การจ้างงานและตำแหน่ง</p>
+          <p className="mt-3 mb-2 text-xs font-medium text-t1-gray-400">การจ้างงานและตำแหน่ง</p>
           <SummaryRow label="ประเภทการจ้างงาน" value={employmentType} />
           <SummaryRow label="ตำแหน่ง" value={position} />
           <SummaryRow label="หน่วยงาน / ทีม" value={[unitId ? unitLabel(unitId, units ?? {}) : "", team].filter(Boolean).join(" / ")} />
           <SummaryRow label="วันที่เริ่มงาน" value={startDate ? formatThaiDate(startDate) : ""} />
         </div>
-        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 text-xs text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
+        <div className="rounded-2xl border border-t1-blue-100 bg-accent/50 p-5 text-xs text-accent-foreground">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
             <InfoIcon className="h-4 w-4" />
             คำแนะนำ
