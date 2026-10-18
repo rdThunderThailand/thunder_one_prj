@@ -61,7 +61,7 @@ function ChoiceCard({
       onClick={() => onSelect(choice)}
       className={`relative flex items-center gap-3 rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-2 ${
         selected
-          ? "border-primary bg-primary-soft ring-1 ring-primary"
+          ? "border-primary bg-accent ring-1 ring-primary"
           : "border-border hover:border-primary/30"
       }`}
     >
@@ -70,7 +70,7 @@ function ChoiceCard({
           selected ? "border-[5px] border-primary" : "border-border"
         }`}
       />
-      <span className={`ml-5 grid shrink-0 place-items-center rounded-lg bg-primary-soft text-primary ${selectedTemplate ? "h-9 w-16" : "h-9 w-9"}`}>
+      <span className={`ml-5 grid shrink-0 place-items-center rounded-lg bg-accent text-primary ${selectedTemplate ? "h-9 w-16" : "h-9 w-9"}`}>
         {selectedTemplate ? (
           <LayoutWireframe
             zones={selectedTemplate.zones}
@@ -90,7 +90,7 @@ function ChoiceCard({
               <span className="block truncate text-sm font-semibold text-primary">
                 {selectedTemplate.name}
               </span>
-              <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary">
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-primary">
                 {selectedTemplate.behaviour === "copied" ? "Copied" : "Shared"}
               </span>
             </span>
@@ -182,7 +182,7 @@ export function CreateLayoutStartStep({
           <fieldset className="space-y-3">
             <legend className="mb-3 text-sm font-semibold text-foreground">Layout information</legend>
             <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-muted-foreground">Layout name <span className="text-danger">*</span></span>
+              <span className="text-sm font-medium text-muted-foreground">Layout name <span className="text-error">*</span></span>
               <input
                 autoFocus
                 maxLength={100}
@@ -258,7 +258,7 @@ export function CreateLayoutStartStep({
                     }
                     setIsAspectLocked((current) => !current);
                   }}
-                  className={`mb-1 grid h-8 w-8 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isAspectLocked ? "border-primary/30 bg-primary-soft text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
+                  className={`mb-1 grid h-8 w-8 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isAspectLocked ? "border-primary/30 bg-accent text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
                 >
                   <LockIcon className="h-3.5 w-3.5" />
                 </button>

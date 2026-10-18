@@ -23,12 +23,12 @@ export function Field({ label, required, optional, hint, error, children, classN
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       <label className="text-xs font-medium text-muted-foreground">
-        {label} {required && <span className="text-danger">*</span>}
+        {label} {required && <span className="text-error">*</span>}
         {optional && <span className="text-muted-foreground">(Optional)</span>}
       </label>
       {children}
       {error ? (
-        <p className="text-xs font-medium text-danger">{error}</p>
+        <p className="text-xs font-medium text-error">{error}</p>
       ) : hint ? (
         <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}
@@ -88,7 +88,7 @@ export function OptionGroup<T extends string>({
             aria-pressed={selected}
             className={`rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
               selected
-                ? "border-primary bg-primary-soft text-primary"
+                ? "border-primary bg-accent text-primary"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
             }`}
           >

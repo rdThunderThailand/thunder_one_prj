@@ -12,7 +12,7 @@ export type DeliveryStage = {
 function StageNode({ state, index }: { state: StageState; index: number }) {
   if (state === "complete") {
     return (
-      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success text-white">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success text-success-foreground">
         <CheckIcon className="h-4 w-4" />
       </span>
     );
@@ -21,7 +21,7 @@ function StageNode({ state, index }: { state: StageState; index: number }) {
   if (state === "active") {
     return (
       <span className="relative flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-card">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-soft opacity-60" />
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
         <span className="relative h-2 w-2 rounded-full bg-primary" />
       </span>
     );

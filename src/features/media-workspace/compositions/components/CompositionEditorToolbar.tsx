@@ -92,7 +92,7 @@ export function CompositionEditorToolbar({
       <Button size="sm" variant="ghost" disabled={activeIndex < 0} aria-pressed={isLocked} onClick={() => toggle(onLockedZoneIds)}><LockIcon /> Lock</Button>
       <Button size="sm" variant="ghost" disabled={activeIndex < 0} aria-pressed={isHidden} onClick={() => toggle(onHiddenZoneIds)}><EyeIcon /> Hide</Button>
       <Button size="sm" variant="ghost" disabled={activeIndex < 0} onClick={duplicate}><ClipboardIcon /> Duplicate</Button>
-      <Button size="sm" variant="ghost" className="text-danger" disabled={zones.length <= 1 || activeIndex < 0} onClick={onDelete}><TrashIcon /> Delete Zone</Button>
+      <Button size="sm" variant="ghost" className="text-error" disabled={zones.length <= 1 || activeIndex < 0} onClick={onDelete}><TrashIcon /> Delete Zone</Button>
       <span className="ml-auto whitespace-nowrap text-[11px] text-muted-foreground">{activeZone ? `Selected: Zone ${String.fromCharCode(65 + activeIndex)}` : "No zone selected"}</span>
     </div>
   );

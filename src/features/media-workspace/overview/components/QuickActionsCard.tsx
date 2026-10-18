@@ -52,7 +52,7 @@ export function QuickActionsCard() {
             <Link
               key={action.label}
               href={action.href}
-              className="flex min-h-0 items-center gap-3 rounded-lg border border-border p-3 text-left text-foreground transition-colors hover:border-primary/30 hover:bg-primary-soft"
+              className="flex min-h-0 items-center gap-3 rounded-lg border border-border p-3 text-left text-foreground transition-colors hover:border-primary/30 hover:bg-accent"
             >
               {content}
             </Link>

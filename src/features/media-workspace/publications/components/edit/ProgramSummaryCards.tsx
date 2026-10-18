@@ -163,7 +163,7 @@ export function ScheduleCard({
                   key={day.value}
                   className={
                     view.days.includes(day.value)
-                      ? "rounded-md bg-info-soft px-2.5 py-1 text-[10px] font-medium text-info"
+                      ? "rounded-md bg-info-muted px-2.5 py-1 text-[10px] font-medium text-info"
                       : "rounded-md bg-muted px-2.5 py-1 text-[10px] text-muted-foreground"
                   }
                 >

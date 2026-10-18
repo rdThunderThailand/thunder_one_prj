@@ -24,7 +24,7 @@ export function LayoutsSummary({ stats }: { stats: { total: number; active: numb
       label="Template summary"
       cards={[
         { label: "Total Templates", value: stats.total, detail: "All templates", icon: LayoutTemplate },
-        { label: "Active", value: stats.active, detail: "Available to layouts", icon: CheckCircle2, tone: "text-success bg-success-soft" },
+        { label: "Active", value: stats.active, detail: "Available to layouts", icon: CheckCircle2, tone: "text-success bg-success-muted" },
         { label: "Inactive", value: stats.inactive, detail: "Archived", icon: PauseCircle, tone: "text-muted-foreground bg-muted" },
       ]}
     />

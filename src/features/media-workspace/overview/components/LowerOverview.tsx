@@ -112,9 +112,9 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
 
   const isLoading = channels === null || publications === null;
   const healthRows = [
-    ["Online", data.health.online, "bg-success", "#22c55e"],
-    ["Warning", data.health.warning, "bg-warning", "#f59e0b"],
-    ["Offline", data.health.offline, "bg-danger", "#ef4444"],
+    ["Online", data.health.online, "bg-success", "var(--color-success)"],
+    ["Warning", data.health.warning, "bg-warning", "var(--color-warning)"],
+    ["Offline", data.health.offline, "bg-error", "var(--color-error)"],
   ] as const;
 
   return (
@@ -127,7 +127,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
           </Link>
         </div>
         {loadFailed ? (
-          <p className="py-10 text-center text-sm text-danger">Could not load today&apos;s schedule</p>
+          <p className="py-10 text-center text-sm text-error">Could not load today&apos;s schedule</p>
         ) : isLoading ? (
           <ScheduleSkeleton />
         ) : data.schedule.length === 0 ? (
@@ -157,7 +157,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
             </Link>
           </div>
           {loadFailed ? (
-            <p className="py-8 text-center text-sm text-danger">Could not load channel health</p>
+            <p className="py-8 text-center text-sm text-error">Could not load channel health</p>
           ) : isLoading ? (
             <div className="flex flex-1 items-center gap-6">
               <Skeleton className="h-36 w-36 shrink-0 rounded-full" />
@@ -204,7 +204,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
             </Link>
           </div>
           {loadFailed ? (
-            <p className="py-4 text-center text-sm text-danger">Could not load channel types</p>
+            <p className="py-4 text-center text-sm text-error">Could not load channel types</p>
           ) : isLoading ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
@@ -240,7 +240,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
             <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Recent Updates</h2>
           </div>
           {loadFailed ? (
-            <p className="py-2 text-xs text-danger">Could not load recent updates</p>
+            <p className="py-2 text-xs text-error">Could not load recent updates</p>
           ) : isLoading ? (
             <ActivitySkeleton />
           ) : data.activity.length === 0 ? (

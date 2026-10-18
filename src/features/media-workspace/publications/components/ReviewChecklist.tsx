@@ -55,7 +55,7 @@ export function ReviewChecklist({
         </ul>
       </Card>
 
-      <Card className="border-warning/30 bg-warning-soft p-4 xl:min-h-[162px]">
+      <Card className="border-warning/30 bg-warning-muted p-4 xl:min-h-[162px]">
         <h2 className="text-[11px] font-bold text-foreground">Conflicts &amp; warnings</h2>
         <div className="mt-3 space-y-3 text-xs">
           {checkingConflicts || conflictsError ? (

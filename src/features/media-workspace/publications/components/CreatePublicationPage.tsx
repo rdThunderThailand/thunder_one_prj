@@ -356,7 +356,7 @@ export function CreatePublicationPage() {
           <NoAccess message={resumeFailure.message} />
         ) : (
           <Card className="p-6">
-            <p className="text-center text-sm text-danger">{resumeFailure.message}</p>
+            <p className="text-center text-sm text-error">{resumeFailure.message}</p>
           </Card>
         )}
         <div className="mt-4 flex justify-center gap-3">
@@ -393,7 +393,7 @@ export function CreatePublicationPage() {
       </Modal>
 
       {confirmingCancel && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
           <span>มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ออกจากหน้านี้จะทำให้ข้อมูลหายไป ดำเนินการต่อ?</span>
           <div className="flex shrink-0 gap-2">
             <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setConfirmingCancel(false)}>
@@ -401,7 +401,7 @@ export function CreatePublicationPage() {
             </Button>
             <Button
               variant="primary"
-              className="bg-danger px-3 py-1.5 text-xs hover:bg-danger"
+              className="bg-error px-3 py-1.5 text-xs hover:bg-error"
               onClick={performCancel}
               disabled={cancelBusy}
             >
@@ -412,7 +412,7 @@ export function CreatePublicationPage() {
       )}
 
       {revisionConflict && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
           <span>{revisionConflict}</span>
           <div className="flex shrink-0 gap-2">
             <Button
@@ -525,7 +525,7 @@ export function CreatePublicationPage() {
         </div>
         {displayError && (
           <div className="flex items-center gap-2">
-            <p className="text-xs font-medium text-danger">{displayError}</p>
+            <p className="text-xs font-medium text-error">{displayError}</p>
             {saveStatus === "error" && (
               <Button
                 variant="secondary"

@@ -49,7 +49,7 @@ export function ChannelGroupsTable({
                 onClick={() => onSelect(group)}
                 className={`cursor-pointer border-b border-border transition-colors last:border-0 ${
                   selected
-                    ? "bg-primary-soft shadow-[inset_3px_0_0_#4f46e5]"
+                    ? "bg-accent shadow-[inset_3px_0_0_var(--color-primary)]"
                     : "hover:bg-muted"
                 }`}
               >
@@ -59,7 +59,7 @@ export function ChannelGroupsTable({
                 <td className="px-3 py-3 text-muted-foreground">
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
                     group.playback_mode === "synchronized"
-                      ? "bg-primary-soft text-primary"
+                      ? "bg-accent text-primary"
                       : "bg-muted text-muted-foreground"
                   }`}>
                     <ModeIcon className="h-3.5 w-3.5" />

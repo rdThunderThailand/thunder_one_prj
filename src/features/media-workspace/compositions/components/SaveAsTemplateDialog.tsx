@@ -44,7 +44,7 @@ export function SaveAsTemplateDialog({
           <span>Template name</span>
           <Input aria-label="Template name" autoFocus value={name} onChange={(event) => setName(event.target.value)} />
         </label>
-        {taken && <p className="text-danger">ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น</p>}
+        {taken && <p className="text-error">ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่น</p>}
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={onClose}>ยกเลิก</Button>
           <Button type="button" disabled={!trimmed || taken} onClick={() => onConfirm(trimmed)}>Save as Template</Button>

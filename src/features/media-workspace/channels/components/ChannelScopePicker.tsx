@@ -118,7 +118,7 @@ export function ChannelScopePicker({ value, onApply }: { value: ChannelScope; on
           aria-label={tab === "channels" ? "Channels" : "Groups"}
           className="flex max-h-64 flex-col gap-0.5 overflow-y-auto"
         >
-          {failed && <p className="px-2 py-3 text-sm text-danger">Could not load Channels. Close and try again.</p>}
+          {failed && <p className="px-2 py-3 text-sm text-error">Could not load Channels. Close and try again.</p>}
           {!failed && !data && <p className="px-2 py-3 text-sm text-muted-foreground">Loading…</p>}
           {data && visible.length === 0 && <p className="px-2 py-3 text-sm text-muted-foreground">Nothing matches.</p>}
           {visible.map((option) => (

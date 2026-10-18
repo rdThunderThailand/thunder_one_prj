@@ -78,7 +78,7 @@ export function PlaybackProofTable({
                 key={entry.id}
                 onClick={(event) => onSelect(entry, event.currentTarget.querySelector("button"))}
                 aria-selected={entry.id === selectedId}
-                className="cursor-pointer border-t border-border align-middle hover:bg-muted/50 aria-selected:bg-primary-soft"
+                className="cursor-pointer border-t border-border align-middle hover:bg-muted/50 aria-selected:bg-accent"
               >
                 <td className="px-4 py-3 tabular-nums">
                   {/* The row is clickable for the mouse; this button is its keyboard / screen-reader entry. */}

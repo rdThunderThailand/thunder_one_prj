@@ -41,7 +41,7 @@ export function Step1ChannelInfo({
                 aria-pressed={selected}
                 className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 text-center transition-colors ${
                   selected
-                    ? "border-primary bg-primary-soft"
+                    ? "border-primary bg-accent"
                     : "border-border hover:border-border"
                 }`}
               >
@@ -60,7 +60,7 @@ export function Step1ChannelInfo({
         <div className="mt-3 grid gap-4 md:grid-cols-2">
           <Input
             name="create-channel-name"
-            label={<>Channel Name <span className="text-danger">*</span></>}
+            label={<>Channel Name <span className="text-error">*</span></>}
             value={draft.name}
             error={nameError}
             placeholder="e.g. Cafe Menu Board"

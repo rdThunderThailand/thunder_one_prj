@@ -59,7 +59,7 @@ export function LayoutSettingsPanel({
         <p className="text-xs text-muted-foreground">No zone selected</p>
       </div>
       <div className="flex flex-col gap-1.5">
-        <label className={labelClasses}>Layout name <span className="text-danger">*</span></label>
+        <label className={labelClasses}>Layout name <span className="text-error">*</span></label>
         <input value={name} onChange={(e) => set({ name: e.target.value })} className={inputClasses} />
       </div>
 
@@ -132,7 +132,7 @@ export function LayoutSettingsPanel({
               </div>
             )}
             {customMode && !customValid && (customWidth || customHeight) && (
-              <p className="text-xs text-danger">
+              <p className="text-xs text-error">
                 Width and height must each be 100–99999.
               </p>
             )}

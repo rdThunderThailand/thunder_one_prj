@@ -179,8 +179,8 @@ export function LayoutCanvas({
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-muted-foreground">Canvas</p>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setShowGrid((v) => !v)} aria-pressed={showGrid} className={`rounded-lg border px-3 py-1 text-xs font-medium ${showGrid ? "border-primary bg-primary-soft text-primary" : "border-border text-muted-foreground"}`}>Show grid</button>
-            <button type="button" onClick={() => setSnap((v) => !v)} aria-pressed={snap} className={`rounded-lg border px-3 py-1 text-xs font-medium ${snap ? "border-primary bg-primary-soft text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
+            <button type="button" onClick={() => setShowGrid((v) => !v)} aria-pressed={showGrid} className={`rounded-lg border px-3 py-1 text-xs font-medium ${showGrid ? "border-primary bg-accent text-primary" : "border-border text-muted-foreground"}`}>Show grid</button>
+            <button type="button" onClick={() => setSnap((v) => !v)} aria-pressed={snap} className={`rounded-lg border px-3 py-1 text-xs font-medium ${snap ? "border-primary bg-accent text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
           </div>
         </div>
       )}
@@ -218,7 +218,7 @@ export function LayoutCanvas({
             className={`absolute border-2 transition-[box-shadow,border-color] ${zone.id && lockedZoneIds.has(zone.id) ? "cursor-default" : "cursor-move"} ${
               selectedIndex === index ? "z-10 border-primary ring-2 ring-primary/30" : "border-primary-foreground/35 hover:border-primary/70"
             } ${selectedIndex !== index && !(zone.id && zonePreviews[zone.id]) ? "border-dashed" : ""} ${
-              overlapping.has(index) ? "outline outline-2 outline-danger" : ""
+              overlapping.has(index) ? "outline outline-2 outline-error" : ""
             }`}
             style={{
               left: `${zone.x}%`,
@@ -248,7 +248,7 @@ export function LayoutCanvas({
                 <div
                   key={h.handle}
                   onPointerDown={startDrag(index, h.handle)}
-                  className={`absolute h-3 w-3 rounded-full border border-white bg-primary ${h.className}`}
+                  className={`absolute h-3 w-3 rounded-full border border-t1-white bg-primary ${h.className}`}
                 />
               ))}
           </div>
@@ -262,13 +262,13 @@ export function LayoutCanvas({
           <span className="min-w-12 text-center text-xs text-muted-foreground">{Math.round(zoom * 100)} %</span>
           <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-md border border-border p-1 text-muted-foreground disabled:opacity-40"><PlusIcon /></button>
           <button type="button" aria-label="Fit to Screen" title="Fit to Screen" onClick={() => setZoom(1)} className="rounded-md border border-border p-1 text-muted-foreground"><ExpandIcon /></button>
-          <button type="button" onClick={() => setShowGrid((value) => !value)} aria-pressed={showGrid} className={`ml-2 rounded-md border px-2 py-1 text-[10px] font-medium ${showGrid ? "border-primary bg-primary-soft text-primary" : "border-border text-muted-foreground"}`}>Show grid</button>
-          <button type="button" onClick={() => setSnap((value) => !value)} aria-pressed={snap} className={`rounded-md border px-2 py-1 text-[10px] font-medium ${snap ? "border-primary bg-primary-soft text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
+          <button type="button" onClick={() => setShowGrid((value) => !value)} aria-pressed={showGrid} className={`ml-2 rounded-md border px-2 py-1 text-[10px] font-medium ${showGrid ? "border-primary bg-accent text-primary" : "border-border text-muted-foreground"}`}>Show grid</button>
+          <button type="button" onClick={() => setSnap((value) => !value)} aria-pressed={snap} className={`rounded-md border px-2 py-1 text-[10px] font-medium ${snap ? "border-primary bg-accent text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
         </div>
       )}
 
       {overlapping.size > 0 && (
-        <p className="text-sm text-danger">
+        <p className="text-sm text-error">
           Zone ซ้อนทับกัน กรุณาปรับขนาดหรือตำแหน่งใหม่
         </p>
       )}

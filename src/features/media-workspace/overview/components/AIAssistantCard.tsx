@@ -3,7 +3,7 @@ import { SparklesIcon } from "@/components/ui/icons";
 
 export function AIAssistantCard() {
   return (
-    <Card className="relative overflow-hidden bg-linear-to-br from-primary to-blue-600 p-4 text-white">
+    <Card className="relative overflow-hidden bg-linear-to-br from-primary to-t1-blue-600 p-4 text-primary-foreground">
       <div className="mb-2 flex items-center gap-2">
         <SparklesIcon className="h-4 w-4" />
         <h2 className="text-[11px] font-bold">AI Media Assistant</h2>

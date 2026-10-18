@@ -88,7 +88,7 @@ export function EditChannelSidebar({
         )}
       </Card>
 
-      <Card className="border-primary/30 bg-primary-soft p-5">
+      <Card className="border-primary/30 bg-accent p-5">
         <div className="flex gap-2">
           <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div>

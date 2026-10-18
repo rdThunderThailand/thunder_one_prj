@@ -55,7 +55,7 @@ export function ChannelsStep({
           {selectedGroups.map((group) => (
             <div
               key={group.id}
-              className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary-soft px-3 py-1.5 text-sm text-primary"
+              className="flex items-center gap-2 rounded-full border border-primary/30 bg-accent px-3 py-1.5 text-sm text-primary"
             >
               <span>{group.name} · {group.channelCount} channels</span>
               <button
@@ -72,7 +72,7 @@ export function ChannelsStep({
       )}
 
       {loadingChannels && <p className="text-xs text-muted-foreground">Loading channels...</p>}
-      {!loadingChannels && channelsError && <p className="text-xs text-danger">{channelsError}</p>}
+      {!loadingChannels && channelsError && <p className="text-xs text-error">{channelsError}</p>}
       {!loadingChannels && !channelsError && channels.length === 0 && (
         <p className="text-xs text-muted-foreground">No Channels available yet — create one first.</p>
       )}
@@ -88,7 +88,7 @@ export function ChannelsStep({
       </div>
 
       {(fitCheckFailed || geometryFit.unfitting.length > 0 || geometryFit.unprofiled.length > 0) && (
-        <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning-soft p-3">
+        <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning-muted p-3">
           {fitCheckFailed && (
             <FitWarning text="Could not check whether these screens fit the Layout." />
           )}

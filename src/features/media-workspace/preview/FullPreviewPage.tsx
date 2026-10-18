@@ -93,7 +93,7 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
   if (channelName && (session.status === "expired" || session.status === "closed")) {
     return <PreviewExpired />;
   }
-  if (error) return <p className="p-6 text-sm text-danger" role="alert">{error}</p>;
+  if (error) return <p className="p-6 text-sm text-error" role="alert">{error}</p>;
   if (!loadedPreview) return <p className="p-6 text-sm text-muted-foreground">Loading preview…</p>;
 
   if (source === "playlist" && loadedPreview.zones[0]) {

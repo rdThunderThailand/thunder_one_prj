@@ -105,7 +105,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
               />
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-xs font-semibold text-foreground" title={contentLabel}>{contentLabel}</p>
-                <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-medium text-success">{type}</span>
+                <span className="shrink-0 rounded-full bg-success-muted px-2 py-0.5 text-[10px] font-medium text-success">{type}</span>
               </div>
               {isComposition ? (
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
@@ -133,7 +133,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
             </SummaryCard>
             <SummaryCard index={3} title="When to Play" subtitle="ช่วงเวลาแสดงผล" status={statusOf(eligibilityChecks, "schedule")} bodyClassName="space-y-3">
               <div className="flex items-center gap-2 text-xs font-medium text-primary">
-                <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-soft">
+                <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent">
                   <CalendarIcon className="h-4 w-4" />
                 </span>
                 {scheduleMode}
@@ -208,7 +208,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                 <div className="relative mt-2 h-12 overflow-hidden rounded-lg bg-muted">
                   <div
                     title={`${basicInfo.name || "Your content"} · ${reviewTimeRange}`}
-                    className="absolute inset-y-0 flex min-w-0 items-center justify-center overflow-hidden rounded-md bg-primary-soft px-2 text-[10px] font-semibold text-primary ring-1 ring-inset ring-primary/30"
+                    className="absolute inset-y-0 flex min-w-0 items-center justify-center overflow-hidden rounded-md bg-accent px-2 text-[10px] font-semibold text-primary ring-1 ring-inset ring-primary/30"
                     style={{
                       left: `${timelinePlacement.leftPercent}%`,
                       width: `${timelinePlacement.widthPercent}%`,
@@ -224,10 +224,10 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                   </div>
                 ))}
                 <div className="mt-4 flex gap-4 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary-soft" />Your content</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-accent" />Your content</span>
                   <span className="flex items-center gap-1.5 text-muted-foreground"><span className="h-2.5 w-2.5 rounded-sm bg-muted" />Other content</span>
                 </div>
-                <p className="mt-auto flex items-start gap-2 rounded-lg bg-primary-soft px-3 py-2 text-[11px] leading-5 text-primary">
+                <p className="mt-auto flex items-start gap-2 rounded-lg bg-accent px-3 py-2 text-[11px] leading-5 text-primary">
                   <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
                   ตัวอย่างนี้อ้างอิงการตั้งค่าปัจจุบัน อาจเปลี่ยนแปลงเมื่อแก้ไขการจัดตาราง
                 </p>
@@ -275,7 +275,7 @@ function SummaryCard({
   return (
     <Card className="flex min-h-40 flex-col p-4 xl:min-h-[450px]">
       <div className="flex items-start gap-2 border-b border-border pb-2.5">
-        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${status === "pass" ? "bg-success-soft text-success" : "bg-primary-soft text-primary"}`}>
+        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${status === "pass" ? "bg-success-muted text-success" : "bg-accent text-primary"}`}>
           {index}
         </span>
         <div>

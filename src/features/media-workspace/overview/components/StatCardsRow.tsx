@@ -24,10 +24,10 @@ const cards = [
 // card) keeps a solid semantic fill, that part already matched the
 // reference as-is.
 const colors = {
-  indigo: { icon: "bg-primary-soft text-primary", bar: "bg-primary" },
-  emerald: { icon: "bg-success-soft text-success", bar: "bg-success" },
-  amber: { icon: "bg-warning-soft text-warning", bar: "bg-warning" },
-  red: { icon: "bg-danger-soft text-danger", bar: "bg-danger" },
+  indigo: { icon: "bg-accent text-primary", bar: "bg-primary" },
+  emerald: { icon: "bg-success-muted text-success", bar: "bg-success" },
+  amber: { icon: "bg-warning-muted text-warning", bar: "bg-warning" },
+  red: { icon: "bg-error-muted text-error", bar: "bg-error" },
 };
 
 export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListItem[] | null; loadFailed: boolean }) {
@@ -52,7 +52,7 @@ export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListIt
               {loadFailed ? (
                 <>
                   <span className="mt-2 text-2xl font-bold text-muted-foreground">—</span>
-                  <p className="mt-auto truncate text-[10px] text-danger">Could not load channel health</p>
+                  <p className="mt-auto truncate text-[10px] text-error">Could not load channel health</p>
                 </>
               ) : summary === null ? (
                 <div className="mt-2 space-y-2">

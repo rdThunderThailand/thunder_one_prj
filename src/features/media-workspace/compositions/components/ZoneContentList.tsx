@@ -123,7 +123,7 @@ export function ZoneContentList({ binding, assets, previews, playlists, playlist
                   type="button"
                   aria-label={`Remove ${label}`}
                   onClick={() => onBindingChange({ ...binding, assetItems: binding.assetItems.filter((current) => current.media_asset_id !== item.media_asset_id) })}
-                  className="rounded p-1 text-muted-foreground hover:text-danger"
+                  className="rounded p-1 text-muted-foreground hover:text-error"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

@@ -50,7 +50,7 @@ export function ScheduleStep({
           <SummaryRow label="Timezone">{schedule.timezone}</SummaryRow>
         </dl>
       ) : (
-        <ul className={`list-disc space-y-1 pl-5 text-xs ${showErrors ? "text-danger" : "text-muted-foreground"}`}>
+        <ul className={`list-disc space-y-1 pl-5 text-xs ${showErrors ? "text-error" : "text-muted-foreground"}`}>
           {messages.map((message) => (
             <li key={message}>{message}</li>
           ))}
@@ -68,8 +68,8 @@ export function ScheduleStep({
         <div
           className={`rounded-lg border p-3 text-xs ${
             conflictsError
-              ? "border-danger/30 bg-danger-soft text-danger"
-              : "border-warning/30 bg-warning-soft text-warning"
+              ? "border-error/30 bg-error-muted text-error"
+              : "border-warning/30 bg-warning-muted text-warning"
           }`}
         >
           {checkingConflicts
