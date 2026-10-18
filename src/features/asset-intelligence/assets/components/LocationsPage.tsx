@@ -15,13 +15,13 @@ export function LocationsPage() {
         const count = assets.filter((a) => a.locationId === location.id).length;
         return (
           <Card key={location.id} className="flex items-center gap-3 p-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
               <GlobeIcon />
             </span>
-            <p className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            <p className="flex-1 text-sm font-medium text-foreground">
               {location.name}
             </p>
-            <span className="shrink-0 text-sm text-zinc-500 dark:text-zinc-400">
+            <span className="shrink-0 text-sm text-muted-foreground">
               {count} asset{count === 1 ? "" : "s"}
             </span>
           </Card>

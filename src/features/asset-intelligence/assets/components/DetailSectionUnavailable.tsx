@@ -13,11 +13,11 @@ import { InfoIcon } from "@/components/ui/icons";
 export function DetailSectionUnavailable({ title, note }: { title: string; note?: string }) {
   return (
     <Card className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
-      <h2 className="self-start text-sm font-semibold text-zinc-900 dark:text-zinc-50">{title}</h2>
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-zinc-400">
+      <h2 className="self-start text-sm font-semibold text-foreground">{title}</h2>
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-t1-gray-400">
         <InfoIcon className="h-5 w-5" />
         <p className="text-sm">ยังไม่มีข้อมูลนี้ในระบบ</p>
-        {note && <p className="text-xs text-zinc-300 dark:text-zinc-600">{note}</p>}
+        {note && <p className="text-xs text-t1-gray-400">{note}</p>}
       </div>
     </Card>
   );

@@ -49,7 +49,7 @@ function LocationTreeRow({ node, depth }: { node: LocationNode; depth: number })
     <>
       <tr>
         <td className="px-4 py-2.5">
-          <input type="checkbox" className="rounded border-zinc-300" disabled title="Not built yet" />
+          <input type="checkbox" className="rounded border-border" disabled title="Not built yet" />
         </td>
         <td className="px-2 py-2.5">
           <div className="flex items-center gap-1.5" style={{ paddingLeft: depth * 20 }}>
@@ -57,17 +57,17 @@ function LocationTreeRow({ node, depth }: { node: LocationNode; depth: number })
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="flex h-5 w-5 shrink-0 items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                className="flex h-5 w-5 shrink-0 items-center justify-center text-t1-gray-400 hover:text-muted-foreground"
               >
                 <ChevronRightIcon className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-90" : ""}`} />
               </button>
             ) : (
               <span className="w-5 shrink-0" />
             )}
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
               {iconFor[node.type]}
             </span>
-            <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{node.name}</span>
+            <span className="truncate text-sm font-medium text-foreground">{node.name}</span>
             {node.badge && (
               <Badge variant="pill" color="indigo" className="shrink-0">
                 {node.badge}
@@ -75,17 +75,17 @@ function LocationTreeRow({ node, depth }: { node: LocationNode; depth: number })
             )}
           </div>
         </td>
-        <td className="px-4 py-2.5 text-xs text-zinc-500 dark:text-zinc-400">{node.type}</td>
-        <td className="px-4 py-2.5 text-xs text-zinc-500 dark:text-zinc-400">{node.code}</td>
-        <td className="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">{node.assetCount.toLocaleString()}</td>
-        <td className="px-4 py-2.5 text-zinc-600 dark:text-zinc-300">{formatTHB(node.valueTHB)}</td>
+        <td className="px-4 py-2.5 text-xs text-muted-foreground">{node.type}</td>
+        <td className="px-4 py-2.5 text-xs text-muted-foreground">{node.code}</td>
+        <td className="px-4 py-2.5 text-muted-foreground">{node.assetCount.toLocaleString()}</td>
+        <td className="px-4 py-2.5 text-muted-foreground">{formatTHB(node.valueTHB)}</td>
         <td className="px-4 py-2.5">
           <Badge variant="pill" color="green">
             {node.status}
           </Badge>
         </td>
         <td className="px-4 py-2.5">
-          <button type="button" title="Not built yet" className="cursor-not-allowed text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+          <button type="button" title="Not built yet" className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground">
             <MoreIcon className="h-4 w-4" />
           </button>
         </td>
@@ -96,7 +96,7 @@ function LocationTreeRow({ node, depth }: { node: LocationNode; depth: number })
         <tr>
           <td />
           <td className="px-2 py-1.5" style={{ paddingLeft: (depth + 2) * 20 + 8 }} colSpan={7}>
-            <span title="Not built yet" className="cursor-not-allowed text-xs font-medium text-indigo-600 dark:text-indigo-400">
+            <span title="Not built yet" className="cursor-not-allowed text-xs font-medium text-primary">
               {node.moreLabel}
             </span>
           </td>
@@ -111,10 +111,10 @@ export function LocationTree() {
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[860px] text-left text-sm">
-          <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <thead className="border-b border-border text-xs text-muted-foreground">
             <tr>
               <th className="w-10 px-4 py-3">
-                <input type="checkbox" className="rounded border-zinc-300" disabled title="Not built yet" />
+                <input type="checkbox" className="rounded border-border" disabled title="Not built yet" />
               </th>
               <th className="px-2 py-3 font-medium">ชื่อสถานที่ / อาคาร / ชั้น / ห้อง</th>
               <th className="px-4 py-3 font-medium">ประเภท</th>
@@ -125,7 +125,7 @@ export function LocationTree() {
               <th className="px-4 py-3 font-medium">การดำเนินการ</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+          <tbody className="divide-y divide-border">
             {locationTree.map((node) => (
               <LocationTreeRow key={node.id} node={node} depth={0} />
             ))}
@@ -133,26 +133,26 @@ export function LocationTree() {
         </table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
         <span
           title="Not built yet"
-          className="flex cursor-not-allowed items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400"
+          className="flex cursor-not-allowed items-center gap-1.5 text-sm text-muted-foreground"
         >
           แสดง
-          <span className="flex items-center gap-1 rounded-lg border border-zinc-200 px-2 py-1 dark:border-zinc-700">
+          <span className="flex items-center gap-1 rounded-lg border border-border px-2 py-1">
             {locationPageSize}
             <ChevronDownIcon className="h-3 w-3" />
           </span>
           รายการ
         </span>
-        <span className="text-sm text-zinc-400">
+        <span className="text-sm text-t1-gray-400">
           1-{locationTree.length} จาก {locationTotalCount.toLocaleString()} รายการ
         </span>
         <div className="flex items-center gap-1">
           <button
             type="button"
             title="Not built yet"
-            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 text-zinc-300 dark:border-zinc-700"
+            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-border text-t1-gray-400"
           >
             <ChevronLeftIcon className="h-3.5 w-3.5" />
           </button>
@@ -163,8 +163,8 @@ export function LocationTree() {
               title="Not built yet"
               className={`flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg text-sm ${
                 page === 1
-                  ? "bg-indigo-600 text-white"
-                  : "border border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-muted-foreground"
               }`}
             >
               {page}
@@ -173,7 +173,7 @@ export function LocationTree() {
           <button
             type="button"
             title="Not built yet"
-            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 text-zinc-300 dark:border-zinc-700"
+            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-border text-t1-gray-400"
           >
             <ChevronRightIcon className="h-3.5 w-3.5" />
           </button>

@@ -26,7 +26,7 @@ export function RegisterAssetPage() {
 
   if (!pending) {
     return (
-      <Card className="p-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <Card className="p-6 text-sm text-muted-foreground">
         No assets are waiting for your confirmation right now.
       </Card>
     );
@@ -35,12 +35,12 @@ export function RegisterAssetPage() {
   if (confirmed) {
     return (
       <Card className="flex items-center gap-3 p-6">
-        <CheckCircleIcon className="h-6 w-6 shrink-0 text-emerald-500" />
+        <CheckCircleIcon className="h-6 w-6 shrink-0 text-success" />
         <div>
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          <p className="text-sm font-medium text-foreground">
             {pending.tag} is now registered to you.
           </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-muted-foreground">
             It will appear in My Assets going forward.
           </p>
         </div>
@@ -50,19 +50,19 @@ export function RegisterAssetPage() {
 
   return (
     <Card className="flex flex-col gap-4 p-6">
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-400">
+      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-t1-gray-400">
         <SearchIcon className="h-4 w-4" /> Scan result
       </div>
       <div>
-        <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{pending.tag}</p>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{pending.model ?? pending.category}</p>
+        <p className="text-lg font-semibold text-foreground">{pending.tag}</p>
+        <p className="text-sm text-muted-foreground">{pending.model ?? pending.category}</p>
       </div>
-      <p className="text-sm text-zinc-600 dark:text-zinc-300">
+      <p className="text-sm text-muted-foreground">
         This asset has been assigned to you. Confirm receipt to register it in the system.
       </p>
       <button
         onClick={() => setConfirmed(true)}
-        className="self-start rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+        className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
       >
         Confirm Receipt
       </button>
