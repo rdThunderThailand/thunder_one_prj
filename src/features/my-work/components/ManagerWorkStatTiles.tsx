@@ -17,11 +17,11 @@ export function ManagerWorkStatTiles({ work, now }: { work: MyWork; now: Date })
   const approvals = work.items.filter((item) => item.kind === "approval").length;
 
   const tiles: { id: string; value: string | number; sublabel: string; icon: ReactNode; tone: string }[] = [
-    { id: "open", value: work.items.length, sublabel: "Open items", icon: <ListIcon />, tone: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400" },
-    { id: "due-soon", value: dueSoon, sublabel: "Due within 2 days", icon: <ClockIcon />, tone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" },
-    { id: "overdue", value: counts.overdue, sublabel: "Overdue", icon: <WarningTriangleIcon />, tone: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400" },
-    { id: "approvals", value: work.available.approval ? approvals : "-", sublabel: "Pending approvals", icon: <CheckCircleIcon />, tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" },
-    { id: "completed", value: work.completed.length, sublabel: "Completed", icon: <CheckCircleIcon />, tone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" },
+    { id: "open", value: work.items.length, sublabel: "Open items", icon: <ListIcon />, tone: "bg-accent text-primary" },
+    { id: "due-soon", value: dueSoon, sublabel: "Due within 2 days", icon: <ClockIcon />, tone: "bg-warning-muted text-t1-amber-700" },
+    { id: "overdue", value: counts.overdue, sublabel: "Overdue", icon: <WarningTriangleIcon />, tone: "bg-error-muted text-t1-red-700" },
+    { id: "approvals", value: work.available.approval ? approvals : "-", sublabel: "Pending approvals", icon: <CheckCircleIcon />, tone: "bg-success-muted text-t1-green-700" },
+    { id: "completed", value: work.completed.length, sublabel: "Completed", icon: <CheckCircleIcon />, tone: "bg-info-muted text-t1-blue-700" },
   ];
 
   return (
@@ -35,8 +35,8 @@ export function ManagerWorkStatTiles({ work, now }: { work: MyWork; now: Date })
             {tile.icon}
           </span>
           <div>
-            <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{tile.value}</p>
-            <p className="text-xs text-zinc-400">{tile.sublabel}</p>
+            <p className="text-xl font-semibold text-foreground">{tile.value}</p>
+            <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>
           </div>
         </Card>
       ))}

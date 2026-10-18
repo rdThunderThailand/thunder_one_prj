@@ -31,7 +31,7 @@ export const headlineMetrics: HeadlineMetricData[] = [
   {
     id: "org-health",
     icon: "heart",
-    iconTone: "text-rose-500",
+    iconTone: "text-error",
     label: "Organization Health",
     value: "82",
     unit: "/100",
@@ -39,12 +39,12 @@ export const headlineMetrics: HeadlineMetricData[] = [
     emphasize: true,
     deltaLabel: "▲ 6",
     deltaCaption: "vs last week",
-    viz: { type: "sparkline", data: [70, 72, 74, 73, 76, 78, 77, 79, 80, 81, 81, 82], color: "text-emerald-500" },
+    viz: { type: "sparkline", data: [70, 72, 74, 73, 76, 78, 77, 79, 80, 81, 81, 82], color: "text-success" },
   },
   {
     id: "strategic-progress",
     icon: "gauge",
-    iconTone: "text-indigo-500",
+    iconTone: "text-primary",
     label: "Strategic Progress",
     value: "68%",
     status: "On Track",
@@ -55,7 +55,7 @@ export const headlineMetrics: HeadlineMetricData[] = [
   {
     id: "financial-snapshot",
     icon: "currency",
-    iconTone: "text-emerald-500",
+    iconTone: "text-success",
     label: "Financial Snapshot",
     value: "92%",
     status: "Budget Utilization",
@@ -66,30 +66,30 @@ export const headlineMetrics: HeadlineMetricData[] = [
   {
     id: "engagement",
     icon: "users",
-    iconTone: "text-blue-500",
+    iconTone: "text-info",
     label: "Engagement",
     value: "128K",
     status: "Interactions this week",
     deltaLabel: "▲ 18%",
     deltaCaption: "vs last week",
-    viz: { type: "sparkline", data: [90, 95, 98, 100, 105, 108, 112, 115, 118, 122, 125, 128], color: "text-blue-500" },
+    viz: { type: "sparkline", data: [90, 95, 98, 100, 105, 108, 112, 115, 118, 122, 125, 128], color: "text-info" },
   },
   {
     id: "customer-sentiment",
     icon: "smile",
-    iconTone: "text-emerald-500",
+    iconTone: "text-success",
     label: "Customer Sentiment",
     value: "4.2",
     unit: "/5",
     status: "Positive",
     deltaLabel: "▲ 0.3",
     deltaCaption: "vs last week",
-    viz: { type: "sparkline", data: [3.6, 3.7, 3.9, 3.8, 4.0, 3.9, 4.1, 4.0, 4.1, 4.2, 4.1, 4.2], color: "text-purple-500" },
+    viz: { type: "sparkline", data: [3.6, 3.7, 3.9, 3.8, 4.0, 3.9, 4.1, 4.0, 4.1, 4.2, 4.1, 4.2], color: "text-in-progress" },
   },
   {
     id: "operational-status",
     icon: "shield",
-    iconTone: "text-amber-500",
+    iconTone: "text-warning",
     label: "Operational Status",
     value: "98%",
     status: "All Systems Operational",
@@ -112,7 +112,7 @@ export const keyInsights: KeyInsightData[] = [
   {
     id: "insight-campaign",
     icon: "gauge",
-    iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400",
+    iconTone: "bg-info-muted text-info",
     title: "Q3 Product Launch is at risk",
     description: "Campaign is delayed by 2 days due to content approval bottleneck.",
     linkLabel: "View prediction",
@@ -120,7 +120,7 @@ export const keyInsights: KeyInsightData[] = [
   {
     id: "insight-field-ops",
     icon: "users",
-    iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400",
+    iconTone: "bg-warning-muted text-warning",
     title: "Field Operations workload high",
     description: `${overdueWorkOrders} work order${overdueWorkOrders === 1 ? "" : "s"} overdue. Allocate resources to reduce impact.`,
     linkLabel: "View details",
@@ -128,7 +128,7 @@ export const keyInsights: KeyInsightData[] = [
   {
     id: "insight-engagement",
     icon: "trendUp",
-    iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400",
+    iconTone: "bg-success-muted text-success",
     title: "Customer engagement rising",
     description: "Engagement increased 18% this week, strongest on Product Update content.",
     linkLabel: "View trend",
@@ -149,7 +149,7 @@ export const objectives: ObjectiveData[] = [
   {
     id: "obj-engagement",
     icon: "gauge",
-    iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400",
+    iconTone: "bg-info-muted text-info",
     title: "Grow Customer Engagement",
     detail: "Increase engagement by 20% in Q3",
     percent: 72,
@@ -158,7 +158,7 @@ export const objectives: ObjectiveData[] = [
   {
     id: "obj-operational",
     icon: "shield",
-    iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400",
+    iconTone: "bg-warning-muted text-warning",
     title: "Operational Excellence",
     detail: "Reduce process cycle time by 15%",
     percent: 58,
@@ -167,7 +167,7 @@ export const objectives: ObjectiveData[] = [
   {
     id: "obj-innovation",
     icon: "users",
-    iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400",
+    iconTone: "bg-in-progress-muted text-in-progress",
     title: "Product Innovation",
     detail: "Launch 2 new features in Q3",
     percent: 40,
@@ -176,7 +176,7 @@ export const objectives: ObjectiveData[] = [
   {
     id: "obj-financial",
     icon: "currency",
-    iconTone: "bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400",
+    iconTone: "bg-accent text-primary",
     title: "Financial Discipline",
     detail: "Maintain budget utilization > 90%",
     percent: 92,
@@ -187,9 +187,9 @@ export const objectives: ObjectiveData[] = [
 export const performanceTrend = {
   xKey: "day",
   series: [
-    { key: "engagement", label: "Engagement", color: "#6366f1" },
-    { key: "reach", label: "Reach", color: "#10b981" },
-    { key: "conversions", label: "Conversions", color: "#a855f7" },
+    { key: "engagement", label: "Engagement", color: "var(--color-primary)" },
+    { key: "reach", label: "Reach", color: "var(--color-success)" },
+    { key: "conversions", label: "Conversions", color: "var(--color-in-progress)" },
   ],
   data: [
     { day: "Mon 18", engagement: 92000, reach: 68000, conversions: 34000 },
@@ -236,46 +236,46 @@ export const departmentOverview: DepartmentMetricData[] = [
   {
     id: "dept-marketing",
     icon: "megaphone",
-    iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400",
+    iconTone: "bg-info-muted text-info",
     name: "Marketing",
     metricLabel: "Engagement",
     value: "128K",
     deltaLabel: "▲ 18%",
     trend: [80, 85, 82, 90, 95, 100, 108, 115, 120, 124, 126, 128],
-    trendColor: "text-blue-500",
+    trendColor: "text-info",
   },
   {
     id: "dept-sales",
     icon: "gauge",
-    iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400",
+    iconTone: "bg-success-muted text-success",
     name: "Sales",
     metricLabel: "Pipeline",
     value: "96M",
     deltaLabel: "▲ 12%",
     trend: [70, 72, 68, 74, 78, 76, 82, 85, 88, 90, 93, 96],
-    trendColor: "text-emerald-500",
+    trendColor: "text-success",
   },
   {
     id: "dept-operations",
     icon: "shield",
-    iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400",
+    iconTone: "bg-warning-muted text-warning",
     name: "Operations",
     metricLabel: "Workload",
     value: "78%",
     deltaLabel: "▲ 6%",
     trend: [60, 62, 65, 63, 68, 70, 72, 71, 74, 76, 77, 78],
-    trendColor: "text-amber-500",
+    trendColor: "text-warning",
   },
   {
     id: "dept-finance",
     icon: "currency",
-    iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400",
+    iconTone: "bg-in-progress-muted text-in-progress",
     name: "Finance",
     metricLabel: "Budget Utilization",
     value: "92%",
     deltaLabel: "▲ 0.3",
     trend: [85, 86, 88, 87, 89, 90, 90, 91, 91, 92, 92, 92],
-    trendColor: "text-purple-500",
+    trendColor: "text-in-progress",
   },
 ];
 
@@ -300,11 +300,11 @@ export interface DataSourceData {
 }
 
 export const dataSources: DataSourceData[] = [
-  { id: "ds-platform", icon: "platform", iconTone: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400", name: "ThunderOne Platform", syncedLabel: "Real-time" },
-  { id: "ds-media-workspace", icon: "megaphone", iconTone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400", name: "Media Workspace", syncedLabel: "5 min ago" },
-  { id: "ds-financial", icon: "currency", iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", name: "Financial System", syncedLabel: "1 hour ago" },
-  { id: "ds-crm", icon: "users", iconTone: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400", name: "CRM System", syncedLabel: "15 min ago" },
-  { id: "ds-hr", icon: "shield", iconTone: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400", name: "HR System", syncedLabel: "2 hours ago" },
+  { id: "ds-platform", icon: "platform", iconTone: "bg-accent text-primary", name: "ThunderOne Platform", syncedLabel: "Real-time" },
+  { id: "ds-media-workspace", icon: "megaphone", iconTone: "bg-info-muted text-t1-blue-700", name: "Media Workspace", syncedLabel: "5 min ago" },
+  { id: "ds-financial", icon: "currency", iconTone: "bg-success-muted text-t1-green-700", name: "Financial System", syncedLabel: "1 hour ago" },
+  { id: "ds-crm", icon: "users", iconTone: "bg-in-progress-muted text-t1-purple-700", name: "CRM System", syncedLabel: "15 min ago" },
+  { id: "ds-hr", icon: "shield", iconTone: "bg-error-muted text-t1-red-700", name: "HR System", syncedLabel: "2 hours ago" },
 ];
 
 // --- Manager Intelligence (the department_admin / manager_it_asset variant
@@ -491,9 +491,9 @@ export const employeeIntelStatTiles: EmployeeStatTileData[] = [
     sublabel: "In progress",
     deltaLabel: "+2 from last week",
     trend: [3, 4, 4, 5, 5, 6, 6, 6, 7, 7, 7, 7],
-    trendColor: "text-blue-500",
+    trendColor: "text-info",
     icon: "inProgress",
-    iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400",
+    iconTone: "bg-info-muted text-info",
   },
   {
     id: "due-soon",
@@ -502,9 +502,9 @@ export const employeeIntelStatTiles: EmployeeStatTileData[] = [
     sublabel: "Within 2 days",
     deltaLabel: "▲ 1 from last week",
     trend: [1, 1, 2, 2, 2, 2, 3, 2, 3, 3, 3, 3],
-    trendColor: "text-amber-500",
+    trendColor: "text-warning",
     icon: "dueSoon",
-    iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400",
+    iconTone: "bg-warning-muted text-warning",
   },
   {
     id: "on-time",
@@ -513,9 +513,9 @@ export const employeeIntelStatTiles: EmployeeStatTileData[] = [
     sublabel: "Completed on time",
     deltaLabel: "▲ 6% from last week",
     trend: [80, 82, 84, 83, 86, 88, 87, 89, 90, 91, 91, 92],
-    trendColor: "text-emerald-500",
+    trendColor: "text-success",
     icon: "onTime",
-    iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400",
+    iconTone: "bg-success-muted text-success",
   },
   {
     id: "collaboration",
@@ -524,9 +524,9 @@ export const employeeIntelStatTiles: EmployeeStatTileData[] = [
     sublabel: "Updates from your team",
     deltaLabel: "Today",
     trend: [6, 8, 7, 9, 10, 9, 11, 10, 12, 11, 13, 14],
-    trendColor: "text-purple-500",
+    trendColor: "text-in-progress",
     icon: "collaboration",
-    iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400",
+    iconTone: "bg-in-progress-muted text-in-progress",
   },
 ];
 
@@ -544,7 +544,7 @@ export const employeeAiInsights: EmployeeAiInsightData[] = [
   {
     id: "eai-1",
     icon: "target",
-    iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400",
+    iconTone: "bg-success-muted text-success",
     eyebrow: "Your #1 focus today",
     title: "Prepare Artwork for Q3 Campaign",
     detail: "Will finish on time if you start within the next 2 hours.",
@@ -553,7 +553,7 @@ export const employeeAiInsights: EmployeeAiInsightData[] = [
   {
     id: "eai-2",
     icon: "trendUp",
-    iconTone: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400",
+    iconTone: "bg-info-muted text-info",
     eyebrow: "Your work trend",
     title: "You're completing tasks 18% faster",
     detail: "Compared to the same period last month.",
@@ -561,7 +561,7 @@ export const employeeAiInsights: EmployeeAiInsightData[] = [
   {
     id: "eai-3",
     icon: "clock",
-    iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400",
+    iconTone: "bg-in-progress-muted text-in-progress",
     eyebrow: "Your optimal work time",
     title: "Peak focus window: 10:00 – 12:00",
     detail: "Based on your last 3 weeks of activity.",
@@ -571,8 +571,8 @@ export const employeeAiInsights: EmployeeAiInsightData[] = [
 export const employeePerformanceTrend = {
   xKey: "day",
   series: [
-    { key: "completed", label: "Completed tasks", color: "#6366f1" },
-    { key: "assigned", label: "Assigned tasks", color: "#10b981" },
+    { key: "completed", label: "Completed tasks", color: "var(--color-primary)" },
+    { key: "assigned", label: "Assigned tasks", color: "var(--color-success)" },
   ],
   data: [
     { day: "Mon", completed: 4, assigned: 4 },
@@ -602,7 +602,7 @@ export const employeeRecommendedActions: RecommendedActionData[] = [
   {
     id: "rec-1",
     icon: "approve",
-    iconTone: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400",
+    iconTone: "bg-success-muted text-success",
     title: "Review and Approve",
     detail: "1 item is awaiting your approval",
     actionLabel: "Go to task",
@@ -610,7 +610,7 @@ export const employeeRecommendedActions: RecommendedActionData[] = [
   {
     id: "rec-2",
     icon: "update",
-    iconTone: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400",
+    iconTone: "bg-warning-muted text-warning",
     title: "Update Progress",
     detail: "Let your team know how it's going",
     actionLabel: "Update now",
@@ -618,7 +618,7 @@ export const employeeRecommendedActions: RecommendedActionData[] = [
   {
     id: "rec-3",
     icon: "template",
-    iconTone: "bg-purple-50 text-purple-500 dark:bg-purple-500/10 dark:text-purple-400",
+    iconTone: "bg-in-progress-muted text-in-progress",
     title: "Use a Template",
     detail: "Create a new task from a template",
     actionLabel: "Choose Template",
