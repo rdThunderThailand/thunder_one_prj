@@ -11,7 +11,7 @@ export function HomeStatTilesSkeleton() {
       {[0, 1, 2, 3].map((i) => (
         <div
           key={i}
-          className="flex flex-col gap-2 rounded-[10px] border border-zinc-100 bg-white p-[18px] dark:border-zinc-800 dark:bg-zinc-900"
+          className="flex flex-col gap-2 rounded-[10px] border border-border bg-card p-[18px]"
         >
           <div className="flex items-center gap-3">
             <Skeleton className="h-12 w-12 rounded-xl" />
@@ -28,7 +28,7 @@ export function HomeStatTilesSkeleton() {
 export function OrgOverviewSkeleton() {
   return (
     <Card className="flex flex-col p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ภาพรวมองค์กร</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">ภาพรวมองค์กร</h2>
       <div className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <div key={i}>
@@ -48,7 +48,7 @@ export function OrgOverviewSkeleton() {
 export function ActivityFeedSkeleton() {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">กิจกรรมล่าสุด</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">กิจกรรมล่าสุด</h2>
       <ul className="flex flex-col gap-3">
         {[0, 1, 2].map((i) => (
           <li
@@ -72,7 +72,7 @@ export function ActivityFeedSkeleton() {
 export function TasksCardSkeleton() {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">งานที่ต้องดำเนินการ</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">งานที่ต้องดำเนินการ</h2>
       <ul className="flex flex-col gap-3">
         {[0, 1, 2].map((i) => (
           <li
@@ -167,7 +167,7 @@ export function MissionControlSkeleton() {
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="flex flex-col gap-3 rounded-[10px] border border-zinc-100 bg-white p-[22px] dark:border-zinc-800 dark:bg-zinc-900"
+                  className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-[22px]"
                 >
                   <div className="flex items-start gap-3">
                     <Skeleton className="h-12 w-12 rounded-[14px]" />

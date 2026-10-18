@@ -51,18 +51,18 @@ export function HomeBanner() {
   // banner with an amber icon). Hex values are the same Figma-fetched
   // blue/violet/navy used by HomeStatTilesRow and WorkspaceCardsRow.
   return (
-    <div className="flex flex-col items-start gap-3 rounded-2xl border border-[#e5edf9] bg-gradient-to-r from-[#eaf4ff] to-[#f1e8ff] p-4 text-[#071858] sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:text-zinc-50">
+    <div className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-gradient-to-r from-accent to-in-progress-muted p-4 text-foreground sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <LightningIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#075df7] dark:text-blue-400" />
+        <LightningIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         <div>
           <p className="text-sm font-medium">&ldquo;องค์กรที่แข็งแกร่ง เริ่มจากคนที่พร้อม และเครื่องมือที่ใช้&rdquo;</p>
-          <p className="text-xs text-[#6b7a9e] dark:text-zinc-400">ThunderOne — ทำให้การทำงานร่วมกันเป็นไปได้อย่างไม่จำกัด</p>
+          <p className="text-xs text-muted-foreground">ThunderOne — ทำให้การทำงานร่วมกันเป็นไปได้อย่างไม่จำกัด</p>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"
-          className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-[#075df7] hover:bg-[#f5f9ff] dark:bg-white/10 dark:text-blue-400 dark:hover:bg-white/20"
+          className="flex items-center gap-1.5 rounded-lg bg-card px-3 py-1.5 text-sm font-medium text-primary hover:bg-muted"
         >
           เรียนรู้เพิ่มเติมเกี่ยวกับ ThunderOne
           <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -71,7 +71,7 @@ export function HomeBanner() {
           type="button"
           onClick={handleDismiss}
           aria-label="ปิด"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#6b7a9e] hover:bg-white/60 hover:text-[#071858] dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-card/60 hover:text-foreground"
         >
           <XIcon className="h-4 w-4" />
         </button>

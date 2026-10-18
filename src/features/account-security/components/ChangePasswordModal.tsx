@@ -8,7 +8,7 @@ import { ApiError } from "@/lib/api/api-error";
 import { changePassword } from "@/features/profile/services/profile-api";
 
 const inputClasses =
-  "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
 
 interface Rule {
   label: string;
@@ -26,13 +26,13 @@ const RULES: Rule[] = [
 // checks in real time against the literal typed value — not a separate
 // scoring heuristic, so the bar and the checklist can never disagree.
 const STRENGTH_LABELS = ["อ่อนมาก", "อ่อน", "ปานกลาง", "ดี", "แข็งแรง"];
-const STRENGTH_BAR_COLORS = ["bg-red-500", "bg-orange-500", "bg-amber-500", "bg-lime-500", "bg-emerald-500"];
+const STRENGTH_BAR_COLORS = ["bg-error", "bg-warning", "bg-warning", "bg-success", "bg-success"];
 const STRENGTH_TEXT_COLORS = [
-  "text-red-500",
-  "text-orange-500",
-  "text-amber-500",
-  "text-lime-600 dark:text-lime-400",
-  "text-emerald-600 dark:text-emerald-400",
+  "text-error",
+  "text-warning",
+  "text-warning",
+  "text-t1-green-700",
+  "text-t1-green-700",
 ];
 
 type Step = "form" | "validating" | "success";
@@ -96,9 +96,9 @@ export function ChangePasswordModal({ onClose, onSuccess }: { onClose: () => voi
     return (
       <Modal open onClose={onClose} title="เปลี่ยนรหัสผ่าน" footer={null}>
         <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">กำลังเปลี่ยนรหัสผ่าน...</p>
-          <p className="text-xs text-zinc-400">กรุณารอสักครู่</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-t1-blue-200 border-t-primary" />
+          <p className="text-sm font-medium text-foreground">กำลังเปลี่ยนรหัสผ่าน...</p>
+          <p className="text-xs text-t1-gray-400">กรุณารอสักครู่</p>
         </div>
       </Modal>
     );
@@ -117,11 +117,11 @@ export function ChangePasswordModal({ onClose, onSuccess }: { onClose: () => voi
         }
       >
         <div className="flex flex-col items-center gap-3 py-4 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success-muted text-t1-green-700">
             <CheckCircleIcon className="h-7 w-7" />
           </span>
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">เปลี่ยนรหัสผ่านเรียบร้อยแล้ว</p>
-          <p className="max-w-xs text-xs text-zinc-400">รหัสผ่านของคุณได้รับการอัปเดตแล้ว</p>
+          <p className="text-sm font-medium text-foreground">เปลี่ยนรหัสผ่านเรียบร้อยแล้ว</p>
+          <p className="max-w-xs text-xs text-t1-gray-400">รหัสผ่านของคุณได้รับการอัปเดตแล้ว</p>
         </div>
       </Modal>
     );
@@ -144,21 +144,21 @@ export function ChangePasswordModal({ onClose, onSuccess }: { onClose: () => voi
       }
     >
       <div className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           รหัสผ่านปัจจุบัน
           <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           รหัสผ่านใหม่
           <input type="password" value={next} onChange={(e) => setNext(e.target.value)} className={inputClasses} />
         </label>
         {next.length > 0 && (
           <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
               <span>ความปลอดภัยของรหัสผ่าน</span>
               <span className={STRENGTH_TEXT_COLORS[passedRules]}>{STRENGTH_LABELS[passedRules]}</span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className={`h-full rounded-full transition-all duration-200 ${STRENGTH_BAR_COLORS[passedRules]}`}
                 style={{ width: `${(passedRules / RULES.length) * 100}%` }}
@@ -170,19 +170,19 @@ export function ChangePasswordModal({ onClose, onSuccess }: { onClose: () => voi
           {RULES.map((rule) => {
             const passed = rule.test(next);
             return (
-              <li key={rule.label} className={`flex items-center gap-1.5 ${passed ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}`}>
+              <li key={rule.label} className={`flex items-center gap-1.5 ${passed ? "text-t1-green-700" : "text-t1-gray-400"}`}>
                 <CheckCircleIcon className="h-3.5 w-3.5 shrink-0" />
                 {rule.label}
               </li>
             );
           })}
         </ul>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           ยืนยันรหัสผ่านใหม่
           <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={inputClasses} />
         </label>
         {error && (
-          <p className="flex items-start gap-1.5 text-xs text-red-500">
+          <p className="flex items-start gap-1.5 text-xs text-error">
             <InfoIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             {error}
           </p>

@@ -43,13 +43,13 @@ const TABS: { id: Tab; label: string }[] = [
 // family as the shell/mission-control redesign (#e5edf9 borders, #071858
 // navy, #0760ed link/action blue, #6b7a9e secondary text), not the app's
 // generic zinc/indigo defaults. Kept as local constants since this page
-// bypasses the shared `Card` (its default `border-zinc-200` can't be
+// bypasses the shared `Card` (its default `border-border` can't be
 // reliably overridden by an appended className at equal Tailwind
 // specificity — same reasoning as HomeStatTilesRow/WorkspaceCardsRow).
-const BORDER = "border-[#e5edf9] dark:border-zinc-800";
-const TEXT_NAVY = "text-[#071858] dark:text-zinc-50";
-const TEXT_MUTED = "text-[#6b7a9e] dark:text-zinc-400";
-const TEXT_BLUE = "text-[#0760ed] dark:text-blue-400";
+const BORDER = "border-border";
+const TEXT_NAVY = "text-foreground";
+const TEXT_MUTED = "text-muted-foreground";
+const TEXT_BLUE = "text-primary";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -70,7 +70,7 @@ function WorkRow({ icon, label, value }: { icon: ReactNode; label: string; value
   return (
     <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
       <span className={`flex items-center gap-2.5 ${TEXT_MUTED}`}>
-        <span className="text-[#9aabd1] dark:text-zinc-500">{icon}</span>
+        <span className="text-t1-gray-400">{icon}</span>
         {label}
       </span>
       <span className={`font-semibold ${TEXT_NAVY}`}>{value || "-"}</span>
@@ -85,7 +85,7 @@ function WorkRow({ icon, label, value }: { icon: ReactNode; label: string; value
 function AccessRow({ icon, title, sublabel, value }: { icon: ReactNode; title: string; sublabel: string; value: string }) {
   return (
     <div className="flex items-center gap-3 py-2.5">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eaf1ff] text-[#0760ed] dark:bg-blue-500/10 dark:text-blue-400">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
@@ -107,7 +107,7 @@ function ContactRow({ label, value, badge, note }: { label: string; value: strin
       <span className="flex items-center gap-2">
         <span className={`font-semibold ${TEXT_NAVY}`}>{value}</span>
         {badge && (
-          <span className="inline-flex shrink-0 items-center rounded-full bg-[#eaf4ff] px-2 py-0.5 text-[11px] font-semibold text-[#075df7] dark:bg-blue-500/10 dark:text-blue-400">
+          <span className="inline-flex shrink-0 items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-primary">
             {badge}
           </span>
         )}
@@ -125,7 +125,7 @@ function EditButton({ onClick, disabled }: { onClick?: () => void; disabled?: bo
       disabled={disabled}
       title={disabled ? "ยังไม่รองรับการแก้ไข" : undefined}
       className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${BORDER} ${
-        disabled ? "cursor-not-allowed text-[#a8c3f5] dark:text-blue-400/30" : `bg-white hover:bg-[#f5f9ff] dark:bg-transparent dark:hover:bg-zinc-800 ${TEXT_BLUE}`
+        disabled ? "cursor-not-allowed text-t1-gray-400" : `bg-card hover:bg-muted ${TEXT_BLUE}`
       }`}
     >
       <EditIcon className="h-3.5 w-3.5" />
@@ -209,20 +209,20 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
 
   return (
     <div className="flex flex-col gap-4">
-      <nav className="flex items-center gap-1.5 text-xs text-zinc-400">
-        <Link href="/mission-control" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+      <nav className="flex items-center gap-1.5 text-xs text-t1-gray-400">
+        <Link href="/mission-control" className="hover:text-muted-foreground">
           หน้าแรก
         </Link>
         <span>/</span>
-        <span className="text-zinc-600 dark:text-zinc-300">โปรไฟล์ของฉัน</span>
+        <span className="text-muted-foreground">โปรไฟล์ของฉัน</span>
       </nav>
-      <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">โปรไฟล์ของฉัน</h1>
+      <h1 className="text-xl font-semibold text-foreground">โปรไฟล์ของฉัน</h1>
 
       {me === null ? (
         <Card className={`border p-10 text-center text-sm ${BORDER} ${TEXT_MUTED}`}>ไม่สามารถโหลดข้อมูลโปรไฟล์ได้ในขณะนี้</Card>
       ) : (
         <>
-          <div className={`flex items-center gap-4 rounded-xl border bg-white p-6 dark:bg-zinc-900 ${BORDER}`}>
+          <div className={`flex items-center gap-4 rounded-xl border bg-card p-6 ${BORDER}`}>
             <ProfileAvatarEditor
               name={fullName}
               avatarUrl={me.avatar_url}
@@ -241,7 +241,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={`border-b-2 px-3 py-2 text-sm font-semibold transition-colors ${
-                  tab === t.id ? `border-[#0760ed] ${TEXT_BLUE}` : `border-transparent ${TEXT_MUTED} hover:text-[#071858] dark:hover:text-zinc-200`
+                  tab === t.id ? `border-primary ${TEXT_BLUE}` : `border-transparent ${TEXT_MUTED} hover:text-foreground`
                 }`}
               >
                 {t.label}
@@ -254,14 +254,14 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                 tab only) — the mockup has them as one bordered box with an
                 internal divider, not two separate cards with a gap between
                 them. */}
-            <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 lg:col-span-2 ${BORDER}`}>
+            <div className={`rounded-xl border bg-card p-5 lg:col-span-2 ${BORDER}`}>
               {tab === "personal" && (
                 <>
                   <div className="mb-1 flex items-center justify-between">
                     <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>ข้อมูลส่วนตัว</h2>
                     <EditButton onClick={() => setEditing(true)} />
                   </div>
-                  <div className="divide-y divide-[#e5edf9] dark:divide-zinc-800">
+                  <div className="divide-y divide-border">
                     <Row label="ชื่อ - นามสกุล" value={fullName} />
                     <Row label="ชื่อที่ใช้แสดง" value={me.display_name ?? ""} />
                     {/* Real since 2026-09-16 (Core commit d33d21a) — was a
@@ -289,7 +289,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
               {tab === "work" && (
                 <>
                   <h2 className={`mb-1 text-sm font-bold ${TEXT_NAVY}`}>ข้อมูลการทำงาน</h2>
-                  <div className="divide-y divide-[#e5edf9] dark:divide-zinc-800">
+                  <div className="divide-y divide-border">
                     <WorkRow icon={<BuildingIcon className="h-4 w-4" />} label="องค์กร" value={tenantName ?? ""} />
                     <WorkRow icon={<ClipboardIcon className="h-4 w-4" />} label="ตำแหน่ง" value={roleName ?? ""} />
                     {/* Real since 2026-09-22 via `membership` (see ProfilePageProps'
@@ -323,8 +323,8 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                       value={membership?.member_type ? MEMBER_TYPE_LABEL[membership.member_type] : ""}
                     />
                   </div>
-                  <p className="mt-3 flex items-start gap-2 rounded-lg bg-[#eff5ff] p-3 text-xs text-[#071858] dark:bg-blue-500/10 dark:text-zinc-300">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0760ed] text-white">
+                  <p className="mt-3 flex items-start gap-2 rounded-lg bg-accent p-3 text-xs text-foreground">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <InfoIcon className="h-3 w-3" />
                     </span>
                     <span>ข้อมูลนี้จัดการโดยองค์กร หากต้องการแก้ไข กรุณาติดต่อฝ่ายบุคคล (People Workspace)</span>
@@ -342,7 +342,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                       จัดการโดยองค์กร
                     </span>
                   </div>
-                  <div className="divide-y divide-[#e5edf9] dark:divide-zinc-800">
+                  <div className="divide-y divide-border">
                     <ContactRow label="อีเมลงาน" value={me.email} badge="หลัก" note="ไม่สามารถแก้ไขได้" />
                     {/* Honest placeholders — these aren't the personal
                         `phone`/`address` columns below (that's real, see
@@ -360,7 +360,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                       <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>ข้อมูลติดต่อส่วนตัว (Personal Contact)</h2>
                       <EditButton onClick={() => setEditingPhone(true)} />
                     </div>
-                    <div className="divide-y divide-[#e5edf9] dark:divide-zinc-800">
+                    <div className="divide-y divide-border">
                       {/* Real since 2026-09-16 (Core commit d33d21a). */}
                       <ContactRow
                         label="โทรศัพท์มือถือ"
@@ -389,14 +389,14 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
 
             {tab === "contact" ? (
               <div className="flex flex-col gap-4">
-                <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+                <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
                   <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>การแสดงข้อมูล</h2>
                   <p className={`mb-2 text-xs ${TEXT_MUTED}`}>กำหนดว่าใครสามารถเห็นข้อมูลการติดต่อของคุณได้</p>
                   {/* No visibility/privacy-permission system exists for
                       contact info in Core — these stay inert rather than
                       claiming a saved value ("ทุกคนในองค์กร") that was
                       never actually set anywhere. */}
-                  <div className="divide-y divide-[#e5edf9] dark:divide-zinc-800">
+                  <div className="divide-y divide-border">
                     {["วันเกิด", "เบอร์โทรศัพท์มือถือ", "LINE"].map((label) => (
                       <div key={label} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                         <span className={TEXT_MUTED}>{label}</span>
@@ -410,8 +410,8 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                       </div>
                     ))}
                   </div>
-                  <p className="mt-3 flex items-start gap-2 rounded-lg bg-[#eff5ff] p-3 text-xs text-[#071858] dark:bg-blue-500/10 dark:text-zinc-300">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0760ed] text-white">
+                  <p className="mt-3 flex items-start gap-2 rounded-lg bg-accent p-3 text-xs text-foreground">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <InfoIcon className="h-3 w-3" />
                     </span>
                     <span>
@@ -421,7 +421,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                   </p>
                 </div>
 
-                <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+                <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
                   <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>ช่องทางการติดต่อด่วน</h2>
                   <p className={`mb-3 text-xs ${TEXT_MUTED}`}>คัดลอกข้อมูลเพื่อใช้งานอย่างรวดเร็ว</p>
                   <div className="flex flex-col gap-2">
@@ -429,12 +429,12 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                       <button
                         type="button"
                         onClick={() => copyToClipboard(me.email, setCopiedEmail)}
-                        className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium ${BORDER} ${TEXT_NAVY} hover:bg-[#f5f9ff] dark:hover:bg-zinc-800`}
+                        className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium ${BORDER} ${TEXT_NAVY} hover:bg-muted`}
                       >
                         คัดลอกอีเมลงาน
                         <CopyIcon className="h-3.5 w-3.5" />
                       </button>
-                      {copiedEmail && <p className="mt-1 text-[11px] font-medium text-emerald-600">คัดลอกแล้ว</p>}
+                      {copiedEmail && <p className="mt-1 text-[11px] font-medium text-t1-green-700">คัดลอกแล้ว</p>}
                     </div>
                     <div>
                       <button
@@ -443,20 +443,20 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                         onClick={() => me.phone && copyToClipboard(me.phone, setCopiedPhone)}
                         title={!me.phone ? "ยังไม่มีข้อมูลเบอร์โทรศัพท์" : undefined}
                         className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium ${BORDER} ${
-                          me.phone ? `${TEXT_NAVY} hover:bg-[#f5f9ff] dark:hover:bg-zinc-800` : "cursor-not-allowed text-[#a8c3f5] dark:text-blue-400/30"
+                          me.phone ? `${TEXT_NAVY} hover:bg-muted` : "cursor-not-allowed text-t1-gray-400"
                         }`}
                       >
                         คัดลอกเบอร์มือถือ
                         <CopyIcon className="h-3.5 w-3.5" />
                       </button>
-                      {copiedPhone && <p className="mt-1 text-[11px] font-medium text-emerald-600">คัดลอกแล้ว</p>}
+                      {copiedPhone && <p className="mt-1 text-[11px] font-medium text-t1-green-700">คัดลอกแล้ว</p>}
                     </div>
                   </div>
                 </div>
               </div>
             ) : tab === "work" ? (
               <div className="flex flex-col gap-4">
-                <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+                <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
                   <div className="mb-3 flex items-center justify-between">
                     <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>โครงสร้างในองค์กร</h2>
                     <Link href="/people/org-structure" className={`flex items-center gap-1 text-xs font-semibold ${TEXT_BLUE}`}>
@@ -469,18 +469,18 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                       gets a rung here. The full real chart is one click away
                       via the link above. */}
                   <div className={`flex items-center gap-2 text-sm font-semibold ${TEXT_NAVY}`}>
-                    <BuildingIcon className="h-4 w-4 shrink-0 text-[#9aabd1] dark:text-zinc-500" />
+                    <BuildingIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
                     <span className="truncate">{tenantName ?? "-"}</span>
                   </div>
-                  <div className="ml-2 mt-2 border-l border-[#e5edf9] pl-4 dark:border-zinc-800">
+                  <div className="ml-2 mt-2 border-l border-border pl-4">
                     {departmentName && (
                       <div className={`mb-2 flex items-center gap-2 text-sm font-medium ${TEXT_NAVY}`}>
-                        <FolderIcon className="h-4 w-4 shrink-0 text-[#9aabd1] dark:text-zinc-500" />
+                        <FolderIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
                         <span className="truncate">{departmentName}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2.5 rounded-lg bg-[#eaf1ff] px-3 py-2 dark:bg-blue-500/10">
-                      <UserIcon className="h-4 w-4 shrink-0 text-[#0760ed] dark:text-blue-400" />
+                    <div className="flex items-center gap-2.5 rounded-lg bg-accent px-3 py-2">
+                      <UserIcon className="h-4 w-4 shrink-0 text-primary" />
                       <div className="min-w-0">
                         <p className={`truncate text-sm font-semibold ${TEXT_NAVY}`}>{fullName}</p>
                         <p className={`truncate text-xs ${TEXT_MUTED}`}>{roleName ?? "-"}</p>
@@ -489,7 +489,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                   </div>
                 </div>
 
-                <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+                <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
                   <div className="mb-1 flex items-center justify-between">
                     <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>สิทธิ์การเข้าถึง</h2>
                     {/* No roles/permission-groups/workspace-count endpoint
@@ -500,7 +500,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                       <ArrowRightIcon className="h-3 w-3" />
                     </button>
                   </div>
-                  <div className="divide-y divide-[#e5edf9] dark:divide-zinc-800">
+                  <div className="divide-y divide-border">
                     <AccessRow icon={<GridIcon className="h-4 w-4" />} title="Workspace Access" sublabel="พื้นที่ทำงานที่สามารถเข้าถึงได้" value="" />
                     <AccessRow icon={<ShieldIcon className="h-4 w-4" />} title="บทบาท (Roles)" sublabel="บทบาทในระบบ" value="" />
                     <AccessRow icon={<LockIcon className="h-4 w-4" />} title="กลุ่มสิทธิ์ (Permission Groups)" sublabel="กลุ่มสิทธิ์ที่ได้รับ" value="" />
@@ -508,20 +508,20 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                 </div>
               </div>
             ) : (
-              <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+              <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
                 <div className="mb-1 flex items-center justify-between">
                   <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>รูปแบบการแสดงผล</h2>
                   <EditButton disabled />
                 </div>
-                <div className="divide-y divide-[#e5edf9] dark:divide-zinc-800">
+                <div className="divide-y divide-border">
                   <Row
                     label="ภาษาในระบบ"
                     value={me.preferred_language ? (LANGUAGE_LABEL[languageFromTag(me.preferred_language) ?? ""] ?? me.preferred_language) : ""}
                   />
                   <Row label="โซนเวลา (Timezone)" value={me.timezone ?? ""} />
                 </div>
-                <p className="mt-3 flex items-start gap-2 rounded-lg bg-[#eff5ff] p-3 text-xs text-[#071858] dark:bg-blue-500/10 dark:text-zinc-300">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0760ed] text-white">
+                <p className="mt-3 flex items-start gap-2 rounded-lg bg-accent p-3 text-xs text-foreground">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <InfoIcon className="h-3 w-3" />
                   </span>
                   <span>

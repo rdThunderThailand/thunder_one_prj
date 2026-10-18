@@ -64,7 +64,7 @@ export default async function DashboardLayout({
               statusUrl: env.helpStatusUrl || undefined,
             }}
           />
-          <main className="flex-1 overflow-y-auto bg-zinc-50 px-6 py-6 dark:bg-zinc-950">
+          <main className="flex-1 overflow-y-auto bg-t1-gray-50 px-6 py-6">
             {children}
           </main>
         </div>

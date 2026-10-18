@@ -49,8 +49,8 @@ export function ManagerWorkspacesPage({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50/40 px-4 py-3 text-sm text-zinc-700 dark:border-indigo-500/20 dark:bg-indigo-500/5 dark:text-zinc-200">
-        <LightbulbIcon className="h-4 w-4 shrink-0 text-indigo-500" />
+      <div className="flex items-center gap-2 rounded-xl border border-t1-blue-100 bg-accent/40 px-4 py-3 text-sm text-foreground">
+        <LightbulbIcon className="h-4 w-4 shrink-0 text-primary" />
         Tip: Star the workspaces you use often to pin them for quick access.
       </div>
     </div>

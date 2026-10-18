@@ -24,7 +24,7 @@ export function RecentlyOpenedRow({ workspaces, showCount = false }: { workspace
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Recently Opened</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Recently Opened</h2>
       {recents.length === 0 ? (
         <Card>
           <EmptyState
@@ -43,19 +43,19 @@ export function RecentlyOpenedRow({ workspaces, showCount = false }: { workspace
                 href={workspace.href}
                 className="min-w-52 flex-1 sm:flex-none"
               >
-                <Card className="flex items-center gap-2.5 p-3 transition-colors hover:border-indigo-200 dark:hover:border-indigo-800">
+                <Card className="flex items-center gap-2.5 p-3 transition-colors hover:border-t1-blue-200">
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${workspace.tone}`}>
                     {workspaceIcon(workspace.icon, "h-4 w-4")}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{workspace.name}</p>
-                    <p className="truncate text-xs text-zinc-400">
+                    <p className="truncate text-sm font-medium text-foreground">{workspace.name}</p>
+                    <p className="truncate text-xs text-t1-gray-400">
                       {showCount
                         ? `Opened ${recent.openCount} time${recent.openCount === 1 ? "" : "s"}`
                         : timeAgo(recent.lastOpenedAt, now)}
                     </p>
                   </div>
-                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-zinc-300" />
+                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
                 </Card>
               </Link>
             ) : null

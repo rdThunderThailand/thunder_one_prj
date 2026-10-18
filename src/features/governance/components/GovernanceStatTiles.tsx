@@ -11,11 +11,11 @@ const iconFor: Record<GovernanceStatTileData["icon"], React.ReactNode> = {
 };
 
 const tone: Record<GovernanceStatTileData["color"], string> = {
-  indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
-  emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-  amber: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  purple: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
-  blue: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+  indigo: "bg-accent text-primary",
+  emerald: "bg-success-muted text-t1-green-700",
+  amber: "bg-warning-muted text-t1-amber-700",
+  purple: "bg-in-progress-muted text-t1-purple-700",
+  blue: "bg-info-muted text-t1-blue-700",
 };
 
 export function GovernanceStatTiles() {
@@ -27,11 +27,11 @@ export function GovernanceStatTiles() {
             {iconFor[tile.icon]}
           </span>
           <p>
-            <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{tile.value}</span>
+            <span className="text-2xl font-semibold text-foreground">{tile.value}</span>
           </p>
-          <p className="text-xs text-zinc-400">{tile.sublabel}</p>
-          {tile.deltaLabel && <p className="text-xs font-medium text-emerald-500">{tile.deltaLabel}</p>}
-          <button className="mt-1 flex items-center gap-1 text-left text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+          <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>
+          {tile.deltaLabel && <p className="text-xs font-medium text-success">{tile.deltaLabel}</p>}
+          <button className="mt-1 flex items-center gap-1 text-left text-xs font-medium text-primary hover:text-accent-foreground">
             {tile.linkLabel} →
           </button>
         </Card>

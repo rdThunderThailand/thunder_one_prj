@@ -7,9 +7,9 @@ export const CUSTOMER_STATUS_LABEL: Record<CustomerStatus, string> = {
 };
 
 export const CUSTOMER_STATUS_CLASSES: Record<CustomerStatus, string> = {
-  overdue: "bg-red-50 text-red-600",
-  near: "bg-amber-50 text-amber-600",
-  normal: "bg-emerald-50 text-emerald-600",
+  overdue: "bg-error-muted text-t1-red-700",
+  near: "bg-warning-muted text-t1-amber-700",
+  normal: "bg-success-muted text-t1-green-700",
 };
 
 export const CUSTOMER_TYPE_LABEL: Record<CustomerType, string> = {
@@ -19,9 +19,9 @@ export const CUSTOMER_TYPE_LABEL: Record<CustomerType, string> = {
 };
 
 export const CUSTOMER_TYPE_CLASSES: Record<CustomerType, string> = {
-  direct: "bg-indigo-50 text-indigo-600",
-  government: "bg-purple-50 text-purple-600",
-  medical: "bg-teal-50 text-teal-600",
+  direct: "bg-accent text-primary",
+  government: "bg-in-progress-muted text-t1-purple-700",
+  medical: "bg-success-muted text-t1-green-700",
 };
 
 export const RENEWAL_STATUS_LABEL: Record<RenewalStatus, string> = {
@@ -34,10 +34,10 @@ export const RENEWAL_STATUS_LABEL: Record<RenewalStatus, string> = {
 };
 
 export const RENEWAL_STATUS_CLASSES: Record<RenewalStatus, string> = {
-  overdue: "bg-red-50 text-red-600",
-  near: "bg-amber-50 text-amber-600",
-  normal: "bg-emerald-50 text-emerald-600",
-  "in-progress": "bg-blue-50 text-blue-600",
-  done: "bg-zinc-100 text-zinc-600",
-  cancelled: "bg-zinc-100 text-zinc-400",
+  overdue: "bg-error-muted text-t1-red-700",
+  near: "bg-warning-muted text-t1-amber-700",
+  normal: "bg-success-muted text-t1-green-700",
+  "in-progress": "bg-info-muted text-t1-blue-700",
+  done: "bg-muted text-muted-foreground",
+  cancelled: "bg-muted text-t1-gray-400",
 };

@@ -11,7 +11,7 @@ export function RecentActivityCard({ logs, nowIso }: { logs: CoreRecentLog[] | n
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Recent Activity</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Recent Activity</h2>
       {logs === null ? (
         <EmptyState
           icon={WarningTriangleIcon}
@@ -33,12 +33,12 @@ export function RecentActivityCard({ logs, nowIso }: { logs: CoreRecentLog[] | n
               key={log.id}
               className="flex items-start gap-2.5"
             >
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-zinc-900 dark:text-zinc-50">{log.action}</p>
-                {log.description && <p className="truncate text-xs text-zinc-400">{log.description}</p>}
+                <p className="truncate text-sm text-foreground">{log.action}</p>
+                {log.description && <p className="truncate text-xs text-t1-gray-400">{log.description}</p>}
               </div>
-              <span className="shrink-0 whitespace-nowrap text-xs text-zinc-400">{timeAgo(log.created_at, now)}</span>
+              <span className="shrink-0 whitespace-nowrap text-xs text-t1-gray-400">{timeAgo(log.created_at, now)}</span>
             </li>
           ))}
         </ul>
