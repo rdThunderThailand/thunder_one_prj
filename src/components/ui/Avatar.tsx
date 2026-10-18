@@ -21,7 +21,7 @@ export function Avatar({ name, src, size = 32, className = "" }: AvatarProps) {
       // Inline `fontSize` wins over any `text-*` a caller's `className`
       // appends, unlike a plain utility class at equal specificity.
       style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }}
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 ${className}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-semibold text-accent-foreground ${className}`}
       aria-hidden="true"
     >
       {initials}

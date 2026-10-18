@@ -9,10 +9,10 @@ interface ProgressBarProps {
 }
 
 const barColor: Record<ProgressBarColor, string> = {
-  indigo: "bg-indigo-500",
-  emerald: "bg-emerald-500",
-  red: "bg-red-500",
-  amber: "bg-amber-500",
+  indigo: "bg-primary",
+  emerald: "bg-success",
+  red: "bg-error",
+  amber: "bg-warning",
 };
 
 export function ProgressBar({
@@ -24,7 +24,7 @@ export function ProgressBar({
   const clamped = Math.min(100, Math.max(0, value));
   return (
     <div
-      className={`h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800 ${className}`}
+      className={`h-1.5 w-full overflow-hidden rounded-full bg-muted ${className}`}
       role="progressbar"
       aria-valuenow={clamped}
       aria-valuemin={0}

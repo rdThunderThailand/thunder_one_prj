@@ -19,24 +19,24 @@ export function WizardSteps({ steps, currentIndex }: WizardStepsProps) {
               <span
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                   state === "done"
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-primary text-primary-foreground"
                     : state === "current"
-                      ? "border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                      : "border border-zinc-200 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
+                      ? "border-2 border-primary text-primary"
+                      : "border border-border text-t1-gray-400"
                 }`}
               >
                 {state === "done" ? <CheckIcon className="h-3.5 w-3.5" /> : index + 1}
               </span>
               <span
                 className={`hidden max-w-[80px] text-center text-[11px] leading-tight sm:block ${
-                  state === "upcoming" ? "text-zinc-400" : "text-zinc-700 dark:text-zinc-200"
+                  state === "upcoming" ? "text-t1-gray-400" : "text-foreground"
                 }`}
               >
                 {label}
               </span>
             </div>
             {index < steps.length - 1 && (
-              <span className={`mx-1.5 h-px flex-1 ${state === "done" ? "bg-indigo-600" : "bg-zinc-200 dark:bg-zinc-700"}`} />
+              <span className={`mx-1.5 h-px flex-1 ${state === "done" ? "bg-primary" : "bg-border"}`} />
             )}
           </li>
         );

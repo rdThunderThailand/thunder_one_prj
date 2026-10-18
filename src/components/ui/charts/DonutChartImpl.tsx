@@ -51,7 +51,7 @@ export function DonutChart({
             startAngle={90}
             endAngle={endAngle}
             paddingAngle={data.length > 1 ? 2 : 0}
-            stroke="#ffffff"
+            stroke="var(--color-card)"
             strokeWidth={2}
             isAnimationActive={false}
           >
@@ -69,15 +69,15 @@ export function DonutChart({
               const segment = payload[0].payload as DonutSegment;
               const percent = ((segment.value / total) * 100).toFixed(1);
               return (
-                <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs shadow-md">
-                  <p className="flex items-center gap-1.5 font-medium text-zinc-900">
+                <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
+                  <p className="flex items-center gap-1.5 font-medium text-foreground">
                     <span
                       className="h-2 w-2 rounded-full"
                       style={{ backgroundColor: segment.color }}
                     />
                     {segment.label}
                   </p>
-                  <p className="mt-0.5 text-zinc-500">
+                  <p className="mt-0.5 text-muted-foreground">
                     {segment.value} ({percent}%)
                   </p>
                 </div>
