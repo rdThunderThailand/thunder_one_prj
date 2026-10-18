@@ -44,7 +44,7 @@ export function TenantSwitcher({ tenantId, tenantName, tenants, collapsed }: Ten
     window.location.assign("/");
   }
 
-  const rowClasses = `mb-2 flex h-9 w-full items-center gap-2.5 rounded-lg border border-[#e6edf9] px-3 text-xs font-semibold text-[#071858] dark:border-zinc-800 dark:text-zinc-200 ${
+  const rowClasses = `mb-2 flex h-9 w-full items-center gap-2.5 rounded-lg border border-border px-3 text-xs font-semibold text-foreground ${
     collapsed ? "justify-center" : ""
   }`;
 
@@ -54,7 +54,7 @@ export function TenantSwitcher({ tenantId, tenantName, tenants, collapsed }: Ten
         className={rowClasses}
         title={collapsed ? label : undefined}
       >
-        <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
+        <BuildingIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
         {!collapsed && <span className="flex-1 truncate">{label}</span>}
       </div>
     );
@@ -71,13 +71,13 @@ export function TenantSwitcher({ tenantId, tenantName, tenants, collapsed }: Ten
         aria-haspopup="menu"
         aria-expanded={isOpen}
         title={collapsed ? label : undefined}
-        className={`${rowClasses} text-left transition-colors hover:bg-slate-50 dark:hover:bg-zinc-900`}
+        className={`${rowClasses} text-left transition-colors hover:bg-t1-gray-50`}
       >
-        <BuildingIcon className="h-4 w-4 shrink-0 text-slate-400" />
+        <BuildingIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
         {!collapsed && (
           <>
             <span className="flex-1 truncate">{label}</span>
-            <ChevronDownIcon className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            <ChevronDownIcon className={`h-3.5 w-3.5 shrink-0 text-t1-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
           </>
         )}
       </button>
@@ -94,9 +94,9 @@ export function TenantSwitcher({ tenantId, tenantName, tenants, collapsed }: Ten
           />
           <div
             role="menu"
-            className="absolute bottom-full left-0 z-20 mb-1 w-56 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
+            className="absolute bottom-full left-0 z-20 mb-1 w-56 rounded-lg border border-border bg-card py-1 shadow-lg"
           >
-            <p className="px-3 pb-1 pt-1.5 text-3xs font-bold uppercase text-slate-500">สลับองค์กร</p>
+            <p className="px-3 pb-1 pt-1.5 text-3xs font-bold uppercase text-muted-foreground">สลับองค์กร</p>
             {tenants.map((tenant) => {
               const current = tenant.id === tenantId;
               return (
@@ -109,20 +109,20 @@ export function TenantSwitcher({ tenantId, tenantName, tenants, collapsed }: Ten
                   disabled={switchingTo !== null}
                   className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors disabled:opacity-60 ${
                     current
-                      ? "font-semibold text-indigo-600 dark:text-indigo-300"
-                      : "text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                      ? "font-semibold text-primary"
+                      : "text-foreground hover:bg-t1-gray-50"
                   }`}
                 >
                   <span className="flex-1 truncate">{tenant.name}</span>
                   {switchingTo === tenant.id ? (
-                    <span className="text-3xs text-slate-400">กำลังสลับ...</span>
+                    <span className="text-3xs text-t1-gray-400">กำลังสลับ...</span>
                   ) : (
                     current && <CheckIcon className="h-3.5 w-3.5 shrink-0" />
                   )}
                 </button>
               );
             })}
-            {error && <p className="px-3 py-1.5 text-3xs text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p className="px-3 py-1.5 text-3xs text-t1-red-700">{error}</p>}
           </div>
         </>
       )}

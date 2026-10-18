@@ -173,17 +173,17 @@ export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
           <button
             type="button"
             aria-keyshortcuts={`${shortcutAria(platform, "k")} /`}
-            className="flex h-9 w-full max-w-[700px] items-center gap-2.5 rounded-lg bg-[#eff5ff] px-3 text-left hover:bg-[#e6effd] dark:bg-zinc-900"
+            className="flex h-9 w-full max-w-[700px] items-center gap-2.5 rounded-lg bg-accent px-3 text-left hover:bg-accent"
           >
-            <SearchIcon className="h-4 w-4 shrink-0 text-[#6074a9] dark:text-zinc-500" />
-            <span className="w-full text-xs text-[#6074a9] dark:text-zinc-500">ค้นหาทุกอย่างใน ThunderOne...</span>
-            <kbd className="shrink-0 whitespace-nowrap text-xs text-[#6074a9] dark:text-zinc-500 pointer-coarse:hidden">{shortcut}</kbd>
+            <SearchIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="w-full text-xs text-muted-foreground">ค้นหาทุกอย่างใน ThunderOne...</span>
+            <kbd className="shrink-0 whitespace-nowrap text-xs text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
           </button>
         )}
       </Dialog.Trigger>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-t1-black/30" />
         <Dialog.Content
           aria-describedby={undefined}
           className="fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-popover shadow-float"
