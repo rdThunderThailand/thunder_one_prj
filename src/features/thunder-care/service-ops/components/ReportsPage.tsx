@@ -22,19 +22,19 @@ export function ReportsPage() {
         <Card key={issue.id} className="flex flex-col gap-3 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                 {issue.assetTag}
                 <Badge color={severityBadge[issue.severity]} variant="pill">
                   {issue.severity}
                 </Badge>
               </p>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{issue.description}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{issue.description}</p>
             </div>
             <Badge color={issueStatusBadge[issue.status].color} variant="pill">
               {issueStatusBadge[issue.status].label}
             </Badge>
           </div>
-          <div className="flex items-center gap-4 text-xs text-zinc-400">
+          <div className="flex items-center gap-4 text-xs text-t1-gray-400">
             <span>Reported by {issue.reportedBy}</span>
             <span>{issue.reportedAt}</span>
           </div>

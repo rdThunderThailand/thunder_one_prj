@@ -9,17 +9,17 @@ export function MiniCalendar() {
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">August</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-t1-gray-400">August</p>
         <Link
           href="/thunder-care/work-orders/calendar"
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+          className="text-xs font-medium text-primary hover:text-accent-foreground"
         >
           View full calendar
         </Link>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-xs">
         {WEEKDAY_LABELS.map((label, index) => (
-          <span key={index} className="py-1 font-medium text-zinc-400">
+          <span key={index} className="py-1 font-medium text-t1-gray-400">
             {label}
           </span>
         ))}
@@ -29,9 +29,9 @@ export function MiniCalendar() {
               key={`${weekIndex}-${dayIndex}`}
               className={`flex h-7 w-7 items-center justify-center rounded-full ${
                 day === TODAY_DAY
-                  ? "bg-indigo-600 font-semibold text-white"
+                  ? "bg-primary font-semibold text-primary-foreground"
                   : day
-                    ? "text-zinc-600 dark:text-zinc-300"
+                    ? "text-muted-foreground"
                     : ""
               }`}
             >

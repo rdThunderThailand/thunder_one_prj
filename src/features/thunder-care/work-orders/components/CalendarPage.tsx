@@ -23,10 +23,10 @@ export function CalendarPage() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <Card className="p-4 lg:col-span-1">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">August</p>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-t1-gray-400">August</p>
         <div className="grid grid-cols-7 gap-1 text-center text-xs">
           {WEEKDAY_LABELS.map((label, index) => (
-            <span key={index} className="py-1 font-medium text-zinc-400">
+            <span key={index} className="py-1 font-medium text-t1-gray-400">
               {label}
             </span>
           ))}
@@ -44,15 +44,15 @@ export function CalendarPage() {
                   onClick={() => setSelectedDay(day)}
                   className={`relative flex h-8 w-8 items-center justify-center rounded-full text-xs transition-colors ${
                     isSelected
-                      ? "bg-indigo-600 font-semibold text-white"
+                      ? "bg-primary font-semibold text-primary-foreground"
                       : isToday
-                        ? "font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-600 dark:text-indigo-400"
-                        : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        ? "font-semibold text-primary ring-1 ring-inset ring-primary"
+                        : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {day}
                   {hasWork && !isSelected && (
-                    <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-indigo-500" />
+                    <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-primary" />
                   )}
                 </button>
               );
@@ -62,14 +62,14 @@ export function CalendarPage() {
       </Card>
 
       <div className="flex flex-col gap-3 lg:col-span-2">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-sm font-semibold text-foreground">
           {selectedDate}
           {selectedDay === TODAY_DAY && (
-            <span className="ml-2 text-xs font-normal text-zinc-400">Today</span>
+            <span className="ml-2 text-xs font-normal text-t1-gray-400">Today</span>
           )}
         </h2>
         {dayOrders.length === 0 ? (
-          <Card className="p-6 text-sm text-zinc-500 dark:text-zinc-400">
+          <Card className="p-6 text-sm text-muted-foreground">
             No work orders scheduled for this day.
           </Card>
         ) : (

@@ -23,7 +23,7 @@ function DispatchControl() {
 
   if (dispatchedTo) {
     return (
-      <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+      <span className="flex items-center gap-1.5 text-xs font-medium text-t1-green-700">
         <CheckCircleIcon className="h-4 w-4" /> Dispatched to {dispatchedTo}
       </span>
     );
@@ -34,7 +34,7 @@ function DispatchControl() {
       <select
         value={technicianId}
         onChange={(e) => setTechnicianId(e.target.value)}
-        className="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-700 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+        className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       >
         {mockTechnicians.map((tech) => (
           <option key={tech.id} value={tech.id}>
@@ -47,7 +47,7 @@ function DispatchControl() {
           const tech = mockTechnicians.find((t) => t.id === technicianId);
           setDispatchedTo(tech?.name ?? technicianId);
         }}
-        className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+        className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
       >
         Dispatch
       </button>
@@ -59,13 +59,13 @@ function QueueRow({ issue }: { issue: Issue }) {
   return (
     <Card className="flex items-center gap-3 p-4">
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+        <p className="flex items-center gap-2 text-sm font-medium text-foreground">
           {issue.assetTag}
           <Badge color={issueStatusBadge[issue.status].color} variant="pill">
             {issueStatusBadge[issue.status].label}
           </Badge>
         </p>
-        <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{issue.description}</p>
+        <p className="truncate text-xs text-muted-foreground">{issue.description}</p>
       </div>
       <DispatchControl />
     </Card>

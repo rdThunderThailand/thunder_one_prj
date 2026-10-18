@@ -31,15 +31,15 @@ function InboxStatTiles() {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       <Card className="flex flex-col gap-1 p-4">
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">เคสเข้าใหม่ (ทั้งหมด)</p>
-        <span className="text-2xl font-semibold text-indigo-600 dark:text-indigo-400">{inboxCases.length}</span>
-        <p className="text-xs text-zinc-400">วันนี้ {inboxCases.length} รายการ</p>
+        <p className="text-xs text-muted-foreground">เคสเข้าใหม่ (ทั้งหมด)</p>
+        <span className="text-2xl font-semibold text-primary">{inboxCases.length}</span>
+        <p className="text-xs text-t1-gray-400">วันนี้ {inboxCases.length} รายการ</p>
       </Card>
       {(["web", "line", "email", "phone"] as const).map((channel) => (
         <Card key={channel} className="flex flex-col gap-1 p-4">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">จาก {CHANNEL_LABEL[channel]}</p>
-          <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{byChannel[channel]}</span>
-          <p className="text-xs text-zinc-400">รายการ</p>
+          <p className="text-xs text-muted-foreground">จาก {CHANNEL_LABEL[channel]}</p>
+          <span className="text-2xl font-semibold text-foreground">{byChannel[channel]}</span>
+          <p className="text-xs text-t1-gray-400">รายการ</p>
         </Card>
       ))}
     </div>
@@ -51,11 +51,11 @@ function FilterRow() {
     <div className="flex flex-wrap items-center gap-2">
       <SearchInput placeholder="ค้นหาในรายการนี้..." className="max-w-xs" />
       {["สถานะ: ทั้งหมด", "ความเร่งด่วน: ทั้งหมด", "ช่องทาง: ทั้งหมด", "ลูกค้า: ทั้งหมด"].map((label) => (
-        <select key={label} disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+        <select key={label} disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">
           <option>{label}</option>
         </select>
       ))}
-      <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="ml-auto flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+      <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="ml-auto flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">
         <FilterIcon className="h-3.5 w-3.5" /> ตัวกรองเพิ่มเติม
       </button>
     </div>
@@ -69,16 +69,16 @@ function CaseDetailPanel({ serviceCase, onClose }: { serviceCase: InboxCase; onC
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{serviceCase.id}</span>
+            <span className="text-sm font-semibold text-foreground">{serviceCase.id}</span>
             <Badge variant="pill" color="indigo">ใหม่</Badge>
           </div>
-          <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-50">{serviceCase.title}</p>
+          <p className="mt-1 text-sm font-medium text-foreground">{serviceCase.title}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="pill" color={priorityBadge[serviceCase.priority].color}>
             {priorityBadge[serviceCase.priority].label}
           </Badge>
-          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+          <button type="button" onClick={onClose} className="text-t1-gray-400 hover:text-muted-foreground">
             <XIcon className="h-4 w-4" />
           </button>
         </div>
@@ -86,36 +86,36 @@ function CaseDetailPanel({ serviceCase, onClose }: { serviceCase: InboxCase; onC
 
       <div className="grid grid-cols-2 gap-3 text-xs">
         <div>
-          <p className="text-zinc-400">SLA</p>
+          <p className="text-t1-gray-400">SLA</p>
           <p className={`font-medium ${slaRiskTextColor[serviceCase.slaRisk]}`}>{serviceCase.slaRemainingLabel}</p>
         </div>
         <div>
-          <p className="text-zinc-400">เรื่อง</p>
-          <p className="font-medium text-zinc-700 dark:text-zinc-200">{serviceCase.reportedAtLabel}</p>
+          <p className="text-t1-gray-400">เรื่อง</p>
+          <p className="font-medium text-foreground">{serviceCase.reportedAtLabel}</p>
         </div>
         <div>
-          <p className="text-zinc-400">ลูกค้า</p>
-          <p className="font-medium text-zinc-700 dark:text-zinc-200">{serviceCase.customerName}</p>
-          <p className="text-zinc-400">{serviceCase.branchLabel}</p>
+          <p className="text-t1-gray-400">ลูกค้า</p>
+          <p className="font-medium text-foreground">{serviceCase.customerName}</p>
+          <p className="text-t1-gray-400">{serviceCase.branchLabel}</p>
         </div>
         <div>
-          <p className="text-zinc-400">Asset</p>
-          <p className="font-medium text-zinc-700 dark:text-zinc-200">{serviceCase.assetTag}</p>
-          <p className="text-zinc-400">{serviceCase.assetLabel}</p>
+          <p className="text-t1-gray-400">Asset</p>
+          <p className="font-medium text-foreground">{serviceCase.assetTag}</p>
+          <p className="text-t1-gray-400">{serviceCase.assetLabel}</p>
         </div>
       </div>
 
       <div>
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">รายละเอียดปัญหา</p>
-        <p className="text-sm text-zinc-600 dark:text-zinc-300">{detail.description}</p>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-t1-gray-400">รายละเอียดปัญหา</p>
+        <p className="text-sm text-muted-foreground">{detail.description}</p>
       </div>
 
       {detail.attachmentCount > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">ไฟล์แนบ ({detail.attachmentCount})</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-t1-gray-400">ไฟล์แนบ ({detail.attachmentCount})</p>
           <div className="flex gap-2">
             {Array.from({ length: detail.attachmentCount }).map((_, i) => (
-              <div key={i} className="flex h-16 w-16 items-center justify-center rounded-lg bg-zinc-100 text-zinc-300 dark:bg-zinc-800">
+              <div key={i} className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted text-t1-gray-400">
                 <ImageIcon className="h-5 w-5" />
               </div>
             ))}
@@ -124,14 +124,14 @@ function CaseDetailPanel({ serviceCase, onClose }: { serviceCase: InboxCase; onC
       )}
 
       <div>
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">ประวัติความเคลื่อนไหว</p>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-t1-gray-400">ประวัติความเคลื่อนไหว</p>
         <ul className="flex flex-col gap-1.5">
           {detail.activity.map((row, i) => (
             <li key={i} className="flex items-center justify-between text-xs">
-              <span className="text-zinc-600 dark:text-zinc-300">
+              <span className="text-muted-foreground">
                 <span className="font-medium">{row.actor}</span> {row.action}
               </span>
-              <span className="shrink-0 text-zinc-400">{row.atLabel}</span>
+              <span className="shrink-0 text-t1-gray-400">{row.atLabel}</span>
             </li>
           ))}
         </ul>
@@ -158,13 +158,13 @@ export function CasesInboxPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">เคสจากลูกค้า</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">รายการเคสทั้งหมดที่ส่งเข้ามาจากลูกค้าในทุกช่องทาง</p>
+        <h1 className="text-xl font-semibold text-foreground">เคสจากลูกค้า</h1>
+        <p className="text-sm text-muted-foreground">รายการเคสทั้งหมดที่ส่งเข้ามาจากลูกค้าในทุกช่องทาง</p>
       </div>
 
       <InboxStatTiles />
 
-      <div className="flex gap-1 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="flex gap-1 border-b border-border">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -172,8 +172,8 @@ export function CasesInboxPage() {
             onClick={() => setActiveTab(tab.key)}
             className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab.label} {countFor(tab.key)}
@@ -186,10 +186,10 @@ export function CasesInboxPage() {
           <FilterRow />
           <Card className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              <thead className="border-b border-border text-xs text-muted-foreground">
                 <tr>
                   <th className="w-8 px-3 py-2">
-                    <input type="checkbox" className="rounded border-zinc-300" disabled title="ยังไม่เปิดใช้งาน" />
+                    <input type="checkbox" className="rounded border-border" disabled title="ยังไม่เปิดใช้งาน" />
                   </th>
                   <th className="px-3 py-2 font-medium">Ticket ID</th>
                   <th className="px-3 py-2 font-medium">เรื่อง / ปัญหา</th>
@@ -202,38 +202,38 @@ export function CasesInboxPage() {
                   <th className="px-3 py-2 font-medium">สถานะ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+              <tbody className="divide-y divide-border">
                 {rows.map((row) => {
                   const ChannelIcon = channelIcon[row.channel];
                   return (
                     <tr
                       key={row.id}
                       onClick={() => setSelectedId(row.id)}
-                      className={`cursor-pointer ${selectedId === row.id ? "bg-indigo-50/60 dark:bg-indigo-500/10" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40"}`}
+                      className={`cursor-pointer ${selectedId === row.id ? "bg-accent/60" : "hover:bg-t1-gray-50"}`}
                     >
                       <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                        <input type="checkbox" className="rounded border-zinc-300" disabled title="ยังไม่เปิดใช้งาน" />
+                        <input type="checkbox" className="rounded border-border" disabled title="ยังไม่เปิดใช้งาน" />
                       </td>
                       <td className="px-3 py-2.5">
-                        <p className="font-medium text-zinc-900 dark:text-zinc-50">{row.id}</p>
-                        <p className="text-[11px] text-indigo-500">ใหม่</p>
+                        <p className="font-medium text-foreground">{row.id}</p>
+                        <p className="text-[11px] text-primary">ใหม่</p>
                       </td>
-                      <td className="px-3 py-2.5 text-zinc-700 dark:text-zinc-200">{row.title}</td>
-                      <td className="px-3 py-2.5 text-zinc-600 dark:text-zinc-300">
+                      <td className="px-3 py-2.5 text-foreground">{row.title}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground">
                         <p>{row.customerName}</p>
-                        <p className="text-xs text-zinc-400">{row.branchLabel}</p>
+                        <p className="text-xs text-t1-gray-400">{row.branchLabel}</p>
                       </td>
-                      <td className="px-3 py-2.5 text-zinc-600 dark:text-zinc-300">
+                      <td className="px-3 py-2.5 text-muted-foreground">
                         <p>{row.assetTag}</p>
-                        <p className="text-xs text-zinc-400">{row.assetLabel}</p>
+                        <p className="text-xs text-t1-gray-400">{row.assetLabel}</p>
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                           <ChannelIcon className="h-3.5 w-3.5" />
                           {CHANNEL_LABEL[row.channel]}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-xs text-zinc-500 dark:text-zinc-400">{row.reportedAtLabel}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-xs text-muted-foreground">{row.reportedAtLabel}</td>
                       <td className="px-3 py-2.5">
                         <Badge variant="pill" color={priorityBadge[row.priority].color}>
                           {priorityBadge[row.priority].label}
@@ -251,7 +251,7 @@ export function CasesInboxPage() {
               </tbody>
             </table>
           </Card>
-          <p className="text-right text-xs text-zinc-400">
+          <p className="text-right text-xs text-t1-gray-400">
             แสดง 1-{rows.length} จาก {rows.length} รายการ
           </p>
         </div>
@@ -260,7 +260,7 @@ export function CasesInboxPage() {
           {selected ? (
             <CaseDetailPanel serviceCase={selected} onClose={() => setSelectedId(null)} />
           ) : (
-            <Card className="p-10 text-center text-sm text-zinc-400">เลือกเคสจากตารางเพื่อดูรายละเอียด</Card>
+            <Card className="p-10 text-center text-sm text-t1-gray-400">เลือกเคสจากตารางเพื่อดูรายละเอียด</Card>
           )}
         </div>
       </div>
