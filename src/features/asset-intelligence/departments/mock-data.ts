@@ -146,10 +146,10 @@ export const teamProgress = {
   totalTasks: 18,
   onPlanPercent: 76,
   segments: [
-    { label: "On plan", value: 12, color: "#10b981" },
-    { label: "In progress", value: 4, color: "#6366f1" },
-    { label: "Delayed", value: 1, color: "#f59e0b" },
-    { label: "Waiting on others", value: 1, color: "#a1a1aa" },
+    { label: "On plan", value: 12, color: "var(--color-success)" },
+    { label: "In progress", value: 4, color: "var(--color-primary)" },
+    { label: "Delayed", value: 1, color: "var(--color-warning)" },
+    { label: "Waiting on others", value: 1, color: "var(--color-t1-gray-400)" },
   ],
 };
 
@@ -322,10 +322,10 @@ export const myProgress = {
   totalTasks: 45,
   onTrackPercent: 92,
   segments: [
-    { label: "Completed", value: 28, color: "#10b981" },
-    { label: "In progress", value: 12, color: "#6366f1" },
-    { label: "Delayed", value: 2, color: "#ef4444" },
-    { label: "Waiting for response", value: 3, color: "#a1a1aa" },
+    { label: "Completed", value: 28, color: "var(--color-success)" },
+    { label: "In progress", value: 12, color: "var(--color-primary)" },
+    { label: "Delayed", value: 2, color: "var(--color-error)" },
+    { label: "Waiting for response", value: 3, color: "var(--color-t1-gray-400)" },
   ],
 };
 

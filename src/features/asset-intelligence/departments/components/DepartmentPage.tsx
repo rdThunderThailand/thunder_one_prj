@@ -5,8 +5,8 @@ import { SettingsIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { departmentStatTiles, needsAttention, requestsSummary } from "../mock-data";
 
 const badgeColor: Record<(typeof needsAttention)[number]["severity"], string> = {
-  red: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400",
-  yellow: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400",
+  red: "bg-error-muted text-error",
+  yellow: "bg-warning-muted text-warning",
 };
 
 const iconFor: Record<(typeof needsAttention)[number]["severity"], React.ReactNode> = {
@@ -17,7 +17,7 @@ const iconFor: Record<(typeof needsAttention)[number]["severity"], React.ReactNo
 function NeedsAttentionCard() {
   return (
     <Card className="flex h-full flex-col p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+      <h2 className="mb-3 text-sm font-semibold text-foreground">
         Needs Attention
       </h2>
       <ul className="flex flex-1 flex-col gap-3">
@@ -29,14 +29,14 @@ function NeedsAttentionCard() {
               {iconFor[row.severity]}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <p className="truncate text-sm font-medium text-foreground">
                 {row.tag}
               </p>
-              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="truncate text-xs text-muted-foreground">
                 {row.subtitle} · Assigned: {row.assignee}
               </p>
             </div>
-            <button className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-500">
+            <button className="shrink-0 text-xs font-medium text-primary hover:text-accent-foreground">
               Review
             </button>
           </li>
@@ -49,17 +49,17 @@ function NeedsAttentionCard() {
 function RequestsCard() {
   return (
     <Card className="flex h-full flex-col p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Requests</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Requests</h2>
       <ul className="flex flex-1 flex-col gap-2.5">
         <li className="flex items-center justify-between text-sm">
-          <span className="text-zinc-500 dark:text-zinc-400">Waiting IT</span>
-          <span className="font-medium text-zinc-900 dark:text-zinc-50">
+          <span className="text-muted-foreground">Waiting IT</span>
+          <span className="font-medium text-foreground">
             {requestsSummary.waitingIT}
           </span>
         </li>
         <li className="flex items-center justify-between text-sm">
-          <span className="text-zinc-500 dark:text-zinc-400">Completed Today</span>
-          <span className="font-medium text-zinc-900 dark:text-zinc-50">
+          <span className="text-muted-foreground">Completed Today</span>
+          <span className="font-medium text-foreground">
             {requestsSummary.completedToday}
           </span>
         </li>
@@ -82,7 +82,7 @@ export function DepartmentPage() {
       </div>
       <Link
         href="/asset-intelligence/departments/assets"
-        className="self-start text-sm font-medium text-indigo-600 hover:text-indigo-500"
+        className="self-start text-sm font-medium text-primary hover:text-accent-foreground"
       >
         View all department assets →
       </Link>
