@@ -97,7 +97,7 @@ export function MediaWorkspaceNav({ nav, pathname, collapsed }: { nav: NavConfig
       {nav.sections.map((section) => (
         <section key={section.label} className="mb-4">
           {!collapsed && (
-            <p className="mb-1.5 px-3 text-[9px] font-bold uppercase text-muted-foreground">
+            <p className="mb-1.5 px-3 text-2xs font-bold uppercase text-muted-foreground">
               {section.label}
             </p>
           )}
