@@ -234,11 +234,11 @@ export function summarizeDelivery(
   } else {
     const hasOutstanding = targets.some((t) => t.status !== "playing" && t.status !== "failed");
     const window = publication.playback_window;
-    const settleAnchor = window?.state === "open" && window.opened_at
-      ? new Date(window.opened_at).getTime()
-      : publication.activated_at
-        ? new Date(publication.activated_at).getTime()
-        : null;
+    const openedAt = window?.state === "open" && window.opened_at ? new Date(window.opened_at).getTime() : null;
+    const activatedAt = publication.activated_at ? new Date(publication.activated_at).getTime() : null;
+    // opened_at is today's daily start, which can be hours before a Program published mid-day.
+    const settleAnchor =
+      openedAt !== null && activatedAt !== null ? Math.max(openedAt, activatedAt) : (openedAt ?? activatedAt);
     const isWaitingForWindow = window?.state === "before" || window?.state === "between";
     const hasEnded = window?.state === "ended";
     const withinSettleWindow =

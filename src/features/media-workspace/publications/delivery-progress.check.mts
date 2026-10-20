@@ -200,6 +200,23 @@ function target(overrides: Partial<PublicationDeliveryTarget>): PublicationDeliv
   assert.equal(summary.result, "Publishing");
 }
 
+// Published long after today's daily start: the window opened hours ago, but the Program was only
+// activated a minute ago, so a still-queued target is "Publishing", not "Publish Failed".
+{
+  const targets = [target({ status: "pending" })];
+  const summary = summarizeDelivery(
+    targets,
+    {
+      status: "active",
+      activated_at: "2026-08-18T09:59:00Z",
+      playback_window: playbackWindow({ opened_at: "2026-08-17T21:00:00Z" }),
+    },
+    null,
+    now
+  );
+  assert.equal(summary.result, "Publishing");
+}
+
 // An ended schedule settles from target outcomes even when the total schedule was shorter than
 // the normal settle window.
 {
