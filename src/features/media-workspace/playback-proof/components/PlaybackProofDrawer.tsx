@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/lovable/button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/lovable/sheet";
 import { isVideoUrl } from "@/lib/media-kind";
 import type { PlaybackProofEntry } from "../playback-proof-api";
-import { FAILURE_LABELS, formatBytes, formatDuration, formatPlayedAt, relatedLinks, sourceLabel } from "../playback-proof-view";
+import { FAILURE_LABELS, OUTCOME_BADGES, formatBytes, formatDuration, formatPlayedAt, relatedLinks, sourceLabel } from "../playback-proof-view";
 
 function MediaPreview({ url }: { url: string | null }) {
   return (
@@ -109,10 +109,10 @@ export function PlaybackProofDrawer({
             <dl className="divide-y divide-border rounded-lg border border-border px-3">
               <Fact label="Result">
                 {entry.outcome === "played" ? (
-                  <Badge variant="success">Played</Badge>
+                  <Badge variant={OUTCOME_BADGES.played.variant}>{OUTCOME_BADGES.played.label}</Badge>
                 ) : (
                   <span className="inline-flex flex-col items-end gap-1">
-                    <Badge variant="danger">Failed</Badge>
+                    <Badge variant={OUTCOME_BADGES[entry.outcome].variant}>{OUTCOME_BADGES[entry.outcome].label}</Badge>
                     {entry.failure_reason && <span className="text-[11px] text-muted-foreground">{FAILURE_LABELS[entry.failure_reason]}</span>}
                   </span>
                 )}
