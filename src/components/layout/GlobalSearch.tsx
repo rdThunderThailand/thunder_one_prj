@@ -167,7 +167,7 @@ export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
           >
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             ค้นหาทุกอย่างใน ThunderOne...
-            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
+            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
           </button>
         ) : (
           <button
