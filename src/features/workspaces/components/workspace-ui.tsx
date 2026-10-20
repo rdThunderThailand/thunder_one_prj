@@ -47,16 +47,16 @@ export function workspaceIcon(icon: WorkspaceIcon, className = "h-5 w-5"): React
 export function WorkspaceStatusLine({ workspace, stat }: { workspace: WorkspaceEntry; stat: WorkspaceStat | null | undefined }) {
   if (workspace.dataStatus === "live" && stat !== undefined) {
     if (stat === null) {
-      return <span className="text-xs text-zinc-400">Not available</span>;
+      return <span className="text-xs text-t1-gray-400">Not available</span>;
     }
     return (
-      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
           {stat.summary}
         </span>
         {stat.alert && (
-          <span className="rounded-full bg-amber-50 px-1.5 py-0.5 font-medium text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+          <span className="rounded-full bg-warning-muted px-1.5 py-0.5 font-medium text-t1-amber-700">
             {stat.alert}
           </span>
         )}
@@ -64,9 +64,9 @@ export function WorkspaceStatusLine({ workspace, stat }: { workspace: WorkspaceE
     );
   }
   return (
-    <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
       <span
-        className={`h-1.5 w-1.5 rounded-full ${workspace.dataStatus === "coming-soon" ? "bg-zinc-300 dark:bg-zinc-600" : "bg-amber-400"}`}
+        className={`h-1.5 w-1.5 rounded-full ${workspace.dataStatus === "coming-soon" ? "bg-t1-gray-300" : "bg-warning"}`}
       />
       {DATA_STATUS_LABEL[workspace.dataStatus]}
     </span>

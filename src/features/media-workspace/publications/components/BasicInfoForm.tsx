@@ -52,7 +52,7 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
   return (
     <Card className="p-5">
       <div className="mb-5 flex items-start gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary"><SettingsIcon className="h-4 w-4" /></span>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent text-primary"><SettingsIcon className="h-4 w-4" /></span>
         <div>
           <h2 className="text-base font-semibold text-foreground">Basic Settings</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">ข้อมูลพื้นฐานของเนื้อหา</p>
@@ -68,7 +68,7 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
               value={name}
               onChange={(e) => patch({ name: e.target.value })}
               aria-invalid={!!fieldErrors.name}
-              className={`w-full rounded-lg border ${fieldErrors.name ? "border-danger" : "border-border"} py-2.5 pl-3.5 pr-16 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30`}
+              className={`w-full rounded-lg border ${fieldErrors.name ? "border-error" : "border-border"} py-2.5 pl-3.5 pr-16 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30`}
             />
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
               {name.length}/{PUBLICATION_LIMITS.nameMaxLength}
@@ -96,14 +96,14 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
             />
             <span
               className={`pointer-events-none absolute bottom-2 right-3 text-xs ${
-                isDescriptionOverLimit ? "font-medium text-danger" : "text-muted-foreground"
+                isDescriptionOverLimit ? "font-medium text-error" : "text-muted-foreground"
               }`}
             >
               {description.length}/{PUBLICATION_LIMITS.descriptionMaxLength}
             </span>
           </div>
           {isDescriptionOverLimit && (
-            <p className="text-xs font-medium text-danger">
+            <p className="text-xs font-medium text-error">
               คำอธิบายยาวเกิน {PUBLICATION_LIMITS.descriptionMaxLength} ตัวอักษร
             </p>
           )}
@@ -114,7 +114,7 @@ export function BasicInfoForm({ workspaceTags = [], showErrors = false }: BasicI
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="flex items-center gap-1.5 rounded-md bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary"
+                className="flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1 text-xs font-medium text-primary"
               >
                 {tag}
                 <button

@@ -53,7 +53,7 @@ export function Step2Setup({
               onClick={() => onChange(withAutoMappedScreens({ ...draft, displayMode: mode }))}
               className={`flex flex-col items-center gap-1 rounded-xl border p-3 text-center transition-colors ${
                 draft.displayMode === mode
-                  ? "border-primary bg-primary-soft"
+                  ? "border-primary bg-accent"
                   : "border-border hover:border-border"
               }`}
             >

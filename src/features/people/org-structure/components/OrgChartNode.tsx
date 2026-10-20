@@ -36,8 +36,8 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
         <div
           className={`flex min-w-[188px] items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${
             selected
-              ? "border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-500/10"
-              : "border-zinc-200 bg-white hover:border-indigo-200 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-indigo-800"
+              ? "border-t1-blue-300 bg-accent"
+              : "border-border bg-card hover:border-t1-blue-200"
           }`}
         >
           <button type="button" onClick={() => onSelect(unitId)} className="flex min-w-0 flex-1 items-start gap-2.5">
@@ -47,13 +47,13 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
               <UsersIcon className="h-4 w-4" />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              <span className="block truncate text-sm font-semibold text-foreground">
                 {unit.name}
               </span>
               {unit.headTitle && (
-                <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{unit.headTitle}</span>
+                <span className="block truncate text-xs text-muted-foreground">{unit.headTitle}</span>
               )}
-              <span className="mt-1 flex items-center gap-2.5 text-xs text-zinc-400">
+              <span className="mt-1 flex items-center gap-2.5 text-xs text-t1-gray-400">
                 <span className="flex items-center gap-1">
                   <UsersIcon className="h-3 w-3" />
                   {unit.employeeCount} คน
@@ -70,7 +70,7 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
           <button
             type="button"
             title="ยังไม่เปิดใช้งาน"
-            className="shrink-0 cursor-not-allowed text-zinc-300 hover:text-zinc-400 dark:text-zinc-600"
+            className="shrink-0 cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground"
           >
             <MoreIcon className="h-3.5 w-3.5" />
           </button>
@@ -83,7 +83,7 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
               setCollapsed((c) => !c);
             }}
             title={collapsed ? `ขยาย (${unit.childIds.length} หน่วยงานย่อย)` : "พับหน่วยงานย่อย"}
-            className="absolute -bottom-2.5 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm hover:border-indigo-300 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-indigo-700 dark:hover:text-indigo-400"
+            className="absolute -bottom-2.5 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:border-t1-blue-300 hover:text-primary"
           >
             <ChevronDownIcon className={`h-3 w-3 transition-transform ${collapsed ? "-rotate-90" : ""}`} />
           </button>
@@ -92,11 +92,11 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
 
       {hasChildren && !collapsed && (
         <>
-          <div className="h-6 w-px bg-zinc-300 dark:bg-zinc-700" />
-          <div className="flex gap-8 border-t border-zinc-300 pt-6 dark:border-zinc-700">
+          <div className="h-6 w-px bg-t1-gray-300" />
+          <div className="flex gap-8 border-t border-border pt-6">
             {unit.childIds.map((childId) => (
               <div key={childId} className="relative flex flex-col items-center px-1">
-                <div className="absolute -top-6 left-1/2 h-6 w-px -translate-x-1/2 bg-zinc-300 dark:bg-zinc-700" />
+                <div className="absolute -top-6 left-1/2 h-6 w-px -translate-x-1/2 bg-t1-gray-300" />
                 <OrgChartNode unitId={childId} units={units} selectedId={selectedId} onSelect={onSelect} />
               </div>
             ))}
@@ -104,7 +104,7 @@ export function OrgChartNode({ unitId, units, selectedId, onSelect }: OrgChartNo
         </>
       )}
       {hasChildren && collapsed && (
-        <p className="mt-3 text-xs text-zinc-400">
+        <p className="mt-3 text-xs text-t1-gray-400">
           + {unit.childIds.length} หน่วยงานย่อย ({sumDescendantEmployeeCount(unit, units)} คน)
         </p>
       )}

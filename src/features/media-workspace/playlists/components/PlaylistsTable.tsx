@@ -205,7 +205,7 @@ function RowActions({
   onAction: (action: RowAction) => void;
   onPreview: () => void;
 }) {
-  const danger = "text-danger focus:text-danger";
+  const danger = "text-error focus:text-error";
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -217,7 +217,7 @@ function RowActions({
             disabled={disabled}
             aria-label={`Preview ${playlist.name}`}
             title="Preview"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft disabled:opacity-50"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-accent disabled:opacity-50"
           >
             <PlayIcon />
           </button>
@@ -225,7 +225,7 @@ function RowActions({
             href={`/media-workspace/playlists/${playlist.id}`}
             aria-label={`Edit ${playlist.name}`}
             title="Edit"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary-soft"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-accent"
           >
             <EditIcon />
           </Link>

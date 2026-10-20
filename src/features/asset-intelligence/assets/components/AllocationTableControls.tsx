@@ -6,10 +6,10 @@ export function AllocationTableControls() {
     <div className="flex flex-wrap items-center justify-between gap-3">
       <span
         title="Not built yet"
-        className="flex cursor-not-allowed items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400"
+        className="flex cursor-not-allowed items-center gap-1.5 text-sm text-muted-foreground"
       >
         แสดง
-        <span className="flex items-center gap-1 rounded-lg border border-zinc-200 px-2 py-1 dark:border-zinc-700">
+        <span className="flex items-center gap-1 rounded-lg border border-border px-2 py-1">
           {allocationPageSize}
           <ChevronDownIcon className="h-3 w-3" />
         </span>
@@ -17,14 +17,14 @@ export function AllocationTableControls() {
       </span>
 
       <div className="flex items-center gap-4">
-        <span className="text-sm text-zinc-400">
+        <span className="text-sm text-t1-gray-400">
           1-{allocationRows.length} จาก {allocationTotalCount.toLocaleString()} รายการ
         </span>
         <div className="flex items-center gap-1">
           <button
             type="button"
             title="Not built yet"
-            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 text-zinc-300 dark:border-zinc-700"
+            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-border text-t1-gray-400"
           >
             <ChevronLeftIcon className="h-3.5 w-3.5" />
           </button>
@@ -35,25 +35,25 @@ export function AllocationTableControls() {
               title="Not built yet"
               className={`flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg text-sm ${
                 page === 1
-                  ? "bg-indigo-600 text-white"
-                  : "border border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-muted-foreground"
               }`}
             >
               {page}
             </button>
           ))}
-          <span className="px-1 text-zinc-300">...</span>
+          <span className="px-1 text-t1-gray-400">...</span>
           <button
             type="button"
             title="Not built yet"
-            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-border text-sm text-muted-foreground"
           >
             {allocationTotalPages}
           </button>
           <button
             type="button"
             title="Not built yet"
-            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 text-zinc-300 dark:border-zinc-700"
+            className="flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border border-border text-t1-gray-400"
           >
             <ChevronRightIcon className="h-3.5 w-3.5" />
           </button>

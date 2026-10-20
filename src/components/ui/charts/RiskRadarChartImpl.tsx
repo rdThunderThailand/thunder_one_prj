@@ -22,12 +22,12 @@ export function RiskRadarChart({ data, size = 220, className = "" }: RiskRadarCh
     <div style={{ width: size, height: size }} className={className}>
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data} outerRadius="68%">
-          <PolarGrid stroke="#e4e4e7" />
-          <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fill: "#71717a" }} />
+          <PolarGrid stroke="var(--color-border)" />
+          <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }} />
           <Radar
             name="Last month"
             dataKey="previous"
-            stroke="#a1a1aa"
+            stroke="var(--color-t1-gray-400)"
             strokeDasharray="4 3"
             fill="transparent"
             isAnimationActive={false}
@@ -35,8 +35,8 @@ export function RiskRadarChart({ data, size = 220, className = "" }: RiskRadarCh
           <Radar
             name="Current"
             dataKey="current"
-            stroke="#ef4444"
-            fill="#ef4444"
+            stroke="var(--color-error)"
+            fill="var(--color-error)"
             fillOpacity={0.25}
             isAnimationActive={false}
           />

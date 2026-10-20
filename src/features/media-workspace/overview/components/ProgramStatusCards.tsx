@@ -42,7 +42,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
           // as a poster/preview instead of reaching next/image (see lib/media-kind).
           <MediaThumb url={model.thumbnailUrl} alt={model.name} className="h-[84px] w-28 rounded-lg" />
         ) : isNow ? (
-          <div className="flex h-[84px] w-28 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-cyan-100">
+          <div className="flex h-[84px] w-28 shrink-0 items-center justify-center rounded-lg bg-program text-t1-blue-100">
             <Radio className="h-9 w-9" />
           </div>
         ) : (
@@ -54,7 +54,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
           <div className="flex min-w-0 items-center gap-2">
             <h3 className="truncate text-sm font-bold text-foreground">{model.name}</h3>
             {isNow && (
-              <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[8px] font-bold uppercase ${model.playbackState === "confirmed" ? "bg-success-soft text-success" : "bg-warning-soft text-warning"}`}>
+              <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[8px] font-bold uppercase ${model.playbackState === "confirmed" ? "bg-success-muted text-success" : "bg-warning-muted text-warning"}`}>
                 <i className={`h-1.5 w-1.5 rounded-full ${model.playbackState === "confirmed" ? "animate-pulse bg-success" : "bg-warning"}`} />
                 {model.playbackState === "confirmed" ? "Live" : model.playbackState === "stale" ? "Stale" : "Awaiting player"}
               </span>

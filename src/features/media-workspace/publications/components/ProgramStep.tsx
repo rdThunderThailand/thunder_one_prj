@@ -100,7 +100,7 @@ function ProgramColumn({
   return (
     <Card className="flex flex-col gap-4 p-5">
       <div className="flex items-baseline gap-2 border-b border-border pb-3">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-primary">
           {index}
         </span>
         <div>

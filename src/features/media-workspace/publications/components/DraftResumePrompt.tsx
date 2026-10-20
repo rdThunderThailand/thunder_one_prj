@@ -40,7 +40,7 @@ export function DraftResumePrompt(props: {
           )}
         </AlertDialogHeader>
         {props.error && (
-          <p role="alert" className="text-sm text-danger">{props.error}</p>
+          <p role="alert" className="text-sm text-error">{props.error}</p>
         )}
         <AlertDialogFooter>
           <AlertDialogCancel asChild>

@@ -4,11 +4,11 @@ import { ArrowRightIcon } from "@/components/ui/icons";
 import type { StatTileColor } from "../mock-data";
 
 const valueColor: Record<StatTileColor, string> = {
-  indigo: "text-indigo-600 dark:text-indigo-400",
-  emerald: "text-emerald-600 dark:text-emerald-400",
-  amber: "text-amber-600 dark:text-amber-400",
-  blue: "text-blue-600 dark:text-blue-400",
-  red: "text-red-600 dark:text-red-400",
+  indigo: "text-primary",
+  emerald: "text-t1-green-700",
+  amber: "text-t1-amber-700",
+  blue: "text-t1-blue-700",
+  red: "text-t1-red-700",
 };
 
 interface StatTile {
@@ -74,12 +74,12 @@ export function StatTilesRow({ totalHeadcount, newHiresThisMonth, onboardingCoun
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {statTiles.map((tile) => (
         <Card key={tile.id} className="flex flex-col gap-1 p-4">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{tile.label}</p>
+          <p className="text-xs text-muted-foreground">{tile.label}</p>
           <span className={`text-2xl font-semibold ${valueColor[tile.color]}`}>{tile.value}</span>
-          {tile.sublabel && <p className="text-xs text-zinc-400">{tile.sublabel}</p>}
+          {tile.sublabel && <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>}
           <Link
             href={tile.href}
-            className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground"
           >
             ดูรายละเอียด
             <ArrowRightIcon className="h-3 w-3" />

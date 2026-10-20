@@ -20,7 +20,7 @@ export const policyStatTiles: PolicyStatTile[] = [
   {
     id: "total",
     icon: "document",
-    iconTone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+    iconTone: "bg-info-muted text-t1-blue-700",
     label: "นโยบายทั้งหมด",
     value: "48",
     sublabel: "รายการ",
@@ -28,7 +28,7 @@ export const policyStatTiles: PolicyStatTile[] = [
   {
     id: "published",
     icon: "check",
-    iconTone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+    iconTone: "bg-success-muted text-t1-green-700",
     label: "ประกาศใช้",
     value: "42",
     sublabel: "87.5%",
@@ -36,7 +36,7 @@ export const policyStatTiles: PolicyStatTile[] = [
   {
     id: "review",
     icon: "clock",
-    iconTone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+    iconTone: "bg-warning-muted text-t1-amber-700",
     label: "รอการทบทวน",
     value: "5",
     sublabel: "10.4%",
@@ -44,7 +44,7 @@ export const policyStatTiles: PolicyStatTile[] = [
   {
     id: "draft",
     icon: "edit",
-    iconTone: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
+    iconTone: "bg-in-progress-muted text-t1-purple-700",
     label: "กำลังร่าง",
     value: "1",
     sublabel: "2.1%",
@@ -52,7 +52,7 @@ export const policyStatTiles: PolicyStatTile[] = [
   {
     id: "retired",
     icon: "archive",
-    iconTone: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    iconTone: "bg-muted text-muted-foreground",
     label: "ยกเลิก",
     value: "2",
     sublabel: "4.2%",

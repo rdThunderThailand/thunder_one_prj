@@ -28,13 +28,13 @@ interface AccountSecurityPageProps {
 // system) — #e5edf9 borders, #071858 navy, #0760ed link/action blue,
 // #6b7a9e secondary text. Kept local rather than shared since only these
 // two feature folders use them so far.
-const BORDER = "border-[#e5edf9] dark:border-zinc-800";
+const BORDER = "border-border";
 // Lighter than BORDER on purpose — an internal row divider inside a card
 // should read as a quiet separator, not another card edge (Nie, 2026-09-16:
 // the divider was too visually heavy).
-const DIVIDER = "divide-[#eef2f9] dark:divide-zinc-800";
-const TEXT_NAVY = "text-[#071858] dark:text-zinc-50";
-const TEXT_MUTED = "text-[#6b7a9e] dark:text-zinc-400";
+const DIVIDER = "divide-border";
+const TEXT_NAVY = "text-foreground";
+const TEXT_MUTED = "text-muted-foreground";
 
 /**
  * Everything below this component that reads as "unavailable" (MFA status,
@@ -60,7 +60,7 @@ function InertNote({ children }: { children: React.ReactNode }) {
 
 function ActiveBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-semibold text-t1-green-700">
       <CheckCircleIcon className="h-3 w-3" />
       {children}
     </span>
@@ -100,7 +100,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
   return (
     <div className="flex flex-col gap-4">
       <nav className="flex items-center gap-1.5 text-xs">
-        <Link href="/profile" className={`${TEXT_MUTED} hover:text-[#071858] dark:hover:text-zinc-200`}>
+        <Link href="/profile" className={`${TEXT_MUTED} hover:text-foreground`}>
           การตั้งค่าส่วนบุคคล
         </Link>
         <span className={TEXT_MUTED}>/</span>
@@ -118,7 +118,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="flex flex-col gap-4 lg:col-span-2">
-            <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+            <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
               <div className="flex items-start gap-4">
                 {/* Avatar sits on the left only — everything else (name
                     block + the info rows below it) is one right-hand
@@ -134,7 +134,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className={`text-base font-bold ${TEXT_NAVY}`}>{fullName}</p>
-                  {roleName && <p className="text-sm font-medium text-[#0760ed] dark:text-blue-400">{roleName}</p>}
+                  {roleName && <p className="text-sm font-medium text-primary">{roleName}</p>}
                   <p className={`text-sm ${TEXT_MUTED}`}>{tenantName || "-"}</p>
 
                   <div className={`mt-3 divide-y ${DIVIDER}`}>
@@ -160,12 +160,12 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
                             type="button"
                             onClick={copyUsername}
                             title="คัดลอก"
-                            className={`rounded p-1 ${TEXT_MUTED} hover:bg-zinc-50 hover:text-[#0760ed] dark:hover:bg-zinc-800`}
+                            className={`rounded p-1 ${TEXT_MUTED} hover:bg-t1-gray-50 hover:text-primary`}
                           >
                             <CopyIcon className="h-3.5 w-3.5" />
                           </button>
                         )}
-                        {copied && <span className="text-[11px] font-medium text-emerald-600">คัดลอกแล้ว</span>}
+                        {copied && <span className="text-[11px] font-medium text-t1-green-700">คัดลอกแล้ว</span>}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
@@ -177,9 +177,9 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
               </div>
             </div>
 
-            <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+            <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#eaf4ff] text-[#075df7] dark:bg-blue-500/10 dark:text-blue-400">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
                   <LockIcon className="h-4 w-4" />
                 </span>
                 <div className="flex-1">
@@ -195,16 +195,16 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
                 <button
                   type="button"
                   onClick={() => setChangingPassword(true)}
-                  className="shrink-0 rounded-lg bg-[#0760ed] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0650c4]"
+                  className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   เปลี่ยนรหัสผ่าน
                 </button>
               </div>
             </div>
 
-            <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+            <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-t1-gray-400">
                   <ShieldIcon className="h-4 w-4" />
                 </span>
                 <div className="flex-1">
@@ -216,7 +216,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
                   type="button"
                   disabled
                   title="ยังไม่พร้อมใช้งาน"
-                  className={`shrink-0 cursor-not-allowed rounded-lg border px-3 py-2 text-sm font-semibold ${BORDER} text-[#a8c3f5] dark:text-blue-400/30`}
+                  className={`shrink-0 cursor-not-allowed rounded-lg border px-3 py-2 text-sm font-semibold ${BORDER} text-t1-gray-400`}
                 >
                   จัดการ MFA
                 </button>
@@ -226,9 +226,9 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
             {/* New — matches the mockup's "อุปกรณ์ที่เข้าสู่ระบบ" section.
                 No session/device endpoint exists in Core, so this is an
                 honest empty state rather than an invented device list. */}
-            <div className={`rounded-xl border bg-white p-5 dark:bg-zinc-900 ${BORDER}`}>
+            <div className={`rounded-xl border bg-card p-5 ${BORDER}`}>
               <div className="mb-1 flex items-center gap-2.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-t1-gray-400">
                   <MonitorIcon className="h-4 w-4" />
                 </span>
                 <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>อุปกรณ์ที่เข้าสู่ระบบ</h2>
@@ -240,7 +240,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className={`rounded-xl border bg-white p-4 dark:bg-zinc-900 ${BORDER}`}>
+            <div className={`rounded-xl border bg-card p-4 ${BORDER}`}>
               <div className="mb-1 flex items-center gap-2">
                 <ShieldIcon className={`h-4 w-4 ${TEXT_MUTED}`} />
                 <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>สถานะความปลอดภัยของบัญชี</h2>
@@ -248,7 +248,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
               <InertNote>ยังไม่สามารถตรวจสอบสถานะความปลอดภัยของบัญชีได้ในขณะนี้</InertNote>
             </div>
 
-            <div className={`rounded-xl border bg-white p-4 dark:bg-zinc-900 ${BORDER}`}>
+            <div className={`rounded-xl border bg-card p-4 ${BORDER}`}>
               <div className="mb-1 flex items-center gap-2">
                 <ClockIcon className={`h-4 w-4 ${TEXT_MUTED}`} />
                 <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>กิจกรรมการเข้าสู่ระบบล่าสุด</h2>
@@ -256,7 +256,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
               <p className={`py-4 text-center text-xs ${TEXT_MUTED}`}>ยังไม่มีข้อมูลกิจกรรมการเข้าสู่ระบบ</p>
             </div>
 
-            <div className={`rounded-xl border bg-white p-4 dark:bg-zinc-900 ${BORDER}`}>
+            <div className={`rounded-xl border bg-card p-4 ${BORDER}`}>
               <h2 className={`mb-1 text-sm font-bold ${TEXT_NAVY}`}>ความปลอดภัยเพิ่มเติม</h2>
               <ul className={`divide-y ${DIVIDER}`}>
                 {["รหัสสำรองสำหรับ MFA", "การแจ้งเตือนด้านความปลอดภัย", "นโยบายความปลอดภัยขององค์กร"].map((label) => (

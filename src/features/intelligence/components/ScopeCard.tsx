@@ -10,7 +10,7 @@ export function ScopeCard() {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Scope</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Scope</h2>
       <div className="flex flex-wrap items-center gap-2">
         {scopeOptions.map((option) => (
           <button
@@ -19,8 +19,8 @@ export function ScopeCard() {
             onClick={() => setActive(option.id)}
             className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
               active === option.id
-                ? "border-indigo-200 bg-indigo-50 text-indigo-600 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-400"
-                : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                ? "border-t1-blue-200 bg-accent text-primary"
+                : "border-border text-muted-foreground hover:bg-t1-gray-50"
             }`}
           >
             {option.label}
@@ -29,7 +29,7 @@ export function ScopeCard() {
         <button
           type="button"
           title="Not built yet"
-          className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 text-zinc-400 dark:border-zinc-700"
+          className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-lg border border-border text-t1-gray-400"
         >
           <MoreIcon className="h-4 w-4" />
         </button>

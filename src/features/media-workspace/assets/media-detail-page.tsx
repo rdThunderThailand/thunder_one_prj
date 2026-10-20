@@ -67,7 +67,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   }, [asset?.height, asset?.width]);
 
   if (error?.kind === "forbidden") return <NoAccess message={error.message} />;
-  if (error) return <div className="space-y-4 py-16 text-center"><p className={error.kind === "not-found" ? "text-muted-foreground" : "text-danger"}>{error.message}</p><Link href="/media-workspace/assets" className={buttonVariants({ variant: "secondary" })}>Back to Media Library</Link></div>;
+  if (error) return <div className="space-y-4 py-16 text-center"><p className={error.kind === "not-found" ? "text-muted-foreground" : "text-error"}>{error.message}</p><Link href="/media-workspace/assets" className={buttonVariants({ variant: "secondary" })}>Back to Media Library</Link></div>;
   if (!asset) return <p className="py-16 text-center text-sm text-muted-foreground">Loading media…</p>;
 
   const label = assetLabel(asset);
@@ -153,7 +153,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
           </div>
           <div className="min-w-0">
             <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent text-primary">
                 <KindIcon asset={asset} className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
@@ -169,7 +169,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
             {asset.status === "processing" ? (
               <p className="mt-3 text-xs text-warning">กำลังแปลง — รีเฟรชเพื่อดูสถานะ</p>
             ) : (
-              verdict && <p className={`mt-3 text-xs ${asset.status === "failed" ? "text-danger" : "text-warning"}`}>{verdict}</p>
+              verdict && <p className={`mt-3 text-xs ${asset.status === "failed" ? "text-error" : "text-warning"}`}>{verdict}</p>
             )}
             {asset.tags?.length ? (
               <div className="mt-3 flex flex-wrap gap-1.5">

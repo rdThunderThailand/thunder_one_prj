@@ -124,10 +124,23 @@ Starting mapping (extend as found): `zinc/gray/slate-900|800` → `foreground`; 
 `red-*` → `error` / `error-muted`; `emerald|green-*` → `success`; `amber|yellow-*` → `warning`.
 Categorical hues (content kinds, zones) stay until a DS rule covers them (DS-04 forbids status colours).
 
+**Status 2026-10-20:** done. Nine Draft PRs (#287–#296, no #293) merged into `dev`; zero raw palette
+classes and zero `[#hex]` classes left in `src`.
+
 ### P6 — Cleanup
 Drop the D7 aliases; `grep` proves zero `dark:`, raw palette and hex in `src`; run the skill's
 `review-checklist.md` over the shell and Overview; close #281 and upstream #2; owner updates
 `~/.claude/CLAUDE.md` §8 (the "globals.css only, ADR 0075" line).
+
+**Status 2026-10-20:** done on branch `style/thunderone-ds-p6`. The D7 aliases and the
+`@custom-variant dark` are gone from `globals.css`; the only `dark:` left is the QR library option in
+`AssetIdentityCard.tsx`. Checklist over the shell + Overview (code-level only, browser not run):
+DS-01 GAP — arbitrary px font sizes (`text-[8px|9px|10px|11px]`) in `components/layout/*`
+(Sidebar, media-workspace-sidebar, Topbar, UserMenu, NotificationBell, GlobalSearch), predating this
+migration; DS-09 PASS (no other icon library); DS-10 PASS (logos are imported SVGs). Visual items
+(DS-03 sizes, DS-05 gaps, DS-11 states, DS-13 focus) NOT CHECKED. Follow-up 2026-10-20: owner chose 9px → `text-2xs` (10px); applied to the two shell sites (`GlobalSearch` kbd,
+`media-workspace-sidebar` section label). The other ~80 `text-[9px]`, `text-[8px]` and the 10/11px literals
+are not swept: they need a per-area look (chips may wrap) and DS has no 9px token.
 
 ## Risks
 - P2 changes every surface at once (that is the point); screens with literals look mixed until P5.

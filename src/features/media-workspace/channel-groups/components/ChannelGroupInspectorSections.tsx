@@ -40,7 +40,7 @@ export function ChannelGroupInspectorSections({
           <p className="text-[11px] text-muted-foreground">Online</p>
         </div>
         <div className="rounded-lg border border-border bg-muted px-2 py-2 text-center">
-          <p className="text-lg font-semibold text-danger">{health.offline}</p>
+          <p className="text-lg font-semibold text-error">{health.offline}</p>
           <p className="text-[11px] text-muted-foreground">Offline</p>
         </div>
         <div className="rounded-lg border border-border bg-muted px-2 py-2 text-center">
@@ -85,7 +85,7 @@ export function ChannelGroupInspectorSections({
         </dl>
       </div>
 
-      <div className="mt-4 flex gap-2 rounded-lg bg-primary-soft p-3 text-xs text-primary">
+      <div className="mt-4 flex gap-2 rounded-lg bg-accent p-3 text-xs text-primary">
         <InfoIcon className="h-4 w-4 shrink-0" />
         Group content is managed through Programs.
       </div>

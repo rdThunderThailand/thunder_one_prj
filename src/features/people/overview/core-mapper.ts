@@ -34,10 +34,10 @@ const TYPE_LABEL: Record<string, string> = {
   guest: "แขก (Guest)",
 };
 const TYPE_COLOR: Record<string, string> = {
-  employee: "#6366f1",
-  contractor: "#22d3ee",
-  partner: "#8b5cf6",
-  guest: "#f59e0b",
+  employee: "var(--color-primary)",
+  contractor: "var(--color-t1-blue-300)",
+  partner: "var(--color-in-progress)",
+  guest: "var(--color-warning)",
 };
 
 const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
@@ -110,7 +110,7 @@ export function computeOverviewStats(
   const totalHeadcount = rows.length;
   const personnelBreakdown: DonutSegment[] = Object.entries(typeCounts)
     .filter(([, value]) => value > 0)
-    .map(([type, value]) => ({ label: TYPE_LABEL[type] ?? type, value, color: TYPE_COLOR[type] ?? "#a1a1aa" }));
+    .map(([type, value]) => ({ label: TYPE_LABEL[type] ?? type, value, color: TYPE_COLOR[type] ?? "var(--color-t1-gray-400)" }));
 
   const tenureTotal = tenureCounts.reduce((a, b) => a + b, 0);
   const tenureDistribution: BarDatum[] = TENURE_BANDS.map((label, i) => ({

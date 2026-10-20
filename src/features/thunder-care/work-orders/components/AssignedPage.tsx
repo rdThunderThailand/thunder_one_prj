@@ -13,7 +13,7 @@ function Section({ label, orders }: { label: string; orders: WorkOrder[] }) {
 
   return (
     <div>
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-t1-gray-400">
         {label} ({orders.length})
       </h2>
       <div className="flex flex-col gap-3">

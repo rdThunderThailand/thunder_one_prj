@@ -12,21 +12,21 @@ interface StatTileProps {
 }
 
 const valueColor: Record<StatTileColor, string> = {
-  zinc: "text-zinc-900 dark:text-zinc-50",
-  indigo: "text-indigo-600 dark:text-indigo-400",
-  blue: "text-blue-600 dark:text-blue-400",
-  amber: "text-amber-600 dark:text-amber-400",
-  red: "text-red-600 dark:text-red-400",
-  emerald: "text-emerald-600 dark:text-emerald-400",
+  zinc: "text-foreground",
+  indigo: "text-primary",
+  blue: "text-info",
+  amber: "text-t1-amber-700",
+  red: "text-t1-red-700",
+  emerald: "text-t1-green-700",
 };
 
 export function StatTile({ label, value, hint, color = "zinc", className = "" }: StatTileProps) {
   return (
     <Card className={`flex flex-col gap-1.5 p-4 ${className}`}>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
       <span className={`text-2xl font-semibold ${valueColor[color]}`}>
         {value}
-        {hint && <span className="ml-1.5 text-sm font-normal text-zinc-400">{hint}</span>}
+        {hint && <span className="ml-1.5 text-sm font-normal text-t1-gray-400">{hint}</span>}
       </span>
     </Card>
   );

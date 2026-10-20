@@ -98,7 +98,7 @@ function PlaylistHowTo({ playlistId, onPlaylistChanged }: { playlistId: string |
   const { playlist, failed } = usePlaylistPreview(playlistId, Boolean(playlistId));
 
   if (!playlistId) return <p className="text-xs text-muted-foreground">ยังไม่ได้เลือก Playlist</p>;
-  if (failed) return <p className="text-xs text-danger">โหลดข้อมูล Playlist ไม่สำเร็จ</p>;
+  if (failed) return <p className="text-xs text-error">โหลดข้อมูล Playlist ไม่สำเร็จ</p>;
   if (!playlist) return <p className="text-xs text-muted-foreground">กำลังโหลด…</p>;
 
   const { playback } = decodeMetadata(playlist.metadata);
@@ -129,7 +129,7 @@ function PlaylistHowTo({ playlistId, onPlaylistChanged }: { playlistId: string |
 
       <Link
         href={`/media-workspace/playlists/${playlistId}`}
-        className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-primary hover:border-primary/30 hover:bg-primary-soft"
+        className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-primary hover:border-primary/30 hover:bg-accent"
       >
         แก้ไขใน Playlist Editor <ExternalLinkIcon className="h-4 w-4" />
       </Link>
@@ -165,7 +165,7 @@ function CompositionHowTo({
   const { preview, loading, error } = usePublicationStagePreview(assets, true, refreshKey);
 
   if (!compositionId) return <p className="text-xs text-muted-foreground">ยังไม่ได้เลือก Layout</p>;
-  if (error) return <p className="text-xs text-danger">โหลดข้อมูล Layout ไม่สำเร็จ</p>;
+  if (error) return <p className="text-xs text-error">โหลดข้อมูล Layout ไม่สำเร็จ</p>;
   if (loading || !preview) return <p className="text-xs text-muted-foreground">กำลังโหลด…</p>;
 
   const zones = compositionZonePlayback(preview, Object.fromEntries(assets.map((asset) => [asset.id, asset])));

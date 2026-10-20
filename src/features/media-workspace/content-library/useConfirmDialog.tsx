@@ -54,7 +54,7 @@ export function useConfirmDialog(): {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className={options?.isDestructive ? "bg-danger hover:bg-danger" : undefined}
+            className={options?.isDestructive ? "bg-error hover:bg-error" : undefined}
             onClick={() => settle(true)}
           >
             {options?.confirmLabel ?? "Confirm"}

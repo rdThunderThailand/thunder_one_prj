@@ -191,8 +191,8 @@ export function MediaLibraryPage() {
             { label: "Total Files", value: stats.total, detail: "All media", icon: Archive },
             { label: "Images", value: stats.images, detail: pct(stats.images), icon: FileImage },
             { label: "Videos", value: stats.videos, detail: pct(stats.videos), icon: FileVideo },
-            { label: "Audio", value: "—", detail: "Coming soon", icon: FileAudio, tone: "text-success bg-success-soft", disabled: true },
-            { label: "Documents", value: "—", detail: "Coming soon", icon: FileText, tone: "text-warning bg-warning-soft", disabled: true },
+            { label: "Audio", value: "—", detail: "Coming soon", icon: FileAudio, tone: "text-success bg-success-muted", disabled: true },
+            { label: "Documents", value: "—", detail: "Coming soon", icon: FileText, tone: "text-warning bg-warning-muted", disabled: true },
           ]}
         />
       )}
@@ -234,7 +234,7 @@ export function MediaLibraryPage() {
         footer={<LibraryPagination page={currentPage} totalPages={totalPages} total={filteredAssets.length} pageSize={PAGE_SIZE} onPage={setPage} />}
       >
         {error ? (
-          <p className="rounded-lg bg-danger-soft p-3 text-sm text-danger">{error}</p>
+          <p className="rounded-lg bg-error-muted p-3 text-sm text-error">{error}</p>
         ) : loading && assets.length === 0 ? (
           <LibraryGridSkeleton />
         ) : visibleAssets.length === 0 ? (

@@ -16,7 +16,7 @@ export function WorkSummaryCard({ items, now }: { items: WorkItem[]; now: Date }
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         My Work Summary
       </h2>
       {total === 0 ? (
@@ -35,8 +35,8 @@ export function WorkSummaryCard({ items, now }: { items: WorkItem[]; now: Date }
               strokeWidth={16}
             />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{total}</span>
-              <span className="text-[10px] text-zinc-400">Total</span>
+              <span className="text-xl font-semibold text-foreground">{total}</span>
+              <span className="text-[10px] text-t1-gray-400">Total</span>
             </div>
           </div>
           <ul className="flex-1 space-y-1.5 text-sm">
@@ -45,14 +45,14 @@ export function WorkSummaryCard({ items, now }: { items: WorkItem[]; now: Date }
                 key={segment.label}
                 className="flex items-center justify-between gap-2"
               >
-                <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
                   <span
                     className="h-2 w-2 shrink-0 rounded-full"
                     style={{ backgroundColor: segment.color }}
                   />
                   {segment.label}
                 </span>
-                <span className="shrink-0 font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="shrink-0 font-medium text-foreground">
                   {segment.value} ({Math.round((segment.value / total) * 100)}%)
                 </span>
               </li>

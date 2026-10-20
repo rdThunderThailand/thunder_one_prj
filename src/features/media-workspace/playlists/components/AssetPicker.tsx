@@ -107,7 +107,7 @@ export function AssetPicker({
                 aria-pressed={selected}
                 className={`flex w-full items-center gap-3 border-b border-border p-3 text-left transition-colors last:border-b-0 ${
                   selected
-                    ? "border-primary bg-primary-soft"
+                    ? "border-primary bg-accent"
                     : "border-border hover:bg-muted"
                 }`}
               >

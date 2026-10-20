@@ -11,7 +11,7 @@ const categoryLabel: Record<ChannelCategoryId, string> = {
 const statusDot: Record<ChannelStatus, string> = {
   online: "bg-success",
   warning: "bg-warning",
-  offline: "bg-danger",
+  offline: "bg-error",
 };
 
 const statusLabel: Record<ChannelStatus, string> = {
@@ -34,12 +34,12 @@ export function ChannelCard({
       type="button"
       onClick={onToggle}
       className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${
-        selected ? "border-primary/30 bg-primary-soft ring-1 ring-primary" : "border-border hover:border-border"
+        selected ? "border-primary/30 bg-accent ring-1 ring-primary" : "border-border hover:border-border"
       }`}
     >
       <span
         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 ${
-          selected ? "border-primary bg-primary text-white" : "border-border bg-card"
+          selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"
         }`}
       >
         {selected && (

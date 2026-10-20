@@ -9,7 +9,7 @@ export interface SparklineProps {
 }
 
 // Color comes from the wrapping element's text color (`currentColor`), e.g.
-// `text-indigo-500` — SVG paint attributes accept it directly, so Recharts
+// `text-primary` — SVG paint attributes accept it directly, so Recharts
 // needs no color prop of its own to stay theme-consistent with the stat card
 // badge it sits beside.
 export function Sparkline({ data, className = "" }: SparklineProps) {

@@ -10,12 +10,12 @@ export function NewsCard() {
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข่าวสารและอัปเดต</h2>
+        <h2 className="text-sm font-semibold text-foreground">ข่าวสารและอัปเดต</h2>
         <button
           type="button"
           disabled
           title="ยังไม่มีหน้ารายการข่าวสารทั้งหมด"
-          className="flex items-center gap-1 text-xs font-medium text-zinc-300 dark:text-zinc-600"
+          className="flex items-center gap-1 text-xs font-medium text-t1-gray-400"
         >
           ดูทั้งหมด
           <ArrowRightIcon className="h-3 w-3" />

@@ -40,7 +40,7 @@ function TranslationUnavailable({ delivery, slug, locale, from }: { delivery: Ex
   const other = delivery.available[0];
   return (
     <div role="status" className="mx-auto flex max-w-xl flex-col items-center px-4 py-14 text-center">
-      <span aria-hidden="true" className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
+      <span aria-hidden="true" className="grid h-14 w-14 place-items-center rounded-2xl bg-accent text-primary">
         <Languages className="h-6 w-6" />
       </span>
       <h1 className="mt-4 text-lg font-bold tracking-tight">{t("translationUnavailableTitle", locale, { lang: LOCALE_NAME[locale][locale] })}</h1>

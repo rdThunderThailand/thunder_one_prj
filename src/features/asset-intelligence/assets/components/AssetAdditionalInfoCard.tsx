@@ -26,12 +26,12 @@ export function AssetAdditionalInfoCard({ asset }: { asset: AssetDetail }) {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลเพิ่มเติม</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">ข้อมูลเพิ่มเติม</h2>
       <dl className="flex flex-col gap-2.5 text-sm">
         {rows.map((row) => (
           <div key={row.label} className="flex items-start justify-between gap-2">
-            <dt className="text-xs text-zinc-400">{row.label}</dt>
-            <dd className="text-right text-zinc-700 dark:text-zinc-200">{row.value}</dd>
+            <dt className="text-xs text-t1-gray-400">{row.label}</dt>
+            <dd className="text-right text-foreground">{row.value}</dd>
           </div>
         ))}
       </dl>

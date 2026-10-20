@@ -6,7 +6,7 @@ import { LazyVideo } from "@/components/ui/LazyVideo";
 import { Badge } from "@/components/ui/lovable/badge";
 import { isVideoUrl } from "@/lib/media-kind";
 import type { PlaybackProofEntry } from "../playback-proof-api";
-import { FAILURE_LABELS, formatDuration, formatPlayedAt, sourceLabel } from "../playback-proof-view";
+import { FAILURE_LABELS, OUTCOME_BADGES, formatDuration, formatPlayedAt, sourceLabel } from "../playback-proof-view";
 
 const EMPTY = <span className="text-muted-foreground">—</span>;
 const HEADERS = ["Played at", "Channel", "Program", "Source", "Media", "Result", "Duration"];
@@ -34,10 +34,11 @@ function MediaThumb({ url }: { url: string | null }) {
 }
 
 function ResultCell({ entry }: { entry: PlaybackProofEntry }) {
-  if (entry.outcome === "played") return <Badge variant="success">Played</Badge>;
+  const badge = OUTCOME_BADGES[entry.outcome];
+  if (entry.outcome === "played") return <Badge variant={badge.variant}>{badge.label}</Badge>;
   return (
     <div className="flex flex-col items-start gap-1">
-      <Badge variant="danger">Failed</Badge>
+      <Badge variant={badge.variant}>{badge.label}</Badge>
       {entry.failure_reason && <span className="text-[9px] text-muted-foreground">{FAILURE_LABELS[entry.failure_reason]}</span>}
     </div>
   );
@@ -78,7 +79,7 @@ export function PlaybackProofTable({
                 key={entry.id}
                 onClick={(event) => onSelect(entry, event.currentTarget.querySelector("button"))}
                 aria-selected={entry.id === selectedId}
-                className="cursor-pointer border-t border-border align-middle hover:bg-muted/50 aria-selected:bg-primary-soft"
+                className="cursor-pointer border-t border-border align-middle hover:bg-muted/50 aria-selected:bg-accent"
               >
                 <td className="px-4 py-3 tabular-nums">
                   {/* The row is clickable for the mouse; this button is its keyboard / screen-reader entry. */}

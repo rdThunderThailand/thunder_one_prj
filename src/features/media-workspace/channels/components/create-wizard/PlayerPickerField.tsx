@@ -35,7 +35,7 @@ function CandidateRow({
         <p className="truncate text-xs text-muted-foreground">
           {[candidate.model, candidate.location?.name].filter(Boolean).join(" · ") || candidate.code}
         </p>
-        {reason && <p className="mt-0.5 text-xs text-danger">Unavailable — {reason}</p>}
+        {reason && <p className="mt-0.5 text-xs text-error">Unavailable — {reason}</p>}
       </div>
     </button>
   );

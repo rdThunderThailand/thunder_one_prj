@@ -13,12 +13,12 @@ import {
 
 function Breadcrumb() {
   return (
-    <nav className="flex items-center gap-1.5 text-xs text-zinc-400">
-      <Link href="/people" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+    <nav className="flex items-center gap-1.5 text-xs text-t1-gray-400">
+      <Link href="/people" className="hover:text-muted-foreground">
         ภาพรวม
       </Link>
       <ChevronRightIcon className="h-3 w-3" />
-      <span className="text-zinc-600 dark:text-zinc-300">เพิ่มคน</span>
+      <span className="text-muted-foreground">เพิ่มคน</span>
     </nav>
   );
 }
@@ -96,13 +96,13 @@ export function AddPersonTypePage() {
         <div className="flex flex-col gap-3">
           <Breadcrumb />
           <div>
-            <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">เพิ่มคนเข้าองค์กร</h1>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <h1 className="text-2xl font-semibold text-foreground">เพิ่มคนเข้าองค์กร</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               เลือกประเภทของบุคคลที่ต้องการเพิ่ม เพื่อเริ่มกระบวนการที่เหมาะสม
             </p>
           </div>
         </div>
-        <div className="flex max-w-sm items-start gap-2 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 text-xs text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
+        <div className="flex max-w-sm items-start gap-2 rounded-xl border border-t1-blue-100 bg-accent/60 p-3 text-xs text-accent-foreground">
           <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
             <span className="font-medium">เลือกประเภทที่ถูกต้อง</span>
@@ -117,12 +117,12 @@ export function AddPersonTypePage() {
           const Icon = CARD_ICON[card.id];
           const body = (
             <>
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-primary">
                 <Icon className="h-5 w-5" />
               </span>
-              <span className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{card.label}</span>
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">{card.description}</span>
-              <span className="mt-auto inline-flex w-fit items-center rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+              <span className="text-base font-semibold text-foreground">{card.label}</span>
+              <span className="text-sm text-muted-foreground">{card.description}</span>
+              <span className="mt-auto inline-flex w-fit items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
                 {card.badge}
               </span>
             </>
@@ -132,16 +132,16 @@ export function AddPersonTypePage() {
             <Link
               key={card.id}
               href={card.href}
-              className="group flex flex-col items-start gap-2 rounded-2xl border border-indigo-200 bg-white p-5 shadow-sm transition-colors hover:border-indigo-400 dark:border-indigo-500/40 dark:bg-zinc-900"
+              className="group flex flex-col items-start gap-2 rounded-2xl border border-t1-blue-200 bg-card p-5 shadow-sm transition-colors hover:border-primary"
             >
               {body}
-              <ArrowRightIcon className="h-4 w-4 self-end text-indigo-500 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRightIcon className="h-4 w-4 self-end text-primary transition-transform group-hover:translate-x-0.5" />
             </Link>
           ) : (
             <div
               key={card.id}
               title="ยังไม่เปิดใช้งาน"
-              className="flex cursor-not-allowed flex-col items-start gap-2 rounded-2xl border border-zinc-200 bg-white p-5 opacity-70 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+              className="flex cursor-not-allowed flex-col items-start gap-2 rounded-2xl border border-border bg-card p-5 opacity-70 shadow-sm"
             >
               {body}
             </div>
@@ -149,17 +149,17 @@ export function AddPersonTypePage() {
         })}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="border-b border-zinc-100 px-5 py-4 text-sm font-semibold text-zinc-900 dark:border-zinc-800 dark:text-zinc-50">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <h2 className="border-b border-border px-5 py-4 text-sm font-semibold text-foreground">
           เปรียบเทียบประเภทบุคคลในระบบ
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-100 text-xs text-zinc-400 dark:border-zinc-800">
+              <tr className="border-b border-border text-xs text-t1-gray-400">
                 <th className="px-5 py-3 font-medium">หัวข้อ</th>
                 {TYPE_CARDS.map((card) => (
-                  <th key={card.id} className="px-5 py-3 font-medium text-zinc-600 dark:text-zinc-300">
+                  <th key={card.id} className="px-5 py-3 font-medium text-muted-foreground">
                     {card.label}
                   </th>
                 ))}
@@ -167,11 +167,11 @@ export function AddPersonTypePage() {
             </thead>
             <tbody>
               {COMPARISON_ROWS.map((row) => (
-                <tr key={row.label} className="border-b border-zinc-50 last:border-0 dark:border-zinc-800/60">
-                  <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">{row.label}</td>
+                <tr key={row.label} className="border-b border-border last:border-0">
+                  <td className="px-5 py-3 text-muted-foreground">{row.label}</td>
                   {row.values.map((value, i) => (
-                    <td key={i} className="px-5 py-3 text-zinc-700 dark:text-zinc-200">
-                      {value === "✓" ? <CheckIcon className="h-4 w-4 text-emerald-500" /> : value}
+                    <td key={i} className="px-5 py-3 text-foreground">
+                      {value === "✓" ? <CheckIcon className="h-4 w-4 text-success" /> : value}
                     </td>
                   ))}
                 </tr>
@@ -181,21 +181,21 @@ export function AddPersonTypePage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">การดำเนินการที่เกี่ยวข้อง</h2>
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">การดำเนินการที่เกี่ยวข้อง</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {RELATED_ACTIONS.map((action, i) => {
             const Icon = ACTION_ICON[i];
             const body = (
               <>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                  <span className="block truncate text-sm font-medium text-foreground">
                     {action.label}
                   </span>
-                  <span className="block truncate text-[11px] text-zinc-400">{action.sublabel}</span>
+                  <span className="block truncate text-[11px] text-t1-gray-400">{action.sublabel}</span>
                 </span>
               </>
             );
@@ -203,7 +203,7 @@ export function AddPersonTypePage() {
               <Link
                 key={action.label}
                 href={action.href}
-                className="flex items-center gap-3 rounded-xl border border-zinc-100 p-3 text-left transition-colors hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-zinc-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-500/5"
+                className="flex items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-t1-blue-300 hover:bg-accent/50"
               >
                 {body}
               </Link>
@@ -211,7 +211,7 @@ export function AddPersonTypePage() {
               <div
                 key={action.label}
                 title="ยังไม่เปิดใช้งาน"
-                className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-zinc-100 p-3 opacity-70 dark:border-zinc-800"
+                className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-border p-3 opacity-70"
               >
                 {body}
               </div>

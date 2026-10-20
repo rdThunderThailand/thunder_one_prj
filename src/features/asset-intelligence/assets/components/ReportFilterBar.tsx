@@ -6,12 +6,12 @@ function FilterSelect({ label, options }: { label: string; options: string[] }) 
   return (
     <span
       title="Not built yet"
-      className="flex cursor-not-allowed flex-col gap-0.5 rounded-lg border border-zinc-200 px-3 py-1.5 dark:border-zinc-700"
+      className="flex cursor-not-allowed flex-col gap-0.5 rounded-lg border border-border px-3 py-1.5"
     >
-      <span className="text-[10px] text-zinc-400">{label}</span>
-      <span className="flex items-center justify-between gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+      <span className="text-[10px] text-t1-gray-400">{label}</span>
+      <span className="flex items-center justify-between gap-2 text-sm text-foreground">
         {options[0]}
-        <ChevronDownIcon className="h-3.5 w-3.5 text-zinc-400" />
+        <ChevronDownIcon className="h-3.5 w-3.5 text-t1-gray-400" />
       </span>
     </span>
   );
@@ -25,7 +25,7 @@ export function ReportFilterBar() {
       <FilterSelect label="สถานที่" options={reportFilterOptions.location} />
       <span
         title="Not built yet"
-        className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+        className="flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground"
       >
         <FilterIcon className="h-3.5 w-3.5" />
         ตัวกรองเพิ่มเติม

@@ -7,8 +7,8 @@ export function TeamGoalsCard() {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Team Goals</h2>
-        <button className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">Team Goals</h2>
+        <button className="text-xs font-medium text-primary hover:text-accent-foreground">
           View all
         </button>
       </div>
@@ -16,15 +16,15 @@ export function TeamGoalsCard() {
         {teamGoals.map((goal) => (
           <li key={goal.id}>
             <div className="mb-1 flex items-center gap-2">
-              <GaugeIcon className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
-              <p className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
+              <GaugeIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                 {goal.title}
               </p>
-              <span className="shrink-0 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              <span className="shrink-0 text-xs font-semibold text-muted-foreground">
                 {goal.percent}%
               </span>
             </div>
-            <p className="mb-1.5 truncate text-xs text-zinc-400">{goal.detail}</p>
+            <p className="mb-1.5 truncate text-xs text-t1-gray-400">{goal.detail}</p>
             <ProgressBar value={goal.percent} color="indigo" />
           </li>
         ))}

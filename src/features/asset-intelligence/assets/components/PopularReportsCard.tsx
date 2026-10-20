@@ -5,27 +5,27 @@ import { popularReports } from "../mock-data";
 export function PopularReportsCard() {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">รายงานยอดนิยม</h2>
-      <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+      <h2 className="mb-3 text-sm font-semibold text-foreground">รายงานยอดนิยม</h2>
+      <ul className="flex flex-col divide-y divide-border">
         {popularReports.map((report) => (
           <li key={report.id}>
             <div
               title="Not built yet"
-              className="flex cursor-not-allowed items-center gap-2.5 py-2.5 text-sm text-zinc-600 dark:text-zinc-300"
+              className="flex cursor-not-allowed items-center gap-2.5 py-2.5 text-sm text-muted-foreground"
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
                 <ClipboardIcon className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-zinc-900 dark:text-zinc-50">{report.title}</p>
-                <p className="truncate text-xs text-zinc-400">{report.subtitle}</p>
+                <p className="truncate font-medium text-foreground">{report.title}</p>
+                <p className="truncate text-xs text-t1-gray-400">{report.subtitle}</p>
               </div>
-              <ChevronRightIcon className="h-3.5 w-3.5 shrink-0 text-zinc-300" />
+              <ChevronRightIcon className="h-3.5 w-3.5 shrink-0 text-t1-gray-400" />
             </div>
           </li>
         ))}
       </ul>
-      <button className="mt-3 flex items-center gap-1.5 border-t border-zinc-100 pt-3 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:border-zinc-800 dark:text-indigo-400">
+      <button className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 text-sm font-medium text-primary hover:text-accent-foreground">
         ดูรายงานทั้งหมด
         <ArrowRightIcon className="h-3.5 w-3.5" />
       </button>

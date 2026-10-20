@@ -7,8 +7,8 @@ export function AssetAllocationCard() {
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">การจัดสรรทรัพย์สิน</h2>
-        <button className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">การจัดสรรทรัพย์สิน</h2>
+        <button className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground">
           ดูทั้งหมด
           <ArrowRightIcon className="h-3 w-3" />
         </button>
@@ -16,30 +16,30 @@ export function AssetAllocationCard() {
 
       <div className="mb-4 grid grid-cols-2 gap-3">
         <div>
-          <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <p className="text-xl font-semibold text-foreground">
             {assetAllocationSummary.allocated.value.toLocaleString()}
           </p>
-          <p className="text-xs text-zinc-400">จัดสรรแล้ว</p>
-          <p className="text-xs text-zinc-400">{assetAllocationSummary.allocated.percentLabel}</p>
+          <p className="text-xs text-t1-gray-400">จัดสรรแล้ว</p>
+          <p className="text-xs text-t1-gray-400">{assetAllocationSummary.allocated.percentLabel}</p>
         </div>
         <div>
-          <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <p className="text-xl font-semibold text-foreground">
             {assetAllocationSummary.unallocated.value.toLocaleString()}
           </p>
-          <p className="text-xs text-zinc-400">ยังไม่ได้จัดสรร</p>
-          <p className="text-xs text-zinc-400">{assetAllocationSummary.unallocated.percentLabel}</p>
+          <p className="text-xs text-t1-gray-400">ยังไม่ได้จัดสรร</p>
+          <p className="text-xs text-t1-gray-400">{assetAllocationSummary.unallocated.percentLabel}</p>
         </div>
       </div>
 
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">แยกตามประเภททรัพย์สิน</p>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-t1-gray-400">แยกตามประเภททรัพย์สิน</p>
       <ul className="flex flex-1 flex-col justify-center gap-2.5">
         {assetCategoryBreakdown.map((row) => (
           <li key={row.id}>
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="text-zinc-600 dark:text-zinc-300">{row.label}</span>
-              <span className="text-zinc-400">
+              <span className="text-muted-foreground">{row.label}</span>
+              <span className="text-t1-gray-400">
                 {row.allocated.toLocaleString()}/{row.total.toLocaleString()}
-                <span className="ml-1 font-medium text-zinc-600 dark:text-zinc-300">{row.percent}%</span>
+                <span className="ml-1 font-medium text-muted-foreground">{row.percent}%</span>
               </span>
             </div>
             <ProgressBar value={row.percent} color="indigo" />

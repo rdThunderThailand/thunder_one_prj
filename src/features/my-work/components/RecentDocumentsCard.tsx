@@ -7,7 +7,7 @@ import { ClipboardIcon } from "@/components/ui/icons";
 export function RecentDocumentsCard() {
   return (
     <Card className="p-4">
-      <h2 className="mb-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Recent Documents</h2>
+      <h2 className="mb-1 text-sm font-semibold text-foreground">Recent Documents</h2>
       <EmptyState
         icon={ClipboardIcon}
         title="No recent documents"

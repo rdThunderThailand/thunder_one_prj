@@ -19,7 +19,7 @@ export function HelpTrigger({ className, support, children }: { className: strin
       <button
         ref={triggerRef}
         type="button"
-        className={cn(className, open && "bg-primary-soft text-primary ring-2 ring-primary/40")}
+        className={cn(className, open && "bg-accent text-primary ring-2 ring-primary/40")}
         aria-label="Help"
         aria-haspopup="dialog"
         aria-expanded={open}

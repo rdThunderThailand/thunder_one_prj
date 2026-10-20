@@ -23,10 +23,10 @@ const STATUS_LABEL: Record<PartnerApplicationStatus, string> = {
 };
 
 const STATUS_CLASSES: Record<PartnerApplicationStatus, string> = {
-  PENDING: "bg-amber-50 text-amber-600",
-  NEEDS_INFO: "bg-blue-50 text-blue-600",
-  APPROVED: "bg-emerald-50 text-emerald-600",
-  REJECTED: "bg-red-50 text-red-600",
+  PENDING: "bg-warning-muted text-t1-amber-700",
+  NEEDS_INFO: "bg-info-muted text-t1-blue-700",
+  APPROVED: "bg-success-muted text-t1-green-700",
+  REJECTED: "bg-error-muted text-t1-red-700",
 };
 
 // "ประเภทปัจจุบัน" isn't a field on the row — it's derived the same way
@@ -36,8 +36,8 @@ const STATUS_CLASSES: Record<PartnerApplicationStatus, string> = {
 // parallel application type).
 function currentType(status: PartnerApplicationStatus): { label: string; classes: string } {
   return status === "APPROVED"
-    ? { label: "พันธมิตร (Partner)", classes: "bg-violet-50 text-violet-600" }
-    : { label: "ลูกค้า (Customer)", classes: "bg-zinc-100 text-zinc-600" };
+    ? { label: "พันธมิตร (Partner)", classes: "bg-in-progress-muted text-t1-purple-700" }
+    : { label: "ลูกค้า (Customer)", classes: "bg-muted text-muted-foreground" };
 }
 
 // submitted_at is a UTC timestamp — slicing it would show the previous day
@@ -119,43 +119,43 @@ export function LeadApprovalPage({ applications, auroraRequests }: LeadApprovalP
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Lead Approval Workspace</p>
-        <h1 className="text-2xl font-bold text-zinc-900">อนุมัติ Lead</h1>
-        <p className="text-sm text-zinc-500">ตรวจสอบและอนุมัติคำขอเป็นพันธมิตร (Partner) ที่เข้ามาใหม่</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-t1-blue-700">Lead Approval Workspace</p>
+        <h1 className="text-2xl font-bold text-foreground">อนุมัติ Lead</h1>
+        <p className="text-sm text-muted-foreground">ตรวจสอบและอนุมัติคำขอเป็นพันธมิตร (Partner) ที่เข้ามาใหม่</p>
       </div>
 
       {applications === null ? (
-        <Card className="p-10 text-center text-sm text-zinc-400">
+        <Card className="p-10 text-center text-sm text-t1-gray-400">
           ไม่สามารถโหลดรายการคำขอได้ในขณะนี้ — บัญชีนี้อาจไม่มีสิทธิ์ตรวจสอบ (ต้องเป็น super_admin) หรือเซิร์ฟเวอร์ขัดข้องชั่วคราว
         </Card>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Card className="flex items-center gap-3 p-4">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-warning-muted text-t1-amber-700">
                 <ClockIcon className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-sm text-zinc-500">รอตรวจสอบ</p>
-                <p className="text-2xl font-bold text-zinc-900">{pendingCount}</p>
+                <p className="text-sm text-muted-foreground">รอตรวจสอบ</p>
+                <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
               </div>
             </Card>
             <Card className="flex items-center gap-3 p-4">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-success-muted text-t1-green-700">
                 <CheckCircleIcon className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-sm text-zinc-500">อนุมัติแล้ว</p>
-                <p className="text-2xl font-bold text-zinc-900">{approvedCount}</p>
+                <p className="text-sm text-muted-foreground">อนุมัติแล้ว</p>
+                <p className="text-2xl font-bold text-foreground">{approvedCount}</p>
               </div>
             </Card>
             <Card className="flex items-center gap-3 p-4">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-error-muted text-t1-red-700">
                 <XIcon className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-sm text-zinc-500">ปฏิเสธแล้ว</p>
-                <p className="text-2xl font-bold text-zinc-900">{rejectedCount}</p>
+                <p className="text-sm text-muted-foreground">ปฏิเสธแล้ว</p>
+                <p className="text-2xl font-bold text-foreground">{rejectedCount}</p>
               </div>
             </Card>
           </div>
@@ -163,20 +163,20 @@ export function LeadApprovalPage({ applications, auroraRequests }: LeadApprovalP
           <Card className="p-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative min-w-[240px] flex-1">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-t1-gray-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="ค้นหาชื่อองค์กร ผู้ติดต่อ..."
-                  className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none"
+                  className="w-full rounded-lg border border-border py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-t1-gray-400 focus:border-info focus:outline-none"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as PartnerApplicationStatus | "ALL")}
                 aria-label="กรองตามสถานะ"
-                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 focus:border-blue-400 focus:outline-none"
+                className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-t1-gray-50 focus:border-info focus:outline-none"
               >
                 <option value="ALL">
                   สถานะ: ทั้งหมด
@@ -193,14 +193,14 @@ export function LeadApprovalPage({ applications, auroraRequests }: LeadApprovalP
             </div>
 
             {rows.length === 0 ? (
-              <p className="py-10 text-center text-sm text-zinc-400">ยังไม่มีคำขอเป็นพันธมิตรเข้ามา</p>
+              <p className="py-10 text-center text-sm text-t1-gray-400">ยังไม่มีคำขอเป็นพันธมิตรเข้ามา</p>
             ) : visibleRows.length === 0 ? (
-              <p className="py-10 text-center text-sm text-zinc-400">ไม่พบคำขอที่ตรงกับการค้นหา</p>
+              <p className="py-10 text-center text-sm text-t1-gray-400">ไม่พบคำขอที่ตรงกับการค้นหา</p>
             ) : (
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[880px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-100 text-xs text-zinc-400">
+                    <tr className="border-b border-border text-xs text-t1-gray-400">
                       <th className="py-2 font-medium">Tenant / องค์กร</th>
                       <th className="py-2 font-medium">ประเภทปัจจุบัน</th>
                       <th className="py-2 font-medium">ผู้สมัคร</th>
@@ -209,24 +209,24 @@ export function LeadApprovalPage({ applications, auroraRequests }: LeadApprovalP
                       <th className="py-2 font-medium">การดำเนินการ</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100">
+                  <tbody className="divide-y divide-border">
                     {visibleRows.map((row) => {
                       const type = currentType(row.status);
                       const busy = pendingId === row.id;
                       return (
                         <tr key={row.id}>
                           <td className="py-3">
-                            <p className="font-semibold text-zinc-900">{row.tenant?.name ?? "-"}</p>
-                            <p className="text-xs text-zinc-400">{row.external_application_id}</p>
+                            <p className="font-semibold text-foreground">{row.tenant?.name ?? "-"}</p>
+                            <p className="text-xs text-t1-gray-400">{row.external_application_id}</p>
                           </td>
                           <td className="py-3">
                             <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${type.classes}`}>{type.label}</span>
                           </td>
                           <td className="py-3">
-                            <p className="text-zinc-900">{row.applicant?.name ?? "-"}</p>
-                            <p className="text-xs text-zinc-400">{row.applicant?.email ?? "-"}</p>
+                            <p className="text-foreground">{row.applicant?.name ?? "-"}</p>
+                            <p className="text-xs text-t1-gray-400">{row.applicant?.email ?? "-"}</p>
                           </td>
-                          <td className="py-3 text-zinc-600">{formatThaiDate(bangkokIsoDate(row.submitted_at))}</td>
+                          <td className="py-3 text-muted-foreground">{formatThaiDate(bangkokIsoDate(row.submitted_at))}</td>
                           <td className="py-3">
                             <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_CLASSES[row.status]}`}>
                               {STATUS_LABEL[row.status]}
@@ -239,7 +239,7 @@ export function LeadApprovalPage({ applications, auroraRequests }: LeadApprovalP
                                   type="button"
                                   disabled={busy}
                                   onClick={() => decide(row, "APPROVED")}
-                                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="rounded-lg bg-success px-3 py-1.5 text-xs font-semibold text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   อนุมัติ
                                 </button>
@@ -247,7 +247,7 @@ export function LeadApprovalPage({ applications, auroraRequests }: LeadApprovalP
                                   type="button"
                                   disabled={busy}
                                   onClick={() => decide(row, "NEEDS_INFO")}
-                                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-t1-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   ขอข้อมูลเพิ่มเติม
                                 </button>
@@ -255,13 +255,13 @@ export function LeadApprovalPage({ applications, auroraRequests }: LeadApprovalP
                                   type="button"
                                   disabled={busy}
                                   onClick={() => decide(row, "REJECTED")}
-                                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-t1-red-700 hover:bg-error-muted disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   ปฏิเสธ
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-xs text-zinc-300">
+                              <span className="text-xs text-t1-gray-400">
                                 {row.status === "NEEDS_INFO" ? "รอผู้สมัครส่งข้อมูลเพิ่มเติม" : "—"}
                               </span>
                             )}

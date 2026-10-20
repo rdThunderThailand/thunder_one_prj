@@ -80,7 +80,7 @@ function FilterLink({ href, selected, label, count }: { href: string; selected: 
         aria-current={selected ? "true" : undefined}
         className={cn(
           "flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px] transition-colors",
-          selected ? "bg-primary-soft font-semibold text-primary" : "text-foreground hover:bg-muted",
+          selected ? "bg-accent font-semibold text-primary" : "text-foreground hover:bg-muted",
         )}
       >
         <span aria-hidden="true" className={cn("grid h-4 w-4 place-items-center rounded border", selected ? "border-primary bg-primary text-primary-foreground" : "border-border")}>

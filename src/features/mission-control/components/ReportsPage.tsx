@@ -14,7 +14,7 @@ export function ReportsPage() {
     <div className="flex flex-col gap-6">
       <Card className="overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <thead className="border-b border-border text-xs text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Department</th>
               <th className="px-4 py-3 font-medium">Total Assets</th>
@@ -22,23 +22,23 @@ export function ReportsPage() {
               <th className="px-4 py-3 font-medium">Replacement Value</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+          <tbody className="divide-y divide-border">
             {mockDepartments.map((dept) => {
               const deptAssets = assets.filter((a) => a.departmentId === dept.id);
               const critical = deptAssets.filter((a) => a.status === "critical").length;
               const value = deptAssets.reduce((sum, a) => sum + a.purchaseValue, 0);
               return (
                 <tr key={dept.id}>
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {dept.name}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {deptAssets.length}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
-                    {critical > 0 ? <span className="text-red-500">{critical}</span> : 0}
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {critical > 0 ? <span className="text-error">{critical}</span> : 0}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-muted-foreground">
                     ฿{value.toLocaleString("en-US")}
                   </td>
                 </tr>

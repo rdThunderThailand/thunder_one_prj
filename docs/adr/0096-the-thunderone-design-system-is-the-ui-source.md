@@ -1,6 +1,6 @@
 # The ThunderOne design system is the UI source
 
-**Status:** accepted · 2026-10-16
+**Status:** accepted · 2026-10-16 · rollout P1–P6 complete 2026-10-20 (see the plan)
 **Supersedes:** ADR 0095; the visual parts of ADR 0075 (§1 token values, §2 font binding stays, §9 icons) and ADR 0076 (§1 Lovable as visual source, §5 base layer)
 **Source:** owner decision 2026-10-16 after ADR 0095; plan `docs/design-system/plan-thunderone-ds-migration.md` (D1–D10)
 **Related:** rdThunderThailand/-thunder-design-system#2, thunder_one_prj#281

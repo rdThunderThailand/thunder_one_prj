@@ -11,11 +11,11 @@ const iconFor: Record<EmployeeStatTileData["icon"], React.ReactNode> = {
 };
 
 const tone: Record<EmployeeStatTileData["color"], string> = {
-  indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
-  emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-  purple: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
-  blue: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-  amber: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+  indigo: "bg-accent text-primary",
+  emerald: "bg-success-muted text-t1-green-700",
+  purple: "bg-in-progress-muted text-t1-purple-700",
+  blue: "bg-info-muted text-t1-blue-700",
+  amber: "bg-warning-muted text-t1-amber-700",
 };
 
 export function EmployeeStatTilesRow() {
@@ -27,8 +27,8 @@ export function EmployeeStatTilesRow() {
             {iconFor[tile.icon]}
           </span>
           <div>
-            <p className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{tile.value}</p>
-            <p className="text-xs text-zinc-400">{tile.sublabel}</p>
+            <p className="text-xl font-semibold text-foreground">{tile.value}</p>
+            <p className="text-xs text-t1-gray-400">{tile.sublabel}</p>
           </div>
         </Card>
       ))}

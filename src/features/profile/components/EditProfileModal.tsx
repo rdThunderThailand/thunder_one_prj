@@ -8,7 +8,7 @@ import { ApiError } from "@/lib/api/api-error";
 import { updateUserProfile } from "../services/profile-api";
 
 const inputClasses =
-  "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-border px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
 
 function errorMessage(err: unknown): string {
   if (err instanceof ApiError) {
@@ -87,27 +87,27 @@ export function EditProfileModal({ userId, firstName, lastName, firstNameTh, las
       }
     >
       <form id="edit-profile-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           ชื่อ (ไทย)
           <input value={firstTh} onChange={(e) => setFirstTh(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           นามสกุล (ไทย)
           <input value={lastTh} onChange={(e) => setLastTh(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           ชื่อ
           <input value={first} onChange={(e) => setFirst(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           นามสกุล
           <input value={last} onChange={(e) => setLast(e.target.value)} className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           วันเดือนปีเกิด
           <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className={inputClasses} />
         </label>
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        {error && <p className="text-xs text-error">{error}</p>}
       </form>
     </Modal>
   );

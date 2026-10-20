@@ -49,16 +49,16 @@ export interface BulkSubmitResult {
 
 function Breadcrumb() {
   return (
-    <nav className="flex items-center gap-1.5 text-xs text-zinc-400">
-      <Link href="/people" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+    <nav className="flex items-center gap-1.5 text-xs text-t1-gray-400">
+      <Link href="/people" className="hover:text-muted-foreground">
         ภาพรวม
       </Link>
       <ChevronRightIcon className="h-3 w-3" />
-      <Link href="/people/add" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+      <Link href="/people/add" className="hover:text-muted-foreground">
         เพิ่มคน
       </Link>
       <ChevronRightIcon className="h-3 w-3" />
-      <span className="text-zinc-600 dark:text-zinc-300">เพิ่มหลายคนเข้าองค์กร (Bulk)</span>
+      <span className="text-muted-foreground">เพิ่มหลายคนเข้าองค์กร (Bulk)</span>
     </nav>
   );
 }
@@ -443,8 +443,8 @@ export function AddBulkWizardPage({ roles, tenantId, units, positionOptions }: A
         <div className="flex flex-col gap-3">
           <Breadcrumb />
           <div>
-            <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">เพิ่มหลายคนเข้าองค์กร (Bulk)</h1>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <h1 className="text-2xl font-semibold text-foreground">เพิ่มหลายคนเข้าองค์กร (Bulk)</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               นำเข้าข้อมูลบุคคลหลายคนพร้อมกัน เพื่อเริ่มกระบวนการ Onboarding
             </p>
           </div>
@@ -454,7 +454,7 @@ export function AddBulkWizardPage({ roles, tenantId, units, positionOptions }: A
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <WizardSteps steps={WIZARD_STEP_LABELS} currentIndex={stepIndex} />
       </div>
 
@@ -550,14 +550,14 @@ export function AddBulkWizardPage({ roles, tenantId, units, positionOptions }: A
             </Button>
           ) : (
             <>
-              <span title="ยังไม่เปิดใช้งาน" className="flex cursor-not-allowed items-center rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+              <span title="ยังไม่เปิดใช้งาน" className="flex cursor-not-allowed items-center rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground">
                 บันทึกร่าง
               </span>
               <div className="flex flex-col items-end gap-1">
                 <Button variant="primary" onClick={handleConfirm} disabled={submitting}>
                   {submitting ? `กำลังสร้าง... (${submitProgress}/${rows.length})` : "ยืนยันและส่งคำเชิญ"}
                 </Button>
-                <span className="text-[11px] text-zinc-400">จะส่งอีเมลเชิญทันทีหลังยืนยัน</span>
+                <span className="text-[11px] text-t1-gray-400">จะส่งอีเมลเชิญทันทีหลังยืนยัน</span>
               </div>
             </>
           )}

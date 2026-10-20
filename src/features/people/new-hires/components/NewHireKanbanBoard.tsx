@@ -50,18 +50,18 @@ function HireCard({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       title={draggable ? "ลากเพื่อย้ายขั้นตอน" : undefined}
-      className={`rounded-xl border border-zinc-100 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 ${
+      className={`rounded-xl border border-border bg-card p-3 ${
         draggable ? "cursor-grab active:cursor-grabbing" : ""
       } ${moving ? "opacity-50" : ""}`}
     >
       <div className="flex items-center gap-2.5">
         <Avatar name={hire.name} size={32} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{hire.name}</p>
-          <p className="truncate text-xs text-zinc-400">{hire.position}</p>
+          <p className="truncate text-sm font-medium text-foreground">{hire.name}</p>
+          <p className="truncate text-xs text-t1-gray-400">{hire.position}</p>
         </div>
       </div>
-      <p className="mt-2 text-xs text-zinc-400">
+      <p className="mt-2 text-xs text-t1-gray-400">
         {hire.status === "onboarding" ? `ความคืบหน้า ${hire.progress}%` : `เริ่ม ${hire.startDateLabel}`}
       </p>
       {draggable && onMoveStage && (
@@ -74,7 +74,7 @@ function HireCard({
           onChange={(e) => {
             if (e.target.value) onMoveStage(e.target.value as NewHireStatus);
           }}
-          className="mt-2 w-full cursor-pointer rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+          className="mt-2 w-full cursor-pointer rounded-md border border-border bg-t1-gray-50 px-2 py-1 text-xs text-muted-foreground"
         >
           <option value="">ย้ายไปยัง...</option>
           {DRAGGABLE_STATUSES.filter((s) => s !== hire.status).map((s) => (
@@ -146,18 +146,18 @@ export function NewHireKanbanBoard({ rows, onMoveStage, movingId }: NewHireKanba
               handleDrop(stage.id);
             }}
             className={`flex flex-col gap-3 p-3 transition-colors ${
-              dragOverStage === stage.id ? "ring-2 ring-indigo-400 dark:ring-indigo-500" : ""
+              dragOverStage === stage.id ? "ring-2 ring-primary" : ""
             }`}
           >
             <div className="flex items-center justify-between px-1">
               <Badge variant="pill" color={columnColor[stage.id]}>
                 {stage.label}
               </Badge>
-              <span className="text-xs text-zinc-400">{stageRows.length} คน</span>
+              <span className="text-xs text-t1-gray-400">{stageRows.length} คน</span>
             </div>
             <div className="flex flex-col gap-2">
               {shown.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-zinc-200 p-4 text-center text-xs text-zinc-400 dark:border-zinc-800">
+                <p className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-t1-gray-400">
                   ไม่มีรายการ
                 </p>
               ) : (
@@ -188,7 +188,7 @@ export function NewHireKanbanBoard({ rows, onMoveStage, movingId }: NewHireKanba
                 })
               )}
               {remaining > 0 && (
-                <span title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed px-1 text-xs font-medium text-indigo-400">
+                <span title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed px-1 text-xs font-medium text-primary">
                   ดูเพิ่ม {remaining} คน
                 </span>
               )}

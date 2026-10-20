@@ -35,7 +35,7 @@ export function OrgUnitListView({ units, onSelect }: OrgUnitListViewProps) {
   return (
     <Card className="overflow-x-auto">
       <table className="w-full min-w-[720px] text-left text-sm">
-        <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <thead className="border-b border-border text-xs text-muted-foreground">
           <tr>
             <th className="px-4 py-3 font-medium">หน่วยงาน</th>
             <th className="px-4 py-3 font-medium">รหัส</th>
@@ -45,12 +45,12 @@ export function OrgUnitListView({ units, onSelect }: OrgUnitListViewProps) {
             <th className="px-4 py-3 font-medium">หน่วยงานย่อย</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+        <tbody className="divide-y divide-border">
           {rows.map((unit) => (
             <tr
               key={unit.id}
               onClick={() => onSelect(unit.id)}
-              className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              className="cursor-pointer hover:bg-t1-gray-50"
             >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2" style={{ paddingLeft: indent(units, unit) * 20 }}>
@@ -59,14 +59,14 @@ export function OrgUnitListView({ units, onSelect }: OrgUnitListViewProps) {
                   >
                     <UsersIcon className="h-3 w-3" />
                   </span>
-                  <span className="font-medium text-zinc-900 dark:text-zinc-50">{unit.name}</span>
+                  <span className="font-medium text-foreground">{unit.name}</span>
                 </div>
               </td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{unit.unitCode}</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{unit.unitType}</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{unit.headName ?? "-"}</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{unit.employeeCount} คน</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{unit.teamsCount} หน่วยงาน</td>
+              <td className="px-4 py-3 text-muted-foreground">{unit.unitCode}</td>
+              <td className="px-4 py-3 text-muted-foreground">{unit.unitType}</td>
+              <td className="px-4 py-3 text-muted-foreground">{unit.headName ?? "-"}</td>
+              <td className="px-4 py-3 text-muted-foreground">{unit.employeeCount} คน</td>
+              <td className="px-4 py-3 text-muted-foreground">{unit.teamsCount} หน่วยงาน</td>
             </tr>
           ))}
         </tbody>

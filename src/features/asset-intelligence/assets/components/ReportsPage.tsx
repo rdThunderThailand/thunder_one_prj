@@ -38,21 +38,21 @@ export function ReportsPage() {
       </div>
       <Card className="overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <thead className="border-b border-border text-xs text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Category</th>
               <th className="px-4 py-3 font-medium">Count</th>
               <th className="px-4 py-3 font-medium">Value</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+          <tbody className="divide-y divide-border">
             {[...byCategory.entries()].map(([category, entry]) => (
               <tr key={category}>
-                <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
+                <td className="px-4 py-3 font-medium text-foreground">
                   {categoryLabel[category] ?? category}
                 </td>
-                <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{entry.count}</td>
-                <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                <td className="px-4 py-3 text-muted-foreground">{entry.count}</td>
+                <td className="px-4 py-3 text-muted-foreground">
                   ฿{entry.value.toLocaleString("en-US")}
                 </td>
               </tr>

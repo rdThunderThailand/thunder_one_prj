@@ -50,16 +50,16 @@ export function OrgChartCanvas({ units, rootUnitId, selectedId, onSelect }: OrgC
   }
 
   return (
-    <div ref={wrapperRef} className="[&:fullscreen]:overflow-auto [&:fullscreen]:bg-white [&:fullscreen]:p-4 [&:fullscreen]:dark:bg-zinc-900">
+    <div ref={wrapperRef} className="[&:fullscreen]:overflow-auto [&:fullscreen]:bg-card [&:fullscreen]:p-4 [&:fullscreen]:">
     <Card className="flex flex-col gap-4 p-4">
       <div className="flex justify-end">
-        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-700">
+        <div className="flex items-center gap-1 rounded-lg border border-border p-1">
           <button
             type="button"
             onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - ZOOM_STEP))}
             disabled={zoom <= MIN_ZOOM}
             title="ย่อ"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
           >
             <MinusIcon className="h-3.5 w-3.5" />
           </button>
@@ -67,7 +67,7 @@ export function OrgChartCanvas({ units, rootUnitId, selectedId, onSelect }: OrgC
             type="button"
             onClick={() => setZoom(100)}
             title="รีเซ็ตเป็น 100%"
-            className="px-1 text-xs text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400"
+            className="px-1 text-xs text-muted-foreground hover:text-primary"
           >
             {zoom}%
           </button>
@@ -76,7 +76,7 @@ export function OrgChartCanvas({ units, rootUnitId, selectedId, onSelect }: OrgC
             onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP))}
             disabled={zoom >= MAX_ZOOM}
             title="ขยาย"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
           >
             <PlusIcon className="h-3.5 w-3.5" />
           </button>
@@ -84,7 +84,7 @@ export function OrgChartCanvas({ units, rootUnitId, selectedId, onSelect }: OrgC
             type="button"
             onClick={() => toggleFullscreen()}
             title={isFullscreen ? "ออกจากเต็มจอ" : "ขยายเต็มจอ"}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
           >
             <ExpandIcon className="h-3.5 w-3.5" />
           </button>
@@ -100,13 +100,13 @@ export function OrgChartCanvas({ units, rootUnitId, selectedId, onSelect }: OrgC
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 border-t border-zinc-100 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+      <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="h-px w-5 bg-zinc-400" />
+          <span className="h-px w-5 bg-t1-gray-400" />
           สายการบังคับบัญชา
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-px w-5 border-t border-dashed border-zinc-400" />
+          <span className="h-px w-5 border-t border-dashed border-t1-gray-400" />
           สายงานประสานงาน
         </span>
         <span className="flex items-center gap-1.5">

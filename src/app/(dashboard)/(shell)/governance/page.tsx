@@ -26,7 +26,7 @@ export default async function GovernancePage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Governance" subtitle="Not built yet." />
-      <Card className="p-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <Card className="p-6 text-sm text-muted-foreground">
         Ownership, permission, policy, and audit rollups across every App. No implementation
         exists yet.
       </Card>

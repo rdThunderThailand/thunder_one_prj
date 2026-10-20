@@ -30,7 +30,7 @@ export function CompositionsSummary({ summary, onNeedsContent }: {
         { label: "Total Layouts", value: summary.total, detail: "All layouts", icon: SquareStack },
         { label: "Template-based", value: summary.templateBased, detail: "From a template", icon: LayoutTemplate },
         { label: "Custom", value: summary.custom, detail: "Built from scratch", icon: PencilRuler },
-        { label: "Needs content", value: summary.needsContent, detail: "Click to filter", icon: AlertCircle, tone: "text-warning bg-warning-soft", onClick: onNeedsContent },
+        { label: "Needs content", value: summary.needsContent, detail: "Click to filter", icon: AlertCircle, tone: "text-warning bg-warning-muted", onClick: onNeedsContent },
       ]}
     />
   );

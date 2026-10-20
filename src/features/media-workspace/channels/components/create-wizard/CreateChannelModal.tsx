@@ -38,7 +38,7 @@ function WizardProgress({ step }: { step: Exclude<WizardStep, "success"> }) {
             <span
               className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-semibold ${
                 completed || current
-                  ? "border-primary bg-primary text-white"
+                  ? "border-primary bg-primary text-primary-foreground"
                   : "border-primary/30 bg-card text-primary"
               }`}
             >
@@ -46,7 +46,7 @@ function WizardProgress({ step }: { step: Exclude<WizardStep, "success"> }) {
             </span>
             <span className={`ml-2 text-sm font-medium ${current ? "text-primary" : "text-muted-foreground"}`}>{label}</span>
             {number < WIZARD_STEPS.length && (
-              <span className={`mx-3 h-px flex-1 ${number < step ? "bg-primary-soft" : "bg-muted"}`} aria-hidden="true" />
+              <span className={`mx-3 h-px flex-1 ${number < step ? "bg-accent" : "bg-muted"}`} aria-hidden="true" />
             )}
           </li>
         );
@@ -220,7 +220,7 @@ export function CreateChannelModal({
         />
       )}
       {submitError && (
-        <p role="alert" className="mt-2 text-sm text-danger">
+        <p role="alert" className="mt-2 text-sm text-error">
           {submitError}
         </p>
       )}

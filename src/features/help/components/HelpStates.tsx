@@ -25,7 +25,7 @@ function StateFrame({ icon: Icon, tone = "neutral", title, text, children, role 
     <div role={role} className="mx-auto flex max-w-xl flex-col items-center px-4 py-14 text-center">
       <span
         aria-hidden="true"
-        className={cn("grid h-14 w-14 place-items-center rounded-2xl", tone === "danger" ? "bg-danger-soft text-danger" : "bg-primary-soft text-primary")}
+        className={cn("grid h-14 w-14 place-items-center rounded-2xl", tone === "danger" ? "bg-error-muted text-error" : "bg-accent text-primary")}
       >
         <Icon className="h-6 w-6" />
       </span>

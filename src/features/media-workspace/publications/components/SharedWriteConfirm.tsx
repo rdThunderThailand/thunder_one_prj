@@ -17,7 +17,7 @@ export type SharedSubject = "Playlist" | "Layout";
 /** The sentence shown next to Apply, whether or not a dialog follows (ADR 0083). */
 export function SharedWriteNote({ subject }: { subject: SharedSubject }) {
   return (
-    <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
+    <p className="rounded-md bg-warning-muted px-3 py-2 text-xs text-warning">
       การเปลี่ยนนี้บันทึกลง {subject} ทันทีเมื่อกด Apply และจะไม่ย้อนกลับแม้ทิ้ง draft นี้
     </p>
   );

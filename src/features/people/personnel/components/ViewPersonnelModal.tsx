@@ -23,8 +23,8 @@ const statusDot: Record<WorkStatus, { label: string; color: BadgeColor }> = {
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2 text-sm">
-      <dt className="text-zinc-500 dark:text-zinc-400">{label}</dt>
-      <dd className="text-right text-zinc-900 dark:text-zinc-50">{value}</dd>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="text-right text-foreground">{value}</dd>
     </div>
   );
 }
@@ -49,7 +49,7 @@ export function ViewPersonnelModal({ row, onClose, onEdit }: ViewPersonnelModalP
         <button
           type="button"
           onClick={onEdit}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           แก้ไขข้อมูล
         </button>
@@ -58,8 +58,8 @@ export function ViewPersonnelModal({ row, onClose, onEdit }: ViewPersonnelModalP
       <div className="flex items-center gap-3 pb-3">
         <Avatar name={row.name} src={row.avatarUrl} size={48} />
         <div className="min-w-0">
-          <p className="truncate font-medium text-zinc-900 dark:text-zinc-50">{row.name}</p>
-          <p className="truncate text-xs text-zinc-400">{row.email}</p>
+          <p className="truncate font-medium text-foreground">{row.name}</p>
+          <p className="truncate text-xs text-t1-gray-400">{row.email}</p>
         </div>
       </div>
       <div className="flex flex-wrap gap-1.5 pb-2">
@@ -73,7 +73,7 @@ export function ViewPersonnelModal({ row, onClose, onEdit }: ViewPersonnelModalP
           {onProbation ? "ทดลองงาน" : "ปกติ"}
         </Badge>
       </div>
-      <dl className="divide-y divide-zinc-100 dark:divide-zinc-800">
+      <dl className="divide-y divide-border">
         <Row label="ชื่อ (ไทย)" value={row.nameTh || "-"} />
         <Row label="รหัสพนักงาน" value={row.employeeCode} />
         <Row label="ตำแหน่ง" value={row.position} />

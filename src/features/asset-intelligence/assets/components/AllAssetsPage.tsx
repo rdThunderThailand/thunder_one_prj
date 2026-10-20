@@ -43,7 +43,7 @@ export function AllAssetsPage({ list, summary, filters, filterQuery }: AllAssets
           <AssetRegistryTable rows={list.rows} />
         </>
       ) : (
-        <p className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
+        <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-t1-gray-400">
           ไม่สามารถโหลดรายการทรัพย์สินได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
         </p>
       )}

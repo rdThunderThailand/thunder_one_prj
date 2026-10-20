@@ -43,14 +43,14 @@ export function ManagerGovernancePage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/40 px-4 py-3 text-sm dark:border-indigo-500/20 dark:bg-indigo-500/5">
-        <span className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
-          <ShieldIcon className="h-4 w-4 text-indigo-500" />
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-t1-blue-100 bg-accent/40 px-4 py-3 text-sm">
+        <span className="flex items-center gap-2 text-foreground">
+          <ShieldIcon className="h-4 w-4 text-primary" />
           Tip: Good governance starts with clear policy, regular audits, and an organization-wide culture of compliance.
         </span>
         <span
           title="Not built yet"
-          className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-zinc-400 dark:bg-zinc-900"
+          className="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-card px-3 py-1.5 text-xs font-semibold text-t1-gray-400"
         >
           Report an Issue
           <ArrowRightIcon className="h-3.5 w-3.5 -rotate-45" />

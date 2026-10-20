@@ -12,8 +12,8 @@ export function TenureDistributionCard({ tenureDistribution }: TenureDistributio
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">การกระจายตามอายุงาน</h2>
-        <button type="button" className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">การกระจายตามอายุงาน</h2>
+        <button type="button" className="text-xs font-medium text-primary hover:text-accent-foreground">
           ดูรายงาน
         </button>
       </div>
@@ -23,7 +23,7 @@ export function TenureDistributionCard({ tenureDistribution }: TenureDistributio
         // All-zero (rather than a chart of five empty bars, which looks
         // broken) means no member in this tenant has a start_date set yet —
         // a real, honest state, not an error.
-        <p className="flex h-56 flex-1 items-center justify-center text-center text-xs text-zinc-400">
+        <p className="flex h-56 flex-1 items-center justify-center text-center text-xs text-t1-gray-400">
           ยังไม่มีข้อมูลวันที่เริ่มงานของบุคลากรในองค์กรนี้
         </p>
       )}

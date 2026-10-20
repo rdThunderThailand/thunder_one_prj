@@ -14,6 +14,8 @@ const categoryLabel: Record<string, string> = {
 
 // Same validated CVD-safe categorical palette used elsewhere in this repo
 // (see features/overview/mock-data.ts's own note on this).
+// ponytail: kept as literal hex — the design system has no CVD-checked categorical chart palette, and
+// swapping these for the t1 ramp would lose that validation — replace when the DS ships one.
 const categoryColor: Record<string, string> = {
   laptop: "#2a78d6",
   printer: "#eb6834",
@@ -37,7 +39,7 @@ export function AnalyticsPage() {
   const segments: DonutSegment[] = [...byCategory.entries()].map(([category, count]) => ({
     label: categoryLabel[category] ?? category,
     value: count,
-    color: categoryColor[category] ?? "#a1a1aa",
+    color: categoryColor[category] ?? "var(--color-t1-gray-400)",
   }));
 
   return (
@@ -57,7 +59,7 @@ export function AnalyticsPage() {
       <Card className="flex flex-col items-center gap-4 p-6 sm:flex-row sm:items-start">
         <DonutChart segments={segments} size={160} strokeWidth={22} />
         <div className="flex flex-1 flex-col gap-2">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+          <h2 className="text-sm font-semibold text-foreground">
             Assets by Category
           </h2>
           <ul className="flex flex-col gap-1.5 text-sm">
@@ -67,8 +69,8 @@ export function AnalyticsPage() {
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ backgroundColor: segment.color }}
                 />
-                <span className="text-zinc-600 dark:text-zinc-300">{segment.label}</span>
-                <span className="ml-auto font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="text-muted-foreground">{segment.label}</span>
+                <span className="ml-auto font-medium text-foreground">
                   {segment.value}
                 </span>
               </li>

@@ -103,7 +103,7 @@ export function PlaylistPreviewPanel({
               onClick={() => onPreviewMode?.(mode)}
               className={`rounded-lg border px-2 py-3 text-center text-xs font-medium ${
                 mode === previewMode
-                  ? "border-primary bg-primary-soft text-primary"
+                  ? "border-primary bg-accent text-primary"
                   : tone === "light"
                     ? "border-border text-muted-foreground hover:border-border"
                     : "border-background/20 text-background/70 hover:border-background/50"

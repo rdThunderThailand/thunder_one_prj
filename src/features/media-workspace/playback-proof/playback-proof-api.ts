@@ -3,14 +3,14 @@ import { ApiError } from "@/lib/api/api-error";
 import { requestApi } from "@/lib/api/media-api";
 import type { ChannelScope } from "../channels/channel-scope";
 
-export type FailureReason = "decode_error" | "file_missing" | "file_corrupt" | "playback_stalled" | "other";
+export type FailureReason = "decode_error" | "file_missing" | "file_corrupt" | "playback_stalled" | "other" | "publication_cancelled";
 
 /** One Player-reported slot (ADR 0089 §1). Program/Source are null when the Player did not report a snapshot. */
 export type PlaybackProofEntry = {
   id: string;
   played_at: string;
   duration_played_seconds: number;
-  outcome: "played" | "failed";
+  outcome: "played" | "failed" | "interrupted";
   failure_reason: FailureReason | null;
   channel: { id: string; name: string; status: string } | null;
   device: { id: string; name: string | null };

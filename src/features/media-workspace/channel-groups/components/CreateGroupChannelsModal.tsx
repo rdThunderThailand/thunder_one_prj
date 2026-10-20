@@ -136,7 +136,7 @@ export function CreateGroupChannelsModal({
           </div>
         </section>
 
-        <section className="rounded-xl border border-primary/30 bg-primary-soft p-3">
+        <section className="rounded-xl border border-primary/30 bg-accent p-3">
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-foreground">{selectedTitle}</h3>
             <span className="text-xs text-primary">{draft.size} selected</span>
@@ -157,7 +157,7 @@ export function CreateGroupChannelsModal({
         </section>
       </div>
       {error && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="text-sm text-error">
           {error}
         </p>
       )}

@@ -11,10 +11,10 @@ const iconFor: Record<NewHireStatus, ReactNode> = {
 };
 
 const toneFor: Record<NewHireStatus, string> = {
-  "pre-boarding": "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
-  onboarding: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-  "ready-to-work": "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
-  active: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+  "pre-boarding": "bg-muted text-muted-foreground",
+  onboarding: "bg-info-muted text-t1-blue-700",
+  "ready-to-work": "bg-accent text-primary",
+  active: "bg-success-muted text-t1-green-700",
 };
 
 const STAGES: { id: NewHireStatus; label: string; sublabel: string }[] = [
@@ -36,29 +36,29 @@ interface NewHireFunnelRowProps {
 export function NewHireFunnelRow({ rows }: NewHireFunnelRowProps) {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ภาพรวมขั้นตอนการเข้าใหม่ทั้งหมด</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">ภาพรวมขั้นตอนการเข้าใหม่ทั้งหมด</h2>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
         {STAGES.map((stage, i) => {
           const count = rows.filter((row) => row.status === stage.id).length;
           return (
             <div key={stage.id} className="flex flex-1 items-center gap-3">
-              <div className="flex flex-1 items-center gap-3 rounded-xl border border-zinc-100 p-3 dark:border-zinc-800">
+              <div className="flex flex-1 items-center gap-3 rounded-xl border border-border p-3">
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${toneFor[stage.id]}`}>
                   {iconFor[stage.id]}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{stage.label}</p>
-                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                    {count} <span className="text-xs font-normal text-zinc-400">คน</span>
+                  <p className="truncate text-sm font-medium text-foreground">{stage.label}</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    {count} <span className="text-xs font-normal text-t1-gray-400">คน</span>
                   </p>
-                  <p className="truncate text-xs text-zinc-400">{stage.sublabel}</p>
-                  <span title="ยังไม่เปิดใช้งาน" className="mt-0.5 inline-block cursor-not-allowed text-xs font-medium text-indigo-400">
+                  <p className="truncate text-xs text-t1-gray-400">{stage.sublabel}</p>
+                  <span title="ยังไม่เปิดใช้งาน" className="mt-0.5 inline-block cursor-not-allowed text-xs font-medium text-primary">
                     ดูรายละเอียด
                   </span>
                 </div>
               </div>
               {i < STAGES.length - 1 && (
-                <ArrowRightIcon className="hidden h-4 w-4 shrink-0 text-zinc-300 sm:block dark:text-zinc-700" />
+                <ArrowRightIcon className="hidden h-4 w-4 shrink-0 text-t1-gray-400 sm:block" />
               )}
             </div>
           );

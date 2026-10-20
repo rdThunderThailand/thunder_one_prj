@@ -8,14 +8,14 @@ const iconFor: Record<ThingsToKnowItem["icon"], React.ReactNode> = {
 };
 
 const toneFor: Record<ThingsToKnowItem["icon"], string> = {
-  announcement: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400",
-  policy: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400",
+  announcement: "bg-info-muted text-info",
+  policy: "bg-warning-muted text-warning",
 };
 
 export function ThingsToKnowCard() {
   return (
     <Card className="flex flex-col gap-3 p-4">
-      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Things to Know Today</h2>
+      <h2 className="text-sm font-semibold text-foreground">Things to Know Today</h2>
       <ul className="flex flex-col gap-3">
         {thingsToKnowToday.map((item) => (
           <li key={item.id} className="flex items-start gap-2.5">
@@ -23,9 +23,9 @@ export function ThingsToKnowCard() {
               {iconFor[item.icon]}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-zinc-400">{item.tag}</p>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{item.title}</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{item.detail}</p>
+              <p className="text-xs font-medium text-t1-gray-400">{item.tag}</p>
+              <p className="text-sm font-medium text-foreground">{item.title}</p>
+              <p className="text-xs text-muted-foreground">{item.detail}</p>
             </div>
           </li>
         ))}

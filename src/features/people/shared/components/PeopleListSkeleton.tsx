@@ -31,7 +31,7 @@ export function PeopleListSkeleton() {
         ))}
       </div>
 
-      <Card className="flex flex-col divide-y divide-zinc-100 p-0 dark:divide-zinc-800">
+      <Card className="flex flex-col divide-y divide-border p-0">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 p-4">
             <Skeleton className="h-9 w-9 shrink-0 rounded-full" />

@@ -18,7 +18,7 @@ function NavBadge({ badge }: { badge?: string }) {
   return (
     <span
       className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase ${
-        isAlert ? "bg-red-500 text-white" : "bg-indigo-100 text-indigo-600"
+        isAlert ? "bg-error text-error-foreground" : "bg-accent text-primary"
       }`}
     >
       {badge}
@@ -58,7 +58,7 @@ function NavLink({ item, pathname, collapsed }: { item: NavItem; pathname: strin
       href={item.href}
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}
-      className={`${className} ${active ? "bg-primary-soft text-primary" : "text-sidebar-foreground hover:bg-accent"}`}
+      className={`${className} ${active ? "bg-accent text-primary" : "text-sidebar-foreground hover:bg-accent"}`}
     >
       {content}
     </Link>
@@ -87,7 +87,7 @@ export function MediaWorkspaceNav({ nav, pathname, collapsed }: { nav: NavConfig
         title={collapsed ? nav.overviewItem.label : undefined}
         aria-current={overviewActive ? "page" : undefined}
         className={`mb-3 flex h-8 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition-colors ${
-          overviewActive ? "bg-primary-soft text-primary" : "text-sidebar-foreground hover:bg-accent"
+          overviewActive ? "bg-accent text-primary" : "text-sidebar-foreground hover:bg-accent"
         } ${collapsed ? "justify-center" : ""}`}
       >
         <span className={`h-4 w-4 shrink-0 ${overviewActive ? "" : "text-muted-foreground"}`}>{nav.overviewItem.icon}</span>
@@ -97,7 +97,7 @@ export function MediaWorkspaceNav({ nav, pathname, collapsed }: { nav: NavConfig
       {nav.sections.map((section) => (
         <section key={section.label} className="mb-4">
           {!collapsed && (
-            <p className="mb-1.5 px-3 text-[9px] font-bold uppercase text-muted-foreground">
+            <p className="mb-1.5 px-3 text-2xs font-bold uppercase text-muted-foreground">
               {section.label}
             </p>
           )}

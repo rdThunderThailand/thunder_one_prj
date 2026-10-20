@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ArrowRightIcon, ClockIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import type { CoreRecentLog } from "../services/dashboard-api";
 
-const DOT_COLORS = ["bg-indigo-500", "bg-emerald-500", "bg-blue-500", "bg-amber-500"];
+const DOT_COLORS = ["bg-primary", "bg-success", "bg-info", "bg-warning"];
 
 /** "N ชม./วัน ที่แล้ว" — this app has no shared relative-time helper yet
  *  (`lib/thai-date.ts` only has absolute-date formatters), so a small local
@@ -35,11 +35,11 @@ export async function ActivityFeedCard({ logs: logsPromise }: { logs: Promise<Co
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">กิจกรรมล่าสุด</h2>
+        <h2 className="text-sm font-semibold text-foreground">กิจกรรมล่าสุด</h2>
         {/* No full activity-log page exists yet (same gap people/overview's
             TodayActivityCard has for this exact recentLogs endpoint) — an
             inert button rather than a Link to somewhere that doesn't exist. */}
-        <button type="button" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <button type="button" className="flex items-center gap-1 text-xs font-medium text-primary hover:text-accent-foreground">
           ดูทั้งหมด
           <ArrowRightIcon className="h-3 w-3" />
         </button>
@@ -64,10 +64,10 @@ export async function ActivityFeedCard({ logs: logsPromise }: { logs: Promise<Co
             <li key={log.id} className="flex items-start gap-2.5 text-sm">
               <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${DOT_COLORS[i % DOT_COLORS.length]}`} />
               <div className="min-w-0 flex-1">
-                <p className="text-zinc-900 dark:text-zinc-50">{log.action}</p>
-                {log.description && <p className="text-xs text-zinc-400">{log.description}</p>}
+                <p className="text-foreground">{log.action}</p>
+                {log.description && <p className="text-xs text-t1-gray-400">{log.description}</p>}
               </div>
-              <span className="shrink-0 whitespace-nowrap text-xs text-zinc-400">{timeAgo(log.created_at, now)}</span>
+              <span className="shrink-0 whitespace-nowrap text-xs text-t1-gray-400">{timeAgo(log.created_at, now)}</span>
             </li>
           ))}
         </ul>

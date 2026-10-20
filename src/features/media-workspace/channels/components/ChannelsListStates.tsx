@@ -27,11 +27,11 @@ export function LoadError({
   onRetry: () => void;
 }) {
   return (
-    <Card className="border-danger/30 p-8 text-center">
+    <Card className="border-error/30 p-8 text-center">
       <p className="text-sm font-semibold text-foreground">
         Channels are unavailable
       </p>
-      <p className="mx-auto mt-2 max-w-xl text-sm text-danger">
+      <p className="mx-auto mt-2 max-w-xl text-sm text-error">
         {error.message}
       </p>
       <button
