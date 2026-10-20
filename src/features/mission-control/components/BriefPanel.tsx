@@ -28,7 +28,7 @@ interface BriefPanelProps {
 const CAPABILITIES = [
   { icon: ClipboardIcon, label: "สรุปสิ่งสำคัญ", iconColor: "text-primary", position: "left-0 top-2" },
   { icon: ShareNodesIcon, label: "เห็นบริบทเชื่อมโยง", iconColor: "text-primary", position: "right-0 top-2" },
-  { icon: WarningTriangleIcon, label: "ติดตามสิ่งที่ต้องดูแล", iconColor: "text-danger", position: "left-0 bottom-2" },
+  { icon: WarningTriangleIcon, label: "ติดตามสิ่งที่ต้องดูแล", iconColor: "text-error", position: "left-0 bottom-2" },
   { icon: CheckCircleIcon, label: "แนะนำการดำเนินการ", iconColor: "text-success", position: "right-0 bottom-2" },
 ] as const;
 
@@ -86,7 +86,7 @@ export function BriefPanel({ open, onClose }: BriefPanelProps) {
           <div className="flex items-center gap-2">
             <SparklesIcon className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">ThunderOne Brief</h2>
-            <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary">
+            <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-primary">
               เร็ว ๆ นี้
             </span>
           </div>
@@ -143,7 +143,7 @@ export function BriefPanel({ open, onClose }: BriefPanelProps) {
           <ul className="flex flex-col gap-3 rounded-xl bg-muted p-4">
             {CHECKLIST.map((item) => (
               <li key={item} className="flex items-center gap-2.5 text-sm text-foreground">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
                   <CheckIcon className="h-3 w-3" />
                 </span>
                 {item}
@@ -166,7 +166,7 @@ export function BriefPanel({ open, onClose }: BriefPanelProps) {
             </div>
           </div>
 
-          <div className="flex items-start gap-2.5 rounded-xl bg-info-soft p-3.5">
+          <div className="flex items-start gap-2.5 rounded-xl bg-info-muted p-3.5">
             <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-info" />
             <p className="text-xs text-foreground">
               ThunderOne Brief ยังอยู่ระหว่างการพัฒนา เราจะแจ้งให้คุณทราบทันทีเมื่อพร้อมใช้งาน

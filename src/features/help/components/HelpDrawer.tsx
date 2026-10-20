@@ -216,12 +216,12 @@ function PanelBody({ pathname, support, onClose }: { pathname: string; support?:
         />
       ) : tab === "page" ? (
         <footer className="grid grid-cols-2 gap-3 px-5 pb-5 pt-2">
-          <Link href={helpHref("/", { lang: locale, from })} onClick={leave} className="inline-flex h-16 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card px-3 text-sm font-semibold text-primary shadow-panel hover:bg-primary-soft">
+          <Link href={helpHref("/", { lang: locale, from })} onClick={leave} className="inline-flex h-16 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card px-3 text-sm font-semibold text-primary shadow-panel hover:bg-accent">
             <BookOpen aria-hidden="true" className="h-5 w-5" />
             {t("openHelpCenter", locale)}
             <ExternalLink aria-hidden="true" className="h-4 w-4" />
           </Link>
-          <button type="button" onClick={() => switchTab("support")} className="inline-flex h-16 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card px-3 text-sm font-semibold text-primary shadow-panel hover:bg-primary-soft">
+          <button type="button" onClick={() => switchTab("support")} className="inline-flex h-16 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card px-3 text-sm font-semibold text-primary shadow-panel hover:bg-accent">
             <MessageCircle aria-hidden="true" className="h-5 w-5" />
             {t("contactSupport", locale)}
           </button>
@@ -442,7 +442,7 @@ function SupportTab({ locale, support, from, onOpen, onLeave }: { locale: Locale
   if (s.chatUrl) {
     channels.push(
       <ChannelRow key="chat" icon={MessagesSquare} title={t("liveChat", locale)} text={t("liveChatText", locale)}>
-        <ExternalAnchor href={s.chatUrl} className="h-9 rounded-lg border border-border px-4 text-primary hover:bg-primary-soft">{t("startChat", locale)}</ExternalAnchor>
+        <ExternalAnchor href={s.chatUrl} className="h-9 rounded-lg border border-border px-4 text-primary hover:bg-accent">{t("startChat", locale)}</ExternalAnchor>
       </ChannelRow>,
     );
   }
@@ -456,7 +456,7 @@ function SupportTab({ locale, support, from, onOpen, onLeave }: { locale: Locale
   if (s.phone) {
     channels.push(
       <ChannelRow key="phone" icon={Phone} title={t("phoneSupport", locale)} text={t("phoneSupportText", locale)} sub={s.hours}>
-        <a href={`tel:${s.phone.replace(/[^\d+]/g, "")}`} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold text-primary hover:bg-primary-soft">
+        <a href={`tel:${s.phone.replace(/[^\d+]/g, "")}`} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold text-primary hover:bg-accent">
           <Phone aria-hidden="true" className="h-4 w-4" />
           {s.phone}
         </a>
@@ -466,7 +466,7 @@ function SupportTab({ locale, support, from, onOpen, onLeave }: { locale: Locale
   if (s.contactUrl) {
     channels.push(
       <ChannelRow key="contact" icon={MessageCircle} title={t("contactForm", locale)} text={t("contactFormText", locale)}>
-        <ExternalAnchor href={s.contactUrl} className="h-9 rounded-lg border border-border px-4 text-primary hover:bg-primary-soft">{t("contactSupport", locale)}</ExternalAnchor>
+        <ExternalAnchor href={s.contactUrl} className="h-9 rounded-lg border border-border px-4 text-primary hover:bg-accent">{t("contactSupport", locale)}</ExternalAnchor>
       </ChannelRow>,
     );
   }
@@ -542,7 +542,7 @@ function SupportTab({ locale, support, from, onOpen, onLeave }: { locale: Locale
 function ChannelRow({ icon: Icon, title, text, sub, children }: { icon: React.ComponentType<{ className?: string }>; title: string; text: string; sub?: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3 py-4">
-      <span aria-hidden="true" className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+      <span aria-hidden="true" className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent text-primary">
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
@@ -572,7 +572,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function IconBox({ icon: Icon }: { icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+    <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent text-primary">
       <Icon className="h-4 w-4" />
     </span>
   );
@@ -606,9 +606,9 @@ function TaskRows({ cards, locale, onOpen, boxed = false }: { cards: GuideCard[]
 }
 
 const TONE: Record<"danger" | "warning" | "info", string> = {
-  danger: "bg-danger-soft text-danger",
-  warning: "bg-warning-soft text-warning",
-  info: "bg-info-soft text-info",
+  danger: "bg-error-muted text-error",
+  warning: "bg-warning-muted text-warning",
+  info: "bg-info-muted text-info",
 };
 
 /** Troubleshooting rows: the badge colour says how serious the topic is (reference: red / amber / blue). */

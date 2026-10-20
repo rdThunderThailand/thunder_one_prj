@@ -61,7 +61,7 @@ export function GuideBody({ body, dense = false }: { body: GuideBlock[]; dense?:
                 key={i}
                 className={cn(
                   "flex gap-3 rounded-xl border p-3",
-                  block.tone === "warning" ? "border-warning/30 bg-warning-soft" : "border-info/20 bg-info-soft",
+                  block.tone === "warning" ? "border-warning/30 bg-warning-muted" : "border-info/20 bg-info-muted",
                 )}
               >
                 <Icon aria-hidden="true" className={cn("mt-1 h-4 w-4 shrink-0", block.tone === "warning" ? "text-warning" : "text-info")} />
