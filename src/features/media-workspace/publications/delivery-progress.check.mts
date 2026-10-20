@@ -11,6 +11,8 @@ import {
   buildDeliveryRows,
   canRetryTarget,
   deliveryPollIntervalMs,
+  deviceStatus,
+  sortDeliveryRows,
   FAST_DELIVERY_POLL_MS,
   SLOW_DELIVERY_POLL_MS,
 } from "./delivery-progress.ts";
@@ -312,6 +314,41 @@ function target(overrides: Partial<PublicationDeliveryTarget>): PublicationDeliv
   const byResult = filterDeliveryRows(rows, "", "error");
   assert.equal(byResult.length, 1);
   assert.equal(byResult[0].target.device_id, "dev-2");
+}
+
+// Each device state reads as one operator-facing label and tone.
+{
+  const future: PublicationSchedule = { starts_at: "2026-08-19T00:00:00Z" } as PublicationSchedule;
+  const past: PublicationSchedule = { ends_at: "2026-08-18T09:00:00Z" } as PublicationSchedule;
+  const status = (t: Partial<PublicationDeliveryTarget>, schedule: PublicationSchedule | null = null) =>
+    deviceStatus(deriveDeviceProgress(target(t), schedule, now), t.error_message);
+  assert.deepEqual(status({ status: "playing" }), { label: "เล่นแล้ว", tone: "success", detail: null });
+  assert.equal(status({ status: "delivered" }, future).tone, "info");
+  assert.equal(status({ status: "delivered" }).label, "ส่งถึงแล้ว · รอยืนยันการเล่น");
+  assert.equal(status({ status: "downloading" }).label, "กำลังดาวน์โหลด");
+  assert.equal(status({ status: "pending" }).label, "รอเครื่องรับงาน");
+  assert.equal(status({ status: "pending", status_level: "offline" }).tone, "warning");
+  assert.equal(status({ status: "pending" }, past).label, "หมดช่วงเวลาออกอากาศก่อนส่งถึง");
+  assert.deepEqual(status({ status: "failed", error_message: "disk full" }), {
+    label: "ส่งไม่สำเร็จ",
+    tone: "error",
+    detail: "disk full",
+  });
+}
+
+// Problems sort first, then by name.
+{
+  const rows = buildDeliveryRows(
+    [
+      target({ device_id: "a", device_name: "B screen", status: "playing" }),
+      target({ device_id: "b", device_name: "A screen", status: "playing" }),
+      target({ device_id: "c", device_name: "Z screen", status: "failed" }),
+      target({ device_id: "d", device_name: "Y screen", status: "pending", status_level: "offline" }),
+    ],
+    null,
+    now
+  );
+  assert.deepEqual(sortDeliveryRows(rows).map((r) => r.target.device_id), ["c", "d", "b", "a"]);
 }
 
 // Poll fast while an open run is settling, slow while waiting/late, and stop at terminals.

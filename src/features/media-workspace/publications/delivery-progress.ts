@@ -44,10 +44,6 @@ export type DeliverySummary = {
   stage2Done: number;
   stage3Done: number;
   overallPercent: number;
-  connected: number;
-  delivered: number;
-  downloading: number;
-  offline: number;
   failed: number;
   result: PublishResult;
   /** When the run reached `result`, or null while it's still `Publishing`. There is no stored
@@ -136,6 +132,43 @@ export function canRetryTarget(progress: DeviceProgress): boolean {
   return progress.stage2 === "failed" || progress.stage2 === "blocked-offline";
 }
 
+export type DeviceStatusTone = "success" | "info" | "in-progress" | "warning" | "error";
+
+export type DeviceStatus = { label: string; tone: DeviceStatusTone; detail: string | null };
+
+/** One operator-facing line per device: what state it is in and why, so the table needs no
+ * separate Delivery / Playback / Result columns. Tones follow the media profile's DS-04 map. */
+export function deviceStatus(progress: DeviceProgress, errorMessage?: string | null): DeviceStatus {
+  switch (progress.stage2) {
+    case "failed":
+      return { label: "ส่งไม่สำเร็จ", tone: "error", detail: errorMessage ?? null };
+    case "blocked-offline":
+      return { label: "เครื่อง offline · ยังไม่ได้รับงาน", tone: "warning", detail: null };
+    case "expired":
+      return { label: "หมดช่วงเวลาออกอากาศก่อนส่งถึง", tone: "warning", detail: null };
+    case "in-progress":
+      return { label: "กำลังดาวน์โหลด", tone: "in-progress", detail: null };
+    case "queued":
+      return { label: "รอเครื่องรับงาน", tone: "in-progress", detail: null };
+  }
+  if (progress.stage3 === "confirmed") return { label: "เล่นแล้ว", tone: "success", detail: null };
+  if (progress.stage3 === "waiting-scheduled") {
+    return { label: "ส่งถึงแล้ว · รอเวลาเริ่มเล่น", tone: "info", detail: null };
+  }
+  return { label: "ส่งถึงแล้ว · รอยืนยันการเล่น", tone: "in-progress", detail: null };
+}
+
+const RESULT_ORDER: Record<DeviceResult, number> = { error: 0, warning: 1, processing: 2, success: 3 };
+
+/** Devices that need attention first, then by name, so a large Group's problems sit on top. */
+export function sortDeliveryRows(rows: DeliveryRow[]): DeliveryRow[] {
+  return [...rows].sort(
+    (a, b) =>
+      RESULT_ORDER[a.progress.result] - RESULT_ORDER[b.progress.result] ||
+      a.progress.deviceName.localeCompare(b.progress.deviceName)
+  );
+}
+
 export function buildDeliveryRows(
   targets: PublicationDeliveryTarget[],
   schedule: PublicationSchedule | null | undefined,
@@ -191,10 +224,6 @@ export function summarizeDelivery(
   const stage3Done = targets.filter((t) => t.status === "playing").length;
   const overallPercent = total === 0 ? 0 : Math.floor((stage3Done / total) * 100);
 
-  const connected = targets.filter((t) => t.status_level !== "offline").length;
-  const delivered = stage2Done;
-  const downloading = targets.filter((t) => t.status === "downloading").length;
-  const offline = targets.filter((t) => isOffline(t)).length;
   const failed = targets.filter((t) => t.status === "failed").length;
 
   let result: PublishResult;
@@ -238,10 +267,6 @@ export function summarizeDelivery(
     stage2Done,
     stage3Done,
     overallPercent,
-    connected,
-    delivered,
-    downloading,
-    offline,
     failed,
     result,
     completedAt,
