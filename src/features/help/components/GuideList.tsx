@@ -28,7 +28,7 @@ export function GuideRow({
     <Link
       href={href}
       className={cn(
-        "group flex items-start gap-3 rounded-xl border border-border bg-card transition-colors hover:border-primary/40 hover:bg-primary-soft/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "group flex items-start gap-3 rounded-xl border border-border bg-card transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         compact ? "p-3" : "p-4",
       )}
     >

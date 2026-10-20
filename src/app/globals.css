@@ -5,17 +5,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* `dark:` classes still exist in ~390 files and nothing applies `.dark`; keeping the variant bound to
-   `.dark` stops them from switching on with the OS theme until they are swept out (plan P5). */
-@custom-variant dark (&:is(.dark *));
-
 /*
  * Design tokens come from the ThunderOne design system (ADR 0096):
  * src/design-system/t1-tailwind-v4.css is a copy of the vendored skill's generated theme and owns
  * every shared colour, radius, shadow and the base layer. Never edit it; never redefine its names
  * here. This file only adds what the design system does not have:
  *   - project-only tokens (z-index, small text sizes, large radii, overlay, program, …)
- *   - temporary aliases for the old token names, removed when plan P5 renames their users.
  * The design system stores colours as HSL triplets (`--success: 160 84% 39%`): in CSS use
  * `var(--color-success)`, never `var(--success)`.
  */
@@ -46,16 +41,6 @@
   --color-border-subtle: #F3F4F6; /* t1 gray-100 */
   --color-overlay: rgb(17 24 39 / 45%); /* t1 gray-900 */
   --color-program: var(--program);
-
-  /* Aliases for the pre-ADR-0096 names. ponytail: kept so this PR stays reviewable — remove when
-     plan P5 renames their users (danger → error, *-soft → *-muted, primary-soft → accent). */
-  --color-danger: hsl(var(--error));
-  --color-danger-soft: hsl(var(--error-muted));
-  --color-danger-foreground: hsl(var(--error-foreground));
-  --color-success-soft: hsl(var(--success-muted));
-  --color-warning-soft: hsl(var(--warning-muted));
-  --color-info-soft: hsl(var(--info-muted));
-  --color-primary-soft: hsl(var(--accent));
 
   --shadow-float: 0 14px 36px rgb(17 24 39 / 12%);
   --shadow-dialog: 0 24px 60px rgb(17 24 39 / 18%);

@@ -30,7 +30,7 @@ export function ContentTypeIcon({ type, size = "md", className }: { type: Conten
     <span
       aria-hidden="true"
       className={cn(
-        "grid shrink-0 place-items-center rounded-lg bg-primary-soft text-primary",
+        "grid shrink-0 place-items-center rounded-lg bg-accent text-primary",
         size === "sm" && "h-7 w-7",
         size === "md" && "h-9 w-9",
         size === "lg" && "h-11 w-11 rounded-xl",
