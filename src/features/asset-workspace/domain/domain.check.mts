@@ -4,6 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { ACTIONS_BY_STATUS, actionsFor, canExport, EXPORT_STATUSES } from "./asset-actions.ts";
 import { ASSET_CONDITIONS, CONDITIONS_BY_STATUS, isConditionAllowed, isTransferBlockedBy } from "./asset-condition.ts";
 import { ASSET_STATUSES, canTransition, findTransition, STATUS_TRANSITIONS, type AssetStatus } from "./asset-status.ts";
+import { CONDITION_TONE, STATUS_TONE } from "./status-tone.ts";
 import { assignBlock, returnBlock, statusAfterReturn, transferBlock, type CustodyState } from "./custody.ts";
 
 // §4.4 — every (from, to) pair in the 5x5 matrix: allowed exactly when it is in the spec list.
@@ -90,6 +91,16 @@ for (const status of ASSET_STATUSES) assert.equal(canExport(status), true, statu
 for (const row of STATUS_TRANSITIONS) {
   assert.ok(ACTIONS_BY_STATUS[row.from].includes(row.via), `${row.from} offers ${row.via}`);
 }
+
+// ADR 0098 §3 — every status and condition has a tone, and the table is the decided one.
+assert.deepEqual(
+  ASSET_STATUSES.map((status) => STATUS_TONE[status]),
+  ["green", "blue", "yellow", "zinc", "zinc"],
+);
+assert.deepEqual(
+  ASSET_CONDITIONS.map((condition) => CONDITION_TONE[condition]),
+  ["green", "zinc", "yellow", "red"],
+);
 
 // AC: no React or fetch in domain/.
 const dir = new URL(".", import.meta.url);
