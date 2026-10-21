@@ -1,5 +1,7 @@
 # 0034 — Feature folders nest under their App; `ai-`/`tc-` prefixes retired
 
+**Updated by ADR 0097** (2026-10-16): Asset Intelligence becomes Asset Workspace — its folder is `src/features/asset-workspace/`, built beside `asset-intelligence/` until release. The rule below is unchanged.
+
 ## Context
 
 ADR-0023 solved the `Asset`-vs-`Asset` folder collision (Communication's media file vs. Asset

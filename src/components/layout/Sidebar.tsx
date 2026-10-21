@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
+import { filterAssetWorkspaceNav } from "@/config/nav/asset-workspace";
+import { DEFAULT_ASSET_WORKSPACE_ROLE } from "@/config/nav/asset-workspace-roles";
 import { customerWorkspaceNav } from "@/config/nav/customer-workspace";
 import { leadApprovalNav } from "@/config/nav/lead-approval";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
@@ -29,6 +31,7 @@ const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
 // (config/nav/shell.tsx) applies instead — docs/adr/0033.
 function resolveAppNavConfig(appId: string, pathname: string): NavConfig {
   if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
+  if (appId === "asset-workspace") return filterAssetWorkspaceNav(DEFAULT_ASSET_WORKSPACE_ROLE);
   if (appId === "thunder-care") return resolveThunderCareNav(pathname);
   if (appId === "people") return peopleNav;
   if (appId === "customer-workspace") return customerWorkspaceNav;

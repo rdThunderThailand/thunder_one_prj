@@ -30,3 +30,9 @@ reviewing a screen. Where the skill and this file disagree, this file wins.
 - Thai text: Noto Sans Thai via `next/font` after Manrope (ADR 0096 §7, local until OD-05 closes).
 - Do not run the design system's setup CLI here. Update by re-copying the skill and
   `src/design-system/` from a newer tag in one PR.
+
+### Asset Workspace styling
+
+Screens under `src/features/asset-workspace/` and `/asset-workspace` use the skill's core rules and
+the local profile in ADR 0098 (status and condition colours, icon map), not the `media` profile.
+Status colours come from the one map next to `domain/`; never pick a colour per screen.
