@@ -92,6 +92,7 @@ function channelDetail(over: Partial<ChannelDetail> = {}): ChannelDetail {
     name: "Cafe Menu Board",
     description: "Menu display",
     lifecycle: "active",
+    status: "active",
     category: "dooh",
     channel_type: null,
     location: { id: "loc-1", name: "Main Restaurant" },

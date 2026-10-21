@@ -7,7 +7,14 @@
  * *.check.mts files here. api-error.ts imports nothing, so this loads clean.
  */
 import assert from "node:assert/strict";
-import { ApiError, classifyApiError, isConflict, isDuplicateName, trashedAssetNames } from "./api-error.ts";
+import {
+  ApiError,
+  classifyApiError,
+  inactiveChannelMessage,
+  isConflict,
+  isDuplicateName,
+  trashedAssetNames,
+} from "./api-error.ts";
 
 const FALLBACK = "Failed to save draft.";
 
@@ -144,5 +151,24 @@ const stale = new ApiError("only draft publications can be edited", 400);
 assert.ok(stale instanceof Error);
 assert.equal(stale.status, 400);
 assert.equal(stale.name, "ApiError");
+
+// ADR 0099: each guard keeps the operator's names and drops the English, including the [publish]
+// tag Publish Changes puts in front.
+const inactiveCases: [string, string][] = [
+  [
+    "Invalid input: [publish] these channels are not active — activate them before publishing: boe_55, testandroid 1",
+    "boe_55, testandroid 1",
+  ],
+  ["Invalid input: only active channels can join a group — not active: Lobby", "Lobby"],
+  ["Invalid input: only active channels can join a group — activate this channel first", "ช่องทางนี้"],
+  ["Invalid input: remove this channel from its groups before deactivating: Floor 1, Floor 2", "Floor 1, Floor 2"],
+];
+for (const [raw, kept] of inactiveCases) {
+  const c = classifyApiError(new ApiError(raw, 400), FALLBACK);
+  assert.equal(c.kind, "rejected");
+  assert.ok(c.message.includes(kept), `${raw} should keep "${kept}"`);
+  assert.ok(!/active|Invalid input/.test(c.message), `${raw} leaked English: ${c.message}`);
+}
+assert.equal(inactiveChannelMessage("Invalid input: the targets have no screens"), null);
 
 console.log("api-error.check.mts — all assertions passed");

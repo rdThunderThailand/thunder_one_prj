@@ -106,7 +106,12 @@ export function PlaybackProofTable({
                       {entry.channel.name}
                     </Link>
                   ) : (
-                    <span className="block truncate text-[11px] font-semibold text-foreground">No Channel</span>
+                    <span
+                      title="This screen was not in an active Channel when it reported the play."
+                      className="block truncate text-[11px] font-semibold text-muted-foreground"
+                    >
+                      No active Channel
+                    </span>
                   )}
                   <p className="truncate text-[9px] text-muted-foreground">{entry.device.name ?? "Media Device"}</p>
                 </td>
