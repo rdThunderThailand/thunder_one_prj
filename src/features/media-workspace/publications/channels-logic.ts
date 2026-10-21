@@ -19,12 +19,12 @@ export function formatPlayerSummary(player: ChannelListItem["player"]): string {
 }
 
 /**
- * A Publication targets committed Channels only — a Draft Channel holds no device
- * reservations, so publishing to one would drive screens nothing has claimed.
+ * A Publication targets active Channels only — a Draft or deactivated Channel holds no device
+ * reservations, so publishing to one would drive screens nothing has claimed (ADR 0099).
  */
 export function toChannelItems(channels: ChannelListItem[]): ChannelItem[] {
   return channels
-    .filter((channel) => channel.lifecycle !== "draft")
+    .filter((channel) => channel.status === "active")
     .map((channel) => ({
       id: channel.id,
       name: channel.name,

@@ -130,6 +130,30 @@ function isNoScreensTarget(message: string): boolean {
   return message.includes("the targets have no screens");
 }
 
+/**
+ * ADR 0099 guards: a Program reaches only active Channels, a Group takes only active Channels, and
+ * a Channel in a Group cannot be deactivated. The raw text ends with the operator's own Channel or
+ * Group names, which are safe to show; the English around them is not. Null when it is none of these.
+ */
+export function inactiveChannelMessage(message: string): string | null {
+  const notActive = /channels are not active — activate them before publishing: ([^\n]+)/.exec(message);
+  if (notActive) {
+    return `ช่องทาง ${notActive[1].trim()} ยังไม่เปิดใช้งาน กรุณาเปิดใช้งานช่องทางก่อนเผยแพร่`;
+  }
+  const notActiveMembers = /only active channels can join a group — not active: ([^\n]+)/.exec(message);
+  if (notActiveMembers) {
+    return `เพิ่มเข้ากลุ่มได้เฉพาะช่องทางที่เปิดใช้งาน — ${notActiveMembers[1].trim()} ยังไม่เปิดใช้งาน`;
+  }
+  if (message.includes("only active channels can join a group — activate this channel first")) {
+    return "เพิ่มเข้ากลุ่มได้เฉพาะช่องทางที่เปิดใช้งาน กรุณาเปิดใช้งานช่องทางนี้ก่อน";
+  }
+  const groups = /remove this channel from its groups before deactivating: ([^\n]+)/.exec(message);
+  if (groups) {
+    return `ช่องทางนี้ยังอยู่ในกลุ่ม ${groups[1].trim()} กรุณานำออกจากกลุ่มก่อนปิดใช้งาน`;
+  }
+  return null;
+}
+
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
   const message = err instanceof Error && err.message ? err.message : fallback;
 
@@ -169,6 +193,11 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
   const trashedNames = trashedAssetNames(message);
   if (trashedNames) {
     return { kind: "rejected", message: trashedAssetMessage(trashedNames) };
+  }
+
+  const inactiveChannel = inactiveChannelMessage(message);
+  if (inactiveChannel) {
+    return { kind: "rejected", message: inactiveChannel };
   }
 
   if (isNoScreensTarget(message)) {

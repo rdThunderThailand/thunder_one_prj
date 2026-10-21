@@ -67,6 +67,7 @@ const channel = {
   name: "Central World Menu Boards",
   description: null,
   lifecycle: "draft",
+  status: "draft",
   category: "in_store",
   channel_type: {
     id: "type-menu-board",
@@ -153,6 +154,9 @@ assert.throws(() => parseChannelDetail({
 }));
 assert.equal(parseChannelDetail({ ...channel, lifecycle: "active" }).lifecycle, "active");
 assert.throws(() => parseChannelDetail({ ...channel, lifecycle: "retired" }));
+// ADR 0099: the stored status is part of the contract; a payload without it is malformed.
+assert.equal(parseChannelDetail({ ...channel, status: "inactive" }).status, "inactive");
+assert.throws(() => parseChannelDetail({ ...channel, status: undefined }));
 assert.throws(() => parseChannelDetail({
   ...channel,
   expected_resolution: "full-hd",

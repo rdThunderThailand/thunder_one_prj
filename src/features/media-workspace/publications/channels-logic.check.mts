@@ -25,6 +25,7 @@ function channel(over: Partial<ChannelListItem> & Pick<ChannelListItem, "id" | "
   return {
     description: null,
     lifecycle: "active",
+    status: "active",
     category: "dooh",
     channel_type: null,
     location: null,
@@ -53,12 +54,14 @@ assert.deepEqual(toChannelItems([]), []);
 const channels: ChannelListItem[] = [
   channel({ id: "c1", name: "Lobby", player: device("d1", "online"), groups: [{ id: "g1", name: "All Screens", playback_mode: "independent" }], expected_resolution: "1920x1080" }),
   channel({ id: "c2", name: "Foyer", category: "in_store", player: device("d2", "warning"), groups: [{ id: "g1", name: "All Screens", playback_mode: "independent" }] }),
-  channel({ id: "c3", name: "Staged", lifecycle: "draft" }),
-  channel({ id: "c4", name: "Empty" }),
+  channel({ id: "c3", name: "Staged", lifecycle: "draft", status: "draft" }),
+  channel({ id: "c4", name: "Empty", lifecycle: "inactive" }),
+  channel({ id: "c5", name: "Switched off", lifecycle: "inactive", status: "inactive" }),
 ];
 const items = toChannelItems(channels);
 
-// A Draft Channel holds no device reservations, so it is not publishable.
+// Only an active Channel holds device reservations (ADR 0099): a Draft or deactivated one is not
+// publishable, while an active one with no Program yet (lifecycle "inactive") still is.
 assert.deepEqual(items.map((i) => i.id), ["c1", "c2", "c4"]);
 assert.equal(items[0].status, "online");
 assert.equal(items[0].resolution, "1920x1080");

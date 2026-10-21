@@ -81,6 +81,11 @@ export interface ChannelListItem {
   name: string;
   description: string | null;
   lifecycle: ChannelLifecycle;
+  /**
+   * Stored status (ADR 0099). `lifecycle` "inactive" also covers an active Channel with no Program,
+   * so only this tells a deactivated Channel apart; only "active" may be targeted.
+   */
+  status: ChannelLifecycle;
   category: ChannelCategory;
   channel_type: ChannelTypeOption | null;
   location: { id: string; name: string } | null;
