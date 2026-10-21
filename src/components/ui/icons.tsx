@@ -34,6 +34,7 @@ import {
   DollarOutlined,
   DownOutlined,
   DownloadOutlined,
+  EnvironmentOutlined,
   EyeOutlined,
   FieldTimeOutlined,
   FileAddOutlined,
@@ -69,10 +70,12 @@ import {
   ProjectOutlined,
   ReadOutlined,
   RedoOutlined,
+  RestOutlined,
   RetweetOutlined,
   RiseOutlined,
   RobotOutlined,
   RocketOutlined,
+  RollbackOutlined,
   SafetyOutlined,
   ScheduleOutlined,
   SendOutlined,
@@ -82,6 +85,8 @@ import {
   SoundOutlined,
   StarFilled,
   StarOutlined,
+  StopOutlined,
+  SwapOutlined,
   TabletOutlined,
   TagOutlined,
   TeamOutlined,
@@ -241,6 +246,13 @@ export const RatioIcon = icon(ColumnWidthOutlined);
 export const MessageIcon = icon(MessageOutlined);
 export const CommentsIcon = icon(CommentOutlined);
 export const SpinnerIcon = icon(LoadingOutlined);
+
+// Asset Workspace concepts (ADR 0098 §4 icon map)
+export const LocationIcon = icon(EnvironmentOutlined);
+export const TransferIcon = icon(SwapOutlined);
+export const ReturnIcon = icon(RollbackOutlined);
+export const RetireIcon = icon(StopOutlined);
+export const DisposeIcon = icon(RestOutlined);
 
 const StarOutlineIcon = icon(StarOutlined);
 const StarFilledIcon = icon(StarFilled);
