@@ -194,6 +194,7 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !isString(value.name) ||
     !isNullableString(value.description) ||
     !isOneOf(value.lifecycle, ["draft", "active", "inactive"]) ||
+    !isOneOf(value.status, ["draft", "active", "inactive"]) ||
     !isOneOf(value.category, ["dooh", "in_store", "online", "social"]) ||
     !(value.channel_type === null || isRecord(value.channel_type)) ||
     !(value.location === null || isRecord(value.location)) ||
@@ -225,6 +226,7 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     name: value.name,
     description: value.description,
     lifecycle: value.lifecycle,
+    status: value.status,
     category: value.category,
     channel_type: channelType,
     location,

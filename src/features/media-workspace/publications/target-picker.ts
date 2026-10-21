@@ -3,9 +3,9 @@ import type { PublicationTarget } from "./types";
 
 export type TargetSelection = { channelIds: string[]; groupIds: string[] };
 
-/** A Program targets committed Channels only — a Draft Channel holds no device reservation. */
+/** A Program targets active Channels only — only they hold a device reservation (ADR 0099). */
 export function targetableChannels(channels: readonly ChannelListItem[]): ChannelListItem[] {
-  return channels.filter((channel) => channel.lifecycle !== "draft");
+  return channels.filter((channel) => channel.status === "active");
 }
 
 export function selectionFromTargets(targets: readonly PublicationTarget[]): TargetSelection {
