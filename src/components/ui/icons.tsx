@@ -15,6 +15,7 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   AudioOutlined,
+  AuditOutlined,
   BankOutlined,
   BgColorsOutlined,
   BlockOutlined,
@@ -28,6 +29,7 @@ import {
   CloseCircleOutlined,
   ColumnWidthOutlined,
   CommentOutlined,
+  ContainerOutlined,
   CopyOutlined,
   CustomerServiceOutlined,
   DesktopOutlined,
@@ -66,6 +68,7 @@ import {
   PictureOutlined,
   PlayCircleOutlined,
   PlaySquareOutlined,
+  PrinterOutlined,
   ProfileOutlined,
   ProjectOutlined,
   ReadOutlined,
@@ -76,12 +79,15 @@ import {
   RobotOutlined,
   RocketOutlined,
   RollbackOutlined,
+  SafetyCertificateOutlined,
   SafetyOutlined,
+  ScanOutlined,
   ScheduleOutlined,
   SendOutlined,
   ShareAltOutlined,
   SlidersOutlined,
   SmileOutlined,
+  SolutionOutlined,
   SoundOutlined,
   StarFilled,
   StarOutlined,
@@ -89,6 +95,7 @@ import {
   SwapOutlined,
   TabletOutlined,
   TagOutlined,
+  TagsOutlined,
   TeamOutlined,
   ThunderboltOutlined,
   ToolOutlined,
@@ -253,6 +260,14 @@ export const TransferIcon = icon(SwapOutlined);
 export const ReturnIcon = icon(RollbackOutlined);
 export const RetireIcon = icon(StopOutlined);
 export const DisposeIcon = icon(RestOutlined);
+export const AssignmentIcon = icon(SolutionOutlined);
+export const InventoryIcon = icon(AuditOutlined);
+export const CategoryIcon = icon(TagsOutlined);
+export const WarrantyIcon = icon(SafetyCertificateOutlined);
+export const MyAssetsIcon = icon(ContainerOutlined);
+export const ScanIcon = icon(ScanOutlined);
+export const BulkImportIcon = icon(ImportOutlined);
+export const PrintIcon = icon(PrinterOutlined);
 
 const StarOutlineIcon = icon(StarOutlined);
 const StarFilledIcon = icon(StarFilled);

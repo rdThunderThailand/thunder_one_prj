@@ -32,6 +32,21 @@ assert.deepEqual(
   ["Asset Management", "Management"],
 );
 
+// Every Asset Admin item links to its ADR 0097 route.
+assert.deepEqual(
+  sectionsForRole("asset_admin").flatMap((section) => section.items.map((item) => item.href)),
+  [
+    "/asset-workspace/assets",
+    "/asset-workspace/assignments",
+    "/asset-workspace/inventory",
+    "/asset-workspace/categories",
+    "/asset-workspace/locations",
+    "/asset-workspace/lifecycle-warranty",
+    "/asset-workspace/reports",
+    "/asset-workspace/settings",
+  ],
+);
+
 const all = sectionsForRole("asset_admin").flatMap((section) => section.items.map((item) => item.label));
 assert.ok(!all.includes("Transfers"), "Transfer is a controlled action, not a menu (Spec §8.2)");
 assert.ok(!all.some((label) => /device|provisioning/i.test(label)), "Connected Devices are Phase 2 (Spec v1.1.5)");
