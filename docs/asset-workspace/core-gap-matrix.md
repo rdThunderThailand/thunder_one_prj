@@ -7,16 +7,30 @@
 One row per UC or canonical field (03 §2.4–2.5). Each owner edits only their own section.
 The `assets` table belongs to Copper: Zeepher writes "needs → see Copper row" and tells Copper.
 
-| Column | Meaning |
+Submission rules, examples and the PR template: Pace note "07 — การส่งงาน & PR Template".
+
+**`—` and `?` are different:** `—` = checked, does not exist · `?` = not checked yet / not found.
+A PR may still contain `?`, but its Verification section must list those rows and why.
+
+| Column | Meaning | How to fill | Example | Common mistake |
+|---|---|---|---|---|
+| UC / field | One thing being checked per row | Data field: name from 03 §2.4–2.5 · Action: UC number + name | `Asset Tag` · `UC-005 Return` | Several fields in one row ("Name/Serial/Tag") — split them, each can get a different status |
+| Doc source | The PO document section that **requires** it | `doc §section`, line optional; several allowed | `03 §2.4` · `04 UC-005 line 88` | Citing an ADR or FE code — PO documents 01–05 only. No PO source means the row should not exist |
+| table.column | Where Core stores it | `table.column`, several allowed; confirm with SELECT on `information_schema.columns` | `assets.asset_code` | Trusting a migration name — columns get renamed or dropped later; check the real DB |
+| Route | The Core API that reads or writes it | `METHOD path` from `src/app/api/core/v1/` · actions need a write route (POST/PATCH) · read-only data needs GET | `GET /api/core/v1/assets/{id}` | A DB column is not enough — no route returning it means `mismatched` |
+| Tenant filter | Where one organization is kept from seeing another's data | `path:line` of the code that filters by tenant (route or RPC/SQL function) | `src/app/api/core/v1/assets/route.ts:42` | Assuming Supabase RLS does it — in Thunder_Core tenant isolation lives in RPCs/routes, not RLS |
+| Audit | Where the change is recorded | History table or trigger name · data that needs no audit: `n/a` | `asset_status_history` · `n/a` | `—` everywhere — the actions that **must** be audited are listed in 03 §2.7 line 266; listed but unaudited = `mismatched` |
+| Status | The result for this row | One of three, by the rule below | `mismatched` | `exists` because the column was found, without checking route, tenant filter and audit |
+| Proposed fix | What Core must add or change to make the row `exists` | Short and specific, Core only · `exists` → `—` · waiting on the PO → say so | `add POST /assets/{id}/return` · `waiting on PO Q2 (Note 06)` | "needs fixing", or a frontend fix — this column is for Core |
+
+| Status | When |
 |---|---|
-| UC / field | The use case or field being checked |
-| Doc source | Section in the PO documents, e.g. `03 §2.4` |
-| table.column | Where Core stores it, or `—` |
-| Route | Core route that reads/writes it, or `—` |
-| Tenant filter | The RPC/route that filters by tenant (isolation lives in RPCs, not RLS) |
-| Audit | Where the change is recorded (history table, audit log), or `—` |
-| Status | `exists` / `mismatched` / `missing` |
-| Proposed fix | What Core needs; empty only when status is `exists` |
+| `exists` | **All four:** storage + route + tenant filter + audit (when required) **and** values/rules match the documents |
+| `mismatched` | Present but different: missing values (4 statuses vs 5), nullable vs required, in detail but not in list, no tenant filter, no audit, or no route returning it |
+| `missing` | Neither storage nor route |
+
+Unsure between `exists` and `mismatched` → pick `mismatched` and explain in Proposed fix. A reviewer can catch
+that error; the other one nobody sees.
 
 ## Copper — assets, custody, status/condition, warranty, scan, move location
 
