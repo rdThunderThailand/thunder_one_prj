@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Clock3, Radio, type LucideIcon } from "lucide-react";
+import {
+  ScheduleIcon as CalendarClock,
+  ClockIcon as Clock3,
+  BroadcastIcon as Radio,
+  type Icon,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { WEEKDAYS } from "../../schedule";
 import { describeSchedule } from "../../schedule-describe";
@@ -35,10 +40,10 @@ function ChangeButton({ label, disabled, onClick }: { label: string; disabled?: 
 }
 
 /** Frame 03's bordered tile beside a card's summary line. */
-function SummaryTile({ icon: Icon }: { icon: LucideIcon }) {
+function SummaryTile({ icon: Icon }: { icon: Icon }) {
   return (
     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-card text-primary">
-      <Icon className="h-4 w-4" strokeWidth={1.8} />
+      <Icon className="h-4 w-4" />
     </span>
   );
 }
@@ -158,7 +163,7 @@ export function ScheduleCard({
                   key={day.value}
                   className={
                     view.days.includes(day.value)
-                      ? "rounded-md bg-info-soft px-2.5 py-1 text-[10px] font-medium text-info"
+                      ? "rounded-md bg-info-muted px-2.5 py-1 text-[10px] font-medium text-info"
                       : "rounded-md bg-muted px-2.5 py-1 text-[10px] text-muted-foreground"
                   }
                 >

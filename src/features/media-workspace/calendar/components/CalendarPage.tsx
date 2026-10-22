@@ -117,7 +117,7 @@ export function CalendarPage() {
       {notice && (
         <p
           role="status"
-          className="rounded-lg bg-warning-soft px-4 py-3 text-xs text-warning"
+          className="rounded-lg bg-warning-muted px-4 py-3 text-xs text-warning"
         >
           {notice}
         </p>

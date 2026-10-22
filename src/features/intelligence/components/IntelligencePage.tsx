@@ -39,9 +39,9 @@ export function IntelligencePage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-t1-gray-400">
         <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
           All Systems Operational
         </span>
         <span>Data as of {dataAsOf}</span>

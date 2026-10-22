@@ -66,7 +66,7 @@ export function CompositionCanvasPane({
   );
 }
 
-const zoneBadgeClasses = ["bg-violet-600", "bg-blue-600", "bg-success"];
+const zoneBadgeClasses = ["bg-t1-purple-700", "bg-t1-blue-600", "bg-t1-green-700"];
 
 export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, referenceResolution, onSelectZone }: {
   zones: LayoutZone[];
@@ -95,11 +95,11 @@ export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, re
               onClick={() => zone.id && onSelectZone(zone.id)}
               className={`grid grid-cols-[28px_minmax(0,1fr)_auto_auto_8px] items-center gap-2 rounded-lg px-2 py-2 text-left text-xs ${
                 zone.id === activeZoneId
-                  ? "bg-primary-soft text-primary"
+                  ? "bg-accent text-primary"
                   : "bg-muted text-muted-foreground"
               }`}
             >
-              <span className={`grid h-7 w-7 place-items-center rounded-md font-semibold text-white ${zoneBadgeClasses[index % zoneBadgeClasses.length]}`}>
+              <span className={`grid h-7 w-7 place-items-center rounded-md font-semibold text-t1-white ${zoneBadgeClasses[index % zoneBadgeClasses.length]}`}>
                 {String.fromCharCode(65 + index)}
               </span>
               <span className="truncate font-medium">{zone.name}</span>

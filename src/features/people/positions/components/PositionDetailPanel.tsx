@@ -22,8 +22,8 @@ const levelLabel: Record<PositionRow["level"], string> = {
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="shrink-0 text-zinc-500 dark:text-zinc-400">{label}</dt>
-      <dd className="text-right text-zinc-900 dark:text-zinc-50">{value}</dd>
+      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="text-right text-foreground">{value}</dd>
     </div>
   );
 }
@@ -40,8 +40,8 @@ export function PositionDetailPanel({ rows, selectedId, onClose }: PositionDetai
   if (!position) {
     return (
       <Card className="flex h-full min-h-[240px] flex-col items-center justify-center gap-2 p-8 text-center">
-        <UsersIcon className="h-6 w-6 text-zinc-300" />
-        <p className="text-sm text-zinc-400">เลือกตำแหน่งงานเพื่อดูรายละเอียด</p>
+        <UsersIcon className="h-6 w-6 text-t1-gray-400" />
+        <p className="text-sm text-t1-gray-400">เลือกตำแหน่งงานเพื่อดูรายละเอียด</p>
       </Card>
     );
   }
@@ -52,21 +52,21 @@ export function PositionDetailPanel({ rows, selectedId, onClose }: PositionDetai
     <Card className="flex h-full flex-col p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">{position.name}</p>
-          <p className="truncate text-xs text-zinc-400">{position.code}</p>
+          <p className="truncate text-base font-semibold text-foreground">{position.name}</p>
+          <p className="truncate text-xs text-t1-gray-400">{position.code}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2 text-zinc-400">
-          <button type="button" title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed hover:text-zinc-600 dark:hover:text-zinc-300">
+        <div className="flex shrink-0 items-center gap-2 text-t1-gray-400">
+          <button type="button" title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed hover:text-muted-foreground">
             <MoreIcon className="h-4 w-4" />
           </button>
-          <button type="button" onClick={onClose} aria-label="Close" className="hover:text-zinc-600 dark:hover:text-zinc-300">
+          <button type="button" onClick={onClose} aria-label="Close" className="hover:text-muted-foreground">
             <XIcon className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">ข้อมูลตำแหน่ง</h3>
+      <div className="mt-4 flex flex-col gap-4 border-t border-border pt-4">
+        <h3 className="text-sm font-semibold text-foreground">ข้อมูลตำแหน่ง</h3>
         <dl className="space-y-3 text-sm">
           <DetailRow label="รหัสตำแหน่ง" value={position.code} />
           <DetailRow label="หน่วยงาน" value={position.unit} />
@@ -82,38 +82,38 @@ export function PositionDetailPanel({ rows, selectedId, onClose }: PositionDetai
         </dl>
       </div>
 
-      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">อัตรากำลัง</h3>
-        <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <div className="mt-4 border-t border-border pt-4">
+        <h3 className="text-sm font-semibold text-foreground">อัตรากำลัง</h3>
+        <p className="mt-1 text-2xl font-semibold text-foreground">
           {position.filled}/{position.total}
         </p>
         <ProgressBar value={fillRate} className="mt-2" />
-        <p className="mt-1.5 text-xs text-zinc-400">{fillRate}% ของอัตรากำลังทั้งหมด</p>
+        <p className="mt-1.5 text-xs text-t1-gray-400">{fillRate}% ของอัตรากำลังทั้งหมด</p>
       </div>
 
-      <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ผู้ครองตำแหน่งปัจจุบัน</h3>
+      <div className="mt-4 border-t border-border pt-4">
+        <h3 className="mb-2 text-sm font-semibold text-foreground">ผู้ครองตำแหน่งปัจจุบัน</h3>
         {position.managerName ? (
           <div className="flex items-center gap-2.5">
             <Avatar name={position.managerName} size={32} />
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{position.managerName}</p>
-              <p className="truncate text-xs text-zinc-400">{position.managerRole}</p>
+              <p className="truncate text-sm font-medium text-foreground">{position.managerName}</p>
+              <p className="truncate text-xs text-t1-gray-400">{position.managerRole}</p>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">ยังไม่มีผู้ครองตำแหน่ง</p>
+          <p className="text-sm text-t1-gray-400">ยังไม่มีผู้ครองตำแหน่ง</p>
         )}
       </div>
 
-      <div className="mt-auto flex flex-col gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">การดำเนินการ</h3>
+      <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4">
+        <h3 className="text-sm font-semibold text-foreground">การดำเนินการ</h3>
         {["ดูรายละเอียดตำแหน่ง", "แก้ไขตำแหน่ง", "ประวัติการเปลี่ยนแปลง"].map((label) => (
           <button
             key={label}
             type="button"
             title="ยังไม่เปิดใช้งาน"
-            className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-zinc-200 py-2 text-sm font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+            className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-muted-foreground"
           >
             {label}
           </button>
@@ -121,7 +121,7 @@ export function PositionDetailPanel({ rows, selectedId, onClose }: PositionDetai
         <button
           type="button"
           title="ยังไม่เปิดใช้งาน"
-          className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-red-200 py-2 text-sm font-medium text-red-500 dark:border-red-500/30"
+          className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-error/30 py-2 text-sm font-medium text-error"
         >
           ยกเลิกตำแหน่ง
         </button>

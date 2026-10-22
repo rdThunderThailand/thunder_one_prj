@@ -42,16 +42,16 @@ interface ChangeTableProps {
 
 export function ChangeTable({ rows, selectedId, onSelect }: ChangeTableProps) {
   if (rows.length === 0) {
-    return <Card className="p-10 text-center text-sm text-zinc-400">ไม่พบการเปลี่ยนแปลงตามเงื่อนไขที่เลือก</Card>;
+    return <Card className="p-10 text-center text-sm text-t1-gray-400">ไม่พบการเปลี่ยนแปลงตามเงื่อนไขที่เลือก</Card>;
   }
 
   return (
     <Card className="overflow-x-auto">
       <table className="w-full min-w-[1080px] text-left text-sm">
-        <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <thead className="border-b border-border text-xs text-muted-foreground">
           <tr>
             <th className="w-10 px-4 py-3">
-              <input type="checkbox" className="rounded border-zinc-300" disabled title="Not built yet" />
+              <input type="checkbox" className="rounded border-border" disabled title="Not built yet" />
             </th>
             <th className="px-4 py-3 font-medium">บุคลากร</th>
             <th className="px-4 py-3 font-medium">ประเภทการเปลี่ยนแปลง</th>
@@ -63,41 +63,41 @@ export function ChangeTable({ rows, selectedId, onSelect }: ChangeTableProps) {
             <th className="px-4 py-3 font-medium">การกระทำ</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+        <tbody className="divide-y divide-border">
           {rows.map((row) => (
             <tr
               key={row.id}
               onClick={() => onSelect(row.id)}
               className={`cursor-pointer ${
-                row.id === selectedId ? "bg-indigo-50/60 dark:bg-indigo-500/10" : "hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                row.id === selectedId ? "bg-accent/60" : "hover:bg-t1-gray-50"
               }`}
             >
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                <input type="checkbox" className="rounded border-zinc-300" disabled title="Not built yet" />
+                <input type="checkbox" className="rounded border-border" disabled title="Not built yet" />
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2.5">
                   <Avatar name={row.name} size={32} />
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-zinc-900 dark:text-zinc-50">{row.name}</p>
-                    <p className="truncate text-xs text-zinc-400">{row.employeeCode}</p>
+                    <p className="truncate font-medium text-foreground">{row.name}</p>
+                    <p className="truncate text-xs text-t1-gray-400">{row.employeeCode}</p>
                   </div>
                 </div>
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                <div className="flex items-center gap-2 text-foreground">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                     {typeIcon[row.changeType]}
                   </span>
                   {row.changeTypeLabel}
                 </div>
               </td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+              <td className="px-4 py-3 text-muted-foreground">
                 <span className="whitespace-nowrap">{row.fromValue}</span>
-                <span className="mx-1.5 text-zinc-300">→</span>
+                <span className="mx-1.5 text-t1-gray-400">→</span>
                 <span className="whitespace-nowrap">{row.toValue}</span>
               </td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{row.effectiveDateLabel}</td>
+              <td className="px-4 py-3 text-muted-foreground">{row.effectiveDateLabel}</td>
               <td className="px-4 py-3">
                 <Badge variant="pill" color={statusBadge[row.resolvedStatus].color}>
                   {statusBadge[row.resolvedStatus].label}
@@ -107,20 +107,20 @@ export function ChangeTable({ rows, selectedId, onSelect }: ChangeTableProps) {
                 <div className="flex items-center gap-2">
                   <Avatar name={row.requesterName} size={22} />
                   <div className="min-w-0">
-                    <p className="truncate text-zinc-700 dark:text-zinc-200">{row.requesterName}</p>
-                    {row.requesterRole && <p className="truncate text-xs text-zinc-400">{row.requesterRole}</p>}
+                    <p className="truncate text-foreground">{row.requesterName}</p>
+                    {row.requesterRole && <p className="truncate text-xs text-t1-gray-400">{row.requesterRole}</p>}
                   </div>
                 </div>
               </td>
               <td className="px-4 py-3">
-                <p className="text-zinc-600 dark:text-zinc-300">{row.requestedDateLabel}</p>
-                <p className="text-xs text-zinc-400">{row.updatedAgoLabel}</p>
+                <p className="text-muted-foreground">{row.requestedDateLabel}</p>
+                <p className="text-xs text-t1-gray-400">{row.updatedAgoLabel}</p>
               </td>
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
                   title="Not built yet"
-                  className="cursor-not-allowed text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  className="cursor-not-allowed text-t1-gray-400 hover:text-muted-foreground"
                 >
                   <MoreIcon className="h-4 w-4" />
                 </button>

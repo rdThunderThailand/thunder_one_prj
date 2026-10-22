@@ -2,6 +2,8 @@
 
 **Status: the `ai-` prefix mechanism below is superseded by `docs/adr/0034-feature-folders-nest-under-app.md`** (2026-08-20) — folder collisions are now avoided by nesting under `src/features/asset-intelligence/*` instead of a prefix. This ADR's actual subject — why the `Asset` entity itself isn't renamed to `Equipment` — is unaffected and still stands.
 
+**Naming superseded by `docs/adr/0097-asset-workspace-is-a-new-app-beside-asset-intelligence.md`** (2026-10-16) — the product is now Asset Workspace (`asset-workspace` app id, route and folder); the `Asset` entity name still stands.
+
 ## Context
 
 Asset Intelligence's core entity is called `Asset`: an organization-wide physical asset (laptop,

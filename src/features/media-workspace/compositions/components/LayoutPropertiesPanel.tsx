@@ -164,7 +164,7 @@ export function LayoutPropertiesPanel({
       </div>
 
       {sharedTemplateUsage > 1 && (
-        <p className={`rounded-lg bg-warning-soft p-2 text-xs text-warning ${compact ? "" : "md:col-span-2 xl:col-span-3"}`}>
+        <p className={`rounded-lg bg-warning-muted p-2 text-xs text-warning ${compact ? "" : "md:col-span-2 xl:col-span-3"}`}>
           Resolution and background come from a Template used by {sharedTemplateUsage} Layouts.
           Changing them here changes all of them.
         </p>
@@ -248,7 +248,7 @@ function CustomResolution({
           title={locked ? "Unlock aspect ratio" : "Lock aspect ratio"}
           disabled={disabled}
           onClick={() => setLocked((current) => !current)}
-          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border transition-colors ${locked ? "border-primary/30 bg-primary-soft text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border transition-colors ${locked ? "border-primary/30 bg-accent text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
         >
           <LockIcon className="h-3.5 w-3.5" />
         </button>
@@ -263,7 +263,7 @@ function CustomResolution({
         />
       </div>
       {!valid && (width || height) && (
-        <p className="text-xs text-danger">Width and height must each be 100–99999.</p>
+        <p className="text-xs text-error">Width and height must each be 100–99999.</p>
       )}
     </>
   );

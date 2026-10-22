@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Pencil, X } from "lucide-react";
+import { CheckIcon as Check, EditIcon as Pencil, XIcon as X } from "@/components/ui/icons";
 import { Badge } from "@/components/ui/lovable/badge";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
@@ -66,7 +66,7 @@ export function InlineRename({ asset, onRenamed }: { asset: MediaAsset; onRename
           <X className="h-4 w-4" />
         </Button>
       </div>
-      {error && <p role="alert" className="mt-2 text-[11px] text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-[11px] text-error">{error}</p>}
     </div>
   );
 }

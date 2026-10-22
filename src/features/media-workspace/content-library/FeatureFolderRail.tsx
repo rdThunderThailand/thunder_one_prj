@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Folder } from "lucide-react";
+import { FolderIcon as Folder } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { ContentFolderRail, type FolderCollection } from "./ContentFolderRail";
@@ -133,7 +133,7 @@ export function FeatureFolderRail({
       {action?.kind === "rename" && <label className="space-y-1"><span>Folder name</span><input autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2" /></label>}
       {action?.kind === "move" && <label className="space-y-1"><span>Parent folder</span><select autoFocus value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2"><option value="">Root</option>{moveTargets.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select></label>}
       {action?.kind === "delete" && childFolders.length > 0 && <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-danger-soft text-danger" aria-hidden="true">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-error-muted text-error" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8"><path d="M3.5 6.5h6l2 2h9v10a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><circle cx="17.5" cy="17.5" r="3.5" fill="white"/><path d="M17.5 15.7v2.1m0 1.3v.1"/></svg>
         </span>
         <div className="pt-0.5 text-sm text-muted-foreground"><p className="font-medium text-foreground">This folder contains {childFolders.length} child folder{childFolders.length === 1 ? "" : "s"}.</p><p>Move or delete the child {childFolders.length === 1 ? "folder" : "folders"} before deleting this folder.</p></div>
@@ -141,7 +141,7 @@ export function FeatureFolderRail({
       {action?.kind === "delete" && childFolders.length === 0 && !deleteFolderItems && <p>Delete &ldquo;{action.folder.name}&rdquo;? The backend refuses non-empty Folders.</p>}
       {action?.kind === "delete" && childFolders.length === 0 && deleteFolderItems && <div className="space-y-5">
         <div className="flex items-start gap-3">
-          <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${deletingItems ? "bg-warning-soft text-warning" : "bg-success-soft text-success"}`} aria-hidden="true">
+          <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${deletingItems ? "bg-warning-muted text-warning" : "bg-success-muted text-success"}`} aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8"><path d="M3.5 6.5h6l2 2h9v10a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><circle cx="17.5" cy="17.5" r="3.5" fill="white"/><path d="m16 17.5 1 1 2-2"/></svg>
           </span>
           <div className="min-w-0 pt-0.5 text-sm text-muted-foreground">
@@ -154,7 +154,7 @@ export function FeatureFolderRail({
           <select aria-label="Destination folder" disabled={deleteDestination !== "folder"} value={value} onChange={(event) => setValue(event.target.value)} className="ml-6 w-[calc(100%-1.5rem)] rounded-lg border border-border px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"><option value="">Select a folder</option>{moveTargets.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select>
         </fieldset>}
       </div>}
-        <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={close}>Cancel</Button><Button type="button" disabled={busy || deleteDisabled || (action?.kind === "rename" && !value.trim())} onClick={submitAction} className={action?.kind === "delete" ? "bg-danger hover:bg-danger disabled:bg-danger/40" : ""}>{busy ? "Saving…" : action?.kind === "delete" ? "Delete Folder" : "Save"}</Button></DialogFooter>
+        <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={close}>Cancel</Button><Button type="button" disabled={busy || deleteDisabled || (action?.kind === "rename" && !value.trim())} onClick={submitAction} className={action?.kind === "delete" ? "bg-error hover:bg-error disabled:bg-error/40" : ""}>{busy ? "Saving…" : action?.kind === "delete" ? "Delete Folder" : "Save"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   </>;

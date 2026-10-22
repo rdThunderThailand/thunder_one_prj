@@ -202,7 +202,7 @@ export function ProgramSummaryRail({
 function ReviewFact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="grid grid-cols-[2rem_5.75rem_minmax(0,1fr)] items-start gap-2 text-xs">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary">{icon}</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-primary">{icon}</span>
       <span className="pt-2 font-medium text-muted-foreground">{label}</span>
       <span className="pt-2 text-right font-medium leading-4 text-foreground">{value}</span>
     </div>

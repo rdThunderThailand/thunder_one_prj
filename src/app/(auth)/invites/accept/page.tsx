@@ -19,7 +19,7 @@ const STATUS_MESSAGE: Partial<Record<InviteStatus, string>> = {
 };
 
 function Message({ text }: { text: string }) {
-  return <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">{text}</p>;
+  return <p className="text-center text-sm text-muted-foreground">{text}</p>;
 }
 
 // Core's pre-existing /members invite mechanism (SHA-256 token,
@@ -45,7 +45,7 @@ export default async function AcceptInvitePage({ searchParams }: PageProps) {
   if (!token) {
     return (
       <>
-        <h1 className="mb-6 text-lg font-semibold text-zinc-900 dark:text-zinc-50">Invitation</h1>
+        <h1 className="mb-6 text-lg font-semibold text-foreground">Invitation</h1>
         <Message text="This link is missing its invitation code." />
       </>
     );
@@ -55,7 +55,7 @@ export default async function AcceptInvitePage({ searchParams }: PageProps) {
   if (!invite) {
     return (
       <>
-        <h1 className="mb-6 text-lg font-semibold text-zinc-900 dark:text-zinc-50">Invitation</h1>
+        <h1 className="mb-6 text-lg font-semibold text-foreground">Invitation</h1>
         <Message text="Could not load this invitation. It may be invalid." />
       </>
     );
@@ -64,7 +64,7 @@ export default async function AcceptInvitePage({ searchParams }: PageProps) {
   if (invite.status !== "pending") {
     return (
       <>
-        <h1 className="mb-6 text-lg font-semibold text-zinc-900 dark:text-zinc-50">Invitation</h1>
+        <h1 className="mb-6 text-lg font-semibold text-foreground">Invitation</h1>
         <Message text={STATUS_MESSAGE[invite.status] ?? "This invitation is no longer valid."} />
       </>
     );
@@ -77,10 +77,10 @@ export default async function AcceptInvitePage({ searchParams }: PageProps) {
     if (currentEmail.toLowerCase() === invite.email.toLowerCase()) {
       return (
         <>
-          <h1 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          <h1 className="mb-2 text-lg font-semibold text-foreground">
             You&apos;re invited{invite.tenantName ? ` to ${invite.tenantName}` : ""}
           </h1>
-          <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mb-6 text-sm text-muted-foreground">
             Join as {invite.email}
             {invite.roleName ? ` (${invite.roleName})` : ""}.
           </p>
@@ -91,7 +91,7 @@ export default async function AcceptInvitePage({ searchParams }: PageProps) {
 
     return (
       <div className="flex flex-col gap-4 text-center">
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-error">
           This invitation was sent to {invite.email}, but you&apos;re signed in as {currentEmail}.
         </p>
         <Message text="Sign out and open this link again to accept it." />
@@ -106,10 +106,10 @@ export default async function AcceptInvitePage({ searchParams }: PageProps) {
 
   return (
     <>
-      <h1 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+      <h1 className="mb-2 text-lg font-semibold text-foreground">
         You&apos;re invited{invite.tenantName ? ` to ${invite.tenantName}` : ""}
       </h1>
-      <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="mb-6 text-sm text-muted-foreground">
         Create your account to join{invite.roleName ? ` as ${invite.roleName}` : ""}.
       </p>
       <AcceptInviteForm token={token} email={invite.email} />

@@ -1,7 +1,14 @@
 // Presentational blocks extracted from PlaylistsListPage.tsx so that file stays
 // inside the 300-line rule. No data-fetching, no side-effects here.
 
-import { CheckCircle2, Clock3, FileEdit, Layers3, ListMusic, PauseCircle } from "lucide-react";
+import {
+  CheckCircleIcon as CheckCircle2,
+  ClockIcon as Clock3,
+  EditIcon as FileEdit,
+  LayersIcon as Layers3,
+  PlaylistIcon as ListMusic,
+  PauseCircleIcon as PauseCircle,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { LibraryEmpty, LibrarySummary } from "../../content-library/LibraryChrome";
 import type { EmptyCause } from "../list-empty-state";
@@ -14,8 +21,8 @@ export function PlaylistsSummary({ stats, items, duration }: { stats: { total: n
       label="Playlist summary"
       cards={[
         { label: "Total Playlists", value: stats.total, detail: "All playlists", icon: ListMusic },
-        { label: "Active", value: stats.active, detail: "Ready to publish", icon: CheckCircle2, tone: "text-success bg-success-soft" },
-        { label: "Scheduled", value: stats.draft, detail: "Not yet ready", icon: FileEdit, tone: "text-warning bg-warning-soft" },
+        { label: "Active", value: stats.active, detail: "Ready to publish", icon: CheckCircle2, tone: "text-success bg-success-muted" },
+        { label: "Scheduled", value: stats.draft, detail: "Not yet ready", icon: FileEdit, tone: "text-warning bg-warning-muted" },
         { label: "Inactive", value: stats.inactive, detail: "Paused", icon: PauseCircle, tone: "text-muted-foreground bg-muted" },
         { label: "Total Items", value: items, detail: "Across playlists", icon: Layers3 },
         { label: "Total Duration", value: duration, detail: "Across playlists", icon: Clock3 },

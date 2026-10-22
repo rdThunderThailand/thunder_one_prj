@@ -8,7 +8,7 @@ export function ReturnTabs({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-wrap items-center gap-4 border-b border-border">
         {returnTabs.map((tab) => (
           <button
             key={tab}
@@ -16,8 +16,8 @@ export function ReturnTabs({ children }: { children: React.ReactNode }) {
             onClick={() => setActive(tab)}
             className={`border-b-2 px-1 pb-2.5 text-sm font-medium transition-colors ${
               active === tab
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab}
@@ -28,7 +28,7 @@ export function ReturnTabs({ children }: { children: React.ReactNode }) {
       {active === returnTabs[0] ? (
         children
       ) : (
-        <div className="rounded-xl border border-dashed border-zinc-200 p-10 text-center text-sm text-zinc-400 dark:border-zinc-800">
+        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-t1-gray-400">
           ยังไม่มีข้อมูลสำหรับแท็บนี้
         </div>
       )}

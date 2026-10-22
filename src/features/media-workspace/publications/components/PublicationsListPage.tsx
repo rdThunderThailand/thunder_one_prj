@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText } from "lucide-react";
+import { FileTextIcon as FileText, PlusIcon, UploadIcon } from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PlusIcon, UploadIcon } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
 import {
   AlertDialog,
@@ -272,7 +271,7 @@ export function PublicationsListPage() {
         title="All Programs"
         meta={data ? `${data.total.toLocaleString()} programs` : "…"}
       >
-        {actionError && <p className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {actionError && <p className="mb-3 text-[10px] text-error">{actionError}</p>}
         {renderBody()}
       </LibraryShell>
 
@@ -288,7 +287,7 @@ export function PublicationsListPage() {
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmPending}
-              className="bg-danger text-danger-foreground hover:bg-danger/90"
+              className="bg-error text-error-foreground hover:bg-error/90"
             >
               {pending && CONFIRM_COPY[pending.action].confirm}
             </AlertDialogAction>

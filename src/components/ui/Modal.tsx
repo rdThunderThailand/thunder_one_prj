@@ -55,28 +55,28 @@ export function Modal({ open, onClose, title, description, children, footer, siz
       ref={ref}
       onClose={onClose}
       onClick={handleBackdropClick}
-      className={`m-auto w-[calc(100%-2rem)] ${sizeClasses[size]} rounded-lg p-0 backdrop:bg-black/40 ${overflowVisible ? "overflow-visible" : ""}`}
+      className={`m-auto w-[calc(100%-2rem)] ${sizeClasses[size]} rounded-lg p-0 backdrop:bg-t1-black/40 ${overflowVisible ? "overflow-visible" : ""}`}
     >
       {/* The <dialog> stays mounted — the effect above needs its ref — but its contents do not.
           A closed dialog is display:none, so everything inside it used to linger in the DOM:
           invisible, unreachable by keyboard, and still found by document.querySelector. */}
       {open && (
-        <div className="relative w-full rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="relative w-full rounded-lg border border-border bg-card p-5">
           <div className={hideTitle ? "sr-only" : "mb-5 pr-8"}>
-            <h2 className={`text-base font-semibold text-zinc-900 dark:text-zinc-100 ${titleClassName}`}>{title}</h2>
-            {description && <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>}
+            <h2 className={`text-base font-semibold text-foreground ${titleClassName}`}>{title}</h2>
+            {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
           </div>
           {showCloseButton && (
             <button
               type="button"
               aria-label="Close"
               onClick={onClose}
-              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-xl text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-xl text-t1-gray-400 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               ×
             </button>
           )}
-          <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-300">{children}</div>
+          <div className="flex flex-col gap-2 text-sm text-foreground">{children}</div>
           <div className="mt-4 flex justify-end gap-2">{footer}</div>
         </div>
       )}

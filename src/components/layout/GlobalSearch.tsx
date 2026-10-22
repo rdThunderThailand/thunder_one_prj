@@ -3,8 +3,17 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileText, Image as ImageIcon, LayoutGrid, Loader2, MonitorPlay, Search, TriangleAlert, User } from "lucide-react";
-import { SearchIcon } from "@/components/ui/icons";
+import {
+  FileTextIcon as FileText,
+  ImageIcon,
+  GridIcon as LayoutGrid,
+  SpinnerIcon as Loader2,
+  MonitorPlayIcon as MonitorPlay,
+  SearchIcon as Search,
+  WarningTriangleIcon as TriangleAlert,
+  UserIcon as User,
+  SearchIcon,
+} from "@/components/ui/icons";
 import { isModShortcut, isSlashShortcut, isTypingTarget, MOD_LABEL, shortcutAria } from "@/lib/keyboard-shortcut";
 import { useShortcutPlatform } from "./ShortcutPlatform";
 import { matchPages } from "./search-index";
@@ -158,23 +167,23 @@ export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
           >
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             ค้นหาทุกอย่างใน ThunderOne...
-            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
+            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
           </button>
         ) : (
           <button
             type="button"
             aria-keyshortcuts={`${shortcutAria(platform, "k")} /`}
-            className="flex h-9 w-full max-w-[700px] items-center gap-2.5 rounded-lg bg-[#eff5ff] px-3 text-left hover:bg-[#e6effd] dark:bg-zinc-900"
+            className="flex h-9 w-full max-w-[700px] items-center gap-2.5 rounded-lg bg-accent px-3 text-left hover:bg-accent"
           >
-            <SearchIcon className="h-4 w-4 shrink-0 text-[#6074a9] dark:text-zinc-500" />
-            <span className="w-full text-xs text-[#6074a9] dark:text-zinc-500">ค้นหาทุกอย่างใน ThunderOne...</span>
-            <kbd className="shrink-0 whitespace-nowrap text-xs text-[#6074a9] dark:text-zinc-500 pointer-coarse:hidden">{shortcut}</kbd>
+            <SearchIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="w-full text-xs text-muted-foreground">ค้นหาทุกอย่างใน ThunderOne...</span>
+            <kbd className="shrink-0 whitespace-nowrap text-xs text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
           </button>
         )}
       </Dialog.Trigger>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-t1-black/30" />
         <Dialog.Content
           aria-describedby={undefined}
           className="fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-popover shadow-float"

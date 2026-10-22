@@ -107,7 +107,7 @@ export function PublishChangesDialog({
         )}
         {phase.kind === "publishing" && (
           <div role="status" className="flex flex-col items-center gap-3 py-6 text-center">
-            <span className="h-10 w-10 animate-spin rounded-full border-4 border-primary-soft border-t-primary" aria-hidden="true" />
+            <span className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-primary" aria-hidden="true" />
             <DialogTitle>Publishing…</DialogTitle>
             <DialogDescription>
               Updating {contentLabel} and sending to {plural(programs.length, "program")}.
@@ -117,7 +117,7 @@ export function PublishChangesDialog({
         {phase.kind === "done" && (
           <>
             <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <span className="grid h-12 w-12 place-items-center rounded-full bg-success-soft text-success">
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-success-muted text-success">
                 <CheckIcon className="h-6 w-6" />
               </span>
               <DialogTitle className="text-success">Updated</DialogTitle>
@@ -133,7 +133,7 @@ export function PublishChangesDialog({
         {phase.kind === "failed" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-danger">Publish failed</DialogTitle>
+              <DialogTitle className="text-error">Publish failed</DialogTitle>
               <DialogDescription>
                 {phase.programName ? `Program “${phase.programName}” — ` : ""}
                 {phase.reason}

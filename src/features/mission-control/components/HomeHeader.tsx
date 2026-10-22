@@ -8,13 +8,13 @@ export function HomeHeader({ userName }: { userName: string }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 px-6 pb-14 pt-8">
       <div className="max-w-lg">
-        <h1 className="text-2xl font-semibold text-[#071858]">สวัสดีครับ คุณ{userName}</h1>
-        <p className="mt-1 text-sm text-[#4b5d8a]">นี่คือสิ่งสำคัญสำหรับวันนี้</p>
+        <h1 className="text-2xl font-semibold text-foreground">สวัสดีครับ คุณ{userName}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">นี่คือสิ่งสำคัญสำหรับวันนี้</p>
       </div>
-      <p className="text-right text-lg font-semibold leading-tight text-[#071858] sm:text-xl">
+      <p className="text-right text-lg font-semibold leading-tight text-foreground sm:text-xl">
         Empowered People.
         <br />
-        <span className="text-[#0760ed]">Connected Organization.</span>
+        <span className="text-primary">Connected Organization.</span>
       </p>
     </div>
   );

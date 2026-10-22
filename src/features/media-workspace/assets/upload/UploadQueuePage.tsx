@@ -27,7 +27,7 @@ const STATE_TONE: Record<UploadItemState, string> = {
   waiting: "text-warning",
   uploading: "text-primary",
   completed: "text-success",
-  failed: "text-danger",
+  failed: "text-error",
   canceled: "text-muted-foreground",
 };
 
@@ -104,7 +104,7 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
       </div>
 
       {queue.rejections.length > 0 && (
-        <div className="space-y-1 rounded-xl border border-danger/30 bg-danger-soft p-3 text-sm text-danger" role="alert">
+        <div className="space-y-1 rounded-xl border border-error/30 bg-error-muted p-3 text-sm text-error" role="alert">
           {queue.rejections.map((reason) => <p key={reason}>{reason}</p>)}
         </div>
       )}
@@ -112,7 +112,7 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <main className="min-w-0 space-y-5">
           <Card className="p-4">
-            <div onDragOver={(event) => event.preventDefault()} onDrop={onDrop} className="flex min-h-60 flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/30 bg-primary-soft p-6 text-center transition-colors hover:border-primary/30">
+            <div onDragOver={(event) => event.preventDefault()} onDrop={onDrop} className="flex min-h-60 flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/30 bg-accent p-6 text-center transition-colors hover:border-primary/30">
               <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-card text-primary shadow-sm ring-1 ring-primary/30"><UploadIcon className="h-6 w-6" /></span>
               <p className="text-sm font-semibold text-foreground">Drag &amp; Drop files here</p>
               <p className="my-2 text-xs text-muted-foreground">or</p>
@@ -139,15 +139,15 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
                       {item.state === "staged" ? <input aria-label={`Display name for ${item.file.name}`} value={item.title} maxLength={200} onChange={(event) => queue.renameItem(item.id, event.target.value)} className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-medium text-foreground outline-none hover:border-border focus:border-ring focus:ring-2 focus:ring-ring/30" /> : <p className="truncate text-sm font-medium text-foreground">{item.title}</p>}
                       <p className="mt-0.5 text-xs text-muted-foreground">{item.file.type || "Unknown type"} · {formatBytes(item.file.size)}</p>
                       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label={`${item.file.name} upload progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={item.pct}>
-                        <div className={`h-full rounded-full transition-[width] ${item.state === "failed" ? "bg-danger" : item.state === "completed" ? "bg-success" : "bg-primary"}`} style={{ width: `${item.pct}%` }} />
+                        <div className={`h-full rounded-full transition-[width] ${item.state === "failed" ? "bg-error" : item.state === "completed" ? "bg-success" : "bg-primary"}`} style={{ width: `${item.pct}%` }} />
                       </div>
-                      {item.error && <p className="mt-1 text-xs text-danger">{item.error}</p>}
+                      {item.error && <p className="mt-1 text-xs text-error">{item.error}</p>}
                       {item.warning && <p className="mt-1 text-xs text-warning">{item.warning}</p>}
                     </div>
                     <div className="flex shrink-0 items-center gap-3 text-xs">
                       <span className={`min-w-16 text-right font-medium ${STATE_TONE[item.state]}`}>{STATE_LABEL[item.state]}{item.state === "uploading" && ` ${item.pct}%`}</span>
-                      {item.state === "staged" && <button className="text-muted-foreground hover:text-danger" onClick={() => queue.removeItem(item.id)}>Remove</button>}
-                      {(item.state === "waiting" || item.state === "uploading") && <button className="text-muted-foreground hover:text-danger" onClick={() => setConfirmation({ action: "cancel", id: item.id, label: item.file.name })}>Cancel</button>}
+                      {item.state === "staged" && <button className="text-muted-foreground hover:text-error" onClick={() => queue.removeItem(item.id)}>Remove</button>}
+                      {(item.state === "waiting" || item.state === "uploading") && <button className="text-muted-foreground hover:text-error" onClick={() => setConfirmation({ action: "cancel", id: item.id, label: item.file.name })}>Cancel</button>}
                       {(item.state === "failed" || item.state === "canceled") && <><button className="font-medium text-primary" onClick={() => queue.retryItem(item.id)}>Retry</button><button className="text-muted-foreground" onClick={() => setConfirmation({ action: "dismiss", id: item.id, label: item.file.name })}>Dismiss</button></>}
                       {item.state === "completed" && <button className="text-muted-foreground" onClick={() => queue.removeItem(item.id)}>Dismiss</button>}
                     </div>
@@ -176,7 +176,7 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
                 {queue.selectedTagIds.map((id) => {
                   const tag = queue.tags.find((candidate) => candidate.id === id);
                   if (!tag) return null;
-                  return <span key={id} className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary">{tag.name}<button type="button" disabled={settingsLocked} onClick={() => queue.setSelectedTagIds(queue.selectedTagIds.filter((tagId) => tagId !== id))} aria-label={`Remove ${tag.name}`} className="disabled:cursor-not-allowed disabled:opacity-50">×</button></span>;
+                  return <span key={id} className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-primary">{tag.name}<button type="button" disabled={settingsLocked} onClick={() => queue.setSelectedTagIds(queue.selectedTagIds.filter((tagId) => tagId !== id))} aria-label={`Remove ${tag.name}`} className="disabled:cursor-not-allowed disabled:opacity-50">×</button></span>;
                 })}
               </div>
               <select id="upload-tag" value="" disabled={settingsLocked || queue.tags.length === queue.selectedTagIds.length} onChange={(event) => addTag(event.target.value)} className="mt-2 w-full bg-transparent px-1 py-1 text-sm text-muted-foreground outline-none disabled:cursor-not-allowed disabled:text-muted-foreground">
@@ -206,7 +206,7 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep</AlertDialogCancel>
-            <AlertDialogAction className="bg-danger hover:bg-danger" onClick={confirmAction}>Confirm</AlertDialogAction>
+            <AlertDialogAction className="bg-error hover:bg-error" onClick={confirmAction}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

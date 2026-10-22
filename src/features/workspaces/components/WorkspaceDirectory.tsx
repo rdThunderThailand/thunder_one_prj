@@ -18,8 +18,8 @@ function PinButton({ id, pinned }: { id: string; pinned: boolean }) {
       aria-label={pinned ? "Unpin workspace" : "Pin workspace"}
       title={pinned ? "Unpin" : "Pin"}
       onClick={() => togglePinnedWorkspace(id)}
-      className={`rounded-md p-1 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-        pinned ? "text-amber-500" : "text-zinc-300 hover:text-zinc-500"
+      className={`rounded-md p-1 transition-colors hover:bg-muted ${
+        pinned ? "text-warning" : "text-t1-gray-400 hover:text-muted-foreground"
       }`}
     >
       <StarIcon
@@ -45,7 +45,7 @@ function WorkspaceTile({
   // (z-10) — a button can't be nested inside an anchor.
   return (
     <Card
-      className={`relative flex h-full flex-col p-4 ${workspace.href ? "transition-colors hover:border-indigo-200 dark:hover:border-indigo-800" : "opacity-75"}`}
+      className={`relative flex h-full flex-col p-4 ${workspace.href ? "transition-colors hover:border-t1-blue-200" : "opacity-75"}`}
     >
       {workspace.href && (
         <Link
@@ -70,8 +70,8 @@ function WorkspaceTile({
         )}
       </div>
       <div className="mt-3 flex-1">
-        <p className="font-semibold text-zinc-900 dark:text-zinc-50">{workspace.name}</p>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{workspace.description}</p>
+        <p className="font-semibold text-foreground">{workspace.name}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{workspace.description}</p>
       </div>
       <div className="mt-4">
         <WorkspaceStatusLine
@@ -114,17 +114,17 @@ export function WorkspaceDirectory({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <label className="flex flex-1 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <SearchIcon className="h-4 w-4 shrink-0 text-zinc-400" />
+        <label className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+          <SearchIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
           <input
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search workspaces..."
-            className="min-w-0 flex-1 bg-transparent text-zinc-700 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-200"
+            className="min-w-0 flex-1 bg-transparent text-foreground placeholder:text-t1-gray-400 focus:outline-none"
           />
         </label>
-        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-700">
+        <div className="flex items-center gap-1 rounded-lg border border-border p-1">
           {(["grid", "list"] as const).map((mode) => (
             <button
               key={mode}
@@ -133,8 +133,8 @@ export function WorkspaceDirectory({
               onClick={() => setView(mode)}
               className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium capitalize ${
                 view === mode
-                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                  : "text-zinc-500 dark:text-zinc-400"
+                  ? "bg-accent text-primary"
+                  : "text-muted-foreground"
               }`}
             >
               {mode === "grid" ? <GridIcon className="h-3.5 w-3.5" /> : <ListIcon className="h-3.5 w-3.5" />}
@@ -153,8 +153,8 @@ export function WorkspaceDirectory({
             onClick={() => setCategory(cat)}
             className={`rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
               category === cat
-                ? "bg-indigo-600 text-white"
-                : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted"
             }`}
           >
             {cat}
@@ -183,11 +183,11 @@ export function WorkspaceDirectory({
           ))}
         </div>
       ) : (
-        <Card className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <Card className="divide-y divide-border">
           {visible.map((workspace) => (
             <div
               key={workspace.id}
-              className={`relative flex items-center gap-3 p-3 ${workspace.href ? "hover:bg-zinc-50 dark:hover:bg-zinc-800/50" : "opacity-75"}`}
+              className={`relative flex items-center gap-3 p-3 ${workspace.href ? "hover:bg-t1-gray-50" : "opacity-75"}`}
             >
               {workspace.href && (
                 <Link
@@ -202,7 +202,7 @@ export function WorkspaceDirectory({
                 {workspaceIcon(workspace.icon, "h-4 w-4")}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{workspace.name}</p>
+                <p className="truncate text-sm font-medium text-foreground">{workspace.name}</p>
                 <WorkspaceStatusLine
                   workspace={workspace}
                   stat={stats[workspace.id]}

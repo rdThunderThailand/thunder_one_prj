@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, LifeBuoy, Search } from "lucide-react";
+import {
+  BookIcon as BookOpen,
+  HelpIcon as LifeBuoy,
+  SearchIcon as Search,
+} from "@/components/ui/icons";
 import { env } from "@/config/env";
 import { cn } from "@/lib/utils";
 import { LOCALE_NAME, t } from "../copy";
@@ -127,7 +131,7 @@ export function LocaleSwitch({ locale, hrefs, className }: { locale: Locale; hre
 export function SupportBand({ locale }: { locale: Locale }) {
   return (
     <section className="mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6">
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-primary-soft/60 px-5 py-4">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-accent/60 px-5 py-4">
         <Image src={SUPPORT_ICON} alt="" width={44} height={44} className="shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="text-base font-bold">{t("stillNeedHelp", locale)}</p>

@@ -71,8 +71,8 @@ export function AssetCard(props: AssetCardProps) {
           <span
             className={`absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
               selected
-                ? "border-primary bg-primary text-white"
-                : "border-white/80 bg-card/20"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-t1-white/80 bg-card/20"
             }`}
           >
             {selected && <CheckIcon className="h-3 w-3" />}
@@ -84,7 +84,7 @@ export function AssetCard(props: AssetCardProps) {
             {playlist.item_count} items
             {playlist.created_at ? ` · ${new Date(playlist.created_at).toLocaleDateString()}` : ""}
           </p>
-          <span className="inline-flex w-fit items-center rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-medium text-primary">
+          <span className="inline-flex w-fit items-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-primary">
             Playlist
           </span>
         </div>
@@ -149,15 +149,15 @@ export function AssetCard(props: AssetCardProps) {
           </span>
         )}
         {isVideo && durationLabel && (
-          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+          <span className="absolute bottom-1.5 right-1.5 rounded bg-t1-black/60 px-1.5 py-0.5 text-[10px] font-medium text-t1-white">
             {durationLabel}
           </span>
         )}
         <span
           className={`absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
             selected
-              ? "border-primary bg-primary text-white"
-              : "border-white/80 bg-card/20"
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-t1-white/80 bg-card/20"
           }`}
         >
           {selected && <CheckIcon className="h-3 w-3" />}

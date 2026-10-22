@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Plus, Trash2, Undo2 } from "lucide-react";
+import { PlusIcon as Plus, TrashIcon as Trash2, UndoIcon as Undo2 } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
@@ -279,9 +279,9 @@ export function CompositionsListPage() {
         )}
       >
         {library?.isLegacyResponse && (
-          <p className="mb-3 rounded-lg bg-warning-soft p-3 text-[10px] text-warning">Layouts Library filters and summary need the Core read-model rollout.</p>
+          <p className="mb-3 rounded-lg bg-warning-muted p-3 text-[10px] text-warning">Layouts Library filters and summary need the Core read-model rollout.</p>
         )}
-        {actionError && <p role="alert" className="mb-3 text-[10px] text-danger">{actionError}</p>}
+        {actionError && <p role="alert" className="mb-3 text-[10px] text-error">{actionError}</p>}
         {error && <ListError message={error.message} onRetry={reload} retrying={false} />}
         {!library ? (
           error ? null : <ListSkeleton />

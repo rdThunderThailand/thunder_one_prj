@@ -1,8 +1,7 @@
 "use client";
 
-import { FileText } from "lucide-react";
+import { FileTextIcon as FileText, XIcon } from "@/components/ui/icons";
 import { useState } from "react";
-import { XIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/lovable/input";
 import { Label } from "@/components/ui/lovable/label";
 import { Textarea } from "@/components/ui/lovable/textarea";
@@ -40,7 +39,7 @@ export function ProgramDetailsCard({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="program-name">
-              Program Name <span className="text-danger">*</span>
+              Program Name <span className="text-error">*</span>
             </Label>
             <Input
               id="program-name"
@@ -70,7 +69,7 @@ export function ProgramDetailsCard({
               {state.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-md bg-info-soft px-2 py-1 text-xs font-medium text-info"
+                  className="inline-flex items-center gap-1 rounded-md bg-info-muted px-2 py-1 text-xs font-medium text-info"
                 >
                   {tag}
                   {!disabled && (

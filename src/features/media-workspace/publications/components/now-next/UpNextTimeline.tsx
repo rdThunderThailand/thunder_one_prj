@@ -8,10 +8,10 @@ const HORIZON = 180;
 
 // ADR 0084 §8: block colour follows Publication Priority, from the status tokens.
 export const PRIORITY_STYLES: Record<NowNextPriority, { label: string; block: string; dot: string }> = {
-  urgent: { label: "Urgent", block: "border-danger/30 bg-danger-soft text-danger", dot: "bg-danger" },
-  high: { label: "High", block: "border-warning/30 bg-warning-soft text-warning", dot: "bg-warning" },
-  normal: { label: "Normal", block: "border-primary/30 bg-primary-soft text-primary", dot: "bg-primary" },
-  low: { label: "Low", block: "border-success/30 bg-success-soft text-success", dot: "bg-success" },
+  urgent: { label: "Urgent", block: "border-error/30 bg-error-muted text-error", dot: "bg-error" },
+  high: { label: "High", block: "border-warning/30 bg-warning-muted text-warning", dot: "bg-warning" },
+  normal: { label: "Normal", block: "border-primary/30 bg-accent text-primary", dot: "bg-primary" },
+  low: { label: "Low", block: "border-success/30 bg-success-muted text-success", dot: "bg-success" },
 };
 
 function Block({ occurrence, asOf, timeZone }: { occurrence: NowNextOccurrence; asOf: string; timeZone: string }) {

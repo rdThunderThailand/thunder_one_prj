@@ -41,7 +41,7 @@ const STATUS_LABEL: Record<ChannelStatusFilter, string> = {
 const STATUS_DOT: Record<ChannelStatusFilter, string> = {
   online: "bg-success",
   warning: "bg-warning",
-  offline: "bg-danger",
+  offline: "bg-error",
   no_player: "bg-border",
 };
 

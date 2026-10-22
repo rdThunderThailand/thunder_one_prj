@@ -1,6 +1,6 @@
 "use client";
 
-import { PlaySquare } from "lucide-react";
+import { PlaySquareIcon as PlaySquare } from "@/components/ui/icons";
 import { useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { fetchPlaylist, formatDuration } from "@/features/media-workspace/playlists";

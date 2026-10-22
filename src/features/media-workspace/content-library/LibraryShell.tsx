@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Menu, Search, X } from "lucide-react";
+import { MenuIcon as Menu, SearchIcon as Search, XIcon as X } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/lovable/sheet";
@@ -97,7 +97,7 @@ export function LibraryShell({ toolbar, selection, rail, title, meta, headerActi
 /** Lovable `BulkActionBar`. */
 export function LibrarySelectionBar({ count, onClear, children }: { count: number; onClear: () => void; children: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-primary/20 bg-primary-soft px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 border-b border-primary/20 bg-accent px-3 py-2">
       <strong className="mr-2 text-[10px] text-primary">{count} selected</strong>
       {children}
       <Button variant="ghost" size="sm" className="ml-auto" onClick={onClear}><X className="h-3.5 w-3.5" />Clear Selection</Button>

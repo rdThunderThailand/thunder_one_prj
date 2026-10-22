@@ -73,11 +73,11 @@ export function SetPasswordForm() {
   if (linkError || !accessToken) {
     return (
       <div className="flex flex-col gap-4 text-center">
-        <p className="text-sm text-red-500">{linkError ?? "This link is missing its access token."}</p>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-error">{linkError ?? "This link is missing its access token."}</p>
+        <p className="text-sm text-muted-foreground">
           Ask whoever invited you to send a new invitation, or open the link directly from your
           invitation email rather than a copy or forward — or{" "}
-          <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+          <Link href="/login" className="font-medium text-primary hover:text-accent-foreground">
             sign in
           </Link>{" "}
           if you already have an account.
@@ -108,7 +108,7 @@ export function SetPasswordForm() {
         value={confirmPassword}
         onChange={(event) => setConfirmPassword(event.target.value)}
       />
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Setting password..." : "Set password"}
       </Button>

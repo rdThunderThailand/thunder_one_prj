@@ -24,23 +24,23 @@ const actionIcon: Record<QuickActionId, ReactNode> = {
 export function QuickActionsRow() {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">ทางลัด (Quick Actions)</h2>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">ทางลัด (Quick Actions)</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {quickActions.map((action) => (
           <button
             key={action.id}
             type="button"
             title="Not built yet"
-            className="flex cursor-not-allowed items-center gap-2.5 rounded-xl border border-zinc-100 p-3 text-left opacity-70 dark:border-zinc-800"
+            className="flex cursor-not-allowed items-center gap-2.5 rounded-xl border border-border p-3 text-left opacity-70"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
               {actionIcon[action.id]}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
+              <span className="block truncate text-sm font-medium text-foreground">
                 {action.label}
               </span>
-              <span className="block truncate text-[11px] text-zinc-400">{action.sublabel}</span>
+              <span className="block truncate text-[11px] text-t1-gray-400">{action.sublabel}</span>
             </span>
           </button>
         ))}

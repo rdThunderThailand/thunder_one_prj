@@ -45,7 +45,7 @@ export function TrashUsageNotice({ items }: { items: AssetRef[] }) {
   if (entries.length === 0) return null;
   return (
     <div className="space-y-2">
-      <p className="rounded-lg bg-warning-soft p-3 text-xs leading-5 text-warning">
+      <p className="rounded-lg bg-warning-muted p-3 text-xs leading-5 text-warning">
         Screens keep playing a file in Trash until it is removed from the Playlists and Layouts below. Programs that use it cannot publish
         changes until it is removed or recovered.
       </p>

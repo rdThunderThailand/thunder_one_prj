@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 type Icon = ComponentType<{ className?: string }>;
 
@@ -8,12 +8,14 @@ export function EmptyState({
   icon: Icon,
   title,
   detail,
+  action,
   compact = false,
   className = "",
 }: {
   icon: Icon;
   title: string;
   detail: string;
+  action?: ReactNode;
   compact?: boolean;
   className?: string;
 }) {
@@ -25,6 +27,7 @@ export function EmptyState({
         </span>
         <p className="mt-2 text-sm font-semibold text-foreground">{title}</p>
         <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+        {action && <div className="mt-3 flex justify-center">{action}</div>}
       </div>
     </div>
   );

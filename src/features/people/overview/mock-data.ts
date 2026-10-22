@@ -81,10 +81,10 @@ export const orgStructureRows: OrgStructureRow[] = [
 export const totalHeadcount = 128;
 
 export const personnelBreakdown: DonutSegment[] = [
-  { label: "พนักงาน (Employee)", value: 112, color: "#6366f1" },
-  { label: "ผู้รับเหมา (Contractor)", value: 9, color: "#22d3ee" },
-  { label: "พันธมิตร (Partner)", value: 4, color: "#8b5cf6" },
-  { label: "แขก (Guest)", value: 3, color: "#f59e0b" },
+  { label: "พนักงาน (Employee)", value: 112, color: "var(--color-primary)" },
+  { label: "ผู้รับเหมา (Contractor)", value: 9, color: "var(--color-t1-blue-300)" },
+  { label: "พันธมิตร (Partner)", value: 4, color: "var(--color-in-progress)" },
+  { label: "แขก (Guest)", value: 3, color: "var(--color-warning)" },
 ];
 
 export const tenureDistribution: BarDatum[] = [

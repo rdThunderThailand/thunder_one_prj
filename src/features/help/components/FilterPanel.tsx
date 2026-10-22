@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, SlidersHorizontal } from "lucide-react";
+import { CheckIcon as Check, SlidersIcon as SlidersHorizontal } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_LABEL, WORKSPACE_LABEL, t } from "../copy";
 import { helpHref, type HelpQuery } from "../navigation";
@@ -80,11 +80,11 @@ function FilterLink({ href, selected, label, count }: { href: string; selected: 
         aria-current={selected ? "true" : undefined}
         className={cn(
           "flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px] transition-colors",
-          selected ? "bg-primary-soft font-semibold text-primary" : "text-foreground hover:bg-muted",
+          selected ? "bg-accent font-semibold text-primary" : "text-foreground hover:bg-muted",
         )}
       >
         <span aria-hidden="true" className={cn("grid h-4 w-4 place-items-center rounded border", selected ? "border-primary bg-primary text-primary-foreground" : "border-border")}>
-          {selected && <Check className="h-3 w-3" strokeWidth={3} />}
+          {selected && <Check className="h-3 w-3" />}
         </span>
         <span className="min-w-0 flex-1 truncate">{label}</span>
         {count !== undefined && <span className="text-2xs tabular-nums text-muted-foreground">{count}</span>}

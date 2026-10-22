@@ -232,7 +232,7 @@ export function CompositionEditorPage({
   const fatal = loadError ?? data.loadError;
   if (fatal) return (
     <div className="rounded-lg border border-border bg-card p-6">
-      <p className="text-sm text-danger">{fatal.message}</p>
+      <p className="text-sm text-error">{fatal.message}</p>
       <Button className="mt-4" variant="outline" onClick={() => router.push(LIST_PATH)}>กลับไป Layouts</Button>
     </div>
   );

@@ -7,7 +7,7 @@ import { GaugeIcon } from "@/components/ui/icons";
 export function MyGoalsCard() {
   return (
     <Card className="p-4">
-      <h2 className="mb-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">My Goals</h2>
+      <h2 className="mb-1 text-sm font-semibold text-foreground">My Goals</h2>
       <EmptyState
         icon={GaugeIcon}
         title="No goals yet"

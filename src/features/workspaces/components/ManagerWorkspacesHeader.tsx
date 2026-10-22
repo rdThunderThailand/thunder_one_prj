@@ -4,11 +4,11 @@ export function ManagerWorkspacesHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold text-foreground">
           Workspaces
-          <GridIcon className="h-5 w-5 text-indigo-500" />
+          <GridIcon className="h-5 w-5 text-primary" />
         </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Your workplace and tools, so you can work efficiently.
         </p>
       </div>
@@ -16,7 +16,7 @@ export function ManagerWorkspacesHeader() {
         <button
           type="button"
           title="Not built yet"
-          className="flex shrink-0 cursor-not-allowed items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+          className="flex shrink-0 cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground"
         >
           Customize
           <SettingsIcon className="h-4 w-4" />
@@ -24,7 +24,7 @@ export function ManagerWorkspacesHeader() {
         <button
           type="button"
           title="Not built yet"
-          className="flex cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 p-2 text-zinc-400 dark:border-zinc-700"
+          className="flex cursor-not-allowed items-center justify-center rounded-lg border border-border p-2 text-t1-gray-400"
         >
           <MoreIcon className="h-4 w-4" />
         </button>

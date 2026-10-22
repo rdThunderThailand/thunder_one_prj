@@ -96,7 +96,7 @@ export function EditScheduleModal({
           <div className="flex flex-col gap-6 border-b border-border p-5 lg:border-b-0 lg:border-r">
             <p className="text-sm font-semibold text-foreground">Schedule Configuration</p>
             {isStartLocked && (
-              <p className="rounded-lg bg-info-soft px-3 py-2 text-xs text-info">
+              <p className="rounded-lg bg-info-muted px-3 py-2 text-xs text-info">
                 Program นี้กำลังออกอากาศ — แก้ได้เฉพาะวันและเวลาสิ้นสุด ถ้าต้องการเปลี่ยนรูปแบบให้สร้าง Program ใหม่
               </p>
             )}
@@ -129,7 +129,7 @@ export function EditScheduleModal({
           {applyError && (
             <p
               role="alert"
-              className="mr-auto text-sm text-danger"
+              className="mr-auto text-sm text-error"
             >
               {applyError}
             </p>

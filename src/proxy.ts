@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { env } from "@/config/env";
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get("to_at")?.value;
   const { pathname } = request.nextUrl;
+
+  // docs/adr/0097: with the Asset Workspace flag off every /asset-workspace route is Not Found.
+  // Gated here, not in the layout — Next renders a layout and its page in parallel, so a layout
+  // notFound() would still run the page (and its data fetches) and stream its content.
+  if (!env.assetWorkspaceMvp && (pathname === "/asset-workspace" || pathname.startsWith("/asset-workspace/"))) {
+    return NextResponse.rewrite(new URL("/_asset-workspace-off", request.url));
+  }
 
   // /set-password: where Supabase's invite email (Add Employee flow) lands
   // an invitee who, by definition, has no session cookie yet — see

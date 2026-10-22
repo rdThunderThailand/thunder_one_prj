@@ -52,19 +52,19 @@ export function CompositionEditorOverlays({
       )}
 
       {saveError && (
-        <div className="shrink-0 border-b border-danger/30 bg-danger-soft px-4 py-2">
-          <p className="text-sm text-danger">{saveError}</p>
+        <div className="shrink-0 border-b border-error/30 bg-error-muted px-4 py-2">
+          <p className="text-sm text-error">{saveError}</p>
         </div>
       )}
 
       {templateSavedName && (
-        <p role="status" className="rounded-lg border border-success/30 bg-success-soft p-3 text-sm text-success">
+        <p role="status" className="rounded-lg border border-success/30 bg-success-muted p-3 text-sm text-success">
           Added “{templateSavedName}” to My Templates.
         </p>
       )}
 
       {sharedTemplateUsage > 1 && (
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-warning/30 bg-warning-soft px-4 py-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-warning/30 bg-warning-muted px-4 py-2">
           <p className="text-sm text-warning">
             This Template is used by {sharedTemplateUsage} Layouts. Changing the Zones affects all of them.
           </p>

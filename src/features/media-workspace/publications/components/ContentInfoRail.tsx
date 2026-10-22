@@ -63,7 +63,7 @@ export function ContentInfoRail({
           <p className="mt-0.5 text-xs text-muted-foreground">ข้อมูลเนื้อหา</p>
         </div>
         {error ? (
-          <p className="text-sm text-danger">โหลดข้อมูลคอนเทนต์ไม่สำเร็จ</p>
+          <p className="text-sm text-error">โหลดข้อมูลคอนเทนต์ไม่สำเร็จ</p>
         ) : loading || !preview ? (
           <p className="text-sm text-muted-foreground">กำลังโหลด…</p>
         ) : branch === "media" ? (
@@ -88,7 +88,7 @@ export function ContentInfoRail({
           ))}
         </ul>
       </Card>
-      <Card className="border-primary/30 bg-primary-soft p-5">
+      <Card className="border-primary/30 bg-accent p-5">
         <div className="flex items-start gap-3">
           <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div>

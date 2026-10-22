@@ -6,6 +6,14 @@ export const FAILURE_LABELS: Record<FailureReason, string> = {
   file_corrupt: "File corrupt",
   playback_stalled: "Playback stalled",
   other: "Other error",
+  publication_cancelled: "Program cancelled",
+};
+
+/** Interrupted = cut short by a cancelled Program (ADR 0018): not a Player fault, so it is not styled as a failure. */
+export const OUTCOME_BADGES: Record<PlaybackProofEntry["outcome"], { label: string; variant: "success" | "danger" | "warning" }> = {
+  played: { label: "Played", variant: "success" },
+  failed: { label: "Failed", variant: "danger" },
+  interrupted: { label: "Interrupted", variant: "warning" },
 };
 
 export const SOURCE_LABELS = { playlist: "Playlist", composition: "Layout", media: "Media" } as const;

@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CircleCheck, CircleX, Monitor, Timer } from "lucide-react";
+import {
+  CheckCircleIcon as CircleCheck,
+  XCircleIcon as CircleX,
+  MonitorIcon as Monitor,
+  TimerIcon as Timer,
+} from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ErrorState } from "@/components/ui/lovable/core";
 import { useListUrlState } from "@/hooks/use-list-url-state";
@@ -114,9 +119,9 @@ export function PlaybackProofPage() {
         <LibrarySummary
           label="Playback Proof summary"
           cards={[
-            { label: "Plays", value: kpis.plays, detail: "Slots reported as played", icon: CircleCheck, tone: "text-success bg-success-soft" },
-            { label: "Failed", value: kpis.failed, detail: "Slots the Player could not play", icon: CircleX, tone: "text-danger bg-danger-soft" },
-            { label: "Airtime", value: formatAirtime(kpis.airtime_seconds), detail: "Total time on screen", icon: Timer, tone: "text-info bg-info-soft" },
+            { label: "Plays", value: kpis.plays, detail: "Slots reported as played", icon: CircleCheck, tone: "text-success bg-success-muted" },
+            { label: "Failed", value: kpis.failed, detail: "Slots the Player could not play", icon: CircleX, tone: "text-error bg-error-muted" },
+            { label: "Airtime", value: formatAirtime(kpis.airtime_seconds), detail: "Total time on screen", icon: Timer, tone: "text-info bg-info-muted" },
             { label: "Screens reporting", value: kpis.screens_reporting, detail: "Channels with at least one entry", icon: Monitor },
           ]}
         />
@@ -139,7 +144,7 @@ export function PlaybackProofPage() {
       {notice && (
         <p
           role="status"
-          className="rounded-lg bg-warning-soft px-4 py-3 text-xs text-warning"
+          className="rounded-lg bg-warning-muted px-4 py-3 text-xs text-warning"
         >
           {notice}
         </p>

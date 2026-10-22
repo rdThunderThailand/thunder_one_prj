@@ -7,7 +7,7 @@ import { MegaphoneIcon } from "@/components/ui/icons";
 export function AnnouncementsCard() {
   return (
     <Card className="p-4">
-      <h2 className="mb-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Announcements</h2>
+      <h2 className="mb-1 text-sm font-semibold text-foreground">Announcements</h2>
       <EmptyState
         icon={MegaphoneIcon}
         title="No announcements"

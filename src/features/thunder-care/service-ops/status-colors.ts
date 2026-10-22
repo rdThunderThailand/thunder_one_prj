@@ -18,9 +18,9 @@ export const priorityBadge: Record<CasePriority, { color: BadgeColor; label: str
 };
 
 export const slaRiskTextColor: Record<SlaRisk, string> = {
-  ok: "text-zinc-500 dark:text-zinc-400",
-  warning: "text-amber-600 dark:text-amber-400",
-  overdue: "text-red-600 dark:text-red-400",
+  ok: "text-muted-foreground",
+  warning: "text-t1-amber-700",
+  overdue: "text-t1-red-700",
 };
 
 export const channelIcon: Record<CaseChannel, typeof GlobeIcon> = {

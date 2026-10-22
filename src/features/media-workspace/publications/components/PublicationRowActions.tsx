@@ -2,8 +2,13 @@
 
 import { Fragment } from "react";
 import Link from "next/link";
-import { CalendarCog, Eye, FilePenLine, type LucideIcon } from "lucide-react";
-import { MoreIcon } from "@/components/ui/icons";
+import {
+  ScheduleIcon as CalendarCog,
+  EyeIcon as Eye,
+  EditIcon as FilePenLine,
+  type Icon,
+  MoreIcon,
+} from "@/components/ui/icons";
 import { Button, buttonVariants } from "@/components/ui/lovable/button";
 import {
   DropdownMenu,
@@ -29,7 +34,7 @@ const LABELS: Record<RowAction, string> = {
 const DESTRUCTIVE: RowAction[] = ["delete", "end"];
 
 /** QA 2026-10-08 #8: the primary action is an icon, one per kind of edit, named by tooltip + aria-label. */
-const PRIMARY_ICONS: Partial<Record<RowAction, { icon: LucideIcon; label: string }>> = {
+const PRIMARY_ICONS: Partial<Record<RowAction, { icon: Icon; label: string }>> = {
   edit: { icon: FilePenLine, label: "แก้ไข Draft" },
   open: { icon: CalendarCog, label: "แก้ไข Program" },
   view: { icon: Eye, label: "ดู Program" },
@@ -102,7 +107,7 @@ export function PublicationRowActions({
             ) : (
               <DropdownMenuItem
                 key={action}
-                className={isDestructive ? "text-danger focus:text-danger" : undefined}
+                className={isDestructive ? "text-error focus:text-error" : undefined}
                 onSelect={() => onAction(action as "duplicate" | "delete" | "end", item)}
               >
                 {LABELS[action]}

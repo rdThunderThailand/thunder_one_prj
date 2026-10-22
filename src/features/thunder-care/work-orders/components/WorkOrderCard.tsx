@@ -26,7 +26,7 @@ export function WorkOrderCard({ workOrder }: { workOrder: WorkOrder }) {
     <Card className="flex flex-col gap-2 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          <p className="flex items-center gap-2 text-sm font-medium text-foreground">
             {workOrder.title}
             {workOrder.severity && (
               <Badge color="red" variant="pill">
@@ -34,12 +34,12 @@ export function WorkOrderCard({ workOrder }: { workOrder: WorkOrder }) {
               </Badge>
             )}
           </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-muted-foreground">
             {workOrder.assetTag} · {workOrder.location}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-t1-gray-400">
             {workOrder.date} {workOrder.time}
           </span>
           <Badge color={badge.color} variant="pill">
@@ -47,12 +47,12 @@ export function WorkOrderCard({ workOrder }: { workOrder: WorkOrder }) {
           </Badge>
         </div>
       </div>
-      <p className="text-sm text-zinc-600 dark:text-zinc-300">{workOrder.description}</p>
+      <p className="text-sm text-muted-foreground">{workOrder.description}</p>
       <div>
         {(status === "assigned" || status === "overdue") && (
           <button
             onClick={() => setStatus("in_progress")}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
           >
             Start
           </button>
@@ -60,13 +60,13 @@ export function WorkOrderCard({ workOrder }: { workOrder: WorkOrder }) {
         {status === "in_progress" && (
           <button
             onClick={() => setStatus("completed")}
-            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500"
+            className="rounded-lg bg-success px-3 py-1.5 text-xs font-semibold text-success-foreground hover:bg-success/90"
           >
             Complete
           </button>
         )}
         {status === "completed" && (
-          <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-t1-green-700">
             <CheckCircleIcon className="h-4 w-4" /> Completed
           </span>
         )}

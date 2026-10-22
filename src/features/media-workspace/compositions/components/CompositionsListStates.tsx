@@ -1,7 +1,12 @@
 // Presentational blocks extracted from CompositionsListPage.tsx so that file stays inside
 // the 300-line rule. No data-fetching, no side-effects here.
 
-import { AlertCircle, LayoutTemplate, PencilRuler, SquareStack } from "lucide-react";
+import {
+  AlertCircleIcon as AlertCircle,
+  LayoutIcon as LayoutTemplate,
+  DesignIcon as PencilRuler,
+  LayersIcon as SquareStack,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { LibraryEmpty, LibrarySummary } from "../../content-library/LibraryChrome";
 
@@ -25,7 +30,7 @@ export function CompositionsSummary({ summary, onNeedsContent }: {
         { label: "Total Layouts", value: summary.total, detail: "All layouts", icon: SquareStack },
         { label: "Template-based", value: summary.templateBased, detail: "From a template", icon: LayoutTemplate },
         { label: "Custom", value: summary.custom, detail: "Built from scratch", icon: PencilRuler },
-        { label: "Needs content", value: summary.needsContent, detail: "Click to filter", icon: AlertCircle, tone: "text-warning bg-warning-soft", onClick: onNeedsContent },
+        { label: "Needs content", value: summary.needsContent, detail: "Click to filter", icon: AlertCircle, tone: "text-warning bg-warning-muted", onClick: onNeedsContent },
       ]}
     />
   );

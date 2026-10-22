@@ -23,7 +23,7 @@ const TILES = [
     unit: "องค์กร",
     delta: `+${overviewStats.totalCustomersDelta} จากช่วงก่อน`,
     icon: UsersIcon,
-    tone: "bg-blue-50 text-blue-600",
+    tone: "bg-info-muted text-t1-blue-700",
     href: "/customer-workspace/customers",
   },
   {
@@ -32,7 +32,7 @@ const TILES = [
     unit: "รายการ",
     delta: `+${overviewStats.dueIn30DaysDelta} จากช่วงก่อน`,
     icon: ClockIcon,
-    tone: "bg-orange-50 text-orange-600",
+    tone: "bg-warning-muted text-t1-amber-700",
     href: "/customer-workspace/renewals",
   },
   {
@@ -41,7 +41,7 @@ const TILES = [
     unit: "รายการ",
     delta: `+${overviewStats.completedDelta} จากช่วงก่อน`,
     icon: CheckCircleIcon,
-    tone: "bg-emerald-50 text-emerald-600",
+    tone: "bg-success-muted text-t1-green-700",
     href: "/customer-workspace/renewals",
   },
   {
@@ -49,15 +49,15 @@ const TILES = [
     value: overviewStats.alerts,
     unit: "รายการ",
     icon: BellIcon,
-    tone: "bg-violet-50 text-violet-600",
+    tone: "bg-in-progress-muted text-t1-purple-700",
   },
 ] as const;
 
 const QUICK_ACTIONS = [
-  { label: "เพิ่มลูกค้าใหม่", icon: UsersIcon, tone: "bg-blue-50 text-blue-600", href: "/customer-workspace/customers" },
-  { label: "สร้างรายการต่ออายุ", icon: ClockIcon, tone: "bg-orange-50 text-orange-600", href: "/customer-workspace/renewals" },
-  { label: "ค้นหาลูกค้า", icon: SearchIcon, tone: "bg-emerald-50 text-emerald-600", href: "/customer-workspace/customers" },
-  { label: "ดูรายงาน", icon: ChartIcon, tone: "bg-violet-50 text-violet-600" },
+  { label: "เพิ่มลูกค้าใหม่", icon: UsersIcon, tone: "bg-info-muted text-t1-blue-700", href: "/customer-workspace/customers" },
+  { label: "สร้างรายการต่ออายุ", icon: ClockIcon, tone: "bg-warning-muted text-t1-amber-700", href: "/customer-workspace/renewals" },
+  { label: "ค้นหาลูกค้า", icon: SearchIcon, tone: "bg-success-muted text-t1-green-700", href: "/customer-workspace/customers" },
+  { label: "ดูรายงาน", icon: ChartIcon, tone: "bg-in-progress-muted text-t1-purple-700" },
 ] as const;
 
 // Overview's own "งานต่ออายุที่ต้องดูแล" widget — the 5 renewals due soonest
@@ -74,18 +74,18 @@ export function OverviewPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">สวัสดีตอนเช้า 👋</h1>
-          <p className="text-lg font-semibold text-zinc-900">{currentUserName}</p>
-          <p className="text-sm text-zinc-500">นี่คือภาพรวมลูกค้าและการต่ออายุในพื้นที่ทำงานนี้</p>
+          <h1 className="text-2xl font-bold text-foreground">สวัสดีตอนเช้า 👋</h1>
+          <p className="text-lg font-semibold text-foreground">{currentUserName}</p>
+          <p className="text-sm text-muted-foreground">นี่คือภาพรวมลูกค้าและการต่ออายุในพื้นที่ทำงานนี้</p>
         </div>
-        <div className="flex items-center gap-3 text-sm text-zinc-500">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span>วันนี้ 12 พฤษภาคม 2569</span>
           <button
             type="button"
-            className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-t1-gray-50"
           >
             ช่วงเวลา: 30 วันข้างหน้า
-            <ChevronDownIcon className="h-3.5 w-3.5 text-zinc-400" />
+            <ChevronDownIcon className="h-3.5 w-3.5 text-t1-gray-400" />
           </button>
         </div>
       </div>
@@ -97,17 +97,17 @@ export function OverviewPage() {
               <tile.icon className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-sm text-zinc-500">{tile.label}</p>
-              <p className="text-2xl font-bold text-zinc-900">
+              <p className="text-sm text-muted-foreground">{tile.label}</p>
+              <p className="text-2xl font-bold text-foreground">
                 {tile.value}
-                <span className="ml-1 text-sm font-normal text-zinc-400">{tile.unit}</span>
+                <span className="ml-1 text-sm font-normal text-t1-gray-400">{tile.unit}</span>
               </p>
             </div>
             {"delta" in tile && tile.delta && (
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-emerald-600">↑ {tile.delta}</span>
+                <span className="font-medium text-t1-green-700">↑ {tile.delta}</span>
                 {"href" in tile && tile.href && (
-                  <Link href={tile.href} className="font-medium text-blue-600 hover:text-blue-700">
+                  <Link href={tile.href} className="font-medium text-t1-blue-700 hover:text-t1-blue-700">
                     ดูรายละเอียด →
                   </Link>
                 )}
@@ -122,19 +122,19 @@ export function OverviewPage() {
           <Card className="p-5">
             <div className="mb-1 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ClockIcon className="h-4 w-4 text-orange-500" />
-                <h2 className="text-sm font-bold text-zinc-900">งานต่ออายุที่ต้องดูแล</h2>
+                <ClockIcon className="h-4 w-4 text-warning" />
+                <h2 className="text-sm font-bold text-foreground">งานต่ออายุที่ต้องดูแล</h2>
               </div>
-              <Link href="/customer-workspace/renewals" className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+              <Link href="/customer-workspace/renewals" className="flex items-center gap-1 text-xs font-semibold text-t1-blue-700 hover:text-t1-blue-700">
                 ดูทั้งหมด
                 <ArrowRightIcon className="h-3 w-3" />
               </Link>
             </div>
-            <p className="mb-3 text-xs text-zinc-400">รายการที่ครบกำหนดใน 30 วันข้างหน้า หรือเกินกำหนดแล้ว</p>
+            <p className="mb-3 text-xs text-t1-gray-400">รายการที่ครบกำหนดใน 30 วันข้างหน้า หรือเกินกำหนดแล้ว</p>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 text-xs text-zinc-400">
+                  <tr className="border-b border-border text-xs text-t1-gray-400">
                     <th className="pb-2 font-medium">ลูกค้า</th>
                     <th className="pb-2 font-medium">รายการ</th>
                     <th className="pb-2 font-medium">วันที่ครบกำหนด</th>
@@ -143,7 +143,7 @@ export function OverviewPage() {
                     <th className="pb-2" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-border">
                   {dueRenewals.map((row) => (
                     <tr key={row.id}>
                       <td className="py-2.5">
@@ -152,25 +152,25 @@ export function OverviewPage() {
                             {row.badgeLabel}
                           </span>
                           <div className="min-w-0">
-                            <p className="truncate font-semibold text-zinc-900">{row.orgName}</p>
-                            <p className="truncate text-xs text-zinc-400">{row.orgNameEn}</p>
+                            <p className="truncate font-semibold text-foreground">{row.orgName}</p>
+                            <p className="truncate text-xs text-t1-gray-400">{row.orgNameEn}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="py-2.5 text-zinc-600">{row.contractName}</td>
+                      <td className="py-2.5 text-muted-foreground">{row.contractName}</td>
                       <td className="py-2.5">
-                        <p className="text-zinc-900">{row.dueDate}</p>
+                        <p className="text-foreground">{row.dueDate}</p>
                         {row.daysNote && (
-                          <p className={row.status === "overdue" ? "text-xs text-red-500" : "text-xs text-zinc-400"}>{row.daysNote}</p>
+                          <p className={row.status === "overdue" ? "text-xs text-error" : "text-xs text-t1-gray-400"}>{row.daysNote}</p>
                         )}
                       </td>
-                      <td className="py-2.5 text-zinc-900">{row.value.toLocaleString("th-TH")}</td>
+                      <td className="py-2.5 text-foreground">{row.value.toLocaleString("th-TH")}</td>
                       <td className="py-2.5">
                         <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${RENEWAL_STATUS_CLASSES[row.status]}`}>
                           {RENEWAL_STATUS_LABEL[row.status]}
                         </span>
                       </td>
-                      <td className="py-2.5 text-right text-zinc-400">
+                      <td className="py-2.5 text-right text-t1-gray-400">
                         <MoreIcon className="ml-auto h-4 w-4" />
                       </td>
                     </tr>
@@ -182,17 +182,17 @@ export function OverviewPage() {
 
           <Card className="p-5">
             <div className="mb-3 flex items-center gap-2">
-              <span className="text-orange-500">⚡</span>
-              <h2 className="text-sm font-bold text-zinc-900">การดำเนินการด่วน</h2>
+              <span className="text-warning">⚡</span>
+              <h2 className="text-sm font-bold text-foreground">การดำเนินการด่วน</h2>
             </div>
-            <p className="mb-3 text-xs text-zinc-400">เข้าสู่การใช้งานที่สำคัญ</p>
+            <p className="mb-3 text-xs text-t1-gray-400">เข้าสู่การใช้งานที่สำคัญ</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {QUICK_ACTIONS.map((action) =>
                 "href" in action ? (
                   <Link
                     key={action.label}
                     href={action.href}
-                    className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-zinc-100 py-5 text-center text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 ${action.tone.split(" ")[0]}/40`}
+                    className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-border py-5 text-center text-sm font-semibold text-foreground transition-colors hover:bg-t1-gray-50 ${action.tone.split(" ")[0]}/40`}
                   >
                     <span className={`flex h-9 w-9 items-center justify-center rounded-full ${action.tone}`}>
                       <action.icon className="h-4 w-4" />
@@ -203,7 +203,7 @@ export function OverviewPage() {
                   <button
                     key={action.label}
                     type="button"
-                    className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-zinc-100 py-5 text-center text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 ${action.tone.split(" ")[0]}/40`}
+                    className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-border py-5 text-center text-sm font-semibold text-foreground transition-colors hover:bg-t1-gray-50 ${action.tone.split(" ")[0]}/40`}
                   >
                     <span className={`flex h-9 w-9 items-center justify-center rounded-full ${action.tone}`}>
                       <action.icon className="h-4 w-4" />
@@ -220,26 +220,26 @@ export function OverviewPage() {
           <Card className="p-5">
             <div className="mb-1 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <UsersIcon className="h-4 w-4 text-blue-500" />
-                <h2 className="text-sm font-bold text-zinc-900">ลูกค้าของฉัน</h2>
+                <UsersIcon className="h-4 w-4 text-info" />
+                <h2 className="text-sm font-bold text-foreground">ลูกค้าของฉัน</h2>
               </div>
-              <Link href="/customer-workspace/customers" className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+              <Link href="/customer-workspace/customers" className="flex items-center gap-1 text-xs font-semibold text-t1-blue-700 hover:text-t1-blue-700">
                 ดูทั้งหมด
                 <ArrowRightIcon className="h-3 w-3" />
               </Link>
             </div>
-            <p className="mb-3 text-xs text-zinc-400">เข้าถึงลูกค้าที่คุณดูแลล่าสุด</p>
-            <ul className="flex flex-col divide-y divide-zinc-100">
+            <p className="mb-3 text-xs text-t1-gray-400">เข้าถึงลูกค้าที่คุณดูแลล่าสุด</p>
+            <ul className="flex flex-col divide-y divide-border">
               {myCustomers.map((row) => (
                 <li key={row.id} className="flex items-center gap-2.5 py-2.5">
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${row.badgeBg} ${row.badgeText}`}>
                     {row.badgeLabel}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-zinc-900">{row.orgName}</p>
-                    <p className="truncate text-xs text-zinc-400">{row.contactName}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{row.orgName}</p>
+                    <p className="truncate text-xs text-t1-gray-400">{row.contactName}</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-600">ลูกค้าปัจจุบัน</span>
+                  <span className="shrink-0 rounded-full bg-success-muted px-2 py-1 text-[11px] font-medium text-t1-green-700">ลูกค้าปัจจุบัน</span>
                 </li>
               ))}
             </ul>
@@ -248,28 +248,28 @@ export function OverviewPage() {
           <Card className="p-5">
             <div className="mb-1 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MegaphoneIcon className="h-4 w-4 text-violet-500" />
-                <h2 className="text-sm font-bold text-zinc-900">ประกาศและข่าวสาร</h2>
+                <MegaphoneIcon className="h-4 w-4 text-in-progress" />
+                <h2 className="text-sm font-bold text-foreground">ประกาศและข่าวสาร</h2>
               </div>
               {/* Inert — no announcements page exists yet. */}
               <button
                 type="button"
-                className="text-xs font-semibold text-zinc-300"
+                className="text-xs font-semibold text-t1-gray-400"
               >
                 ดูทั้งหมด
               </button>
             </div>
-            <ul className="flex flex-col divide-y divide-zinc-100">
+            <ul className="flex flex-col divide-y divide-border">
               {announcements.map((item) => (
                 <li key={item.id} className="flex items-start gap-2.5 py-2.5">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                     <BellIcon className="h-3.5 w-3.5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-zinc-900">{item.title}</p>
-                    <p className="truncate text-xs text-zinc-400">{item.detail}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
+                    <p className="truncate text-xs text-t1-gray-400">{item.detail}</p>
                   </div>
-                  <span className="ml-auto shrink-0 text-xs text-zinc-400">{item.date}</span>
+                  <span className="ml-auto shrink-0 text-xs text-t1-gray-400">{item.date}</span>
                 </li>
               ))}
             </ul>

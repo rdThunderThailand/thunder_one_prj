@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ChevronRight, Search } from "lucide-react";
+import {
+  ArrowRightIcon as ArrowRight,
+  ChevronRightIcon as ChevronRight,
+  SearchIcon as Search,
+} from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_HINT, CONTENT_TYPE_LABEL, WORKSPACE_LABEL, guideCount, t } from "../copy";
 import { guideHref, helpHref } from "../navigation";
@@ -27,7 +31,7 @@ export function HelpHomePage({ params }: { params: HelpParams }) {
 
   return (
     <HelpPageShell locale={locale} from={from} localeHrefs={localeHrefs("/", params)}>
-      <section className="relative isolate overflow-hidden border-b border-border bg-primary-soft">
+      <section className="relative isolate overflow-hidden border-b border-border bg-accent">
         <Image src={HERO_BG} alt="" fill priority sizes="100vw" className="-z-10 object-cover" />
         <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 pb-10 pt-10 sm:px-6 lg:grid-cols-[1fr_auto] lg:pt-12">
           <div className="min-w-0">
@@ -95,7 +99,7 @@ export function HelpHomePage({ params }: { params: HelpParams }) {
                   {w.key && count > 0 ? (
                     <Link
                       href={helpHref("/browse", { workspace: w.key, lang: locale, from })}
-                      className={cn(box, "group transition-colors hover:border-primary/40 hover:bg-primary-soft/60")}
+                      className={cn(box, "group transition-colors hover:border-primary/40 hover:bg-accent/60")}
                     >
                       {body}
                     </Link>
@@ -118,7 +122,7 @@ export function HelpHomePage({ params }: { params: HelpParams }) {
               <li key={c.key}>
                 <Link
                   href={helpHref("/browse", { type: c.key, lang: locale, from })}
-                  className="group flex h-full items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-primary-soft/60"
+                  className="group flex h-full items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-accent/60"
                 >
                   <Image src={CONTENT_TYPE_ART[c.key]} alt="" width={40} height={40} className="shrink-0 rounded-lg" />
                   <span className="min-w-0 flex-1">
@@ -164,7 +168,7 @@ function RecommendedCard({ card, locale, from }: { card: GuideCard; locale: Loca
   return (
     <Link
       href={href}
-      className="group flex h-full gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-primary-soft/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex h-full gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <span className="relative grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted">
         {art ? <Image src={art} alt="" fill sizes="96px" className="object-cover" /> : <ContentTypeIcon type={card.contentType} size="lg" />}

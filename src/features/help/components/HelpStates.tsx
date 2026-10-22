@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { AlertTriangle, FileQuestion, LayoutGrid, SearchX, type LucideIcon } from "lucide-react";
+import {
+  WarningTriangleIcon as AlertTriangle,
+  FileQuestionIcon as FileQuestion,
+  GridIcon as LayoutGrid,
+  SearchXIcon as SearchX,
+  type Icon,
+} from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/lovable/skeleton";
 import { cn } from "@/lib/utils";
 import { t } from "../copy";
@@ -8,7 +14,7 @@ import type { Locale } from "../types";
 import { HiddenContext, SupportLink } from "./HelpPageShell";
 
 function StateFrame({ icon: Icon, tone = "neutral", title, text, children, role }: {
-  icon: LucideIcon;
+  icon: Icon;
   tone?: "neutral" | "danger";
   title: string;
   text: string;
@@ -19,9 +25,9 @@ function StateFrame({ icon: Icon, tone = "neutral", title, text, children, role 
     <div role={role} className="mx-auto flex max-w-xl flex-col items-center px-4 py-14 text-center">
       <span
         aria-hidden="true"
-        className={cn("grid h-14 w-14 place-items-center rounded-2xl", tone === "danger" ? "bg-danger-soft text-danger" : "bg-primary-soft text-primary")}
+        className={cn("grid h-14 w-14 place-items-center rounded-2xl", tone === "danger" ? "bg-error-muted text-error" : "bg-accent text-primary")}
       >
-        <Icon className="h-6 w-6" strokeWidth={1.8} />
+        <Icon className="h-6 w-6" />
       </span>
       <h2 className="mt-4 text-lg font-bold tracking-tight">{title}</h2>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">{text}</p>

@@ -1,4 +1,5 @@
 import { APPS } from "@/config/apps";
+import { env } from "@/config/env";
 import { canOpenApp } from "@/config/tenant-access";
 
 /**
@@ -42,7 +43,7 @@ export const WORKSPACES: WorkspaceEntry[] = [
     description: "Plan, create, approve and publish media across every channel.",
     category: "Communication",
     icon: "megaphone",
-    tone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+    tone: "bg-info-muted text-t1-blue-700",
     href: appHref("media-workspace"),
     dataStatus: "live",
   },
@@ -52,17 +53,32 @@ export const WORKSPACES: WorkspaceEntry[] = [
     description: "Track assets, lifecycle, maintenance and compliance in real time.",
     category: "Operations",
     icon: "box",
-    tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+    tone: "bg-success-muted text-t1-green-700",
     href: appHref("asset-intelligence"),
     dataStatus: "live",
   },
+  // ADR 0097: behind the flag until release.
+  ...(env.assetWorkspaceMvp
+    ? [
+        {
+          id: "asset-workspace",
+          name: "Asset Workspace",
+          description: "Register, assign and count assets across every location.",
+          category: "Operations",
+          icon: "box",
+          tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+          href: appHref("asset-workspace"),
+          dataStatus: "sample",
+        } satisfies WorkspaceEntry,
+      ]
+    : []),
   {
     id: "people",
     name: "People Workspace",
     description: "Headcount, onboarding, org changes and departures at a glance.",
     category: "Operations",
     icon: "users",
-    tone: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
+    tone: "bg-accent text-primary",
     href: appHref("people"),
     dataStatus: "live",
   },
@@ -73,7 +89,7 @@ export const WORKSPACES: WorkspaceEntry[] = [
     description: "Review and approve incoming partner applications.",
     category: "Operations",
     icon: "check",
-    tone: "bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400",
+    tone: "bg-success-muted text-t1-green-700",
     href: appHref("lead-approval"),
     dataStatus: "live",
   },
@@ -83,7 +99,7 @@ export const WORKSPACES: WorkspaceEntry[] = [
     description: "Manage customers, contracts, and renewals in one place.",
     category: "Customer",
     icon: "users",
-    tone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+    tone: "bg-warning-muted text-t1-amber-700",
     href: appHref("customer-workspace"),
     dataStatus: "sample",
   },
@@ -93,7 +109,7 @@ export const WORKSPACES: WorkspaceEntry[] = [
     description: "IT support, service requests and device management.",
     category: "Operations",
     icon: "headset",
-    tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+    tone: "bg-success-muted text-t1-green-700",
     href: appHref("thunder-care"),
     dataStatus: "sample",
   },
@@ -103,7 +119,7 @@ export const WORKSPACES: WorkspaceEntry[] = [
     description: "Plan, track and deliver projects with milestones and tasks.",
     category: "Project",
     icon: "clipboard",
-    tone: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
+    tone: "bg-error-muted text-t1-red-700",
     href: null,
     dataStatus: "coming-soon",
   },
@@ -113,7 +129,7 @@ export const WORKSPACES: WorkspaceEntry[] = [
     description: "Dashboards, reports, and in-depth analysis.",
     category: "Tools",
     icon: "chart",
-    tone: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+    tone: "bg-info-muted text-t1-blue-700",
     href: null,
     dataStatus: "coming-soon",
   },
@@ -123,7 +139,7 @@ export const WORKSPACES: WorkspaceEntry[] = [
     description: "Store documents, templates, and route document approvals.",
     category: "Tools",
     icon: "box",
-    tone: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    tone: "bg-muted text-muted-foreground",
     href: null,
     dataStatus: "coming-soon",
   },

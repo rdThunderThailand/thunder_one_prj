@@ -2,8 +2,11 @@
 
 import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CircleHelp } from "lucide-react";
-import { HelpIcon } from "@/components/ui/icons";
+import {
+  CalendarIcon as CalendarDays,
+  HelpIcon as CircleHelp,
+  HelpIcon,
+} from "@/components/ui/icons";
 import { resolveActiveApp } from "@/config/apps";
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
@@ -93,7 +96,7 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: 
     // the design reference's own header (69px tall, px-6), and matches the
     // sidebar's logo row (also trimmed to h-[68px] today) so the two borders
     // still line up.
-    <header className="flex h-[68px] items-center gap-4 border-b border-[#e6edf9] bg-white px-6 dark:border-zinc-800 dark:bg-zinc-950">
+    <header className="flex h-[68px] items-center gap-4 border-b border-border bg-card px-6">
       {/* h-12/px-4 -> h-9/px-3, icon 24px -> 16px, matching the reference's
           own 36px-tall search bar. */}
       <GlobalSearch variant="default" />
@@ -107,18 +110,18 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: 
       <div className="ml-auto flex items-center gap-1">
         <LanguageSwitch
           initialLocale={locale}
-          className="hidden text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 sm:flex"
+          className="hidden text-muted-foreground hover:bg-t1-gray-50 hover:text-foreground sm:flex"
         />
         <NotificationBell variant="default" />
         <HelpTrigger
-          className="grid h-9 w-9 place-items-center rounded-lg text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-t1-gray-50 hover:text-foreground"
           support={helpSupport}
         >
           <HelpIcon className="h-5 w-5" />
         </HelpTrigger>
         <span
           aria-hidden="true"
-          className="mx-2 h-6 w-px bg-[#e6edf9] dark:bg-zinc-800"
+          className="mx-2 h-6 w-px bg-accent"
         />
         <UserMenu
           userName={userName}

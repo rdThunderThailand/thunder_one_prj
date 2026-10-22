@@ -21,10 +21,10 @@ const STATUS_LABEL: Record<AuroraMigrationStatus, string> = {
 };
 
 const STATUS_CLASSES: Record<AuroraMigrationStatus, string> = {
-  PENDING: "bg-amber-50 text-amber-600",
-  NEEDS_INFO: "bg-blue-50 text-blue-600",
-  APPROVED: "bg-emerald-50 text-emerald-600",
-  REJECTED: "bg-red-50 text-red-600",
+  PENDING: "bg-warning-muted text-t1-amber-700",
+  NEEDS_INFO: "bg-info-muted text-t1-blue-700",
+  APPROVED: "bg-success-muted text-t1-green-700",
+  REJECTED: "bg-error-muted text-t1-red-700",
 };
 
 const APPROVED_ROLE_LABEL: Record<AuroraApprovalRole, string> = {
@@ -54,13 +54,13 @@ function bangkokIsoDate(timestamp: string): string {
 }
 
 function Chips({ values }: { values: string[] }) {
-  if (values.length === 0) return <span className="text-xs text-zinc-300">—</span>;
+  if (values.length === 0) return <span className="text-xs text-t1-gray-400">—</span>;
   return (
     <div className="flex flex-wrap gap-1">
       {values.map((value) => (
         <span
           key={value}
-          className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] text-zinc-600"
+          className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
         >
           {value}
         </span>
@@ -107,17 +107,17 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
   return (
     <Card className="p-4">
       <div>
-        <h2 className="text-base font-semibold text-zinc-900">คำขอย้ายระบบ Aurora</h2>
-        <p className="text-sm text-zinc-500">คำขอที่ส่งเข้ามาจาก LINE OA (100 รายการล่าสุด)</p>
+        <h2 className="text-base font-semibold text-foreground">คำขอย้ายระบบ Aurora</h2>
+        <p className="text-sm text-muted-foreground">คำขอที่ส่งเข้ามาจาก LINE OA (100 รายการล่าสุด)</p>
       </div>
 
       {rows.length === 0 ? (
-        <p className="py-10 text-center text-sm text-zinc-400">ยังไม่มีคำขอย้ายระบบ Aurora เข้ามา</p>
+        <p className="py-10 text-center text-sm text-t1-gray-400">ยังไม่มีคำขอย้ายระบบ Aurora เข้ามา</p>
       ) : (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[1100px] text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-100 text-xs text-zinc-400">
+              <tr className="border-b border-border text-xs text-t1-gray-400">
                 <th className="py-2 pr-3 font-medium">เลขอ้างอิง</th>
                 <th className="py-2 pr-3 font-medium">ผู้ขอ</th>
                 <th className="py-2 pr-3 font-medium">บริษัท / ตำแหน่ง</th>
@@ -128,28 +128,28 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
                 <th className="py-2 font-medium">การดำเนินการ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-border">
               {rows.map((row) => (
                 <tr
                   key={row.id}
                   className="align-top"
                 >
                   <td className="py-3 pr-3">
-                    <p className="whitespace-nowrap font-mono font-semibold text-zinc-900">{row.reference_no}</p>
+                    <p className="whitespace-nowrap font-mono font-semibold text-foreground">{row.reference_no}</p>
                   </td>
                   <td className="py-3 pr-3">
-                    <p className="text-zinc-900">
+                    <p className="text-foreground">
                       {row.first_name} {row.last_name}
                     </p>
                     {row.line_profile?.display_name ? (
-                      <p className="text-xs text-zinc-400">LINE: {row.line_profile.display_name}</p>
+                      <p className="text-xs text-t1-gray-400">LINE: {row.line_profile.display_name}</p>
                     ) : null}
-                    <p className="text-xs text-zinc-400">{row.email}</p>
-                    <p className="text-xs text-zinc-400">{row.phone}</p>
+                    <p className="text-xs text-t1-gray-400">{row.email}</p>
+                    <p className="text-xs text-t1-gray-400">{row.phone}</p>
                   </td>
                   <td className="py-3 pr-3">
-                    <p className="text-zinc-900">{row.company_name}</p>
-                    <p className="text-xs text-zinc-400">{row.position ?? "-"}</p>
+                    <p className="text-foreground">{row.company_name}</p>
+                    <p className="text-xs text-t1-gray-400">{row.position ?? "-"}</p>
                   </td>
                   <td className="py-3 pr-3">
                     <div className="flex flex-col gap-1.5">
@@ -160,16 +160,16 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
                   <td className="py-3 pr-3">
                     <Chips values={row.sites} />
                   </td>
-                  <td className="py-3 pr-3 text-zinc-600">{formatThaiDate(bangkokIsoDate(row.created_at))}</td>
+                  <td className="py-3 pr-3 text-muted-foreground">{formatThaiDate(bangkokIsoDate(row.created_at))}</td>
                   <td className="py-3 pr-3">
                     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_CLASSES[row.status]}`}>
                       {STATUS_LABEL[row.status]}
                     </span>
                     {row.approved_role ? (
-                      <p className="mt-1 text-xs text-zinc-500">{APPROVED_ROLE_LABEL[row.approved_role]}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{APPROVED_ROLE_LABEL[row.approved_role]}</p>
                     ) : null}
                     {row.reviewer ? (
-                      <p className="text-xs text-zinc-400">โดย {row.reviewer.name ?? row.reviewer.email ?? "-"}</p>
+                      <p className="text-xs text-t1-gray-400">โดย {row.reviewer.name ?? row.reviewer.email ?? "-"}</p>
                     ) : null}
                   </td>
                   <td className="py-3">
@@ -182,7 +182,7 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
                           }
                           disabled={pendingId === row.id}
                           aria-label={`บทบาทที่จะอนุมัติสำหรับ ${row.reference_no}`}
-                          className="rounded-lg border border-zinc-200 px-2 py-1.5 text-xs text-zinc-700 focus:border-blue-400 focus:outline-none disabled:opacity-50"
+                          className="rounded-lg border border-border px-2 py-1.5 text-xs text-foreground focus:border-info focus:outline-none disabled:opacity-50"
                         >
                           <option
                             value=""
@@ -206,13 +206,13 @@ export function AuroraMigrationRequestsCard({ requests }: AuroraMigrationRequest
                             const role = roleById[row.id];
                             if (role) approve(row, role);
                           }}
-                          className="whitespace-nowrap rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="whitespace-nowrap rounded-lg bg-success px-3 py-1.5 text-xs font-semibold text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {pendingId === row.id ? "กำลังอนุมัติ…" : "อนุมัติ"}
                         </button>
                       </div>
                     ) : (
-                      <span className="text-xs text-zinc-300">—</span>
+                      <span className="text-xs text-t1-gray-400">—</span>
                     )}
                   </td>
                 </tr>

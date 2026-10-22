@@ -71,12 +71,12 @@ export function ChannelRowActionsMenu({
             disabled={!canDisable || pending}
             title={canDisable ? undefined : "Channel is not active"}
             onClick={() => void disable()}
-            className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
+            className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-muted disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
           >
             {pending ? "Disabling…" : "Disable Channel"}
           </button>
           {error && (
-            <p role="alert" className="px-3 py-2 text-xs text-danger">
+            <p role="alert" className="px-3 py-2 text-xs text-error">
               {error}
             </p>
           )}

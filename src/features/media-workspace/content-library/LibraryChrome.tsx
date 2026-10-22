@@ -1,7 +1,11 @@
 "use client";
 
 import type { ComponentType, ReactNode } from "react";
-import { ChevronLeft, ChevronRight, FileImage } from "lucide-react";
+import {
+  ChevronLeftIcon as ChevronLeft,
+  ChevronRightIcon as ChevronRight,
+  FileImageIcon as FileImage,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { cn } from "@/lib/utils";
@@ -11,7 +15,7 @@ export type SummaryCard = {
   value: string | number;
   detail?: string;
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
-  /** Icon tile colours, e.g. "text-primary bg-primary-soft". */
+  /** Icon tile colours, e.g. "text-primary bg-accent". */
   tone?: string;
   disabled?: boolean;
   /** Renders the card as a button (e.g. a card that applies a filter). */
@@ -29,7 +33,7 @@ export function LibrarySummary({ cards, label }: { cards: SummaryCard[]; label: 
         const Tag = card.onClick ? "button" : "article";
         return (
         <Tag key={card.label} type={card.onClick ? "button" : undefined} onClick={card.onClick} className={cn("flex min-h-22 items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-panel", card.onClick && "transition hover:border-foreground/20 hover:shadow-float", card.disabled && "opacity-55")}>
-          <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", card.tone ?? "text-primary bg-primary-soft")}>
+          <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", card.tone ?? "text-primary bg-accent")}>
             <card.icon className="h-4 w-4" strokeWidth={1.8} />
           </span>
           <div>
@@ -89,7 +93,7 @@ export function LibraryEmpty({ title, hint, action, tone = "muted" }: { title: s
   return (
     <div className="grid min-h-80 place-items-center text-center">
       <div>
-        <span className={cn("mx-auto grid h-10 w-10 place-items-center rounded-full", tone === "danger" ? "bg-danger-soft text-danger" : "bg-muted text-muted-foreground")}><FileImage className="h-5 w-5" /></span>
+        <span className={cn("mx-auto grid h-10 w-10 place-items-center rounded-full", tone === "danger" ? "bg-error-muted text-error" : "bg-muted text-muted-foreground")}><FileImage className="h-5 w-5" /></span>
         <h3 className="mt-3 text-sm font-bold">{title}</h3>
         {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
         {action && <div className="mt-3">{action}</div>}

@@ -1,4 +1,5 @@
 # 0076 — The Lovable design system is the component source for Media Workspace
+> §1 (Lovable as visual source) and §5 (base layer) superseded by ADR 0096 (2026-10-16).
 
 Status: accepted (2026-09-19, grilling with owner). Amends ADR 0075 Consequences.
 Reference: Lovable project `e8b49026-3bd5-4a8f-b94c-aad813085d2c` — `src/styles.css`,

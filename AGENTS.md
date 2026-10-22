@@ -8,22 +8,31 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Write JSX with one element per line, matching the surrounding file. A `return` statement that renders more than a couple of elements gets multi-line JSX with normal indentation, not a single collapsed line.
 
-## Media Workspace styling
+## ThunderOne design system
 
-Inside `src/features/media-workspace/` use the tokens from `src/app/globals.css` (`primary`, `foreground`,
-`muted-foreground`, `border`, `card`, `success/warning/danger`) — no raw `indigo-*`/`zinc-*`/`bg-white`
-and no `dark:` variants (the app is light-only). ADR 0075, Consequences.
+ThunderOne workspace: media
 
-New or changed Media Workspace UI must use the copied primitives in `src/components/ui/lovable/`
-and the tokens in `src/app/globals.css` as its component source. Copy an existing Lovable primitive
-instead of recreating it locally. ADR 0076, Decision 1.
+UI work follows the `thunderone-ui` skill (`.claude/skills/thunderone-ui/`, vendored unmodified at
+`v0.2.0`) and its `media` profile, as decided in ADR 0096. Read both before creating, editing or
+reviewing a screen. Where the skill and this file disagree, this file wins.
 
-## Porting from Lovable
+- Tokens come from `src/design-system/t1-tailwind-v4.css` (a copy of the skill's generated theme,
+  imported by `src/app/globals.css`). Never edit the copy; `node src/design-system/design-system.check.mts`
+  fails if it drifts. Do not install `@rdthunderthailand/thunderone-theme`.
+- No raw palette classes (`zinc-*`, `indigo-*`, `bg-white` …), hex literals or new `dark:` variants.
+  Prefer the design system names (`error`, `success-muted`, `accent`) over the temporary aliases
+  (`danger`, `*-soft`, `primary-soft`). In CSS use `var(--color-x)`, never `var(--x)` (HSL triplets).
+- Icons: import from `src/components/ui/icons.tsx` (antd glyphs; platform concepts via `T1Icon`,
+  Media concepts per the `media` profile map). Add a missing concept there; never import
+  `@ant-design/icons` or SVG paths in feature code.
+- Components: reuse `src/components/ui/lovable/` primitives; Lovable is no longer a visual source.
+- Nav and terms follow `src/config/nav/media-workspace.tsx` where the profile disagrees (ADR 0096 §6).
+- Thai text: Noto Sans Thai via `next/font` after Manrope (ADR 0096 §7, local until OD-05 closes).
+- Do not run the design system's setup CLI here. Update by re-copying the skill and
+  `src/design-system/` from a newer tag in one PR.
 
-Full rules R1–R6 and the primitive decision: `docs/media-workspace/plan-lovable-port-workflow.md` §2–§3 — read before any port.
+### Asset Workspace styling
 
-- Two authorities: visual presentation inside the touched surface → Lovable; data, behavior, accessibility, routes, permissions, code structure → this repo and its ADRs.
-- Replace the whole visual treatment of each touched element, checking every state (hover, focus, disabled, loading, empty, responsive) against the Lovable file as you implement.
-- New UI/motion dependency: propose in full (packages, what each replaces, why native won't do, routes, files) and wait for a yes.
-- Primitives: copy the exact Lovable source into `src/components/ui/lovable/`; the legacy `src/components/ui/` kit stays as is.
-- Before calling a port done: offer the browser-verification choices, then compare Lovable's `preview_url` with localhost and report the deltas yourself.
+Screens under `src/features/asset-workspace/` and `/asset-workspace` use the skill's core rules and
+the local profile in ADR 0098 (status and condition colours, icon map), not the `media` profile.
+Status colours come from the one map next to `domain/`; never pick a colour per screen.

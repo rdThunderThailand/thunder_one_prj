@@ -7,7 +7,7 @@ import { FilterIcon, GridIcon, ListIcon, SearchIcon } from "@/components/ui/icon
 import type { PersonnelType, WorkStatus } from "../mock-data";
 
 const selectClasses =
-  "cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300";
+  "cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground focus:border-primary focus:outline-none";
 
 const TYPE_LABEL: Record<PersonnelType, string> = {
   employee: "พนักงาน",
@@ -79,23 +79,23 @@ export function PersonnelFilterBar({
   return (
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2">
-        <div className="flex flex-1 items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm focus-within:border-indigo-500 dark:border-zinc-700">
-          <SearchIcon className="h-4 w-4 shrink-0 text-zinc-400" />
+        <div className="flex flex-1 items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm focus-within:border-primary">
+          <SearchIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && commitSearch()}
             onBlur={commitSearch}
             placeholder="ค้นหาชื่อ, อีเมล, รหัสพนักงาน, ตำแหน่ง..."
-            className="w-full bg-transparent text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+            className="w-full bg-transparent text-foreground outline-none placeholder:text-t1-gray-400"
           />
         </div>
-        <div className="flex shrink-0 items-center gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-700">
+        <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border p-1">
           <button
             type="button"
             onClick={() => onViewChange("list")}
             title="มุมมองรายการ"
-            className={`flex h-7 w-7 items-center justify-center rounded-md ${view === "list" ? "bg-indigo-600 text-white" : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}
+            className={`flex h-7 w-7 items-center justify-center rounded-md ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
           >
             <ListIcon className="h-4 w-4" />
           </button>
@@ -103,7 +103,7 @@ export function PersonnelFilterBar({
             type="button"
             onClick={() => onViewChange("grid")}
             title="มุมมองตาราง"
-            className={`flex h-7 w-7 items-center justify-center rounded-md ${view === "grid" ? "bg-indigo-600 text-white" : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}
+            className={`flex h-7 w-7 items-center justify-center rounded-md ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
           >
             <GridIcon className="h-4 w-4" />
           </button>
@@ -111,7 +111,7 @@ export function PersonnelFilterBar({
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-400">หน่วยงาน</span>
+          <span className="text-xs text-t1-gray-400">หน่วยงาน</span>
           <select value={unit} onChange={(e) => onUnitChange(e.target.value)} className={selectClasses}>
             <option value="">ทั้งหมด</option>
             {unitOptions.map((option) => (
@@ -122,7 +122,7 @@ export function PersonnelFilterBar({
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-400">ตำแหน่ง</span>
+          <span className="text-xs text-t1-gray-400">ตำแหน่ง</span>
           <select value={position} onChange={(e) => onPositionChange(e.target.value)} className={selectClasses}>
             <option value="">ทั้งหมด</option>
             {positionOptions.map((option) => (
@@ -133,7 +133,7 @@ export function PersonnelFilterBar({
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-400">ประเภทบุคลากร</span>
+          <span className="text-xs text-t1-gray-400">ประเภทบุคลากร</span>
           <select
             value={type}
             onChange={(e) => onTypeChange(e.target.value as PersonnelType | "")}
@@ -148,7 +148,7 @@ export function PersonnelFilterBar({
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-400">สถานะการทำงาน</span>
+          <span className="text-xs text-t1-gray-400">สถานะการทำงาน</span>
           <select
             value={workStatus}
             onChange={(e) => onWorkStatusChange(e.target.value as WorkStatus | "")}
@@ -164,7 +164,7 @@ export function PersonnelFilterBar({
         </div>
         <span
           title="Not built yet"
-          className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+          className="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground"
         >
           <FilterIcon className="h-3.5 w-3.5" />
           ตัวกรองเพิ่มเติม
@@ -172,7 +172,7 @@ export function PersonnelFilterBar({
         <button
           type="button"
           onClick={onReset}
-          className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          className="flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-t1-gray-50"
         >
           รีเซ็ต
         </button>

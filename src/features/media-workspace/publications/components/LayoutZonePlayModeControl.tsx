@@ -128,7 +128,7 @@ export function LayoutZonePlayModeControl({
         ))}
       </ul>
       {isChanged && <SharedWriteNote subject="Layout" />}
-      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="text-xs text-error">{error}</p>}
       {isChanged && (
         <Button
           variant="outline"

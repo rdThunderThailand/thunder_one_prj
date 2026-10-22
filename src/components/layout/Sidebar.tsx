@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
+import { filterAssetWorkspaceNav } from "@/config/nav/asset-workspace";
+import { DEFAULT_ASSET_WORKSPACE_ROLE } from "@/config/nav/asset-workspace-roles";
 import { customerWorkspaceNav } from "@/config/nav/customer-workspace";
 import { leadApprovalNav } from "@/config/nav/lead-approval";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
@@ -29,6 +31,7 @@ const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
 // (config/nav/shell.tsx) applies instead — docs/adr/0033.
 function resolveAppNavConfig(appId: string, pathname: string): NavConfig {
   if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
+  if (appId === "asset-workspace") return filterAssetWorkspaceNav(DEFAULT_ASSET_WORKSPACE_ROLE);
   if (appId === "thunder-care") return resolveThunderCareNav(pathname);
   if (appId === "people") return peopleNav;
   if (appId === "customer-workspace") return customerWorkspaceNav;
@@ -54,7 +57,7 @@ function NavBadge({ badge }: { badge?: string }) {
   return (
     <span
       className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
-        isAlert ? "bg-red-500 text-white" : "bg-indigo-100 text-indigo-600"
+        isAlert ? "bg-error text-error-foreground" : "bg-accent text-primary"
       }`}
     >
       {badge}
@@ -71,11 +74,11 @@ function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
   // an exact 32px row with 12px horizontal padding.
   const baseClasses =
     "flex h-8 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium transition-colors";
-  const icon = item.icon ? <span className="h-4 w-4 shrink-0 text-slate-500">{item.icon}</span> : null;
+  const icon = item.icon ? <span className="h-4 w-4 shrink-0 text-muted-foreground">{item.icon}</span> : null;
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed select-none bg-slate-50 text-slate-400 opacity-75 dark:bg-zinc-900`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-t1-gray-50 text-t1-gray-400 opacity-75`} title="Not built yet">
         {icon}
         {item.label}
         <NavBadge badge={item.badge} />
@@ -88,8 +91,8 @@ function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       className={`${baseClasses} ${
         active
-          ? "bg-indigo-50 text-indigo-600"
-          : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
+          ? "bg-accent text-primary"
+          : "text-foreground hover:bg-muted hover:text-primary"
       }`}
     >
       {icon}
@@ -106,7 +109,7 @@ function SubLink({ item, active }: { item: NavItem; active: boolean }) {
 
   if (!item.href) {
     return (
-      <span className={`${baseClasses} cursor-not-allowed select-none bg-slate-50 text-slate-400 opacity-75 dark:bg-zinc-900`} title="Not built yet">
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-t1-gray-50 text-t1-gray-400 opacity-75`} title="Not built yet">
         {item.label}
       </span>
     );
@@ -117,8 +120,8 @@ function SubLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       className={`${baseClasses} ${
         active
-          ? "bg-indigo-50 text-indigo-600"
-          : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
+          ? "bg-accent text-primary"
+          : "text-foreground hover:bg-muted hover:text-primary"
       }`}
     >
       {item.label}
@@ -134,8 +137,8 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   // matched to TopLevelLink's own 2026-09-19 fix (text-xs/font-medium).
   if (!section.icon) {
     return (
-      <section className="border-b border-slate-100 pb-4 last:border-b-0">
-        <h2 className="mb-2 px-3 text-3xs font-bold uppercase text-slate-500">{section.label}</h2>
+      <section className="border-b border-border pb-4 last:border-b-0">
+        <h2 className="mb-2 px-3 text-3xs font-bold uppercase text-muted-foreground">{section.label}</h2>
         <div className="space-y-0.5">
           {section.items.map((item) => (
             <TopLevelLink key={item.label} item={item} active={isActivePath(pathname, item.href)} />
@@ -146,21 +149,21 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   }
 
   return (
-    <section className="border-b border-slate-100 pb-4 last:border-b-0">
-      <h2 className="mb-2 px-3 text-3xs font-bold uppercase text-slate-500">{section.label}</h2>
+    <section className="border-b border-border pb-4 last:border-b-0">
+      <h2 className="mb-2 px-3 text-3xs font-bold uppercase text-muted-foreground">{section.label}</h2>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-8 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium text-slate-800 transition-colors hover:bg-slate-100"
+        className="flex h-8 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
       >
-        <span className="h-4 w-4 shrink-0 text-slate-500">{section.icon}</span>
+        <span className="h-4 w-4 shrink-0 text-muted-foreground">{section.icon}</span>
         <span className="flex-1 text-left">{section.triggerLabel ?? section.label}</span>
         <ChevronDownIcon
-          className={`h-3.5 w-3.5 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && (
-        <div className="relative mt-0.5 space-y-0.5 before:absolute before:bottom-1 before:left-[19px] before:top-1 before:w-px before:bg-slate-200">
+        <div className="relative mt-0.5 space-y-0.5 before:absolute before:bottom-1 before:left-[19px] before:top-1 before:w-px before:bg-muted">
           {section.items.map((item) => (
             <SubLink key={item.label} item={item} active={isActivePath(pathname, item.href)} />
           ))}
@@ -189,7 +192,7 @@ function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolea
       <Link
         href={home.href}
         title={collapsed ? home.label : home.sublabel}
-        className={`flex items-center gap-3 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300 ${
+        className={`flex items-center gap-3 rounded-xl bg-accent text-primary ${
           collapsed ? "h-8 justify-center px-3 py-2" : "min-h-10 px-3 py-2 text-sm font-semibold"
         }`}
       >
@@ -206,20 +209,20 @@ function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolea
             title={collapsed ? item.label : item.sublabel}
             className={`flex h-8 items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium transition-colors ${
               active
-                ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300"
-                : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                ? "bg-accent text-primary"
+                : "text-foreground hover:bg-muted hover:text-primary"
             } ${collapsed ? "justify-center" : ""}`}
           >
-            <span className="h-4 w-4 shrink-0 text-slate-500">{item.icon}</span>
+            <span className="h-4 w-4 shrink-0 text-muted-foreground">{item.icon}</span>
             {!collapsed && (
               <>
                 <span className="flex-1 truncate">{item.label}</span>
                 {item.badge !== undefined && (
-                  <span className="ml-auto shrink-0 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                  <span className="ml-auto shrink-0 rounded-full bg-error px-1.5 py-0.5 text-[10px] font-bold leading-none text-error-foreground">
                     {item.badge}
                   </span>
                 )}
-                {item.chevron && <ChevronRightIcon className="ml-1.5 h-3.5 w-3.5 shrink-0 text-slate-400" />}
+                {item.chevron && <ChevronRightIcon className="ml-1.5 h-3.5 w-3.5 shrink-0 text-t1-gray-400" />}
               </>
             )}
           </Link>
@@ -247,7 +250,7 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
         <Link
           href={nav.overviewItem.href!}
           title={nav.overviewItem.label}
-          className="flex items-center justify-center rounded-[10px] bg-indigo-50 px-3 py-2 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
+          className="flex items-center justify-center rounded-[10px] bg-accent px-3 py-2 text-accent-foreground"
         >
           {nav.overviewItem.icon}
         </Link>
@@ -264,8 +267,8 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
         <div
           className={`flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
             overviewActive
-              ? "bg-indigo-50 text-indigo-600"
-              : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600"
+              ? "bg-accent text-primary"
+              : "text-foreground hover:bg-muted hover:text-primary"
           }`}
         >
           <span className="h-4 w-4">{nav.overviewItem.icon}</span>
@@ -280,10 +283,10 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
       ))}
 
       {nav.standaloneLinks.length > 0 && (
-        <div className="space-y-0.5 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+        <div className="space-y-0.5 border-t border-border pt-3">
           {nav.standaloneLinks.map((item, index) => (
             <div key={item.label} className="flex items-center gap-2.5">
-              <span className="pl-2.5 text-zinc-400">{nav.standaloneIcons[index]}</span>
+              <span className="pl-2.5 text-t1-gray-400">{nav.standaloneIcons[index]}</span>
               <TopLevelLink item={item} active={isActivePath(pathname, item.href)} />
             </div>
           ))}
@@ -302,24 +305,22 @@ function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: strin
 // Sizing/row/active-state tokens now match the main shell nav exactly
 // (w-56, h-[68px] header, indigo-50 active pill, 16px icons) — this used to
 // run its own oversized/solid-blue treatment (300px wide, 88px header,
-// bg-[#0860ef] active fill, 28px icons), which read as a different app once
+// bg-primary active fill, 28px icons), which read as a different app once
 // you landed here from anywhere else in the shell.
 function SettingsSidebar({ pathname }: { pathname: string }) {
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-card">
       <Link
         href="/"
-        className="flex h-[68px] items-center border-b border-[#e6edf9] px-5 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+        className="flex h-[68px] items-center border-b border-border px-5 hover:bg-t1-gray-50"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo; no next/image optimization needed */}
-        <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-8 w-auto dark:hidden" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-8 w-auto dark:block" />
+        <img src="/brand/thunderone-logo-horizontal-color.svg" alt="ThunderOne" className="h-10 w-auto" />
       </Link>
       <div className="px-3 pb-1 pt-3">
         <Link
           href="/mission-control"
-          className="flex items-center gap-2 rounded-[10px] px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-indigo-400"
+          className="flex items-center gap-2 rounded-[10px] px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
         >
           <ArrowLeftIcon className="h-4 w-4 shrink-0" />
           กลับไป ThunderOne
@@ -334,11 +335,11 @@ function SettingsSidebar({ pathname }: { pathname: string }) {
               href={item.href}
               className={`flex h-8 items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium transition-colors ${
                 active
-                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300"
-                  : "text-slate-800 hover:bg-slate-100 hover:text-indigo-600 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                  ? "bg-accent text-primary"
+                  : "text-foreground hover:bg-muted hover:text-primary"
               }`}
             >
-              <span className="h-4 w-4 shrink-0 text-slate-500">{item.icon}</span>
+              <span className="h-4 w-4 shrink-0 text-muted-foreground">{item.icon}</span>
               {item.label}
             </Link>
           );
@@ -385,7 +386,7 @@ export function Sidebar({
       // was the single biggest contributor to the whole shell reading as
       // "bloated" next to it, more than any font-size difference.
       className={`flex h-full shrink-0 flex-col border-r ${
-        isMediaWorkspace ? "border-sidebar-border bg-sidebar" : "border-[#e6edf9] bg-white dark:border-zinc-800 dark:bg-zinc-950"
+        isMediaWorkspace ? "border-sidebar-border bg-sidebar" : "border-border bg-card"
       } transition-[width] duration-150 ${
         collapsed ? "w-16" : "w-56"
       }`}
@@ -398,40 +399,19 @@ export function Sidebar({
         className={`flex items-center ${
           isMediaWorkspace
             ? `h-[68px] gap-3 border-b border-sidebar-border hover:bg-accent px-4 ${collapsed ? "justify-center px-2" : ""}`
-            : `h-[68px] border-b border-[#e6edf9] hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900 ${collapsed ? "justify-center px-2" : "px-5"}`
+            : `h-[68px] border-b border-border hover:bg-t1-gray-50 ${collapsed ? "justify-center px-2" : "px-5"}`
         }`}
       >
         {isMediaWorkspace ? (
           <MediaWorkspaceBrand collapsed={collapsed} />
         ) : collapsed ? (
           // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
-          <img src="/brand/t1-mark.svg" alt="ThunderOne" style={{ width: 32, height: 32 }} />
-        ) : activeApp?.id === "customer-workspace" ? (
-          // Same "mark + 2-line text stack" layout as Media Workspace's own
-          // t1-sidebar-brand-block.svg (confirmed against a screenshot of it
-          // 2026-09-23) — that asset bakes in the literal string "Media
-          // Workspace" though, so it can't be reused for a different
-          // caption; this rebuilds the same layout with live text/tagline
-          // instead of a second baked-in SVG per App.
-          <div className="flex items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/t1-mark.svg" alt="ThunderOne" className="h-8 w-auto" />
-            <div className="flex flex-col justify-center">
-              <span className="text-lg font-extrabold leading-tight tracking-tight">
-                <span className="text-[#010F29] dark:text-zinc-50">Thunder</span>
-                {" "}
-                <span className="text-[#0C60FA]">One</span>
-              </span>
-              <span className="text-xs leading-tight text-zinc-500 dark:text-zinc-400">{activeApp.tagline}</span>
-            </div>
-          </div>
+          <img src="/brand/thunderone-mark-t1-dark.svg" alt="ThunderOne" className="h-8 w-8 max-w-none" />
         ) : (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/t1-logo-horizontal.svg" alt="ThunderOne" className="h-8 w-auto dark:hidden" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/t1-logo-horizontal-dark.svg" alt="ThunderOne" className="hidden h-8 w-auto dark:block" />
-          </>
+          // Every App shows the design system's horizontal lockup (DS-10, brand.md); the wordmark is
+          // never re-typed as live text.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/brand/thunderone-logo-horizontal-color.svg" alt="ThunderOne" className="h-10 w-auto" />
         )}
       </Link>
 
@@ -444,7 +424,7 @@ export function Sidebar({
       {/* 2026-09-19: px-5 pb-5 pt-3 + two h-14 (56px) rows -> p-2 + two h-9
           (36px) rows, matching the reference's own compact bottom area
           (57px total, p-2 padding) — was nearly twice as tall. */}
-      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-sidebar-border p-2" : "border-t border-[#e6edf9] p-2 dark:border-zinc-800"}`}>
+      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-sidebar-border p-2" : "border-t border-border p-2"}`}>
         {isMediaWorkspace ? (
           !collapsed && <p className="sr-only">{tenantName ?? "Thunder One"}</p>
         ) : (
@@ -466,7 +446,7 @@ export function Sidebar({
               ? `flex h-9 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-foreground transition-colors hover:bg-accent hover:text-primary ${
                   collapsed ? "justify-center" : ""
                 }`
-              : "flex h-9 w-full items-center justify-center gap-2.5 rounded-lg border border-[#e6edf9] text-xs font-semibold text-[#61719e] transition-colors hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900"
+              : "flex h-9 w-full items-center justify-center gap-2.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground transition-colors hover:bg-t1-gray-50"
           }
         >
           {isMediaWorkspace ? (

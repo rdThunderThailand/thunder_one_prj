@@ -42,7 +42,7 @@ export function PublicationPlaybackPreviewButton({
       >
         {loading ? "Loading preview…" : "Preview playback"}
       </Button>
-      {hook.error && <p className="text-xs text-danger" role="alert">โหลด Content สำหรับ preview ไม่สำเร็จ</p>}
+      {hook.error && <p className="text-xs text-error" role="alert">โหลด Content สำหรับ preview ไม่สำเร็จ</p>}
       {preview && (
         <PlaybackPreviewModal
           open={open}

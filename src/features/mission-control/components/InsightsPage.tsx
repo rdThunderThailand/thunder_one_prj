@@ -10,13 +10,13 @@ function CriticalTrendCard() {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+      <h2 className="mb-1 text-sm font-semibold text-foreground">
         Critical Assets — 12 Month Trend
       </h2>
-      <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="mb-3 text-xs text-muted-foreground">
         Flat, not climbing — no systemic issue, per-asset decisions are enough for now.
       </p>
-      <Sparkline data={critical.trend} className="h-16 w-full text-blue-500" />
+      <Sparkline data={critical.trend} className="h-16 w-full text-info" />
     </Card>
   );
 }
@@ -26,7 +26,7 @@ function DepartmentBenchmarkCard() {
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+      <h2 className="mb-3 text-sm font-semibold text-foreground">
         Department Benchmark — Avg Health Score
       </h2>
       <div className="flex flex-col gap-3">
@@ -38,8 +38,8 @@ function DepartmentBenchmarkCard() {
           return (
             <div key={dept.id}>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-zinc-500 dark:text-zinc-400">{dept.name}</span>
-                <span className="text-zinc-400">
+                <span className="text-muted-foreground">{dept.name}</span>
+                <span className="text-t1-gray-400">
                   {avgHealth}% · {deptAssets.length} asset{deptAssets.length === 1 ? "" : "s"}
                 </span>
               </div>

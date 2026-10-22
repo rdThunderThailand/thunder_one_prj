@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { Bell, CheckCircle2, ClipboardList, Clock, Image as ImageIcon, TriangleAlert } from "lucide-react";
-import { BellIcon } from "@/components/ui/icons";
+import {
+  BellIcon as Bell,
+  CheckCircleIcon as CheckCircle2,
+  ClipboardIcon as ClipboardList,
+  ClockIcon as Clock,
+  ImageIcon,
+  WarningTriangleIcon as TriangleAlert,
+  BellIcon,
+} from "@/components/ui/icons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -32,10 +39,10 @@ const MAX_SEEN = 300;
 const MAX_LISTED = 8;
 
 const KIND_ICON: Record<Kind, { icon: typeof Bell; tone: string }> = {
-  approval: { icon: CheckCircle2, tone: "bg-emerald-50 text-emerald-600" },
-  task: { icon: ClipboardList, tone: "bg-indigo-50 text-indigo-600" },
-  draft: { icon: ImageIcon, tone: "bg-blue-50 text-blue-600" },
-  waiting: { icon: Clock, tone: "bg-purple-50 text-purple-600" },
+  approval: { icon: CheckCircle2, tone: "bg-success-muted text-t1-green-700" },
+  task: { icon: ClipboardList, tone: "bg-accent text-primary" },
+  draft: { icon: ImageIcon, tone: "bg-info-muted text-t1-blue-700" },
+  waiting: { icon: Clock, tone: "bg-in-progress-muted text-t1-purple-700" },
 };
 
 function readSeen(): string | null {
@@ -138,7 +145,7 @@ export function NotificationBell({ variant }: { variant: "default" | "media" }) 
   const buttonClass =
     variant === "media"
       ? "relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-      : "relative grid h-9 w-9 place-items-center rounded-lg text-[#536999] hover:bg-slate-50 hover:text-[#071858] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100";
+      : "relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-t1-gray-50 hover:text-foreground";
 
   return (
     <div className="relative">
@@ -153,7 +160,7 @@ export function NotificationBell({ variant }: { variant: "default" | "media" }) 
         {variant === "media" ? <Bell className="h-4 w-4" /> : <BellIcon className="h-5 w-5" />}
         {unread.length > 0 && (
           <span
-            className={`absolute flex h-4 min-w-4 items-center justify-center rounded-full bg-[#fb2c36] px-1 text-[10px] font-medium text-white ${
+            className={`absolute flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-medium text-error-foreground ${
               "-right-0.5 -top-0.5"
             }`}
           >

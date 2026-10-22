@@ -59,7 +59,7 @@ function TemplateCard({ entry, selected, onSelect }: { entry: PickerEntry; selec
       }`}
     >
       {selected && (
-        <span className="absolute right-1.5 top-1.5 z-10 grid h-5 w-5 place-items-center rounded-full bg-primary text-xs text-white" aria-hidden="true">✓</span>
+        <span className="absolute right-1.5 top-1.5 z-10 grid h-5 w-5 place-items-center rounded-full bg-primary text-xs text-primary-foreground" aria-hidden="true">✓</span>
       )}
       <span className="flex h-32 w-full items-center justify-center rounded-lg bg-program p-2">
         <LayoutWireframe
@@ -244,7 +244,7 @@ export function LayoutTemplatePicker({
                   onClick={() => { setGroup(item.key); setSelectedId(null); }}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium ${
                     group === item.key
-                      ? "bg-primary-soft text-primary"
+                      ? "bg-accent text-primary"
                       : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -276,7 +276,7 @@ export function LayoutTemplatePicker({
                 <option value="all">All Use Cases</option>{useCases.map((useCase) => <option key={useCase} value={useCase}>{useCase}</option>)}
               </select>
             </div>
-            {loadError && <p role="alert" className="mb-3 text-sm text-danger">{loadError}</p>}
+            {loadError && <p role="alert" className="mb-3 text-sm text-error">{loadError}</p>}
             <p className="mb-3 text-sm font-semibold text-foreground">{GROUPS.find((item) => item.key === group)?.label}</p>
             <div className="grid max-h-[470px] grid-cols-1 gap-3 overflow-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
               {visible.map((entry) => <TemplateCard key={`${entry.source}:${entry.id}`} entry={entry} selected={selected?.id === entry.id && selected.source === entry.source} onSelect={() => setSelectedId(entry.id)} />)}

@@ -70,7 +70,7 @@ export function ChannelLifecycleActions({
     <Card className="p-5">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lifecycle</p>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-danger">
+        <p role="alert" className="mt-2 text-sm text-error">
           {error.message}
         </p>
       )}
@@ -86,7 +86,7 @@ export function ChannelLifecycleActions({
             variant="secondary"
             disabled={busy}
             onClick={() => setConfirmingDelete(true)}
-            className="text-danger hover:bg-danger-soft"
+            className="text-error hover:bg-error-muted"
           >
             Delete Channel
           </Button>

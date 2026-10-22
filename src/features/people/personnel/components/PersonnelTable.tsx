@@ -32,13 +32,13 @@ interface PersonnelTableProps {
 
 export function PersonnelTable({ rows, startIndex = 0, onEditRow, onViewRow }: PersonnelTableProps) {
   if (rows.length === 0) {
-    return <Card className="p-10 text-center text-sm text-zinc-400">ไม่พบบุคลากรตามเงื่อนไขที่เลือก</Card>;
+    return <Card className="p-10 text-center text-sm text-t1-gray-400">ไม่พบบุคลากรตามเงื่อนไขที่เลือก</Card>;
   }
 
   return (
     <Card className="overflow-x-auto">
       <table className="w-full min-w-[1200px] text-left text-sm">
-        <thead className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <thead className="border-b border-border text-xs text-muted-foreground">
           <tr>
             <th className="w-10 px-4 py-3 font-medium">#</th>
             <th className="px-4 py-3 font-medium">บุคลากร</th>
@@ -51,32 +51,32 @@ export function PersonnelTable({ rows, startIndex = 0, onEditRow, onViewRow }: P
             <th className="px-4 py-3 font-medium">จัดการ</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+        <tbody className="divide-y divide-border">
           {rows.map((row, i) => {
             const onProbation = isOnProbation(row.probationEndDate);
             return (
               <tr key={row.id}>
-                <td className="px-4 py-3 text-zinc-400">{startIndex + i + 1}</td>
+                <td className="px-4 py-3 text-t1-gray-400">{startIndex + i + 1}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     <Avatar name={row.name} src={row.avatarUrl} size={32} />
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-zinc-900 dark:text-zinc-50">{row.name}</p>
-                      <p className="truncate text-xs text-zinc-400">{row.email}</p>
+                      <p className="truncate font-medium text-foreground">{row.name}</p>
+                      <p className="truncate text-xs text-t1-gray-400">{row.email}</p>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{row.employeeCode}</td>
+                <td className="px-4 py-3 text-muted-foreground">{row.employeeCode}</td>
                 <td className="px-4 py-3">
                   <Badge variant="pill" color={typeBadge[row.type].color}>
                     {typeBadge[row.type].label}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">
+                <td className="px-4 py-3 text-foreground">
                   <p>{row.position}</p>
-                  {row.levelRole && <p className="text-xs text-zinc-400">{row.levelRole}</p>}
+                  {row.levelRole && <p className="text-xs text-t1-gray-400">{row.levelRole}</p>}
                 </td>
-                <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{row.unit}</td>
+                <td className="px-4 py-3 text-muted-foreground">{row.unit}</td>
                 <td className="px-4 py-3">
                   <div className="flex flex-col gap-1">
                     <Badge variant="pill" color={onProbation ? "yellow" : "green"}>
@@ -87,19 +87,19 @@ export function PersonnelTable({ rows, startIndex = 0, onEditRow, onViewRow }: P
                     </Badge>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                <td className="px-4 py-3 text-muted-foreground">
                   <p>{row.startDateLabel}</p>
                   {row.tenureLabel && row.tenureLabel !== "-" && (
-                    <p className="text-xs text-zinc-400">{row.tenureLabel}</p>
+                    <p className="text-xs text-t1-gray-400">{row.tenureLabel}</p>
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-2 text-zinc-400">
+                  <div className="flex items-center gap-2 text-t1-gray-400">
                     <button
                       type="button"
                       title="ดูรายละเอียด"
                       onClick={() => onViewRow(row)}
-                      className="hover:text-zinc-600 dark:hover:text-zinc-300"
+                      className="hover:text-muted-foreground"
                     >
                       <EyeIcon className="h-4 w-4" />
                     </button>
@@ -107,14 +107,14 @@ export function PersonnelTable({ rows, startIndex = 0, onEditRow, onViewRow }: P
                       type="button"
                       title="แก้ไขข้อมูล"
                       onClick={() => onEditRow(row)}
-                      className="hover:text-zinc-600 dark:hover:text-zinc-300"
+                      className="hover:text-muted-foreground"
                     >
                       <EditIcon className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
                       title="ยังไม่เปิดใช้งาน"
-                      className="cursor-not-allowed text-zinc-300 dark:text-zinc-600"
+                      className="cursor-not-allowed text-t1-gray-400"
                     >
                       <MoreIcon className="h-4 w-4" />
                     </button>

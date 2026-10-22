@@ -7,7 +7,7 @@ interface OrgViewTabsProps {
 
 export function OrgViewTabs({ active, onChange }: OrgViewTabsProps) {
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-700">
+    <div className="flex items-center gap-1 rounded-lg border border-border p-1">
       {orgViewTabs.map((tab) => (
         <button
           key={tab.id}
@@ -15,8 +15,8 @@ export function OrgViewTabs({ active, onChange }: OrgViewTabsProps) {
           onClick={() => onChange(tab.id)}
           className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
             active === tab.id
-              ? "bg-indigo-600 text-white"
-              : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-muted"
           }`}
         >
           {tab.label}

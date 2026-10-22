@@ -70,7 +70,7 @@ export function PrepareContentStep({
             <p className="text-xs">เลือกคอนเทนต์ในขั้นตอนที่ 1 เพื่อดูตัวอย่าง</p>
           </div>
         ) : error ? (
-          <p className="text-sm text-danger">โหลด preview ไม่สำเร็จ</p>
+          <p className="text-sm text-error">โหลด preview ไม่สำเร็จ</p>
         ) : loading || !preview ? (
           <p className="py-10 text-center text-sm text-muted-foreground">กำลังโหลด preview…</p>
         ) : (

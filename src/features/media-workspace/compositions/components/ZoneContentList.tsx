@@ -4,7 +4,12 @@
 // item, reorder, tweak an image's seconds, or drop the whole binding. Playlist Zones stay
 // read-only here (edit at the Playlist editor); assets Zones are the Zone's own inline list.
 
-import { ChevronDown, ChevronUp, ExternalLink, X } from "lucide-react";
+import {
+  ChevronDownIcon as ChevronDown,
+  ChevronUpIcon as ChevronUp,
+  ExternalLinkIcon as ExternalLink,
+  XIcon as X,
+} from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { formatDuration } from "@/features/media-workspace/playlists";
 import type { MediaAsset, PlaylistListItem } from "@/types/domain";
@@ -118,7 +123,7 @@ export function ZoneContentList({ binding, assets, previews, playlists, playlist
                   type="button"
                   aria-label={`Remove ${label}`}
                   onClick={() => onBindingChange({ ...binding, assetItems: binding.assetItems.filter((current) => current.media_asset_id !== item.media_asset_id) })}
-                  className="rounded p-1 text-muted-foreground hover:text-danger"
+                  className="rounded p-1 text-muted-foreground hover:text-error"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

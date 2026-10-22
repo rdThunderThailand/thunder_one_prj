@@ -50,7 +50,7 @@ export function RecentUploadsCard({ completedCount }: { completedCount: number }
             </div>
           ))
         ) : error ? (
-          <p className="text-xs text-danger">{error}</p>
+          <p className="text-xs text-error">{error}</p>
         ) : assets.length === 0 ? (
           <p className="text-xs text-muted-foreground">Completed uploads will appear here.</p>
         ) : (

@@ -9,17 +9,17 @@ const iconFor: Record<AiSuggestedData["icon"], React.ReactNode> = {
 };
 
 const iconTone: Record<AiSuggestedData["icon"], string> = {
-  star: "bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400",
-  warning: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400",
-  bulb: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400",
+  star: "bg-accent text-primary",
+  warning: "bg-error-muted text-error",
+  bulb: "bg-warning-muted text-warning",
 };
 
 export function AiSuggestedCard() {
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">AI Suggested for You</h2>
-        <button className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+        <h2 className="text-sm font-semibold text-foreground">AI Suggested for You</h2>
+        <button className="text-xs font-medium text-primary hover:text-accent-foreground">
           View all
         </button>
       </div>
@@ -30,10 +30,10 @@ export function AiSuggestedCard() {
               {iconFor[item.icon]}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{item.title}</p>
-              <p className="truncate text-xs text-zinc-400">{item.detail}</p>
+              <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+              <p className="truncate text-xs text-t1-gray-400">{item.detail}</p>
             </div>
-            <button className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+            <button className="shrink-0 text-xs font-medium text-primary hover:text-accent-foreground">
               <ArrowRightIcon className="h-3.5 w-3.5" />
             </button>
           </li>

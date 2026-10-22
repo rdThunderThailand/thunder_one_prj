@@ -30,16 +30,16 @@ export const EMPLOYEE_QUICK_ACCESS: QuickAccessItem[] = [
 export function QuickAccessCard({ items }: { items: QuickAccessItem[] }) {
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Quick Access</h2>
-      <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Quick Access</h2>
+      <ul className="flex flex-col divide-y divide-border">
         {items.map((item) => {
           const content = (
             <>
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
                 {item.icon}
               </span>
               <span className="flex-1">{item.label}</span>
-              <ChevronRightIcon className="h-3.5 w-3.5 text-zinc-300" />
+              <ChevronRightIcon className="h-3.5 w-3.5 text-t1-gray-400" />
             </>
           );
           return (
@@ -47,14 +47,14 @@ export function QuickAccessCard({ items }: { items: QuickAccessItem[] }) {
               {item.href ? (
                 <Link
                   href={item.href}
-                  className="flex items-center gap-2.5 py-2.5 text-sm text-zinc-700 hover:text-indigo-600 dark:text-zinc-200"
+                  className="flex items-center gap-2.5 py-2.5 text-sm text-foreground hover:text-primary"
                 >
                   {content}
                 </Link>
               ) : (
                 <div
                   title="Not built yet"
-                  className="flex cursor-not-allowed items-center gap-2.5 py-2.5 text-sm text-zinc-400"
+                  className="flex cursor-not-allowed items-center gap-2.5 py-2.5 text-sm text-t1-gray-400"
                 >
                   {content}
                 </div>

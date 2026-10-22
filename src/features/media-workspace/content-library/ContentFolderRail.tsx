@@ -1,7 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ChevronRight, Folder, FolderOpen, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  ChevronRightIcon as ChevronRight,
+  FolderIcon as Folder,
+  FolderOpenIcon as FolderOpen,
+  MoreIcon as MoreHorizontal,
+  TrashIcon as Trash2,
+} from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/lovable/button";
 import {
@@ -36,7 +42,7 @@ type Props = {
 const rowClass = (active: boolean) =>
   cn(
     "group flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-[10px] font-medium",
-    active ? "bg-primary-soft text-primary" : "hover:bg-muted",
+    active ? "bg-accent text-primary" : "hover:bg-muted",
   );
 
 const countLabel = (counts: Record<string, number> | undefined, key: string) =>

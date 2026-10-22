@@ -3,7 +3,11 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ChevronRight, Folder, Search } from "lucide-react";
+import {
+  ChevronRightIcon as ChevronRight,
+  FolderIcon as Folder,
+  SearchIcon as Search,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
@@ -70,7 +74,7 @@ export function MoveToFolderDialog({
                   onClick={() => setDestination(option.id)}
                   className={cn(
                     "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[11px] font-medium",
-                    destination === option.id ? "bg-primary-soft text-primary" : "hover:bg-muted",
+                    destination === option.id ? "bg-accent text-primary" : "hover:bg-muted",
                   )}
                 >
                   <ChevronRight className="h-3 w-3 text-muted-foreground" />

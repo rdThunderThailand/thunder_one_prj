@@ -106,7 +106,7 @@ export function AcceptInviteForm({ token, email }: AcceptInviteFormProps) {
         value={confirmPassword}
         onChange={(event) => setConfirmPassword(event.target.value)}
       />
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Creating account..." : "Create account & join"}
       </Button>
