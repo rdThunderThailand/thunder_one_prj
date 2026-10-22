@@ -124,6 +124,32 @@ assert.equal(multi.health, null);
 assert.deepEqual(multi.display_config, multiDraft.display_config);
 assert.equal(multi.display_config?.screens.length, 2);
 
+const mixedChannels = [
+  { ...channel, expected_resolution: "6912x700" },
+  { ...channel, expected_resolution: "1440x900" },
+  channel,
+  { ...channel, expected_resolution: null },
+  { ...multiDraft, expected_resolution: "3840x1080" },
+];
+assert.deepEqual(
+  parseChannelList({ channels: mixedChannels }).map((item) => item.expected_resolution),
+  ["6912x700", "1440x900", "1920x1080", null, "3840x1080"],
+);
+for (const resolution of ["6912x700", "1440x900", "1600x900", "100x100", "99999x99999"]) {
+  assert.equal(parseChannelDetail({ ...channel, expected_resolution: resolution }).expected_resolution, resolution);
+  assert.equal(parseChannelList({ channels: [{ ...channel, expected_resolution: resolution }] })[0]?.expected_resolution, resolution);
+}
+assert.equal(parseChannelDetail({ ...channel, expected_resolution: null }).expected_resolution, null);
+
+for (const resolution of [
+  "0x700", "700x0", "-100x700", "700x-100", "0100x700", "700x0100",
+  "99x700", "700x99", "100000x700", "700x100000", "6912X700", "6912×700",
+  "", "6912", "6912x", "x700", "6912x700 extra", 6912, {}, undefined,
+]) {
+  assert.throws(() => parseChannelDetail({ ...channel, expected_resolution: resolution }), /Channel data is malformed/);
+  assert.throws(() => parseChannelList({ channels: [{ ...channel, expected_resolution: resolution }] }), /Channel data is malformed/);
+}
+
 // The compatibility read is gone: a payload without the Core v2 fields is malformed, never a
 // silently-defaulted row.
 assert.throws(() => parseChannelDetail({ data: { ...channel, player: undefined } }));
@@ -160,10 +186,6 @@ assert.throws(() => parseChannelDetail({ ...channel, status: undefined }));
 assert.throws(() => parseChannelDetail({
   ...channel,
   expected_resolution: "full-hd",
-}));
-assert.throws(() => parseChannelDetail({
-  ...channel,
-  expected_resolution: "1600x900",
 }));
 assert.throws(() => parseChannelDetail({
   ...channel,
