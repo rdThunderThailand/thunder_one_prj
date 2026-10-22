@@ -12,7 +12,6 @@ import type {
   ChannelReferenceData,
   ChannelTypeOption,
 } from "../types/index.ts";
-import { isDisplayResolution } from "../../../../lib/display-resolution.ts";
 
 type ChannelRequestMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
@@ -203,7 +202,10 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !(value.player === null || isRecord(value.player)) ||
     !Array.isArray(value.groups) ||
     !(value.expected_orientation === null || isOneOf(value.expected_orientation, ["landscape", "portrait"])) ||
-    !(value.expected_resolution === null || isDisplayResolution(value.expected_resolution)) ||
+    !(
+      value.expected_resolution === null ||
+      (typeof value.expected_resolution === "string" && /^[1-9]\d{2,4}x[1-9]\d{2,4}$/.test(value.expected_resolution))
+    ) ||
     !(value.default_playlist === null || isRecord(value.default_playlist)) ||
     !isPositiveSafeInteger(value.revision) ||
     !isTimestamp(value.updated_at)
