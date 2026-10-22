@@ -11,10 +11,32 @@ export type AssetWorkspaceRole = "asset_admin" | "manager" | "employee";
 // ponytail: Phase 1 has no role source — every user gets the Asset Admin nav. Real role wiring is Phase 6.
 export const DEFAULT_ASSET_WORKSPACE_ROLE: AssetWorkspaceRole = "asset_admin";
 
+const BASE = "/asset-workspace";
+
 const ADMIN_SECTIONS: NavSection[] = [
-  { label: "Asset Management", items: [{ label: "Assets" }, { label: "Assignments" }, { label: "Inventory" }] },
-  { label: "Asset Structure", items: [{ label: "Categories" }, { label: "Locations" }] },
-  { label: "Management", items: [{ label: "Lifecycle & Warranty" }, { label: "Reports" }, { label: "Settings" }] },
+  {
+    label: "Asset Management",
+    items: [
+      { label: "Assets", href: `${BASE}/assets` },
+      { label: "Assignments", href: `${BASE}/assignments` },
+      { label: "Inventory", href: `${BASE}/inventory` },
+    ],
+  },
+  {
+    label: "Asset Structure",
+    items: [
+      { label: "Categories", href: `${BASE}/categories` },
+      { label: "Locations", href: `${BASE}/locations` },
+    ],
+  },
+  {
+    label: "Management",
+    items: [
+      { label: "Lifecycle & Warranty", href: `${BASE}/lifecycle-warranty` },
+      { label: "Reports", href: `${BASE}/reports` },
+      { label: "Settings", href: `${BASE}/settings` },
+    ],
+  },
 ];
 
 const MANAGER_ITEMS: ReadonlySet<string> = new Set(["Assets", "Assignments", "Inventory", "Reports"]);
