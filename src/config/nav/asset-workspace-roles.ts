@@ -1,7 +1,7 @@
-// Which Asset Workspace nav items each role sees (docs/adr/0097, Spec v1.1.5
-// §8.2–8.3, FigJam Navigation v1.1 `515:635`). Pure data so
+// Which Asset Workspace nav items each role sees (docs/adr/0097, Product
+// Specification 02 §3.3 and §4.2, FigJam Navigation v1.1 `515:635`). Pure data so
 // asset-workspace-nav.check.mts can run it; icons are added in
-// ./asset-workspace.tsx. Hiding an item is never authorization (Spec §6.3).
+// ./asset-workspace.tsx. Hiding an item is never authorization (02 §3.3).
 //
 // Items without `href` are screens not built yet — they render inert.
 import type { NavSection } from "./types";

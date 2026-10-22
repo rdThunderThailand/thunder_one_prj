@@ -38,8 +38,13 @@ assert.equal(toSubmission("return", assigned, { ...ret, condition: "Damaged", re
 
 // Change status/condition: options from the transition table; condition must fit the new status.
 assert.deepEqual(statusOptions(available), ["Available", "In Maintenance"]);
-assert.deepEqual(validateDraft("change_status_condition", available, initialDraft(available)), ["Change the status or the condition."]);
-assert.deepEqual(validateDraft("change_status_condition", available, { ...initialDraft(available), condition: "Fair" }), []);
+assert.deepEqual(validateDraft("change_status_condition", available, initialDraft(available)), [
+  "Change the status or the condition.",
+  "Enter a reason.",
+]);
+// A condition-only change still needs a Reason (02 §3.2, AC-020).
+assert.deepEqual(validateDraft("change_status_condition", available, { ...initialDraft(available), condition: "Fair" }), ["Enter a reason."]);
+assert.deepEqual(validateDraft("change_status_condition", available, { ...initialDraft(available), condition: "Fair", reason: "Scratched" }), []);
 assert.deepEqual(validateDraft("change_status_condition", available, { ...initialDraft(available), status: "In Maintenance", reason: "x" }), [
   "Good is not allowed for In Maintenance assets.",
 ]);

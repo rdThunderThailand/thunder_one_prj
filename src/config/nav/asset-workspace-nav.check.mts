@@ -33,7 +33,7 @@ assert.deepEqual(
 );
 
 const all = sectionsForRole("asset_admin").flatMap((section) => section.items.map((item) => item.label));
-assert.ok(!all.includes("Transfers"), "Transfer is a controlled action, not a menu (Spec §8.2)");
-assert.ok(!all.some((label) => /device|provisioning/i.test(label)), "Connected Devices are Phase 2 (Spec v1.1.5)");
+assert.ok(!all.includes("Transfers"), "Transfer is a controlled action, not a menu (02 §4.2)");
+assert.ok(!all.some((label) => /device|provisioning/i.test(label)), "Connected Devices are Phase 2 (02 §2.3)");
 
 console.log("asset-workspace-nav: ok");

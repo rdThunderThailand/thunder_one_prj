@@ -5,6 +5,7 @@
 and `src/app/(dashboard)/(application)/asset-workspace/**`
 **Source:** Dev Lead decision 2026-10-20; Phase 1 work package P1-05; Product Specification v1.1.5 §4.3–4.4, §4.11
 **Related:** Pace #38 (P1-05); ADR 0097 (Asset Workspace routes); P1-03 domain (`src/features/asset-workspace/domain/`)
+**Reference note (2026-10-22):** §4.3–4.4 and §4.11 cited here are unchanged in 05 Functional Specification v1.1.5 (Spec split into 01–05 on 2026-10-18).
 
 ## Context
 
