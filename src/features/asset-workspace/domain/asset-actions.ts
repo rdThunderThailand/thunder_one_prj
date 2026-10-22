@@ -20,8 +20,8 @@ export const ACTIONS_BY_STATUS: Record<AssetStatus, readonly AssetActionKey[]> =
 };
 
 /**
- * Export is offered for every status, but its behaviour is UC-014 (still OPEN),
- * so it stays a separate constant that the UI can switch off without touching the table above.
+ * Export (UC-014, approved as a lean CSV — 05 §4.7) is offered for every status, Disposed included,
+ * so it stays apart from the lifecycle table above.
  */
 export const EXPORT_STATUSES: readonly AssetStatus[] = ["Available", "Assigned", "In Maintenance", "Retired", "Disposed"];
 

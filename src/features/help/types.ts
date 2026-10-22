@@ -14,7 +14,7 @@ export const CONTENT_TYPES = ["getting-started", "how-to", "concept", "troublesh
 export type ContentType = (typeof CONTENT_TYPES)[number];
 
 /** Owning Workspace identifier. `general` is the platform-wide fallback level of context resolution. */
-export type WorkspaceKey = "media" | "general";
+export type WorkspaceKey = "media" | "asset" | "general";
 
 /** Structured Guide body. Plain data so the same content renders in the Help Center and the drawer. */
 export type GuideBlock =

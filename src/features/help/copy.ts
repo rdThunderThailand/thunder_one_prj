@@ -22,6 +22,7 @@ export const CONTENT_TYPE_HINT: Record<ContentType, Record<Locale, string>> = {
 
 export const WORKSPACE_LABEL: Record<WorkspaceKey, Record<Locale, string>> = {
   media: { th: "Media Workspace", en: "Media Workspace" },
+  asset: { th: "Asset Workspace", en: "Asset Workspace" },
   general: { th: "ทั่วไป", en: "General" },
 };
 

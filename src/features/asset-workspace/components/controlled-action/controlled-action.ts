@@ -83,8 +83,12 @@ export function nextStatus(action: ControlledActionKey, asset: ActionAsset, draf
   }
 }
 
-/** A Reason is required only when the status moves and that transition says so (§4.13.3). */
+/**
+ * Change Status/Condition always carries a Reason, condition-only included (02 §3.2, AC-020).
+ * Other actions need one only when the status moves and that transition says so (05 §4.13.3).
+ */
 export function isReasonRequired(action: ControlledActionKey, asset: ActionAsset, draft: ActionDraft): boolean {
+  if (action === "change_status_condition") return true;
   const to = nextStatus(action, asset, draft);
   if (to === asset.status) return false;
   return findTransition(asset.status, to)?.requiresReason ?? false;

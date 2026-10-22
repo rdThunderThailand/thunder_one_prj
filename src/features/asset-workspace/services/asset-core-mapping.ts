@@ -3,7 +3,7 @@
 // it without the server-only fetch code. Each gap marker below names a field
 // Core cannot give us yet; grep for them to build the list the PE carries
 // into the Core contract.
-import type { AssetListRow, AssetListStatus, AssetSummary } from "../../asset-intelligence/assets/services/asset-list-api.ts";
+import type { AssetDetail, AssetListRow, AssetListStatus, AssetSummary } from "../../asset-intelligence/assets/services/asset-list-api.ts";
 import type { AssetCondition } from "../domain/asset-condition.ts";
 import { ASSET_STATUSES, type AssetStatus } from "../domain/asset-status.ts";
 import type { CustodyTarget } from "../domain/custody.ts";
@@ -28,6 +28,9 @@ export function statusToCore(status: AssetStatus): AssetListStatus | null {
 
 export interface WorkspaceAsset {
   id: string;
+  // CORE-GAP:asset-tag — Asset Tag is required and unique (03 §2.4), but Core sends it on the
+  // detail response only (`assetTag` = `assets.asset_code`, nullable); list rows have none.
+  tag: string | null;
   name: string;
   serial: string | null;
   category: string | null;
@@ -49,9 +52,10 @@ function custodyFromOwner(owner: string | null): CustodyTarget | null {
   return owner ? { type: "person", id: "", label: owner } : null;
 }
 
-export function assetFromCore(row: AssetListRow): WorkspaceAsset {
+export function assetFromCore(row: AssetListRow | AssetDetail): WorkspaceAsset {
   return {
     id: row.id,
+    tag: "assetTag" in row ? row.assetTag : null,
     name: row.name,
     serial: row.serial,
     category: row.category,

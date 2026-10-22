@@ -8,6 +8,7 @@
 // to a Client one: each screen is a server page that fetches, plus a small "use client"
 // view that declares its columns and renders this.
 import { useState, type ReactNode } from "react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { StatTile } from "@/components/ui/StatTile";
@@ -107,13 +108,11 @@ export function AssetWorkspaceListPage<Row>({
 
   return (
     <div className="space-y-3 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
-          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
-        </div>
-        {primaryAction && <div className="flex shrink-0 items-center gap-2">{primaryAction}</div>}
-      </div>
+      <PageHeader
+        title={title}
+        subtitle={subtitle}
+        actions={primaryAction}
+      />
 
       {stats && stats.length > 0 && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

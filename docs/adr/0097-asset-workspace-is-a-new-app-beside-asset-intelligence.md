@@ -4,6 +4,7 @@
 **Supersedes:** the naming parts of ADR 0023 (app id, route, folder); updates the folder example in ADR 0034
 **Source:** PO rename 2026-10-14 (Asset Workspace Decision Log); Product Specification v1.1.5 §6.3, §8.2–8.3 (PO sign-off 2026-10-15, G1–G9 PASS); plan `plan-asset-workspace-mvp.md` §1.1/§4.0; Phase 1 work package P1-01
 **Related:** Pace #34 (P1-01), #35 (P1-02); FigJam Navigation & Terminology v1.1 `515:635`, G2 Architecture v1.1 `515:720`
+**Reference note (2026-10-22):** the PO split Spec v1.1.5 into documents 01–05 on 2026-10-18 with no change to decisions. Section numbers below are from the old single file: §6.3 → 02 Product Specification §3.3; §8.2–8.3 → 02 §4.2 (the menu and Screen Inventory now live only in FigJam `515:635` / `515:720`).
 
 ## Context
 
