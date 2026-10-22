@@ -40,6 +40,11 @@ export interface CoreAuroraMigrationRequest {
   updated_at: string;
   line_profile: { display_name: string | null; picture_url: string | null } | null;
   reviewer: { id: string; name: string | null; email: string | null } | null;
+  /** Manual "invite แล้ว / ยังไม่ invite" flag: ops invites the requester into
+   *  the system by hand after approval (Pace #56). Optional, because a Core
+   *  deploy without the columns omits them. A missing value means "not invited". */
+  invited_at?: string | null;
+  invited_by?: string | null;
 }
 
 /**
@@ -67,4 +72,17 @@ export async function approveAuroraMigrationRequest(
   role: AuroraApprovalRole
 ): Promise<CoreAuroraMigrationRequest> {
   return requestApi<CoreAuroraMigrationRequest>("POST", `/aurora-migration-requests/${id}/approve`, { role });
+}
+
+/**
+ * PATCH /aurora-migration-requests/:id/invite — sets (`invited_at = now()`,
+ * `invited_by = caller`) or clears the invite flag. Same reviewer gate as
+ * approve, valid for every status, Thunder-side only (never calls LINE OA).
+ * Last write wins.
+ */
+export async function setAuroraMigrationRequestInvited(
+  id: string,
+  invited: boolean
+): Promise<CoreAuroraMigrationRequest> {
+  return requestApi<CoreAuroraMigrationRequest>("PATCH", `/aurora-migration-requests/${id}/invite`, { invited });
 }
