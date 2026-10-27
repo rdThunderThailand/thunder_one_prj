@@ -7,6 +7,7 @@
 // API the app already uses: `className` sets the box, the glyph fills it.
 import type { ComponentType } from "react";
 import {
+  AudioMutedOutlined,
   AimOutlined,
   ApartmentOutlined,
   ApiOutlined,
@@ -167,6 +168,7 @@ export const BroadcastIcon = icon(ApartmentOutlined);
 export const MonitorIcon = icon(DesktopOutlined);
 export const MonitorPlayIcon = icon(FundProjectionScreenOutlined);
 export const MegaphoneIcon = icon(SoundOutlined);
+export const MuteIcon = icon(AudioMutedOutlined);
 export const EyeIcon = icon(EyeOutlined);
 export const HeartIcon = icon(HeartOutlined);
 export const PaperPlaneIcon = icon(SendOutlined);

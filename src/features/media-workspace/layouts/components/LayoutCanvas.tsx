@@ -10,8 +10,10 @@ import { MediaThumb } from "@/components/ui/MediaThumb";
 import { ExpandIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
 import { fitCanvasSize, parseAspectRatio, parseResolution, referencePixels, roundPercent, validateZones } from "../geometry";
 import type { LayoutZone } from "../types";
+import { computeNextRect, snapDelta, snapTargets, type SnapHandle as Handle } from "../zone-snap";
 
-type Handle = "move" | "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+/** How close (screen px) an edge must come to another edge before it sticks; Alt bypasses. */
+const SNAP_DISTANCE_PX = 8;
 
 const RESIZE_HANDLES: { handle: Handle; className: string }[] = [
   { handle: "nw", className: "-left-1 -top-1 cursor-nwse-resize" },
@@ -23,36 +25,6 @@ const RESIZE_HANDLES: { handle: Handle; className: string }[] = [
   { handle: "sw", className: "-left-1 -bottom-1 cursor-nesw-resize" },
   { handle: "w", className: "-left-1 top-1/2 -translate-y-1/2 cursor-ew-resize" },
 ];
-
-function computeNextRect(
-  start: LayoutZone,
-  handle: Handle,
-  dxPct: number,
-  dyPct: number,
-  round: (v: number) => number
-): Pick<LayoutZone, "x" | "y" | "width" | "height"> {
-  let { x, y, width, height } = start;
-  if (handle === "move") {
-    x += dxPct;
-    y += dyPct;
-  } else {
-    if (handle.includes("e")) width += dxPct;
-    if (handle.includes("w")) {
-      x += dxPct;
-      width -= dxPct;
-    }
-    if (handle.includes("s")) height += dyPct;
-    if (handle.includes("n")) {
-      y += dyPct;
-      height -= dyPct;
-    }
-  }
-  width = Math.max(1, Math.min(100, width));
-  height = Math.max(1, Math.min(100, height));
-  x = Math.max(0, Math.min(100 - width, x));
-  y = Math.max(0, Math.min(100 - height, y));
-  return { x: round(x), y: round(y), width: round(width), height: round(height) };
-}
 
 export function LayoutCanvas({
   zones,
@@ -88,6 +60,7 @@ export function LayoutCanvas({
   const [showGrid, setShowGrid] = useState(false);
   const gridVisible = snap || showGrid;
   const [zoom, setZoom] = useState(1);
+  const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   // 70vh is a page-layout guess that's wrong once real content (page header, template
   // rail, other cards) sits above the canvas — measure the actual remaining viewport height
@@ -121,6 +94,7 @@ export function LayoutCanvas({
     startZone: LayoutZone;
     containerWidth: number;
     containerHeight: number;
+    targets: { x: number[]; y: number[] };
   } | null>(null);
 
   const [ratioW, ratioH] = parseAspectRatio(aspectRatio) ?? [16, 9];
@@ -148,6 +122,8 @@ export function LayoutCanvas({
       startZone: zones[index]!,
       containerWidth: rect.width,
       containerHeight: rect.height,
+      // Hidden Zones are off the canvas, so nothing sticks to them; locked ones still count.
+      targets: snapTargets(zones.filter((zone, i) => i !== index && !hiddenZoneIds.has(zone.id ?? ""))),
     };
     window.addEventListener("pointermove", handleMove);
     window.addEventListener("pointerup", handleUp);
@@ -156,15 +132,28 @@ export function LayoutCanvas({
   const handleMove = (e: PointerEvent) => {
     const state = drag.current;
     if (!state) return;
-    const dxPct = ((e.clientX - state.startClientX) / state.containerWidth) * 100;
-    const dyPct = ((e.clientY - state.startClientY) / state.containerHeight) * 100;
-    const round = snap ? Math.round : roundPercent;
-    const nextRect = computeNextRect(state.startZone, state.handle, dxPct, dyPct, round);
+    const rawDx = ((e.clientX - state.startClientX) / state.containerWidth) * 100;
+    const rawDy = ((e.clientY - state.startClientY) / state.containerHeight) * 100;
+    const snapped = e.altKey
+      ? { dx: rawDx, dy: rawDy, guideX: null, guideY: null }
+      : snapDelta(state.startZone, state.handle, rawDx, rawDy, state.targets, {
+        x: (SNAP_DISTANCE_PX / state.containerWidth) * 100,
+        y: (SNAP_DISTANCE_PX / state.containerHeight) * 100,
+      });
+    setGuides({ x: snapped.guideX, y: snapped.guideY });
+    // An edge stuck to another Zone wins over the grid; grid rounding would pull it off again.
+    const gridRound = snap ? Math.round : roundPercent;
+    const nextRect = computeNextRect(
+      state.startZone, state.handle, snapped.dx, snapped.dy,
+      snapped.guideX === null ? gridRound : roundPercent,
+      snapped.guideY === null ? gridRound : roundPercent,
+    );
     onChange(zones.map((z, i) => (i === state.index ? { ...z, ...nextRect } : z)));
   };
 
   const handleUp = () => {
     drag.current = null;
+    setGuides({ x: null, y: null });
     window.removeEventListener("pointermove", handleMove);
     window.removeEventListener("pointerup", handleUp);
   };
@@ -253,6 +242,12 @@ export function LayoutCanvas({
               ))}
           </div>
         ))}
+        {guides.x !== null && (
+          <div className="pointer-events-none absolute inset-y-0 z-20 w-px bg-error" style={{ left: `min(${guides.x}%, calc(100% - 1px))` }} />
+        )}
+        {guides.y !== null && (
+          <div className="pointer-events-none absolute inset-x-0 z-20 h-px bg-error" style={{ top: `min(${guides.y}%, calc(100% - 1px))` }} />
+        )}
       </div>
       </div>
 
