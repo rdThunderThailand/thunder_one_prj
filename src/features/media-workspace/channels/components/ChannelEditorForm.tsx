@@ -159,6 +159,9 @@ export function ChannelEditorForm({
               onChange={(event) => onChange(withAutoMappedScreens({ ...draft, screenResolution: event.target.value }))}
               className={fieldClasses}
             >
+              {!["1920x1080", "3840x2160"].includes(draft.screenResolution) && (
+                <option value={draft.screenResolution}>{draft.screenResolution}</option>
+              )}
               <option value="1920x1080">1920 × 1080 (Full HD)</option>
               <option value="3840x2160">3840 × 2160 (4K)</option>
             </select>

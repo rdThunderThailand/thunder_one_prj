@@ -4,8 +4,8 @@ import { useEffect, useState, type ReactNode, type Ref } from "react";
 import { ExpandIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup,
-  DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup,
+  DropdownMenuRadioItem, DropdownMenuTrigger,
 } from "@/components/ui/lovable/dropdown-menu";
 import { formatDuration } from "@/features/media-workspace/playlists/duration";
 
@@ -13,8 +13,8 @@ const SPEED_OPTIONS = [1, 2, 3];
 
 export function PreviewControls({
   conflictCount, geometryControls, timeSeconds, timelineSeconds, muted, playing, speed,
-  allowActualSize, framePixels, fitToWindow, isFullscreen, placement = "panel",
-  bodyRef, portalContainer, onTimeline, onPlaying, onSpeed, onMuted, onFitToWindow, onFullscreen,
+  isFullscreen, placement = "panel",
+  bodyRef, portalContainer, onTimeline, onPlaying, onSpeed, onMuted, onFullscreen,
 }: {
   conflictCount: number;
   geometryControls: ReactNode;
@@ -23,9 +23,6 @@ export function PreviewControls({
   muted: boolean;
   playing: boolean;
   speed: number;
-  allowActualSize: boolean;
-  framePixels: [number, number] | null;
-  fitToWindow: boolean;
   isFullscreen: boolean;
   placement?: "panel" | "overlay" | "footer";
   bodyRef?: Ref<HTMLDivElement>;
@@ -34,7 +31,6 @@ export function PreviewControls({
   onPlaying: (playing: boolean) => void;
   onSpeed: (speed: number) => void;
   onMuted: (muted: boolean) => void;
-  onFitToWindow: (fit: boolean) => void;
   onFullscreen: () => void;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -126,14 +122,6 @@ export function PreviewControls({
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
-                {allowActualSize && framePixels && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => onFitToWindow(!fitToWindow)}>
-                      {fitToWindow ? `Actual size (${framePixels[0]}×${framePixels[1]})` : "Fit to window"}
-                    </DropdownMenuItem>
-                  </>
-                )}
               </DropdownMenuContent>
             </DropdownMenu>
             <Button

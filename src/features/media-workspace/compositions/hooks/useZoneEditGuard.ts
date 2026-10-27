@@ -9,6 +9,7 @@
 
 import { useRef, useState } from "react";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
+import type { LayoutSettingsDraft } from "../save-composition";
 import { useZoneHistory, type EditorSnapshot } from "./useZoneHistory";
 
 /** ADR 0087 §2: X/Y/W/H typed into the Zone panel are continuous (one step per focus); a rename
@@ -17,6 +18,12 @@ export function zoneEditKey(zone: LayoutZone | null | undefined, next: LayoutZon
   if (!zone || zone.name !== next.name) return undefined;
   const field = (["x", "y", "width", "height"] as const).find((key) => zone[key] !== next[key]);
   return field ? `zone:${next.id}:${field}` : undefined;
+}
+
+/** Background drags and Custom resolution typed live are continuous too — one step per focus. */
+export function settingsEditKey(current: LayoutSettingsDraft, next: LayoutSettingsDraft): string | undefined {
+  if (next.background !== current.background) return "background";
+  return next.referenceResolution !== current.referenceResolution ? "resolution" : undefined;
 }
 
 export function useZoneEditGuard(
