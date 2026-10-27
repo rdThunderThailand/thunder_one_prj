@@ -173,7 +173,9 @@ export function LayoutCanvas({
     <div className={`flex flex-col gap-2 ${fillAvailable ? "min-h-0 flex-1" : ""}`}>
       {fillAvailable ? (
         <div className="flex justify-between px-1 text-[10px] text-muted-foreground" aria-hidden="true">
-          <span>0</span><span>480</span><span>960</span><span>1440</span><span>1920</span>
+          {[0, 0.25, 0.5, 0.75, 1].map((fraction) => (
+            <span key={fraction}>{resolution ? Math.round(resolution[0] * fraction) : `${fraction * 100}%`}</span>
+          ))}
         </div>
       ) : (
         <div className="flex items-center justify-between">

@@ -20,7 +20,7 @@ import { useCompositionEditorData } from "../hooks/useCompositionEditorData";
 import { useCompositionPreview } from "../hooks/useCompositionPreview";
 import { useCompositionSave } from "../hooks/useCompositionSave";
 import { useEditorLayout } from "../hooks/useEditorLayout";
-import { useZoneEditGuard, zoneEditKey } from "../hooks/useZoneEditGuard";
+import { settingsEditKey, useZoneEditGuard, zoneEditKey } from "../hooks/useZoneEditGuard";
 import type { EditorSnapshot } from "../hooks/useZoneHistory";
 import { CompositionCanvasPane, ZoneOverview } from "./CompositionCanvasPane";
 import { CompositionContentBrowser } from "./CompositionContentBrowser";
@@ -28,7 +28,6 @@ import { CompositionEditorHeader } from "./CompositionEditorHeader";
 import { CompositionEditorToolbar } from "./CompositionEditorToolbar";
 import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
 import { CompositionEditorSkeleton } from "./CompositionEditorSkeleton";
-import { LayoutInformationCard } from "./LayoutInformationCard";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
 import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
@@ -299,9 +298,9 @@ export function CompositionEditorPage({
       <PlaybackPreviewDialog
         open={previewOpen} onClose={() => setPreviewOpen(false)}
         zones={preview.playbackPreviewZones} assets={data.assets}
-        aspectRatio={layout?.aspect_ratio} previewUrls={data.previews}
-        geometryOptions={editorGeometryOptions(layout?.reference_resolution)}
-        referenceResolution={layout?.reference_resolution ?? null}
+        aspectRatio={settings.aspectRatio} previewUrls={data.previews}
+        geometryOptions={editorGeometryOptions(settings.referenceResolution)}
+        referenceResolution={settings.referenceResolution}
         background={settings.background}
         layoutName={name}
         canOpenFullPreview={!!id && !!layout}
@@ -345,7 +344,18 @@ export function CompositionEditorPage({
               hiddenZoneIds={hiddenZoneIds}
             />
             <div className="grid shrink-0 grid-cols-2 gap-3">
-              <LayoutInformationCard name={name} resolution={settings.referenceResolution} aspectRatio={settings.aspectRatio} zoneCount={layout.zones.length} status={status} />
+              <section className="rounded-lg border border-border bg-card p-3">
+                <LayoutPropertiesPanel
+                  name={name} onNameChange={setName} folders={data.folders}
+                  folderId={folderId ?? null} onFolderChange={setFolderId}
+                  tags={tags ?? []} onTagsChange={setTags} settings={settings}
+                  onSettingsChange={(next) => beginZoneEdit(settingsEditKey(settings, next)) && setLayoutSettings(next)}
+                  sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
+                />
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {layout.zones.length} Zones · <span className="capitalize">{status}</span>
+                </p>
+              </section>
               <section className="rounded-lg border border-border bg-card p-3"><ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} /></section>
             </div>
           </main>
@@ -359,20 +369,12 @@ export function CompositionEditorPage({
           {view.binding && view.activeZone ? <>
             <p className="text-[11px] font-bold text-foreground">Zone Properties</p>
             <ZonePropertiesPanel
-              zone={view.activeZone} referenceResolution={layout?.reference_resolution ?? null} binding={view.binding}
+              zone={view.activeZone} referenceResolution={settings.referenceResolution} binding={view.binding}
               onZoneChange={(next) => beginZoneEdit(zoneEditKey(view.activeZone, next)) && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
               onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} previews={data.previews}
               playlists={data.playlists} playlistDurations={data.playlistDurations}
             />
-          </> : layout ? (
-            <LayoutPropertiesPanel
-              compact name={name} onNameChange={setName} folders={data.folders}
-              folderId={folderId ?? null} onFolderChange={setFolderId}
-              tags={tags ?? []} onTagsChange={setTags} settings={settings}
-              onSettingsChange={(next) => beginZoneEdit(next.background !== settings.background ? "background" : undefined) && setLayoutSettings(next)}
-              sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
-            />
-          ) : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
+          </> : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
         </aside>
       </div>
       </div>
