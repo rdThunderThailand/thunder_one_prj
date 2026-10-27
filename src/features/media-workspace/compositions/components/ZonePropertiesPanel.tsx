@@ -9,7 +9,7 @@ import { TrashIcon as Trash2 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { ZoneGeometryFields } from "@/features/media-workspace/layouts/components/ZoneGeometryFields";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
-import type { MediaAsset, PlaylistListItem } from "@/types/domain";
+import type { MediaAsset, PlaylistItem, PlaylistListItem } from "@/types/domain";
 import { defaultBinding, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
 import { ZoneContentList } from "./ZoneContentList";
 
@@ -30,6 +30,7 @@ export function ZonePropertiesPanel({
   previews,
   playlists,
   playlistDurations,
+  playlistItemsById,
 }: {
   zone: LayoutZone;
   referenceResolution: string | null;
@@ -43,6 +44,7 @@ export function ZonePropertiesPanel({
   previews: Record<string, string | undefined>;
   playlists: PlaylistListItem[];
   playlistDurations: Record<string, number | undefined>;
+  playlistItemsById: Record<string, PlaylistItem[] | undefined>;
 }) {
   const [tab, setTab] = useState<"layout" | "content">("content");
   const hasContent = binding.source === "playlist" ? Boolean(binding.playlistId) : binding.assetItems.length > 0;
@@ -87,6 +89,7 @@ export function ZonePropertiesPanel({
             previews={previews}
             playlists={playlists}
             playlistDurations={playlistDurations}
+            playlistItemsById={playlistItemsById}
             onBindingChange={onBindingChange}
           />
 
