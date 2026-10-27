@@ -91,6 +91,14 @@ assert.equal(reorderAssetItem(reordered, "video-1", 0), reordered, "dropping in 
 assert.equal(totalZoneDurationSeconds(bindings[1]!, { "video-1": 42 }, {}), 52);
 assert.equal(totalZoneDurationSeconds(bindings[0]!, {}, { "playlist-main": 75 }), 75);
 assert.equal(totalZoneDurationSeconds(bindings[0]!, {}, {}), 0, "an unresolved Playlist duration is 0, not undefined");
+// #326: an inline Playlist is missing from the library list, so its duration comes from the
+// items the editor read on open — item duration first, then the asset's own length.
+const inlineItems = { "playlist-main": [
+  { media_asset_id: "image-1", position: 0, duration_seconds: 10 },
+  { media_asset_id: "video-1", position: 1, duration_seconds: null },
+] };
+assert.equal(totalZoneDurationSeconds(bindings[0]!, { "video-1": 42 }, {}, inlineItems), 52);
+assert.equal(totalZoneDurationSeconds(bindings[0]!, {}, { "playlist-main": 75 }, inlineItems), 75, "the library total wins when present");
 
 // --- toSetZonesPayload -------------------------------------------------------
 
