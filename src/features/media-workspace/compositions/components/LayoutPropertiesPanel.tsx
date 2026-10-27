@@ -31,7 +31,6 @@ export function LayoutPropertiesPanel({
   onSettingsChange,
   sharedTemplateUsage,
   disabled = false,
-  compact = false,
 }: {
   name: string;
   onNameChange: (next: string) => void;
@@ -47,7 +46,6 @@ export function LayoutPropertiesPanel({
   /** How many Layouts share this geometry; > 1 means an edit here travels. */
   sharedTemplateUsage: number;
   disabled?: boolean;
-  compact?: boolean;
 }) {
   const [vocabulary, setVocabulary] = useState<Tag[]>([]);
   const [draftTag, setDraftTag] = useState("");
@@ -92,7 +90,7 @@ export function LayoutPropertiesPanel({
       <div className="rounded-lg border border-border bg-muted p-1">
         <button type="button" aria-current="page" className="w-full rounded-md bg-card px-3 py-1.5 text-[9px] font-medium text-primary shadow-sm">General</button>
       </div>
-      <div className={`grid items-start gap-4 ${compact ? "" : "md:grid-cols-2 xl:grid-cols-3"}`}>
+      <div className="grid grid-cols-2 items-start gap-3">
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClasses}>Layout name</span>
@@ -164,7 +162,7 @@ export function LayoutPropertiesPanel({
       </div>
 
       {sharedTemplateUsage > 1 && (
-        <p className={`rounded-lg bg-warning-muted p-2 text-xs text-warning ${compact ? "" : "md:col-span-2 xl:col-span-3"}`}>
+        <p className="col-span-2 rounded-lg bg-warning-muted p-2 text-xs text-warning">
           Resolution and background come from a Template used by {sharedTemplateUsage} Layouts.
           Changing them here changes all of them.
         </p>
@@ -195,7 +193,14 @@ export function LayoutPropertiesPanel({
           ))}
           <option value="custom">Custom</option>
         </select>
-        {customMode && <CustomResolution disabled={disabled} aspectRatio={settings.aspectRatio} onCommit={setResolution} />}
+        {customMode && (
+          <CustomResolution
+            disabled={disabled}
+            resolution={settings.referenceResolution}
+            aspectRatio={settings.aspectRatio}
+            onCommit={setResolution}
+          />
+        )}
         <p className="text-xs text-muted-foreground">Aspect ratio: {settings.aspectRatio}</p>
       </div>
 
@@ -214,32 +219,54 @@ export function LayoutPropertiesPanel({
   );
 }
 
+// Commits every valid keystroke so the canvas follows live. The locked ratio is captured here, not
+// read from `aspectRatio`: that prop is re-derived from each commit, so the in-between "1234"
+// of "12345" would drift a locked 16:9 to 617:347 for the next digit.
 function CustomResolution({
   disabled,
+  resolution,
   aspectRatio,
   onCommit,
 }: {
   disabled: boolean;
+  resolution: string | null;
   aspectRatio: string;
   onCommit: (resolution: string) => void;
 }) {
-  const [width, setWidth] = useState("");
-  const [height, setHeight] = useState("");
+  const initial = resolution ? parseResolution(resolution) : null;
+  const [width, setWidth] = useState(initial ? String(initial[0]) : "");
+  const [height, setHeight] = useState(initial ? String(initial[1]) : "");
   const [locked, setLocked] = useState(true);
+  const [lockedRatio, setLockedRatio] = useState(aspectRatio);
+  // Undo/Redo can change the resolution under these inputs; follow it unless it is our own commit.
+  const [seenResolution, setSeenResolution] = useState(resolution);
+  if (resolution !== seenResolution) {
+    setSeenResolution(resolution);
+    const parsed = resolution ? parseResolution(resolution) : null;
+    if (parsed && resolution !== `${width}x${height}`) {
+      setWidth(String(parsed[0]));
+      setHeight(String(parsed[1]));
+      setLockedRatio(deriveAspectRatio(parsed[0], parsed[1]));
+    }
+  }
   const valid = parseResolution(`${width}x${height}`) !== null;
-  const commit = () => valid && onCommit(`${width}x${height}`);
+
+  const change = (dimension: "width" | "height", value: string) => {
+    const paired = locked ? pairedResolutionDimension(Number(value), dimension, lockedRatio) : null;
+    const nextWidth = dimension === "width" ? value : (paired !== null ? String(paired) : width);
+    const nextHeight = dimension === "height" ? value : (paired !== null ? String(paired) : height);
+    setWidth(nextWidth);
+    setHeight(nextHeight);
+    const next = `${nextWidth}x${nextHeight}`;
+    if (parseResolution(next) !== null) onCommit(next);
+  };
 
   return (
     <>
       <div className="flex items-center gap-2">
         <input
           type="number" step={1} min={100} max={99999} placeholder="Width" value={width} disabled={disabled}
-          onChange={(event) => {
-            setWidth(event.target.value);
-            if (!locked) return;
-            const paired = pairedResolutionDimension(Number(event.target.value), "width", aspectRatio);
-            if (paired !== null) setHeight(String(paired));
-          }} onBlur={commit} className={inputClasses}
+          onChange={(event) => change("width", event.target.value)} className={inputClasses}
         />
         <button
           type="button"
@@ -247,19 +274,17 @@ function CustomResolution({
           aria-pressed={locked}
           title={locked ? "Unlock aspect ratio" : "Lock aspect ratio"}
           disabled={disabled}
-          onClick={() => setLocked((current) => !current)}
+          onClick={() => {
+            if (!locked) setLockedRatio(valid ? deriveAspectRatio(Number(width), Number(height)) : aspectRatio);
+            setLocked((current) => !current);
+          }}
           className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border transition-colors ${locked ? "border-primary/30 bg-accent text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
         >
           <LockIcon className="h-3.5 w-3.5" />
         </button>
         <input
           type="number" step={1} min={100} max={99999} placeholder="Height" value={height} disabled={disabled}
-          onChange={(event) => {
-            setHeight(event.target.value);
-            if (!locked) return;
-            const paired = pairedResolutionDimension(Number(event.target.value), "height", aspectRatio);
-            if (paired !== null) setWidth(String(paired));
-          }} onBlur={commit} className={inputClasses}
+          onChange={(event) => change("height", event.target.value)} className={inputClasses}
         />
       </div>
       {!valid && (width || height) && (
