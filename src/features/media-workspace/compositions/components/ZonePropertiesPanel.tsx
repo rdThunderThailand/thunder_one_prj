@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { TrashIcon as Trash2 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
-import { parseResolution, referencePixels, roundPercent } from "@/features/media-workspace/layouts/geometry";
+import { ZoneGeometryFields } from "@/features/media-workspace/layouts/components/ZoneGeometryFields";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
 import type { MediaAsset, PlaylistListItem } from "@/types/domain";
 import { defaultBinding, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
@@ -18,8 +18,6 @@ const tabClasses = (active: boolean) =>
 
 const selectClasses =
   "mt-1 h-9 w-full rounded-lg border border-border bg-card px-2 text-xs text-foreground";
-
-const geometryFields = ["x", "y", "width", "height"] as const;
 
 export function ZonePropertiesPanel({
   zone,
@@ -47,7 +45,6 @@ export function ZonePropertiesPanel({
   playlistDurations: Record<string, number | undefined>;
 }) {
   const [tab, setTab] = useState<"layout" | "content">("content");
-  const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   const hasContent = binding.source === "playlist" ? Boolean(binding.playlistId) : binding.assetItems.length > 0;
 
   return (
@@ -79,31 +76,7 @@ export function ZonePropertiesPanel({
       </div>
 
       {tab === "layout" && (
-        <div className="grid grid-cols-2 gap-3">
-          {geometryFields.map((key) => (
-            <label key={key} className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-              {key.toUpperCase()} (%)
-              <input
-                type="number"
-                step={0.001}
-                min={key === "width" || key === "height" ? 0.1 : 0}
-                max={100}
-                value={zone[key]}
-                onChange={(event) => {
-                  const raw = Number.parseFloat(event.target.value);
-                  if (Number.isNaN(raw)) return;
-                  onZoneChange({ ...zone, [key]: roundPercent(raw) });
-                }}
-                className="h-9 rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-              />
-              {resolution && (
-                <span className="text-[11px] text-muted-foreground">
-                  ≈ {referencePixels(zone[key], key === "x" || key === "width" ? resolution[0] : resolution[1])}px
-                </span>
-              )}
-            </label>
-          ))}
-        </div>
+        <ZoneGeometryFields zone={zone} referenceResolution={referenceResolution} onChange={onZoneChange} />
       )}
 
       {tab === "content" && (
