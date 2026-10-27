@@ -127,7 +127,9 @@ export function PreviewStage({
   // Zones stretch into it; PreviewSurface resolves each item's own media_fit inside that box.
   const geometryFit = selectedGeometry ? deviceFit(selectedGeometry.resolution, aspectRatio) : "fits";
   const framePixels = resolveFramePixels(selectedGeometry, referenceResolution);
-  const canScale = allowActualSize && framePixels !== null;
+  // Cards that overlay their controls on the frame are too small for real pixels: at 1.0 the
+  // controls end up a frame-height scroll away. Scale lives in the modal and the full preview.
+  const canScale = allowActualSize && framePixels !== null && controlsPlacement !== "overlay";
   const frameWidth = canScale && scale !== "fit"
     ? `${framePixels[0] * scale}px`
     : fillWidth && !isFullscreen
