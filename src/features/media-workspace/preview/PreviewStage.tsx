@@ -5,6 +5,7 @@ import { deviceFit, parseAspectRatio } from "@/features/media-workspace/layouts/
 import { fetchPreviewUrls } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import { PreviewControls } from "./PreviewControls";
+import { PreviewScaleControl } from "./PreviewScaleControl";
 import { PreviewZones } from "./PreviewZones";
 import { usePreviewControlsLayout } from "./use-preview-controls-layout";
 import { previewFrameAt, zoneSchedule, type PlaybackPreviewZone, type ZonePreviewFrame, type ZoneSchedule } from "./preview-clock";
@@ -70,7 +71,8 @@ export function PreviewStage({
   const [muted, setMuted] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [geometryId, setGeometryId] = useState<string | null>(null);
-  const [fitToWindow, setFitToWindow] = useState(true);
+  // "fit" sizes the frame to the window; a number is that fraction of the real pixels.
+  const [scale, setScale] = useState<number | "fit">("fit");
   const { stageRef, frameRef, controlsBodyRef, canOverlay, fullscreenContext, toggleFullscreen } = usePreviewControlsLayout(controlsPlacement === "overlay");
   const isFullscreen = fullscreenContext.isStageFullscreen;
   const [urls, setUrls] = useState<Record<string, string | undefined>>({});
@@ -125,11 +127,14 @@ export function PreviewStage({
   // Zones stretch into it; PreviewSurface resolves each item's own media_fit inside that box.
   const geometryFit = selectedGeometry ? deviceFit(selectedGeometry.resolution, aspectRatio) : "fits";
   const framePixels = resolveFramePixels(selectedGeometry, referenceResolution);
-  const frameWidth = fillWidth && !isFullscreen
-    ? "100%"
-    : fitToWindow || !framePixels
-      ? `min(100%, calc(${isFullscreen ? "82vh" : frameViewportHeight} * ${ratioWidth} / ${ratioHeight}))`
-      : `${framePixels[0]}px`;
+  // Cards that overlay their controls on the frame are too small for real pixels: at 1.0 the
+  // controls end up a frame-height scroll away. Scale lives in the modal and the full preview.
+  const canScale = allowActualSize && framePixels !== null && controlsPlacement !== "overlay";
+  const frameWidth = canScale && scale !== "fit"
+    ? `${framePixels[0] * scale}px`
+    : fillWidth && !isFullscreen
+      ? "100%"
+      : `min(100%, calc(${isFullscreen ? "82vh" : frameViewportHeight} * ${ratioWidth} / ${ratioHeight}))`;
 
   // ponytail: promise chain, not a direct call — react-hooks/set-state-in-effect flags any
   // setState called synchronously in an effect body, same workaround as AssetLibraryStep.
@@ -244,9 +249,6 @@ export function PreviewStage({
       muted={muted}
       playing={playing}
       speed={speed}
-      allowActualSize={allowActualSize}
-      framePixels={framePixels}
-      fitToWindow={fitToWindow}
       isFullscreen={fullscreenContext.owner !== null}
       placement={controlsPosition}
       bodyRef={controlsBodyRef}
@@ -258,16 +260,19 @@ export function PreviewStage({
       }}
       onSpeed={setSpeed}
       onMuted={setMuted}
-      onFitToWindow={setFitToWindow}
       onFullscreen={toggleFullscreen}
     />
   );
 
   return (
-    <div ref={stageRef} className={isFullscreen ? "flex h-screen flex-col justify-center gap-4 bg-foreground p-4" : controlsPlacement === "footer" ? "flex h-full min-h-0 flex-col" : "space-y-4"}>
-      <div className={controlsPlacement === "footer" && !isFullscreen ? "flex min-h-0 flex-1 items-center justify-center overflow-auto p-8" : "overflow-auto"}>
+    <div ref={stageRef} className={isFullscreen ? "relative flex h-screen flex-col justify-center gap-4 bg-foreground p-4" : controlsPlacement === "footer" ? "relative flex h-full min-h-0 flex-col" : "space-y-4"}>
+      {canScale && (
+        <PreviewScaleControl scale={scale} onScale={setScale} floating={controlsPlacement === "footer" || isFullscreen} />
+      )}
+      {/* m-auto rather than justify-center: a frame wider than the box must still scroll to its left edge. */}
+      <div className={controlsPlacement === "footer" && !isFullscreen ? "flex min-h-0 flex-1 overflow-auto p-8" : "overflow-auto"}>
         <div
-          className="group/preview-stage relative mx-auto"
+          className="group/preview-stage relative m-auto shrink-0"
           style={{ width: frameWidth }}
         >
           <div

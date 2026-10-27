@@ -118,6 +118,17 @@ assert.equal(singleDraft.playerId, "player-1");
 assert.equal(singleDraft.locationId, "loc-1");
 assert.equal(singleDraft.screenResolution, "1920x1080");
 
+for (const resolution of ["6912x700", "1440x900"]) {
+  const customChannel = channelDetail({ expected_resolution: resolution });
+  const customDraft = draftFromChannel(customChannel);
+  assert.equal(customDraft.screenResolution, resolution);
+  const renamedPayload = toUpdateChannelPayload({ ...customDraft, name: "Renamed Channel" }, customChannel.revision);
+  assert.equal(renamedPayload.name, "Renamed Channel");
+  assert.equal(renamedPayload.expected_resolution, resolution);
+  assert.equal(renamedPayload.expected_revision, customChannel.revision);
+  assert.equal(renamedPayload.display_config, null);
+}
+
 // draftFromChannel: multi-screen, arrangement round-trips to the matching preset key.
 const multiChannel = channelDetail({
   display_config: {
@@ -135,6 +146,14 @@ const multiDraftFromChannel = draftFromChannel(multiChannel);
 assert.equal(multiDraftFromChannel.displayMode, "multi");
 assert.equal(multiDraftFromChannel.arrangementKey, "1x3");
 assert.equal(multiDraftFromChannel.screens.length, 3);
+const multiUpdate = toUpdateChannelPayload({ ...multiDraftFromChannel, name: "Renamed Multi Channel" }, multiChannel.revision);
+assert.equal(multiUpdate.name, "Renamed Multi Channel");
+assert.equal(multiUpdate.display_config?.mode, multiChannel.display_config?.mode);
+assert.equal(multiUpdate.display_config?.arrangement.rows, multiChannel.display_config?.arrangement.rows);
+assert.equal(multiUpdate.display_config?.arrangement.cols, multiChannel.display_config?.arrangement.cols);
+assert.deepEqual(multiUpdate.display_config?.screens, multiChannel.display_config?.screens);
+assert.equal(multiUpdate.expected_resolution, null);
+assert.equal(multiUpdate.expected_revision, multiChannel.revision);
 
 // draftFromChannel: Player-less Draft.
 const draftChannel = channelDetail({ player: null, health: null });

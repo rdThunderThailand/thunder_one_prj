@@ -1,6 +1,6 @@
 "use client";
 
-import { parseResolution, referencePixels, roundPercent } from "../geometry";
+import { ZoneGeometryFields } from "./ZoneGeometryFields";
 import type { LayoutZone } from "../types";
 
 const inputClasses =
@@ -25,32 +25,6 @@ export function ZoneProperties({
   onRemove: () => void;
   canRemove: boolean;
 }) {
-  const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
-
-  const field = (key: "x" | "y" | "width" | "height", label: string) => (
-    <div className="flex flex-col gap-1">
-      <label className={labelClasses}>{label} (%)</label>
-      <input
-        type="number"
-        step={0.001}
-        min={key === "width" || key === "height" ? 0.1 : 0}
-        max={100}
-        value={zone[key]}
-        onChange={(e) => {
-          const raw = Number.parseFloat(e.target.value);
-          if (Number.isNaN(raw)) return;
-          onChange({ ...zone, [key]: roundPercent(raw) });
-        }}
-        className={inputClasses}
-      />
-      {resolution && (
-        <span className="text-[11px] text-muted-foreground">
-          ≈ {referencePixels(zone[key], key === "x" || key === "width" ? resolution[0] : resolution[1])}px
-        </span>
-      )}
-    </div>
-  );
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between">
@@ -77,12 +51,7 @@ export function ZoneProperties({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {field("x", "X")}
-        {field("y", "Y")}
-        {field("width", "Width")}
-        {field("height", "Height")}
-      </div>
+      <ZoneGeometryFields zone={zone} referenceResolution={referenceResolution} onChange={onChange} />
     </div>
   );
 }

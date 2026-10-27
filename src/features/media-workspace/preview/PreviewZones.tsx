@@ -1,5 +1,6 @@
 "use client";
 
+import { MuteIcon } from "@/components/ui/icons";
 import type { MediaAsset } from "@/types/domain";
 import { PreviewSurface } from "./PreviewSurface";
 import { previewFrameAt, type PlaybackPreviewZone, type ZoneSchedule } from "./preview-clock";
@@ -31,7 +32,7 @@ export function PreviewZones({
     return (
       <div
         key={zone.id}
-        className="absolute overflow-hidden border border-primary-foreground/25 bg-foreground"
+        className="absolute overflow-hidden bg-foreground"
         style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%`, backgroundColor: background }}
         title={`${nameLabel} · ${timeLabel}`}
       >
@@ -71,16 +72,17 @@ export function PreviewZones({
             style={transition ? { position: "absolute", inset: 0, opacity: transition.progress } : undefined}
           />
         </div>
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex min-w-0 items-center gap-2 bg-gradient-to-b from-foreground/70 to-transparent px-2 py-1 text-[10px] font-medium text-primary-foreground">
-          <span className="min-w-0 flex-1 truncate" aria-label={nameLabel}>
-            {zone.name}
-            {/* ADR 0064 §7: this label never changes the preview's audio policy. */}
-            {zone.playback?.zoneMuted && <span aria-hidden="true"> 🔇</span>}
+        {/* Borderless and label-free like the screen itself; only mute keeps a marker (ADR 0064 §7),
+            and it never changes the preview's audio policy. */}
+        {zone.playback?.zoneMuted && (
+          <span
+            role="img"
+            aria-label="This Zone is set to mute"
+            className="pointer-events-none absolute right-1.5 top-1.5 rounded bg-foreground/60 p-1 text-primary-foreground"
+          >
+            <MuteIcon className="h-3 w-3" />
           </span>
-          <span className="min-w-0 max-w-[50%] truncate" aria-label={timeLabel}>
-            {timeLabel}
-          </span>
-        </div>
+        )}
       </div>
     );
   });
