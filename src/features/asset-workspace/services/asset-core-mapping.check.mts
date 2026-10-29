@@ -32,6 +32,9 @@ const row: AssetListRow = {
 const asset = assetFromCore(row);
 assert.equal(asset.status, "Assigned");
 assert.equal(asset.condition, null);
+// List rows carry no tag; the detail response does.
+assert.equal(asset.tag, null);
+assert.equal(assetFromCore({ ...row, assetTag: "AST-000001", assetCode: "AST-000001", barcode: null, color: null, dimensions: null, weight: null, accessories: null, notes: null, currentStage: null, stageChangedAt: null }).tag, "AST-000001");
 assert.deepEqual(asset.custody, { type: "person", id: "", label: "Somchai" });
 assert.equal(assetFromCore({ ...row, status: "Ready", owner: null }).custody, null);
 

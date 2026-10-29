@@ -55,6 +55,11 @@ export interface Session {
    * which Apps the tenant sees (config/tenant-access.ts). `null` when Core
    * doesn't send it (older Core) — treated as owner, failing open. */
   tenantAppRole: string | null;
+  /** Core's `/session` `enabled_workspaces`: the App ids a platform super admin
+   * switched on for this tenant (core_prj_Frontend → Tenant › Applications).
+   * `null` when Core sends none (no workspace catalog yet, or older Core) —
+   * config/tenant-access.ts then keeps its previous rule. */
+  enabledWorkspaces: string[] | null;
   /** Every tenant this user may switch into (Core's `available_tenants`):
    * all tenants Thunder One serves for a platform super admin, otherwise the
    * tenants they're an active member of. The Sidebar shows a tenant switcher
@@ -171,7 +176,7 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false, preferredLanguage: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, enabledWorkspaces: null, availableTenants: [], isSuperAdmin: false, preferredLanguage: null };
   }
 
   if (sessionRes.status === 401) {
@@ -186,7 +191,7 @@ async function getSessionUncached(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, availableTenants: [], isSuperAdmin: false, preferredLanguage: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, enabledWorkspaces: null, availableTenants: [], isSuperAdmin: false, preferredLanguage: null };
   }
 
   const body = await sessionRes.json().catch(() => null);
@@ -196,6 +201,7 @@ async function getSessionUncached(): Promise<SessionResult> {
   const tenantAppRole: string | null =
     typeof body?.data?.tenant_application?.role === "string" ? body.data.tenant_application.role : null;
   const availableTenants = parseAvailableTenants(body?.data?.available_tenants);
+  const enabledWorkspaces = parseEnabledWorkspaces(body?.data?.enabled_workspaces);
   const userEmail = typeof user?.email === "string" ? user.email : null;
   const rawUserId = typeof user?.id === "string" ? user.id : null;
   const memberships = await readMemberships(membershipsRes);
@@ -207,13 +213,18 @@ async function getSessionUncached(): Promise<SessionResult> {
   const { jobTitle } = membershipExtras;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin, preferredLanguage: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, enabledWorkspaces, availableTenants, isSuperAdmin, preferredLanguage: null };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
   const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
   const preferredLanguage = typeof user.preferred_language === "string" ? user.preferred_language : null;
-  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, availableTenants, isSuperAdmin, preferredLanguage };
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, enabledWorkspaces, availableTenants, isSuperAdmin, preferredLanguage };
+}
+
+function parseEnabledWorkspaces(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.filter((id): id is string => typeof id === "string");
 }
 
 function parseAvailableTenants(value: unknown): AvailableTenant[] {

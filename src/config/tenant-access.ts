@@ -1,34 +1,28 @@
 import { redirect } from "next/navigation";
+import { APPS } from "@/config/apps";
 import type { SessionResult } from "@/features/auth/services/get-session";
+import { allowedAppIds, canOpenApp, deniedAppLanding } from "@/config/tenant-access-rules";
 
-// Which Apps a tenant may open, keyed on its `tenant_applications.role` for
-// Thunder One (Nie, 2026-09-29). The owner tenant (Thunder Enterprise
-// Master) sees every App; any other tenant — role "viewer" today — sees
-// only the Apps listed here — except for a platform super admin, who sees
-// every App in any tenant they switch into (Nie, 2026-09-29). Like
-// config/rbac.ts this is a courtesy layer:
-// Core still enforces tenant boundaries on every request.
-const NON_OWNER_APP_IDS: ReadonlySet<string> = new Set(["media-workspace"]);
+// Which Apps a tenant may open. A platform super admin switches each App on
+// or off per tenant in core_prj_Frontend (Tenant › Applications); Core sends
+// the result as `/session` `enabled_workspaces` (Thunder_Core
+// docs/api/application-workspaces.md). The owner tenant (Thunder Enterprise
+// Master) and a platform super admin see every App (Nie, 2026-09-29). Rules:
+// config/tenant-access-rules.ts. Like config/rbac.ts this is a courtesy
+// layer: Core still enforces tenant boundaries on every request.
 
-const NON_OWNER_LANDING = "/media-workspace";
+export { canOpenApp };
 
-/** `null` means every App. An unknown role (Core didn't send one, or the
- *  session failed) also resolves to every App — fails open, same as
- *  getSession(). */
+/** `null` means every App. */
 export function resolveAllowedAppIds(session: SessionResult): ReadonlySet<string> | null {
   if (session === "forbidden") return null;
-  const { tenantAppRole, isSuperAdmin } = session;
-  if (isSuperAdmin || tenantAppRole === null || tenantAppRole === "owner") return null;
-  return NON_OWNER_APP_IDS;
-}
-
-export function canOpenApp(allowed: ReadonlySet<string> | null, appId: string): boolean {
-  return allowed === null || allowed.has(appId);
+  return allowedAppIds(session);
 }
 
 /** Call from an App's layout. Sends a tenant that may not open this App to
- *  the non-owner landing page instead. */
+ *  the first App it may open instead. */
 export function requireAppAccess(session: SessionResult, appId: string): void {
-  if (canOpenApp(resolveAllowedAppIds(session), appId)) return;
-  redirect(NON_OWNER_LANDING);
+  const allowed = resolveAllowedAppIds(session);
+  if (canOpenApp(allowed, appId)) return;
+  redirect(deniedAppLanding(allowed, APPS));
 }
