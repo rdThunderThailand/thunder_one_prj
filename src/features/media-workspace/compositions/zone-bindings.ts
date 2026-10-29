@@ -8,6 +8,7 @@
 // comparison, not a client-side computation (ADR 0049 §7, §11).
 
 import type { LayoutZone } from "../layouts/types";
+import type { PlaylistItem } from "@/types/domain";
 import type { CompositionAssetItem, CompositionZone } from "./types";
 
 export type ZonePlayback = {
@@ -219,13 +220,23 @@ export function isComplete(layoutZoneIds: string[], bindings: ZoneBindingDraft[]
   return layoutZoneIds.length > 0 && findUnboundZoneIds(layoutZoneIds, bindings).length === 0;
 }
 
+/** #326: `playlistDurations` comes from the library list, which excludes `kind='inline'`
+ *  Playlists — a Zone filled with picked assets reopens bound to one. Its items, read on open,
+ *  stand in until the list has a total for it. */
 export function totalZoneDurationSeconds(
   binding: ZoneBindingDraft,
   assetDurations: Record<string, number | undefined>,
   playlistDurations: Record<string, number | undefined>,
+  playlistItems: Record<string, readonly Pick<PlaylistItem, "media_asset_id" | "duration_seconds">[] | undefined> = {},
 ): number {
   if (binding.source === "playlist") {
-    return binding.playlistId ? (playlistDurations[binding.playlistId] ?? 0) : 0;
+    if (!binding.playlistId) return 0;
+    const listed = playlistDurations[binding.playlistId];
+    if (listed !== undefined) return listed;
+    return (playlistItems[binding.playlistId] ?? []).reduce(
+      (total, item) => total + (item.duration_seconds ?? assetDurations[item.media_asset_id] ?? 0),
+      0,
+    );
   }
   return binding.assetItems.reduce(
     (total, item) => total + (item.duration_seconds ?? assetDurations[item.media_asset_id] ?? 0),
