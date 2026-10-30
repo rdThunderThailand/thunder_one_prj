@@ -1,14 +1,32 @@
-// Overview — the shell only in Phase 1; summary counts arrive with the smoke
-// slice (P1-09). docs/adr/0097.
-export default function AssetWorkspaceOverviewPage() {
-  return (
-    <div className="space-y-1 p-6">
-      <h1 className="text-xl font-semibold text-foreground">
-        Overview
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        Asset Workspace is being built. Screens appear here as they are ready.
-      </p>
-    </div>
-  );
+import { OverviewPage, type OverviewData } from "@/features/asset-workspace/components/overview/OverviewPage";
+import {
+  getCategoryCounts,
+  getExpiringWarranties,
+  getInMaintenance,
+  getLocationCounts,
+  getRecentActivity,
+  getStatusCounts,
+} from "@/features/asset-workspace/services/asset-overview-api";
+import { getAuthToken, getSession } from "@/features/auth/services/get-session";
+
+// Overview — every widget loads in parallel and fails on its own (docs/adr/0097 route `/`).
+export default async function AssetWorkspaceOverviewPage() {
+  const session = await getSession();
+  const token = await getAuthToken();
+  const tenantId = session !== "forbidden" ? session.tenantId : null;
+
+  const [statusCounts, categories, locations, warranties, maintenance, activity] =
+    token && tenantId
+      ? await Promise.all([
+          getStatusCounts(token, tenantId),
+          getCategoryCounts(token, tenantId),
+          getLocationCounts(token, tenantId),
+          getExpiringWarranties(token, tenantId),
+          getInMaintenance(token, tenantId),
+          getRecentActivity(token, tenantId),
+        ])
+      : [null, null, null, null, null, null];
+
+  const data: OverviewData = { statusCounts, categories, locations, warranties, maintenance, activity };
+  return <OverviewPage data={data} />;
 }
