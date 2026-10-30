@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType, ReactNode, RefObject } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import {
   AssignmentIcon, ChevronDownIcon, GridIcon, InventoryIcon, ListIcon,
@@ -31,10 +31,13 @@ export function UnavailableAction({ children, icon: Icon, label, primary, classN
   );
 }
 
-export function AssetsPageActions() {
+export function AssetsPageActions({ onScan, scanTriggerRef }: { onScan: () => void; scanTriggerRef: RefObject<HTMLButtonElement | null> }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <UnavailableAction icon={ScanIcon}>Scan Asset</UnavailableAction>
+      <Button ref={scanTriggerRef} variant="outline" size="sm" onClick={onScan}>
+        <ScanIcon className="size-4" />
+        Scan Asset
+      </Button>
       <UnavailableAction icon={PlusIcon} primary>
         Register Asset
         <ChevronDownIcon className="size-3" />

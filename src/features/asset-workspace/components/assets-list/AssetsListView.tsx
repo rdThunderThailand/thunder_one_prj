@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/lovable/button";
 import { assetListQueryString, type AssetListQuery } from "../../services/assets-list-query";
@@ -14,6 +14,7 @@ import { AssetsSummary } from "./AssetsSummary";
 import { AssetsTable } from "./AssetsTable";
 import { AssetsPagination } from "./AssetsPagination";
 import { AssetsPageActions, AssetsSelectionToolbar, AssetsViewControls } from "./AssetsListToolbar";
+import { ScanAssetDialog } from "../scan-asset/ScanAssetDialog";
 
 function AssetsListContent({ data, query, url }: { data: AssetListData; query: AssetListQuery; url: ListUrlState }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -79,6 +80,9 @@ export function AssetsListView({ results, query }: { results: AssetsPageData; qu
   const url = useListUrlState();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [scanOpen, setScanOpen] = useState(false);
+  const scanTriggerRef = useRef<HTMLButtonElement>(null);
   const failedAccess = [results.list, results.summary, results.filters].find((result) => !result.ok && [401, 403].includes(result.status));
   const hasFilters = ["q", "category_id", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id"].some((key) => url.get(key));
 
@@ -86,7 +90,7 @@ export function AssetsListView({ results, query }: { results: AssetsPageData; qu
     <div className="@container min-w-0 space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <PageHeader title="Assets" subtitle="View and manage all organizational assets" />
-        <AssetsPageActions />
+        <AssetsPageActions onScan={() => setScanOpen(true)} scanTriggerRef={scanTriggerRef} />
       </div>
       {failedAccess && !failedAccess.ok ? (
         failedAccess.status === 403 ? <AccessDeniedState body={failedAccess.message} /> : (
@@ -121,6 +125,17 @@ export function AssetsListView({ results, query }: { results: AssetsPageData; qu
             <ErrorState title="Couldn't load assets" body={results.list.message} />
           )}
         </>
+      )}
+      {(scanOpen || searchParams.get("scan") === "1") && (
+        <ScanAssetDialog triggerRef={scanTriggerRef} onClose={() => {
+          setScanOpen(false);
+          if (searchParams.has("scan")) {
+            const next = new URLSearchParams(searchParams.toString());
+            next.delete("scan");
+            // Remove only the direct-entry flag; do not reset pagination or filters.
+            router.replace(next.size ? `${pathname}?${next}` : pathname, { scroll: false });
+          }
+        }} />
       )}
     </div>
   );
