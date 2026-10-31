@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode, RefObject } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import {
   AssignmentIcon, ChevronDownIcon, GridIcon, InventoryIcon, ListIcon,
@@ -38,10 +39,12 @@ export function AssetsPageActions({ onScan, scanTriggerRef }: { onScan: () => vo
         <ScanIcon className="size-4" />
         Scan Asset
       </Button>
-      <UnavailableAction icon={PlusIcon} primary>
-        Register Asset
-        <ChevronDownIcon className="size-3" />
-      </UnavailableAction>
+      <Button asChild variant="primary" size="sm">
+        <Link href="/asset-workspace/assets/register">
+          <PlusIcon className="size-4" />
+          Register Asset
+        </Link>
+      </Button>
       <UnavailableAction>
         More Actions
         <ChevronDownIcon className="size-3" />

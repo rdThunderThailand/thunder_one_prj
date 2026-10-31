@@ -1,7 +1,8 @@
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useId, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { FilterIcon, SearchIcon } from "@/components/ui/icons";
 import type { AssetFilterOptions, AssetReadResult } from "../../services/assets-list-types";
 import type { ListUrlState } from "../list-page/useListUrlState";
@@ -18,20 +19,22 @@ interface FilterSelectProps {
 }
 
 function FilterSelect({ label, allLabel, value, options, pending, onChange }: FilterSelectProps) {
+  const labelId = useId();
+  const allValue = "__all__";
   return (
-    <label className="flex min-w-0 flex-1 flex-col rounded-control border border-input bg-card px-3 py-1">
-      <span className="text-2xs text-muted-foreground">{label}</span>
-      <select
-        value={value}
-        disabled={pending}
-        onChange={(event) => onChange(event.target.value || undefined)}
-        className="min-h-8 w-full min-w-0 bg-card text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <option value="">{allLabel}</option>
-        {value && !options.some((option) => option.value === value) && <option value={value}>Current selection</option>}
-        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select>
-    </label>
+    <div className="flex min-w-0 flex-1 flex-col rounded-control border border-input bg-card px-3 py-1">
+      <span id={labelId} className="text-2xs text-muted-foreground">{label}</span>
+      <Select value={value || allValue} disabled={pending} onValueChange={(next) => onChange(next === allValue ? undefined : next)}>
+        <SelectTrigger aria-labelledby={labelId} className="h-8 min-w-0 border-0 px-0 py-0 text-xs shadow-none [&>span]:min-w-0 [&>span]:truncate">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={allValue}>{allLabel}</SelectItem>
+          {value && !options.some((option) => option.value === value) && <SelectItem value={value}>Current selection</SelectItem>}
+          {options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 

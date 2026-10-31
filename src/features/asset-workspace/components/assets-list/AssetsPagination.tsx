@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/lovable/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { ASSET_PAGE_SIZES } from "../../services/assets-list-query";
 import type { AssetListData } from "../../services/assets-list-types";
@@ -25,20 +26,19 @@ export function AssetsPagination({ data, pending, onPage, onPageSize, compact = 
   return (
     <div className={`flex flex-wrap items-center gap-3 ${compact ? "justify-end" : "justify-between"}`}>
       {!compact && (
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <select
-            aria-label="Assets per page"
-            value={pageSize}
-            disabled={pending}
-            onChange={(event) => onPageSize(Number(event.target.value))}
-            className="h-8 rounded-control border border-input bg-card px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {Array.from(new Set([...ASSET_PAGE_SIZES, pageSize])).sort((a, b) => a - b).map((size) => (
-              <option key={size} value={size}>{size}</option>
-            ))}
-          </select>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Select value={String(pageSize)} disabled={pending} onValueChange={(value) => onPageSize(Number(value))}>
+            <SelectTrigger aria-label="Assets per page" className="h-8 w-20 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from(new Set([...ASSET_PAGE_SIZES, pageSize])).sort((a, b) => a - b).map((size) => (
+                <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           per page
-        </label>
+        </div>
       )}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs tabular-nums text-muted-foreground">{start}–{end} of {total.toLocaleString("en-GB")} assets</span>
