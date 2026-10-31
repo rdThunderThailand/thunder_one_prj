@@ -7,6 +7,7 @@ import { SingleAssetWizard } from "@/features/asset-workspace/components/registe
 import { AccessDeniedState, EmptyState } from "@/features/asset-workspace/components/states/states";
 import { ErrorState } from "@/features/asset-workspace/components/states/ErrorState";
 import { getRegistrationOptions } from "@/features/asset-workspace/services/asset-registration-api";
+import { RegistrationRecovery } from "@/features/asset-workspace/components/register-asset/RegistrationRecovery";
 
 export default async function RegisterAssetPage({ searchParams }: { searchParams: Promise<{ mode?: string | string[] }> }) {
   const params = await searchParams;
@@ -22,6 +23,7 @@ export default async function RegisterAssetPage({ searchParams }: { searchParams
     return <SingleAssetWizard key={`${tenantId}:${userId}`} tenantId={tenantId} userId={userId} options={result.data} />;
   }
   const error = result.ok ? null : result;
+  if (error && tenantId && userId) return <RegistrationRecovery tenantId={tenantId} userId={userId} message={error.message} />;
   return (
     <div className="h-full space-y-4 overflow-y-auto overscroll-contain">
       <PageHeader title="Register Asset" subtitle="Prepare a single asset registration" />

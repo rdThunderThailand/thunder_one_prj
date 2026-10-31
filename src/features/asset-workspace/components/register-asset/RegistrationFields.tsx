@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { Input } from "@/components/ui/lovable/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
+import type { Icon } from "@/components/ui/icons";
 import type { RegistrationDraft } from "../../domain/registration-draft";
 import type { RegistrationErrors } from "../../domain/registration-validation";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
@@ -12,12 +13,19 @@ export interface RegistrationStepProps {
   patch: (changes: Partial<RegistrationDraft>) => void;
 }
 
-export function RegistrationSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function RegistrationSection({ title, description, icon: Icon, children }: { title: string; description?: string; icon?: Icon; children: ReactNode }) {
   return (
     <section className="space-y-4 rounded-card border border-border bg-card p-4">
-      <div className="space-y-1">
-        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      <div className="flex items-start gap-3">
+        {Icon && (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
+            <Icon className="h-5 w-5" />
+          </span>
+        )}
+        <div className="min-w-0 space-y-1">
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </div>
       </div>
       {children}
     </section>
@@ -57,7 +65,7 @@ export function RegistrationTextField({ name, label, error, hint, required, ...p
 
 export function RegistrationSelect({ name, label, value, onChange, items, error, required, hint }: {
   name: string; label: string; value: string; onChange: (value: string) => void;
-  items: { value: string; label: string }[]; error?: string; required?: boolean; hint?: string;
+  items: { value: string; label: string; disabled?: boolean }[]; error?: string; required?: boolean; hint?: string;
 }) {
   return (
     <RegistrationField name={name} label={label} error={error} hint={hint} required={required}>
@@ -72,7 +80,7 @@ export function RegistrationSelect({ name, label, value, onChange, items, error,
           <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
         </SelectTrigger>
         <SelectContent>
-          {items.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+          {items.map((item) => <SelectItem key={item.value} value={item.value} disabled={item.disabled}>{item.label}</SelectItem>)}
         </SelectContent>
       </Select>
     </RegistrationField>

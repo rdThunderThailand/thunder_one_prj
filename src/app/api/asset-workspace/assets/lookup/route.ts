@@ -7,8 +7,11 @@ export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store" };
 
 export async function GET(request: Request) {
-  const [session, token] = await Promise.all([getSession(), getAuthToken()]);
+  const token = await getAuthToken();
   if (!token) return NextResponse.json({ error: lookupFailure(401).message }, { status: 401, headers });
+  let session;
+  try { session = await getSession(); }
+  catch { return NextResponse.json({ error: lookupFailure(401).message }, { status: 401, headers }); }
   if (session === "forbidden" || !session.tenantId) {
     return NextResponse.json({ error: lookupFailure(403).message }, { status: 403, headers });
   }

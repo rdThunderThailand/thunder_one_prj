@@ -20,7 +20,7 @@ export const lookupDataSchema = z.object({
   outcome: z.literal("found"),
   identifier: z.object({ type: z.enum(LOOKUP_TYPES), value: z.string() }),
   asset: z.object({
-    id: z.uuid(),
+    id: z.guid(),
     name: z.string().nullable(),
     asset_code: z.string().nullable(),
     serial_number: z.string().nullable(),

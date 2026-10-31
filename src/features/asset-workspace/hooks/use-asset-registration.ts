@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { newRegistrationState, type RegistrationDraft, type RegistrationState } from "../domain/registration-draft";
 import { firstInvalidRegistrationStep, registrationErrors, type RegistrationErrors } from "../domain/registration-validation";
-import { warrantyEndDate } from "../domain/registration-warranty-dates";
+import { registrationInitialConditions } from "../domain/registration-initial-state";
 import { readRegistrationDraft, removeRegistrationDraft, saveRegistrationDraft } from "../services/asset-registration-draft-storage";
 import type { RegistrationOptions } from "../services/asset-registration-contract";
 
@@ -15,7 +15,7 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
     }
     const empty = newRegistrationState();
     empty.draft.tagMode = options.tagGeneration.modes.includes("automatic") ? "automatic" : "manual";
-    empty.draft.condition = options.initialConditions[0];
+    empty.draft.condition = registrationInitialConditions(empty.draft, options)[0] ?? "Good";
     return empty;
   });
   const [errors, setErrors] = useState<RegistrationErrors>(() => initial.state ? registrationErrors(initial.state.draft, options, state.step) : {});
@@ -36,15 +36,15 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
   function patch(changes: Partial<RegistrationDraft>) {
     const draft = { ...state.draft, ...changes };
     if (changes.custodyType !== undefined) draft.custodyId = "";
-    if (changes.warrantyStart !== undefined || changes.warrantyYears !== undefined) {
-      draft.warrantyEnd = warrantyEndDate(draft.warrantyStart, draft.warrantyYears);
-    }
     commit({ ...state, draft });
     setErrors({});
   }
 
   function advance(): boolean {
-    const invalid = state.editing || state.step === 3 ? firstInvalidRegistrationStep(state.draft, options) : null;
+    const conditionInvalid = state.step >= 2 && registrationErrors(state.draft, options, 0).condition;
+    let invalid: number | null = null;
+    if (conditionInvalid) invalid = 0;
+    else if (state.editing || state.step === 3) invalid = firstInvalidRegistrationStep(state.draft, options);
     const target = invalid ?? state.step;
     const found = registrationErrors(state.draft, options, target);
     setErrors(found);
@@ -58,7 +58,10 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
   }
 
   function edit(step: number) {
-    commit({ ...state, step, editing: true, reviewed: true });
+    if (!Number.isInteger(step) || step < 0 || step >= 4) return;
+    if (!state.reviewed && step >= state.step) return;
+    // Early edits keep normal Next navigation; Update is reserved for returning from Review.
+    commit({ ...state, step, editing: state.reviewed });
     setErrors({});
   }
 
@@ -66,6 +69,11 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
     const step = Math.max(0, state.step - 1);
     commit({ ...state, step, editing: state.reviewed });
     setErrors({});
+  }
+
+  function validateForConfirmation(step: number) {
+    commit({ ...state, step, editing: true, reviewed: true });
+    setErrors(registrationErrors(state.draft, options, step));
   }
 
   function discard(): boolean {
@@ -77,5 +85,5 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
   }
 
   const dirty = JSON.stringify(state.draft) !== JSON.stringify(newRegistrationState().draft);
-  return { state, errors, storageUnavailable, cancelOpen, setCancelOpen: changeCancelOpen, discardFailed, dirty, patch, advance, edit, back, discard };
+  return { state, errors, storageUnavailable, cancelOpen, setCancelOpen: changeCancelOpen, discardFailed, dirty, patch, advance, edit, back, discard, validateForConfirmation };
 }

@@ -1,4 +1,5 @@
 import { registrationStateSchema, type RegistrationState } from "../domain/registration-draft.ts";
+import { migrateRegistrationDraft } from "../domain/registration-draft-migration.ts";
 
 export function registrationDraftKey(tenantId: string, userId: string): string {
   return `asset-registration:v1:${tenantId}:${userId}`;
@@ -14,8 +15,15 @@ export function readRegistrationDraft(key: string): { state: RegistrationState |
       sessionStorage.removeItem(key);
       return { state: null, unavailable: false };
     }
-    const parsed = registrationStateSchema.safeParse(value);
-    if (parsed.success) return { state: parsed.data, unavailable: false };
+    const migrated = migrateRegistrationDraft(value);
+    const parsed = registrationStateSchema.safeParse(migrated);
+    if (parsed.success) {
+      if (migrated !== value) {
+        try { sessionStorage.setItem(key, JSON.stringify(parsed.data)); }
+        catch { return { state: parsed.data, unavailable: true }; }
+      }
+      return { state: parsed.data, unavailable: false };
+    }
     sessionStorage.removeItem(key);
     return { state: null, unavailable: false };
   } catch {
