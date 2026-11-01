@@ -1,6 +1,8 @@
 import type { ComponentType, ReactNode, RefObject } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
+import type { AssetListQuery } from "../../services/assets-list-query";
 import {
   AssignmentIcon, ChevronDownIcon, GridIcon, InventoryIcon, ListIcon,
   LocationIcon, MoreIcon, PlusIcon, ScanIcon, TransferIcon, XIcon,
@@ -24,7 +26,7 @@ export function UnavailableAction({ children, icon: Icon, label, primary, classN
       title="Not available in this version of the Assets page"
       variant={primary ? "primary" : "outline"}
       size={label ? "icon-sm" : "sm"}
-      className={`cursor-not-allowed opacity-50 ${className ?? ""}`}
+      className={`cursor-not-allowed opacity-50 ${label ? "" : "px-2"} ${className ?? ""}`}
     >
       {Icon && <Icon className="size-4" />}
       {children}
@@ -55,7 +57,7 @@ export function AssetsPageActions({ onScan, scanTriggerRef }: { onScan: () => vo
 
 export function AssetsSelectionToolbar({ count, clear }: { count: number; clear: () => void }) {
   return (
-    <div role="toolbar" aria-label="Selected asset actions" className="flex flex-wrap items-center gap-2">
+    <div role="toolbar" aria-label="Selected asset actions" className="flex w-max items-center gap-1">
       <span
         role="status"
         aria-live="polite"
@@ -90,5 +92,23 @@ export function AssetsViewControls() {
       </Button>
       <UnavailableAction label="Grid view" icon={GridIcon} />
     </div>
+  );
+}
+
+export function AssetsSortControl({ value, pending, onChange }: {
+  value: AssetListQuery["sort"]; pending: boolean; onChange: (value: AssetListQuery["sort"]) => void;
+}) {
+  return (
+    <Select value={value} disabled={pending} onValueChange={(next) => {
+      if (next === "created_at" || next === "status_since") onChange(next);
+    }}>
+      <SelectTrigger aria-label="Asset sort order" className="h-8 w-56 text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="created_at">Newest registered</SelectItem>
+        <SelectItem value="status_since">Longest in current status</SelectItem>
+      </SelectContent>
+    </Select>
   );
 }

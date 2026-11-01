@@ -5,8 +5,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { FilterIcon, SearchIcon } from "@/components/ui/icons";
 import type { AssetFilterOptions, AssetReadResult } from "../../services/assets-list-types";
-import type { ListUrlState } from "../list-page/useListUrlState";
-import { ErrorState } from "../states/ErrorState";
+import type { AssetsListUrlState } from "../../hooks/use-assets-list-url";
+import { ASSET_SEARCH_MAX_LENGTH } from "../../services/assets-list-query";
+import { AssetsFilterOptionsLoading } from "./AssetsListLoading";
 import { UnavailableAction } from "./AssetsListToolbar";
 
 interface FilterSelectProps {
@@ -22,7 +23,7 @@ function FilterSelect({ label, allLabel, value, options, pending, onChange }: Fi
   const labelId = useId();
   const allValue = "__all__";
   return (
-    <div className="flex min-w-0 flex-1 flex-col rounded-control border border-input bg-card px-3 py-1">
+    <div className="flex h-13 min-w-0 flex-col justify-center rounded-control border border-input bg-card px-3">
       <span id={labelId} className="text-2xs text-muted-foreground">{label}</span>
       <Select value={value || allValue} disabled={pending} onValueChange={(next) => onChange(next === allValue ? undefined : next)}>
         <SelectTrigger aria-labelledby={labelId} className="h-8 min-w-0 border-0 px-0 py-0 text-xs shadow-none [&>span]:min-w-0 [&>span]:truncate">
@@ -38,7 +39,7 @@ function FilterSelect({ label, allLabel, value, options, pending, onChange }: Fi
   );
 }
 
-export function AssetsFilters({ result, url }: { result: AssetReadResult<AssetFilterOptions>; url: ListUrlState }) {
+export function AssetsFilters({ result, url, loading = false }: { result: AssetReadResult<AssetFilterOptions> | null; url: AssetsListUrlState; loading?: boolean }) {
   const currentSearch = url.get("q") ?? "";
   const [input, setInput] = useState({ source: currentSearch, draft: currentSearch, submitted: undefined as string | undefined });
   // Keep newer typing when our search completes; restore the URL value on Back/Forward.
@@ -61,19 +62,19 @@ export function AssetsFilters({ result, url }: { result: AssetReadResult<AssetFi
     return () => clearTimeout(timer);
   }, [search, currentSearch, url.isPending]);
 
-  const options = result.ok ? result.data : null;
+  const options = result?.ok ? result.data : null;
   const pending = url.isPending || !options;
-  const custody = url.get("custody_id") ? `${url.get("custody_type")}:${url.get("custody_id")}` : "";
+  const custody = url.get("custody_id") ? `${url.get("custody_type")}:${url.get("custody_id")}` : url.get("custody_type") ?? "";
   const references = (items: { id: string; name: string | null }[]) => items.map((item) => ({
     value: item.id, label: item.name || `Unnamed (${item.id})`,
   }));
 
   return (
     <section aria-label="Asset filters" className="space-y-3">
-      <div className="flex flex-wrap items-stretch gap-2">
+      <div className="grid items-center gap-2 @3xl:grid-cols-[minmax(12rem,1fr)_minmax(0,2fr)] @6xl:grid-cols-[minmax(14rem,2fr)_minmax(0,4fr)_auto]">
         <form
           role="search"
-          className="relative w-full @4xl:w-auto @4xl:flex-1"
+          className="relative min-w-0"
           onSubmit={(event) => { event.preventDefault(); applySearch(search.trim()); }}
         >
           <label htmlFor="assets-search" className="sr-only">Search assets by name, Asset Tag or serial number</label>
@@ -87,14 +88,14 @@ export function AssetsFilters({ result, url }: { result: AssetReadResult<AssetFi
             id="assets-search"
             name="q"
             type="search"
-            maxLength={200}
+            maxLength={ASSET_SEARCH_MAX_LENGTH}
             value={search}
             onChange={(event) => setInput((previous) => ({ ...previous, source: currentSearch, draft: event.target.value }))}
             placeholder="Search name, Asset Tag, serial number…"
-            className="h-full min-h-12 pl-9 text-xs"
+            className="h-13 pl-9 text-xs"
           />
         </form>
-        <div className="grid w-full grid-cols-2 gap-2 @2xl:grid-cols-4 @4xl:w-auto">
+        {loading ? <AssetsFilterOptionsLoading /> : <div className="grid min-w-0 grid-cols-2 gap-2 @2xl:grid-cols-4">
           <FilterSelect
             label="Category"
             allLabel="All Categories"
@@ -130,8 +131,8 @@ export function AssetsFilters({ result, url }: { result: AssetReadResult<AssetFi
               url.set({ custody_type: type, custody_id: id });
             }}
           />
-        </div>
-        <div className="flex items-center gap-2">
+        </div>}
+        <div className="flex items-center gap-2 @3xl:col-span-2 @3xl:justify-end @6xl:col-span-1">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" disabled={pending}>
@@ -153,7 +154,6 @@ export function AssetsFilters({ result, url }: { result: AssetReadResult<AssetFi
           <UnavailableAction>Save View</UnavailableAction>
         </div>
       </div>
-      {!result.ok && <ErrorState title="Couldn't load filter options" body={result.message} />}
     </section>
   );
 }
