@@ -34,12 +34,6 @@ export const reserveRegistrationSchema = z.object({
     return value.mime_type === "image/jpeg" ? extension === ".jpg" || extension === ".jpeg"
       : value.mime_type === "image/png" ? extension === ".png" : value.purpose !== "asset_photo" && extension === ".pdf";
   });
-export const registrationOperationSchema = z.discriminatedUnion("operation", [
-  z.object({ operation: z.literal("create"), payload: createRegistrationSchema }).strict(),
-  z.object({ operation: z.literal("reserve"), payload: reserveRegistrationSchema }).strict(),
-  z.object({ operation: z.literal("complete"), uploadId: z.uuid() }).strict(),
-]);
-export type RegistrationOperation = z.infer<typeof registrationOperationSchema>;
 export const createdRegistrationSchema = z.object({ assetId: reference, assetTag: z.string().min(1), replayed: z.boolean(), profilePath: z.string().optional() });
 export const completedRegistrationUploadSchema = z.object({ fileId: reference, expiresAt: z.iso.datetime({ offset: true }) });
 export const reservedRegistrationUploadSchema = z.object({

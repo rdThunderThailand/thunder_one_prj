@@ -68,8 +68,8 @@ export function RegistrationPhotos({ photos, errors, rules, needsReselection, on
       </p>
       {needsReselection && (
         <div className="space-y-2 rounded-control bg-warning-muted p-3 text-xs text-foreground" role="status">
-          <p>Please reselect your photos. Selected files cannot be restored after refresh; your text draft has been kept.</p>
-          <Button variant="outline" size="sm" onClick={onClearReminder}>Continue without photos</Button>
+          <p>Some selected photos could not be restored. Their local cache may have expired or been cleared. Reselect them or remove their selections; your other information has been kept.</p>
+          <Button variant="outline" size="sm" onClick={onClearReminder}>{photos.length || retained.length ? "Continue without missing photos" : "Continue without photos"}</Button>
         </div>
       )}
       {errors.length > 0 && (

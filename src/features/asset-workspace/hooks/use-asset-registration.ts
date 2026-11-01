@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { newRegistrationState, type RegistrationDraft, type RegistrationState } from "../domain/registration-draft";
 import { firstInvalidRegistrationStep, registrationErrors, type RegistrationErrors } from "../domain/registration-validation";
 import { registrationInitialConditions } from "../domain/registration-initial-state";
@@ -9,16 +9,14 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
   const [initial] = useState(() => readRegistrationDraft(storageKey));
   const [state, setState] = useState<RegistrationState>(() => {
     const saved = initial.state;
-    if (saved) {
-      const invalid = firstInvalidRegistrationStep(saved.draft, options);
-      return saved.step === 4 && invalid !== null ? { ...saved, step: invalid, editing: true } : saved;
-    }
+    if (saved) return saved;
     const empty = newRegistrationState();
     empty.draft.tagMode = options.tagGeneration.modes.includes("automatic") ? "automatic" : "manual";
     empty.draft.condition = registrationInitialConditions(empty.draft, options)[0] ?? "Good";
     return empty;
   });
-  const [errors, setErrors] = useState<RegistrationErrors>(() => initial.state ? registrationErrors(initial.state.draft, options, state.step) : {});
+  const current = useRef(state);
+  const [errors, setErrors] = useState<RegistrationErrors>({});
   const [storageUnavailable, setStorageUnavailable] = useState(initial.unavailable);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [discardFailed, setDiscardFailed] = useState(false);
@@ -30,23 +28,26 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
 
   function commit(next: RegistrationState) {
     setStorageUnavailable(!saveRegistrationDraft(storageKey, next));
+    current.current = next;
     setState(next);
   }
 
-  function patch(changes: Partial<RegistrationDraft>) {
-    const draft = { ...state.draft, ...changes };
-    if (changes.custodyType !== undefined) draft.custodyId = "";
-    commit({ ...state, draft });
+  function patch(changes: Partial<RegistrationDraft> | ((draft: RegistrationDraft) => Partial<RegistrationDraft>)) {
+    const previous = current.current;
+    const update = typeof changes === "function" ? changes(previous.draft) : changes;
+    const draft = { ...previous.draft, ...update };
+    if (update.custodyType !== undefined) draft.custodyId = "";
+    commit({ ...previous, draft });
     setErrors({});
   }
 
-  function advance(): boolean {
-    const conditionInvalid = state.step >= 2 && registrationErrors(state.draft, options, 0).condition;
+  function advance(currentOptions: RegistrationOptions = options): boolean {
+    const conditionInvalid = state.step >= 2 && registrationErrors(state.draft, currentOptions, 0).condition;
     let invalid: number | null = null;
     if (conditionInvalid) invalid = 0;
-    else if (state.editing || state.step === 3) invalid = firstInvalidRegistrationStep(state.draft, options);
+    else if (state.editing || state.step === 3) invalid = firstInvalidRegistrationStep(state.draft, currentOptions, true);
     const target = invalid ?? state.step;
-    const found = registrationErrors(state.draft, options, target);
+    const found = registrationErrors(state.draft, currentOptions, target);
     setErrors(found);
     if (Object.keys(found).length) {
       if (target !== state.step) commit({ ...state, step: target });
@@ -71,9 +72,9 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
     setErrors({});
   }
 
-  function validateForConfirmation(step: number) {
-    commit({ ...state, step, editing: true, reviewed: true });
-    setErrors(registrationErrors(state.draft, options, step));
+  function validateForConfirmation(draft: RegistrationDraft, validatedOptions: RegistrationOptions, step: number | null) {
+    commit({ ...state, draft, ...(step === null ? {} : { step, editing: true, reviewed: true }) });
+    setErrors(step === null ? {} : registrationErrors(draft, validatedOptions, step));
   }
 
   function discard(): boolean {

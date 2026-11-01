@@ -1,3 +1,4 @@
+import { selectedReference, selectedReferenceLabel, referenceValidationMessage, referenceStatus } from "./registration-references.ts";
 import type { RegistrationOptions } from "../services/asset-registration-contract.ts";
 import type { RegistrationDraft } from "./registration-draft.ts";
 import { isCalendarDate } from "./registration-warranty-dates.ts";
@@ -20,19 +21,22 @@ export function registrationErrors(draft: RegistrationDraft, options: Registrati
     }
   }
   if (step === 1) {
-    const category = options.categories.find((item) => item.id === draft.categoryId);
-    if (!category) errors.categoryId = "Choose an active category.";
+    const category = selectedReference(draft, "categories");
+    const categoryError = referenceValidationMessage(draft, options, "categories");
+    if (categoryError) errors.categoryId = draft.categoryId ? categoryError : "Choose an active category.";
     if (category?.is_serial_required && !draft.serialNumber.trim()) errors.serialNumber = "This category requires a serial number.";
     if (draft.serialNumber.trim().length > 250) errors.serialNumber = "Use no more than 250 characters.";
   }
   if (step === 2) {
-    if (!options.locations.some((item) => item.id === draft.locationId)) errors.locationId = "Choose an active location.";
-    const targets = draft.custodyType === "person" ? options.persons : options.orgUnits;
-    if (draft.custodyType !== "none" && !targets.some((item) => item.id === draft.custodyId)) {
-      errors.custodyId = "Choose an active custody target.";
+    const locationError = referenceValidationMessage(draft, options, "locations");
+    if (locationError) errors.locationId = draft.locationId ? locationError : "Choose an active location.";
+    if (draft.custodyType !== "none") {
+      const error = referenceValidationMessage(draft, options, draft.custodyType === "person" ? "persons" : "orgUnits");
+      if (error) errors.custodyId = error;
     }
   }
   if (step === 3) {
+    if (draft.notes.length > 5000) errors.notes = "Use no more than 5000 characters.";
     if (draft.purchaseDate && !isCalendarDate(draft.purchaseDate)) errors.purchaseDate = "Enter a valid acquisition date.";
     if (draft.warranties.some((warranty) => Object.keys(warrantyErrors(warranty)).length)) errors.warranties = "Check the highlighted warranty fields.";
     if (draft.warranties.length && draft.warranties.filter((warranty) => warranty.isCurrent).length !== 1) {
@@ -42,21 +46,21 @@ export function registrationErrors(draft: RegistrationDraft, options: Registrati
   return errors;
 }
 
-export function firstInvalidRegistrationStep(draft: RegistrationDraft, options: RegistrationOptions): number | null {
+export function firstInvalidRegistrationStep(draft: RegistrationDraft, options: RegistrationOptions, allowPending = false): number | null {
   for (let step = 0; step < 4; step++) {
-    if (Object.keys(registrationErrors(draft, options, step)).length) return step;
+    const errors = registrationErrors(draft, options, step);
+    // Navigation may reach Review while other steps' retained references are resolving.
+    // The current step and final confirmation still require successful validation.
+    if (allowPending) {
+      if (draft.categoryId && referenceStatus(draft, options, "categories") === "pending") delete errors.categoryId;
+      if (draft.locationId && referenceStatus(draft, options, "locations") === "pending") delete errors.locationId;
+      if (draft.custodyId && referenceStatus(draft, options, draft.custodyType === "person" ? "persons" : "orgUnits") === "pending") delete errors.custodyId;
+    }
+    if (Object.keys(errors).length) return step;
   }
   return null;
 }
 
-export function locationPath(id: string, options: RegistrationOptions): string {
-  const parts: string[] = [];
-  const visited = new Set<string>();
-  let current = options.locations.find((item) => item.id === id);
-  while (current && !visited.has(current.id)) {
-    visited.add(current.id);
-    parts.unshift(current.name?.trim() || "Unnamed location");
-    current = options.locations.find((item) => item.id === current?.parent_location_id);
-  }
-  return parts.join(" › ");
+export function locationPath(id: string, draft: RegistrationDraft): string {
+  return id === draft.locationId ? selectedReferenceLabel(draft, "locations") : "";
 }

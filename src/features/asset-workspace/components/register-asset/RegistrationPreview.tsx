@@ -7,18 +7,20 @@ import { locationPath, registrationErrors } from "../../domain/registration-vali
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { registrationInitialStatus } from "../../domain/registration-initial-state";
 import type { RegistrationPhoto } from "../../hooks/use-registration-photos";
+import { selectedReference } from "../../domain/registration-references";
 import { registrationCategoryPath } from "../../domain/registration-categories";
 import { registrationCustodyLabel } from "../../domain/registration-reference-choices";
+import { RegistrationHelp } from "./RegistrationFields";
 
 export function RegistrationPreview({ draft, options, step, reviewed, onEdit, photo, needsPhotoReselection, locked = false, verifiedPhoto = false }: {
   draft: RegistrationDraft; options: RegistrationOptions; step: number; reviewed: boolean; onEdit: (step: number) => void;
   photo?: RegistrationPhoto; needsPhotoReselection: boolean; locked?: boolean; verifiedPhoto?: boolean;
 }) {
-  const category = options.categories.find((item) => item.id === draft.categoryId);
-  const categoryPath = registrationCategoryPath(draft.categoryId, options.categories);
-  const custody = registrationCustodyLabel(draft, options);
+  const category = selectedReference(draft, "categories");
+  const categoryPath = registrationCategoryPath(draft.categoryId, draft.selectedReferences.categories);
+  const custody = registrationCustodyLabel(draft);
   const acquisitionSummary = `${draft.purchaseDate || "Acquisition date optional"} · ${draft.warranties.length ? `${draft.warranties.length} warranties` : "No warranties"}`;
-  const summaries = [draft.name || "Not entered", categoryPath || "Not selected", locationPath(draft.locationId, options) || "Not selected", acquisitionSummary, step === 4 ? "Reviewing information" : "Not completed"];
+  const summaries = [draft.name || "Not entered", categoryPath || "Not selected", locationPath(draft.locationId, draft) || "Not selected", acquisitionSummary, step === 4 ? "Reviewing information" : "Not completed"];
   const checklist = step === 4 ? [...REGISTRATION_STEPS.slice(0, 4), "Additional information"] : REGISTRATION_STEPS;
   if (step === 4) summaries[4] = draft.notes || draft.hasDocumentSelections ? "Notes and documents reviewed" : "Optional information not provided";
 
@@ -29,12 +31,12 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
           <h2 className="text-sm font-semibold">{step === 4 ? "Asset preview" : "Live preview"}</h2>
           <p className="mt-1 text-xs text-muted-foreground">Check how the asset information will look.</p>
         </div>
-        <div className={step === 0 ? "flex items-start gap-3" : "space-y-3"}>
-          <div className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-control bg-muted ${step === 0 ? "aspect-square w-1/3" : "aspect-video w-full"}`}>
+        <div className={!photo || step === 0 ? "flex items-start gap-3" : "space-y-3"}>
+          <div className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-control bg-muted ${!photo ? "h-12 w-12" : step === 0 ? "h-24 w-24" : "aspect-video max-h-48 w-full"}`}>
             {photo ? (
-              <Image src={photo.previewUrl} alt={`Local preview of ${draft.name.trim() || "new asset"}`} fill unoptimized sizes={step === 0 ? "160px" : "480px"} className="object-contain" />
+              <Image src={photo.previewUrl} alt={`Local preview of ${draft.name.trim() || "new asset"}`} fill unoptimized sizes={step === 0 ? "96px" : "352px"} className="object-contain" />
             ) : (
-              <BoxIcon className="h-10 w-10 text-muted-foreground" />
+              <BoxIcon className="h-5 w-5 text-muted-foreground" />
             )}
           </div>
           <div className="min-w-0 flex-1 space-y-2">
@@ -50,12 +52,12 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
         </div>
         {(photo || needsPhotoReselection || verifiedPhoto) && (
           <p className="text-2xs text-muted-foreground" role="status">
-            {needsPhotoReselection ? "Please reselect photos in Step 1. Files are not restored after refresh." : verifiedPhoto ? "Verified photo upload retained for this registration." : "Local preview · not uploaded"}
+            {needsPhotoReselection ? "Some photos could not be restored. Reselect or remove them in Step 1." : verifiedPhoto ? "Verified photo upload retained for this registration." : "Local preview · not uploaded"}
           </p>
         )}
         {(step !== 0 || draft.locationId || draft.serialNumber) && (
-          <dl className="space-y-2 text-xs">
-            {[["Location", locationPath(draft.locationId, options) || "Not selected"], ["Custody", custody], ["Serial Number", draft.serialNumber || "Not entered"]].map(([label, value]) => (
+          <dl className="space-y-1 text-xs">
+            {[["Location", locationPath(draft.locationId, draft) || "Not selected"], ["Custody", custody], ["Serial Number", draft.serialNumber || "Not entered"]].map(([label, value]) => (
               <div key={label} className="grid grid-cols-3 gap-2">
                 <dt className="text-muted-foreground">{label}</dt>
                 <dd className="col-span-2 break-words text-foreground">{value}</dd>
@@ -65,19 +67,19 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
         )}
       </section>
       {step === 0 ? (
-        <section className="space-y-2 rounded-control bg-info-muted p-3 text-xs text-info" aria-label="Quick tips">
+        <section className="space-y-1 rounded-control bg-info-muted p-3 text-xs text-info" aria-label="Quick tips">
           <h2 className="flex items-center gap-2 font-semibold">
             <InfoIcon className="h-4 w-4" />
             Quick tips
           </h2>
-          <ul className="list-disc space-y-1 pl-5">
-            <li>Enter a unique Asset Tag or use automatic generation.</li>
-            <li>Status follows initial custody selected in Step 3.</li>
-            <li>Photos are optional. Reselect them after refresh.</li>
-          </ul>
+          <p>Use a unique tag or generate it on creation. Photos are optional.</p>
+          <RegistrationHelp>
+            <p>Status follows initial custody selected in Step 3.</p>
+            <p>Keep browser storage available to restore selected files after refresh.</p>
+          </RegistrationHelp>
         </section>
       ) : (
-        <section className="space-y-3 rounded-card border border-border bg-card p-4" aria-label="Registration checklist">
+        <section className="space-y-2 rounded-card border border-border bg-card p-4" aria-label="Registration checklist">
           <h2 className="text-sm font-semibold">{step === 4 ? "Checklist" : "Your progress"}</h2>
           {checklist.map((label, index) => {
             const complete = step === 4 && index === 4 || index < 4 && (reviewed || index < step) && Object.keys(registrationErrors(draft, options, index)).length === 0;
@@ -89,7 +91,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
                 </span>
                 <div className="min-w-0 flex-1 text-xs">
                   <p className={`font-medium ${current ? "text-primary" : ""}`}>{label}</p>
-                  <p className="mt-1 break-words text-muted-foreground">{summaries[index]}</p>
+                  <p className="mt-1 line-clamp-2 break-words text-muted-foreground" title={summaries[index]}>{summaries[index]}</p>
                 </div>
                 {(index < 4 || step === 4) && (reviewed || complete) && !current && (
                   <Button variant="ghost" size="icon-sm" disabled={locked} aria-label={`Edit ${label} from preview`} onClick={() => onEdit(Math.min(index, 3))}>

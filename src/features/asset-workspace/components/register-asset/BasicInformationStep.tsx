@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Textarea } from "@/components/ui/lovable/textarea";
 import { registrationInitialConditions, registrationInitialStatus } from "../../domain/registration-initial-state";
-import { RegistrationField, RegistrationSection, RegistrationSelect, RegistrationTextField, type RegistrationStepProps } from "./RegistrationFields";
+import { RegistrationField, RegistrationHelp, RegistrationSection, RegistrationSelect, RegistrationTextField, type RegistrationStepProps } from "./RegistrationFields";
 
 export function BasicInformationStep({ draft, options, errors, patch }: RegistrationStepProps) {
   const automatic = draft.tagMode === "automatic";
@@ -11,19 +11,19 @@ export function BasicInformationStep({ draft, options, errors, patch }: Registra
     ? "This condition is not allowed for the current status. Choose another condition or restore valid custody in Step 3." : undefined);
   const tagError = errors.assetCode ?? errors.tagMode;
   const tagHint = automatic
-    ? "Format preview only. The actual tag is assigned on successful creation; no number is reserved."
+    ? "Format preview · assigned on creation."
     : "Must be unique within this organization.";
   return (
     <RegistrationSection title="Asset information" description="Basic identification and description of the asset.">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-3">
           <RegistrationTextField
             name="name" label="Asset Name" required maxLength={250}
             value={draft.name} onChange={(event) => patch({ name: event.target.value })} error={errors.name}
           />
           <RegistrationField name="description" label="Description" error={errors.description} hint={`${draft.description.length}/5000 characters`}>
             <Textarea
-              id="registration-description" rows={5} maxLength={5000} value={draft.description}
+              id="registration-description" rows={3} maxLength={5000} value={draft.description}
               placeholder="Describe this asset and how it will be used…"
               aria-invalid={Boolean(errors.description)}
               aria-describedby={`registration-description-hint${errors.description ? " registration-description-error" : ""}`}
@@ -31,7 +31,7 @@ export function BasicInformationStep({ draft, options, errors, patch }: Registra
             />
           </RegistrationField>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-3">
           <RegistrationField name="assetCode" label="Asset Tag" required={!automatic} error={tagError} hint={tagHint}>
             <div className="flex flex-wrap gap-2">
               <Input
@@ -48,10 +48,10 @@ export function BasicInformationStep({ draft, options, errors, patch }: Registra
               )}
             </div>
           </RegistrationField>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <RegistrationTextField
               name="status" label="Initial status" value={registrationInitialStatus(draft, options)}
-              readOnly hint="Determined by initial custody in Step 3."
+              readOnly hint="From initial custody in Step 3."
             />
             <RegistrationSelect
               name="condition" label="Condition" required value={draft.condition}
@@ -60,9 +60,12 @@ export function BasicInformationStep({ draft, options, errors, patch }: Registra
               onChange={(value) => patch({ condition: value as typeof draft.condition })} error={conditionError}
             />
           </div>
-          <p className="text-xs text-muted-foreground">Damaged is available only when valid initial custody is selected in Step 3.</p>
         </div>
       </div>
+      <RegistrationHelp>
+        <p>Automatic tags are allocated only when creation succeeds; the preview reserves no number.</p>
+        <p>Status follows initial custody in Step 3. Damaged requires valid initial custody.</p>
+      </RegistrationHelp>
     </RegistrationSection>
   );
 }

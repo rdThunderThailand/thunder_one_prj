@@ -6,7 +6,9 @@ import { readConfirmation, removeConfirmation, saveConfirmation } from "../servi
 import { createRegisteredAsset, refreshRegistrationOptions, RegistrationRequestError } from "../services/asset-registration-client";
 import { uploadRegistrationFiles } from "../services/asset-registration-uploads";
 import type { RegistrationOptions } from "../services/asset-registration-contract";
+import { resolveSelectedReferences } from "../services/registration-reference-resolution";
 import { beginRegistrationRun } from "../services/asset-registration-run";
+import { registrationCreationBlocker } from "../domain/registration-readiness";
 
 export function useRegistrationConfirmation(key: string, context: string, initialOptions: RegistrationOptions | null) {
   const [initial] = useState(() => readConfirmation(key));
@@ -19,6 +21,7 @@ export function useRegistrationConfirmation(key: string, context: string, initia
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [errorStatus, setErrorStatus] = useState<number>();
   const [options, setOptions] = useState(initialOptions);
   const uncertain = record?.phase === "uncertain" || record?.phase === "submitting";
   const locked = busy || uncertain || storageBlocked;
@@ -52,16 +55,20 @@ export function useRegistrationConfirmation(key: string, context: string, initia
     if (active.current) return;
     active.current = true;
     setBusy(true);
-    try { setOptions(await refreshRegistrationOptions(context)); setError(""); }
-    catch (failure) { setError(failure instanceof Error ? failure.message : "Couldn't refresh registration options."); }
+    try { setOptions(await refreshRegistrationOptions(context)); setError(""); setErrorStatus(undefined); }
+    catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Couldn't refresh registration options.");
+      setErrorStatus(failure instanceof RegistrationRequestError ? failure.status : undefined);
+    }
     finally { active.current = false; setBusy(false); }
   }
 
-  async function start(draft: RegistrationDraft, candidates: UploadCandidate[], edit: (step: number) => void, overrideReason?: string) {
+  async function start(draft: RegistrationDraft, candidates: UploadCandidate[], edit: (draft: RegistrationDraft, options: RegistrationOptions, step: number | null) => void, overrideReason?: string) {
     if (active.current || storageBlocked || current.current?.phase === "succeeded") return;
     active.current = true;
     setBusy(true);
     setError("");
+    setErrorStatus(undefined);
     let submitting = false;
     let recovery = false;
     let run: ReturnType<typeof beginRegistrationRun> | undefined;
@@ -77,9 +84,15 @@ export function useRegistrationConfirmation(key: string, context: string, initia
         const fresh = await refreshRegistrationOptions(context);
         run.check();
         setOptions(fresh);
-        const invalid = firstInvalidRegistrationStep(draft, fresh);
-        if (invalid !== null) { edit(invalid); throw new Error("Check the highlighted registration step before confirming."); }
-        if (!fresh.submission.canSubmit) throw new Error("Asset creation is temporarily unavailable. Your registration has been kept.");
+        const resolved = await resolveSelectedReferences(context, draft);
+        run.check();
+        draft = resolved.draft;
+        const validatedOptions = { ...fresh, referenceValidation: resolved.validation };
+        const invalid = firstInvalidRegistrationStep(draft, validatedOptions);
+        edit(draft, validatedOptions, invalid);
+        if (invalid !== null) { throw new Error("Check the highlighted registration step before confirming."); }
+        const blocker = registrationCreationBlocker(draft, fresh, next?.uploads ?? []);
+        if (blocker) throw new Error(blocker);
         if (overrideReason && (!fresh.canOverrideSerial || next?.rejectedSerial !== draft.serialNumber.trim())) {
           throw new Error("Serial override is no longer available for this registration.");
         }
@@ -108,6 +121,7 @@ export function useRegistrationConfirmation(key: string, context: string, initia
     } catch (failure) {
       if (!submitting && run?.controller.signal.aborted) return;
       const requestError = failure instanceof RegistrationRequestError ? failure : null;
+      setErrorStatus(requestError?.status);
       // A failed recovery (including expired authentication) cannot disprove the original commit.
       const unknown = submitting && (recovery || !requestError || requestError.uncertain);
       const previous = current.current;
@@ -130,5 +144,5 @@ export function useRegistrationConfirmation(key: string, context: string, initia
     if (active.current || uncertain) return false;
     return removeConfirmation(key);
   }
-  return { record, options, busy, locked, uncertain, storageBlocked, message, error, start, refresh, retryStorage, discard };
+  return { record, options, busy, locked, uncertain, storageBlocked, message, error, errorStatus, start, refresh, retryStorage, discard };
 }

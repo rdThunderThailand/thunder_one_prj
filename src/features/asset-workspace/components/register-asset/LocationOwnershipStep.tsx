@@ -1,36 +1,32 @@
-import { useMemo } from "react";
 import { LocationIcon, UserIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { registrationInitialConditions, registrationInitialStatus } from "../../domain/registration-initial-state";
-import { registrationCustodyChoices, registrationLocationChoices } from "../../domain/registration-reference-choices";
+import { selectedReference, selectedReferenceLabel } from "../../domain/registration-references";
+import type { ReferenceItem, SelectorKind } from "../../services/registration-selector-contract";
 import { StatusBadge } from "../StatusBadges";
-import { RegistrationSection, RegistrationSelect, type RegistrationStepProps } from "./RegistrationFields";
+import { RegistrationHelp, RegistrationSection, RegistrationSelect, type RegistrationStepProps } from "./RegistrationFields";
 import { RegistrationReferenceSelect } from "./RegistrationReferenceSelect";
 
-export function LocationOwnershipStep({ draft, options, errors, patch, onReviewCondition }: RegistrationStepProps & { onReviewCondition: () => void }) {
-  const locations = useMemo(() => registrationLocationChoices(options), [options]);
-  const targets = useMemo(() => registrationCustodyChoices(draft.custodyType, options), [draft.custodyType, options]);
-  const location = options.locations.find((item) => item.id === draft.locationId);
-  const locationLabel = locations.find((item) => item.value === draft.locationId)?.label;
-  const custody = targets.find((item) => item.value === draft.custodyId);
+export function LocationOwnershipStep({ draft, options, errors, patch, onReviewCondition, context, onSelectReference }: RegistrationStepProps & {
+  onReviewCondition: () => void; context: string; onSelectReference: (kind: SelectorKind, item: ReferenceItem) => void;
+}) {
+  const location = selectedReference(draft, "locations");
+  const locationLabel = selectedReferenceLabel(draft, "locations");
+  const kind = draft.custodyType === "person" ? "persons" : "orgUnits";
   const status = registrationInitialStatus(draft, options);
   const conditionConflict = !registrationInitialConditions(draft, options).includes(draft.condition);
-  const locationError = draft.locationId && !location
-    ? "Your selected location is no longer available. Choose an active location." : errors.locationId;
-  const custodyError = draft.custodyType !== "none" && draft.custodyId && !custody
-    ? "Your previous custody target is no longer available. Choose an active target or leave unassigned." : errors.custodyId;
   return (
     <div className="space-y-3">
-      <RegistrationSection title="Location" icon={LocationIcon} description="Specify where this asset is located. Select one parent or child location.">
+      <RegistrationSection title="Location" icon={LocationIcon} description="Select where this asset is located.">
         <RegistrationReferenceSelect
-          name="locationId" label="Location" required value={draft.locationId}
-          items={locations} onChange={(value) => patch({ locationId: value })} error={locationError}
-          emptyMessage="No active locations are available. Ask your administrator to configure a location."
+          name="locationId" label="Location" value={draft.locationId}
+          kind="locations" context={context} rules={options.referenceSelectors} selectedLabel={locationLabel}
+          onChange={(item) => onSelectReference("locations", item)} error={errors.locationId}
         />
         {location && (
-          <div aria-label="Selected location" className="flex items-start gap-3 rounded-control bg-muted p-4">
-            <LocationIcon className="h-8 w-8 text-primary" />
-            <div className="min-w-0 space-y-2">
+          <div aria-label="Selected location" className="flex items-start gap-3 rounded-control bg-muted p-3">
+            <LocationIcon className="h-5 w-5 shrink-0 text-primary" />
+            <div className="min-w-0 space-y-1">
               <h3 className="break-words text-sm font-semibold">{location.name || "Unnamed location"}</h3>
               <p className="break-words text-xs text-muted-foreground">{locationLabel}</p>
               {location.location_type && <p className="break-words text-xs text-muted-foreground">Type: {location.location_type.replaceAll("_", " ")}</p>}
@@ -38,8 +34,8 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
           </div>
         )}
       </RegistrationSection>
-      <RegistrationSection title="Ownership & assignment" icon={UserIcon} description="Choose a person or organizational unit as the initial custodian, or leave unassigned. This does not change the asset’s organization or location.">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <RegistrationSection title="Ownership & assignment" icon={UserIcon} description="Choose an initial custodian, or leave unassigned.">
+        <div className="grid gap-3 sm:grid-cols-2">
           <RegistrationSelect
             name="custodyType" label="Custody target type" value={draft.custodyType}
             items={[{ value: "none", label: "Unassigned" }, { value: "person", label: "Person" }, { value: "org_unit", label: "Organizational Unit" }]}
@@ -48,10 +44,9 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
           {draft.custodyType !== "none" && (
             <RegistrationReferenceSelect
               key={draft.custodyType}
-              name="custodyId" label={draft.custodyType === "person" ? "Person" : "Organizational Unit"} required value={draft.custodyId}
-              items={targets} onChange={(value) => patch({ custodyId: value })} error={custodyError}
-              emptyMessage="No active custody targets are available. Choose another target type or leave unassigned."
-              hint={targets.length ? undefined : "No active targets are available. Choose another target type or leave unassigned."}
+              name="custodyId" label={draft.custodyType === "person" ? "Person" : "Organizational Unit"} value={draft.custodyId}
+              kind={kind} context={context} rules={options.referenceSelectors} selectedLabel={selectedReferenceLabel(draft, kind)}
+              onChange={(item) => onSelectReference(kind, item)} error={errors.custodyId}
             />
           )}
         </div>
@@ -68,7 +63,10 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
             </div>
           </div>
         )}
-        <p className="text-xs text-muted-foreground">Handover evidence is not available in this version and is not required. General asset notes belong in Step 4.</p>
+        <RegistrationHelp>
+          <p>Parent and child locations can both be selected. Custody does not change the asset’s organization or location.</p>
+          <p>Handover evidence is not required or available in this version. Add general asset notes in Step 4.</p>
+        </RegistrationHelp>
       </RegistrationSection>
     </div>
   );

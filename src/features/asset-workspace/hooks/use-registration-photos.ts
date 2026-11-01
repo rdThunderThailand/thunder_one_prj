@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { RegistrationOptions } from "../services/asset-registration-contract";
 import type { RetainedRegistrationFile } from "./use-registration-documents";
+import type { UploadCandidate } from "../domain/registration-confirmation";
 
 export interface RegistrationPhoto {
   id: string;
@@ -63,5 +64,16 @@ export function useRegistrationPhotos(rules: RegistrationOptions["photoUpload"],
     onSelectionChange(ids.length > 0, ids);
   }
 
-  return { photos, errors, select, remove };
+  function restore(files: UploadCandidate[]) {
+    const restored = files.filter((file) => file.purpose === "asset_photo");
+    const next = restored.map((item) => current.current.find((photo) => photo.id === item.localId)
+      ?? { id: item.localId, file: item.file, previewUrl: URL.createObjectURL(item.file) });
+    for (const photo of current.current) {
+      if (!next.some((item) => item.id === photo.id)) URL.revokeObjectURL(photo.previewUrl);
+    }
+    current.current = next;
+    setPhotos(next);
+  }
+
+  return { photos, errors, select, remove, restore };
 }

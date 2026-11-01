@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { newRegistrationState, registrationPayload, registrationStateSchema } from "./registration-draft.ts";
 import { firstInvalidRegistrationStep, locationPath, registrationErrors } from "./registration-validation.ts";
 import { isCalendarDate } from "./registration-warranty-dates.ts";
-import { registrationOptionsSchema } from "../services/asset-registration-contract.ts";
+import { referenceItemSchema } from "../services/registration-selector-contract.ts";
+import { registrationOptionsSchema, type RegistrationOptions } from "../services/asset-registration-contract.ts";
 import { readRegistrationDraft, registrationDraftKey, removeRegistrationDraft, saveRegistrationDraft } from "../services/asset-registration-draft-storage.ts";
 
 import { newWarranty, warrantyErrors } from "./registration-warranties.ts";
@@ -11,25 +12,22 @@ import { newWarranty, warrantyErrors } from "./registration-warranties.ts";
 const category = "33333333-3333-4333-8333-333333333333";
 const location = "44444444-4444-4444-8444-444444444444";
 const person = "55555555-5555-4555-8555-555555555555";
-const options = registrationOptionsSchema.parse({
-  categories: [{ id: category, name: "Display", is_serial_required: true }],
-  locations: [{ id: location, name: "Lobby", parent_location_id: null, location_type: "office" }],
-  persons: [{ id: person, name: "Example user" }], orgUnits: [], initialConditions: ["Good", "Fair"],
-  canOverrideSerial: false, tagGeneration: { modes: ["manual", "automatic"], allocatedOn: "creation" },
+const rules = registrationOptionsSchema.parse({
+  referenceSelectors: { pageSize: 25, maxPageSize: 100, search: { enabled: true, debounceMs: 300, maxLength: 200 },
+    categories: { path: "/categories", hierarchical: true }, locations: { path: "/locations", hierarchical: true },
+    orgUnits: { path: "/org-units", hierarchical: true }, persons: { path: "/persons", hierarchical: false, pagination: "cursor" } },
+  initialConditions: ["Good", "Fair"], canOverrideSerial: false,
+  tagGeneration: { modes: ["manual", "automatic"], allocatedOn: "creation" },
   submission: { method: "POST", path: "/assets", canSubmit: false, reason: "REGISTRATION_UNAVAILABLE" },
 });
-
+const options: RegistrationOptions = { ...rules, referenceValidation: {
+  categories: { id: category, status: "valid" }, locations: { id: location, status: "valid" }, persons: { id: person, status: "valid" },
+} };
+assert.equal("categories" in rules, false);
 const legacyId = "12345678-1234-0234-1234-123456789abc";
-const legacyOptions = {
-  ...options,
-  categories: [{ ...options.categories[0], id: legacyId }],
-  locations: [{ ...options.locations[0], id: legacyId, parent_location_id: legacyId }],
-  persons: [{ ...options.persons[0], id: legacyId }],
-  orgUnits: [{ id: legacyId, name: "Legacy unit", parent_department_id: legacyId }],
-};
-assert.equal(registrationOptionsSchema.safeParse(legacyOptions).success, true);
+assert.equal(referenceItemSchema.safeParse({ id: legacyId, name: "Legacy" }).success, true);
 for (const id of ["not-a-uuid", "12345678-1234-0234-1234-123456789abg", ""]) {
-  assert.equal(registrationOptionsSchema.safeParse({ ...legacyOptions, categories: [{ ...legacyOptions.categories[0], id }] }).success, false);
+  assert.equal(referenceItemSchema.safeParse({ id, name: "Invalid" }).success, false);
 }
 
 assert.equal(isCalendarDate("2026-04-31"), false);
@@ -38,6 +36,11 @@ assert.equal(isCalendarDate("2024-02-29"), true);
 const state = newRegistrationState();
 assert.equal(firstInvalidRegistrationStep(state.draft, options), 0);
 Object.assign(state.draft, { name: " Lobby display ", categoryId: category, locationId: location, serialNumber: " SN-001 " });
+Object.assign(state.draft.selectedReferences, {
+  categories: { id: category, name: "Display", is_serial_required: true },
+  locations: { id: location, name: "Lobby", parent_id: null, location_type: "office" },
+  persons: { id: person, name: "Example user", secondary_label: "EMP-001" },
+});
 assert.equal(firstInvalidRegistrationStep(state.draft, options), null);
 assert.ok(registrationErrors({ ...state.draft, serialNumber: "" }, options, 1).serialNumber);
 assert.ok(registrationErrors({ ...state.draft, tagMode: "manual" }, options, 0).assetCode);
@@ -59,9 +62,11 @@ assert.equal(payload.serial_number, "SN-001");
 assert.equal(payload.warranties[0].is_current, true);
 assert.equal(payload.warranties[0].end_date, "2025-02-28");
 assert.deepEqual(payload.initial_custody, { target_type: "person", target_user_id: person });
-for (const excluded of ["asset_code", "status", "tenant_id", "brand", "photos", "warranty_years"]) assert.equal(excluded in payload, false);
+for (const excluded of ["asset_code", "status", "tenant_id", "brand", "photos", "warranty_years", "selectedReferences"]) assert.equal(excluded in payload, false);
 assert.equal("warranty" in JSON.parse(JSON.stringify(registrationPayload({ ...state.draft, warranties: [] }))), false);
-assert.equal(locationPath(location, { ...options, locations: [{ ...options.locations[0], parent_location_id: location }] }), "Lobby");
+assert.equal(locationPath(location, state.draft), "Lobby");
+assert.ok(registrationErrors(state.draft, { ...rules }, 2).locationId);
+assert.equal(firstInvalidRegistrationStep(state.draft, { ...rules, referenceValidation: options.referenceValidation }), null);
 assert.equal(registrationStateSchema.safeParse({ ...state, step: 99 }).success, false);
 assert.equal(registrationStateSchema.safeParse({ ...state, step: 4, editing: true }).success, false);
 

@@ -8,9 +8,13 @@ import { Button } from "@/components/ui/lovable/button";
 import { InfoIcon } from "@/components/ui/icons";
 import { RegistrationNavigation, RegistrationCancelDialog } from "./RegistrationNavigation";
 import { REGISTRATION_STEPS } from "../../domain/registration-draft";
+import { useRegistrationReferences } from "../../hooks/use-registration-references";
+import { RegistrationReferenceState } from "./RegistrationReferenceState";
 import { useAssetRegistration } from "../../hooks/use-asset-registration";
 import { useRegistrationPhotos } from "../../hooks/use-registration-photos";
 import { useRegistrationDocuments } from "../../hooks/use-registration-documents";
+import { useRegistrationFileCache } from "../../hooks/use-registration-file-cache";
+import { RegistrationFileStorageState } from "./RegistrationFileStorageState";
 import { registrationDraftKey } from "../../services/asset-registration-draft-storage";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { RegistrationLoading } from "./RegistrationLoading";
@@ -25,6 +29,8 @@ import { RegistrationConfirmation, RegistrationReceipt } from "./RegistrationCon
 import { useRegistrationConfirmation } from "../../hooks/use-registration-confirmation";
 import { missingRegistrationFiles, validReceipt, type UploadCandidate } from "../../domain/registration-confirmation";
 import { removeRegistrationDraft } from "../../services/asset-registration-draft-storage";
+import { registrationCreationBlocker } from "../../domain/registration-readiness";
+import { RegistrationWorkspace } from "./RegistrationWorkspace";
 
 const subscribe = () => () => {};
 const clientReady = () => true;
@@ -45,17 +51,21 @@ function RegistrationSession(props: { options: RegistrationOptions; tenantId: st
 function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart }: { options: RegistrationOptions; tenantId: string; userId: string; onRestart: () => void }) {
   const router = useRouter();
   const [recoveryClearFailed, setRecoveryClearFailed] = useState(false);
+  const [discarded, setDiscarded] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const storageKey = registrationDraftKey(tenantId, userId);
   const confirmation = useRegistrationConfirmation(`${storageKey}:confirmation`, `${tenantId}:${userId}`, initialOptions);
   const { locked } = confirmation;
-  const options = confirmation.options ?? initialOptions;
-  const registration = useAssetRegistration(storageKey, options);
+  const rules = confirmation.options ?? initialOptions;
+  const registration = useAssetRegistration(storageKey, rules);
   const { state: editableState, errors, patch } = registration;
   const state = confirmation.uncertain && confirmation.record
     ? { ...editableState, step: 4, draft: confirmation.record.draft } : editableState;
+  const references = useRegistrationReferences(`${tenantId}:${userId}`, state.draft,
+    confirmation.uncertain || confirmation.record?.phase === "succeeded" ? -1 : state.step, patch);
+  const options = { ...rules, referenceValidation: references.validation };
   const receipts = confirmation.record?.uploads ?? [];
   const verifiedFiles = receipts.filter(validReceipt);
   const retainedFor = (ids: string[]) => verifiedFiles.filter((file) => ids.includes(file.localId)).map((file) => ({ id: file.localId, filename: file.filename, size: file.size }));
@@ -79,45 +89,77 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
         purpose: target === "asset" ? "asset_document" as const : "warranty_document" as const,
         warrantyClientId: target === "asset" ? undefined : target }))),
   ];
-  const needsPhotoReselection = state.draft.hasPhotoSelections && photoSelection.photos.length === 0
-    && (!state.draft.photoSelectionIds.length || !state.draft.photoSelectionIds.every((id) => verifiedFiles.some((file) => file.localId === id)));
+  const fileCache = useRegistrationFileCache({
+    key: storageKey, draft: state.draft, options, files: candidates,
+    succeeded: confirmation.record?.phase === "succeeded",
+    restore: (files) => { photoSelection.restore(files); documents.restore(files); },
+  });
+  const needsPhotoReselection = state.draft.hasPhotoSelections && (!state.draft.photoSelectionIds.length
+    || state.draft.photoSelectionIds.some((id) => !photoSelection.photos.some((file) => file.id === id) && !retainedPhotos.some((file) => file.id === id)));
   const missingFiles = missingRegistrationFiles(state.draft, candidates, receipts);
+  const creationBlocker = registrationCreationBlocker(state.draft, options, receipts);
   const edit = (step: number) => { if (!locked) registration.edit(step); };
-  const stepProps = { draft: state.draft, options, errors, patch, documents, onReviewCondition: () => edit(0) };
+  const stepProps = { context: `${tenantId}:${userId}`, onSelectReference: references.select, draft: state.draft, options, errors, patch, documents, onReviewCondition: () => edit(0) };
   const Step = [BasicInformationStep, CategorySpecificationStep, LocationOwnershipStep, AcquisitionWarrantyStep][state.step];
-  const submit = (reason?: string) => confirmation.start(state.draft, candidates, registration.validateForConfirmation, reason);
+  const submit = (reason?: string) => {
+    if (!fileCache.restoring || confirmation.uncertain) {
+      return confirmation.start(state.draft, candidates, (resolved, validatedOptions, invalidStep) => {
+        references.accept(validatedOptions.referenceValidation ?? {});
+        registration.validateForConfirmation(resolved, validatedOptions, invalidStep);
+      }, reason);
+    }
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
+    scrollRef.current?.querySelector("[data-registration-form-scroll]")?.scrollTo({ top: 0 });
     headingRef.current?.focus({ preventScroll: true });
-  }, [state.step, state.editing]);
+  }, [state.step, state.editing, fileCache.initializing]);
 
-  function discard() {
+  async function discard() {
     if (locked) return false;
     if (!confirmation.discard()) { setRecoveryClearFailed(true); registration.setCancelOpen(true); return false; }
-    return registration.discard();
+    if (!registration.discard()) return false;
+    if (await fileCache.clear()) router.push("/asset-workspace/assets");
+    else setDiscarded(true);
+    return true;
   }
-  function leave() { if (discard()) router.push("/asset-workspace/assets"); }
 
   if (confirmation.record?.phase === "succeeded" && confirmation.record.result) {
     return (
-      <RegistrationReceipt result={confirmation.record.result} onBack={() => router.push("/asset-workspace/assets")} onAnother={() => {
+      <RegistrationReceipt result={confirmation.record.result} onBack={() => router.push("/asset-workspace/assets")} onAnother={async () => {
         if (!removeRegistrationDraft(storageKey) || !confirmation.discard()) return false;
+        await fileCache.clear();
         onRestart();
         return true;
-      }} />
+      }}>
+        <RegistrationFileStorageState cache={fileCache} />
+      </RegistrationReceipt>
     );
   }
 
+  if (discarded) {
+    return (
+      <section className="h-full space-y-4 overflow-y-auto overscroll-contain">
+        <PageHeader title="Registration discarded" subtitle="Your registration draft has been removed from this tab." />
+        <RegistrationFileStorageState cache={fileCache} />
+        <Button variant="outline" onClick={() => router.push("/asset-workspace/assets")}>Back to Assets</Button>
+      </section>
+    );
+  }
+  if (fileCache.initializing && !confirmation.uncertain) return <RegistrationLoading />;
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-3" onInputCapture={fileCache.touch} onPointerDownCapture={fileCache.touch}>
       <div className="shrink-0 space-y-3">
         <PageHeader title="Register Asset" subtitle={state.step === 4 ? "Review all information before creating the asset. You can edit any section." : "Add a new asset to your organization. Complete the information below."} />
         <WizardSteps steps={REGISTRATION_STEPS} currentIndex={state.step} />
-        <div className="flex items-start gap-3 rounded-control bg-info-muted p-3 text-info" role="status">
-          <InfoIcon className="h-4 w-4" />
-          <p className="text-xs">{options.submission.canSubmit ? "Review your information, then confirm to upload files and create the asset." : "You can prepare and review this registration. Asset creation is temporarily unavailable."}</p>
-        </div>
+        {!options.submission.canSubmit && (
+          <p className="flex items-center gap-2 text-xs text-muted-foreground" role="status">
+            <InfoIcon className="h-4 w-4 shrink-0 text-info" />
+            Asset creation is temporarily unavailable.
+          </p>
+        )}
         {confirmation.storageBlocked && state.step !== 4 && (
           <div role="alert" className="space-y-2 rounded-control bg-warning-muted p-3 text-xs text-warning">
             <p>Recovery storage is unavailable. Restore it before continuing this registration.</p>
@@ -127,57 +169,64 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
         {registration.storageUnavailable && (
           <p role="alert" className="rounded-control bg-warning-muted p-3 text-xs text-warning">Browser draft storage is unavailable. Your latest changes may be lost on refresh.</p>
         )}
-        {(!options.categories.length || !options.locations.length) && (
-          <p role="status" className="rounded-control bg-warning-muted p-3 text-xs text-warning">An active category and location are required. Ask your administrator to configure the missing registration options.</p>
-        )}
+
       </div>
       <form ref={formRef} className="flex min-h-0 flex-1 flex-col" noValidate onSubmit={(event) => {
         event.preventDefault();
         if (locked && !confirmation.uncertain) return;
         if (state.step === 4) { void submit(); return; }
-        const advanced = registration.advance();
+        const advanced = registration.advance(options);
         requestAnimationFrame(() => {
           if (!advanced) formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
-          else scrollRef.current?.scrollTo({ top: 0 });
+          else {
+            scrollRef.current?.scrollTo({ top: 0 });
+            scrollRef.current?.querySelector("[data-registration-form-scroll]")?.scrollTo({ top: 0 });
+          }
         });
       }}>
-        <div ref={scrollRef} data-registration-scroll className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 pr-1">
+        <RegistrationWorkspace
+          scrollRef={scrollRef}
+          photos={state.step === 0 && (
+            <RegistrationPhotos
+              photos={photoSelection.photos} retained={retainedPhotos} errors={photoSelection.errors} rules={options.photoUpload}
+              needsReselection={needsPhotoReselection} onSelect={photoSelection.select} onRemove={photoSelection.remove}
+              onClearReminder={() => {
+                const ids = state.draft.photoSelectionIds.filter((id) => photoSelection.photos.some((photo) => photo.id === id) || retainedPhotos.some((photo) => photo.id === id));
+                patch({ hasPhotoSelections: ids.length > 0, photoSelectionIds: ids });
+              }}
+            />
+          )}
+          preview={(
+            <RegistrationPreview
+              draft={state.draft} options={options} step={state.step} reviewed={state.reviewed} onEdit={edit} locked={locked}
+              photo={photoSelection.photos[0]} needsPhotoReselection={needsPhotoReselection}
+              verifiedPhoto={Boolean(retainedPhotos.length)}
+            />
+          )}
+        >
+          <RegistrationFileStorageState cache={fileCache} />
           <h2 ref={headingRef} tabIndex={-1} className="mb-3 text-sm font-semibold outline-none sm:sr-only">
             Step {state.step + 1}: {REGISTRATION_STEPS[state.step]}{state.editing ? " — editing" : ""}
           </h2>
           {Object.keys(errors).length > 0 && <p role="alert" className="mb-3 text-xs text-error">Check the highlighted fields before continuing.</p>}
+          {missingFiles && state.step !== 4 && !confirmation.uncertain && (
+            <p role="alert" className="text-xs text-warning">Some selected files are unavailable. Reselect or remove photos in Step 1 and documents in Step 4 before creating the asset.</p>
+          )}
 
-          <div className="grid items-start gap-3 xl:grid-cols-3">
-            <div className="min-w-0 xl:col-span-2">
-              {state.step === 4 ? (
-                <RegistrationReviewStep draft={state.draft} options={options} onEdit={edit} locked={locked} photoCount={photoSelection.photos.length} needsPhotoReselection={needsPhotoReselection} documentGroups={documents.groups} verifiedFiles={verifiedFiles} />
-              ) : (
-                <Step {...stepProps} />
-              )}
-            </div>
-            <div className="min-w-0 space-y-3">
-              {state.step === 0 && (
-                <RegistrationPhotos
-                  photos={photoSelection.photos} retained={retainedPhotos} errors={photoSelection.errors} rules={options.photoUpload}
-                  needsReselection={needsPhotoReselection} onSelect={photoSelection.select} onRemove={photoSelection.remove}
-                  onClearReminder={() => patch({ hasPhotoSelections: false, photoSelectionIds: [] })}
-                />
-              )}
-              <RegistrationPreview
-                draft={state.draft} options={options} step={state.step} reviewed={state.reviewed} onEdit={edit} locked={locked}
-                photo={photoSelection.photos[0]} needsPhotoReselection={needsPhotoReselection}
-                verifiedPhoto={Boolean(retainedPhotos.length)}
-              />
-              {state.step === 4 && (
-                <RegistrationConfirmation confirmation={confirmation} missingFiles={missingFiles} serialNumber={state.draft.serialNumber} onOverride={(reason) => { void submit(reason); }} onLeave={() => router.push("/asset-workspace/assets")} />
-              )}
-            </div>
-          </div>
-        </div>
+          {!confirmation.uncertain && <RegistrationReferenceState draft={state.draft} options={options} onRetry={references.retry} />}
+          {state.step === 4 ? (
+            <RegistrationReviewStep draft={state.draft} options={options} onEdit={edit} locked={locked} photoCount={photoSelection.photos.length} needsPhotoReselection={needsPhotoReselection} documentGroups={documents.groups} verifiedFiles={verifiedFiles} />
+          ) : (
+            <Step {...stepProps} />
+          )}
+          {state.step === 4 && (
+            <RegistrationConfirmation confirmation={confirmation} blocker={creationBlocker} missingFiles={missingFiles} serialNumber={state.draft.serialNumber} onOverride={(reason) => { void submit(reason); }} onLeave={() => router.push("/asset-workspace/assets")} />
+          )}
+        </RegistrationWorkspace>
         <RegistrationNavigation
           step={state.step} editing={state.editing} locked={locked} busy={confirmation.busy} uncertain={confirmation.uncertain}
-          canConfirm={!confirmation.storageBlocked && (confirmation.uncertain || options.submission.canSubmit && !missingFiles)}
-          onCancel={() => registration.dirty ? registration.setCancelOpen(true) : leave()}
+          canConfirm={!confirmation.storageBlocked && (confirmation.uncertain || !fileCache.restoring && !creationBlocker && !missingFiles)}
+          onCancel={() => registration.dirty ? registration.setCancelOpen(true) : void discard()}
           onBack={() => { if (!locked) registration.back(); }}
         />
       </form>

@@ -15,7 +15,7 @@ export interface RegistrationStepProps {
 
 export function RegistrationSection({ title, description, icon: Icon, children }: { title: string; description?: string; icon?: Icon; children: ReactNode }) {
   return (
-    <section className="space-y-4 rounded-card border border-border bg-card p-4">
+    <section className="space-y-3 rounded-card border border-border bg-card p-4">
       <div className="flex items-start gap-3">
         {Icon && (
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
@@ -36,7 +36,7 @@ export function RegistrationField({ name, label, required, error, hint, children
   name: string; label: string; required?: boolean; error?: string; hint?: string; children: ReactNode;
 }) {
   return (
-    <div className="min-w-0 space-y-2">
+    <div className="min-w-0 space-y-1">
       <label htmlFor={`registration-${name}`} className="block text-xs font-medium text-foreground">
         {label}{required && <span aria-hidden="true" className="text-error"> *</span>}
       </label>
@@ -44,6 +44,15 @@ export function RegistrationField({ name, label, required, error, hint, children
       {hint && <p id={`registration-${name}-hint`} className="text-xs text-muted-foreground">{hint}</p>}
       {error && <p id={`registration-${name}-error`} role="alert" className="text-xs text-error">{error}</p>}
     </div>
+  );
+}
+
+export function RegistrationHelp({ children }: { children: ReactNode }) {
+  return (
+    <details className="group text-xs text-muted-foreground">
+      <summary className="min-h-8 w-fit cursor-pointer rounded-control py-2 font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Help</summary>
+      <div className="space-y-2 pt-1">{children}</div>
+    </details>
   );
 }
 

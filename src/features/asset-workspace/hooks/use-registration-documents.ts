@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { RegistrationOptions } from "../services/asset-registration-contract";
+import type { UploadCandidate } from "../domain/registration-confirmation";
 
 export interface RegistrationDocument { id: string; file: File }
 export interface RegistrationDocumentGroup { files: RegistrationDocument[]; errors: string[] }
@@ -68,6 +69,18 @@ export function useRegistrationDocuments(rules: RegistrationOptions["documentUpl
     const ids = (selectionIds[target] ?? []).filter((id) => !missing.has(id));
     onSelectionChange(target, ids.length > 0, ids);
   }
-  return { groups, retained, missingIds, select, remove, forget, clearReminder };
+  function restore(files: UploadCandidate[]) {
+    const next: RegistrationDocumentGroups = {};
+    for (const item of files) {
+      if (item.purpose === "asset_photo") continue;
+      const target = item.purpose === "asset_document" ? "asset" : item.warrantyClientId;
+      if (!target) continue;
+      next[target] ??= { files: [], errors: current.current[target]?.errors ?? [] };
+      next[target].files.push({ id: item.localId, file: item.file });
+    }
+    current.current = next;
+    setGroups(next);
+  }
+  return { groups, retained, missingIds, select, remove, forget, clearReminder, restore };
 }
 export type RegistrationDocuments = ReturnType<typeof useRegistrationDocuments>;

@@ -1,9 +1,10 @@
+import { referenceStatus } from "./registration-references.ts";
 import type { RegistrationDraft } from "./registration-draft.ts";
 import type { RegistrationOptions } from "../services/asset-registration-contract.ts";
 
 export function registrationInitialStatus(draft: RegistrationDraft, options: RegistrationOptions): "Available" | "Assigned" {
-  const targets = draft.custodyType === "person" ? options.persons : options.orgUnits;
-  const hasCustody = draft.custodyType !== "none" && targets.some((target) => target.id === draft.custodyId);
+  const kind = draft.custodyType === "person" ? "persons" : "orgUnits";
+  const hasCustody = draft.custodyType !== "none" && Boolean(draft.custodyId) && referenceStatus(draft, options, kind) !== "unavailable";
   return hasCustody ? "Assigned" : "Available";
 }
 

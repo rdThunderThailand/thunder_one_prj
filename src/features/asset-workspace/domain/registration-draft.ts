@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { selectedReferencesSchema } from "../services/registration-selector-contract.ts";
 import { warrantyDraftSchema } from "./registration-warranties.ts";
 
 export const REGISTRATION_STEPS = ["Basic Information", "Category & Specification", "Location & Ownership", "Acquisition & Warranty", "Review & Confirm"];
 
 export const registrationDraftSchema = z.object({
+  selectedReferences: selectedReferencesSchema.default({ categories: null, locations: null, orgUnits: null, persons: null }),
   name: z.string().max(250), tagMode: z.enum(["automatic", "manual"]), assetCode: z.string().max(100),
   // Defaults keep existing saved text drafts compatible; photo bytes never enter tab storage.
   description: z.string().max(5000).default(""), hasPhotoSelections: z.boolean().default(false),
@@ -25,6 +27,7 @@ export function newRegistrationState(): RegistrationState {
   return {
     step: 0, editing: false, reviewed: false,
     draft: {
+      selectedReferences: { categories: null, locations: null, orgUnits: null, persons: null },
       name: "", tagMode: "automatic", assetCode: "", description: "", hasPhotoSelections: false, photoSelectionIds: [], documentSelectionIds: [],
       condition: "Good", categoryId: "", serialNumber: "",
       locationId: "", custodyType: "none", custodyId: "", purchaseDate: "", notes: "",

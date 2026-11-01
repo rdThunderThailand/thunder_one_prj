@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { CheckIcon } from "@/components/ui/icons";
@@ -11,8 +11,8 @@ import { selectedFileIds, validReceipt } from "../../domain/registration-confirm
 import type { CreatedRegistration } from "../../services/asset-registration-write-contract";
 
 type Confirmation = ReturnType<typeof useRegistrationConfirmation>;
-export function RegistrationConfirmation({ confirmation, missingFiles, serialNumber, onOverride, onLeave }: {
-  confirmation: Confirmation; missingFiles: boolean; serialNumber: string; onOverride: (reason: string) => void; onLeave: () => void;
+export function RegistrationConfirmation({ confirmation, blocker, missingFiles, serialNumber, onOverride, onLeave }: {
+  confirmation: Confirmation; blocker: string; missingFiles: boolean; serialNumber: string; onOverride: (reason: string) => void; onLeave: () => void;
 }) {
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -42,7 +42,8 @@ export function RegistrationConfirmation({ confirmation, missingFiles, serialNum
           <Button variant="outline" size="sm" disabled={busy} onClick={confirmation.retryStorage}>Retry recovery storage</Button>
         </div>
       )}
-      {!options?.submission.canSubmit && !uncertain && <p className="text-xs text-muted-foreground">Asset creation is temporarily unavailable. Your registration remains in this tab.</p>}
+      {blocker && !uncertain && <p role="status" className="text-xs text-muted-foreground">{blocker}</p>}
+      {uncertain && <p role="alert" className="text-xs text-warning">The creation result is unknown. Retry the original request to recover its result; editing remains locked.</p>}
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" disabled={busy} onClick={confirmation.refresh}>Refresh availability</Button>
         {uncertain && <Button variant="outline" size="sm" disabled={busy} onClick={onLeave}>Leave and keep recovery</Button>}
@@ -66,7 +67,7 @@ export function RegistrationConfirmation({ confirmation, missingFiles, serialNum
           </label>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <Button disabled={!confirmed || !reason.trim() || busy} onClick={() => { setOverrideOpen(false); onOverride(reason.trim()); }}>Confirm override and create</Button>
+            <Button disabled={!confirmed || !reason.trim() || busy || Boolean(blocker)} onClick={() => { setOverrideOpen(false); onOverride(reason.trim()); }}>Confirm override and create</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -74,8 +75,9 @@ export function RegistrationConfirmation({ confirmation, missingFiles, serialNum
   );
 }
 
-export function RegistrationReceipt({ result, onBack, onAnother }: { result: CreatedRegistration; onBack: () => void; onAnother: () => boolean }) {
+export function RegistrationReceipt({ result, onBack, onAnother, children }: { result: CreatedRegistration; onBack: () => void; onAnother: () => boolean | Promise<boolean>; children?: ReactNode }) {
   const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
   return (
     <section className="mx-auto flex h-full min-h-0 w-full max-w-xl flex-col items-center gap-4 overflow-y-auto overscroll-contain rounded-card border border-border bg-card p-6 text-center [&>*]:shrink-0" aria-label="Registration succeeded">
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success-muted text-success">
@@ -86,10 +88,14 @@ export function RegistrationReceipt({ result, onBack, onAnother }: { result: Cre
       <p className="text-xs text-muted-foreground">{result.replayed ? "The original registration result was recovered." : "Your asset was created successfully."}</p>
       <Button variant="outline" disabled aria-describedby="registration-profile-reason">View Asset Profile</Button>
       <p id="registration-profile-reason" className="text-xs text-muted-foreground">The Asset Profile page is not available yet.</p>
+      {children}
       {failed && <p role="alert" className="text-xs text-error">Could not clear the previous registration from tab storage. The successful result is kept. Try again.</p>}
       <div className="flex flex-wrap justify-center gap-2">
-        <Button variant="outline" onClick={onBack}>Back to Assets</Button>
-        <Button onClick={() => setFailed(!onAnother())}>Register another</Button>
+        <Button variant="outline" disabled={busy} onClick={onBack}>Back to Assets</Button>
+        <Button disabled={busy} onClick={() => {
+          setBusy(true);
+          void Promise.resolve(onAnother()).then((reset) => setFailed(!reset)).finally(() => setBusy(false));
+        }}>{busy ? "Please wait…" : "Register another"}</Button>
       </div>
     </section>
   );

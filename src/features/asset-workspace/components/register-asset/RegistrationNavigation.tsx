@@ -10,7 +10,7 @@ export function RegistrationNavigation({ step, editing, locked, busy, uncertain,
   onCancel: () => void; onBack: () => void;
 }) {
   return (
-    <footer data-registration-footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-3 py-3">
+    <footer data-registration-footer className="z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card py-3">
       <Button variant="outline" size="sm" disabled={locked} onClick={onCancel}>Cancel</Button>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" disabled={locked || step === 0} onClick={onBack}>
@@ -38,8 +38,9 @@ export function RegistrationNavigation({ step, editing, locked, busy, uncertain,
 }
 
 export function RegistrationCancelDialog({ open, onOpenChange, failed, onDiscard, onLeave }: {
-  open: boolean; onOpenChange: (open: boolean) => void; failed: boolean; onDiscard: () => boolean; onLeave: () => void;
+  open: boolean; onOpenChange: (open: boolean) => void; failed: boolean; onDiscard: () => Promise<boolean>; onLeave: () => void;
 }) {
+  const [busy, setBusy] = useState(false);
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="w-[calc(100%-2rem)] rounded-card">
@@ -51,14 +52,16 @@ export function RegistrationCancelDialog({ open, onOpenChange, failed, onDiscard
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Keep editing</AlertDialogCancel>
-          {failed && <Button variant="outline" onClick={onLeave}>Leave anyway</Button>}
-          <AlertDialogAction onClick={(event) => {
-            if (!onDiscard()) event.preventDefault();
-            else onLeave();
-          }}>{failed ? "Try again" : "Discard draft"}</AlertDialogAction>
+          <AlertDialogCancel disabled={busy}>Keep editing</AlertDialogCancel>
+          {failed && <Button variant="outline" disabled={busy} onClick={onLeave}>Leave anyway</Button>}
+          <AlertDialogAction disabled={busy} onClick={(event) => {
+            event.preventDefault();
+            setBusy(true);
+            void onDiscard().then((removed) => { if (removed) onOpenChange(false); }).finally(() => setBusy(false));
+          }}>{busy ? "Discarding…" : failed ? "Try again" : "Discard draft"}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
 }
+import { useState } from "react";

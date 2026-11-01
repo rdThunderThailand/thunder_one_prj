@@ -1,17 +1,15 @@
 import { z } from "zod";
 
-// Existing reference IDs can be PostgreSQL UUIDs without RFC version/variant bits.
-// Keep the hexadecimal UUID shape check without rejecting those returned records.
-const reference = z.object({ id: z.guid(), name: z.string().nullable() });
 const initialCondition = z.enum(["Good", "Fair", "Damaged"]);
 export const registrationOptionsSchema = z.object({
-  categories: z.array(reference.extend({
-    name: z.string(), is_serial_required: z.boolean(), parent_id: z.guid().nullable().optional(),
-    icon_url: z.string().nullable().optional(), color_code: z.string().nullable().optional(),
-  })),
-  locations: z.array(reference.extend({ parent_location_id: z.guid().nullable(), location_type: z.string().nullable() })),
-  persons: z.array(reference),
-  orgUnits: z.array(reference.extend({ parent_department_id: z.guid().nullable() })),
+  referenceSelectors: z.object({
+    pageSize: z.number().int().positive().max(100), maxPageSize: z.number().int().positive().max(100),
+    search: z.object({ enabled: z.literal(true), debounceMs: z.number().int().nonnegative(), maxLength: z.number().int().positive().max(200) }),
+    categories: z.object({ path: z.string(), hierarchical: z.literal(true) }),
+    locations: z.object({ path: z.string(), hierarchical: z.literal(true) }),
+    orgUnits: z.object({ path: z.string(), hierarchical: z.literal(true) }),
+    persons: z.object({ path: z.string(), hierarchical: z.literal(false), pagination: z.literal("cursor") }),
+  }),
   initialConditions: z.array(initialCondition).min(1),
   initialConditionsByStatus: z.object({
     Available: z.array(initialCondition).min(1), Assigned: z.array(initialCondition).min(1),
@@ -50,7 +48,6 @@ export const registrationOptionsSchema = z.object({
   }),
 });
 
-export type RegistrationOptions = z.infer<typeof registrationOptionsSchema>;
-export type RegistrationReadResult =
-  | { ok: true; data: RegistrationOptions }
-  | { ok: false; status: number; message: string };
+export type RegistrationRules = z.infer<typeof registrationOptionsSchema>;
+/** UI-only validation state; R1 never supplies or preloads reference directories. */
+export type RegistrationOptions = RegistrationRules & { referenceValidation?: import("./registration-selector-contract").ReferenceValidation };
