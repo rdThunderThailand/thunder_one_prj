@@ -6,6 +6,8 @@ export interface DonutSegment {
   label: string;
   value: number;
   color: string;
+  /** Optional class on the slice and tooltip dot, e.g. `text-t1-blue-600` with `color: "currentColor"`. */
+  colorClass?: string;
 }
 
 export interface DonutChartProps {
@@ -13,6 +15,8 @@ export interface DonutChartProps {
   size?: number;
   strokeWidth?: number;
   className?: string;
+  /** Draw slices edge to edge, without the white gap between them. */
+  seamless?: boolean;
 }
 
 export function DonutChart({
@@ -20,6 +24,7 @@ export function DonutChart({
   size = 128,
   strokeWidth = 18,
   className = "",
+  seamless = false,
 }: DonutChartProps) {
   const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
   // Zero-value slices draw nothing but still take padding. And when a single
@@ -50,13 +55,17 @@ export function DonutChart({
             outerRadius={outerRadius}
             startAngle={90}
             endAngle={endAngle}
-            paddingAngle={data.length > 1 ? 2 : 0}
+            paddingAngle={data.length > 1 && !seamless ? 2 : 0}
             stroke="var(--color-card)"
-            strokeWidth={2}
+            strokeWidth={seamless ? 0 : 2}
             isAnimationActive={false}
           >
             {data.map((segment) => (
-              <Cell key={segment.label} fill={segment.color} />
+              <Cell
+                key={segment.label}
+                fill={segment.color}
+                className={segment.colorClass}
+              />
             ))}
           </Pie>
           {/* Per-slice hover tooltip — the donut is a proper standalone chart
@@ -72,7 +81,7 @@ export function DonutChart({
                 <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
                   <p className="flex items-center gap-1.5 font-medium text-foreground">
                     <span
-                      className="h-2 w-2 rounded-full"
+                      className={`h-2 w-2 rounded-full ${segment.colorClass ?? ""}`}
                       style={{ backgroundColor: segment.color }}
                     />
                     {segment.label}

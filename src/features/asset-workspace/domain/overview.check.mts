@@ -46,7 +46,7 @@ assert.deepEqual(breakdown([], 0), []);
 const row = (id: string, date: string, reason: AttentionRow["reason"]): AttentionRow => ({
   assetId: id,
   assetName: id,
-  assetCode: null,
+  assetTag: null,
   category: null,
   location: null,
   reason,

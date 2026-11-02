@@ -56,7 +56,7 @@ export const ATTENTION_LIMIT = 5;
 export interface AttentionRow {
   assetId: string;
   assetName: string;
-  assetCode: string | null;
+  assetTag: string | null;
   category: string | null;
   location: string | null;
   reason: "Warranty expiring" | "In Maintenance";

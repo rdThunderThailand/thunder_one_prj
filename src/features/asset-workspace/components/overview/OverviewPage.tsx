@@ -8,7 +8,15 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/ui/DonutChart";
-import { ChevronRightIcon, PlusIcon } from "@/components/ui/icons";
+import {
+  AssignmentIcon,
+  BoxIcon,
+  CheckCircleIcon,
+  ChevronRightIcon,
+  PlusIcon,
+  RetireIcon,
+  ToolIcon,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { StatTile } from "@/components/ui/StatTile";
 import type { AssetStatus } from "../../domain/asset-status";
@@ -115,6 +123,14 @@ const TILE_COLOR = {
   zinc: "zinc",
 } as const satisfies Record<StatusTone, string>;
 
+// ADR 0098 §4 icon map: Assets, Assignments, Maintenance, Retire; Available uses the platform success glyph.
+const TILE_ICON = {
+  Available: CheckCircleIcon,
+  Assigned: AssignmentIcon,
+  "In Maintenance": ToolIcon,
+  Retired: RetireIcon,
+} as const;
+
 function KpiRow({ total, tiles }: ReturnType<typeof kpiFromCounts>) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -122,21 +138,26 @@ function KpiRow({ total, tiles }: ReturnType<typeof kpiFromCounts>) {
         <StatTile
           label="Total Assets"
           value={total.toLocaleString()}
+          icon={<BoxIcon />}
         />
       </Link>
-      {tiles.map((tile) => (
-        <Link
-          key={tile.status}
-          href={`${BASE}/assets?status=${encodeURIComponent(tile.status)}`}
-        >
-          <StatTile
-            label={tile.status}
-            value={tile.count.toLocaleString()}
-            hint={`${tile.percent}%`}
-            color={TILE_COLOR[STATUS_TONE[tile.status]]}
-          />
-        </Link>
-      ))}
+      {tiles.map((tile) => {
+        const Icon = TILE_ICON[tile.status];
+        return (
+          <Link
+            key={tile.status}
+            href={`${BASE}/assets?status=${encodeURIComponent(tile.status)}`}
+          >
+            <StatTile
+              label={tile.status}
+              value={tile.count.toLocaleString()}
+              hint={`${tile.percent}%`}
+              color={TILE_COLOR[STATUS_TONE[tile.status]]}
+              icon={<Icon />}
+            />
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -161,9 +182,11 @@ function Widget({ title, viewAll, children }: { title: string; viewAll?: string;
   );
 }
 
-// Categories and locations are taxonomy, not status (DS-04): one brand ramp, grey for the buckets.
-const RAMP = ["700", "600", "500", "400", "300", "200"].map((step) => `var(--color-t1-blue-${step})`);
-const BUCKET_COLOR = "var(--color-t1-gray-300)";
+// Categories and locations are taxonomy, not status (DS-04): brand blue and purple only, so no slice reads as
+// green/amber/red. Grey for the Others and Unassigned buckets. Text classes painted through `currentColor`:
+// the theme is `@theme inline`, so `var(--color-t1-*)` is not emitted for the SVG fills.
+const RAMP = ["text-t1-blue-600", "text-t1-purple-500", "text-t1-blue-300", "text-t1-purple-700", "text-t1-blue-800", "text-t1-purple-300"];
+const BUCKET_COLOR = "text-t1-gray-300";
 
 function BreakdownBody({
   items,
@@ -184,14 +207,22 @@ function BreakdownBody({
   const max = Math.max(...rows.map((r) => r.count));
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-5">
       {chart === "donut" && (
-        <DonutChart
-          segments={rows.map((row, i) => ({ label: row.label, value: row.count, color: colorOf(row, i) }))}
-          size={140}
-        />
+        <div className="relative shrink-0">
+          <DonutChart
+            segments={rows.map((row, i) => ({ label: row.label, value: row.count, color: "currentColor", colorClass: colorOf(row, i) }))}
+            size={150}
+            strokeWidth={26}
+            seamless
+          />
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-3xl font-bold tabular-nums text-foreground">{total.toLocaleString()}</span>
+            <span className="text-xs text-muted-foreground">Assets</span>
+          </div>
+        </div>
       )}
-      <ul className="min-w-0 flex-1 divide-y divide-border">
+      <ul className={chart === "donut" ? "min-w-0 flex-1" : "min-w-0 flex-1 divide-y divide-border"}>
         {rows.map((row, i) => {
           const label = row.id ? (
             <Link
@@ -206,24 +237,19 @@ function BreakdownBody({
           return (
             <li
               key={row.id ?? row.label}
-              className="flex items-center gap-3 py-1.5 text-sm"
+              className="flex items-center gap-2 py-1.5 text-sm"
             >
-              {chart === "donut" && (
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: colorOf(row, i) }}
-                />
-              )}
+              {chart === "donut" && <span className={`h-3 w-3 shrink-0 rounded-full bg-current ${colorOf(row, i)}`} />}
               <span className={chart === "bars" ? "w-40 min-w-0 truncate" : "min-w-0 flex-1 truncate"}>{label}</span>
               {chart === "bars" && (
                 <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                   <span
-                    className="block h-full rounded-full"
-                    style={{ width: `${(row.count / max) * 100}%`, backgroundColor: colorOf(row, i) }}
+                    className={`block h-full rounded-full bg-current ${colorOf(row, i)}`}
+                    style={{ width: `${(row.count / max) * 100}%` }}
                   />
                 </span>
               )}
-              <span className="w-10 text-right tabular-nums text-foreground">{row.count}</span>
+              <span className="w-8 text-right tabular-nums text-foreground">{row.count}</span>
               <span className="w-12 text-right tabular-nums text-muted-foreground">{row.percent}%</span>
             </li>
           );
@@ -268,7 +294,7 @@ function AttentionBody({ warranties, maintenance }: { warranties: AttentionRow[]
               >
                 {row.assetName}
               </Link>
-              <span className="text-xs text-muted-foreground">{[row.assetCode, row.category].filter(Boolean).join(" · ")}</span>
+              <span className="text-xs text-muted-foreground">{[row.assetTag, row.category].filter(Boolean).join(" · ")}</span>
             </td>
             <td className="py-2">
               <Badge
