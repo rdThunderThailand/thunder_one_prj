@@ -45,7 +45,7 @@ export async function getCategoryCounts(token: string, tenantId: string): Promis
   return data && data.map((c) => ({ id: c.id, label: c.name, count: c.assetCount }));
 }
 
-export interface LocationCount extends BreakdownInput {
+interface LocationCount extends BreakdownInput {
   latitude: number | null;
   longitude: number | null;
 }
@@ -63,17 +63,11 @@ export async function getLocationCounts(token: string, tenantId: string): Promis
   );
 }
 
-interface AttentionAsset {
-  id: string;
-  name: string;
-  assetCode: string | null;
-  category: string | null;
-  location: string | null;
-}
-
 /** #78 — current warranties ending within 30 days. */
 export async function getExpiringWarranties(token: string, tenantId: string): Promise<AttentionRow[] | null> {
-  const data = await coreGet<(AttentionAsset & { endDate: string })[]>(
+  const data = await coreGet<
+    { id: string; name: string; assetCode: string | null; category: string | null; location: string | null; endDate: string }[]
+  >(
     "v1",
     `/tenants/${tenantId}/assets/reports/warranty-expiry?days=${ATTENTION_WARRANTY_DAYS}&limit=${ATTENTION_LIMIT}`,
     token,
