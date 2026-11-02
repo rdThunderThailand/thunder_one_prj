@@ -1,7 +1,7 @@
 // Asset Workspace Overview (FigJam 445:833; scope in E:\ThunderOne\docs\asset-ws-overview-fe-checklist.md §1).
 // Each widget gets its own data or `null` (Core failed) and renders its own error / empty state.
-// Waiting on the Lead: "vs last month" on the tiles and Quick Actions (not here), Assets on Map
-// and Alerts & Notifications (layout mockups only, OverviewMockups.tsx).
+// Waiting on the Lead: "vs last month" on the tiles (not here) and Assets on Map (layout mockup only,
+// OverviewMockups.tsx). Quick Actions are plain links; Register Device is Phase 2 (checklist §1).
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -11,8 +11,10 @@ import { DonutChart } from "@/components/ui/DonutChart";
 import {
   AssignmentIcon,
   BoxIcon,
+  BulkImportIcon,
   CheckCircleIcon,
   ChevronRightIcon,
+  InventoryIcon,
   PlusIcon,
   RetireIcon,
   ToolIcon,
@@ -25,7 +27,8 @@ import { STATUS_TONE, type StatusTone } from "../../domain/status-tone";
 import type { ActivityEntry } from "../../services/asset-overview-api";
 import { ErrorState } from "../states/ErrorState";
 import { EmptyState } from "../states/states";
-import { AlertsMockup, MapMockup } from "./OverviewMockups";
+import { AlertsPanel, type AlertItem } from "./AlertsPanel";
+import { MapMockup } from "./OverviewMockups";
 
 const BASE = "/asset-workspace";
 
@@ -107,11 +110,81 @@ export function OverviewPage({ data }: { data: OverviewData }) {
           <ActivityBody entries={data.activity} />
         </Widget>
         <Widget title="Alerts & Notifications">
-          <AlertsMockup />
+          {data.warranties && data.maintenance ? (
+            <AlertsPanel items={alertItems(data.warranties, data.maintenance)} />
+          ) : (
+            <ErrorState />
+          )}
         </Widget>
       </div>
+
+      <QuickActions />
     </div>
   );
+}
+
+const QUICK_ACTIONS = [
+  { label: "Register Asset", href: `${BASE}/assets/register`, Icon: PlusIcon, primary: true },
+  { label: "Assign Asset", href: `${BASE}/assignments`, Icon: AssignmentIcon },
+  { label: "Start Inventory", href: `${BASE}/inventory`, Icon: InventoryIcon },
+  { label: "Import Data", href: `${BASE}/assets/import`, Icon: BulkImportIcon },
+];
+
+function QuickActions() {
+  return (
+    <section className="space-y-2">
+      <h2 className="text-sm font-semibold text-foreground">Quick Actions</h2>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {QUICK_ACTIONS.map(({ label, href, Icon, primary }) => (
+          <Link
+            key={label}
+            href={href}
+          >
+            <Card className="flex items-center gap-3 p-3 transition-colors hover:bg-muted">
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg ${
+                  primary ? "bg-primary text-primary-foreground" : "bg-accent text-primary"
+                }`}
+              >
+                <Icon />
+              </span>
+              <span className="text-sm font-medium text-primary">{label}</span>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const DAY_MS = 86_400_000;
+const days = (n: number) => `${n} ${n === 1 ? "day" : "days"}`;
+
+// Built on the server, so "today" is the request time; the client panel only switches tabs.
+function alertItems(warranties: AttentionRow[], maintenance: AttentionRow[]): AlertItem[] {
+  const now = Date.now();
+  const detail = (row: AttentionRow) => [row.assetTag, row.location].filter(Boolean).join(" · ");
+  return [
+    ...warranties.map((row) => {
+      const left = Math.max(Math.ceil((Date.parse(row.date) - now) / DAY_MS), 0);
+      return {
+        key: `w-${row.assetId}`,
+        kind: "Warranty" as const,
+        title: `${row.assetName} warranty expiring`,
+        detail: detail(row),
+        href: `${BASE}/assets/${row.assetId}`,
+        due: left === 0 ? "Today" : `${days(left)} left`,
+      };
+    }),
+    ...maintenance.map((row) => ({
+      key: `m-${row.assetId}`,
+      kind: "Maintenance" as const,
+      title: `${row.assetName} in maintenance`,
+      detail: detail(row),
+      href: `${BASE}/assets/${row.assetId}`,
+      due: `for ${days(Math.max(Math.floor((now - Date.parse(row.date)) / DAY_MS), 0))}`,
+    })),
+  ];
 }
 
 // Tile colours follow the one status map (ADR 0098 §3).
