@@ -332,12 +332,12 @@ function BreakdownBody({
         <div className="relative shrink-0">
           <DonutChart
             segments={rows.map((row, i) => ({ label: row.label, value: row.count, color: "currentColor", colorClass: colorOf(row, i) }))}
-            size={150}
-            strokeWidth={26}
+            size={120}
+            strokeWidth={22}
             seamless
           />
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold tabular-nums text-foreground">{total.toLocaleString()}</span>
+            <span className="text-2xl font-bold tabular-nums text-foreground">{total.toLocaleString()}</span>
             <span className="text-xs text-muted-foreground">Assets</span>
           </div>
         </div>
@@ -347,12 +347,12 @@ function BreakdownBody({
           const label = row.id ? (
             <Link
               href={`${BASE}/assets?${filterParam}=${row.id}`}
-              className="truncate hover:underline"
+              className="hover:underline"
             >
               {row.label}
             </Link>
           ) : (
-            <span className="truncate text-muted-foreground">{row.label}</span>
+            <span className="text-muted-foreground">{row.label}</span>
           );
           return (
             <li
@@ -360,7 +360,8 @@ function BreakdownBody({
               className="flex items-center gap-2 py-1.5 text-sm"
             >
               {chart === "donut" && <span className={`h-3 w-3 shrink-0 rounded-full bg-current ${colorOf(row, i)}`} />}
-              <span className={chart === "bars" ? "w-40 min-w-0 truncate" : "min-w-0 flex-1 truncate"}>{label}</span>
+              {/* Donut legend wraps long names: beside the chart a third-width card leaves too little room to truncate. */}
+              <span className={chart === "bars" ? "w-40 min-w-0 truncate" : "min-w-0 flex-1 break-words leading-tight"}>{label}</span>
               {chart === "bars" && (
                 <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                   <span
@@ -420,6 +421,7 @@ function AttentionBody({ warranties, maintenance }: { warranties: AttentionRow[]
               <Badge
                 variant="pill"
                 color={row.reason === "In Maintenance" ? STATUS_TONE["In Maintenance"] : "yellow"}
+                className="whitespace-nowrap"
               >
                 {row.reason}
               </Badge>
