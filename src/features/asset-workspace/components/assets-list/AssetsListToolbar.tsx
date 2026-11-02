@@ -1,32 +1,37 @@
 import type { ComponentType, ReactNode, RefObject } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/lovable/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import type { AssetListQuery } from "../../services/assets-list-query";
 import {
-  AssignmentIcon, ChevronDownIcon, GridIcon, InventoryIcon, ListIcon,
-  LocationIcon, MoreIcon, PlusIcon, ScanIcon, TransferIcon, XIcon,
+  AssignmentIcon, ChevronDownIcon, ClockIcon, DownloadIcon, FileTextIcon, GridIcon, InventoryIcon, ListIcon,
+  LocationIcon, MoreIcon, PlusIcon, PrintIcon, ScanIcon, TransferIcon, XIcon,
 } from "@/components/ui/icons";
 
 interface UnavailableActionProps {
   children?: ReactNode;
   icon?: ComponentType<{ className?: string }>;
   label?: string;
-  primary?: boolean;
   className?: string;
 }
 
-/** Aria-disabled keeps the explanation discoverable by keyboard users. No action is attached. */
-export function UnavailableAction({ children, icon: Icon, label, primary, className }: UnavailableActionProps) {
+const UNAVAILABLE_REASON = "Not available in this version of the Assets page";
+
+/** Aria-disabled keeps the explanation discoverable by keyboard users. No action is attached.
+ *  Muted text instead of opacity, so it reads as "not yet" rather than broken. */
+export function UnavailableAction({ children, icon: Icon, label, className }: UnavailableActionProps) {
   return (
     <Button
       aria-disabled="true"
       aria-label={label}
-      aria-description="This action is not available in this version of the Assets page."
-      title="Not available in this version of the Assets page"
-      variant={primary ? "primary" : "outline"}
+      aria-description={`${UNAVAILABLE_REASON}.`}
+      title={UNAVAILABLE_REASON}
+      variant="outline"
       size={label ? "icon-sm" : "sm"}
-      className={`cursor-not-allowed opacity-50 ${label ? "" : "px-2"} ${className ?? ""}`}
+      className={`cursor-not-allowed text-muted-foreground hover:bg-card ${label ? "" : "px-2"} ${className ?? ""}`}
     >
       {Icon && <Icon className="size-4" />}
       {children}
@@ -41,45 +46,117 @@ export function AssetsPageActions({ onScan, scanTriggerRef }: { onScan: () => vo
         <ScanIcon className="size-4" />
         Scan Asset
       </Button>
-      <Button asChild variant="primary" size="sm">
+      <RegisterAssetSplitButton />
+      <MoreActionsMenu />
+    </div>
+  );
+}
+
+/** PO split button: the main part opens the method choice, the chevron offers the methods directly. */
+function RegisterAssetSplitButton() {
+  return (
+    <div className="flex items-center">
+      <Button asChild variant="primary" size="sm" className="rounded-r-none">
         <Link href="/asset-workspace/assets/register">
           <PlusIcon className="size-4" />
           Register Asset
         </Link>
       </Button>
-      <UnavailableAction>
-        More Actions
-        <ChevronDownIcon className="size-3" />
-      </UnavailableAction>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="primary"
+            size="icon-sm"
+            aria-label="Choose registration method"
+            className="rounded-l-none border-l border-primary-foreground/30"
+          >
+            <ChevronDownIcon className="size-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuItem asChild>
+            <Link href="/asset-workspace/assets/register?mode=single">
+              <AssetMenuItemText title="Single Asset" description="Register one asset step by step" />
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled className={UNAVAILABLE_ITEM}>
+            <AssetMenuItemText title="Bulk Assets" description="Not available yet" />
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
 
+/** Override the shared 50% opacity so unavailable items keep readable contrast. */
+const UNAVAILABLE_ITEM = "data-[disabled]:opacity-100 data-[disabled]:text-muted-foreground";
+
+const MORE_ACTIONS = [
+  { title: "Export Assets", description: "Export current view to Excel or CSV", icon: DownloadIcon },
+  { title: "Download Import Template", description: "Get the template for bulk registration", icon: FileTextIcon },
+  { title: "Print / Download Labels", description: "Generate QR, barcode or Asset Tag labels", icon: PrintIcon },
+  { title: "Import History", description: "View bulk import transactions", icon: ClockIcon },
+];
+
+function MoreActionsMenu() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm">
+          More Actions
+          <ChevronDownIcon className="size-3" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72">
+        <p className="px-2 py-1.5 text-2xs text-muted-foreground">Not available in this version</p>
+        {MORE_ACTIONS.map(({ title, description, icon: Icon }) => (
+          <DropdownMenuItem key={title} disabled className={`items-start ${UNAVAILABLE_ITEM}`}>
+            <Icon className="mt-0.5" />
+            <AssetMenuItemText title={title} description={description} />
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function AssetMenuItemText({ title, description }: { title: string; description: string }) {
+  return (
+    <span className="flex flex-col">
+      <span className="text-xs font-medium">{title}</span>
+      <span className="text-2xs text-muted-foreground">{description}</span>
+    </span>
+  );
+}
+
+/** Bulk actions appear only once rows are selected; until then a hint explains what selection enables. */
 export function AssetsSelectionToolbar({ count, clear }: { count: number; clear: () => void }) {
   return (
-    <div role="toolbar" aria-label="Selected asset actions" className="flex w-max items-center gap-1">
+    <div role="toolbar" aria-label="Selected asset actions" className="flex h-8 w-max items-center gap-1">
       <span
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        className="mr-1 text-xs font-semibold text-foreground"
+        className={count > 0 ? "mr-1 text-xs font-semibold text-foreground" : "text-xs text-muted-foreground"}
       >
-        {count} selected
+        {count > 0 ? `${count} selected` : "Select assets to assign, transfer or update their status"}
       </span>
       {count > 0 && (
-        <Button variant="ghost" size="icon-sm" aria-label="Clear selection" onClick={clear}>
-          <XIcon className="size-3" />
-        </Button>
+        <>
+          <Button variant="ghost" size="icon-sm" aria-label="Clear selection" onClick={clear}>
+            <XIcon className="size-3" />
+          </Button>
+          <UnavailableAction icon={AssignmentIcon}>Assign</UnavailableAction>
+          <UnavailableAction icon={TransferIcon}>Transfer</UnavailableAction>
+          <UnavailableAction icon={LocationIcon}>Move Location</UnavailableAction>
+          <UnavailableAction>
+            Update Status
+            <ChevronDownIcon className="size-3" />
+          </UnavailableAction>
+          <UnavailableAction icon={InventoryIcon}>Add to Inventory</UnavailableAction>
+          <UnavailableAction label="More selected asset actions" icon={MoreIcon} />
+        </>
       )}
-      <UnavailableAction icon={AssignmentIcon}>Assign</UnavailableAction>
-      <UnavailableAction icon={TransferIcon}>Transfer</UnavailableAction>
-      <UnavailableAction icon={LocationIcon}>Move Location</UnavailableAction>
-      <UnavailableAction>
-        Update Status
-        <ChevronDownIcon className="size-3" />
-      </UnavailableAction>
-      <UnavailableAction icon={InventoryIcon}>Add to Inventory</UnavailableAction>
-      <UnavailableAction label="More selected asset actions" icon={MoreIcon} />
     </div>
   );
 }

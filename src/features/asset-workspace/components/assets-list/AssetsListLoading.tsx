@@ -20,7 +20,7 @@ export function AssetsSummaryLoading() {
 export function AssetsFilterOptionsLoading() {
   return (
     <div role="status" aria-label="Loading filter options" className="grid min-w-0 grid-cols-2 gap-2 @2xl:grid-cols-4">
-      {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-13 w-full rounded-control" />)}
+      {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-11 w-full rounded-control" />)}
     </div>
   );
 }

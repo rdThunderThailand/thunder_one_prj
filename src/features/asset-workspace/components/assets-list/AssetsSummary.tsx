@@ -37,9 +37,9 @@ export function AssetsSummary({ result }: { result: AssetReadResult<AssetSummary
             <div className="min-w-0">
               <h2 className="text-xs font-semibold text-foreground">{label}</h2>
               <p className="mt-1 text-kpi font-bold leading-tight tabular-nums text-foreground">{number.format(count)}</p>
-              {percent !== null && (
-                <p className="mt-1 text-xs tabular-nums text-muted-foreground">{percent.toFixed(1)}%</p>
-              )}
+              <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+                {percent === null ? "All statuses" : `${percent.toFixed(1)}%`}
+              </p>
             </div>
           </Card>
         ))}

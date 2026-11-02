@@ -23,10 +23,10 @@ function FilterSelect({ label, allLabel, value, options, pending, onChange }: Fi
   const labelId = useId();
   const allValue = "__all__";
   return (
-    <div className="flex h-13 min-w-0 flex-col justify-center rounded-control border border-input bg-card px-3">
+    <div className="flex h-11 min-w-0 flex-col justify-center rounded-control border border-input bg-card px-3">
       <span id={labelId} className="text-2xs text-muted-foreground">{label}</span>
       <Select value={value || allValue} disabled={pending} onValueChange={(next) => onChange(next === allValue ? undefined : next)}>
-        <SelectTrigger aria-labelledby={labelId} className="h-8 min-w-0 border-0 px-0 py-0 text-xs shadow-none [&>span]:min-w-0 [&>span]:truncate">
+        <SelectTrigger aria-labelledby={labelId} className="h-6 min-w-0 border-0 px-0 py-0 text-xs shadow-none [&>span]:min-w-0 [&>span]:truncate">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -92,7 +92,7 @@ export function AssetsFilters({ result, url, loading = false }: { result: AssetR
             value={search}
             onChange={(event) => setInput((previous) => ({ ...previous, source: currentSearch, draft: event.target.value }))}
             placeholder="Search name, Asset Tag, serial number…"
-            className="h-13 pl-9 text-xs"
+            className="h-11 pl-9 text-xs"
           />
         </form>
         {loading ? <AssetsFilterOptionsLoading /> : <div className="grid min-w-0 grid-cols-2 gap-2 @2xl:grid-cols-4">

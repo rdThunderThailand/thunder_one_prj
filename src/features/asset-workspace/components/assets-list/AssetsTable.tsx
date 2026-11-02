@@ -1,5 +1,5 @@
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { BoxIcon, EditIcon, EyeIcon, MoreIcon } from "@/components/ui/icons";
+import { BoxIcon } from "@/components/ui/icons";
 import { ASSET_STATUSES, type AssetStatus } from "../../domain/asset-status";
 import { ASSET_CONDITIONS, type AssetCondition } from "../../domain/asset-condition";
 import type { AssetListRow } from "../../services/assets-list-types";
@@ -27,7 +27,7 @@ function UpdatedAt({ value }: { value: string | null }) {
 
 export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: AssetsTableProps) {
   const count = rows.filter((row) => selected.has(row.id)).length;
-  const cell = "border-b border-border px-2 py-2 align-top";
+  const cell = "border-b border-border px-2 py-2 align-middle";
 
   return (
     <table className="w-full min-w-[76rem] table-fixed border-separate border-spacing-0 text-left text-xs">
@@ -43,12 +43,12 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: 
         <col className="w-22" />
         <col className="w-28" />
         <col className="w-28" />
-        <col className="w-26" />
+        <col className="w-14" />
       </colgroup>
       <thead className="sticky top-0 z-20 bg-muted text-2xs text-muted-foreground [&_th]:h-10 [&_th]:border-y [&_th]:border-border [&_th]:px-2 [&_th]:font-medium">
         <tr>
           <th scope="col">
-            <Checkbox aria-label="Select all assets on this page" disabled={pending || !rows.length}
+            <Checkbox className="rounded-xs" aria-label="Select all assets on this page" disabled={pending || !rows.length}
               checked={count === 0 ? false : count === rows.length ? true : "indeterminate"}
               onCheckedChange={(checked) => onSelectAll(checked === true)} />
           </th>
@@ -66,13 +66,13 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: 
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.id} data-selected={selected.has(row.id)} className={`group h-12 ${selected.has(row.id) ? "bg-info-muted" : "hover:bg-muted"}`}>
+          <tr key={row.id} data-selected={selected.has(row.id)} className={`group h-12 ${selected.has(row.id) ? "bg-accent" : "hover:bg-muted"}`}>
             <td className={cell}>
-              <Checkbox aria-label={`Select ${row.name || "unnamed asset"}`} disabled={pending} checked={selected.has(row.id)} onCheckedChange={(checked) => onSelect(row.id, checked === true)} />
+              <Checkbox className="rounded-xs" aria-label={`Select ${row.name || "unnamed asset"}`} disabled={pending} checked={selected.has(row.id)} onCheckedChange={(checked) => onSelect(row.id, checked === true)} />
             </td>
             {/* Composite the pinned background with its text to prevent scroll paint-through. */}
-            <td className={`${cell} sticky left-0 z-10 transform-gpu bg-card group-hover:bg-muted group-data-[selected=true]:bg-info-muted`}>
-              <div className="flex items-start gap-2">
+            <td className={`${cell} sticky left-0 z-10 transform-gpu bg-card group-hover:bg-muted group-data-[selected=true]:bg-accent`}>
+              <div className="flex items-center gap-2">
                 <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-control bg-muted text-muted-foreground">
                   <BoxIcon className="size-5" />
                 </span>
@@ -81,7 +81,7 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: 
                 </div>
               </div>
             </td>
-            <td className={`${cell} break-words text-muted-foreground`}>{row.asset_code || "—"}</td>
+            <td className={`${cell} break-words font-medium tabular-nums text-foreground`}>{row.asset_code || "—"}</td>
             <td className={`${cell} break-words`}>{row.serial_number || "—"}</td>
             <td className={cell}>
               <span className="inline-block max-w-full break-words rounded-pill border border-border bg-card px-2 py-1 text-2xs text-muted-foreground">
@@ -108,11 +108,8 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: 
               <UpdatedAt value={row.updated_at} />
             </td>
             <td className={cell}>
-              <div className="flex items-center">
-                <UnavailableAction label={`View ${row.name || "asset"}`} icon={EyeIcon} className="border-transparent bg-transparent" />
-                <UnavailableAction label={`Edit ${row.name || "asset"}`} icon={EditIcon} className="border-transparent bg-transparent" />
-                <UnavailableAction label={`More actions for ${row.name || "asset"}`} icon={MoreIcon} className="border-transparent bg-transparent" />
-              </div>
+              {/* Opens the Asset Profile (view and edit) once that page exists; disabled until then. */}
+              <UnavailableAction label={`Open asset profile for ${row.name || "asset"}`} icon={BoxIcon} className="border-transparent bg-transparent" />
             </td>
           </tr>
         ))}

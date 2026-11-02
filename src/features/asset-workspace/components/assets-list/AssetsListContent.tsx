@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
+import { PlusIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { AssetsListResource } from "../../hooks/use-assets-list-data";
 import type { AssetsListUrlState } from "../../hooks/use-assets-list-url";
@@ -11,8 +13,8 @@ import { AssetsSelectionToolbar, AssetsSortControl, AssetsViewControls } from ".
 import { AssetsTableLoading } from "./AssetsListLoading";
 import { AssetsSectionError } from "./AssetsSectionError";
 
-export function AssetsListContent({ resource, query, requestedKey, url }: {
-  resource: AssetsListResource; query: AssetListQuery; requestedKey: string; url: AssetsListUrlState;
+export function AssetsListContent({ resource, query, requestedKey, url, filtered }: {
+  resource: AssetsListResource; query: AssetListQuery; requestedKey: string; url: AssetsListUrlState; filtered: boolean;
 }) {
   const { data, pending, error, retry, dataKey } = resource;
   const scroll = useRef<HTMLDivElement>(null);
@@ -65,8 +67,15 @@ export function AssetsListContent({ resource, query, requestedKey, url }: {
         ) : data.rows.length === 0 ? (
           <div className="p-6">
             <EmptyState title={data.total > 0 ? "No assets on this page" : "No assets found"}
-              body={data.total > 0 ? "The results may have changed. Return to the first page." : "There are no assets in this view. Adjust your filters or check your authorized scope."}
-              action={data.total > 0 ? <Button size="sm" variant="outline" disabled={frozen} onClick={() => url.set({ page: "1" })}>Go to first page</Button> : undefined} />
+              body={data.total > 0 ? "The results may have changed. Return to the first page." : filtered ? "There are no assets in this view. Adjust your filters or check your authorized scope." : "This organization has no assets in your authorized scope yet."}
+              action={data.total > 0 ? <Button size="sm" variant="outline" disabled={frozen} onClick={() => url.set({ page: "1" })}>Go to first page</Button> : filtered ? undefined : (
+                <Button asChild size="sm" variant="primary">
+                  <Link href="/asset-workspace/assets/register">
+                    <PlusIcon className="size-4" />
+                    Register Asset
+                  </Link>
+                </Button>
+              )} />
           </div>
         ) : (
           <AssetsTable rows={data.rows} selected={frozen ? new Set() : selected} pending={frozen}

@@ -53,7 +53,7 @@ export function AssetsListView({ context }: { context: string }) {
         </div>
       )}
       <AssetsListContent
-        resource={list} query={query} url={url}
+        resource={list} query={query} url={url} filtered={hasFilters}
         requestedKey={parsed.success ? assetListQueryString(query) : `invalid:${url.search}`}
       />
       {!denied && (scanOpen || url.get("scan") === "1") && (
