@@ -8,13 +8,21 @@ const KPI_STATUSES = ["Available", "Assigned", "In Maintenance", "Retired"] as c
 /** Share of Total, one decimal; 0 when Total is 0. */
 const pct = (n: number, total: number) => (total > 0 ? Math.round((n / total) * 1000) / 10 : 0);
 
-export function kpiFromCounts(counts: Partial<Record<AssetStatus, number>>) {
-  const total = KPI_STATUSES.reduce((sum, status) => sum + (counts[status] ?? 0), 0);
+type StatusCounts = Partial<Record<AssetStatus, number>>;
+
+const kpiTotal = (counts: StatusCounts) => KPI_STATUSES.reduce((sum, status) => sum + (counts[status] ?? 0), 0);
+
+/**
+ * `lastMonth` = last calendar month's closing counts (PO 2026-11-02). Each delta is now minus last month,
+ * or `null` when there is no snapshot for last month.
+ */
+export function kpiFromCounts(counts: StatusCounts, lastMonth: StatusCounts | null = null) {
+  const total = kpiTotal(counts);
   const tiles = KPI_STATUSES.map((status) => {
     const count = counts[status] ?? 0;
-    return { status, count, percent: pct(count, total) };
+    return { status, count, percent: pct(count, total), delta: lastMonth && count - (lastMonth[status] ?? 0) };
   });
-  return { total, tiles };
+  return { total, totalDelta: lastMonth && total - kpiTotal(lastMonth), tiles };
 }
 
 export interface BreakdownInput {

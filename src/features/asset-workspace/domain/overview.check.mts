@@ -15,6 +15,16 @@ assert.deepEqual(
   ],
 );
 assert.equal(kpiFromCounts({}).tiles[0].percent, 0);
+assert.equal(kpi.totalDelta, null);
+assert.equal(kpi.tiles[0].delta, null);
+
+// vs last month: now minus last month's closing count; a status missing last month counts as 0.
+const trend = kpiFromCounts({ Available: 142, Assigned: 44 }, { Available: 134, Assigned: 40, Disposed: 3 });
+assert.equal(trend.totalDelta, 12);
+assert.deepEqual(
+  trend.tiles.map((t) => t.delta),
+  [8, 4, 0, 0],
+);
 
 // Top 6, then Others, then Unassigned; zero rows dropped.
 const items = ["a", "b", "c", "d", "e", "f", "g", "h"].map((id, i) => ({ id, label: id.toUpperCase(), count: 10 - i }));

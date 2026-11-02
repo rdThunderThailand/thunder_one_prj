@@ -1,7 +1,7 @@
 // Asset Workspace Overview (FigJam 445:833; scope in E:\ThunderOne\docs\asset-ws-overview-fe-checklist.md §1).
 // Each widget gets its own data or `null` (Core failed) and renders its own error / empty state.
-// Waiting on the Lead: "vs last month" on the tiles (not here) and Assets on Map (layout mockup only,
-// OverviewMockups.tsx). Quick Actions are plain links; Register Device is Phase 2 (checklist §1).
+// KPI "vs last month" shows once Core has last month's month-end rows. Quick Actions stay disabled until their
+// pages ship. Connected Devices and Register Device are Phase 2 (checklist §1).
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -13,6 +13,7 @@ import {
   BoxIcon,
   BulkImportIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
   ChevronRightIcon,
   InventoryIcon,
   PlusIcon,
@@ -20,29 +21,30 @@ import {
   ToolIcon,
 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { StatTile } from "@/components/ui/StatTile";
 import type { AssetStatus } from "../../domain/asset-status";
 import { attentionRows, breakdown, kpiFromCounts, type AttentionRow, type BreakdownInput, type BreakdownRow } from "../../domain/overview";
 import { STATUS_TONE, type StatusTone } from "../../domain/status-tone";
-import type { ActivityEntry } from "../../services/asset-overview-api";
+import type { ActivityEntry, LocationCount } from "../../services/asset-overview-api";
 import { ErrorState } from "../states/ErrorState";
 import { EmptyState } from "../states/states";
 import { AlertsPanel, type AlertItem } from "./AlertsPanel";
-import { MapMockup } from "./OverviewMockups";
+import { AssetMap } from "./AssetMap";
 
 const BASE = "/asset-workspace";
 
 export interface OverviewData {
-  statusCounts: Partial<Record<AssetStatus, number>> | null;
+  statusCounts: { now: Partial<Record<AssetStatus, number>>; lastMonth: Partial<Record<AssetStatus, number>> | null } | null;
   categories: BreakdownInput[] | null;
-  locations: BreakdownInput[] | null;
+  locations: LocationCount[] | null;
   warranties: AttentionRow[] | null;
   maintenance: AttentionRow[] | null;
   activity: ActivityEntry[] | null;
 }
 
 export function OverviewPage({ data }: { data: OverviewData }) {
-  const kpi = data.statusCounts && kpiFromCounts(data.statusCounts);
+  const kpi = data.statusCounts && kpiFromCounts(data.statusCounts.now, data.statusCounts.lastMonth);
   const total = kpi?.total ?? 0;
 
   return (
@@ -51,20 +53,44 @@ export function OverviewPage({ data }: { data: OverviewData }) {
         title="Overview"
         subtitle="Asset status and what needs attention in your organization"
         actions={
-          <Button asChild>
-            <Link href={`${BASE}/assets/register`}>
-              <PlusIcon className="h-4 w-4" />
-              Register Asset
-            </Link>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <PlusIcon className="h-4 w-4" />
+                Register Asset
+                <ChevronDownIcon className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {QUICK_ACTIONS.map(({ label, href, Icon, ready }) =>
+                ready ? (
+                  <DropdownMenuItem
+                    key={label}
+                    asChild
+                  >
+                    <Link href={href}>
+                      <Icon />
+                      {label}
+                    </Link>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    key={label}
+                    disabled
+                  >
+                    <Icon />
+                    {label}
+                    <span className="ml-auto text-xs text-muted-foreground">Soon</span>
+                  </DropdownMenuItem>
+                ),
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         }
       />
 
       {kpi ? (
-        <KpiRow
-          total={kpi.total}
-          tiles={kpi.tiles}
-        />
+        <KpiRow {...kpi} />
       ) : (
         <Card className="p-4">
           <ErrorState title="Couldn't load asset counts" />
@@ -95,7 +121,7 @@ export function OverviewPage({ data }: { data: OverviewData }) {
           title="Assets on Map"
           viewAll={`${BASE}/locations`}
         >
-          <MapMockup />
+          {data.locations ? <AssetMap locations={data.locations} /> : <ErrorState />}
         </Widget>
       </div>
 
@@ -123,11 +149,13 @@ export function OverviewPage({ data }: { data: OverviewData }) {
   );
 }
 
+// Lead (2026-11-02): keep these four; an action whose page isn't built yet stays disabled. Set `ready`
+// when its page replaces the ScreenPlaceholder.
 const QUICK_ACTIONS = [
-  { label: "Register Asset", href: `${BASE}/assets/register`, Icon: PlusIcon, primary: true },
-  { label: "Assign Asset", href: `${BASE}/assignments`, Icon: AssignmentIcon },
-  { label: "Start Inventory", href: `${BASE}/inventory`, Icon: InventoryIcon },
-  { label: "Import Data", href: `${BASE}/assets/import`, Icon: BulkImportIcon },
+  { label: "Register Asset", href: `${BASE}/assets/register`, Icon: PlusIcon, primary: true, ready: false },
+  { label: "Assign Asset", href: `${BASE}/assignments`, Icon: AssignmentIcon, ready: false },
+  { label: "Start Inventory", href: `${BASE}/inventory`, Icon: InventoryIcon, ready: false },
+  { label: "Import Data", href: `${BASE}/assets/import`, Icon: BulkImportIcon, ready: false },
 ];
 
 function QuickActions() {
@@ -135,12 +163,9 @@ function QuickActions() {
     <section className="space-y-2">
       <h2 className="text-sm font-semibold text-foreground">Quick Actions</h2>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {QUICK_ACTIONS.map(({ label, href, Icon, primary }) => (
-          <Link
-            key={label}
-            href={href}
-          >
-            <Card className="flex items-center gap-3 p-3 transition-colors hover:bg-muted">
+        {QUICK_ACTIONS.map(({ label, href, Icon, primary, ready }) => {
+          const card = (
+            <Card className={`flex items-center gap-3 p-3 transition-colors ${ready ? "hover:bg-muted" : "opacity-50"}`}>
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg ${
                   primary ? "bg-primary text-primary-foreground" : "bg-accent text-primary"
@@ -150,8 +175,25 @@ function QuickActions() {
               </span>
               <span className="text-sm font-medium text-primary">{label}</span>
             </Card>
-          </Link>
-        ))}
+          );
+          return ready ? (
+            <Link
+              key={label}
+              href={href}
+            >
+              {card}
+            </Link>
+          ) : (
+            <div
+              key={label}
+              aria-disabled="true"
+              title="Coming soon"
+              className="cursor-not-allowed"
+            >
+              {card}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -204,13 +246,17 @@ const TILE_ICON = {
   Retired: RetireIcon,
 } as const;
 
-function KpiRow({ total, tiles }: ReturnType<typeof kpiFromCounts>) {
+/** "+12 vs last month"; nothing until last month has a snapshot. */
+const vsLastMonth = (delta: number | null) => (delta === null ? undefined : `${delta > 0 ? "+" : ""}${delta.toLocaleString()} vs last month`);
+
+function KpiRow({ total, totalDelta, tiles }: ReturnType<typeof kpiFromCounts>) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
       <Link href={`${BASE}/assets`}>
         <StatTile
           label="Total Assets"
           value={total.toLocaleString()}
+          trend={vsLastMonth(totalDelta)}
           icon={<BoxIcon />}
         />
       </Link>
@@ -225,6 +271,7 @@ function KpiRow({ total, tiles }: ReturnType<typeof kpiFromCounts>) {
               label={tile.status}
               value={tile.count.toLocaleString()}
               hint={`${tile.percent}%`}
+              trend={vsLastMonth(tile.delta)}
               color={TILE_COLOR[STATUS_TONE[tile.status]]}
               icon={<Icon />}
             />

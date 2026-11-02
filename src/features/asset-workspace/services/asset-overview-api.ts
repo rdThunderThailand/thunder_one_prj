@@ -2,8 +2,8 @@
 // like asset-list-api.ts: the token comes from the session cookie and is passed in. Each call
 // fails open to `null` so one missing endpoint shows that widget's error state, not a broken page.
 //
-// All six are Core v2 reads (sheet rows #6, #27, #33, #78, #1, #85) from Core `feat/asset-ws-v2-*`,
-// not on `develop` yet.
+// All six are Core v2 reads under `/api/core/v2/tenants/{id}/asset-workspace/`: `assets/summary` and
+// `assets/list` are on `develop`; `categories`, `locations`, `warranties/expiring` and `activity` are not yet.
 import { env } from "@/config/env";
 import type { AssetStatus } from "../domain/asset-status";
 import { ATTENTION_LIMIT, ATTENTION_WARRANTY_DAYS, type AttentionRow, type BreakdownInput } from "../domain/overview";
@@ -22,13 +22,15 @@ async function coreGet<T>(path: string, token: string): Promise<T | null> {
   }
 }
 
-/** #6 — counts per lifecycle status over authorized assets. */
+/** `assets/summary`: counts per lifecycle status now and, once snapshotted, at the end of last month. */
 export async function getStatusCounts(token: string, tenantId: string) {
-  const data = await coreGet<{ byStatus: { status: AssetStatus; count: number }[] }>(
+  type ByStatus = { status: AssetStatus; count: number }[];
+  const data = await coreGet<{ byStatus: ByStatus; lastMonth?: { month: string; byStatus: ByStatus } | null }>(
     `/tenants/${tenantId}/asset-workspace/assets/summary`,
     token,
   );
-  return data && Object.fromEntries(data.byStatus.map((row) => [row.status, row.count]));
+  const toCounts = (rows: ByStatus) => Object.fromEntries(rows.map((row) => [row.status, row.count]));
+  return data && { now: toCounts(data.byStatus), lastMonth: data.lastMonth ? toCounts(data.lastMonth.byStatus) : null };
 }
 
 interface NamedCount {
@@ -38,18 +40,18 @@ interface NamedCount {
   assetCount: number;
 }
 
-/** #27 — categories with asset counts. */
+/** `categories`: categories with asset counts. */
 export async function getCategoryCounts(token: string, tenantId: string): Promise<BreakdownInput[] | null> {
   const data = await coreGet<NamedCount[]>(`/tenants/${tenantId}/asset-workspace/categories`, token);
   return data && data.map((c) => ({ id: c.id, label: c.name, count: c.assetCount }));
 }
 
-interface LocationCount extends BreakdownInput {
+export interface LocationCount extends BreakdownInput {
   latitude: number | null;
   longitude: number | null;
 }
 
-/** #33 — locations with asset counts and coordinates (coordinates feed the map, pending Lead). */
+/** `locations`: locations with asset counts and coordinates (coordinates feed Assets on Map). */
 export async function getLocationCounts(token: string, tenantId: string): Promise<LocationCount[] | null> {
   const data = await coreGet<(NamedCount & { latitude: number | null; longitude: number | null })[]>(
     `/tenants/${tenantId}/asset-workspace/locations`,
@@ -82,7 +84,7 @@ function attentionRow(a: AssetRef, reason: AttentionRow["reason"], date: string)
   };
 }
 
-/** #78 — current warranties ending within 30 days, soonest first. */
+/** `warranties/expiring`: current warranties ending within 30 days, soonest first. */
 export async function getExpiringWarranties(token: string, tenantId: string): Promise<AttentionRow[] | null> {
   const data = await coreGet<(AssetRef & { endDate: string })[]>(
     `/tenants/${tenantId}/asset-workspace/warranties/expiring?days=${ATTENTION_WARRANTY_DAYS}&limit=${ATTENTION_LIMIT}`,
@@ -91,7 +93,7 @@ export async function getExpiringWarranties(token: string, tenantId: string): Pr
   return data && data.map((a) => attentionRow(a, "Warranty expiring", a.endDate));
 }
 
-/** #1 — assets In Maintenance, longest first. */
+/** `assets/list`: assets In Maintenance, longest first. */
 export async function getInMaintenance(token: string, tenantId: string): Promise<AttentionRow[] | null> {
   const query = new URLSearchParams({
     status: "In Maintenance",
@@ -116,7 +118,7 @@ export interface ActivityEntry {
   at: string;
 }
 
-/** #85 — latest asset events from `audit_events`. */
+/** `activity`: latest asset events from `audit_events`. */
 export function getRecentActivity(token: string, tenantId: string) {
   return coreGet<ActivityEntry[]>(`/tenants/${tenantId}/asset-workspace/activity?limit=5`, token);
 }

@@ -8,6 +8,8 @@ interface StatTileProps {
   value: string;
   /** Small secondary line under the value, e.g. a percentage ("86%"). */
   hint?: string;
+  /** Small muted line under the value, e.g. "+12 vs last month". */
+  trend?: string;
   color?: StatTileColor;
   /** Optional leading icon, shown in a round chip tinted like the value. */
   icon?: ReactNode;
@@ -32,7 +34,7 @@ const chipColor: Record<StatTileColor, string> = {
   emerald: "bg-success-muted text-t1-green-700",
 };
 
-export function StatTile({ label, value, hint, color = "zinc", icon, className = "" }: StatTileProps) {
+export function StatTile({ label, value, hint, trend, color = "zinc", icon, className = "" }: StatTileProps) {
   return (
     <Card className={`flex items-start gap-3 p-4 ${className}`}>
       {icon && (
@@ -46,6 +48,7 @@ export function StatTile({ label, value, hint, color = "zinc", icon, className =
           {value}
           {hint && <span className="ml-1.5 text-sm font-normal text-t1-gray-400">{hint}</span>}
         </span>
+        {trend && <p className="text-xs text-muted-foreground">{trend}</p>}
       </div>
     </Card>
   );

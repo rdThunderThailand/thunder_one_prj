@@ -1,6 +1,6 @@
 "use client";
 
-// Alerts & Notifications (option b, 2026-11-02): the same #78 warranty and #1 In Maintenance rows as
+// Alerts & Notifications (option b, 2026-11-02): the same expiring-warranty and In Maintenance rows as
 // Assets Needing Attention, shown as alerts with days left / days in maintenance. No data of its own;
 // platform notifications stay in the Shell bell (02 §4.2).
 import Link from "next/link";

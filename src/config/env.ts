@@ -16,4 +16,6 @@ export const env = {
   helpStatusUrl: process.env.NEXT_PUBLIC_HELP_STATUS_URL ?? "",
   // ADR 0097: "1" turns on the Asset Workspace MVP App (local/dev only); anything else hides it.
   assetWorkspaceMvp: process.env.NEXT_PUBLIC_ASSET_WORKSPACE_MVP === "1",
+  // Public Mapbox token (pk.…) for Assets on Map; unset shows "Map unavailable".
+  mapboxToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "",
 } as const;
