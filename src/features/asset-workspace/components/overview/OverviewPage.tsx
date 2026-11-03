@@ -53,39 +53,43 @@ export function OverviewPage({ data }: { data: OverviewData }) {
         title="Overview"
         subtitle="Asset status and what needs attention in your organization"
         actions={
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <PlusIcon className="h-4 w-4" />
-                Register Asset
-                <ChevronDownIcon className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {QUICK_ACTIONS.map(({ label, href, Icon, ready }) =>
-                ready ? (
-                  <DropdownMenuItem
-                    key={label}
-                    asChild
-                  >
-                    <Link href={href}>
+          <div className="flex">
+            <RegisterAssetButton />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label="More actions"
+                  className="rounded-l-none border-l border-primary-foreground/30 px-2"
+                >
+                  <ChevronDownIcon className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {QUICK_ACTIONS.slice(1).map(({ label, href, Icon, ready }) =>
+                  ready ? (
+                    <DropdownMenuItem
+                      key={label}
+                      asChild
+                    >
+                      <Link href={href}>
+                        <Icon />
+                        {label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      key={label}
+                      disabled
+                    >
                       <Icon />
                       {label}
-                    </Link>
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem
-                    key={label}
-                    disabled
-                  >
-                    <Icon />
-                    {label}
-                    <span className="ml-auto text-xs text-muted-foreground">Soon</span>
-                  </DropdownMenuItem>
-                ),
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                      <span className="ml-auto text-xs text-muted-foreground">Soon</span>
+                    </DropdownMenuItem>
+                  ),
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         }
       />
 
@@ -157,6 +161,33 @@ const QUICK_ACTIONS = [
   { label: "Start Inventory", href: `${BASE}/inventory`, Icon: InventoryIcon, ready: false },
   { label: "Import Data", href: `${BASE}/assets/import`, Icon: BulkImportIcon, ready: false },
 ];
+
+// Header split button: main part opens Register Asset, the chevron lists the other Quick Actions.
+function RegisterAssetButton() {
+  const { label, href, Icon, ready } = QUICK_ACTIONS[0];
+  const content = (
+    <>
+      <Icon className="h-4 w-4" />
+      {label}
+    </>
+  );
+  return ready ? (
+    <Button
+      asChild
+      className="rounded-r-none"
+    >
+      <Link href={href}>{content}</Link>
+    </Button>
+  ) : (
+    <Button
+      disabled
+      title="Coming soon"
+      className="rounded-r-none"
+    >
+      {content}
+    </Button>
+  );
+}
 
 function QuickActions() {
   return (
