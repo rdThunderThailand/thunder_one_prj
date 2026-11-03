@@ -1,10 +1,9 @@
-import { ScreenPlaceholder } from "@/features/asset-workspace/components/ScreenPlaceholder";
+import { getSession } from "@/features/auth/services/get-session";
+import { RegisterAssetPage } from "@/features/asset-workspace/components/register-asset/RegisterAssetPage";
+import { AccessDeniedState } from "@/features/asset-workspace/components/states/states";
 
-export default function RegisterAssetPage() {
-  return (
-    <ScreenPlaceholder
-      title="Register Asset"
-      spec="UC-001 · 05 §4.1"
-    />
-  );
+export default async function Page({ searchParams }: { searchParams: Promise<{ mode?: string | string[] }> }) {
+  const [params, session] = await Promise.all([searchParams, getSession()]);
+  if (session === "forbidden" || !session.tenantId || !session.userId) return <AccessDeniedState />;
+  return <RegisterAssetPage single={params.mode === "single"} tenantId={session.tenantId} userId={session.userId} />;
 }

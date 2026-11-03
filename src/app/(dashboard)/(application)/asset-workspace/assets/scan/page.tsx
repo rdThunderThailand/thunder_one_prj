@@ -1,10 +1,5 @@
-import { ScreenPlaceholder } from "@/features/asset-workspace/components/ScreenPlaceholder";
+import { redirect } from "next/navigation";
 
 export default function ScanAssetPage() {
-  return (
-    <ScreenPlaceholder
-      title="Scan Asset"
-      spec="UC-011 · 05 §4.7"
-    />
-  );
+  redirect("/asset-workspace/assets?scan=1");
 }
