@@ -1,10 +1,15 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/lovable/button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { BoxIcon } from "@/components/ui/icons";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
+import { EyeIcon, MoreIcon } from "@/components/ui/icons";
 import { ASSET_STATUSES, type AssetStatus } from "../../domain/asset-status";
 import { ASSET_CONDITIONS, type AssetCondition } from "../../domain/asset-condition";
 import type { AssetListRow } from "../../services/assets-list-types";
+import { AssetThumbnail } from "../AssetThumbnail";
 import { ConditionBadge, StatusBadge } from "../StatusBadges";
-import { UnavailableAction } from "./AssetsListToolbar";
+
+const profileHref = (id: string) => `/asset-workspace/assets/${encodeURIComponent(id)}`;
 
 interface AssetsTableProps {
   rows: AssetListRow[]; selected: Set<string>; pending: boolean;
@@ -73,11 +78,14 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: 
             {/* Composite the pinned background with its text to prevent scroll paint-through. */}
             <td className={`${cell} sticky left-0 z-10 transform-gpu bg-card group-hover:bg-muted group-data-[selected=true]:bg-accent`}>
               <div className="flex items-center gap-2">
-                <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-control bg-muted text-muted-foreground">
-                  <BoxIcon className="size-5" />
-                </span>
+                <AssetThumbnail src={row.thumbnail_url} />
                 <div className="min-w-0 break-words">
-                  <span className="font-semibold text-foreground">{row.name || "Unnamed asset"}</span>
+                  <Link
+                    href={profileHref(row.id)}
+                    className="rounded-xs font-semibold text-foreground hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {row.name || "Unnamed asset"}
+                  </Link>
                 </div>
               </div>
             </td>
@@ -108,8 +116,22 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: 
               <UpdatedAt value={row.updated_at} />
             </td>
             <td className={cell}>
-              {/* Opens the Asset Profile (view and edit) once that page exists; disabled until then. */}
-              <UnavailableAction label={`Open asset profile for ${row.name || "asset"}`} icon={BoxIcon} className="border-transparent bg-transparent" />
+              {/* Row actions arrive with their backend PRs; the Asset Profile is the only one for now. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${row.name || "asset"}`}>
+                    <MoreIcon className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={profileHref(row.id)}>
+                      <EyeIcon className="size-4" />
+                      View profile
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </td>
           </tr>
         ))}

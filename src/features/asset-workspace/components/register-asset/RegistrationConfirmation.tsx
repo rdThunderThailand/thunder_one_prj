@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { CheckIcon } from "@/components/ui/icons";
@@ -11,6 +12,9 @@ import { selectedFileIds, validReceipt } from "../../domain/registration-confirm
 import type { CreatedRegistration } from "../../services/asset-registration-write-contract";
 
 type Confirmation = ReturnType<typeof useRegistrationConfirmation>;
+// Core PR A returns this app's Profile route; an older Core's path matches no page, so build it from the id.
+const profileHref = ({ assetId, profilePath }: CreatedRegistration) =>
+  profilePath?.startsWith("/asset-workspace/assets/") ? profilePath : `/asset-workspace/assets/${encodeURIComponent(assetId)}`;
 export function RegistrationConfirmation({ confirmation, blocker, missingFiles, serialNumber, onOverride, onLeave }: {
   confirmation: Confirmation; blocker: string; missingFiles: boolean; serialNumber: string; onOverride: (reason: string) => void; onLeave: () => void;
 }) {
@@ -86,8 +90,9 @@ export function RegistrationReceipt({ result, onBack, onAnother, children }: { r
       <h2 className="text-lg font-semibold">Asset registered</h2>
       <p className="text-sm">Asset Tag: <strong className="break-all">{result.assetTag}</strong></p>
       <p className="text-xs text-muted-foreground">{result.replayed ? "The original registration result was recovered." : "Your asset was created successfully."}</p>
-      <Button variant="outline" disabled aria-describedby="registration-profile-reason">View Asset Profile</Button>
-      <p id="registration-profile-reason" className="text-xs text-muted-foreground">The Asset Profile page is not available yet.</p>
+      <Button asChild variant="outline">
+        <Link href={profileHref(result)}>View Asset Profile</Link>
+      </Button>
       {children}
       {failed && <p role="alert" className="text-xs text-error">Could not clear the previous registration from tab storage. The successful result is kept. Try again.</p>}
       <div className="flex flex-wrap justify-center gap-2">
