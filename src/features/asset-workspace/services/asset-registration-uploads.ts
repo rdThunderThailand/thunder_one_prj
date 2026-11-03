@@ -78,7 +78,7 @@ export async function uploadRegistrationFiles(context: string, initial: Confirma
       update({ ...receipt, ...completed, completed: true });
       progress(`Verified ${file.name}`);
     } catch (failure) {
-      if (failure instanceof RegistrationRequestError && ["UPLOAD_EXPIRED", "UPLOAD_NOT_FOUND"].includes(failure.code)) update({ ...receipt, unusable: true });
+      if (failure instanceof RegistrationRequestError && ["UPLOAD_EXPIRED", "NOT_FOUND"].includes(failure.code)) update({ ...receipt, unusable: true });
       throw failure;
     }
   }

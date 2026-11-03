@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 export function RegistrationLoading() {
   return (
-    <div role="status" aria-label="Loading asset registration" className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-3">
+    <div role="status" aria-label="Loading asset registration" className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3">
       <div className="shrink-0 space-y-3">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-80 max-w-full" />

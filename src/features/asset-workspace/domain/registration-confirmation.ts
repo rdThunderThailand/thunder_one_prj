@@ -49,7 +49,7 @@ export function confirmationPayload(draft: RegistrationDraft, record: Confirmati
     ...base, submission_id: record.submissionId,
     photo_file_ids: ids(draft.photoSelectionIds), document_file_ids: ids(draft.documentSelectionIds),
     warranties: base.warranties.map((warranty, index) => ({ ...warranty, document_file_ids: ids(draft.warranties[index].documentSelectionIds) })),
-    ...(overrideReason ? { serial_override: { confirmed: true, reason: overrideReason } } : {}),
+    ...(overrideReason ? { serial_override_reason: overrideReason } : {}),
   });
   const allIds = [...payload.photo_file_ids!, ...payload.document_file_ids!, ...payload.warranties!.flatMap((warranty) => warranty.document_file_ids!)];
   if (new Set(allIds).size !== allIds.length) throw new Error("A file cannot be attached more than once.");

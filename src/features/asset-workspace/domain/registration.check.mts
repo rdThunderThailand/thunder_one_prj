@@ -16,7 +16,8 @@ const rules = registrationOptionsSchema.parse({
   referenceSelectors: { pageSize: 25, maxPageSize: 100, search: { enabled: true, debounceMs: 300, maxLength: 200 },
     categories: { path: "/categories", hierarchical: true }, locations: { path: "/locations", hierarchical: true },
     orgUnits: { path: "/org-units", hierarchical: true }, persons: { path: "/persons", hierarchical: false, pagination: "cursor" } },
-  initialConditions: ["Good", "Fair"], canOverrideSerial: false,
+  initialConditions: ["Good", "Fair"],
+  serialOverride: { field: "serial_override_reason", maxLength: 1000, reasonIsConfirmation: true },
   tagGeneration: { modes: ["manual", "automatic"], allocatedOn: "creation" },
   submission: { method: "POST", path: "/assets", canSubmit: false, reason: "REGISTRATION_UNAVAILABLE" },
 });

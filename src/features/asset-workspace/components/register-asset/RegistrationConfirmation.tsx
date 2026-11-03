@@ -47,7 +47,7 @@ export function RegistrationConfirmation({ confirmation, blocker, missingFiles, 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" disabled={busy} onClick={confirmation.refresh}>Refresh availability</Button>
         {uncertain && <Button variant="outline" size="sm" disabled={busy} onClick={onLeave}>Leave and keep recovery</Button>}
-        {!uncertain && !busy && !storageBlocked && record?.rejectedSerial && record.rejectedSerial === serialNumber.trim() && options?.canOverrideSerial && (
+        {!uncertain && !busy && !storageBlocked && record?.rejectedSerial && record.rejectedSerial === serialNumber.trim() && options?.serialOverride && (
           <Button variant="outline" size="sm" onClick={() => { setOverrideOpen(true); setReason(""); setConfirmed(false); }}>Review serial override</Button>
         )}
       </div>

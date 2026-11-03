@@ -48,7 +48,7 @@ function RecoveryContent({ tenantId, userId, message, status, onReset }: { tenan
   }
   if (options && !uncertain) return <SingleAssetWizard tenantId={tenantId} userId={userId} options={options} />;
   return (
-    <div className="mx-auto h-full max-w-7xl space-y-4 overflow-y-auto overscroll-contain">
+    <div className="h-full min-w-0 space-y-4 overflow-y-auto overscroll-contain">
       <PageHeader title="Register Asset" subtitle={uncertain ? "Recover the original registration result" : "Registration options are unavailable"} />
       {uncertain && record ? (
         <section className="space-y-3 rounded-card border border-border bg-card p-4">

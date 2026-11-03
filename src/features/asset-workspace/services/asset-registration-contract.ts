@@ -17,7 +17,10 @@ export const registrationOptionsSchema = z.object({
   initialStatus: z.object({
     editable: z.literal(false), withoutCustody: z.literal("Available"), withCustody: z.literal("Assigned"),
   }).optional(),
-  canOverrideSerial: z.boolean(),
+  // Anyone who may register may override a duplicate serial by giving a reason (Core #262).
+  serialOverride: z.object({
+    field: z.literal("serial_override_reason"), maxLength: z.number().int().positive().max(1000), reasonIsConfirmation: z.literal(true),
+  }),
   tagGeneration: z.object({
     modes: z.array(z.enum(["manual", "automatic"])).min(1), allocatedOn: z.literal("creation"),
     prefix: z.string().optional(), sequenceDigits: z.number().int().positive().optional(),

@@ -6,7 +6,11 @@ export class AssetWorkspaceRequestError extends ApiError {
   constructor(message: string, public code: string, public uncertain = false, status = 0) { super(message, status); }
 }
 const envelope = z.object({ success: z.literal(true), data: z.unknown() });
+// Proxy rejects stay flat; Core v2 always nests { error: { code, message, details? } }.
 const failure = z.object({ code: z.string().optional(), uncertain: z.boolean().optional(), error: z.string().optional() });
+const coreFailure = z.object({ error: z.object({ code: z.string(), message: z.string(), details: z.unknown().optional() }) });
+// Core rejects these before any write, so a failed creation with them is never uncertain.
+const notCommitted = new Set(["REGISTRATION_UNAVAILABLE"]);
 const listReadFailure = z.object({ error: z.object({
   code: z.enum(["VALIDATION", "UNAUTHENTICATED", "PERMISSION_DENIED", "INTERNAL"]),
   message: z.string(),
@@ -44,18 +48,24 @@ export async function requestAssetWorkspace(method: "GET" | "POST", path: string
           response.status >= 400 ? response.status : listReadErrorStatus[code]);
       }
     }
+    const core = coreFailure.safeParse(response.data);
     const error = failure.safeParse(response.data);
-    if (response.status < 200 || response.status >= 300 || (error.success && error.data.error)) {
-      const code = error.success ? error.data.code ?? "REQUEST_FAILED" : "INVALID_RESPONSE";
-      const uncertain = Boolean(options.creation && (error.success ? error.data.uncertain ?? (response.status >= 500 && code !== "REGISTRATION_UNAVAILABLE") : response.status >= 500));
+    if (response.status < 200 || response.status >= 300 || core.success || (error.success && error.data.error)) {
+      const code = core.success ? core.data.error.code : error.success ? error.data.code ?? "REQUEST_FAILED" : "INVALID_RESPONSE";
+      const flagged = error.success ? error.data.uncertain : undefined;
+      const uncertain = Boolean(options.creation && (core.success || error.success
+        ? flagged ?? (response.status >= 500 && !notCommitted.has(code)) : response.status >= 500));
       const message = response.status === 401 ? "Sign in again to continue."
         : response.status === 403 ? "You do not have permission, or your account or organization changed. Return to the matching registration."
           : code === "SERIAL_DUPLICATE" ? "This Serial Number is already used. Correct it or use an authorized override."
             : code === "UPLOAD_EXPIRED" ? "A temporary upload expired. Reselect the affected file before confirming again."
-              : code === "CONFLICT" ? "This registration conflicts with an existing record. Review the Asset Tag, references and files."
-                : response.status === 404 ? "This reference or upload is no longer available in your organization."
-                  : response.status === 400 ? "The service rejected the entered fields or file contents. Review your information."
-                    : "The asset service is temporarily unavailable. Your information has been kept. Try again.";
+              : code === "INVALID_STATE" ? "This registration conflicts with an existing record. Review the Asset Tag, references and files."
+                : code === "UPLOAD_RETRY" ? "The upload could not be finished. Retry to resume confirmation."
+                  : code === "REGISTRATION_UPLOAD_UNAVAILABLE" ? "File uploads are temporarily unavailable. Your selections have been kept."
+                    : code === "REGISTRATION_UNAVAILABLE" ? "Asset creation is temporarily unavailable. Your registration remains in this tab."
+                      : response.status === 404 ? "This reference or upload is no longer available in your organization."
+                        : response.status === 400 ? "The service rejected the entered fields or file contents. Review your information."
+                          : "The asset service is temporarily unavailable. Your information has been kept. Try again.";
       throw new AssetWorkspaceRequestError(message, code, uncertain, response.status);
     }
     const parsed = envelope.safeParse(response.data);

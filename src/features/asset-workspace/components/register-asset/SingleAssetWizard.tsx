@@ -150,7 +150,7 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
   if (fileCache.initializing && !confirmation.uncertain) return <RegistrationLoading />;
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-3" onInputCapture={fileCache.touch} onPointerDownCapture={fileCache.touch}>
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3" onInputCapture={fileCache.touch} onPointerDownCapture={fileCache.touch}>
       <div className="shrink-0 space-y-3">
         <PageHeader title="Register Asset" subtitle={state.step === 4 ? "Review all information before creating the asset. You can edit any section." : "Add a new asset to your organization. Complete the information below."} />
         <WizardSteps steps={REGISTRATION_STEPS} currentIndex={state.step} />

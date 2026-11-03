@@ -19,7 +19,8 @@ export const createRegistrationSchema = z.object({
     status: text(100), is_current: z.boolean(), document_file_ids: fileIds,
   }).strict()).optional(),
   photo_file_ids: fileIds, document_file_ids: fileIds,
-  serial_override: z.object({ confirmed: z.literal(true), reason: z.string().trim().min(1).max(1000) }).strict().optional(),
+  // The reason is the override confirmation, as asset_update_details (#257).
+  serial_override_reason: z.string().trim().min(1).max(1000).optional(),
 }).strict();
 export type CreateRegistration = z.infer<typeof createRegistrationSchema>;
 

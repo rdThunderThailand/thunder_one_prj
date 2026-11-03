@@ -93,7 +93,7 @@ export function useRegistrationConfirmation(key: string, context: string, initia
         if (invalid !== null) { throw new Error("Check the highlighted registration step before confirming."); }
         const blocker = registrationCreationBlocker(draft, fresh, next?.uploads ?? []);
         if (blocker) throw new Error(blocker);
-        if (overrideReason && (!fresh.canOverrideSerial || next?.rejectedSerial !== draft.serialNumber.trim())) {
+        if (overrideReason && (overrideReason.length > fresh.serialOverride.maxLength || next?.rejectedSerial !== draft.serialNumber.trim())) {
           throw new Error("Serial override is no longer available for this registration.");
         }
         if (missingRegistrationFiles(draft, candidates, next?.uploads ?? [])) throw new Error("Reselect missing files in Step 1 or Step 4, or explicitly remove those selections.");
