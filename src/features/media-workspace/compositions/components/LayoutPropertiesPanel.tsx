@@ -1,7 +1,7 @@
 "use client";
 
 // New-layout details can be seeded by the Create modal; they remain editable here beside the
-// canvas they affect. Existing Layouts also use this panel as their single edit surface.
+// canvas they affect. The name is edited in the editor header, not here.
 //
 // Presentational on purpose. Resolution and background sit on the shared `layouts` row, so
 // changing them can need ADR 0052 §3's interruption — the page owns that guard and hands
@@ -20,8 +20,6 @@ const inputClasses =
 const labelClasses = "text-[9px] font-medium uppercase tracking-wide text-muted-foreground";
 
 export function LayoutPropertiesPanel({
-  name,
-  onNameChange,
   folders,
   folderId,
   onFolderChange,
@@ -32,8 +30,6 @@ export function LayoutPropertiesPanel({
   sharedTemplateUsage,
   disabled = false,
 }: {
-  name: string;
-  onNameChange: (next: string) => void;
   folders: ContentFolder[];
   folderId: string | null;
   onFolderChange: (next: string | null) => void;
@@ -87,20 +83,7 @@ export function LayoutPropertiesPanel({
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
       <p className="text-[11px] font-bold text-foreground">Layout Properties</p>
-      <div className="rounded-lg border border-border bg-muted p-1">
-        <button type="button" aria-current="page" className="w-full rounded-md bg-card px-3 py-1.5 text-[9px] font-medium text-primary shadow-sm">General</button>
-      </div>
       <div className="grid grid-cols-2 items-start gap-3">
-
-      <label className="flex flex-col gap-1.5">
-        <span className={labelClasses}>Layout name</span>
-        <input
-          value={name}
-          disabled={disabled}
-          onChange={(event) => onNameChange(event.target.value)}
-          className={inputClasses}
-        />
-      </label>
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClasses}>Folder</span>

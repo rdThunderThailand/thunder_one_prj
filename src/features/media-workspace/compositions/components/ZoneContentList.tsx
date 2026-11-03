@@ -12,20 +12,22 @@ import {
 } from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { formatDuration } from "@/features/media-workspace/playlists";
-import type { MediaAsset, PlaylistListItem } from "@/types/domain";
+import type { MediaAsset, PlaylistItem, PlaylistListItem } from "@/types/domain";
 import { reorderAssetItem, totalZoneDurationSeconds, type ZoneBindingDraft } from "../zone-bindings";
 
-export function ZoneContentList({ binding, assets, previews, playlists, playlistDurations, onBindingChange }: {
+export function ZoneContentList({ binding, assets, previews, playlists, playlistDurations, playlistItemsById, onBindingChange }: {
   binding: ZoneBindingDraft;
   assets: MediaAsset[];
   previews: Record<string, string | undefined>;
   playlists: PlaylistListItem[];
   playlistDurations: Record<string, number | undefined>;
+  /** Items read on open — the only source for an inline Playlist (#326). */
+  playlistItemsById: Record<string, PlaylistItem[] | undefined>;
   onBindingChange: (next: ZoneBindingDraft) => void;
 }) {
   const assetById = new Map(assets.map((asset) => [asset.id, asset]));
   const assetDurations = Object.fromEntries(assets.map((asset) => [asset.id, asset.duration_seconds ?? undefined]));
-  const durationSeconds = totalZoneDurationSeconds(binding, assetDurations, playlistDurations);
+  const durationSeconds = totalZoneDurationSeconds(binding, assetDurations, playlistDurations, playlistItemsById);
   const hasContent = binding.source === "playlist" ? Boolean(binding.playlistId) : binding.assetItems.length > 0;
 
   if (!hasContent) {
@@ -38,12 +40,13 @@ export function ZoneContentList({ binding, assets, previews, playlists, playlist
 
   if (binding.source === "playlist" && binding.playlistId) {
     const playlist = playlists.find((item) => item.id === binding.playlistId);
+    const itemCount = playlist?.item_count ?? playlistItemsById[binding.playlistId]?.length ?? 0;
     return (
       <div className="flex flex-col gap-3">
         <div className="rounded-lg border border-border bg-muted p-3">
           <p className="truncate text-xs font-semibold text-foreground">{playlist?.name ?? binding.playlistName ?? "Playlist"}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {(playlist?.item_count ?? 0).toLocaleString()} item{playlist?.item_count === 1 ? "" : "s"}
+            {itemCount.toLocaleString()} item{itemCount === 1 ? "" : "s"}
           </p>
           <a
             href={`/media-workspace/playlists/${binding.playlistId}`}
