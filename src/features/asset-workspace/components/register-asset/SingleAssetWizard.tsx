@@ -127,7 +127,9 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
 
   if (confirmation.record?.phase === "succeeded" && confirmation.record.result) {
     return (
-      <RegistrationReceipt result={confirmation.record.result} onBack={() => router.push("/asset-workspace/assets")} onAnother={async () => {
+      <RegistrationReceipt
+        result={confirmation.record.result} draft={confirmation.record.draft} options={options} photo={photoSelection.photos[0]}
+        onBack={() => router.push("/asset-workspace/assets")} onAnother={async () => {
         if (!removeRegistrationDraft(storageKey) || !confirmation.discard()) return false;
         await fileCache.clear();
         onRestart();
@@ -220,7 +222,8 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
             <Step {...stepProps} />
           )}
           {state.step === 4 && (
-            <RegistrationConfirmation confirmation={confirmation} blocker={creationBlocker} missingFiles={missingFiles} serialNumber={state.draft.serialNumber} onOverride={(reason) => { void submit(reason); }} onLeave={() => router.push("/asset-workspace/assets")} />
+            <RegistrationConfirmation confirmation={confirmation} blocker={creationBlocker} missingFiles={missingFiles} serialNumber={state.draft.serialNumber} onOverride={(reason) => { void submit(reason); }} onLeave={() => router.push("/asset-workspace/assets")}
+              onRetry={() => { void submit(); }} onEdit={edit} />
           )}
         </RegistrationWorkspace>
         <RegistrationNavigation
