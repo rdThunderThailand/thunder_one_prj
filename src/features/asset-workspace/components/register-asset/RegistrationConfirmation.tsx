@@ -36,8 +36,7 @@ export function RegistrationConfirmation({ confirmation, blocker, missingFiles, 
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const [dismissed, setDismissed] = useState(0);
-  const { record, options, busy, uncertain, storageBlocked, message, error, attempt, stage, failure } = confirmation;
+  const { record, options, busy, uncertain, storageBlocked, message, error, stage, failure } = confirmation;
   const selected = record ? selectedFileIds(record.draft) : [];
   const uploads = record?.uploads.filter((upload) => selected.includes(upload.localId)) ?? [];
   const progressFiles = uploads.map((upload) => ({
@@ -46,14 +45,15 @@ export function RegistrationConfirmation({ confirmation, blocker, missingFiles, 
   const openOverride = () => { setOverrideOpen(true); setReason(""); setConfirmed(false); };
   const act = (action: OutcomeAction) => {
     if (action === "retry") { onRetry(); return; }
-    setDismissed(attempt);
+    const editStep = action === "edit" && failure?.code ? EDIT_STEP[failure.code] : undefined;
+    confirmation.dismissFailure(editStep !== undefined);
     if (action === "override") openOverride();
-    else if (action === "edit" && failure?.code && EDIT_STEP[failure.code] !== undefined) onEdit(EDIT_STEP[failure.code]);
+    else if (editStep !== undefined) onEdit(editStep);
   };
   return (
     <section className="mb-3 space-y-3 rounded-card border border-border bg-card p-4" aria-label="Confirmation status">
       <RegistrationProgressDialog
-        open={busy || (Boolean(failure) && dismissed !== attempt)} busy={busy} stage={stage}
+        open={busy || Boolean(failure)} busy={busy} stage={stage}
         files={progressFiles} waiting={Math.max(selected.length - progressFiles.length, 0)}
         failure={failure} canOverride={Boolean(options?.serialOverride)} onAction={act}
       />

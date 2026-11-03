@@ -110,6 +110,13 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
     }
   };
 
+  // A created asset ends this registration: drop its draft so the next visit starts a new one.
+  // The receipt keeps rendering from memory; file bytes are cleared by the file cache.
+  const succeeded = confirmation.record?.phase === "succeeded";
+  useEffect(() => {
+    if (succeeded) removeRegistrationDraft(storageKey);
+  }, [succeeded, storageKey]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
     scrollRef.current?.querySelector("[data-registration-form-scroll]")?.scrollTo({ top: 0 });

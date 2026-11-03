@@ -25,8 +25,8 @@ export function useRegistrationConfirmation(key: string, context: string, initia
   const [error, setError] = useState("");
   const [errorStatus, setErrorStatus] = useState<number>();
   const [options, setOptions] = useState(initialOptions);
-  // The progress dialog follows one confirmation run: its stage while busy, then its failure (if any).
-  const [attempt, setAttempt] = useState(0);
+  // The progress dialog follows one confirmation run: its stage while busy, then its failure until dismissed.
+  // The failure lives here, not in the Review step, so leaving to edit and pressing Update doesn't reopen it.
   const [stage, setStage] = useState<RegistrationStage | null>(null);
   const [failure, setFailure] = useState<RegistrationFailure | null>(null);
   const uncertain = record?.phase === "uncertain" || record?.phase === "submitting";
@@ -76,7 +76,6 @@ export function useRegistrationConfirmation(key: string, context: string, initia
     setError("");
     setErrorStatus(undefined);
     setFailure(null);
-    setAttempt((value) => value + 1);
     let submitting = false;
     let recovery = false;
     let run: ReturnType<typeof beginRegistrationRun> | undefined;
@@ -124,10 +123,11 @@ export function useRegistrationConfirmation(key: string, context: string, initia
       setMessage(recovery ? "Recovering the original creation result" : "Creating asset");
       const result = await createRegisteredAsset(context, next.requestJson!);
       const succeeded: ConfirmationRecord = { ...next, phase: "succeeded", result };
-      // A confirmed receipt always wins, even if saving it fails. Persisted original request recovers it on refresh.
+      // A confirmed receipt always wins and stays in memory only: the tab must not reopen it on the next registration.
+      // If clearing fails, keep the receipt stored so the persisted request isn't replayed as a recovery.
       current.current = succeeded;
       setRecord(succeeded);
-      if (!saveConfirmation(key, succeeded)) setStorageBlocked(true);
+      if (!removeConfirmation(key) && !saveConfirmation(key, succeeded)) setStorageBlocked(true);
       setMessage("Asset created");
       toast.success(`${result.assetTag} registered`, {
         description: result.replayed ? "The original registration result was recovered." : draft.name.trim() || undefined,
@@ -156,9 +156,14 @@ export function useRegistrationConfirmation(key: string, context: string, initia
     } finally { run?.finish(); operation.current = null; active.current = false; setBusy(false); setStage(null); }
   }
 
+  function dismissFailure(editing: boolean) {
+    setFailure(null);
+    // Going back to edit makes the old rejection stale; Close keeps it visible on the review.
+    if (editing) { setError(""); setErrorStatus(undefined); }
+  }
   function discard() {
     if (active.current || uncertain) return false;
     return removeConfirmation(key);
   }
-  return { record, options, busy, locked, uncertain, storageBlocked, message, error, errorStatus, attempt, stage, failure, start, refresh, retryStorage, discard };
+  return { record, options, busy, locked, uncertain, storageBlocked, message, error, errorStatus, stage, failure, start, refresh, retryStorage, dismissFailure, discard };
 }
