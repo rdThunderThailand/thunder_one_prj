@@ -141,7 +141,7 @@ export function PlaybackProofTable({
                           variant="neutral"
                           className="mt-0.5 px-1.5 py-0 text-[9px]"
                         >
-                          In Trash
+                          {entry.media.file_deleted ? "File deleted" : "In Trash"}
                         </Badge>
                       )}
                     </div>

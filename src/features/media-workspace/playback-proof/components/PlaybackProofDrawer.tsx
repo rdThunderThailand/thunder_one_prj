@@ -99,7 +99,7 @@ export function PlaybackProofDrawer({
                     variant="neutral"
                     className="shrink-0 px-1.5 py-0 text-[10px]"
                   >
-                    In Trash
+                    {media.file_deleted ? "File deleted" : "In Trash"}
                   </Badge>
                 )}
               </div>

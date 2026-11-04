@@ -103,8 +103,8 @@ export type AssetUsage = {
 
 /** What stopped a Permanent delete. Unlike Usage this keeps trashed and ended references. */
 export type AssetDeleteBlockers = {
-  playlists: Array<AssetUsageRef & { trashed: boolean }>;
-  layouts: Array<AssetUsageRef & { trashed: boolean }>;
+  playlists: AssetUsageRef[];
+  layouts: AssetUsageRef[];
   programs: Array<AssetUsageRef & { status: string }>;
   history: boolean;
 };
@@ -147,6 +147,7 @@ export type Creator = { id: string; display_name: string } | null;
 export type PlaylistItem = {
   media_asset_id: string;
   title?: string;
+  file_deleted?: boolean;
   position: number;
   duration_seconds?: number | null;
   transition?: Transition;

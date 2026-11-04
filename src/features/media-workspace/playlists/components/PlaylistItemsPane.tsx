@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
+import { Badge } from "@/components/ui/lovable/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { ChevronDownIcon, ClipboardIcon, EyeIcon, MoreIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
@@ -122,6 +123,7 @@ export function PlaylistItemsPane({
                   <span className="flex items-center gap-1.5">
                     {nowPlayingId === item.mediaAssetId && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />}
                     <span className="truncate text-sm font-medium text-foreground">{label}</span>
+                    {item.fileDeleted && <Badge variant="neutral" className="shrink-0 px-1.5 py-0 text-[10px]">File deleted</Badge>}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {isVideo ? "Video" : "Image"} · {seconds != null ? formatDuration(seconds) : "—"}

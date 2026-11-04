@@ -14,6 +14,7 @@ import {
   isConflict,
   isDuplicateName,
   trashedAssetNames,
+  deletedFileNames,
 } from "./api-error.ts";
 
 const FALLBACK = "Failed to save draft.";
@@ -125,6 +126,7 @@ assert.ok(!noScreens.message.includes("targets have no screens"));
 assert.notEqual(noScreens.message, classifyApiError(new ApiError("Invalid input: x", 400), FALLBACK).message);
 
 // ADR 0091: a trashed Asset in the snapshot is refused by name, in Thai, never as the raw RPC text.
+assert.equal(deletedFileNames("Invalid input: cannot activate — remove or restore from Trash: B.mp4; file was deleted, replace it: A.mp4"), "A.mp4");
 const trashedRaw = "Invalid input: cannot activate — remove or restore from Trash: Predator.mp4, sample.mp4";
 assert.equal(trashedAssetNames(trashedRaw), "Predator.mp4, sample.mp4");
 // reasons are joined with "; " — only the Trash part is taken
