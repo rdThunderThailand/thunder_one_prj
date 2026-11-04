@@ -63,12 +63,10 @@ const formatDate = (value?: string) => {
 export const assetLabel = (asset: MediaAsset) => asset.title ?? asset.file?.original_filename ?? "Untitled asset";
 
 /** Lovable `MediaMenu`, limited to the actions this repo actually has. */
-export function AssetMenu({ asset, trash, folders, hasHistory, onRefresh, onTrash, onDelete }: {
+export function AssetMenu({ asset, trash, folders, onRefresh, onTrash, onDelete }: {
   asset: MediaAsset;
   trash: boolean;
   folders: ContentFolder[];
-  // Broadcast history cannot be cleared, so Permanent delete is offered only when it can succeed (ADR 0091).
-  hasHistory: boolean;
   onRefresh: () => void;
   onTrash: () => void;
   onDelete: () => void;
@@ -90,7 +88,7 @@ export function AssetMenu({ asset, trash, folders, hasHistory, onRefresh, onTras
           <>
             <DropdownMenuItem onSelect={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}><Undo2 />Recover</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive" disabled={hasHistory} onSelect={onDelete}>
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={onDelete}>
               <Trash2 />Permanent delete
             </DropdownMenuItem>
           </>
@@ -184,7 +182,7 @@ export function AssetCard({ asset, trash, folders, hasHistory = false, onRefresh
             {formatFormat(asset)} · {formatBytes(asset.file?.file_size_bytes)} · {formatDate(asset.created_at)}
           </p>
         </div>
-        <AssetMenu asset={asset} trash={trash} folders={folders} hasHistory={hasHistory} onRefresh={onRefresh} onTrash={() => setConfirm("trash")} onDelete={() => setConfirm("delete")} />
+        <AssetMenu asset={asset} trash={trash} folders={folders} onRefresh={onRefresh} onTrash={() => setConfirm("trash")} onDelete={() => setConfirm("delete")} />
       </div>
       {trash && (
         <div className="flex gap-2 border-t border-border p-2.5">
@@ -192,7 +190,7 @@ export function AssetCard({ asset, trash, folders, hasHistory = false, onRefresh
             <Undo2 className="h-3 w-3" />
             Recover
           </Button>
-          <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px] text-destructive" disabled={hasHistory} onClick={() => setConfirm("delete")}>
+          <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px] text-destructive" onClick={() => setConfirm("delete")}>
             <Trash2 className="h-3 w-3" />
             Delete
           </Button>

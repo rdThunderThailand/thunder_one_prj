@@ -1,6 +1,6 @@
 # Asset Trash warns with its Usage, and Permanent delete names its blockers
 
-**Status:** accepted · 2026-10-09
+**Status:** accepted · 2026-10-09; Decisions 4 and 5 amended by `0101` (Broadcast history no longer blocks Permanent delete)
 **Source:** issue #262 (QA batch 2026-10-08, item 13); revised after design review the same day
 **Related:** `0045` (snapshot history blocks hard delete), `0056-nested-feature-folders-and-trash.md`, `0066-layout-trash-is-blocked-by-live-programs.md`, `0089-playback-proof-records-player-reported-outcomes.md`
 

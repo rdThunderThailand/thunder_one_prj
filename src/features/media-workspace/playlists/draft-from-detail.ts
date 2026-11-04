@@ -22,6 +22,7 @@ function detailToDraftItems(items: PlaylistItem[]): DraftItem[] {
     .map((item) => ({
       mediaAssetId: item.media_asset_id,
       title: item.title,
+      ...(item.file_deleted ? { fileDeleted: true } : {}),
       durationSeconds: item.duration_seconds ?? null,
       transition: item.transition === "cut" ? ("cut" as const) : ("fade" as const),
       ...(item.transition_duration_seconds != null

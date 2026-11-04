@@ -114,7 +114,7 @@ function DeleteBody({ items, onClose, onDone }: { items: AssetRef[]; onClose: ()
           <AlertDialogTitle>{outcome.deleted > 0 ? "Some files could not be deleted" : "Could not delete"}</AlertDialogTitle>
           <AlertDialogDescription>
             {outcome.deleted > 0 && `${outcome.deleted} deleted. `}
-            {outcome.blocked.length > 0 && `${outcome.blocked.length} still in use or kept for Playback Proof.`}
+            {outcome.blocked.length > 0 && `${outcome.blocked.length} still in use.`}
             {outcome.failed > 0 && ` ${outcome.failed} failed — try again.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -129,7 +129,7 @@ function DeleteBody({ items, onClose, onDone }: { items: AssetRef[]; onClose: ()
     <>
       <AlertDialogHeader>
         <AlertDialogTitle>Permanent delete?</AlertDialogTitle>
-        <AlertDialogDescription>{itemsText(items)} will be permanently deleted. This cannot be undone.</AlertDialogDescription>
+        <AlertDialogDescription>{itemsText(items)} will be permanently deleted and cannot be recovered. Any broadcast history stays in Playback Proof.</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
@@ -142,8 +142,8 @@ function DeleteBody({ items, onClose, onDone }: { items: AssetRef[]; onClose: ()
 }
 
 /**
- * Permanent delete for one or many Assets. Core refuses anything still referenced or aired
- * (ADR 0091 Decision 4); those come back named in one list instead of a raw error.
+ * Permanent delete for one or many Assets. Core refuses anything still in use (ADR 0101 Decision 2);
+ * those come back named in one list instead of a raw error.
  */
 export function DeleteAssetsDialog({
   items,

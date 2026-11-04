@@ -80,7 +80,7 @@ export function relatedLinks(entry: PlaybackProofEntry): RelatedLink[] {
     label: "Media",
     name: entry.media.title,
     href: entry.media.in_trash ? null : `/media-workspace/assets/${entry.media.id}`,
-    note: entry.media.in_trash ? "In Trash" : undefined,
+    note: entry.media.file_deleted ? "File deleted" : entry.media.in_trash ? "In Trash" : undefined,
   });
   return links;
 }

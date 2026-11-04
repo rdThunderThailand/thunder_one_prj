@@ -41,7 +41,7 @@ Can create/manage Assets, Playlists, Publications, and Channels, assign existing
 Read-only across content and Monitoring. Cannot see the Audit Log.
 
 **Asset** (Communication):
-A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG and MP4 (WebP was dropped by `docs/adr/0070-*.md`). A video whose codec or H.264 profile the players cannot decode is refused on intake (`docs/adr/0070-*.md`); automatic repair through a Rendition is proposed, not built. Removing one sends it to Trash and hides it from new selections without breaking existing playback, and a trashed Asset cannot enter a new Publish Job (`docs/adr/0091-*.md`); permanent deletion is allowed only from Trash and remains blocked while a live reference or any Publish Job snapshot requires it. `docs/adr/0056-nested-feature-folders-and-trash.md`.
+A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG and MP4 (WebP was dropped by `docs/adr/0070-*.md`). A video whose codec or H.264 profile the players cannot decode is refused on intake (`docs/adr/0070-*.md`); automatic repair through a Rendition is proposed, not built. Removing one sends it to Trash and hides it from new selections without breaking existing playback, and a trashed Asset cannot enter a new Publish Job (`docs/adr/0091-*.md`); permanent deletion is allowed only from Trash and remains blocked while a live reference or the newest Publish Job snapshot of a not-yet-ended Program requires it (`docs/adr/0101-*.md`). `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: Video, media file, content (when a specific entity is meant)
 
 **Rendition**:
@@ -73,7 +73,7 @@ The Playlists, Layouts and not-yet-ended Programs that currently reference an As
 _Avoid_: references, dependencies, usage count (when meaning the list)
 
 **Broadcast history**:
-The evidence that an Asset has aired: any Publish Job snapshot or playback log that names it. It is kept as Playback Proof, so an Asset with Broadcast history cannot be permanently deleted. `docs/adr/0091-asset-trash-warns-with-usage-and-permanent-delete-names-blockers.md`.
+The evidence that an Asset has aired: any Publish Job snapshot or playback log that names it. It is kept as Playback Proof, which is why Permanent delete keeps every Asset's record as a Tombstone: the file is removed, the Asset cannot be recovered, and it appears only in that evidence. `docs/adr/0101-permanent-delete-tombstones-every-asset.md`.
 _Avoid_: past usage
 
 **Media Detail**:
