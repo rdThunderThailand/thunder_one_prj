@@ -104,15 +104,16 @@ Preparation: re-probe the videos with no verdict on the day, because the set may
    `1c23959a`, which plays cleanly. Watch `playback_logs` before continuing past the first.
 5. Enqueue the 64 Main files under 200 MB. They stay `ready` and install off air only.
 
-Before stage 1, confirm in Aurora-migrate's code that it omits `p_probe_verdict`, and make it pass one before
-the next customer moves.
+Aurora-migrate omits `p_probe_verdict` (confirmed 2026-11-05). The owner chose not to change it for now, because
+migrated files mostly play and a verdict would hold working High files in `processing`. After a migration, use
+these stages (Thunder_Core#295).
 
 Rollback: clearing `rendition_storage_key` and `rendition_checksum` returns an Asset to its original, and
 verdict and status can be restored. Originals are never touched.
 
 Acceptance: re-run the verdict query, no live video lacks one, and each enqueued job ends with a Rendition.
 
-## Progress PR (Core + FE, after Core PR 2)
+## Progress PR (Core + FE, moved ahead of Core PR 2 on 2026-11-05: see the ADR 0071 amendment)
 
 1. Core: `media_transcode_jobs.progress_pct`; `run()` parses `-progress pipe:1`, throttled to one write per
    5 s through a service-role RPC. A write error is logged and ignored.

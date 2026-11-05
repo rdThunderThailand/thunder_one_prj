@@ -13,6 +13,7 @@ import {
   startItems,
   stageFiles,
   summarize,
+  settleConverting,
   uploadOutcome,
   type UploadItem,
 } from "./upload-queue.ts";
@@ -205,5 +206,14 @@ assert.deepEqual(
   "Main is ready to publish; the upload is Completed either way"
 );
 assert.deepEqual(uploadOutcome("ready", null), { state: "completed", readiness: null }, "an image or unprobed video says nothing");
+
+const converting = { id: "1", file: { name: "a.mp4", type: "video/mp4", size: 1 }, title: "a", state: "completed", pct: 100, readiness: "converting" } as const;
+assert.equal(settleConverting(converting, "ready").readiness, "ready", "a Rendition landed");
+assert.deepEqual(
+  { state: settleConverting(converting, "failed").state, readiness: settleConverting(converting, "failed").readiness },
+  { state: "failed", readiness: "unsupported_profile" },
+  "the conversion gave up"
+);
+assert.equal(settleConverting(converting, "processing"), converting, "still converting");
 
 console.log("upload-queue: all checks passed");

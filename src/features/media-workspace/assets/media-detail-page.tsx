@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftIcon as ArrowLeft,
   CalendarIcon as Calendar,
@@ -29,6 +29,9 @@ import { NoAccess } from "@/components/ui/NoAccess";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { playbackReadiness, readinessMessage, readinessTone } from "@/features/media-workspace/assets/upload/playback-readiness";
+import { transcodeWaitMessage } from "@/features/media-workspace/assets/upload/transcode-wait";
+import { useTranscodeStatus } from "@/features/media-workspace/assets/use-transcode-status";
+import type { TranscodeStatus } from "@/types/domain";
 import { fetchContentFolders, fetchMediaAsset } from "@/lib/api/media-api";
 import { useAppLocale } from "@/lib/use-app-locale";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
@@ -57,6 +60,11 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
       .catch((reason) => alive && setError(classifyApiError(reason, "Unable to load media detail")));
     return () => { alive = false; };
   }, [assetId]);
+
+  const refreshSettled = useCallback(({ asset_id: id }: TranscodeStatus) => {
+    fetchMediaAsset(id).then(setAsset).catch(() => undefined);
+  }, []);
+  const transcode = useTranscodeStatus(asset?.status === "processing" ? [assetId] : [], refreshSettled);
 
   const previewUrl = previews.urls[assetId];
   const thumbnailUrl = previews.thumbnailUrls[assetId];
@@ -168,7 +176,11 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
             {readiness && (
               <p className={`mt-3 text-xs ${{ neutral: "text-muted-foreground", warning: "text-warning", error: "text-error" }[readinessTone(readiness)]}`}>
                 {readinessMessage(readiness, locale)}
-                {readiness === "converting" && ` ${locale === "th" ? "(รีเฟรชเพื่อดูสถานะ)" : "(Refresh to see the status.)"}`}
+              </p>
+            )}
+            {readiness === "converting" && transcodeWaitMessage(transcode[assetId], locale) && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {transcodeWaitMessage(transcode[assetId], locale)}
               </p>
             )}
             {asset.tags?.length ? (

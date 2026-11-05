@@ -12,6 +12,7 @@ import { MAX_UPLOAD_SIZE_LABEL, UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "
 import { useAppLocale } from "@/lib/use-app-locale";
 import { MAX_WORKERS, type UploadItemState } from "./upload-queue";
 import { VIEW_DETAILS_LABEL, isRefusal, readinessMessage, readinessTone, type ReadinessTone } from "./playback-readiness";
+import { transcodeWaitMessage } from "./transcode-wait";
 import { RecentUploadsCard } from "./RecentUploadsCard";
 import { useUploadQueue } from "./useUploadQueue";
 
@@ -152,6 +153,11 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
                       </div>
                       {item.error && <p className="mt-1 text-xs text-error">{item.error}</p>}
                       {item.readiness && <p className={`mt-1 text-xs ${READINESS_TEXT_TONE[readinessTone(item.readiness)]}`}>{readinessMessage(item.readiness, locale)}</p>}
+                      {item.readiness === "converting" && item.assetId && transcodeWaitMessage(queue.transcode[item.assetId], locale) && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {transcodeWaitMessage(queue.transcode[item.assetId], locale)}
+                        </p>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-3 text-xs">
                       <span className={`min-w-16 text-right font-medium ${STATE_TONE[item.state]}`}>{STATE_LABEL[item.state]}{item.state === "uploading" && ` ${item.pct}%`}</span>
