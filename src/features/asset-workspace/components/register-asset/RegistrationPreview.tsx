@@ -11,6 +11,7 @@ import { selectedReference } from "../../domain/registration-references";
 import { registrationCategoryPath } from "../../domain/registration-categories";
 import { registrationCustodyLabel } from "../../domain/registration-reference-choices";
 import { RegistrationHelp } from "./RegistrationFields";
+import { cn } from "@/lib/utils";
 
 export function RegistrationPreview({ draft, options, step, reviewed, onEdit, photo, needsPhotoReselection, locked = false, verifiedPhoto = false }: {
   draft: RegistrationDraft; options: RegistrationOptions; step: number; reviewed: boolean; onEdit: (step: number) => void;
@@ -28,8 +29,10 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
     <aside className="min-w-0 space-y-3" aria-label="Asset preview">
       <section className="space-y-3 rounded-card border border-border bg-card p-4">
         <div>
-          <h2 className="text-sm font-semibold">{step === 4 ? "Asset preview" : "Live preview"}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Check how the asset information will look.</p>
+          <h2 className="text-sm font-semibold text-foreground">{step === 4 ? "Asset preview" : "Live preview"}</h2>
+          <p className={cn("mt-1 text-xs text-muted-foreground", step === 0 && "leading-relaxed")}>
+            Check how the asset information will look.
+          </p>
         </div>
         <div className={!photo || step === 0 ? "flex items-start gap-3" : "space-y-3"}>
           <div className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-control bg-muted ${!photo ? "h-12 w-12" : step === 0 ? "h-24 w-24" : "aspect-video max-h-48 w-full"}`}>
@@ -44,14 +47,14 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
               <StatusBadge status={registrationInitialStatus(draft, options)} />
               <ConditionBadge condition={draft.condition} />
             </div>
-            <h3 className="break-words text-sm font-semibold">{draft.name.trim() || "New asset"}</h3>
+            <h3 className="break-words text-sm font-semibold text-foreground">{draft.name.trim() || "New asset"}</h3>
             <p className="break-words text-xs text-muted-foreground">{draft.tagMode === "automatic" ? `${options.tagGeneration.format || "Asset Tag"} · Assigned on creation` : `Asset Tag: ${draft.assetCode || "Not entered"}`}</p>
             {category && <span className="inline-block max-w-full break-words rounded-full border border-border bg-muted px-2 py-1 text-xs text-muted-foreground" title={categoryPath}>{category.name}</span>}
             {categoryPath && categoryPath !== category?.name && <p className="break-words text-2xs text-muted-foreground">{categoryPath}</p>}
           </div>
         </div>
         {(photo || needsPhotoReselection || verifiedPhoto) && (
-          <p className="text-2xs text-muted-foreground" role="status">
+          <p className={cn("text-muted-foreground", step === 0 ? "text-xs leading-relaxed" : "text-2xs")} role="status">
             {needsPhotoReselection ? "Some photos could not be restored. Reselect or remove them in Step 1." : verifiedPhoto ? "Verified photo upload retained for this registration." : "Local preview · not uploaded"}
           </p>
         )}
@@ -67,9 +70,9 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
         )}
       </section>
       {step === 0 ? (
-        <section className="space-y-1 rounded-control bg-info-muted p-3 text-xs text-info" aria-label="Quick tips">
-          <h2 className="flex items-center gap-2 font-semibold">
-            <InfoIcon className="h-4 w-4" />
+        <section className="space-y-2 rounded-card bg-accent p-4 text-xs leading-relaxed text-foreground" aria-label="Quick tips">
+          <h2 className="flex items-center gap-2 font-semibold text-accent-foreground">
+            <InfoIcon aria-hidden="true" className="h-4 w-4 shrink-0" />
             Quick tips
           </h2>
           <p>Use a unique tag or generate it on creation. Photos are optional.</p>

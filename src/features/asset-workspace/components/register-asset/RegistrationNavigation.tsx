@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/lovable/button";
 import { ArrowLeftIcon, ArrowRightIcon } from "@/components/ui/icons";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -9,11 +10,14 @@ export function RegistrationNavigation({ step, editing, locked, busy, uncertain,
   step: number; editing: boolean; locked: boolean; busy: boolean; uncertain: boolean; canConfirm: boolean;
   onCancel: () => void; onBack: () => void;
 }) {
+  const pageOneControl = step === 0 ? "min-w-20 max-sm:h-10" : undefined;
   return (
     <footer data-registration-footer className="z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card py-3">
-      <Button variant="outline" size="sm" disabled={locked} onClick={onCancel}>Cancel</Button>
+      <Button variant="outline" size="sm" className={pageOneControl} disabled={locked} onClick={onCancel}>
+        Cancel
+      </Button>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" disabled={locked || step === 0} onClick={onBack}>
+        <Button variant="outline" size="sm" className={pageOneControl} disabled={locked || step === 0} onClick={onBack}>
           <ArrowLeftIcon className="h-4 w-4" />
           Back
         </Button>
@@ -22,7 +26,7 @@ export function RegistrationNavigation({ step, editing, locked, busy, uncertain,
             {busy ? "Please wait…" : uncertain ? "Retry original request" : "Create Asset"}
           </Button>
         ) : (
-          <Button type="submit" size="sm" disabled={locked}>
+          <Button type="submit" size="sm" className={cn(pageOneControl, step === 0 && "min-w-24")} disabled={locked}>
             {editing ? "Update" : "Next"}
             <ArrowRightIcon className="h-4 w-4" />
           </Button>

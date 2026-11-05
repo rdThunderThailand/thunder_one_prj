@@ -1,40 +1,53 @@
 import { Skeleton } from "@/components/ui/Skeleton";
+import { RegistrationBreadcrumb } from "./RegistrationBreadcrumb";
 
 export function RegistrationLoading() {
   return (
     <div role="status" aria-label="Loading asset registration" className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3">
-      <div className="shrink-0 space-y-3">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-80 max-w-full" />
-        <div className="flex justify-between gap-3 py-3">
-          {Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-8 w-8 rounded-full sm:w-28" />)}
-        </div>
-      </div>
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="space-y-3">
-            {[0, 1].map((index) => (
-              <div key={index} className="space-y-3 rounded-card border border-border bg-card p-4">
-                <Skeleton className="h-5 w-40" />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {Array.from({ length: 4 }, (_, field) => <Skeleton key={field} className="h-10 w-full" />)}
-                </div>
+      <div className="@container/registration min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-3">
+        <div className="space-y-3">
+          <RegistrationBreadcrumb current="Single Asset" />
+          <Skeleton className="h-7 w-48 motion-reduce:animate-none" />
+          <Skeleton className="h-3 w-80 max-w-full motion-reduce:animate-none" />
+          <div aria-hidden="true" className="flex justify-between gap-3 py-1">
+            {Array.from({ length: 5 }, (_, index) => (
+              <div key={index} className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="size-8 rounded-full motion-reduce:animate-none" />
+                <Skeleton className="hidden h-4 w-3/4 motion-reduce:animate-none sm:block" />
+                <Skeleton className="hidden h-3 w-1/2 motion-reduce:animate-none sm:block" />
               </div>
             ))}
           </div>
-          <div className="hidden space-y-3 rounded-card border border-border bg-card p-4 xl:block">
-            <Skeleton className="h-5 w-32" />
-            <div className="flex gap-3">
-              <Skeleton className="h-12 w-12 shrink-0" />
-              <Skeleton className="h-12 flex-1" />
+        </div>
+        <div aria-hidden="true" className="grid items-start gap-3 @min-4xl/registration:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]">
+          <div className="@container/basic-information space-y-4 rounded-card border border-border bg-card p-4">
+            <Skeleton className="h-4 w-40 motion-reduce:animate-none" />
+            <Skeleton className="h-3 w-3/4 motion-reduce:animate-none" />
+            <div className="grid gap-4 @min-lg/basic-information:grid-cols-2">
+              {Array.from({ length: 4 }, (_, field) => (
+                <div key={field} className="space-y-2">
+                  <Skeleton className="h-3 w-20 motion-reduce:animate-none" />
+                  <Skeleton className={`${field === 2 ? "h-24" : "h-9"} w-full motion-reduce:animate-none`} />
+                </div>
+              ))}
             </div>
-            <Skeleton className="h-4 w-3/4" />
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-3 rounded-card border border-border bg-card p-4">
+              <Skeleton className="h-4 w-32 motion-reduce:animate-none" />
+              <Skeleton className="h-40 w-full motion-reduce:animate-none" />
+              <Skeleton className="h-3 w-3/4 motion-reduce:animate-none" />
+            </div>
+            <div className="hidden space-y-3 rounded-card border border-border bg-card p-4 @min-4xl/registration:block">
+              <Skeleton className="h-4 w-32 motion-reduce:animate-none" />
+              <Skeleton className="h-16 w-full motion-reduce:animate-none" />
+            </div>
           </div>
         </div>
       </div>
       <div className="flex shrink-0 justify-between border-t border-border bg-card p-3">
-        <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-8 w-20 motion-reduce:animate-none max-sm:h-10" />
+        <Skeleton className="h-8 w-24 motion-reduce:animate-none max-sm:h-10" />
       </div>
     </div>
   );
