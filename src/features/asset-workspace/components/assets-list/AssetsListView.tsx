@@ -17,6 +17,9 @@ import { AssetsImportBatchFilter } from "./AssetsImportBatchFilter";
 import { ScanAssetDialog } from "../scan-asset/ScanAssetDialog";
 import { useAssetExport } from "../../hooks/use-asset-export";
 import { AssetsExportDialog } from "./AssetsExportDialog";
+import { useAssetLabels } from "../../hooks/use-asset-labels";
+import { useAssetsSelection } from "../../hooks/use-assets-selection";
+import { AssetLabelsDialog } from "../asset-labels/AssetLabelsDialog";
 
 export function AssetsListView({ context }: { context: string }) {
   const url = useAssetsListUrl();
@@ -32,6 +35,16 @@ export function AssetsListView({ context }: { context: string }) {
   const requestedKey = parsed.success ? assetListQueryString(query) : `invalid:${url.search}`;
   const exportReady = parsed.success && !list.pending && !list.error && Boolean(list.data) && list.dataKey === requestedKey;
   const exportFlow = useAssetExport(context, `${requestedKey}:${exportReady ? "ready" : "unavailable"}`);
+  const labels = useAssetLabels(context, `${requestedKey}:${exportReady ? "ready" : "unavailable"}`);
+  const selection = useAssetsSelection(`${context}:${requestedKey}`, list.data?.rows ?? []);
+  const actionsPending = exportFlow.pending || labels.phase === "loading" || labels.phase === "generating";
+
+  function openLabels(trigger: HTMLButtonElement | null) {
+    if (!exportReady) return false;
+    const candidates = (list.data?.rows ?? []).filter((row) => selection.selected.has(row.id))
+      .map((row) => ({ id: row.id, name: row.name, assetTag: row.asset_code, status: row.status }));
+    return labels.open(candidates, trigger);
+  }
 
   return (
     <AssetsListWorkspace>
@@ -46,6 +59,8 @@ export function AssetsListView({ context }: { context: string }) {
               if (exportReady && list.data) exportFlow.openFiltered(query, list.data.total, trigger);
             }}
             exportDisabled={!exportReady || exportFlow.pending}
+            onLabels={openLabels}
+            labelsDisabled={!exportReady || actionsPending}
           />
         )}
       </div>
@@ -76,9 +91,12 @@ export function AssetsListView({ context }: { context: string }) {
         onExportSelected={(ids, trigger) => {
           if (exportReady) exportFlow.openSelected(ids, trigger);
         }}
-        exportPending={exportFlow.pending}
+        exportPending={actionsPending}
+        selection={selection}
+        onLabels={openLabels}
       />
       <AssetsExportDialog flow={exportFlow} />
+      <AssetLabelsDialog flow={labels} />
       {!denied && (scanOpen || url.get("scan") === "1") && (
         <ScanAssetDialog
           triggerRef={scanTriggerRef}

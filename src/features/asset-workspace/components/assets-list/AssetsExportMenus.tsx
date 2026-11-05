@@ -10,12 +10,9 @@ import { useAssetImportHistory } from "../../hooks/use-asset-import-history";
 import { ImportHistoryDialog } from "../import-history/ImportHistoryDialog";
 
 type ExportMenuProps = { disabled: boolean; onExport: (trigger: HTMLButtonElement | null) => void };
-const UNAVAILABLE_ITEM = "data-[disabled]:opacity-100 data-[disabled]:text-muted-foreground";
-const OTHER_ACTIONS = [
-  { title: "Print / Download Labels", description: "Generate QR, barcode or Asset Tag labels", icon: PrintIcon },
-];
+type LabelsMenuProps = { onLabels: (trigger: HTMLButtonElement | null) => boolean; labelsDisabled: boolean };
 
-export function AssetsMoreActionsMenu({ context, disabled, onExport }: ExportMenuProps & { context: string }) {
+export function AssetsMoreActionsMenu({ context, disabled, onExport, onLabels, labelsDisabled }: ExportMenuProps & LabelsMenuProps & { context: string }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const openingDialogRef = useRef(false);
   const template = useAssetsListTemplate(context);
@@ -61,6 +58,15 @@ export function AssetsMoreActionsMenu({ context, disabled, onExport }: ExportMen
             <span className="text-2xs text-muted-foreground">Get the Excel template for bulk registration</span>
           </span>
         </DropdownMenuItem>
+        <DropdownMenuItem disabled={labelsDisabled} className="items-start" onSelect={() => {
+          openingDialogRef.current = onLabels(triggerRef.current);
+        }}>
+          <PrintIcon className="mt-0.5" />
+          <span className="flex flex-col">
+            <span className="text-xs font-medium">Print / Download Asset Labels</span>
+            <span className="text-2xs text-muted-foreground">Select assets to generate labels</span>
+          </span>
+        </DropdownMenuItem>
         <DropdownMenuItem className="items-start" onSelect={() => {
           openingDialogRef.current = true;
           history.show(triggerRef.current);
@@ -71,16 +77,6 @@ export function AssetsMoreActionsMenu({ context, disabled, onExport }: ExportMen
             <span className="text-2xs text-muted-foreground">View all bulk import transactions</span>
           </span>
         </DropdownMenuItem>
-        <p className="border-t border-border px-2 py-1.5 text-2xs text-muted-foreground">Other actions are not available yet</p>
-        {OTHER_ACTIONS.map(({ title, description, icon: Icon }) => (
-          <DropdownMenuItem key={title} disabled className={`items-start ${UNAVAILABLE_ITEM}`}>
-            <Icon className="mt-0.5" />
-            <span className="flex flex-col">
-              <span className="text-xs font-medium">{title}</span>
-              <span className="text-2xs text-muted-foreground">{description}</span>
-            </span>
-          </DropdownMenuItem>
-        ))}
       </DropdownMenuContent>
       <AssetsTemplateDownloadDialog flow={template} />
       <ImportHistoryDialog flow={history} />
@@ -88,7 +84,7 @@ export function AssetsMoreActionsMenu({ context, disabled, onExport }: ExportMen
   );
 }
 
-export function AssetsSelectedExportMenu({ disabled, onExport }: ExportMenuProps) {
+export function AssetsSelectedExportMenu({ disabled, onExport, onLabels, labelsDisabled }: ExportMenuProps & LabelsMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const openingDialogRef = useRef(false);
   return (
@@ -102,6 +98,12 @@ export function AssetsSelectedExportMenu({ disabled, onExport }: ExportMenuProps
         if (openingDialogRef.current) event.preventDefault();
         openingDialogRef.current = false;
       }}>
+        <DropdownMenuItem disabled={labelsDisabled} onSelect={() => {
+          openingDialogRef.current = onLabels(triggerRef.current);
+        }}>
+          <PrintIcon />
+          Print / Download Labels
+        </DropdownMenuItem>
         <DropdownMenuItem disabled={disabled} onSelect={() => {
           openingDialogRef.current = true;
           onExport(triggerRef.current);

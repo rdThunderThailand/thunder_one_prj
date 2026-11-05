@@ -40,12 +40,14 @@ export function UnavailableAction({ children, icon: Icon, label, className }: Un
   );
 }
 
-export function AssetsPageActions({ context, onScan, scanTriggerRef, onExport, exportDisabled }: {
+export function AssetsPageActions({ context, onScan, scanTriggerRef, onExport, exportDisabled, onLabels, labelsDisabled }: {
   context: string;
   onScan: () => void;
   scanTriggerRef: RefObject<HTMLButtonElement | null>;
   onExport: (trigger: HTMLButtonElement | null) => void;
   exportDisabled: boolean;
+  onLabels: (trigger: HTMLButtonElement | null) => boolean;
+  labelsDisabled: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -54,7 +56,7 @@ export function AssetsPageActions({ context, onScan, scanTriggerRef, onExport, e
         Scan Asset
       </Button>
       <RegisterAssetSplitButton />
-      <AssetsMoreActionsMenu context={context} onExport={onExport} disabled={exportDisabled} />
+      <AssetsMoreActionsMenu context={context} onExport={onExport} disabled={exportDisabled} onLabels={onLabels} labelsDisabled={labelsDisabled} />
     </div>
   );
 }
@@ -108,10 +110,11 @@ function AssetMenuItemText({ title, description }: { title: string; description:
 }
 
 /** Bulk actions appear only once rows are selected; until then a hint explains what selection enables. */
-export function AssetsSelectionToolbar({ count, clear, onExport, exportDisabled }: {
+export function AssetsSelectionToolbar({ count, clear, onExport, exportDisabled, onLabels }: {
   count: number; clear: () => void;
   onExport: (trigger: HTMLButtonElement | null) => void;
   exportDisabled: boolean;
+  onLabels: (trigger: HTMLButtonElement | null) => boolean;
 }) {
   return (
     <div role="toolbar" aria-label="Selected asset actions" className="flex h-8 w-max items-center gap-1">
@@ -136,7 +139,7 @@ export function AssetsSelectionToolbar({ count, clear, onExport, exportDisabled 
             <ChevronDownIcon className="size-3" />
           </UnavailableAction>
           <UnavailableAction icon={InventoryIcon}>Add to Inventory</UnavailableAction>
-          <AssetsSelectedExportMenu onExport={onExport} disabled={exportDisabled} />
+          <AssetsSelectedExportMenu onExport={onExport} disabled={exportDisabled} onLabels={onLabels} labelsDisabled={exportDisabled} />
         </>
       )}
     </div>

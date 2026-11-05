@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import { PlusIcon } from "@/components/ui/icons";
@@ -12,19 +12,18 @@ import { AssetsPagination } from "./AssetsPagination";
 import { AssetsSelectionToolbar, AssetsSortControl, AssetsViewControls } from "./AssetsListToolbar";
 import { AssetsTableLoading } from "./AssetsListLoading";
 import { AssetsSectionError } from "./AssetsSectionError";
+import type { AssetsSelection } from "../../hooks/use-assets-selection";
 
-export function AssetsListContent({ resource, query, requestedKey, url, filtered, onExportSelected, exportPending }: {
+export function AssetsListContent({ resource, query, requestedKey, url, filtered, onExportSelected, exportPending, selection, onLabels }: {
   resource: AssetsListResource; query: AssetListQuery; requestedKey: string; url: AssetsListUrlState; filtered: boolean;
   onExportSelected: (ids: string[], trigger: HTMLButtonElement | null) => void;
   exportPending: boolean;
+  selection: AssetsSelection;
+  onLabels: (trigger: HTMLButtonElement | null) => boolean;
 }) {
   const { data, pending, error, retry, dataKey } = resource;
   const scroll = useRef<HTMLDivElement>(null);
-  const [selection, setSelection] = useState({ query: requestedKey, ids: new Set<string>() });
-  const selected = new Set([...selection.ids].filter((id) => data?.rows.some((row) => row.id === id)));
-  if (selection.query !== requestedKey || selected.size !== selection.ids.size) {
-    setSelection({ query: requestedKey, ids: selection.query !== requestedKey ? new Set() : selected });
-  }
+  const { selected } = selection;
   const frozen = pending || Boolean(error);
   const pagination = data ? { data, pending: frozen,
     onPage: (page: number) => url.set({ page: String(page) }),
@@ -40,7 +39,8 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
         <div className="min-w-0 flex-1 overflow-x-auto">
           <AssetsSelectionToolbar
             count={frozen ? 0 : selected.size}
-            clear={() => setSelection({ query: requestedKey, ids: new Set() })}
+            clear={selection.clear}
+            onLabels={onLabels}
             onExport={(trigger) => onExportSelected([...selected], trigger)}
             exportDisabled={frozen || exportPending || dataKey !== requestedKey}
           />
@@ -66,7 +66,7 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
         ) : error?.status === 401 ? (
           <EmptyState title="Sign in to view assets" body={error.message} action={
             <Button asChild variant="outline" size="sm">
-              <a href="/login">Sign in</a>
+              <Link href="/login">Sign in</Link>
             </Button>
           } />
         ) : (
@@ -86,12 +86,8 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
           </div>
         ) : (
           <AssetsTable rows={data.rows} selected={frozen ? new Set() : selected} pending={frozen}
-            onSelectAll={(checked) => setSelection({ query: requestedKey, ids: checked ? new Set(data.rows.map((row) => row.id)) : new Set() })}
-            onSelect={(id, checked) => setSelection((previous) => {
-              const ids = new Set(previous.ids);
-              if (checked) ids.add(id); else ids.delete(id);
-              return { query: requestedKey, ids };
-            })} />
+            onSelectAll={selection.selectAll}
+            onSelect={selection.select} />
         )}
       </div>
       <div data-assets-controls className="shrink-0 border-t border-border px-3 py-2">

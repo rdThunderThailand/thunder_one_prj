@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { ArrowLeftIcon, CalendarIcon, EditIcon, LocationIcon, TagIcon, UserIcon, WarrantyIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, CalendarIcon, EditIcon, LocationIcon, PrintIcon, TagIcon, UserIcon, WarrantyIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { locationTrail, warrantyState } from "../../domain/asset-profile";
@@ -17,6 +17,8 @@ import {
   ConditionValue, Fact, formatDate, formatDateTime, formatDay, ProfileRows, ProfileSection, SectionLoading, StatusValue, todayInBangkok,
 } from "./ProfileParts";
 import { FilesSection, HistorySection, WarrantySection } from "./ProfileSections";
+import { useAssetLabels } from "../../hooks/use-asset-labels";
+import { AssetLabelsDialog } from "../asset-labels/AssetLabelsDialog";
 
 const BACK = "/asset-workspace/assets";
 // Refresh signed links a minute before they expire.
@@ -36,6 +38,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   // Detail and files load together; each part renders as soon as its own data arrives.
   const detail = useProfileRead(`${context}:${assetId}:detail`, (signal) => getAssetDetail(context, assetId, signal));
   const files = useProfileRead(`${context}:${assetId}:files`, (signal) => getAssetFiles(context, assetId, signal));
+  const labels = useAssetLabels(context, assetId);
 
   const expiresAt = files.result?.ok ? Date.parse(files.result.data.expiresAt) : NaN;
   const { reload: reloadFiles } = files;
@@ -69,7 +72,15 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   return (
     <div className="min-w-0 space-y-3" aria-busy={!asset}>
       <BackLink />
-      <ProfileHero asset={asset} photos={photos} onPhotoFailed={refreshLinks} />
+      <ProfileHero asset={asset} photos={photos} onPhotoFailed={refreshLinks} labelAction={asset && asset.lifecycleStatus !== "Disposed" ? (
+        <Button variant="outline" size="sm" onClick={(event) => labels.open([
+          { id: asset.id, name: asset.name, assetTag: asset.assetTag, status: asset.lifecycleStatus },
+        ], event.currentTarget)}>
+          <PrintIcon className="size-4" />
+          Print / Download Label
+        </Button>
+      ) : null} />
+      <AssetLabelsDialog flow={labels} />
       <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-3">
           <ProfileSection title="Details">
@@ -85,7 +96,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   );
 }
 
-function ProfileHero({ asset, photos, onPhotoFailed }: { asset: AssetDetail | null; photos: AssetFiles["photos"]; onPhotoFailed: () => void }) {
+function ProfileHero({ asset, photos, onPhotoFailed, labelAction }: { asset: AssetDetail | null; photos: AssetFiles["photos"]; onPhotoFailed: () => void; labelAction: ReactNode }) {
   const photo = photos[0] ?? null;
   return (
     <header className="@container rounded-card border border-border bg-card p-4 shadow-panel @3xl:p-6">
@@ -126,13 +137,16 @@ function ProfileHero({ asset, photos, onPhotoFailed }: { asset: AssetDetail | nu
                 <Skeleton className="h-4 w-40" />
               </div>
             )}
-            <Button
-              variant="outline" size="sm" aria-disabled="true" title="Editing is not available in this version"
-              aria-description="Editing is not available in this version." className="cursor-not-allowed text-muted-foreground hover:bg-card"
-            >
-              <EditIcon className="size-4" />
-              Edit
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {labelAction}
+              <Button
+                variant="outline" size="sm" aria-disabled="true" title="Editing is not available in this version"
+                aria-description="Editing is not available in this version." className="cursor-not-allowed text-muted-foreground hover:bg-card"
+              >
+                <EditIcon className="size-4" />
+                Edit
+              </Button>
+            </div>
           </div>
           {asset ? <HeroFacts asset={asset} /> : <SectionLoading rows={2} />}
         </div>
