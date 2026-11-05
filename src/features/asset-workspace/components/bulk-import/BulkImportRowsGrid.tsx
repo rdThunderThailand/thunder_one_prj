@@ -18,7 +18,10 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
       role="region"
       aria-label="Import rows"
       tabIndex={0}
-      className="max-w-full overflow-auto overscroll-x-contain rounded-control border border-border focus-visible:outline-2 focus-visible:outline-ring xl:min-h-0 xl:flex-1"
+      className={cn(
+        "max-w-full overflow-x-auto overscroll-x-contain rounded-control border border-border focus-visible:outline-2 focus-visible:outline-ring",
+        variant === "review" && "flex-1",
+      )}
     >
       <table
         className={cn(
@@ -26,7 +29,7 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
           variant === "validate" ? "min-w-[26rem]" : "min-w-4xl",
         )}
       >
-        <thead className="sticky top-0 z-20 bg-muted text-2xs text-muted-foreground">
+        <thead className="bg-muted text-2xs text-muted-foreground">
           <tr>
             <th
               scope="col"

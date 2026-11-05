@@ -89,9 +89,11 @@ export function BulkImportCounts(props: Props) {
   return (
     <div
       className={`grid shrink-0 grid-cols-2 gap-3 ${
-        props.variant === "validation" && !props.review
-          ? "@min-lg/validate:grid-cols-4"
-          : "xl:grid-cols-4"
+        review
+          ? "@min-2xl/summary:grid-cols-4"
+          : props.variant === "validation"
+            ? "@min-lg/validate:grid-cols-4"
+            : "xl:grid-cols-4"
       }`}
     >
       {items.map(({ label, value, hint, icon: Icon, tone }) => (

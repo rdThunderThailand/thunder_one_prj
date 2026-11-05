@@ -114,7 +114,7 @@ export function BulkImportUploadedFile({ flow, fileFeedbackId }: {
           will be linked to the original import.
         </p>
       )}
-      {flow.progress && (
+      {flow.busy && flow.progress && (
         <div className="space-y-2" role="status">
           <Progress
             value={flow.progress.value}

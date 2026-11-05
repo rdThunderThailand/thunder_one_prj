@@ -49,6 +49,10 @@ export function BulkImportValidationProgress({ progress }: { progress: ImportPro
           aria-valuenow={sending ? percentage : undefined}
           aria-valuetext={progress.label}
           className="h-3 bg-muted"
+          indicatorClassName={cn(
+            "transition-transform duration-500 ease-out motion-reduce:transition-none",
+            !sending && "progress-stripes",
+          )}
         />
         <p role="status" className="text-xs leading-relaxed text-muted-foreground">
           {progress.label}

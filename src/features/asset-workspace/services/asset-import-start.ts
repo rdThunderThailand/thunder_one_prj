@@ -52,7 +52,10 @@ export async function startImportBatch(
       mimeType: parsed.kind === "csv"
         ? "text/csv"
         : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      onProgress: (value) => onProgress({ label: `Uploading file… ${Math.round(value)}%`, value }),
+      onProgress: (value) => onProgress({
+        label: value >= 100 ? "Finishing upload…" : `Uploading file… ${Math.round(value)}%`,
+        value,
+      }),
       checkActive,
     });
   } catch (error) {

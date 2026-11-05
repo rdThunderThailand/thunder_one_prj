@@ -5,7 +5,7 @@ import { z } from "zod";
 import { autoMap } from "../domain/asset-import-mapping.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { restoredMappingView } from "../domain/asset-import-step.ts";
-import type { ImportBatch } from "../domain/asset-import-types.ts";
+import type { ImportBatch, ImportConfirmBody } from "../domain/asset-import-types.ts";
 import { ImportApiError } from "../services/asset-import-api.ts";
 import { restoreImportFile } from "../services/asset-import-restore.ts";
 import { getParsedImportFile, readImportSession, setParsedImportFile, takeImportNotice } from "../services/asset-import-session.ts";
@@ -16,6 +16,7 @@ export function useAssetImportRestoration(
   runtime: ImportFlowRuntime,
   state: FlowState,
   requestedUrlRef: RefObject<{ batchId: string | null; superseded: Set<string | null> } | null>,
+  confirmLoop: (lifecycle: Lifecycle, batch: ImportBatch, first?: ImportConfirmBody) => Promise<void>,
 ) {
   const { api, options, userId, context, preview, batchId, routeKey, current, publish, run, clearLocal } = runtime;
 
@@ -101,6 +102,12 @@ export function useAssetImportRestoration(
       }
       if (needsFile) {
         await restoreFile(lifecycle, batch);
+      } else if (batch.status === "processing") {
+        publish(lifecycle, { restoring: false });
+        if (!creator) {
+          throw new ImportApiError("PERMISSION_DENIED", "Only the person who started this import can confirm it.", 403);
+        }
+        await confirmLoop(lifecycle, batch);
       }
     });
   });
@@ -116,6 +123,23 @@ export function useAssetImportRestoration(
       active = false;
     };
   }, [api, batchId, routeKey, ready, state.busy]);
+
+  useEffect(() => {
+    if (!state.confirming && state.batch?.status !== "processing") return;
+    const guard = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const link = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!(link instanceof HTMLAnchorElement) || link.target === "_blank" || link.hasAttribute("download")) return;
+      const target = new URL(link.href, window.location.href);
+      if (target.pathname === window.location.pathname && target.search === window.location.search) return;
+      if (!window.confirm("Registration is in progress. Leave this page?")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    document.addEventListener("click", guard, true);
+    return () => document.removeEventListener("click", guard, true);
+  }, [state.confirming, state.batch?.status]);
 
   useEffect(() => {
     // A reload is safe once uploaded, because the file comes back from Core.

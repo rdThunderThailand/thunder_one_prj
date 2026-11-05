@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 export function BulkImportRowsLoading({ variant }: {
   variant: "validate" | "review" | "result";
 }) {
-  const columns = variant === "validate" ? 4 : variant === "review" ? 10 : 7;
+  const columns = variant === "validate" ? 4 : variant === "review" ? 9 : 7;
   const gridClassName = variant === "validate"
     ? "grid-cols-[2rem_minmax(0,2fr)_minmax(0,3fr)_4rem]"
-    : variant === "review" ? "grid-cols-10" : "grid-cols-7";
+    : variant === "review" ? "grid-cols-9" : "grid-cols-7";
 
   return (
     <div role="status" className="flex min-h-0 flex-1 flex-col gap-3">
@@ -16,7 +16,7 @@ export function BulkImportRowsLoading({ variant }: {
       </p>
       <div
         aria-hidden="true"
-        className="max-h-64 min-h-0 overflow-hidden rounded-control border border-border xl:max-h-none xl:flex-1"
+        className="flex-1 overflow-hidden rounded-control border border-border"
       >
         <div className={cn("grid items-center gap-3 bg-muted p-3", gridClassName)}>
           {Array.from({ length: columns }, (_, index) => (

@@ -18,6 +18,7 @@ import { BulkImportHeader } from "./BulkImportHeader";
 import { ScreenPlaceholder } from "../ScreenPlaceholder";
 import { UploadStep } from "./steps/UploadStep";
 import { MapValidateStep } from "./steps/MapValidateStep";
+import { ReviewConfirmStep } from "./steps/ReviewConfirmStep";
 
 export function BulkImportPage(context: AssetImportContext) {
   return (
@@ -108,10 +109,19 @@ function ImportWorkspace({
       case 1:
         content = <MapValidateStep flow={flow} renderFooter={renderFooter} />;
         break;
+      case 2:
+        content = (
+          <ReviewConfirmStep
+            key={flow.batch?.id}
+            flow={flow}
+            renderFooter={renderFooter}
+          />
+        );
+        break;
       default:
         content = (
           <ScreenPlaceholder
-            title={flow.step === 2 ? "Review & Confirm" : "Complete"}
+            title="Complete"
             spec="UC-010 · 05 §4.6"
           />
         );
@@ -161,7 +171,7 @@ function BulkImportLoading({ step }: { step: number }) {
     <div
       role="status"
       aria-label="Loading bulk import"
-      className={cn("space-y-3", step <= 1 && "@container/upload")}
+      className={cn("space-y-3", step <= 2 && "@container/upload")}
     >
       {step !== 0 && <Skeleton className="h-20 w-full motion-reduce:animate-none" />}
       {step === 3 && (
@@ -177,7 +187,7 @@ function BulkImportLoading({ step }: { step: number }) {
             ? "@min-4xl/upload:grid-cols-[minmax(0,4fr)_minmax(0,3fr)]"
             : step === 1
               ? "@min-4xl/upload:grid-cols-[minmax(0,7fr)_minmax(0,6fr)]"
-              : "xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
+              : "items-start @min-5xl/upload:grid-cols-[minmax(0,1fr)_20rem]"
         }`}
       >
         <div className="space-y-3 rounded-card border border-border bg-card p-4">

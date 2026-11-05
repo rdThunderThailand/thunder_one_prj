@@ -178,8 +178,8 @@ export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
     discard,
   };
   const upload = useAssetImportUpload(runtime);
-  const review = useAssetImportReview(runtime);
-  const restoration = useAssetImportRestoration(runtime, state, lifecycle.requestedUrl);
+  const review = useAssetImportReview(runtime, upload.createBatch);
+  const restoration = useAssetImportRestoration(runtime, state, lifecycle.requestedUrl, review.confirmLoop);
   const ready = !preview && Boolean(options?.ready);
 
   const derived = stepFor(state.batch, Boolean(state.parsed) || state.restoringFile || state.restoreFailed);
@@ -206,6 +206,8 @@ export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
     startBatch: upload.startBatch,
     runValidation: review.runValidation,
     replaceFile: upload.clearFile,
+    editMapping: review.editMapping,
+    confirm: review.confirm,
     setMapping: review.setMapping,
     showMapping: review.showMapping,
     showReview: review.showReview,

@@ -23,6 +23,7 @@ import { useAssetImportRows } from "../../hooks/use-asset-import-rows";
 import { ErrorState } from "../states/ErrorState";
 import { BulkImportPagination } from "./BulkImportPagination";
 import { BulkImportRowsGrid } from "./BulkImportRowsGrid";
+import { BulkImportRowsEmpty } from "./BulkImportRowsEmpty";
 import { BulkImportRowSheet } from "./BulkImportRowSheet";
 import { BulkImportRowsLoading } from "./BulkImportRowsLoading";
 
@@ -60,6 +61,7 @@ export function BulkImportRowsTable({
   const currentBatch = batch ?? batchResource.batch;
   const result = variant === "result";
   const validate = variant === "validate";
+  const fill = variant === "review" && "flex flex-1 flex-col";
   const rows = useAssetImportRows(api, batchId, {
     page: query.page,
     pageSize: query.pageSize,
@@ -112,11 +114,11 @@ export function BulkImportRowsTable({
 
   return (
     <div
-      className="min-w-0 xl:flex xl:min-h-0 xl:flex-1 xl:flex-col"
+      className={cn("min-w-0", fill)}
       aria-busy={rows.loading || batchResource.loading}
     >
       <Tabs
-        className="min-w-0 xl:flex xl:min-h-0 xl:flex-1 xl:flex-col"
+        className={cn("min-w-0", fill)}
         value={query.tab}
         onValueChange={(tab) =>
           setQuery((previous) => ({
@@ -139,10 +141,11 @@ export function BulkImportRowsTable({
                 value={tab.key}
                 className={cn(
                   "min-h-8 whitespace-normal text-2xs sm:text-xs",
-                  validate && "flex-1 gap-1",
+                  !result && "gap-1",
+                  validate && "flex-1",
                 )}
               >
-                {validate && tab.icon}
+                {tab.icon}
                 {tab.label} (
                 {tab.count === undefined ? "…" : formatCount(tab.count)})
               </TabsTrigger>
@@ -172,7 +175,7 @@ export function BulkImportRowsTable({
         </div>
         <TabsContent
           value={query.tab}
-          className="mt-3 space-y-3 xl:flex xl:min-h-0 xl:flex-1 xl:flex-col xl:gap-3 xl:space-y-0"
+          className={cn("mt-3 space-y-3", fill)}
         >
           {rows.loading || batchResource.loading ? (
             <BulkImportRowsLoading variant={variant} />
@@ -201,12 +204,7 @@ export function BulkImportRowsTable({
                     onViewRow={setViewRow}
                   />
                 ) : (
-                  <p
-                    role="status"
-                    className="py-8 text-center text-xs text-muted-foreground"
-                  >
-                    No rows in this tab.
-                  </p>
+                  <BulkImportRowsEmpty tab={query.tab} searching={Boolean(query.q)} />
                 )}
                 <BulkImportPagination
                   data={rows.page}
