@@ -12,12 +12,14 @@ import { useAssetImportOptions } from "../../hooks/use-asset-import-options";
 interface BulkMethodActionProps {
   tenantId: string;
   userId: string;
+  selected?: boolean;
   onOptionsChange?: (options: ImportOptions | null, loading: boolean) => void;
 }
 
 export function BulkMethodAction({
   tenantId,
   userId,
+  selected = false,
   onOptionsChange,
 }: BulkMethodActionProps) {
   const { options, loading, error, reload } = useAssetImportOptions({
@@ -43,7 +45,7 @@ export function BulkMethodAction({
       <div className="mt-auto space-y-1">
         <Button
           asChild
-          variant="outline"
+          variant={selected ? "default" : "outline"}
           size="sm"
           className="w-full"
         >
@@ -70,7 +72,7 @@ export function BulkMethodAction({
   return (
     <div className="mt-auto space-y-1">
       <Button
-        variant="outline"
+        variant={selected ? "default" : "outline"}
         size="sm"
         disabled
         aria-describedby="bulk-registration-reason"
