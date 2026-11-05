@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isCalendarDate } from "../domain/registration-warranty-dates";
+import { isCalendarDate } from "../domain/registration-warranty-dates.ts";
 
 const reference = z.guid().transform((value) => value.toLowerCase());
 const date = z.string().refine(isCalendarDate);

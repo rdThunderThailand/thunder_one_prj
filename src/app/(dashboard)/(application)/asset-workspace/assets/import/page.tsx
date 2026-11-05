@@ -1,10 +1,19 @@
-import { ScreenPlaceholder } from "@/features/asset-workspace/components/ScreenPlaceholder";
+import { Suspense } from "react";
+import { getSession } from "@/features/auth/services/get-session";
+import { BulkImportPage } from "@/features/asset-workspace/components/bulk-import/BulkImportPage";
+import {
+  AccessDeniedState,
+  LoadingState,
+} from "@/features/asset-workspace/components/states/states";
 
-export default function BulkImportPage() {
+export default async function Page() {
+  const session = await getSession();
+  if (session === "forbidden" || !session.tenantId || !session.userId) {
+    return <AccessDeniedState />;
+  }
   return (
-    <ScreenPlaceholder
-      title="Bulk Import"
-      spec="UC-010 · 05 §4.6"
-    />
+    <Suspense fallback={<LoadingState />}>
+      <BulkImportPage tenantId={session.tenantId} userId={session.userId} />
+    </Suspense>
   );
 }

@@ -1,11 +1,18 @@
+"use client";
+
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
-  MonitorIcon, CheckIcon, CheckCircleIcon, ArrowRightIcon, ChevronRightIcon,
-  FileTextIcon, BookIcon, CategoryIcon, InfoIcon, PlusIcon, UploadIcon,
+  MonitorIcon, CheckIcon, CheckCircleIcon, ArrowRightIcon,
+  FileTextIcon, InfoIcon, PlusIcon, UploadIcon,
   TransferIcon, ClipboardIcon, ClockIcon, UserIcon,
 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
+
+import type { ImportOptions } from "../../domain/asset-import-types";
+import { BulkMethodAction } from "../bulk-import/BulkMethodAction";
+import { RegistrationResources } from "./RegistrationResources";
 
 const methods = [
   {
@@ -28,13 +35,11 @@ const comparisons = [
   { label: "Time to complete", icon: ClockIcon, single: "Approximately 2–3 minutes per asset", bulk: "A few minutes for file upload" },
 ];
 
-const resources = [
-  { label: "Download Template", icon: FileTextIcon, description: "Get Excel template for bulk asset registration" },
-  { label: "View Import Guide", icon: BookIcon, description: "Step-by-step guide for file import" },
-  { label: "View Asset Categories", icon: CategoryIcon, description: "Check available categories and required fields" },
-];
-
-export function RegistrationMethodChoice() {
+export function RegistrationMethodChoice({ tenantId, userId }: { tenantId: string; userId: string }) {
+  const [bulkState, setBulkState] = useState<{ options: ImportOptions | null; loading: boolean }>({ options: null, loading: true });
+  const handleOptionsChange = useCallback((options: ImportOptions | null, loading: boolean) => {
+    setBulkState({ options, loading });
+  }, []);
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       <div data-registration-scroll className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-4 pr-1">
@@ -44,7 +49,7 @@ export function RegistrationMethodChoice() {
             <InfoIcon className="mt-1 h-4 w-4" />
             <div className="space-y-1 text-xs">
               <p className="font-semibold">Select the option that matches your situation</p>
-              <p>Single registration is available for preparation and review. Saving new assets and bulk registration are not available yet.</p>
+              <p>Choose how you want to register assets.</p>
             </div>
           </div>
         </div>
@@ -87,13 +92,11 @@ export function RegistrationMethodChoice() {
                     </Link>
                   </Button>
                 ) : (
-                  <div className="mt-auto space-y-1">
-                    <Button variant="outline" size="sm" disabled aria-describedby="bulk-registration-reason" className="w-full">
-                      Register Bulk Assets
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </Button>
-                    <p id="bulk-registration-reason" className="text-2xs text-muted-foreground">Bulk registration is not available in this version.</p>
-                  </div>
+                  <BulkMethodAction
+                    tenantId={tenantId}
+                    userId={userId}
+                    onOptionsChange={handleOptionsChange}
+                  />
                 )}
               </div>
             </section>
@@ -133,26 +136,12 @@ export function RegistrationMethodChoice() {
             </dl>
           </div>
         </section>
-        <section aria-labelledby="registration-resources-title" className="space-y-2 rounded-card border border-border bg-card p-3">
-          <h2 id="registration-resources-title" className="text-sm font-semibold">Related resources</h2>
-          <div className="grid gap-3 md:grid-cols-3">
-            {resources.map(({ label, icon: Icon, description }, index) => (
-              <div key={label} className="rounded-control border border-border p-3">
-                <Button variant="ghost" disabled aria-describedby={`registration-resource-${index}`} className="h-auto w-full justify-start gap-3 whitespace-normal p-0 text-left disabled:opacity-100">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-info-muted text-primary">
-                    <Icon className="h-6 w-6" />
-                  </span>
-                  <span className="min-w-0 flex-1 space-y-1">
-                    <span className="block text-xs font-semibold text-primary">{label}</span>
-                    <span className="block text-xs font-normal text-muted-foreground">{description}</span>
-                  </span>
-                  <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
-                </Button>
-                <p id={`registration-resource-${index}`} className="mt-2 text-2xs text-muted-foreground">Not available in this version.</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <RegistrationResources
+          options={bulkState.options}
+          loading={bulkState.loading}
+          tenantId={tenantId}
+          userId={userId}
+        />
       </div>
       <footer data-registration-footer className="shrink-0 border-t border-border bg-card px-3 py-3">
         <Button asChild variant="outline" size="sm">
