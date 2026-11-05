@@ -9,12 +9,14 @@ import type { AssetUsage, Campaign, ContentFolder, MediaAsset, MediaAssetPage, P
 export async function requestApi<T>(
   method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
   path: string,
-  data?: unknown
+  data?: unknown,
+  options?: { timeoutMs?: number }
 ): Promise<T> {
   const res = await apiClient.request({
     url: `/api/proxy${path}`,
     method,
     data,
+    timeout: options?.timeoutMs,
     validateStatus: () => true,
   });
 

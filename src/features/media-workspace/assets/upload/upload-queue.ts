@@ -1,7 +1,7 @@
 import { rejectUploadReason } from "../../publications/upload-limits.ts";
-import type { UploadTarget } from "../../publications/services/upload-api.ts";
+import type { RegistrationDraft, UploadTarget } from "../../publications/services/upload-api.ts";
 import type { ProbeVerdict } from "@/types/domain";
-import { verdictMessage } from "./verdict-message.ts";
+import { playbackReadiness, type PlaybackReadiness } from "./playback-readiness.ts";
 
 /** Structural subset of `File` — lets the pure queue logic run under `node` in the
  *  `.check.mts` without a File polyfill; a real File satisfies this. */
@@ -16,9 +16,15 @@ export type UploadItem = {
   state: UploadItemState;
   pct: number;
   error?: string;
-  /** Set on a `completed` item admitted with a caveat (ADR 0070 `unverified_preset`, e.g. an
-   *  uncertified H.264 Main Profile) — a completed upload, not a failure. */
-  warning?: string;
+  /** What Core said about playback when it registered the file (ADR 0059 amendment 2026-11-04).
+   *  A code, rendered in the app's language. On a `failed` item it is a refusal, which `Retry`
+   *  cannot change. */
+  readiness?: PlaybackReadiness;
+  /** The Asset this row became, once registration returned. */
+  assetId?: string;
+  /** Set once the bytes are in Storage: a `Retry` then only registers again (idempotent in Core)
+   *  instead of uploading the file a second time. */
+  registration?: RegistrationDraft;
   /** Authorization from this file's first attempt. A retry reuses it to resume from the prior
    *  offset; dropping it means re-authorizing and restarting from zero (ADR-0059). */
   target?: UploadTarget;
@@ -30,7 +36,8 @@ export type UploadItem = {
   tagIds?: string[];
 };
 
-export const MAX_WORKERS = 2;
+/** ADR 0059 amendment 2026-11-04: four, up from two. Ten stays rejected — see the ADR. */
+export const MAX_WORKERS = 4;
 
 const ACTIVE_STATES: UploadItemState[] = ["waiting", "uploading"];
 
@@ -80,7 +87,7 @@ export function aggregateAction(items: UploadItem[]): "clear-queue" | "cancel-al
 }
 
 /** Ids of `waiting` items that should start now, given how many are already active.
- *  The entire two-worker scheduler: a failed/canceled item stops counting as active
+ *  The entire scheduler (`MAX_WORKERS` at a time): a failed/canceled item stops counting as active
  *  and its slot opens up on the next call, no separate release step needed. */
 export function nextToStart(items: UploadItem[], maxWorkers: number = MAX_WORKERS): string[] {
   const activeCount = items.filter((item) => item.state === "uploading").length;
@@ -93,9 +100,14 @@ export function nextToStart(items: UploadItem[], maxWorkers: number = MAX_WORKER
 
 /** What a retry of `item` should do with the failed attempt's authorization: resume against it,
  *  or drop it and re-authorize. A reservation that is being dropped comes back as `release` so
- *  the caller can cancel it server-side instead of leaving it for the sweep. */
-export function retryPlan(item: UploadItem): { shouldResume: boolean; release?: UploadTarget } {
-  if (item.target && !item.isReservationDead) return { shouldResume: true };
+ *  the caller can cancel it server-side instead of leaving it for the sweep. A finished transfer
+ *  (`registration`) is only worth keeping while its reservation is — a restart uploads again. */
+export function retryPlan(item: UploadItem): {
+  shouldResume: boolean;
+  release?: UploadTarget;
+  registration?: RegistrationDraft;
+} {
+  if (item.target && !item.isReservationDead) return { shouldResume: true, registration: item.registration };
   return { shouldResume: false, release: item.target };
 }
 
@@ -109,23 +121,21 @@ export function reservationToRelease(item: UploadItem): UploadTarget | undefined
   return item.target;
 }
 
-export type UploadOutcome = { state: "failed"; error: string } | { state: "completed"; warning?: string };
+export type UploadOutcome =
+  | { state: "failed"; readiness: PlaybackReadiness }
+  | { state: "completed"; readiness: PlaybackReadiness | null };
 
 /** ADR 0071: what a resolved register call means for a queue row. A resolved call is not
  *  automatically success — the backend already judged the file on intake:
- *  - `failed` is a refusal; ADR 0070's verdict sentence explains why (unchanged by ADR 0071).
- *  - `processing` means a High/HEVC upload was accepted and queued for automatic conversion —
- *    the ADR 0070 refusal would be misleading here, so it is replaced with a plain notice.
- *    Upload Queue does not poll; the outcome shows up later on Media Detail.
- *  - anything else (`ready`) completed, optionally with ADR 0070's `unverified_preset` caveat. */
+ *  - `failed` is a refusal, with the reason the verdict gives.
+ *  - `processing` means a High/HEVC upload was accepted and is converting; it completed the
+ *    upload but cannot be published yet.
+ *  - anything else (`ready`) completed. `Completed` is only the upload; readiness is separate.
+ *  Upload Queue does not poll; later changes show on Media Detail. */
 export function uploadOutcome(status: string, verdict: ProbeVerdict | null | undefined): UploadOutcome {
-  if (status === "failed") {
-    return { state: "failed", error: verdictMessage(verdict) ?? "The server refused this file." };
-  }
-  if (status === "processing") {
-    return { state: "completed", warning: "กำลังแปลงไฟล์ให้เล่นได้" };
-  }
-  return { state: "completed", warning: verdictMessage(verdict) ?? undefined };
+  const readiness = playbackReadiness({ status, probe_verdict: verdict });
+  if (status === "failed") return { state: "failed", readiness: readiness ?? "refused" };
+  return { state: "completed", readiness };
 }
 
 export function summarize(items: UploadItem[]) {
