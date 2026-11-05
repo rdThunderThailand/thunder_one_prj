@@ -6,18 +6,20 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDownIcon, ClockIcon, DownloadIcon, FileTextIcon, MoreIcon, PrintIcon, SpinnerIcon } from "@/components/ui/icons";
 import { useAssetsListTemplate } from "../../hooks/use-assets-list-template";
 import { AssetsTemplateDownloadDialog } from "./AssetsTemplateDownloadDialog";
+import { useAssetImportHistory } from "../../hooks/use-asset-import-history";
+import { ImportHistoryDialog } from "../import-history/ImportHistoryDialog";
 
 type ExportMenuProps = { disabled: boolean; onExport: (trigger: HTMLButtonElement | null) => void };
 const UNAVAILABLE_ITEM = "data-[disabled]:opacity-100 data-[disabled]:text-muted-foreground";
 const OTHER_ACTIONS = [
   { title: "Print / Download Labels", description: "Generate QR, barcode or Asset Tag labels", icon: PrintIcon },
-  { title: "Import History", description: "View bulk import transactions", icon: ClockIcon },
 ];
 
 export function AssetsMoreActionsMenu({ context, disabled, onExport }: ExportMenuProps & { context: string }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const openingDialogRef = useRef(false);
   const template = useAssetsListTemplate(context);
+  const history = useAssetImportHistory(context);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -59,6 +61,16 @@ export function AssetsMoreActionsMenu({ context, disabled, onExport }: ExportMen
             <span className="text-2xs text-muted-foreground">Get the Excel template for bulk registration</span>
           </span>
         </DropdownMenuItem>
+        <DropdownMenuItem className="items-start" onSelect={() => {
+          openingDialogRef.current = true;
+          history.show(triggerRef.current);
+        }}>
+          <ClockIcon className="mt-0.5" />
+          <span className="flex flex-col">
+            <span className="text-xs font-medium">Import History</span>
+            <span className="text-2xs text-muted-foreground">View all bulk import transactions</span>
+          </span>
+        </DropdownMenuItem>
         <p className="border-t border-border px-2 py-1.5 text-2xs text-muted-foreground">Other actions are not available yet</p>
         {OTHER_ACTIONS.map(({ title, description, icon: Icon }) => (
           <DropdownMenuItem key={title} disabled className={`items-start ${UNAVAILABLE_ITEM}`}>
@@ -71,6 +83,7 @@ export function AssetsMoreActionsMenu({ context, disabled, onExport }: ExportMen
         ))}
       </DropdownMenuContent>
       <AssetsTemplateDownloadDialog flow={template} />
+      <ImportHistoryDialog flow={history} />
     </DropdownMenu>
   );
 }
