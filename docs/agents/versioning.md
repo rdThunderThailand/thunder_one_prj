@@ -83,6 +83,8 @@ the count while bumping PATCH, not MINOR.
 | 18 | `v0.13.0` | #314 | 2026-10-22 |
 | — | `v0.14.0` (hotfix straight to `main`, not a promotion) | #316 | 2026-10-22 |
 | — | `v0.15.0` (hotfix straight to `main`, not a promotion) | #321, #322, #323 | 2026-10-27 |
+| — | `v0.15.1` (hotfix straight to `main`, not a promotion; never tagged — its code shipped inside `v0.16.0`) | #327 | 2026-10-27 |
+| 19 | `v0.16.0` (tagged retroactively on `3172a88d`; `package.json` was not bumped for it because the release-prep PR #332 was closed) | #333 | 2026-10-29 |
 
 Append a row for every release. This table is the only release log we keep.
 
