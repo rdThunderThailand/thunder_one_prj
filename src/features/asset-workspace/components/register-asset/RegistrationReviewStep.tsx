@@ -75,26 +75,33 @@ export function RegistrationReviewStep({ draft, options, onEdit, photoCount, nee
   ];
 
   return (
-    <section className="rounded-card border border-border bg-card p-4" aria-label="Review asset information">
-      <h2 className="text-sm font-semibold">Review asset information</h2>
+    <section className="min-w-0 rounded-card border border-border bg-card p-4" aria-label="Review asset information">
+      <h2 className="text-sm font-semibold text-foreground">Review asset information</h2>
       {groups.map((group, index) => {
         const Icon = [FileTextIcon, GridIcon, LocationIcon, ShieldIcon, ClipboardIcon][index];
         return (
-          <section key={group.title} className="space-y-2 border-b border-border py-3 last:border-b-0 last:pb-0">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="flex items-center gap-2 text-xs font-semibold">
-                <Icon className="h-4 w-4 shrink-0 text-primary" />
-                {group.title}
+          <section key={group.title} className="min-w-0 space-y-3 border-b border-border py-4 last:border-b-0 last:pb-0">
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="flex min-w-0 items-start gap-2 text-sm font-semibold text-foreground">
+                <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-accent-foreground" />
+                <span className="min-w-0 break-words">{group.title}</span>
               </h3>
-              <Button variant="outline" size="sm" disabled={locked} aria-label={`Edit ${group.title}`} onClick={() => onEdit(group.step)}>
-                <EditIcon className="h-3.5 w-3.5" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-accent-foreground max-sm:h-10"
+                disabled={locked}
+                aria-label={`Edit ${group.title}`}
+                onClick={() => onEdit(group.step)}
+              >
+                <EditIcon aria-hidden="true" className="h-3.5 w-3.5" />
                 Edit
               </Button>
             </div>
             <RegistrationReviewRows rows={group.rows} />
             {group.title === "Acquisition & Warranty" && warrantyGroups.map((warranty) => (
-              <section key={warranty.id} className="space-y-2 border-t border-border pt-3">
-                <h4 className="text-xs font-medium">{warranty.title}</h4>
+              <section key={warranty.id} className="min-w-0 space-y-3 border-t border-border pt-4">
+                <h4 className="text-xs font-semibold text-foreground">{warranty.title}</h4>
                 <RegistrationReviewRows rows={warranty.rows} />
               </section>
             ))}

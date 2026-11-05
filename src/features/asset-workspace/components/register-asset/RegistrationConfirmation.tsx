@@ -51,40 +51,76 @@ export function RegistrationConfirmation({ confirmation, blocker, missingFiles, 
     else if (editStep !== undefined) onEdit(editStep);
   };
   return (
-    <section className="mb-3 space-y-3 rounded-card border border-border bg-card p-4" aria-label="Confirmation status">
+    <section className="@container/confirmation mb-3 min-w-0 space-y-3 rounded-card border border-border bg-card p-4" aria-label="Confirmation status">
       <RegistrationProgressDialog
         open={busy || Boolean(failure)} busy={busy} stage={stage}
         files={progressFiles} waiting={Math.max(selected.length - progressFiles.length, 0)}
         failure={failure} canOverride={Boolean(options?.serialOverride)} onAction={act}
       />
-      <h2 className="text-sm font-semibold">Confirm registration</h2>
-      <p className="text-xs text-muted-foreground">Files are uploaded and verified before the asset is created. Keep this tab open until the result is confirmed.</p>
-      {busy && <p role="status" aria-live="polite" className="text-xs text-primary">{message || "Please wait…"}</p>}
+      <h2 className="text-sm font-semibold text-foreground">Confirm registration</h2>
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        Files are uploaded and verified before the asset is created. Keep this tab open until the result is confirmed.
+      </p>
+      {busy && (
+        <p role="status" aria-live="polite" className="rounded-control bg-info-muted p-3 text-xs leading-relaxed text-accent-foreground">
+          {message || "Please wait…"}
+        </p>
+      )}
       {uploads.length ? (
-        <ul className="space-y-2 text-xs" aria-label="File progress">
+        <ul className="space-y-2 text-xs leading-relaxed" aria-label="File progress">
           {uploads.map((upload) => (
-            <li key={upload.uploadId} className="flex items-start justify-between gap-3">
-              <span className="min-w-0 break-words">{upload.filename}</span>
-              <span className="shrink-0 text-muted-foreground">{validReceipt(upload) ? "Verified" : upload.unusable || upload.completed ? "Expired / unavailable" : "Pending verification"}</span>
+            <li key={upload.uploadId} className="flex min-w-0 flex-col gap-1 rounded-control bg-muted p-3 @min-md/confirmation:flex-row @min-md/confirmation:justify-between">
+              <span className="min-w-0 flex-1 break-words text-foreground">{upload.filename}</span>
+              <span className="text-muted-foreground @min-md/confirmation:shrink-0">
+                {validReceipt(upload) ? "Verified" : upload.unusable || upload.completed ? "Expired / unavailable" : "Pending verification"}
+              </span>
             </li>
           ))}
         </ul>
       ) : null}
-      {error && <p role="alert" className="text-xs text-error">{error}</p>}
-      {missingFiles && !uncertain && <p role="alert" className="text-xs text-warning">Some selected files are unavailable. Edit Step 1 or Step 4 to reselect them or remove their selection.</p>}
+      {error && (
+        <p role="alert" className="rounded-control bg-error-muted p-3 text-xs leading-relaxed text-foreground">
+          {error}
+        </p>
+      )}
+      {missingFiles && !uncertain && (
+        <p role="alert" className="rounded-control bg-warning-muted p-3 text-xs leading-relaxed text-foreground">
+          Some selected files are unavailable. Edit Step 1 or Step 4 to reselect them or remove their selection.
+        </p>
+      )}
       {storageBlocked && (
-        <div className="space-y-2">
-          <p role="alert" className="text-xs text-warning">Recovery storage is unavailable or contains an unreadable record. Confirmation is blocked to protect this registration.</p>
-          <Button variant="outline" size="sm" disabled={busy} onClick={confirmation.retryStorage}>Retry recovery storage</Button>
+        <div className="space-y-3 rounded-control bg-warning-muted p-3 text-xs leading-relaxed text-foreground">
+          <p role="alert">
+            Recovery storage is unavailable or contains an unreadable record. Confirmation is blocked to protect this registration.
+          </p>
+          <Button variant="outline" size="sm" className="max-sm:h-10" disabled={busy} onClick={confirmation.retryStorage}>
+            Retry recovery storage
+          </Button>
         </div>
       )}
-      {blocker && !uncertain && <p role="status" className="text-xs text-muted-foreground">{blocker}</p>}
-      {uncertain && <p role="alert" className="text-xs text-warning">The creation result is unknown. Retry the original request to recover its result; editing remains locked.</p>}
+      {blocker && !uncertain && (
+        <p role="status" className="rounded-control bg-muted p-3 text-xs leading-relaxed text-foreground">
+          {blocker}
+        </p>
+      )}
+      {uncertain && (
+        <p role="alert" className="rounded-control bg-warning-muted p-3 text-xs leading-relaxed text-foreground">
+          The creation result is unknown. Retry the original request to recover its result; editing remains locked.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" disabled={busy} onClick={confirmation.refresh}>Refresh availability</Button>
-        {uncertain && <Button variant="outline" size="sm" disabled={busy} onClick={onLeave}>Leave and keep recovery</Button>}
+        <Button variant="outline" size="sm" className="max-sm:h-10" disabled={busy} onClick={confirmation.refresh}>
+          Refresh availability
+        </Button>
+        {uncertain && (
+          <Button variant="outline" size="sm" className="max-sm:h-10" disabled={busy} onClick={onLeave}>
+            Leave and keep recovery
+          </Button>
+        )}
         {!uncertain && !busy && !storageBlocked && record?.rejectedSerial && record.rejectedSerial === serialNumber.trim() && options?.serialOverride && (
-          <Button variant="outline" size="sm" onClick={openOverride}>Review serial override</Button>
+          <Button variant="outline" size="sm" className="max-sm:h-10" onClick={openOverride}>
+            Review serial override
+          </Button>
         )}
       </div>
       <AlertDialog open={overrideOpen} onOpenChange={setOverrideOpen}>
