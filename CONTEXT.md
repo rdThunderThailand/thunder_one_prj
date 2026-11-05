@@ -41,11 +41,11 @@ Can create/manage Assets, Playlists, Publications, and Channels, assign existing
 Read-only across content and Monitoring. Cannot see the Audit Log.
 
 **Asset** (Communication):
-A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG and MP4 (WebP was dropped by `docs/adr/0070-*.md`). A video whose codec or H.264 profile the players cannot decode is refused on intake (`docs/adr/0070-*.md`); automatic repair through a Rendition is proposed, not built. Removing one sends it to Trash and hides it from new selections without breaking existing playback, and a trashed Asset cannot enter a new Publish Job (`docs/adr/0091-*.md`); permanent deletion is allowed only from Trash and remains blocked while a live reference or any Publish Job snapshot requires it. `docs/adr/0056-nested-feature-folders-and-trash.md`.
+A reusable media file (image or video) stored in the central repository; supported upload formats are JPG, PNG and MP4 (WebP was dropped by `docs/adr/0070-*.md`). A video whose codec or H.264 profile the players cannot decode stays unpublishable until a Rendition repairs it; a file the platform cannot read or convert is refused (`docs/adr/0070-*.md`, `docs/adr/0071-*.md`). Removing one sends it to Trash and hides it from new selections without breaking existing playback, and a trashed Asset cannot enter a new Publish Job (`docs/adr/0091-*.md`); permanent deletion is allowed only from Trash and remains blocked while a live reference or the newest Publish Job snapshot of a not-yet-ended Program requires it (`docs/adr/0101-*.md`). `docs/adr/0056-nested-feature-folders-and-trash.md`.
 _Avoid_: Video, media file, content (when a specific entity is meant)
 
 **Rendition**:
-_Planned term — ADR 0071 is still proposed; nothing produces or serves one yet._ The player-compatible encode of a video Asset (MP4 / H.264 Constrained Baseline / ≤1080p30 / AAC-LC) that the platform would produce when the uploaded original is not Baseline or Constrained Baseline. The original is kept; a Media Device would be served the Rendition whenever one exists. At most one Rendition per Asset is planned. `docs/adr/0071-a-quarantined-video-is-transcoded-instead-of-refused.md`.
+The player-compatible encode of a video Asset (MP4 / H.264 Constrained Baseline / ≤1080p30 / AAC-LC) that the platform produces when the uploaded original is not Baseline or Constrained Baseline. The original is kept; a Media Device is served the Rendition whenever one exists. An Asset has at most one Rendition. `docs/adr/0071-a-quarantined-video-is-transcoded-instead-of-refused.md`.
 _Avoid_: converted file, transcode (that is the job, not the artifact), Version (`file_versions` is operator-driven and unrelated)
 _Note_: Another App in this repo, Asset Intelligence, also has an entity called `Asset` with a different meaning — see the Asset Intelligence glossary entry below and `docs/adr/0023-asset-intelligence-feature-namespacing.md` for why neither was renamed.
 
@@ -73,7 +73,7 @@ The Playlists, Layouts and not-yet-ended Programs that currently reference an As
 _Avoid_: references, dependencies, usage count (when meaning the list)
 
 **Broadcast history**:
-The evidence that an Asset has aired: any Publish Job snapshot or playback log that names it. It is kept as Playback Proof, so an Asset with Broadcast history cannot be permanently deleted. `docs/adr/0091-asset-trash-warns-with-usage-and-permanent-delete-names-blockers.md`.
+The evidence that an Asset has aired: any Publish Job snapshot or playback log that names it. It is kept as Playback Proof, which is why Permanent delete keeps every Asset's record as a Tombstone: the file is removed, the Asset cannot be recovered, and it appears only in that evidence. `docs/adr/0101-permanent-delete-tombstones-every-asset.md`.
 _Avoid_: past usage
 
 **Media Detail**:
@@ -83,6 +83,10 @@ _Avoid_: fabricated usage counts, inferred technical metadata
 **Upload Queue**:
 A temporary staged collection of local files waiting to become Communication Assets. Clearing or dismissing queue entries never removes an Asset that has already been registered. `docs/adr/0059-staged-resumable-media-upload.md`.
 _Avoid_: Media Library, upload history
+
+**Playback Readiness**:
+Whether a registered video Asset can be published now, separate from whether its upload finished. A completed upload is either ready to publish or waiting on a required Rendition; a refused file is a failed upload, not a readiness state.
+_Avoid_: Completed (that is the upload outcome), certified
 
 **Playlist**:
 An ordered sequence of Assets, with per-item duration and transition settings. Has no scheduling or targeting responsibility of its own. Item duration and transition reach the screen together with the Playlist's play mode, repeat behavior and start position (ADR 0031); media fit, volume and failure handling remain stored intent that no player reads yet (ADR 0010). It carries a **Cover**, which is a reference to one of the Assets already in the Playlist (never a separately uploaded file) and falls back to the first item when none is picked, and a **creator**, recorded once at creation and never reassigned by later edits. Active/inactive remains its operational lifecycle; removing it from the library is the separate, reversible move to Trash.

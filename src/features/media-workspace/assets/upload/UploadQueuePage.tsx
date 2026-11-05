@@ -9,9 +9,18 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CheckCircleIcon, LightbulbIcon, UploadIcon } from "@/components/ui/icons";
 import { formatBytes } from "@/features/media-workspace/playlists/totals";
 import { MAX_UPLOAD_SIZE_LABEL, UPLOAD_ACCEPT_ATTR, UPLOAD_ACCEPT_LABEL } from "@/features/media-workspace/publications/upload-limits";
-import { type UploadItemState } from "./upload-queue";
+import { useAppLocale } from "@/lib/use-app-locale";
+import { MAX_WORKERS, type UploadItemState } from "./upload-queue";
+import { VIEW_DETAILS_LABEL, isRefusal, readinessMessage, readinessTone, type ReadinessTone } from "./playback-readiness";
+import { transcodeWaitMessage } from "./transcode-wait";
 import { RecentUploadsCard } from "./RecentUploadsCard";
 import { useUploadQueue } from "./useUploadQueue";
+
+const READINESS_TEXT_TONE: Record<ReadinessTone, string> = {
+  neutral: "text-muted-foreground",
+  warning: "text-warning",
+  error: "text-error",
+};
 
 const STATE_LABEL: Record<UploadItemState, string> = {
   staged: "Ready",
@@ -51,6 +60,7 @@ function QueuedFilePreview({ file }: { file: File }) {
 export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: string | null }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queue = useUploadQueue(initialFolderId);
+  const locale = useAppLocale();
   const stagedItems = queue.items.filter((item) => item.state === "staged");
   const canStart = stagedItems.length > 0 && stagedItems.every((item) => item.title.trim());
   const settingsLocked = queue.items.some((item) => item.state === "waiting" || item.state === "uploading");
@@ -124,7 +134,7 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
 
           <Card className="overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
-              <div><h2 className="text-[11px] font-bold text-foreground">Upload Queue ({queue.summary.total} files)</h2><p className="mt-0.5 text-xs text-muted-foreground">Two files upload at a time.</p></div>
+              <div><h2 className="text-[11px] font-bold text-foreground">Upload Queue ({queue.summary.total} files)</h2><p className="mt-0.5 text-xs text-muted-foreground">{`Up to ${MAX_WORKERS} files upload at a time.`}</p></div>
               {queue.aggregateAction && <Button variant="outline" onClick={runAggregateAction}>{AGGREGATE_LABEL[queue.aggregateAction]}</Button>}
             </div>
 
@@ -142,14 +152,19 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
                         <div className={`h-full rounded-full transition-[width] ${item.state === "failed" ? "bg-error" : item.state === "completed" ? "bg-success" : "bg-primary"}`} style={{ width: `${item.pct}%` }} />
                       </div>
                       {item.error && <p className="mt-1 text-xs text-error">{item.error}</p>}
-                      {item.warning && <p className="mt-1 text-xs text-warning">{item.warning}</p>}
+                      {item.readiness && <p className={`mt-1 text-xs ${READINESS_TEXT_TONE[readinessTone(item.readiness)]}`}>{readinessMessage(item.readiness, locale)}</p>}
+                      {item.readiness === "converting" && item.assetId && transcodeWaitMessage(queue.transcode[item.assetId], locale) && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {transcodeWaitMessage(queue.transcode[item.assetId], locale)}
+                        </p>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-3 text-xs">
                       <span className={`min-w-16 text-right font-medium ${STATE_TONE[item.state]}`}>{STATE_LABEL[item.state]}{item.state === "uploading" && ` ${item.pct}%`}</span>
                       {item.state === "staged" && <button className="text-muted-foreground hover:text-error" onClick={() => queue.removeItem(item.id)}>Remove</button>}
-                      {(item.state === "waiting" || item.state === "uploading") && <button className="text-muted-foreground hover:text-error" onClick={() => setConfirmation({ action: "cancel", id: item.id, label: item.file.name })}>Cancel</button>}
-                      {(item.state === "failed" || item.state === "canceled") && <><button className="font-medium text-primary" onClick={() => queue.retryItem(item.id)}>Retry</button><button className="text-muted-foreground" onClick={() => setConfirmation({ action: "dismiss", id: item.id, label: item.file.name })}>Dismiss</button></>}
-                      {item.state === "completed" && <button className="text-muted-foreground" onClick={() => queue.removeItem(item.id)}>Dismiss</button>}
+                      {(item.state === "waiting" || (item.state === "uploading" && !item.registration)) && <button className="text-muted-foreground hover:text-error" onClick={() => setConfirmation({ action: "cancel", id: item.id, label: item.file.name })}>Cancel</button>}
+                      {(item.state === "failed" || item.state === "canceled") && <>{!(item.state === "failed" && isRefusal(item.readiness)) && <button className="font-medium text-primary" onClick={() => queue.retryItem(item.id)}>Retry</button>}<button className="text-muted-foreground" onClick={() => setConfirmation({ action: "dismiss", id: item.id, label: item.file.name })}>Dismiss</button></>}
+                      {item.state === "completed" && <>{item.assetId && <Link href={`/media-workspace/assets/${item.assetId}`} className="font-medium text-primary hover:underline">{VIEW_DETAILS_LABEL[locale]}</Link>}<button className="text-muted-foreground" onClick={() => queue.removeItem(item.id)}>Dismiss</button></>}
                     </div>
                   </li>
                 ))}
@@ -188,7 +203,7 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
 
           <Card className="p-4">
             <div className="flex items-center gap-2"><LightbulbIcon className="h-4 w-4 shrink-0 text-primary" /><h2 className="text-[11px] font-bold text-foreground">Upload Tips</h2></div>
-            <ul className="mt-4 space-y-3 text-xs text-muted-foreground">{[`Use only ${UPLOAD_ACCEPT_LABEL}`, `Keep each file at or below ${MAX_UPLOAD_SIZE_LABEL}`, "No queue limit; two files upload at a time"].map((tip) => <li key={tip} className="flex gap-2"><CheckCircleIcon className="h-4 w-4 shrink-0 text-success" /><span>{tip}</span></li>)}</ul>
+            <ul className="mt-4 space-y-3 text-xs text-muted-foreground">{[`Use only ${UPLOAD_ACCEPT_LABEL}`, `Keep each file at or below ${MAX_UPLOAD_SIZE_LABEL}`, `No queue limit; ${MAX_WORKERS} files upload at a time`].map((tip) => <li key={tip} className="flex gap-2"><CheckCircleIcon className="h-4 w-4 shrink-0 text-success" /><span>{tip}</span></li>)}</ul>
           </Card>
 
           <RecentUploadsCard completedCount={queue.summary.completed} />

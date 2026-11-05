@@ -103,13 +103,23 @@ export type AssetUsage = {
 
 /** What stopped a Permanent delete. Unlike Usage this keeps trashed and ended references. */
 export type AssetDeleteBlockers = {
-  playlists: Array<AssetUsageRef & { trashed: boolean }>;
-  layouts: Array<AssetUsageRef & { trashed: boolean }>;
+  playlists: AssetUsageRef[];
+  layouts: AssetUsageRef[];
   programs: Array<AssetUsageRef & { status: string }>;
   history: boolean;
 };
 
 /** `deleted` is absent when an older Core route that ignores the RPC result answers. */
+/** Where one Asset's conversion stands. `status` is the Asset's, and `job_status` is null once no job is open. */
+export type TranscodeStatus = {
+  asset_id: string;
+  status: string;
+  job_status: "queued" | "running" | null;
+  queue_position: number | null;
+  progress_pct: number | null;
+  estimated_start_seconds: number | null;
+};
+
 export type PermanentDeleteResult = { deleted?: boolean; blockers?: AssetDeleteBlockers };
 
 export type ContentFolder = {
@@ -147,6 +157,7 @@ export type Creator = { id: string; display_name: string } | null;
 export type PlaylistItem = {
   media_asset_id: string;
   title?: string;
+  file_deleted?: boolean;
   position: number;
   duration_seconds?: number | null;
   transition?: Transition;

@@ -17,10 +17,10 @@ assert.equal(isInUse(used), true);
 assert.equal(usageSummary(empty), "");
 assert.equal(usageSummary(used), "2 Playlists · 1 Program");
 
-assert.equal(blockerSummary({ playlists: [], layouts: [], programs: [], history: true }), "Has broadcast history");
+assert.equal(blockerSummary({ playlists: [], layouts: [], programs: [], history: true }), "");
 assert.equal(
-  blockerSummary({ playlists: [{ id: "p1", name: "Lobby", trashed: true }], layouts: [{ id: "c1", name: "L", trashed: false }], programs: [], history: true }),
-  "Has broadcast history · 1 Playlist · 1 Layout",
+  blockerSummary({ playlists: [{ id: "p1", name: "Lobby" }], layouts: [{ id: "c1", name: "L" }], programs: [], history: true }),
+  "1 Playlist · 1 Layout",
 );
 
 assert.equal(isDeleteBlocked({ deleted: false }), true);

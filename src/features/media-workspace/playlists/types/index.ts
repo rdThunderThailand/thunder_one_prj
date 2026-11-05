@@ -86,6 +86,7 @@ export type PlaylistMetadata = {
 export type DraftItem = {
   mediaAssetId: string;
   title?: string;
+  fileDeleted?: boolean;
   kind?: "video" | "image";
   /** Null lets the backend fall back to the asset's own duration (videos). */
   durationSeconds: number | null;
