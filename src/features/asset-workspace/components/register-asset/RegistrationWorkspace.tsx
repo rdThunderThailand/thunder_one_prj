@@ -3,12 +3,12 @@ import { ChevronDownIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { cn } from "@/lib/utils";
 
-export function RegistrationWorkspace({ scrollRef, children, photos, preview, basicInformation = false, header }: {
+export function RegistrationWorkspace({ scrollRef, children, photos, preview, responsiveLayout = false, header }: {
   scrollRef: RefObject<HTMLDivElement | null>;
   children: ReactNode;
   photos?: ReactNode;
   preview: ReactNode;
-  basicInformation?: boolean;
+  responsiveLayout?: boolean;
   header?: ReactNode;
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -19,7 +19,7 @@ export function RegistrationWorkspace({ scrollRef, children, photos, preview, ba
       <Button
         variant="outline"
         size="sm"
-        className={cn("w-full justify-between", basicInformation ? "max-sm:h-10 @min-4xl/registration:hidden" : "xl:hidden")}
+        className={cn("w-full justify-between", responsiveLayout ? "max-sm:h-10 @min-4xl/registration:hidden" : "xl:hidden")}
         aria-expanded={previewOpen}
         aria-controls={previewId}
         onClick={() => setPreviewOpen((open) => !open)}
@@ -32,14 +32,14 @@ export function RegistrationWorkspace({ scrollRef, children, photos, preview, ba
       </Button>
       <div
         id={previewId}
-        className={cn(previewOpen ? "block" : "hidden", basicInformation ? "@min-4xl/registration:block" : "xl:block")}
+        className={cn(previewOpen ? "block" : "hidden", responsiveLayout ? "@min-4xl/registration:block" : "xl:block")}
       >
         {preview}
       </div>
     </>
   );
 
-  if (basicInformation) {
+  if (responsiveLayout) {
     return (
       <div
         ref={scrollRef}

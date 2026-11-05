@@ -23,9 +23,9 @@ export function RegistrationHeader({ step }: { step: number }) {
       />
       <WizardSteps
         steps={REGISTRATION_STEPS}
-        descriptions={step === 0 ? DESCRIPTIONS : undefined}
+        descriptions={step <= 1 ? DESCRIPTIONS : undefined}
         currentIndex={step}
-        variant={step === 0 ? "detailed" : "default"}
+        variant={step <= 1 ? "detailed" : "default"}
       />
     </header>
   );
