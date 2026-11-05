@@ -13,7 +13,6 @@ import {
 import type { AssetImportApi } from "../../services/asset-import-api";
 import type {
   ImportBatch,
-  ImportRow,
   RowResult,
   Severity,
 } from "../../domain/asset-import-types";
@@ -24,7 +23,7 @@ import { ErrorState } from "../states/ErrorState";
 import { BulkImportPagination } from "./BulkImportPagination";
 import { BulkImportRowsGrid } from "./BulkImportRowsGrid";
 import { BulkImportRowsEmpty } from "./BulkImportRowsEmpty";
-import { BulkImportRowSheet } from "./BulkImportRowSheet";
+import { BulkImportRowDetails } from "./BulkImportRowDetails";
 import { BulkImportRowsLoading } from "./BulkImportRowsLoading";
 
 type Tab = "all" | Severity | RowResult;
@@ -37,6 +36,8 @@ type Props = {
   batch?: ImportBatch;
   toolbar?: ReactNode;
   onReloadBatch?: () => void;
+  onReimport?: () => void;
+  reimporting?: boolean;
 };
 
 export function BulkImportRowsTable({
@@ -47,6 +48,8 @@ export function BulkImportRowsTable({
   batch,
   toolbar,
   onReloadBatch,
+  onReimport,
+  reimporting,
 }: Props) {
   const [query, setQuery] = useState({
     tab: initialTab,
@@ -55,7 +58,7 @@ export function BulkImportRowsTable({
     pageSize: 10,
   });
   const [search, setSearch] = useState("");
-  const [viewRow, setViewRow] = useState<ImportRow | null>(null);
+  const [viewIndex, setViewIndex] = useState<number | null>(null);
   const searchId = useId();
   const batchResource = useAssetImportBatch(api, batch ? null : batchId);
   const currentBatch = batch ?? batchResource.batch;
@@ -89,21 +92,22 @@ export function BulkImportRowsTable({
     return () => clearTimeout(timer);
   }, [search, query.q]);
 
+  const viewPosition = viewIndex === null ? 0 : (query.page - 1) * query.pageSize + viewIndex;
+  function stepRow(delta: 1 | -1) {
+    if (viewIndex === null || !rows.page) return;
+    const next = viewIndex + delta;
+    if (next >= 0 && next < rows.page.rows.length) { setViewIndex(next); return; }
+    setQuery((previous) => ({ ...previous, page: previous.page + delta }));
+    setViewIndex(delta > 0 ? 0 : query.pageSize - 1);
+  }
+
   const counts = currentBatch?.counts;
   const tabs: { key: Tab; label: string; count?: number; icon?: ReactNode }[] = result
     ? [
         { key: "all", label: "All Rows", count: currentBatch?.totalRows },
-        { key: "created", label: "Created", count: counts?.created },
-        {
-          key: "created_with_warning",
-          label: "Created with Warnings",
-          count: counts?.createdWithWarning,
-        },
-        {
-          key: "not_registered",
-          label: "Not Registered",
-          count: counts?.notRegistered,
-        },
+        { key: "created", label: "Created", count: counts?.created, icon: <CheckCircleIcon className="size-4 text-success" /> },
+        { key: "created_with_warning", label: "Created with Warnings", count: counts?.createdWithWarning, icon: <WarningTriangleIcon className="size-4 text-warning" /> },
+        { key: "not_registered", label: "Not Registered", count: counts?.notRegistered, icon: <XCircleIcon className="size-4 text-error" /> },
       ]
     : [
         { key: "all", label: "All", count: currentBatch?.totalRows },
@@ -140,8 +144,7 @@ export function BulkImportRowsTable({
                 key={tab.key}
                 value={tab.key}
                 className={cn(
-                  "min-h-8 whitespace-normal text-2xs sm:text-xs",
-                  !result && "gap-1",
+                  "min-h-8 gap-1 whitespace-normal text-2xs sm:text-xs",
                   validate && "flex-1",
                 )}
               >
@@ -201,7 +204,7 @@ export function BulkImportRowsTable({
                   <BulkImportRowsGrid
                     rows={rows.page.rows}
                     variant={variant}
-                    onViewRow={setViewRow}
+                    onViewRow={(row) => setViewIndex(rows.page?.rows.indexOf(row) ?? null)}
                   />
                 ) : (
                   <BulkImportRowsEmpty tab={query.tab} searching={Boolean(query.q)} />
@@ -225,13 +228,20 @@ export function BulkImportRowsTable({
           )}
         </TabsContent>
       </Tabs>
-      {viewRow && (
-        <BulkImportRowSheet
-          row={viewRow}
-          open
-          onOpenChange={(open) => {
-            if (!open) setViewRow(null);
-          }}
+      {viewIndex !== null && (
+        <BulkImportRowDetails
+          row={rows.page?.rows[viewIndex] ?? null}
+          batch={currentBatch ?? undefined}
+          position={rows.page ? { index: viewPosition + 1, total: rows.page.total } : undefined}
+          loading={rows.loading}
+          error={rows.error?.message}
+          canPrevious={Boolean(rows.page) && viewPosition > 0}
+          canNext={Boolean(rows.page) && viewPosition + 1 < (rows.page?.total ?? 0)}
+          onStep={stepRow}
+          onRetry={rows.reload}
+          onClose={() => setViewIndex(null)}
+          onReimport={onReimport}
+          reimporting={reimporting}
         />
       )}
     </div>

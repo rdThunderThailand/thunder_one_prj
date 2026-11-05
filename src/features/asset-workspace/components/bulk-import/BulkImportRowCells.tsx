@@ -17,7 +17,7 @@ export function RowIssue({ row, result = false }: { row: ImportRow; result?: boo
         ) : message.severity === "warning" ? (
           <WarningTriangleIcon className="mt-0.5 size-3 shrink-0 text-warning" />
         ) : null}
-        <span>{message.text}</span>
+        <span className={message.severity === "error" ? "text-error" : undefined}>{message.text}</span>
       </div>
     );
   }

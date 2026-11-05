@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
+  SpinnerIcon,
 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import {
@@ -234,8 +235,12 @@ export function ReviewConfirmStep({
                 if (!missingReason) setDialog("confirm");
               }}
             >
-              <span>{frozen ? "Retry registration" : "Register Assets"}</span>
-              <ArrowRightIcon className="size-4" />
+              <span>{processing ? "Registering…" : frozen ? "Retry registration" : "Register Assets"}</span>
+              {processing ? (
+                <SpinnerIcon className="size-4 animate-spin motion-reduce:animate-none" />
+              ) : (
+                <ArrowRightIcon className="size-4" />
+              )}
             </Button>
           </div>
         </>,

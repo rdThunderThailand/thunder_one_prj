@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { importReviewSelection, importConfirmProcessed } from "./asset-import-review.ts";
 import { importResultMessage } from "./asset-import-messages.ts";
-import { restoredMappingView } from "./asset-import-step.ts";
+import { isFinishedImport, restoredMappingView, stepFor } from "./asset-import-step.ts";
 import type { ImportBatch, ImportRow } from "./asset-import-types.ts";
 import { confirmRequestSchema, importBatchSchema, importRowSchema, rowMessageSchema, sourceFileUrlSchema } from "../services/asset-import-contract.ts";
 
@@ -79,4 +79,28 @@ assert.ok(sourceFileUrlSchema.safeParse(source).success);
 for (const url of ["javascript:alert(1)", "data:text/csv,Name", "https://user:secret@example.invalid/file"]) {
   assert.equal(sourceFileUrlSchema.safeParse({ ...source, url }).success, false);
 }
+// A finished import opens on step 4 and is what the browser clean-up keys on.
+for (const status of ["completed", "partially_completed", "failed"] as const) {
+  assert.equal(isFinishedImport({ status } as ImportBatch), true);
+  assert.equal(stepFor({ status } as ImportBatch, false).step, 3);
+}
+for (const status of ["uploaded", "validated", "processing"] as const) {
+  assert.equal(isFinishedImport({ status } as ImportBatch), false);
+}
+
+// A reload shows the remembered step; anything else stays unknown instead of a wrong step 1.
+const stored = new Map<string, string>();
+Object.assign(globalThis, { sessionStorage: {
+  getItem: (key: string) => stored.get(key) ?? null,
+  setItem: (key: string, value: string) => { stored.set(key, value); },
+} });
+const { readImportStep, rememberImportStep } = await import("../services/asset-import-session.ts");
+assert.equal(readImportStep("batch"), null);
+rememberImportStep("batch", 2);
+assert.equal(readImportStep("batch"), 2);
+stored.set("asset-import-step:batch", "9");
+assert.equal(readImportStep("batch"), null);
+stored.set("asset-import-step:batch", "");
+assert.equal(readImportStep("batch"), null);
+
 console.log("asset-import-review.check.mts: review choices, reason bounds, result authority, additive contracts and final totals passed");

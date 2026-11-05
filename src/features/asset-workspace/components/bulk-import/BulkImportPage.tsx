@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/lovable/button";
 import { Skeleton } from "@/components/ui/lovable/skeleton";
 import { useAssetImportFlow } from "../../hooks/use-asset-import-flow";
 import { requestErrorText } from "../../domain/asset-import-messages";
+import { readImportStep, rememberImportStep } from "../../services/asset-import-session";
 import {
   ImportApiError,
   type AssetImportContext,
@@ -15,10 +16,10 @@ import {
 import { AccessDeniedState, EmptyState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { BulkImportHeader } from "./BulkImportHeader";
-import { ScreenPlaceholder } from "../ScreenPlaceholder";
 import { UploadStep } from "./steps/UploadStep";
 import { MapValidateStep } from "./steps/MapValidateStep";
 import { ReviewConfirmStep } from "./steps/ReviewConfirmStep";
+import { CompleteStep } from "./steps/CompleteStep";
 
 export function BulkImportPage(context: AssetImportContext) {
   return (
@@ -29,12 +30,26 @@ export function BulkImportPage(context: AssetImportContext) {
   );
 }
 
+const neverChanges = () => () => {};
+
 function ImportWorkspace({
   context,
 }: {
   context: AssetImportContext;
 }) {
   const flow = useAssetImportFlow(context);
+  const { routeBatch } = flow;
+  // The server cannot see this tab's storage, so it renders no active step rather than a wrong one.
+  const rememberedStep = useSyncExternalStore(
+    neverChanges,
+    () => (routeBatch ? readImportStep(routeBatch) : null),
+    () => null,
+  );
+  const step = !flow.loading ? flow.step : routeBatch ? rememberedStep : flow.step;
+  const loadedBatchId = flow.loading ? null : flow.batch?.id;
+  useEffect(() => {
+    if (loadedBatchId) rememberImportStep(loadedBatchId, flow.step);
+  }, [loadedBatchId, flow.step]);
   const [footer, setFooter] = useState<HTMLElement | null>(null);
   const requestError =
     flow.error instanceof ImportApiError ? flow.error : null;
@@ -60,7 +75,7 @@ function ImportWorkspace({
 
   let content: ReactNode;
   if (flow.loading) {
-    content = <BulkImportLoading step={flow.step} />;
+    content = <BulkImportLoading step={step} />;
   } else if (denied) {
     const message = !flow.batch
       ? "You do not have permission to import assets."
@@ -118,11 +133,12 @@ function ImportWorkspace({
           />
         );
         break;
-      default:
+      case 3:
         content = (
-          <ScreenPlaceholder
-            title="Complete"
-            spec="UC-010 · 05 §4.6"
+          <CompleteStep
+            key={flow.batch?.id}
+            flow={flow}
+            renderFooter={renderFooter}
           />
         );
         break;
@@ -135,7 +151,7 @@ function ImportWorkspace({
         data-registration-scroll
         className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1 pb-1"
       >
-        <BulkImportHeader step={flow.step} />
+        <BulkImportHeader step={step} />
         {flow.preview && (
           <p
             id="bulk-upload-preview-notice"
@@ -166,12 +182,12 @@ function ImportWorkspace({
   );
 }
 
-function BulkImportLoading({ step }: { step: number }) {
+function BulkImportLoading({ step }: { step: number | null }) {
   return (
     <div
       role="status"
       aria-label="Loading bulk import"
-      className={cn("space-y-3", step <= 2 && "@container/upload")}
+      className={cn("space-y-3", step !== 3 && "@container/upload")}
     >
       {step !== 0 && <Skeleton className="h-20 w-full motion-reduce:animate-none" />}
       {step === 3 && (

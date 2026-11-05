@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/icons";
 import { formatCount } from "../../domain/asset-import-format";
 import type { ImportBatch } from "../../domain/asset-import-types";
+import { AnimatedCount } from "./AnimatedCount";
 
 type ValidationCounts = {
   total: number;
@@ -16,7 +17,7 @@ type ValidationCounts = {
 
 type Props =
   | { variant: "validation"; counts: ValidationCounts; review?: boolean }
-  | { variant: "result"; batch: ImportBatch };
+  | { variant: "result"; batch: ImportBatch; animate?: boolean };
 
 export function BulkImportCounts(props: Props) {
   const result = props.variant === "result";
@@ -93,22 +94,28 @@ export function BulkImportCounts(props: Props) {
           ? "@min-2xl/summary:grid-cols-4"
           : props.variant === "validation"
             ? "@min-lg/validate:grid-cols-4"
-            : "xl:grid-cols-4"
+            : "@min-4xl/result:grid-cols-4"
       }`}
     >
       {items.map(({ label, value, hint, icon: Icon, tone }) => (
         <div
           key={label}
-          className="flex min-w-0 items-start gap-2 rounded-control border border-border p-3"
+          className={
+            result
+              ? "flex min-w-0 items-center gap-3 rounded-card border border-border bg-card p-4"
+              : "flex min-w-0 items-start gap-2 rounded-control border border-border p-3"
+          }
         >
           <span
-            className={`flex size-8 shrink-0 items-center justify-center rounded-full ${tone}`}
+            className={`flex shrink-0 items-center justify-center rounded-full ${result ? "size-12" : "size-8"} ${tone}`}
           >
-            <Icon className="size-4" />
+            <Icon className={result ? "size-6" : "size-4"} />
           </span>
           <div className="min-w-0">
-            <p className="text-lg font-bold tabular-nums">{formatCount(value)}</p>
-            <p className="text-2xs font-semibold">{label}</p>
+            <p className={`font-bold tabular-nums ${result ? "text-2xl" : "text-lg"}`}>
+              {result && props.animate ? <AnimatedCount value={value} from={0} /> : formatCount(value)}
+            </p>
+            <p className={`font-semibold ${result ? "text-xs" : "text-2xs"}`}>{label}</p>
             {hint && (
               <p className="mt-1 text-2xs text-muted-foreground">{hint}</p>
             )}

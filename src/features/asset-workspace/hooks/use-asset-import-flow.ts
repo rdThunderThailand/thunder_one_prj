@@ -196,6 +196,7 @@ export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
             (batchId && state.loadedRoute !== routeKey)),
       ),
     ...state,
+    routeBatch: batchId,
     step: preview ? state.previewStep :
       state.mappingView && state.batch?.status === "validated"
         ? (1 as const)

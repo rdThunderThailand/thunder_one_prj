@@ -7,6 +7,10 @@ export function restoredMappingView(batch: ImportBatch, savedMappingView?: boole
   return batch.status === "validated" && (savedMappingView === true || batch.counts.valid + batch.counts.warning === 0);
 }
 
+export function isFinishedImport(batch: ImportBatch): boolean {
+  return ["completed", "partially_completed", "failed"].includes(batch.status);
+}
+
 export function stepFor(
   batch: ImportBatch | null,
   hasParsedFile: boolean,

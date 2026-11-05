@@ -16,7 +16,8 @@ import {
 } from "../../domain/status-tone";
 import { formatCount } from "../../domain/asset-import-format";
 import { rowMessageText } from "../../domain/asset-import-messages";
-import type { ImportRow, RowResult, Severity } from "../../domain/asset-import-types";
+import type { ImportRow, RowMessage, RowResult, Severity } from "../../domain/asset-import-types";
+import { cn } from "@/lib/utils";
 
 const SEVERITY_LABEL = {
   valid: "Valid",
@@ -96,54 +97,62 @@ export function ImportMessageList({ row }: { row: ImportRow }) {
             )}
             <span>{rowMessageText(message, row.values)}</span>
           </p>
-          {Array.isArray(message.details) && message.details.length > 0 && (
-            <div className="space-y-1 pl-6">
-              <p className="font-semibold">Already used by:</p>
-              <ul className="space-y-1">
-                {message.details.map((asset) => (
-                  <li key={asset.id}>
-                    <Link
-                      href={`/asset-workspace/assets/${asset.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-8 items-center text-primary underline underline-offset-4"
-                    >
-                      {asset.assetTag ?? "–"} · {asset.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              {message.detailsTotal !== undefined && message.detailsTotal > message.details.length && (
-                <p className="text-muted-foreground">
-                  and {formatCount(message.detailsTotal - message.details.length)} more
-                </p>
-              )}
-            </div>
-          )}
-          {message.details &&
-            !Array.isArray(message.details) &&
-            "rows" in message.details && (
-              <p className="pl-6 text-muted-foreground">
-                Also in rows {message.details.rows.join(", ")}
-                {message.details.total - 1 > message.details.rows.length
-                  ? ` and ${formatCount(message.details.total - 1 - message.details.rows.length)} more`
-                  : ""}
-              </p>
-            )}
-          {message.details &&
-            !Array.isArray(message.details) &&
-            "candidates" in message.details && (
-              <div className="space-y-1 pl-6">
-                <p className="font-semibold">Matches:</p>
-                <ul className="space-y-1 font-mono text-2xs">
-                  {message.details.candidates.map((candidate) => (
-                    <li key={candidate}>{candidate}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          <ImportMessageDetails message={message} className="pl-6" />
         </li>
       ))}
     </ul>
+  );
+}
+
+export function ImportMessageDetails({ message, className }: { message: RowMessage; className?: string }) {
+  return (
+    <>
+      {Array.isArray(message.details) && message.details.length > 0 && (
+        <div className={cn("space-y-1", className)}>
+          <p className="font-semibold">Already used by:</p>
+          <ul className="space-y-1">
+            {message.details.map((asset) => (
+              <li key={asset.id}>
+                <Link
+                  href={`/asset-workspace/assets/${asset.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-8 items-center text-primary underline underline-offset-4"
+                >
+                  {asset.assetTag ?? "–"} · {asset.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {message.detailsTotal !== undefined && message.detailsTotal > message.details.length && (
+            <p className="text-muted-foreground">
+              and {formatCount(message.detailsTotal - message.details.length)} more
+            </p>
+          )}
+        </div>
+      )}
+      {message.details &&
+        !Array.isArray(message.details) &&
+        "rows" in message.details && (
+          <p className={cn("text-muted-foreground", className)}>
+            Also in rows {message.details.rows.join(", ")}
+            {message.details.total - 1 > message.details.rows.length
+              ? ` and ${formatCount(message.details.total - 1 - message.details.rows.length)} more`
+              : ""}
+          </p>
+        )}
+      {message.details &&
+        !Array.isArray(message.details) &&
+        "candidates" in message.details && (
+          <div className={cn("space-y-1", className)}>
+            <p className="font-semibold">Matches:</p>
+            <ul className="space-y-1 font-mono text-2xs">
+              {message.details.candidates.map((candidate) => (
+                <li key={candidate}>{candidate}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+    </>
   );
 }

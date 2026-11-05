@@ -28,7 +28,7 @@ export function BulkImportHeader({
   step,
   tools,
 }: {
-  step: number;
+  step: number | null;
   tools?: ReactNode;
 }) {
   return (
@@ -61,13 +61,15 @@ export function BulkImportHeader({
       <WizardSteps
         steps={STEPS}
         descriptions={DESCRIPTIONS}
-        currentIndex={step}
+        currentIndex={step ?? -1}
         variant="detailed"
       />
-      <p className="text-xs text-muted-foreground sm:hidden" role="status">
-        <span>Step {step + 1} of {STEPS.length}: </span>
-        <span className="font-semibold text-foreground">{STEPS[step]}</span>
-      </p>
+      {step !== null && (
+        <p className="text-xs text-muted-foreground sm:hidden" role="status">
+          <span>Step {step + 1} of {STEPS.length}: </span>
+          <span className="font-semibold text-foreground">{STEPS[step]}</span>
+        </p>
+      )}
     </header>
   );
 }

@@ -4,12 +4,12 @@ import { useEffect, useEffectEvent, type RefObject } from "react";
 import { z } from "zod";
 import { autoMap } from "../domain/asset-import-mapping.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
-import { restoredMappingView } from "../domain/asset-import-step.ts";
+import { isFinishedImport, restoredMappingView } from "../domain/asset-import-step.ts";
 import type { ImportBatch, ImportConfirmBody } from "../domain/asset-import-types.ts";
 import { ImportApiError } from "../services/asset-import-api.ts";
 import { restoreImportFile } from "../services/asset-import-restore.ts";
 import { getParsedImportFile, readImportSession, setParsedImportFile, takeImportNotice } from "../services/asset-import-session.ts";
-import { assertActive, importFlowMemory, type FlowState, type ImportFlowRuntime, type Lifecycle } from "./asset-import-flow-state.ts";
+import { clearFinishedImport, assertActive, importFlowMemory, type FlowState, type ImportFlowRuntime, type Lifecycle } from "./asset-import-flow-state.ts";
 
 /** Restore a batch after navigation/reload and retain the existing leave-page guards. */
 export function useAssetImportRestoration(
@@ -77,6 +77,7 @@ export function useAssetImportRestoration(
         return;
       }
       assertActive(lifecycle);
+      if (isFinishedImport(batch)) clearFinishedImport(lifecycle, batch.id);
       const parsed = importFlowMemory.batchId === batch.id ? getParsedImportFile() : null;
       const saved = readImportSession(batch.id).state;
       const confirmation = batch.status === "uploaded" ? null

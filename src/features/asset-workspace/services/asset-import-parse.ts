@@ -160,7 +160,7 @@ export async function parseImportFile(
   }
 }
 
-function readImportCsv(bytes: ArrayBuffer, maxRows: number): ParsedImportRows {
+export function readImportCsv(bytes: ArrayBuffer, maxRows: number): ParsedImportRows {
   let text: string;
   try {
     text = new TextDecoder("utf-8", { fatal: true })

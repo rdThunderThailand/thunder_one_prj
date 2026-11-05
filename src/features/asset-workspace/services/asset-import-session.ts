@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ImportStep } from "../domain/asset-import-step.ts";
 import { IMPORT_FIELD_KEYS, type ParsedImportFile } from "../domain/asset-import-types.ts";
 
 const sessionSchema = z.object({
@@ -39,6 +40,24 @@ export function setParsedImportFile(file: ParsedImportFile | null): void {
 
 export function importSessionKey(batchId: string): string {
   return `asset-import:${batchId}`;
+}
+
+/** Only the step number stays after an import finishes, so a reload can show the right step at once. */
+export function rememberImportStep(batchId: string, step: ImportStep): void {
+  try {
+    sessionStorage.setItem(`asset-import-step:${batchId}`, String(step));
+  } catch {
+    /* A reload then shows no active step until Core answers. */
+  }
+}
+
+export function readImportStep(batchId: string): ImportStep | null {
+  try {
+    const step = Number(sessionStorage.getItem(`asset-import-step:${batchId}`) || NaN);
+    return step === 0 || step === 1 || step === 2 || step === 3 ? step : null;
+  } catch {
+    return null;
+  }
 }
 
 export function readImportSession(batchId: string): {

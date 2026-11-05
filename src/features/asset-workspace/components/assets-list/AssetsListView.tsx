@@ -13,6 +13,7 @@ import { AssetsListContent } from "./AssetsListContent";
 import { AssetsSummaryLoading } from "./AssetsListLoading";
 import { AssetsListWorkspace } from "./AssetsListWorkspace";
 import { AssetsSectionError } from "./AssetsSectionError";
+import { AssetsImportBatchFilter } from "./AssetsImportBatchFilter";
 import { ScanAssetDialog } from "../scan-asset/ScanAssetDialog";
 
 export function AssetsListView({ context }: { context: string }) {
@@ -48,7 +49,9 @@ export function AssetsListView({ context }: { context: string }) {
       )}
       {(hasFilters || !parsed.success || list.error?.status === 400) && (
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          {url.get("import_batch_id") && <span className="break-all">Import batch: {url.get("import_batch_id")}</span>}
+          {parsed.success && query.import_batch_id && (
+            <AssetsImportBatchFilter context={context} batchId={query.import_batch_id} />
+          )}
           <Button size="sm" variant="ghost" onClick={url.clear}>Clear filters</Button>
         </div>
       )}

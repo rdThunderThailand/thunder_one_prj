@@ -1,12 +1,12 @@
 import { formatCount } from "../domain/asset-import-format.ts";
 import { importConfirmProcessed } from "../domain/asset-import-review.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
+import { isFinishedImport as finished } from "../domain/asset-import-step.ts";
 import type { ImportConfirmBody, ImportBatch } from "../domain/asset-import-types.ts";
 import { ImportApiError, type AssetImportApi } from "./asset-import-api.ts";
 import type { ImportProgress } from "./asset-import-start.ts";
 
 type ConfirmState = { batch: ImportBatch; progress: ImportProgress; retrying: boolean };
-const finished = (batch: ImportBatch) => ["completed", "partially_completed", "failed"].includes(batch.status);
 
 export function waitForImportRetry(milliseconds: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {

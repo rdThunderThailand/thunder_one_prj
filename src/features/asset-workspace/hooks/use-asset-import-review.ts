@@ -5,7 +5,7 @@ import { ImportApiError } from "../services/asset-import-api.ts";
 import { confirmImportBatch } from "../services/asset-import-confirm.ts";
 import { prepareImportValidation, validateImportBatch } from "../services/asset-import-validation.ts";
 import { readImportSession, saveImportSession, setParsedImportFile } from "../services/asset-import-session.ts";
-import { assertActive, importFlowMemory, type ImportFlowRuntime, type Lifecycle } from "./asset-import-flow-state.ts";
+import { assertActive, clearFinishedImport, importFlowMemory, type ImportFlowRuntime, type Lifecycle } from "./asset-import-flow-state.ts";
 
 /** Existing mapping, validation and confirm actions keep the same shared run guard. */
 export function useAssetImportReview(runtime: ImportFlowRuntime, createBatch: (lifecycle: Lifecycle) => Promise<void>) {
@@ -80,7 +80,10 @@ export function useAssetImportReview(runtime: ImportFlowRuntime, createBatch: (l
     const verified = await confirmImportBatch(api, batch, body, lifecycle.controller.signal,
       (state) => publish(lifecycle, state));
     assertActive(lifecycle);
-    publish(lifecycle, { batch: verified, progress: null, retrying: false });
+    clearFinishedImport(lifecycle, batch.id);
+    publish(lifecycle, {
+      batch: verified, parsed: null, selectedFile: null, confirmation: null, progress: null, retrying: false, justRegistered: true,
+    });
   }
 
   async function confirm(mode: ConfirmMode, reason: string): Promise<void> {

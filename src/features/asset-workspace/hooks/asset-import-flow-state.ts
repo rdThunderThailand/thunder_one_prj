@@ -3,6 +3,7 @@ import type { ColumnMapping, ImportBatch, ImportConfirmBody, ImportOptions, Pars
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { ImportApiError, type AssetImportApi } from "../services/asset-import-api.ts";
 import { ParseError } from "../services/asset-import-parse.ts";
+import { removeImportSession, setParsedImportFile } from "../services/asset-import-session.ts";
 import type { ImportAttempt, ImportProgress } from "../services/asset-import-start.ts";
 import type { ImportValidationAttempt } from "../services/asset-import-validation.ts";
 
@@ -37,6 +38,7 @@ export type FlowState = {
   confirming: boolean;
   confirmation: ImportConfirmBody | null;
   previewStep: 0 | 1;
+  justRegistered: boolean;
 };
 
 // Parsed bytes and retry intent remain memory-only and scoped to the authenticated context.
@@ -89,7 +91,20 @@ export function emptyState(context: string): FlowState {
     confirming: false,
     confirmation: null,
     previewStep: 0,
+    justRegistered: false,
   };
+}
+
+/** Core now holds the result, so the file's rows and the saved reason leave the browser at once. */
+export function clearFinishedImport(lifecycle: Lifecycle, batchId: string) {
+  removeImportSession(batchId);
+  setParsedImportFile(null);
+  lifecycle.pending = null;
+  lifecycle.validation = null;
+  importFlowMemory.pending = null;
+  importFlowMemory.validation = null;
+  importFlowMemory.confirmation = null;
+  importFlowMemory.batchId = null;
 }
 
 export function assertActive(lifecycle: Lifecycle) {

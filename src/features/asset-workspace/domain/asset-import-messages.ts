@@ -1,7 +1,7 @@
 import { formatCount } from "./asset-import-format.ts";
 import type { ImportFieldKey, ImportRow, RowMessage } from "./asset-import-types.ts";
 
-const FIELD_LABELS: Record<ImportFieldKey | "row", string> = {
+export const FIELD_LABELS: Record<ImportFieldKey | "row", string> = {
   name: "Asset Name",
   category: "Category",
   location: "Location",

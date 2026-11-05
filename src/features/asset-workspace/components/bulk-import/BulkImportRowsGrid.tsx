@@ -93,7 +93,11 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
                 <th
                   scope="col"
                   key={title}
-                  className="p-2 font-semibold"
+                  className={cn(
+                    "p-2 font-semibold",
+                    title === "Message" && "w-1/4",
+                    title === "Action" && "w-28",
+                  )}
                 >
                   {title}
                 </th>
@@ -116,6 +120,9 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
                   "p-2 tabular-nums",
                   variant === "review" &&
                     "sticky left-0 z-10 bg-card",
+                  result &&
+                    row.result === "not_registered" &&
+                    "font-semibold text-error",
                 )}
               >
                 {row.rowIndex}
