@@ -346,15 +346,12 @@ export function CompositionEditorPage({
             <div className="grid shrink-0 grid-cols-2 gap-3">
               <section className="rounded-lg border border-border bg-card p-3">
                 <LayoutPropertiesPanel
-                  name={name} onNameChange={setName} folders={data.folders}
+                  folders={data.folders}
                   folderId={folderId ?? null} onFolderChange={setFolderId}
                   tags={tags ?? []} onTagsChange={setTags} settings={settings}
                   onSettingsChange={(next) => beginZoneEdit(settingsEditKey(settings, next)) && setLayoutSettings(next)}
                   sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
                 />
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {layout.zones.length} Zones · <span className="capitalize">{status}</span>
-                </p>
               </section>
               <section className="rounded-lg border border-border bg-card p-3"><ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} /></section>
             </div>
@@ -372,7 +369,7 @@ export function CompositionEditorPage({
               zone={view.activeZone} referenceResolution={settings.referenceResolution} binding={view.binding}
               onZoneChange={(next) => beginZoneEdit(zoneEditKey(view.activeZone, next)) && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
               onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} previews={data.previews}
-              playlists={data.playlists} playlistDurations={data.playlistDurations}
+              playlists={data.playlists} playlistDurations={data.playlistDurations} playlistItemsById={data.playlistItemsById}
             />
           </> : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
         </aside>
