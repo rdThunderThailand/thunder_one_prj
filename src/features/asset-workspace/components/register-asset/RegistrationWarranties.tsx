@@ -32,11 +32,28 @@ export function RegistrationWarranties({ draft, options, errors, patch, document
   }
   return (
     <RegistrationSection title="Warranty information" icon={ShieldIcon} description="Optional. Choose exactly one Current warranty when adding records.">
-      {draft.warranties.length === 0 && <p className="text-xs text-muted-foreground">No warranties added. You can continue without a warranty.</p>}
-      {draft.savedWarranty && <p className="text-xs text-muted-foreground">Your previously excluded warranty details have been kept and will be restored when you add a warranty.</p>}
-      {errors.warranties && <p id="registration-warranties-error" role="alert" className="text-xs text-error">{errors.warranties}</p>}
+      {draft.warranties.length === 0 && (
+        <p className="rounded-control bg-muted p-4 text-xs leading-relaxed text-muted-foreground">
+          No warranties added. You can continue without a warranty.
+        </p>
+      )}
+      {draft.savedWarranty && (
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Your previously excluded warranty details have been kept and will be restored when you add a warranty.
+        </p>
+      )}
+      {errors.warranties && (
+        <p id="registration-warranties-error" role="alert" className="text-xs text-error">
+          {errors.warranties}
+        </p>
+      )}
       {draft.warranties.length > 0 && (
-        <fieldset className="space-y-3" tabIndex={-1} aria-invalid={Boolean(errors.warranties) && currentMissing} aria-describedby={errors.warranties ? "registration-warranties-error" : undefined}>
+        <fieldset
+          className="min-w-0 space-y-3 rounded-control focus-visible:outline-2 focus-visible:outline-ring"
+          tabIndex={-1}
+          aria-invalid={Boolean(errors.warranties) && currentMissing}
+          aria-describedby={errors.warranties ? "registration-warranties-error" : undefined}
+        >
           <legend className="sr-only">Warranty records and Current selection</legend>
           {draft.warranties.map((warranty, index) => (
             <RegistrationWarrantyPanel
@@ -61,8 +78,8 @@ export function RegistrationWarranties({ draft, options, errors, patch, document
           ))}
         </fieldset>
       )}
-      <Button variant="outline" size="sm" onClick={addWarranty}>
-        <PlusIcon className="h-4 w-4" />
+      <Button variant="outline" size="sm" className="text-accent-foreground max-sm:h-10" onClick={addWarranty}>
+        <PlusIcon aria-hidden="true" className="h-4 w-4" />
         Add warranty
       </Button>
       <AlertDialog open={pendingRemoval !== null} onOpenChange={(open) => { if (!open) setPendingRemoval(null); }}>

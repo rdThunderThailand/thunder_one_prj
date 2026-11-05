@@ -20,7 +20,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
   const category = selectedReference(draft, "categories");
   const categoryPath = registrationCategoryPath(draft.categoryId, draft.selectedReferences.categories);
   const custody = registrationCustodyLabel(draft);
-  const detailedPreview = step === 1 || step === 2;
+  const detailedPreview = step >= 1 && step <= 3;
   const acquisitionSummary = `${draft.purchaseDate || "Acquisition date optional"} · ${draft.warranties.length ? `${draft.warranties.length} warranties` : "No warranties"}`;
   const summaries = [draft.name || "Not entered", categoryPath || "Not selected", locationPath(draft.locationId, draft) || "Not selected", acquisitionSummary, step === 4 ? "Reviewing information" : "Not completed"];
   const checklist = step === 4 ? [...REGISTRATION_STEPS.slice(0, 4), "Additional information"] : REGISTRATION_STEPS;
@@ -31,7 +31,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
       <section className="space-y-3 rounded-card border border-border bg-card p-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground">{step === 4 ? "Asset preview" : "Live preview"}</h2>
-          <p className={cn("mt-1 text-xs text-muted-foreground", step <= 2 && "leading-relaxed")}>
+          <p className={cn("mt-1 text-xs text-muted-foreground", step <= 3 && "leading-relaxed")}>
             Check how the asset information will look.
           </p>
         </div>
@@ -72,7 +72,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
           </div>
         </div>
         {(photo || needsPhotoReselection || verifiedPhoto) && (
-          <p className={cn("text-muted-foreground", step <= 2 ? "text-xs leading-relaxed" : "text-2xs")} role="status">
+          <p className={cn("text-muted-foreground", step <= 3 ? "text-xs leading-relaxed" : "text-2xs")} role="status">
             {needsPhotoReselection ? "Some photos could not be restored. Reselect or remove them in Step 1." : verifiedPhoto ? "Verified photo upload retained for this registration." : "Local preview · not uploaded"}
           </p>
         )}

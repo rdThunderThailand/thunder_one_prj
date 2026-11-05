@@ -35,28 +35,52 @@ export function RegistrationDateField({ name, label, value, onChange, readOnly, 
         <PopoverAnchor asChild>
           <div className="relative">
             <Input
-              id={`registration-${name}`} value={displayDate(value)} placeholder="dd/mm/yyyy" inputMode="numeric"
-              readOnly={readOnly} maxLength={10} className="pr-10" autoComplete="off"
+              id={`registration-${name}`}
+              value={displayDate(value)}
+              placeholder="dd/mm/yyyy"
+              inputMode="numeric"
+              readOnly={readOnly}
+              maxLength={10}
+              className="pr-12 max-sm:h-10"
+              autoComplete="off"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? `registration-${name}-error` : hint ? `registration-${name}-hint` : undefined}
               onChange={(event) => onChange?.(inputDate(event.target.value))}
             />
             {readOnly ? (
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                <CalendarIcon className="h-4 w-4" />
+                <CalendarIcon aria-hidden="true" className="h-4 w-4" />
               </span>
             ) : (
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label={`Open ${label} calendar`} className="absolute right-1 top-1/2 -translate-y-1/2">
-                  <CalendarIcon className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Open ${label} calendar`}
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 text-accent-foreground max-sm:size-9"
+                >
+                  <CalendarIcon aria-hidden="true" className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
             )}
           </div>
         </PopoverAnchor>
         {!readOnly && (
-          <PopoverContent align="start" aria-label={`${label} calendar`} className="w-80 max-w-[calc(100vw-2rem)] rounded-control p-3">
-            <RegistrationCalendar key={`${open}:${value}`} value={value} today={todayInBangkok()} onSelect={(date) => { onChange?.(date); setOpen(false); }} />
+          <PopoverContent
+            align="start"
+            collisionPadding={12}
+            aria-label={`${label} calendar`}
+            className="max-h-(--radix-popover-content-available-height) w-80 max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain rounded-control p-3 motion-reduce:animate-none"
+          >
+            <RegistrationCalendar
+              key={`${open}:${value}`}
+              value={value}
+              today={todayInBangkok()}
+              onSelect={(date) => {
+                onChange?.(date);
+                setOpen(false);
+              }}
+            />
           </PopoverContent>
         )}
       </Popover>
