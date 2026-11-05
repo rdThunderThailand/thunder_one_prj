@@ -134,6 +134,7 @@ async function templateChecks() {
   assert.equal(roundTrip.columnCount, 9);
 
   const calls: string[] = [];
+  const stages: string[] = [];
   const complete = await createImportTemplate(OPTIONS, context, async (header, kind, query) => {
     assert.equal(header, `${context.tenantId}:${context.userId}`);
     calls.push(`${kind}:${query.parentId ?? "root"}:${query.page}`);
@@ -142,17 +143,33 @@ async function templateChecks() {
       : [{ id: "hq", name: "HQ", code: "HQ" }];
     const hasMore = kind === "categories" && !query.parentId && query.page === 1;
     return { items, pageSize: 50, page: query.page, hasMore, nextPage: hasMore ? 2 : null };
+  }, async (stage) => {
+    stages.push(stage);
+    if (stage === "workbook") assert.ok(calls.includes("categories:root:2"));
   });
+  assert.deepEqual(stages, ["references", "workbook"], "stages follow the actual reference and workbook work");
   assert.equal(complete.filename, "asset-import-template.xlsx");
   assert.equal(complete.referenceUnavailable, false);
   assert.ok(calls.includes("categories:root:2"));
   const completeWorkbook = await readBlob(complete.blob);
   assert.ok(utils.sheet_to_csv(completeWorkbook.Sheets.Reference).includes("CAT2"));
 
-  const fallback = await createImportTemplate(OPTIONS, context, async () => { throw new Error("Unavailable"); });
+  const fallbackStages: string[] = [];
+  const fallback = await createImportTemplate(OPTIONS, context, async () => { throw new Error("Unavailable"); }, (stage) => {
+    fallbackStages.push(stage);
+  });
+  assert.deepEqual(fallbackStages, ["references", "workbook"], "a missing reference sheet still builds the blank template");
   assert.equal(fallback.referenceUnavailable, true);
   assert.deepEqual((await readBlob(fallback.blob)).SheetNames, ["Assets"]);
   assert.equal((await parseImportFile(new File([fallback.blob], fallback.filename), OPTIONS)).rows.length, 1);
+
+  const cancelled = new DOMException("Cancelled", "AbortError");
+  await assert.rejects(() => createImportTemplate(OPTIONS, context, async () => {
+    throw new Error("Reference loading must not start after cancellation");
+  }, () => { throw cancelled; }), (error) => error === cancelled);
+  await assert.rejects(() => createImportTemplate(OPTIONS, context, async () => ({
+    items: [], page: 1, pageSize: 50, hasMore: false, nextPage: null,
+  }), (stage) => { if (stage === "workbook") throw cancelled; }), (error) => error === cancelled);
 }
 
 await parserChecks();

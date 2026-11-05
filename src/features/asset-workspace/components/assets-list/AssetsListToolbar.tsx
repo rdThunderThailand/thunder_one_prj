@@ -7,9 +7,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import type { AssetListQuery } from "../../services/assets-list-query";
 import {
-  AssignmentIcon, ChevronDownIcon, ClockIcon, DownloadIcon, FileTextIcon, GridIcon, InventoryIcon, ListIcon,
-  LocationIcon, MoreIcon, PlusIcon, PrintIcon, ScanIcon, TransferIcon, XIcon,
+  AssignmentIcon, ChevronDownIcon, GridIcon, InventoryIcon, ListIcon,
+  LocationIcon, PlusIcon, ScanIcon, TransferIcon, XIcon,
 } from "@/components/ui/icons";
+import { AssetsMoreActionsMenu, AssetsSelectedExportMenu } from "./AssetsExportMenus";
 
 interface UnavailableActionProps {
   children?: ReactNode;
@@ -39,7 +40,13 @@ export function UnavailableAction({ children, icon: Icon, label, className }: Un
   );
 }
 
-export function AssetsPageActions({ onScan, scanTriggerRef }: { onScan: () => void; scanTriggerRef: RefObject<HTMLButtonElement | null> }) {
+export function AssetsPageActions({ context, onScan, scanTriggerRef, onExport, exportDisabled }: {
+  context: string;
+  onScan: () => void;
+  scanTriggerRef: RefObject<HTMLButtonElement | null>;
+  onExport: (trigger: HTMLButtonElement | null) => void;
+  exportDisabled: boolean;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button ref={scanTriggerRef} variant="outline" size="sm" onClick={onScan}>
@@ -47,7 +54,7 @@ export function AssetsPageActions({ onScan, scanTriggerRef }: { onScan: () => vo
         Scan Asset
       </Button>
       <RegisterAssetSplitButton />
-      <MoreActionsMenu />
+      <AssetsMoreActionsMenu context={context} onExport={onExport} disabled={exportDisabled} />
     </div>
   );
 }
@@ -91,35 +98,6 @@ function RegisterAssetSplitButton() {
 /** Override the shared 50% opacity so unavailable items keep readable contrast. */
 const UNAVAILABLE_ITEM = "data-[disabled]:opacity-100 data-[disabled]:text-muted-foreground";
 
-const MORE_ACTIONS = [
-  { title: "Export Assets", description: "Export current view to Excel or CSV", icon: DownloadIcon },
-  { title: "Download Import Template", description: "Get the template for bulk registration", icon: FileTextIcon },
-  { title: "Print / Download Labels", description: "Generate QR, barcode or Asset Tag labels", icon: PrintIcon },
-  { title: "Import History", description: "View bulk import transactions", icon: ClockIcon },
-];
-
-function MoreActionsMenu() {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          More Actions
-          <ChevronDownIcon className="size-3" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
-        <p className="px-2 py-1.5 text-2xs text-muted-foreground">Not available in this version</p>
-        {MORE_ACTIONS.map(({ title, description, icon: Icon }) => (
-          <DropdownMenuItem key={title} disabled className={`items-start ${UNAVAILABLE_ITEM}`}>
-            <Icon className="mt-0.5" />
-            <AssetMenuItemText title={title} description={description} />
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 function AssetMenuItemText({ title, description }: { title: string; description: string }) {
   return (
     <span className="flex flex-col">
@@ -130,7 +108,11 @@ function AssetMenuItemText({ title, description }: { title: string; description:
 }
 
 /** Bulk actions appear only once rows are selected; until then a hint explains what selection enables. */
-export function AssetsSelectionToolbar({ count, clear }: { count: number; clear: () => void }) {
+export function AssetsSelectionToolbar({ count, clear, onExport, exportDisabled }: {
+  count: number; clear: () => void;
+  onExport: (trigger: HTMLButtonElement | null) => void;
+  exportDisabled: boolean;
+}) {
   return (
     <div role="toolbar" aria-label="Selected asset actions" className="flex h-8 w-max items-center gap-1">
       <span
@@ -154,7 +136,7 @@ export function AssetsSelectionToolbar({ count, clear }: { count: number; clear:
             <ChevronDownIcon className="size-3" />
           </UnavailableAction>
           <UnavailableAction icon={InventoryIcon}>Add to Inventory</UnavailableAction>
-          <UnavailableAction label="More selected asset actions" icon={MoreIcon} />
+          <AssetsSelectedExportMenu onExport={onExport} disabled={exportDisabled} />
         </>
       )}
     </div>

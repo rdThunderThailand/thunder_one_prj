@@ -15,6 +15,8 @@ import { AssetsListWorkspace } from "./AssetsListWorkspace";
 import { AssetsSectionError } from "./AssetsSectionError";
 import { AssetsImportBatchFilter } from "./AssetsImportBatchFilter";
 import { ScanAssetDialog } from "../scan-asset/ScanAssetDialog";
+import { useAssetExport } from "../../hooks/use-asset-export";
+import { AssetsExportDialog } from "./AssetsExportDialog";
 
 export function AssetsListView({ context }: { context: string }) {
   const url = useAssetsListUrl();
@@ -27,12 +29,25 @@ export function AssetsListView({ context }: { context: string }) {
   const [scanOpen, setScanOpen] = useState(false);
   const scanTriggerRef = useRef<HTMLButtonElement>(null);
   const hasFilters = ["q", "category_id", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id"].some((key) => url.get(key));
+  const requestedKey = parsed.success ? assetListQueryString(query) : `invalid:${url.search}`;
+  const exportReady = parsed.success && !list.pending && !list.error && Boolean(list.data) && list.dataKey === requestedKey;
+  const exportFlow = useAssetExport(context, `${requestedKey}:${exportReady ? "ready" : "unavailable"}`);
 
   return (
     <AssetsListWorkspace>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader title="Assets" subtitle="View and manage all organizational assets" />
-        {!denied && <AssetsPageActions onScan={() => setScanOpen(true)} scanTriggerRef={scanTriggerRef} />}
+        {!denied && (
+          <AssetsPageActions
+            context={context}
+            onScan={() => setScanOpen(true)}
+            scanTriggerRef={scanTriggerRef}
+            onExport={(trigger) => {
+              if (exportReady && list.data) exportFlow.openFiltered(query, list.data.total, trigger);
+            }}
+            exportDisabled={!exportReady || exportFlow.pending}
+          />
+        )}
       </div>
       <div className="space-y-2" aria-busy={summary.pending}>
         {summary.error && (
@@ -57,8 +72,13 @@ export function AssetsListView({ context }: { context: string }) {
       )}
       <AssetsListContent
         resource={list} query={query} url={url} filtered={hasFilters}
-        requestedKey={parsed.success ? assetListQueryString(query) : `invalid:${url.search}`}
+        requestedKey={requestedKey}
+        onExportSelected={(ids, trigger) => {
+          if (exportReady) exportFlow.openSelected(ids, trigger);
+        }}
+        exportPending={exportFlow.pending}
       />
+      <AssetsExportDialog flow={exportFlow} />
       {!denied && (scanOpen || url.get("scan") === "1") && (
         <ScanAssetDialog
           triggerRef={scanTriggerRef}

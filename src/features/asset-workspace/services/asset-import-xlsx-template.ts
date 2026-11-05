@@ -8,6 +8,7 @@ import {
 } from "./asset-import-template.ts";
 
 export const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+export type ImportTemplateStage = "references" | "workbook";
 
 export async function buildTemplateXlsx(
   options: ImportOptions,
@@ -60,13 +61,16 @@ export async function createImportTemplate(
   options: ImportOptions,
   context: AssetImportContext,
   fetcher?: ReferencePageFetcher,
+  onStage?: (stage: ImportTemplateStage) => void | Promise<void>,
 ): Promise<{ blob: Blob; filename: string; referenceUnavailable: boolean }> {
   let references: ImportReferences | null = null;
+  await onStage?.("references");
   try {
     references = await loadImportReferences(context, fetcher);
   } catch {
     // The caller reports the missing reference sheet; never export a partial hierarchy.
   }
+  await onStage?.("workbook");
   return {
     blob: await buildTemplateXlsx(options, references),
     filename: "asset-import-template.xlsx",

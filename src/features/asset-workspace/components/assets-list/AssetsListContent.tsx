@@ -13,8 +13,10 @@ import { AssetsSelectionToolbar, AssetsSortControl, AssetsViewControls } from ".
 import { AssetsTableLoading } from "./AssetsListLoading";
 import { AssetsSectionError } from "./AssetsSectionError";
 
-export function AssetsListContent({ resource, query, requestedKey, url, filtered }: {
+export function AssetsListContent({ resource, query, requestedKey, url, filtered, onExportSelected, exportPending }: {
   resource: AssetsListResource; query: AssetListQuery; requestedKey: string; url: AssetsListUrlState; filtered: boolean;
+  onExportSelected: (ids: string[], trigger: HTMLButtonElement | null) => void;
+  exportPending: boolean;
 }) {
   const { data, pending, error, retry, dataKey } = resource;
   const scroll = useRef<HTMLDivElement>(null);
@@ -36,7 +38,12 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
     >
       <div data-assets-controls className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-2">
         <div className="min-w-0 flex-1 overflow-x-auto">
-          <AssetsSelectionToolbar count={frozen ? 0 : selected.size} clear={() => setSelection({ query: requestedKey, ids: new Set() })} />
+          <AssetsSelectionToolbar
+            count={frozen ? 0 : selected.size}
+            clear={() => setSelection({ query: requestedKey, ids: new Set() })}
+            onExport={(trigger) => onExportSelected([...selected], trigger)}
+            exportDisabled={frozen || exportPending || dataKey !== requestedKey}
+          />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <AssetsSortControl value={query.sort} pending={pending} onChange={(sort) => url.set({ sort })} />
