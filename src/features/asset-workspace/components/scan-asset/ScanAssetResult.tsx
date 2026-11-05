@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import { AlertCircleIcon, BoxIcon, CheckCircleIcon, RefreshIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { ASSET_STATUSES, type AssetStatus } from "../../domain/asset-status";
@@ -87,7 +88,7 @@ export function ScanAssetResult({ result, code, onClose, onRetry }: ScanAssetRes
         <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
         {result.kind === "unauthenticated" ? (
           <Button asChild size="sm">
-            <a href="/login">Sign in</a>
+            <Link href="/login">Sign in</Link>
           </Button>
         ) : result.kind !== "forbidden" && (
           <Button
@@ -99,7 +100,13 @@ export function ScanAssetResult({ result, code, onClose, onRetry }: ScanAssetRes
             {found ? "Scan another asset" : result.kind === "ambiguous" ? "Enter Asset Tag" : "Try again"}
           </Button>
         )}
-        {found && <UnavailableNextStep reason="Asset Profile is not available in this increment.">View Asset Profile</UnavailableNextStep>}
+        {found && (
+          <Button asChild size="sm">
+            <Link href={`/asset-workspace/assets/${encodeURIComponent(result.data.asset.id)}`} onClick={onClose}>
+              View Asset Profile
+            </Link>
+          </Button>
+        )}
         {notFound && <UnavailableNextStep reason="Registration and creator authorization are not available in this increment.">Register New Asset</UnavailableNextStep>}
       </div>
     </div>
