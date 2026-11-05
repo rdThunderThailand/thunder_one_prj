@@ -185,7 +185,7 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3" onInputCapture={fileCache.touch} onPointerDownCapture={fileCache.touch}>
-      {state.step > 1 && header}
+      {state.step > 2 && header}
       <form ref={formRef} className="flex min-h-0 flex-1 flex-col" noValidate onSubmit={(event) => {
         event.preventDefault();
         if (locked && !confirmation.uncertain) return;
@@ -201,8 +201,8 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
       }}>
         <RegistrationWorkspace
           scrollRef={scrollRef}
-          responsiveLayout={state.step <= 1}
-          header={state.step <= 1 ? header : undefined}
+          responsiveLayout={state.step <= 2}
+          header={state.step <= 2 ? header : undefined}
           photos={state.step === 0 && (
             <RegistrationPhotos
               photos={photoSelection.photos} retained={retainedPhotos} errors={photoSelection.errors} rules={options.photoUpload}

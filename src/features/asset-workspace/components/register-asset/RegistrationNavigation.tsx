@@ -10,7 +10,7 @@ export function RegistrationNavigation({ step, editing, locked, busy, uncertain,
   step: number; editing: boolean; locked: boolean; busy: boolean; uncertain: boolean; canConfirm: boolean;
   onCancel: () => void; onBack: () => void;
 }) {
-  const responsiveControl = step <= 1 ? "min-w-20 max-sm:h-10" : undefined;
+  const responsiveControl = step <= 2 ? "min-w-20 max-sm:h-10" : undefined;
   return (
     <footer data-registration-footer className="z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card py-3">
       <Button variant="outline" size="sm" className={responsiveControl} disabled={locked} onClick={onCancel}>
@@ -26,7 +26,7 @@ export function RegistrationNavigation({ step, editing, locked, busy, uncertain,
             {busy ? "Please wait…" : uncertain ? "Retry original request" : "Create Asset"}
           </Button>
         ) : (
-          <Button type="submit" size="sm" className={cn(responsiveControl, step <= 1 && "min-w-24")} disabled={locked}>
+          <Button type="submit" size="sm" className={cn(responsiveControl, step <= 2 && "min-w-24")} disabled={locked}>
             {editing ? "Update" : "Next"}
             <ArrowRightIcon className="h-4 w-4" />
           </Button>

@@ -20,6 +20,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
   const category = selectedReference(draft, "categories");
   const categoryPath = registrationCategoryPath(draft.categoryId, draft.selectedReferences.categories);
   const custody = registrationCustodyLabel(draft);
+  const detailedPreview = step === 1 || step === 2;
   const acquisitionSummary = `${draft.purchaseDate || "Acquisition date optional"} · ${draft.warranties.length ? `${draft.warranties.length} warranties` : "No warranties"}`;
   const summaries = [draft.name || "Not entered", categoryPath || "Not selected", locationPath(draft.locationId, draft) || "Not selected", acquisitionSummary, step === 4 ? "Reviewing information" : "Not completed"];
   const checklist = step === 4 ? [...REGISTRATION_STEPS.slice(0, 4), "Additional information"] : REGISTRATION_STEPS;
@@ -30,7 +31,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
       <section className="space-y-3 rounded-card border border-border bg-card p-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground">{step === 4 ? "Asset preview" : "Live preview"}</h2>
-          <p className={cn("mt-1 text-xs text-muted-foreground", step <= 1 && "leading-relaxed")}>
+          <p className={cn("mt-1 text-xs text-muted-foreground", step <= 2 && "leading-relaxed")}>
             Check how the asset information will look.
           </p>
         </div>
@@ -39,7 +40,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
             className={cn(
               "relative flex shrink-0 items-center justify-center overflow-hidden rounded-control bg-muted",
               !photo ? "h-12 w-12" : step === 0 ? "h-24 w-24" : "aspect-video max-h-48 w-full",
-              step === 1 && photo && "max-h-none",
+              detailedPreview && photo && "max-h-none",
             )}
           >
             {photo ? (
@@ -48,7 +49,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
                 alt={`Local preview of ${draft.name.trim() || "new asset"}`}
                 fill
                 unoptimized
-                sizes={step === 0 ? "96px" : step === 1 ? "(max-width: 1023px) 100vw, 36vw" : "352px"}
+                sizes={step === 0 ? "96px" : detailedPreview ? "(max-width: 1023px) 100vw, 36vw" : "352px"}
                 className="object-contain"
               />
             ) : (
@@ -64,19 +65,19 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
             <p className="break-words text-xs text-muted-foreground">{draft.tagMode === "automatic" ? `${options.tagGeneration.format || "Asset Tag"} · Assigned on creation` : `Asset Tag: ${draft.assetCode || "Not entered"}`}</p>
             {category && <span className="inline-block max-w-full break-words rounded-full border border-border bg-muted px-2 py-1 text-xs text-muted-foreground" title={categoryPath}>{category.name}</span>}
             {categoryPath && categoryPath !== category?.name && (
-              <p className={cn("break-words text-muted-foreground", step === 1 ? "text-xs leading-relaxed" : "text-2xs")}>
+              <p className={cn("break-words text-muted-foreground", detailedPreview ? "text-xs leading-relaxed" : "text-2xs")}>
                 {categoryPath}
               </p>
             )}
           </div>
         </div>
         {(photo || needsPhotoReselection || verifiedPhoto) && (
-          <p className={cn("text-muted-foreground", step <= 1 ? "text-xs leading-relaxed" : "text-2xs")} role="status">
+          <p className={cn("text-muted-foreground", step <= 2 ? "text-xs leading-relaxed" : "text-2xs")} role="status">
             {needsPhotoReselection ? "Some photos could not be restored. Reselect or remove them in Step 1." : verifiedPhoto ? "Verified photo upload retained for this registration." : "Local preview · not uploaded"}
           </p>
         )}
         {(step !== 0 || draft.locationId || draft.serialNumber) && (
-          <dl className={cn("space-y-1 text-xs", step === 1 && "space-y-2 border-t border-border pt-3 leading-relaxed")}>
+          <dl className={cn("space-y-1 text-xs", detailedPreview && "space-y-2 border-t border-border pt-3 leading-relaxed")}>
             {[["Location", locationPath(draft.locationId, draft) || "Not selected"], ["Custody", custody], ["Serial Number", draft.serialNumber || "Not entered"]].map(([label, value]) => (
               <div key={label} className="grid grid-cols-3 gap-2">
                 <dt className="text-muted-foreground">{label}</dt>
@@ -110,8 +111,8 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
                 aria-current={current ? "step" : undefined}
                 className={cn(
                   "flex items-start gap-2 rounded-control p-2",
-                  step === 1 && "gap-3 p-3",
-                  current && (step === 1 ? "bg-accent" : "bg-primary/5"),
+                  detailedPreview && "gap-3 p-3",
+                  current && (detailedPreview ? "bg-accent" : "bg-primary/5"),
                 )}
               >
                 <span
@@ -120,30 +121,30 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
                     step === 4 && complete ? "bg-success-muted text-success"
                       : complete || current ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground",
-                    step === 1 && "size-8 font-semibold",
+                    detailedPreview && "size-8 font-semibold",
                   )}
                 >
                   {complete ? <CheckIcon aria-hidden="true" className="h-3.5 w-3.5" /> : index + 1}
                 </span>
-                <div className={cn("min-w-0 flex-1 text-xs", step === 1 && "leading-relaxed")}>
-                  <p className={cn("font-medium", step === 1 && "font-semibold", current && (step === 1 ? "text-accent-foreground" : "text-primary"))}>
+                <div className={cn("min-w-0 flex-1 text-xs", detailedPreview && "leading-relaxed")}>
+                  <p className={cn("font-medium", detailedPreview && "font-semibold", current && (detailedPreview ? "text-accent-foreground" : "text-primary"))}>
                     {label}
                   </p>
-                  <p className={cn("mt-1 break-words text-muted-foreground", step !== 1 && "line-clamp-2")} title={summaries[index]}>
+                  <p className={cn("mt-1 break-words text-muted-foreground", !detailedPreview && "line-clamp-2")} title={summaries[index]}>
                     {summaries[index]}
                   </p>
                 </div>
                 {(index < 4 || step === 4) && (reviewed || complete) && !current && (
                   <Button
                     variant="ghost"
-                    size={step === 1 ? "sm" : "icon-sm"}
-                    className={step === 1 ? "text-accent-foreground max-sm:h-10" : undefined}
+                    size={detailedPreview ? "sm" : "icon-sm"}
+                    className={detailedPreview ? "text-accent-foreground max-sm:h-10" : undefined}
                     disabled={locked}
                     aria-label={`Edit ${label} from preview`}
                     onClick={() => onEdit(Math.min(index, 3))}
                   >
                     <EditIcon aria-hidden="true" className="h-3.5 w-3.5" />
-                    {step === 1 && "Edit"}
+                    {detailedPreview && "Edit"}
                   </Button>
                 )}
               </div>
