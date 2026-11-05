@@ -88,17 +88,16 @@ function RegisterAssetSplitButton() {
               <AssetMenuItemText title="Single Asset" description="Register one asset step by step" />
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled className={UNAVAILABLE_ITEM}>
-            <AssetMenuItemText title="Bulk Assets" description="Not available yet" />
+          <DropdownMenuItem asChild>
+            <Link href="/asset-workspace/assets/import">
+              <AssetMenuItemText title="Bulk Assets" description="Register multiple assets using file import or template" />
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
 }
-
-/** Override the shared 50% opacity so unavailable items keep readable contrast. */
-const UNAVAILABLE_ITEM = "data-[disabled]:opacity-100 data-[disabled]:text-muted-foreground";
 
 function AssetMenuItemText({ title, description }: { title: string; description: string }) {
   return (
