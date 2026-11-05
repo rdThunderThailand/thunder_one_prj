@@ -28,8 +28,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { NoAccess } from "@/components/ui/NoAccess";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { verdictMessage } from "@/features/media-workspace/assets/upload/verdict-message";
+import { playbackReadiness, readinessMessage, readinessTone } from "@/features/media-workspace/assets/upload/playback-readiness";
 import { fetchContentFolders, fetchMediaAsset } from "@/lib/api/media-api";
+import { useAppLocale } from "@/lib/use-app-locale";
 import type { ContentFolder, MediaAsset } from "@/types/domain";
 import { folderPath } from "../content-library/folder-tree";
 import { FullscreenDialog, MoveToFolderDialog, TrashDialog } from "./media-detail-dialogs";
@@ -43,6 +44,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [dialog, setDialog] = useState<"move" | "trash" | "fullscreen" | null>(null);
   const previews = usePreviewUrls([assetId]);
+  const locale = useAppLocale();
 
   useEffect(() => {
     let alive = true;
@@ -74,7 +76,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   const kindLabel = asset.kind ? asset.kind.charAt(0).toUpperCase() + asset.kind.slice(1) : "File";
   const mime = asset.file?.mime_type ?? "Unknown type";
   const size = asset.file?.file_size_bytes != null ? `${(asset.file.file_size_bytes / 1024 / 1024).toFixed(1)} MB` : "—";
-  const verdict = asset.status === "failed" || !asset.rendition?.present ? verdictMessage(asset.probe_verdict) : undefined;
+  const readiness = playbackReadiness(asset);
   const facts: Array<[Icon, string, string]> = [
     [User, "Uploaded by", asset.created_by?.display_name ?? "—"],
     [Calendar, "Uploaded on", formatDate(asset.created_at)],
@@ -161,15 +163,13 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
                 <p className="mt-1 text-[11px] text-muted-foreground">{kindLabel} · {mime} · {size}</p>
               </div>
             </div>
-            {/* ADR 0071: `processing` is a background conversion in progress, not a refusal — the
-                ADR 0070 verdict sentence would misdescribe it. `failed` is a refusal and always
-                keeps its reason, even if a stale Rendition record exists. A present Rendition on
-                a non-failed Asset means the source finding is resolved, so the profile warning
-                no longer applies. */}
-            {asset.status === "processing" ? (
-              <p className="mt-3 text-xs text-warning">กำลังแปลง — รีเฟรชเพื่อดูสถานะ</p>
-            ) : (
-              verdict && <p className={`mt-3 text-xs ${asset.status === "failed" ? "text-error" : "text-warning"}`}>{verdict}</p>
+            {/* Playback Readiness (CONTEXT.md): the same sentence the Upload Queue shows. `status`
+                decides first, so a converted Asset reads as ready whatever its source verdict was. */}
+            {readiness && (
+              <p className={`mt-3 text-xs ${{ neutral: "text-muted-foreground", warning: "text-warning", error: "text-error" }[readinessTone(readiness)]}`}>
+                {readinessMessage(readiness, locale)}
+                {readiness === "converting" && ` ${locale === "th" ? "(รีเฟรชเพื่อดูสถานะ)" : "(Refresh to see the status.)"}`}
+              </p>
             )}
             {asset.tags?.length ? (
               <div className="mt-3 flex flex-wrap gap-1.5">
