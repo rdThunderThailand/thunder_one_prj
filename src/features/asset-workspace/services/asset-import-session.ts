@@ -4,6 +4,13 @@ import { IMPORT_FIELD_KEYS, type ParsedImportFile } from "../domain/asset-import
 const sessionSchema = z.object({
   mapping: z.array(z.enum(IMPORT_FIELD_KEYS).nullable()),
   uploadId: z.uuid(),
+  rowsSent: z.boolean().optional(),
+  mappingView: z.boolean().optional(),
+  mode: z.enum(["ready_and_warnings", "ready_only"]).optional(),
+  confirmation: z.object({
+    mode: z.enum(["ready_and_warnings", "ready_only"]).optional(),
+    override_reason: z.string().trim().min(1).max(1000).optional(),
+  }).strict().optional(),
 });
 
 export type ImportSession = z.infer<typeof sessionSchema>;

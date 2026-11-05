@@ -3,7 +3,6 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { WizardSteps } from "@/components/ui/WizardSteps";
 import { ChevronRightIcon } from "@/components/ui/icons";
-import { cn } from "@/lib/utils";
 
 const BREADCRUMBS = [
   { label: "Home", href: "/" },
@@ -33,7 +32,7 @@ export function BulkImportHeader({
   tools?: ReactNode;
 }) {
   return (
-    <header className={cn("min-w-0 shrink-0 space-y-3", step === 0 && "pb-1")}>
+    <header className="min-w-0 shrink-0 space-y-3 pb-1">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <nav aria-label="Breadcrumb" className="text-2xs text-muted-foreground">
           <ol className="flex flex-wrap items-center gap-1">
@@ -63,7 +62,7 @@ export function BulkImportHeader({
         steps={STEPS}
         descriptions={DESCRIPTIONS}
         currentIndex={step}
-        variant={step === 0 ? "detailed" : "default"}
+        variant="detailed"
       />
       <p className="text-xs text-muted-foreground sm:hidden" role="status">
         <span>Step {step + 1} of {STEPS.length}: </span>

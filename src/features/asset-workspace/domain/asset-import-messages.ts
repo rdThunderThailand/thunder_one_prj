@@ -1,4 +1,82 @@
 import { formatCount } from "./asset-import-format.ts";
+import type { ImportFieldKey, ImportRow, RowMessage } from "./asset-import-types.ts";
+
+const FIELD_LABELS: Record<ImportFieldKey | "row", string> = {
+  name: "Asset Name",
+  category: "Category",
+  location: "Location",
+  asset_tag: "Asset Tag",
+  serial_number: "Serial Number",
+  purchase_date: "Acquisition Date",
+  condition: "Condition",
+  assignee: "Assignee",
+  notes: "Notes",
+  row: "Row",
+};
+
+const SAFE_CORE_VALIDATION = new Set([
+  "Asset Name is required.",
+  "Asset Name must be at most 250 characters.",
+  "Asset Tag must be at most 100 characters.",
+  "Serial Number must be at most 250 characters.",
+  "Notes must be at most 5,000 characters.",
+  "This row could not be registered; check its values and import it again",
+]);
+
+export function rowMessageText(
+  message: RowMessage,
+  values: Partial<Record<ImportFieldKey, string>> = {},
+): string {
+  const fieldLabel = FIELD_LABELS[message.field] ?? "Field";
+  const value = message.field === "row" ? "" : (values[message.field]?.trim() ?? "");
+
+  switch (message.code) {
+    case "REQUIRED":
+      return `${fieldLabel} is required.`;
+    case "VALIDATION":
+      return SAFE_CORE_VALIDATION.has(message.message)
+        ? message.message
+        : `${fieldLabel} is not valid.`;
+    case "INVALID_DATE":
+      return "Acquisition date must be YYYY-MM-DD.";
+    case "INVALID_CONDITION":
+      return "Condition must be Good, Fair or Damaged (Damaged needs an Assignee).";
+    case "UNKNOWN_CATEGORY":
+      return `Category "${value}" was not found or is inactive.`;
+    case "UNKNOWN_LOCATION":
+      return `Location "${value}" was not found or is inactive.`;
+    case "UNKNOWN_ASSIGNEE":
+      return `Assignee "${value}" was not found.`;
+    case "AMBIGUOUS_REFERENCE":
+      return `"${value}" matches more than one ${fieldLabel.toLowerCase()}. Use the code or full path.`;
+    case "SERIAL_REQUIRED":
+      return "This category requires a Serial Number.";
+    case "SERIAL_DUPLICATE":
+      return "Serial Number is already used.";
+    case "TAG_TAKEN":
+      return "Asset Tag is already used.";
+    case "TAG_DUPLICATE_IN_FILE":
+      return "Asset Tag appears more than once in this file.";
+    case "ALREADY_IMPORTED":
+      return "This row was already registered by an earlier import.";
+    case "UNKNOWN_SOURCE_ROW":
+      return "Source Row is missing or not in the original import.";
+    case "SOURCE_ROW_DUPLICATE_IN_FILE":
+      return "This source row appears on more than one row of this file.";
+  }
+}
+
+/** Result is authoritative: validation severity and error codes survive an approved warning. */
+export function importResultMessage(row: ImportRow): { text: string; severity: "warning" | "error" | null } {
+  if (row.result === "created") return { text: "Created", severity: null };
+  if (row.result === null) return { text: "Pending", severity: null };
+  const severity = row.result === "not_registered" ? "error" : "warning";
+  if (row.errorMessage) return { text: row.errorMessage, severity };
+  const latestError = row.messages.findLast((message) => message.severity === "error");
+  const message = latestError ?? row.messages[0];
+  return { text: message ? rowMessageText(message, row.values)
+    : row.result === "not_registered" ? "Not Registered" : "Created with Warnings", severity };
+}
 
 export function requestErrorText(code: string, status = 0): string {
   if (status === 401 || code === "UNAUTHENTICATED") {

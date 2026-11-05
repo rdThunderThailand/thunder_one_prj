@@ -4,10 +4,12 @@ import { useEffect, useEffectEvent, type RefObject } from "react";
 import { z } from "zod";
 import { autoMap } from "../domain/asset-import-mapping.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
+import { restoredMappingView } from "../domain/asset-import-step.ts";
 import type { ImportBatch } from "../domain/asset-import-types.ts";
 import { ImportApiError } from "../services/asset-import-api.ts";
-import { getParsedImportFile, readImportSession, takeImportNotice } from "../services/asset-import-session.ts";
-import { assertActive, importFlowMemory, type FlowState, type ImportFlowRuntime } from "./asset-import-flow-state.ts";
+import { restoreImportFile } from "../services/asset-import-restore.ts";
+import { getParsedImportFile, readImportSession, setParsedImportFile, takeImportNotice } from "../services/asset-import-session.ts";
+import { assertActive, importFlowMemory, type FlowState, type ImportFlowRuntime, type Lifecycle } from "./asset-import-flow-state.ts";
 
 /** Restore a batch after navigation/reload and retain the existing leave-page guards. */
 export function useAssetImportRestoration(
@@ -15,7 +17,35 @@ export function useAssetImportRestoration(
   state: FlowState,
   requestedUrlRef: RefObject<{ batchId: string | null; superseded: Set<string | null> } | null>,
 ) {
-  const { api, options, context, preview, batchId, routeKey, current, publish, run, discard, clearLocal } = runtime;
+  const { api, options, userId, context, preview, batchId, routeKey, current, publish, run, clearLocal } = runtime;
+
+  async function restoreFile(lifecycle: Lifecycle, batch: ImportBatch) {
+    if (!options) return;
+    publish(lifecycle, { restoringFile: true, restoreFailed: false });
+    try {
+      const parsed = await restoreImportFile(api, batch, options, lifecycle.controller.signal);
+      assertActive(lifecycle);
+      importFlowMemory.batchId = batch.id;
+      setParsedImportFile(parsed);
+      const { mapping } = current.current;
+      publish(lifecycle, {
+        parsed,
+        selectedFile: parsed.file,
+        mapping: mapping.length === parsed.headers.length ? mapping : autoMap(parsed.headers),
+        restoringFile: false,
+      });
+    } catch {
+      assertActive(lifecycle);
+      publish(lifecycle, { restoringFile: false, restoreFailed: true });
+    }
+  }
+
+  function retryFileRestore() {
+    void run(async (lifecycle) => {
+      const { batch } = current.current;
+      if (batch) await restoreFile(lifecycle, batch);
+    });
+  }
 
   const restore = useEffectEvent(async () => {
     if (preview || !options?.ready) return;
@@ -30,7 +60,7 @@ export function useAssetImportRestoration(
     await run(async (lifecycle) => {
       publish(lifecycle, { restoring: true, loadedRoute: routeKey });
       if (!batchId) {
-        publish(lifecycle, { batch: null, notice: takeImportNotice(context) });
+        publish(lifecycle, { batch: null, mappingView: false, notice: takeImportNotice(context) });
         return;
       }
       if (!z.uuid().safeParse(batchId).success) {
@@ -48,18 +78,29 @@ export function useAssetImportRestoration(
       assertActive(lifecycle);
       const parsed = importFlowMemory.batchId === batch.id ? getParsedImportFile() : null;
       const saved = readImportSession(batch.id).state;
+      const confirmation = batch.status === "uploaded" ? null
+        : importFlowMemory.confirmation?.batchId === batch.id ? importFlowMemory.confirmation.body : saved?.confirmation ?? null;
       if (saved) lifecycle.pending = { batchId: batch.id, uploadId: saved.uploadId };
+      const creator = batch.createdBy.id === userId;
+      const needsFile = !parsed && creator && (batch.status === "uploaded" || batch.status === "validated");
       publish(lifecycle, {
+        ...(needsFile ? { restoring: false, restoringFile: true } : {}),
         batch,
+        confirmation,
         parsed,
         selectedFile: parsed?.file ?? null,
-        mapping: saved?.mapping ?? (parsed ? autoMap(parsed.headers) : []),
+        mapping: importFlowMemory.validation?.batchId === batch.id ? importFlowMemory.validation.mapping
+          : saved?.mapping ?? (parsed ? autoMap(parsed.headers) : []),
+        rowsSent:
+          Boolean(saved?.rowsSent) || importFlowMemory.validation?.batchId === batch.id || batch.status !== "uploaded" ||
+          batch.counts.valid + batch.counts.warning + batch.counts.error > 0,
+        mappingView: restoredMappingView(batch, saved?.mappingView),
       });
-      if (batch.status === "uploaded" && !parsed) {
-        publish(lifecycle, { notice: "Select the file again" });
-        await discard(lifecycle);
-        assertActive(lifecycle);
-        clearLocal(lifecycle, "Select the file again");
+      if (batch.status === "uploaded" && !parsed && !creator) {
+        throw new ImportApiError("PERMISSION_DENIED", requestErrorText("PERMISSION_DENIED", 403), 403);
+      }
+      if (needsFile) {
+        await restoreFile(lifecycle, batch);
       }
     });
   });
@@ -77,19 +118,15 @@ export function useAssetImportRestoration(
   }, [api, batchId, routeKey, ready, state.busy]);
 
   useEffect(() => {
-    if (
-      !state.busy &&
-      state.batch?.status !== "uploaded" &&
-      state.batch?.status !== "processing"
-    ) {
-      return;
-    }
+    // A reload is safe once uploaded, because the file comes back from Core.
+    if ((!state.busy || state.restoringFile) && state.batch?.status !== "processing") return;
     const guard = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", guard);
     return () => window.removeEventListener("beforeunload", guard);
-  }, [state.busy, state.batch?.status]);
+  }, [state.busy, state.restoringFile, state.batch?.status]);
 
+  return { retryFileRestore };
 }

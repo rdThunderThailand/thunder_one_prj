@@ -78,6 +78,40 @@ export type BatchStatus =
   | "partially_completed"
   | "failed";
 
+export type Severity = "valid" | "warning" | "error";
+
+export type RowResult = "created" | "created_with_warning" | "not_registered";
+
+export type RowCode =
+  | "VALIDATION"
+  | "REQUIRED"
+  | "INVALID_DATE"
+  | "INVALID_CONDITION"
+  | "UNKNOWN_CATEGORY"
+  | "UNKNOWN_LOCATION"
+  | "UNKNOWN_ASSIGNEE"
+  | "AMBIGUOUS_REFERENCE"
+  | "SERIAL_REQUIRED"
+  | "SERIAL_DUPLICATE"
+  | "TAG_TAKEN"
+  | "TAG_DUPLICATE_IN_FILE"
+  | "ALREADY_IMPORTED"
+  | "UNKNOWN_SOURCE_ROW"
+  | "SOURCE_ROW_DUPLICATE_IN_FILE";
+
+export type RowMessage = {
+  field: ImportFieldKey | "row";
+  code: RowCode;
+  severity: "error" | "warning";
+  message: string;
+  detailsTotal?: number;
+  // rows = other rows, at most 20; total = all rows sharing the value, this row included.
+  details?:
+    | { id: string; assetTag: string | null; name: string }[]
+    | { rows: number[]; total: number }
+    | { candidates: string[] };
+};
+
 export type ImportBatch = {
   id: string;
   batchCode: string;
@@ -102,6 +136,61 @@ export type ImportBatch = {
   };
   original: { id: string; batchCode: string } | null;
   registeredAssetsPath: string;
+};
+
+export type ImportRow = {
+  id: string;
+  rowIndex: number;
+  values: Partial<Record<ImportFieldKey, string>>;
+  severity: Severity;
+  messages: RowMessage[];
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  result: RowResult | null;
+  createdAsset: { id: string; assetTag: string; name: string } | null;
+  override: {
+    reason: string | null;
+    // Null once the approving user has been removed.
+    by: { id: string; name: string } | null;
+    at: string;
+  } | null;
+  originalRowIndex: number | null;
+};
+
+export type RowsQuery = {
+  severity?: Severity;
+  result?: RowResult | "pending";
+  q?: string;
+  page: number;
+  pageSize: number;
+};
+
+export type RowsPage = {
+  rows: ImportRow[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
+
+export type SendRow = {
+  row_index: number;
+  original_row_index?: number;
+  values: Partial<Record<ImportFieldKey, string>>;
+};
+
+export type ConfirmMode = "ready_and_warnings" | "ready_only";
+export type ImportConfirmBody = { mode?: ConfirmMode; override_reason?: string };
+
+export type ConfirmResult = {
+  batchId: string;
+  status: BatchStatus;
+  processed: number;
+  remaining: number;
+  counts: {
+    created: number;
+    createdWithWarning: number;
+    notRegistered: number;
+  };
 };
 
 /** Shared parser output before file metadata and re-import detection. */

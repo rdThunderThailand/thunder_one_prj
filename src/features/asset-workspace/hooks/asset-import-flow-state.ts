@@ -1,9 +1,10 @@
 import type { RefObject } from "react";
-import type { ColumnMapping, ImportBatch, ImportOptions, ParsedImportFile } from "../domain/asset-import-types.ts";
+import type { ColumnMapping, ImportBatch, ImportConfirmBody, ImportOptions, ParsedImportFile } from "../domain/asset-import-types.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { ImportApiError, type AssetImportApi } from "../services/asset-import-api.ts";
 import { ParseError } from "../services/asset-import-parse.ts";
 import type { ImportAttempt, ImportProgress } from "../services/asset-import-start.ts";
+import type { ImportValidationAttempt } from "../services/asset-import-validation.ts";
 
 type PendingBatch = ImportAttempt;
 
@@ -12,6 +13,7 @@ export type Lifecycle = {
   controller: AbortController;
   active: boolean;
   pending: PendingBatch | null;
+  validation: ImportValidationAttempt | null;
 };
 
 export type FlowState = {
@@ -23,11 +25,17 @@ export type FlowState = {
   parsing: boolean;
   busy: boolean;
   restoring: boolean;
+  restoringFile: boolean;
+  restoreFailed: boolean;
   loadedRoute: string;
   progress: ImportProgress | null;
   error: ImportApiError | ParseError | null;
   notice: string | null;
   retrying: boolean;
+  rowsSent: boolean;
+  mappingView: boolean;
+  confirming: boolean;
+  confirmation: ImportConfirmBody | null;
   previewStep: 0 | 1;
 };
 
@@ -36,7 +44,9 @@ export const importFlowMemory: {
   context: string;
   batchId: string | null;
   pending: PendingBatch | null;
-} = { context: "", batchId: null, pending: null };
+  validation: ImportValidationAttempt | null;
+  confirmation: { batchId: string; body: ImportConfirmBody } | null;
+} = { context: "", batchId: null, pending: null, validation: null, confirmation: null };
 
 /** Callbacks shared by focused flow hooks; this does not own another copy of state. */
 export type ImportFlowRuntime = {
@@ -67,11 +77,17 @@ export function emptyState(context: string): FlowState {
     parsing: false,
     busy: false,
     restoring: false,
+    restoringFile: false,
+    restoreFailed: false,
     loadedRoute: "",
     progress: null,
     error: null,
     notice: null,
     retrying: false,
+    rowsSent: false,
+    mappingView: false,
+    confirming: false,
+    confirmation: null,
     previewStep: 0,
   };
 }
@@ -93,3 +109,4 @@ export function safeError(error: unknown): ImportApiError | ParseError {
   }
   return new ImportApiError("INTERNAL", requestErrorText("INTERNAL"));
 }
+

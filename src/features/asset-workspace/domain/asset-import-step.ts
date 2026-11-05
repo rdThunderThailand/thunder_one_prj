@@ -2,6 +2,11 @@ import type { ImportBatch } from "./asset-import-types.ts";
 
 export type ImportStep = 0 | 1 | 2 | 3;
 
+/** After a reload, reopen Map & Validate if the user was there or nothing can be registered. */
+export function restoredMappingView(batch: ImportBatch, savedMappingView?: boolean): boolean {
+  return batch.status === "validated" && (savedMappingView === true || batch.counts.valid + batch.counts.warning === 0);
+}
+
 export function stepFor(
   batch: ImportBatch | null,
   hasParsedFile: boolean,

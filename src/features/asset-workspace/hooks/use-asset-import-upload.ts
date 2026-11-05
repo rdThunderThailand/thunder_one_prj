@@ -67,6 +67,10 @@ export function useAssetImportUpload(runtime: ImportFlowRuntime) {
     }
     publish(lifecycle, {
       batch,
+      mappingView: false,
+      rowsSent:
+        batch.status !== "uploaded" ||
+        batch.counts.valid + batch.counts.warning + batch.counts.error > 0,
       loadedRoute: `${batch.id}:${version}`,
       progress: null,
     });

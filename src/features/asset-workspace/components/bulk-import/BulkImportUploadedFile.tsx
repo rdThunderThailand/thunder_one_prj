@@ -76,7 +76,7 @@ export function BulkImportUploadedFile({ flow, fileFeedbackId }: {
               </p>
               <p className="text-xs leading-relaxed">
                 {flow.preview
-                  ? "File format is valid. Click Next to continue."
+                  ? "File format is valid. Click Next to preview column mapping."
                   : 'File format is valid. Click "Next" to continue.'}
               </p>
             </div>

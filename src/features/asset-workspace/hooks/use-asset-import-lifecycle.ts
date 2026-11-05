@@ -38,6 +38,7 @@ export function useAssetImportLifecycle(api: AssetImportApi, context: string) {
       controller: new AbortController(),
       active: false,
       pending: null,
+      validation: null,
     };
     lifecycleRef.current = lifecycle;
     requestedUrl.current = null;
@@ -46,9 +47,12 @@ export function useAssetImportLifecycle(api: AssetImportApi, context: string) {
       importFlowMemory.context = context;
       importFlowMemory.batchId = null;
       importFlowMemory.pending = null;
+      importFlowMemory.validation = null;
+      importFlowMemory.confirmation = null;
       setParsedImportFile(null);
     }
     lifecycle.pending = preview ? null : importFlowMemory.pending;
+    lifecycle.validation = !preview && importFlowMemory.validation?.batchId === batchId ? importFlowMemory.validation : null;
     const retained = !preview && importFlowMemory.batchId === batchId ? getParsedImportFile() : null;
     current.current = {
       ...emptyState(context),
@@ -97,6 +101,7 @@ export function useAssetImportLifecycle(api: AssetImportApi, context: string) {
       controller: new AbortController(),
       active: false,
       pending: importFlowMemory.pending?.batchId === batchId ? importFlowMemory.pending : null,
+      validation: !preview && importFlowMemory.validation?.batchId === batchId ? importFlowMemory.validation : null,
     };
     lifecycleRef.current = replacement;
     observedUrl.current = { context, batchId };

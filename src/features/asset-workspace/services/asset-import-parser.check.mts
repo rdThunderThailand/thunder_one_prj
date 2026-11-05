@@ -73,3 +73,4 @@ export async function parserChecks() {
   await parseFails(csv('Name,Notes\nDesk,"unfinished'), "UNREADABLE");
   await parseFails(csv("Name,Import ID,Source Row\nDesk,,2"), "MIXED_IMPORT");
 }
+

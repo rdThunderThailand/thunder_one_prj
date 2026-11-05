@@ -102,9 +102,17 @@ async function utilityChecks() {
   const state = {
     mapping: autoMap(template.headers),
     uploadId: crypto.randomUUID(),
+    mode: "ready_only" as const,
+    rowsSent: true,
   };
   assert.equal(saveImportSession(batchId, state), true);
   assert.deepEqual(readImportSession(batchId), { state, unavailable: false });
+  const confirming = { ...state, confirmation: { mode: "ready_and_warnings" as const, override_reason: "Approved" } };
+  assert.equal(saveImportSession(batchId, confirming), true);
+  assert.deepEqual(readImportSession(batchId).state, confirming);
+  assert.equal(saveImportSession(batchId, { ...state, confirmation: {} }), true);
+  assert.deepEqual(readImportSession(batchId).state?.confirmation, {});
+  assert.equal(saveImportSession(batchId, { ...state, confirmation: { override_reason: " " } }), false);
   setImportNotice(`${tenantId}:${userId}`, "Keep Import ID and Source Row.");
   assert.equal(takeImportNotice(`${tenantId}:${userId}`), "Keep Import ID and Source Row.");
   assert.equal(takeImportNotice(`${tenantId}:${userId}`), null, "notices are consumed once");

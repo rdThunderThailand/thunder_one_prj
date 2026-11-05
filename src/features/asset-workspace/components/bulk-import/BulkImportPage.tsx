@@ -17,6 +17,7 @@ import { ErrorState } from "../states/ErrorState";
 import { BulkImportHeader } from "./BulkImportHeader";
 import { ScreenPlaceholder } from "../ScreenPlaceholder";
 import { UploadStep } from "./steps/UploadStep";
+import { MapValidateStep } from "./steps/MapValidateStep";
 
 export function BulkImportPage(context: AssetImportContext) {
   return (
@@ -100,30 +101,31 @@ function ImportWorkspace({
       />
     );
   } else {
-    content = flow.step === 0 ? (
-      <UploadStep flow={flow} context={context} renderFooter={renderFooter} />
-    ) : (
-      <ScreenPlaceholder
-        title={flow.step === 1 ? "Map & Validate" : flow.step === 2 ? "Review & Confirm" : "Complete"}
-        spec="UC-010 · 05 §4.6"
-      />
-    );
+    switch (flow.step) {
+      case 0:
+        content = <UploadStep flow={flow} context={context} renderFooter={renderFooter} />;
+        break;
+      case 1:
+        content = <MapValidateStep flow={flow} renderFooter={renderFooter} />;
+        break;
+      default:
+        content = (
+          <ScreenPlaceholder
+            title={flow.step === 2 ? "Review & Confirm" : "Complete"}
+            spec="UC-010 · 05 §4.6"
+          />
+        );
+        break;
+    }
   }
 
   return (
-    <div className={cn(
-      "flex h-full min-h-0 w-full min-w-0 flex-col",
-      flow.step === 0 ? "gap-4 text-sm" : "gap-3",
-    )}>
-      {flow.step !== 0 && <BulkImportHeader step={flow.step} />}
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 text-sm">
       <div
         data-registration-scroll
-        className={cn(
-          "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-1",
-          flow.step === 0 ? "gap-4 px-1" : "gap-3 pr-1",
-        )}
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-1 pb-1"
       >
-        {flow.step === 0 && <BulkImportHeader step={flow.step} />}
+        <BulkImportHeader step={flow.step} />
         {flow.preview && (
           <p
             id="bulk-upload-preview-notice"
@@ -148,7 +150,7 @@ function ImportWorkspace({
         data-registration-footer
         className="z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card py-2 sm:py-3"
       >
-        {(!ready || flow.step !== 0) && back}
+        {!ready && back}
       </footer>
     </div>
   );
@@ -159,7 +161,7 @@ function BulkImportLoading({ step }: { step: number }) {
     <div
       role="status"
       aria-label="Loading bulk import"
-      className={cn("space-y-3", step === 0 && "@container/upload")}
+      className={cn("space-y-3", step <= 1 && "@container/upload")}
     >
       {step !== 0 && <Skeleton className="h-20 w-full motion-reduce:animate-none" />}
       {step === 3 && (
@@ -173,7 +175,9 @@ function BulkImportLoading({ step }: { step: number }) {
         className={`grid gap-3 ${
           step === 3 ? "" : step === 0
             ? "@min-4xl/upload:grid-cols-[minmax(0,4fr)_minmax(0,3fr)]"
-            : "xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
+            : step === 1
+              ? "@min-4xl/upload:grid-cols-[minmax(0,7fr)_minmax(0,6fr)]"
+              : "xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
         }`}
       >
         <div className="space-y-3 rounded-card border border-border bg-card p-4">

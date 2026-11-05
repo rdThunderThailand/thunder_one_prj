@@ -63,3 +63,4 @@ export const importOptionsSchema: z.ZodType<ImportOptions> = z.object({
   }),
   registeredAssetsPath: z.string().min(1),
 });
+

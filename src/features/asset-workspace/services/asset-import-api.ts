@@ -1,5 +1,14 @@
 import type { z } from "zod";
-import type { ImportBatch, ImportOptions } from "../domain/asset-import-types.ts";
+import type {
+  BatchStatus,
+  ConfirmResult,
+  ImportBatch,
+  ImportOptions,
+  ImportConfirmBody,
+  RowsPage,
+  RowsQuery,
+  SendRow,
+} from "../domain/asset-import-types.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { createHttpImportApi } from "./asset-import-http.ts";
 
@@ -38,8 +47,24 @@ export interface AssetImportApi {
     totalRows: number;
     originalImportId?: string;
   }): Promise<{ batchId: string; batchCode: string; replayed: boolean }>;
+  addRows(batchId: string, rows: SendRow[]): Promise<{ inserted: number; alreadyPresent: number }>;
+  validate(batchId: string): Promise<{
+    status: BatchStatus;
+    counts: { total: number; valid: number; warning: number; error: number };
+  }>;
   discard(batchId: string): Promise<void>;
   getBatch(batchId: string): Promise<ImportBatch>;
+  listRows(batchId: string, query: RowsQuery): Promise<RowsPage>;
+  confirm(
+    batchId: string,
+    body: ImportConfirmBody,
+  ): Promise<ConfirmResult>;
+  sourceFileUrl(batchId: string): Promise<{ url: string; name: string }>;
+  downloadFile(
+    batchId: string,
+    kind: "result" | "error",
+    batchCode: string,
+  ): Promise<{ blob: Blob; filename: string }>;
 }
 
 export function parseImportResponse<T>(schema: z.ZodType<T>, data: unknown): T {
