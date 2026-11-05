@@ -132,6 +132,14 @@ export type UploadOutcome =
  *    upload but cannot be published yet.
  *  - anything else (`ready`) completed. `Completed` is only the upload; readiness is separate.
  *  Upload Queue does not poll; later changes show on Media Detail. */
+/** A converting row once Core reports its Asset left `processing`. A conversion only starts for a
+ *  High or HEVC source, so a `failed` Asset here is that refusal. */
+export function settleConverting(item: UploadItem, status: string): UploadItem {
+  if (status === "ready") return { ...item, readiness: "ready" };
+  if (status === "failed") return { ...item, state: "failed", readiness: "unsupported_profile" };
+  return item;
+}
+
 export function uploadOutcome(status: string, verdict: ProbeVerdict | null | undefined): UploadOutcome {
   const readiness = playbackReadiness({ status, probe_verdict: verdict });
   if (status === "failed") return { state: "failed", readiness: readiness ?? "refused" };

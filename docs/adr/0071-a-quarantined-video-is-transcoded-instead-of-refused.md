@@ -312,6 +312,12 @@ A probing backfill brings them under this ADR in stages after Phase 1, with file
 because a `processing` Asset installs its Rendition at once even while on air. It uses the same intake
 rules, separately from Phase 1. Every caller of `media_video_register` must pass a verdict for a video.
 
+**Amendment 2026-11-05: position ships before Phase 2, and carries an estimate.** Waiting without knowing how
+long is the operators' main complaint, and a queue position needs no benchmark, so Phase 3 no longer waits for
+Phase 2. Core returns a start estimate of position × 60 s, the one-start-per-tick rate, and owns the figure so
+Phase 2 changes one constant. It ignores the length of the files ahead, so the page calls it approximate.
+Showing no estimate was rejected: a position alone does not answer how long to wait.
+
 **Benchmark gate.** Under Fluid compute, enabled on this project, Vercel may share an instance between
 invocations, and its [in-function concurrency announcement](https://vercel.com/changelog/in-function-concurrency-now-in-public-beta)
 warned that purely CPU-bound work may see higher latency. Overlapping loops therefore risk `/tmp`

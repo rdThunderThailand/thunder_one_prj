@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ContentFolder, Tag } from "@/types/domain";
+import type { ContentFolder, Tag, TranscodeStatus } from "@/types/domain";
+import { useTranscodeStatus } from "../use-transcode-status";
 import { fetchContentFolders, fetchTags } from "@/lib/api/media-api";
 import {
   EXPIRED_UPLOAD_ERROR,
@@ -15,6 +16,7 @@ import {
   nextToStart,
   reservationToRelease,
   retryPlan,
+  settleConverting,
   startItems,
   stageFiles,
   summarize,
@@ -230,7 +232,14 @@ export function useUploadQueue(initialFolderId: string | null = null) {
     }
   }, [items, cancelItem, releaseReservation]);
 
+  const applySettled = useCallback(({ asset_id: assetId, status }: TranscodeStatus) => {
+    setItems((current) => current.map((item) => (item.assetId === assetId ? settleConverting(item, status) : item)));
+  }, []);
+  const convertingIds = items.flatMap((item) => (item.readiness === "converting" && item.assetId ? [item.assetId] : []));
+  const transcode = useTranscodeStatus(convertingIds, applySettled);
+
   return {
+    transcode,
     items,
     rejections,
     folders,

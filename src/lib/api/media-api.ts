@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/api-error";
-import type { AssetUsage, Campaign, ContentFolder, MediaAsset, MediaAssetPage, PermanentDeleteResult, PlaylistDetail, PlaylistListItem, Tag } from "@/types/domain";
+import type { AssetUsage, Campaign, ContentFolder, MediaAsset, MediaAssetPage, PermanentDeleteResult, PlaylistDetail, PlaylistListItem, Tag, TranscodeStatus } from "@/types/domain";
 
 /**
  * Shared transport for every `/api/proxy/media/*` call. Feature services build
@@ -156,6 +156,16 @@ export async function restoreMediaAsset(id: string): Promise<void> {
 /** Resolves `{ deleted: false, blockers }` when the Asset is still referenced (ADR 0091); it does not throw. */
 export async function permanentlyDeleteMediaAsset(id: string): Promise<PermanentDeleteResult> {
   return requestApi<PermanentDeleteResult>("DELETE", `/media/videos/${id}/permanent`);
+}
+
+/** Ids outside the tenant are omitted. Core caps one call at 100 ids. */
+export async function fetchTranscodeStatus(ids: string[]): Promise<TranscodeStatus[]> {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+  const pages = await Promise.all(
+    chunks.map((chunk) => requestApi<TranscodeStatus[]>("GET", `/media/videos/transcode-status?ids=${chunk.join(",")}`)),
+  );
+  return pages.flat();
 }
 
 /** Usage keyed by Asset id; ids outside the tenant are omitted. Core caps one call at 100 ids. */
