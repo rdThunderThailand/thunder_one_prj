@@ -4,6 +4,9 @@ import { assetExportFilename } from "./asset-export.ts";
 
 export const LABEL_LIMIT = 500;
 export const LABEL_MM = { width: 50, height: 30 } as const;
+export const LABEL_FORMATS = ["qr", "barcode"] as const;
+export type LabelFormat = typeof LABEL_FORMATS[number];
+export const labelFormatName = (format: LabelFormat) => format === "qr" ? "QR Code" : "Barcode (Code128)";
 export type LabelCandidate = { id: string; name: string; assetTag: string; status: string };
 export const assetLabelSchema = z.object({ id: z.guid(), name: z.string(), assetTag: z.string().min(1), qrValue: z.string().max(2048) });
 export type AssetLabel = z.infer<typeof assetLabelSchema>;
@@ -27,6 +30,12 @@ export function assertLabelTags(labels: readonly AssetLabel[]) {
     "These Asset Tags contain characters Code128 cannot print. No labels were generated.",
     400, "INVALID_TAG", invalid.map((label) => label.name || label.assetTag),
   );
+}
+
+/** Barcode restrictions must not prevent printing a QR-only label. */
+export function assertLabelFormat(labels: readonly AssetLabel[], format: LabelFormat) {
+  if (!LABEL_FORMATS.includes(format)) throw new AssetActionError("Choose QR Code or Barcode.", 400, "VALIDATION");
+  if (format === "barcode") assertLabelTags(labels);
 }
 
 export function labelFailure(error: unknown, candidates: readonly LabelCandidate[]): AssetActionError {

@@ -14,8 +14,9 @@ export function AssetLabelsProgress({ completed, total, preparation }: {
   // PDF work consists of each label page, followed by serialization of the complete file.
   const totalSteps = steps?.length ?? total + 1;
   const completedSteps = steps ? steps.filter((step) => step.done).length : completed;
-  const percent = Math.floor(completedSteps / totalSteps * 100);
-  const progressText = `${completedSteps} of ${totalSteps} preparation steps completed`;
+  const percent = Math.min(100, Math.max(0, Math.floor(completedSteps / totalSteps * 100)));
+  const progressText = preparation ? `${completedSteps} of ${totalSteps} preparation steps completed`
+    : completed >= total ? "Finalizing the PDF file" : `${completed} of ${total} label pages prepared`;
   const stage = preparation
     ? !preparation.data ? "Loading selected asset data…"
       : !preparation.tools ? "Preparing the label format…" : "Preparing the label preview…"
@@ -35,7 +36,7 @@ export function AssetLabelsProgress({ completed, total, preparation }: {
           <span className="font-semibold">{percent}%</span>
         </div>
         <Progress value={percent} aria-valuetext={progressText} aria-label={preparation ? "Preparing label preview" : "Preparing PDF"}
-          className="h-2 bg-muted" indicatorClassName="duration-300 ease-out motion-reduce:transition-none" />
+          className="h-2 bg-muted" indicatorClassName="transition-transform duration-300 ease-out motion-reduce:transition-none" />
       </div>
       {steps && (
         <ul className="space-y-2 text-left text-xs">
