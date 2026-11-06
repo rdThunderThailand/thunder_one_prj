@@ -44,7 +44,11 @@ interface AssetWorkspaceListPageProps<Row> {
   title: string;
   subtitle?: string;
   primaryAction?: ReactNode;
+  /** Under the header, e.g. the Reports tab links. */
+  nav?: ReactNode;
   stats?: ListStat[];
+  /** Between the stat tiles and the filters, e.g. report charts. */
+  summary?: ReactNode;
   tabs?: { key: string; label: string }[];
   /** Filter controls. They get the scaffold's own URL state: a second `useListUrlState()`
    *  would not tell the scaffold a navigation is pending, so Loading would never show. */
@@ -67,7 +71,9 @@ export function AssetWorkspaceListPage<Row>({
   title,
   subtitle,
   primaryAction,
+  nav,
   stats,
+  summary,
   tabs,
   filters,
   columns,
@@ -114,6 +120,8 @@ export function AssetWorkspaceListPage<Row>({
         actions={primaryAction}
       />
 
+      {nav}
+
       {stats && stats.length > 0 && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {stats.map((stat) => (
@@ -124,6 +132,8 @@ export function AssetWorkspaceListPage<Row>({
           ))}
         </div>
       )}
+
+      {summary}
 
       {tabs && (
         <Tabs

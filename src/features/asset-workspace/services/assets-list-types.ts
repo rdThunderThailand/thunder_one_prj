@@ -22,6 +22,8 @@ export const assetRowSchema = z.object({
   statusSince: z.string(),
   // Signed one-hour thumbnail of the first photo; null (or absent before Core PR A) shows the icon.
   thumbnailUrl: z.string().nullable().optional(),
+  // Reports Lifecycle table only; status is Core's Asia/Bangkok bucket (Active / Expiring Soon / Expired).
+  currentWarranty: z.object({ endDate: z.string().nullable(), status: z.string() }).nullable().optional(),
 }).transform((row) => ({
   // Adapt Core's transport names once; list consumers retain the feature's row model.
   id: row.id, name: row.name, asset_code: row.assetTag, serial_number: row.serialNumber,
@@ -30,6 +32,7 @@ export const assetRowSchema = z.object({
   status: row.lifecycleStatus, condition: row.condition, custody: row.custody,
   purchase_date: row.acquisitionDate, created_at: row.registrationDate,
   updated_at: row.updatedAt, status_since: row.statusSince, thumbnail_url: row.thumbnailUrl ?? null,
+  current_warranty: row.currentWarranty ?? null,
 }));
 
 export const assetListSchema = z.object({

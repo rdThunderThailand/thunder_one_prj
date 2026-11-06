@@ -106,7 +106,7 @@ export function OverviewPage({ data }: { data: OverviewData }) {
           <BreakdownBody
             items={kpi && data.categories}
             total={total}
-            filterParam="category_id"
+            href={(id) => `${BASE}/assets?category_id=${id}`}
             chart="donut"
           />
         </Widget>
@@ -117,7 +117,7 @@ export function OverviewPage({ data }: { data: OverviewData }) {
           <BreakdownBody
             items={kpi && data.locations}
             total={total}
-            filterParam="location_id"
+            href={(id) => `${BASE}/assets?location_id=${id}`}
             chart="bars"
           />
         </Widget>
@@ -261,7 +261,7 @@ function alertItems(warranties: AttentionRow[], maintenance: AttentionRow[]): Al
 }
 
 // Tile colours follow the one status map (ADR 0098 §3).
-const TILE_COLOR = {
+export const TILE_COLOR = {
   green: "emerald",
   blue: "blue",
   yellow: "amber",
@@ -278,7 +278,7 @@ const TILE_ICON = {
 } as const;
 
 /** "+12 vs last month"; nothing until last month has a snapshot. */
-const vsLastMonth = (delta: number | null) => (delta === null ? undefined : `${delta > 0 ? "+" : ""}${delta.toLocaleString()} vs last month`);
+export const vsLastMonth = (delta: number | null) => (delta === null ? undefined : `${delta > 0 ? "+" : ""}${delta.toLocaleString()} vs last month`);
 
 function KpiRow({ total, totalDelta, tiles }: ReturnType<typeof kpiFromCounts>) {
   return (
@@ -313,7 +313,7 @@ function KpiRow({ total, totalDelta, tiles }: ReturnType<typeof kpiFromCounts>) 
   );
 }
 
-function Widget({ title, viewAll, children }: { title: string; viewAll?: string; children: ReactNode }) {
+export function Widget({ title, viewAll, children }: { title: string; viewAll?: string; children: ReactNode }) {
   return (
     <Card className="flex flex-col p-4">
       <div className="mb-3 flex items-baseline justify-between gap-2">
@@ -339,19 +339,23 @@ function Widget({ title, viewAll, children }: { title: string; viewAll?: string;
 const RAMP = ["text-t1-blue-600", "text-t1-purple-500", "text-t1-blue-300", "text-t1-purple-700", "text-t1-blue-800", "text-t1-purple-300"];
 const BUCKET_COLOR = "text-t1-gray-300";
 
-function BreakdownBody({
+export function BreakdownBody({
   items,
   total,
-  filterParam,
+  href,
   chart,
+  restLabel,
 }: {
   items: BreakdownInput[] | null;
   total: number;
-  filterParam: "category_id" | "location_id";
+  /** Drill-down link for a row; rows without one show plain text. */
+  href?: (id: string) => string;
   chart: "donut" | "bars";
+  /** Label for Total minus everything counted; default "Unassigned". */
+  restLabel?: string;
 }) {
   if (!items) return <ErrorState />;
-  const rows = breakdown(items, total);
+  const rows = breakdown(items, total, restLabel);
   if (rows.length === 0) return <EmptyState title="No assets yet" body="Counts appear once assets are registered." />;
 
   const colorOf = (row: BreakdownRow, i: number) => (row.id ? RAMP[i] : BUCKET_COLOR);
@@ -366,6 +370,8 @@ function BreakdownBody({
             size={120}
             strokeWidth={22}
             seamless
+            // Above the centre label, so the hover tooltip is not covered by it.
+            className="relative z-10"
           />
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-2xl font-bold tabular-nums text-foreground">{total.toLocaleString()}</span>
@@ -375,15 +381,15 @@ function BreakdownBody({
       )}
       <ul className={chart === "donut" ? "min-w-0 flex-1" : "min-w-0 flex-1 divide-y divide-border"}>
         {rows.map((row, i) => {
-          const label = row.id ? (
+          const label = row.id && href ? (
             <Link
-              href={`${BASE}/assets?${filterParam}=${row.id}`}
+              href={href(row.id)}
               className="hover:underline"
             >
               {row.label}
             </Link>
           ) : (
-            <span className="text-muted-foreground">{row.label}</span>
+            <span className={row.id ? undefined : "text-muted-foreground"}>{row.label}</span>
           );
           return (
             <li
@@ -401,7 +407,7 @@ function BreakdownBody({
                   />
                 </span>
               )}
-              <span className="w-8 text-right tabular-nums text-foreground">{row.count}</span>
+              <span className="w-12 shrink-0 text-right tabular-nums text-foreground">{row.count.toLocaleString()}</span>
               <span className="w-12 text-right tabular-nums text-muted-foreground">{row.percent}%</span>
             </li>
           );
