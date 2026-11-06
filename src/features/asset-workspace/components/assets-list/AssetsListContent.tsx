@@ -8,6 +8,7 @@ import type { AssetsListUrlState } from "../../hooks/use-assets-list-url";
 import type { AssetListQuery } from "../../services/assets-list-query";
 import { AccessDeniedState, EmptyState } from "../states/states";
 import { AssetsTable } from "./AssetsTable";
+import { AssetsCompactList } from "./AssetsCompactList";
 import { AssetsPagination } from "./AssetsPagination";
 import { AssetsSelectionToolbar, AssetsSortControl, AssetsViewControls } from "./AssetsListToolbar";
 import { AssetsTableLoading } from "./AssetsListLoading";
@@ -33,10 +34,10 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
   return (
     <section
       data-assets-table aria-label="Assets list" aria-busy={pending}
-      className="flex min-w-0 flex-col overflow-hidden rounded-card border border-border bg-card shadow-panel group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1"
+      className="@container/assets-results flex min-w-0 flex-col overflow-hidden rounded-card border border-border bg-card group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1"
     >
-      <div data-assets-controls className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-2">
-        <div className="min-w-0 flex-1 overflow-x-auto">
+      <div data-assets-controls className="flex shrink-0 flex-wrap items-center gap-2 px-3 py-2">
+        <div className="min-w-0 flex-1 basis-48">
           <AssetsSelectionToolbar
             count={frozen ? 0 : selected.size}
             clear={selection.clear}
@@ -45,7 +46,7 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
             exportDisabled={frozen || exportPending || dataKey !== requestedKey}
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 @min-4xl/assets-results:justify-end">
           <AssetsSortControl value={query.sort} pending={pending} onChange={(sort) => url.set({ sort })} />
           {pagination && <AssetsPagination {...pagination} compact />}
           <AssetsViewControls />
@@ -58,8 +59,8 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
         </div>
       )}
       <div
-        ref={scroll} data-assets-scroll tabIndex={0} aria-label="Scrollable assets table"
-        className="min-w-0 overflow-x-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1 group-data-[bounded=true]/assets-workspace:overflow-y-auto"
+        ref={scroll} data-assets-scroll tabIndex={0} aria-label="Assets results"
+        className="relative min-w-0 overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1 group-data-[bounded=true]/assets-workspace:overflow-y-auto"
       >
         {!data ? pending ? <AssetsTableLoading /> : error?.status === 403 ? (
           <AccessDeniedState body={error.message} />
@@ -85,9 +86,26 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
               )} />
           </div>
         ) : (
-          <AssetsTable rows={data.rows} selected={frozen ? new Set() : selected} pending={frozen}
-            onSelectAll={selection.selectAll}
-            onSelect={selection.select} />
+          <>
+            <div className="hidden @min-4xl/assets-results:block">
+              <AssetsTable
+                rows={data.rows}
+                selected={frozen ? new Set() : selected}
+                pending={frozen}
+                onSelectAll={selection.selectAll}
+                onSelect={selection.select}
+              />
+            </div>
+            <div className="@min-4xl/assets-results:hidden">
+              <AssetsCompactList
+                rows={data.rows}
+                selected={frozen ? new Set() : selected}
+                pending={frozen}
+                onSelectAll={selection.selectAll}
+                onSelect={selection.select}
+              />
+            </div>
+          </>
         )}
       </div>
       <div data-assets-controls className="shrink-0 border-t border-border px-3 py-2">

@@ -1,11 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { assetListQueryString, readAssetListSearch } from "../../services/assets-list-query";
 import { useAssetsListData } from "../../hooks/use-assets-list-data";
 import { useAssetsListUrl } from "../../hooks/use-assets-list-url";
 import { Button } from "@/components/ui/lovable/button";
+import { ChevronRightIcon } from "@/components/ui/icons";
 import { AssetsFilters } from "./AssetsFilters";
 import { AssetsSummary } from "./AssetsSummary";
 import { AssetsPageActions } from "./AssetsListToolbar";
@@ -48,21 +50,34 @@ export function AssetsListView({ context }: { context: string }) {
 
   return (
     <AssetsListWorkspace>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title="Assets" subtitle="View and manage all organizational assets" />
-        {!denied && (
-          <AssetsPageActions
-            context={context}
-            onScan={() => setScanOpen(true)}
-            scanTriggerRef={scanTriggerRef}
-            onExport={(trigger) => {
-              if (exportReady && list.data) exportFlow.openFiltered(query, list.data.total, trigger);
-            }}
-            exportDisabled={!exportReady || exportFlow.pending}
-            onLabels={openLabels}
-            labelsDisabled={!exportReady || actionsPending}
-          />
-        )}
+      <div className="space-y-1">
+        <nav aria-label="Breadcrumb" className="text-2xs text-muted-foreground">
+          <ol className="flex flex-wrap items-center gap-1">
+            <li className="flex items-center gap-1">
+              <Link href="/" className="inline-flex min-h-8 items-center rounded-control underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring">
+                Home
+              </Link>
+              <ChevronRightIcon aria-hidden="true" className="size-3" />
+            </li>
+            <li aria-current="page" className="font-semibold text-foreground">Assets</li>
+          </ol>
+        </nav>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <PageHeader title="Assets" subtitle="View and manage all organizational assets" />
+          {!denied && (
+            <AssetsPageActions
+              context={context}
+              onScan={() => setScanOpen(true)}
+              scanTriggerRef={scanTriggerRef}
+              onExport={(trigger) => {
+                if (exportReady && list.data) exportFlow.openFiltered(query, list.data.total, trigger);
+              }}
+              exportDisabled={!exportReady || exportFlow.pending}
+              onLabels={openLabels}
+              labelsDisabled={!exportReady || actionsPending}
+            />
+          )}
+        </div>
       </div>
       <div className="space-y-2" aria-busy={summary.pending}>
         {summary.error && (

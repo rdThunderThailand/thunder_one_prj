@@ -20,12 +20,12 @@ export function AssetsMoreActionsMenu({ context, disabled, onExport, onLabels, l
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button ref={triggerRef} variant="outline" size="sm">
+        <Button ref={triggerRef} variant="outline" size="sm" className="max-sm:h-10">
           More Actions
           <ChevronDownIcon className="size-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72" onCloseAutoFocus={(event) => {
+      <DropdownMenuContent align="end" className="w-72 max-w-[calc(100vw-2rem)]" onCloseAutoFocus={(event) => {
         if (openingDialogRef.current) event.preventDefault();
         openingDialogRef.current = false;
       }}>
@@ -90,7 +90,7 @@ export function AssetsSelectedExportMenu({ disabled, onExport, onLabels, labelsD
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button ref={triggerRef} variant="outline" size="icon-sm" aria-label="More selected asset actions">
+        <Button ref={triggerRef} variant="outline" size="icon-sm" className="max-sm:size-10" aria-label="More selected asset actions">
           <MoreIcon className="size-4" />
         </Button>
       </DropdownMenuTrigger>

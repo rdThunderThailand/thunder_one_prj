@@ -16,7 +16,8 @@ export function AssetsListWorkspace({ children }: { children: ReactNode }) {
       const fixed = blocks.filter((block) => !block.hasAttribute("data-assets-table")).reduce((sum, block) => sum + block.offsetHeight, 0);
       const gap = Number.parseFloat(getComputedStyle(workspace).rowGap) || 0;
       const controls = Array.from(workspace.querySelectorAll<HTMLElement>("[data-assets-controls]")).reduce((sum, block) => sum + block.offsetHeight, 0);
-      const bounded = workspace.clientWidth >= 960 && height - fixed - gap * Math.max(0, blocks.length - 1) - controls >= 240;
+      // Keeps page scroll off on laptops. Below 160px of rows the page scrolls so the list stays usable.
+      const bounded = workspace.clientWidth >= 960 && height - fixed - gap * Math.max(0, blocks.length - 1) - controls >= 160;
       workspace.dataset.bounded = String(bounded);
     }
     fit();

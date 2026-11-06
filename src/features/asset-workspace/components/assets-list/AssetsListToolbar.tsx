@@ -32,7 +32,7 @@ export function UnavailableAction({ children, icon: Icon, label, className }: Un
       title={UNAVAILABLE_REASON}
       variant="outline"
       size={label ? "icon-sm" : "sm"}
-      className={`cursor-not-allowed text-muted-foreground hover:bg-card ${label ? "" : "px-2"} ${className ?? ""}`}
+      className={`cursor-not-allowed text-muted-foreground hover:bg-card ${label ? "max-sm:size-10" : "px-2 max-sm:h-10"} ${className ?? ""}`}
     >
       {Icon && <Icon className="size-4" />}
       {children}
@@ -51,8 +51,8 @@ export function AssetsPageActions({ context, onScan, scanTriggerRef, onExport, e
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button ref={scanTriggerRef} variant="outline" size="sm" onClick={onScan}>
-        <ScanIcon className="size-4" />
+      <Button ref={scanTriggerRef} variant="outline" size="sm" className="max-sm:h-10" onClick={onScan}>
+        <ScanIcon aria-hidden="true" className="size-4" />
         Scan Asset
       </Button>
       <RegisterAssetSplitButton />
@@ -65,7 +65,7 @@ export function AssetsPageActions({ context, onScan, scanTriggerRef, onExport, e
 function RegisterAssetSplitButton() {
   return (
     <div className="flex items-center">
-      <Button asChild variant="primary" size="sm" className="rounded-r-none">
+      <Button asChild variant="primary" size="sm" className="rounded-r-none max-sm:h-10">
         <Link href="/asset-workspace/assets/register">
           <PlusIcon className="size-4" />
           Register Asset
@@ -77,12 +77,12 @@ function RegisterAssetSplitButton() {
             variant="primary"
             size="icon-sm"
             aria-label="Choose registration method"
-            className="rounded-l-none border-l border-primary-foreground/30"
+            className="rounded-l-none border-l border-primary-foreground/30 max-sm:size-10"
           >
             <ChevronDownIcon className="size-3" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuContent align="end" className="w-64 max-w-[calc(100vw-2rem)]">
           <DropdownMenuItem asChild>
             <Link href="/asset-workspace/assets/register?mode=single">
               <AssetMenuItemText title="Single Asset" description="Register one asset step by step" />
@@ -103,7 +103,7 @@ function AssetMenuItemText({ title, description }: { title: string; description:
   return (
     <span className="flex flex-col">
       <span className="text-xs font-medium">{title}</span>
-      <span className="text-2xs text-muted-foreground">{description}</span>
+      <span className="text-xs leading-relaxed text-muted-foreground">{description}</span>
     </span>
   );
 }
@@ -116,18 +116,18 @@ export function AssetsSelectionToolbar({ count, clear, onExport, exportDisabled,
   onLabels: (trigger: HTMLButtonElement | null) => boolean;
 }) {
   return (
-    <div role="toolbar" aria-label="Selected asset actions" className="flex h-8 w-max items-center gap-1">
+    <div role="toolbar" aria-label="Selected asset actions" className="flex min-h-8 min-w-0 flex-wrap items-center gap-2">
       <span
         role="status"
         aria-live="polite"
         aria-atomic="true"
         className={count > 0 ? "mr-1 text-xs font-semibold text-foreground" : "text-xs text-muted-foreground"}
       >
-        {count > 0 ? `${count} selected` : "Select assets to assign, transfer or update their status"}
+        {count > 0 ? `${count} selected` : "Select assets for bulk actions"}
       </span>
       {count > 0 && (
         <>
-          <Button variant="ghost" size="icon-sm" aria-label="Clear selection" onClick={clear}>
+          <Button variant="ghost" size="icon-sm" className="max-sm:size-10" aria-label="Clear selection" onClick={clear}>
             <XIcon className="size-3" />
           </Button>
           <UnavailableAction icon={AssignmentIcon}>Assign</UnavailableAction>
@@ -148,7 +148,7 @@ export function AssetsSelectionToolbar({ count, clear, onExport, exportDisabled,
 export function AssetsViewControls() {
   return (
     <div className="flex items-center gap-1" aria-label="Assets view">
-      <Button variant="secondary" size="icon-sm" aria-label="List view" aria-pressed="true">
+      <Button variant="secondary" size="icon-sm" className="bg-accent text-accent-foreground max-sm:size-10" aria-label="List view" aria-pressed="true">
         <ListIcon className="size-4" />
       </Button>
       <UnavailableAction label="Grid view" icon={GridIcon} />
@@ -163,7 +163,7 @@ export function AssetsSortControl({ value, pending, onChange }: {
     <Select value={value} disabled={pending} onValueChange={(next) => {
       if (next === "created_at" || next === "status_since") onChange(next);
     }}>
-      <SelectTrigger aria-label="Asset sort order" className="h-8 w-56 text-xs">
+      <SelectTrigger aria-label="Asset sort order" className="h-8 w-48 max-w-full text-xs max-sm:h-10">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
