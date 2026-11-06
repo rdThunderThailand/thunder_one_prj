@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/lovable/button";
-import { ArrowLeftIcon, ArrowRightIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, SpinnerIcon } from "@/components/ui/icons";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -9,20 +10,34 @@ export function RegistrationNavigation({ step, editing, locked, busy, uncertain,
   step: number; editing: boolean; locked: boolean; busy: boolean; uncertain: boolean; canConfirm: boolean;
   onCancel: () => void; onBack: () => void;
 }) {
+  const responsiveControl = "min-w-20 max-sm:h-10";
   return (
     <footer data-registration-footer className="z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card py-3">
-      <Button variant="outline" size="sm" disabled={locked} onClick={onCancel}>Cancel</Button>
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" disabled={locked || step === 0} onClick={onBack}>
+      <Button variant="outline" size="sm" className={responsiveControl} disabled={locked} onClick={onCancel}>
+        Cancel
+      </Button>
+      <div className={cn("flex items-center gap-2", step === 4 && "min-w-0 flex-wrap justify-end")}>
+        <Button variant="outline" size="sm" className={responsiveControl} disabled={locked || step === 0} onClick={onBack}>
           <ArrowLeftIcon className="h-4 w-4" />
           Back
         </Button>
         {step === 4 ? (
-          <Button type="submit" size="sm" disabled={busy || !canConfirm} aria-describedby="registration-create-reason">
+          <Button
+            type="submit"
+            size="sm"
+            className={cn(responsiveControl, "min-w-32")}
+            disabled={busy || !canConfirm}
+            aria-describedby="registration-create-reason"
+          >
+            {busy ? (
+              <SpinnerIcon aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
+            ) : !uncertain && (
+              <CheckIcon aria-hidden="true" className="size-4" />
+            )}
             {busy ? "Please wait…" : uncertain ? "Retry original request" : "Create Asset"}
           </Button>
         ) : (
-          <Button type="submit" size="sm" disabled={locked}>
+          <Button type="submit" size="sm" className={cn(responsiveControl, "min-w-24")} disabled={locked}>
             {editing ? "Update" : "Next"}
             <ArrowRightIcon className="h-4 w-4" />
           </Button>

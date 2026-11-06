@@ -23,10 +23,10 @@ function FilterSelect({ label, allLabel, value, options, pending, onChange }: Fi
   const labelId = useId();
   const allValue = "__all__";
   return (
-    <div className="flex h-11 min-w-0 flex-col justify-center rounded-control border border-input bg-card px-3">
+    <div className="flex h-10 min-w-0 flex-col justify-center rounded-control border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-ring">
       <span id={labelId} className="text-2xs text-muted-foreground">{label}</span>
       <Select value={value || allValue} disabled={pending} onValueChange={(next) => onChange(next === allValue ? undefined : next)}>
-        <SelectTrigger aria-labelledby={labelId} className="h-6 min-w-0 border-0 px-0 py-0 text-xs shadow-none [&>span]:min-w-0 [&>span]:truncate">
+        <SelectTrigger aria-labelledby={labelId} className="h-5 min-w-0 border-0 px-0 py-0 text-xs shadow-none focus:ring-0 [&>span]:min-w-0 [&>span]:truncate">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -70,11 +70,11 @@ export function AssetsFilters({ result, url, loading = false }: { result: AssetR
   }));
 
   return (
-    <section aria-label="Asset filters" className="space-y-3">
-      <div className="grid items-center gap-2 @3xl:grid-cols-[minmax(12rem,1fr)_minmax(0,2fr)] @6xl:grid-cols-[minmax(14rem,2fr)_minmax(0,4fr)_auto]">
+    <section aria-label="Asset filters" className="@container/asset-filters min-w-0 space-y-3">
+      <div className="grid items-start gap-2 @min-2xl/asset-filters:grid-cols-[minmax(0,1fr)_auto] @min-6xl/asset-filters:grid-cols-[minmax(12rem,1.7fr)_minmax(0,4fr)_auto]">
         <form
           role="search"
-          className="relative min-w-0"
+          className="relative min-w-0 @min-2xl/asset-filters:col-span-2 @min-6xl/asset-filters:col-span-1"
           onSubmit={(event) => { event.preventDefault(); applySearch(search.trim()); }}
         >
           <label htmlFor="assets-search" className="sr-only">Search assets by name, Asset Tag or serial number</label>
@@ -92,10 +92,10 @@ export function AssetsFilters({ result, url, loading = false }: { result: AssetR
             value={search}
             onChange={(event) => setInput((previous) => ({ ...previous, source: currentSearch, draft: event.target.value }))}
             placeholder="Search name, Asset Tag, serial number…"
-            className="h-11 pl-9 text-xs"
+            className="h-10 pl-9 md:text-xs"
           />
         </form>
-        {loading ? <AssetsFilterOptionsLoading /> : <div className="grid min-w-0 grid-cols-2 gap-2 @2xl:grid-cols-4">
+        {loading ? <AssetsFilterOptionsLoading /> : <div className="grid min-w-0 grid-cols-1 gap-2 @min-xs/asset-filters:grid-cols-2 @min-2xl/asset-filters:grid-cols-4">
           <FilterSelect
             label="Category"
             allLabel="All Categories"
@@ -132,15 +132,15 @@ export function AssetsFilters({ result, url, loading = false }: { result: AssetR
             }}
           />
         </div>}
-        <div className="flex items-center gap-2 @3xl:col-span-2 @3xl:justify-end @6xl:col-span-1">
+        <div className="flex flex-wrap items-center gap-2 @min-2xl/asset-filters:justify-end">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" disabled={pending}>
-                <FilterIcon className="size-4" />
+              <Button variant="outline" size="sm" className="h-10" disabled={pending}>
+                <FilterIcon aria-hidden="true" className="size-4" />
                 More Filters{url.get("condition") ? " (1)" : ""}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end">
+            <PopoverContent align="end" collisionPadding={12} className="w-72 max-w-[calc(100vw-2rem)] rounded-control p-3">
               <FilterSelect
                 label="Condition"
                 allLabel="All Conditions"
@@ -151,7 +151,7 @@ export function AssetsFilters({ result, url, loading = false }: { result: AssetR
               />
             </PopoverContent>
           </Popover>
-          <UnavailableAction>Save View</UnavailableAction>
+          <UnavailableAction className="h-10">Save View</UnavailableAction>
         </div>
       </div>
     </section>

@@ -35,7 +35,7 @@ function RecoveryContent({ tenantId, userId, message, status, onReset }: { tenan
   const back = () => router.push("/asset-workspace/assets");
   if (record?.phase === "succeeded" && record.result) {
     return (
-      <RegistrationReceipt result={record.result} onBack={back} onAnother={async () => {
+      <RegistrationReceipt result={record.result} draft={record.draft} options={options} onBack={back} onAnother={async () => {
         if (!removeRegistrationDraft(key) || !confirmation.discard()) return false;
         await fileCache.clear();
         onReset();

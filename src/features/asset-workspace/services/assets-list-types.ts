@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ASSET_STATUSES } from "../domain/asset-status";
-import { ASSET_CONDITIONS } from "../domain/asset-condition";
+import { ASSET_STATUSES } from "../domain/asset-status.ts";
+import { ASSET_CONDITIONS } from "../domain/asset-condition.ts";
 
 const referenceSchema = z.object({ id: z.string(), name: z.string().nullable() });
 const custodySchema = referenceSchema.extend({ type: z.enum(["person", "org_unit"]) });
@@ -20,6 +20,8 @@ export const assetRowSchema = z.object({
   registrationDate: z.string(),
   updatedAt: z.string(),
   statusSince: z.string(),
+  // Signed one-hour thumbnail of the first photo; null (or absent before Core PR A) shows the icon.
+  thumbnailUrl: z.string().nullable().optional(),
 }).transform((row) => ({
   // Adapt Core's transport names once; list consumers retain the feature's row model.
   id: row.id, name: row.name, asset_code: row.assetTag, serial_number: row.serialNumber,
@@ -27,7 +29,7 @@ export const assetRowSchema = z.object({
   location_id: row.location?.id ?? null, location_name: row.location?.name ?? null,
   status: row.lifecycleStatus, condition: row.condition, custody: row.custody,
   purchase_date: row.acquisitionDate, created_at: row.registrationDate,
-  updated_at: row.updatedAt, status_since: row.statusSince,
+  updated_at: row.updatedAt, status_since: row.statusSince, thumbnail_url: row.thumbnailUrl ?? null,
 }));
 
 export const assetListSchema = z.object({

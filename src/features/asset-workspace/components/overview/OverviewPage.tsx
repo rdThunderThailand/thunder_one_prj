@@ -156,7 +156,7 @@ export function OverviewPage({ data }: { data: OverviewData }) {
 // Lead (2026-11-02): keep these four; an action whose page isn't built yet stays disabled. Set `ready`
 // when its page replaces the ScreenPlaceholder.
 const QUICK_ACTIONS = [
-  { label: "Register Asset", href: `${BASE}/assets/register`, Icon: PlusIcon, primary: true, ready: false },
+  { label: "Register Asset", href: `${BASE}/assets/register`, Icon: PlusIcon, primary: true, ready: true },
   { label: "Assign Asset", href: `${BASE}/assignments`, Icon: AssignmentIcon, ready: false },
   { label: "Start Inventory", href: `${BASE}/inventory`, Icon: InventoryIcon, ready: false },
   { label: "Import Data", href: `${BASE}/assets/import`, Icon: BulkImportIcon, ready: false },

@@ -1,5 +1,6 @@
 import type { AssetCondition } from "./asset-condition.ts";
 import type { AssetStatus } from "./asset-status.ts";
+import type { RowResult, Severity } from "./asset-import-types.ts";
 
 /** ADR 0098 §3 (DS-04) — the one place that picks a colour for a status or condition.
  *  Tones are the shared Badge colours: green = success, blue = info, yellow = warning,
@@ -21,3 +22,15 @@ export const CONDITION_TONE: Record<AssetCondition, StatusTone> = {
   Damaged: "yellow",
   Unusable: "red",
 };
+
+export const IMPORT_SEVERITY_BADGE = {
+  valid: "success",
+  warning: "warning",
+  error: "danger",
+} as const satisfies Record<Severity, string>;
+
+export const IMPORT_RESULT_BADGE = {
+  created: "success",
+  created_with_warning: "warning",
+  not_registered: "danger",
+} as const satisfies Record<RowResult, string>;

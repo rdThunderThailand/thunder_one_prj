@@ -2,6 +2,7 @@ import { selectedFileIds, validReceipt, type ConfirmationRecord, type UploadCand
 import type { RegistrationOptions } from "./asset-registration-contract";
 import { completeRegistrationUpload, reserveRegistrationUpload, RegistrationRequestError } from "./asset-registration-client";
 import { reserveRegistrationSchema } from "./asset-registration-write-contract";
+import { putRegistrationUpload } from "./registration-upload-transport";
 
 async function fingerprint(file: File) {
   const hash = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
@@ -58,18 +59,8 @@ export async function uploadRegistrationFiles(context: string, initial: Confirma
       }
       if (!reservation.signedUploadUrl) throw new Error("The upload URL is unavailable. Try again.");
       progress(`Uploading ${file.name}`);
-      const response = await fetch(reservation.signedUploadUrl, {
-        method: "PUT", body: file, credentials: "omit", redirect: "error", referrerPolicy: "no-referrer",
-        headers: { "Content-Type": file.type, "x-upsert": "false" }, signal: AbortSignal.timeout(120000),
-      });
-      checkActive();
-      // An existing staging object can be verified by completion. Other failures must stay failures.
-      let stagingExists = response.status === 409;
-      if (!response.ok && response.status === 400) {
-        const body: unknown = await response.json().catch(() => null);
-        stagingExists = typeof body === "object" && body !== null && "error" in body && body.error === "Duplicate";
-      }
-      if (!response.ok && !stagingExists) throw new Error(`Upload failed for ${file.name}. Retry to resume confirmation.`);
+      const response = await putRegistrationUpload(file, reservation.signedUploadUrl, file.type, checkActive);
+      if (!response.ok) throw new Error(`Upload failed for ${file.name}. Retry to resume confirmation.`);
       checkActive();
       progress(`Verifying ${file.name}`);
       const completed = await completeRegistrationUpload(context, receipt.uploadId);

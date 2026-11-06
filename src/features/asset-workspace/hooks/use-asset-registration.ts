@@ -73,7 +73,8 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
   }
 
   function validateForConfirmation(draft: RegistrationDraft, validatedOptions: RegistrationOptions, step: number | null) {
-    commit({ ...state, draft, ...(step === null ? {} : { step, editing: true, reviewed: true }) });
+    // Called after the confirmation's awaits, so read the latest state rather than this render's.
+    commit({ ...current.current, draft, ...(step === null ? {} : { step, editing: true, reviewed: true }) });
     setErrors(step === null ? {} : registrationErrors(draft, validatedOptions, step));
   }
 

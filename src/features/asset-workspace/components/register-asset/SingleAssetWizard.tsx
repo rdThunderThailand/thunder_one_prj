@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { WizardSteps } from "@/components/ui/WizardSteps";
 import { Button } from "@/components/ui/lovable/button";
 import { InfoIcon } from "@/components/ui/icons";
 import { RegistrationNavigation, RegistrationCancelDialog } from "./RegistrationNavigation";
@@ -31,6 +30,7 @@ import { missingRegistrationFiles, validReceipt, type UploadCandidate } from "..
 import { removeRegistrationDraft } from "../../services/asset-registration-draft-storage";
 import { registrationCreationBlocker } from "../../domain/registration-readiness";
 import { RegistrationWorkspace } from "./RegistrationWorkspace";
+import { RegistrationHeader } from "./RegistrationHeader";
 
 const subscribe = () => () => {};
 const clientReady = () => true;
@@ -110,6 +110,13 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
     }
   };
 
+  // A created asset ends this registration: drop its draft so the next visit starts a new one.
+  // The receipt keeps rendering from memory; file bytes are cleared by the file cache.
+  const succeeded = confirmation.record?.phase === "succeeded";
+  useEffect(() => {
+    if (succeeded) removeRegistrationDraft(storageKey);
+  }, [succeeded, storageKey]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
     scrollRef.current?.querySelector("[data-registration-form-scroll]")?.scrollTo({ top: 0 });
@@ -127,7 +134,9 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
 
   if (confirmation.record?.phase === "succeeded" && confirmation.record.result) {
     return (
-      <RegistrationReceipt result={confirmation.record.result} onBack={() => router.push("/asset-workspace/assets")} onAnother={async () => {
+      <RegistrationReceipt
+        result={confirmation.record.result} draft={confirmation.record.draft} options={options} photo={photoSelection.photos[0]}
+        onBack={() => router.push("/asset-workspace/assets")} onAnother={async () => {
         if (!removeRegistrationDraft(storageKey) || !confirmation.discard()) return false;
         await fileCache.clear();
         onRestart();
@@ -149,28 +158,33 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
   }
   if (fileCache.initializing && !confirmation.uncertain) return <RegistrationLoading />;
 
+  const header = (
+    <div className="shrink-0 space-y-3">
+      <RegistrationHeader step={state.step} />
+      {!options.submission.canSubmit && (
+        <p className="flex items-center gap-2 text-xs text-muted-foreground" role="status">
+          <InfoIcon className="h-4 w-4 shrink-0 text-info" />
+          Asset creation is temporarily unavailable.
+        </p>
+      )}
+      {confirmation.storageBlocked && state.step !== 4 && (
+        <div role="alert" className="space-y-2 rounded-control bg-warning-muted p-3 text-xs text-warning">
+          <p>Recovery storage is unavailable. Restore it before continuing this registration.</p>
+          <Button variant="outline" size="sm" onClick={confirmation.retryStorage}>
+            Retry recovery storage
+          </Button>
+        </div>
+      )}
+      {registration.storageUnavailable && (
+        <p role="alert" className="rounded-control bg-warning-muted p-3 text-xs text-warning">
+          Browser draft storage is unavailable. Your latest changes may be lost on refresh.
+        </p>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3" onInputCapture={fileCache.touch} onPointerDownCapture={fileCache.touch}>
-      <div className="shrink-0 space-y-3">
-        <PageHeader title="Register Asset" subtitle={state.step === 4 ? "Review all information before creating the asset. You can edit any section." : "Add a new asset to your organization. Complete the information below."} />
-        <WizardSteps steps={REGISTRATION_STEPS} currentIndex={state.step} />
-        {!options.submission.canSubmit && (
-          <p className="flex items-center gap-2 text-xs text-muted-foreground" role="status">
-            <InfoIcon className="h-4 w-4 shrink-0 text-info" />
-            Asset creation is temporarily unavailable.
-          </p>
-        )}
-        {confirmation.storageBlocked && state.step !== 4 && (
-          <div role="alert" className="space-y-2 rounded-control bg-warning-muted p-3 text-xs text-warning">
-            <p>Recovery storage is unavailable. Restore it before continuing this registration.</p>
-            <Button variant="outline" size="sm" onClick={confirmation.retryStorage}>Retry recovery storage</Button>
-          </div>
-        )}
-        {registration.storageUnavailable && (
-          <p role="alert" className="rounded-control bg-warning-muted p-3 text-xs text-warning">Browser draft storage is unavailable. Your latest changes may be lost on refresh.</p>
-        )}
-
-      </div>
       <form ref={formRef} className="flex min-h-0 flex-1 flex-col" noValidate onSubmit={(event) => {
         event.preventDefault();
         if (locked && !confirmation.uncertain) return;
@@ -186,6 +200,8 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
       }}>
         <RegistrationWorkspace
           scrollRef={scrollRef}
+          responsiveLayout
+          header={header}
           photos={state.step === 0 && (
             <RegistrationPhotos
               photos={photoSelection.photos} retained={retainedPhotos} errors={photoSelection.errors} rules={options.photoUpload}
@@ -220,7 +236,8 @@ function RegistrationForm({ options: initialOptions, tenantId, userId, onRestart
             <Step {...stepProps} />
           )}
           {state.step === 4 && (
-            <RegistrationConfirmation confirmation={confirmation} blocker={creationBlocker} missingFiles={missingFiles} serialNumber={state.draft.serialNumber} onOverride={(reason) => { void submit(reason); }} onLeave={() => router.push("/asset-workspace/assets")} />
+            <RegistrationConfirmation confirmation={confirmation} blocker={creationBlocker} missingFiles={missingFiles} serialNumber={state.draft.serialNumber} onOverride={(reason) => { void submit(reason); }} onLeave={() => router.push("/asset-workspace/assets")}
+              onRetry={() => { void submit(); }} onEdit={edit} />
           )}
         </RegistrationWorkspace>
         <RegistrationNavigation

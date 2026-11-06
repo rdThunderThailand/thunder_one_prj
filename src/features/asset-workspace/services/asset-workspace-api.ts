@@ -3,7 +3,8 @@ import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/api-error";
 
 export class AssetWorkspaceRequestError extends ApiError {
-  constructor(message: string, public code: string, public uncertain = false, status = 0) { super(message, status); }
+  /** `details`: Core's error details, e.g. SERIAL_DUPLICATE's [{ id, assetTag, name }]. */
+  constructor(message: string, public code: string, public uncertain = false, status = 0, public details?: unknown, public serverMessage?: string) { super(message, status); }
 }
 const envelope = z.object({ success: z.literal(true), data: z.unknown() });
 // Proxy rejects stay flat; Core v2 always nests { error: { code, message, details? } }.
@@ -66,7 +67,8 @@ export async function requestAssetWorkspace(method: "GET" | "POST", path: string
                       : response.status === 404 ? "This reference or upload is no longer available in your organization."
                         : response.status === 400 ? "The service rejected the entered fields or file contents. Review your information."
                           : "The asset service is temporarily unavailable. Your information has been kept. Try again.";
-      throw new AssetWorkspaceRequestError(message, code, uncertain, response.status);
+      throw new AssetWorkspaceRequestError(message, code, uncertain, response.status, core.success ? core.data.error.details : undefined,
+        path === "/labels" && core.success && response.status === 400 ? core.data.error.message : undefined);
     }
     const parsed = envelope.safeParse(response.data);
     if (!parsed.success) throw new AssetWorkspaceRequestError("The asset service returned an unexpected response. Retry the original request.", "INVALID_RESPONSE", Boolean(options.creation), 502);

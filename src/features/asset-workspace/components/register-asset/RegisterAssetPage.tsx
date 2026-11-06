@@ -9,7 +9,19 @@ import { RegistrationRecovery } from "./RegistrationRecovery";
 import { SingleAssetWizard } from "./SingleAssetWizard";
 
 export function RegisterAssetPage({ single, tenantId, userId }: { single: boolean; tenantId: string; userId: string }) {
-  return single ? <RegistrationEntry key={`${tenantId}:${userId}`} tenantId={tenantId} userId={userId} /> : <RegistrationMethodChoice />;
+  return single ? (
+    <RegistrationEntry
+      key={`${tenantId}:${userId}`}
+      tenantId={tenantId}
+      userId={userId}
+    />
+  ) : (
+    <RegistrationMethodChoice
+      key={`${tenantId}:${userId}`}
+      tenantId={tenantId}
+      userId={userId}
+    />
+  );
 }
 
 function RegistrationEntry({ tenantId, userId }: { tenantId: string; userId: string }) {

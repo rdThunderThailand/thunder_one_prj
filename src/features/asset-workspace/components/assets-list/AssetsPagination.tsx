@@ -28,7 +28,7 @@ export function AssetsPagination({ data, pending, onPage, onPageSize, compact = 
       {!compact && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Select value={String(pageSize)} disabled={pending} onValueChange={(value) => onPageSize(Number(value))}>
-            <SelectTrigger aria-label="Assets per page" className="h-8 w-20 text-xs">
+            <SelectTrigger aria-label="Assets per page" className="h-8 w-20 text-xs max-sm:h-10">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -46,6 +46,7 @@ export function AssetsPagination({ data, pending, onPage, onPageSize, compact = 
           <Button
             variant="ghost"
             size="icon-sm"
+            className="max-sm:size-10"
             aria-label="Previous page"
             disabled={pending || page <= 1}
             onClick={() => onPage(page - 1)}
@@ -53,11 +54,12 @@ export function AssetsPagination({ data, pending, onPage, onPageSize, compact = 
             <ChevronLeftIcon className="size-3" />
           </Button>
           {pages.map((value, index) => (
-            <span key={value} className="hidden items-center gap-1 @2xl:inline-flex">
+            <span key={value} className={`hidden items-center gap-1 ${compact ? "" : "@min-2xl/assets-results:inline-flex"}`}>
               {index > 0 && value - pages[index - 1] > 1 && <span className="px-1 text-muted-foreground">…</span>}
               <Button
                 variant={value === page ? "secondary" : "ghost"}
                 size="icon-sm"
+                className={value === page ? "bg-accent text-accent-foreground" : undefined}
                 aria-label={`Page ${value}`}
                 aria-current={value === page ? "page" : undefined}
                 disabled={pending}
@@ -67,10 +69,13 @@ export function AssetsPagination({ data, pending, onPage, onPageSize, compact = 
               </Button>
             </span>
           ))}
-          <span className="text-xs tabular-nums @2xl:hidden">{page} / {Math.max(totalPages, 1)}</span>
+          <span className={`text-xs tabular-nums ${compact ? "" : "@min-2xl/assets-results:hidden"}`}>
+            {page} / {Math.max(totalPages, 1)}
+          </span>
           <Button
             variant="ghost"
             size="icon-sm"
+            className="max-sm:size-10"
             aria-label="Next page"
             disabled={pending || page >= totalPages}
             onClick={() => onPage(page + 1)}
