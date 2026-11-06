@@ -80,6 +80,10 @@ export interface AvailableTenant {
   name: string;
   /** This tenant's `tenant_applications.role` — "owner" / "viewer". */
   role: string | null;
+  /** The tenant's logo/cover for the switcher card (Core's `logo_url`), or
+   * `null`. Core doesn't send it yet (requested 2026-11-06); the card shows
+   * the tenant's initials until it does. */
+  logoUrl: string | null;
 }
 
 /**
@@ -231,7 +235,14 @@ function parseAvailableTenants(value: unknown): AvailableTenant[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((row) =>
     row && typeof row.id === "string" && typeof row.name === "string"
-      ? [{ id: row.id, name: row.name, role: typeof row.role === "string" ? row.role : null }]
+      ? [
+          {
+            id: row.id,
+            name: row.name,
+            role: typeof row.role === "string" ? row.role : null,
+            logoUrl: typeof row.logo_url === "string" && row.logo_url ? row.logo_url : null,
+          },
+        ]
       : [],
   );
 }
