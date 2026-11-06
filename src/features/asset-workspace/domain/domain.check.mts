@@ -5,6 +5,7 @@ import { ACTIONS_BY_STATUS, actionsFor, canExport, EXPORT_STATUSES } from "./ass
 import { ASSET_CONDITIONS, CONDITIONS_BY_STATUS, isConditionAllowed, isTransferBlockedBy } from "./asset-condition.ts";
 import { ASSET_STATUSES, canTransition, findTransition, STATUS_TRANSITIONS, type AssetStatus } from "./asset-status.ts";
 import { CONDITION_TONE, STATUS_TONE } from "./status-tone.ts";
+import { assetAge, formatAverageAge, topWithOthers } from "./report.ts";
 import { assignBlock, returnBlock, statusAfterReturn, transferBlock, type CustodyState } from "./custody.ts";
 
 // §4.4 — every (from, to) pair in the 5x5 matrix: allowed exactly when it is in the spec list.
@@ -110,3 +111,23 @@ for (const file of readdirSync(dir).filter((name) => name.endsWith(".ts"))) {
 }
 
 console.log("asset-workspace domain: ok");
+
+// Reports Lifecycle "Age": whole months from the purchase date, a month counts once its day is reached.
+assert.equal(assetAge(null, "2026-11-04"), null);
+assert.equal(assetAge("2026-11-04", "2026-11-04"), "< 1m");
+assert.equal(assetAge("2026-10-05", "2026-11-04"), "< 1m");
+assert.equal(assetAge("2026-10-04", "2026-11-04"), "1m");
+assert.equal(assetAge("2024-11-04", "2026-11-04"), "2y");
+assert.equal(assetAge("2023-08-31", "2026-11-04"), "3y 2m");
+assert.equal(assetAge("2026-12-01", "2026-11-04"), null);
+
+// Reports Lifecycle (provisional): average age in years, top categories + Others.
+assert.equal(formatAverageAge(null), null);
+assert.equal(formatAverageAge(45), "3.8 years");
+assert.equal(formatAverageAge(0), "0.0 years");
+const cats = [1, 5, 3, 9, 2, 7, 4, 8].map((n, i) => ({ id: `c${i}`, name: `C${i}`, counts: { Available: n, Assigned: 1 } }));
+const top = topWithOthers(cats, 6);
+assert.deepEqual(top.map((r) => r.id), ["c3", "c7", "c5", "c1", "c6", "c2", "others"]);
+assert.deepEqual(top[6].counts, { Available: 3, Assigned: 2 });
+assert.equal(topWithOthers(cats.slice(0, 7), 6).length, 7, "one leftover row stays itself, no Others");
+console.log("asset-workspace report: ok");

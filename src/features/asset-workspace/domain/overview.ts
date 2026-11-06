@@ -43,9 +43,9 @@ const BREAKDOWN_TOP = 6;
 
 /**
  * Top 6 by count, then Others (the rest), then Unassigned (Total minus everything counted).
- * Empty buckets are dropped. Category and Location share this rule.
+ * Empty buckets are dropped. Category, Location and the Reports custody bars share this rule.
  */
-export function breakdown(items: BreakdownInput[], total: number): BreakdownRow[] {
+export function breakdown(items: BreakdownInput[], total: number, restLabel = "Unassigned"): BreakdownRow[] {
   const sorted = items.filter((i) => i.count > 0).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
   const top = sorted.slice(0, BREAKDOWN_TOP);
   const others = sorted.slice(BREAKDOWN_TOP).reduce((sum, i) => sum + i.count, 0);
@@ -54,7 +54,7 @@ export function breakdown(items: BreakdownInput[], total: number): BreakdownRow[
 
   const rows: BreakdownRow[] = top.map((i) => ({ id: i.id, label: i.label, count: i.count, percent: pct(i.count, total) }));
   if (others > 0) rows.push({ id: null, label: "Others", count: others, percent: pct(others, total) });
-  if (unassigned > 0) rows.push({ id: null, label: "Unassigned", count: unassigned, percent: pct(unassigned, total) });
+  if (unassigned > 0) rows.push({ id: null, label: restLabel, count: unassigned, percent: pct(unassigned, total) });
   return rows;
 }
 

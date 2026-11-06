@@ -1,10 +1,6 @@
-import { ScreenPlaceholder } from "@/features/asset-workspace/components/ScreenPlaceholder";
+import { redirect } from "next/navigation";
 
+// Reports opens on its first tab (05 §4.13.5); each tab is its own route.
 export default function ReportsPage() {
-  return (
-    <ScreenPlaceholder
-      title="Reports"
-      spec="05 §4.13.5"
-    />
-  );
+  redirect("/asset-workspace/reports/summary");
 }
