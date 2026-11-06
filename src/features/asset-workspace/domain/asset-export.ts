@@ -4,7 +4,7 @@ import type { AssetListQuery } from "../services/assets-list-query.ts";
 export const EXPORT_MAX_ASSETS = 10_000;
 const assetIdSchema = z.guid();
 export const EXPORT_FILTER_KEYS = [
-  "q", "status", "condition", "category_id", "location_id", "import_batch_id", "custody_type", "custody_id",
+  "q", "status", "condition", "category_id", "include_child_categories", "location_id", "import_batch_id", "custody_type", "custody_id",
 ] as const;
 
 export const EXPORT_COLUMNS = [

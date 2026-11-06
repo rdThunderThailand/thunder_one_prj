@@ -2,7 +2,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useRef } from "react";
 import { nextHistoryOp, type SequencerState } from "@/hooks/use-list-url-state";
 
-const filterKeys = ["page", "pageSize", "page_size", "q", "category_id", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id", "sort", "direction"];
+const filterKeys = ["page", "pageSize", "page_size", "q", "category_id", "include_child_categories", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id", "sort", "direction"];
 
 export function useAssetsListUrl() {
   const pathname = usePathname();

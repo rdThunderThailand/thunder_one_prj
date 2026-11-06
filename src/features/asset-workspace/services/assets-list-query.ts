@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ASSET_STATUSES } from "../domain/asset-status";
-import { ASSET_CONDITIONS } from "../domain/asset-condition";
+import { ASSET_STATUSES } from "../domain/asset-status.ts";
+import { ASSET_CONDITIONS } from "../domain/asset-condition.ts";
 
 export const ASSET_SORT_KEYS = ["created_at", "status_since"] as const;
 export const ASSET_PAGE_SIZES = [10, 25, 50, 100, 200] as const;
@@ -10,7 +10,8 @@ const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(25),
   q: z.string().trim().max(ASSET_SEARCH_MAX_LENGTH).transform((value) => value || undefined).optional(),
-  category_id: z.uuid().optional(),
+  category_id: z.guid().optional(),
+  include_child_categories: z.enum(["true", "false"]).optional(),
   location_id: z.uuid().optional(),
   status: z.enum(ASSET_STATUSES).optional(),
   condition: z.enum(ASSET_CONDITIONS).optional(),

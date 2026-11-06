@@ -1,5 +1,6 @@
 import type { AssetCondition } from "./asset-condition.ts";
 import type { AssetStatus } from "./asset-status.ts";
+import type { CategoryStatus } from "./asset-category.ts";
 import type { RowResult, Severity } from "./asset-import-types.ts";
 import type { InventoryResult, SessionStatus, WarrantyStatus } from "./report.ts";
 
@@ -7,6 +8,12 @@ import type { InventoryResult, SessionStatus, WarrantyStatus } from "./report.ts
  *  Tones are the shared Badge colours: green = success, blue = info, yellow = warning,
  *  red = error, zinc = neutral. Screens never choose per status. */
 export type StatusTone = "green" | "blue" | "yellow" | "red" | "zinc";
+
+// Inactive is an intentional availability state, not an error (shared design guide).
+export const CATEGORY_STATUS_TONE: Record<CategoryStatus, StatusTone> = {
+  Active: "green",
+  Inactive: "zinc",
+};
 
 export const STATUS_TONE: Record<AssetStatus, StatusTone> = {
   Available: "green",
