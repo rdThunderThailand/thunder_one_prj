@@ -1,17 +1,18 @@
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Card } from "@/components/ui/Card";
 
 export function AssetsSummaryLoading() {
   return (
     <section aria-label="Loading asset totals" role="status" className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @6xl:grid-cols-6">
       {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="flex min-h-24 gap-3 rounded-card border border-border bg-card p-3">
-          <Skeleton className="size-8 shrink-0 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-3 w-20 max-w-full" />
-            <Skeleton className="h-7 w-12" />
-            <Skeleton className="h-3 w-8" />
+        <Card key={index} className="flex min-w-0 gap-3 p-4 motion-reduce:[&_*]:animate-none">
+          <Skeleton className="size-10 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Skeleton className="h-5 w-20 max-w-full" />
+            <Skeleton className="h-8 w-12" />
+            {index === 0 && <Skeleton className="h-4 w-20 max-w-full" />}
           </div>
-        </div>
+        </Card>
       ))}
     </section>
   );
