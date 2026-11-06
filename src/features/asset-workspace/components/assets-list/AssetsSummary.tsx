@@ -16,6 +16,8 @@ const tileColor = {
   green: "emerald", blue: "blue", yellow: "amber", red: "red", zinc: "zinc",
 } as const satisfies Record<StatusTone, string>;
 const number = new Intl.NumberFormat("en-GB");
+// Match Overview's one-decimal percentages without adding a trailing zero.
+const percentage = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
 
 export function AssetsSummary({ result }: { result: AssetReadResult<AssetSummaryData> }) {
   if (!result.ok) {
@@ -39,7 +41,7 @@ export function AssetsSummary({ result }: { result: AssetReadResult<AssetSummary
               key={status}
               label={status}
               value={number.format(bucket?.count ?? 0)}
-              hint={`${(bucket?.percent ?? 0).toFixed(1)}%`}
+              hint={`${percentage.format(bucket?.percent ?? 0)}%`}
               color={tileColor[STATUS_TONE[status]]}
               icon={<Icon />}
             />

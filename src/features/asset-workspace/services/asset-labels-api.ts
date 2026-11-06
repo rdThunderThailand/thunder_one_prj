@@ -1,5 +1,5 @@
 import { AssetActionError } from "../domain/asset-action-error.ts";
-import { assertLabelTags, labelFailure, labelScope, labelsResponseSchema, type LabelCandidate } from "../domain/asset-labels.ts";
+import { labelFailure, labelScope, labelsResponseSchema, type LabelCandidate } from "../domain/asset-labels.ts";
 import { readAssetQrValue } from "../domain/asset-qr-reference.ts";
 import { requestAssetAction, type AssetActionRequester } from "./asset-action-api.ts";
 
@@ -15,7 +15,6 @@ export async function getAssetLabels(context: string, candidates: readonly Label
       return label.id.toLowerCase() !== scope[index].id || reference?.assetId !== scope[index].id
         || reference.tenantId !== context.split(":")[0].toLowerCase();
     })) throw new AssetActionError("The asset service returned unexpected label data. Refresh and try again.", 502, "INVALID_RESPONSE");
-    assertLabelTags(parsed.data.labels);
     return parsed.data.labels;
   } catch (error) {
     if (signal.aborted) throw error;

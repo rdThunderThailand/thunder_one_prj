@@ -6,26 +6,28 @@ import { useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon, PrintIcon } from "@/components/ui/icons";
+import { LABEL_FORMATS, labelFormatName } from "../../domain/asset-labels";
 import type { AssetLabelsFlow } from "../../hooks/use-asset-labels";
 import { AssetLabelPreview, type LabelPreviewStatus } from "./AssetLabelPreview";
 import { AssetLabelsProgress } from "./AssetLabelsProgress";
 import { AssetLabelsReady } from "./AssetLabelsReady";
 
 export function AssetLabelsDialog({ flow }: { flow: AssetLabelsFlow }) {
-  const [preview, setPreview] = useState({ labels: flow.labels, index: 0, status: "loading" as LabelPreviewStatus });
-  if (preview.labels !== flow.labels) setPreview({ labels: flow.labels, index: 0, status: "loading" });
-  const current = preview.labels === flow.labels ? preview : { labels: flow.labels, index: 0, status: "loading" };
+  const [preview, setPreview] = useState({ labels: flow.labels, format: flow.format, index: 0, status: "loading" as LabelPreviewStatus });
+  if (preview.labels !== flow.labels) setPreview({ labels: flow.labels, format: flow.format, index: 0, status: "loading" });
+  else if (preview.format !== flow.format) setPreview({ ...preview, format: flow.format, status: "loading" });
+  const current = preview.labels === flow.labels && preview.format === flow.format ? preview
+    : { labels: flow.labels, format: flow.format, index: preview.labels === flow.labels ? preview.index : 0, status: "loading" };
 
   function updatePreviewStatus(status: LabelPreviewStatus) {
     setPreview((previous) => {
-      if (previous.labels !== flow.labels || previous.index !== current.index || previous.status === status) return previous;
+      if (previous.labels !== flow.labels || previous.index !== current.index || previous.format !== flow.format || previous.status === status) return previous;
       return { ...previous, status };
     });
   }
 
   if (!flow.phase) return null;
   const loading = flow.phase === "loading";
-  const preparing = loading || (flow.phase === "preview" && current.status === "loading");
   const generating = flow.phase === "generating";
   const ready = flow.phase === "ready";
   const count = flow.scope.length || flow.labels.length;
@@ -35,7 +37,7 @@ export function AssetLabelsDialog({ flow }: { flow: AssetLabelsFlow }) {
       <DialogContent
         className="flex max-h-dvh flex-col gap-0 overflow-hidden rounded-card bg-card p-0 sm:max-w-lg sm:rounded-card [&>button]:size-8"
         onCloseAutoFocus={(event) => { event.preventDefault(); flow.restoreFocus(); }}
-        onPointerDownOutside={(event) => { if (preparing || generating) event.preventDefault(); }}
+        onPointerDownOutside={(event) => { if (loading || generating) event.preventDefault(); }}
       >
         <DialogHeader className="shrink-0 p-4 text-left">
           <div className="flex items-center gap-3 pr-6">
@@ -47,16 +49,47 @@ export function AssetLabelsDialog({ flow }: { flow: AssetLabelsFlow }) {
           </DialogDescription>
         </DialogHeader>
         <div className="min-h-0 space-y-4 overflow-y-auto px-4 pb-4">
-          {(preparing || generating) && (
+          {flow.phase === "preview" && (
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-medium text-foreground">Code type</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {LABEL_FORMATS.map((format) => (
+                  <label
+                    key={format}
+                    className={
+                      "flex min-h-10 cursor-pointer items-center gap-2 rounded-control border p-3 text-xs focus-within:ring-2 focus-within:ring-ring " +
+                      (flow.format === format ? "border-primary bg-accent text-accent-foreground" : "border-border bg-card text-foreground hover:bg-muted")
+                    }
+                  >
+                    <input
+                      type="radio"
+                      name="asset-label-format"
+                      value={format}
+                      checked={flow.format === format}
+                      onChange={() => flow.setFormat(format)}
+                      className="size-4 shrink-0 accent-primary"
+                      aria-describedby="asset-label-format-help"
+                    />
+                    <span className="font-semibold">{labelFormatName(format)}</span>
+                  </label>
+                ))}
+              </div>
+              <p id="asset-label-format-help" className="min-h-12 text-xs leading-relaxed text-muted-foreground sm:min-h-10">
+                {flow.format === "qr" ? "Opens the Asset Profile when scanned with a phone camera." : "Encodes the Asset Tag for compatible barcode scanners."}
+                {" "}Applies to all selected assets in this PDF.
+              </p>
+            </fieldset>
+          )}
+          {(loading || generating) && (
             <AssetLabelsProgress
               completed={flow.completed}
               total={generating ? flow.labels.length : count}
-              preparation={preparing ? { ...flow.preparation, preview: current.status === "ready" } : undefined}
+              preparation={loading ? { ...flow.preparation, preview: false } : undefined}
             />
           )}
           {flow.phase === "preview" && flow.labels[current.index] && (
-            <div className={preparing ? "hidden" : "space-y-4"}>
-              <AssetLabelPreview key={flow.labels[current.index].id} label={flow.labels[current.index]} onStatus={updatePreviewStatus} />
+            <div className="space-y-4">
+              <AssetLabelPreview key={flow.labels[current.index].id} label={flow.labels[current.index]} format={flow.format} onStatus={updatePreviewStatus} />
               <nav aria-label="Label previews" className="flex items-center justify-center gap-3">
                 <Button variant="outline" size="icon-sm" aria-label="Previous label" disabled={current.index === 0} onClick={() => setPreview({ ...current, index: current.index - 1, status: "loading" })}>
                   <ChevronLeftIcon className="size-4" />
@@ -68,7 +101,7 @@ export function AssetLabelsDialog({ flow }: { flow: AssetLabelsFlow }) {
               </nav>
             </div>
           )}
-          {ready && flow.file && <AssetLabelsReady filename={flow.file.filename} size={flow.file.blob.size} count={flow.labels.length} />}
+          {ready && flow.file && <AssetLabelsReady filename={flow.file.filename} size={flow.file.blob.size} count={flow.labels.length} format={flow.format} />}
           {flow.error && (
             <div role="alert" className="space-y-2 rounded-control bg-error-muted p-3 text-xs leading-relaxed text-foreground">
               <p>{flow.error.message}</p>
@@ -89,7 +122,7 @@ export function AssetLabelsDialog({ flow }: { flow: AssetLabelsFlow }) {
               </Button>
             )}
             {flow.phase === "error" && retryable && <Button size="sm" onClick={flow.retry}>Retry</Button>}
-            {flow.phase === "preview" && <Button size="sm" disabled={current.status !== "ready"} onClick={() => void flow.generate()}>Generate PDF</Button>}
+            {flow.phase === "preview" && <Button size="sm" disabled={current.status !== "ready" || flow.error?.code === "INVALID_TAG"} onClick={() => void flow.generate()}>Generate PDF</Button>}
             {ready && (
               <>
                 <Button variant="outline" size="sm" onClick={flow.print}>

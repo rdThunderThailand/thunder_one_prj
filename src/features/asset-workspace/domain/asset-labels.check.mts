@@ -1,7 +1,7 @@
 /** Run: node src/features/asset-workspace/domain/asset-labels.check.mts */
 import assert from "node:assert/strict";
 import { AssetActionError } from "./asset-action-error.ts";
-import { assertLabelTags, assetLabelsFilename, labelFailure, labelScope, type LabelCandidate } from "./asset-labels.ts";
+import { assertLabelFormat, assertLabelTags, assetLabelsFilename, labelFailure, labelScope, type LabelCandidate } from "./asset-labels.ts";
 import { LABEL_LAYOUT, LABEL_PAGE, labelNameLines, mmToPoints } from "./asset-label-layout.ts";
 
 const id = (index: number) => `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
@@ -25,6 +25,10 @@ for (const assetTag of ["แท็ก-001", "TAG\n001", "TAG😀"]) {
   assert.throws(() => assertLabelTags([{ ...label, assetTag }]), (error) =>
     error instanceof AssetActionError && error.code === "INVALID_TAG");
 }
+for (const format of ["qr", "barcode"] as const) assert.doesNotThrow(() => assertLabelFormat([label], format));
+assert.doesNotThrow(() => assertLabelFormat([{ ...label, assetTag: "แท็ก-001" }], "qr"));
+assert.throws(() => assertLabelFormat([{ ...label, assetTag: "แท็ก-001" }], "barcode"), /Code128/);
+assert.throws(() => assertLabelFormat([label], "both" as never), /Choose QR Code or Barcode/);
 const conflict = labelFailure({ status: 409, code: "INVALID_STATE", details: { assetIds: [id(1), id(99)] } }, [asset]);
 assert.deepEqual(conflict.assetNames, [asset.name], "never reveal a name outside the requested scope");
 for (const status of [400, 401, 403, 404, 500]) {
@@ -37,7 +41,7 @@ assert.equal(labelFailure({ status: 500, code: "INTERNAL", serverMessage: "Priva
 assert.equal(assetLabelsFilename(new Date("2026-11-05T17:00:00Z")), "asset-labels-2026-11-06.pdf");
 assert.equal(LABEL_PAGE.width, mmToPoints(50));
 assert.equal(LABEL_PAGE.height, mmToPoints(30));
-for (const box of Object.values(LABEL_LAYOUT)) {
+for (const box of Object.values(LABEL_LAYOUT).flatMap((layout) => Object.values(layout))) {
   assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= 50 && box.y + box.height <= 30);
 }
 const graphemes = (text: string) => [...new Intl.Segmenter("th", { granularity: "grapheme" }).segment(text)].length;

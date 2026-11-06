@@ -16,25 +16,25 @@ type FilesResult = { result: AssetReadResult<AssetFiles> | null; pending: boolea
 type WarrantyFields = Pick<AssetWarranty, "id" | "provider" | "type" | "startDate" | "endDate" | "referenceNo" | "coverageNote" | "status">;
 
 const disclosure = "group/disclosure";
-const summaryClass = "flex min-h-8 w-fit cursor-pointer list-none items-center gap-1 rounded-control text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden";
+const summaryClass = "flex min-h-8 w-fit cursor-pointer max-sm:min-h-10 list-none items-center gap-1 rounded-control text-xs font-medium text-accent-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden";
 
 function DisclosureChevron() {
-  return <ChevronDownIcon className="size-3.5 transition-transform group-open/disclosure:rotate-180" />;
+  return <ChevronDownIcon aria-hidden="true" className="size-3.5 transition-transform group-open/disclosure:rotate-180 motion-reduce:transition-none" />;
 }
 
 function FileList({ files }: { files: AssetFile[] }) {
   return (
-    <ul className="divide-y divide-border-subtle">
+    <ul className="divide-y divide-border">
       {files.map((file) => (
         <li key={file.fileId} className="flex min-w-0 items-center gap-3 py-2">
-          <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-control bg-muted text-muted-foreground">
+          <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
             <FileTextIcon className="size-4" />
           </span>
           <span className="min-w-0 flex-1">
             {file.url ? (
-              <a href={file.url} target="_blank" rel="noopener noreferrer" className="block text-sm wrap-anywhere text-foreground hover:text-primary hover:underline">{file.filename}</a>
+              <a href={file.url} target="_blank" rel="noopener noreferrer" className="block text-xs font-medium leading-relaxed wrap-anywhere text-accent-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring">{file.filename}</a>
             ) : (
-              <span className="block text-sm wrap-anywhere text-foreground" title="Link unavailable">{file.filename}</span>
+              <span className="block text-xs leading-relaxed wrap-anywhere text-foreground" title="Link unavailable">{file.filename}</span>
             )}
             <span className="block text-xs tabular-nums text-muted-foreground">{fileSize(file.sizeBytes)}</span>
           </span>
@@ -48,7 +48,7 @@ function RetryMessage({ message, onRetry, pending }: { message: string | null; o
   return (
     <div className="space-y-2">
       <SectionMessage tone="error">{message}</SectionMessage>
-      <Button variant="outline" size="sm" disabled={pending} onClick={onRetry}>Retry</Button>
+      <Button variant="outline" size="sm" className="max-sm:h-10" disabled={pending} onClick={onRetry}>Retry</Button>
     </div>
   );
 }
@@ -63,9 +63,9 @@ export function FilesSection({ files }: { files: FilesResult }) {
       ) : (
         <div className="space-y-4">
           <div className="space-y-2">
-            <h3 className="text-xs font-medium text-muted-foreground">Photos</h3>
+            <h3 className="text-xs font-medium text-foreground">Photos</h3>
             {data.photos.length ? (
-              <ul aria-label="Photos" className="grid grid-cols-3 gap-2">
+              <ul aria-label="Photos" className="grid grid-cols-2 gap-2 @min-xs/profile-section:grid-cols-3">
                 {data.photos.map((photo) => (
                   <li key={photo.fileId}>
                     <a
@@ -80,7 +80,7 @@ export function FilesSection({ files }: { files: FilesResult }) {
             ) : <SectionMessage>No photos.</SectionMessage>}
           </div>
           <div className="space-y-1">
-            <h3 className="text-xs font-medium text-muted-foreground">Documents</h3>
+            <h3 className="text-xs font-medium text-foreground">Documents</h3>
             {data.documents.length ? <FileList files={data.documents} /> : <SectionMessage>No documents.</SectionMessage>}
           </div>
         </div>
@@ -100,7 +100,7 @@ function WarrantyCard({ warranty, files, today }: { warranty: WarrantyFields; fi
     <div className="space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-semibold wrap-anywhere text-foreground">{warranty.provider || "Unnamed provider"}</p>
+          <p className="text-xs font-semibold leading-relaxed wrap-anywhere text-foreground">{warranty.provider || "Unnamed provider"}</p>
           <p className="text-xs tabular-nums text-muted-foreground">
             {formatDate(warranty.startDate)} – {warranty.endDate ? formatDate(warranty.endDate) : "no end date"}
           </p>
@@ -162,14 +162,14 @@ export function HistorySection({ context, assetId }: { context: string; assetId:
           {activity.entries.length > 0 && (
             <ol className="relative space-y-4 before:absolute before:top-2 before:bottom-2 before:left-[5px] before:w-px before:bg-border">
               {activity.entries.map((entry, index) => (
-                <li key={entry.id} className="relative grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 pl-6">
-                  <span aria-hidden="true" className={`absolute top-1.5 left-0 size-[11px] rounded-full border-2 border-card ${index === 0 ? "bg-primary" : "bg-t1-gray-300"}`} />
+                <li key={entry.id} className="relative grid min-w-0 gap-1 pl-6 @min-xl/profile-section:grid-cols-[minmax(0,1fr)_auto] @min-xl/profile-section:gap-x-4">
+                  <span aria-hidden="true" className={`absolute top-1.5 left-0 size-[11px] rounded-full border-2 border-card ${index === 0 ? "bg-primary" : "bg-border"}`} />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground">{activityLabel(entry.action, entry.summary)}</p>
+                    <p className="text-xs font-semibold leading-relaxed text-foreground">{activityLabel(entry.action, entry.summary)}</p>
                     {entry.actorName && <p className="text-xs text-muted-foreground">by {entry.actorName}</p>}
                     {entry.reason && <p className="mt-1 text-xs wrap-anywhere text-foreground">Reason: {entry.reason}</p>}
                   </div>
-                  <time dateTime={entry.at} className="text-xs tabular-nums text-muted-foreground">{formatDateTime(entry.at)}</time>
+                  <time dateTime={entry.at} className="text-xs tabular-nums text-muted-foreground @min-xl/profile-section:text-right">{formatDateTime(entry.at)}</time>
                 </li>
               ))}
             </ol>
@@ -178,7 +178,7 @@ export function HistorySection({ context, assetId }: { context: string; assetId:
           {activity.error && <RetryMessage message={activity.error} onRetry={activity.retry} />}
           {!activity.pending && !activity.error && !activity.entries.length && <SectionMessage>No history yet.</SectionMessage>}
           {activity.hasMore && !activity.pending && !activity.error && (
-            <Button variant="outline" size="sm" onClick={activity.loadMore}>Load more</Button>
+            <Button variant="outline" size="sm" className="max-sm:h-10" onClick={activity.loadMore}>Load more</Button>
           )}
         </div>
       </details>
