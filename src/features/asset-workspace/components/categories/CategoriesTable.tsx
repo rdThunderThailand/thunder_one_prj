@@ -24,7 +24,7 @@ export function CategoriesTable({ rows, query, onSort, onToggle }: {
   return (
     <table className="w-full min-w-96 table-fixed border-separate border-spacing-0 text-left text-xs leading-relaxed">
       <caption className="sr-only">Categories, their parents, rolled-up asset counts, and availability.</caption>
-      <thead data-category-controls className="sticky top-0 z-10 bg-muted text-2xs text-muted-foreground">
+      <thead data-category-controls className="sticky top-0 z-10 bg-muted text-xs text-muted-foreground">
         <tr>
           {columns.map((column) => (
             <th
@@ -36,7 +36,7 @@ export function CategoriesTable({ rows, query, onSort, onToggle }: {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 max-w-full justify-start gap-2 px-0 text-2xs font-semibold text-muted-foreground"
+                className="h-8 max-w-full justify-start gap-2 px-0 text-xs font-semibold text-muted-foreground"
                 aria-label={`Sort by ${column.label}, ${query.sort === column.key && query.direction === "asc" ? "descending" : "ascending"}`}
                 onClick={() => onSort(column.key)}
               >

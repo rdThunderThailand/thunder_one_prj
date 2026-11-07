@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/lovable/button";
 import { PlusIcon } from "@/components/ui/icons";
 import type { CategoryListQuery, CategorySortKey } from "../../domain/asset-category";
@@ -117,11 +118,12 @@ export function CategoriesListView({ context }: { context: string }) {
           Clear filters
         </Button>
       )}
-      <section
+      <Card
         data-category-results
+        role="region"
         aria-label="Categories list"
         aria-busy={resource.pending}
-        className="@container/categories-results flex min-w-0 flex-col overflow-hidden rounded-card border border-border bg-card group-data-[bounded=true]/categories-workspace:min-h-0 group-data-[bounded=true]/categories-workspace:flex-1 group-data-[bounded=true]/categories-workspace:shrink"
+        className="@container/categories-results flex min-w-0 flex-col overflow-hidden focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none group-data-[bounded=true]/categories-workspace:min-h-0 group-data-[bounded=true]/categories-workspace:flex-1 group-data-[bounded=true]/categories-workspace:shrink"
       >
         <div
           ref={scroll}
@@ -142,7 +144,7 @@ export function CategoriesListView({ context }: { context: string }) {
             onPageSize={(size) => url.set({ pageSize: String(size) })}
           />
         )}
-      </section>
+      </Card>
     </CategoriesWorkspace>
   );
 }
