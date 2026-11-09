@@ -20,6 +20,17 @@ export interface AssetCategory {
   updatedAt: string;
 }
 
+export interface CategoryChild {
+  id: string;
+  name: string;
+  status: CategoryStatus;
+  assetCount: number;
+}
+
+export interface AssetCategoryDetail extends AssetCategory {
+  children: CategoryChild[];
+}
+
 export interface CategoryListQuery {
   q: string;
   status?: CategoryStatus;
