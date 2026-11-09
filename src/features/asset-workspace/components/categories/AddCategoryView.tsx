@@ -10,11 +10,12 @@ import { ChevronRightIcon, PlusIcon } from "@/components/ui/icons";
 import { activeCategoryParents, type CategoryField } from "../../domain/category-form";
 import { useCategoryListData } from "../../hooks/use-category-list-data";
 import { useCategoryCreate } from "../../hooks/use-category-create";
-import { AccessDeniedState, EmptyState, LoadingState } from "../states/states";
+import { AccessDeniedState, EmptyState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { CategoriesWorkspace } from "./CategoriesWorkspace";
 import { CategoryInformation, CategoryRules, categoryFieldTargets } from "./CategoryFormFields";
 import { CategoryFormPreview } from "./CategoryFormPreview";
+import { AddCategoryFieldsLoading } from "./AddCategoryLoading";
 
 const listHref = "/asset-workspace/categories";
 
@@ -41,14 +42,7 @@ export function AddCategoryView({ context }: { context: string }) {
 
   let fields;
   if (parents.pending) {
-    fields = (
-      <div className="grid gap-3 @min-4xl/category-form:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)]">
-        <LoadingState rows={6} />
-        <div className="hidden @min-4xl/category-form:block">
-          <LoadingState rows={4} />
-        </div>
-      </div>
-    );
+    fields = <AddCategoryFieldsLoading />;
   }
   else if (parents.error?.status === 403) fields = <AccessDeniedState body={parents.error.message} />;
   else if (parents.error?.status === 401) {

@@ -100,18 +100,22 @@ export function CategoryInformation({ flow, parents }: { flow: CategoryCreateFlo
   );
 }
 
-export function CategoryRules({ flow }: { flow: CategoryCreateFlow }) {
+export function CategoryRules({ flow, stacked = false }: {
+  flow: Pick<CategoryCreateFlow, "draft" | "fields" | "locked" | "patch">;
+  stacked?: boolean;
+}) {
+  const options = [
+    { value: false, label: "Optional", hint: "Assets may be registered without a serial number." },
+    { value: true, label: "Required", hint: "Assets must have a serial number when registered." },
+  ];
   return (
     <Card role="region" aria-labelledby="category-rules-title"
       className="space-y-3 p-4 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none">
       <h2 id="category-rules-title" className="text-sm font-semibold text-foreground">Category Rules</h2>
       <fieldset disabled={flow.locked} aria-describedby={flow.fields.isSerialRequired ? "category-serial-error" : undefined}>
         <legend className="mb-3 text-xs font-medium text-foreground">Serial Number</legend>
-        <div className="grid gap-3 @min-2xl/category-form:grid-cols-2">
-          {[
-            { value: false, label: "Optional", hint: "Assets may be registered without a serial number." },
-            { value: true, label: "Required", hint: "Assets must have a serial number when registered." },
-          ].map((option) => (
+        <div className={`grid gap-3 ${stacked ? "" : "@min-2xl/category-form:grid-cols-2"}`}>
+          {(stacked ? [...options].reverse() : options).map((option) => (
             <label
               key={option.label}
               className={`flex cursor-pointer items-start gap-3 rounded-control border p-3 transition-colors motion-reduce:transition-none ${flow.draft.isSerialRequired === option.value ? "border-primary bg-accent" : "border-border hover:bg-muted"} ${flow.locked ? "cursor-default opacity-60" : ""}`}

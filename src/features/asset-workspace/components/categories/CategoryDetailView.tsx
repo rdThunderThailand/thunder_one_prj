@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/lovable/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import { useCategoryDetail } from "../../hooks/use-category-detail";
-import { AccessDeniedState, EmptyState, LoadingState, NotFoundState } from "../states/states";
+import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { CategoriesWorkspace } from "./CategoriesWorkspace";
 import { CategoryDetailHeader } from "./CategoryDetailHeader";
 import { CategoryOverviewCards } from "./CategoryOverviewCards";
 import { CategoryChildrenSection } from "./CategoryChildrenSection";
+import { CategoryDetailLoading } from "./CategoryDetailLoading";
 
 const listHref = "/asset-workspace/categories";
 
@@ -40,7 +41,8 @@ export function CategoryDetailView({ context, categoryId }: { context: string; c
     );
   } else if (detail.error?.status === 403) state = <AccessDeniedState body={detail.error.message} action={back} />;
   else if (detail.error) state = <ErrorState title="Couldn't load this category" body={detail.error.message} onRetry={detail.retry} />;
-  else if (!category) state = <LoadingState rows={8} />;
+
+  if (!category && !detail.error) return <CategoryDetailLoading />;
 
   return (
     <CategoriesWorkspace>

@@ -10,12 +10,13 @@ import type { CategoryListQuery, CategorySortKey } from "../../domain/asset-cate
 import { categoryListView } from "../../domain/category-list";
 import { useCategoryListData } from "../../hooks/use-category-list-data";
 import { useCategoryListUrl } from "../../hooks/use-category-list-url";
-import { AccessDeniedState, EmptyState, LoadingState } from "../states/states";
+import { AccessDeniedState, EmptyState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { CategoriesFilters } from "./CategoriesFilters";
 import { CategoriesPagination } from "./CategoriesPagination";
 import { CategoriesTable } from "./CategoriesTable";
 import { CategoriesWorkspace } from "./CategoriesWorkspace";
+import { CategoriesPaginationLoading, CategoriesTableLoading } from "./CategoriesListLoading";
 
 const defaults: CategoryListQuery = { q: "", sort: "default", direction: "asc", page: 1, pageSize: 10, expanded: [] };
 
@@ -68,7 +69,7 @@ export function CategoriesListView({ context }: { context: string }) {
       />
     );
   } else if (resource.pending) {
-    content = <LoadingState rows={5} />;
+    content = <CategoriesTableLoading />;
   } else if (resource.error?.status === 401) {
     content = (
       <EmptyState
@@ -132,10 +133,11 @@ export function CategoriesListView({ context }: { context: string }) {
           tabIndex={0}
           className="relative min-w-0 overflow-x-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-data-[bounded=true]/categories-workspace:min-h-0 group-data-[bounded=true]/categories-workspace:flex-1 group-data-[bounded=true]/categories-workspace:overflow-auto"
         >
-          {view.rows.length && !resource.pending && !resource.error && url.parsed.success ? content : (
+          {(resource.pending && url.parsed.success) || (view.rows.length && !resource.error && url.parsed.success) ? content : (
             <div className="p-4">{content}</div>
           )}
         </div>
+        {resource.pending && url.parsed.success && <CategoriesPaginationLoading />}
         {!resource.pending && !resource.error && url.parsed.success && resource.data && (
           <CategoriesPagination
             {...view}
