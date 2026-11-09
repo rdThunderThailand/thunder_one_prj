@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ASSET_STATUSES } from "../domain/asset-status";
-import { ASSET_CONDITIONS } from "../domain/asset-condition";
+import { ASSET_STATUSES } from "../domain/asset-status.ts";
+import { ASSET_CONDITIONS } from "../domain/asset-condition.ts";
 
 export const ASSET_SORT_KEYS = ["created_at", "status_since"] as const;
 export const ASSET_PAGE_SIZES = [10, 25, 50, 100, 200] as const;
@@ -10,7 +10,8 @@ const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(25),
   q: z.string().trim().max(ASSET_SEARCH_MAX_LENGTH).transform((value) => value || undefined).optional(),
-  category_id: z.uuid().optional(),
+  category_id: z.guid().optional(),
+  include_child_categories: z.enum(["true", "false"]).optional(),
   location_id: z.uuid().optional(),
   status: z.enum(ASSET_STATUSES).optional(),
   condition: z.enum(ASSET_CONDITIONS).optional(),
@@ -46,10 +47,11 @@ export function readAssetListSearch(search: string) {
   return readAssetListQuery(input);
 }
 
-export function assetListQueryString(query: AssetListQuery): string {
+export function assetListQueryString(query: AssetListQuery, options: { omitDefaultSort?: boolean } = {}): string {
   const params = new URLSearchParams();
   // The schema is the endpoint allowlist; UI-only and obsolete URL keys never reach Core.
   for (const [key, value] of Object.entries(querySchema.parse(query))) {
+    if (options.omitDefaultSort && key === "sort" && value === "created_at") continue;
     if (value !== undefined && value !== "") params.set(key, String(value));
   }
   return params.toString();
