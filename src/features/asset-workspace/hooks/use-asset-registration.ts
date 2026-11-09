@@ -1,20 +1,14 @@
 import { useRef, useState } from "react";
 import { newRegistrationState, type RegistrationDraft, type RegistrationState } from "../domain/registration-draft";
 import { firstInvalidRegistrationStep, registrationErrors, type RegistrationErrors } from "../domain/registration-validation";
-import { registrationInitialConditions } from "../domain/registration-initial-state";
+import { initialRegistrationState } from "../domain/registration-category-prefill";
+import type { ReferenceItem } from "../services/registration-selector-contract";
 import { readRegistrationDraft, removeRegistrationDraft, saveRegistrationDraft } from "../services/asset-registration-draft-storage";
 import type { RegistrationOptions } from "../services/asset-registration-contract";
 
-export function useAssetRegistration(storageKey: string, options: RegistrationOptions) {
+export function useAssetRegistration(storageKey: string, options: RegistrationOptions, initialCategory?: ReferenceItem) {
   const [initial] = useState(() => readRegistrationDraft(storageKey));
-  const [state, setState] = useState<RegistrationState>(() => {
-    const saved = initial.state;
-    if (saved) return saved;
-    const empty = newRegistrationState();
-    empty.draft.tagMode = options.tagGeneration.modes.includes("automatic") ? "automatic" : "manual";
-    empty.draft.condition = registrationInitialConditions(empty.draft, options)[0] ?? "Good";
-    return empty;
-  });
+  const [state, setState] = useState<RegistrationState>(() => initialRegistrationState(initial.state, options, initialCategory));
   const current = useRef(state);
   const [errors, setErrors] = useState<RegistrationErrors>({});
   const [storageUnavailable, setStorageUnavailable] = useState(initial.unavailable);
@@ -87,5 +81,5 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
   }
 
   const dirty = JSON.stringify(state.draft) !== JSON.stringify(newRegistrationState().draft);
-  return { state, errors, storageUnavailable, cancelOpen, setCancelOpen: changeCancelOpen, discardFailed, dirty, patch, advance, edit, back, discard, validateForConfirmation };
+  return { state, restored: Boolean(initial.state), restoreUnavailable: initial.unavailable, errors, storageUnavailable, cancelOpen, setCancelOpen: changeCancelOpen, discardFailed, dirty, patch, advance, edit, back, discard, validateForConfirmation };
 }

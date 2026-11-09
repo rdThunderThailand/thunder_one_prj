@@ -1,6 +1,7 @@
 import type { CategoryChild } from "./asset-category.ts";
 
 export const categoryDetailHref = (id: string) => `/asset-workspace/categories/${encodeURIComponent(id)}`;
+export const categoryRegistrationHref = (id: string) => `/asset-workspace/assets/register?${new URLSearchParams({ mode: "single", category_id: id })}`;
 export const categoryAssetsHref = (id: string) => `/asset-workspace/assets?${new URLSearchParams({
   category_id: id, include_child_categories: "true",
 })}`;

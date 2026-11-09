@@ -6,6 +6,7 @@ import type { AssetCategoryDetail, CategoryStatus } from "../../domain/asset-cat
 import { CategoryStatusBadge } from "./CategoryStatusBadge";
 import { CategoryStatusActions } from "./CategoryStatusActions";
 import { categoryAssetsHref, categoryDetailHref } from "../../domain/category-detail";
+import { CategoryRegistrationButton } from "./CategoryRegistrationButton";
 
 export function CategoryDetailHeader({ category, busy, sending, onStatus, showSummary = false }: {
   category: AssetCategoryDetail;
@@ -35,7 +36,8 @@ export function CategoryDetailHeader({ category, busy, sending, onStatus, showSu
           </p>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <CategoryRegistrationButton id={category.id} status={category.status} busy={busy} />
         <Button asChild variant="outline" size="sm" className="border-primary text-accent-foreground hover:border-accent-foreground hover:bg-accent max-sm:h-10">
           <Link href={`/asset-workspace/categories/${encodeURIComponent(category.id)}/edit`}>
             <EditIcon aria-hidden="true" className="size-4" />
@@ -59,12 +61,16 @@ export function CategoryDetailHeader({ category, busy, sending, onStatus, showSu
           <div className="space-y-2">
             <dt className="text-muted-foreground">Assets</dt>
             <dd className="font-semibold tabular-nums">
-              <Link href={categoryAssetsHref(category.id)} className="rounded-xs text-accent-foreground underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring">{category.assetCount.toLocaleString("en-GB")}</Link>
+              <Link href={categoryAssetsHref(category.id)} title="Open in Assets"
+                aria-label={`Open ${category.assetCount} assets in ${category.name} and its descendants in the Assets list`}
+                className="rounded-xs text-accent-foreground underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring">
+                {category.assetCount.toLocaleString("en-GB")}
+              </Link>
             </dd>
           </div>
           <div className="space-y-2">
-            <dt className="text-muted-foreground">Serial Number Required</dt>
-            <dd className="font-semibold">{category.isSerialRequired ? "Yes" : "No"}</dd>
+            <dt className="text-muted-foreground">Serial Number</dt>
+            <dd className="font-semibold">{category.isSerialRequired ? "Required" : "Optional"}</dd>
           </div>
           <div className="space-y-2">
             <dt className="text-muted-foreground">Status</dt>

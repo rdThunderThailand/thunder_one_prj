@@ -20,7 +20,8 @@ export function CategoryDetailLoading({ assets = false }: { assets?: boolean }) 
           </div>
           <Skeleton className="h-4 w-3/4" />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-8 w-32 max-sm:h-10" />
           <Skeleton className="h-8 w-32 max-sm:h-10" />
           <Skeleton className="size-8 max-sm:size-10" />
         </div>

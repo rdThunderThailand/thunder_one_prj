@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ErrorState } from "../states/ErrorState";
@@ -13,15 +14,16 @@ import { SingleAssetWizard } from "./SingleAssetWizard";
 import { useRegistrationFileCache } from "../../hooks/use-registration-file-cache";
 import { newRegistrationState } from "../../domain/registration-draft";
 import { RegistrationFileStorageState } from "./RegistrationFileStorageState";
+import { RegistrationCategoryEntry } from "./RegistrationCategoryEntry";
 
 const subscribe = () => () => {};
-export function RegistrationRecovery(props: { tenantId: string; userId: string; message: string; status?: number }) {
+export function RegistrationRecovery(props: { tenantId: string; userId: string; message: string; status?: number; initialCategoryId?: string | string[] }) {
   const [generation, setGeneration] = useState(0);
   const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
   return hydrated ? <RecoveryContent key={`${props.tenantId}:${props.userId}:${generation}`} {...props} onReset={() => setGeneration((value) => value + 1)} /> : <RegistrationLoading />;
 }
 
-function RecoveryContent({ tenantId, userId, message, status, onReset }: { tenantId: string; userId: string; message: string; status?: number; onReset: () => void }) {
+function RecoveryContent({ tenantId, userId, message, status, onReset, initialCategoryId }: { tenantId: string; userId: string; message: string; status?: number; onReset: () => void; initialCategoryId?: string | string[] }) {
   const router = useRouter();
   const key = registrationDraftKey(tenantId, userId);
   const confirmation = useRegistrationConfirmation(`${key}:confirmation`, `${tenantId}:${userId}`, null);
@@ -46,7 +48,9 @@ function RecoveryContent({ tenantId, userId, message, status, onReset }: { tenan
       </RegistrationReceipt>
     );
   }
-  if (options && !uncertain) return <SingleAssetWizard tenantId={tenantId} userId={userId} options={options} />;
+  if (options && !uncertain) return initialCategoryId === undefined
+    ? <SingleAssetWizard tenantId={tenantId} userId={userId} options={options} />
+    : <RegistrationCategoryEntry tenantId={tenantId} userId={userId} categoryId={initialCategoryId} options={options} />;
   return (
     <div className="h-full min-w-0 space-y-4 overflow-y-auto overscroll-contain">
       <PageHeader title="Register Asset" subtitle={uncertain ? "Recover the original registration result" : "Registration options are unavailable"} />
@@ -63,7 +67,7 @@ function RecoveryContent({ tenantId, userId, message, status, onReset }: { tenan
       )}
       {failureStatus === 401 && (
         <Button asChild variant="outline">
-          <a href="/login">Sign in</a>
+          <Link href="/login">Sign in</Link>
         </Button>
       )}
       {storageBlocked && (

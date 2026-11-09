@@ -7,13 +7,17 @@ import { RegistrationMethodChoice } from "./RegistrationMethodChoice";
 import { RegistrationLoading } from "./RegistrationLoading";
 import { RegistrationRecovery } from "./RegistrationRecovery";
 import { SingleAssetWizard } from "./SingleAssetWizard";
+import { RegistrationCategoryEntry } from "./RegistrationCategoryEntry";
 
-export function RegisterAssetPage({ single, tenantId, userId }: { single: boolean; tenantId: string; userId: string }) {
+export function RegisterAssetPage({ single, tenantId, userId, initialCategoryId }: {
+  single: boolean; tenantId: string; userId: string; initialCategoryId?: string | string[];
+}) {
   return single ? (
     <RegistrationEntry
-      key={`${tenantId}:${userId}`}
+      key={initialCategoryId === undefined ? `${tenantId}:${userId}` : `${tenantId}:${userId}:category:${JSON.stringify(initialCategoryId)}`}
       tenantId={tenantId}
       userId={userId}
+      initialCategoryId={initialCategoryId}
     />
   ) : (
     <RegistrationMethodChoice
@@ -24,7 +28,7 @@ export function RegisterAssetPage({ single, tenantId, userId }: { single: boolea
   );
 }
 
-function RegistrationEntry({ tenantId, userId }: { tenantId: string; userId: string }) {
+function RegistrationEntry({ tenantId, userId, initialCategoryId }: { tenantId: string; userId: string; initialCategoryId?: string | string[] }) {
   const [options, setOptions] = useState<RegistrationOptions | null>(null);
   const [error, setError] = useState<{ message: string; status?: number } | null>(null);
   useEffect(() => {
@@ -40,7 +44,9 @@ function RegistrationEntry({ tenantId, userId }: { tenantId: string; userId: str
     return () => { alive = false; controller.abort(); };
   }, [tenantId, userId]);
 
-  if (options) return <SingleAssetWizard tenantId={tenantId} userId={userId} options={options} />;
-  if (error) return <RegistrationRecovery tenantId={tenantId} userId={userId} message={error.message} status={error.status} />;
+  if (options) return initialCategoryId === undefined
+    ? <SingleAssetWizard tenantId={tenantId} userId={userId} options={options} />
+    : <RegistrationCategoryEntry tenantId={tenantId} userId={userId} categoryId={initialCategoryId} options={options} />;
+  if (error) return <RegistrationRecovery tenantId={tenantId} userId={userId} message={error.message} status={error.status} initialCategoryId={initialCategoryId} />;
   return <RegistrationLoading />;
 }
