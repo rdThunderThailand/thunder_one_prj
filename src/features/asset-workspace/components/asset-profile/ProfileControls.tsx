@@ -60,7 +60,7 @@ export function ProfileActions({ context, asset }: { context: string; asset: Ass
         }}>
           <DropdownMenuItem disabled={asset.lifecycleStatus === "Disposed"} onSelect={() => {
             openingDialog.current = true;
-            labels.open([{ id: asset.id, name: asset.name, assetTag: asset.assetTag, status: asset.lifecycleStatus }], trigger.current);
+            labels.open([{ id: asset.id, name: asset.name, assetTag: asset.assetTag, status: asset.lifecycleStatus, serialNumber: asset.serialNumber }], trigger.current);
           }}>
             <PrintIcon aria-hidden="true" />
             Print label

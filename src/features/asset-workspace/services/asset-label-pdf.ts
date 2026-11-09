@@ -1,15 +1,15 @@
 import { AssetActionError } from "../domain/asset-action-error.ts";
 import { labelLayout, LABEL_PAGE, mmToPoints } from "../domain/asset-label-layout.ts";
-import { assertLabelFormat, assetLabelsFilename, LABEL_LIMIT, type AssetLabel, type LabelFormat } from "../domain/asset-labels.ts";
+import { assertLabelFormat, assetLabelsFilename, LABEL_LIMIT, type AssetLabel, type LabelFields, type LabelFormat } from "../domain/asset-labels.ts";
 import { assetLabelRectangles } from "./asset-label-codes.ts";
 
-type TextRenderer = (label: AssetLabel, format: LabelFormat) => Promise<Uint8Array>;
-const defaultTextRenderer: TextRenderer = async (label, format) => {
+type TextRenderer = (label: AssetLabel, format: LabelFormat, fields: LabelFields) => Promise<Uint8Array>;
+const defaultTextRenderer: TextRenderer = async (label, format, fields) => {
   const { renderAssetLabelText } = await import("./asset-label-text.ts");
-  return renderAssetLabelText(label, format);
+  return renderAssetLabelText(label, format, fields);
 };
 
-export async function createAssetLabelsPdf(labels: readonly AssetLabel[], format: LabelFormat, signal: AbortSignal,
+export async function createAssetLabelsPdf(labels: readonly AssetLabel[], format: LabelFormat, fields: LabelFields, signal: AbortSignal,
   onProgress: (completed: number) => void, renderText: TextRenderer = defaultTextRenderer) {
   if (!labels.length || labels.length > LABEL_LIMIT) throw new AssetActionError("Select between 1 and 500 assets for labels.", 400, "VALIDATION");
   assertLabelFormat(labels, format);
@@ -21,7 +21,7 @@ export async function createAssetLabelsPdf(labels: readonly AssetLabel[], format
   for (let index = 0; index < labels.length; index += 1) {
     signal.throwIfAborted();
     const rectangles = await assetLabelRectangles(labels[index], format);
-    const text = await renderText(labels[index], format);
+    const text = await renderText(labels[index], format, fields);
     signal.throwIfAborted();
     const page = document.addPage([LABEL_PAGE.width, LABEL_PAGE.height]);
     for (const rectangle of rectangles) {

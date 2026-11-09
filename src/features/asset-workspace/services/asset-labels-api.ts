@@ -15,7 +15,7 @@ export async function getAssetLabels(context: string, candidates: readonly Label
       return label.id.toLowerCase() !== scope[index].id || reference?.assetId !== scope[index].id
         || reference.tenantId !== context.split(":")[0].toLowerCase();
     })) throw new AssetActionError("The asset service returned unexpected label data. Refresh and try again.", 502, "INVALID_RESPONSE");
-    return parsed.data.labels;
+    return parsed.data.labels.map((label, index) => ({ ...label, serialNumber: scope[index].serialNumber ?? null }));
   } catch (error) {
     if (signal.aborted) throw error;
     throw labelFailure(error, scope);
