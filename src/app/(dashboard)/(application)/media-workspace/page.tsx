@@ -1,15 +1,23 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ChevronDownIcon, PlusIcon, SparklesIcon } from "@/components/ui/icons";
+import { getSession } from "@/features/auth/services/get-session";
 import { OverviewDashboard } from "@/features/media-workspace/overview";
 
-export default function OverviewPage() {
+export default async function OverviewPage() {
+  const session = await getSession();
+  const isSuperAdmin = session !== "forbidden" && session.isSuperAdmin;
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Overview" subtitle="Real-time status of your media ecosystem" titleInTopbar />
       <OverviewDashboard
         actions={
           <>
+            {isSuperAdmin && (
+              <Link href="/media-workspace/player-releases" className="inline-flex h-9 items-center rounded-lg border border-border bg-card px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                Player releases
+              </Link>
+            )}
             <button
               type="button"
               disabled
