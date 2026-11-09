@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
-import { getSession } from "@/features/auth/services/get-session";
+import { canSwitchTenant, getSession } from "@/features/auth/services/get-session";
 import { TENANT_COOKIE, isTenantId } from "@/lib/core/tenant-selection";
 
 export const dynamic = "force-dynamic";
@@ -18,8 +18,8 @@ export async function POST(request: Request) {
   }
 
   const session = await getSession();
-  if (session === "forbidden" || !session.isSuperAdmin) {
-    return NextResponse.json({ error: "Only a platform super admin can switch tenants" }, { status: 403 });
+  if (session === "forbidden" || !canSwitchTenant(session)) {
+    return NextResponse.json({ error: "Only a platform super admin or a partner can switch tenants" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

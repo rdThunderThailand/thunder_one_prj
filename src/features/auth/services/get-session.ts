@@ -69,6 +69,10 @@ export interface Session {
    * isPlatformSuperAdmin rule. Only a platform super admin gets the tenant
    * switcher. */
   isSuperAdmin: boolean;
+  /** Set when this tenant is reached only as a partner of its parent tenant
+   * (Core's `/session` `partner_access`, Thunder_Core ADR 0027): the user has
+   * no membership here and acts with company_admin rights. */
+  partnerAccess: { parentTenantId: string | null } | null;
   /** `public.users.preferred_language` as Core stores it ("th-TH", "en-US"; older rows "th"), or `null`. The user's
    * primary language for the whole app; `getAppLocale(session.preferredLanguage)` turns it into
    * the render language (lib/app-locale). */
@@ -84,6 +88,9 @@ export interface AvailableTenant {
    * `null`. Core doesn't send it yet (requested 2026-11-06); the card shows
    * the tenant's initials until it does. */
   logoUrl: string | null;
+  /** How the user reaches it: own membership, partner of its parent, or platform
+   * super admin. `null` when Core doesn't send it (older Core). */
+  access: "member" | "partner" | "platform" | null;
 }
 
 /**
@@ -95,6 +102,10 @@ export type SessionResult = Session | "forbidden";
 
 const FALLBACK_NAME = "Account";
 const NO_ROLE = { roleType: null, roleCode: null, roleName: null } as const;
+const PARTNER_ROLE = { roleType: "company_admin", roleCode: "partner", roleName: "Partner" } as const;
+
+/** May use the tenant switcher: a platform super admin, or a partner with child tenants to reach. */
+export const canSwitchTenant = (s: Session) => s.isSuperAdmin || s.availableTenants.some((t) => t.access === "partner");
 
 // Mirrors Core's own priority order (thunder_core_prj's src/lib/core/member-view.ts
 // toPrimaryRole — not the buggy src/utils/supabase/rbac.ts getUserRole, which
@@ -180,7 +191,7 @@ async function getSessionUncached(): Promise<SessionResult> {
       ),
     ]);
   } catch {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, enabledWorkspaces: null, availableTenants: [], isSuperAdmin: false, preferredLanguage: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, enabledWorkspaces: null, availableTenants: [], isSuperAdmin: false, partnerAccess: null, preferredLanguage: null };
   }
 
   if (sessionRes.status === 401) {
@@ -195,7 +206,7 @@ async function getSessionUncached(): Promise<SessionResult> {
     return "forbidden";
   }
   if (!sessionRes.ok) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, enabledWorkspaces: null, availableTenants: [], isSuperAdmin: false, preferredLanguage: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, enabledWorkspaces: null, availableTenants: [], isSuperAdmin: false, partnerAccess: null, preferredLanguage: null };
   }
 
   const body = await sessionRes.json().catch(() => null);
@@ -206,24 +217,29 @@ async function getSessionUncached(): Promise<SessionResult> {
     typeof body?.data?.tenant_application?.role === "string" ? body.data.tenant_application.role : null;
   const availableTenants = parseAvailableTenants(body?.data?.available_tenants);
   const enabledWorkspaces = parseEnabledWorkspaces(body?.data?.enabled_workspaces);
+  const pa = body?.data?.partner_access;
+  const partnerAccess = pa && typeof pa === "object" ? { parentTenantId: typeof pa.parent_tenant_id === "string" ? pa.parent_tenant_id : null } : null;
   const userEmail = typeof user?.email === "string" ? user.email : null;
   const rawUserId = typeof user?.id === "string" ? user.id : null;
   const memberships = await readMemberships(membershipsRes);
   const isSuperAdmin = memberships.some(hasSuperAdminRole);
-  const [role, membershipExtras] = await Promise.all([
+  const [memberRole, membershipExtras] = await Promise.all([
     resolveRole(memberships, tenantId),
     extrasFromSession(body?.data) ?? resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
   ]);
   const { jobTitle } = membershipExtras;
+  // A partner has no membership in the child tenant, so no role resolves from
+  // /me/memberships; Core grants company_admin there (partner_access).
+  const role = partnerAccess && memberRole.roleType === null ? PARTNER_ROLE : memberRole;
 
   if (!user) {
-    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, enabledWorkspaces, availableTenants, isSuperAdmin, preferredLanguage: null };
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, enabledWorkspaces, availableTenants, isSuperAdmin, partnerAccess, preferredLanguage: null };
   }
 
   const userId = typeof user.id === "string" ? user.id : null;
   const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
   const preferredLanguage = typeof user.preferred_language === "string" ? user.preferred_language : null;
-  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, enabledWorkspaces, availableTenants, isSuperAdmin, preferredLanguage };
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, enabledWorkspaces, availableTenants, isSuperAdmin, partnerAccess, preferredLanguage };
 }
 
 function parseEnabledWorkspaces(value: unknown): string[] | null {
@@ -241,6 +257,7 @@ function parseAvailableTenants(value: unknown): AvailableTenant[] {
             name: row.name,
             role: typeof row.role === "string" ? row.role : null,
             logoUrl: typeof row.logo_url === "string" && row.logo_url ? row.logo_url : null,
+            access: row.access === "member" || row.access === "partner" || row.access === "platform" ? row.access : null,
           },
         ]
       : [],
