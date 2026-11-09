@@ -1,10 +1,7 @@
-import { ScreenPlaceholder } from "@/features/asset-workspace/components/ScreenPlaceholder";
+import { redirect } from "next/navigation";
 
-export default function LocationDetailPage() {
-  return (
-    <ScreenPlaceholder
-      title="Location Detail"
-      spec="05 §4.8"
-    />
-  );
+// Location Detail opens on Overview; each tab is its own route.
+export default async function LocationDetailPage({ params }: { params: Promise<{ locationId: string }> }) {
+  const { locationId } = await params;
+  redirect(`/asset-workspace/locations/${encodeURIComponent(locationId)}/overview`);
 }

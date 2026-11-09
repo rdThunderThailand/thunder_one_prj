@@ -1,10 +1,7 @@
-import { ScreenPlaceholder } from "@/features/asset-workspace/components/ScreenPlaceholder";
+import { LocationsView } from "@/features/asset-workspace/components/locations/LocationsView";
+import { getLocations } from "@/features/asset-workspace/services/asset-locations-api";
 
-export default function LocationsPage() {
-  return (
-    <ScreenPlaceholder
-      title="Locations"
-      spec="05 §4.8"
-    />
-  );
+// Filters run on the client over the full list (Core `locations` has no query params).
+export default async function LocationsPage() {
+  return <LocationsView locations={await getLocations()} />;
 }

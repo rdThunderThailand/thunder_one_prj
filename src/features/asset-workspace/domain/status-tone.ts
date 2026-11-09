@@ -2,6 +2,7 @@ import type { AssetCondition } from "./asset-condition.ts";
 import type { AssetStatus } from "./asset-status.ts";
 import type { RowResult, Severity } from "./asset-import-types.ts";
 import type { InventoryResult, SessionStatus, WarrantyStatus } from "./report.ts";
+import type { LocationStatus } from "./location.ts";
 
 /** ADR 0098 §3 (DS-04) — the one place that picks a colour for a status or condition.
  *  Tones are the shared Badge colours: green = success, blue = info, yellow = warning,
@@ -56,4 +57,10 @@ export const WARRANTY_TONE: Record<WarrantyStatus, StatusTone> = {
   "Expiring Soon": "yellow",
   Expired: "red",
   "No Warranty": "zinc",
+};
+
+/** Location master status (05 §4.8). Inactive is an admin state, not an alert. */
+export const LOCATION_STATUS_TONE: Record<LocationStatus, StatusTone> = {
+  Active: "green",
+  Inactive: "zinc",
 };

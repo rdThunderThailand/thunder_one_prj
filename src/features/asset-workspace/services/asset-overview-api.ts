@@ -2,8 +2,8 @@
 // like asset-list-api.ts: the token comes from the session cookie and is passed in. Each call
 // fails open to `null` so one missing endpoint shows that widget's error state, not a broken page.
 //
-// All six are Core v2 reads under `/api/core/v2/tenants/{id}/asset-workspace/`: `assets/summary` and
-// `assets/list` are on `develop`; `categories`, `locations`, `warranties/expiring` and `activity` are not yet.
+// All six are Core v2 reads under `/api/core/v2/tenants/{id}/asset-workspace/`: `assets/summary`, `assets/list`,
+// `categories`, `locations` and `warranties/expiring` are on `develop`; `activity` is not yet.
 import { env } from "@/config/env";
 import type { AssetStatus } from "../domain/asset-status";
 import { ATTENTION_LIMIT, ATTENTION_WARRANTY_DAYS, type AttentionRow, type BreakdownInput } from "../domain/overview";

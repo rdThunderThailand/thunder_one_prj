@@ -56,12 +56,6 @@ export function AssetReportView({
   data: AssetListData | null;
   filters: AssetFilterOptions | null;
 }) {
-  const list = useListUrlState();
-  const searchParams = useSearchParams();
-  // AssetsFilters reads only get / set / isPending. Our router-push URL state makes the server page re-fetch
-  // the KPIs and charts too; the Assets page's own hook only rewrites history, which would leave them stale.
-  const url: AssetsListUrlState = { ...list, search: searchParams.toString(), clear: noop, closeScan: noop };
-
   return (
     <div className="@container space-y-3 p-6">
       <PageHeader
@@ -71,8 +65,51 @@ export function AssetReportView({
       />
       {slots.nav}
       {slots.summary}
+      <AssetsTableSection
+        data={data}
+        filters={filters}
+        lifecycleColumns={lifecycleColumns}
+      />
+    </div>
+  );
+}
+
+/** Assets page filters + table + pagination over URL state, read-only (no selection). Shared by the Reports asset tabs
+ *  and the Location Detail Assets tab, which passes `lockedLocationId`: the Location filter then shows that location and
+ *  ignores changes (the server page always queries it). */
+export function AssetsTableSection({
+  data,
+  filters,
+  lifecycleColumns = false,
+  lockedLocationId,
+}: {
+  data: AssetListData | null;
+  filters: AssetFilterOptions | null;
+  lifecycleColumns?: boolean;
+  lockedLocationId?: string;
+}) {
+  const list = useListUrlState();
+  const searchParams = useSearchParams();
+  // AssetsFilters reads only get / set / isPending. Our router-push URL state makes the server page re-fetch
+  // the KPIs and charts too; the Assets page's own hook only rewrites history, which would leave them stale.
+  const url: AssetsListUrlState = {
+    ...list,
+    get: (key) => (lockedLocationId && key === "location_id" ? lockedLocationId : list.get(key)),
+    set: (updates) => {
+      if (lockedLocationId) delete updates.location_id;
+      list.set(updates);
+    },
+    search: searchParams.toString(),
+    clear: noop,
+    closeScan: noop,
+  };
+  const options =
+    filters && lockedLocationId ? { ...filters, locations: filters.locations.filter((l) => l.id === lockedLocationId) } : filters;
+
+  return (
+    <>
       <AssetsFilters
-        result={filters ? { ok: true, data: filters } : null}
+        result={options ? { ok: true, data: options } : null}
         url={url}
       />
       <section
@@ -96,7 +133,7 @@ export function AssetReportView({
             {lifecycleColumns ? (
               <LifecycleTable rows={data.rows} />
             ) : (
-              // Reports are read-only: no bulk actions, so selection stays off.
+              // Read-only: no bulk actions, so selection stays off.
               <AssetsTable
                 rows={data.rows}
                 selected={NO_SELECTION}
@@ -118,7 +155,7 @@ export function AssetReportView({
           </div>
         )}
       </section>
-    </div>
+    </>
   );
 }
 

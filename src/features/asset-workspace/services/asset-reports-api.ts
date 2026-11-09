@@ -20,7 +20,7 @@ export async function reportAuth() {
   return token && tenantId ? { token, tenantId } : null;
 }
 
-async function reportGet<T>(path: string, token: string): Promise<ReportResult<T>> {
+export async function reportGet<T>(path: string, token: string): Promise<ReportResult<T>> {
   try {
     const res = await fetch(`${env.coreApiUrl}/api/core/v2${path}`, {
       headers: { "x-api-key": env.coreApiKey, Authorization: `Bearer ${token}` },
