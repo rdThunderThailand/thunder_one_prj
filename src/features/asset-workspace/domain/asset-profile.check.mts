@@ -34,10 +34,10 @@ assert.equal(fileSize(24_000), "23 KB");
 assert.equal(fileSize(1_013_880), "990 KB");
 assert.equal(fileSize(2_500_000), "2.4 MB");
 
-// Detail from a Core without PR A still parses; PR A fields default.
+// Nullable fields and the current Core detail contract.
 const legacy = assetDetailSchema.parse({
-  id, name: "Laptop", assetTag: "AST-000011", serialNumber: null, category: null, location: { id, name: "Lobby 1" },
-  custody: { type: "person", id, name: "Nie Napat" }, lifecycleStatus: "Assigned", condition: "Good",
+  id, name: "Laptop", assetTag: "AST-000011", serialNumber: null, category: null, categoryPath: [], qrValue: null, location: { id, name: "Lobby 1" },
+  custody: { type: "person", id, name: "Nie Napat", avatarUrl: null, department: null }, lifecycleStatus: "Assigned", condition: "Good",
   acquisitionDate: null, registrationDate: "2026-11-03T05:10:00Z", updatedAt: "2026-11-03T05:10:00Z", notes: null,
 });
 assert.deepEqual(legacy.locationPath, []);
@@ -45,11 +45,11 @@ assert.equal(legacy.description, null);
 assert.equal(legacy.custody?.since, null);
 assert.equal(legacy.currentWarranty, null);
 
-// PR A detail, files, warranties and activity as documented.
+// Detail, files, warranties and activity as documented.
 const detail = assetDetailSchema.parse({
   ...legacy, description: "Lobby display", locationPath: [{ id, name: "Head Office" }, { id, name: "Lobby 1" }],
-  custody: { type: "org_unit", id, name: "IT Team", since: "2026-11-03T05:10:00Z" },
-  currentWarranty: { id, provider: "Samsung", type: null, startDate: "2024-01-15", endDate: "2027-01-14", referenceNo: null, coverageNote: null, status: null },
+  custody: { type: "org_unit", id, name: "IT Team", since: "2026-11-03T05:10:00Z", avatarUrl: null, department: null },
+  currentWarranty: { id, provider: "Samsung", type: null, startDate: "2024-01-15", endDate: "2027-01-14", referenceNo: null, coverageNote: null, status: null, expiryStatus: "Active" },
 });
 assert.equal(detail.custody?.since, "2026-11-03T05:10:00Z");
 assert.equal(detail.locationPath.length, 2);

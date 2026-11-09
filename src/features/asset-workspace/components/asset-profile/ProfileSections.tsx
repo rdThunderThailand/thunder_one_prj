@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { profileWarranty } from "../../domain/asset-profile-display.mts";
 import { ChevronDownIcon, FileTextIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
-import { activityLabel, fileSize, warrantyState } from "../../domain/asset-profile";
+import { fileSize } from "../../domain/asset-profile";
 import { getAssetWarranties } from "../../services/asset-profile-api";
 import type { AssetDetail, AssetFile, AssetFiles, AssetWarranty } from "../../services/asset-profile-contract";
 import type { AssetReadResult } from "../../services/assets-list-types";
-import { useAssetActivity, useProfileRead } from "../../hooks/use-asset-profile";
+import { useProfileRead } from "../../hooks/use-asset-profile";
 import { AssetThumbnail } from "../AssetThumbnail";
-import { formatDate, formatDateTime, ProfileRows, ProfileSection, SectionLoading, SectionMessage, todayInBangkok } from "./ProfileParts";
+import { formatDate, ProfileRows, ProfileSection, SectionLoading, SectionMessage } from "./ProfileParts";
+import { ProfileFilesLoading } from "./AssetProfileLoading";
 
 type FilesResult = { result: AssetReadResult<AssetFiles> | null; pending: boolean; reload: () => void };
 type WarrantyFields = Pick<AssetWarranty, "id" | "provider" | "type" | "startDate" | "endDate" | "referenceNo" | "coverageNote" | "status">;
@@ -53,12 +55,12 @@ function RetryMessage({ message, onRetry, pending }: { message: string | null; o
   );
 }
 
-export function FilesSection({ files }: { files: FilesResult }) {
+export function FilesSection({ files, onPhotoFailed }: { files: FilesResult; onPhotoFailed: () => void }) {
   const data = files.result?.ok ? files.result.data : null;
   const count = data ? data.photos.length + data.documents.length : null;
   return (
     <ProfileSection title="Photos & files" meta={count ?? undefined}>
-      {!data ? files.pending ? <SectionLoading /> : (
+      {!data ? files.pending ? <ProfileFilesLoading /> : (
         <RetryMessage message={files.result && !files.result.ok ? files.result.message : null} onRetry={files.reload} />
       ) : (
         <div className="space-y-4">
@@ -72,7 +74,7 @@ export function FilesSection({ files }: { files: FilesResult }) {
                       href={photo.url ?? undefined} target="_blank" rel="noopener noreferrer" aria-label={`Open ${photo.filename}`}
                       className="block rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <AssetThumbnail src={photo.thumbnailUrl ?? photo.url} alt={photo.filename} className="aspect-square w-full" iconClassName="size-6" />
+                      <AssetThumbnail src={photo.thumbnailUrl ?? photo.url} alt={photo.filename} className="aspect-square w-full" iconClassName="size-6" onFailed={onPhotoFailed} />
                     </a>
                   </li>
                 ))}
@@ -93,8 +95,8 @@ function warrantyDocuments(files: FilesResult, warrantyId: string) {
   return files.result?.ok ? files.result.data.warrantyDocuments.filter((document) => document.warrantyId === warrantyId) : [];
 }
 
-function WarrantyCard({ warranty, files, today }: { warranty: WarrantyFields; files: FilesResult; today: string }) {
-  const state = warrantyState(warranty.endDate, today);
+function WarrantyCard({ warranty, files, expiryStatus }: { warranty: WarrantyFields; files: FilesResult; expiryStatus?: NonNullable<AssetDetail["currentWarranty"]>["expiryStatus"] }) {
+  const state = expiryStatus ? profileWarranty(expiryStatus) : null;
   const documents = warrantyDocuments(files, warranty.id);
   return (
     <div className="space-y-3">
@@ -105,7 +107,7 @@ function WarrantyCard({ warranty, files, today }: { warranty: WarrantyFields; fi
             {formatDate(warranty.startDate)} – {warranty.endDate ? formatDate(warranty.endDate) : "no end date"}
           </p>
         </div>
-        <Badge variant="pill" color={state.tone}>{state.label}</Badge>
+        {state && <Badge variant="pill" color={state.tone}>{state.label}</Badge>}
       </div>
       <ProfileRows rows={[
         { label: "Type", value: warranty.type || "—" },
@@ -114,6 +116,7 @@ function WarrantyCard({ warranty, files, today }: { warranty: WarrantyFields; fi
         { label: "Coverage note", value: warranty.coverageNote || "—", wide: true },
       ]} />
       {documents.length > 0 && <FileList files={documents} />}
+      {files.result && !files.result.ok && <RetryMessage message="Warranty documents could not be loaded." onRetry={files.reload} pending={files.pending} />}
     </div>
   );
 }
@@ -124,10 +127,9 @@ export function WarrantySection({ context, assetId, current, files }: {
   const [open, setOpen] = useState(false);
   const history = useProfileRead(`${context}:${assetId}:warranties`, (signal) => getAssetWarranties(context, assetId, signal), open);
   const earlier = history.result?.ok ? history.result.data.filter((warranty) => !warranty.isCurrent) : [];
-  const today = todayInBangkok();
   return (
     <ProfileSection title="Warranty">
-      {current ? <WarrantyCard warranty={current} files={files} today={today} /> : <SectionMessage>No current warranty is recorded.</SectionMessage>}
+      {current ? <WarrantyCard warranty={current} files={files} expiryStatus={current.expiryStatus} /> : <SectionMessage>No current warranty is recorded.</SectionMessage>}
       <details className={`${disclosure} mt-3`} onToggle={(event) => { if (event.currentTarget.open) setOpen(true); }}>
         <summary className={summaryClass}>
           Earlier warranties
@@ -138,48 +140,9 @@ export function WarrantySection({ context, assetId, current, files }: {
             <RetryMessage message={history.result.message} onRetry={history.reload} pending={history.pending} />
           ) : earlier.length ? earlier.map((warranty) => (
             <div key={warranty.id} className="rounded-control border border-border p-3">
-              <WarrantyCard warranty={warranty} files={files} today={today} />
+              <WarrantyCard warranty={warranty} files={files} />
             </div>
           )) : <SectionMessage>No earlier warranties.</SectionMessage>}
-        </div>
-      </details>
-    </ProfileSection>
-  );
-}
-
-export function HistorySection({ context, assetId }: { context: string; assetId: string }) {
-  const [open, setOpen] = useState(false);
-  const activity = useAssetActivity(context, assetId, open);
-  return (
-    <ProfileSection title="History" meta={activity.total || undefined}>
-      <details className={disclosure} onToggle={(event) => { if (event.currentTarget.open) setOpen(true); }}>
-        <summary className={summaryClass}>
-          <span className="group-open/disclosure:hidden">Show history</span>
-          <span className="hidden group-open/disclosure:inline">Hide history</span>
-          <DisclosureChevron />
-        </summary>
-        <div className="mt-3 space-y-3">
-          {activity.entries.length > 0 && (
-            <ol className="relative space-y-4 before:absolute before:top-2 before:bottom-2 before:left-[5px] before:w-px before:bg-border">
-              {activity.entries.map((entry, index) => (
-                <li key={entry.id} className="relative grid min-w-0 gap-1 pl-6 @min-xl/profile-section:grid-cols-[minmax(0,1fr)_auto] @min-xl/profile-section:gap-x-4">
-                  <span aria-hidden="true" className={`absolute top-1.5 left-0 size-[11px] rounded-full border-2 border-card ${index === 0 ? "bg-primary" : "bg-border"}`} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold leading-relaxed text-foreground">{activityLabel(entry.action, entry.summary)}</p>
-                    {entry.actorName && <p className="text-xs text-muted-foreground">by {entry.actorName}</p>}
-                    {entry.reason && <p className="mt-1 text-xs wrap-anywhere text-foreground">Reason: {entry.reason}</p>}
-                  </div>
-                  <time dateTime={entry.at} className="text-xs tabular-nums text-muted-foreground @min-xl/profile-section:text-right">{formatDateTime(entry.at)}</time>
-                </li>
-              ))}
-            </ol>
-          )}
-          {activity.pending && <SectionLoading />}
-          {activity.error && <RetryMessage message={activity.error} onRetry={activity.retry} />}
-          {!activity.pending && !activity.error && !activity.entries.length && <SectionMessage>No history yet.</SectionMessage>}
-          {activity.hasMore && !activity.pending && !activity.error && (
-            <Button variant="outline" size="sm" className="max-sm:h-10" onClick={activity.loadMore}>Load more</Button>
-          )}
         </div>
       </details>
     </ProfileSection>
