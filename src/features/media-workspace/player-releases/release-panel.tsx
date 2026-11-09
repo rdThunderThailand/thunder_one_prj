@@ -11,6 +11,7 @@ import {
   preparePlayerRelease,
   registerPlayerRelease,
 } from "./actions";
+import { ReleaseAdmission } from "./release-admission";
 
 type ReleaseList = Awaited<ReturnType<typeof listPlayerReleases>>;
 type Draft = {
@@ -134,6 +135,11 @@ export function ReleasePanel({ releases }: { releases: ReleaseList }) {
             {releases.data.map((release) => (
               <li key={release.id} className="grid gap-2 border-b border-border pb-4">
                 <p className="font-medium">{release.display_name} · {release.version}</p>
+                <ReleaseAdmission
+                  downloadId={release.id}
+                  label={`${release.display_name} ${release.version}`}
+                  admitted={release.admitted ?? undefined}
+                />
                 <ul className="grid justify-items-start gap-2">
                   {release.files.map((file) => (
                     <li key={file.name} className="min-w-0">
