@@ -32,7 +32,7 @@ export function RegistrationPhotos({ photos, errors, rules, needsReselection, on
           event.target.value = "";
         }}
       />
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-2">
         {saved.map((file) => (
           <div key={file.id} className="min-w-0 space-y-2 rounded-control border border-border p-2 text-xs">
             <p className="break-words">{file.filename}</p>
@@ -82,7 +82,7 @@ export function RegistrationPhotos({ photos, errors, rules, needsReselection, on
             variant="outline"
             className={cn(
               "h-auto min-h-32 flex-col gap-2 whitespace-normal border-dashed border-primary/30 bg-accent/30 p-4 text-accent-foreground hover:bg-accent",
-              !photos.length && !saved.length && "col-span-2 min-h-40",
+              !photos.length && !saved.length && "col-span-full min-h-40",
             )}
             disabled={!rules}
             aria-describedby="registration-photo-rules registration-photo-state"

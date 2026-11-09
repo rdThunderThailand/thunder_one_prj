@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AssetActionError } from "../domain/asset-action-error";
-import { assertLabelFormat, labelFailure, labelScope, type AssetLabel, type LabelCandidate, type LabelFormat } from "../domain/asset-labels";
+import { assertLabelFormat, DEFAULT_LABEL_FIELDS, DEFAULT_LABEL_FORMAT, labelFailure, labelScope, type AssetLabel, type LabelCandidate, type LabelField, type LabelFields, type LabelFormat } from "../domain/asset-labels";
 import { prepareAssetLabels } from "../services/asset-label-preparation";
 import { downloadBlob } from "../services/asset-import-template";
 import { printAssetLabelsPdf } from "../services/asset-label-print";
@@ -15,9 +15,10 @@ type LabelState = {
   completed: number; file: LabelFile | null; error: AssetActionError | null;
   preparation: { tools: boolean; data: boolean };
   format: LabelFormat;
+  fields: LabelFields;
 };
 const empty = (key: string): LabelState => ({
-  key, scope: [], labels: [], phase: null, completed: 0, file: null, error: null, format: "qr",
+  key, scope: [], labels: [], phase: null, completed: 0, file: null, error: null, format: DEFAULT_LABEL_FORMAT, fields: DEFAULT_LABEL_FIELDS,
   preparation: { tools: false, data: false },
 });
 
@@ -82,6 +83,11 @@ export function useAssetLabels(context: string, viewKey: string) {
     setState({ ...current, format, file: null, completed: 0, error });
   }
 
+  function setField(field: LabelField, checked: boolean) {
+    if (current.phase !== "preview" || controllerRef.current) return;
+    setState({ ...current, fields: { ...current.fields, [field]: checked }, file: null, completed: 0 });
+  }
+
   async function generate() {
     const guard = scopeRef.current;
     if (!current.labels.length || controllerRef.current || !guard?.active || guard.key !== key) return;
@@ -92,7 +98,7 @@ export function useAssetLabels(context: string, viewKey: string) {
     try {
       const { createAssetLabelsPdf } = await import("../services/asset-label-pdf");
       controller.signal.throwIfAborted();
-      const file = await createAssetLabelsPdf(current.labels, current.format, controller.signal, (completed) => {
+      const file = await createAssetLabelsPdf(current.labels, current.format, current.fields, controller.signal, (completed) => {
         if (isCurrent()) setState((previous) => ({ ...previous, completed }));
       });
       if (isCurrent()) setState({ ...current, phase: "ready", completed: current.labels.length + 1, file, error: null });
@@ -117,7 +123,7 @@ export function useAssetLabels(context: string, viewKey: string) {
     } catch { setState({ ...current, error: new AssetActionError("Allow pop-ups to open the PDF, or download it and print from your PDF viewer.") }); }
   }
 
-  return { ...current, open, close, setFormat, generate, download, print,
+  return { ...current, open, close, setFormat, setField, generate, download, print,
     retry: () => void load(current.scope), restoreFocus: () => triggerRef.current?.focus() };
 }
 

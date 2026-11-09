@@ -48,7 +48,7 @@ export function AssetsListView({ context }: { context: string }) {
   function openLabels(trigger: HTMLButtonElement | null) {
     if (!exportReady) return false;
     const candidates = (list.data?.rows ?? []).filter((row) => selection.selected.has(row.id))
-      .map((row) => ({ id: row.id, name: row.name, assetTag: row.asset_code, status: row.status }));
+      .map((row) => ({ id: row.id, name: row.name, assetTag: row.asset_code, status: row.status, serialNumber: row.serial_number }));
     return labels.open(candidates, trigger);
   }
 

@@ -18,7 +18,7 @@ const response = await getAssetLabels(context, [asset, asset], controller.signal
   assert.deepEqual(options, { context, signal: controller.signal });
   return { labels: [label] };
 });
-assert.deepEqual(response, [label]);
+assert.deepEqual(response, [{ ...label, serialNumber: null }]);
 const invalid = (body: unknown): AssetActionRequester => async () => body;
 for (const body of [
   { labels: [] }, { labels: [label, label] }, { labels: [{ ...label, id: other }] },
@@ -26,8 +26,10 @@ for (const body of [
   { labels: [{ ...label, qrValue: `https://app.example/${tenant}/assets/${other}` }] },
   { labels: [{ ...label, qrValue: id }] },
 ]) await assert.rejects(() => getAssetLabels(context, [asset], controller.signal, invalid(body)), AssetActionError);
+const serial = await getAssetLabels(context, [{ ...asset, serialNumber: "SN-1" }], controller.signal, invalid({ labels: [label] }));
+assert.equal(serial[0].serialNumber, "SN-1", "serial comes from the caller's row, not Core");
 const unicodeLabel = { ...label, assetTag: "แท็ก-001" };
-assert.deepEqual(await getAssetLabels(context, [asset], controller.signal, invalid({ labels: [unicodeLabel] })), [unicodeLabel],
+assert.deepEqual(await getAssetLabels(context, [asset], controller.signal, invalid({ labels: [unicodeLabel] })), [{ ...unicodeLabel, serialNumber: null }],
   "authorized label data remains available for QR-only output; Code128 validation belongs to format selection");
 for (const status of [400, 401, 403, 404, 409, 500]) {
   await assert.rejects(() => getAssetLabels(context, [asset], controller.signal, async () => {

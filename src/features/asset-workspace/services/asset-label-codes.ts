@@ -1,8 +1,9 @@
-import { labelLayout, mmToPoints, type LabelRectangle } from "../domain/asset-label-layout.ts";
+import { LABEL_LAYOUT, mmToPoints, type LabelRectangle } from "../domain/asset-label-layout.ts";
 import { assertLabelFormat, type AssetLabel, type LabelFormat } from "../domain/asset-labels.ts";
 
-function barcodeRectangles(bits: string): LabelRectangle[] {
-  const box = labelLayout("barcode").code;
+type Box = { x: number; y: number; width: number; height: number };
+
+function barcodeRectangles(bits: string, box: Box): LabelRectangle[] {
   const moduleWidth = mmToPoints(box.width) / (bits.length + 20); // Code128 quiet zones: 10 modules per side.
   const rectangles: LabelRectangle[] = [];
   for (let index = 0; index < bits.length;) {
@@ -15,20 +16,18 @@ function barcodeRectangles(bits: string): LabelRectangle[] {
   return rectangles;
 }
 
-/** Public encoder APIs only; preview and PDF share exactly the same vector geometry. */
-export async function assetLabelRectangles(label: AssetLabel, format: LabelFormat): Promise<LabelRectangle[]> {
-  assertLabelFormat([label], format);
-  if (format === "barcode") {
-    const { default: JsBarcode } = await import("jsbarcode");
-    const barcode: { encodings?: { data: string }[] } = {};
-    JsBarcode(barcode, label.assetTag, { format: "CODE128", displayValue: false, margin: 0 });
-    const bits = barcode.encodings?.map((part) => part.data).join("");
-    if (!bits || !/^[01]+$/.test(bits)) throw new Error("Code128 encoding failed");
-    return barcodeRectangles(bits);
-  }
+async function code128Rectangles(assetTag: string, box: Box) {
+  const { default: JsBarcode } = await import("jsbarcode");
+  const barcode: { encodings?: { data: string }[] } = {};
+  JsBarcode(barcode, assetTag, { format: "CODE128", displayValue: false, margin: 0 });
+  const bits = barcode.encodings?.map((part) => part.data).join("");
+  if (!bits || !/^[01]+$/.test(bits)) throw new Error("Code128 encoding failed");
+  return barcodeRectangles(bits, box);
+}
+
+async function qrRectangles(qrValue: string, box: Box) {
   const QRCode = await import("qrcode");
-  const box = labelLayout("qr").code;
-  const qr = QRCode.create(label.qrValue, { errorCorrectionLevel: "M" });
+  const qr = QRCode.create(qrValue, { errorCorrectionLevel: "M" });
   const size = qr.modules.size;
   const unit = mmToPoints(box.width) / (size + 8); // Four-module QR quiet zone.
   const rectangles: LabelRectangle[] = [];
@@ -42,4 +41,15 @@ export async function assetLabelRectangles(label: AssetLabel, format: LabelForma
     }
   }
   return rectangles;
+}
+
+/** Public encoder APIs only; preview and PDF share exactly the same vector geometry. */
+export async function assetLabelRectangles(label: AssetLabel, format: LabelFormat): Promise<LabelRectangle[]> {
+  assertLabelFormat([label], format);
+  const layout: { qr?: Box; barcode?: Box } = LABEL_LAYOUT[format];
+  const [qr, barcode] = await Promise.all([
+    layout.qr ? qrRectangles(label.qrValue, layout.qr) : [],
+    layout.barcode ? code128Rectangles(label.assetTag, layout.barcode) : [],
+  ]);
+  return [...qr, ...barcode];
 }

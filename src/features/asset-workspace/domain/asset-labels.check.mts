@@ -1,7 +1,7 @@
 /** Run: node src/features/asset-workspace/domain/asset-labels.check.mts */
 import assert from "node:assert/strict";
 import { AssetActionError } from "./asset-action-error.ts";
-import { assertLabelFormat, assertLabelTags, assetLabelsFilename, labelFailure, labelScope, type LabelCandidate } from "./asset-labels.ts";
+import { assertLabelFormat, assertLabelTags, DEFAULT_LABEL_FIELDS, DEFAULT_LABEL_FORMAT, LABEL_FORMATS, assetLabelsFilename, labelFailure, labelScope, type LabelCandidate } from "./asset-labels.ts";
 import { LABEL_LAYOUT, LABEL_PAGE, labelNameLines, mmToPoints } from "./asset-label-layout.ts";
 
 const id = (index: number) => `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
@@ -25,10 +25,12 @@ for (const assetTag of ["แท็ก-001", "TAG\n001", "TAG😀"]) {
   assert.throws(() => assertLabelTags([{ ...label, assetTag }]), (error) =>
     error instanceof AssetActionError && error.code === "INVALID_TAG");
 }
-for (const format of ["qr", "barcode"] as const) assert.doesNotThrow(() => assertLabelFormat([label], format));
+for (const format of LABEL_FORMATS) assert.doesNotThrow(() => assertLabelFormat([label], format));
+assert.equal(DEFAULT_LABEL_FORMAT, "both", "AC-031 label (QR + Code128 + name) is the default");
+assert.deepEqual(DEFAULT_LABEL_FIELDS, { assetTag: true, name: true, serialNumber: false }, "PO default fields: Asset Tag + Asset Name");
 assert.doesNotThrow(() => assertLabelFormat([{ ...label, assetTag: "แท็ก-001" }], "qr"));
-assert.throws(() => assertLabelFormat([{ ...label, assetTag: "แท็ก-001" }], "barcode"), /Code128/);
-assert.throws(() => assertLabelFormat([label], "both" as never), /Choose QR Code or Barcode/);
+for (const format of ["barcode", "both"] as const) assert.throws(() => assertLabelFormat([{ ...label, assetTag: "แท็ก-001" }], format), /Code128/);
+assert.throws(() => assertLabelFormat([label], "sheet" as never), /Choose a label type/);
 const conflict = labelFailure({ status: 409, code: "INVALID_STATE", details: { assetIds: [id(1), id(99)] } }, [asset]);
 assert.deepEqual(conflict.assetNames, [asset.name], "never reveal a name outside the requested scope");
 for (const status of [400, 401, 403, 404, 500]) {
@@ -50,4 +52,7 @@ assert.equal(lines.length, 2);
 assert.ok(lines.every((line) => graphemes(line) <= 6));
 assert.ok(lines[1].endsWith("…"));
 assert.equal(labelNameLines("", graphemes, 100)[0], "Unnamed asset");
+const single = labelNameLines("กำลังทดสอบจอภาพที่มีชื่อยาวมาก", graphemes, 6, 1);
+assert.equal(single.length, 1);
+assert.ok(single[0].endsWith("…") && graphemes(single[0]) <= 6);
 console.log("Labels: scope, 500-ID cap, atomic eligibility, errors, Thai wrapping and print dimensions passed.");

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Icon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Card } from "@/components/ui/Card";
 import { ASSET_CONDITIONS, type AssetCondition } from "../../domain/asset-condition";
 import { ASSET_STATUSES, type AssetStatus } from "../../domain/asset-status";
 import { ConditionBadge, StatusBadge } from "../StatusBadges";
@@ -26,10 +27,10 @@ export function todayInBangkok(): string {
 }
 
 /** Shared profile surface with a consistent heading and content spacing. */
-export function ProfileSection({ title, meta, action, children }: { title: string; meta?: ReactNode; action?: ReactNode; children: ReactNode }) {
+export function ProfileSection({ title, meta, action, children, headingHidden = false }: { title: string; meta?: ReactNode; action?: ReactNode; children: ReactNode; headingHidden?: boolean }) {
   return (
-    <section aria-label={title} className="@container/profile-section min-w-0 rounded-card border border-border bg-card p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <Card role="region" aria-label={title} className="@container/profile-section min-w-0 p-4 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none">
+      <div className={headingHidden ? "sr-only" : "mb-3 flex flex-wrap items-center justify-between gap-2"}>
         <h2 className="flex items-baseline gap-2 text-sm font-semibold text-foreground">
           {title}
           {meta && <span className="text-xs font-normal tabular-nums text-muted-foreground">{meta}</span>}
@@ -37,19 +38,19 @@ export function ProfileSection({ title, meta, action, children }: { title: strin
         {action}
       </div>
       {children}
-    </section>
+    </Card>
   );
 }
 
 export interface ProfileRow { label: string; value: ReactNode; wide?: boolean }
 
-/** Ruled label/value rows; long text spans both columns on wide cards. */
-export function ProfileRows({ rows }: { rows: ProfileRow[] }) {
+/** Label/value rows; the header summary omits the Overview's row rules. */
+export function ProfileRows({ rows, separators = true }: { rows: ProfileRow[]; separators?: boolean }) {
   return (
-    <dl className="grid border-t border-border @min-3xl/profile-section:grid-cols-2 @min-3xl/profile-section:gap-x-6">
+    <dl className={`min-w-0 ${separators ? "divide-y divide-border" : ""}`}>
       {rows.map((row) => (
-        <div key={row.label} className={`grid min-w-0 gap-1 border-b border-border py-3 @min-xs/profile-section:grid-cols-[minmax(0,7rem)_minmax(0,1fr)] @min-xs/profile-section:items-baseline @min-xs/profile-section:gap-3 ${row.wide ? "@min-3xl/profile-section:col-span-2" : ""}`}>
-          <dt className="text-xs font-medium text-foreground">{row.label}</dt>
+        <div key={row.label} className="grid min-w-0 gap-1 py-2 @min-xs/profile-section:grid-cols-[minmax(0,7rem)_minmax(0,1fr)] @min-xs/profile-section:items-baseline @min-xs/profile-section:gap-3">
+          <dt className="text-xs text-muted-foreground">{row.label}</dt>
           <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere text-xs leading-relaxed text-foreground">{row.value}</dd>
         </div>
       ))}
@@ -60,15 +61,15 @@ export function ProfileRows({ rows }: { rows: ProfileRow[] }) {
 /** One of the header's key facts (05 §4.2: where it is, who is responsible). */
 export function Fact({ icon: FactIcon, label, value, detail }: { icon: Icon; label: string; value: ReactNode; detail?: ReactNode }) {
   return (
-    <div className="flex min-w-0 items-start gap-2">
-      <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
+    <div className="grid min-w-0 grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)] items-start gap-2">
+      <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-control bg-muted text-primary">
         <FactIcon className="size-5" />
       </span>
-      <div className="min-w-0 space-y-0.5">
-        <dt className="text-xs font-medium text-foreground">{label}</dt>
-        <dd className="text-xs font-semibold leading-relaxed wrap-anywhere text-foreground">{value}</dd>
-        {detail && <dd className="text-xs wrap-anywhere text-muted-foreground">{detail}</dd>}
-      </div>
+      <dt className="min-w-0 pt-1 text-xs leading-relaxed text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 space-y-1 pt-1 text-xs leading-relaxed wrap-anywhere text-foreground">
+        {value}
+        {detail && <span className="block text-xs wrap-anywhere text-muted-foreground">{detail}</span>}
+      </dd>
     </div>
   );
 }

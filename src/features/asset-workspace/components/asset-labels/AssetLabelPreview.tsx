@@ -4,18 +4,21 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { SpinnerIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { labelLayout, LABEL_PAGE, mmToPoints, type LabelRectangle } from "../../domain/asset-label-layout";
-import { labelFormatName, type AssetLabel, type LabelFormat } from "../../domain/asset-labels";
+import { LABEL_FIELDS, labelFormatName, type AssetLabel, type LabelFields, type LabelFormat } from "../../domain/asset-labels";
 
-type Preview = { label: AssetLabel; format: LabelFormat; rectangles: LabelRectangle[]; textUrl: string };
+type Preview = { label: AssetLabel; format: LabelFormat; design: string; rectangles: LabelRectangle[]; textUrl: string };
 export type LabelPreviewStatus = "loading" | "ready" | "error";
 
-export function AssetLabelPreview({ label, format, onStatus }: { label: AssetLabel; format: LabelFormat; onStatus: (status: LabelPreviewStatus) => void }) {
-  const cache = useRef(new Map<LabelFormat, Preview>());
+export function AssetLabelPreview({ label, format, fields, onStatus }: {
+  label: AssetLabel; format: LabelFormat; fields: LabelFields; onStatus: (status: LabelPreviewStatus) => void;
+}) {
+  const design = `${format}:${LABEL_FIELDS.filter((field) => fields[field]).join(",")}`;
+  const cache = useRef(new Map<string, Preview>());
   const [snapshot, setSnapshot] = useState<Preview | null>(null);
-  const [failure, setFailure] = useState<{ label: AssetLabel; format: LabelFormat; version: number } | null>(null);
+  const [failure, setFailure] = useState<{ label: AssetLabel; design: string; version: number } | null>(null);
   const [version, setVersion] = useState(0);
   const reportStatus = useEffectEvent(onStatus);
-  // At most two artworks for the current asset; never persist them between dialogs.
+  // Artworks for the current asset only; never persist them between dialogs.
   useEffect(() => {
     const entries = cache.current;
     return () => {
@@ -28,7 +31,7 @@ export function AssetLabelPreview({ label, format, onStatus }: { label: AssetLab
     let active = true;
     let textUrl = "";
     let cached = false;
-    const existing = cache.current.get(format);
+    const existing = cache.current.get(design);
     if (existing?.label === label) {
       void Promise.resolve().then(() => {
         if (!active) return;
@@ -43,15 +46,15 @@ export function AssetLabelPreview({ label, format, onStatus }: { label: AssetLab
       const [{ assetLabelRectangles }, { renderAssetLabelText }] = await Promise.all([
         import("../../services/asset-label-codes"), import("../../services/asset-label-text"),
       ]);
-      const [rectangles, text] = await Promise.all([assetLabelRectangles(label, format), renderAssetLabelText(label, format)]);
+      const [rectangles, text] = await Promise.all([assetLabelRectangles(label, format), renderAssetLabelText(label, format, fields)]);
       if (!active) return;
       textUrl = URL.createObjectURL(new Blob([new Uint8Array(text)], { type: "image/png" }));
       const artwork = new window.Image();
       artwork.src = textUrl;
       await artwork.decode();
       if (!active) return;
-      const next = { label, format, rectangles, textUrl };
-      cache.current.set(format, next);
+      const next = { label, format, design, rectangles, textUrl };
+      cache.current.set(design, next);
       cached = true;
       setFailure(null);
       setSnapshot(next);
@@ -60,7 +63,7 @@ export function AssetLabelPreview({ label, format, onStatus }: { label: AssetLab
       if (active) {
         if (textUrl) URL.revokeObjectURL(textUrl);
         textUrl = "";
-        setFailure({ label, format, version });
+        setFailure({ label, design, version });
         reportStatus("error");
       }
     });
@@ -69,19 +72,19 @@ export function AssetLabelPreview({ label, format, onStatus }: { label: AssetLab
       // Completed artwork belongs to the cache; interrupted work belongs to this request.
       if (textUrl && !cached) URL.revokeObjectURL(textUrl);
     };
-  }, [label, format, version]);
+  }, [label, format, fields, design, version]);
   const artwork = snapshot?.label === label ? snapshot : null;
-  const failed = failure?.label === label && failure.format === format && failure.version === version;
-  const pending = artwork?.format !== format && !failed;
+  const failed = failure?.label === label && failure.design === design && failure.version === version;
+  const pending = artwork?.design !== design && !failed;
   const box = artwork ? labelLayout(artwork.format).text : null;
   return (
-    <figure className="space-y-3" aria-busy={pending}>
-      <div className="overflow-hidden rounded-control border border-border bg-card p-3">
+    <figure className="space-y-2" aria-busy={pending}>
+      <div className="overflow-hidden rounded-control border border-border bg-card p-2 shadow-control">
         <div className="relative aspect-[5/3] w-full">
           {artwork && box ? (
             // Print artwork: black ink, white stock. Its layout also drives the PDF.
             <svg
-              key={artwork.format}
+              key={artwork.design}
               viewBox={`0 0 ${LABEL_PAGE.width} ${LABEL_PAGE.height}`}
               className={`absolute inset-0 h-full w-full animate-in fade-in duration-200 ease-out motion-reduce:animate-none ${pending || failed ? "opacity-30" : ""}`}
               role="img"
@@ -109,10 +112,9 @@ export function AssetLabelPreview({ label, format, onStatus }: { label: AssetLab
           )}
         </div>
       </div>
-      <figcaption className="space-y-1 text-center text-xs">
-        <p className="font-medium wrap-anywhere">{label.name || "Unnamed asset"}</p>
-        <p className="text-muted-foreground">50 × 30 mm · {labelFormatName(format)} · Asset Tag · Asset Name</p>
-        <p role="status" aria-live="polite" className="min-h-5 text-muted-foreground">
+      <figcaption className="text-center text-xs">
+        <p className="truncate font-medium text-foreground">{label.name || "Unnamed asset"}</p>
+        <p role="status" aria-live="polite" className="sr-only">
           {pending ? `Preparing ${labelFormatName(format)} preview…` : failed ? "Preview not ready" : "Preview ready"}
         </p>
       </figcaption>
