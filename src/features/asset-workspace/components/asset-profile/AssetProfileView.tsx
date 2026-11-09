@@ -15,12 +15,27 @@ import { ProfileRail } from "./ProfileRail";
 import { ProfileOverview } from "./ProfileOverview";
 import { ProfileActions, DisabledHint } from "./ProfileControls";
 import { AssetProfileLoading } from "./AssetProfileLoading";
+import { Button } from "@/components/ui/lovable/button";
+import { AssetFilesEditDialog } from "./AssetFilesEditDialog";
+import type { AssetFilesSnapshot } from "../../hooks/use-asset-files-edit";
+import type { AssetFileKind } from "../../domain/asset-files-edit";
+import type { ChangedAssetFiles } from "../../services/asset-files-change";
+import type { AssetDetail } from "../../services/asset-profile-contract";
+
+type FileEditorSession = { id: string; kind: AssetFileKind; removeId?: string; trigger: HTMLButtonElement; snapshot: AssetFilesSnapshot };
 
 export function AssetProfileView({ context, assetId }: { context: string; assetId: string }) {
-  const detail = useProfileRead(`${context}:${assetId}:detail`, (signal) => getAssetDetail(context, assetId, signal));
-  const files = useProfileRead(`${context}:${assetId}:files`, (signal) => getAssetFiles(context, assetId, signal));
+  const [revision, setRevision] = useState(0);
+  const [known, setKnown] = useState<AssetFilesSnapshot | null>(null);
+  const [editor, setEditor] = useState<FileEditorSession | null>(null);
+  const view = useRef<HTMLDivElement>(null);
+  const detail = useProfileRead(`${context}:${assetId}:detail:${revision}`, (signal) => getAssetDetail(context, assetId, signal));
+  const files = useProfileRead(`${context}:${assetId}:files:${revision}`, (signal) => getAssetFiles(context, assetId, signal));
+  const readsReady = Boolean(detail.result?.ok && files.result?.ok && !detail.pending && !files.pending);
+  const viewFiles = { ...files, result: files.result?.ok || !known ? files.result : { ok: true as const, data: known.files },
+    pending: files.pending || detail.pending || Boolean(known && !readsReady) };
   const [tab, setTab] = useState("overview");
-  const expiresAt = files.result?.ok ? files.result.data.expiresAt : null;
+  const expiresAt = viewFiles.result?.ok ? viewFiles.result.data.expiresAt : null;
   const { reload: reloadFiles } = files;
   useEffect(() => {
     if (!expiresAt) return;
@@ -35,22 +50,47 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
     refreshedFor.current = expiresAt;
     reloadFiles();
   }
-  if (!detail.result) return <AssetProfileLoading />;
-  if (!detail.result.ok) {
+  const asset = detail.result?.ok ? detail.result.data : known?.asset;
+  if (!asset && !detail.result) return <AssetProfileLoading />;
+  if (detail.result && !detail.result.ok && (!known || ["NOT_FOUND", "UNAUTHENTICATED", "PERMISSION_DENIED"].includes(detail.result.code ?? ""))) {
     const { code, message } = detail.result;
     return code === "NOT_FOUND" ? <NotFoundState title="Asset not found" body={message} />
       : code === "UNAUTHENTICATED" || code === "PERMISSION_DENIED" ? <AccessDeniedState body={message} />
         : <ErrorState title="Couldn't load this asset" body={message} onRetry={detail.reload} />;
   }
-  const asset = detail.result.data;
-  const photos = files.result?.ok ? files.result.data.photos : [];
+  if (!asset) return <AssetProfileLoading />;
+  const photos = viewFiles.result?.ok ? viewFiles.result.data.photos : [];
+  function openEditor(kind: AssetFileKind, trigger: HTMLButtonElement, removeId?: string) {
+    if (!readsReady || !files.result?.ok || asset!.lifecycleStatus === "Disposed") return;
+    setEditor({ id: crypto.randomUUID(), kind, removeId, trigger, snapshot: { asset: asset!, files: files.result.data } });
+  }
+  function observe(snapshot: AssetFilesSnapshot) {
+    setKnown(snapshot);
+    setRevision((value) => value + 1);
+  }
+  function saved(data: ChangedAssetFiles, baseline: AssetDetail) {
+    if (!editor) return;
+    const { updatedAt, ...nextFiles } = data;
+    observe({ asset: { ...baseline, updatedAt }, files: nextFiles });
+    setEditor(null);
+  }
+  function closeEditor(refresh: boolean) {
+    setEditor(null);
+    if (refresh) { setKnown(null); setRevision((value) => value + 1); }
+  }
   return (
-    <div className="@container/asset-profile min-w-0 space-y-3">
+    <div ref={view} tabIndex={-1} className="@container/asset-profile min-w-0 space-y-3 focus-visible:outline-2 focus-visible:outline-ring">
       <nav aria-label="Breadcrumb" className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <Link href="/asset-workspace/assets" className="inline-flex min-h-8 items-center rounded-control text-accent-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">Assets</Link>
         <ChevronRightIcon aria-hidden="true" className="size-3" />
         <span aria-current="page" className="min-w-0 font-medium wrap-anywhere">{asset.name}</span>
       </nav>
+      {known && (detail.result && !detail.result.ok || files.result && !files.result.ok) && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border bg-muted p-3 text-xs">
+          <p>The latest profile could not be refreshed. File editing is paused until fresh details and files load.</p>
+          <Button variant="outline" size="sm" disabled={detail.pending || files.pending} onClick={() => { detail.reload(); files.reload(); }}>Refresh profile and files</Button>
+        </div>
+      )}
       <div className="grid min-w-0 items-start gap-3 @min-6xl/asset-profile:grid-cols-[minmax(0,1fr)_17rem]">
         <div className="min-w-0 space-y-3">
           <ProfileHero asset={asset} photos={photos} onPhotoFailed={refreshLinks} actions={<ProfileActions context={context} asset={asset} />} />
@@ -70,21 +110,28 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
               })}
             </TabsList>
             <TabsContent value="overview" className="mt-3">
-              <ProfileOverview asset={asset} files={files} onPhotoFailed={refreshLinks} />
+              <ProfileOverview asset={asset} files={viewFiles} onPhotoFailed={refreshLinks} onPhotoEdit={(trigger) => openEditor("photo", trigger)} />
             </TabsContent>
             <TabsContent value="files" className="mt-3">
-              <FilesSection files={files} onPhotoFailed={refreshLinks} />
+              <FilesSection files={viewFiles} onPhotoFailed={refreshLinks} disposed={asset.lifecycleStatus === "Disposed"}
+                onAddDocument={(trigger) => openEditor("document", trigger)} onRemoveDocument={(file, trigger) => openEditor("document", trigger, file.fileId)} />
             </TabsContent>
             <TabsContent value="warranty" className="mt-3">
-              <WarrantySection context={context} assetId={assetId} current={asset.currentWarranty} files={files} />
+              <WarrantySection context={context} assetId={assetId} current={asset.currentWarranty} files={viewFiles} />
             </TabsContent>
             <TabsContent value="history" className="mt-3">
-              <HistorySection context={context} assetId={assetId} />
+              <HistorySection key={revision} context={context} assetId={assetId} />
             </TabsContent>
           </Tabs>
         </div>
         <ProfileRail asset={asset} />
       </div>
+      {editor && (
+        <AssetFilesEditDialog key={editor.id} context={context} snapshot={editor.snapshot} kind={editor.kind} removeId={editor.removeId}
+          liveFiles={viewFiles.result?.ok ? viewFiles.result.data : editor.snapshot.files} onFailed={refreshLinks}
+          onSaved={saved} onObserved={observe} onClose={closeEditor}
+          restoreFocus={() => { if (editor.trigger.isConnected) editor.trigger.focus(); else view.current?.focus(); }} />
+      )}
     </div>
   );
 }

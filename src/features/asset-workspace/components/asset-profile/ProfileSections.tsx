@@ -13,6 +13,7 @@ import { useProfileRead } from "../../hooks/use-asset-profile";
 import { AssetThumbnail } from "../AssetThumbnail";
 import { formatDate, ProfileRows, ProfileSection, SectionLoading, SectionMessage } from "./ProfileParts";
 import { ProfileFilesLoading } from "./AssetProfileLoading";
+import { DisabledHint } from "./ProfileControls";
 
 type FilesResult = { result: AssetReadResult<AssetFiles> | null; pending: boolean; reload: () => void };
 type WarrantyFields = Pick<AssetWarranty, "id" | "provider" | "type" | "startDate" | "endDate" | "referenceNo" | "coverageNote" | "status">;
@@ -24,7 +25,9 @@ function DisclosureChevron() {
   return <ChevronDownIcon aria-hidden="true" className="size-3.5 transition-transform group-open/disclosure:rotate-180 motion-reduce:transition-none" />;
 }
 
-function FileList({ files }: { files: AssetFile[] }) {
+function FileList({ files, onRemove, disabledReason }: {
+  files: AssetFile[]; onRemove?: (file: AssetFile, trigger: HTMLButtonElement) => void; disabledReason?: string;
+}) {
   return (
     <ul className="divide-y divide-border">
       {files.map((file) => (
@@ -40,6 +43,11 @@ function FileList({ files }: { files: AssetFile[] }) {
             )}
             <span className="block text-xs tabular-nums text-muted-foreground">{fileSize(file.sizeBytes)}</span>
           </span>
+          {onRemove && (disabledReason ? (
+            <DisabledHint reason={disabledReason}>
+              <Button variant="outline" size="sm" disabled>Remove</Button>
+            </DisabledHint>
+          ) : <Button variant="outline" size="sm" onClick={(event) => onRemove(file, event.currentTarget)} aria-label={`Remove ${file.filename}`}>Remove</Button>)}
         </li>
       ))}
     </ul>
@@ -55,9 +63,15 @@ function RetryMessage({ message, onRetry, pending }: { message: string | null; o
   );
 }
 
-export function FilesSection({ files, onPhotoFailed }: { files: FilesResult; onPhotoFailed: () => void }) {
+export function FilesSection({ files, onPhotoFailed, disposed, onAddDocument, onRemoveDocument }: {
+  files: FilesResult; onPhotoFailed: () => void; disposed: boolean;
+  onAddDocument: (trigger: HTMLButtonElement) => void; onRemoveDocument: (file: AssetFile, trigger: HTMLButtonElement) => void;
+}) {
   const data = files.result?.ok ? files.result.data : null;
   const count = data ? data.photos.length + data.documents.length : null;
+  const disabledReason = disposed ? "Disposed assets can't have their files changed."
+    : files.pending || !data ? "Wait for the current files to load." : undefined;
+  const addBlocked = disabledReason ?? (data && data.documents.length >= 10 ? "This asset already has 10 documents." : undefined);
   return (
     <ProfileSection title="Photos & files" meta={count ?? undefined}>
       {!data ? files.pending ? <ProfileFilesLoading /> : (
@@ -65,7 +79,7 @@ export function FilesSection({ files, onPhotoFailed }: { files: FilesResult; onP
       ) : (
         <div className="space-y-4">
           <div className="space-y-2">
-            <h3 className="text-xs font-medium text-foreground">Photos</h3>
+            <h3 className="text-xs font-medium text-foreground">Photos ({data.photos.length}/4)</h3>
             {data.photos.length ? (
               <ul aria-label="Photos" className="grid grid-cols-2 gap-2 @min-xs/profile-section:grid-cols-3">
                 {data.photos.map((photo) => (
@@ -82,8 +96,15 @@ export function FilesSection({ files, onPhotoFailed }: { files: FilesResult; onP
             ) : <SectionMessage>No photos.</SectionMessage>}
           </div>
           <div className="space-y-1">
-            <h3 className="text-xs font-medium text-foreground">Documents</h3>
-            {data.documents.length ? <FileList files={data.documents} /> : <SectionMessage>No documents.</SectionMessage>}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-xs font-medium text-foreground">Documents ({data.documents.length}/10)</h3>
+              {addBlocked ? (
+                <DisabledHint reason={addBlocked}>
+                  <Button variant="outline" size="sm" disabled>Add document</Button>
+                </DisabledHint>
+              ) : <Button variant="outline" size="sm" onClick={(event) => onAddDocument(event.currentTarget)}>Add document</Button>}
+            </div>
+            {data.documents.length ? <FileList files={data.documents} onRemove={onRemoveDocument} disabledReason={disabledReason} /> : <SectionMessage>No documents.</SectionMessage>}
           </div>
         </div>
       )}

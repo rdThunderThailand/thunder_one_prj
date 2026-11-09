@@ -55,7 +55,10 @@ export function ProfileFilesLoading() {
         <div className="grid grid-cols-2 gap-2 @min-xs/profile-section:grid-cols-3">
           {[0, 1, 2].map((index) => <Skeleton key={index} className="aspect-square w-full" />)}
         </div>
-        <Skeleton className="h-4 w-24" />
+        <div className="flex items-center justify-between gap-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-28" />
+        </div>
         {[0, 1].map((index) => (
           <div key={index} className="flex items-center gap-3 py-2">
             <Skeleton className="size-8 shrink-0" />
@@ -63,6 +66,7 @@ export function ProfileFilesLoading() {
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-3 w-16" />
             </div>
+            <Skeleton className="h-8 w-20 shrink-0" />
           </div>
         ))}
       </div>

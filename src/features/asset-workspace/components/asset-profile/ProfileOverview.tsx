@@ -16,11 +16,13 @@ import { ProfilePhotoLoading } from "./AssetProfileLoading";
 
 export type ProfileFilesRead = { result: AssetReadResult<AssetFiles> | null; pending: boolean; reload: () => void };
 
-export function ProfileEdit({ asset, onPhotoEdit, photo = false }: { asset: AssetDetail; photo?: boolean; onPhotoEdit?: () => void }) {
+export function ProfileEdit({ asset, onPhotoEdit, photo = false, disabledReason }: {
+  asset: AssetDetail; photo?: boolean; onPhotoEdit?: (trigger: HTMLButtonElement) => void; disabledReason?: string;
+}) {
   const className = "border-primary text-accent-foreground hover:border-accent-foreground hover:bg-accent max-sm:h-10";
-  if (asset.lifecycleStatus === "Disposed" || (photo && !onPhotoEdit)) {
+  if (asset.lifecycleStatus === "Disposed" || disabledReason || (photo && !onPhotoEdit)) {
     return (
-      <DisabledHint reason={asset.lifecycleStatus === "Disposed" ? "Disposed assets can't be edited" : undefined}>
+      <DisabledHint reason={asset.lifecycleStatus === "Disposed" ? "Disposed assets can't be edited" : disabledReason}>
         <Button disabled variant="outline" size="sm" className={className}>
           <EditIcon aria-hidden="true" className="size-4" />
           Edit
@@ -29,7 +31,7 @@ export function ProfileEdit({ asset, onPhotoEdit, photo = false }: { asset: Asse
     );
   }
   return photo ? (
-    <Button variant="outline" size="sm" className={className} onClick={onPhotoEdit}>
+    <Button variant="outline" size="sm" className={className} onClick={(event) => onPhotoEdit?.(event.currentTarget)}>
       <EditIcon aria-hidden="true" className="size-4" />
       Edit
     </Button>
@@ -44,13 +46,14 @@ export function ProfileEdit({ asset, onPhotoEdit, photo = false }: { asset: Asse
 }
 
 export function ProfilePhotos({ asset, files, onFailed, onEdit }: {
-  asset: AssetDetail; files: ProfileFilesRead; onFailed: () => void; onEdit?: () => void;
+  asset: AssetDetail; files: ProfileFilesRead; onFailed: () => void; onEdit?: (trigger: HTMLButtonElement) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const photos = files.result?.ok ? files.result.data.photos : [];
   const active = photos.find((photo) => photo.fileId === selected) ?? photos[0];
   return (
-    <ProfileSection title="Asset Photo" action={<ProfileEdit asset={asset} photo onPhotoEdit={onEdit} />}>
+    <ProfileSection title="Asset Photo" action={<ProfileEdit asset={asset} photo onPhotoEdit={onEdit}
+      disabledReason={files.pending ? "Wait for photos to finish loading." : !files.result?.ok ? "Reload the photos before editing." : undefined} />}>
       {!files.result && files.pending ? <ProfilePhotoLoading /> : files.result && !files.result.ok ? (
         <div className="space-y-2">
           <SectionMessage tone="error">{files.result.message}</SectionMessage>
@@ -84,7 +87,7 @@ export function ProfilePhotos({ asset, files, onFailed, onEdit }: {
 }
 
 export function ProfileOverview({ asset, files, onPhotoFailed, onPhotoEdit }: {
-  asset: AssetDetail; files: ProfileFilesRead; onPhotoFailed: () => void; onPhotoEdit?: () => void;
+  asset: AssetDetail; files: ProfileFilesRead; onPhotoFailed: () => void; onPhotoEdit?: (trigger: HTMLButtonElement) => void;
 }) {
   const category = categoryDisplay(asset.categoryPath);
   return (
