@@ -69,10 +69,10 @@ export function ProfilePhotos({ asset, files, onFailed, onEdit }: {
             </div>
           )}
           {photos.length > 0 && (
-            <div aria-label="Choose asset photo" className="grid grid-cols-4 gap-2">
+            <div aria-label="Choose asset photo" className="flex flex-wrap gap-2">
               {photos.map((photo) => (
-                <button key={photo.fileId} type="button" aria-label={`Show ${photo.filename}`} aria-pressed={active?.fileId === photo.fileId} onClick={() => setSelected(photo.fileId)} className="min-h-8 rounded-control border-2 border-transparent p-0.5 transition-colors hover:border-primary/30 focus-visible:outline-2 focus-visible:outline-ring aria-pressed:border-primary motion-reduce:transition-none">
-                  <AssetThumbnail src={photo.thumbnailUrl ?? photo.url} alt="" className="h-12 w-full object-contain!" onFailed={onFailed} />
+                <button key={photo.fileId} type="button" aria-label={`Show ${photo.filename}`} aria-pressed={active?.fileId === photo.fileId} onClick={() => setSelected(photo.fileId)} className="size-18 shrink-0 rounded-control border-2 border-transparent p-0.5 transition-colors hover:border-primary/30 focus-visible:outline-2 focus-visible:outline-ring aria-pressed:border-primary motion-reduce:transition-none">
+                  <AssetThumbnail src={photo.thumbnailUrl ?? photo.url} alt="" className="h-full w-full object-contain!" onFailed={onFailed} />
                 </button>
               ))}
             </div>

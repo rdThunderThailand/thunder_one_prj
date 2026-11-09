@@ -39,8 +39,8 @@ export function ProfilePhotoLoading() {
     <div role="status" aria-label="Loading asset photos" className="motion-reduce:[&_*]:animate-none">
       <div aria-hidden="true" className="space-y-2">
         <Skeleton className="h-44 w-full" />
-        <div className="grid grid-cols-4 gap-2">
-          {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-14 w-full" />)}
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="size-18 shrink-0" />)}
         </div>
       </div>
     </div>
@@ -97,8 +97,8 @@ export function AssetProfileLoading() {
         <div className="grid min-w-0 items-start gap-3 @min-6xl/asset-profile:grid-cols-[minmax(0,1fr)_17rem]">
           <div className="min-w-0 space-y-3">
             <div className="@container/profile-hero">
-              <div className="grid items-start gap-3 @min-2xl/profile-hero:grid-cols-[9rem_minmax(0,1fr)]">
-                <Skeleton className="h-40 w-36 @min-2xl/profile-hero:h-56 @min-2xl/profile-hero:w-full" />
+              <div className="grid items-start gap-3 @min-2xl/profile-hero:grid-cols-[9rem_minmax(0,1fr)] @min-3xl/profile-hero:grid-cols-[12rem_minmax(0,1fr)]">
+                <Skeleton className="h-48 w-44 @min-2xl/profile-hero:h-56 @min-2xl/profile-hero:w-full" />
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1 basis-64 space-y-2">

@@ -13,11 +13,11 @@ export function ProfileHero({ asset, photos, onPhotoFailed, actions }: {
   const photo = photos[0];
   return (
     <header className="@container/profile-hero min-w-0">
-      <div className="grid min-w-0 items-start gap-3 @min-2xl/profile-hero:grid-cols-[9rem_minmax(0,1fr)]">
+      <div className="grid min-w-0 items-start gap-3 @min-2xl/profile-hero:grid-cols-[9rem_minmax(0,1fr)] @min-3xl/profile-hero:grid-cols-[12rem_minmax(0,1fr)]">
         <AssetThumbnail
           src={photo?.url ?? photo?.thumbnailUrl ?? null}
           alt={photo ? `Photo of ${asset.name}` : ""}
-          className="h-40 w-36 object-contain! p-3 @min-2xl/profile-hero:h-56 @min-2xl/profile-hero:w-full"
+          className="h-48 w-44 object-contain! p-1 @min-2xl/profile-hero:h-56 @min-2xl/profile-hero:w-full"
           iconClassName="size-10"
           onFailed={onPhotoFailed}
         />
