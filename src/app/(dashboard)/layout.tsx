@@ -5,7 +5,7 @@ import { ShortcutPlatformProvider } from "@/components/layout/ShortcutPlatform";
 import { Topbar } from "@/components/layout/Topbar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
 import { env } from "@/config/env";
-import { getSession } from "@/features/auth/services/get-session";
+import { canSwitchTenant, getSession } from "@/features/auth/services/get-session";
 import { headers } from "next/headers";
 import { getAppLocale } from "@/lib/app-locale.server";
 import { platformFromHeaders } from "@/lib/keyboard-shortcut";
@@ -29,7 +29,7 @@ export default async function DashboardLayout({
   if (session === "forbidden") {
     redirect("/no-access");
   }
-  const { userName, avatarUrl, tenantId, tenantName, availableTenants, isSuperAdmin, jobTitle } = session;
+  const { userName, avatarUrl, tenantId, tenantName, availableTenants, jobTitle } = session;
   // 2026-09-16 — the Topbar shows the person's real job title (Personnel's
   // own `job_title` field) when their membership has one, not the RBAC
   // access-tier label; falls back to the tier label (e.g. "Company
@@ -45,9 +45,10 @@ export default async function DashboardLayout({
         <Sidebar
           tenantId={tenantId}
           tenantName={tenantName}
-          // Only a platform super admin gets the tenant switcher (Nie,
-          // 2026-09-29); a member of several tenants still sees a plain label.
-          availableTenants={isSuperAdmin ? availableTenants : []}
+          // A platform super admin (Nie, 2026-09-29) or a partner of a parent
+          // tenant (Thunder_Core ADR 0027, 2026-11-09) gets the tenant switcher;
+          // a member of several tenants still sees a plain label.
+          availableTenants={canSwitchTenant(session) ? availableTenants : []}
         />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <Topbar
