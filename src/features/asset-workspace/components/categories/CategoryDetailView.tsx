@@ -13,11 +13,14 @@ import { CategoryDetailHeader } from "./CategoryDetailHeader";
 import { CategoryOverviewCards } from "./CategoryOverviewCards";
 import { CategoryChildrenSection } from "./CategoryChildrenSection";
 import { CategoryDetailLoading } from "./CategoryDetailLoading";
+import { useCategoryAssetsUrl } from "../../hooks/use-category-assets-url";
+import { CategoryAssetsTab } from "./CategoryAssetsTab";
 
 const listHref = "/asset-workspace/categories";
 
 export function CategoryDetailView({ context, categoryId }: { context: string; categoryId: string }) {
   const detail = useCategoryDetail(context, categoryId);
+  const url = useCategoryAssetsUrl(categoryId);
   const feedback = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (detail.failure) feedback.current?.focus();
@@ -42,7 +45,7 @@ export function CategoryDetailView({ context, categoryId }: { context: string; c
   } else if (detail.error?.status === 403) state = <AccessDeniedState body={detail.error.message} action={back} />;
   else if (detail.error) state = <ErrorState title="Couldn't load this category" body={detail.error.message} onRetry={detail.retry} />;
 
-  if (!category && !detail.error) return <CategoryDetailLoading />;
+  if (!category && !detail.error) return <CategoryDetailLoading assets={url.tab === "assets"} />;
 
   return (
     <CategoriesWorkspace>
@@ -61,7 +64,7 @@ export function CategoryDetailView({ context, categoryId }: { context: string; c
       </nav>
       {category && !detail.error && (
         <CategoryDetailHeader category={category} busy={detail.sending || detail.pending}
-          sending={detail.sending} onStatus={detail.changeStatus} />
+          sending={detail.sending} onStatus={detail.changeStatus} showSummary={url.tab === "assets"} />
       )}
       {detail.failure && (
         <div ref={feedback} role="alert" tabIndex={-1} className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border bg-muted px-4 py-3 text-xs focus-visible:outline-2 focus-visible:outline-ring">
@@ -80,19 +83,22 @@ export function CategoryDetailView({ context, categoryId }: { context: string; c
         {state ? (
           <div className="min-h-0 flex-1 overflow-y-auto p-1">{state}</div>
         ) : category && (
-          <Tabs value="overview" className="flex min-h-0 min-w-0 flex-1 flex-col" aria-busy={detail.pending || detail.sending}>
+          <Tabs value={url.tab} onValueChange={url.setTab} className="flex min-h-0 min-w-0 flex-1 flex-col" aria-busy={detail.pending || detail.sending}>
             <div data-category-controls className="shrink-0 border-b border-border">
               <TabsList aria-label="Category details" className="h-10 justify-start gap-1 rounded-none bg-transparent p-0">
                 <TabsTrigger value="overview" className="h-10 rounded-t-control rounded-b-none border-b-2 border-transparent px-6 data-[state=active]:border-primary data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none">
                   Overview
                 </TabsTrigger>
-                <TabsTrigger value="assets" disabled className="h-10 rounded-t-control rounded-b-none px-6">Assets</TabsTrigger>
+                <TabsTrigger value="assets" className="h-10 rounded-t-control rounded-b-none border-b-2 border-transparent px-6 data-[state=active]:border-primary data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none">Assets</TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="overview" className="@container/category-detail mt-0 min-w-0 space-y-3 p-1 pt-3 group-data-[bounded=true]/categories-workspace:min-h-0 group-data-[bounded=true]/categories-workspace:flex-1 group-data-[bounded=true]/categories-workspace:overflow-y-auto">
               {detail.pending && <p role="status" className="px-1 text-xs text-muted-foreground">Refreshing category…</p>}
               <CategoryOverviewCards category={category} />
               <CategoryChildrenSection categories={category.children} />
+            </TabsContent>
+            <TabsContent value="assets" className="mt-0 flex min-w-0 flex-col p-1 pt-3 data-[state=inactive]:hidden group-data-[bounded=true]/categories-workspace:min-h-0 group-data-[bounded=true]/categories-workspace:flex-1">
+              {url.tab === "assets" && <CategoryAssetsTab context={context} category={category} url={url} />}
             </TabsContent>
           </Tabs>
         )}

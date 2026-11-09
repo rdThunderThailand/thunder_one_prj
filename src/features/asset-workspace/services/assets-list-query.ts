@@ -47,10 +47,11 @@ export function readAssetListSearch(search: string) {
   return readAssetListQuery(input);
 }
 
-export function assetListQueryString(query: AssetListQuery): string {
+export function assetListQueryString(query: AssetListQuery, options: { omitDefaultSort?: boolean } = {}): string {
   const params = new URLSearchParams();
   // The schema is the endpoint allowlist; UI-only and obsolete URL keys never reach Core.
   for (const [key, value] of Object.entries(querySchema.parse(query))) {
+    if (options.omitDefaultSort && key === "sort" && value === "created_at") continue;
     if (value !== undefined && value !== "") params.set(key, String(value));
   }
   return params.toString();

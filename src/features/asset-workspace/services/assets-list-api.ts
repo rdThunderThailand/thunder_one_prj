@@ -35,8 +35,8 @@ async function readAssets<T>(
   }
 }
 
-export function getAssetsList(context: string, query: AssetListQuery, signal: AbortSignal) {
-  return readAssets(context, `/list?${assetListQueryString(query)}`, assetListSchema, signal);
+export function getAssetsList(context: string, query: AssetListQuery, signal: AbortSignal, options?: { omitDefaultSort?: boolean }) {
+  return readAssets(context, `/list?${assetListQueryString(query, options)}`, assetListSchema, signal);
 }
 
 export function getAssetsSummary(context: string, signal: AbortSignal) {

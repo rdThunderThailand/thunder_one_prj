@@ -5,12 +5,14 @@ import { CategoryIcon, EditIcon } from "@/components/ui/icons";
 import type { AssetCategoryDetail, CategoryStatus } from "../../domain/asset-category";
 import { CategoryStatusBadge } from "./CategoryStatusBadge";
 import { CategoryStatusActions } from "./CategoryStatusActions";
+import { categoryAssetsHref, categoryDetailHref } from "../../domain/category-detail";
 
-export function CategoryDetailHeader({ category, busy, sending, onStatus }: {
+export function CategoryDetailHeader({ category, busy, sending, onStatus, showSummary = false }: {
   category: AssetCategoryDetail;
   busy: boolean;
   sending: boolean;
   onStatus: (status: CategoryStatus) => Promise<void>;
+  showSummary?: boolean;
 }) {
   return (
     <Card className="flex flex-wrap items-start gap-4 p-4 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none">
@@ -23,7 +25,7 @@ export function CategoryDetailHeader({ category, busy, sending, onStatus }: {
           <CategoryStatusBadge status={category.status} />
         </div>
         {category.description && <p className="max-w-prose whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">{category.description}</p>}
-        {category.parent && (
+        {category.parent && !showSummary && (
           <p className="text-xs text-muted-foreground">
             Parent: {" "}
             <Link href={`/asset-workspace/categories/${encodeURIComponent(category.parent.id)}`}
@@ -34,7 +36,7 @@ export function CategoryDetailHeader({ category, busy, sending, onStatus }: {
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Button asChild variant="outline" size="sm" className="max-sm:h-10">
+        <Button asChild variant="outline" size="sm" className="border-primary text-accent-foreground hover:border-accent-foreground hover:bg-accent max-sm:h-10">
           <Link href={`/asset-workspace/categories/${encodeURIComponent(category.id)}/edit`}>
             <EditIcon aria-hidden="true" className="size-4" />
             Edit Category
@@ -42,6 +44,34 @@ export function CategoryDetailHeader({ category, busy, sending, onStatus }: {
         </Button>
         <CategoryStatusActions category={category} busy={busy} sending={sending} onChange={onStatus} />
       </div>
+      {showSummary && (
+        <dl className="grid w-full basis-full gap-3 rounded-control border border-border bg-background p-3 text-xs @min-xl/categories:grid-cols-2 @min-4xl/categories:grid-cols-5">
+          <div className="min-w-0 space-y-2">
+            <dt className="text-muted-foreground">Parent Category</dt>
+            <dd className="break-words font-semibold">
+              {category.parent ? <Link href={categoryDetailHref(category.parent.id)} className="rounded-xs text-accent-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">{category.parent.name}</Link> : "—"}
+            </dd>
+          </div>
+          <div className="space-y-2">
+            <dt className="text-muted-foreground">Child Categories</dt>
+            <dd className="font-semibold tabular-nums">{category.childCount.toLocaleString("en-GB")}</dd>
+          </div>
+          <div className="space-y-2">
+            <dt className="text-muted-foreground">Assets</dt>
+            <dd className="font-semibold tabular-nums">
+              <Link href={categoryAssetsHref(category.id)} className="rounded-xs text-accent-foreground underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring">{category.assetCount.toLocaleString("en-GB")}</Link>
+            </dd>
+          </div>
+          <div className="space-y-2">
+            <dt className="text-muted-foreground">Serial Number Required</dt>
+            <dd className="font-semibold">{category.isSerialRequired ? "Yes" : "No"}</dd>
+          </div>
+          <div className="space-y-2">
+            <dt className="text-muted-foreground">Status</dt>
+            <dd><CategoryStatusBadge status={category.status} /></dd>
+          </div>
+        </dl>
+      )}
     </Card>
   );
 }
