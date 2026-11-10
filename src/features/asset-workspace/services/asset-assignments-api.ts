@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { currentAssignmentsPageSchema } from "./asset-assignments-contract.ts";
+import { assignmentHistoryPageSchema, currentAssignmentsPageSchema } from "./asset-assignments-contract.ts";
 import { assetFiltersSchema } from "./assets-list-types.ts";
 import { currentAssignmentQueryString, type CurrentAssignmentQuery } from "../domain/assignment-current.ts";
+import { assignmentHistoryQueryString, type AssignmentHistoryQuery } from "../domain/assignment-history.ts";
 
 type AssignmentAuth = { tenantId: string; token: string };
 export type AssignmentRead<T> = { ok: true; data: T } | { ok: false; code: string };
@@ -39,4 +40,13 @@ export async function getCurrentAssignments(auth: AssignmentAuth, query: Current
 }
 export function getAssignmentFilters(auth: AssignmentAuth, requester = request) {
   return read("assets/filters", auth, assetFiltersSchema, requester);
+}
+
+export async function getAssignmentHistory(auth: AssignmentAuth, query: AssignmentHistoryQuery, requester = request) {
+  const result = await read(`assignments/history?${assignmentHistoryQueryString(query)}`, auth, assignmentHistoryPageSchema, requester);
+  if (!result.ok) return result;
+  if (result.data.page !== query.page || result.data.pageSize !== query.pageSize) {
+    return { ok: false as const, code: "INVALID_RESPONSE" };
+  }
+  return result;
 }

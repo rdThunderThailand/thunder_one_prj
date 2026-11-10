@@ -20,7 +20,9 @@ export function AssignmentsWorkspace({ children }: { children: ReactNode }) {
       const footer = results.querySelector<HTMLElement>("[data-list-controls]");
       const heading = results.querySelector<HTMLElement>("thead");
       const row = results.querySelector<HTMLElement>("tbody tr");
-      const style = getComputedStyle(results);
+      // With a History aside, the measured direct child is a grid; chrome belongs to its table card.
+      const tableCard = results.querySelector<HTMLElement>("[data-list-table]") ?? results;
+      const style = getComputedStyle(tableCard);
       const number = (value: string) => Number.parseFloat(value) || 0;
       const metrics = listViewportMetrics({
         viewportBottom: window.visualViewport ? window.visualViewport.offsetTop + window.visualViewport.height : window.innerHeight,
@@ -39,7 +41,7 @@ export function AssignmentsWorkspace({ children }: { children: ReactNode }) {
         main.scrollTop = 0;
         if (window.scrollY) window.scrollTo({ top: 0 });
       }
-      for (const element of [main, root, ...blocks, footer, heading, row]) {
+      for (const element of [main, root, ...blocks, tableCard, footer, heading, row]) {
         if (element && !observed.has(element)) { observed.add(element); resize.observe(element); }
       }
       for (const element of observed) {
@@ -62,7 +64,9 @@ export function AssignmentsWorkspace({ children }: { children: ReactNode }) {
   return (
     <div
       ref={ref}
-      className="@container/assignments group/list-viewport flex min-w-0 flex-col gap-3 [&>:not([data-list-results])]:flex-none data-[bounded=true]:h-(--list-viewport-height) data-[bounded=true]:min-h-0 data-[bounded=true]:overflow-hidden"
+      // Bounded to main's height from the first server paint, so streamed rows can't scroll main before hydration measures.
+      data-bounded="true"
+      className="@container/assignments group/list-viewport flex min-w-0 flex-col gap-3 [&>:not([data-list-results])]:flex-none data-[bounded=true]:h-(--list-viewport-height,100%) data-[bounded=true]:min-h-0 data-[bounded=true]:overflow-hidden"
     >
       {children}
     </div>

@@ -29,3 +29,26 @@ export const assignmentEventSchema = z.object({
 export type AssignmentEvent = z.infer<typeof assignmentEventSchema>;
 export const assignmentEventsPageSchema = z.object({ data: z.array(assignmentEventSchema), total: z.number().int().nonnegative() });
 export type AssignmentEventsPage = z.infer<typeof assignmentEventsPageSchema>;
+
+// Full global History rows are separate from the shorter Recent-history contract.
+const signedUrl = z.url().refine((value) => new URL(value).protocol === "https:" || new URL(value).protocol === "http:");
+export const assignmentHistoryEventSchema = assignmentEventSchema.extend({
+  at: z.iso.datetime({ offset: true }),
+  asset: z.object({ id: z.guid(), name: z.string(), assetTag: z.string() }),
+  performedBy: reference.extend({ avatarUrl: z.string().nullable().optional() }).nullable(),
+  condition: z.enum(["Good", "Fair", "Damaged", "Unusable"]).nullable(),
+  reason: z.string().nullable(),
+  evidence: z.array(z.object({
+    fileId: z.guid(), filename: z.string(), mimeType: z.string(), sizeBytes: z.number().nonnegative(),
+    uploadedAt: z.iso.datetime({ offset: true }), url: signedUrl.nullable(),
+  })),
+});
+export type AssignmentHistoryEvent = z.infer<typeof assignmentHistoryEventSchema>;
+export const assignmentHistoryPageSchema = z.object({
+  data: z.array(assignmentHistoryEventSchema), page: z.number().int().positive(),
+  pageSize: z.number().int().min(1).max(100), total: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(), expiresAt: z.iso.datetime({ offset: true }),
+}).refine((page) => page.totalPages === Math.ceil(page.total / page.pageSize)
+  && page.data.length <= page.pageSize
+  && new Set(page.data.map((event) => `${event.action}:${event.id}`)).size === page.data.length);
+export type AssignmentHistoryPage = z.infer<typeof assignmentHistoryPageSchema>;
