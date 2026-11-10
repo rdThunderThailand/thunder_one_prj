@@ -1,20 +1,63 @@
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ArrowRightIcon, CheckCircleIcon, InfoIcon, LocationIcon, TransferIcon } from "@/components/ui/icons";
-import { locationTrail } from "../../domain/asset-profile";
+import { ArrowRightIcon, CheckCircleIcon, ClockIcon, InfoIcon, LocationIcon, TransferIcon } from "@/components/ui/icons";
 import { assignmentDate } from "../../domain/assignment-current";
-import { assignOutcomes } from "../../domain/assignment-assign";
+import type { ProfileReadResult } from "../../services/asset-profile-api";
+import type { AssetDetail } from "../../services/asset-profile-contract";
+import type { AssignmentEventsPage } from "../../services/asset-assignments-contract";
 import { AssetThumbnail } from "../AssetThumbnail";
 import { AssignHolder } from "./AssignHolder";
-import type { AssignFlow } from "./use-assign-flow";
 
-/** Frame 16's right column: live summary, fixed outcomes, last three custody events. */
-export function AssignSidePanel({ flow }: { flow: AssignFlow }) {
-  const { asset, target, recent } = flow;
-  const location = asset ? locationTrail(asset.locationPath, asset.location) || null : null;
+export type PanelHolder = { type: "person" | "org_unit"; name: string | null; secondary?: string | null; avatarUrl?: string | null };
+export type PanelSide = { holder: PanelHolder | null; empty: string; location?: string | null; since?: string | null };
+
+function Side({ label, side, live = false }: { label: string; side: PanelSide; live?: boolean }) {
+  return (
+    <div
+      aria-live={live ? "polite" : undefined}
+      className="space-y-2 rounded-control bg-muted p-3"
+    >
+      <p className="text-2xs font-medium text-muted-foreground">{label}</p>
+      {side.holder ? (
+        <AssignHolder
+          type={side.holder.type}
+          name={side.holder.name}
+          secondary={side.holder.secondary}
+          avatarUrl={side.holder.avatarUrl ?? null}
+        />
+      ) : (
+        <p className="text-xs text-muted-foreground">{side.empty}</p>
+      )}
+      {side.location !== undefined && (
+        <p className="flex items-center gap-1 text-2xs text-muted-foreground wrap-anywhere">
+          <LocationIcon
+            aria-hidden="true"
+            className="size-3 shrink-0"
+          />
+          {side.location ?? "No location"}
+        </p>
+      )}
+      {side.since && (
+        <p className="flex items-center gap-1 text-2xs text-muted-foreground">
+          <ClockIcon
+            aria-hidden="true"
+            className="size-3 shrink-0"
+          />
+          Since {assignmentDate(side.since)}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Frame 16's right column for FE 02–04: live summary, fixed outcomes, last three custody events. */
+export function AssignSidePanel({ title, asset, thumbnailUrl, from, to, outcomes, recent, noAsset }: {
+  title: string; asset: AssetDetail | null; thumbnailUrl: string | null; from: PanelSide; to: PanelSide; outcomes: string[];
+  recent: ProfileReadResult<AssignmentEventsPage> | null; noAsset?: boolean;
+}) {
   return (
     <aside
-      aria-label="Assign summary"
+      aria-label={title}
       className="min-w-0 space-y-3"
     >
       <Card className="space-y-3 p-4">
@@ -23,12 +66,12 @@ export function AssignSidePanel({ flow }: { flow: AssignFlow }) {
             aria-hidden="true"
             className="size-4 text-muted-foreground"
           />
-          Assign Summary
+          {title}
         </h2>
         {asset ? (
           <div className="flex min-w-0 items-center gap-3">
             <AssetThumbnail
-              src={flow.picked?.thumbnailUrl ?? null}
+              src={thumbnailUrl}
               className="size-12"
             />
             <div className="min-w-0">
@@ -39,41 +82,24 @@ export function AssignSidePanel({ flow }: { flow: AssignFlow }) {
         ) : (
           <p className="text-xs text-muted-foreground">Select an asset to see the summary.</p>
         )}
-        <div className="space-y-2 rounded-control bg-muted p-3">
-          <p className="text-2xs font-medium text-muted-foreground">From (Current)</p>
-          <p className="text-xs text-foreground">No current custodian</p>
-          <p className="flex items-center gap-1 text-2xs text-muted-foreground wrap-anywhere">
-            <LocationIcon
-              aria-hidden="true"
-              className="size-3 shrink-0"
-            />
-            {location ?? "No location"}
-          </p>
-        </div>
+        <Side
+          label="From (Current)"
+          side={from}
+        />
         <ArrowRightIcon
           aria-hidden="true"
           className="mx-3 size-4 rotate-90 text-muted-foreground"
         />
-        <div
-          aria-live="polite"
-          className="space-y-2 rounded-control bg-muted p-3"
-        >
-          <p className="text-2xs font-medium text-muted-foreground">To (New)</p>
-          {target ? (
-            <AssignHolder
-              type={target.type}
-              name={target.name}
-              secondary={target.secondary}
-            />
-          ) : (
-            <p className="text-xs text-muted-foreground">Choose a person or team</p>
-          )}
-        </div>
+        <Side
+          label="To (New)"
+          side={to}
+          live
+        />
       </Card>
       <Card className="space-y-2 p-4">
         <h2 className="text-sm font-semibold text-foreground">What will happen?</h2>
         <ul className="space-y-2 text-xs text-foreground">
-          {assignOutcomes(target?.name ?? null, location).map((line) => (
+          {outcomes.map((line) => (
             <li
               key={line}
               className="flex items-start gap-2"
@@ -96,17 +122,17 @@ export function AssignSidePanel({ flow }: { flow: AssignFlow }) {
       </Card>
       <Card className="space-y-2 p-4">
         <h2 className="text-sm font-semibold text-foreground">Recent Assignment History</h2>
-        {!flow.assetId ? (
+        {noAsset ? (
           <p className="text-xs text-muted-foreground">Select an asset to see its history.</p>
-        ) : !recent.result ? (
+        ) : !recent ? (
           <Skeleton className="h-16 w-full" />
-        ) : !recent.result.ok ? (
+        ) : !recent.ok ? (
           <p className="text-xs text-muted-foreground">Couldn&apos;t load recent history.</p>
-        ) : recent.result.data.data.length === 0 ? (
+        ) : recent.data.data.length === 0 ? (
           <p className="text-xs text-muted-foreground">No earlier assignments</p>
         ) : (
           <ul className="divide-y divide-border">
-            {recent.result.data.data.map((event) => {
+            {recent.data.data.map((event) => {
               const holder = event.to ?? event.from;
               return (
                 <li

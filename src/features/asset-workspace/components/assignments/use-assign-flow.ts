@@ -3,13 +3,14 @@
 import { useRef, useState } from "react";
 import { assignBody, assignSteps, type AssignTarget } from "../../domain/assignment-assign";
 import { useProfileRead } from "../../hooks/use-asset-profile";
-import { getAssetDetail, type ProfileReadResult } from "../../services/asset-profile-api";
+import { getAssetDetail, getAssetFiles, type ProfileReadResult } from "../../services/asset-profile-api";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { assignAsset, getRecentAssignments } from "../../services/asset-assignments-write";
+import type { ActionSave } from "./SaveAlert";
 import { useAssignEvidence } from "./use-assign-evidence";
 
-async function getAssignOptions(context: string, signal: AbortSignal): Promise<ProfileReadResult<RegistrationOptions>> {
+export async function getAssignOptions(context: string, signal: AbortSignal): Promise<ProfileReadResult<RegistrationOptions>> {
   const { refreshRegistrationOptions } = await import("../../services/asset-registration-client");
   try {
     return { ok: true, data: await refreshRegistrationOptions(context, signal) };
@@ -20,8 +21,6 @@ async function getAssignOptions(context: string, signal: AbortSignal): Promise<P
   }
 }
 
-export type AssignSave = { phase: "idle" | "sending" | "failed"; code?: string; uncertain?: boolean };
-
 /** FE 02 state. Input (target, reason, files) survives a Reload of the asset; changing the asset clears it. */
 export function useAssignFlow(context: string, routeAssetId: string | null) {
   const steps = assignSteps(!routeAssetId);
@@ -30,15 +29,18 @@ export function useAssignFlow(context: string, routeAssetId: string | null) {
   const [target, setTarget] = useState<AssignTarget | null>(null);
   const [tab, setTab] = useState<AssignTarget["type"]>("person");
   const [reason, setReason] = useState("");
-  const [save, setSave] = useState<AssignSave>({ phase: "idle" });
+  const [save, setSave] = useState<ActionSave>({ phase: "idle" });
   const [saved, setSaved] = useState<{ before: AssetDetail; after: AssetDetail } | null>(null);
   const sending = useRef(false);
   const assetId = routeAssetId ?? picked?.id ?? null;
   const options = useProfileRead(`${context}:assign-options`, (signal) => getAssignOptions(context, signal));
   const detail = useProfileRead(`${context}:${assetId}:assign-detail`, (signal) => getAssetDetail(context, assetId ?? "", signal), Boolean(assetId));
   const recent = useProfileRead(`${context}:${assetId}:assign-recent`, (signal) => getRecentAssignments(context, assetId ?? "", signal), Boolean(assetId));
+  const files = useProfileRead(`${context}:${assetId}:assign-files`, (signal) => getAssetFiles(context, assetId ?? "", signal), Boolean(assetId));
   const evidence = useAssignEvidence(context, options.result?.ok ? options.result.data : null);
   const asset = detail.result?.ok ? detail.result.data : null;
+  // Same source as the profile hero: the first photo of `GET {id}/files`.
+  const photo = files.result?.ok ? files.result.data.photos[0]?.thumbnailUrl ?? files.result.data.photos[0]?.url ?? null : null;
   const name = steps[step];
 
   function pick(id: string, thumbnailUrl: string | null) {
@@ -79,7 +81,7 @@ export function useAssignFlow(context: string, routeAssetId: string | null) {
 
   return {
     steps, step, name, setStep, next: () => canNext && setStep(step + 1), back: () => setStep(Math.max(0, step - 1)), canNext,
-    picked, pick, assetId, asset, detail, recent, options, target, setTarget, tab, chooseTab, reason, setReason,
+    picked, pick, assetId, asset, photo, detail, recent, options, target, setTarget, tab, chooseTab, reason, setReason,
     evidence, save, saved, confirm, reload,
   };
 }

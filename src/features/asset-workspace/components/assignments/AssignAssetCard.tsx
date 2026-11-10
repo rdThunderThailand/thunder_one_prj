@@ -4,6 +4,7 @@ import type { AssetStatus } from "../../domain/asset-status";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import { AssetThumbnail } from "../AssetThumbnail";
 import { StatusBadge } from "../StatusBadges";
+import { AssignHolder } from "./AssignHolder";
 
 export function AssignAssetCard({ asset, thumbnailUrl }: { asset: AssetDetail; thumbnailUrl: string | null }) {
   return (
@@ -34,7 +35,16 @@ export function AssignAssetCard({ asset, thumbnailUrl }: { asset: AssetDetail; t
           <dt className="text-muted-foreground">Serial Number</dt>
           <dd className="text-foreground wrap-anywhere">{asset.serialNumber || "—"}</dd>
           <dt className="text-muted-foreground">Current Custodian</dt>
-          <dd className="text-foreground">None</dd>
+          <dd className="text-foreground">
+            {asset.custody ? (
+              <AssignHolder
+                type={asset.custody.type}
+                name={asset.custody.name}
+                secondary={asset.custody.department?.name}
+                avatarUrl={asset.custody.avatarUrl}
+              />
+            ) : "None"}
+          </dd>
         </dl>
       </div>
     </Card>

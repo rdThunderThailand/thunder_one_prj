@@ -28,3 +28,4 @@ export const assignmentEventSchema = z.object({
 });
 export type AssignmentEvent = z.infer<typeof assignmentEventSchema>;
 export const assignmentEventsPageSchema = z.object({ data: z.array(assignmentEventSchema), total: z.number().int().nonnegative() });
+export type AssignmentEventsPage = z.infer<typeof assignmentEventsPageSchema>;

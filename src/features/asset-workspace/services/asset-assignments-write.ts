@@ -35,11 +35,11 @@ export function getRecentAssignments(context: string, assetId: string, signal: A
   return read(`/${encodeURIComponent(assetId)}/assignments?pageSize=3`, assignmentEventsPageSchema, context, signal, transport);
 }
 
-/** Never retried here: an uncertain result means the assignment may already exist. */
-export async function assignAsset(context: string, assetId: string, body: unknown, signal: AbortSignal,
-  transport: Transport = transportDefault): Promise<AssignResult> {
+/** Never retried here: an uncertain result means the action may already have happened. */
+async function postCustody(action: "assign" | "transfer", context: string, assetId: string, body: unknown, signal: AbortSignal,
+  transport: Transport): Promise<AssignResult> {
   try {
-    const data = await transport("POST", `/${encodeURIComponent(assetId)}/assign`, body, { context, signal, creation: true });
+    const data = await transport("POST", `/${encodeURIComponent(assetId)}/${action}`, body, { context, signal, creation: true });
     const parsed = assetDetailSchema.safeParse(data);
     return parsed.success && parsed.data.id === assetId ? { ok: true, data: parsed.data } : { ok: false, code: "INVALID_RESPONSE", uncertain: true };
   } catch (error) {
@@ -48,3 +48,9 @@ export async function assignAsset(context: string, assetId: string, body: unknow
     return { ok: false, code: signal.aborted ? "CANCELLED" : "CONNECTION_FAILED", uncertain: !signal.aborted };
   }
 }
+
+export const assignAsset = (context: string, assetId: string, body: unknown, signal: AbortSignal, transport: Transport = transportDefault) =>
+  postCustody("assign", context, assetId, body, signal, transport);
+
+export const transferAsset = (context: string, assetId: string, body: unknown, signal: AbortSignal, transport: Transport = transportDefault) =>
+  postCustody("transfer", context, assetId, body, signal, transport);

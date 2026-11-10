@@ -43,7 +43,7 @@ function load(name: string): Record<string, unknown> {
     if (id.endsWith("/dropdown-menu")) return {
       DropdownMenu: group, DropdownMenuTrigger: group, DropdownMenuContent: group, DropdownMenuItem: item,
     };
-    if (id === "../../domain/assignment-current") return require(new URL("../../domain/assignment-current.ts", import.meta.url).pathname.replace(/^\/(\w:)/, "$1"));
+    if (id.startsWith("../../domain/")) return require(new URL(`${id}.ts`, import.meta.url).pathname.replace(/^\/(\w:)/, "$1"));
     if (id.startsWith("./")) return load(`${id}${id.endsWith("columns") ? ".ts" : ".tsx"}`);
     return require(id);
   } });
@@ -74,16 +74,16 @@ assert.match(html, /Organizational Unit/);
 assert.match(html, /No location/);
 assert.match(html, /10 Nov 2026/);
 assert.match(html, new RegExp(`href="/asset-workspace/assets/${id}"`));
-assert.match(html, /\/transfer\?from=assignments/);
-assert.match(html, /\/return\?from=assignments/);
+assert.match(html, /\/assignments\/[^/"]+\/transfer"/);
+assert.match(html, /\/assignments\/[^/"]+\/return"/);
 assert.doesNotMatch(html, /checkbox|Asset ID/);
 assert.match(html, /class="relative px-4 py-2 text-right align-middle"/);
 const damaged = render(AssignmentsTable, { rows: [{ ...row, asset: { ...row.asset, condition: "Damaged" } }] });
 assert.match(damaged, /Return it instead/);
-assert.doesNotMatch(damaged, /\/transfer\?from=assignments/);
+assert.doesNotMatch(damaged, /\/assignments\/[^/"]+\/transfer"/);
 assert.match(damaged, /aria-disabled="true"/);
 const maintenance = render(AssignmentsTable, { rows: [{ ...row, asset: { ...row.asset, lifecycleStatus: "In Maintenance" } }] });
-assert.doesNotMatch(maintenance, /\/(transfer|return)\?from=assignments/);
+assert.doesNotMatch(maintenance, /\/assignments\/[^/"]+\/(transfer|return)"/);
 assert.match(maintenance, /View Asset/);
 const loading = render(AssignmentsTableLoading);
 for (const header of headers) assert.ok(loading.includes(`>${header}</th>`));

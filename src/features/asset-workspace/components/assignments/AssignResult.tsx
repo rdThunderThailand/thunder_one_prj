@@ -4,10 +4,11 @@ import { Card } from "@/components/ui/Card";
 import { ArrowRightIcon, CheckCircleIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import type { AssetDetail } from "../../services/asset-profile-contract";
+import { locationTrail } from "../../domain/asset-profile";
 import { AssignHolder } from "./AssignHolder";
 
-/** The only success signal (no toast): what changed and where to go next. */
-export function AssignResult({ before, after }: { before: AssetDetail; after: AssetDetail }) {
+/** The only success signal (no toast) for FE 02–04: what changed and where to go next. */
+export function AssignResult({ before, after, title = "Asset assigned" }: { before: AssetDetail; after: AssetDetail; title?: string }) {
   const banner = useRef<HTMLDivElement>(null);
   useEffect(() => banner.current?.focus(), []);
   const links = [
@@ -27,32 +28,35 @@ export function AssignResult({ before, after }: { before: AssetDetail; after: As
           className="mt-0.5 size-5 shrink-0 text-success"
         />
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">Asset assigned</p>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
           <p className="text-xs text-muted-foreground wrap-anywhere">{after.name} · {after.assetTag}</p>
         </div>
       </div>
       <dl className="grid gap-3 text-xs sm:grid-cols-2">
-        <div className="space-y-2 rounded-control bg-muted p-3">
-          <dt className="text-2xs font-medium text-muted-foreground">Before</dt>
-          <dd className="space-y-1 text-foreground">
-            <p>{before.lifecycleStatus}</p>
-            <p className="text-muted-foreground">No current custodian</p>
-          </dd>
-        </div>
-        <div className="space-y-2 rounded-control bg-muted p-3">
-          <dt className="text-2xs font-medium text-muted-foreground">After</dt>
-          <dd className="space-y-1 text-foreground">
-            <p>{after.lifecycleStatus}</p>
-            {after.custody && (
-              <AssignHolder
-                type={after.custody.type}
-                name={after.custody.name}
-                secondary={after.custody.department?.name}
-                avatarUrl={after.custody.avatarUrl}
-              />
-            )}
-          </dd>
-        </div>
+        {[{ label: "Before", asset: before }, { label: "After", asset: after }].map((side) => (
+          <div
+            key={side.label}
+            className="space-y-2 rounded-control bg-muted p-3"
+          >
+            <dt className="text-2xs font-medium text-muted-foreground">{side.label}</dt>
+            <dd className="space-y-1 text-foreground">
+              <p>{side.asset.lifecycleStatus}</p>
+              {side.asset.custody ? (
+                <AssignHolder
+                  type={side.asset.custody.type}
+                  name={side.asset.custody.name}
+                  secondary={side.asset.custody.department?.name}
+                  avatarUrl={side.asset.custody.avatarUrl}
+                />
+              ) : (
+                <p className="text-muted-foreground">No current custodian</p>
+              )}
+              <p className="text-muted-foreground wrap-anywhere">
+                {locationTrail(side.asset.locationPath, side.asset.location) || "No location"}
+              </p>
+            </dd>
+          </div>
+        ))}
       </dl>
       <div className="flex flex-wrap gap-2">
         {links.map((link) => (

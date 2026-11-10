@@ -5,6 +5,7 @@ import { useId } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { EyeIcon, MoreIcon, ReturnIcon, TransferIcon } from "@/components/ui/icons";
+import { actionHref } from "../../domain/assignment-assign";
 import { assignmentActions } from "../../domain/assignment-current";
 import type { CurrentAssignment } from "../../services/asset-assignments-contract";
 
@@ -40,7 +41,7 @@ export function AssignmentRowMenu({ row }: { row: CurrentAssignment }) {
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem asChild>
-            <Link href={`${path}/transfer?from=assignments`}>
+            <Link href={actionHref(row.asset.id, "transfer", true)}>
               <TransferIcon aria-hidden="true" />
               Transfer
             </Link>
@@ -56,7 +57,7 @@ export function AssignmentRowMenu({ row }: { row: CurrentAssignment }) {
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem asChild>
-            <Link href={`${path}/return?from=assignments`}>
+            <Link href={actionHref(row.asset.id, "return", true)}>
               <ReturnIcon aria-hidden="true" />
               Return
             </Link>
