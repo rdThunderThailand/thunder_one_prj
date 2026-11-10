@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment, type ReactNode } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
@@ -8,16 +9,210 @@ import { AssetThumbnail } from "../AssetThumbnail";
 import { AssetsConditionValue, AssetsRowDetails, AssetsStatusValue, AssetsUpdatedAt } from "./AssetsRowDetails";
 
 const profileHref = (id: string) => `/asset-workspace/assets/${encodeURIComponent(id)}`;
+const cell = "border-b border-border px-2 py-2 align-top";
+
+// Each data column: its header cell and body cell. Checkbox and actions stay first and last.
+const COLUMNS: Record<string, { th: ReactNode; td: (row: AssetListRow) => ReactNode }> = {
+  asset: {
+    th: (
+      <th
+        scope="col"
+        className="w-1/4 @min-[90rem]/assets-results:w-1/5"
+      >
+        Asset
+      </th>
+    ),
+    td: (row) => (
+      <td className={cell}>
+        <div className="flex items-start gap-2">
+          <AssetThumbnail src={row.thumbnail_url} />
+          <div className="relative min-w-0 flex-1 break-words">
+            <Link
+              href={profileHref(row.id)}
+              title={row.name || "Unnamed asset"}
+              className="block min-h-8 rounded-xs font-semibold text-foreground hover:text-accent-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring @max-[90rem]/assets-results:pr-16"
+            >
+              <span className="line-clamp-2">{row.name || "Unnamed asset"}</span>
+            </Link>
+            <AssetsRowDetails
+              row={row}
+              table
+            />
+          </div>
+        </div>
+      </td>
+    ),
+  },
+  tag: {
+    th: (
+      <th
+        scope="col"
+        className="w-32 @min-[90rem]/assets-results:w-28"
+      >
+        Asset Tag<span className="@min-[90rem]/assets-results:hidden"> / Serial</span>
+      </th>
+    ),
+    td: (row) => (
+      <td className={`${cell} tabular-nums`}>
+        <span
+          className="block truncate font-medium text-foreground"
+          title={row.asset_code || undefined}
+        >
+          {row.asset_code || "—"}
+        </span>
+        <span
+          className="block truncate text-2xs text-muted-foreground @min-[90rem]/assets-results:hidden"
+          title={row.serial_number || undefined}
+        >
+          <span className="sr-only">Serial Number: </span>
+          {row.serial_number || "No serial number"}
+        </span>
+      </td>
+    ),
+  },
+  serial: {
+    th: (
+      <th
+        scope="col"
+        className="hidden w-36 @min-[90rem]/assets-results:table-cell"
+      >
+        Serial Number
+      </th>
+    ),
+    td: (row) => (
+      <td className={`${cell} hidden @min-[90rem]/assets-results:table-cell`}>
+        <span
+          className="block truncate"
+          title={row.serial_number || undefined}
+        >
+          {row.serial_number || "—"}
+        </span>
+      </td>
+    ),
+  },
+  category: {
+    th: <th scope="col">Category</th>,
+    td: (row) => (
+      <td className={cell}>
+        <span
+          title={row.category_name || undefined}
+          className="inline-block max-w-full truncate rounded-pill border border-border bg-card px-2 py-1 text-2xs text-muted-foreground"
+        >
+          {row.category_name || "Uncategorized"}
+        </span>
+      </td>
+    ),
+  },
+  location: {
+    th: <th scope="col">Location</th>,
+    td: (row) => (
+      <td className={cell}>
+        <span
+          className="block truncate"
+          title={row.location_name || undefined}
+        >
+          {row.location_name || "—"}
+        </span>
+      </td>
+    ),
+  },
+  status: {
+    th: (
+      <th
+        scope="col"
+        className="w-32"
+      >
+        Status
+      </th>
+    ),
+    td: (row) => (
+      <td className={cell}>
+        <AssetsStatusValue value={row.status} />
+      </td>
+    ),
+  },
+  condition: {
+    th: (
+      <th
+        scope="col"
+        className="hidden w-24 @min-5xl/assets-results:table-cell"
+      >
+        Condition
+      </th>
+    ),
+    td: (row) => (
+      <td className={`${cell} hidden @min-5xl/assets-results:table-cell`}>
+        <AssetsConditionValue value={row.condition} />
+      </td>
+    ),
+  },
+  registered: {
+    th: (
+      <th
+        scope="col"
+        className="hidden w-28 @min-5xl/assets-results:table-cell"
+      >
+        Registered Date
+      </th>
+    ),
+    td: (row) => (
+      <td className={`${cell} hidden text-muted-foreground @min-5xl/assets-results:table-cell`}>
+        <AssetsUpdatedAt value={row.created_at} />
+      </td>
+    ),
+  },
+  assignee: {
+    th: (
+      <th
+        scope="col"
+        className="hidden @min-6xl/assets-results:table-cell"
+      >
+        Assignee
+      </th>
+    ),
+    td: (row) => (
+      <td className={`${cell} hidden @min-6xl/assets-results:table-cell`}>
+        <span
+          className="block truncate"
+          title={row.custody?.name || undefined}
+        >
+          {row.custody ? row.custody.name || "Unnamed custodian" : "Unassigned"}
+        </span>
+      </td>
+    ),
+  },
+  updated: {
+    th: (
+      <th
+        scope="col"
+        className="hidden w-28 @min-[90rem]/assets-results:table-cell"
+      >
+        Last Updated
+      </th>
+    ),
+    td: (row) => (
+      <td className={`${cell} hidden text-muted-foreground @min-[90rem]/assets-results:table-cell`}>
+        <AssetsUpdatedAt value={row.updated_at} />
+      </td>
+    ),
+  },
+};
+
+const ASSETS_ORDER = ["asset", "tag", "serial", "category", "location", "status", "condition", "assignee", "updated"];
+// Location Detail Assets tab (05 §4.8), Figma order. Room / Area has no field yet, so Location sits in its place.
+const LOCATION_ORDER = ["tag", "asset", "category", "status", "condition", "serial", "location", "registered", "assignee", "updated"];
 
 export interface AssetsTableProps {
   rows: AssetListRow[]; selected: Set<string>; pending: boolean;
   onSelect: (id: string, checked: boolean) => void;
   onSelectAll: (checked: boolean) => void;
+  /** Location Detail Assets tab: Figma column order plus Registered Date. */
+  locationLayout?: boolean;
 }
 
-export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: AssetsTableProps) {
+export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending, locationLayout = false }: AssetsTableProps) {
   const count = rows.filter((row) => selected.has(row.id)).length;
-  const cell = "border-b border-border px-2 py-2 align-top";
+  const columns = (locationLayout ? LOCATION_ORDER : ASSETS_ORDER).map((key) => ({ key, ...COLUMNS[key] }));
 
   return (
     <table className="w-full table-fixed border-separate border-spacing-0 text-left text-xs leading-relaxed">
@@ -29,17 +224,9 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: 
               checked={count === 0 ? false : count === rows.length ? true : "indeterminate"}
               onCheckedChange={(checked) => onSelectAll(checked === true)} />
           </th>
-          <th scope="col" className="w-1/4 @min-[90rem]/assets-results:w-1/5">Asset</th>
-          <th scope="col" className="w-32 @min-[90rem]/assets-results:w-28">
-            Asset Tag<span className="@min-[90rem]/assets-results:hidden"> / Serial</span>
-          </th>
-          <th scope="col" className="hidden w-36 @min-[90rem]/assets-results:table-cell">Serial Number</th>
-          <th scope="col">Category</th>
-          <th scope="col">Location</th>
-          <th scope="col" className="w-32">Status</th>
-          <th scope="col" className="hidden w-24 @min-5xl/assets-results:table-cell">Condition</th>
-          <th scope="col" className="hidden @min-6xl/assets-results:table-cell">Assignee</th>
-          <th scope="col" className="hidden w-28 @min-[90rem]/assets-results:table-cell">Last Updated</th>
+          {columns.map((column) => (
+            <Fragment key={column.key}>{column.th}</Fragment>
+          ))}
           <th scope="col" className="w-12">
             <span className="sr-only">Actions</span>
           </th>
@@ -51,55 +238,9 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending }: 
             <td className={cell}>
               <Checkbox className="rounded-xs" aria-label={`Select ${row.name || "unnamed asset"}`} disabled={pending} checked={selected.has(row.id)} onCheckedChange={(checked) => onSelect(row.id, checked === true)} />
             </td>
-            <td className={cell}>
-              <div className="flex items-start gap-2">
-                <AssetThumbnail src={row.thumbnail_url} />
-                <div className="relative min-w-0 flex-1 break-words">
-                  <Link
-                    href={profileHref(row.id)}
-                    title={row.name || "Unnamed asset"}
-                    className="block min-h-8 rounded-xs font-semibold text-foreground hover:text-accent-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring @max-[90rem]/assets-results:pr-16"
-                  >
-                    <span className="line-clamp-2">{row.name || "Unnamed asset"}</span>
-                  </Link>
-                  <AssetsRowDetails row={row} table />
-                </div>
-              </div>
-            </td>
-            <td className={`${cell} tabular-nums`}>
-              <span className="block truncate font-medium text-foreground" title={row.asset_code || undefined}>
-                {row.asset_code || "—"}
-              </span>
-              <span className="block truncate text-2xs text-muted-foreground @min-[90rem]/assets-results:hidden" title={row.serial_number || undefined}>
-                <span className="sr-only">Serial Number: </span>
-                {row.serial_number || "No serial number"}
-              </span>
-            </td>
-            <td className={`${cell} hidden @min-[90rem]/assets-results:table-cell`}>
-              <span className="block truncate" title={row.serial_number || undefined}>{row.serial_number || "—"}</span>
-            </td>
-            <td className={cell}>
-              <span title={row.category_name || undefined} className="inline-block max-w-full truncate rounded-pill border border-border bg-card px-2 py-1 text-2xs text-muted-foreground">
-                {row.category_name || "Uncategorized"}
-              </span>
-            </td>
-            <td className={cell}>
-              <span className="block truncate" title={row.location_name || undefined}>{row.location_name || "—"}</span>
-            </td>
-            <td className={cell}>
-              <AssetsStatusValue value={row.status} />
-            </td>
-            <td className={`${cell} hidden @min-5xl/assets-results:table-cell`}>
-              <AssetsConditionValue value={row.condition} />
-            </td>
-            <td className={`${cell} hidden @min-6xl/assets-results:table-cell`}>
-              <span className="block truncate" title={row.custody?.name || undefined}>
-                {row.custody ? row.custody.name || "Unnamed custodian" : "Unassigned"}
-              </span>
-            </td>
-            <td className={`${cell} hidden text-muted-foreground @min-[90rem]/assets-results:table-cell`}>
-              <AssetsUpdatedAt value={row.updated_at} />
-            </td>
+            {columns.map((column) => (
+              <Fragment key={column.key}>{column.td(row)}</Fragment>
+            ))}
             <td className={cell}>
               {/* Row actions arrive with their backend PRs; the Asset Profile is the only one for now. */}
               <DropdownMenu>

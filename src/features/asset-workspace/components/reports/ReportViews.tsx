@@ -115,7 +115,7 @@ export function AssetsTableSection({
       <section
         aria-label="Assets"
         aria-busy={url.isPending}
-        className="flex min-w-0 flex-col overflow-hidden rounded-card border border-border bg-card shadow-panel"
+        className="@container/assets-results flex min-w-0 flex-col overflow-hidden rounded-card border border-border bg-card shadow-panel"
       >
         {url.isPending ? (
           <AssetsTableLoading />
@@ -140,6 +140,7 @@ export function AssetsTableSection({
                 pending
                 onSelect={noop}
                 onSelectAll={noop}
+                locationLayout={lockedLocationId !== undefined}
               />
             )}
           </div>
