@@ -4,7 +4,7 @@
 // Checklist: E:\ThunderOne\docs\location\asset-ws-locations-fe-checklist.md
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -14,6 +14,7 @@ import {
   LOCATION_TYPES,
   filterLocations,
   locationTone,
+  mapPin,
   toTreeRows,
   type Location,
   type TreeRow,
@@ -101,14 +102,18 @@ export function LocationsView({ locations }: { locations: Location[] | null }) {
   );
 }
 
-/** Location Detail Overview: this location's own pin (none when it has no coordinates). */
-export function LocationPointMap({ location }: { location: Location }) {
+/** Location Detail map: its own pin, else the nearest ancestor's (`mapPin`) with a note saying whose. */
+export function LocationPointMap({ location, locations }: { location: Location; locations: Location[] }) {
+  const pin = mapPin(location, locations);
   return (
-    <AssetMap
-      locations={asMapPoints([location])}
-      href={detailHref}
-      includeEmpty
-    />
+    <div className="space-y-1">
+      <AssetMap
+        locations={asMapPoints([{ ...location, latitude: pin?.latitude ?? null, longitude: pin?.longitude ?? null }])}
+        href={detailHref}
+        includeEmpty
+      />
+      {pin?.from && <p className="text-xs text-muted-foreground">Shown at {pin.from}&apos;s location (this location has no coordinates).</p>}
+    </div>
   );
 }
 
@@ -268,6 +273,11 @@ const TABS = [
   { key: "attachments", label: "Attachments" },
   { key: "history", label: "History" },
 ] as const;
+
+/** Location Detail header: Overview keeps the page header (its own KPIs and map); other tabs get the hero. */
+export function LocationHeaderSwitch({ overview, hero }: { overview: ReactNode; hero: ReactNode }) {
+  return usePathname().endsWith("/overview") ? overview : hero;
+}
 
 export function LocationTabs({ locationId }: { locationId: string }) {
   const pathname = usePathname();

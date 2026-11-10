@@ -58,6 +58,26 @@ export function toTreeRows(locations: Location[]): TreeRow[] {
   return rows;
 }
 
+export interface MapPin {
+  latitude: number;
+  longitude: number;
+  /** Ancestor whose coordinates are shown; null when the location has its own. */
+  from: string | null;
+}
+
+/** Where a location sits on a map (decided 2026-11-10): its own coordinates, else the nearest ancestor's. Children never
+ *  copy the parent's coordinates into the DB, so a parent move keeps them in step. A parent loop stops the walk. */
+export function mapPin(location: Pick<Location, "latitude" | "longitude" | "parentId">, locations: Location[]): MapPin | null {
+  if (location.latitude !== null && location.longitude !== null) return { latitude: location.latitude, longitude: location.longitude, from: null };
+  const byId = new Map(locations.map((l) => [l.id, l]));
+  const seen = new Set<string>();
+  for (let l = location.parentId ? byId.get(location.parentId) : undefined; l && !seen.has(l.id); l = l.parentId ? byId.get(l.parentId) : undefined) {
+    seen.add(l.id);
+    if (l.latitude !== null && l.longitude !== null) return { latitude: l.latitude, longitude: l.longitude, from: l.name };
+  }
+  return null;
+}
+
 /** The location and every location below it: not allowed as its new Parent. */
 export function selfAndDescendants(locations: Location[], id: string): Set<string> {
   const out = new Set([id]);

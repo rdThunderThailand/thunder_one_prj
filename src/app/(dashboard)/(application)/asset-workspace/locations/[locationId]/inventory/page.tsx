@@ -1,5 +1,6 @@
 import { InventoryIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
+import { LocationTabHeader } from "@/features/asset-workspace/components/locations/LocationHero";
 import { LocationInventorySection } from "@/features/asset-workspace/components/reports/ReportViews";
 import { getSessionRows, reportAuth, type SearchParams } from "@/features/asset-workspace/services/asset-reports-api";
 
@@ -18,15 +19,20 @@ export default async function LocationInventoryTab({
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <Button
-          disabled
-          title="Available when the Inventory module is ready"
-        >
-          <InventoryIcon className="h-4 w-4" />
-          Start Inventory
-        </Button>
-      </div>
+      <LocationTabHeader
+        title="Inventory Sessions"
+        count={sessions.unavailable ? null : sessions.data?.total}
+        subtitle="Stocktake and verification sessions that cover this location."
+        action={
+          <Button
+            disabled
+            title="Available when the Inventory module is ready"
+          >
+            <InventoryIcon className="h-4 w-4" />
+            Start Inventory
+          </Button>
+        }
+      />
       <LocationInventorySection
         data={sessions.data}
         unavailable={sessions.unavailable}

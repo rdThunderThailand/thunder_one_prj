@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PlusIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
+import { LocationTabHeader } from "@/features/asset-workspace/components/locations/LocationHero";
 import { AssetsTableSection } from "@/features/asset-workspace/components/reports/ReportViews";
 import { getAssetFilters, getAssetRows, reportAuth, type SearchParams } from "@/features/asset-workspace/services/asset-reports-api";
 
@@ -23,14 +24,19 @@ export default async function LocationAssetsTab({
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <Button asChild>
-          <Link href={`/asset-workspace/assets/register?mode=single&location_id=${encodeURIComponent(locationId)}`}>
-            <PlusIcon className="h-4 w-4" />
-            Register Asset
-          </Link>
-        </Button>
-      </div>
+      <LocationTabHeader
+        title="Assets"
+        count={rows?.total}
+        subtitle="Assets registered at this location."
+        action={
+          <Button asChild>
+            <Link href={`/asset-workspace/assets/register?mode=single&location_id=${encodeURIComponent(locationId)}`}>
+              <PlusIcon className="h-4 w-4" />
+              Register Asset
+            </Link>
+          </Button>
+        }
+      />
       <AssetsTableSection
         data={rows}
         filters={filters}

@@ -1,4 +1,5 @@
 import { AddChildLocationButton } from "@/features/asset-workspace/components/locations/LocationActions";
+import { LocationTabHeader } from "@/features/asset-workspace/components/locations/LocationHero";
 import { LocationsTable } from "@/features/asset-workspace/components/locations/LocationsView";
 import { ErrorState } from "@/features/asset-workspace/components/states/ErrorState";
 import { toTreeRows } from "@/features/asset-workspace/domain/location";
@@ -14,14 +15,19 @@ export default async function LocationChildrenTab({ params }: { params: Promise<
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        {self && (
-          <AddChildLocationButton
-            parent={self}
-            locations={locations}
-          />
-        )}
-      </div>
+      <LocationTabHeader
+        title="Child Locations"
+        count={children.length}
+        subtitle="Locations directly under this location."
+        action={
+          self && (
+            <AddChildLocationButton
+              parent={self}
+              locations={locations}
+            />
+          )
+        }
+      />
       <LocationsTable
         rows={toTreeRows(children)}
         locations={locations}

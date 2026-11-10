@@ -74,7 +74,6 @@ export function AddChildLocationButton({ parent, locations }: { parent: Location
       mode={{ kind: "add-child", parent: { id: parent.id, name: parent.name } }}
       locations={locations}
       label="Add Child Location"
-      variant="outline"
     />
   );
 }

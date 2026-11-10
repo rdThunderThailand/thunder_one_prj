@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BoxIcon, LocationIcon } from "@/components/ui/icons";
+import { latestInventoryTile } from "@/features/asset-workspace/components/locations/LocationHero";
 import { LocationPointMap, LocationStatusBadge } from "@/features/asset-workspace/components/locations/LocationsView";
 import { Widget } from "@/features/asset-workspace/components/overview/OverviewPage";
 import { KpiGrid, NotAvailable } from "@/features/asset-workspace/components/reports/ReportWidgets";
@@ -28,16 +29,7 @@ export default async function LocationOverviewTab({ params }: { params: Promise<
   const children = (locations ?? []).filter((l) => l.parentId === locationId).sort((a, b) => a.name.localeCompare(b.name));
   const base = `${BASE}/${encodeURIComponent(locationId)}`;
 
-  // Latest Inventory = newest session that has started (the list is newest first; Drafts have no start).
-  // ponytail: looks at the first page only (20 sessions); add a `started` filter to the route if drafts pile up.
-  const latest = sessions?.data?.rows.find((s) => s.startedAt);
-  const latestTile = !sessions?.data
-    ? { value: null, hint: "Couldn't load" }
-    : sessions.unavailable
-      ? { value: null, hint: "Not available yet" }
-      : latest
-        ? { value: dateFmt.format(new Date(latest.startedAt!)), hint: `${latest.status} · ${latest.progressPct}%` }
-        : { value: "—", hint: "No inventory yet" };
+  const latestTile = latestInventoryTile(sessions);
 
   const info: [string, string][] = [
     ["Type", location.locationType ?? "—"],
@@ -80,7 +72,10 @@ export default async function LocationOverviewTab({ params }: { params: Promise<
           </dl>
         </Widget>
         <Widget title="Map">
-          <LocationPointMap location={location} />
+          <LocationPointMap
+            location={location}
+            locations={locations ?? []}
+          />
         </Widget>
         <Widget
           title="Child Locations"

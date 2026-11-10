@@ -1,6 +1,6 @@
 /** Run: node src/features/asset-workspace/domain/location.check.mts */
 import assert from "node:assert/strict";
-import { filterLocations, locationTone, selfAndDescendants, toTreeRows, validateLocationForm, type Location } from "./location.ts";
+import { filterLocations, locationTone, mapPin, selfAndDescendants, toTreeRows, validateLocationForm, type Location } from "./location.ts";
 
 const loc = (id: string, parentId: string | null, extra: Partial<Location> = {}): Location => ({
   id, name: id.toUpperCase(), locationType: "Site", status: "Active", parentId, address: null, latitude: null,
@@ -41,5 +41,12 @@ assert.ok(validateLocationForm({ ...form, latitude: "91", longitude: "100" }).er
 assert.ok(validateLocationForm({ ...form, latitude: "13", longitude: "abc" }).errors.longitude);
 assert.ok(validateLocationForm({ ...form, notes: "x".repeat(501) }).errors.notes);
 assert.deepEqual(validateLocationForm({ ...form, parentId: "p", latitude: "13.75", longitude: "100.5" }).input?.latitude, 13.75);
+
+// Map pin: own coordinates, else nearest ancestor with some (named), else none; a loop stops.
+const geo = [loc("hq", null, { latitude: 13.7, longitude: 100.5 }), loc("b", "hq"), loc("f", "b"), loc("r", "f", { latitude: 1, longitude: 2 })];
+assert.deepEqual(mapPin(geo[3], geo), { latitude: 1, longitude: 2, from: null });
+assert.deepEqual(mapPin(geo[2], geo), { latitude: 13.7, longitude: 100.5, from: "HQ" });
+assert.equal(mapPin(loc("x", null), geo), null);
+assert.equal(mapPin(loc("z", "x"), [loc("x", "y"), loc("y", "x")]), null);
 
 console.log("location.check: ok");

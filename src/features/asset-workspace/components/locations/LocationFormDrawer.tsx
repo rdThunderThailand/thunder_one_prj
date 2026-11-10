@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Textarea } from "@/components/ui/lovable/textarea";
 import {
   LOCATION_TYPES,
+  mapPin,
   parseCoordinate,
   selfAndDescendants,
   validateLocationForm,
@@ -263,6 +264,7 @@ export function LocationFormDrawer({
             latitude={parseCoordinate(form.latitude)}
             longitude={parseCoordinate(form.longitude)}
             onPick={(lat, lng) => setForm((f) => ({ ...f, latitude: lat.toFixed(6), longitude: lng.toFixed(6) }))}
+            center={mapPin({ latitude: null, longitude: null, parentId: form.parentId || null }, locations)}
           />
           <Field
             id="location-notes"
@@ -342,15 +344,18 @@ const BANGKOK: [number, number] = [100.5018, 13.7563];
 const valid = (lat: number | null, lng: number | null): lat is number =>
   lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
 
-/** Click the map to set the coordinates; typing them moves the pin. */
+/** Click the map to set the coordinates; typing them moves the pin. Without coordinates it opens on `center`
+ *  (the parent's pin, never copied into the form: decided 2026-11-10), else Bangkok. */
 function LocationMapPicker({
   latitude,
   longitude,
   onPick,
+  center,
 }: {
   latitude: number | null;
   longitude: number | null;
   onPick: (lat: number, lng: number) => void;
+  center: { latitude: number; longitude: number } | null;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapboxMap | null>(null);
@@ -359,21 +364,21 @@ function LocationMapPicker({
   useEffect(() => {
     pick.current = onPick;
   });
-  const start = useRef({ latitude, longitude });
+  const start = useRef({ latitude, longitude, center });
 
   useEffect(() => {
     if (!container.current || !env.mapboxToken) return;
     let cancelled = false;
     import("mapbox-gl").then(({ default: mapboxgl }) => {
       if (cancelled || !container.current) return;
-      const { latitude: lat, longitude: lng } = start.current;
+      const { latitude: lat, longitude: lng, center: fallback } = start.current;
       const has = valid(lat, lng);
       map.current = new mapboxgl.Map({
         container: container.current,
         accessToken: env.mapboxToken,
         style: "mapbox://styles/mapbox/light-v11",
-        center: has ? [lng!, lat] : BANGKOK,
-        zoom: has ? 14 : 10,
+        center: has ? [lng!, lat] : fallback ? [fallback.longitude, fallback.latitude] : BANGKOK,
+        zoom: has || fallback ? 14 : 10,
         attributionControl: false,
       });
       map.current.addControl(new mapboxgl.AttributionControl({ compact: true }));
