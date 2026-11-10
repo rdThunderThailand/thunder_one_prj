@@ -2,6 +2,7 @@
 
 import { env } from "@/config/env";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
+import type { FleetDevice } from "./device-state";
 
 type Selection = { name: string; version: string; files: { name: string; size: number }[] };
 type Command =
@@ -13,6 +14,7 @@ type Release = {
   id: string;
   display_name: string;
   version: string;
+  created_at: string;
   files: { name: string; size: number; sha256: string }[];
   // player_releases.download_id is unique, so PostgREST embeds one object or null, never an array.
   admitted: { id: string; status: "ready" | "revoked"; admitted_at: string } | null;
@@ -111,8 +113,9 @@ export async function listPilotMembers() {
   return coreRequest<PilotMember[]>("player-update/devices");
 }
 
-export async function searchDevices(search: string) {
-  return coreRequest<Device[]>(`player-update/devices?search=${encodeURIComponent(search.trim())}`);
+/** ADR 0028 §11 item 4: every Media Device of every tenant; the page filters and counts. */
+export async function listAllDevices() {
+  return coreRequest<FleetDevice[]>("player-update/all-devices");
 }
 
 export async function addPilotMember(assetId: string) {

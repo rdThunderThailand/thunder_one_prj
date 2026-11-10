@@ -11,7 +11,7 @@ export default async function PilotRingPage() {
 
   return (
     <div className="grid gap-6">
-      <PageHeader title="Pilot ring" subtitle="Devices that auto update to the pilot target first" />
+      <PageHeader title="Test group" subtitle="Devices that auto update first, before any wider rollout" />
       <PilotPanel
         members={members}
         target={target}
