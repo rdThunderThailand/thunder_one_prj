@@ -15,7 +15,6 @@ export function AssetsUpdatedAt({ value }: { value: string | null }) {
   return (
     <time dateTime={value} title={`${dateFormat.format(date)} ${timeFormat.format(date)} Asia/Bangkok`}>
       {dateFormat.format(date)}
-      <span className="block text-2xs text-muted-foreground">{timeFormat.format(date)}</span>
     </time>
   );
 }

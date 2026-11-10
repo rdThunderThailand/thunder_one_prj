@@ -26,7 +26,6 @@ export function ImportHistoryTable({ data, onView }: { data: ImportHistory; onVi
                 <td className="px-3 py-3 whitespace-nowrap">
                   <time dateTime={batch.createdAt} title={`${dateFormat.format(date)} ${timeFormat.format(date)} Asia/Bangkok`}>
                     {dateFormat.format(date)}
-                    <span className="mt-1 block text-2xs text-muted-foreground">{timeFormat.format(date)}</span>
                   </time>
                 </td>
                 <td className="px-3 py-3">
