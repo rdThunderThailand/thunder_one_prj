@@ -238,6 +238,31 @@ export function InventoryReportView({
   );
 }
 
+/** Location Detail Inventory tab: the same sessions table, with the location fixed by the server page. */
+export function LocationInventorySection({ data, unavailable }: { data: ListData<SessionRow> | null; unavailable: boolean }) {
+  return (
+    <AssetWorkspaceListPage
+      embedded
+      title="Inventory"
+      filters={(url) => (
+        <ReportFilterBar
+          url={url}
+          searchPlaceholder="Search session name or reference"
+          selects={[{ key: "status", label: "Status", options: fixed(SESSION_STATUSES) }]}
+          dateRange={{ label: "Started", from: "from", to: "to" }}
+        />
+      )}
+      columns={SESSION_COLUMNS}
+      data={data}
+      getRowId={(row) => row.id}
+      itemLabel="sessions"
+      {...(unavailable
+        ? NOT_AVAILABLE
+        : { emptyTitle: "No inventory sessions", emptyBody: "Inventory sessions that cover this location appear here." })}
+    />
+  );
+}
+
 // ── Warranty: assets with their current warranty ──
 
 const WARRANTY_COLUMNS: ListColumn<WarrantyRow>[] = [

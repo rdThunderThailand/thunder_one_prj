@@ -1,6 +1,36 @@
-import { NotAvailable } from "@/features/asset-workspace/components/reports/ReportWidgets";
+import { InventoryIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/lovable/button";
+import { LocationInventorySection } from "@/features/asset-workspace/components/reports/ReportViews";
+import { getSessionRows, reportAuth, type SearchParams } from "@/features/asset-workspace/services/asset-reports-api";
 
-// Waits on Core routes (see docs/location checklist §2).
-export default function LocationInventoryTab() {
-  return <NotAvailable />;
+// Inventory sessions whose scope includes this location (05 §4.9). Start Inventory waits on the Inventory module.
+export default async function LocationInventoryTab({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locationId: string }>;
+  searchParams: Promise<SearchParams>;
+}) {
+  const [{ locationId }, sp, auth] = await Promise.all([params, searchParams, reportAuth()]);
+  const sessions = auth
+    ? await getSessionRows(auth.token, auth.tenantId, { ...sp, location_id: locationId })
+    : { data: null, unavailable: false };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button
+          disabled
+          title="Available when the Inventory module is ready"
+        >
+          <InventoryIcon className="h-4 w-4" />
+          Start Inventory
+        </Button>
+      </div>
+      <LocationInventorySection
+        data={sessions.data}
+        unavailable={sessions.unavailable}
+      />
+    </div>
+  );
 }

@@ -8,24 +8,36 @@ import { EmptyState } from "@/features/asset-workspace/components/states/states"
 import { StatusBadge } from "@/features/asset-workspace/components/StatusBadges";
 import type { AssetStatus } from "@/features/asset-workspace/domain/asset-status";
 import { getLocation, getLocations } from "@/features/asset-workspace/services/asset-locations-api";
-import { getAssetRows, reportAuth } from "@/features/asset-workspace/services/asset-reports-api";
+import { getAssetRows, getSessionRows, reportAuth } from "@/features/asset-workspace/services/asset-reports-api";
 
 const BASE = "/asset-workspace/locations";
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
-// Overview tab (05 §4.8). Latest Inventory and Recent Activity wait on Core (L4 / L3).
+// Overview tab (05 §4.8). Recent Activity waits on Core (L3).
 export default async function LocationOverviewTab({ params }: { params: Promise<{ locationId: string }> }) {
   const { locationId } = await params;
   const auth = await reportAuth();
-  const [location, locations, assets] = await Promise.all([
+  const [location, locations, assets, sessions] = await Promise.all([
     getLocation(locationId),
     getLocations(),
     auth ? getAssetRows(auth.token, auth.tenantId, { location_id: locationId, pageSize: "5" }) : null,
+    auth ? getSessionRows(auth.token, auth.tenantId, { location_id: locationId }) : null,
   ]);
   // The layout shows not-found / error for the location itself.
   if (!location || location === "not-found") return null;
   const children = (locations ?? []).filter((l) => l.parentId === locationId).sort((a, b) => a.name.localeCompare(b.name));
   const base = `${BASE}/${encodeURIComponent(locationId)}`;
+
+  // Latest Inventory = newest session that has started (the list is newest first; Drafts have no start).
+  // ponytail: looks at the first page only (20 sessions); add a `started` filter to the route if drafts pile up.
+  const latest = sessions?.data?.rows.find((s) => s.startedAt);
+  const latestTile = !sessions?.data
+    ? { value: null, hint: "Couldn't load" }
+    : sessions.unavailable
+      ? { value: null, hint: "Not available yet" }
+      : latest
+        ? { value: dateFmt.format(new Date(latest.startedAt!)), hint: `${latest.status} · ${latest.progressPct}%` }
+        : { value: "—", hint: "No inventory yet" };
 
   const info: [string, string][] = [
     ["Type", location.locationType ?? "—"],
@@ -46,7 +58,7 @@ export default async function LocationOverviewTab({ params }: { params: Promise<
           { label: "Type", value: location.locationType ?? "—", icon: <LocationIcon className="h-4 w-4" /> },
           { label: "Total Assets", value: location.assetCount, hint: "Directly at this location", icon: <BoxIcon className="h-4 w-4" /> },
           { label: "Child Locations", value: location.childCount },
-          { label: "Latest Inventory", value: null, hint: "Not available yet" },
+          { label: "Latest Inventory", ...latestTile },
         ]}
       />
       <div className="grid gap-3 lg:grid-cols-2">

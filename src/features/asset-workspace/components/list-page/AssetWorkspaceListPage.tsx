@@ -65,6 +65,8 @@ interface AssetWorkspaceListPageProps<Row> {
   /** Row click opens this in a right-side panel. */
   renderPanel?: (row: Row) => ReactNode;
   panelTitle?: (row: Row) => string;
+  /** Inside another page (e.g. a Location Detail tab): no page header or page padding. */
+  embedded?: boolean;
 }
 
 export function AssetWorkspaceListPage<Row>({
@@ -85,6 +87,7 @@ export function AssetWorkspaceListPage<Row>({
   bulkActions,
   renderPanel,
   panelTitle,
+  embedded = false,
 }: AssetWorkspaceListPageProps<Row>) {
   const url = useListUrlState();
   // ponytail: selection is per page — it is filtered to the rows on screen, so paging or
@@ -113,12 +116,14 @@ export function AssetWorkspaceListPage<Row>({
   const showSelection = bulkActions !== undefined;
 
   return (
-    <div className="space-y-3 p-6">
-      <PageHeader
-        title={title}
-        subtitle={subtitle}
-        actions={primaryAction}
-      />
+    <div className={embedded ? "space-y-3" : "space-y-3 p-6"}>
+      {!embedded && (
+        <PageHeader
+          title={title}
+          subtitle={subtitle}
+          actions={primaryAction}
+        />
+      )}
 
       {nav}
 
