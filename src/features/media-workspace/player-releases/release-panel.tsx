@@ -3,17 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/lovable/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
-import { MoreIcon } from "@/components/ui/icons";
 import { downloadPlayerRelease, listPlayerReleases } from "./actions";
 import { formatTime } from "./device-state";
 import { ReleaseAdmission } from "./release-admission";
+import { ReleaseMenu } from "./release-menu";
 
 type ReleaseList = Awaited<ReturnType<typeof listPlayerReleases>>;
 
 const megabytes = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
-/** ADR 0028 §11 item 2: one table, newest first; Approve and Withdraw in the row, file downloads in a menu. */
+/** ADR 0028 §11 item 2: one table, newest first; Approve, Withdraw and Delete in the row, Rename and downloads in a menu. */
 export function ReleasePanel({ releases }: { releases: ReleaseList }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -54,7 +53,7 @@ export function ReleasePanel({ releases }: { releases: ReleaseList }) {
               <th className="p-3">Size</th>
               <th className="p-3">Uploaded</th>
               <th className="p-3">Status</th>
-              <th className="p-3"><span className="sr-only">Files</span></th>
+              <th className="p-3"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -75,21 +74,7 @@ export function ReleasePanel({ releases }: { releases: ReleaseList }) {
                   />
                 </td>
                 <td className="p-3 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" aria-label={`Files of ${release.display_name} ${release.version}`} disabled={isBusy}>
-                        <MoreIcon />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Download</DropdownMenuLabel>
-                      {release.files.map((file) => (
-                        <DropdownMenuItem key={file.name} onSelect={() => void download(release.id, file.name)}>
-                          {file.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <ReleaseMenu release={release} isBusy={isBusy} onDownload={(file) => void download(release.id, file)} />
                 </td>
               </tr>
             ))}
