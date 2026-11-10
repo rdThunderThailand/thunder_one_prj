@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { LocationIcon, WarningTriangleIcon } from "@/components/ui/icons";
+import { ClockIcon, LocationIcon, SettingsIcon, WarningTriangleIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { ASSET_CONDITIONS, type AssetCondition } from "../../domain/asset-condition";
@@ -17,6 +17,7 @@ import { AssignAssetCard } from "./AssignAssetCard";
 import { AssignAttachments } from "./AssignAttachments";
 import { CustodianTabs } from "./CustodianTabs";
 import { ReasonField } from "./ReasonField";
+import { SectionTitle } from "./SectionTitle";
 import type { TransferFlow } from "./use-transfer-flow";
 
 export function TransferDetailsForm({ context, flow, asset, rules, returnHref }: {
@@ -30,7 +31,7 @@ export function TransferDetailsForm({ context, flow, asset, rules, returnHref }:
         thumbnailUrl={flow.photo}
       />
       <Card className="space-y-3 p-4">
-        <h2 className="text-sm font-semibold text-foreground">1. New Custodian</h2>
+        <SectionTitle icon={ClockIcon}>1. New Custodian</SectionTitle>
         <CustodianTabs
           context={context}
           rules={rules.referenceSelectors}
@@ -43,7 +44,7 @@ export function TransferDetailsForm({ context, flow, asset, rules, returnHref }:
         />
       </Card>
       <Card className="space-y-3 p-4">
-        <h2 className="text-sm font-semibold text-foreground">2. Transfer Details</h2>
+        <SectionTitle icon={ClockIcon}>2. Transfer Details</SectionTitle>
         <div className="grid min-w-0 gap-3 @min-2xl/assign-flow:grid-cols-2">
           <div className="min-w-0 space-y-1">
             <p className="text-xs font-medium text-foreground">From Location (Current)</p>
@@ -89,10 +90,12 @@ export function TransferDetailsForm({ context, flow, asset, rules, returnHref }:
         />
       </Card>
       <Card className="space-y-3 p-4">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">3. Condition Check</h2>
-          <p className="text-2xs text-muted-foreground">Confirm the asset condition at the time of transfer.</p>
-        </div>
+        <SectionTitle
+          icon={SettingsIcon}
+          subtitle="Confirm asset condition at the time of transfer."
+        >
+          3. Condition Check
+        </SectionTitle>
         <div className="max-w-xs space-y-1">
           <label
             id="transfer-condition-label"

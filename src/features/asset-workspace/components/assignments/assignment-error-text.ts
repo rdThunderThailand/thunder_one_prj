@@ -23,7 +23,8 @@ export function assignmentWriteText(code: string, uncertain = false, action: Cus
     case "INVALID_STATE": return "This asset's status changed. Reload to see the latest.";
     case "PERMISSION_DENIED": return `You don't have permission to ${action} assets in this organization.`;
     case "UNAUTHENTICATED": return "Your session has expired. Sign in again, then retry.";
-    case "NOT_FOUND": return "The asset or the chosen custodian is no longer available. Reload and choose again.";
+    case "NOT_FOUND": return action === "return" ? "The asset is no longer available. Reload to check."
+      : "The asset or the chosen custodian is no longer available. Reload and choose again.";
     case "VALIDATION": return `Some details were rejected. Check ${checks[action]}.`;
     default: return `The ${noun[action]} couldn't be saved. Check your connection and try again.`;
   }

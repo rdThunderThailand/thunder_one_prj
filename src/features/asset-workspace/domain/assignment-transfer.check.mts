@@ -21,5 +21,6 @@ assert.deepEqual(transferBody({ ...base, locationId: "l2", reason: " Move ", fil
 });
 
 assert.equal(transferOutcomes("IT", "HQ", "Branch")[2], "Location will be updated to Branch");
-assert.equal(transferOutcomes(null, "HQ", null)[2], "Location stays HQ");
+assert.equal(transferOutcomes(null, "HQ", null).length, 2);
+assert.equal(transferOutcomes("IT", "HQ", null, true)[2], "Asset status remains Assigned");
 console.log("assignment-transfer checks passed");

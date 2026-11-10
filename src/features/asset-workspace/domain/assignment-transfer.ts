@@ -45,11 +45,12 @@ export function transferBody(input: {
   };
 }
 
-export function transferOutcomes(targetName: string | null, current: string | null, next: string | null) {
+/** PO frame 16 (Details) and frame 20 (Review adds the status line); the location line only when it changes. */
+export function transferOutcomes(targetName: string | null, current: string | null, next: string | null, review = false) {
   return [
     "Current assignment will be closed",
     `New assignment will be created for ${targetName ?? "the chosen custodian"}`,
-    next && next !== current ? `Location will be updated to ${next}` : `Location stays ${current ?? "unchanged"}`,
-    "Status stays Assigned",
-  ];
+    next && next !== current ? `Location will be updated to ${next}` : null,
+    review ? "Asset status remains Assigned" : null,
+  ].filter((line): line is string => line !== null);
 }

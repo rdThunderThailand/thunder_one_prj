@@ -25,7 +25,7 @@ const attachments = (
 );
 
 /** Left column placeholder, one card per real section (Assign: 2, Transfer: 3), so nothing jumps on load. */
-export function AssignLoadingMain({ label = "Loading asset…", kind = "assign" }: { label?: string; kind?: "assign" | "transfer" }) {
+export function AssignLoadingMain({ label = "Loading asset…", kind = "assign" }: { label?: string; kind?: "assign" | "transfer" | "return" }) {
   return (
     <div
       role="status"
@@ -46,12 +46,36 @@ export function AssignLoadingMain({ label = "Loading asset…", kind = "assign" 
           </div>
         </div>
       </Card>
-      <Card className="space-y-3 p-4">
+      {kind !== "return" && <Card className="space-y-3 p-4">
         <Skeleton className="h-5 w-36" />
         <Skeleton className="h-10 w-full" />
         <div className="pt-1">{field}</div>
-      </Card>
-      {kind === "transfer" ? (
+      </Card>}
+      {kind === "return" ? (
+        <>
+          <Card className="space-y-3 p-4">
+            <Skeleton className="h-5 w-36" />
+            {reason}
+          </Card>
+          <Card className="space-y-3 p-4">
+            <div className="space-y-1">
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="h-3 w-56" />
+            </div>
+            <div className="grid gap-3 @min-2xl/assign-flow:grid-cols-2">
+              <div className="space-y-1">
+                {field}
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-5 w-24 rounded-full" />
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">{attachments}</Card>
+        </>
+      ) : kind === "transfer" ? (
         <>
           <Card className="space-y-3 p-4">
             <Skeleton className="h-5 w-36" />
@@ -128,7 +152,7 @@ export function AssignLoadingPanel() {
 
 /** Route loading has no params, so the header falls back to the Assignments origin. */
 export function AssignFlowLoading({ title = "Assign Asset", subtitle = "Assign this asset to a person or team.", steps, kind, mockNote = false }: {
-  title?: string; subtitle?: string; steps?: string[]; kind?: "assign" | "transfer"; mockNote?: boolean;
+  title?: string; subtitle?: string; steps?: string[]; kind?: "assign" | "transfer" | "return"; mockNote?: boolean;
 }) {
   const origin = assignOrigin(undefined, null);
   return (
@@ -138,7 +162,7 @@ export function AssignFlowLoading({ title = "Assign Asset", subtitle = "Assign t
         assetId={null}
         title={title}
       />
-      <div data-assign-body>
+      <div data-assign-body className={kind === "return" ? "relative min-w-0 p-1 group-data-[bounded=true]/assign-flow:min-h-0 group-data-[bounded=true]/assign-flow:flex-1 group-data-[bounded=true]/assign-flow:overflow-y-auto" : undefined}>
         <ActionLayout
           head={(
             <AssignFlowTitle
@@ -153,6 +177,12 @@ export function AssignFlowLoading({ title = "Assign Asset", subtitle = "Assign t
           panel={<AssignLoadingPanel />}
         />
       </div>
+      {kind === "return" && (
+        <div data-assign-footer aria-hidden="true" className="flex shrink-0 justify-between border-t border-border pt-3 motion-reduce:[&_*]:animate-none">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+      )}
     </AssignFlowWorkspace>
   );
 }

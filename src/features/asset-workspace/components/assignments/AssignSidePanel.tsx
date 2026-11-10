@@ -51,9 +51,11 @@ function Side({ label, side, live = false }: { label: string; side: PanelSide; l
 }
 
 /** Frame 16's right column for FE 02–04: live summary, fixed outcomes, last three custody events. */
-export function AssignSidePanel({ title, asset, thumbnailUrl, from, to, outcomes, recent, noAsset }: {
-  title: string; asset: AssetDetail | null; thumbnailUrl: string | null; from: PanelSide; to: PanelSide; outcomes: string[];
-  recent: ProfileReadResult<AssignmentEventsPage> | null; noAsset?: boolean;
+export type Outcome = string | { text: string; sub: string[] };
+
+export function AssignSidePanel({ title, asset, thumbnailUrl, from, to, outcomes, recent, noAsset, toLabel = "To (New)", outcomesTitle = "What will happen?" }: {
+  title: string; asset: AssetDetail | null; thumbnailUrl: string | null; from: PanelSide; to: PanelSide; outcomes: Outcome[];
+  recent: ProfileReadResult<AssignmentEventsPage> | null; noAsset?: boolean; toLabel?: string; outcomesTitle?: string;
 }) {
   return (
     <aside
@@ -77,6 +79,7 @@ export function AssignSidePanel({ title, asset, thumbnailUrl, from, to, outcomes
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground wrap-anywhere">{asset.name}</p>
               <p className="text-2xs text-muted-foreground wrap-anywhere">{asset.assetTag}</p>
+              {asset.serialNumber && <p className="text-2xs text-muted-foreground wrap-anywhere">{asset.serialNumber}</p>}
             </div>
           </div>
         ) : (
@@ -91,26 +94,36 @@ export function AssignSidePanel({ title, asset, thumbnailUrl, from, to, outcomes
           className="mx-3 size-4 rotate-90 text-muted-foreground"
         />
         <Side
-          label="To (New)"
+          label={toLabel}
           side={to}
           live
         />
       </Card>
       <Card className="space-y-2 p-4">
-        <h2 className="text-sm font-semibold text-foreground">What will happen?</h2>
+        <h2 className="text-sm font-semibold text-foreground">{outcomesTitle}</h2>
         <ul className="space-y-2 text-xs text-foreground">
-          {outcomes.map((line) => (
-            <li
-              key={line}
-              className="flex items-start gap-2"
-            >
-              <CheckCircleIcon
-                aria-hidden="true"
-                className="mt-0.5 size-4 shrink-0 text-success"
-              />
-              {line}
-            </li>
-          ))}
+          {outcomes.map((line) => {
+            const text = typeof line === "string" ? line : line.text;
+            return (
+              <li
+                key={text}
+                className="flex items-start gap-2"
+              >
+                <CheckCircleIcon
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0 text-success"
+                />
+                <div className="min-w-0">
+                  {text}
+                  {typeof line !== "string" && (
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">
+                      {line.sub.map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  )}
+                </div>
+              </li>
+            );
+          })}
           <li className="flex items-start gap-2">
             <InfoIcon
               aria-hidden="true"
