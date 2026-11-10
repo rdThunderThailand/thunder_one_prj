@@ -2,13 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getSession } from "@/features/auth/services/get-session";
-import { listPlayerReleases } from "@/features/media-workspace/player-releases/actions";
+import { getPilotTarget, listPlayerReleases } from "@/features/media-workspace/player-releases/actions";
 import { NewReleaseDialog } from "@/features/media-workspace/player-releases/new-release-dialog";
 import { ReleasePanel } from "@/features/media-workspace/player-releases/release-panel";
 
 export default async function PlayerReleasesPage() {
   const session = await getSession();
   if (session === "forbidden" || !session.isSuperAdmin) notFound();
+  const [releases, target] = await Promise.all([listPlayerReleases(), getPilotTarget()]);
 
   return (
     <div className="grid gap-6">
@@ -27,7 +28,10 @@ export default async function PlayerReleasesPage() {
           </div>
         }
       />
-      <ReleasePanel releases={await listPlayerReleases()} />
+      <ReleasePanel
+        releases={releases}
+        target={target}
+      />
     </div>
   );
 }

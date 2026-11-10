@@ -30,10 +30,12 @@ type Loaded<T extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnTy
 type Choice = { id: string | null; label: string };
 
 /** ADR 0028 §11: the test group (Update Ring `pilot`), its version, pause updates and its devices. */
-export function PilotPanel({ members, target, releases }: {
+export function PilotPanel({ members, target, releases, preselected }: {
   members: Loaded<typeof listPilotMembers>;
   target: Loaded<typeof getPilotTarget>;
   releases: Loaded<typeof listPlayerReleases>;
+  /** ADR 0028 §11 amendment 3 item 4: "Send to test group" on Player releases opens this page with the release chosen. */
+  preselected?: string;
 }) {
   const router = useRouter();
   const [isBusy, setIsBusy] = useState(false);
@@ -44,6 +46,8 @@ export function PilotPanel({ members, target, releases }: {
     release.admitted?.status === "ready" ? [{ id: release.admitted.id, label: `${release.display_name} · ${release.version}` }] : []);
   const current = "error" in target ? null : target.data;
   const deviceCount = "error" in members ? 0 : members.data.length;
+  const chosen = preselected && approved.some((release) => release.id === preselected) ? preselected : current?.release_id ?? "";
+  const isChosenUnsaved = chosen !== (current?.release_id ?? "");
 
   async function run(action: () => Promise<{ data: unknown } | { error: string }>) {
     setIsBusy(true);
@@ -81,18 +85,23 @@ export function PilotPanel({ members, target, releases }: {
           <h2 className="text-lg font-semibold">Version for test group · Windows x64</h2>
           {current?.paused && <Badge variant="warning">Updates paused</Badge>}
         </div>
-        <form key={current?.release_id ?? "none"} onSubmit={askToSave} className="grid max-w-lg justify-items-start gap-3">
+        <form key={`${current?.release_id ?? "none"}-${chosen}`} onSubmit={askToSave} className="grid max-w-lg justify-items-start gap-3">
           <Label htmlFor="pilot-release">Version the test group installs</Label>
           <select
             id="pilot-release"
             name="release"
-            defaultValue={current?.release_id ?? ""}
+            defaultValue={chosen}
             disabled={isBusy}
             className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">No version</option>
             {approved.map((release) => <option key={release.id} value={release.id}>{release.label}</option>)}
           </select>
+          {isChosenUnsaved && (
+            <p role="status" className="text-sm text-muted-foreground">
+              Chosen from Player releases and not saved yet. Press Save version to send it to the test group.
+            </p>
+          )}
           <div className="flex flex-wrap gap-3">
             <Button type="submit" disabled={isBusy}>Save version</Button>
             {current && (
