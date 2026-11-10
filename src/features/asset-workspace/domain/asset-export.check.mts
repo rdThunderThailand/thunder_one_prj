@@ -6,6 +6,7 @@ import type { AssetListQuery } from "../services/assets-list-query.ts";
 const query: AssetListQuery = Object.freeze({
   page: 7, pageSize: 200, sort: "status_since", q: " laptop ", status: "Available", condition: "Good",
   category_id: "11111111-1111-4111-8111-111111111111", location_id: "22222222-2222-4222-8222-222222222222",
+  include_child_categories: "true",
   import_batch_id: "33333333-3333-4333-8333-333333333333", custody_type: "person",
   custody_id: "44444444-4444-4444-8444-444444444444",
 });
@@ -16,6 +17,7 @@ assert.ok(filtered.label.includes("across all pages"));
 if (filtered.request.scope !== "filtered") throw new Error("Expected filtered request");
 assert.deepEqual(Object.keys(filtered.request.filters).sort(), [...EXPORT_FILTER_KEYS].sort());
 assert.equal(filtered.request.filters.q, "laptop");
+assert.equal(filtered.request.filters.include_child_categories, "true");
 for (const key of ["page", "pageSize", "sort"]) assert.equal(key in filtered.request.filters, false);
 assert.equal(query.q, " laptop ", "the current list query is not mutated");
 

@@ -10,6 +10,7 @@ All 30 `.check.mts` logic scripts pass. **Browser acceptance of Bulk Import is s
 | `docs/adr/0098-asset-workspace-uses-the-design-system-core-with-a-local-profile.md` | UI rules |
 | `docs/adr/0101-bulk-import-reports-a-core-owned-batch.md` | Bulk Import rules; status is proposed |
 | `docs/asset-workspace/core-gap-matrix.md` | screens against Core tables and routes |
+| [Categories handoff](categories.md) | subsequent Categories batch, count links and contextual Single Registration; verification and Core prerequisites |
 | `Thunder_Core/docs/api/asset-workspace-*.md` | API contracts: assets, single registration, bulk import, export, labels, scan, profile |
 
 ## The shape
@@ -47,8 +48,9 @@ Asset was created.
 | Labels | 50 × 30 mm PDF with QR and Code128, up to 500 Assets, made in the browser | `components/asset-labels/` |
 | Scan | Camera or manual entry; QR and Code128 | `components/scan-asset/` |
 
-The other Asset Workspace screens are not part of this work: Overview has its own owner, and Assignments,
-Categories, Inventory, Lifecycle, Locations, Reports and Settings were not built here.
+This overview covers the Assets batch. Categories were implemented subsequently; see the
+[Categories handoff](categories.md) for their scope and verification. Overview has its own owner;
+Assignments, Inventory, Lifecycle, Locations, Reports and Settings were not built by the Assets batch.
 
 ## Single Register
 
@@ -135,7 +137,7 @@ Review these first; they reach beyond this feature.
 
 | File | Change |
 | --- | --- |
-| `src/app/api/proxy/[...path]/route.ts` | adds the `v2/asset-workspace/assets` path and its session, context and origin checks. Other `v2` paths return 404; `v1` still goes through |
+| `src/app/api/proxy/[...path]/route.ts` | adds the `v2/asset-workspace/assets` path and its session, context and origin checks. The subsequent Categories batch also permits `v2/asset-workspace/categories`; other `v2` paths return 404; `v1` still goes through |
 | `src/proxy.ts` | flag-gates QR routes; sends a signed-out QR scan to login and back |
 | `src/components/ui/StatTile.tsx`, `WizardSteps.tsx`, `charts/DonutChartImpl.tsx`, `lovable/progress.tsx` | adjusted for these screens |
 
@@ -145,7 +147,7 @@ Review these first; they reach beyond this feature.
   re-upload (ADR 0101).
 - Clean-up of batches abandoned before confirm is not decided (ADR 0101).
 - Real role behavior (manager, company admin, below manager) has not been tested with real users.
-- `SingleAssetWizard.tsx` is 257 lines, over the 250-line limit.
+- The former 257-line `SingleAssetWizard.tsx` was split by the subsequent Categories entry work into a 31-line wrapper and 241-line form; see the [Categories handoff](categories.md#register-from-a-category). Source checks passed; browser acceptance remains pending.
 
 ## Out of scope
 

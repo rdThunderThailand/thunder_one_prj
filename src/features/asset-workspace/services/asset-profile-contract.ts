@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-// Core v2 Asset Profile reads (Thunder_Core docs/api/asset-workspace-asset-profile.md). Fields that PR A adds
-// default when absent, so the page still renders against a Core without them.
+// Core v2 Asset Profile contract after PR #327. Missing new fields are a contract error.
 const reference = z.object({ id: z.string(), name: z.string().nullable() });
 const date = z.string().nullable();
 
@@ -11,10 +10,15 @@ export const assetDetailSchema = z.object({
   assetTag: z.string(),
   serialNumber: z.string().nullable(),
   category: reference.nullable(),
+  categoryPath: z.array(reference),
+  qrValue: z.string().nullable(),
   location: reference.nullable(),
   // Root first, ending with the asset's own location.
   locationPath: z.array(z.object({ id: z.string(), name: z.string().nullable() })).default([]),
-  custody: reference.extend({ type: z.enum(["person", "org_unit"]), since: z.string().nullable().default(null) }).nullable(),
+  custody: reference.extend({
+    type: z.enum(["person", "org_unit"]), since: z.string().nullable().default(null),
+    avatarUrl: z.string().nullable(), department: reference.nullable(),
+  }).nullable(),
   // Legacy values must remain visible without guessing their canonical meaning.
   lifecycleStatus: z.string(),
   condition: z.string().nullable(),
@@ -26,6 +30,7 @@ export const assetDetailSchema = z.object({
   currentWarranty: z.object({
     id: z.string(), provider: z.string().nullable(), type: date, startDate: date, endDate: date,
     referenceNo: date, coverageNote: date, status: date,
+    expiryStatus: z.enum(["Active", "Expiring Soon", "Expired"]),
   }).nullable().default(null),
 });
 export type AssetDetail = z.infer<typeof assetDetailSchema>;
@@ -53,13 +58,22 @@ export type AssetWarranty = z.infer<typeof assetWarrantiesSchema>[number];
 
 export const assetActivityPageSchema = z.object({
   data: z.array(z.object({
-    id: z.string(), action: z.string(), summary: z.string().nullable(), reason: z.string().nullable(),
+    id: z.string(), kind: z.enum(["registered", "details_edited", "photos_updated", "documents_updated", "other"]),
+    summary: z.string().nullable(), reason: z.string().nullable(),
     actorName: z.string().nullable(), at: z.string(),
+    events: z.array(z.object({
+      id: z.string(), action: z.string(), summary: z.string().nullable(), reason: z.string().nullable(),
+      file: z.object({
+        fileId: z.string(), kind: z.enum(["photo", "document"]).nullable(), filename: z.string(), mimeType: z.string(),
+        url: z.string().nullable(), thumbnailUrl: z.string().nullable(),
+      }).nullable(),
+    })),
   })),
   page: z.number().int().positive(),
   pageSize: z.number().int().positive().max(100),
   total: z.number().int().nonnegative(),
   totalPages: z.number().int().nonnegative(),
+  expiresAt: z.string(),
 });
 export type AssetActivityPage = z.infer<typeof assetActivityPageSchema>;
 export type AssetActivityEntry = AssetActivityPage["data"][number];

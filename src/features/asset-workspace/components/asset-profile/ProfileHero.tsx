@@ -1,107 +1,62 @@
 import type { ReactNode } from "react";
-import { Badge } from "@/components/ui/Badge";
-import { CalendarIcon, EditIcon, LocationIcon, TagIcon, UserIcon, WarrantyIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { locationTrail, warrantyState } from "../../domain/asset-profile";
+import { categoryDisplay } from "../../domain/asset-profile-display.mts";
+import { locationTrail } from "../../domain/asset-profile";
 import type { AssetDetail, AssetFiles } from "../../services/asset-profile-contract";
 import { AssetThumbnail } from "../AssetThumbnail";
-import { ConditionValue, Fact, formatDate, formatDay, SectionLoading, StatusValue, todayInBangkok } from "./ProfileParts";
+import { ConditionValue, formatDate, formatDay, ProfileRows, ProfileSection, StatusValue } from "./ProfileParts";
+import { CustodianValue, WarrantyValue } from "./ProfileValues";
 
-export function ProfileHero({ asset, photos, onPhotoFailed, labelAction }: { asset: AssetDetail | null; photos: AssetFiles["photos"]; onPhotoFailed: () => void; labelAction: ReactNode }) {
-  const photo = photos[0] ?? null;
+export function ProfileHero({ asset, photos, onPhotoFailed, actions }: {
+  asset: AssetDetail; photos: AssetFiles["photos"]; onPhotoFailed: () => void; actions: ReactNode;
+}) {
+  const category = categoryDisplay(asset.categoryPath);
+  const photo = photos[0];
   return (
-    <header className="@container/profile-hero min-w-0 rounded-card border border-border bg-card p-4">
-      <div className="flex flex-col gap-4 @min-xl/profile-hero:flex-row">
-        <div className="relative w-fit shrink-0">
-          <AssetThumbnail
-            src={photo?.url ?? photo?.thumbnailUrl ?? null} alt={photo ? `Photo of ${asset?.name || "the asset"}` : ""}
-            className="size-24 @min-5xl/profile-hero:size-32" iconClassName="size-10" onFailed={onPhotoFailed}
-          />
-          {photos.length > 1 && (
-            <span className="absolute bottom-2 left-2 rounded-pill bg-card px-2 py-0.5 text-2xs font-medium tabular-nums text-foreground shadow-control">
-              {photos.length} photos
-            </span>
-          )}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
+    <header className="@container/profile-hero min-w-0">
+      <div className="grid min-w-0 items-start gap-3 @min-2xl/profile-hero:grid-cols-[9rem_minmax(0,1fr)] @min-3xl/profile-hero:grid-cols-[12rem_minmax(0,1fr)]">
+        <AssetThumbnail
+          src={photo?.url ?? photo?.thumbnailUrl ?? null}
+          alt={photo ? `Photo of ${asset.name}` : ""}
+          className="h-48 w-44 object-contain! p-1 @min-2xl/profile-hero:h-56 @min-2xl/profile-hero:w-full"
+          iconClassName="size-10"
+          onFailed={onPhotoFailed}
+        />
+        <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            {asset ? (
-              <div className="min-w-0 flex-1 basis-64 space-y-2">
-                <h1 className="text-xl font-extrabold tracking-tight wrap-anywhere text-foreground">{asset.name || "Unnamed asset"}</h1>
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="min-w-0 flex-1 basis-64 space-y-1">
+              <div className="flex items-start gap-2">
+                <h1 className="min-w-0 text-xl font-extrabold tracking-tight wrap-anywhere">{asset.name || "Unnamed asset"}</h1>
+                <span className="shrink-0 pt-1">
                   <StatusValue status={asset.lifecycleStatus} />
-                  <ConditionValue condition={asset.condition} />
-                </div>
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex min-w-0 max-w-full items-center gap-2 tabular-nums wrap-anywhere text-muted-foreground">
-                    <TagIcon aria-hidden="true" className="size-4 shrink-0 text-primary" />
-                    {asset.assetTag || "No Asset Tag"}
-                  </span>
-                  {/* Category is taxonomy: a neutral tag, never a status colour (DS-04). */}
-                  <span className="max-w-full rounded-full border border-border bg-muted px-2 py-1 text-xs wrap-anywhere text-muted-foreground">{asset.category?.name || "Uncategorized"}</span>
-                </p>
+                </span>
               </div>
-            ) : (
-              <div role="status" aria-label="Loading asset" className="w-72 max-w-full space-y-3 motion-reduce:[&_*]:animate-none">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-4 w-40" />
-              </div>
-            )}
-            <div className="flex flex-wrap items-center gap-2">
-              {labelAction}
-              <Button
-                variant="outline" size="sm" aria-disabled="true" title="Editing is not available in this version"
-                aria-description="Editing is not available in this version." className="cursor-not-allowed text-muted-foreground hover:bg-card max-sm:h-10"
-              >
-                <EditIcon aria-hidden="true" className="size-4" />
-                Edit
-              </Button>
+              <p className="text-xs leading-relaxed wrap-anywhere text-muted-foreground">
+                {[asset.assetTag, category.category, category.subcategory].filter(Boolean).join(" | ")}
+              </p>
             </div>
+            {actions}
           </div>
-          {asset ? <HeroFacts asset={asset} /> : <SectionLoading rows={2} />}
+          <ProfileSection title="Asset summary" headingHidden>
+            <div className="grid min-w-0 gap-x-6 @min-lg/profile-section:grid-cols-2">
+              <ProfileRows separators={false} rows={[
+                { label: "Category", value: category.category },
+                { label: "Serial Number", value: asset.serialNumber || "—" },
+                { label: "Asset Tag", value: asset.assetTag },
+                { label: "Purchase Date", value: formatDate(asset.acquisitionDate) },
+                { label: "Status", value: <StatusValue status={asset.lifecycleStatus} /> },
+              ]} />
+              <ProfileRows separators={false} rows={[
+                { label: "Current Custodian", value: <CustodianValue custody={asset.custody} /> },
+                { label: "Assigned Date", value: asset.custody ? formatDay(asset.custody.since) : "—" },
+                { label: "Location", value: locationTrail(asset.locationPath, asset.location) || "—" },
+                { label: "Warranty", value: <WarrantyValue warranty={asset.currentWarranty} /> },
+                { label: "Condition", value: <ConditionValue condition={asset.condition} /> },
+              ]} />
+            </div>
+          </ProfileSection>
         </div>
       </div>
     </header>
-  );
-}
-
-function HeroFacts({ asset }: { asset: AssetDetail }) {
-  const trail = locationTrail(asset.locationPath, asset.location);
-  const segments = trail ? trail.split(" › ") : [];
-  const warranty = asset.currentWarranty;
-  const coverage = warranty ? warrantyState(warranty.endDate, todayInBangkok()) : null;
-  return (
-    <dl className="grid gap-4 border-t border-border pt-3 @min-xl/profile-hero:grid-cols-2 @min-5xl/profile-hero:grid-cols-4">
-      <Fact
-        icon={LocationIcon} label="Location"
-        value={segments.at(-1) ?? "No location"}
-        detail={segments.length > 1 ? segments.slice(0, -1).join(" › ") : undefined}
-      />
-      <Fact
-        icon={UserIcon} label="Custodian"
-        value={asset.custody ? asset.custody.name || "Unnamed custodian" : "Unassigned"}
-        detail={asset.custody
-          ? `${asset.custody.type === "person" ? "Person" : "Organizational Unit"}${asset.custody.since ? ` · since ${formatDay(asset.custody.since)}` : ""}`
-          : "No active custody"}
-      />
-      <Fact
-        icon={WarrantyIcon} label="Warranty"
-        value={warranty ? warranty.provider || "Unnamed provider" : "None recorded"}
-        detail={warranty && coverage ? (
-          <span className="flex flex-wrap items-center gap-2">
-            <Badge variant="pill" color={coverage.tone}>{coverage.label}</Badge>
-            {warranty.endDate && <span className="tabular-nums">until {formatDate(warranty.endDate)}</span>}
-          </span>
-        ) : undefined}
-      />
-      <Fact
-        icon={CalendarIcon} label="Registered"
-        value={formatDay(asset.registrationDate)}
-        detail={asset.acquisitionDate ? `Acquired ${formatDate(asset.acquisitionDate)}` : undefined}
-      />
-    </dl>
   );
 }
 

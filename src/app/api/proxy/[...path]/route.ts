@@ -14,12 +14,14 @@ async function handle(request: Request, ctx: RouteCtx): Promise<NextResponse> {
   const { path } = await ctx.params;
   const joinedPath = path.join("/");
   const assetV2 = path[0] === "v2" && path[1] === "asset-workspace" && path[2] === "assets";
+  const categoryV2 = path[0] === "v2" && path[1] === "asset-workspace" && path[2] === "categories";
+  const workspaceV2 = assetV2 || categoryV2;
   const privateHeaders = { "Cache-Control": "private, no-store" };
   const reject = (status: number, error: string) => NextResponse.json({ error, uncertain: false }, { status, headers: privateHeaders });
-  if (path[0] === "v2" && !assetV2) return reject(404, "This v2 proxy path is not available.");
+  if (path[0] === "v2" && !workspaceV2) return reject(404, "This v2 proxy path is not available.");
   let upstreamPath = `v1/${joinedPath}`;
 
-  if (assetV2) {
+  if (workspaceV2) {
     if (path.some((part) => part === "." || part === ".." || /[\\/?#\u0000-\u001f]/.test(part))) return reject(400, "Invalid API path.");
     if (request.headers.has("x-device-token")) return reject(403, "A user session is required.");
     if (!(await cookies()).get("to_at")?.value) return reject(401, "Sign in again to continue.");
@@ -28,7 +30,7 @@ async function handle(request: Request, ctx: RouteCtx): Promise<NextResponse> {
     catch { return reject(401, "Sign in again to continue."); }
     if (session === "forbidden" || !session.tenantId || !session.userId) return reject(403, "Choose an authorized organization.");
     const context = request.headers.get("x-registration-context");
-    const registration = !["lookup", "list", "summary", "filters"].includes(path[3] ?? "");
+    const registration = categoryV2 || !["lookup", "list", "summary", "filters"].includes(path[3] ?? "");
     if ((registration || context) && context !== `${session.tenantId}:${session.userId}`) return reject(403, "Your account or organization changed. Return to the matching registration context.");
     if (!["GET", "HEAD"].includes(request.method) && request.headers.get("origin") !== new URL(request.url).origin) return reject(403, "Requests must originate from this application.");
     upstreamPath = `v2/tenants/${encodeURIComponent(session.tenantId)}/${path.slice(1).join("/")}`;
@@ -79,7 +81,7 @@ async function handle(request: Request, ctx: RouteCtx): Promise<NextResponse> {
           request.headers.get("content-type") || "application/json";
       }
     } catch {
-      if (assetV2) return reject(400, "The request body could not be read.");
+      if (workspaceV2) return reject(400, "The request body could not be read.");
       // Ignore body read errors
     }
   }
@@ -89,16 +91,16 @@ async function handle(request: Request, ctx: RouteCtx): Promise<NextResponse> {
       method: request.method,
       headers: headersToSend,
       body,
-      ...(assetV2 ? { cache: "no-store" as const, redirect: "error" as const, signal: AbortSignal.timeout(request.method === "GET" ? 15000 : 60000) } : {}),
+      ...(workspaceV2 ? { cache: "no-store" as const, redirect: "error" as const, signal: AbortSignal.timeout(request.method === "GET" ? 15000 : 60000) } : {}),
     });
 
     const resText = await upstreamRes.text();
     return new NextResponse(resText, {
       status: upstreamRes.status,
-      headers: { "Content-Type": "application/json", ...(assetV2 ? privateHeaders : {}) },
+      headers: { "Content-Type": "application/json", ...(workspaceV2 ? privateHeaders : {}) },
     });
   } catch (err) {
-    if (assetV2) return NextResponse.json({ code: "UPSTREAM_FAILED", error: "The asset service could not be reached.", uncertain: !["GET", "HEAD"].includes(request.method) }, { status: 502, headers: privateHeaders });
+    if (workspaceV2) return NextResponse.json({ code: "UPSTREAM_FAILED", error: "The asset service could not be reached.", uncertain: !["GET", "HEAD"].includes(request.method) }, { status: 502, headers: privateHeaders });
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 502 });
   }

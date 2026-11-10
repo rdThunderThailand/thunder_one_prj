@@ -4,11 +4,21 @@ import { assetExportFilename } from "./asset-export.ts";
 
 export const LABEL_LIMIT = 500;
 export const LABEL_MM = { width: 50, height: 30 } as const;
-export const LABEL_FORMATS = ["qr", "barcode"] as const;
+/** "both" is the PO default label (AC-031): QR reference + Code128 Asset Tag + Asset Name. */
+export const LABEL_FORMATS = ["qr", "barcode", "both"] as const;
 export type LabelFormat = typeof LABEL_FORMATS[number];
-export const labelFormatName = (format: LabelFormat) => format === "qr" ? "QR Code" : "Barcode (Code128)";
-export type LabelCandidate = { id: string; name: string; assetTag: string; status: string };
-export const assetLabelSchema = z.object({ id: z.guid(), name: z.string(), assetTag: z.string().min(1), qrValue: z.string().max(2048) });
+const LABEL_FORMAT_NAMES: Record<LabelFormat, string> = { both: "QR Code + Barcode", qr: "QR Code", barcode: "Barcode (Code128)" };
+export const labelFormatName = (format: LabelFormat) => LABEL_FORMAT_NAMES[format];
+export const DEFAULT_LABEL_FORMAT: LabelFormat = "both";
+/** Text lines the user can print. Serial is PO-optional (05 §4.12.2); it comes from the list row or profile, not Core. */
+export const LABEL_FIELDS = ["assetTag", "name", "serialNumber"] as const;
+export type LabelField = typeof LABEL_FIELDS[number];
+export type LabelFields = Record<LabelField, boolean>;
+export const DEFAULT_LABEL_FIELDS: LabelFields = { assetTag: true, name: true, serialNumber: false };
+export const LABEL_FIELD_NAMES: Record<LabelField, string> = { assetTag: "Asset Tag", name: "Asset Name", serialNumber: "Serial Number" };
+export type LabelCandidate = { id: string; name: string; assetTag: string; status: string; serialNumber?: string | null };
+export const assetLabelSchema = z.object({ id: z.guid(), name: z.string(), assetTag: z.string().min(1), qrValue: z.string().max(2048),
+  serialNumber: z.string().nullable().optional() });
 export type AssetLabel = z.infer<typeof assetLabelSchema>;
 export const labelsResponseSchema = z.object({ labels: z.array(assetLabelSchema).min(1).max(LABEL_LIMIT) });
 
@@ -34,8 +44,8 @@ export function assertLabelTags(labels: readonly AssetLabel[]) {
 
 /** Barcode restrictions must not prevent printing a QR-only label. */
 export function assertLabelFormat(labels: readonly AssetLabel[], format: LabelFormat) {
-  if (!LABEL_FORMATS.includes(format)) throw new AssetActionError("Choose QR Code or Barcode.", 400, "VALIDATION");
-  if (format === "barcode") assertLabelTags(labels);
+  if (!LABEL_FORMATS.includes(format)) throw new AssetActionError("Choose a label type.", 400, "VALIDATION");
+  if (format !== "qr") assertLabelTags(labels);
 }
 
 export function labelFailure(error: unknown, candidates: readonly LabelCandidate[]): AssetActionError {

@@ -9,7 +9,7 @@ interface Snapshot<T> {
   error: Failure | null; denied: Failure | null;
 }
 
-function useAssetSection<T>(context: string, key: string, load: (signal: AbortSignal) => Promise<AssetReadResult<T>>) {
+export function useAssetSection<T>(context: string, key: string, load: (signal: AbortSignal) => Promise<AssetReadResult<T>>) {
   const [version, setVersion] = useState(0);
   const [snapshot, setSnapshot] = useState<Snapshot<T> | null>(null);
   const request = `${key}:${version}`;

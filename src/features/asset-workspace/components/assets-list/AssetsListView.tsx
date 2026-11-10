@@ -22,6 +22,7 @@ import { AssetsExportDialog } from "./AssetsExportDialog";
 import { useAssetLabels } from "../../hooks/use-asset-labels";
 import { useAssetsSelection } from "../../hooks/use-assets-selection";
 import { AssetLabelsDialog } from "../asset-labels/AssetLabelsDialog";
+import { useCategoryFilterLabel } from "../../hooks/use-category-filter-label";
 
 export function AssetsListView({ context }: { context: string }) {
   const url = useAssetsListUrl();
@@ -30,6 +31,9 @@ export function AssetsListView({ context }: { context: string }) {
   if (!defaults.success) throw new Error("Invalid default asset query");
   const query = parsed.success ? parsed.data : defaults.data;
   const { summary, filters, list } = useAssetsListData(context, parsed.success ? parsed.data : null, url.search);
+  const missingCategoryOption = Boolean(parsed.success && filters.data && query.category_id
+    && !filters.data.categories.some((category) => category.id === query.category_id));
+  const selectedCategory = useCategoryFilterLabel(context, query.category_id, missingCategoryOption);
   const denied = list.denied;
   const [scanOpen, setScanOpen] = useState(false);
   const scanTriggerRef = useRef<HTMLButtonElement>(null);
@@ -44,7 +48,7 @@ export function AssetsListView({ context }: { context: string }) {
   function openLabels(trigger: HTMLButtonElement | null) {
     if (!exportReady) return false;
     const candidates = (list.data?.rows ?? []).filter((row) => selection.selected.has(row.id))
-      .map((row) => ({ id: row.id, name: row.name, assetTag: row.asset_code, status: row.status }));
+      .map((row) => ({ id: row.id, name: row.name, assetTag: row.asset_code, status: row.status, serialNumber: row.serial_number }));
     return labels.open(candidates, trigger);
   }
 
@@ -88,6 +92,7 @@ export function AssetsListView({ context }: { context: string }) {
       <AssetsFilters
         result={filters.data ? { ok: true, data: filters.data } : filters.error}
         loading={filters.pending && !filters.data} url={url}
+        selectedCategory={selectedCategory}
       />
       {filters.error && (
         <AssetsSectionError title="Couldn’t load filter options" message={filters.error.message} pending={filters.pending} retry={filters.retry} />

@@ -39,7 +39,12 @@ function FilterSelect({ label, allLabel, value, options, pending, onChange }: Fi
   );
 }
 
-export function AssetsFilters({ result, url, loading = false }: { result: AssetReadResult<AssetFilterOptions> | null; url: AssetsListUrlState; loading?: boolean }) {
+export function AssetsFilters({ result, url, loading = false, selectedCategory }: {
+  result: AssetReadResult<AssetFilterOptions> | null;
+  url: AssetsListUrlState;
+  loading?: boolean;
+  selectedCategory?: { id: string; name: string };
+}) {
   const currentSearch = url.get("q") ?? "";
   const [input, setInput] = useState({ source: currentSearch, draft: currentSearch, submitted: undefined as string | undefined });
   // Keep newer typing when our search completes; restore the URL value on Back/Forward.
@@ -67,6 +72,15 @@ export function AssetsFilters({ result, url, loading = false }: { result: AssetR
   const custody = url.get("custody_id") ? `${url.get("custody_type")}:${url.get("custody_id")}` : url.get("custody_type") ?? "";
   const references = (items: { id: string; name: string | null }[]) => items.map((item) => ({
     value: item.id, label: item.name || `Unnamed (${item.id})`,
+  }));
+  const categories = references(options?.categories ?? []);
+  if (selectedCategory && !categories.some((category) => category.value === selectedCategory.id)) {
+    categories.push({ value: selectedCategory.id, label: selectedCategory.name });
+  }
+  const categoryOptions = categories.map((category) => ({
+    ...category,
+    label: category.value === url.get("category_id") && url.get("include_child_categories") === "true"
+      ? `${category.label} and child categories` : category.label,
   }));
 
   return (
@@ -100,9 +114,9 @@ export function AssetsFilters({ result, url, loading = false }: { result: AssetR
             label="Category"
             allLabel="All Categories"
             value={url.get("category_id") ?? ""}
-            options={references(options?.categories ?? [])}
+            options={categoryOptions}
             pending={pending}
-            onChange={(value) => url.set({ category_id: value })}
+            onChange={(value) => url.set({ category_id: value, include_child_categories: undefined })}
           />
           <FilterSelect
             label="Location"
