@@ -107,6 +107,18 @@ export async function revokePlayerRelease(admittedId: string) {
   return byId(admittedId, () => coreRequest<null>(`player-releases/admitted/${admittedId}/revoke`, { method: "POST" }));
 }
 
+/** ADR 0028 §11 amendment 2: display name only, in any status. */
+export async function renamePlayerRelease(downloadId: string, name: string) {
+  return byId(downloadId, () => coreRequest<null>(`player-releases/${downloadId}`, { method: "PATCH", body: { name } }));
+}
+
+/** ADR 0028 §11 amendment 2: only a release that is not approved; its version can then be uploaded again. */
+export async function deletePlayerRelease(downloadId: string) {
+  return byId(downloadId, () => coreRequest<null>(`player-releases/${downloadId}`, {
+    method: "DELETE", conflict: "This release was approved or its files are already public, so it cannot be deleted. Refresh the page.",
+  }));
+}
+
 // Pilot page (ADR 0028 §11): one ring, one track.
 
 export async function listPilotMembers() {

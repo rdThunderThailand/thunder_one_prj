@@ -7,9 +7,24 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/lovable/input";
 import { Label } from "@/components/ui/lovable/label";
 import { preparePlayerRelease, registerPlayerRelease } from "./actions";
+import { manifestProblem } from "./manifest-check";
 
 type Selection = { name: string; version: string; files: { name: string; size: number }[] };
 type Draft = { id: string; selection: Selection };
+
+function readForm(form: HTMLFormElement) {
+  const fields = new FormData(form);
+  const files = fields.getAll("files").filter((item): item is File => item instanceof File && item.size > 0);
+  return { fields, files, version: String(fields.get("version") ?? "").trim() };
+}
+
+/** ADR 0028 §11 amendment 2 item 2: the reason Upload stays disabled, or "" when the files match manifest.json. */
+async function checkFiles(form: HTMLFormElement) {
+  const { files, version } = readForm(form);
+  if (!version || files.length === 0) return "";
+  const manifest = files.find((file) => file.name === "manifest.json");
+  return manifestProblem(manifest ? await manifest.text() : null, version, files) ?? "";
+}
 
 /** ADR 0028 §11 item 2: upload in a dialog that cannot be dismissed, and warns before the tab leaves, while files move. */
 export function NewReleaseDialog() {
@@ -19,6 +34,7 @@ export function NewReleaseDialog() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [isBusy, setIsBusy] = useState(false);
+  const [problem, setProblem] = useState("");
 
   useEffect(() => {
     if (!isBusy) return;
@@ -34,16 +50,21 @@ export function NewReleaseDialog() {
       setDraft(null);
       setStatus("");
       setError("");
+      setProblem("");
     }
   }
 
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const fields = new FormData(event.currentTarget);
-    const files = fields.getAll("files").filter((item): item is File => item instanceof File && item.size > 0);
+    const form = event.currentTarget;
+    // Re-check here: a late check from an earlier change could have cleared the reason.
+    const reason = await checkFiles(form);
+    setProblem(reason);
+    if (reason) return;
+    const { fields, files, version } = readForm(form);
     const selection: Selection = {
       name: String(fields.get("name") ?? ""),
-      version: String(fields.get("version") ?? "").trim(),
+      version,
       files: files.map(({ name, size }) => ({ name, size })),
     };
     setIsBusy(true);
@@ -112,14 +133,19 @@ export function NewReleaseDialog() {
             </div>
           </div>
         ) : (
-          <form onSubmit={upload} className="grid justify-items-start gap-3">
+          <form
+            onSubmit={upload}
+            onChange={(event) => void checkFiles(event.currentTarget).then(setProblem)}
+            className="grid justify-items-start gap-3"
+          >
             <Label htmlFor="release-name">Release name</Label>
             <Input id="release-name" name="name" maxLength={120} required disabled={isBusy} />
             <Label htmlFor="release-version">Build version</Label>
             <Input id="release-version" name="version" placeholder="1.2.0" maxLength={29} required disabled={isBusy} />
             <Label htmlFor="release-files">Build files</Label>
             <Input id="release-files" name="files" type="file" multiple required disabled={isBusy} />
-            <Button type="submit" disabled={isBusy}>Upload files</Button>
+            {problem && <p role="alert" className="text-sm text-error">{problem}</p>}
+            <Button type="submit" disabled={isBusy || problem !== ""}>Upload files</Button>
           </form>
         )}
         {status && <p role="status" className="text-sm text-muted-foreground">{status}</p>}
