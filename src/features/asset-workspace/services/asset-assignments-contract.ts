@@ -20,3 +20,11 @@ export const currentAssignmentsPageSchema = z.object({
   totalPages: z.number().int().nonnegative(),
 }).refine((page) => page.totalPages === Math.ceil(page.total / page.pageSize)
   && page.data.length <= page.pageSize && new Set(page.data.map((row) => row.assignmentId)).size === page.data.length);
+
+const target = z.object({ type: z.enum(["person", "org_unit"]), id: z.guid(), name: z.string().nullable(), avatarUrl: z.string().nullable() });
+export const assignmentEventSchema = z.object({
+  id: z.guid(), action: z.enum(["Assign", "Transfer", "Return"]), at: z.string(),
+  from: target.nullable(), to: target.nullable(), location: reference.nullable(),
+});
+export type AssignmentEvent = z.infer<typeof assignmentEventSchema>;
+export const assignmentEventsPageSchema = z.object({ data: z.array(assignmentEventSchema), total: z.number().int().nonnegative() });
