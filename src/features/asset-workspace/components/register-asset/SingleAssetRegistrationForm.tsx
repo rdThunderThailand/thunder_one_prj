@@ -34,7 +34,7 @@ import { RegistrationCategoryDraftChoice, RegistrationCategoryStorageNotice } fr
 import { needsCategoryDraftChoice } from "../../domain/registration-category-prefill";
 import type { ReferenceItem } from "../../services/registration-selector-contract";
 
-export function SingleAssetRegistrationForm({ options: initialOptions, tenantId, userId, onRestart, initialCategory }: { options: RegistrationOptions; tenantId: string; userId: string; onRestart: () => void; initialCategory?: ReferenceItem }) {
+export function SingleAssetRegistrationForm({ options: initialOptions, tenantId, userId, onRestart, initialCategory, initialLocation }: { options: RegistrationOptions; tenantId: string; userId: string; onRestart: () => void; initialCategory?: ReferenceItem; initialLocation?: ReferenceItem }) {
   const router = useRouter();
   const [recoveryClearFailed, setRecoveryClearFailed] = useState(false);
   const [discarded, setDiscarded] = useState(false);
@@ -45,7 +45,8 @@ export function SingleAssetRegistrationForm({ options: initialOptions, tenantId,
   const confirmation = useRegistrationConfirmation(`${storageKey}:confirmation`, `${tenantId}:${userId}`, initialOptions);
   const { locked } = confirmation;
   const rules = confirmation.options ?? initialOptions;
-  const registration = useAssetRegistration(storageKey, rules, confirmation.record ? undefined : initialCategory);
+  const registration = useAssetRegistration(storageKey, rules, confirmation.record ? undefined : initialCategory,
+    confirmation.record ? undefined : initialLocation);
   const { state: editableState, errors, patch } = registration;
   const state = confirmation.uncertain && confirmation.record
     ? { ...editableState, step: 4, draft: confirmation.record.draft } : editableState;

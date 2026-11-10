@@ -14,6 +14,7 @@ interface WizardProps {
   tenantId: string;
   userId: string;
   initialCategory?: ReferenceItem;
+  initialLocation?: ReferenceItem;
 }
 
 export function SingleAssetWizard(props: WizardProps) {

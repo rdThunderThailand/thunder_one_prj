@@ -5,7 +5,7 @@ import { AssetsTableSection } from "@/features/asset-workspace/components/report
 import { getAssetFilters, getAssetRows, reportAuth, type SearchParams } from "@/features/asset-workspace/services/asset-reports-api";
 
 // Assets whose own location is this one (no roll-up). The Location filter is shown locked to it.
-// Register Asset does not prefill the location yet (checklist §4).
+// Register Asset opens the single wizard with `?location_id=` so a fresh draft pre-selects this location.
 export default async function LocationAssetsTab({
   params,
   searchParams,
@@ -25,7 +25,7 @@ export default async function LocationAssetsTab({
     <div className="space-y-3">
       <div className="flex justify-end">
         <Button asChild>
-          <Link href="/asset-workspace/assets/register">
+          <Link href={`/asset-workspace/assets/register?mode=single&location_id=${encodeURIComponent(locationId)}`}>
             <PlusIcon className="h-4 w-4" />
             Register Asset
           </Link>

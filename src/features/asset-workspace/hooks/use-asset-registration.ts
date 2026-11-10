@@ -6,9 +6,10 @@ import type { ReferenceItem } from "../services/registration-selector-contract";
 import { readRegistrationDraft, removeRegistrationDraft, saveRegistrationDraft } from "../services/asset-registration-draft-storage";
 import type { RegistrationOptions } from "../services/asset-registration-contract";
 
-export function useAssetRegistration(storageKey: string, options: RegistrationOptions, initialCategory?: ReferenceItem) {
+export function useAssetRegistration(storageKey: string, options: RegistrationOptions, initialCategory?: ReferenceItem,
+  initialLocation?: ReferenceItem) {
   const [initial] = useState(() => readRegistrationDraft(storageKey));
-  const [state, setState] = useState<RegistrationState>(() => initialRegistrationState(initial.state, options, initialCategory));
+  const [state, setState] = useState<RegistrationState>(() => initialRegistrationState(initial.state, options, initialCategory, initialLocation));
   const current = useRef(state);
   const [errors, setErrors] = useState<RegistrationErrors>({});
   const [storageUnavailable, setStorageUnavailable] = useState(initial.unavailable);

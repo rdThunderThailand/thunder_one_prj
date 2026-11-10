@@ -3,8 +3,9 @@ import { registrationInitialConditions } from "./registration-initial-state.ts";
 import type { RegistrationOptions } from "../services/asset-registration-contract.ts";
 import type { ReferenceItem } from "../services/registration-selector-contract.ts";
 
-/** Saved work always wins; a category link supplies defaults only to a fresh draft. */
-export function initialRegistrationState(saved: RegistrationState | null, options: RegistrationOptions, category?: ReferenceItem) {
+/** Saved work always wins; a category or location link supplies defaults only to a fresh draft. */
+export function initialRegistrationState(saved: RegistrationState | null, options: RegistrationOptions, category?: ReferenceItem,
+  location?: ReferenceItem) {
   if (saved) return saved;
   const state = newRegistrationState();
   state.draft.tagMode = options.tagGeneration.modes.includes("automatic") ? "automatic" : "manual";
@@ -12,6 +13,10 @@ export function initialRegistrationState(saved: RegistrationState | null, option
   if (category) {
     state.draft.categoryId = category.id;
     state.draft.selectedReferences.categories = { ...category };
+  }
+  if (location) {
+    state.draft.locationId = location.id;
+    state.draft.selectedReferences.locations = { ...location };
   }
   return state;
 }
