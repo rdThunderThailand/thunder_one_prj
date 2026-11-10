@@ -26,7 +26,7 @@ export function PageHeader({ title, subtitle, actions, titleInTopbar = false }: 
   }
 
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
         {/* 2026-09-19: matched to the Media Workspace design reference's
             page title (20px/extrabold/tight tracking) and subtitle
