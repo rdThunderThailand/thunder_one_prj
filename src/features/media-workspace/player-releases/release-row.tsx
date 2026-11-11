@@ -86,7 +86,7 @@ export function ReleaseRow({ release, target }: { release: Release; target: { is
       <td className="p-3">
         <div className="grid justify-items-start gap-1">
           <div className="flex flex-wrap items-center gap-2">{badges}</div>
-          {busy === "approve" && <p role="status" className="text-sm text-muted-foreground">Checking signature…</p>}
+          {busy === "approve" && <p role="status" className="text-sm text-muted-foreground">Checking files…</p>}
           {error && <p role="alert" className="text-sm text-error">{error}</p>}
         </div>
       </td>

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/lovable/input";
 import { Label } from "@/components/ui/lovable/label";
 import { preparePlayerRelease, registerPlayerRelease } from "./actions";
-import { manifestProblem } from "./manifest-check";
+import { feedProblem } from "./feed-check";
 
 type Selection = { name: string; version: string; files: { name: string; size: number }[] };
 type Draft = { id: string; selection: Selection };
@@ -18,12 +18,12 @@ function readForm(form: HTMLFormElement) {
   return { fields, files, version: String(fields.get("version") ?? "").trim() };
 }
 
-/** ADR 0028 §11 amendment 2 item 2: the reason Upload stays disabled, or "" when the files match manifest.json. */
+/** ADR 0028 §4 amendment 4 items 1-2: the reason Upload stays disabled, or "" when the files match the vpk feed. */
 async function checkFiles(form: HTMLFormElement) {
   const { files, version } = readForm(form);
   if (!version || files.length === 0) return "";
-  const manifest = files.find((file) => file.name === "manifest.json");
-  return manifestProblem(manifest ? await manifest.text() : null, version, files) ?? "";
+  const feed = files.find((file) => file.name === "releases.windows-x64.json");
+  return feedProblem(feed ? await feed.text() : null, version, files) ?? "";
 }
 
 /** ADR 0028 §11 item 2: upload in a dialog that cannot be dismissed, and warns before the tab leaves, while files move. */

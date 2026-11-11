@@ -95,7 +95,7 @@ export async function downloadPlayerRelease(id: string, file: string) {
   return command<{ url: string }>({ action: "download", id, file });
 }
 
-/** ADR 0028 §4: Core verifies the signed manifest, copies the files to the public bucket and records the release. */
+/** ADR 0028 §4 (amendment 4): Core checks the vpk feed, builds an unsigned manifest, copies the files to the public bucket and records the release. */
 export async function admitPlayerRelease(downloadId: string) {
   return byId(downloadId, () => coreRequest<{ id: string }>(`player-releases/${downloadId}/admit`, {
     method: "POST", showReason: true, conflict: "This release was already admitted with different files. Refresh the page.",
