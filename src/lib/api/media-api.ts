@@ -56,14 +56,27 @@ export type PreviewUrls = {
   thumbnailUrls: Record<string, string>;
 };
 
+/** The route rejects more than 100 ids with a 400, which used to blank every thumbnail of a
+ *  Playlist longer than that. */
+const PREVIEW_URL_BATCH = 100;
+
 /** Batch-signs 1h preview URLs (and, for videos with a captured poster, thumbnail URLs). */
 export async function fetchPreviewUrls(ids: string[]): Promise<PreviewUrls> {
-  if (ids.length === 0) return { urls: {}, thumbnailUrls: {} };
-  const data = await requestApi<{
-    urls?: Record<string, string>;
-    thumbnail_urls?: Record<string, string>;
-  }>("POST", "/media/videos/preview-urls", { ids });
-  return { urls: data.urls ?? {}, thumbnailUrls: data.thumbnail_urls ?? {} };
+  const unique = [...new Set(ids)];
+  const batches: string[][] = [];
+  for (let i = 0; i < unique.length; i += PREVIEW_URL_BATCH) batches.push(unique.slice(i, i + PREVIEW_URL_BATCH));
+  const pages = await Promise.all(
+    batches.map((batch) =>
+      requestApi<{
+        urls?: Record<string, string>;
+        thumbnail_urls?: Record<string, string>;
+      }>("POST", "/media/videos/preview-urls", { ids: batch }),
+    ),
+  );
+  return {
+    urls: Object.assign({}, ...pages.map((data) => data.urls ?? {})),
+    thumbnailUrls: Object.assign({}, ...pages.map((data) => data.thumbnail_urls ?? {})),
+  };
 }
 
 export async function fetchCampaigns(): Promise<Campaign[]> {
