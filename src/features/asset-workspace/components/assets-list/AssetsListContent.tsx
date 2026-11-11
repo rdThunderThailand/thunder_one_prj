@@ -88,7 +88,7 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
           </div>
         ) : (
           <>
-            <div className="hidden @min-4xl/assets-results:block">
+            <div className="hidden @min-5xl/assets-results:block">
               <AssetsTable
                 rows={data.rows}
                 selected={frozen ? new Set() : selected}
@@ -97,7 +97,7 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
                 onSelect={selection.select}
               />
             </div>
-            <div className="@min-4xl/assets-results:hidden">
+            <div className="@min-5xl/assets-results:hidden">
               <AssetsCompactList
                 rows={data.rows}
                 selected={frozen ? new Set() : selected}
