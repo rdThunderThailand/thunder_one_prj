@@ -12,12 +12,13 @@ import { AccessDeniedState, NotFoundState } from "../states/states";
 import { FilesSection, WarrantySection } from "./ProfileSections";
 import { ProfileAssignmentEvents } from "../assignments/ProfileAssignmentEvents";
 import { ProfileAssignmentHistory } from "../assignments/ProfileAssignmentHistory";
+import { ProfileLocationView } from "../assignments/ProfileLocationView";
 import { inAssignments } from "../../domain/assignment-assign";
 import { ProfileHero } from "./ProfileHero";
 import { ProfileRail } from "./ProfileRail";
 import { ProfileOverview } from "./ProfileOverview";
 import { ProfileCurrentAssignment } from "./ProfileCurrentAssignment";
-import { ProfileActions, DisabledHint } from "./ProfileControls";
+import { ProfileActions } from "./ProfileControls";
 import { AssetProfileLoading } from "./AssetProfileLoading";
 import { Button } from "@/components/ui/lovable/button";
 import { AssetFilesEditDialog } from "./AssetFilesEditDialog";
@@ -106,15 +107,13 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
               {[
                 ["overview", "Overview"], ["assignments", "Assignments"], ["location", "Location"],
                 ["files", "Files"], ["warranty", "Lifecycle & Warranty"], ["history", "History"],
-              ].map(([value, label]) => {
-                const disabled = value === "location";
-                const trigger = (
-                  <TabsTrigger value={value} disabled={disabled} className="min-h-10 rounded-none border-b-2 border-transparent px-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none">
+              ].map(([value, label]) => (
+                <span key={value}>
+                  <TabsTrigger value={value} className="min-h-10 rounded-none border-b-2 border-transparent px-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none">
                     {label}
                   </TabsTrigger>
-                );
-                return disabled ? <DisabledHint key={value}>{trigger}</DisabledHint> : <span key={value}>{trigger}</span>;
-              })}
+                </span>
+              ))}
             </TabsList>
             <TabsContent value="overview" className="mt-3">
               <ProfileOverview asset={asset} files={viewFiles} onPhotoFailed={refreshLinks} onPhotoEdit={(trigger) => openEditor("photo", trigger)} />
@@ -122,6 +121,9 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
             <TabsContent value="assignments" className="mt-3 space-y-3">
               <ProfileCurrentAssignment asset={asset} tinted />
               <ProfileAssignmentEvents key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
+            </TabsContent>
+            <TabsContent value="location" className="mt-3">
+              <ProfileLocationView key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
             </TabsContent>
             <TabsContent value="files" className="mt-3">
               <FilesSection files={viewFiles} onPhotoFailed={refreshLinks} disposed={asset.lifecycleStatus === "Disposed"}
