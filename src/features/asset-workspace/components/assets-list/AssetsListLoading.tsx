@@ -89,7 +89,7 @@ export function AssetsListLoading() {
           <Skeleton className="h-10 w-48 max-w-full rounded-control motion-reduce:animate-none" />
         </div>
       </div>
-      <div className="@container/assets-results overflow-hidden rounded-card border border-border bg-card">
+      <Card className="@container/assets-results overflow-hidden motion-reduce:transition-none">
         <div className="flex h-12 items-center justify-between gap-3 px-3">
           <Skeleton className="h-7 w-1/2" />
           <Skeleton className="h-7 w-1/4" />
@@ -101,7 +101,7 @@ export function AssetsListLoading() {
           <Skeleton className="h-7 w-28" />
           <Skeleton className="h-7 w-60 max-w-full" />
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

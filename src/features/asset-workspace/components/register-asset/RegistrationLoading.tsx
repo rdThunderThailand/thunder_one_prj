@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { RegistrationBreadcrumb } from "./RegistrationBreadcrumb";
 
@@ -20,7 +21,7 @@ export function RegistrationLoading() {
           </div>
         </div>
         <div aria-hidden="true" className="grid items-start gap-3 @min-4xl/registration:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]">
-          <div className="@container/basic-information space-y-4 rounded-card border border-border bg-card p-4">
+          <Card className="@container/basic-information space-y-4 motion-reduce:transition-none p-4">
             <Skeleton className="h-4 w-40 motion-reduce:animate-none" />
             <Skeleton className="h-3 w-3/4 motion-reduce:animate-none" />
             <div className="grid gap-4 @min-lg/basic-information:grid-cols-2">
@@ -31,17 +32,17 @@ export function RegistrationLoading() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
           <div className="space-y-3">
-            <div className="space-y-3 rounded-card border border-border bg-card p-4">
+            <Card className="space-y-3 motion-reduce:transition-none p-4">
               <Skeleton className="h-4 w-32 motion-reduce:animate-none" />
               <Skeleton className="h-40 w-full motion-reduce:animate-none" />
               <Skeleton className="h-3 w-3/4 motion-reduce:animate-none" />
-            </div>
-            <div className="hidden space-y-3 rounded-card border border-border bg-card p-4 @min-4xl/registration:block">
+            </Card>
+            <Card className="hidden space-y-3 motion-reduce:transition-none p-4 @min-4xl/registration:block">
               <Skeleton className="h-4 w-32 motion-reduce:animate-none" />
               <Skeleton className="h-16 w-full motion-reduce:animate-none" />
-            </div>
+            </Card>
           </div>
         </div>
       </div>

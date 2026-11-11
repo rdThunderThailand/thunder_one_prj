@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { useId, type Ref } from "react";
 import { Textarea } from "@/components/ui/lovable/textarea";
 import { formatCount } from "../../domain/asset-import-format";
@@ -32,7 +33,7 @@ export function BulkImportRegistrationOptions({
 }) {
   const group = useId();
   return (
-    <section className="min-w-0 space-y-3 rounded-card border border-border bg-card p-4 @min-5xl/review:order-last @min-5xl/review:self-start">
+    <Card className="min-w-0 space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4 @min-5xl/review:order-last @min-5xl/review:self-start">
       <h2 className="text-sm font-semibold">Registration Options</h2>
       {counts.warning > 0 ? (
         <>
@@ -116,6 +117,6 @@ export function BulkImportRegistrationOptions({
           All {formatCount(counts.valid)} ready rows will be registered.
         </p>
       )}
-    </section>
+    </Card>
   );
 }

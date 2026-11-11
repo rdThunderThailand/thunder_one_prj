@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 import { EditIcon, FileTextIcon, GridIcon, LocationIcon, ShieldIcon, ClipboardIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import type { RegistrationDraft } from "../../domain/registration-draft";
@@ -75,7 +76,7 @@ export function RegistrationReviewStep({ draft, options, onEdit, photoCount, nee
   ];
 
   return (
-    <section className="min-w-0 rounded-card border border-border bg-card p-4" aria-label="Review asset information">
+    <Card role="region" className="min-w-0 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4" aria-label="Review asset information">
       <h2 className="text-sm font-semibold text-foreground">Review asset information</h2>
       {groups.map((group, index) => {
         const Icon = [FileTextIcon, GridIcon, LocationIcon, ShieldIcon, ClipboardIcon][index];
@@ -108,6 +109,6 @@ export function RegistrationReviewStep({ draft, options, onEdit, photoCount, nee
           </section>
         );
       })}
-    </section>
+    </Card>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, ArrowRightIcon, DownloadIcon, SpinnerIcon } from "@/components/ui/icons";
@@ -41,39 +42,42 @@ export function CompleteStep({ flow, renderFooter }: {
       <div className={cn(enter("[animation-delay:120ms]"))}>
         <BulkImportCounts variant="result" batch={batch} animate={flow.justRegistered} />
       </div>
-      <section
-        className={cn("flex min-w-0 flex-col rounded-card border border-border bg-card p-4", enter("[animation-delay:240ms]"))}
-        aria-label="Import results"
-      >
-        <BulkImportRowsTable
-          key={batch.id}
-          api={flow.api}
-          batchId={batch.id}
-          batch={batch}
-          variant="result"
-          onReloadBatch={flow.reload}
-          initialTab={batch.counts.notRegistered ? "not_registered" : "all"}
-          onReimport={() => setErrorFileChoice({ reimport: true })}
-          reimporting={Boolean(busy)}
-          toolbar={
-            batch.counts.notRegistered > 0 ? (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={Boolean(busy)}
-                onClick={() => setErrorFileChoice({ reimport: false })}
-              >
-                {busy === "error" ? (
-                  <SpinnerIcon className="size-4 animate-spin motion-reduce:animate-none" />
-                ) : (
-                  <DownloadIcon className="size-4" />
-                )}
-                <span>Download Error File</span>
-              </Button>
-            ) : undefined
-          }
-        />
-      </section>
+      {/* Entry animation on a wrapper so its duration doesn't override the Card hover transition. */}
+      <div className={cn("flex min-w-0 flex-col", enter("[animation-delay:240ms]"))}>
+        <Card role="region"
+          className="flex min-w-0 flex-col focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4"
+          aria-label="Import results"
+        >
+          <BulkImportRowsTable
+            key={batch.id}
+            api={flow.api}
+            batchId={batch.id}
+            batch={batch}
+            variant="result"
+            onReloadBatch={flow.reload}
+            initialTab={batch.counts.notRegistered ? "not_registered" : "all"}
+            onReimport={() => setErrorFileChoice({ reimport: true })}
+            reimporting={Boolean(busy)}
+            toolbar={
+              batch.counts.notRegistered > 0 ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={Boolean(busy)}
+                  onClick={() => setErrorFileChoice({ reimport: false })}
+                >
+                  {busy === "error" ? (
+                    <SpinnerIcon className="size-4 animate-spin motion-reduce:animate-none" />
+                  ) : (
+                    <DownloadIcon className="size-4" />
+                  )}
+                  <span>Download Error File</span>
+                </Button>
+              ) : undefined
+            }
+          />
+        </Card>
+      </div>
       <div className={cn(enter("[animation-delay:360ms]"))}>
         <BulkImportNextSteps
           batch={batch}

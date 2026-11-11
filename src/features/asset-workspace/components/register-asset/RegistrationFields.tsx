@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 import type { ComponentProps, ReactNode } from "react";
 import { Input } from "@/components/ui/lovable/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
@@ -15,7 +16,7 @@ export interface RegistrationStepProps {
 
 export function RegistrationSection({ title, description, icon: Icon, children }: { title: string; description?: string; icon?: Icon; children: ReactNode }) {
   return (
-    <section className="space-y-3 rounded-card border border-border bg-card p-4">
+    <Card className="space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
       <div className="flex items-start gap-3">
         {Icon && (
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
@@ -28,7 +29,7 @@ export function RegistrationSection({ title, description, icon: Icon, children }
         </div>
       </div>
       {children}
-    </section>
+    </Card>
   );
 }
 

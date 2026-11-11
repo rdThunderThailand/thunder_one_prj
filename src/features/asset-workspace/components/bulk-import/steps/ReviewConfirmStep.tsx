@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeftIcon,
@@ -139,7 +140,7 @@ export function ReviewConfirmStep({
               reasonError={reasonError}
               onBlur={() => setTouched(true)}
             />
-            <section className="flex min-w-0 flex-col gap-3 rounded-card border border-border bg-card p-4">
+            <Card className="flex min-w-0 flex-col gap-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
               <h2 className="text-sm font-semibold">
                 Preview Assets ({formatCount(toRegister)} rows will be
                 registered)
@@ -152,7 +153,7 @@ export function ReviewConfirmStep({
                 variant="review"
                 onReloadBatch={flow.reload}
               />
-            </section>
+            </Card>
           </div>
         </>
       )}

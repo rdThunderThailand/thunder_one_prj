@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 import Image from "next/image";
 import { BoxIcon, EditIcon, CheckIcon, InfoIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
@@ -28,7 +29,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
 
   return (
     <aside className="min-w-0 space-y-3" aria-label="Asset preview">
-      <section className="space-y-3 rounded-card border border-border bg-card p-4">
+      <Card className="space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground">{step === 4 ? "Asset preview" : "Live preview"}</h2>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
@@ -86,7 +87,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
             ))}
           </dl>
         )}
-      </section>
+      </Card>
       {step === 0 ? (
         <section className="space-y-2 rounded-card bg-accent p-4 text-xs leading-relaxed text-foreground" aria-label="Quick tips">
           <h2 className="flex items-center gap-2 font-semibold text-accent-foreground">
@@ -100,7 +101,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
           </RegistrationHelp>
         </section>
       ) : (
-        <section className="space-y-2 rounded-card border border-border bg-card p-4" aria-label="Registration checklist">
+        <Card role="region" className="space-y-2 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4" aria-label="Registration checklist">
           <h2 className="text-sm font-semibold">{step === 4 ? "Checklist" : "Your progress"}</h2>
           {checklist.map((label, index) => {
             const complete = step === 4 && index === 4 || index < 4 && (reviewed || index < step) && Object.keys(registrationErrors(draft, options, index)).length === 0;
@@ -150,7 +151,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
               </div>
             );
           })}
-        </section>
+        </Card>
       )}
     </aside>
   );

@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 import { useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
@@ -32,9 +33,9 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
   useEffect(() => { if (!pending && !error) scroll.current?.scrollTo({ top: 0 }); }, [dataKey, pending, error]);
 
   return (
-    <section
+    <Card role="region"
       data-assets-table aria-label="Assets list" aria-busy={pending}
-      className="@container/assets-results flex min-w-0 flex-col overflow-hidden rounded-card border border-border bg-card group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1"
+      className="@container/assets-results flex min-w-0 flex-col overflow-hidden focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1"
     >
       <div data-assets-controls className="flex shrink-0 flex-wrap items-center gap-2 px-3 py-2">
         <div className="min-w-0 flex-1 basis-48">
@@ -111,6 +112,6 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
       <div data-assets-controls className="shrink-0 border-t border-border px-3 py-2">
         {pagination ? <AssetsPagination {...pagination} /> : <Skeleton className="h-8 w-full" />}
       </div>
-    </section>
+    </Card>
   );
 }
