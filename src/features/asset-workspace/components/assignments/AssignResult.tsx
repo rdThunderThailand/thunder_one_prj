@@ -1,18 +1,21 @@
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Card } from "@/components/ui/Card";
 import { ArrowRightIcon, CheckCircleIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import { locationTrail } from "../../domain/asset-profile";
+import { inAssignments, profileHref } from "../../domain/assignment-assign";
 import { AssignHolder } from "./AssignHolder";
 
 /** The only success signal (no toast) for FE 02–04: what changed and where to go next. */
 export function AssignResult({ before, after, title = "Asset assigned" }: { before: AssetDetail; after: AssetDetail; title?: string }) {
   const banner = useRef<HTMLDivElement>(null);
+  const fromAssignments = inAssignments(usePathname());
   useEffect(() => banner.current?.focus(), []);
   const links = [
-    { href: `/asset-workspace/assets/${encodeURIComponent(after.id)}`, label: "Asset Profile" },
+    { href: profileHref(after.id, fromAssignments), label: "Asset Profile" },
     { href: "/asset-workspace/assignments?tab=history", label: "Assignment History" },
   ];
   return (

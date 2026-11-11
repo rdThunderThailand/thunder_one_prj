@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
-import { actionHref, assetAssignBlock, assignBody, assignOrigin, assignSteps, evidenceKind } from "./assignment-assign.ts";
+import { actionHref, inAssignments, profileHref, assetAssignBlock, assignBody, assignOrigin, assignSteps, evidenceKind } from "./assignment-assign.ts";
 
 assert.equal(actionHref("a 1", "transfer", true), "/asset-workspace/assignments/a%201/transfer");
 assert.equal(actionHref("a1", "return", false), "/asset-workspace/assets/a1/return");
+assert.equal(profileHref("a 1", true), "/asset-workspace/assignments/a%201");
+assert.equal(profileHref("a1", false), "/asset-workspace/assets/a1");
+assert.ok(inAssignments("/asset-workspace/assignments/a1") && inAssignments("/asset-workspace/assignments"));
+assert.ok(!inAssignments("/asset-workspace/assets/a1") && !inAssignments("/asset-workspace/assignmentsx"));
 
 assert.deepEqual(assignSteps(true), ["Select Asset", "Assign Details", "Review", "Confirm"]);
 assert.deepEqual(assignSteps(false), ["Assign Details", "Review", "Confirm"]);

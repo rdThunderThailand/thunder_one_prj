@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { locationTrail } from "../../domain/asset-profile";
-import { actionHref, assetAssignBlock, assignBlockText, assignOrigin, assignOutcomes } from "../../domain/assignment-assign";
+import { actionHref, profileHref, assetAssignBlock, assignBlockText, assignOrigin, assignOutcomes } from "../../domain/assignment-assign";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
 import { ActionFooter } from "./ActionFooter";
@@ -106,14 +106,13 @@ function content(context: string, flow: AssignFlow, fromAssignments: boolean): {
   const block = assetAssignBlock(detail.data);
   if (block) {
     const text = assignBlockText(block);
-    const id = encodeURIComponent(detail.data.id);
     const action = (
       <Button
         asChild
         variant="outline"
         size="sm"
       >
-        <Link href={block === "has_custody" ? actionHref(detail.data.id, "transfer", fromAssignments) : `/asset-workspace/assets/${id}`}>
+        <Link href={block === "has_custody" ? actionHref(detail.data.id, "transfer", fromAssignments) : profileHref(detail.data.id, fromAssignments)}>
           {block === "has_custody" ? "Transfer" : "View Asset"}
         </Link>
       </Button>

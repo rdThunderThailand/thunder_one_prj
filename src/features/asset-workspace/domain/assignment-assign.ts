@@ -17,10 +17,16 @@ export function assignOrigin(from: string | undefined, assetId: string | null) {
   return { href: `/asset-workspace/assets/${encodeURIComponent(assetId)}`, label: "Asset Profile" };
 }
 
-/** Actions opened from Assignments live under `/assignments/{id}/…` so the sidebar keeps Assignments active. */
-export function actionHref(assetId: string, action: "assign" | "transfer" | "return", fromAssignments: boolean) {
-  return `/asset-workspace/${fromAssignments ? "assignments" : "assets"}/${encodeURIComponent(assetId)}/${action}`;
+/** Profile and actions opened from Assignments live under `/assignments/{id}` so the sidebar keeps Assignments active. */
+export function profileHref(assetId: string, fromAssignments: boolean) {
+  return `/asset-workspace/${fromAssignments ? "assignments" : "assets"}/${encodeURIComponent(assetId)}`;
 }
+
+export function actionHref(assetId: string, action: "assign" | "transfer" | "return", fromAssignments: boolean) {
+  return `${profileHref(assetId, fromAssignments)}/${action}`;
+}
+
+export const inAssignments = (pathname: string) => /^\/asset-workspace\/assignments(\/|$)/.test(pathname);
 
 export function assetAssignBlock(asset: AssetLike): CustodyBlock | null {
   return assignBlock({

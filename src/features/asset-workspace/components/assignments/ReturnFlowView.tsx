@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { locationTrail } from "../../domain/asset-profile";
-import { assignOrigin } from "../../domain/assignment-assign";
+import { assignOrigin, profileHref } from "../../domain/assignment-assign";
 import { assetReturnBlock, returnOutcomes } from "../../domain/assignment-return";
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
@@ -24,7 +24,7 @@ const denied = (code?: string) => code === "PERMISSION_DENIED" || code === "UNAU
 export function ReturnFlowView({ context, assetId, from }: { context: string; assetId: string; from?: string }) {
   const flow = useReturnFlow(context, assetId);
   const origin = assignOrigin(from, assetId);
-  const body = content(flow);
+  const body = content(flow, from === "assignments");
   return (
     <AssignFlowWorkspace>
       <AssignFlowCrumb origin={origin} assetId={assetId} assetName={flow.asset?.name} title={RETURN_TITLE.title} />
@@ -55,7 +55,7 @@ export function ReturnFlowView({ context, assetId, from }: { context: string; as
   );
 }
 
-function content(flow: ReturnFlow): { node: ReactNode; panel?: ReactNode; form: boolean } {
+function content(flow: ReturnFlow, fromAssignments: boolean): { node: ReactNode; panel?: ReactNode; form: boolean } {
   if (flow.saved) return { node: <ReturnResult flow={flow} />, form: false };
   const detail = flow.detail.result;
   const options = flow.options.result;
@@ -77,7 +77,7 @@ function content(flow: ReturnFlow): { node: ReactNode; panel?: ReactNode; form: 
     return { form: false, node: (
       <EmptyState title="This asset can't be returned" body="Only Assigned assets with a current custodian can be returned." action={(
         <Button asChild variant="outline" size="sm">
-          <Link href={`/asset-workspace/assets/${encodeURIComponent(asset.id)}`}>View Asset</Link>
+          <Link href={profileHref(asset.id, fromAssignments)}>View Asset</Link>
         </Button>
       )} />
     ) };

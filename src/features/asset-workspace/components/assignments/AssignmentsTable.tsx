@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { UsersIcon } from "@/components/ui/icons";
 import { AssetThumbnail } from "../AssetThumbnail";
 import { assignmentDate } from "../../domain/assignment-current";
+import { profileHref } from "../../domain/assignment-assign";
 import type { CurrentAssignment } from "../../services/asset-assignments-contract";
 import { AssignmentRowMenu } from "./AssignmentRowMenu";
 import { assignmentTableColumns } from "./assignment-table-columns";
@@ -44,7 +45,7 @@ export function AssignmentsTable({ rows }: { rows: CurrentAssignment[] }) {
                 />
                 <div className="min-w-0 space-y-1">
                   <Link
-                    href={`/asset-workspace/assets/${encodeURIComponent(row.asset.id)}`}
+                    href={profileHref(row.asset.id, true)}
                     className="rounded-control font-semibold text-foreground underline-offset-4 wrap-anywhere hover:text-accent-foreground hover:underline"
                   >
                     {row.asset.name || "Unnamed asset"}

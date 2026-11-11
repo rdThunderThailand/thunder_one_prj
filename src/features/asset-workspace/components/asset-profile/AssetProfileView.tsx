@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
@@ -11,6 +12,7 @@ import { AccessDeniedState, NotFoundState } from "../states/states";
 import { FilesSection, WarrantySection } from "./ProfileSections";
 import { ProfileAssignmentEvents } from "../assignments/ProfileAssignmentEvents";
 import { ProfileAssignmentHistory } from "../assignments/ProfileAssignmentHistory";
+import { inAssignments } from "../../domain/assignment-assign";
 import { ProfileHero } from "./ProfileHero";
 import { ProfileRail } from "./ProfileRail";
 import { ProfileOverview } from "./ProfileOverview";
@@ -36,7 +38,9 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   const readsReady = Boolean(detail.result?.ok && files.result?.ok && !detail.pending && !files.pending);
   const viewFiles = { ...files, result: files.result?.ok || !known ? files.result : { ok: true as const, data: known.files },
     pending: files.pending || detail.pending || Boolean(known && !readsReady) };
-  const [tab, setTab] = useState("overview");
+  // Opened from Assignments: stay in that sidebar section and open on its tab (owner 2026-11-11).
+  const fromAssignments = inAssignments(usePathname());
+  const [tab, setTab] = useState(fromAssignments ? "assignments" : "overview");
   const expiresAt = viewFiles.result?.ok ? viewFiles.result.data.expiresAt : null;
   const { reload: reloadFiles } = files;
   useEffect(() => {
@@ -83,7 +87,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   return (
     <div ref={view} tabIndex={-1} className="@container/asset-profile min-w-0 space-y-3 focus-visible:outline-2 focus-visible:outline-ring">
       <nav aria-label="Breadcrumb" className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
-        <Link href="/asset-workspace/assets" className="inline-flex min-h-8 items-center rounded-control text-accent-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">Assets</Link>
+        <Link href={fromAssignments ? "/asset-workspace/assignments" : "/asset-workspace/assets"} className="inline-flex min-h-8 items-center rounded-control text-accent-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">{fromAssignments ? "Assignments" : "Assets"}</Link>
         <ChevronRightIcon aria-hidden="true" className="size-3" />
         <span aria-current="page" className="min-w-0 font-medium wrap-anywhere">{asset.name}</span>
       </nav>

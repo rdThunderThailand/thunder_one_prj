@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { locationTrail } from "../../domain/asset-profile";
-import { actionHref, assignOrigin } from "../../domain/assignment-assign";
+import { actionHref, assignOrigin, profileHref } from "../../domain/assignment-assign";
 import { assetTransferBlock, transferBlockText, transferOutcomes } from "../../domain/assignment-transfer";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
@@ -95,7 +95,7 @@ function content(context: string, flow: TransferFlow, fromAssignments: boolean):
     const text = transferBlockText(block);
     const action = block === "no_custody" ? { href: actionHref(asset.id, "assign", fromAssignments), label: "Assign" }
       : block === "condition_blocks_transfer" ? { href: actionHref(asset.id, "return", fromAssignments), label: "Return" }
-        : { href: `/asset-workspace/assets/${encodeURIComponent(asset.id)}`, label: "View Asset" };
+        : { href: profileHref(asset.id, fromAssignments), label: "View Asset" };
     const button = (
       <Button
         asChild

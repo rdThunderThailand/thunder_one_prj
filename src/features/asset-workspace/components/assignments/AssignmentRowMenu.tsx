@@ -5,14 +5,14 @@ import { useId } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { EyeIcon, MoreIcon, ReturnIcon, TransferIcon } from "@/components/ui/icons";
-import { actionHref } from "../../domain/assignment-assign";
+import { actionHref, profileHref } from "../../domain/assignment-assign";
 import { assignmentActions } from "../../domain/assignment-current";
 import type { CurrentAssignment } from "../../services/asset-assignments-contract";
 
 export function AssignmentRowMenu({ row }: { row: CurrentAssignment }) {
   const description = useId();
   const reasons = assignmentActions(row);
-  const path = `/asset-workspace/assets/${encodeURIComponent(row.asset.id)}`;
+  const path = profileHref(row.asset.id, true);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

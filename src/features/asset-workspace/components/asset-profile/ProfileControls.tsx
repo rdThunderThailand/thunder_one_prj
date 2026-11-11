@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { DownloadIcon, MoreIcon, PlusIcon, PrintIcon, ReturnIcon, TransferIcon } from "@/components/ui/icons";
-import { actionHref } from "../../domain/assignment-assign";
+import { actionHref, inAssignments } from "../../domain/assignment-assign";
 import { profileAssignmentActions } from "../../domain/assignment-profile";
 import { useAssetLabels } from "../../hooks/use-asset-labels";
 import { useAssetExport } from "../../hooks/use-asset-export";
@@ -34,6 +35,7 @@ export function ProfileCustodyActions({ asset, placement }: {
   asset: AssetDetail; placement: "header" | "rail" | "assignment";
 }) {
   const eligibility = profileAssignmentActions(asset);
+  const fromAssignments = inAssignments(usePathname());
   const actions = eligibility.assign ? ["assign"] as const : ["transfer", "return"] as const;
   return (
     <div className={placement === "rail" ? "grid gap-2 [&>span]:w-full" : "flex flex-wrap items-start gap-2"}>
@@ -56,7 +58,7 @@ export function ProfileCustodyActions({ asset, placement }: {
           </DisabledHint>
         ) : (
           <Button key={action} asChild variant={variant} size="sm" className={className}>
-            <Link href={actionHref(asset.id, action, false)}>{content}</Link>
+            <Link href={actionHref(asset.id, action, fromAssignments)}>{content}</Link>
           </Button>
         );
       })}

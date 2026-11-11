@@ -73,7 +73,7 @@ for (const header of headers) {
 assert.match(html, /Organizational Unit/);
 assert.match(html, /No location/);
 assert.match(html, /10 Nov 2026/);
-assert.match(html, new RegExp(`href="/asset-workspace/assets/${id}"`));
+assert.match(html, new RegExp(`href="/asset-workspace/assignments/${id}"`));
 assert.match(html, /\/assignments\/[^/"]+\/transfer"/);
 assert.match(html, /\/assignments\/[^/"]+\/return"/);
 assert.doesNotMatch(html, /checkbox|Asset ID/);

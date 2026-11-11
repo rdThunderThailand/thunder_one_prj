@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { AssignmentHistoryEvent } from "../../services/asset-assignments-contract";
 import { assignmentEventKey, assignmentHistoryReason, assignmentHistoryRowNumber } from "../../domain/assignment-history";
+import { profileHref } from "../../domain/assignment-assign";
 import { assignmentHistoryColumns } from "./assignment-history-columns";
 import { AssignmentEventPill, AssignmentHistoryCondition, AssignmentHistoryPerson, AssignmentHistoryTime } from "./AssignmentsHistoryValues";
 
@@ -47,7 +48,7 @@ export function AssignmentsHistoryTable({ rows, page, pageSize, selectedKey, onS
                 : "hover:bg-muted/50 focus-within:bg-muted/50"} [&>td]:px-3 [&>td]:py-3 [&>td]:align-top [&>td]:wrap-anywhere`}>
               <td>{assignmentHistoryRowNumber(page, pageSize, index)}</td>
               <td>
-                <Link href={`/asset-workspace/assets/${encodeURIComponent(event.asset.id)}`} onClick={(click) => click.stopPropagation()}
+                <Link href={profileHref(event.asset.id, true)} onClick={(click) => click.stopPropagation()}
                   className="rounded-control font-semibold text-foreground underline-offset-4 hover:text-accent-foreground hover:underline">
                   {event.asset.name}
                 </Link>
