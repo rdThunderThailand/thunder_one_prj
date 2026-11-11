@@ -24,6 +24,9 @@ export default async function PlayerReleasesPage() {
             <Link href="/media-workspace/player-releases/pilot" className="inline-flex h-9 items-center rounded-lg border border-border bg-card px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               Test group
             </Link>
+            <Link href="/media-workspace/player-releases/rollout" className="inline-flex h-9 items-center rounded-lg border border-border bg-card px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              Rollout
+            </Link>
             <NewReleaseDialog />
           </div>
         }

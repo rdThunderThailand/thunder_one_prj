@@ -5,7 +5,7 @@ import { countVersions, isWindows, pilotBlocker, resolveVersion, type FleetDevic
 const base: FleetDevice = {
   id: "1", name: "d", tenant_id: "t", tenant_name: "T", registry_status: "registered", lifecycle_status: "ACTIVE",
   os_version: null, app_version: null, last_heartbeat_at: null, health: "offline", ring: null, active_channel: null,
-  last_check: null, latest_report: null, reported_version: null,
+  last_check: null, latest_report: null, reported_version: null, is_recent_check: null, production_outcome: null, target_report: null,
 };
 const check = { app_version: "1.0.0", update_track: "windows-x64", update_install_mode: "windows_managed", os_version: null, checked_at: "x" };
 
