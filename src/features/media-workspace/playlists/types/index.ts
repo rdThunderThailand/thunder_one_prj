@@ -84,6 +84,9 @@ export type PlaylistMetadata = {
 
 /** One row in the wizard's working list, before it becomes a `playlist_items` row. */
 export type DraftItem = {
+  /** Editor-only identity, never sent to the backend. A Playlist may repeat an asset, so
+   *  `mediaAssetId` cannot tell two rows apart (ADR 0103). */
+  key: string;
   mediaAssetId: string;
   title?: string;
   fileDeleted?: boolean;
