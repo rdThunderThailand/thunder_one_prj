@@ -36,7 +36,7 @@ export function getRecentAssignments(context: string, assetId: string, signal: A
 }
 
 /** Never retried here: an uncertain result means the action may already have happened. */
-async function postCustody(action: "assign" | "transfer" | "return", context: string, assetId: string, body: unknown, signal: AbortSignal,
+async function postCustody(action: "assign" | "transfer" | "return" | "move-location", context: string, assetId: string, body: unknown, signal: AbortSignal,
   transport: Transport): Promise<AssignResult> {
   try {
     const data = await transport("POST", `/${encodeURIComponent(assetId)}/${action}`, body, { context, signal, creation: true });
@@ -57,3 +57,6 @@ export const transferAsset = (context: string, assetId: string, body: unknown, s
 
 export const returnAsset = (context: string, assetId: string, body: unknown, signal: AbortSignal, transport: Transport = transportDefault) =>
   postCustody("return", context, assetId, body, signal, transport);
+
+export const moveAssetLocation = (context: string, assetId: string, body: unknown, signal: AbortSignal, transport: Transport = transportDefault) =>
+  postCustody("move-location", context, assetId, body, signal, transport);

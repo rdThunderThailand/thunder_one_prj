@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { assignAsset, getRecentAssignments, returnAsset, searchAvailableAssets, transferAsset } from "./asset-assignments-write.ts";
+import { assignAsset, getRecentAssignments, moveAssetLocation, returnAsset, searchAvailableAssets, transferAsset } from "./asset-assignments-write.ts";
+import { moveLocationBody } from "../domain/assignment-move-location.ts";
 
 const id = "10000000-0000-4000-8000-000000000001";
 const signal = new AbortController().signal;
@@ -52,3 +53,31 @@ const uncertain = await returnAsset("ctx", id, returnBody, signal, (async () => 
 assert.equal(attempts, 1);
 assert.deepEqual(uncertain, { ok: false, code: "INTERNAL", uncertain: true });
 console.log("Return POST parsing, uncertainty and no-retry checks passed");
+
+const locationId = "30000000-0000-4000-8000-000000000003";
+const moved = { ...detail, location: { id: locationId, name: "Repair Bench" }, updatedAt: "2026-11-11T01:00:00Z" };
+const moveBody = moveLocationBody(detail.updatedAt, locationId, " Bench check ");
+const beforeMove = calls.length;
+const move = await moveAssetLocation("ctx", id, moveBody, signal, ok(moved));
+assert.equal(calls.length, beforeMove + 1);
+assert.deepEqual(calls.at(-1), ["POST", `/${id}/move-location`, {
+  expectedUpdatedAt: detail.updatedAt, locationId, reason: "Bench check",
+}, { context: "ctx", signal, creation: true }]);
+assert.ok(move.ok);
+assert.equal(move.data.location?.id, locationId);
+assert.equal(move.data.custody?.id, detail.custody.id);
+assert.equal(move.data.lifecycleStatus, detail.lifecycleStatus);
+assert.equal(move.data.condition, detail.condition);
+assert.equal(move.data.updatedAt, moved.updatedAt);
+for (const code of ["STALE", "INVALID_STATE", "NOT_FOUND", "VALIDATION", "PERMISSION_DENIED", "UNAUTHENTICATED"]) {
+  assert.deepEqual(await moveAssetLocation("ctx", id, moveBody, signal, fail(code, false)), { ok: false, code, uncertain: false });
+}
+assert.deepEqual(await moveAssetLocation("ctx", id, moveBody, signal, ok({ ...moved, id: "other" })),
+  { ok: false, code: "INVALID_RESPONSE", uncertain: true });
+attempts = 0;
+assert.deepEqual(await moveAssetLocation("ctx", id, moveBody, signal, (async () => {
+  attempts++;
+  throw { code: "UPSTREAM_FAILED", uncertain: true };
+}) as never), { ok: false, code: "UPSTREAM_FAILED", uncertain: true });
+assert.equal(attempts, 1);
+console.log("Move Location payload, fresh detail, errors and no-retry checks passed");

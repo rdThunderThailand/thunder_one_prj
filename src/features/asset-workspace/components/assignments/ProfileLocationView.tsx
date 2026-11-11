@@ -7,6 +7,7 @@ import { LocationIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/lovable/button";
 import { assignmentHistoryRowNumber } from "../../domain/assignment-history";
+import { canMoveAsset } from "../../domain/assignment-move-location";
 import { locationHistoryPath } from "../../domain/assignment-location-history";
 import { STATUS_TONE } from "../../domain/status-tone";
 import { useProfileRead } from "../../hooks/use-asset-profile";
@@ -112,7 +113,9 @@ function NearbyAssets({ context, asset }: { context: string; asset: AssetDetail 
   );
 }
 
-export function ProfileLocationView({ context, asset }: { context: string; asset: AssetDetail }) {
+export function ProfileLocationView({ context, asset, onEditLocation }: {
+  context: string; asset: AssetDetail; onEditLocation?: (trigger: HTMLButtonElement) => void;
+}) {
   const [page, setPage] = useState(1);
   const paths = useProfileRead(`${context}:profile-location-paths`, (signal) => getLocationHistoryLocations(context, signal));
   const history = useProfileRead(`${context}:${asset.id}:location-intervals:${page}`,
@@ -126,11 +129,15 @@ export function ProfileLocationView({ context, asset }: { context: string; asset
   const parents = resolvedParents.length >= detailParents.length ? resolvedParents : detailParents;
   const historyData = history.result?.ok ? history.result.data : null;
   const code = history.result && !history.result.ok ? history.result.code : undefined;
+  const canEdit = canMoveAsset(asset) && onEditLocation;
 
   return (
     <div className="min-w-0 space-y-3">
-      <ProfileSection title="Current Location" action={(
-        <DisabledHint>
+      <ProfileSection title="Current Location" action={canEdit ? (
+        <Button id="profile-edit-location" variant="outline" size="sm"
+          onClick={(event) => canEdit(event.currentTarget)}>Edit Location</Button>
+      ) : (
+        <DisabledHint reason={onEditLocation ? "Only Available, Assigned or In Maintenance assets can be moved." : undefined}>
           <Button variant="outline" size="sm" disabled>Edit Location</Button>
         </DisabledHint>
       )}>

@@ -13,6 +13,7 @@ import { FilesSection, WarrantySection } from "./ProfileSections";
 import { ProfileAssignmentEvents } from "../assignments/ProfileAssignmentEvents";
 import { ProfileAssignmentHistory } from "../assignments/ProfileAssignmentHistory";
 import { ProfileLocationView } from "../assignments/ProfileLocationView";
+import { MoveLocationFlow } from "../assignments/MoveLocationFlow";
 import { inAssignments } from "../../domain/assignment-assign";
 import { ProfileHero } from "./ProfileHero";
 import { ProfileRail } from "./ProfileRail";
@@ -28,11 +29,15 @@ import type { ChangedAssetFiles } from "../../services/asset-files-change";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 
 type FileEditorSession = { id: string; kind: AssetFileKind; removeId?: string; trigger: HTMLButtonElement; snapshot: AssetFilesSnapshot };
+type MoveSession = { context: string; assetId: string; trigger: HTMLButtonElement };
+type MoveSnapshot = { context: string; revision: number; asset: AssetDetail };
 
 export function AssetProfileView({ context, assetId }: { context: string; assetId: string }) {
   const [revision, setRevision] = useState(0);
   const [known, setKnown] = useState<AssetFilesSnapshot | null>(null);
   const [editor, setEditor] = useState<FileEditorSession | null>(null);
+  const [move, setMove] = useState<MoveSession | null>(null);
+  const [moveSnapshot, setMoveSnapshot] = useState<MoveSnapshot | null>(null);
   const view = useRef<HTMLDivElement>(null);
   const detail = useProfileRead(`${context}:${assetId}:detail:${revision}`, (signal) => getAssetDetail(context, assetId, signal));
   const files = useProfileRead(`${context}:${assetId}:files:${revision}`, (signal) => getAssetFiles(context, assetId, signal));
@@ -57,9 +62,11 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
     refreshedFor.current = expiresAt;
     reloadFiles();
   }
-  const asset = detail.result?.ok ? detail.result.data : known?.asset;
+  const moveFallback = moveSnapshot?.context === context && moveSnapshot.asset.id === assetId && moveSnapshot.revision === revision
+    ? moveSnapshot.asset : null;
+  const asset = detail.result?.ok ? detail.result.data : known?.asset ?? moveFallback;
   if (!asset && !detail.result) return <AssetProfileLoading />;
-  if (detail.result && !detail.result.ok && (!known || ["NOT_FOUND", "UNAUTHENTICATED", "PERMISSION_DENIED"].includes(detail.result.code ?? ""))) {
+  if (detail.result && !detail.result.ok && ((!known && !moveFallback) || ["NOT_FOUND", "UNAUTHENTICATED", "PERMISSION_DENIED"].includes(detail.result.code ?? ""))) {
     const { code, message } = detail.result;
     return code === "NOT_FOUND" ? <NotFoundState title="Asset not found" body={message} />
       : code === "UNAUTHENTICATED" || code === "PERMISSION_DENIED" ? <AccessDeniedState body={message} />
@@ -85,6 +92,11 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
     setEditor(null);
     if (refresh) { setKnown(null); setRevision((value) => value + 1); }
   }
+  function refreshLocation(next: AssetDetail) {
+    setMoveSnapshot({ context, revision: revision + 1, asset: next });
+    setKnown((previous) => previous ? { ...previous, asset: next } : previous);
+    setRevision((previous) => previous + 1);
+  }
   return (
     <div ref={view} tabIndex={-1} className="@container/asset-profile min-w-0 space-y-3 focus-visible:outline-2 focus-visible:outline-ring">
       <nav aria-label="Breadcrumb" className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
@@ -92,7 +104,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
         <ChevronRightIcon aria-hidden="true" className="size-3" />
         <span aria-current="page" className="min-w-0 font-medium wrap-anywhere">{asset.name}</span>
       </nav>
-      {known && (detail.result && !detail.result.ok || files.result && !files.result.ok) && (
+      {(known || moveFallback) && (detail.result && !detail.result.ok || files.result && !files.result.ok) && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border bg-muted p-3 text-xs">
           <p>The latest profile could not be refreshed. File editing is paused until fresh details and files load.</p>
           <Button variant="outline" size="sm" disabled={detail.pending || files.pending} onClick={() => { detail.reload(); files.reload(); }}>Refresh profile and files</Button>
@@ -123,7 +135,8 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
               <ProfileAssignmentEvents key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
             </TabsContent>
             <TabsContent value="location" className="mt-3">
-              <ProfileLocationView key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
+              <ProfileLocationView key={`${context}:${assetId}:${revision}`} context={context} asset={asset}
+                onEditLocation={(trigger) => setMove({ context, assetId, trigger })} />
             </TabsContent>
             <TabsContent value="files" className="mt-3">
               <FilesSection files={viewFiles} onPhotoFailed={refreshLinks} disposed={asset.lifecycleStatus === "Disposed"}
@@ -144,6 +157,16 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
           liveFiles={viewFiles.result?.ok ? viewFiles.result.data : editor.snapshot.files} onFailed={refreshLinks}
           onSaved={saved} onObserved={observe} onClose={closeEditor}
           restoreFocus={() => { if (editor.trigger.isConnected) editor.trigger.focus(); else view.current?.focus(); }} />
+      )}
+      {move?.context === context && move.assetId === assetId && (
+        <MoveLocationFlow context={context} assetId={assetId}
+          onSaved={(next) => { refreshLocation(next); setMove(null); }}
+          onClose={(refresh) => { if (refresh) refreshLocation(asset); setMove(null); }}
+          restoreFocus={() => {
+            const trigger = move.trigger.isConnected ? move.trigger
+              : view.current?.querySelector<HTMLButtonElement>("#profile-edit-location");
+            (trigger && !trigger.disabled ? trigger : view.current)?.focus({ preventScroll: true });
+          }} />
       )}
     </div>
   );
