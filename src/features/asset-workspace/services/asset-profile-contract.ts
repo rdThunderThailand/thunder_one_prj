@@ -18,6 +18,7 @@ export const assetDetailSchema = z.object({
   custody: reference.extend({
     type: z.enum(["person", "org_unit"]), since: z.string().nullable().default(null),
     avatarUrl: z.string().nullable(), department: reference.nullable(),
+    note: z.string().nullable().default(null),
   }).nullable(),
   // Legacy values must remain visible without guessing their canonical meaning.
   lifecycleStatus: z.string(),

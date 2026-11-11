@@ -17,12 +17,14 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export function AssignmentsHistoryPanel({ event, expiresAt, onClose, onRefresh, refreshing }: {
+export function AssignmentsHistoryPanel({ event, expiresAt, onClose, onRefresh, refreshing, category, eventMeta }: {
   event: AssignmentHistoryEvent;
   expiresAt: string;
   onClose: () => void;
   onRefresh: () => void;
   refreshing: boolean;
+  category?: string;
+  eventMeta?: ReactNode;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -47,8 +49,9 @@ export function AssignmentsHistoryPanel({ event, expiresAt, onClose, onRefresh, 
           <XIcon aria-hidden="true" className="size-4" />
         </Button>
       </div>
-      <div className="mb-4">
+      <div className={eventMeta ? "mb-4 flex flex-wrap gap-1" : "mb-4"}>
         <AssignmentEventPill action={event.action} />
+        {eventMeta}
       </div>
       <dl className="space-y-3">
         <Detail label="Date & Time">
@@ -97,6 +100,7 @@ export function AssignmentsHistoryPanel({ event, expiresAt, onClose, onRefresh, 
         <dl className="space-y-3">
           <Detail label="Asset Name">{event.asset.name}</Detail>
           <Detail label="Asset Tag">{event.asset.assetTag || "—"}</Detail>
+          {category !== undefined && <Detail label="Category">{category}</Detail>}
         </dl>
       </section>
     </Card>

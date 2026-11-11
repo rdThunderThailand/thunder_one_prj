@@ -125,7 +125,26 @@ export function AssetProfileLoading() {
                 <ProfilePhotoLoading />
               </Card>
             </div>
-            <LoadingCard rows={2} />
+            <Card className="@container/profile-section min-w-0 space-y-3 p-4 motion-reduce:transition-none">
+              <Skeleton className="h-5 w-32" />
+              <div className="grid min-w-0 items-start gap-3 @min-xl/profile-section:grid-cols-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="size-8 shrink-0 rounded-full" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
+                <div className="divide-y divide-border">
+                  {[0, 1, 2].map((row) => (
+                    <div key={row} className="grid gap-1 py-2 @min-xs/profile-section:grid-cols-[minmax(0,7rem)_minmax(0,1fr)] @min-xs/profile-section:gap-3">
+                      <Skeleton className="h-4 w-20 max-w-full" />
+                      <Skeleton className="h-4 w-32 max-w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
           </div>
           <div className="grid gap-3 @min-xl/asset-profile:grid-cols-2 @min-6xl/asset-profile:grid-cols-1">
             <LoadingCard rows={2} />

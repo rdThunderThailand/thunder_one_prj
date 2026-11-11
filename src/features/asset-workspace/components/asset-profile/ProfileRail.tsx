@@ -6,7 +6,7 @@ import { CalendarIcon, DownloadIcon, LocationIcon, UserIcon, WarrantyIcon } from
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import { locationTrail } from "../../domain/asset-profile";
 import { Fact, formatDate, formatDay, ProfileSection, SectionMessage, StatusValue } from "./ProfileParts";
-import { DisabledHint, FutureAction } from "./ProfileControls";
+import { DisabledHint, ProfileCustodyActions } from "./ProfileControls";
 import { WarrantyValue } from "./ProfileValues";
 
 function ProfileQr({ asset }: { asset: AssetDetail }) {
@@ -56,10 +56,7 @@ export function ProfileRail({ asset }: { asset: AssetDetail }) {
   return (
     <aside aria-label="Asset quick reference" className="grid min-w-0 gap-3 @min-xl/asset-profile:grid-cols-2 @min-6xl/asset-profile:grid-cols-1">
       <ProfileSection title="Quick Actions">
-        <div className="grid gap-2 [&>span]:w-full">
-          <FutureAction label="Transfer Asset" primary />
-          <FutureAction label="Return Asset" kind="return" />
-        </div>
+        <ProfileCustodyActions asset={asset} placement="rail" />
       </ProfileSection>
       <ProfileSection title="Status & Key Dates">
         <dl className="space-y-3">

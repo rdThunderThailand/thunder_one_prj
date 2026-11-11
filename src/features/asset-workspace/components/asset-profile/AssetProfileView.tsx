@@ -9,10 +9,12 @@ import { useProfileRead } from "../../hooks/use-asset-profile";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, NotFoundState } from "../states/states";
 import { FilesSection, WarrantySection } from "./ProfileSections";
-import { HistorySection } from "./ProfileHistory";
+import { ProfileAssignmentEvents } from "../assignments/ProfileAssignmentEvents";
+import { ProfileAssignmentHistory } from "../assignments/ProfileAssignmentHistory";
 import { ProfileHero } from "./ProfileHero";
 import { ProfileRail } from "./ProfileRail";
 import { ProfileOverview } from "./ProfileOverview";
+import { ProfileCurrentAssignment } from "./ProfileCurrentAssignment";
 import { ProfileActions, DisabledHint } from "./ProfileControls";
 import { AssetProfileLoading } from "./AssetProfileLoading";
 import { Button } from "@/components/ui/lovable/button";
@@ -100,7 +102,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
                 ["overview", "Overview"], ["assignments", "Assignments"], ["location", "Location"],
                 ["files", "Files"], ["warranty", "Lifecycle & Warranty"], ["history", "History"],
               ].map(([value, label]) => {
-                const disabled = value === "assignments" || value === "location";
+                const disabled = value === "location";
                 const trigger = (
                   <TabsTrigger value={value} disabled={disabled} className="min-h-10 rounded-none border-b-2 border-transparent px-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none">
                     {label}
@@ -112,6 +114,10 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
             <TabsContent value="overview" className="mt-3">
               <ProfileOverview asset={asset} files={viewFiles} onPhotoFailed={refreshLinks} onPhotoEdit={(trigger) => openEditor("photo", trigger)} />
             </TabsContent>
+            <TabsContent value="assignments" className="mt-3 space-y-3">
+              <ProfileCurrentAssignment asset={asset} tinted />
+              <ProfileAssignmentEvents key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
+            </TabsContent>
             <TabsContent value="files" className="mt-3">
               <FilesSection files={viewFiles} onPhotoFailed={refreshLinks} disposed={asset.lifecycleStatus === "Disposed"}
                 onAddDocument={(trigger) => openEditor("document", trigger)} onRemoveDocument={(file, trigger) => openEditor("document", trigger, file.fileId)} />
@@ -120,7 +126,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
               <WarrantySection context={context} assetId={assetId} current={asset.currentWarranty} files={viewFiles} />
             </TabsContent>
             <TabsContent value="history" className="mt-3">
-              <HistorySection key={revision} context={context} assetId={assetId} />
+              <ProfileAssignmentHistory key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
             </TabsContent>
           </Tabs>
         </div>

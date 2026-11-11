@@ -5,13 +5,12 @@ import { useState } from "react";
 import { EditIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { categoryDisplay } from "../../domain/asset-profile-display.mts";
-import { locationTrail } from "../../domain/asset-profile";
 import type { AssetDetail, AssetFiles } from "../../services/asset-profile-contract";
 import type { AssetReadResult } from "../../services/assets-list-types";
 import { AssetThumbnail } from "../AssetThumbnail";
 import { DisabledHint } from "./ProfileControls";
-import { formatDay, ProfileRows, ProfileSection, SectionMessage } from "./ProfileParts";
-import { CustodianValue } from "./ProfileValues";
+import { ProfileRows, ProfileSection, SectionMessage } from "./ProfileParts";
+import { ProfileCurrentAssignment } from "./ProfileCurrentAssignment";
 import { ProfilePhotoLoading } from "./AssetProfileLoading";
 
 export type ProfileFilesRead = { result: AssetReadResult<AssetFiles> | null; pending: boolean; reload: () => void };
@@ -106,17 +105,7 @@ export function ProfileOverview({ asset, files, onPhotoFailed, onPhotoEdit }: {
         </ProfileSection>
         <ProfilePhotos asset={asset} files={files} onFailed={onPhotoFailed} onEdit={onPhotoEdit} />
       </div>
-      <ProfileSection title="Current Assignment">
-        {asset.custody ? (
-          <div className="grid min-w-0 items-start gap-3 @min-xl/profile-section:grid-cols-2">
-            <CustodianValue custody={asset.custody} />
-            <ProfileRows rows={[
-              { label: "Assigned Date", value: formatDay(asset.custody.since) },
-              { label: "Location", value: locationTrail(asset.locationPath, asset.location) || "—" },
-            ]} />
-          </div>
-        ) : <SectionMessage>—</SectionMessage>}
-      </ProfileSection>
+      <ProfileCurrentAssignment asset={asset} />
     </div>
   );
 }

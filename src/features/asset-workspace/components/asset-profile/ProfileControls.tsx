@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
-import { DownloadIcon, MoreIcon, PrintIcon, ReturnIcon, TransferIcon } from "@/components/ui/icons";
+import { DownloadIcon, MoreIcon, PlusIcon, PrintIcon, ReturnIcon, TransferIcon } from "@/components/ui/icons";
+import { actionHref } from "../../domain/assignment-assign";
+import { profileAssignmentActions } from "../../domain/assignment-profile";
 import { useAssetLabels } from "../../hooks/use-asset-labels";
 import { useAssetExport } from "../../hooks/use-asset-export";
 import type { AssetDetail } from "../../services/asset-profile-contract";
@@ -27,15 +30,37 @@ export function DisabledHint({ children, reason = LATER }: { children: ReactNode
   );
 }
 
-export function FutureAction({ label, primary = false, kind = "transfer" }: { label: string; primary?: boolean; kind?: "transfer" | "return" }) {
-  const Icon = kind === "transfer" ? TransferIcon : ReturnIcon;
+export function ProfileCustodyActions({ asset, placement }: {
+  asset: AssetDetail; placement: "header" | "rail" | "assignment";
+}) {
+  const eligibility = profileAssignmentActions(asset);
+  const actions = eligibility.assign ? ["assign"] as const : ["transfer", "return"] as const;
   return (
-    <DisabledHint>
-      <Button disabled variant={primary ? "primary" : "outline"} size="sm" className="w-full max-sm:h-10">
-        <Icon aria-hidden="true" className="size-4" />
-        {label}
-      </Button>
-    </DisabledHint>
+    <div className={placement === "rail" ? "grid gap-2 [&>span]:w-full" : "flex flex-wrap items-start gap-2"}>
+      {actions.map((action) => {
+        const label = (action === "assign" ? "Assign" : action === "transfer" ? "Transfer" : "Return")
+          + (placement === "rail" ? " Asset" : "");
+        const Icon = action === "assign" ? PlusIcon : action === "transfer" ? TransferIcon : ReturnIcon;
+        const reason = action === "assign" ? null : eligibility[action];
+        const variant = action === "assign" || (action === "transfer" && placement !== "header") ? "primary" : "outline";
+        const className = placement === "rail" ? "w-full max-sm:h-10" : "max-sm:h-10";
+        const content = (
+          <>
+            <Icon aria-hidden="true" className="size-4" />
+            {label}
+          </>
+        );
+        return reason ? (
+          <DisabledHint key={action} reason={reason}>
+            <Button disabled variant={variant} size="sm" className={className}>{content}</Button>
+          </DisabledHint>
+        ) : (
+          <Button key={action} asChild variant={variant} size="sm" className={className}>
+            <Link href={actionHref(asset.id, action, false)}>{content}</Link>
+          </Button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -46,8 +71,7 @@ export function ProfileActions({ context, asset }: { context: string; asset: Ass
   const openingDialog = useRef(false);
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <FutureAction label="Transfer" />
-      <FutureAction label="Return" kind="return" />
+      <ProfileCustodyActions asset={asset} placement="header" />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button ref={trigger} variant="outline" size="icon-sm" aria-label="More asset actions" className="max-sm:size-10">
