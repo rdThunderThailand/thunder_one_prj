@@ -94,6 +94,18 @@ assert.match(panel, /rounded-xl border border-border bg-card shadow-panel/);
 assert.match(panel, /group-data-\[bounded=true\]\/list-viewport:overflow-y-auto/);
 assert.doesNotMatch(panel, /sticky top-0|self-start|overflow-x-auto/);
 assert.match(panel, /No evidence attached\./);
+assert.match(panel, /Condition at Return<\/dt><dd[^>]*><span[^>]*>Good<\/span>/);
+for (const row of [
+  { ...event, action: "Assign" },
+  { ...event, action: "Transfer" },
+  { ...event, condition: null },
+]) {
+  const historyRow = render(AssignmentsHistoryTable, { rows: [row], page: 1, pageSize: 20, onSelect() {} });
+  const cells = [...historyRow.matchAll(/<td\b[^>]*>(.*?)<\/td>/g)];
+  assert.equal(cells[HISTORY_COLUMNS.indexOf("Condition at Return")]?.[1], "<span>—</span>");
+  const details = render(AssignmentsHistoryPanel, { ...panelProps, event: row });
+  assert.match(details, /Condition at Return<\/dt><dd[^>]*><span>—<\/span>/);
+}
 assert.doesNotMatch(panel, new RegExp(id));
 assert.doesNotMatch(panel, /Asset ID|Category|Transaction ID|backfill/);
 const file = { fileId: id, filename: "handover.pdf", mimeType: "application/pdf", sizeBytes: 10,

@@ -66,7 +66,7 @@ export function AssignmentsHistoryTable({ rows, page, pageSize, selectedKey, onS
               </td>
               <td>{event.location?.name || "—"}</td>
               <td>
-                <AssignmentHistoryCondition condition={event.condition} />
+                <AssignmentHistoryCondition condition={event.action === "Return" ? event.condition : null} />
               </td>
               <td>
                 <AssignmentHistoryPerson person={event.performedBy} fallback="System" />

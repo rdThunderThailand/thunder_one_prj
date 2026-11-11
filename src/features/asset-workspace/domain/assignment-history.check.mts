@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readAssignmentHistoryQuery, assignmentHistoryQueryString, assignmentEventKey, assignmentHistoryDate,
-  assignmentHistoryReason, assignmentHistoryRowNumber, assignmentEvidenceState, ASSIGNMENT_EVENT_LABEL } from "./assignment-history.ts";
+  assignmentHistoryReason, assignmentHistoryRowNumber, assignmentEvidenceState, assignmentHistoryRangeLabel, ASSIGNMENT_EVENT_LABEL } from "./assignment-history.ts";
 import { assignmentEventsPageSchema, assignmentHistoryPageSchema } from "../services/asset-assignments-contract.ts";
 
 const id = "c1111111-1111-1111-1111-111111111111";
@@ -49,3 +49,8 @@ assert.equal(assignmentHistoryPageSchema.safeParse({ ...page, data: [{ ...event,
 // The short Recent-history payloads used by FE 02–04 still parse without the new fields.
 assert.equal(assignmentEventsPageSchema.safeParse({ data: [{ id, action: "Assign", at, from: null, to: null, location: null }], total: 1 }).success, true);
 console.log("History query, dates, labels, identity, evidence and Recent-history compatibility checks passed");
+assert.equal(assignmentHistoryRangeLabel("", ""), "All");
+assert.equal(assignmentHistoryRangeLabel("2026-11-01", "2026-11-10"), "1 Nov 2026 – 10 Nov 2026");
+assert.equal(assignmentHistoryRangeLabel("2026-11-10", "2026-11-10"), "10 Nov 2026");
+assert.equal(assignmentHistoryRangeLabel("2026-11-01", ""), "From 1 Nov 2026");
+assert.equal(assignmentHistoryRangeLabel("", "2026-11-10"), "Until 10 Nov 2026");

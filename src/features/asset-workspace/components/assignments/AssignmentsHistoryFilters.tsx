@@ -4,7 +4,8 @@ import { useEffect, useEffectEvent, useId, useState } from "react";
 import { Input } from "@/components/ui/lovable/input";
 import { Button } from "@/components/ui/lovable/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
-import { ChevronDownIcon, SearchIcon } from "@/components/ui/icons";
+import { SearchIcon } from "@/components/ui/icons";
+import { AssignmentsHistoryDateRange } from "./AssignmentsHistoryDateRange";
 import type { ListUrlState } from "../list-page/useListUrlState";
 import { ASSIGNMENT_EVENT_LABEL, HISTORY_FILTER_KEYS } from "../../domain/assignment-history";
 
@@ -22,8 +23,6 @@ export function AssignmentsHistoryFilters({ url }: { url: ListUrlState }) {
     const timer = setTimeout(applyDebounced, 350);
     return () => clearTimeout(timer);
   }, [search.draft, current, url.isPending]);
-  const from = url.get("date_from") ?? "";
-  const to = url.get("date_to") ?? "";
   return (
     <div className="min-w-0 space-y-2">
       <div className="grid min-w-0 grid-cols-1 items-start gap-2 @xl/assignments:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
@@ -49,25 +48,7 @@ export function AssignmentsHistoryFilters({ url }: { url: ListUrlState }) {
             </SelectContent>
           </Select>
         </div>
-        <details className="relative min-w-0 rounded-control border border-input bg-card">
-          <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-control px-3 text-xs focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-            <span className="text-2xs text-muted-foreground">Date Range</span>
-            <span className="min-w-0 flex-1 wrap-anywhere">{from || to ? `${from || "—"} – ${to || "—"}` : "All"}</span>
-            <ChevronDownIcon aria-hidden="true" className="size-4" />
-          </summary>
-          <div className="space-y-3 border-t border-border p-3">
-            <div className="space-y-1">
-              <label htmlFor={`${id}-from`} className="text-xs">From</label>
-              <Input id={`${id}-from`} type="date" value={from} disabled={url.isPending}
-                onChange={(event) => url.set({ date_from: event.target.value || undefined })} />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor={`${id}-to`} className="text-xs">To</label>
-              <Input id={`${id}-to`} type="date" value={to} disabled={url.isPending}
-                onChange={(event) => url.set({ date_to: event.target.value || undefined })} />
-            </div>
-          </div>
-        </details>
+        <AssignmentsHistoryDateRange url={url} />
       </div>
       {HISTORY_FILTER_KEYS.some((key) => url.get(key)) && (
         <Button size="sm" variant="ghost" disabled={url.isPending}

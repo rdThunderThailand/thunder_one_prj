@@ -55,3 +55,13 @@ export function assignmentEvidenceState(url: string | null, expiresAt: string, n
   if (now >= Date.parse(expiresAt)) return "expired";
   return url ? "available" : "unavailable";
 }
+
+const rangeDay = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const showRangeDay = (value: string) => rangeDay.format(new Date(`${value}T00:00:00Z`));
+
+/** Date Range filter summary for ISO calendar days from the URL. */
+export function assignmentHistoryRangeLabel(from: string, to: string) {
+  if (from && to) return from === to ? showRangeDay(from) : `${showRangeDay(from)} – ${showRangeDay(to)}`;
+  if (from) return `From ${showRangeDay(from)}`;
+  return to ? `Until ${showRangeDay(to)}` : "All";
+}

@@ -65,7 +65,7 @@ export function AssignmentsHistoryPanel({ event, expiresAt, onClose, onRefresh, 
         </Detail>
         <Detail label="Location">{event.location?.name || "—"}</Detail>
         <Detail label="Condition at Return">
-          <AssignmentHistoryCondition condition={event.condition} />
+          <AssignmentHistoryCondition condition={event.action === "Return" ? event.condition : null} />
         </Detail>
         <Detail label="Notes / Reason">{assignmentHistoryReason(event.reason)}</Detail>
       </dl>
