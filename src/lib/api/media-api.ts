@@ -87,7 +87,8 @@ export async function fetchTags(): Promise<Tag[]> {
   return [];
 }
 
-/** The list endpoint is paginated; callers that need the whole library page through it. */
+/** The list endpoint is paginated; callers that need the whole library page through it.
+ *  The server may cap page_size below this (Core caps at 100), so stop on `total`, not on a short page. */
 const ASSET_PAGE_SIZE = 200;
 
 export async function fetchMediaAssets(params: {
@@ -101,7 +102,7 @@ export async function fetchMediaAssets(params: {
     const data = await fetchMediaAssetPage({ ...params, page, pageSize: ASSET_PAGE_SIZE });
     const items = Array.isArray(data?.items) ? data.items : [];
     assets.push(...items);
-    if (items.length < ASSET_PAGE_SIZE) return assets;
+    if (items.length === 0 || assets.length >= (data?.total ?? 0)) return assets;
   }
 }
 
