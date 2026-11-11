@@ -68,13 +68,15 @@ export function ProfileRail({ asset }: { asset: AssetDetail }) {
       </ProfileSection>
       <ProfileSection title="Location">
         <div className="space-y-3">
-          <p className="flex items-start gap-2 text-xs leading-relaxed wrap-anywhere">
-            <LocationIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+          <p className="flex items-start gap-2 text-xs leading-relaxed font-medium wrap-anywhere text-foreground">
+            <LocationIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
             {locationTrail(asset.locationPath, asset.location) || "—"}
           </p>
-          <DisabledHint>
-            <Button disabled variant="outline" size="sm">View Location</Button>
-          </DisabledHint>
+          <div className="flex justify-end">
+            <DisabledHint>
+              <Button disabled variant="outline" size="sm">View Location</Button>
+            </DisabledHint>
+          </div>
         </div>
       </ProfileSection>
       <ProfileQr asset={asset} />

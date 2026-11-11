@@ -41,7 +41,10 @@ const mocks: Record<string, unknown> = {
   "../../services/asset-assignments-location-history": { getAssetLocationHistory() {}, getLocationHistoryLocations() {} },
   "../states/ErrorState": { ErrorState: state },
   "../states/states": { AccessDeniedState: state, EmptyState: state, NotFoundState: state },
-  "../asset-profile/ProfileParts": { formatDay: (value: string | null) => value?.slice(0, 10) ?? "—" },
+  "../asset-profile/ProfileParts": {
+    formatDay: (value: string | null) => value?.slice(0, 10) ?? "—",
+    SectionMessage: ({ children }: Props) => createElement("p", null, children),
+  },
 };
 const modules = new Map<string, Record<string, unknown>>();
 function load(url: URL): Record<string, unknown> {
@@ -83,7 +86,8 @@ assert.match(screen, /Head Office › Floor 3/);
 assert.match(screen, /JD.*Jane Doe/);
 assert.match(screen, /System/);
 assert.match(screen, /Showing 1 to 2 of 2 records/);
-assert.doesNotMatch(screen, /Export|Close|Location Map|<select|Department|Date Range/);
+assert.match(screen, /Location Map \(To Location\).*aria-disabled="true".*Map is not available in this version\./);
+assert.doesNotMatch(screen, /Export|Close|<select|Department|Date Range/);
 assert.equal(view(false), "<div></div>");
 
 const detail = (event: LocationHistoryEvent | null, position: number, pending = false) =>

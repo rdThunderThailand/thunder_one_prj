@@ -85,11 +85,11 @@ export function ProfileAssignmentHistory({ context, asset }: { context: string; 
     </TabsList>
   );
   return (
-    <Tabs value={tab} onValueChange={setTab} className="min-w-0">
+    <Tabs value={tab} onValueChange={setTab} className="min-w-0 space-y-3">
+      {nav}
       <ProfileAssignmentEvents context={context} asset={asset} enabled={tab === "assignment"} layout={(assignment, assignmentPanel) => (
         <ProfileLocationHistory context={context} assetId={asset.id} enabled={tab === "location"} layout={(location, locationPanel) => (
           <ProfileHistoryLayout panel={tab === "location" ? locationPanel : assignmentPanel}>
-            {nav}
             <TabsContent value="all" className="m-0">
               <HistorySection context={context} assetId={asset.id} />
             </TabsContent>

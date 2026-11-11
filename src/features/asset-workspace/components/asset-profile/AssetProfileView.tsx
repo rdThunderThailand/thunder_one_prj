@@ -65,14 +65,14 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   const moveFallback = moveSnapshot?.context === context && moveSnapshot.asset.id === assetId && moveSnapshot.revision === revision
     ? moveSnapshot.asset : null;
   const asset = detail.result?.ok ? detail.result.data : known?.asset ?? moveFallback;
-  if (!asset && !detail.result) return <AssetProfileLoading />;
+  if (!asset && !detail.result) return <AssetProfileLoading tab={tab} />;
   if (detail.result && !detail.result.ok && ((!known && !moveFallback) || ["NOT_FOUND", "UNAUTHENTICATED", "PERMISSION_DENIED"].includes(detail.result.code ?? ""))) {
     const { code, message } = detail.result;
     return code === "NOT_FOUND" ? <NotFoundState title="Asset not found" body={message} />
       : code === "UNAUTHENTICATED" || code === "PERMISSION_DENIED" ? <AccessDeniedState body={message} />
         : <ErrorState title="Couldn't load this asset" body={message} onRetry={detail.reload} />;
   }
-  if (!asset) return <AssetProfileLoading />;
+  if (!asset) return <AssetProfileLoading tab={tab} />;
   const photos = viewFiles.result?.ok ? viewFiles.result.data.photos : [];
   function openEditor(kind: AssetFileKind, trigger: HTMLButtonElement, removeId?: string) {
     if (!readsReady || !files.result?.ok || asset!.lifecycleStatus === "Disposed") return;
@@ -102,7 +102,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
       <nav aria-label="Breadcrumb" className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <Link href={fromAssignments ? "/asset-workspace/assignments" : "/asset-workspace/assets"} className="inline-flex min-h-8 items-center rounded-control text-accent-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">{fromAssignments ? "Assignments" : "Assets"}</Link>
         <ChevronRightIcon aria-hidden="true" className="size-3" />
-        <span aria-current="page" className="min-w-0 font-medium wrap-anywhere">{asset.name}</span>
+        <span aria-current="page" className="min-w-0 font-medium wrap-anywhere">{asset.name} ({asset.assetTag})</span>
       </nav>
       {(known || moveFallback) && (detail.result && !detail.result.ok || files.result && !files.result.ok) && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border bg-muted p-3 text-xs">
@@ -113,7 +113,9 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
       {/* Frames 03 vs 04/09/13: the rail belongs to Overview only, so the other tabs get the full width (owner 2026-11-11). */}
       <div className={`grid min-w-0 items-start gap-3 ${tab === "overview" ? "@min-6xl/asset-profile:grid-cols-[minmax(0,1fr)_17rem]" : ""}`}>
         <div className="min-w-0 space-y-3">
-          <ProfileHero asset={asset} photos={photos} onPhotoFailed={refreshLinks} actions={<ProfileActions context={context} asset={asset} />} />
+          {/* Frames 04/09: compact summary off Overview; frame 09 adds Location to the strip. */}
+          <ProfileHero asset={asset} photos={photos} onPhotoFailed={refreshLinks} actions={<ProfileActions context={context} asset={asset} />}
+            compact={tab !== "overview"} showLocation={tab === "history"} />
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
             <TabsList aria-label="Asset profile sections" className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
               {[

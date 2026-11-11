@@ -33,6 +33,7 @@ export function ProfileAssignmentEvents({ context, asset, layout, enabled = true
   const [filters, setFilters] = useState<Filters>({});
   const [page, setPage] = useState(1);
   const [selection, setSelection] = useState<string>();
+  const [dismissed, setDismissed] = useState(false);
   const opener = useRef<HTMLElement>(null);
   const parsed = readAssignmentHistoryQuery({ ...filters, page: String(page), pageSize: String(PAGE_SIZE) });
   const source = parsed.ok ? assignmentHistoryQueryString(parsed.query) : "invalid";
@@ -46,20 +47,24 @@ export function ProfileAssignmentEvents({ context, asset, layout, enabled = true
   function changePage(next: number) {
     if (next === page) return;
     setSelection(undefined);
+    setDismissed(false);
     setPage(next);
   }
   function changeFilters(updates: Filters) {
     const next = { ...filters, ...updates };
     if (!HISTORY_FILTER_KEYS.some((key) => next[key] !== filters[key])) return;
     setSelection(undefined);
+    setDismissed(false);
     setPage(1);
     setFilters(next);
   }
   function select(event: ProfileAssignmentEvent, trigger: HTMLElement) {
     opener.current = trigger;
+    setDismissed(false);
     setSelection(assignmentEventKey(event));
   }
   function close() {
+    setDismissed(true);
     setSelection(undefined);
     opener.current?.focus({ preventScroll: true });
   }
@@ -69,7 +74,10 @@ export function ProfileAssignmentEvents({ context, asset, layout, enabled = true
 
   const filtered = HISTORY_FILTER_KEYS.some((key) => Boolean(filters[key]));
   const data = read.result?.ok ? read.result.data : null;
-  const selected = data?.data.find((event) => assignmentEventKey(event) === selection);
+  const selected = history && !dismissed && data?.data.length
+    ? (data.data.find((event) => assignmentEventKey(event) === selection) ?? data.data[0])
+    : undefined;
+  const activeKey = selected ? assignmentEventKey(selected) : undefined;
   const currentKey = data ? currentProfileAssignmentKey(data.data, asset.custody) : undefined;
   const reset = <Button variant="outline" onClick={clear}>Clear filters</Button>;
   const retry = <Button variant="outline" onClick={read.reload}>Retry</Button>;
@@ -105,12 +113,12 @@ export function ProfileAssignmentEvents({ context, asset, layout, enabled = true
   } else {
     const { data: rows, ...pagination } = read.result.data;
     results = (
-      <>
+      <div className="flex min-h-60 flex-col justify-between">
         <ProfileAssignmentEventsTable history={history} rows={rows} page={pagination.page} pageSize={pagination.pageSize}
-          currentKey={currentKey} selectedKey={selection} onSelect={history ? select : undefined} />
+          currentKey={currentKey} selectedKey={activeKey} onSelect={history ? select : undefined} />
         <ProfileAssignmentPager {...pagination} itemLabel={history ? "assignment history records" : "assignments"}
           onPageChange={changePage} />
-      </>
+      </div>
     );
   }
 

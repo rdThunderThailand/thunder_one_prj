@@ -3,10 +3,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, ExternalLinkIcon, LocationIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
-import { ASSIGNMENT_EVENT_TONE } from "../../domain/assignment-history";
+import { ASSIGNMENT_EVENT_TONE, assignmentHistoryDate } from "../../domain/assignment-history";
 import { locationHistoryPath } from "../../domain/assignment-location-history";
 import type { LocationHistoryEvent, LocationHistoryReference } from "../../services/asset-assignments-location-history";
-import { AssignmentHistoryPerson, AssignmentHistoryTime } from "./AssignmentsHistoryValues";
+import { SectionMessage } from "../asset-profile/ProfileParts";
+import { AssignmentHistoryPerson } from "./AssignmentsHistoryValues";
 import { ProfileLocationDetailLoading } from "./ProfileLocationHistoryLoading";
 
 const actions = {
@@ -56,11 +57,12 @@ export function ProfileLocationHistoryPanel({ event, position, total, locations,
   onStep: (step: -1 | 1) => void;
 }) {
   const action = event ? actions[event.source] : null;
+  const time = event ? assignmentHistoryDate(event.at) : null;
   const previousDisabled = pending || position <= 1;
   const nextDisabled = pending || position >= total;
   return (
     <Card role="complementary" aria-label="Location Change Detail" aria-busy={pending}
-      className="@container/location-panel min-w-0 space-y-3 overscroll-contain p-3 text-xs focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none">
+      className="@container/location-panel min-w-0 space-y-4 overscroll-contain p-4 text-xs focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none">
       <div className="flex min-w-0 items-center justify-between gap-2">
         <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
           <ClockIcon aria-hidden="true" className="size-4 shrink-0" />
@@ -78,12 +80,16 @@ export function ProfileLocationHistoryPanel({ event, position, total, locations,
           </Button>
         </div>
       </div>
-      {event && action ? (
+      {event && action && time ? (
         <>
-          <dl className="grid grid-cols-[minmax(0,1fr)_max-content_minmax(0,1.25fr)] gap-2 rounded-control bg-accent/50 p-3">
+          <dl className="grid grid-cols-[minmax(0,1fr)_max-content_minmax(0,1.25fr)] items-start gap-3 rounded-control bg-accent/50 p-3">
             <div className="space-y-1">
               <dt className="text-muted-foreground">Date &amp; Time</dt>
-              <dd><AssignmentHistoryTime at={event.at} /></dd>
+              <dd>
+                <time dateTime={event.at} className="font-semibold tabular-nums text-foreground">
+                  {time.date} {time.time}
+                </time>
+              </dd>
             </div>
             <div className="space-y-1">
               <dt className="text-muted-foreground">Action</dt>
@@ -101,6 +107,12 @@ export function ProfileLocationHistoryPanel({ event, position, total, locations,
             </div>
             <LocationEndpoint title="To Location" location={event.to} locations={locations} link />
           </dl>
+          <div className="space-y-2 border-t border-border pt-3">
+            <h3 className="text-xs font-semibold text-foreground">Location Map (To Location)</h3>
+            <div aria-disabled="true" className="flex min-h-36 items-start rounded-control border border-dashed border-border bg-muted/40 p-4 opacity-60">
+              <SectionMessage>Map is not available in this version.</SectionMessage>
+            </div>
+          </div>
         </>
       ) : <ProfileLocationDetailLoading />}
     </Card>

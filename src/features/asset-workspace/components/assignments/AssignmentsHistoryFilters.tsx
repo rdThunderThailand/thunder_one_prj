@@ -37,7 +37,7 @@ export function AssignmentsHistoryFilters({ url }: { url: ListUrlState }) {
           <span id={`${id}-event`} className="shrink-0 text-2xs text-muted-foreground">Event Type</span>
           <Select value={url.get("event_type") || "__all__"} disabled={url.isPending}
             onValueChange={(value) => url.set({ event_type: value === "__all__" ? undefined : value })}>
-            <SelectTrigger aria-labelledby={`${id}-event`} className="h-8 min-w-0 border-0 px-0 py-0 text-xs shadow-none focus:ring-0">
+            <SelectTrigger aria-labelledby={`${id}-event`} className="h-8 min-w-0 border-0 px-0 py-0 text-xs font-medium text-foreground shadow-none focus:ring-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

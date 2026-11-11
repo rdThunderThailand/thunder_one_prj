@@ -4,13 +4,13 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { XIcon } from "@/components/ui/icons";
 import { Card } from "@/components/ui/Card";
-import { assignmentEvidenceState, assignmentHistoryReason } from "../../domain/assignment-history";
+import { assignmentEvidenceState, assignmentHistoryDate, assignmentHistoryReason } from "../../domain/assignment-history";
 import type { AssignmentHistoryEvent } from "../../services/asset-assignments-contract";
-import { AssignmentEventPill, AssignmentHistoryCondition, AssignmentHistoryPerson, AssignmentHistoryTime } from "./AssignmentsHistoryValues";
+import { AssignmentEventPill, AssignmentHistoryCondition, AssignmentHistoryPerson } from "./AssignmentsHistoryValues";
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid min-w-0 grid-cols-2 items-start gap-3">
+    <div className="grid min-w-0 grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] items-start gap-3">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere">{children}</dd>
     </div>
@@ -37,6 +37,7 @@ export function AssignmentsHistoryPanel({ event, expiresAt, onClose, onRefresh, 
   }, [expiresAt]);
   const expired = now >= Date.parse(expiresAt);
   const unavailable = event.evidence.some((file) => !file.url);
+  const time = assignmentHistoryDate(event.at);
   return (
     <Card data-list-aside role="complementary" aria-labelledby="assignment-event-title"
       onKeyDown={(press) => { if (press.key === "Escape") onClose(); }}
@@ -55,7 +56,9 @@ export function AssignmentsHistoryPanel({ event, expiresAt, onClose, onRefresh, 
       </div>
       <dl className="space-y-3">
         <Detail label="Date & Time">
-          <AssignmentHistoryTime at={event.at} />
+          <time dateTime={event.at} className="tabular-nums text-foreground">
+            {time.date} {time.time}
+          </time>
         </Detail>
         <Detail label="Performed By">
           <AssignmentHistoryPerson person={event.performedBy} fallback="System" />

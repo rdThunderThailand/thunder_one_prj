@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { UserIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
-  ASSIGNMENT_EVENT_TONE, assignmentEventKey, assignmentHistoryReason, assignmentHistoryRowNumber,
+  ASSIGNMENT_EVENT_TONE, assignmentEventKey, assignmentHistoryDate, assignmentHistoryReason, assignmentHistoryRowNumber,
 } from "../../domain/assignment-history";
 import { STATUS_TONE } from "../../domain/status-tone";
 import { locationHistoryPath } from "../../domain/assignment-location-history";
@@ -17,9 +18,9 @@ const custodyColumns = ["#", "Custodian", "From", "To", "Location", "Action", "N
 const historyColumns = ["#", "Event Type", "From", "To / Custodian", "Date & Time", "Location", "Condition at Return", "Performed By", "Notes / Reason"];
 const locationColumns = ["#", "Date & Time", "From Location", "To Location", "By", "Reason"];
 const widths = {
-  custody: ["w-9", "w-36", "w-24", "w-28", "w-32", "w-24", "w-36", "w-36"],
-  history: ["w-9", "w-28", "w-32", "w-32", "w-28", "w-28", "w-24", "w-32", "w-36"],
-  location: ["w-9", "w-28", "w-32", "w-32", "w-32", "w-36"],
+  custody: ["w-9", "w-40", "w-24", "w-28", "w-36", "w-24", "w-44", "w-56"],
+  history: ["w-8", "w-28", "w-36", "w-40", "w-28", "w-28", "w-24", "w-40", "w-36"],
+  location: ["w-9", "w-28", "w-32", "w-32", "w-44", "w-36"],
 };
 
 export function CurrentAssignmentBadge() {
@@ -43,8 +44,16 @@ function historyCells(event: ProfileAssignmentEvent, current: boolean): ReactNod
 }
 
 function custodyCells(event: ProfileAssignmentEvent, current: boolean): ReactNode[] {
+  const time = assignmentHistoryDate(event.at);
   return [
-    <AssignmentHistoryPerson key="holder" person={event.to} fallback="Unassigned" />,
+    event.to?.name ? <AssignmentHistoryPerson key="holder" person={event.to} /> : (
+      <div key="holder" className="flex min-w-0 items-center gap-2">
+        <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <UserIcon className="size-4" />
+        </span>
+        <span className="text-muted-foreground">Unassigned</span>
+      </div>
+    ),
     formatDay(event.custodyPeriod?.startedAt ?? null),
     <div key="end" className="flex flex-wrap items-center gap-1">
       {formatDay(event.action === "Return" ? event.at : event.custodyPeriod?.endedAt ?? null)}
@@ -55,9 +64,14 @@ function custodyCells(event: ProfileAssignmentEvent, current: boolean): ReactNod
       {event.action}
     </Badge>,
     assignmentHistoryReason(event.reason),
-    <div key="actor" className="space-y-1">
-      <AssignmentHistoryPerson person={event.performedBy} fallback="System" />
-      <AssignmentHistoryTime at={event.at} />
+    // Frame 04: actor and time share one line; the time wraps under the name when the column is narrow.
+    <div key="actor" className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
+      <div className="min-w-0 flex-1 basis-24">
+        <AssignmentHistoryPerson person={event.performedBy} fallback="System" />
+      </div>
+      <time dateTime={event.at} className="shrink-0 whitespace-nowrap text-2xs tabular-nums text-muted-foreground">
+        {time.date} {time.time}
+      </time>
     </div>,
   ];
 }

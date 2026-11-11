@@ -23,7 +23,7 @@ function AssignmentFilter({ label, all, value, options, disabled, onChange }: {
     <div className="flex h-10 min-w-0 items-center gap-2 rounded-control border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-ring">
       <span id={id} className="shrink-0 text-2xs text-muted-foreground">{label}</span>
       <Select value={value || "__all__"} disabled={disabled} onValueChange={(next) => onChange(next === "__all__" ? undefined : next)}>
-        <SelectTrigger aria-labelledby={id} className="h-8 min-w-0 border-0 px-0 py-0 text-xs shadow-none focus:ring-0">
+        <SelectTrigger aria-labelledby={id} className="h-8 min-w-0 border-0 px-0 py-0 text-xs font-medium text-foreground shadow-none focus:ring-0">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -62,7 +62,7 @@ export function AssignmentsCurrentFilters({ url, result }: { url: ListUrlState; 
   const filtered = Object.keys(CLEAR_ASSIGNMENT_FILTERS).some((key) => url.get(key));
   return (
     <div className="w-full min-w-0 space-y-2">
-      <div className="grid min-w-0 grid-cols-1 items-start gap-2 @xl/assignments:grid-cols-3 @4xl/assignments:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-2 @xl/assignments:grid-cols-3 @4xl/assignments:grid-cols-[minmax(0,1.8fr)_repeat(3,minmax(0,1fr))]">
         <form role="search" className="relative min-w-0 @xl/assignments:col-span-3 @4xl/assignments:col-span-1" onSubmit={(event) => { event.preventDefault(); apply(search.trim()); }}>
           <label htmlFor={searchId} className="sr-only">Search assignments</label>
           <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground" />

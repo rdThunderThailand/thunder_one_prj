@@ -89,17 +89,17 @@ export function ProfileLocationHistory({ context, assetId, enabled, layout }: {
     );
   } else if (page) {
     results = (
-      <>
+      <div className="flex min-h-64 flex-1 flex-col justify-between">
         <ProfileAssignmentEventsTable variant="location" rows={page.data} locations={locations}
           page={page.page} pageSize={page.pageSize} selectedKey={event?.id} onSelect={select} />
         <ProfileAssignmentPager page={page.page} pageSize={page.pageSize} total={page.total} totalPages={page.totalPages}
           itemLabel="records" onPageChange={goToPage} />
-      </>
+      </div>
     );
   }
 
   const content = (
-    <Card className="min-w-0 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none" aria-busy={history.pending}>
+    <Card className="min-w-0 p-0 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none" aria-busy={history.pending}>
       <div className="flex items-start gap-2 px-4 py-3">
         <LocationIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
         <div>

@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 
 export function ProfileLocationLoading({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div role="status" aria-label={label} className="motion-reduce:[&_*]:animate-none">
-      <div aria-hidden="true">{children}</div>
+    <div role="status" aria-label={label} className="flex flex-1 flex-col motion-reduce:[&_*]:animate-none">
+      <div aria-hidden="true" className="flex flex-1 flex-col">{children}</div>
     </div>
   );
 }
@@ -14,8 +14,8 @@ export function NearbyAssetsLoading() {
     <ProfileLocationLoading label="Loading nearby assets…">
       <div className="divide-y divide-border">
         {[0, 1, 2, 3].map((row) => (
-          <div key={row} className="flex items-center gap-2 py-2">
-            <Skeleton className="size-8 shrink-0" />
+          <div key={row} className="flex items-center gap-3 py-2.5">
+            <Skeleton className="size-9 shrink-0" />
             <div className="min-w-0 flex-1 space-y-1">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-3 w-16 max-w-full" />

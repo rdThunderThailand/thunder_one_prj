@@ -21,7 +21,6 @@ import { DisabledHint } from "../asset-profile/ProfileControls";
 import { formatDay, ProfileRows, ProfileSection, SectionMessage, StatusValue } from "../asset-profile/ProfileParts";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
-import { AssignmentHistoryPerson } from "./AssignmentsHistoryValues";
 import { ProfileAssignmentPager } from "./ProfileAssignmentPager";
 import { NearbyAssetsLoading, ProfileLocationHistoryFooterLoading, ProfileLocationLoading } from "./ProfileLocationLoading";
 
@@ -42,32 +41,35 @@ function LocationIntervals({ data, locations }: {
         <thead className="bg-muted text-2xs text-muted-foreground">
           <tr>
             {columns.map((label) => (
-              <th key={label} scope="col" className="px-2 py-2 font-semibold">{label}</th>
+              <th key={label} scope="col" className="border-b border-border px-3 py-2.5 font-semibold">{label}</th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
           {data ? data.data.map((event, index) => {
             const number = assignmentHistoryRowNumber(data.page, data.pageSize, index);
+            const actor = event.performedBy?.name || "System";
             return (
-              <tr key={event.id} className="hover:bg-muted/50 [&>td]:px-2 [&>td]:py-2 [&>td]:align-top">
-                <td className="tabular-nums">{number}</td>
-                <td className="wrap-break-word">{locationHistoryPath(event.to, locations).join(" › ") || "—"}</td>
-                <td className="whitespace-nowrap">{formatDay(event.at)}</td>
-                <td className="whitespace-nowrap">{formatDay(event.until)}</td>
-                <td className="min-w-24 max-w-36"><AssignmentHistoryPerson person={event.performedBy} fallback="System" /></td>
-                <td className="space-y-1 whitespace-pre-wrap wrap-anywhere">
+              <tr key={event.id} className="hover:bg-muted/50 [&>td]:px-3 [&>td]:py-2.5 [&>td]:align-top">
+                <td className="tabular-nums text-muted-foreground">{number}</td>
+                <td className="font-medium wrap-break-word text-foreground">
+                  {locationHistoryPath(event.to, locations).join(" › ") || "—"}
+                </td>
+                <td className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDay(event.at)}</td>
+                <td className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDay(event.until)}</td>
+                <td className="max-w-36 truncate text-muted-foreground" title={actor}>{actor}</td>
+                <td className="space-y-1 whitespace-pre-wrap wrap-anywhere text-muted-foreground">
                   {number === 1 && (
                     <Badge color={STATUS_TONE.Assigned} variant="pill" className="whitespace-nowrap">Current location</Badge>
                   )}
-                  <div>{event.reason || "—"}</div>
+                  {(event.reason || number !== 1) && <div>{event.reason || "—"}</div>}
                 </td>
               </tr>
             );
           }) : Array.from({ length: 4 }, (_, index) => (
             <tr key={index}>
               {columns.map((column) => (
-                <td key={column} className="px-2 py-2"><Skeleton className="h-5 w-full" /></td>
+                <td key={column} className="px-3 py-2.5"><Skeleton className="h-5 w-full" /></td>
               ))}
             </tr>
           ))}
@@ -95,9 +97,9 @@ function NearbyAssets({ context, asset }: { context: string; asset: AssetDetail 
           ) : rows.length ? (
             <ul className="divide-y divide-border">
               {rows.map((row) => (
-                <li key={row.id} className="flex min-w-0 items-center gap-2 py-2 text-xs">
-                  <AssetThumbnail src={row.thumbnail_url} />
-                  <div className="min-w-0 flex-1">
+                <li key={row.id} className="flex min-w-0 items-center gap-3 py-2.5 text-xs">
+                  <AssetThumbnail src={row.thumbnail_url} className="size-9" />
+                  <div className="min-w-0 flex-1 space-y-0.5">
                     <Link href={`/asset-workspace/assets/${encodeURIComponent(row.id)}`} title={row.name}
                       className="block truncate rounded-control font-semibold text-foreground hover:text-accent-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">
                       {row.name}
@@ -133,50 +135,59 @@ export function ProfileLocationView({ context, asset, onEditLocation }: {
 
   return (
     <div className="min-w-0 space-y-3">
-      <ProfileSection title="Current Location" action={canEdit ? (
-        <Button id="profile-edit-location" variant="outline" size="sm"
-          onClick={(event) => canEdit(event.currentTarget)}>Edit Location</Button>
-      ) : (
-        <DisabledHint reason={onEditLocation ? "Only Available, Assigned or In Maintenance assets can be moved." : undefined}>
-          <Button variant="outline" size="sm" disabled>Edit Location</Button>
-        </DisabledHint>
-      )}>
-        {location ? (
-          <div className="space-y-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid size-12 shrink-0 place-items-center rounded-control bg-accent text-accent-foreground">
-                <LocationIcon aria-hidden="true" className="size-6" />
-              </span>
-              <div className="min-w-0 wrap-anywhere">
-                {parents.length > 0 && <p className="text-xs text-muted-foreground">{parents.join(" › ")}</p>}
-                <p className="text-base font-semibold">{location.name ?? reference?.name ?? "Unnamed location"}</p>
+      <div className="grid min-w-0 items-start gap-3 @min-5xl/asset-profile:grid-cols-[minmax(0,1fr)_minmax(0,1.65fr)] @min-5xl/asset-profile:items-stretch [&>div]:flex [&>div]:h-full [&>div]:flex-col">
+        <ProfileSection title="Current Location" action={canEdit ? (
+          <Button id="profile-edit-location" variant="outline" size="sm"
+            onClick={(event) => canEdit(event.currentTarget)}>Edit Location</Button>
+        ) : (
+          <DisabledHint reason={onEditLocation ? "Only Available, Assigned or In Maintenance assets can be moved." : undefined}>
+            <Button variant="outline" size="sm" disabled>Edit Location</Button>
+          </DisabledHint>
+        )}>
+          {location ? (
+            <div className="space-y-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid size-12 shrink-0 place-items-center rounded-control bg-accent text-accent-foreground">
+                  <LocationIcon aria-hidden="true" className="size-6" />
+                </span>
+                <div className="min-w-0 space-y-0.5 wrap-anywhere">
+                  {parents.length > 0 && <p className="text-xs text-muted-foreground">{parents.join(" › ")}</p>}
+                  <p className="text-base font-semibold text-foreground">{location.name ?? reference?.name ?? "Unnamed location"}</p>
+                </div>
+              </div>
+              <div aria-disabled="true" className="space-y-1 opacity-60">
+                <ProfileRows rows={detailRows} />
+                <SectionMessage>Location details: {UNSUPPORTED}</SectionMessage>
               </div>
             </div>
-            <div aria-disabled="true" className="space-y-1 opacity-60">
-              <ProfileRows rows={detailRows} />
-              <SectionMessage>Location details: {UNSUPPORTED}</SectionMessage>
+          ) : <SectionMessage>No location assigned.</SectionMessage>}
+          {paths.result && !paths.result.ok && (
+            <div role="status" className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2 text-xs">
+              <p>Couldn&apos;t load the location path</p>
+              <Button size="sm" variant="outline" disabled={paths.pending} onClick={paths.reload}>Retry</Button>
             </div>
+          )}
+        </ProfileSection>
+        <ProfileSection title="Location Map">
+          <div aria-disabled="true" className="flex min-h-48 flex-1 items-start rounded-control border border-dashed border-border bg-muted/40 p-4 opacity-60">
+            <SectionMessage>Map is not available in this version.</SectionMessage>
           </div>
-        ) : <SectionMessage>No location assigned.</SectionMessage>}
-        {paths.result && !paths.result.ok && (
-          <div role="status" className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2 text-xs">
-            <p>Couldn&apos;t load the location path</p>
-            <Button size="sm" variant="outline" disabled={paths.pending} onClick={paths.reload}>Retry</Button>
-          </div>
-        )}
-      </ProfileSection>
+        </ProfileSection>
+      </div>
 
-      <div className="grid min-w-0 items-start gap-3 @min-5xl/asset-profile:grid-cols-[minmax(0,1fr)_minmax(0,1.65fr)_minmax(0,1fr)]">
+      <div className="grid min-w-0 items-start gap-3 @min-5xl/asset-profile:grid-cols-[minmax(0,0.85fr)_minmax(0,1.95fr)_minmax(0,1.05fr)] @min-5xl/asset-profile:items-stretch [&>div]:flex [&>div]:h-full [&>div]:flex-col">
         <ProfileSection title="Location Photos">
-          <div aria-disabled="true" className="opacity-60">
+          <div aria-disabled="true" className="flex min-h-48 flex-1 items-start rounded-control border border-dashed border-border bg-muted/40 p-4 opacity-60">
             <SectionMessage>Location photos: {UNSUPPORTED}</SectionMessage>
           </div>
         </ProfileSection>
         <ProfileSection title="Location History">
           {history.pending || !history.result ? (
             <ProfileLocationLoading label="Loading location history…">
-              <LocationIntervals locations={locations} />
-              <ProfileLocationHistoryFooterLoading />
+              <div className="flex min-h-56 flex-1 flex-col justify-between">
+                <LocationIntervals locations={locations} />
+                <ProfileLocationHistoryFooterLoading />
+              </div>
             </ProfileLocationLoading>
           ) : code === "NOT_FOUND" ? (
             <NotFoundState title="Asset not found" body="This asset doesn't exist in your organization, or it is no longer available." />
@@ -187,11 +198,11 @@ export function ProfileLocationView({ context, asset, onEditLocation }: {
           ) : !historyData ? (
             <ErrorState title="Couldn't load location history" body="Check your connection and retry." onRetry={history.reload} />
           ) : historyData.data.length ? (
-            <>
+            <div className="flex min-h-56 flex-1 flex-col justify-between">
               <LocationIntervals data={historyData} locations={locations} />
               <ProfileAssignmentPager page={historyData.page} pageSize={historyData.pageSize} total={historyData.total}
                 totalPages={historyData.totalPages} itemLabel="records" onPageChange={setPage} />
-            </>
+            </div>
           ) : historyData.total > 0 || page > 1 ? (
             <EmptyState title="No location history on this page"
               action={<Button variant="outline" onClick={() => setPage(1)}>Go to first page</Button>} />
