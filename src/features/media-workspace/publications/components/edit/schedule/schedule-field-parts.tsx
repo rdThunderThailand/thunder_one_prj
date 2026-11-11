@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Input } from "@/components/ui/lovable/input";
 import { Label } from "@/components/ui/lovable/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { shiftYmd, TIMEZONES } from "../../../schedule";
@@ -58,17 +57,58 @@ export function TimezoneField({ value, disabled, onChange }: { value: string; di
   );
 }
 
+const TIME_UNITS = (count: number) => Array.from({ length: count }, (_, i) => String(i).padStart(2, "0"));
+const HOURS = TIME_UNITS(24);
+const MINUTES = TIME_UNITS(60);
+const SELECT_CLASS =
+  "h-9 w-full rounded-md border border-input bg-transparent px-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
+
+/** A 24-hour "HH:mm" field. A native `<input type="time">` follows the OS locale and shows AM/PM, which a page cannot override (#338). */
 export function TimeField({ id, label, value, disabled, onChange }: { id: string; label: string; value: string; disabled?: boolean; onChange: (v: string) => void }) {
+  const [hour, minute] = /^\d{2}:\d{2}$/.test(value) ? value.split(":") : ["00", "00"];
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="time"
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      <div
+        role="group"
+        aria-label={label}
+        className="flex items-center gap-1.5"
+      >
+        <select
+          id={id}
+          aria-label={`${label} (hour)`}
+          className={SELECT_CLASS}
+          value={hour}
+          disabled={disabled}
+          onChange={(event) => onChange(`${event.target.value}:${minute}`)}
+        >
+          {HOURS.map((h) => (
+            <option
+              key={h}
+              value={h}
+            >
+              {h}
+            </option>
+          ))}
+        </select>
+        <span aria-hidden="true">:</span>
+        <select
+          aria-label={`${label} (minute)`}
+          className={SELECT_CLASS}
+          value={minute}
+          disabled={disabled}
+          onChange={(event) => onChange(`${hour}:${event.target.value}`)}
+        >
+          {MINUTES.map((m) => (
+            <option
+              key={m}
+              value={m}
+            >
+              {m}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
