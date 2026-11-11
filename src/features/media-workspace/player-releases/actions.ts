@@ -30,10 +30,34 @@ type PilotMember = {
 };
 type Target = { release_id: string | null; paused: boolean; policy_revision: number; updated_at: string } | null;
 
+export type RolloutStatus = {
+  release_id: string | null;
+  version: string | null;
+  paused: boolean;
+  pause_reason: string | null;
+  policy_revision: number;
+  in_flight_cap: number;
+  failure_limit: number;
+  updated_at: string;
+} | null;
+
+export type DeviceHistory = {
+  last_check: {
+    app_version: string; update_track: string; update_install_mode: string; silent_install_supported: boolean | null;
+    capability_reason: string | null; updater_version: string | null; os_version: string | null; free_bytes: number | null; checked_at: string;
+  } | null;
+  reports: {
+    id: string; state: string; from_version: string | null; target_version: string | null; running_version: string | null;
+    error_stage: string | null; error_code: string | null; media_rendered: boolean | null;
+    occurred_at: string; received_at: string;
+  }[];
+};
+
 type Result<T> = { data: T } | { error: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PILOT_TARGET = "player-update/targets/pilot/windows-x64";
+const PRODUCTION_TARGET = "player-update/targets/production/windows-x64";
 
 /** Calls a Core Player release admin route. A 400 shows Core's own reason when `showReason` is set. */
 async function coreRequest<T>(
@@ -149,4 +173,30 @@ export async function setPilotTarget(releaseId: string | null) {
 
 export async function pausePilotTarget(isPaused: boolean) {
   return coreRequest<{ policy_revision: number }>(PILOT_TARGET, { method: "PUT", body: { paused: isPaused }, showReason: true });
+}
+
+// Rollout page (ADR 0029): the production ring, every device not in the test group.
+
+export async function getRolloutStatus() {
+  return coreRequest<RolloutStatus>("player-update/rollouts/production/windows-x64");
+}
+
+export async function setProductionTarget(releaseId: string | null) {
+  if (releaseId !== null && !UUID.test(releaseId)) return { error: "Choose an admitted release." };
+  return coreRequest<{ policy_revision: number }>(PRODUCTION_TARGET, { method: "PUT", body: { release_id: releaseId }, showReason: true });
+}
+
+export async function pauseProductionTarget(isPaused: boolean) {
+  return coreRequest<{ policy_revision: number }>(PRODUCTION_TARGET, { method: "PUT", body: { paused: isPaused }, showReason: true });
+}
+
+export async function setProductionLimits(inFlightCap: number, failureLimit: number) {
+  return coreRequest<{ policy_revision: null }>(PRODUCTION_TARGET, {
+    method: "PUT", body: { in_flight_cap: inFlightCap, failure_limit: failureLimit }, showReason: true,
+  });
+}
+
+/** ADR 0029 amendment 1 item 7: the drawer's data, loaded when it opens. */
+export async function getDeviceHistory(assetId: string) {
+  return byId(assetId, () => coreRequest<DeviceHistory>(`player-update/devices/${assetId}/reports`));
 }

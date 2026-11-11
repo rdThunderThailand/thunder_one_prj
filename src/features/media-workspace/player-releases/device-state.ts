@@ -16,6 +16,10 @@ export type FleetDevice = {
   last_check: { app_version: string; update_track: string; update_install_mode: string; os_version: string | null; checked_at: string } | null;
   latest_report: { state: string; occurred_at: string } | null;
   reported_version: string | null;
+  // ADR 0029 amendment 1: rollout facts from player_update_devices_list.
+  is_recent_check: boolean | null;
+  production_outcome: "in_flight" | "healthy" | "failed" | "timed_out" | "unsupported" | null;
+  target_report: { state: string; error_stage: string | null; error_code: string | null; received_at: string } | null;
 };
 
 export type ResolvedVersion = { version: string; source: "update report" | "update check" | "device record" };
