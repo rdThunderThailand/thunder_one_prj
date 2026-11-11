@@ -70,11 +70,11 @@ export function ProfileHistoryLayout({ children, panel }: { children: ReactNode;
 export function ProfileAssignmentHistory({ context, asset }: { context: string; asset: AssetDetail }) {
   const [tab, setTab] = useState("all");
   const nav = (
-    <TabsList aria-label="Asset history sections" className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-1 rounded-control border border-border bg-card p-1">
+    <TabsList aria-label="Asset history sections" className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-0 rounded-control border border-border bg-card p-1">
       {profileHistoryTabs.map(({ id, label, icon: Icon, disabled }) => {
         const trigger = (
           <TabsTrigger value={id} disabled={disabled}
-            className="min-h-9 shrink-0 gap-2 rounded-none border-b-2 border-transparent px-2 text-xs data-[state=active]:border-primary data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none">
+            className="min-h-9 shrink-0 gap-1.5 rounded-none border-b-2 border-transparent px-1.5 text-xs data-[state=active]:border-primary data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none">
             <Icon aria-hidden="true" className="size-4" />
             {label}
           </TabsTrigger>

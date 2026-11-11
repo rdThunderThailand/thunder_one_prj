@@ -97,7 +97,8 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
           <Button variant="outline" size="sm" disabled={detail.pending || files.pending} onClick={() => { detail.reload(); files.reload(); }}>Refresh profile and files</Button>
         </div>
       )}
-      <div className="grid min-w-0 items-start gap-3 @min-6xl/asset-profile:grid-cols-[minmax(0,1fr)_17rem]">
+      {/* Frames 03 vs 04/09/13: the rail belongs to Overview only, so the other tabs get the full width (owner 2026-11-11). */}
+      <div className={`grid min-w-0 items-start gap-3 ${tab === "overview" ? "@min-6xl/asset-profile:grid-cols-[minmax(0,1fr)_17rem]" : ""}`}>
         <div className="min-w-0 space-y-3">
           <ProfileHero asset={asset} photos={photos} onPhotoFailed={refreshLinks} actions={<ProfileActions context={context} asset={asset} />} />
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
@@ -134,7 +135,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
             </TabsContent>
           </Tabs>
         </div>
-        <ProfileRail asset={asset} />
+        {tab === "overview" && <ProfileRail asset={asset} />}
       </div>
       {editor && (
         <AssetFilesEditDialog key={editor.id} context={context} snapshot={editor.snapshot} kind={editor.kind} removeId={editor.removeId}

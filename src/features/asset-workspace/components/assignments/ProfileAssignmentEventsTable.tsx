@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/Badge";
-import { ChevronDownIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
   ASSIGNMENT_EVENT_TONE, assignmentEventKey, assignmentHistoryReason, assignmentHistoryRowNumber,
@@ -78,7 +77,7 @@ export function ProfileAssignmentEventsTable({ history, rows = [], page = 1, pag
               <th key={heading} scope="col" aria-sort={heading === "Date & Time" ? "descending" : undefined}
                 className="border-b border-border px-3 py-3 font-semibold">
                 {heading}
-                {heading === "Date & Time" && <ChevronDownIcon aria-hidden="true" className="ml-1 inline size-3" />}
+                {heading === "Date & Time" && <span aria-hidden="true"> ↓</span>}
               </th>
             ))}
           </tr>
