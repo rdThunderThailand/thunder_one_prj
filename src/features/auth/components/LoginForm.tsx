@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { login } from "../services/auth.service";
+import { LOGIN_FAILURES, LoginError } from "../login-error";
 
 export function LoginForm() {
   const router = useRouter();
@@ -27,8 +28,8 @@ export function LoginForm() {
       // open-redirect hole.
       const next = searchParams.get("next");
       router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
-    } catch {
-      setError("Invalid email or password.");
+    } catch (error) {
+      setError(error instanceof LoginError ? error.message : LOGIN_FAILURES.AUTH_SERVICE_UNAVAILABLE.message);
     } finally {
       setPending(false);
     }
