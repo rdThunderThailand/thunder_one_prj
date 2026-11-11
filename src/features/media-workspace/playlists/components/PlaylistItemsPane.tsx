@@ -22,6 +22,7 @@ export function PlaylistItemsPane({
   onSelect,
   onMove,
   onRemove,
+  onDuplicate,
   onSeek,
   onAddItem,
 }: {
@@ -30,16 +31,19 @@ export function PlaylistItemsPane({
   assets: MediaAsset[];
   selectedId: string | null;
   nowPlayingId: string | null;
-  onSelect: (mediaAssetId: string) => void;
+  /** Rows are addressed by `DraftItem.key` — the same asset may appear more than once. */
+  onSelect: (key: string) => void;
   onMove: (from: number, to: number) => void;
-  onRemove: (mediaAssetId: string) => void;
+  onRemove: (key: string) => void;
+  onDuplicate: (key: string) => void;
   onSeek: (seconds: number) => void;
   onAddItem: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dropId, setDropId] = useState<string | null>(null);
-  const previews = usePreviewUrls(useMemo(() => items.map((i) => i.mediaAssetId), [items]));
+  const previews = usePreviewUrls(useMemo(() => [...new Set(items.map((i) => i.mediaAssetId))], [items]));
+  const indexByKey = useMemo(() => new Map(items.map((item, index) => [item.key, index])), [items]);
   const assetById = useMemo(() => Object.fromEntries(assets.map((a) => [a.id, a])), [assets]);
   const startSeconds = useMemo(() => itemStartSeconds(items, assets, playback), [assets, items, playback]);
   const total = formatDuration(totalItemsDurationSeconds(items, assets, playback));
@@ -50,9 +54,9 @@ export function PlaylistItemsPane({
     : items;
   const moveDraggedTo = (targetId: string) => {
     if (!draggedId || draggedId === targetId) return;
-    const from = items.findIndex((item) => item.mediaAssetId === draggedId);
-    const to = items.findIndex((item) => item.mediaAssetId === targetId);
-    if (from >= 0 && to >= 0) onMove(from, to);
+    const from = indexByKey.get(draggedId);
+    const to = indexByKey.get(targetId);
+    if (from !== undefined && to !== undefined) onMove(from, to);
   };
 
   return (
@@ -87,31 +91,31 @@ export function PlaylistItemsPane({
       ) : (
         <ul className="min-h-0 flex-1 overflow-y-auto pr-1">
           {visible.map((item) => {
-            const index = items.findIndex((source) => source.mediaAssetId === item.mediaAssetId);
+            const index = indexByKey.get(item.key) ?? 0;
             const asset = assetById[item.mediaAssetId];
             const label = item.title ?? asset?.title ?? item.mediaAssetId;
             const isVideo = (item.kind ?? asset?.kind) === "video";
             const seconds = item.durationSeconds ?? asset?.duration_seconds ?? null;
-            const isSelected = selectedId === item.mediaAssetId;
+            const isSelected = selectedId === item.key;
             return (
               <li
-                key={item.mediaAssetId}
+                key={item.key}
                 draggable
-                onClick={() => onSelect(item.mediaAssetId)}
-                onDragStart={() => setDraggedId(item.mediaAssetId)}
-                onDragEnter={() => setDropId(item.mediaAssetId)}
+                onClick={() => onSelect(item.key)}
+                onDragStart={() => setDraggedId(item.key)}
+                onDragEnter={() => setDropId(item.key)}
                 onDragOver={(event) => event.preventDefault()}
                 onDragEnd={() => { setDraggedId(null); setDropId(null); }}
                 onDrop={(event) => {
                   event.preventDefault();
-                  moveDraggedTo(item.mediaAssetId);
+                  moveDraggedTo(item.key);
                   setDraggedId(null);
                   setDropId(null);
                 }}
                 className={`mb-1 flex cursor-grab items-center gap-2 rounded-lg p-2 transition-colors active:cursor-grabbing ${
                   isSelected ? "bg-accent" : "hover:bg-muted hover:shadow-sm"
                 } ${
-                  dropId === item.mediaAssetId && draggedId !== item.mediaAssetId
+                  dropId === item.key && draggedId !== item.key
                     ? "ring-2 ring-primary/30"
                     : ""
                 }`}
@@ -121,7 +125,7 @@ export function PlaylistItemsPane({
                 <MediaThumb url={previews.urls[item.mediaAssetId]} kind={item.kind ?? asset?.kind} alt={label} className="h-9 w-12" />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    {nowPlayingId === item.mediaAssetId && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />}
+                    {nowPlayingId === item.key && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />}
                     <span className="truncate text-sm font-medium text-foreground">{label}</span>
                     {item.fileDeleted && <Badge variant="neutral" className="shrink-0 px-1.5 py-0 text-[10px]">File deleted</Badge>}
                   </span>
@@ -134,12 +138,13 @@ export function PlaylistItemsPane({
                   canMoveUp={index > 0}
                   canMoveDown={index < items.length - 1}
                   onPreview={() => {
-                    onSelect(item.mediaAssetId);
+                    onSelect(item.key);
                     onSeek(startSeconds[index] ?? 0);
                   }}
+                  onDuplicate={() => onDuplicate(item.key)}
                   onMoveUp={() => onMove(index, index - 1)}
                   onMoveDown={() => onMove(index, index + 1)}
-                  onRemove={() => onRemove(item.mediaAssetId)}
+                  onRemove={() => onRemove(item.key)}
                 />
               </li>
             );
@@ -168,6 +173,7 @@ function ItemActions({
   canMoveUp,
   canMoveDown,
   onPreview,
+  onDuplicate,
   onMoveUp,
   onMoveDown,
   onRemove,
@@ -176,6 +182,7 @@ function ItemActions({
   canMoveUp: boolean;
   canMoveDown: boolean;
   onPreview: () => void;
+  onDuplicate: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
@@ -201,7 +208,7 @@ function ItemActions({
           <DropdownMenuItem disabled>
             <SearchIcon className="h-4 w-4" /> Replace
           </DropdownMenuItem>
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem onSelect={onDuplicate}>
             <ClipboardIcon className="h-4 w-4" /> Duplicate
           </DropdownMenuItem>
           <DropdownMenuItem disabled={!canMoveUp} onSelect={onMoveUp}>
