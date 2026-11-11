@@ -15,6 +15,7 @@ import {
   filterLocations,
   locationTone,
   mapPin,
+  rolledUpAssetCounts,
   toTreeRows,
   type Location,
   type TreeRow,
@@ -24,7 +25,7 @@ import { AssetMap } from "../overview/AssetMap";
 import { ReportFilterBar } from "../reports/ReportFilterBar";
 import { ErrorState } from "../states/ErrorState";
 import { EmptyState } from "../states/states";
-import { AddLocationButton } from "./LocationActions";
+import { AddLocationButton, LocationRowActions } from "./LocationActions";
 
 export const LOCATIONS_BASE = "/asset-workspace/locations";
 const detailHref = (id: string) => `${LOCATIONS_BASE}/${id}`;
@@ -78,7 +79,10 @@ export function LocationsView({ locations }: { locations: Location[] | null }) {
             </Card>
             <Card className="p-4">
               <h2 className="mb-3 text-sm font-semibold text-foreground">Hierarchy</h2>
-              <Hierarchy rows={toTreeRows(shown)} />
+              <Hierarchy
+                rows={toTreeRows(shown)}
+                totals={rolledUpAssetCounts(locations)}
+              />
             </Card>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -129,7 +133,8 @@ function visibleRows(rows: TreeRow[], collapsed: Set<string>) {
   return out;
 }
 
-function Hierarchy({ rows }: { rows: TreeRow[] }) {
+/** `totals`: rolled-up counts from the whole list, so a search doesn't shrink a parent's number. */
+function Hierarchy({ rows, totals }: { rows: TreeRow[]; totals: Map<string, number> }) {
   const [collapsed, setCollapsed] = useState(new Set<string>());
   const toggle = (id: string) =>
     setCollapsed((prev) => {
@@ -177,10 +182,47 @@ function Hierarchy({ rows }: { rows: TreeRow[] }) {
           >
             {row.name}
           </Link>
-          <span className="ml-auto text-xs text-muted-foreground">{row.assetCount}</span>
+          <span
+            className="ml-auto text-xs text-muted-foreground"
+            title="Includes child locations"
+          >
+            {(totals.get(row.id) ?? row.assetCount).toLocaleString()}
+          </span>
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Child Locations tab: the direct children with the List page's search + Type + Status filters (URL, in memory). */
+export function ChildLocationsView({ items, locations }: { items: Location[]; locations: Location[] }) {
+  const url = useListUrlState();
+  const shown = filterLocations(items, { q: url.get("q"), type: url.get("type"), status: url.get("status") });
+  const filtered = shown.length !== items.length;
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <ReportFilterBar
+          url={url}
+          searchPlaceholder="Search by location name or address"
+          selects={[
+            { key: "type", label: "Type", options: options(LOCATION_TYPES) },
+            { key: "status", label: "Status", options: options(LOCATION_STATUSES) },
+          ]}
+        />
+      </div>
+      <LocationsTable
+        rows={toTreeRows(shown)}
+        locations={locations}
+        caption="Locations directly under this location."
+        empty={
+          filtered
+            ? { title: "No child locations match", body: "Try clearing a filter." }
+            : { title: "No child locations", body: "Locations under this one appear here." }
+        }
+      />
+    </>
   );
 }
 
@@ -226,6 +268,12 @@ export function LocationsTable({
                 Assets
               </th>
               <th scope="col">Status</th>
+              <th
+                scope="col"
+                className="w-12"
+              >
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -255,6 +303,12 @@ export function LocationsTable({
                 </td>
                 <td className={cell}>
                   <LocationStatusBadge status={row.status} />
+                </td>
+                <td className={cell}>
+                  <LocationRowActions
+                    location={row}
+                    locations={locations}
+                  />
                 </td>
               </tr>
             ))}

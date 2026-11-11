@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { EditIcon, PlusIcon } from "@/components/ui/icons";
+import { EditIcon, MoreIcon, PlusIcon } from "@/components/ui/icons";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
 import { Button } from "@/components/ui/lovable/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import type { Location, LocationDetail } from "../../domain/location";
 import { setLocationStatusAction, type LocationWriteResult } from "../../services/asset-locations-actions";
 import { LocationFormDrawer, type LocationFormMode } from "./LocationFormDrawer";
@@ -115,6 +116,26 @@ function ActivateButton({ location }: { location: Location }) {
 
 function DeactivateButton({ location }: { location: Location }) {
   const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        variant="outline"
+        onClick={() => setOpen(true)}
+      >
+        Deactivate
+      </Button>
+      <DeactivateDialog
+        location={location}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </>
+  );
+}
+
+/** Confirm, then show Core's blockers (active assets / children) when it refuses. Shared by the header and row menu. */
+function DeactivateDialog({ location, open, onOpenChange }: { location: Location; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const setOpen = onOpenChange;
   const [refused, setRefused] = useState<Extract<LocationWriteResult, { ok: false }> | null>(null);
   const [pending, startTransition] = useTransition();
   const base = `/asset-workspace/locations/${encodeURIComponent(location.id)}`;
@@ -137,12 +158,6 @@ function DeactivateButton({ location }: { location: Location }) {
         if (!next) setRefused(null);
       }}
     >
-      <Button
-        variant="outline"
-        onClick={() => setOpen(true)}
-      >
-        Deactivate
-      </Button>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{refused?.blockers ? "Can't deactivate yet" : `Deactivate ${location.name}?`}</AlertDialogTitle>
@@ -194,5 +209,70 @@ function DeactivateButton({ location }: { location: Location }) {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/** Row `⋮` on the All Locations and Child Locations tables: Edit · Add Child Location (active only) · Activate / Deactivate. */
+export function LocationRowActions({ location, locations }: { location: Location; locations: Location[] }) {
+  const [open, setOpen] = useState<"edit" | "add-child" | "deactivate" | null>(null);
+  const [pending, startTransition] = useTransition();
+  const active = location.status === "Active";
+  const activate = () =>
+    startTransition(async () => {
+      const result = await setLocationStatusAction(location.id, "activate");
+      if (result.ok) toast.success("Location activated");
+      else toast.error(result.message);
+    });
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Actions for ${location.name}`}
+            disabled={pending}
+          >
+            <MoreIcon className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => setOpen("edit")}>
+            <EditIcon className="size-4" />
+            Edit
+          </DropdownMenuItem>
+          {active && (
+            <DropdownMenuItem onSelect={() => setOpen("add-child")}>
+              <PlusIcon className="size-4" />
+              Add Child Location
+            </DropdownMenuItem>
+          )}
+          {active ? (
+            <DropdownMenuItem
+              className="text-error"
+              onSelect={() => setOpen("deactivate")}
+            >
+              Deactivate
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onSelect={activate}>Activate</DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {(open === "edit" || open === "add-child") && (
+        <LocationFormDrawer
+          mode={open === "edit" ? { kind: "edit", location } : { kind: "add-child", parent: { id: location.id, name: location.name } }}
+          locations={locations}
+          open
+          onOpenChange={(next) => !next && setOpen(null)}
+        />
+      )}
+      <DeactivateDialog
+        location={location}
+        open={open === "deactivate"}
+        onOpenChange={(next) => setOpen(next ? "deactivate" : null)}
+      />
+    </>
   );
 }

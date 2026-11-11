@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
-import { FilterIcon, SearchIcon } from "@/components/ui/icons";
+import { FilterIcon, RefreshIcon, SearchIcon } from "@/components/ui/icons";
 import type { AssetFilterOptions, AssetReadResult } from "../../services/assets-list-types";
 import type { AssetsListUrlState } from "../../hooks/use-assets-list-url";
 import { ASSET_SEARCH_MAX_LENGTH } from "../../services/assets-list-query";
@@ -166,6 +166,18 @@ export function AssetsFilters({ result, url, loading = false, selectedCategory }
             </PopoverContent>
           </Popover>
           <UnavailableAction className="h-10">Save View</UnavailableAction>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 text-primary"
+            onClick={url.clear}
+          >
+            <RefreshIcon
+              aria-hidden="true"
+              className="size-4"
+            />
+            Clear Filters
+          </Button>
         </div>
       </div>
     </section>

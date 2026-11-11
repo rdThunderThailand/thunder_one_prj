@@ -20,7 +20,7 @@ export type LocationWriteResult =
       blockers?: { activeAssets: number; activeChildren: number };
     };
 
-async function coreWrite(method: "POST" | "PATCH", path: string, body?: unknown): Promise<LocationWriteResult> {
+async function coreWrite(method: "POST" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<LocationWriteResult> {
   const auth = await reportAuth();
   if (!auth) return { ok: false, code: "UNAUTHENTICATED", message: "Sign in again to continue." };
   try {
@@ -35,9 +35,11 @@ async function coreWrite(method: "POST" | "PATCH", path: string, body?: unknown)
       cache: "no-store",
     });
     const json = await res.json().catch(() => null);
-    if (res.ok && json?.data?.id) {
+    // Locations answer `{ id }`; attachment add / unlink answer `{ linkId }`.
+    const id = json?.data?.id ?? json?.data?.linkId;
+    if (res.ok && id) {
       refresh();
-      return { ok: true, id: json.data.id };
+      return { ok: true, id };
     }
     const error = json?.error ?? {};
     const code: string = error.code ?? "REQUEST_FAILED";
@@ -68,4 +70,14 @@ export async function updateLocationAction(id: string, expectedUpdatedAt: string
 
 export async function setLocationStatusAction(id: string, action: "activate" | "deactivate") {
   return coreWrite("POST", `${idPath(id)}/${action}`);
+}
+
+/** Link a file completed through the registration upload routes (purpose asset_document) to this location. */
+export async function attachLocationFileAction(locationId: string, fileId: string) {
+  return coreWrite("POST", `${idPath(locationId)}/attachments`, { fileId });
+}
+
+/** Unlink only: the file stays in Shared Files. */
+export async function unlinkLocationAttachmentAction(locationId: string, linkId: string) {
+  return coreWrite("DELETE", `${idPath(locationId)}/attachments/${encodeURIComponent(linkId)}`);
 }

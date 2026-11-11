@@ -43,7 +43,7 @@ const PAGE_KEYS = ["page", "pageSize"];
 
 export type SearchParams = Record<string, string | string[] | undefined>;
 
-function query(sp: SearchParams, keys: string[]) {
+export function query(sp: SearchParams, keys: string[]) {
   const params = new URLSearchParams();
   for (const key of keys) {
     const value = sp[key];
@@ -53,7 +53,7 @@ function query(sp: SearchParams, keys: string[]) {
   return s ? `?${s}` : "";
 }
 
-interface Page<Row> {
+export interface Page<Row> {
   data: Row[];
   page: number;
   pageSize: number;
@@ -62,7 +62,7 @@ interface Page<Row> {
 }
 
 /** Paged Core response → the list scaffold's shape. A route Core hasn't built shows as an empty table. */
-function toListData<Row>(page: ReportResult<Page<Row>>): { data: ListData<Row> | null; unavailable: boolean } {
+export function toListData<Row>(page: ReportResult<Page<Row>>): { data: ListData<Row> | null; unavailable: boolean } {
   if (page === "unavailable") return { data: { rows: [], page: 1, pageSize: 25, total: 0, totalPages: 0 }, unavailable: true };
   return { data: page && { rows: page.data, page: page.page, pageSize: page.pageSize, total: page.total, totalPages: page.totalPages }, unavailable: false };
 }

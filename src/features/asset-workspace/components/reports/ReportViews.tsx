@@ -40,6 +40,7 @@ const NOT_AVAILABLE = { emptyTitle: "Report not available yet", emptyBody: "This
 // ── Asset Summary + Lifecycle & Condition: the Assets page's table, filters and pagination ──
 
 const NO_SELECTION = new Set<string>();
+const ASSET_FILTER_KEYS = ["q", "category_id", "include_child_categories", "location_id", "status", "condition", "custody_type", "custody_id"];
 const noop = () => {};
 export function AssetReportView({
   slots,
@@ -100,7 +101,8 @@ export function AssetsTableSection({
       list.set(updates);
     },
     search: searchParams.toString(),
-    clear: noop,
+    // The locked location stays: the server page always queries it.
+    clear: () => list.set(Object.fromEntries(ASSET_FILTER_KEYS.filter((k) => !(lockedLocationId && k === "location_id")).map((k) => [k, undefined]))),
     closeScan: noop,
   };
   const options =
@@ -123,10 +125,18 @@ export function AssetsTableSection({
           <ErrorState />
         ) : data.rows.length === 0 ? (
           <div className="p-6">
-            <EmptyState
-              title="No assets match"
-              body="Try clearing a filter."
-            />
+            {/* "Match" only when the user set a filter; the page / size and the locked location don't count. */}
+            {[...searchParams.keys()].some((key) => !["page", "pageSize", ...(lockedLocationId ? ["location_id"] : [])].includes(key)) ? (
+              <EmptyState
+                title="No assets match"
+                body="Try clearing a filter."
+              />
+            ) : (
+              <EmptyState
+                title={lockedLocationId ? "No assets at this location" : "No assets yet"}
+                body={lockedLocationId ? "Assets registered at this location appear here." : "Assets appear here once they are registered."}
+              />
+            )}
           </div>
         ) : (
           <div className="min-w-0 overflow-x-auto">

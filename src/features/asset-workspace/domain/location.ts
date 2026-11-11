@@ -58,6 +58,19 @@ export function toTreeRows(locations: Location[]): TreeRow[] {
   return rows;
 }
 
+/** Assets at each location plus every location under it (Hierarchy, decided 2026-11-10). A subtree is contiguous in
+ *  `toTreeRows` order, so each row sums the rows after it until depth returns to its own. */
+export function rolledUpAssetCounts(locations: Location[]): Map<string, number> {
+  const rows = toTreeRows(locations);
+  const out = new Map<string, number>();
+  rows.forEach((row, i) => {
+    let n = row.assetCount;
+    for (let j = i + 1; j < rows.length && rows[j].depth > row.depth; j++) n += rows[j].assetCount;
+    out.set(row.id, n);
+  });
+  return out;
+}
+
 export interface MapPin {
   latitude: number;
   longitude: number;
@@ -171,3 +184,16 @@ export function validateLocationForm(form: LocationForm): { errors: LocationForm
     },
   };
 }
+
+/** Location History event types (Core `history?action=`) → labels for the filter, table and Overview Activity. */
+export const HISTORY_ACTIONS: Record<string, string> = {
+  "location.create": "Created",
+  "location.update": "Updated",
+  "location.activate": "Activated",
+  "location.deactivate": "Deactivated",
+  "location.child_added": "Child Location Added",
+  "location.attachment_added": "File Attached",
+  "location.attachment_removed": "File Unlinked",
+  "asset.moved_in": "Asset Moved In",
+  "asset.moved_out": "Asset Moved Out",
+};

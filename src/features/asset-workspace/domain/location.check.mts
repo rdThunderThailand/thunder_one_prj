@@ -1,6 +1,6 @@
 /** Run: node src/features/asset-workspace/domain/location.check.mts */
 import assert from "node:assert/strict";
-import { filterLocations, locationTone, mapPin, selfAndDescendants, toTreeRows, validateLocationForm, type Location } from "./location.ts";
+import { filterLocations, locationTone, mapPin, rolledUpAssetCounts, selfAndDescendants, toTreeRows, validateLocationForm, type Location } from "./location.ts";
 
 const loc = (id: string, parentId: string | null, extra: Partial<Location> = {}): Location => ({
   id, name: id.toUpperCase(), locationType: "Site", status: "Active", parentId, address: null, latitude: null,
@@ -15,6 +15,10 @@ assert.deepEqual(
   toTreeRows(all).map((r) => `${r.id}:${r.depth}`),
   ["br:0", "hq:0", "b:1", "f:2", "wh:1", "orphan:0"],
 );
+
+// Roll-up: hq = own 1 + b 2 + f 4 + wh 8; b = 2 + 4; leaves keep their own.
+const counted = [loc("hq", null, { assetCount: 1 }), loc("b", "hq", { assetCount: 2 }), loc("f", "b", { assetCount: 4 }), loc("wh", "hq", { assetCount: 8 })];
+assert.deepEqual(Object.fromEntries(rolledUpAssetCounts(counted)), { hq: 15, b: 6, f: 4, wh: 8 });
 
 // A loop never hangs and every row still shows once.
 const loop = toTreeRows([loc("x", "y"), loc("y", "x")]);

@@ -2,7 +2,8 @@
 
 // One filter bar per Reports tab; it drives the KPIs, charts and table together (filters live in the URL,
 // the server page re-fetches every report with them). Used by Inventory and Warranty; the asset tabs use AssetsFilters.
-import { SearchIcon } from "@/components/ui/icons";
+import { RefreshIcon, SearchIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import type { ListUrlState } from "../list-page/useListUrlState";
@@ -28,33 +29,36 @@ export function ReportFilterBar({
   dateRange,
 }: {
   url: ListUrlState;
-  searchPlaceholder: string;
+  /** Omit for a route without `q` (e.g. Location History): no search box. */
+  searchPlaceholder?: string;
   selects: SelectFilter[];
   /** Two URL keys for a from / to date pair. */
   dateRange?: { label: string; from: string; to: string };
 }) {
   return (
     <>
-      <form
-        role="search"
-        className="relative w-full sm:w-72"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const q = new FormData(event.currentTarget).get("q");
-          url.set({ q: typeof q === "string" ? q.trim() : undefined });
-        }}
-      >
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          key={url.get("q") ?? ""}
-          name="q"
-          type="search"
-          aria-label={searchPlaceholder}
-          placeholder={searchPlaceholder}
-          defaultValue={url.get("q")}
-          className="pl-9"
-        />
-      </form>
+      {searchPlaceholder && (
+        <form
+          role="search"
+          className="relative w-full sm:w-72"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const q = new FormData(event.currentTarget).get("q");
+            url.set({ q: typeof q === "string" ? q.trim() : undefined });
+          }}
+        >
+          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            key={url.get("q") ?? ""}
+            name="q"
+            type="search"
+            aria-label={searchPlaceholder}
+            placeholder={searchPlaceholder}
+            defaultValue={url.get("q")}
+            className="pl-9"
+          />
+        </form>
+      )}
       {selects.map((filter) => (
         <Select
           key={filter.key}
@@ -105,6 +109,21 @@ export function ReportFilterBar({
           ))}
         </fieldset>
       )}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-primary"
+        onClick={() =>
+          url.set(
+            Object.fromEntries(
+              [...(searchPlaceholder ? ["q"] : []), ...selects.map((s) => s.key), ...(dateRange ? [dateRange.from, dateRange.to] : [])].map((key) => [key, undefined]),
+            ),
+          )
+        }
+      >
+        <RefreshIcon className="h-4 w-4" />
+        Clear Filters
+      </Button>
     </>
   );
 }
