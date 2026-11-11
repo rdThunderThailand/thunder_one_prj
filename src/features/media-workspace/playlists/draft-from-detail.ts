@@ -20,6 +20,7 @@ function detailToDraftItems(items: PlaylistItem[]): DraftItem[] {
   return [...items]
     .sort((a, b) => a.position - b.position)
     .map((item) => ({
+      key: crypto.randomUUID(),
       mediaAssetId: item.media_asset_id,
       title: item.title,
       ...(item.file_deleted ? { fileDeleted: true } : {}),

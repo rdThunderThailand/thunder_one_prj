@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
@@ -35,7 +35,6 @@ export function AddItemDrawer({
   open,
   assets,
   loading,
-  alreadyInPlaylist,
   onAdd,
   onClose,
   purpose = "playlist",
@@ -47,7 +46,6 @@ export function AddItemDrawer({
   open: boolean;
   assets: MediaAsset[];
   loading: boolean;
-  alreadyInPlaylist: string[];
   onAdd: (assets: MediaAsset[]) => void;
   onClose: () => void;
   purpose?: "playlist" | "layout";
@@ -79,16 +77,10 @@ export function AddItemDrawer({
     fetchTags().then(setTags).catch(() => undefined);
   }, [hasOpened]);
 
-  // Assets already in the Playlist are off the table — re-adding one would be a silent no-op.
-  const pickable = useMemo(
-    () => assets.filter((a) => !alreadyInPlaylist.includes(a.id)),
-    [assets, alreadyInPlaylist],
-  );
-
   const toggle = (asset: MediaAsset) =>
     setStaged((s) => (s.includes(asset.id) ? s.filter((id) => id !== asset.id) : [...s, asset.id]));
 
-  // Only the staged selection is dropped on close — keeping it would re-offer assets the
+  // Only the staged selection is dropped on close — keeping it would pre-tick assets the
   // commit just added. The filters around it are the part worth remembering.
   const close = () => {
     setStaged([]);
@@ -142,7 +134,7 @@ export function AddItemDrawer({
           )}
           {source === "media" ? (
             <AssetPicker
-              assets={pickable}
+              assets={assets}
               loading={loading}
               selectedIds={staged}
               onToggle={toggle}

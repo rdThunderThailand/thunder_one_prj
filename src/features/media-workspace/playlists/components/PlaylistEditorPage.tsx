@@ -12,6 +12,7 @@ import { useUndoableState } from "../use-undoable-state";
 import { usePlaylistPreviewHandoff } from "../use-playlist-preview-handoff";
 import {
   appendItems,
+  duplicateItem,
   emptyEditorState,
   moveItem,
   savedStateLabel,
@@ -94,21 +95,22 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const setName = (name: string) => history.commit((s) => ({ ...s, name }));
   const setPlayback = (patch: Partial<PlaylistPlayback>) =>
     history.commit((s) => ({ ...s, playback: { ...s.playback, ...patch } }));
-  const patchItem = (assetId: string, patch: Partial<DraftItem>) =>
+  const patchItem = (key: string, patch: Partial<DraftItem>) =>
     history.commit((s) => ({
       ...s,
-      items: s.items.map((i) => (i.mediaAssetId === assetId ? { ...i, ...patch } : i)),
+      items: s.items.map((i) => (i.key === key ? { ...i, ...patch } : i)),
     }));
-  const removeItem = (assetId: string) => {
-    history.commit((s) => ({ ...s, items: s.items.filter((i) => i.mediaAssetId !== assetId) }));
-    setSelectedItemId((current) => (current === assetId ? null : current));
+  const removeItem = (key: string) => {
+    history.commit((s) => ({ ...s, items: s.items.filter((i) => i.key !== key) }));
+    setSelectedItemId((current) => (current === key ? null : current));
   };
+  const duplicate = (key: string) => history.commit((s) => ({ ...s, items: duplicateItem(s.items, key) }));
 
   const addAssets = (picked: MediaAsset[]) =>
     history.commit((s) => ({ ...s, items: appendItems(s.items, picked, s.playback) }));
 
-  const selectItem = (assetId: string) => {
-    setSelectedItemId(assetId);
+  const selectItem = (key: string) => {
+    setSelectedItemId(key);
     setPropTab("item");
   };
 
@@ -163,10 +165,11 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
       ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
       : null;
   const savedLabel = savedStateLabel(row.isDirty, row.lastSavedAt, !!row.serverId);
-  const effectiveSelectedItemId = selectedItemId ?? present.items[0]?.mediaAssetId ?? null;
-  const selectedItem = present.items.find((i) => i.mediaAssetId === effectiveSelectedItemId) ?? null;
+  const effectiveSelectedItemId = selectedItemId ?? present.items[0]?.key ?? null;
+  const selectedItem = present.items.find((i) => i.key === effectiveSelectedItemId) ?? null;
+  // `itemIndex` is the authored index, so a repeated asset lights up only the row on air.
   const onFrame = (frame: ZonePreviewFrame | null) =>
-    setNowPlayingItemId(frame?.item?.mediaAssetId ?? null);
+    setNowPlayingItemId(frame?.itemIndex != null ? (present.items[frame.itemIndex]?.key ?? null) : null);
 
   return (
     <div className="flex min-h-[calc(100dvh-3rem)] flex-col gap-4 xl:h-[calc(100dvh-3rem)] xl:min-h-0 xl:overflow-hidden">
@@ -222,6 +225,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           onSelect={selectItem}
           onMove={(from, to) => history.commit((s) => ({ ...s, items: moveItem(s.items, from, to) }))}
           onRemove={removeItem}
+          onDuplicate={duplicate}
           onSeek={(seconds) => setSeekRequest((current) => ({ seconds, id: (current?.id ?? 0) + 1 }))}
           onAddItem={() => setDrawerOpen(true)}
         />
@@ -249,8 +253,8 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
           asset={selectedItem ? assets.find((a) => a.id === selectedItem.mediaAssetId) : undefined}
           info={info}
           playback={present.playback}
-          onItemPatch={(patch) => selectedItem && patchItem(selectedItem.mediaAssetId, patch)}
-          onItemRemove={() => selectedItem && removeItem(selectedItem.mediaAssetId)}
+          onItemPatch={(patch) => selectedItem && patchItem(selectedItem.key, patch)}
+          onItemRemove={() => selectedItem && removeItem(selectedItem.key)}
           onInfoChange={(patch) => setInfo((c) => ({ ...c, ...patch }))}
         />
       </div>
@@ -271,7 +275,6 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         open={drawerOpen}
         assets={assets}
         loading={assetsLoading}
-        alreadyInPlaylist={present.items.map((i) => i.mediaAssetId)}
         onAdd={addAssets}
         onClose={() => setDrawerOpen(false)}
       />
