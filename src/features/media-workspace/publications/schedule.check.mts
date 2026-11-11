@@ -94,8 +94,8 @@ assert.equal(classifyPublicationAiring(monthly, at("2026-10-19T01:00:00Z")), "li
 // Same instant, schedule in UTC: it is the 18th there, so not an air day.
 assert.equal(classifyPublicationAiring({ ...monthly, timezone: "UTC" }, at("2026-10-18T18:00:00Z")), "next");
 
-// Exact 00:00-23:59 is the all-day sentinel: the final minute stays live, then
-// the next local calendar day's monthly rule applies. Other 23:59 ends stay exclusive.
+// A daily end of 23:59 runs through the end of the local day (#240): the final minute stays live, then
+// the next local calendar day's monthly rule applies. 00:00-23:59 is just the case with an early start.
 const monthlyAllDay: PublicationSchedule = {
   ...monthly,
   timezone: "UTC",
@@ -104,11 +104,20 @@ const monthlyAllDay: PublicationSchedule = {
 assert.equal(classifyPublicationAiring(monthlyAllDay, at("2026-10-19T23:59:00Z")), "live");
 assert.equal(classifyPublicationAiring(monthlyAllDay, at("2026-10-19T23:59:59Z")), "live");
 assert.equal(classifyPublicationAiring(monthlyAllDay, at("2026-10-20T00:00:00Z")), "next");
+const monthlyFromNine: PublicationSchedule = {
+  ...monthlyAllDay,
+  recurrence: { freq: "monthly", month_days: [19], daily_start: "09:00", daily_end: "23:59" },
+};
+assert.equal(classifyPublicationAiring(monthlyFromNine, at("2026-10-19T23:59:00Z")), "live");
+assert.equal(classifyPublicationAiring(monthlyFromNine, at("2026-10-19T23:59:59Z")), "live");
+assert.equal(classifyPublicationAiring(monthlyFromNine, at("2026-10-19T08:59:59Z")), "next");
+assert.equal(classifyPublicationAiring(monthlyFromNine, at("2026-10-20T00:00:00Z")), "next");
+// Any other end stays exclusive.
 assert.equal(
   classifyPublicationAiring({
     ...monthlyAllDay,
-    recurrence: { freq: "monthly", month_days: [19], daily_start: "09:00", daily_end: "23:59" },
-  }, at("2026-10-19T23:59:00Z")),
+    recurrence: { freq: "monthly", month_days: [19], daily_start: "09:00", daily_end: "22:00" },
+  }, at("2026-10-19T22:00:00Z")),
   "next",
 );
 
