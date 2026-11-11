@@ -11,7 +11,7 @@ import { conditionBlocksTransfer } from "../../domain/assignment-transfer";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { referenceLabel } from "../../services/registration-selector-contract";
-import { RegistrationReferenceSelect } from "../register-asset/RegistrationReferenceSelect";
+import { RegistrationTreeField } from "../register-asset/RegistrationTreeField";
 import { ConditionBadge } from "../StatusBadges";
 import { AssignAssetCard } from "./AssignAssetCard";
 import { AssignAttachments } from "./AssignAttachments";
@@ -57,9 +57,10 @@ export function TransferDetailsForm({ context, flow, asset, rules, returnHref }:
             </p>
           </div>
           <div className="min-w-0 space-y-1">
-            <RegistrationReferenceSelect
+            <RegistrationTreeField
               name="transfer-location"
               label="To Location"
+              required={false}
               value={flow.location?.id ?? ""}
               selectedLabel={flow.location ? referenceLabel({ id: flow.location.id, name: flow.location.name }, "locations") : ""}
               kind="locations"
@@ -67,7 +68,6 @@ export function TransferDetailsForm({ context, flow, asset, rules, returnHref }:
               rules={rules.referenceSelectors}
               onChange={(item) => flow.setLocation({ id: item.id, name: item.name?.trim() || "Unnamed location" })}
             />
-            {/* shortcut: the shared picker always marks itself required; this hint says otherwise until it takes an optional prop */}
             {!flow.location && <p className="text-2xs text-muted-foreground">Optional. Leave empty to keep the current location.</p>}
             {flow.location && (
               <Button

@@ -25,9 +25,10 @@ export interface TreeSelectCopy {
  * A row with children opens them (count ›); a row without chooses; inside a level the parent comes first, labelled as
  * the parent, then its children indented under a guide line.
  */
-export function RegistrationTreeSelect({ name, label, copy, tree, value, error, maxLength, onChange }: {
-  name: string; label: string; copy: TreeSelectCopy; tree: ReferenceTree; value: string; error?: string;
-  maxLength: number; onChange: (node: TreeNode) => void;
+export function RegistrationTreeSelect({ name, label, copy, tree, value, selectedLabel = "", required = true, error, maxLength, onChange }: {
+  name: string; label: string; copy: TreeSelectCopy; tree: ReferenceTree; value: string;
+  /** Shown when the value isn't in the active tree (e.g. an asset's current inactive category). */
+  selectedLabel?: string; required?: boolean; error?: string; maxLength: number; onChange: (node: TreeNode) => void;
 }) {
   const selectedPath = treePath(tree, value);
   const [open, setOpen] = useState(false);
@@ -35,7 +36,7 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, error, 
   const [search, setSearch] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const listId = useId();
-  const names = selectedPath.map((id) => tree.byId.get(id)?.name ?? "");
+  const names = selectedPath.length ? selectedPath.map((id) => tree.byId.get(id)?.name ?? "") : value && selectedLabel ? [selectedLabel] : [];
   const parent = tree.byId.get(level);
   const results = searchTree(tree, search, SEARCH_LIMIT);
   const levelRows = tree.children.get(level) ?? [];
@@ -54,14 +55,14 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, error, 
   );
 
   return (
-    <RegistrationField name={name} label={label} required error={error}>
+    <RegistrationField name={name} label={label} required={required} error={error}>
       <Popover open={open} onOpenChange={toggle}>
         <PopoverTrigger asChild>
           <Button
             id={`registration-${name}`}
             variant="outline"
             className="h-auto min-h-10 w-full justify-between gap-3 py-2 text-start font-normal"
-            aria-label={`${label} (required): ${names.join(" › ") || "Not selected"}`}
+            aria-label={`${label}${required ? " (required)" : ""}: ${names.join(" › ") || "Not selected"}`}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? `registration-${name}-error` : undefined}
           >

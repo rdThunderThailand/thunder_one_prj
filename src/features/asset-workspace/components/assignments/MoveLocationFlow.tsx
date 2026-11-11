@@ -19,7 +19,7 @@ import type { AssetDetail } from "../../services/asset-profile-contract";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { fetchRegistrationReferences } from "../../services/registration-selector-client";
 import { referenceLabel, type ReferenceItem } from "../../services/registration-selector-contract";
-import { RegistrationReferenceSelect } from "../register-asset/RegistrationReferenceSelect";
+import { RegistrationTreeField } from "../register-asset/RegistrationTreeField";
 import { getAssignOptions } from "./use-assign-flow";
 
 type Failure = Extract<AssignResult, { ok: false }>;
@@ -140,7 +140,7 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
                     {locationTrail(current.asset.locationPath, current.asset.location) || "No location assigned."}
                   </p>
                 </div>
-                <RegistrationReferenceSelect name="move-location" label="To Location" kind="locations" context={context}
+                <RegistrationTreeField name="move-location" label="To Location" kind="locations" context={context}
                   rules={current.rules} value={destination?.id ?? ""}
                   selectedLabel={destination ? referenceLabel(destination, "locations") : ""}
                   error={destinationError} onChange={(value) => {

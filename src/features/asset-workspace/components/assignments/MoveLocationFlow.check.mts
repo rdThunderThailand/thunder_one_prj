@@ -67,7 +67,7 @@ const mocks: Record<string, unknown> = {
     return { items: active ? [destination] : [] };
   } },
   "../../services/registration-selector-contract": { referenceLabel: (value: { name: string }) => value.name },
-  "../register-asset/RegistrationReferenceSelect": { RegistrationReferenceSelect: picker },
+  "../register-asset/RegistrationTreeField": { RegistrationTreeField: picker },
   "./use-assign-flow": { getAssignOptions: async () => optionsResult },
 };
 const url = new URL("./MoveLocationFlow.tsx", import.meta.url);

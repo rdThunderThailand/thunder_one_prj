@@ -12,9 +12,9 @@ const COPY: Record<"categories" | "locations", TreeSelectCopy> = {
 };
 
 /** Tree dropdown when the whole list can be read; otherwise the registration options select (one level at a time). */
-export function RegistrationTreeField({ kind, name, label, value, selectedLabel, context, rules, error, onChange }: {
-  kind: "categories" | "locations"; name: string; label: string; value: string; selectedLabel: string; context: string;
-  rules: RegistrationOptions["referenceSelectors"]; error?: string; onChange: (item: ReferenceItem) => void;
+export function RegistrationTreeField({ kind, name, label, value, selectedLabel, required = true, context, rules, error, onChange }: {
+  kind: "categories" | "locations"; name: string; label: string; value: string; selectedLabel: string; required?: boolean;
+  context: string; rules: RegistrationOptions["referenceSelectors"]; error?: string; onChange: (item: ReferenceItem) => void;
 }) {
   const tree = useReferenceTree(context, kind);
   if (tree === null) {
@@ -26,13 +26,15 @@ export function RegistrationTreeField({ kind, name, label, value, selectedLabel,
     );
   }
   if (tree === "failed") {
+    // shortcut: the fallback select always marks itself required; give it a required prop if an optional field needs it.
     return (
       <RegistrationReferenceSelect name={name} label={label} value={value} kind={kind} selectedLabel={selectedLabel}
         context={context} rules={rules} error={error} onChange={onChange} />
     );
   }
   return (
-    <RegistrationTreeSelect name={name} label={label} copy={COPY[kind]} tree={tree} value={value} error={error}
+    <RegistrationTreeSelect name={name} label={label} copy={COPY[kind]} tree={tree} value={value} selectedLabel={selectedLabel}
+      required={required} error={error}
       maxLength={rules.search.maxLength} onChange={(node) => onChange(treeReference(tree, node, kind))} />
   );
 }

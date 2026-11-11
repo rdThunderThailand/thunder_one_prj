@@ -4,7 +4,7 @@ import type { useAssetEdit } from "../../hooks/use-asset-edit";
 import type { AssetEditOptions } from "../../services/asset-edit-options";
 import type { ReferenceItem } from "../../services/registration-selector-contract";
 import { RegistrationField, RegistrationTextField } from "../register-asset/RegistrationFields";
-import { RegistrationReferenceSelect } from "../register-asset/RegistrationReferenceSelect";
+import { RegistrationTreeField } from "../register-asset/RegistrationTreeField";
 import { RegistrationDateField } from "../register-asset/RegistrationDateField";
 
 export function AssetEditFields({ context, flow, options, selected, onSelect }: {
@@ -26,7 +26,7 @@ export function AssetEditFields({ context, flow, options, selected, onSelect }: 
           className="h-10" autoComplete="off" onChange={(event) => patch({ name: event.target.value })}
         />
         <div className="space-y-1">
-          <RegistrationReferenceSelect
+          <RegistrationTreeField
             name="asset-edit-category" label="Category" kind="categories" context={context}
             rules={options.rules.referenceSelectors} value={draft.categoryId} selectedLabel={label}
             error={fields.categoryId} onChange={onSelect}
