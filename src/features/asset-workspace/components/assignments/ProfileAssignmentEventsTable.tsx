@@ -5,7 +5,9 @@ import {
   ASSIGNMENT_EVENT_TONE, assignmentEventKey, assignmentHistoryReason, assignmentHistoryRowNumber,
 } from "../../domain/assignment-history";
 import { STATUS_TONE } from "../../domain/status-tone";
+import { locationHistoryPath } from "../../domain/assignment-location-history";
 import type { ProfileAssignmentEvent } from "../../services/asset-assignments-profile-api";
+import type { LocationHistoryEvent, LocationHistoryReference } from "../../services/asset-assignments-location-history";
 import { formatDay } from "../asset-profile/ProfileParts";
 import {
   AssignmentEventPill, AssignmentHistoryCondition, AssignmentHistoryPerson, AssignmentHistoryTime,
@@ -13,9 +15,11 @@ import {
 
 const custodyColumns = ["#", "Custodian", "From", "To", "Location", "Action", "Notes", "By"];
 const historyColumns = ["#", "Event Type", "From", "To / Custodian", "Date & Time", "Location", "Condition at Return", "Performed By", "Notes / Reason"];
+const locationColumns = ["#", "Date & Time", "From Location", "To Location", "By", "Reason"];
 const widths = {
   custody: ["w-9", "w-36", "w-24", "w-28", "w-32", "w-24", "w-36", "w-36"],
   history: ["w-9", "w-28", "w-32", "w-32", "w-28", "w-28", "w-24", "w-32", "w-36"],
+  location: ["w-9", "w-28", "w-32", "w-32", "w-32", "w-36"],
 };
 
 export function CurrentAssignmentBadge() {
@@ -58,18 +62,48 @@ function custodyCells(event: ProfileAssignmentEvent, current: boolean): ReactNod
   ];
 }
 
-export function ProfileAssignmentEventsTable({ history, rows = [], page = 1, pageSize = 20, selectedKey, currentKey,
-  loading = false, onSelect }: {
-  history: boolean; rows?: ProfileAssignmentEvent[]; page?: number; pageSize?: number; selectedKey?: string;
-  currentKey?: string; loading?: boolean; onSelect?: (event: ProfileAssignmentEvent, opener: HTMLElement) => void;
-}) {
-  const columns = history ? historyColumns : custodyColumns;
+type TableProps = { page?: number; pageSize?: number; selectedKey?: string; loading?: boolean } & (
+  | { variant?: never; history: boolean; rows?: ProfileAssignmentEvent[]; currentKey?: string;
+    onSelect?: (event: ProfileAssignmentEvent, opener: HTMLElement) => void }
+  | { variant: "location"; rows?: LocationHistoryEvent[];
+    locations: ReadonlyMap<string, LocationHistoryReference>;
+    onSelect?: (event: LocationHistoryEvent, opener: HTMLElement) => void }
+);
+
+function tableRows(props: TableProps) {
+  if (props.variant === "location") {
+    return (props.rows ?? []).map((event) => ({
+      key: event.id,
+      cells: [
+        <AssignmentHistoryTime key="time" at={event.at} />,
+        locationHistoryPath(event.from, props.locations).join(" › ") || "—",
+        locationHistoryPath(event.to, props.locations).join(" › ") || "—",
+        <AssignmentHistoryPerson key="actor" person={event.performedBy} fallback="System" />,
+        event.reason || "—",
+      ],
+      select: props.onSelect ? (opener: HTMLElement) => props.onSelect?.(event, opener) : undefined,
+    }));
+  }
+  return (props.rows ?? []).map((event) => {
+    const key = assignmentEventKey(event);
+    const current = key === props.currentKey;
+    return { key, cells: props.history ? historyCells(event, current) : custodyCells(event, current),
+      select: props.onSelect ? (opener: HTMLElement) => props.onSelect?.(event, opener) : undefined };
+  });
+}
+
+export function ProfileAssignmentEventsTable(props: TableProps) {
+  const { page = 1, pageSize = 20, selectedKey, loading = false } = props;
+  const variant = props.variant === "location" ? "location" : props.history ? "history" : "custody";
+  const columns = variant === "location" ? locationColumns : variant === "history" ? historyColumns : custodyColumns;
+  const caption = variant === "location" ? "Location history records" : variant === "history" ? "Assignment history records" : "Assignments";
+  const minimumWidth = variant === "location" ? "min-w-2xl" : variant === "history" ? "min-w-4xl" : "min-w-3xl";
   return (
     <div className="min-w-0 overflow-x-auto">
-      <table className={`relative w-full table-fixed text-left text-xs ${history ? "min-w-4xl" : "min-w-3xl"}`}>
-        <caption className="sr-only">{history ? "Assignment history records" : "Assignments"}</caption>
+      <table className={`relative w-full table-fixed text-left text-xs ${minimumWidth}`}>
+        <caption className="sr-only">{caption}</caption>
         <colgroup>
-          {widths[history ? "history" : "custody"].map((width, index) => <col key={columns[index]} className={width} />)}
+          {widths[variant].map((width, index) => <col key={columns[index]} className={width} />)}
         </colgroup>
         <thead className="bg-muted text-2xs text-muted-foreground">
           <tr>
@@ -77,7 +111,7 @@ export function ProfileAssignmentEventsTable({ history, rows = [], page = 1, pag
               <th key={heading} scope="col" aria-sort={heading === "Date & Time" ? "descending" : undefined}
                 className="border-b border-border px-3 py-3 font-semibold">
                 {heading}
-                {heading === "Date & Time" && <span aria-hidden="true"> ↓</span>}
+                {variant === "history" && heading === "Date & Time" && <span aria-hidden="true"> ↓</span>}
               </th>
             ))}
           </tr>
@@ -91,16 +125,14 @@ export function ProfileAssignmentEventsTable({ history, rows = [], page = 1, pag
                 </td>
               ))}
             </tr>
-          )) : rows.map((event, index) => {
-            const key = assignmentEventKey(event);
-            const cells = history ? historyCells(event, key === currentKey) : custodyCells(event, key === currentKey);
+          )) : tableRows(props).map(({ key, cells, select }, index) => {
             return (
-              <tr key={key} tabIndex={onSelect ? 0 : undefined} aria-selected={onSelect ? key === selectedKey : undefined}
-                onClick={onSelect ? (click) => onSelect(event, click.currentTarget) : undefined}
-                onKeyDown={onSelect ? (press) => {
+              <tr key={key} tabIndex={select ? 0 : undefined} aria-selected={select ? key === selectedKey : undefined}
+                onClick={select ? (click) => select(click.currentTarget) : undefined}
+                onKeyDown={select ? (press) => {
                   if (press.target !== press.currentTarget || (press.key !== "Enter" && press.key !== " ")) return;
                   press.preventDefault();
-                  onSelect(event, press.currentTarget);
+                  select(press.currentTarget);
                 } : undefined}
                 className={`outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${key === selectedKey
                   ? "bg-accent [&>td:first-child]:border-l-2 [&>td:first-child]:border-primary"

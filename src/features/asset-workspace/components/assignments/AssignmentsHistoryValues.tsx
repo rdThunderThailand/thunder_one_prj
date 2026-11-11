@@ -21,7 +21,7 @@ export function AssignmentHistoryPerson({ person, fallback = "—" }: {
   return (
     <div className="flex min-w-0 items-center gap-2">
       <Avatar name={name} src={person?.avatarUrl} size={28} />
-      <span className="min-w-0 font-semibold wrap-anywhere text-foreground">{name}</span>
+      <span title={name} className="min-w-0 truncate font-semibold text-foreground">{name}</span>
     </div>
   );
 }

@@ -26,6 +26,8 @@ const mocks: Record<string, unknown> = {
   "../asset-profile/ProfileParts": { formatDay: (value: string | null) => value?.slice(0, 10) ?? "—" },
   "./ProfileAssignmentEvents": { ProfileAssignmentEvents: ({ layout }: Props) =>
     (layout as (content: ReactNode, panel: ReactNode) => ReactNode)(null, null) },
+  "./ProfileLocationHistory": { ProfileLocationHistory: ({ layout }: Props) =>
+    (layout as (content: ReactNode, panel: ReactNode) => ReactNode)(null, null) },
 };
 const modules = new Map<string, Record<string, unknown>>();
 function load(url: URL): Record<string, unknown> {
@@ -66,12 +68,14 @@ assert.match(custody, /Current/);
 assert.match(custody, />21<\/td>/);
 assert.match(custody, /Old Room/);
 assert.match(custody, /Unassigned/);
+assert.match(custody, /title="Jane Doe" class="min-w-0 truncate/);
 assert.doesNotMatch(custody, /backfill/);
 const history = render(table, { history: true, rows: [row, returned], currentKey: "Transfer:event",
   selectedKey: "Return:event", onSelect() {} });
 assert.match(history, /Condition at Return/);
 assert.match(history, /aria-sort="descending"/);
 assert.match(history, /aria-selected="true"/);
+assert.match(history, /title="Jane Doe" class="min-w-0 truncate/);
 assert.match(history, /<span>Fair<\/span>/);
 assert.doesNotMatch(history, /Damaged|Transaction ID|Asset ID/);
 for (const view of [false, true]) {
@@ -83,10 +87,11 @@ for (const view of [false, true]) {
 const nav = render(ProfileAssignmentHistory, { context: "tenant:user", asset: { id: "asset" } });
 assert.match(nav, /All History.*Assignment History.*Location History.*Status History.*Maintenance History.*File History.*Audit Log/);
 assert.match(nav, /<button disabled="">Maintenance History<\/button>/);
-assert.equal((nav.match(/<button disabled=""/g) ?? []).length, 5);
+assert.match(nav, /<button>Location History<\/button>/);
+assert.equal((nav.match(/<button disabled=""/g) ?? []).length, 4);
 const layout = render(ProfileHistoryLayout, { children: "SUBTABS_TABLE", panel: createElement("aside", null, "EVENT_DETAILS") });
 assert.match(layout, /SUBTABS_TABLE<\/div><div[^>]*sticky[^>]*><aside>EVENT_DETAILS/);
-assert.match(layout, /minmax\(0,1fr\)_var\(--container-xs\)/);
+assert.match(layout, /minmax\(0,3fr\)_minmax\(var\(--container-sm\),2fr\)/);
 assert.doesNotMatch(layout, /overflow-x-auto|100vh|100dvh/);
 
 const footer = render(pager, { page: 2, pageSize: 20, total: 25, totalPages: 2, itemLabel: "assignments", onPageChange() {} });

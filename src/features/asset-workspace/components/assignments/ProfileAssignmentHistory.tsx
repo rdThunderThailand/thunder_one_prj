@@ -7,11 +7,12 @@ import type { AssetDetail } from "../../services/asset-profile-contract";
 import { DisabledHint } from "../asset-profile/ProfileControls";
 import { HistorySection } from "../asset-profile/ProfileHistory";
 import { ProfileAssignmentEvents } from "./ProfileAssignmentEvents";
+import { ProfileLocationHistory } from "./ProfileLocationHistory";
 
 export const profileHistoryTabs = [
   { id: "all", label: "All History", icon: ListIcon, disabled: false },
   { id: "assignment", label: "Assignment History", icon: UserIcon, disabled: false },
-  { id: "location", label: "Location History", icon: LocationIcon, disabled: true },
+  { id: "location", label: "Location History", icon: LocationIcon, disabled: false },
   { id: "status", label: "Status History", icon: ClockIcon, disabled: true },
   { id: "maintenance", label: "Maintenance History", icon: ToolIcon, disabled: true },
   { id: "file", label: "File History", icon: FileTextIcon, disabled: true },
@@ -55,7 +56,7 @@ export function ProfileHistoryLayout({ children, panel }: { children: ReactNode;
 
   return (
     <div className="@container/profile-history min-w-0">
-      <div ref={grid} className={`grid min-w-0 items-start gap-3 ${hasPanel ? "@3xl/profile-history:grid-cols-[minmax(0,1fr)_var(--container-xs)]" : ""}`}>
+      <div ref={grid} className={`grid min-w-0 items-start gap-3 ${hasPanel ? "@3xl/profile-history:grid-cols-[minmax(0,3fr)_minmax(var(--container-sm),2fr)]" : ""}`}>
         <div className="min-w-0 space-y-3">{children}</div>
         {hasPanel && (
           <div ref={aside} className="min-w-0 @3xl/profile-history:sticky @3xl/profile-history:top-0 @3xl/profile-history:[&>*]:max-h-(--profile-panel-height) @3xl/profile-history:[&>*]:overflow-y-auto">
@@ -85,16 +86,21 @@ export function ProfileAssignmentHistory({ context, asset }: { context: string; 
   );
   return (
     <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-      <ProfileAssignmentEvents context={context} asset={asset} enabled={tab === "assignment"} layout={(content, panel) => (
-        <ProfileHistoryLayout panel={panel}>
-          {nav}
-          <TabsContent value="all" className="m-0">
-            <HistorySection context={context} assetId={asset.id} />
-          </TabsContent>
-          <TabsContent value="assignment" className="m-0 min-w-0">
-            {content}
-          </TabsContent>
-        </ProfileHistoryLayout>
+      <ProfileAssignmentEvents context={context} asset={asset} enabled={tab === "assignment"} layout={(assignment, assignmentPanel) => (
+        <ProfileLocationHistory context={context} assetId={asset.id} enabled={tab === "location"} layout={(location, locationPanel) => (
+          <ProfileHistoryLayout panel={tab === "location" ? locationPanel : assignmentPanel}>
+            {nav}
+            <TabsContent value="all" className="m-0">
+              <HistorySection context={context} assetId={asset.id} />
+            </TabsContent>
+            <TabsContent value="assignment" className="m-0 min-w-0">
+              {assignment}
+            </TabsContent>
+            <TabsContent value="location" className="m-0 min-w-0">
+              {location}
+            </TabsContent>
+          </ProfileHistoryLayout>
+        )} />
       )} />
     </Tabs>
   );

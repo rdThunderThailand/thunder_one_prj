@@ -73,6 +73,12 @@ for (const fallback of ["Unassigned", "System", "—"]) {
 const initials = render(AssignmentHistoryPerson, { person: { name: "Jane Doe", avatarUrl: null } });
 assert.match(initials, /JD/);
 assert.match(initials, /rounded-full/);
+const email = "long.assignment.email@example.test";
+const longName = render(AssignmentHistoryPerson, { person: { name: email, avatarUrl: null } });
+assert.ok(longName.includes(`title="${email}"`));
+assert.match(longName, /class="min-w-0 truncate font-semibold text-foreground"/);
+assert.ok(longName.includes(`>${email}</span>`));
+assert.doesNotMatch(longName, /wrap-anywhere/);
 assert.match(table, /aria-selected="true"/);
 assert.match(table, /bg-accent/);
 assert.doesNotMatch(table, /backfill|checkbox|Transaction ID|Current<|Department|Organizational Unit/);
