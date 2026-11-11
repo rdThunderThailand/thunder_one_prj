@@ -48,7 +48,7 @@ export type DeviceHistory = {
   } | null;
   reports: {
     id: string; state: string; from_version: string | null; target_version: string | null; running_version: string | null;
-    error_stage: string | null; error_code: string | null; error_detail: string | null; media_rendered: boolean | null;
+    error_stage: string | null; error_code: string | null; media_rendered: boolean | null;
     occurred_at: string; received_at: string;
   }[];
 };
