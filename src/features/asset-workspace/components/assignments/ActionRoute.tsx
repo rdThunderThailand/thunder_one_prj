@@ -6,11 +6,12 @@ import { ReturnFlowView } from "./ReturnFlowView";
 import { ChangeStatusActionView } from "../lifecycle/ChangeStatusActionView";
 import { RetireFlowView } from "../lifecycle/RetireFlowView";
 import { DisposeFlowView } from "../lifecycle/DisposeFlowView";
+import { LabelFlowView } from "../lifecycle/LabelFlowView";
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VIEWS = {
   assign: AssignFlowView, transfer: TransferFlowView, return: ReturnFlowView, "change-status": ChangeStatusActionView,
-  retire: RetireFlowView, dispose: DisposeFlowView,
+  retire: RetireFlowView, dispose: DisposeFlowView, label: LabelFlowView,
 };
 
 /** Server entry shared by `/assets/{id}/{action}` (profile) and `/assignments/{id}/{action}` (Assignments list). */

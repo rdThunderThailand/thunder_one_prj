@@ -14,10 +14,8 @@ import {
 import { lifecycleMenu } from "../../domain/asset-lifecycle-actions";
 import { actionHref, inAssignments, profileHref } from "../../domain/assignment-assign";
 import { profileAssignmentActions } from "../../domain/assignment-profile";
-import { useAssetLabels } from "../../hooks/use-asset-labels";
 import { useAssetExport } from "../../hooks/use-asset-export";
 import type { AssetDetail } from "../../services/asset-profile-contract";
-import { AssetLabelsDialog } from "../asset-labels/AssetLabelsDialog";
 import { AssetsExportDialog } from "../assets-list/AssetsExportDialog";
 
 export const LATER = "Available in a later release";
@@ -75,7 +73,6 @@ export function ProfileCustodyActions({ asset, placement }: {
 }
 
 export function ProfileActions({ context, asset }: { context: string; asset: AssetDetail }) {
-  const labels = useAssetLabels(context, asset.id);
   const exportFlow = useAssetExport(context, asset.id);
   const trigger = useRef<HTMLButtonElement>(null);
   const openingDialog = useRef(false);
@@ -113,13 +110,19 @@ export function ProfileActions({ context, asset }: { context: string; asset: Ass
           })}
           <DropdownMenuSeparator />
           <DropdownMenuLabel className={groupLabel}>Utilities</DropdownMenuLabel>
-          <DropdownMenuItem disabled={asset.lifecycleStatus === "Disposed"} onSelect={() => {
-            openingDialog.current = true;
-            labels.open([{ id: asset.id, name: asset.name, assetTag: asset.assetTag, status: asset.lifecycleStatus, serialNumber: asset.serialNumber }], trigger.current);
-          }}>
-            <PrintIcon aria-hidden="true" />
-            Print label
-          </DropdownMenuItem>
+          {asset.lifecycleStatus === "Disposed" ? (
+            <DropdownMenuItem disabled>
+              <PrintIcon aria-hidden="true" />
+              Print label
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem asChild>
+              <Link href={`${profile}/label`}>
+                <PrintIcon aria-hidden="true" />
+                Print label
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onSelect={() => {
             openingDialog.current = true;
             exportFlow.openSelected([asset.id], trigger.current);
@@ -129,7 +132,6 @@ export function ProfileActions({ context, asset }: { context: string; asset: Ass
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <AssetLabelsDialog flow={labels} />
       <AssetsExportDialog flow={exportFlow} />
     </div>
   );

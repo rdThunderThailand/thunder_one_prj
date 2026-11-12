@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   allowedConditions, allowedTargets, changeStatusBody, DISPOSAL_METHODS, disposeBlock, disposeBody, disposeErrors, changeStatusErrors, endsCustody, lifecycleNeedsReload, retireBody,
-  lifecycleMenu, retireEligibility, retireErrors,
+  labelCopies, lifecycleMenu, retireEligibility, retireErrors,
 } from "./asset-lifecycle-actions.ts";
 import type { AssetDetail } from "../services/asset-profile-contract.ts";
 
@@ -91,3 +91,8 @@ for (const [lifecycleStatus, custody, expected] of [
   assert.deepEqual(menu.map(({ reason }) => reason), expected, `${lifecycleStatus} ${custody ? "with" : "without"} holder`);
 }
 console.log("More Actions availability checks passed");
+
+for (const [input, copies] of [["1", 1], ["5", 5], ["20", 20], ["21", 20], ["0", 1], ["-3", 1], ["2.7", 2], ["", 1], ["abc", 1]] as const) {
+  assert.equal(labelCopies(input), copies, `copies "${input}"`);
+}
+console.log("Label copies checks passed");

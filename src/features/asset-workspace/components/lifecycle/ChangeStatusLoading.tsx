@@ -74,8 +74,9 @@ export function ChangeStatusFooterLoading() {
 }
 
 /** Route loading for every lifecycle page; Retire passes its own title and subtitle. */
-export function ChangeStatusLoading({ from, title = CHANGE_STATUS_TITLE, subtitle = CHANGE_STATUS_SUBTITLE }: {
-  from?: "assignments"; title?: string; subtitle?: string;
+/** `steps={null}` for pages without a stepper (FE 06 Label). */
+export function ChangeStatusLoading({ from, title = CHANGE_STATUS_TITLE, subtitle = CHANGE_STATUS_SUBTITLE, steps = CHANGE_STATUS_STEPS }: {
+  from?: "assignments"; title?: string; subtitle?: string; steps?: string[] | null;
 }) {
   const origin = from === "assignments"
     ? { href: "/asset-workspace/assignments", label: "Assignments" }
@@ -98,7 +99,7 @@ export function ChangeStatusLoading({ from, title = CHANGE_STATUS_TITLE, subtitl
                 origin={origin}
                 title={title}
                 subtitle={subtitle}
-                steps={CHANGE_STATUS_STEPS}
+                steps={steps ?? undefined}
               />
             </div>
           )}

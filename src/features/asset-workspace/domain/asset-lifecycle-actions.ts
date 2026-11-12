@@ -154,3 +154,13 @@ export function lifecycleMenu(asset: Pick<AssetDetail, "lifecycleStatus" | "cust
     },
   ] satisfies { action: LifecycleMenuAction; label: string; reason: string | null }[];
 }
+
+export const LABEL_TITLE = "Print / Download Label";
+export const LABEL_SUBTITLE = "Generate and print an asset label for this asset.";
+export const LABEL_COPIES_MAX = 20;
+
+/** Owner L3: whole copies 1–20 per asset; anything else falls back to the nearest allowed value. */
+export function labelCopies(value: string) {
+  const copies = Math.trunc(Number(value));
+  return Number.isFinite(copies) ? Math.min(LABEL_COPIES_MAX, Math.max(1, copies)) : 1;
+}
