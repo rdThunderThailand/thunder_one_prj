@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   allowedConditions, allowedTargets, changeStatusBody, DISPOSAL_METHODS, disposeBlock, disposeBody, disposeErrors, changeStatusErrors, endsCustody, lifecycleNeedsReload, retireBody,
-  retireEligibility, retireErrors,
+  lifecycleMenu, retireEligibility, retireErrors,
 } from "./asset-lifecycle-actions.ts";
 import type { AssetDetail } from "../services/asset-profile-contract.ts";
 
@@ -77,3 +77,17 @@ assert.deepEqual(disposeBody("v", { ...dispose, notes: " Cert EW-1 " }, ["f"]), 
   expectedUpdatedAt: "v", disposalMethod: "Scrapped-Destroyed", reason: "Beyond repair", notes: "Cert EW-1", evidenceFileIds: ["f"],
 });
 console.log("Dispose eligibility, method, field and payload checks passed");
+
+for (const [lifecycleStatus, custody, expected] of [
+  ["Available", null, [null, null, "Only available when Retired"]],
+  ["Assigned", holder, [null, "Return asset first", "Only available when Retired"]],
+  ["In Maintenance", null, [null, null, "Only available when Retired"]],
+  ["In Maintenance", holder, [null, "Change status to Available first", "Only available when Retired"]],
+  ["Retired", null, [null, "Already retired", null]],
+  ["Disposed", null, ["Disposed assets can't change", "Disposed assets can't change", "Already disposed"]],
+] as const) {
+  const menu = lifecycleMenu({ lifecycleStatus, custody } as AssetDetail);
+  assert.deepEqual(menu.map(({ action }) => action), ["change-status", "retire", "dispose"]);
+  assert.deepEqual(menu.map(({ reason }) => reason), expected, `${lifecycleStatus} ${custody ? "with" : "without"} holder`);
+}
+console.log("More Actions availability checks passed");

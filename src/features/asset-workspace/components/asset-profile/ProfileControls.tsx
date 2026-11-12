@@ -5,9 +5,14 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
-import { DownloadIcon, MoreIcon, PlusIcon, PrintIcon, ReturnIcon, TransferIcon } from "@/components/ui/icons";
-import { actionHref, inAssignments } from "../../domain/assignment-assign";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/lovable/dropdown-menu";
+import {
+  DisposeIcon, DownloadIcon, MoreIcon, PlusIcon, PrintIcon, RefreshIcon, RetireIcon, ReturnIcon, TransferIcon,
+} from "@/components/ui/icons";
+import { lifecycleMenu } from "../../domain/asset-lifecycle-actions";
+import { actionHref, inAssignments, profileHref } from "../../domain/assignment-assign";
 import { profileAssignmentActions } from "../../domain/assignment-profile";
 import { useAssetLabels } from "../../hooks/use-asset-labels";
 import { useAssetExport } from "../../hooks/use-asset-export";
@@ -16,6 +21,9 @@ import { AssetLabelsDialog } from "../asset-labels/AssetLabelsDialog";
 import { AssetsExportDialog } from "../assets-list/AssetsExportDialog";
 
 export const LATER = "Available in a later release";
+
+const LIFECYCLE_ICONS = { "change-status": RefreshIcon, retire: RetireIcon, dispose: DisposeIcon } as const;
+const groupLabel = "px-2 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide text-muted-foreground";
 
 /** The wrapper keeps the explanation reachable even when the actual control is disabled. */
 export function DisabledHint({ children, reason = LATER }: { children: ReactNode; reason?: string }) {
@@ -71,6 +79,7 @@ export function ProfileActions({ context, asset }: { context: string; asset: Ass
   const exportFlow = useAssetExport(context, asset.id);
   const trigger = useRef<HTMLButtonElement>(null);
   const openingDialog = useRef(false);
+  const profile = profileHref(asset.id, inAssignments(usePathname()));
   return (
     <div className="flex flex-wrap items-center gap-2">
       <ProfileCustodyActions asset={asset} placement="header" />
@@ -84,6 +93,26 @@ export function ProfileActions({ context, asset }: { context: string; asset: Ass
           if (openingDialog.current) event.preventDefault();
           openingDialog.current = false;
         }}>
+          <DropdownMenuLabel className={groupLabel}>Lifecycle</DropdownMenuLabel>
+          {lifecycleMenu(asset).map(({ action, label, reason }) => {
+            const Icon = LIFECYCLE_ICONS[action];
+            return reason ? (
+              <DropdownMenuItem key={action} disabled>
+                <Icon aria-hidden="true" />
+                {label}
+                <span className="ml-auto rounded-control bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground">{reason}</span>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem key={action} asChild>
+                <Link href={`${profile}/${action}`}>
+                  <Icon aria-hidden="true" />
+                  {label}
+                </Link>
+              </DropdownMenuItem>
+            );
+          })}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className={groupLabel}>Utilities</DropdownMenuLabel>
           <DropdownMenuItem disabled={asset.lifecycleStatus === "Disposed"} onSelect={() => {
             openingDialog.current = true;
             labels.open([{ id: asset.id, name: asset.name, assetTag: asset.assetTag, status: asset.lifecycleStatus, serialNumber: asset.serialNumber }], trigger.current);

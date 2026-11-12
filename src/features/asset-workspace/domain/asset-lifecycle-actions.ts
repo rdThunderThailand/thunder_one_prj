@@ -130,3 +130,27 @@ export function disposeBody(updatedAt: string, draft: DisposeDraft, fileIds: str
     ...(fileIds.length && { evidenceFileIds: fileIds }),
   };
 }
+
+export type LifecycleMenuAction = "change-status" | "retire" | "dispose";
+
+/** FE 01 More Actions availability (frame 24 table + decision A); `reason` is the muted tag on a disabled item. */
+export function lifecycleMenu(asset: Pick<AssetDetail, "lifecycleStatus" | "custody">) {
+  const status = asset.lifecycleStatus;
+  const disposed = status === "Disposed" ? "Disposed assets can't change" : null;
+  const retire = retireEligibility(asset);
+  return [
+    { action: "change-status", label: CHANGE_STATUS_TITLE, reason: disposed },
+    {
+      action: "retire",
+      label: RETIRE_TITLE,
+      reason: disposed ?? (retire.kind === "ok" ? null
+        : retire.kind === "done" ? (status === "Retired" ? "Already retired" : "Not available")
+          : retire.action === "return" ? "Return asset first" : "Change status to Available first"),
+    },
+    {
+      action: "dispose",
+      label: DISPOSE_TITLE,
+      reason: status === "Retired" ? null : status === "Disposed" ? "Already disposed" : "Only available when Retired",
+    },
+  ] satisfies { action: LifecycleMenuAction; label: string; reason: string | null }[];
+}
