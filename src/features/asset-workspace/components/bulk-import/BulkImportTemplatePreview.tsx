@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/lovable/button";
 import type { ImportFieldKey, ImportOptions } from "../../domain/asset-import-types";
 
@@ -22,7 +23,7 @@ export function BulkImportTemplatePreview({
   options: ImportOptions;
 }) {
   return (
-    <section className="min-w-0 space-y-3 rounded-card border border-border bg-card p-4">
+    <Card className="min-w-0 space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Template Preview</h2>
         <Button variant="link" size="sm" disabled>
@@ -76,6 +77,6 @@ export function BulkImportTemplatePreview({
           </tbody>
         </table>
       </div>
-    </section>
+    </Card>
   );
 }

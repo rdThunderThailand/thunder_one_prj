@@ -1,10 +1,11 @@
+import { Card } from "@/components/ui/Card";
 import { InfoIcon } from "@/components/ui/icons";
 import type { ImportBatch } from "../../domain/asset-import-types";
 import { BulkImportCounts } from "./BulkImportCounts";
 
 export function BulkImportRegistrationSummary({ batch }: { batch: ImportBatch }) {
   return (
-    <section className="@container/summary shrink-0 space-y-3 rounded-card border border-border bg-card p-4">
+    <Card className="@container/summary shrink-0 space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
       <h2 className="text-sm font-semibold">Registration Summary</h2>
       <div className="grid gap-3 @min-5xl/summary:grid-cols-[minmax(0,4fr)_minmax(0,1.4fr)]">
         <BulkImportCounts variant="validation" review counts={{ total: batch.totalRows, ...batch.counts }} />
@@ -18,6 +19,6 @@ export function BulkImportRegistrationSummary({ batch }: { batch: ImportBatch })
           </div>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }

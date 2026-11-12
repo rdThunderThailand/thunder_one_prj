@@ -44,3 +44,7 @@ assert.equal(parsed.rows[0].location_name, null);
 assert.equal(parsed.total, 520, "preserve the server total; don't substitute the current page length");
 assert.ok(!assetListSchema.safeParse({ data: [{}], total: 520, page: 1, pageSize: 25, totalPages: 21 }).success);
 console.log("Category Assets scope, filters, paging, tab URL, default-sort compatibility and row contract checks passed.");
+
+// Core seed ids are GUIDs without an RFC version/variant; the profile Nearby Assets read must not throw on them.
+const seedId = "00000000-0000-0000-0000-000000000001";
+assert.equal(new URLSearchParams(assetListQueryString({ page: 1, pageSize: 5, location_id: seedId, custody_type: "person", custody_id: seedId } as never)).get("location_id"), seedId);

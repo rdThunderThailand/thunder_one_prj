@@ -5,13 +5,12 @@ import { useState } from "react";
 import { EditIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { categoryDisplay } from "../../domain/asset-profile-display.mts";
-import { locationTrail } from "../../domain/asset-profile";
 import type { AssetDetail, AssetFiles } from "../../services/asset-profile-contract";
 import type { AssetReadResult } from "../../services/assets-list-types";
 import { AssetThumbnail } from "../AssetThumbnail";
 import { DisabledHint } from "./ProfileControls";
-import { formatDay, ProfileRows, ProfileSection, SectionMessage } from "./ProfileParts";
-import { CustodianValue } from "./ProfileValues";
+import { ProfileRows, ProfileSection, SectionMessage } from "./ProfileParts";
+import { ProfileCurrentAssignment } from "./ProfileCurrentAssignment";
 import { ProfilePhotoLoading } from "./AssetProfileLoading";
 
 export type ProfileFilesRead = { result: AssetReadResult<AssetFiles> | null; pending: boolean; reload: () => void };
@@ -60,7 +59,7 @@ export function ProfilePhotos({ asset, files, onFailed, onEdit }: {
           <Button variant="outline" size="sm" disabled={files.pending} onClick={files.reload}>Retry photos</Button>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="flex flex-1 flex-col justify-between gap-2">
           {active ? (
             <a href={active.url ?? undefined} target="_blank" rel="noopener noreferrer" aria-label={`Open ${active.filename}`} className="block rounded-control focus-visible:outline-2 focus-visible:outline-ring">
               <AssetThumbnail src={active.url ?? active.thumbnailUrl} alt={active.filename} className="h-44 w-full object-contain! p-2" onFailed={onFailed} />
@@ -72,12 +71,17 @@ export function ProfilePhotos({ asset, files, onFailed, onEdit }: {
             </div>
           )}
           {photos.length > 0 && (
-            <div aria-label="Choose asset photo" className="flex flex-wrap gap-2">
-              {photos.map((photo) => (
-                <button key={photo.fileId} type="button" aria-label={`Show ${photo.filename}`} aria-pressed={active?.fileId === photo.fileId} onClick={() => setSelected(photo.fileId)} className="size-18 shrink-0 rounded-control border-2 border-transparent p-0.5 transition-colors hover:border-primary/30 focus-visible:outline-2 focus-visible:outline-ring aria-pressed:border-primary motion-reduce:transition-none">
-                  <AssetThumbnail src={photo.thumbnailUrl ?? photo.url} alt="" className="h-full w-full object-contain!" onFailed={onFailed} />
-                </button>
-              ))}
+            <div aria-label="Choose asset photo" className="grid grid-cols-4 gap-2">
+              {Array.from({ length: Math.max(photos.length, 4) }, (_, index) => {
+                const photo = photos[index];
+                return photo ? (
+                  <button key={photo.fileId} type="button" aria-label={`Show ${photo.filename}`} aria-pressed={active?.fileId === photo.fileId} onClick={() => setSelected(photo.fileId)} className="h-16 w-full rounded-control border-2 border-transparent p-0.5 transition-colors hover:border-primary/30 focus-visible:outline-2 focus-visible:outline-ring aria-pressed:border-primary motion-reduce:transition-none">
+                    <AssetThumbnail src={photo.thumbnailUrl ?? photo.url} alt="" className="h-full w-full object-contain!" onFailed={onFailed} />
+                  </button>
+                ) : (
+                  <span key={`slot-${index}`} aria-hidden="true" className="h-16 w-full rounded-control bg-muted/50" />
+                );
+              })}
             </div>
           )}
         </div>
@@ -92,13 +96,13 @@ export function ProfileOverview({ asset, files, onPhotoFailed, onPhotoEdit }: {
   const category = categoryDisplay(asset.categoryPath);
   return (
     <div className="space-y-3">
-      <div className="grid min-w-0 items-start gap-3 @min-4xl/asset-profile:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <div className="grid min-w-0 items-start gap-3 @min-4xl/asset-profile:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] @min-4xl/asset-profile:items-stretch [&>div]:flex [&>div]:h-full [&>div]:flex-col">
         <ProfileSection title="General Information" action={<ProfileEdit asset={asset} />}>
           <ProfileRows rows={[
             { label: "Asset Name", value: asset.name },
             { label: "Description", value: asset.description || "—" },
             { label: "Category", value: category.category },
-            ...(category.subcategory ? [{ label: "Subcategory", value: category.subcategory }] : []),
+            { label: "Subcategory", value: category.subcategory || "—" },
             { label: "Serial Number", value: asset.serialNumber || "—" },
             { label: "Asset Tag", value: asset.assetTag },
             { label: "Notes", value: asset.notes || "—" },
@@ -106,17 +110,7 @@ export function ProfileOverview({ asset, files, onPhotoFailed, onPhotoEdit }: {
         </ProfileSection>
         <ProfilePhotos asset={asset} files={files} onFailed={onPhotoFailed} onEdit={onPhotoEdit} />
       </div>
-      <ProfileSection title="Current Assignment">
-        {asset.custody ? (
-          <div className="grid min-w-0 items-start gap-3 @min-xl/profile-section:grid-cols-2">
-            <CustodianValue custody={asset.custody} />
-            <ProfileRows rows={[
-              { label: "Assigned Date", value: formatDay(asset.custody.since) },
-              { label: "Location", value: locationTrail(asset.locationPath, asset.location) || "—" },
-            ]} />
-          </div>
-        ) : <SectionMessage>—</SectionMessage>}
-      </ProfileSection>
+      <ProfileCurrentAssignment asset={asset} />
     </div>
   );
 }

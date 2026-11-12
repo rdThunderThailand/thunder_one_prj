@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -30,9 +31,9 @@ export function RegistrationResources({
   const templateEnabled = Boolean(options?.ready) && !loading && !downloading;
 
   return (
-    <section
+    <Card role="region"
       aria-labelledby="registration-resources-title"
-      className="min-w-0 space-y-2 rounded-card border border-border bg-card p-3"
+      className="min-w-0 space-y-2 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-3"
     >
       <h2
         id="registration-resources-title"
@@ -121,7 +122,7 @@ export function RegistrationResources({
           Could not load bulk import settings. Use Retry on the Bulk Assets card.
         </p>
       )}
-    </section>
+    </Card>
   );
 }
 

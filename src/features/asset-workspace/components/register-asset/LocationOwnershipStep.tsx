@@ -6,6 +6,7 @@ import type { ReferenceItem, SelectorKind } from "../../services/registration-se
 import { StatusBadge } from "../StatusBadges";
 import { RegistrationHelp, RegistrationSection, RegistrationSelect, type RegistrationStepProps } from "./RegistrationFields";
 import { RegistrationReferenceSelect } from "./RegistrationReferenceSelect";
+import { RegistrationTreeField } from "./RegistrationTreeField";
 
 export function LocationOwnershipStep({ draft, options, errors, patch, onReviewCondition, context, onSelectReference }: RegistrationStepProps & {
   onReviewCondition: () => void; context: string; onSelectReference: (kind: SelectorKind, item: ReferenceItem) => void;
@@ -18,11 +19,11 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
   return (
     <div className="@container/ownership min-w-0 space-y-3">
       <RegistrationSection title="Location" icon={LocationIcon} description="Select where this asset is located.">
-        <RegistrationReferenceSelect
+        <RegistrationTreeField
+          kind="locations"
           name="locationId"
           label="Location"
           value={draft.locationId}
-          kind="locations"
           context={context}
           rules={options.referenceSelectors}
           selectedLabel={locationLabel}
@@ -30,7 +31,7 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
           error={errors.locationId}
         />
         {location && (
-          <SelectedLocationSummary location={location} path={locationLabel} />
+          <SelectedLocationSummary location={location} />
         )}
       </RegistrationSection>
       <RegistrationSection title="Ownership & assignment" icon={UserIcon} description="Choose an initial custodian, or leave unassigned.">
@@ -88,32 +89,23 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
   );
 }
 
-function SelectedLocationSummary({ location, path }: { location: ReferenceItem; path: string }) {
+/** The field already shows name and path; this adds only what it doesn't (type, code). */
+function SelectedLocationSummary({ location }: { location: ReferenceItem }) {
+  if (!location.code && !location.location_type) return null;
   return (
-    <div aria-label="Selected location" className="flex min-w-0 items-start gap-3 rounded-control bg-muted p-4">
-      <LocationIcon aria-hidden="true" className="size-5 shrink-0 text-accent-foreground" />
-      <div className="min-w-0 flex-1 space-y-2">
-        <h3 className="break-words text-sm font-semibold text-foreground">
-          {location.name || "Unnamed location"}
-        </h3>
-        <p className="break-words text-xs leading-relaxed text-muted-foreground">{path}</p>
-        {(location.code || location.location_type) && (
-          <dl className="grid gap-2 text-xs leading-relaxed @min-sm/ownership:grid-cols-2">
-            {location.code && (
-              <div className="min-w-0">
-                <dt className="text-muted-foreground">Code</dt>
-                <dd className="break-words text-foreground">{location.code}</dd>
-              </div>
-            )}
-            {location.location_type && (
-              <div className="min-w-0">
-                <dt className="text-muted-foreground">Type</dt>
-                <dd className="break-words text-foreground">{location.location_type.replaceAll("_", " ")}</dd>
-              </div>
-            )}
-          </dl>
-        )}
-      </div>
-    </div>
+    <dl aria-label="Selected location details" className="flex flex-wrap gap-x-6 gap-y-1 text-xs">
+      {location.location_type && (
+        <div className="flex gap-1.5">
+          <dt className="text-muted-foreground">Type</dt>
+          <dd className="font-medium capitalize text-foreground">{location.location_type.replaceAll("_", " ")}</dd>
+        </div>
+      )}
+      {location.code && (
+        <div className="flex min-w-0 gap-1.5">
+          <dt className="text-muted-foreground">Code</dt>
+          <dd className="font-medium wrap-anywhere text-foreground">{location.code}</dd>
+        </div>
+      )}
+    </dl>
   );
 }

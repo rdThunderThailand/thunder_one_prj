@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import { AlertCircleIcon, BoxIcon, CheckCircleIcon, RefreshIcon, WarningTriangleIcon } from "@/components/ui/icons";
@@ -46,7 +47,7 @@ export function ScanAssetResult({ result, code, onClose, onRetry }: ScanAssetRes
         </p>
       </div>
       {found ? (
-        <div className="flex items-start gap-4 rounded-card border border-border bg-card p-4">
+        <Card className="flex items-start gap-4 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
           <span
             aria-hidden="true"
             className="flex size-12 shrink-0 items-center justify-center rounded-control bg-muted text-muted-foreground"
@@ -77,7 +78,7 @@ export function ScanAssetResult({ result, code, onClose, onRetry }: ScanAssetRes
               </dd>
             </div>
           </dl>
-        </div>
+        </Card>
       ) : (
         <dl className="space-y-2 rounded-control border border-border bg-muted/50 p-3 text-xs">
           <dt className="font-medium text-foreground">Scanned identifier</dt>

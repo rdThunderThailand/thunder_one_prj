@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
@@ -9,11 +10,16 @@ import { useProfileRead } from "../../hooks/use-asset-profile";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, NotFoundState } from "../states/states";
 import { FilesSection, WarrantySection } from "./ProfileSections";
-import { HistorySection } from "./ProfileHistory";
+import { ProfileAssignmentEvents } from "../assignments/ProfileAssignmentEvents";
+import { ProfileAssignmentHistory } from "../assignments/ProfileAssignmentHistory";
+import { ProfileLocationView } from "../assignments/ProfileLocationView";
+import { MoveLocationFlow } from "../assignments/MoveLocationFlow";
+import { inAssignments } from "../../domain/assignment-assign";
 import { ProfileHero } from "./ProfileHero";
 import { ProfileRail } from "./ProfileRail";
 import { ProfileOverview } from "./ProfileOverview";
-import { ProfileActions, DisabledHint } from "./ProfileControls";
+import { ProfileCurrentAssignment } from "./ProfileCurrentAssignment";
+import { ProfileActions } from "./ProfileControls";
 import { AssetProfileLoading } from "./AssetProfileLoading";
 import { Button } from "@/components/ui/lovable/button";
 import { AssetFilesEditDialog } from "./AssetFilesEditDialog";
@@ -23,18 +29,28 @@ import type { ChangedAssetFiles } from "../../services/asset-files-change";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 
 type FileEditorSession = { id: string; kind: AssetFileKind; removeId?: string; trigger: HTMLButtonElement; snapshot: AssetFilesSnapshot };
+type MoveSession = { context: string; assetId: string; trigger: HTMLButtonElement };
+type MoveSnapshot = { context: string; revision: number; asset: AssetDetail };
 
 export function AssetProfileView({ context, assetId }: { context: string; assetId: string }) {
   const [revision, setRevision] = useState(0);
   const [known, setKnown] = useState<AssetFilesSnapshot | null>(null);
   const [editor, setEditor] = useState<FileEditorSession | null>(null);
+  const [move, setMove] = useState<MoveSession | null>(null);
+  const [moveSnapshot, setMoveSnapshot] = useState<MoveSnapshot | null>(null);
   const view = useRef<HTMLDivElement>(null);
   const detail = useProfileRead(`${context}:${assetId}:detail:${revision}`, (signal) => getAssetDetail(context, assetId, signal));
   const files = useProfileRead(`${context}:${assetId}:files:${revision}`, (signal) => getAssetFiles(context, assetId, signal));
   const readsReady = Boolean(detail.result?.ok && files.result?.ok && !detail.pending && !files.pending);
   const viewFiles = { ...files, result: files.result?.ok || !known ? files.result : { ok: true as const, data: known.files },
     pending: files.pending || detail.pending || Boolean(known && !readsReady) };
-  const [tab, setTab] = useState("overview");
+  // Opened from Assignments: stay in that sidebar section and open on its tab (owner 2026-11-11).
+  const fromAssignments = inAssignments(usePathname());
+  const search = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const initial = search.get("tab");
+    return initial === "history" || initial === "overview" ? initial : fromAssignments ? "assignments" : "overview";
+  });
   const expiresAt = viewFiles.result?.ok ? viewFiles.result.data.expiresAt : null;
   const { reload: reloadFiles } = files;
   useEffect(() => {
@@ -50,15 +66,17 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
     refreshedFor.current = expiresAt;
     reloadFiles();
   }
-  const asset = detail.result?.ok ? detail.result.data : known?.asset;
-  if (!asset && !detail.result) return <AssetProfileLoading />;
-  if (detail.result && !detail.result.ok && (!known || ["NOT_FOUND", "UNAUTHENTICATED", "PERMISSION_DENIED"].includes(detail.result.code ?? ""))) {
+  const moveFallback = moveSnapshot?.context === context && moveSnapshot.asset.id === assetId && moveSnapshot.revision === revision
+    ? moveSnapshot.asset : null;
+  const asset = detail.result?.ok ? detail.result.data : known?.asset ?? moveFallback;
+  if (!asset && !detail.result) return <AssetProfileLoading tab={tab} />;
+  if (detail.result && !detail.result.ok && ((!known && !moveFallback) || ["NOT_FOUND", "UNAUTHENTICATED", "PERMISSION_DENIED"].includes(detail.result.code ?? ""))) {
     const { code, message } = detail.result;
     return code === "NOT_FOUND" ? <NotFoundState title="Asset not found" body={message} />
       : code === "UNAUTHENTICATED" || code === "PERMISSION_DENIED" ? <AccessDeniedState body={message} />
         : <ErrorState title="Couldn't load this asset" body={message} onRetry={detail.reload} />;
   }
-  if (!asset) return <AssetProfileLoading />;
+  if (!asset) return <AssetProfileLoading tab={tab} />;
   const photos = viewFiles.result?.ok ? viewFiles.result.data.photos : [];
   function openEditor(kind: AssetFileKind, trigger: HTMLButtonElement, removeId?: string) {
     if (!readsReady || !files.result?.ok || asset!.lifecycleStatus === "Disposed") return;
@@ -78,39 +96,53 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
     setEditor(null);
     if (refresh) { setKnown(null); setRevision((value) => value + 1); }
   }
+  function refreshLocation(next: AssetDetail) {
+    setMoveSnapshot({ context, revision: revision + 1, asset: next });
+    setKnown((previous) => previous ? { ...previous, asset: next } : previous);
+    setRevision((previous) => previous + 1);
+  }
   return (
     <div ref={view} tabIndex={-1} className="@container/asset-profile min-w-0 space-y-3 focus-visible:outline-2 focus-visible:outline-ring">
       <nav aria-label="Breadcrumb" className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
-        <Link href="/asset-workspace/assets" className="inline-flex min-h-8 items-center rounded-control text-accent-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">Assets</Link>
+        <Link href={fromAssignments ? "/asset-workspace/assignments" : "/asset-workspace/assets"} className="inline-flex min-h-8 items-center rounded-control text-accent-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">{fromAssignments ? "Assignments" : "Assets"}</Link>
         <ChevronRightIcon aria-hidden="true" className="size-3" />
-        <span aria-current="page" className="min-w-0 font-medium wrap-anywhere">{asset.name}</span>
+        <span aria-current="page" className="min-w-0 font-medium wrap-anywhere">{asset.name} ({asset.assetTag})</span>
       </nav>
-      {known && (detail.result && !detail.result.ok || files.result && !files.result.ok) && (
+      {(known || moveFallback) && (detail.result && !detail.result.ok || files.result && !files.result.ok) && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border bg-muted p-3 text-xs">
           <p>The latest profile could not be refreshed. File editing is paused until fresh details and files load.</p>
           <Button variant="outline" size="sm" disabled={detail.pending || files.pending} onClick={() => { detail.reload(); files.reload(); }}>Refresh profile and files</Button>
         </div>
       )}
-      <div className="grid min-w-0 items-start gap-3 @min-6xl/asset-profile:grid-cols-[minmax(0,1fr)_17rem]">
+      {/* Frames 03 vs 04/09/13: the rail belongs to Overview only, so the other tabs get the full width (owner 2026-11-11). */}
+      <div className={`grid min-w-0 items-start gap-3 ${tab === "overview" ? "@min-6xl/asset-profile:grid-cols-[minmax(0,1fr)_17rem]" : ""}`}>
         <div className="min-w-0 space-y-3">
-          <ProfileHero asset={asset} photos={photos} onPhotoFailed={refreshLinks} actions={<ProfileActions context={context} asset={asset} />} />
+          {/* Frames 04/09: compact summary off Overview; frame 09 adds Location to the strip. */}
+          <ProfileHero asset={asset} photos={photos} onPhotoFailed={refreshLinks} actions={<ProfileActions context={context} asset={asset} />}
+            compact={tab !== "overview"} showLocation={tab === "history"} />
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
             <TabsList aria-label="Asset profile sections" className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
               {[
                 ["overview", "Overview"], ["assignments", "Assignments"], ["location", "Location"],
                 ["files", "Files"], ["warranty", "Lifecycle & Warranty"], ["history", "History"],
-              ].map(([value, label]) => {
-                const disabled = value === "assignments" || value === "location";
-                const trigger = (
-                  <TabsTrigger value={value} disabled={disabled} className="min-h-10 rounded-none border-b-2 border-transparent px-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none">
+              ].map(([value, label]) => (
+                <span key={value}>
+                  <TabsTrigger value={value} className="min-h-10 rounded-none border-b-2 border-transparent px-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none">
                     {label}
                   </TabsTrigger>
-                );
-                return disabled ? <DisabledHint key={value}>{trigger}</DisabledHint> : <span key={value}>{trigger}</span>;
-              })}
+                </span>
+              ))}
             </TabsList>
             <TabsContent value="overview" className="mt-3">
               <ProfileOverview asset={asset} files={viewFiles} onPhotoFailed={refreshLinks} onPhotoEdit={(trigger) => openEditor("photo", trigger)} />
+            </TabsContent>
+            <TabsContent value="assignments" className="mt-3 space-y-3">
+              <ProfileCurrentAssignment asset={asset} tinted />
+              <ProfileAssignmentEvents key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
+            </TabsContent>
+            <TabsContent value="location" className="mt-3">
+              <ProfileLocationView key={`${context}:${assetId}:${revision}`} context={context} asset={asset}
+                onEditLocation={(trigger) => setMove({ context, assetId, trigger })} />
             </TabsContent>
             <TabsContent value="files" className="mt-3">
               <FilesSection files={viewFiles} onPhotoFailed={refreshLinks} disposed={asset.lifecycleStatus === "Disposed"}
@@ -120,17 +152,27 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
               <WarrantySection context={context} assetId={assetId} current={asset.currentWarranty} files={viewFiles} />
             </TabsContent>
             <TabsContent value="history" className="mt-3">
-              <HistorySection key={revision} context={context} assetId={assetId} />
+              <ProfileAssignmentHistory key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
             </TabsContent>
           </Tabs>
         </div>
-        <ProfileRail asset={asset} />
+        {tab === "overview" && <ProfileRail asset={asset} />}
       </div>
       {editor && (
         <AssetFilesEditDialog key={editor.id} context={context} snapshot={editor.snapshot} kind={editor.kind} removeId={editor.removeId}
           liveFiles={viewFiles.result?.ok ? viewFiles.result.data : editor.snapshot.files} onFailed={refreshLinks}
           onSaved={saved} onObserved={observe} onClose={closeEditor}
           restoreFocus={() => { if (editor.trigger.isConnected) editor.trigger.focus(); else view.current?.focus(); }} />
+      )}
+      {move?.context === context && move.assetId === assetId && (
+        <MoveLocationFlow context={context} assetId={assetId}
+          onSaved={(next) => { refreshLocation(next); setMove(null); }}
+          onClose={(refresh) => { if (refresh) refreshLocation(asset); setMove(null); }}
+          restoreFocus={() => {
+            const trigger = move.trigger.isConnected ? move.trigger
+              : view.current?.querySelector<HTMLButtonElement>("#profile-edit-location");
+            (trigger && !trigger.disabled ? trigger : view.current)?.focus({ preventScroll: true });
+          }} />
       )}
     </div>
   );

@@ -12,11 +12,11 @@ const querySchema = z.object({
   q: z.string().trim().max(ASSET_SEARCH_MAX_LENGTH).transform((value) => value || undefined).optional(),
   category_id: z.guid().optional(),
   include_child_categories: z.enum(["true", "false"]).optional(),
-  location_id: z.uuid().optional(),
+  location_id: z.guid().optional(),
   status: z.enum(ASSET_STATUSES).optional(),
   condition: z.enum(ASSET_CONDITIONS).optional(),
   custody_type: z.enum(["person", "org_unit"]).optional(),
-  custody_id: z.uuid().optional(),
+  custody_id: z.guid().optional(),
   import_batch_id: z.uuid().optional(),
   sort: z.enum(ASSET_SORT_KEYS).default("created_at"),
 }).strict().refine((value) => !value.custody_id || Boolean(value.custody_type), {

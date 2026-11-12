@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import { locationHistoryCursor, locationHistoryPath } from "./assignment-location-history.ts";
+import type { LocationHistoryReference } from "../services/asset-assignments-location-history.ts";
+
+const root = { id: "root", name: "Head Office", parentId: null };
+const floor = { id: "floor", name: "Floor 3", parentId: "root" };
+const room = { id: "room", name: "Storage", parentId: "floor" };
+const locations = new Map<string, LocationHistoryReference>([["root", root], ["floor", floor], ["room", { ...room, name: "Renamed", parentId: null }]]);
+assert.deepEqual(locationHistoryPath(room, locations), ["Head Office", "Floor 3", "Storage"]);
+assert.deepEqual(locationHistoryPath(null, locations), []);
+assert.deepEqual(locationHistoryPath(room, new Map()), ["Storage"]);
+assert.deepEqual(locationHistoryPath(room, new Map([["floor", { ...floor, parentId: "room" }]])), ["Floor 3", "Storage"]);
+assert.deepEqual(locationHistoryPath({ ...room, name: null }, locations), ["Head Office", "Floor 3"]);
+assert.deepEqual(locationHistoryCursor(1, 20, 42), { page: 1, index: 0 });
+assert.deepEqual(locationHistoryCursor(20, 20, 42), { page: 1, index: 19 });
+assert.deepEqual(locationHistoryCursor(21, 20, 42), { page: 2, index: 0 });
+assert.deepEqual(locationHistoryCursor(42, 20, 42), { page: 3, index: 1 });
+assert.equal(locationHistoryCursor(0, 20, 42), null);
+assert.equal(locationHistoryCursor(43, 20, 42), null);
+console.log("Location History ancestry, incomplete paths, cycles and adjacent-page positions passed");

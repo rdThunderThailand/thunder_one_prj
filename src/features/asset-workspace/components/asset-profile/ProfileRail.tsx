@@ -6,7 +6,7 @@ import { CalendarIcon, DownloadIcon, LocationIcon, UserIcon, WarrantyIcon } from
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import { locationTrail } from "../../domain/asset-profile";
 import { Fact, formatDate, formatDay, ProfileSection, SectionMessage, StatusValue } from "./ProfileParts";
-import { DisabledHint, FutureAction } from "./ProfileControls";
+import { DisabledHint, ProfileCustodyActions } from "./ProfileControls";
 import { WarrantyValue } from "./ProfileValues";
 
 function ProfileQr({ asset }: { asset: AssetDetail }) {
@@ -56,10 +56,7 @@ export function ProfileRail({ asset }: { asset: AssetDetail }) {
   return (
     <aside aria-label="Asset quick reference" className="grid min-w-0 gap-3 @min-xl/asset-profile:grid-cols-2 @min-6xl/asset-profile:grid-cols-1">
       <ProfileSection title="Quick Actions">
-        <div className="grid gap-2 [&>span]:w-full">
-          <FutureAction label="Transfer Asset" primary />
-          <FutureAction label="Return Asset" kind="return" />
-        </div>
+        <ProfileCustodyActions asset={asset} placement="rail" />
       </ProfileSection>
       <ProfileSection title="Status & Key Dates">
         <dl className="space-y-3">
@@ -71,13 +68,15 @@ export function ProfileRail({ asset }: { asset: AssetDetail }) {
       </ProfileSection>
       <ProfileSection title="Location">
         <div className="space-y-3">
-          <p className="flex items-start gap-2 text-xs leading-relaxed wrap-anywhere">
-            <LocationIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+          <p className="flex items-start gap-2 text-xs leading-relaxed font-medium wrap-anywhere text-foreground">
+            <LocationIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
             {locationTrail(asset.locationPath, asset.location) || "—"}
           </p>
-          <DisabledHint>
-            <Button disabled variant="outline" size="sm">View Location</Button>
-          </DisabledHint>
+          <div className="flex justify-end">
+            <DisabledHint>
+              <Button disabled variant="outline" size="sm">View Location</Button>
+            </DisabledHint>
+          </div>
         </div>
       </ProfileSection>
       <ProfileQr asset={asset} />
