@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { assetListQueryString, readAssetListSearch } from "../../services/assets-list-query";
 import { useAssetsListData } from "../../hooks/use-assets-list-data";
@@ -15,8 +17,8 @@ import { AssetsListWorkspace } from "./AssetsListWorkspace";
 import { AssetsSectionError } from "./AssetsSectionError";
 import { AssetsImportBatchFilter } from "./AssetsImportBatchFilter";
 import { ScanAssetDialog } from "../scan-asset/ScanAssetDialog";
-import { useAssetExport } from "../../hooks/use-asset-export";
-import { AssetsExportDialog } from "./AssetsExportDialog";
+import { filteredAssetExport } from "../../domain/asset-export";
+import { startAssetExport } from "../lifecycle/export-handoff";
 import { useAssetLabels } from "../../hooks/use-asset-labels";
 import { useAssetsSelection } from "../../hooks/use-assets-selection";
 import { AssetLabelsDialog } from "../asset-labels/AssetLabelsDialog";
@@ -38,10 +40,23 @@ export function AssetsListView({ context }: { context: string }) {
   const hasFilters = ["q", "category_id", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id"].some((key) => url.get(key));
   const requestedKey = parsed.success ? assetListQueryString(query) : `invalid:${url.search}`;
   const exportReady = parsed.success && !list.pending && !list.error && Boolean(list.data) && list.dataKey === requestedKey;
-  const exportFlow = useAssetExport(context, `${requestedKey}:${exportReady ? "ready" : "unavailable"}`);
   const labels = useAssetLabels(context, `${requestedKey}:${exportReady ? "ready" : "unavailable"}`);
   const selection = useAssetsSelection(`${context}:${requestedKey}`, list.data?.rows ?? []);
-  const actionsPending = exportFlow.pending || labels.phase === "loading" || labels.phase === "generating";
+  const actionsPending = labels.phase === "loading" || labels.phase === "generating";
+  const router = useRouter();
+  const listSearch = parsed.success ? assetListQueryString(query, { omitDefaultSort: true }) : "";
+  const from = listSearch ? `/asset-workspace/assets?${listSearch}` : "/asset-workspace/assets";
+
+  /** FE 05: Export opens the export page; the selection or the list filters go with it (E1). */
+  function openExport(ids?: string[]) {
+    if (!exportReady || !list.data) return;
+    if (ids) { startAssetExport(router.push, { from, ids }); return; }
+    try {
+      const request = filteredAssetExport(query, list.data.total).request;
+      const filters = request.scope === "filtered" ? request.filters as Record<string, string> : {};
+      startAssetExport(router.push, { from, filters: Object.keys(filters).length ? filters : undefined });
+    } catch { toast.error("The export scope could not be prepared. Refresh the list and try again."); }
+  }
 
   function openLabels(trigger: HTMLButtonElement | null) {
     if (!exportReady) return false;
@@ -60,10 +75,8 @@ export function AssetsListView({ context }: { context: string }) {
               context={context}
               onScan={() => setScanOpen(true)}
               scanTriggerRef={scanTriggerRef}
-              onExport={(trigger) => {
-                if (exportReady && list.data) exportFlow.openFiltered(query, list.data.total, trigger);
-              }}
-              exportDisabled={!exportReady || exportFlow.pending}
+              onExport={() => openExport()}
+              exportDisabled={!exportReady}
               onLabels={openLabels}
               labelsDisabled={!exportReady || actionsPending}
             />
@@ -95,14 +108,11 @@ export function AssetsListView({ context }: { context: string }) {
       <AssetsListContent
         resource={list} query={query} url={url} filtered={hasFilters}
         requestedKey={requestedKey}
-        onExportSelected={(ids, trigger) => {
-          if (exportReady) exportFlow.openSelected(ids, trigger);
-        }}
+        onExportSelected={(ids) => openExport(ids)}
         exportPending={actionsPending}
         selection={selection}
         onLabels={openLabels}
       />
-      <AssetsExportDialog flow={exportFlow} />
       <AssetLabelsDialog flow={labels} />
       {!denied && (scanOpen || url.get("scan") === "1") && (
         <ScanAssetDialog

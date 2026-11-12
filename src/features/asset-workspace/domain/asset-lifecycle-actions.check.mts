@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   allowedConditions, allowedTargets, changeStatusBody, DISPOSAL_METHODS, disposeBlock, disposeBody, disposeErrors, changeStatusErrors, endsCustody, lifecycleNeedsReload, retireBody,
-  labelCopies, lifecycleMenu, retireEligibility, retireErrors,
+  exportFileName, exportFileNameError, exportScopeFor, labelCopies, lifecycleMenu, readExportHandoff, retireEligibility, retireErrors,
 } from "./asset-lifecycle-actions.ts";
 import type { AssetDetail } from "../services/asset-profile-contract.ts";
 
@@ -96,3 +96,33 @@ for (const [input, copies] of [["1", 1], ["5", 5], ["20", 20], ["21", 20], ["0",
   assert.equal(labelCopies(input), copies, `copies "${input}"`);
 }
 console.log("Label copies checks passed");
+
+// FE 05 export page.
+assert.equal(exportFileName(new Date("2026-11-11T18:30:00Z")), "ThunderOne_Asset_Export_2026-11-12", "Bangkok date");
+assert.equal(exportFileNameError("Q4 audit"), null);
+assert.equal(exportFileNameError("  "), "Enter a file name.");
+assert.equal(exportFileNameError("x".repeat(101)), "Enter 100 characters or fewer.");
+for (const bad of ["a/b", `a${String.fromCharCode(92)}b`, "a:b", "a*b", "a?b", 'a"b', "a<b", "a>b", "a|b"]) {
+  assert.match(exportFileNameError(bad) ?? "", /^Remove these characters/, bad);
+}
+const id = "10000000-0000-4000-8000-000000000001";
+assert.equal(readExportHandoff(null), null);
+assert.equal(readExportHandoff("{bad json"), null);
+assert.equal(readExportHandoff(JSON.stringify({ from: "https://evil.example/", ids: [id] })), null, "from must stay in the workspace");
+assert.equal(readExportHandoff(JSON.stringify({ from: "/asset-workspace/assets", ids: ["nope"] })), null, "ids must be GUIDs");
+assert.equal(readExportHandoff(JSON.stringify({ from: "/asset-workspace/assets", filters: { page: "2" } })), null, "only export filter keys");
+assert.deepEqual(readExportHandoff(JSON.stringify({ from: "/asset-workspace/assets?status=Assigned", filters: { status: "Assigned", q: " " } })),
+  { from: "/asset-workspace/assets?status=Assigned", filters: { status: "Assigned" } });
+assert.deepEqual(readExportHandoff(JSON.stringify({ from: "/asset-workspace/assets", filters: { q: "" } })), { from: "/asset-workspace/assets", filters: undefined });
+const handoff = { from: "/asset-workspace/assets", ids: [id], filters: { status: "Retired" as const } };
+assert.deepEqual(exportScopeFor("all", handoff, ""), { kind: "filtered", filters: {} });
+assert.deepEqual(exportScopeFor("filtered", handoff, ""), { kind: "filtered", filters: { status: "Retired" } });
+assert.equal(exportScopeFor("filtered", null, ""), null);
+assert.deepEqual(exportScopeFor("selected", handoff, ""), { kind: "selected", ids: [id] });
+assert.equal(exportScopeFor("selected", null, ""), null);
+assert.equal(exportScopeFor("category", handoff, ""), null, "no pick yet");
+assert.deepEqual(exportScopeFor("category", null, id), { kind: "filtered", filters: { category_id: id, include_child_categories: "true" } });
+assert.deepEqual(exportScopeFor("location", null, id), { kind: "filtered", filters: { location_id: id } });
+assert.deepEqual(exportScopeFor("status", null, "Disposed"), { kind: "filtered", filters: { status: "Disposed" } });
+assert.equal(exportScopeFor("status", null, "In Use"), null, "only real statuses");
+console.log("Export page file name, handoff and scope checks passed");

@@ -43,7 +43,7 @@ export function AssignmentRowMenu({ row, open, anchor, onOpenChange }: {
         {reasons.transfer ? `Transfer unavailable: ${reasons.transfer} ` : ""}
         {reasons.return ? `Return unavailable: ${reasons.return}` : ""}
       </span>
-      <DropdownMenuContent align="start" sideOffset={4} className="max-w-72">
+      <DropdownMenuContent align="start" sideOffset={4} collisionPadding={8} className="max-w-72">
         <DropdownMenuItem asChild>
           <Link href={path}>
             <EyeIcon aria-hidden="true" />

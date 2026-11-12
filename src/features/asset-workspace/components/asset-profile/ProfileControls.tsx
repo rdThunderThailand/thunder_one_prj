@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -14,9 +14,8 @@ import {
 import { lifecycleMenu } from "../../domain/asset-lifecycle-actions";
 import { actionHref, inAssignments, profileHref } from "../../domain/assignment-assign";
 import { profileAssignmentActions } from "../../domain/assignment-profile";
-import { useAssetExport } from "../../hooks/use-asset-export";
 import type { AssetDetail } from "../../services/asset-profile-contract";
-import { AssetsExportDialog } from "../assets-list/AssetsExportDialog";
+import { startAssetExport } from "../lifecycle/export-handoff";
 
 export const LATER = "Available in a later release";
 
@@ -72,24 +71,20 @@ export function ProfileCustodyActions({ asset, placement }: {
   );
 }
 
-export function ProfileActions({ context, asset }: { context: string; asset: AssetDetail }) {
-  const exportFlow = useAssetExport(context, asset.id);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const openingDialog = useRef(false);
+// `context` stays in the props: AssetProfileView passes it and is outside this batch's paths.
+export function ProfileActions({ asset }: { context: string; asset: AssetDetail }) {
+  const router = useRouter();
   const profile = profileHref(asset.id, inAssignments(usePathname()));
   return (
     <div className="flex flex-wrap items-center gap-2">
       <ProfileCustodyActions asset={asset} placement="header" />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button ref={trigger} variant="outline" size="icon-sm" aria-label="More asset actions" className="max-sm:size-10">
+          <Button variant="outline" size="icon-sm" aria-label="More asset actions" className="max-sm:size-10">
             <MoreIcon aria-hidden="true" className="size-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" onCloseAutoFocus={(event) => {
-          if (openingDialog.current) event.preventDefault();
-          openingDialog.current = false;
-        }}>
+        <DropdownMenuContent align="end">
           <DropdownMenuLabel className={groupLabel}>Lifecycle</DropdownMenuLabel>
           {lifecycleMenu(asset).map(({ action, label, reason }) => {
             const Icon = LIFECYCLE_ICONS[action];
@@ -123,16 +118,12 @@ export function ProfileActions({ context, asset }: { context: string; asset: Ass
               </Link>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onSelect={() => {
-            openingDialog.current = true;
-            exportFlow.openSelected([asset.id], trigger.current);
-          }}>
+          <DropdownMenuItem onSelect={() => startAssetExport(router.push, { from: profile, ids: [asset.id] })}>
             <DownloadIcon aria-hidden="true" />
             Export
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <AssetsExportDialog flow={exportFlow} />
     </div>
   );
 }

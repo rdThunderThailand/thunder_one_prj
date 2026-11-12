@@ -1,5 +1,8 @@
+import { z } from "zod";
 import type { AssetDetail } from "../services/asset-profile-contract.ts";
 import { CONDITIONS_BY_STATUS, type AssetCondition } from "./asset-condition.ts";
+import { assetExportFilename, EXPORT_FILTER_KEYS, EXPORT_MAX_ASSETS } from "./asset-export.ts";
+import { ASSET_STATUSES } from "./asset-status.ts";
 
 export const CHANGE_STATUS_STEPS = ["Details", "Review", "Confirm"];
 export const CHANGE_STATUS_TITLE = "Change Status / Condition";
@@ -163,4 +166,54 @@ export const LABEL_COPIES_MAX = 20;
 export function labelCopies(value: string) {
   const copies = Math.trunc(Number(value));
   return Number.isFinite(copies) ? Math.min(LABEL_COPIES_MAX, Math.max(1, copies)) : 1;
+}
+
+export const EXPORT_TITLE = "Export Asset Record";
+export const EXPORT_SUBTITLE = "Export asset data to a file for reporting, audit, or offline use.";
+export const EXPORT_HANDOFF_KEY = "asset-export-scope";
+export const EXPORT_NAME_MAX = 100;
+export const EXPORT_OPTIONS = ["all", "filtered", "selected", "category", "location", "status"] as const;
+export type ExportOption = typeof EXPORT_OPTIONS[number];
+
+const handoffSchema = z.object({
+  from: z.string().regex(/^\/asset-workspace\/(assets|assignments)(\/|\?|$)/),
+  ids: z.array(z.guid()).min(1).max(EXPORT_MAX_ASSETS).optional(),
+  filters: z.partialRecord(z.enum(EXPORT_FILTER_KEYS), z.string()).optional(),
+});
+export type ExportHandoff = z.infer<typeof handoffSchema>;
+
+/** Scope passed from the list or profile through sessionStorage (E1); anything invalid falls back to All assets. */
+export function readExportHandoff(raw: string | null): ExportHandoff | null {
+  if (!raw) return null;
+  try {
+    const parsed = handoffSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) return null;
+    const filters = Object.fromEntries(Object.entries(parsed.data.filters ?? {}).filter(([, value]) => value?.trim()));
+    return { ...parsed.data, filters: Object.keys(filters).length ? filters : undefined };
+  } catch { return null; }
+}
+
+/** Default "ThunderOne_Asset_Export_<YYYY-MM-DD>" in Bangkok time, the same date the existing export uses. */
+export function exportFileName(date = new Date()) {
+  return `ThunderOne_Asset_Export_${assetExportFilename(date).slice("assets-export-".length, -".csv".length)}`;
+}
+
+export function exportFileNameError(name: string) {
+  const value = name.trim();
+  if (!value) return "Enter a file name.";
+  if (value.length > EXPORT_NAME_MAX) return "Enter 100 characters or fewer.";
+  return /[/\\:*?"<>|]/.test(value) ? "Remove these characters: / \\ : * ? \" < > |" : null;
+}
+
+/** Section 1 option → what to export; null while a By … option has no value picked. */
+export type ExportScopeChoice = { kind: "selected"; ids: string[] } | { kind: "filtered"; filters: Record<string, string> };
+
+export function exportScopeFor(option: ExportOption, handoff: ExportHandoff | null, pick: string): ExportScopeChoice | null {
+  if (option === "selected") return handoff?.ids ? { kind: "selected", ids: handoff.ids } : null;
+  if (option === "all") return { kind: "filtered", filters: {} };
+  if (option === "filtered") return handoff?.filters ? { kind: "filtered", filters: handoff.filters as Record<string, string> } : null;
+  if (!pick) return null;
+  if (option === "category") return { kind: "filtered", filters: { category_id: pick, include_child_categories: "true" } };
+  if (option === "location") return { kind: "filtered", filters: { location_id: pick } };
+  return ASSET_STATUSES.some((status) => status === pick) ? { kind: "filtered", filters: { status: pick } } : null;
 }
