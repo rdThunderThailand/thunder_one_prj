@@ -63,7 +63,7 @@ const row = {
 };
 const render = (entry: unknown, props = {}) => renderToStaticMarkup(createElement(entry as Component, props));
 const html = render(AssignmentsTable, { rows: [row] });
-const headers = ["Asset", "Asset Tag", "Category", "Current Custodian", "Location", "Assigned Date", "Actions"];
+const headers = ["Asset", "Asset Tag", "Category", "Current Custodian", "Location", "Assigned Date"];
 let previous = -1;
 for (const header of headers) {
   const position = html.indexOf(`>${header}</th>`);
@@ -77,7 +77,9 @@ assert.match(html, new RegExp(`href="/asset-workspace/assignments/${id}"`));
 assert.match(html, /\/assignments\/[^/"]+\/transfer"/);
 assert.match(html, /\/assignments\/[^/"]+\/return"/);
 assert.doesNotMatch(html, /checkbox|Asset ID/);
-assert.match(html, /class="relative px-4 py-2 text-right align-middle"/);
+assert.doesNotMatch(html, />Actions<\/th>/);
+assert.match(html, /<button[^>]*aria-label="Actions for Test laptop"/);
+assert.match(html, /Select a row for its actions/);
 const damaged = render(AssignmentsTable, { rows: [{ ...row, asset: { ...row.asset, condition: "Damaged" } }] });
 assert.match(damaged, /Return it instead/);
 assert.doesNotMatch(damaged, /\/assignments\/[^/"]+\/transfer"/);

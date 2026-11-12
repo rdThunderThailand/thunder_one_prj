@@ -30,7 +30,7 @@ export function AssignmentsTableLoading() {
                       <Skeleton className="h-4 w-full" />
                     </div>
                   ) : (
-                    <Skeleton className={column.key === "actions" ? "ml-auto size-8" : "h-4 w-full"} />
+                    <Skeleton className="h-4 w-full" />
                   )}
                 </td>
               ))}
