@@ -4,7 +4,7 @@ import { changeAssetFiles } from "../services/asset-files-change.ts";
 
 const id = (index: number) => `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
 const stored = (index: number) => ({ fileId: id(index), filename: `${index}.jpg`, mimeType: "image/jpeg", sizeBytes: 100,
-  uploadedAt: "2026-11-09T00:00:00Z", url: null, thumbnailUrl: null });
+  uploadedAt: "2026-11-09T00:00:00Z", url: null, thumbnailUrl: null, uploadedBy: null });
 const original = [stored(1), stored(2), stored(3), stored(4)];
 const pending = { id: id(20), existing: null, file: new File(["bytes"], "new.jpg", { type: "image/jpeg" }), previewUrl: null };
 const selections = existingFileSelections(original);

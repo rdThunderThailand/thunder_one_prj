@@ -9,7 +9,8 @@ import { getAssetDetail, getAssetFiles } from "../../services/asset-profile-api"
 import { useProfileRead } from "../../hooks/use-asset-profile";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, NotFoundState } from "../states/states";
-import { FilesSection, WarrantySection } from "./ProfileSections";
+import { ProfileLifecycle } from "./ProfileLifecycle";
+import { ProfileFiles } from "./ProfileFiles";
 import { ProfileAssignmentEvents } from "../assignments/ProfileAssignmentEvents";
 import { ProfileAssignmentHistory } from "../assignments/ProfileAssignmentHistory";
 import { ProfileLocationView } from "../assignments/ProfileLocationView";
@@ -49,7 +50,8 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   const search = useSearchParams();
   const [tab, setTab] = useState(() => {
     const initial = search.get("tab");
-    return initial === "history" || initial === "overview" ? initial : fromAssignments ? "assignments" : "overview";
+    return initial && ["overview", "assignments", "location", "files", "warranty", "history"].includes(initial) ? initial
+      : fromAssignments ? "assignments" : "overview";
   });
   const expiresAt = viewFiles.result?.ok ? viewFiles.result.data.expiresAt : null;
   const { reload: reloadFiles } = files;
@@ -145,14 +147,14 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
                 onEditLocation={(trigger) => setMove({ context, assetId, trigger })} />
             </TabsContent>
             <TabsContent value="files" className="mt-3">
-              <FilesSection files={viewFiles} onPhotoFailed={refreshLinks} disposed={asset.lifecycleStatus === "Disposed"}
-                onAddDocument={(trigger) => openEditor("document", trigger)} onRemoveDocument={(file, trigger) => openEditor("document", trigger, file.fileId)} />
+              <ProfileFiles files={viewFiles} />
             </TabsContent>
             <TabsContent value="warranty" className="mt-3">
-              <WarrantySection context={context} assetId={assetId} current={asset.currentWarranty} files={viewFiles} />
+              <ProfileLifecycle context={context} asset={asset} />
             </TabsContent>
             <TabsContent value="history" className="mt-3">
-              <ProfileAssignmentHistory key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
+              <ProfileAssignmentHistory key={`${context}:${assetId}:${revision}`} context={context} asset={asset}
+                initialTab={search.get("history")} />
             </TabsContent>
           </Tabs>
         </div>

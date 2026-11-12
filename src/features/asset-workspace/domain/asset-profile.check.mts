@@ -1,18 +1,12 @@
 /** Run: node src/features/asset-workspace/domain/asset-profile.check.mts */
 import assert from "node:assert/strict";
-import { activityLabel, fileSize, locationTrail, warrantyState } from "./asset-profile.ts";
+import { fileSize, locationTrail, warrantyState } from "./asset-profile.ts";
 import {
-  assetActivityPageSchema, assetDetailSchema, assetFilesSchema, assetWarrantiesSchema,
+  assetDetailSchema, assetFilesSchema, assetWarrantiesSchema,
 } from "../services/asset-profile-contract.ts";
 import { assetRowSchema } from "../services/assets-list-types.ts";
 
 const id = "11111111-1111-4111-8111-111111111111";
-
-// History labels: known codes are mapped; unknown codes keep Core's recorded summary.
-assert.equal(activityLabel("asset.create", "Asset registered"), "Asset registered");
-assert.equal(activityLabel("asset.custody.assign", null), "Custody assigned");
-assert.equal(activityLabel("asset.future.thing", "Something new"), "Something new");
-assert.equal(activityLabel("asset.future.thing", "  "), "Asset updated");
 
 // Location path, root first; the asset's own location before Core sends the path.
 assert.equal(locationTrail([{ name: "Head Office" }, { name: "Main Building" }, { name: "Lobby 1" }], { name: "Lobby 1" }),
@@ -64,7 +58,6 @@ assert.equal(files.photos[0].thumbnailUrl, null);
 assert.equal(assetFilesSchema.safeParse({ ...files, warrantyDocuments: [{ ...files.warrantyDocuments[0], warrantyId: undefined }] }).success, false);
 
 assert.equal(assetWarrantiesSchema.parse([{ id, provider: "Old Co", type: null, startDate: null, endDate: null, referenceNo: null, coverageNote: null, status: null, isCurrent: false, createdAt: "2026-11-03T05:10:00Z" }]).length, 1);
-assert.equal(assetActivityPageSchema.safeParse({ data: [], page: 1, pageSize: 101, total: 0, totalPages: 0 }).success, false);
 
 // List rows: thumbnailUrl is optional (null or absent) and custody.since does not break parsing.
 const row = {

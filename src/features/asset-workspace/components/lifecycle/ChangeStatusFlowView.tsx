@@ -36,7 +36,7 @@ function ChangeStatusFooter({ flow, href }: { flow: ChangeStatusFlow; href: stri
           </Button>
           <div className="ml-auto flex flex-wrap justify-end gap-2">
             <Button asChild variant="outline" size="sm" className={secondaryAction}>
-              <Link href={`${href}?tab=history`}>View Status History</Link>
+              <Link href={`${href}?tab=history&history=status`}>View Status History</Link>
             </Button>
             <Button asChild size="sm" className="min-w-36 max-sm:h-10">
               <Link href={href}>
