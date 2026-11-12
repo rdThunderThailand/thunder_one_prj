@@ -92,3 +92,41 @@ export function retireBody(updatedAt: string, draft: RetireDraft, fileIds: strin
     ...(fileIds.length && { evidenceFileIds: fileIds }),
   };
 }
+
+export const DISPOSE_STEPS = ["Details", "Review", "Confirm"];
+export const DISPOSE_TITLE = "Dispose Asset";
+export const DISPOSE_SUBTITLE = "Permanently remove this asset from your organization.";
+/** PO 05 §4.4 methods; values match Core `assets_disposal_method_check`. */
+export const DISPOSAL_METHODS = [
+  { value: "Sold", label: "Sold" },
+  { value: "Donated", label: "Donated" },
+  { value: "Scrapped-Destroyed", label: "Scrapped / Destroyed" },
+  { value: "Returned to Vendor", label: "Returned to Vendor" },
+  { value: "Other", label: "Other" },
+] as const;
+export type DisposeDraft = { method: string; reason: string; notes: string };
+
+export function disposeBlock(asset: Pick<AssetDetail, "lifecycleStatus">) {
+  if (asset.lifecycleStatus === "Retired") return null;
+  return asset.lifecycleStatus === "Disposed" ? "This asset is already disposed." : "Only Retired assets can be disposed.";
+}
+
+export function disposeErrors(draft: DisposeDraft) {
+  return {
+    method: DISPOSAL_METHODS.some(({ value }) => value === draft.method) ? null : "Choose a disposal method.",
+    reason: !draft.reason.trim() ? "Enter a reason."
+      : draft.reason.trim().length > LIFECYCLE_TEXT_MAX ? "Enter 500 characters or fewer." : null,
+    notes: draft.notes.length > LIFECYCLE_TEXT_MAX ? "Enter 500 characters or fewer." : null,
+  };
+}
+
+export function disposeBody(updatedAt: string, draft: DisposeDraft, fileIds: string[]) {
+  const notes = draft.notes.trim();
+  return {
+    expectedUpdatedAt: updatedAt,
+    disposalMethod: draft.method,
+    reason: draft.reason.trim(),
+    ...(notes && { notes }),
+    ...(fileIds.length && { evidenceFileIds: fileIds }),
+  };
+}

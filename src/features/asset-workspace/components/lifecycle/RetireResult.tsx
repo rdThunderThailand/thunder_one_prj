@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/lovable/button";
 import type { RetireFlow } from "../../hooks/use-retire-flow";
 import { formatDay } from "../asset-profile/ProfileParts";
 import { LifecycleCondition, LifecycleStatus } from "./LifecycleSummary";
-import { RetireAssetInfo, RetireTable } from "./RetireReview";
+import { LifecycleAssetInfo, LifecycleTable } from "./RetireReview";
 
 export function RetireResult({ saved, photo }: { saved: NonNullable<RetireFlow["saved"]>; photo: string | null }) {
   const { before, after, draft, historyId, confirmedAt } = saved;
@@ -39,7 +39,7 @@ export function RetireResult({ saved, photo }: { saved: NonNullable<RetireFlow["
         </div>
       </section>
       <Card className="space-y-3 p-4">
-        <RetireAssetInfo
+        <LifecycleAssetInfo
           asset={after}
           photo={photo}
           rows={[
@@ -54,7 +54,7 @@ export function RetireResult({ saved, photo }: { saved: NonNullable<RetireFlow["
           <FileTextIcon aria-hidden="true" className="size-4 shrink-0 text-accent-foreground" />
           Retirement Summary
         </h2>
-        <RetireTable rows={[
+        <LifecycleTable rows={[
           ["Retirement Date", <time key="date" dateTime={confirmedAt}>{day}</time>],
           ["Reason for Retirement", draft.reason.trim()],
           ["Condition at Retirement", <LifecycleCondition key="condition" value={after.condition} />],

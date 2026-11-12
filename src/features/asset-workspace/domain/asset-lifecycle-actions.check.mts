@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {
-  allowedConditions, allowedTargets, changeStatusBody, changeStatusErrors, endsCustody, lifecycleNeedsReload, retireBody,
+  allowedConditions, allowedTargets, changeStatusBody, DISPOSAL_METHODS, disposeBlock, disposeBody, disposeErrors, changeStatusErrors, endsCustody, lifecycleNeedsReload, retireBody,
   retireEligibility, retireErrors,
 } from "./asset-lifecycle-actions.ts";
 import type { AssetDetail } from "../services/asset-profile-contract.ts";
@@ -61,3 +61,19 @@ assert.deepEqual(retireBody("v", { ...retire, notes: " Wiped " }, ["f"]), {
   expectedUpdatedAt: "v", condition: "Unusable", reason: "End of life", notes: "Wiped", evidenceFileIds: ["f"],
 });
 console.log("Retire eligibility, field and payload checks passed");
+
+assert.deepEqual(DISPOSAL_METHODS.map(({ value }) => value), ["Sold", "Donated", "Scrapped-Destroyed", "Returned to Vendor", "Other"]);
+assert.equal(disposeBlock({ lifecycleStatus: "Retired" }), null);
+assert.equal(disposeBlock({ lifecycleStatus: "Disposed" }), "This asset is already disposed.");
+for (const lifecycleStatus of ["Available", "Assigned", "In Maintenance"]) {
+  assert.equal(disposeBlock({ lifecycleStatus }), "Only Retired assets can be disposed.");
+}
+const dispose = { method: "Scrapped-Destroyed", reason: " Beyond repair ", notes: "" };
+assert.ok(Object.values(disposeErrors(dispose)).every((error) => error === null));
+assert.ok(disposeErrors({ ...dispose, method: "Recycled (e-waste)" }).method);
+assert.ok(disposeErrors({ ...dispose, reason: "" }).reason);
+assert.deepEqual(disposeBody("v", dispose, []), { expectedUpdatedAt: "v", disposalMethod: "Scrapped-Destroyed", reason: "Beyond repair" });
+assert.deepEqual(disposeBody("v", { ...dispose, notes: " Cert EW-1 " }, ["f"]), {
+  expectedUpdatedAt: "v", disposalMethod: "Scrapped-Destroyed", reason: "Beyond repair", notes: "Cert EW-1", evidenceFileIds: ["f"],
+});
+console.log("Dispose eligibility, method, field and payload checks passed");

@@ -47,7 +47,9 @@ export function LifecycleValues({ rows }: { rows: ReadonlyArray<readonly [string
   );
 }
 
-export function LifecycleIdentity({ asset, photo, review = false }: { asset: AssetDetail; photo: string | null; review?: boolean }) {
+export function LifecycleIdentity({ asset, photo, review = false, badge }: {
+  asset: AssetDetail; photo: string | null; review?: boolean; badge?: ReactNode;
+}) {
   const category = asset.categoryPath.map(({ name }) => name).filter(Boolean).join(" | ") || asset.category?.name;
   return (
     <div className="flex min-w-0 items-center gap-3">
@@ -55,7 +57,7 @@ export function LifecycleIdentity({ asset, photo, review = false }: { asset: Ass
       <div className="min-w-0 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-semibold text-foreground wrap-anywhere">{asset.name}</p>
-          {review && <LifecycleStatus value={asset.lifecycleStatus} />}
+          {review && (badge ?? <LifecycleStatus value={asset.lifecycleStatus} />)}
         </div>
         <p className="text-xs text-muted-foreground wrap-anywhere">{asset.assetTag}</p>
         {category && <p className="text-xs text-muted-foreground wrap-anywhere">{category}</p>}
@@ -84,8 +86,10 @@ export function LifecycleNotice({ title, lines, kind = "info", numbered = false 
 type ProfileFiles = { result: { ok: boolean } | null; pending: boolean; reload: () => void };
 
 /** Side-panel "Asset Summary" card shared by Change Status, Retire and Dispose (frames 25–33). */
-export function LifecycleAssetCard({ asset, photo, files, statusRows }: {
+export function LifecycleAssetCard({ asset, photo, files, statusRows, custodian }: {
   asset: AssetDetail; photo: string | null; files: ProfileFiles; statusRows?: ReadonlyArray<readonly [string, ReactNode]>;
+  /** Replaces the custodian block (Dispose shows the last custody from history); `null` hides it. */
+  custodian?: ReactNode;
 }) {
   return (
     <Card className="space-y-3 p-4">
@@ -112,20 +116,22 @@ export function LifecycleAssetCard({ asset, photo, files, statusRows }: {
           ]),
         ]} />
       </div>
-      <section className="space-y-2 border-t border-border pt-3 text-xs">
-        <h3 className="font-semibold text-foreground">{asset.custody ? "Current Custodian" : "Last Custodian"}</h3>
-        <LifecycleHolder holder={asset.custody} />
-        <p className="flex items-center gap-1.5 text-muted-foreground wrap-anywhere">
-          <LocationIcon aria-hidden="true" className="size-3.5 shrink-0" />
-          {locationTrail(asset.locationPath, asset.location) || "—"}
-        </p>
-        {asset.custody?.since && (
-          <p className="flex items-center gap-1.5 text-muted-foreground">
-            <ClockIcon aria-hidden="true" className="size-3.5 shrink-0" />
-            Since {assignmentDate(asset.custody.since)}
+      {custodian !== undefined ? custodian : (
+        <section className="space-y-2 border-t border-border pt-3 text-xs">
+          <h3 className="font-semibold text-foreground">{asset.custody ? "Current Custodian" : "Last Custodian"}</h3>
+          <LifecycleHolder holder={asset.custody} />
+          <p className="flex items-center gap-1.5 text-muted-foreground wrap-anywhere">
+            <LocationIcon aria-hidden="true" className="size-3.5 shrink-0" />
+            {locationTrail(asset.locationPath, asset.location) || "—"}
           </p>
-        )}
-      </section>
+          {asset.custody?.since && (
+            <p className="flex items-center gap-1.5 text-muted-foreground">
+              <ClockIcon aria-hidden="true" className="size-3.5 shrink-0" />
+              Since {assignmentDate(asset.custody.since)}
+            </p>
+          )}
+        </section>
+      )}
     </Card>
   );
 }

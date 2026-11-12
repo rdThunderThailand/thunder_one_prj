@@ -5,6 +5,7 @@ import { fileSize } from "../../domain/asset-profile";
 import { assignmentDate } from "../../domain/assignment-current";
 import type { RetireFlow } from "../../hooks/use-retire-flow";
 import type { AssetDetail } from "../../services/asset-profile-contract";
+import type { EvidenceItem } from "../assignments/use-assign-evidence";
 import { LifecycleCondition, LifecycleIdentity, LifecycleStatus } from "./LifecycleSummary";
 
 type Rows = ReadonlyArray<readonly [string, ReactNode]>;
@@ -16,8 +17,8 @@ const RETIRE_IMPACT = [
   "To dispose this asset, you can do so after it is retired.",
 ];
 
-/** Label / value table with row rules, as frames 29–30 draw "Retirement Details" and "Retirement Summary". */
-export function RetireTable({ rows }: { rows: Rows }) {
+/** Label / value table with row rules (frames 29–30, 32–33). */
+export function LifecycleTable({ rows }: { rows: Rows }) {
   return (
     <dl className="divide-y divide-border rounded-control border border-border text-xs">
       {rows.map(([label, value]) => (
@@ -30,14 +31,33 @@ export function RetireTable({ rows }: { rows: Rows }) {
   );
 }
 
-export function RetireAssetInfo({ asset, photo, rows }: { asset: AssetDetail; photo: string | null; rows: Rows }) {
+/** Uploaded attachments as Review / Confirm list them: icon, name, size. */
+export function LifecycleFiles({ items }: { items: EvidenceItem[] }) {
+  const done = items.filter((item) => item.status === "done");
+  if (!done.length) return "—";
+  return (
+    <ul className="space-y-1.5">
+      {done.map((item) => (
+        <li key={item.id} className="flex items-center gap-2">
+          <FileIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 wrap-anywhere">{item.file.name}</span>
+          <span className="shrink-0 font-normal text-muted-foreground">{fileSize(item.file.size)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function LifecycleAssetInfo({ asset, photo, rows, title = "Asset Information", badge }: {
+  asset: AssetDetail; photo: string | null; rows: Rows; title?: string; badge?: ReactNode;
+}) {
   return (
     <section className="space-y-3 rounded-card border border-border p-4">
       <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <BoxIcon aria-hidden="true" className="size-4 shrink-0 text-accent-foreground" />
-        Asset Information
+        {title}
       </h3>
-      <LifecycleIdentity asset={asset} photo={photo} review />
+      <LifecycleIdentity asset={asset} photo={photo} review badge={badge} />
       <dl className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs lg:grid-cols-4">
         {rows.map(([label, value]) => (
           <div key={label} className="min-w-0 space-y-1">
@@ -51,7 +71,6 @@ export function RetireAssetInfo({ asset, photo, rows }: { asset: AssetDetail; ph
 }
 
 export function RetireReview({ asset, flow }: { asset: AssetDetail; flow: RetireFlow }) {
-  const attachments = flow.evidence.items.filter((item) => item.status === "done");
   return (
     <Card className="space-y-4 p-4">
       <header className="space-y-0.5">
@@ -61,7 +80,7 @@ export function RetireReview({ asset, flow }: { asset: AssetDetail; flow: Retire
         </h2>
         <p className="pl-6 text-xs text-muted-foreground">Please review the information below before confirming.</p>
       </header>
-      <RetireAssetInfo
+      <LifecycleAssetInfo
         asset={asset}
         photo={flow.photo}
         rows={[
@@ -76,21 +95,11 @@ export function RetireReview({ asset, flow }: { asset: AssetDetail; flow: Retire
           <FileTextIcon aria-hidden="true" className="size-4 shrink-0 text-accent-foreground" />
           Retirement Details
         </h3>
-        <RetireTable rows={[
+        <LifecycleTable rows={[
           ["Reason for Retirement", flow.draft.reason.trim()],
           ["Condition at Retirement", <LifecycleCondition key="condition" value={flow.draft.condition} />],
           ["Notes", flow.draft.notes.trim() || "—"],
-          ["Attachments", attachments.length ? (
-            <ul key="files" className="space-y-1.5">
-              {attachments.map((item) => (
-                <li key={item.id} className="flex items-center gap-2">
-                  <FileIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 wrap-anywhere">{item.file.name}</span>
-                  <span className="shrink-0 font-normal text-muted-foreground">{fileSize(item.file.size)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : "—"],
+          ["Attachments", <LifecycleFiles key="files" items={flow.evidence.items} />],
         ]} />
       </section>
       <section className="space-y-2 rounded-card border border-warning/25 bg-warning-muted p-4">
