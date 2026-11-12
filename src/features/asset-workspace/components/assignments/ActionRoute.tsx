@@ -3,9 +3,10 @@ import { AccessDeniedState, NotFoundState } from "../states/states";
 import { AssignFlowView } from "./AssignFlowView";
 import { TransferFlowView } from "./TransferFlowView";
 import { ReturnFlowView } from "./ReturnFlowView";
+import { ChangeStatusActionView } from "../lifecycle/ChangeStatusActionView";
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const VIEWS = { assign: AssignFlowView, transfer: TransferFlowView, return: ReturnFlowView };
+const VIEWS = { assign: AssignFlowView, transfer: TransferFlowView, return: ReturnFlowView, "change-status": ChangeStatusActionView };
 
 /** Server entry shared by `/assets/{id}/{action}` (profile) and `/assignments/{id}/{action}` (Assignments list). */
 export async function ActionRoute({ params, action, from }: {

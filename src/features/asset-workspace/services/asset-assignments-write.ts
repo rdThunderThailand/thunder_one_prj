@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod";
 import { assetDetailSchema, type AssetDetail } from "./asset-profile-contract.ts";
 import { assignmentEventsPageSchema } from "./asset-assignments-contract.ts";
 import { assetListSchema } from "./assets-list-types.ts";
@@ -60,3 +60,20 @@ export const returnAsset = (context: string, assetId: string, body: unknown, sig
 
 export const moveAssetLocation = (context: string, assetId: string, body: unknown, signal: AbortSignal, transport: Transport = transportDefault) =>
   postCustody("move-location", context, assetId, body, signal, transport);
+
+export type LifecycleResult = { ok: true; data: AssetDetail; historyId: string } | Extract<AssignResult, { ok: false }>;
+const lifecycleResponse = z.object({ asset: assetDetailSchema, historyId: z.guid() });
+
+export async function postLifecycle(action: "change-status" | "retire" | "dispose", context: string, assetId: string,
+  body: unknown, signal: AbortSignal, transport: Transport = transportDefault): Promise<LifecycleResult> {
+  try {
+    const data = await transport("POST", `/${encodeURIComponent(assetId)}/${action}`, body, { context, signal, creation: true });
+    const parsed = lifecycleResponse.safeParse(data);
+    if (!parsed.success || parsed.data.asset.id !== assetId) return { ok: false, code: "INVALID_RESPONSE", uncertain: true };
+    return { ok: true, data: parsed.data.asset, historyId: parsed.data.historyId };
+  } catch (error) {
+    const known = failure(error);
+    if (known) return { ok: false, ...known };
+    return { ok: false, code: signal.aborted ? "CANCELLED" : "CONNECTION_FAILED", uncertain: !signal.aborted };
+  }
+}

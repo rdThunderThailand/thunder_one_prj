@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
@@ -46,7 +46,11 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
     pending: files.pending || detail.pending || Boolean(known && !readsReady) };
   // Opened from Assignments: stay in that sidebar section and open on its tab (owner 2026-11-11).
   const fromAssignments = inAssignments(usePathname());
-  const [tab, setTab] = useState(fromAssignments ? "assignments" : "overview");
+  const search = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const initial = search.get("tab");
+    return initial === "history" || initial === "overview" ? initial : fromAssignments ? "assignments" : "overview";
+  });
   const expiresAt = viewFiles.result?.ok ? viewFiles.result.data.expiresAt : null;
   const { reload: reloadFiles } = files;
   useEffect(() => {

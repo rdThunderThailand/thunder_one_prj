@@ -1,3 +1,16 @@
+export function lifecycleWriteText(code?: string, uncertain = false) {
+  if (uncertain) return "The change may have been saved. Reload to check before trying again.";
+  switch (code) {
+    case "STALE": return "This asset was changed by someone else. Reload to see the latest.";
+    case "INVALID_STATE": return "This change isn't allowed for the asset's current status. Reload to see the latest.";
+    case "VALIDATION": return "Some details were rejected. Check the fields and attachments.";
+    case "PERMISSION_DENIED": return "Only Asset Admins can change an asset's status.";
+    case "UNAUTHENTICATED": return "Your session has expired. Sign in again, then retry.";
+    case "NOT_FOUND": return "The asset is no longer available. Reload to check.";
+    default: return "The change couldn't be saved. Check your connection and try again.";
+  }
+}
+
 export function assignmentErrorText(code: string) {
   switch (code) {
     case "VALIDATION": return { title: "Check assignment filters", body: "These filters are invalid. Clear the filters and try again." };
