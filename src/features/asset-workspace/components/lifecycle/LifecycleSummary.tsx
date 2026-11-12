@@ -64,19 +64,69 @@ export function LifecycleIdentity({ asset, photo, review = false }: { asset: Ass
   );
 }
 
-export function LifecycleNotice({ title, lines, kind = "info" }: {
-  title: string; lines: string[]; kind?: "info" | "notes";
+export function LifecycleNotice({ title, lines, kind = "info", numbered = false }: {
+  title: string; lines: string[]; kind?: "info" | "notes"; numbered?: boolean;
 }) {
+  const List = numbered ? "ol" : "ul";
   return (
     <section className={`space-y-2 rounded-card border p-3.5 ${kind === "info" ? "border-primary/15 bg-accent/60" : "border-border bg-muted/50"}`}>
       <h3 className="flex items-center gap-2 text-xs font-semibold text-foreground">
         <InfoIcon aria-hidden="true" className="size-4 shrink-0 text-accent-foreground" />
         {title}
       </h3>
-      <ul className={`list-disc space-y-1.5 pl-5 text-xs ${kind === "info" ? "text-foreground/90 marker:text-accent-foreground" : "text-muted-foreground marker:text-muted-foreground"}`}>
+      <List className={`${numbered ? "list-decimal" : "list-disc"} space-y-1.5 pl-5 text-xs ${kind === "info" ? "text-foreground/90 marker:text-accent-foreground" : "text-muted-foreground marker:text-muted-foreground"}`}>
         {lines.map((line) => <li key={line}>{line}</li>)}
-      </ul>
+      </List>
     </section>
+  );
+}
+
+type ProfileFiles = { result: { ok: boolean } | null; pending: boolean; reload: () => void };
+
+/** Side-panel "Asset Summary" card shared by Change Status, Retire and Dispose (frames 25–33). */
+export function LifecycleAssetCard({ asset, photo, files, statusRows }: {
+  asset: AssetDetail; photo: string | null; files: ProfileFiles; statusRows?: ReadonlyArray<readonly [string, ReactNode]>;
+}) {
+  return (
+    <Card className="space-y-3 p-4">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <ClipboardIcon aria-hidden="true" className="size-4 shrink-0 text-accent-foreground" />
+        Asset Summary
+      </h2>
+      <LifecycleIdentity asset={asset} photo={photo} />
+      {files.result && !files.result.ok && (
+        <Button type="button" variant="outline" size="sm" disabled={files.pending} onClick={files.reload}>
+          Retry asset photo
+        </Button>
+      )}
+      <div className="border-t border-border pt-3">
+        <LifecycleValues rows={[
+          ["Serial Number", asset.serialNumber || "—"],
+          ["Asset Tag", asset.assetTag],
+          ["Category", asset.category?.name || "—"],
+          ["Brand / Model", "—"],
+          ["Purchase Date", asset.acquisitionDate ? assignmentDate(asset.acquisitionDate) : "—"],
+          ...(statusRows ?? [
+            ["Current Status", <LifecycleStatus key="status" value={asset.lifecycleStatus} />],
+            ["Current Condition", <LifecycleCondition key="condition" value={asset.condition} />],
+          ]),
+        ]} />
+      </div>
+      <section className="space-y-2 border-t border-border pt-3 text-xs">
+        <h3 className="font-semibold text-foreground">{asset.custody ? "Current Custodian" : "Last Custodian"}</h3>
+        <LifecycleHolder holder={asset.custody} />
+        <p className="flex items-center gap-1.5 text-muted-foreground wrap-anywhere">
+          <LocationIcon aria-hidden="true" className="size-3.5 shrink-0" />
+          {locationTrail(asset.locationPath, asset.location) || "—"}
+        </p>
+        {asset.custody?.since && (
+          <p className="flex items-center gap-1.5 text-muted-foreground">
+            <ClockIcon aria-hidden="true" className="size-3.5 shrink-0" />
+            Since {assignmentDate(asset.custody.since)}
+          </p>
+        )}
+      </section>
+    </Card>
   );
 }
 
@@ -109,43 +159,7 @@ export function LifecycleSummary({ asset, flow }: { asset: AssetDetail; flow: Ch
 
   return (
     <aside aria-label="Asset Summary" className="min-w-0 space-y-3">
-      <Card className="space-y-3 p-4">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <ClipboardIcon aria-hidden="true" className="size-4 shrink-0 text-accent-foreground" />
-          Asset Summary
-        </h2>
-        <LifecycleIdentity asset={asset} photo={flow.photo} />
-        {flow.files.result && !flow.files.result.ok && (
-          <Button type="button" variant="outline" size="sm" disabled={flow.files.pending} onClick={flow.files.reload}>
-            Retry asset photo
-          </Button>
-        )}
-        <div className="border-t border-border pt-3">
-          <LifecycleValues rows={[
-            ["Serial Number", asset.serialNumber || "—"],
-            ["Asset Tag", asset.assetTag],
-            ["Category", asset.category?.name || "—"],
-            ["Brand / Model", "—"],
-            ["Purchase Date", asset.acquisitionDate ? assignmentDate(asset.acquisitionDate) : "—"],
-            ["Current Status", <LifecycleStatus key="status" value={asset.lifecycleStatus} />],
-            ["Current Condition", <LifecycleCondition key="condition" value={asset.condition} />],
-          ]} />
-        </div>
-        <section className="space-y-2 border-t border-border pt-3 text-xs">
-          <h3 className="font-semibold text-foreground">{asset.custody ? "Current Custodian" : "Last Custodian"}</h3>
-          <LifecycleHolder holder={asset.custody} />
-          <p className="flex items-center gap-1.5 text-muted-foreground wrap-anywhere">
-            <LocationIcon aria-hidden="true" className="size-3.5 shrink-0" />
-            {locationTrail(asset.locationPath, asset.location) || "—"}
-          </p>
-          {asset.custody?.since && (
-            <p className="flex items-center gap-1.5 text-muted-foreground">
-              <ClockIcon aria-hidden="true" className="size-3.5 shrink-0" />
-              Since {assignmentDate(asset.custody.since)}
-            </p>
-          )}
-        </section>
-      </Card>
+      <LifecycleAssetCard asset={asset} photo={flow.photo} files={flow.files} />
       <LifecycleNotice
         title={saved ? "What happens next?" : flow.step === 1 ? "What will happen after confirmation?" : "What will Happen next?"}
         lines={outcomes}

@@ -73,7 +73,10 @@ export function ChangeStatusFooterLoading() {
   );
 }
 
-export function ChangeStatusLoading({ from }: { from?: "assignments" }) {
+/** Route loading for every lifecycle page; Retire passes its own title and subtitle. */
+export function ChangeStatusLoading({ from, title = CHANGE_STATUS_TITLE, subtitle = CHANGE_STATUS_SUBTITLE }: {
+  from?: "assignments"; title?: string; subtitle?: string;
+}) {
   const origin = from === "assignments"
     ? { href: "/asset-workspace/assignments", label: "Assignments" }
     : { href: "/asset-workspace/assets", label: "Assets" };
@@ -84,7 +87,7 @@ export function ChangeStatusLoading({ from }: { from?: "assignments" }) {
         <ChevronRightIcon className="size-3" />
         <Skeleton className="h-3 w-24" />
         <ChevronRightIcon className="size-3" />
-        <span className="font-semibold text-foreground">{CHANGE_STATUS_TITLE}</span>
+        <span className="font-semibold text-foreground">{title}</span>
       </div>
       <div data-assign-body className={changeStatusBodyClass}>
         <p role="status" className="sr-only">Loading asset…</p>
@@ -93,8 +96,8 @@ export function ChangeStatusLoading({ from }: { from?: "assignments" }) {
             <div className="rounded-card border border-border bg-card p-4">
               <AssignFlowTitle
                 origin={origin}
-                title={CHANGE_STATUS_TITLE}
-                subtitle={CHANGE_STATUS_SUBTITLE}
+                title={title}
+                subtitle={subtitle}
                 steps={CHANGE_STATUS_STEPS}
               />
             </div>

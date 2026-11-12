@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { allowedConditions, allowedTargets, changeStatusBody, changeStatusErrors, endsCustody, lifecycleNeedsReload } from "./asset-lifecycle-actions.ts";
+import {
+  allowedConditions, allowedTargets, changeStatusBody, changeStatusErrors, endsCustody, lifecycleNeedsReload, retireBody,
+  retireEligibility, retireErrors,
+} from "./asset-lifecycle-actions.ts";
 import type { AssetDetail } from "../services/asset-profile-contract.ts";
 
 for (const [lifecycleStatus, expected] of [
@@ -39,3 +42,22 @@ assert.equal(lifecycleNeedsReload("INVALID_STATE"), true);
 assert.equal(lifecycleNeedsReload("INTERNAL", true), true);
 assert.equal(lifecycleNeedsReload("VALIDATION"), false);
 console.log("Change Status target, condition, custody and payload checks passed");
+
+const holder = { name: "Holder" } as AssetDetail["custody"];
+assert.equal(retireEligibility({ lifecycleStatus: "Available", custody: null }).kind, "ok");
+assert.equal(retireEligibility({ lifecycleStatus: "In Maintenance", custody: null }).kind, "ok");
+assert.deepEqual(retireEligibility({ lifecycleStatus: "Assigned", custody: holder }), { kind: "blocked", action: "return" });
+assert.deepEqual(retireEligibility({ lifecycleStatus: "In Maintenance", custody: holder }), { kind: "blocked", action: "change-status" });
+assert.equal(retireEligibility({ lifecycleStatus: "Retired", custody: null }).kind, "done");
+assert.equal(retireEligibility({ lifecycleStatus: "Disposed", custody: null }).kind, "done");
+assert.equal(retireEligibility({ lifecycleStatus: "constructor", custody: null }).kind, "done");
+const retire = { condition: "Unusable", reason: "  End of life  ", notes: "" };
+assert.ok(Object.values(retireErrors(retire)).every((error) => error === null));
+assert.ok(retireErrors({ ...retire, condition: "" }).condition);
+assert.ok(retireErrors({ ...retire, reason: "  " }).reason);
+assert.ok(retireErrors({ ...retire, notes: "x".repeat(501) }).notes);
+assert.deepEqual(retireBody("v", retire, []), { expectedUpdatedAt: "v", condition: "Unusable", reason: "End of life" });
+assert.deepEqual(retireBody("v", { ...retire, notes: " Wiped " }, ["f"]), {
+  expectedUpdatedAt: "v", condition: "Unusable", reason: "End of life", notes: "Wiped", evidenceFileIds: ["f"],
+});
+console.log("Retire eligibility, field and payload checks passed");

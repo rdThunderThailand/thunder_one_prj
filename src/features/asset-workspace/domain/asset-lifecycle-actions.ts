@@ -56,3 +56,39 @@ export function changeStatusBody(updatedAt: string, draft: ChangeStatusDraft, fi
 export function lifecycleNeedsReload(code?: string, uncertain = false) {
   return uncertain || code === "STALE" || code === "INVALID_STATE" || code === "NOT_FOUND";
 }
+
+export const RETIRE_STEPS = ["Details", "Review", "Confirm"];
+export const RETIRE_TITLE = "Retire Asset";
+export const RETIRE_SUBTITLE = "Mark this asset as retired when it is no longer in active use.";
+export type RetireDraft = { condition: string; reason: string; notes: string };
+
+/** Q9 + decision A: Available, or In Maintenance without a holder. `blocked` keeps the form visible with Next off. */
+export function retireEligibility(asset: Pick<AssetDetail, "lifecycleStatus" | "custody">) {
+  if (asset.lifecycleStatus === "Retired") return { kind: "done", message: "This asset is already retired." } as const;
+  if (asset.lifecycleStatus === "Disposed") return { kind: "done", message: "Disposed assets can't change." } as const;
+  if (asset.lifecycleStatus === "Assigned") return { kind: "blocked", action: "return" } as const;
+  if (asset.lifecycleStatus === "In Maintenance" && asset.custody) return { kind: "blocked", action: "change-status" } as const;
+  if (asset.lifecycleStatus === "Available" || asset.lifecycleStatus === "In Maintenance") return { kind: "ok" } as const;
+  return { kind: "done", message: "This asset can't be retired." } as const;
+}
+
+export function retireErrors(draft: RetireDraft) {
+  return {
+    condition: allowedConditions("Retired").some((condition) => condition === draft.condition)
+      ? null : "Choose a condition at retirement.",
+    reason: !draft.reason.trim() ? "Enter a reason."
+      : draft.reason.trim().length > LIFECYCLE_TEXT_MAX ? "Enter 500 characters or fewer." : null,
+    notes: draft.notes.length > LIFECYCLE_TEXT_MAX ? "Enter 500 characters or fewer." : null,
+  };
+}
+
+export function retireBody(updatedAt: string, draft: RetireDraft, fileIds: string[]) {
+  const notes = draft.notes.trim();
+  return {
+    expectedUpdatedAt: updatedAt,
+    condition: draft.condition,
+    reason: draft.reason.trim(),
+    ...(notes && { notes }),
+    ...(fileIds.length && { evidenceFileIds: fileIds }),
+  };
+}

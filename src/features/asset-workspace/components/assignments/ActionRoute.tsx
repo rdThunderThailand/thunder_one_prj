@@ -4,9 +4,12 @@ import { AssignFlowView } from "./AssignFlowView";
 import { TransferFlowView } from "./TransferFlowView";
 import { ReturnFlowView } from "./ReturnFlowView";
 import { ChangeStatusActionView } from "../lifecycle/ChangeStatusActionView";
+import { RetireFlowView } from "../lifecycle/RetireFlowView";
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const VIEWS = { assign: AssignFlowView, transfer: TransferFlowView, return: ReturnFlowView, "change-status": ChangeStatusActionView };
+const VIEWS = {
+  assign: AssignFlowView, transfer: TransferFlowView, return: ReturnFlowView, "change-status": ChangeStatusActionView, retire: RetireFlowView,
+};
 
 /** Server entry shared by `/assets/{id}/{action}` (profile) and `/assignments/{id}/{action}` (Assignments list). */
 export async function ActionRoute({ params, action, from }: {
