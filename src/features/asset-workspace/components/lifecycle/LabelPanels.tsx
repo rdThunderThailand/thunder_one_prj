@@ -169,7 +169,7 @@ export function LabelSummary({ asset, photo, files }: {
         asset={asset}
         photo={photo}
         files={files}
-        custodian={null}
+        recent={null}
         statusRows={[
           ["Location", locationTrail(asset.locationPath, asset.location) || "—"],
           ["Current Status", <LifecycleStatus key="status" value={asset.lifecycleStatus} />],

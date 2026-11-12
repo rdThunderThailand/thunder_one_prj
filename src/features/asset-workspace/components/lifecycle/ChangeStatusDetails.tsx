@@ -20,7 +20,8 @@ export function ChangeStatusDetails({ flow, asset }: { flow: ChangeStatusFlow; a
   const conditions = allowedConditions(draft.status);
   const holder = asset.custody?.name ?? "The current custodian";
   const statusError = touched.status ? errors?.status : null;
-  const conditionError = (touched.condition || touched.status) ? (errors?.condition ?? errors?.change) : null;
+  // A new status clears the condition; wait until the user picks one before flagging it as missing.
+  const conditionError = (touched.condition ? errors?.condition : null) ?? ((touched.condition || touched.status) ? errors?.change : null);
   const reasonError = touched.reason ? errors?.reason : null;
   return (
     <Card className="space-y-4 p-4 focus-within:border-foreground/20 focus-within:shadow-float">

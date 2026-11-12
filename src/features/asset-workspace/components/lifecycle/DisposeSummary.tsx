@@ -1,11 +1,7 @@
-import { CheckCircleIcon, ClockIcon, LocationIcon } from "@/components/ui/icons";
-import { assignmentDate } from "../../domain/assignment-current";
+import { CheckCircleIcon } from "@/components/ui/icons";
 import type { DisposeFlow } from "../../hooks/use-dispose-flow";
 import type { AssetDetail } from "../../services/asset-profile-contract";
-import { AssignHolder } from "../assignments/AssignHolder";
 import { LifecycleAssetCard, LifecycleNotice } from "./LifecycleSummary";
-
-const PAST = { Assign: "Assigned", Transfer: "Transferred", Return: "Returned" } as const;
 
 const NOTES = [
   ["Disposed assets cannot be restored.", "Dispose action will be recorded in the Audit Log.", "You can still view the asset history and record."],
@@ -23,30 +19,6 @@ const DISPOSE_OUTCOMES = [
   "This action cannot be undone.",
 ];
 
-/** Newest custody event (frame 31 "Last Custodian"); hidden when the asset never had one. */
-function LastCustodian({ flow }: { flow: DisposeFlow }) {
-  const event = flow.recent.result?.ok ? flow.recent.result.data.data[0] : undefined;
-  const holder = event && (event.action === "Return" ? event.from : event.to ?? event.from);
-  if (!event || !holder) return null;
-  return (
-    <section className="space-y-2 border-t border-border pt-3 text-xs">
-      <h3 className="font-semibold text-foreground">Last Custodian</h3>
-      <AssignHolder type={holder.type} name={holder.name} avatarUrl={holder.avatarUrl} />
-      {event.location?.name && (
-        <p className="flex items-center gap-1.5 text-muted-foreground wrap-anywhere">
-          <LocationIcon aria-hidden="true" className="size-3.5 shrink-0" />
-          {event.location.name}
-        </p>
-      )}
-      <p className="flex items-center gap-1.5 text-muted-foreground">
-        <ClockIcon aria-hidden="true" className="size-3.5 shrink-0" />
-        <time dateTime={event.at}>{assignmentDate(event.at)}</time>
-        {` (${PAST[event.action]})`}
-      </p>
-    </section>
-  );
-}
-
 export function DisposeSummary({ asset, flow }: { asset: AssetDetail; flow: DisposeFlow }) {
   const checklist = [
     ["Disposal method is specified", !flow.errors.method],
@@ -54,7 +26,7 @@ export function DisposeSummary({ asset, flow }: { asset: AssetDetail; flow: Disp
   ] as const;
   return (
     <aside aria-label="Asset Summary" className="min-w-0 space-y-3">
-      <LifecycleAssetCard asset={asset} photo={flow.photo} files={flow.files} custodian={<LastCustodian flow={flow} />} />
+      <LifecycleAssetCard asset={asset} photo={flow.photo} files={flow.files} recent={flow.recent} />
       {flow.step === 0 && (
         <LifecycleNotice
           title="Before You Dispose"

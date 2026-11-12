@@ -8,6 +8,7 @@ export const CHANGE_STATUS_STEPS = ["Details", "Review", "Confirm"];
 export const CHANGE_STATUS_TITLE = "Change Status / Condition";
 export const CHANGE_STATUS_SUBTITLE = "Update the asset's status and/or condition.";
 export const LIFECYCLE_TEXT_MAX = 500;
+export const REVIEW_CLICK_GUARD_MS = 500;
 
 const targets = {
   Available: ["Available", "In Maintenance"],

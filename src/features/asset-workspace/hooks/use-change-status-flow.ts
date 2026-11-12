@@ -6,10 +6,10 @@ import { getAssignOptions } from "../components/assignments/use-assign-flow";
 import { useAssignEvidence } from "../components/assignments/use-assign-evidence";
 import type { ActionSave } from "../components/assignments/SaveAlert";
 import {
-  allowedConditions, changeStatusBody, changeStatusErrors, lifecycleNeedsReload, type ChangeStatusDraft,
+  allowedConditions, changeStatusBody, changeStatusErrors, lifecycleNeedsReload, REVIEW_CLICK_GUARD_MS, type ChangeStatusDraft,
 } from "../domain/asset-lifecycle-actions";
 import { getAssetDetail, getAssetFiles } from "../services/asset-profile-api";
-import { postLifecycle } from "../services/asset-assignments-write";
+import { getRecentAssignments, postLifecycle } from "../services/asset-assignments-write";
 import type { AssetDetail } from "../services/asset-profile-contract";
 import { useProfileRead } from "./use-asset-profile";
 
@@ -25,8 +25,11 @@ export function useChangeStatusFlow(context: string, assetId: string) {
     before: AssetDetail; after: AssetDetail; historyId: string; confirmedAt: string; draft: ChangeStatusDraft;
   } | null>(null);
   const sending = useRef(false);
+  // A double-click on Next must not also press Confirm: ignore Confirm briefly after Review opens.
+  const reviewOpenedAt = useRef(0);
   const detail = useProfileRead(`${context}:${assetId}:change-status-detail`, (signal) => getAssetDetail(context, assetId, signal));
   const files = useProfileRead(`${context}:${assetId}:change-status-files`, (signal) => getAssetFiles(context, assetId, signal));
+  const recent = useProfileRead(`${context}:${assetId}:change-status-recent`, (signal) => getRecentAssignments(context, assetId, signal));
   const options = useProfileRead(`${context}:assign-options`, (signal) => getAssignOptions(context, signal));
   const evidence = useAssignEvidence(context, options.result?.ok ? options.result.data : null);
   const asset = detail.result?.ok ? detail.result.data : null;
@@ -54,11 +57,12 @@ export function useChangeStatusFlow(context: string, assetId: string) {
     if (!canNext || step !== 0) return;
     setStatus(draft.status);
     setCondition(draft.condition);
+    reviewOpenedAt.current = Date.now();
     setStep(1);
   }
 
   async function confirm() {
-    if (!canConfirm || !asset || sending.current) return;
+    if (!canConfirm || !asset || sending.current || Date.now() - reviewOpenedAt.current < REVIEW_CLICK_GUARD_MS) return;
     sending.current = true;
     setSave({ phase: "sending" });
     const body = changeStatusBody(asset.updatedAt, draft, evidence.fileIds);
@@ -85,7 +89,7 @@ export function useChangeStatusFlow(context: string, assetId: string) {
   }
 
   return {
-    step, asset, photo, draft, errors, evidence, save, saved, detail, files, options, needsReload, canNext, canConfirm,
+    step, asset, photo, draft, errors, evidence, save, saved, detail, files, recent, options, needsReload, canNext, canConfirm,
     chooseStatus, setCondition, setReason, setNotes, next, confirm, reload,
     back: () => { if (!sending.current && step === 1) setStep(0); },
   };

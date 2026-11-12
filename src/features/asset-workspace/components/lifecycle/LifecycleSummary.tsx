@@ -84,12 +84,39 @@ export function LifecycleNotice({ title, lines, kind = "info", numbered = false 
 }
 
 type ProfileFiles = { result: { ok: boolean } | null; pending: boolean; reload: () => void };
+type RecentCustody = ChangeStatusFlow["recent"];
+
+const PAST = { Assign: "Assigned", Transfer: "Transferred", Return: "Returned" } as const;
+
+/** Newest custody event (frame 31 "Last Custodian"); hidden when the asset never had one. */
+function LastCustodian({ recent }: { recent: RecentCustody }) {
+  const event = recent.result?.ok ? recent.result.data.data[0] : undefined;
+  const holder = event && (event.action === "Return" ? event.from : event.to ?? event.from);
+  if (!event || !holder) return null;
+  return (
+    <section className="space-y-2 border-t border-border pt-3 text-xs">
+      <h3 className="font-semibold text-foreground">Last Custodian</h3>
+      <AssignHolder type={holder.type} name={holder.name} avatarUrl={holder.avatarUrl} />
+      {event.location?.name && (
+        <p className="flex items-center gap-1.5 text-muted-foreground wrap-anywhere">
+          <LocationIcon aria-hidden="true" className="size-3.5 shrink-0" />
+          {event.location.name}
+        </p>
+      )}
+      <p className="flex items-center gap-1.5 text-muted-foreground">
+        <ClockIcon aria-hidden="true" className="size-3.5 shrink-0" />
+        <time dateTime={event.at}>{assignmentDate(event.at)}</time>
+        {` (${PAST[event.action]})`}
+      </p>
+    </section>
+  );
+}
 
 /** Side-panel "Asset Summary" card shared by Change Status, Retire and Dispose (frames 25–33). */
-export function LifecycleAssetCard({ asset, photo, files, statusRows, custodian }: {
+export function LifecycleAssetCard({ asset, photo, files, statusRows, recent }: {
   asset: AssetDetail; photo: string | null; files: ProfileFiles; statusRows?: ReadonlyArray<readonly [string, ReactNode]>;
-  /** Replaces the custodian block (Dispose shows the last custody from history); `null` hides it. */
-  custodian?: ReactNode;
+  /** With no current holder, the newest custody event is shown as "Last Custodian"; `null` hides the block. */
+  recent: RecentCustody | null;
 }) {
   return (
     <Card className="space-y-3 p-4">
@@ -116,9 +143,9 @@ export function LifecycleAssetCard({ asset, photo, files, statusRows, custodian 
           ]),
         ]} />
       </div>
-      {custodian !== undefined ? custodian : (
+      {!recent ? null : !asset.custody ? <LastCustodian recent={recent} /> : (
         <section className="space-y-2 border-t border-border pt-3 text-xs">
-          <h3 className="font-semibold text-foreground">{asset.custody ? "Current Custodian" : "Last Custodian"}</h3>
+          <h3 className="font-semibold text-foreground">Current Custodian</h3>
           <LifecycleHolder holder={asset.custody} />
           <p className="flex items-center gap-1.5 text-muted-foreground wrap-anywhere">
             <LocationIcon aria-hidden="true" className="size-3.5 shrink-0" />
@@ -165,7 +192,7 @@ export function LifecycleSummary({ asset, flow }: { asset: AssetDetail; flow: Ch
 
   return (
     <aside aria-label="Asset Summary" className="min-w-0 space-y-3">
-      <LifecycleAssetCard asset={asset} photo={flow.photo} files={flow.files} />
+      <LifecycleAssetCard asset={asset} photo={flow.photo} files={flow.files} recent={flow.recent} />
       <LifecycleNotice
         title={saved ? "What happens next?" : flow.step === 1 ? "What will happen after confirmation?" : "What will Happen next?"}
         lines={outcomes}

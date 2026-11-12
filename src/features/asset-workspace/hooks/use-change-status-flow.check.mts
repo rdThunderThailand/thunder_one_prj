@@ -13,6 +13,8 @@ let asset = { id, updatedAt: "v1", lifecycleStatus: "Assigned", condition: "Good
 const state: unknown[] = [];
 let cursor = 0;
 let pending = false;
+let clock = 0;
+class FakeDate extends Date { static now() { return clock; } }
 let refreshes = 0;
 const calls: unknown[] = [];
 const evidence = { fileIds: [id], items: [], busy: false, failed: false };
@@ -23,7 +25,7 @@ const compiled = ts.transpileModule(readFileSync(new URL("./use-change-status-fl
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText;
 
-vm.runInNewContext(compiled, { exports, AbortController, require: (name: string) => {
+vm.runInNewContext(compiled, { exports, AbortController, Date: FakeDate, require: (name: string) => {
   if (name === "react") return {
     useState(initial: unknown) {
       const index = cursor++;
@@ -76,9 +78,14 @@ evidence.failed = true;
 assert.equal(render().canNext, false);
 evidence.failed = false;
 render().next();
+clock += 1000;
 flow = render();
 assert.equal(flow.step, 1);
 assert.equal(calls.length, 0, "Review sends nothing");
+clock -= 1000;
+await flow.confirm();
+assert.equal(calls.length, 0, "Confirm right after Next (a double-click) sends nothing");
+clock += 1000;
 
 const first = flow.confirm();
 await flow.confirm();
@@ -101,6 +108,7 @@ assert.equal(render().canNext, false);
 pending = false;
 asset = { ...asset, updatedAt: "v2" };
 render().next();
+clock += 1000;
 
 const second = render().confirm();
 finish({ ok: false, code: "CONNECTION_FAILED", uncertain: true });
@@ -110,6 +118,7 @@ assert.equal(calls.length, 2);
 render().reload();
 pending = false;
 render().next();
+clock += 1000;
 flow = render();
 const third = flow.confirm();
 finish({ ok: true, data: { ...asset, lifecycleStatus: "In Maintenance", condition: "Fair" }, historyId: id });

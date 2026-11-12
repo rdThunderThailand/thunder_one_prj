@@ -32,6 +32,7 @@ export function RetireSummary({ asset, flow, href, onExport }: {
           asset={asset}
           photo={flow.photo}
           files={flow.files}
+          recent={flow.recent}
           statusRows={[
             ["Previous Status", <LifecycleStatus key="before" value={saved.before.lifecycleStatus} />],
             ["Current Status", <LifecycleStatus key="after" value={asset.lifecycleStatus} />],
@@ -84,7 +85,7 @@ export function RetireSummary({ asset, flow, href, onExport }: {
   ];
   return (
     <aside aria-label="Asset Summary" className="min-w-0 space-y-3">
-      <LifecycleAssetCard asset={asset} photo={flow.photo} files={flow.files} />
+      <LifecycleAssetCard asset={asset} photo={flow.photo} files={flow.files} recent={flow.recent} />
       <LifecycleNotice title="What happens next?" lines={outcomes} numbered />
       <LifecycleNotice title="Important Notes" lines={notes} kind="notes" />
     </aside>
