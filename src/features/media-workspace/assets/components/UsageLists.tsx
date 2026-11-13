@@ -71,10 +71,10 @@ export function UsageGroups({ usage }: { usage: AssetUsage }) {
   );
 }
 
-/** One collapsible row per in-use Asset: label, summary, expandable groups. The Trash dialog slot scrolls this list. */
+/** One collapsible row per in-use Asset: label, summary, expandable groups. Scrolls after max-h-64 so a long Trash list stays inside the dialog. */
 export function UsageEntries({ entries }: { entries: Array<{ id: string; label: string; usage: AssetUsage }> }) {
   return (
-    <div className="space-y-1.5">
+    <div className="max-h-64 space-y-1.5 overflow-y-auto">
       {entries.map((entry) => (
         <details key={entry.id} className="rounded-lg border border-border bg-muted px-3 py-2">
           <summary className="cursor-pointer text-xs">

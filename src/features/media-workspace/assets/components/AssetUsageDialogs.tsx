@@ -24,8 +24,8 @@ const itemsText = (items: AssetRef[]) => (items.length === 1 ? items[0].label : 
 
 /**
  * What still uses the Assets about to go to Trash (ADR 0091 Decision 3). Advisory only: it never
- * blocks the confirm. Mount it inside the dialog so every open reads current data. The slot keeps
- * a fixed height so Cancel and Move to Trash stay put while usage loads; a longer list scrolls inside.
+ * blocks the confirm. Mount it inside the dialog so every open reads current data. The note sizes
+ * to its text; a long usage list scrolls inside UsageEntries.
  */
 export function TrashUsageNotice({ items }: { items: AssetRef[] }) {
   const { usage, loading, failed } = useAssetUsage(items.map((item) => item.id));
@@ -34,7 +34,7 @@ export function TrashUsageNotice({ items }: { items: AssetRef[] }) {
     return itemUsage && isInUse(itemUsage) ? [{ id: item.id, label: item.label, usage: itemUsage }] : [];
   });
   return (
-    <div className="h-40 overflow-y-auto" role="status" aria-busy={loading}>
+    <div role="status" aria-busy={loading}>
       {loading ? (
         <p className="text-xs text-muted-foreground">{trashUsageLoadingCopy(items.length)}</p>
       ) : failed ? (
