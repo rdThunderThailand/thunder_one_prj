@@ -167,6 +167,11 @@ export interface SessionRow {
   progressPct: number;
   results: ResultCounts;
   status: SessionStatus;
+  /** Core #370 added these; the Inventory list shows them. */
+  dueDate?: string | null;
+  verifiedCount?: number;
+  expectedCount?: number;
+  issues?: number;
 }
 
 export async function getSessionRows(token: string, tenantId: string, sp: SearchParams) {
