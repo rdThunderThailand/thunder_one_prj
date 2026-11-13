@@ -20,6 +20,7 @@ import { useProfileRead } from "../../hooks/use-asset-profile";
 import { getAssetStatusHistory, getAssetWarranties } from "../../services/asset-profile-api";
 import type { AssetDetail, AssetStatusChange } from "../../services/asset-profile-contract";
 import { formatDate, formatDay, SectionMessage, StatusValue, todayInBangkok } from "./ProfileParts";
+import { SetCurrentWarranty, WarrantyCardActions } from "../lifecycle-warranty/ProfileWarrantyActions";
 
 // The tone comes from status-tone.ts; this only maps a tone to the step card surface.
 const TONE_CARD = {
@@ -158,7 +159,7 @@ function WarrantyInformation({ context, asset }: { context: string; asset: Asset
   const remaining = current && current.expiryStatus !== "Expired" ? warrantyRemaining(current.endDate, todayInBangkok()) : null;
   const earlier = warranties.result?.ok ? warranties.result.data.filter((warranty) => !warranty.isCurrent) : [];
   return (
-    <LifecycleCard icon={WarrantyIcon} title="Warranty Information">
+    <LifecycleCard icon={WarrantyIcon} title="Warranty Information" action={<WarrantyCardActions asset={asset} />}>
       {current && state ? (
         <Rows rows={[
           ["Warranty Status", <Badge key="status" variant="pill" color={state.tone}>{state.label}</Badge>],
@@ -194,6 +195,7 @@ function WarrantyInformation({ context, asset }: { context: string; asset: Asset
                 ["Warranty Type", warranty.type || "—"],
                 ["Reference No.", warranty.referenceNo || "—"],
               ]} />
+              <SetCurrentWarranty context={context} asset={asset} warrantyId={warranty.id} />
             </div>
           )) : <SectionMessage>No earlier warranties.</SectionMessage>}
         </div>
