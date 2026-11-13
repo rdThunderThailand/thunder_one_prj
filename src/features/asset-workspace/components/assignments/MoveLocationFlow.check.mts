@@ -75,7 +75,7 @@ const exports: { MoveLocationFlow?: (props: Props) => ReactNode } = {};
 vm.runInNewContext(ts.transpileModule(readFileSync(url, "utf8"), { compilerOptions: {
   jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
 } }).outputText, {
-  exports, AbortController,
+  exports, AbortController, requestAnimationFrame: () => 0,
   require: (id: string) => mocks[id] ?? (id.startsWith("../../domain/")
     ? require(fileURLToPath(new URL(`${id}.ts`, url))) : require(id)),
 });
@@ -117,6 +117,16 @@ fire(props(tree, (node) => node.kind === "locations").onChange, destination);
 fire(props(tree, (node) => node.id === "move-location-reason").onChange, { target: { value: "  Bench check  " } });
 tree = draw();
 assert.equal(moveDisabled(tree), false);
+assert.match(html(tree), /Step 1 of 2.*Next/);
+await submit(tree);
+assert.equal(calls.length, 0);
+tree = draw();
+assert.match(html(tree), /Step 2 of 2.*Review move.*Current Room.*Repair Bench.*No current custodian \(unchanged\).*Bench check.*Back.*Move/);
+fire(props(tree, (node) => node.children === "Back").onClick);
+tree = draw();
+assert.equal(props(tree, (node) => node.kind === "locations").value, "to");
+await submit(tree);
+tree = draw();
 
 const inflight = submit(tree);
 const duplicate = submit(tree);
@@ -132,8 +142,7 @@ assert.deepEqual(plain(calls[0]), { context: "tenant:user", id: "asset", body: {
 tree = draw();
 assert.match(html(tree), /This asset was changed by someone else/);
 assert.equal(moveDisabled(tree), true);
-assert.equal(props(tree, (node) => node.kind === "locations").value, "to");
-assert.equal(props(tree, (node) => node.id === "move-location-reason").value, "  Bench check  ");
+assert.match(html(tree), /Review move.*Repair Bench.*Bench check/);
 fire(props(tree, (node) => node.children === "Reload").onClick);
 tree = draw();
 assert.equal(reloads, 1);
@@ -152,17 +161,23 @@ active = true;
 fire(props(tree, (node) => node.kind === "locations").onChange, destination);
 tree = draw();
 assert.equal(moveDisabled(tree), false);
+assert.match(html(tree), /Step 1 of 2/);
+await submit(tree);
+tree = draw();
+assert.match(html(tree), /Step 2 of 2/);
 moveResult = { ok: false, code: "VALIDATION", uncertain: false };
 await submit(tree);
 tree = draw();
 assert.match(html(tree), /Some details were rejected\. Check the destination and reason\./);
-assert.equal(props(tree, (node) => node.kind === "locations").error, undefined);
+assert.match(html(tree), /Review move/);
 assert.deepEqual(plain(calls[1]), { context: "tenant:user", id: "asset", body: {
   expectedUpdatedAt: "fresh-version", locationId: "to", reason: "Bench check",
 } });
 moveResult = { ok: true, data: latest };
 await submit(tree);
 assert.equal(observed, latest);
+fire(props(tree, (node) => node.children === "Back").onClick);
+tree = draw();
 fire(props(tree, (node) => node.children === "Cancel").onClick);
 assert.equal(closed, true);
 
@@ -175,4 +190,4 @@ assert.match(html(draw()), /Couldn&#x27;t load the asset or locations/);
 result = { ok: true, data: { asset: { ...asset, lifecycleStatus: "Retired" }, rules: {} } };
 assert.match(html(draw()), /This asset can&#x27;t be moved/);
 assert.equal(moveDisabled(draw()), true);
-console.log("Move Location dialog guards, preserved draft, active reload, fresh version, validation and success passed");
+console.log("Move Location dialog two steps, guards, preserved draft, active reload, fresh version, validation and success passed");

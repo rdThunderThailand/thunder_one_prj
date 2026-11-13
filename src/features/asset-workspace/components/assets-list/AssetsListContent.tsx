@@ -16,12 +16,13 @@ import { AssetsTableLoading } from "./AssetsListLoading";
 import { AssetsSectionError } from "./AssetsSectionError";
 import type { AssetsSelection } from "../../hooks/use-assets-selection";
 
-export function AssetsListContent({ resource, query, requestedKey, url, filtered, onExportSelected, exportPending, selection, onLabels }: {
+export function AssetsListContent({ resource, query, requestedKey, url, filtered, onExportSelected, exportPending, selection, onLabels, onRowsScroll }: {
   resource: AssetsListResource; query: AssetListQuery; requestedKey: string; url: AssetsListUrlState; filtered: boolean;
   onExportSelected: (ids: string[], trigger: HTMLButtonElement | null) => void;
   exportPending: boolean;
   selection: AssetsSelection;
   onLabels: (trigger: HTMLButtonElement | null) => boolean;
+  onRowsScroll?: (rows: HTMLDivElement, wheelUp?: boolean) => void;
 }) {
   const { data, pending, error, retry, dataKey } = resource;
   const scroll = useRef<HTMLDivElement>(null);
@@ -41,6 +42,7 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
         <div className="min-w-0 flex-1 basis-48">
           <AssetsSelectionToolbar
             count={frozen ? 0 : selected.size}
+            single={selected.size === 1 ? data?.rows.find((row) => selected.has(row.id)) ?? null : null}
             clear={selection.clear}
             onLabels={onLabels}
             onExport={(trigger) => onExportSelected([...selected], trigger)}
@@ -61,6 +63,8 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
       )}
       <div
         ref={scroll} data-assets-scroll tabIndex={0} aria-label="Assets results"
+        onScroll={(event) => onRowsScroll?.(event.currentTarget)}
+        onWheel={(event) => { if (event.deltaY < 0) onRowsScroll?.(event.currentTarget, true); }}
         className="relative min-w-0 overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1 group-data-[bounded=true]/assets-workspace:overflow-y-auto"
       >
         {!data ? pending ? <AssetsTableLoading /> : error?.status === 403 ? (

@@ -64,3 +64,18 @@ export const WARRANTY_TONE: Record<WarrantyStatus, StatusTone> = {
   Expired: "red",
   "No Warranty": "zinc",
 };
+
+// Profile tabs FE 02 stepper (owner 2026-11-12).
+export const LIFECYCLE_STEP_TONE: Record<"Completed" | "Current" | "Not Started", StatusTone> = {
+  Completed: "green",
+  Current: "blue",
+  "Not Started": "zinc",
+};
+
+// Profile tabs FE 03 All History event tags (owner 2026-11-12): no purple/orange tokens, so the rest are neutral.
+export const HISTORY_EVENT_TONE: Record<string, StatusTone> = {
+  assign: "blue",
+  transfer: "blue",
+  return: "blue",
+  status: "green",
+};

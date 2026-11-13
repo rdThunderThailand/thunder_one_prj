@@ -75,24 +75,6 @@ export function ProfileFilesLoading() {
   );
 }
 
-export function ProfileHistoryLoading() {
-  return (
-    <div role="status" aria-label="Loading asset history" className="motion-reduce:[&_*]:animate-none">
-      <div aria-hidden="true" className="divide-y divide-border">
-        {[0, 1, 2].map((index) => (
-          <div key={index} className="flex flex-wrap items-start justify-between gap-2 py-3">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-48 max-w-full" />
-            </div>
-            <Skeleton className="h-4 w-28" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /** Frame 04 opening state (profile opened from Assignments): compact summary, tinted card and table, no rail. */
 function AssignmentsTabLoading() {
   return (

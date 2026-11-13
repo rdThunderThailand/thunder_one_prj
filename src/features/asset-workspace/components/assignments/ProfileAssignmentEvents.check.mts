@@ -22,7 +22,10 @@ const mocks: Record<string, unknown> = {
     Tabs: container, TabsList: container, TabsContent: container, TabsTrigger: button,
   },
   "../asset-profile/ProfileControls": { DisabledHint: container },
-  "../asset-profile/ProfileHistory": { HistorySection: container },
+  "../asset-profile/ProfileAllHistory": { ProfileAllHistory: container },
+  "../asset-profile/ProfileStatusHistory": { ProfileStatusHistory: ({ layout }: Props) =>
+    (layout as (content: ReactNode, panel: ReactNode) => ReactNode)(null, null) },
+  "../states/states": { EmptyState: ({ title, body }: Props) => createElement("p", null, `${title}: ${body}`) },
   "../asset-profile/ProfileParts": { formatDay: (value: string | null) => value?.slice(0, 10) ?? "—" },
   "./ProfileAssignmentEvents": { ProfileAssignmentEvents: ({ layout }: Props) =>
     (layout as (content: ReactNode, panel: ReactNode) => ReactNode)(null, null) },
@@ -86,9 +89,14 @@ for (const view of [false, true]) {
 
 const nav = render(ProfileAssignmentHistory, { context: "tenant:user", asset: { id: "asset" } });
 assert.match(nav, /All History.*Assignment History.*Location History.*Status History.*Maintenance History.*File History.*Audit Log/);
-assert.match(nav, /<button disabled="">Maintenance History<\/button>/);
+assert.match(nav, /<button>Status History<\/button>/);
+assert.doesNotMatch(nav, /<p>Status History:/);
+for (const label of ["Maintenance History", "File History", "Audit Log"]) {
+  assert.match(nav, new RegExp(`<button>${label}</button>`));
+  assert.match(nav, new RegExp(`<p>${label}: This view will be available after Lifecycle &amp; Warranty is finished.</p>`));
+}
 assert.match(nav, /<button>Location History<\/button>/);
-assert.equal((nav.match(/<button disabled=""/g) ?? []).length, 4);
+assert.equal((nav.match(/<button disabled=""/g) ?? []).length, 0);
 const layout = render(ProfileHistoryLayout, { children: "SUBTABS_TABLE", panel: createElement("aside", null, "EVENT_DETAILS") });
 assert.match(layout, /SUBTABS_TABLE<\/div><div[^>]*sticky[^>]*><aside>EVENT_DETAILS/);
 assert.match(layout, /minmax\(0,3fr\)_minmax\(var\(--container-sm\),2fr\)/);

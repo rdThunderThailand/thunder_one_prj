@@ -22,14 +22,15 @@ export const LATER = "Available in a later release";
 const LIFECYCLE_ICONS = { "change-status": RefreshIcon, retire: RetireIcon, dispose: DisposeIcon } as const;
 const groupLabel = "px-2 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide text-muted-foreground";
 
-/** The wrapper keeps the explanation reachable even when the actual control is disabled. */
-export function DisabledHint({ children, reason = LATER }: { children: ReactNode; reason?: string }) {
+/** The wrapper keeps the explanation reachable even when the actual control is disabled.
+ *  `below` opens it under the control, for toolbars at the top edge of a card that clips overflow. */
+export function DisabledHint({ children, reason = LATER, below = false }: { children: ReactNode; reason?: string; below?: boolean }) {
   const id = useId();
   const [dismissed, setDismissed] = useState(false);
   return (
     <span tabIndex={0} aria-describedby={id} onFocus={() => setDismissed(false)} onMouseEnter={() => setDismissed(false)} onKeyDown={(event) => { if (event.key === "Escape") setDismissed(true); }} className="group/hint relative inline-flex max-w-full rounded-control focus-visible:outline-2 focus-visible:outline-ring">
       {children}
-      <span role="tooltip" id={id} className={`pointer-events-none absolute bottom-full left-0 z-popover mb-1 hidden w-max max-w-64 rounded-control border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-float ${dismissed ? "" : "group-hover/hint:block group-focus-within/hint:block"}`}>
+      <span role="tooltip" id={id} className={`pointer-events-none absolute left-0 z-popover ${below ? "top-full mt-1" : "bottom-full mb-1"} hidden w-max max-w-64 rounded-control border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-float ${dismissed ? "" : "group-hover/hint:block group-focus-within/hint:block"}`}>
         {reason}
       </span>
     </span>

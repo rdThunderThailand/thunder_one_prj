@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/Card";
 
 export function AssetsSummaryLoading() {
   return (
-    <section aria-label="Loading asset totals" role="status" className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @6xl:grid-cols-6">
+    <section aria-label="Loading asset totals" role="status" className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @5xl:grid-cols-6">
       {Array.from({ length: 6 }, (_, index) => (
         <Card key={index} className="flex min-w-0 gap-3 p-4 motion-reduce:[&_*]:animate-none">
           <Skeleton className="size-10 shrink-0 rounded-full" />

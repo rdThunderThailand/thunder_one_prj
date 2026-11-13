@@ -1,28 +1,5 @@
 // Asset Profile display rules (05 §4.2: what it is, where it is, who is responsible, status, history).
 
-/** Labels for Core's stable audit codes. Unknown codes fall back to the recorded summary. */
-export const ACTIVITY_LABELS: Record<string, string> = {
-  "asset.create": "Asset registered",
-  "asset.update": "Details edited",
-  "asset.tag.change": "Asset Tag changed",
-  "asset.custody.assign": "Custody assigned",
-  "asset.custody.return": "Returned",
-  "asset.custody.transfer": "Transferred",
-  "asset.location.move": "Location moved",
-  "asset.status.change": "Status changed",
-  "asset.condition.change": "Condition changed",
-  "asset.warranty.add": "Warranty added",
-  "asset.warranty.update": "Warranty edited",
-  "asset.attachment.add": "File attached",
-  "asset.attachment.remove": "File removed",
-  "asset.retire": "Retired",
-  "asset.dispose": "Disposed",
-};
-
-export function activityLabel(action: string, summary: string | null): string {
-  return ACTIVITY_LABELS[action] ?? (summary?.trim() || "Asset updated");
-}
-
 /** "Head Office › Main Building › Lobby 1"; falls back to the asset's own location before Core sends the path. */
 export function locationTrail(path: { name: string | null }[], location: { name: string | null } | null): string {
   const names = (path.length ? path : location ? [location] : []).map((item) => item.name?.trim() || "Unnamed location");

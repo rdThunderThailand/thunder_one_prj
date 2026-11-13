@@ -9,7 +9,8 @@ import { getAssetDetail, getAssetFiles } from "../../services/asset-profile-api"
 import { useProfileRead } from "../../hooks/use-asset-profile";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, NotFoundState } from "../states/states";
-import { FilesSection, WarrantySection } from "./ProfileSections";
+import { ProfileLifecycle } from "./ProfileLifecycle";
+import { ProfileFiles } from "./ProfileFiles";
 import { ProfileAssignmentEvents } from "../assignments/ProfileAssignmentEvents";
 import { ProfileAssignmentHistory } from "../assignments/ProfileAssignmentHistory";
 import { ProfileLocationView } from "../assignments/ProfileLocationView";
@@ -29,14 +30,13 @@ import type { ChangedAssetFiles } from "../../services/asset-files-change";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 
 type FileEditorSession = { id: string; kind: AssetFileKind; removeId?: string; trigger: HTMLButtonElement; snapshot: AssetFilesSnapshot };
-type MoveSession = { context: string; assetId: string; trigger: HTMLButtonElement };
+type MoveSession = { context: string; assetId: string; trigger: HTMLButtonElement | null };
 type MoveSnapshot = { context: string; revision: number; asset: AssetDetail };
 
 export function AssetProfileView({ context, assetId }: { context: string; assetId: string }) {
   const [revision, setRevision] = useState(0);
   const [known, setKnown] = useState<AssetFilesSnapshot | null>(null);
   const [editor, setEditor] = useState<FileEditorSession | null>(null);
-  const [move, setMove] = useState<MoveSession | null>(null);
   const [moveSnapshot, setMoveSnapshot] = useState<MoveSnapshot | null>(null);
   const view = useRef<HTMLDivElement>(null);
   const detail = useProfileRead(`${context}:${assetId}:detail:${revision}`, (signal) => getAssetDetail(context, assetId, signal));
@@ -47,9 +47,20 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   // Opened from Assignments: stay in that sidebar section and open on its tab (owner 2026-11-11).
   const fromAssignments = inAssignments(usePathname());
   const search = useSearchParams();
+  // The Assets list toolbar links here with `action=move-location`; the flow itself blocks assets that can't move.
+  const [move, setMove] = useState<MoveSession | null>(() => search.get("action") === "move-location"
+    ? { context, assetId, trigger: null } : null);
+  function closeMove() {
+    setMove(null);
+    if (!search.has("action")) return;
+    const next = new URLSearchParams(search);
+    next.delete("action");
+    window.history.replaceState(null, "", `?${next}`);
+  }
   const [tab, setTab] = useState(() => {
     const initial = search.get("tab");
-    return initial === "history" || initial === "overview" ? initial : fromAssignments ? "assignments" : "overview";
+    return initial && ["overview", "assignments", "location", "files", "warranty", "history"].includes(initial) ? initial
+      : fromAssignments ? "assignments" : "overview";
   });
   const expiresAt = viewFiles.result?.ok ? viewFiles.result.data.expiresAt : null;
   const { reload: reloadFiles } = files;
@@ -145,14 +156,14 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
                 onEditLocation={(trigger) => setMove({ context, assetId, trigger })} />
             </TabsContent>
             <TabsContent value="files" className="mt-3">
-              <FilesSection files={viewFiles} onPhotoFailed={refreshLinks} disposed={asset.lifecycleStatus === "Disposed"}
-                onAddDocument={(trigger) => openEditor("document", trigger)} onRemoveDocument={(file, trigger) => openEditor("document", trigger, file.fileId)} />
+              <ProfileFiles files={viewFiles} />
             </TabsContent>
             <TabsContent value="warranty" className="mt-3">
-              <WarrantySection context={context} assetId={assetId} current={asset.currentWarranty} files={viewFiles} />
+              <ProfileLifecycle context={context} asset={asset} />
             </TabsContent>
             <TabsContent value="history" className="mt-3">
-              <ProfileAssignmentHistory key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
+              <ProfileAssignmentHistory key={`${context}:${assetId}:${revision}`} context={context} asset={asset}
+                initialTab={search.get("history")} />
             </TabsContent>
           </Tabs>
         </div>
@@ -166,10 +177,10 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
       )}
       {move?.context === context && move.assetId === assetId && (
         <MoveLocationFlow context={context} assetId={assetId}
-          onSaved={(next) => { refreshLocation(next); setMove(null); }}
-          onClose={(refresh) => { if (refresh) refreshLocation(asset); setMove(null); }}
+          onSaved={(next) => { refreshLocation(next); closeMove(); }}
+          onClose={(refresh) => { if (refresh) refreshLocation(asset); closeMove(); }}
           restoreFocus={() => {
-            const trigger = move.trigger.isConnected ? move.trigger
+            const trigger = move.trigger?.isConnected ? move.trigger
               : view.current?.querySelector<HTMLButtonElement>("#profile-edit-location");
             (trigger && !trigger.disabled ? trigger : view.current)?.focus({ preventScroll: true });
           }} />

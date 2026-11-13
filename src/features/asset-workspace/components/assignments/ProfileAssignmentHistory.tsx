@@ -5,7 +5,9 @@ import { ClockIcon, FileTextIcon, ListIcon, LocationIcon, ShieldIcon, ToolIcon, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import { DisabledHint } from "../asset-profile/ProfileControls";
-import { HistorySection } from "../asset-profile/ProfileHistory";
+import { EmptyState } from "../states/states";
+import { ProfileAllHistory } from "../asset-profile/ProfileAllHistory";
+import { ProfileStatusHistory } from "../asset-profile/ProfileStatusHistory";
 import { ProfileAssignmentEvents } from "./ProfileAssignmentEvents";
 import { ProfileLocationHistory } from "./ProfileLocationHistory";
 
@@ -13,11 +15,14 @@ export const profileHistoryTabs = [
   { id: "all", label: "All History", icon: ListIcon, disabled: false },
   { id: "assignment", label: "Assignment History", icon: UserIcon, disabled: false },
   { id: "location", label: "Location History", icon: LocationIcon, disabled: false },
-  { id: "status", label: "Status History", icon: ClockIcon, disabled: true },
-  { id: "maintenance", label: "Maintenance History", icon: ToolIcon, disabled: true },
-  { id: "file", label: "File History", icon: FileTextIcon, disabled: true },
-  { id: "audit", label: "Audit Log", icon: ShieldIcon, disabled: true },
+  { id: "status", label: "Status History", icon: ClockIcon, disabled: false },
+  { id: "maintenance", label: "Maintenance History", icon: ToolIcon, disabled: false },
+  { id: "file", label: "File History", icon: FileTextIcon, disabled: false },
+  { id: "audit", label: "Audit Log", icon: ShieldIcon, disabled: false },
 ] as const;
+
+// Frames 12–14 wait for the Lifecycle & Warranty module (profile-tabs FE 05).
+const laterTabs = profileHistoryTabs.filter(({ id }) => id === "maintenance" || id === "file" || id === "audit");
 
 export function ProfileHistoryLayout({ children, panel }: { children: ReactNode; panel?: ReactNode }) {
   const grid = useRef<HTMLDivElement>(null);
@@ -68,8 +73,9 @@ export function ProfileHistoryLayout({ children, panel }: { children: ReactNode;
   );
 }
 
-export function ProfileAssignmentHistory({ context, asset }: { context: string; asset: AssetDetail }) {
-  const [tab, setTab] = useState("all");
+export function ProfileAssignmentHistory({ context, asset, initialTab }: { context: string; asset: AssetDetail; initialTab?: string | null }) {
+  // `?history=status` (Change Status result link) opens that sub-tab.
+  const [tab, setTab] = useState(profileHistoryTabs.some(({ id, disabled }) => id === initialTab && !disabled) ? initialTab as string : "all");
   const nav = (
     <TabsList aria-label="Asset history sections" className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-0 rounded-control border border-border bg-card p-1">
       {profileHistoryTabs.map(({ id, label, icon: Icon, disabled }) => {
@@ -89,17 +95,27 @@ export function ProfileAssignmentHistory({ context, asset }: { context: string; 
       {nav}
       <ProfileAssignmentEvents context={context} asset={asset} enabled={tab === "assignment"} layout={(assignment, assignmentPanel) => (
         <ProfileLocationHistory context={context} assetId={asset.id} enabled={tab === "location"} layout={(location, locationPanel) => (
-          <ProfileHistoryLayout panel={tab === "location" ? locationPanel : assignmentPanel}>
-            <TabsContent value="all" className="m-0">
-              <HistorySection context={context} assetId={asset.id} />
-            </TabsContent>
-            <TabsContent value="assignment" className="m-0 min-w-0">
-              {assignment}
-            </TabsContent>
-            <TabsContent value="location" className="m-0 min-w-0">
-              {location}
-            </TabsContent>
-          </ProfileHistoryLayout>
+          <ProfileStatusHistory context={context} assetId={asset.id} enabled={tab === "status"} layout={(status, statusPanel) => (
+            <ProfileHistoryLayout panel={tab === "location" ? locationPanel : tab === "status" ? statusPanel : assignmentPanel}>
+              <TabsContent value="all" className="m-0">
+                <ProfileAllHistory context={context} assetId={asset.id} />
+              </TabsContent>
+              <TabsContent value="assignment" className="m-0 min-w-0">
+                {assignment}
+              </TabsContent>
+              <TabsContent value="location" className="m-0 min-w-0">
+                {location}
+              </TabsContent>
+              <TabsContent value="status" className="m-0 min-w-0">
+                {status}
+              </TabsContent>
+              {laterTabs.map(({ id, label }) => (
+                <TabsContent key={id} value={id} className="m-0 min-w-0">
+                  <EmptyState title={label} body="This view will be available after Lifecycle & Warranty is finished." />
+                </TabsContent>
+              ))}
+            </ProfileHistoryLayout>
+          )} />
         )} />
       )} />
     </Tabs>

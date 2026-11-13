@@ -25,9 +25,14 @@ async function read<T>(path: string, schema: z.ZodType<T>, context: string, sign
 }
 
 /** Select Asset: Available assets only; Core still decides who has a holder (`assignBlock` disables those rows). */
-export function searchAvailableAssets(context: string, q: string, signal: AbortSignal, transport: Transport = transportDefault) {
+export type AssignAssetSearch = { q: string; page?: number; category_id?: string; location_id?: string };
+
+export function searchAvailableAssets(context: string, search: AssignAssetSearch, signal: AbortSignal, transport: Transport = transportDefault) {
   const query = new URLSearchParams({ status: "Available", pageSize: String(ASSIGN_SEARCH_SIZE) });
-  if (q.trim()) query.set("q", q.trim());
+  if (search.page && search.page > 1) query.set("page", String(search.page));
+  if (search.q.trim()) query.set("q", search.q.trim());
+  if (search.category_id) query.set("category_id", search.category_id);
+  if (search.location_id) query.set("location_id", search.location_id);
   return read(`/list?${query}`, assetListSchema, context, signal, transport);
 }
 
