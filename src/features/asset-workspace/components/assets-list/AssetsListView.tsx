@@ -38,6 +38,9 @@ export function AssetsListView({ context }: { context: string }) {
   const [scanOpen, setScanOpen] = useState(false);
   const scanTriggerRef = useRef<HTMLButtonElement>(null);
   const hasFilters = ["q", "category_id", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id"].some((key) => url.get(key));
+  // Arriving with a filter (e.g. from an Overview tile) starts with the totals folded so the filtered rows get the room.
+  const [folded, setFolded] = useState(hasFilters);
+  const summaryRef = useRef<HTMLDivElement>(null);
   const requestedKey = parsed.success ? assetListQueryString(query) : `invalid:${url.search}`;
   const exportReady = parsed.success && !list.pending && !list.error && Boolean(list.data) && list.dataKey === requestedKey;
   const labels = useAssetLabels(context, `${requestedKey}:${exportReady ? "ready" : "unavailable"}`);
@@ -56,6 +59,14 @@ export function AssetsListView({ context }: { context: string }) {
       const filters = request.scope === "filtered" ? request.filters as Record<string, string> : {};
       startAssetExport(router.push, { from, filters: Object.keys(filters).length ? filters : undefined });
     } catch { toast.error("The export scope could not be prepared. Refresh the list and try again."); }
+  }
+
+  /** FE 07: scrolling the rows folds the totals away so the table gets their room; back at the top they return. */
+  function onRowsScroll(rows: HTMLDivElement, wheelUp = false) {
+    // Scrolling up at the top reopens them, also when the rows are too short to scroll.
+    if (rows.scrollTop === 0 && (wheelUp || rows.scrollHeight > rows.clientHeight)) setFolded(false);
+    // Fold only if the rows still overflow once the totals hide, or the taller box snaps to the top and reopens them.
+    else if (rows.scrollTop > 24 && rows.scrollHeight - rows.clientHeight > (summaryRef.current?.offsetHeight ?? 0) + 24) setFolded(true);
   }
 
   function openLabels(trigger: HTMLButtonElement | null) {
@@ -83,11 +94,16 @@ export function AssetsListView({ context }: { context: string }) {
           )}
         </div>
       </div>
-      <div className="space-y-2" aria-busy={summary.pending}>
-        {summary.error && (
-          <AssetsSectionError title="Couldn’t load asset totals" message={summary.error.message} pending={summary.pending} retry={summary.retry} />
-        )}
-        {summary.data ? <AssetsSummary result={{ ok: true, data: summary.data }} /> : summary.pending ? <AssetsSummaryLoading /> : null}
+      <div
+        ref={summaryRef} inert={folded} aria-busy={summary.pending}
+        className={`grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out motion-reduce:transition-none ${folded ? "-mb-3 grid-rows-[0fr] opacity-0" : "grid-rows-[1fr]"}`}
+      >
+        <div className="min-h-0 space-y-2 overflow-hidden">
+          {summary.error && (
+            <AssetsSectionError title="Couldn’t load asset totals" message={summary.error.message} pending={summary.pending} retry={summary.retry} />
+          )}
+          {summary.data ? <AssetsSummary result={{ ok: true, data: summary.data }} status={url.get("status")} onStatus={(status) => url.set({ status })} /> : summary.pending ? <AssetsSummaryLoading /> : null}
+        </div>
       </div>
       <AssetsFilters
         result={filters.data ? { ok: true, data: filters.data } : filters.error}
@@ -112,6 +128,7 @@ export function AssetsListView({ context }: { context: string }) {
         exportPending={actionsPending}
         selection={selection}
         onLabels={openLabels}
+        onRowsScroll={onRowsScroll}
       />
       <AssetLabelsDialog flow={labels} />
       {!denied && (scanOpen || url.get("scan") === "1") && (

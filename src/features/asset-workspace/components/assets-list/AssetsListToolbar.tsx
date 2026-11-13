@@ -7,10 +7,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import type { AssetListQuery } from "../../services/assets-list-query";
 import {
-  AssignmentIcon, ChevronDownIcon, GridIcon, InventoryIcon, ListIcon,
-  LocationIcon, PlusIcon, ScanIcon, TransferIcon, XIcon,
+  ChevronDownIcon, GridIcon, InventoryIcon, ListIcon, PlusIcon, ScanIcon, XIcon,
 } from "@/components/ui/icons";
+import type { AssetListRow } from "../../services/assets-list-types";
 import { AssetsMoreActionsMenu, AssetsSelectedExportMenu } from "./AssetsExportMenus";
+import { AssetsSingleActions } from "./AssetsSingleActions";
 
 interface UnavailableActionProps {
   children?: ReactNode;
@@ -109,8 +110,8 @@ function AssetMenuItemText({ title, description }: { title: string; description:
 }
 
 /** Bulk actions appear only once rows are selected; until then a hint explains what selection enables. */
-export function AssetsSelectionToolbar({ count, clear, onExport, exportDisabled, onLabels }: {
-  count: number; clear: () => void;
+export function AssetsSelectionToolbar({ count, single, clear, onExport, exportDisabled, onLabels }: {
+  count: number; single: AssetListRow | null; clear: () => void;
   onExport: (trigger: HTMLButtonElement | null) => void;
   exportDisabled: boolean;
   onLabels: (trigger: HTMLButtonElement | null) => boolean;
@@ -130,13 +131,10 @@ export function AssetsSelectionToolbar({ count, clear, onExport, exportDisabled,
           <Button variant="ghost" size="icon-sm" className="max-sm:size-10" aria-label="Clear selection" onClick={clear}>
             <XIcon className="size-3" />
           </Button>
-          <UnavailableAction icon={AssignmentIcon}>Assign</UnavailableAction>
-          <UnavailableAction icon={TransferIcon}>Transfer</UnavailableAction>
-          <UnavailableAction icon={LocationIcon}>Move Location</UnavailableAction>
-          <UnavailableAction>
-            Update Status
-            <ChevronDownIcon className="size-3" />
-          </UnavailableAction>
+          <AssetsSingleActions
+            row={single}
+            count={count}
+          />
           <UnavailableAction icon={InventoryIcon}>Add to Inventory</UnavailableAction>
           <AssetsSelectedExportMenu onExport={onExport} disabled={exportDisabled} onLabels={onLabels} labelsDisabled={exportDisabled} />
         </>

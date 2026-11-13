@@ -30,14 +30,13 @@ import type { ChangedAssetFiles } from "../../services/asset-files-change";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 
 type FileEditorSession = { id: string; kind: AssetFileKind; removeId?: string; trigger: HTMLButtonElement; snapshot: AssetFilesSnapshot };
-type MoveSession = { context: string; assetId: string; trigger: HTMLButtonElement };
+type MoveSession = { context: string; assetId: string; trigger: HTMLButtonElement | null };
 type MoveSnapshot = { context: string; revision: number; asset: AssetDetail };
 
 export function AssetProfileView({ context, assetId }: { context: string; assetId: string }) {
   const [revision, setRevision] = useState(0);
   const [known, setKnown] = useState<AssetFilesSnapshot | null>(null);
   const [editor, setEditor] = useState<FileEditorSession | null>(null);
-  const [move, setMove] = useState<MoveSession | null>(null);
   const [moveSnapshot, setMoveSnapshot] = useState<MoveSnapshot | null>(null);
   const view = useRef<HTMLDivElement>(null);
   const detail = useProfileRead(`${context}:${assetId}:detail:${revision}`, (signal) => getAssetDetail(context, assetId, signal));
@@ -48,6 +47,16 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   // Opened from Assignments: stay in that sidebar section and open on its tab (owner 2026-11-11).
   const fromAssignments = inAssignments(usePathname());
   const search = useSearchParams();
+  // The Assets list toolbar links here with `action=move-location`; the flow itself blocks assets that can't move.
+  const [move, setMove] = useState<MoveSession | null>(() => search.get("action") === "move-location"
+    ? { context, assetId, trigger: null } : null);
+  function closeMove() {
+    setMove(null);
+    if (!search.has("action")) return;
+    const next = new URLSearchParams(search);
+    next.delete("action");
+    window.history.replaceState(null, "", `?${next}`);
+  }
   const [tab, setTab] = useState(() => {
     const initial = search.get("tab");
     return initial && ["overview", "assignments", "location", "files", "warranty", "history"].includes(initial) ? initial
@@ -168,10 +177,10 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
       )}
       {move?.context === context && move.assetId === assetId && (
         <MoveLocationFlow context={context} assetId={assetId}
-          onSaved={(next) => { refreshLocation(next); setMove(null); }}
-          onClose={(refresh) => { if (refresh) refreshLocation(asset); setMove(null); }}
+          onSaved={(next) => { refreshLocation(next); closeMove(); }}
+          onClose={(refresh) => { if (refresh) refreshLocation(asset); closeMove(); }}
           restoreFocus={() => {
-            const trigger = move.trigger.isConnected ? move.trigger
+            const trigger = move.trigger?.isConnected ? move.trigger
               : view.current?.querySelector<HTMLButtonElement>("#profile-edit-location");
             (trigger && !trigger.disabled ? trigger : view.current)?.focus({ preventScroll: true });
           }} />
