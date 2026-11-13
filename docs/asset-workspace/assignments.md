@@ -57,7 +57,7 @@ Feature paths below are relative to `src/features/asset-workspace/`.
 | FE 04 — Return | Return details and condition check, next status shown (auto), review and confirm | `components/assignments/ReturnFlowView.tsx`, `use-return-flow.ts`, `domain/assignment-return.ts` |
 | FE 05 — History tab | Event type / date range filters on the house date picker, table, Event Details card; condition shown on Return only | `components/assignments/AssignmentsHistoryView.tsx`, `domain/assignment-history.ts` |
 | FE 06 — Profile parts | Overview Current Assignment card, Assignments tab, History › Assignment with server-side filters and periods; profile kept inside Assignments | `components/assignments/ProfileAssignmentHistory.tsx`, `ProfileAssignmentEvents.tsx`, `domain/assignment-profile.ts` |
-| FE 07 — Move Location | Dialog from the profile Location tab; active location tree; also opened by `?tab=location&action=move-location` | `components/assignments/MoveLocationFlow.tsx`, `domain/assignment-move-location.ts` |
+| FE 07 — Move Location | Two-step dialog (choose location → Review, per PO UC-012) from the profile Location tab; active location tree; also opened by `?tab=location&action=move-location` | `components/assignments/MoveLocationFlow.tsx`, `domain/assignment-move-location.ts` |
 | FE 08 — Location tab | Current location and history on the profile; Location details and Photos disabled for phase 1 (owner) | `components/assignments/ProfileLocationView.tsx` |
 | FE 09 — Location History | History › Location History table with a side panel | `components/assignments/ProfileLocationHistory.tsx`, `domain/assignment-location-history.ts` |
 | Design pass | FE 01 / 05 / 06 / 08 / 09 aligned to the PO frames | commit `93e184f` |

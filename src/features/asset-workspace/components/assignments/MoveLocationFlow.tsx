@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type RefObject } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -39,7 +39,9 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
   const [checkId, setCheckId] = useState<string | null>(null);
   const [refreshOnClose, setRefreshOnClose] = useState(false);
   const [sending, setSending] = useState(false);
+  const [step, setStep] = useState<"choose" | "review">("choose");
   const submitting = useRef(false);
+  const stepHeading = useRef<HTMLHeadingElement>(null);
 
   const form = useProfileRead<MoveForm>(`${context}:${assetId}:move-location`, async (signal) => {
     const [detail, options] = await Promise.all([getAssetDetail(context, assetId, signal), getAssignOptions(context, signal)]);
@@ -63,6 +65,14 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
   const accessBlocked = failure?.code === "PERMISSION_DENIED" || failure?.code === "UNAUTHENTICATED";
   const locked = sending || form.pending || mustReload || accessBlocked;
   const canSubmit = Boolean(current && allowed && destination && !destinationError && !errors?.reason && !locked);
+  // A reload that makes the choice invalid (inactive, same place, status changed) drops back to the choose step.
+  const reviewing = step === "review" && Boolean(current && allowed && destination && !destinationError);
+
+  function goTo(next: "choose" | "review") {
+    setStep(next);
+    // Focus leaves the footer button, so a second Enter can't confirm a review the user hasn't seen.
+    requestAnimationFrame(() => stepHeading.current?.focus());
+  }
 
   function reload() {
     if (submitting.current || form.pending) return;
@@ -79,6 +89,7 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting.current || !canSubmit || !current || !destination) return;
+    if (!reviewing) return goTo("review");
     submitting.current = true;
     setSending(true);
     setFailure(null);
@@ -103,7 +114,9 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
         onCloseAutoFocus={(event) => { event.preventDefault(); requestAnimationFrame(restoreFocus); }}>
         <DialogHeader className="shrink-0 border-b border-border p-4 pr-12 text-left">
           <DialogTitle>Move Location</DialogTitle>
-          <DialogDescription>Choose a new location for this asset.</DialogDescription>
+          <DialogDescription>
+            {reviewing ? "Step 2 of 2 · Check the move, then confirm." : "Step 1 of 2 · Choose a new location for this asset."}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex min-h-0 flex-col" aria-busy={waiting || sending}>
           <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain p-4">
@@ -132,8 +145,16 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
                 <p className="font-semibold">This asset can&apos;t be moved.</p>
                 <p>{blocked}</p>
               </div>
+            ) : reviewing && destination ? (
+              <MoveReview
+                asset={current.asset}
+                to={referenceLabel(destination, "locations")}
+                reason={reason.trim()}
+                headingRef={stepHeading}
+              />
             ) : (
               <fieldset disabled={locked} className="min-w-0 space-y-3">
+                <h3 ref={stepHeading} tabIndex={-1} className="sr-only">Choose location</h3>
                 <div className="space-y-1">
                   <p className="text-xs font-medium">From Location (Current)</p>
                   <p className="min-h-10 rounded-control border border-border bg-muted px-3 py-2 text-xs text-muted-foreground wrap-anywhere">
@@ -146,6 +167,7 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
                   error={destinationError} onChange={(value) => {
                     if (locked || submitting.current) return;
                     setDestination(value);
+                    setStep("choose");
                     setCheckId(null);
                     setFailure(null);
                   }} />
@@ -165,12 +187,48 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
             {sending && <p role="status" className="text-xs text-muted-foreground">Moving asset…</p>}
           </div>
           <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border p-4">
-            <Button variant="outline" size="sm" disabled={sending} onClick={close}>Cancel</Button>
-            <Button type="submit" size="sm" disabled={!canSubmit}>{sending ? "Moving asset…" : "Move"}</Button>
+            {reviewing ? (
+              <Button key="back" variant="outline" size="sm" disabled={sending} onClick={() => goTo("choose")}>Back</Button>
+            ) : (
+              <Button key="cancel" variant="outline" size="sm" disabled={sending} onClick={close}>Cancel</Button>
+            )}
+            <Button key={reviewing ? "move" : "next"} type="submit" size="sm" disabled={!canSubmit}>
+              {sending ? "Moving asset…" : reviewing ? "Move" : "Next"}
+            </Button>
           </footer>
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** PO 04 UC-012 Review: what moves, from where to where, and that the holder stays. */
+function MoveReview({ asset, to, reason, headingRef }: {
+  asset: AssetDetail; to: string; reason: string; headingRef: RefObject<HTMLHeadingElement | null>;
+}) {
+  const rows = [
+    { label: "Asset", value: `${asset.name} · ${asset.assetTag}` },
+    { label: "From", value: locationTrail(asset.locationPath, asset.location) || "No location assigned." },
+    { label: "To", value: to },
+    { label: "Holder", value: `${asset.custody?.name ?? "No current custodian"} (unchanged)` },
+    { label: "Reason / Note", value: reason || "—" },
+  ];
+  return (
+    <section className="space-y-2">
+      <h3 ref={headingRef} tabIndex={-1} className="text-xs font-semibold outline-none">Review move</h3>
+      <dl className="divide-y divide-border rounded-control border border-border text-xs">
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            className="grid grid-cols-[6.5rem_1fr] gap-3 px-3 py-2"
+          >
+            <dt className="text-muted-foreground">{row.label}</dt>
+            <dd className={`min-w-0 wrap-anywhere ${row.label === "To" ? "font-semibold text-foreground" : "text-foreground"}`}>{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-2xs text-muted-foreground">Only the location changes. Custody, status and condition stay the same.</p>
+    </section>
   );
 }
 
