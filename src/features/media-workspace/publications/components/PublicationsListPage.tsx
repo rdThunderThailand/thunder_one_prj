@@ -146,7 +146,7 @@ export function PublicationsListPage() {
   const error = failure?.key === requestKey ? failure.error : null;
   const isLoading = !error && result?.key !== requestKey;
   const isFiltered =
-    filters.search.trim() !== "" || filters.status !== "all" || filters.target !== "all" || filters.tag !== "all";
+    filters.search.trim() !== "" || filters.status !== DEFAULT_FILTERS.status || filters.target !== "all" || filters.tag !== "all";
 
   const handleFilterChange = (patch: Partial<ListFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
