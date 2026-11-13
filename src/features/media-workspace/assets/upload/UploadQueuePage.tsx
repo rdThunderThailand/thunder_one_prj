@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
@@ -104,8 +105,7 @@ export function UploadQueuePage({ initialFolderId = null }: { initialFolderId?: 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"><Link href="/media-workspace/assets" className="hover:text-primary">Media Library</Link><span aria-hidden="true">/</span><span>Upload Media</span></div>
-          <h1 className="text-xl font-extrabold tracking-tight text-foreground">Upload Media</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Upload and manage your media assets.</p>
+          <PageHeader title="Upload Media" subtitle="Upload and manage your media assets." titleInTopbar />
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" disabled title="Coming in Phase 2">Add from Source · Phase 2</Button>

@@ -248,7 +248,7 @@ export function PublicationsListPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Programs"
-        subtitle="จัดการโปรแกรมที่ออกอากาศบนช่องของคุณ"
+        subtitle="Manage and schedule programs across your channels."
         titleInTopbar
         actions={
           <>

@@ -192,6 +192,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
     <div className="flex flex-col gap-4">
       {/* 1. Header */}
       <PageHeader
+        titleInTopbar
         title={detail.name}
         subtitle={`Status: ${displayStatus}`}
         actions={

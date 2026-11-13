@@ -377,8 +377,9 @@ export function CreatePublicationPage() {
   return (
     <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-6">
       <PageHeader
+        titleInTopbar
         title="Create Publication"
-        subtitle="สร้างและเผยแพร่สื่อไปยังทุกช่องทางของคุณ"
+        subtitle="Create and publish content across your channels."
       />
 
       <DraftResumePrompt {...entry.prompt} />

@@ -14,6 +14,7 @@ export default async function PlayerReleasesPage() {
   return (
     <div className="grid gap-6">
       <PageHeader
+        titleInTopbar
         title="Player releases"
         subtitle="Upload Windows Player builds and approve them for automatic update. Approved files are public."
         actions={

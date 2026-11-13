@@ -30,12 +30,7 @@ interface TopbarProps {
   locale: AppLocale;
 }
 
-// Only the Overview route publishes into the title store today (its
-// `PageHeader` passes `titleInTopbar`) — this fallback exists solely to cover
-// the gap before that effect fires on first paint, so it applies only to that
-// one route. Every other Media Workspace page still renders its own
-// `PageHeader` title in `main`, unchanged; showing a nav-derived guess for
-// them here would just duplicate it (docs/adr/0075 §4).
+// Overview has no page action row; keep its title visible before the page publishes.
 function fallbackTitle(pathname: string): string | null {
   if (pathname !== mediaWorkspaceNav.overviewItem.href) return null;
   return mediaWorkspaceNav.overviewItem.label;
