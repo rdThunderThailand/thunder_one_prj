@@ -25,9 +25,12 @@ assert.deepEqual(calls.at(-1)?.slice(0, 3), ["POST", `/${id}/transfer`, { b: 2 }
 assert.deepEqual(await transferAsset("ctx", id, {}, signal, (async () => { throw new Error("down"); }) as never),
   { ok: false, code: "CONNECTION_FAILED", uncertain: true });
 
-await searchAvailableAssets("ctx", " lap top ", signal, ok({ data: [], page: 1, pageSize: 10, total: 0, totalPages: 0 }));
+const emptyPage = { data: [], page: 1, pageSize: 10, total: 0, totalPages: 0 };
+await searchAvailableAssets("ctx", { q: " lap top " }, signal, ok(emptyPage));
 assert.equal(calls.at(-1)?.[1], "/list?status=Available&pageSize=10&q=lap+top");
-assert.deepEqual(await searchAvailableAssets("ctx", "", signal, ok({ nope: true })), { ok: false, status: 502, code: "CONTRACT_MISMATCH", message: "" });
+await searchAvailableAssets("ctx", { q: "", page: 3, category_id: "c1", location_id: "l1" }, signal, ok(emptyPage));
+assert.equal(calls.at(-1)?.[1], "/list?status=Available&pageSize=10&page=3&category_id=c1&location_id=l1");
+assert.deepEqual(await searchAvailableAssets("ctx", { q: "" }, signal, ok({ nope: true })), { ok: false, status: 502, code: "CONTRACT_MISMATCH", message: "" });
 
 const recent = await getRecentAssignments("ctx", id, signal, ok({ total: 1, data: [{ id, action: "Assign", at: "t", from: null,
   to: { type: "org_unit", id, name: "IT", avatarUrl: null }, location: null }] }));
