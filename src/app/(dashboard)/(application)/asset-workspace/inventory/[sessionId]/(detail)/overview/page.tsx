@@ -1,6 +1,7 @@
 import { SessionOverview } from "@/features/asset-workspace/components/inventory/SessionOverview";
 import { ErrorState } from "@/features/asset-workspace/components/states/ErrorState";
 import {
+  getInventoryActivity,
   getInventoryAssignments,
   getInventorySession,
   getInventorySessionAssets,
@@ -10,10 +11,11 @@ import {
 export default async function SessionOverviewPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = await params;
   // pageSize 1: only the by-location / by-category totals are used here.
-  const [session, assignments, assets] = await Promise.all([
+  const [session, assignments, assets, activity] = await Promise.all([
     getInventorySession(sessionId),
     getInventoryAssignments(sessionId),
     getInventorySessionAssets(sessionId, { pageSize: "1" }),
+    getInventoryActivity(sessionId, { pageSize: "5" }),
   ]);
   if (!session || session === "not-found") return <ErrorState />;
   return (
@@ -21,6 +23,7 @@ export default async function SessionOverviewPage({ params }: { params: Promise<
       session={session}
       assignments={assignments}
       assets={assets}
+      activity={activity}
     />
   );
 }

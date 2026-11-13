@@ -14,6 +14,10 @@ import {
   validateSetup,
   verifyInput,
   findingChange,
+  assetActionHref,
+  decisionsFor,
+  findingStatus,
+  reconcileInput,
   wizardStep,
 } from "./inventory.ts";
 
@@ -57,8 +61,8 @@ assert.deepEqual(sessionProgress({ expected: 8, verified: 3, mismatch: 1, notFou
   done: 5, pct: 63, discrepancies: 4,
 });
 assert.equal(sessionProgress({ expected: 0, verified: 0, mismatch: 0, notFound: 0, unexpected: 0, remaining: 0 }).pct, 0);
-assert.deepEqual(sessionActions("In Progress"), { continue: true, cancel: true, complete: true });
-assert.deepEqual(sessionActions("Completed"), { continue: false, cancel: false, complete: false });
+assert.deepEqual(sessionActions("In Progress"), { continue: true, cancel: true, complete: true, close: false });
+assert.deepEqual(sessionActions("Completed"), { continue: false, cancel: false, complete: false, close: true });
 assert.equal(detailHref("s1", "assets"), "/asset-workspace/inventory/s1/assets");
 
 console.log("inventory.check ok");
@@ -81,3 +85,19 @@ assert.equal(scanMatch(vRows, "AT"), null);
 assert.equal(scanMatch(vRows, undefined), null);
 assert.equal(findingChange({ type: "mismatch_condition", expectedCondition: "Good", foundCondition: "Damaged" } as never), "Good → Damaged");
 assert.equal(findingChange({ type: "not_found" } as never), null);
+
+// I4 Reconcile
+assert.deepEqual(decisionsFor("not_found"), ["mark_lost", "dismiss"]);
+assert.deepEqual(decisionsFor("unexpected"), ["register_asset", "dismiss"]);
+assert.equal(assetActionHref("transfer_custody", "a 1"), "/asset-workspace/assets/a%201/transfer");
+assert.equal(assetActionHref("update_location", null), null);
+assert.equal(assetActionHref("dismiss", "a1"), null);
+const rBad = reconcileInput({ decision: "register_asset", reason: " ", note: "", assetId: "" });
+assert.ok(!rBad.ok && rBad.fields.reason && rBad.fields.assetId);
+assert.deepEqual(reconcileInput({ decision: "dismiss", reason: " dup ", note: "", assetId: "x" }), { ok: true, input: { decision: "dismiss", reason: "dup" } });
+assert.deepEqual(reconcileInput({ decision: "register_asset", reason: "r", note: " n ", assetId: "a9" }), {
+  ok: true, input: { decision: "register_asset", reason: "r", note: "n", assetId: "a9" },
+});
+assert.equal(findingStatus({ resolutionState: "open", decision: null }), "Open");
+assert.equal(findingStatus({ resolutionState: "reconciled", decision: "mark_lost" }), "Reconciled · Mark as Lost");
+assert.equal(findingStatus({ resolutionState: "dismissed", decision: "dismiss" }), "Dismissed");

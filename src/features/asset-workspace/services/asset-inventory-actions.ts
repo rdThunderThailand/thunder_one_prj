@@ -1,12 +1,12 @@
 "use server";
 
 // Inventory session writes (Core v2 `inventory-sessions` POST, `{id}` PATCH, `{id}/cancel`, `/assignments`, `/start`, `/verifications`,
-// `/findings`, `/complete`) and the step 2 scope
+// `/findings`, `/complete`, `/findings/{id}/reconcile`, `/close`) and the step 2 scope
 // preview (a read sent as POST) as Server Actions: the browser proxy only passes `v2/asset-workspace/assets|categories`,
 // and these need the same server-side token as the reads. Core checks the role (Asset Admin) and every rule.
 import { refresh } from "next/cache";
 import { env } from "@/config/env";
-import type { Assignments, ScopeInput, ScopeMode, SessionDetail, SetupInput, VerifyInput } from "../domain/inventory";
+import type { Assignments, Finding, ReconcileInput, ScopeInput, ScopeMode, SessionDetail, SetupInput, VerifyInput } from "../domain/inventory";
 import { reportAuth } from "./asset-reports-api";
 
 export type InventoryWriteResult<T> =
@@ -17,6 +17,8 @@ export type InventoryWriteResult<T> =
       message: string;
       /** VALIDATION: field → messages. */
       fieldErrors?: Record<string, string[]>;
+      /** Any other error's `details` as Core sent them (e.g. UNRESOLVED_FINDINGS `{ open, items }`). */
+      details?: unknown;
     };
 
 const ADMIN_ONLY = "Only Asset Admins can manage inventory sessions.";
@@ -51,6 +53,7 @@ async function coreCall<T>(
       code,
       message: res.status >= 500 || !error.message ? "The inventory service couldn't do this. Try again." : error.message,
       fieldErrors: code === "VALIDATION" && error.details && typeof error.details === "object" ? error.details : undefined,
+      details: error.details,
     };
   } catch {
     return { ok: false, code: "CONNECTION_FAILED", message: "The inventory service could not be reached. Try again." };
@@ -102,6 +105,24 @@ export async function reportUnexpectedAction(id: string, input: { unexpectedIden
 /** Complete Inventory: unchecked assets stay Remaining (D1). */
 export async function completeSessionAction(id: string, expectedUpdatedAt: string) {
   return coreCall<SessionDetail>("POST", `${idPath(id)}/complete`, { expectedUpdatedAt });
+}
+
+/** Reconcile one open finding of a Completed session (D6): records the decision; the asset was changed first. */
+export async function reconcileFindingAction(id: string, findingId: string, input: ReconcileInput) {
+  return coreCall<{ id: string }>("POST", `${idPath(id)}/findings/${encodeURIComponent(findingId)}/reconcile`, input);
+}
+
+export interface UnresolvedFindings {
+  open: number;
+  items: Finding[];
+}
+
+/** Close Session (D2): open findings answer 409 UNRESOLVED_FINDINGS (`details`) until `confirmUnresolved` is sent. */
+export async function closeSessionAction(id: string, expectedUpdatedAt: string, confirmUnresolved = false) {
+  return coreCall<SessionDetail>("POST", `${idPath(id)}/close`, {
+    expectedUpdatedAt,
+    ...(confirmUnresolved ? { confirmUnresolved: true } : {}),
+  });
 }
 
 export interface ScopeAsset {

@@ -1,14 +1,25 @@
 // Session Overview tab (05 §4.9 · checklist §1 I2): progress, KPIs, information, scope and assignees, location and
-// category progress. Recent Activity waits for the activity route (I4). No Verification Method (§5).
+// category progress and the five latest activities. No Verification Method (§5).
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatTile } from "@/components/ui/StatTile";
 import { CheckCircleIcon, ClockIcon, InventoryIcon, WarningTriangleIcon } from "@/components/ui/icons";
-import { REASON_LABEL, sessionProgress, type Assignments, type Breakdown, type SessionAssets, type SessionDetail } from "../../domain/inventory";
+import {
+  detailHref,
+  REASON_LABEL,
+  sessionProgress,
+  type Activity,
+  type Assignments,
+  type Breakdown,
+  type SessionAssets,
+  type SessionDetail,
+} from "../../domain/inventory";
 import type { StatusTone } from "../../domain/status-tone";
 import { ToneDonut } from "../reports/ReportWidgets";
 import { EmptyState } from "../states/states";
+import { ActivityList } from "./SessionActivityView";
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const date = (iso: string | null) => (iso ? dateFmt.format(new Date(iso)) : "—");
@@ -79,11 +90,12 @@ function ProgressList({ rows }: { rows: Breakdown[] | undefined }) {
   );
 }
 
-export function SessionOverview({ session, assignments, assets }: {
+export function SessionOverview({ session, assignments, assets, activity }: {
   session: SessionDetail;
   /** `null` = the fetch failed. */
   assignments: Assignments | null;
   assets: SessionAssets | null;
+  activity: Activity | null;
 }) {
   const { counts, scope } = session;
   const progress = sessionProgress(counts);
@@ -188,10 +200,24 @@ export function SessionOverview({ session, assignments, assets }: {
       </div>
 
       <Section title="Recent Activity">
-        <EmptyState
-          title="Not available yet"
-          body="Session activity appears here in a later release."
-        />
+        {!activity ? (
+          <p className="text-sm text-muted-foreground">Could not be loaded. Reload to try again.</p>
+        ) : activity.data.length === 0 ? (
+          <EmptyState
+            title="No activity yet"
+            body="Results, discrepancies and session changes appear here."
+          />
+        ) : (
+          <>
+            <ActivityList rows={activity.data} />
+            <Link
+              href={detailHref(session.id, "activity")}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              View all activity
+            </Link>
+          </>
+        )}
       </Section>
     </div>
   );

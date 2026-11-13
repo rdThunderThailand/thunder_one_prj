@@ -218,11 +218,16 @@ export function sessionProgress(counts: SessionDetail["counts"]) {
   };
 }
 
-/** Header actions (§1.1): a Draft lives in the wizard; Close / Reconcile come in I4. Verify and Report Unexpected
- *  follow `continue` (In Progress only). */
+/** Header actions (§1.1): a Draft lives in the wizard. Verify and Report Unexpected follow `continue` (In Progress);
+ *  Reconcile and Close follow `close` (Completed). Closed / Cancelled are read only. */
 export function sessionActions(status: SessionStatus) {
   const inProgress = status === "In Progress";
-  return { continue: inProgress, cancel: status === "Draft" || inProgress, complete: inProgress };
+  return {
+    continue: inProgress,
+    cancel: status === "Draft" || inProgress,
+    complete: inProgress,
+    close: status === "Completed",
+  };
 }
 
 // ── Verify · Report Unexpected · Discrepancies (slice I3) ──
@@ -340,6 +345,11 @@ export interface Finding {
   reportedAt: string;
   note: string | null;
   resolutionState: "open" | "dismissed" | "reconciled";
+  decision: Decision | null;
+  decisionReason: string | null;
+  decisionNote: string | null;
+  reconciledBy: Person | null;
+  reconciledAt: string | null;
 }
 
 export interface Findings {
@@ -370,3 +380,116 @@ export const DETAIL_TABS = [
 
 export const detailHref = (id: string, tab: (typeof DETAIL_TABS)[number]["key"] = "overview") =>
   `${BASE}/${encodeURIComponent(id)}/${tab}`;
+
+// ── Reconcile · Close · Activity (slice I4) ──
+
+export const DECISIONS = ["update_location", "transfer_custody", "update_condition", "mark_lost", "register_asset", "dismiss"] as const;
+export type Decision = (typeof DECISIONS)[number];
+
+export const DECISION_LABEL: Record<Decision, string> = {
+  update_location: "Update Location",
+  transfer_custody: "Transfer Custody",
+  update_condition: "Update Condition",
+  mark_lost: "Mark as Lost",
+  register_asset: "Register Asset",
+  dismiss: "Dismiss",
+};
+
+/** The one decision that fits each finding type (§1.2 · Core `inventory_reconcile`); Dismiss fits every type. */
+const FITS: Record<FindingType, Decision> = {
+  mismatch_location: "update_location",
+  mismatch_custody: "transfer_custody",
+  mismatch_condition: "update_condition",
+  not_found: "mark_lost",
+  unexpected: "register_asset",
+};
+export const decisionsFor = (type: FindingType): Decision[] => [FITS[type], "dismiss"];
+
+/** D6: these record an asset change made first through the asset's own controlled action; Core refuses the decision
+ *  until the asset shows the found value. Returns that action's page, or null when the decision only records. */
+export function assetActionHref(decision: Decision, assetId: string | null): string | null {
+  const asset = assetId ? `/asset-workspace/assets/${encodeURIComponent(assetId)}` : null;
+  switch (decision) {
+    case "update_location":
+      return asset && `${asset}?action=move-location`;
+    case "transfer_custody":
+      return asset && `${asset}/transfer`;
+    case "update_condition":
+      return asset && `${asset}/change-status`;
+    case "register_asset":
+      return "/asset-workspace/assets/register";
+    default:
+      return null;
+  }
+}
+
+export const REASON_MAX = 500;
+
+export interface ReconcileInput {
+  decision: Decision;
+  reason: string;
+  note?: string;
+  assetId?: string;
+}
+
+export function reconcileInput(draft: { decision: Decision; reason: string; note: string; assetId: string }):
+  { ok: true; input: ReconcileInput } | { ok: false; fields: Partial<Record<"reason" | "assetId" | "note", string>> } {
+  const reason = draft.reason.trim();
+  const note = draft.note.trim();
+  const fields: Partial<Record<"reason" | "assetId" | "note", string>> = {};
+  if (!reason) fields.reason = "Enter a reason.";
+  else if (reason.length > REASON_MAX) fields.reason = `Use ${REASON_MAX} characters or fewer.`;
+  if (note.length > NOTE_MAX) fields.note = `Use ${NOTE_MAX} characters or fewer.`;
+  if (draft.decision === "register_asset" && !draft.assetId) fields.assetId = "Choose the asset you registered.";
+  if (Object.keys(fields).length) return { ok: false, fields };
+  return {
+    ok: true,
+    input: {
+      decision: draft.decision,
+      reason,
+      ...(note ? { note } : {}),
+      ...(draft.decision === "register_asset" ? { assetId: draft.assetId } : {}),
+    },
+  };
+}
+
+/** Status column: Open · Dismissed · Reconciled · <decision>. */
+export function findingStatus(f: Pick<Finding, "resolutionState" | "decision">) {
+  if (f.resolutionState === "open" || !f.decision) return "Open";
+  return f.resolutionState === "dismissed" ? "Dismissed" : `Reconciled · ${DECISION_LABEL[f.decision]}`;
+}
+
+export const FINDING_STATES = [
+  { value: "open", label: "Open" },
+  { value: "reconciled", label: "Reconciled" },
+  { value: "dismissed", label: "Dismissed" },
+];
+
+export const ACTIVITY_TYPES = [
+  { value: "verification", label: "Verification" },
+  { value: "discrepancy", label: "Discrepancy" },
+  { value: "system", label: "System & Other" },
+] as const;
+export type ActivityType = (typeof ACTIVITY_TYPES)[number]["value"];
+
+export interface ActivityRow {
+  id: string;
+  at: string;
+  type: ActivityType;
+  action: string;
+  summary: string;
+  asset: { id: string; name: string; assetTag: string } | null;
+  unexpectedIdentifier: string | null;
+  actorId: string | null;
+  actorName: string | null;
+  details: Record<string, unknown> | null;
+}
+
+export interface Activity {
+  data: ActivityRow[];
+  counts: { total: number; verification: number; discrepancy: number; system: number };
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}

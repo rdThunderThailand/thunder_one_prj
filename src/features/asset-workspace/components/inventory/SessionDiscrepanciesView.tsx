@@ -2,28 +2,44 @@
 
 // Session Discrepancies tab (05 §4.9 · checklist §1 I3): KPIs + findings table in PO words (Not Found / Unexpected /
 // Mismatch, never "Missing" / "Other Issues"), no checkboxes. Filters live in the URL; the server page fetches.
-// Reconcile per row comes in I4.
+// A Completed session adds Reconcile on each open row (I4).
+import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { StatTile } from "@/components/ui/StatTile";
+import { Button } from "@/components/ui/lovable/button";
 import { SearchXIcon, WarningTriangleIcon, XCircleIcon } from "@/components/ui/icons";
-import { FINDING_FILTERS, FINDING_LABEL, findingChange, findingResult, type Findings } from "../../domain/inventory";
+import {
+  FINDING_FILTERS,
+  FINDING_LABEL,
+  FINDING_STATES,
+  findingChange,
+  findingResult,
+  findingStatus,
+  type Finding,
+  type Findings,
+} from "../../domain/inventory";
 import { INVENTORY_RESULT_TONE } from "../../domain/status-tone";
 import { useListUrlState } from "../list-page/useListUrlState";
 import { ReportFilterBar } from "../reports/ReportFilterBar";
 import { EmptyState, LoadingState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
+import { ReconcileDialog } from "./ReconcileDialog";
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
-const HEADERS = ["Asset", "Asset Tag", "Category", "Expected Location", "Result", "Found Location", "Verified By", "Date"];
+const HEADERS = ["Asset", "Asset Tag", "Category", "Expected Location", "Result", "Found Location", "Verified By", "Date", "Status"];
 
-export function SessionDiscrepanciesView({ data, options }: {
+export function SessionDiscrepanciesView({ sessionId, data, canReconcile, options }: {
+  sessionId: string;
   data: Findings | null;
+  /** Completed: Reconcile on open rows (Core: Asset Admin only). */
+  canReconcile: boolean;
   options: { categories: { id: string; name: string | null }[]; locations: { id: string; name: string | null }[] };
 }) {
   const url = useListUrlState();
-  const filtered = Boolean(url.get("q") || url.get("type") || url.get("category_id") || url.get("location_id"));
+  const [reconciling, setReconciling] = useState<Finding | null>(null);
+  const filtered = Boolean(url.get("q") || url.get("type") || url.get("category_id") || url.get("location_id") || url.get("state"));
   const c = data?.counts;
   const mismatch = c ? c.mismatch.location + c.mismatch.custody + c.mismatch.condition : 0;
   const opts = (list: { id: string; name: string | null }[]) => list.map((x) => ({ value: x.id, label: x.name ?? "Unnamed" }));
@@ -68,6 +84,7 @@ export function SessionDiscrepanciesView({ data, options }: {
             { key: "type", label: "Result", options: FINDING_FILTERS },
             { key: "category_id", label: "Category", options: opts(options.categories) },
             { key: "location_id", label: "Location", options: opts(options.locations) },
+            { key: "state", label: "Status", options: FINDING_STATES },
           ]}
         />
       </div>
@@ -95,6 +112,11 @@ export function SessionDiscrepanciesView({ data, options }: {
                         {h}
                       </th>
                     ))}
+                    {canReconcile && (
+                      <th className="py-2 font-medium">
+                        <span className="sr-only">Actions</span>
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -126,6 +148,23 @@ export function SessionDiscrepanciesView({ data, options }: {
                         <td className="py-3 pr-4">{f.foundLocation?.name ?? "—"}</td>
                         <td className="py-3 pr-4">{f.reportedBy?.name ?? "—"}</td>
                         <td className="whitespace-nowrap py-3 pr-4">{dateFmt.format(new Date(f.reportedAt))}</td>
+                        <td className="py-3 pr-4">
+                          <p className="whitespace-nowrap">{findingStatus(f)}</p>
+                          {f.decisionReason && <p className="text-xs text-muted-foreground">{f.decisionReason}</p>}
+                        </td>
+                        {canReconcile && (
+                          <td className="py-3 text-right">
+                            {f.resolutionState === "open" && (
+                              <Button
+                                size="sm"
+                                aria-label={`Reconcile ${f.asset?.name ?? f.unexpectedIdentifier ?? "finding"}`}
+                                onClick={() => setReconciling(f)}
+                              >
+                                Reconcile
+                              </Button>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -147,6 +186,14 @@ export function SessionDiscrepanciesView({ data, options }: {
           </>
         )}
       </Card>
+      {reconciling && (
+        <ReconcileDialog
+          key={reconciling.id}
+          sessionId={sessionId}
+          finding={reconciling}
+          onClose={() => setReconciling(null)}
+        />
+      )}
     </div>
   );
 }

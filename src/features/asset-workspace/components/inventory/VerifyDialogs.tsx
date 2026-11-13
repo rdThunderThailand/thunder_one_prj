@@ -65,7 +65,7 @@ function Choice({ id, label, value, onChange, sameLabel, options }: {
   );
 }
 
-function DialogShell({ open, onOpenChange, busy, title, description, children, footer }: {
+export function DialogShell({ open, onOpenChange, busy, title, description, children, footer }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   busy: boolean;

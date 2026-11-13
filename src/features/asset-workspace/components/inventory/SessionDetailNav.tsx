@@ -6,16 +6,18 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { buttonClasses } from "@/components/ui/Button";
 import { Button } from "@/components/ui/lovable/button";
+import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
-import { DETAIL_TABS, detailHref, sessionActions, sessionProgress, type SessionDetail } from "../../domain/inventory";
-import { completeSessionAction } from "../../services/asset-inventory-actions";
+import { DETAIL_TABS, detailHref, FINDING_LABEL, sessionActions, sessionProgress, type SessionDetail } from "../../domain/inventory";
+import { closeSessionAction, completeSessionAction, type UnresolvedFindings } from "../../services/asset-inventory-actions";
 import { CancelSessionDialog, FormError } from "./parts";
 
 export function SessionHeaderActions({ session }: { session: SessionDetail }) {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
   const can = sessionActions(session.status);
-  if (!can.continue && !can.cancel && !can.complete) return null;
+  if (!can.continue && !can.cancel && !can.complete && !can.close) return null;
   return (
     <div className="flex flex-wrap gap-2">
       {can.cancel && (
@@ -34,6 +36,22 @@ export function SessionHeaderActions({ session }: { session: SessionDetail }) {
         >
           Complete Inventory
         </Button>
+      )}
+      {can.close && (
+        <Button
+          variant="outline"
+          onClick={() => setCloseOpen(true)}
+        >
+          Close Session
+        </Button>
+      )}
+      {can.close && (
+        <Link
+          href={`${detailHref(session.id, "discrepancies")}?state=open`}
+          className={buttonClasses("primary")}
+        >
+          Review &amp; Reconcile
+        </Link>
       )}
       {can.continue && (
         <Link
@@ -54,7 +72,101 @@ export function SessionHeaderActions({ session }: { session: SessionDetail }) {
           onClose={() => setCompleteOpen(false)}
         />
       )}
+      {closeOpen && (
+        <CloseSessionDialog
+          session={session}
+          onClose={() => setCloseOpen(false)}
+        />
+      )}
     </div>
+  );
+}
+
+/** Close Session (D2): Core lists the open findings (409 UNRESOLVED_FINDINGS); closing anyway needs a confirmation. */
+function CloseSessionDialog({ session, onClose }: { session: SessionDetail; onClose: () => void }) {
+  const [unresolved, setUnresolved] = useState<UnresolvedFindings | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  async function close() {
+    setSending(true);
+    const res = await closeSessionAction(session.id, session.updatedAt, Boolean(unresolved));
+    setSending(false);
+    if (res.ok) {
+      onClose();
+      return;
+    }
+    if (res.code === "UNRESOLVED_FINDINGS" && res.details && typeof res.details === "object") {
+      setUnresolved(res.details as UnresolvedFindings);
+      setError(null);
+      return;
+    }
+    setError(res.message);
+  }
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(o) => {
+        if (!o && !sending) onClose();
+      }}
+    >
+      <DialogContent
+        className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-y-auto rounded-xl"
+        aria-busy={sending}
+      >
+        <DialogHeader>
+          <DialogTitle className="break-words pr-6 leading-snug">Close {session.name}?</DialogTitle>
+          <DialogDescription>A closed session is read only. Results and decisions stay in its history.</DialogDescription>
+        </DialogHeader>
+        <FormError message={error} />
+        {unresolved && (
+          <div className="space-y-2">
+            <p
+              role="alert"
+              className="text-sm font-medium"
+            >
+              {unresolved.open.toLocaleString()} {unresolved.open === 1 ? "discrepancy is" : "discrepancies are"} still open.
+            </p>
+            <ul className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border border-border text-sm">
+              {unresolved.items.map((f) => (
+                <li
+                  key={f.id}
+                  className="flex justify-between gap-2 px-3 py-2"
+                >
+                  <span className="min-w-0 truncate">{f.asset?.name ?? f.unexpectedIdentifier ?? "—"}</span>
+                  <span className="shrink-0 text-muted-foreground">{FINDING_LABEL[f.type] ?? f.type}</span>
+                </li>
+              ))}
+            </ul>
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox
+                checked={confirmed}
+                onCheckedChange={(v) => setConfirmed(v === true)}
+                className="mt-0.5"
+              />
+              Close with these discrepancies unresolved
+            </label>
+          </div>
+        )}
+        <DialogFooter className="gap-2 sm:space-x-0">
+          <Button
+            variant="outline"
+            disabled={sending}
+            onClick={onClose}
+          >
+            Keep Open
+          </Button>
+          <Button
+            disabled={sending || (Boolean(unresolved) && !confirmed)}
+            onClick={() => void close()}
+          >
+            {sending ? "Closing…" : unresolved ? "Close Anyway" : "Close Session"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
