@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/lovable/alert-dialog";
 import { permanentlyDeleteMediaAsset } from "@/lib/api/media-api";
 import type { AssetDeleteBlockers } from "@/types/domain";
-import { isDeleteBlocked, isInUse } from "../asset-usage";
+import { isDeleteBlocked, isInUse, trashUsageLoadingCopy } from "../asset-usage";
 import { useAssetUsage } from "../useAssetUsage";
 import { BlockedEntries, UsageEntries } from "./UsageLists";
 
@@ -24,32 +24,32 @@ const itemsText = (items: AssetRef[]) => (items.length === 1 ? items[0].label : 
 
 /**
  * What still uses the Assets about to go to Trash (ADR 0091 Decision 3). Advisory only: it never
- * blocks the confirm. Mount it inside the dialog so every open reads current data.
+ * blocks the confirm. Mount it inside the dialog so every open reads current data. The note sizes
+ * to its text; a long usage list scrolls inside UsageEntries.
  */
 export function TrashUsageNotice({ items }: { items: AssetRef[] }) {
   const { usage, loading, failed } = useAssetUsage(items.map((item) => item.id));
-  if (loading) {
-    return (
-      <p role="status" className="text-xs text-muted-foreground">
-        Checking where {items.length === 1 ? "this file" : "these files"} are used…
-      </p>
-    );
-  }
-  if (failed) {
-    return <p className="text-xs text-muted-foreground">Could not check where this is used. You can still move it to Trash.</p>;
-  }
   const entries = items.flatMap((item) => {
     const itemUsage = usage?.[item.id];
     return itemUsage && isInUse(itemUsage) ? [{ id: item.id, label: item.label, usage: itemUsage }] : [];
   });
-  if (entries.length === 0) return null;
   return (
-    <div className="space-y-2">
-      <p className="rounded-lg bg-warning-muted p-3 text-xs leading-5 text-warning">
-        Screens keep playing a file in Trash until it is removed from the Playlists and Layouts below. Programs that use it cannot publish
-        changes until it is removed or recovered.
-      </p>
-      <UsageEntries entries={entries} />
+    <div role="status" aria-busy={loading}>
+      {loading ? (
+        <p className="text-xs text-muted-foreground">{trashUsageLoadingCopy(items.length)}</p>
+      ) : failed ? (
+        <p className="text-xs text-muted-foreground">Could not check where this is used. You can still move it to Trash.</p>
+      ) : entries.length === 0 ? (
+        <p className="text-xs text-muted-foreground">Not used anywhere.</p>
+      ) : (
+        <div className="space-y-2">
+          <p className="rounded-lg bg-warning-muted p-3 text-xs leading-5 text-warning">
+            Screens keep playing a file in Trash until it is removed from the Playlists and Layouts below. Programs that use it cannot publish
+            changes until it is removed or recovered.
+          </p>
+          <UsageEntries entries={entries} />
+        </div>
+      )}
     </div>
   );
 }
