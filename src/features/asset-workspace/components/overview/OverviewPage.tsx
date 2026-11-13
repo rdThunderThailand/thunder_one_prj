@@ -158,7 +158,7 @@ export function OverviewPage({ data }: { data: OverviewData }) {
 const QUICK_ACTIONS = [
   { label: "Register Asset", href: `${BASE}/assets/register`, Icon: PlusIcon, primary: true, ready: true },
   { label: "Assign Asset", href: `${BASE}/assignments`, Icon: AssignmentIcon, ready: false },
-  { label: "Start Inventory", href: `${BASE}/inventory`, Icon: InventoryIcon, ready: false },
+  { label: "Start Inventory", href: `${BASE}/inventory/new`, Icon: InventoryIcon, ready: true },
   { label: "Import Data", href: `${BASE}/assets/import`, Icon: BulkImportIcon, ready: false },
 ];
 

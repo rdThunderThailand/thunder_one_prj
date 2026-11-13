@@ -1,7 +1,7 @@
 "use client";
 
 // Start Inventory wizard (UC-007 · PO 05 §4.9 · FigJam Step 1 / Step 2). Step 1 Next creates the Draft (or saves its
-// changes); step 2 edits the scope with a live preview; Save as Draft keeps it for later. Step 3 Review & Start is I2.
+// changes); step 2 edits the scope with a live preview; Save as Draft keeps it for later; step 3 reviews and starts.
 // The step lives in the URL (`?step=`), so a reload or a Draft link from the list resumes in place.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { WizardSteps } from "@/components/ui/WizardSteps";
-import { AlertCircleIcon, InfoIcon, SearchIcon, XIcon } from "@/components/ui/icons";
+import { InfoIcon, SearchIcon, XIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
@@ -33,7 +33,6 @@ import {
   type SetupDraft,
 } from "../../domain/inventory";
 import {
-  cancelSessionAction,
   createSessionAction,
   previewScopeAction,
   searchAssetsAction,
@@ -43,6 +42,8 @@ import {
 } from "../../services/asset-inventory-actions";
 import type { AssetFilterOptions } from "../../services/assets-list-types";
 import { MultiSelect, type MultiOption } from "./MultiSelect";
+import { Breakdown, CancelSessionDialog, FieldError, FormError } from "./parts";
+import { ReviewStep, type ReviewData } from "./ReviewStep";
 
 const STEPS = ["Session Setup", "Define Scope", "Review & Start"];
 const DESCRIPTIONS = ["Name, due date and owner", "Which assets to count", "Check and start"];
@@ -56,9 +57,13 @@ export interface WizardProps {
   owners: Person[] | null;
   options: AssetFilterOptions | null;
   today: string;
+  /** Step 3 data, fetched by the server page. */
+  review?: ReviewData;
+  /** `?location=` from a Location's Start Inventory: added to an empty scope in step 2. */
+  prefillLocation?: string;
 }
 
-export function InventoryWizard({ session, step, owners, options, today }: WizardProps) {
+export function InventoryWizard({ session, step, owners, options, today, review, prefillLocation }: WizardProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4">
@@ -77,6 +82,7 @@ export function InventoryWizard({ session, step, owners, options, today }: Wizar
           session={session}
           owners={owners}
           today={today}
+          prefillLocation={prefillLocation}
           onCancel={() => setCancelOpen(true)}
         />
       )}
@@ -84,10 +90,18 @@ export function InventoryWizard({ session, step, owners, options, today }: Wizar
         <ScopeStep
           session={session}
           options={options}
+          prefillLocation={prefillLocation}
           onCancel={() => setCancelOpen(true)}
         />
       )}
-      {step === 3 && session && <ReviewPlaceholder session={session} />}
+      {step === 3 && session && review && (
+        <ReviewStep
+          session={session}
+          review={review}
+          today={today}
+          onCancel={() => setCancelOpen(true)}
+        />
+      )}
       {session && (
         <CancelSessionDialog
           session={session}
@@ -101,40 +115,13 @@ export function InventoryWizard({ session, step, owners, options, today }: Wizar
 
 const setupHref = (id: string, step: number) => `${LIST}/${id}/setup?step=${step}`;
 
-function FormError({ message }: { message: string | null }) {
-  if (!message) return null;
-  return (
-    <p
-      role="alert"
-      className="flex items-start gap-2 rounded-lg bg-error-muted px-3 py-2 text-sm text-t1-red-700"
-    >
-      <AlertCircleIcon
-        aria-hidden="true"
-        className="mt-0.5 h-4 w-4 shrink-0"
-      />
-      {message}
-    </p>
-  );
-}
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <p
-      id={id}
-      className="text-xs text-t1-red-700"
-    >
-      {message}
-    </p>
-  );
-}
-
 // ── Step 1 ──
 
-function SetupStep({ session, owners, today, onCancel }: {
+function SetupStep({ session, owners, today, prefillLocation, onCancel }: {
   session: SessionDetail | null;
   owners: Person[] | null;
   today: string;
+  prefillLocation?: string;
   onCancel: () => void;
 }) {
   const router = useRouter();
@@ -173,7 +160,7 @@ function SetupStep({ session, owners, today, onCancel }: {
       }
       return;
     }
-    router.push(setupHref(res.data.id, 2));
+    router.push(`${setupHref(res.data.id, 2)}${prefillLocation ? `&location=${encodeURIComponent(prefillLocation)}` : ""}`);
   }
 
   return (
@@ -363,14 +350,20 @@ function choices(list: { id: string; name: string | null }[], saved: { id: strin
   return [...seen].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function ScopeStep({ session, options, onCancel }: {
+function ScopeStep({ session, options, prefillLocation, onCancel }: {
   session: SessionDetail;
   options: AssetFilterOptions | null;
+  prefillLocation?: string;
   onCancel: () => void;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<ScopeMode>(session.scopeMode);
-  const [picks, setPicks] = useState<Picks>(() => toPicks(toScopeInput(session.scope)));
+  const [picks, setPicks] = useState<Picks>(() => {
+    const saved = toPicks(toScopeInput(session.scope));
+    // A Location's Start Inventory: only an empty scope takes the prefill, so a saved choice is never overwritten.
+    const empty = saved.locationIds.length === 0 && saved.assetIds.length === 0;
+    return prefillLocation && empty ? { ...saved, locationIds: [prefillLocation] } : saved;
+  });
   // The preview answers one scope; it shows only while that scope is still on screen.
   const [result, setResult] = useState<{ key: string; preview?: ScopePreview; error?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -659,26 +652,6 @@ function AssetPicker({ value, onChange, known, onFound }: {
   );
 }
 
-function Breakdown({ title, rows }: { title: string; rows: { id: string; name: string; count: number }[] }) {
-  if (rows.length === 0) return null;
-  return (
-    <div className="space-y-1">
-      <h3 className="text-xs font-semibold uppercase text-muted-foreground">{title}</h3>
-      <ul className="space-y-1 text-sm">
-        {rows.map((r) => (
-          <li
-            key={r.id}
-            className="flex justify-between gap-2"
-          >
-            <span className="truncate">{r.name}</span>
-            <span className="tabular-nums text-muted-foreground">{r.count.toLocaleString()}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function PreviewPanel({ ready, mode, preview, error, onViewAssets }: {
   ready: boolean;
   mode: ScopeMode;
@@ -824,108 +797,3 @@ function AssetsDialog({ open, onOpenChange, mode, scope, total }: {
   );
 }
 
-// ── Step 3 (I2) ──
-
-function ReviewPlaceholder({ session }: { session: SessionDetail }) {
-  return (
-    <Card className="space-y-3 p-5">
-      <h2 className="font-semibold">Review &amp; Start is not available yet</h2>
-      <p className="text-sm text-muted-foreground">Your draft and its scope are saved. You can start the session when this step is released.</p>
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href={setupHref(session.id, 2)}
-          className="inline-flex h-10 items-center rounded-lg border border-border bg-card px-4 text-sm font-semibold hover:bg-muted"
-        >
-          Back to Scope
-        </Link>
-        <Link
-          href={LIST}
-          className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-        >
-          Go to Inventory
-        </Link>
-      </div>
-    </Card>
-  );
-}
-
-// ── Cancel ──
-
-function CancelSessionDialog({ session, open, onOpenChange }: {
-  session: SessionDetail;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const router = useRouter();
-  const [reason, setReason] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [touched, setTouched] = useState(false);
-  const [sending, setSending] = useState(false);
-  const empty = reason.trim() === "";
-
-  async function confirm() {
-    setTouched(true);
-    if (empty) return;
-    setSending(true);
-    const res = await cancelSessionAction(session.id, reason.trim());
-    setSending(false);
-    if (!res.ok) {
-      setError(res.message);
-      return;
-    }
-    onOpenChange(false);
-    router.push(LIST);
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        if (!sending) onOpenChange(o);
-      }}
-    >
-      <DialogContent
-        className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-y-auto rounded-xl"
-        aria-busy={sending}
-      >
-        <DialogHeader>
-          <DialogTitle className="break-words pr-6 leading-snug">Cancel {session.name}?</DialogTitle>
-          <DialogDescription>The session stays in the list as Cancelled and can no longer be edited or started.</DialogDescription>
-        </DialogHeader>
-        <FormError message={error} />
-        <div className="space-y-1.5">
-          <Label htmlFor="cancel-reason">Reason *</Label>
-          <Textarea
-            id="cancel-reason"
-            rows={3}
-            maxLength={500}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            aria-invalid={(touched && empty) || undefined}
-            aria-describedby="cancel-reason-error"
-          />
-          <FieldError
-            id="cancel-reason-error"
-            message={touched && empty ? "Enter a reason." : undefined}
-          />
-        </div>
-        <DialogFooter className="gap-2 sm:space-x-0">
-          <Button
-            variant="outline"
-            disabled={sending}
-            onClick={() => onOpenChange(false)}
-          >
-            Keep Session
-          </Button>
-          <Button
-            variant="destructive"
-            disabled={sending}
-            onClick={() => void confirm()}
-          >
-            {sending ? "Cancelling…" : "Cancel Session"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}

@@ -1,11 +1,11 @@
 "use server";
 
-// Inventory session writes (Core v2 `inventory-sessions` POST, `{id}` PATCH, `{id}/cancel`) and the step 2 scope
+// Inventory session writes (Core v2 `inventory-sessions` POST, `{id}` PATCH, `{id}/cancel`, `/assignments`, `/start`) and the step 2 scope
 // preview (a read sent as POST) as Server Actions: the browser proxy only passes `v2/asset-workspace/assets|categories`,
 // and these need the same server-side token as the reads. Core checks the role (Asset Admin) and every rule.
 import { refresh } from "next/cache";
 import { env } from "@/config/env";
-import type { ScopeInput, ScopeMode, SessionDetail, SetupInput } from "../domain/inventory";
+import type { Assignments, ScopeInput, ScopeMode, SessionDetail, SetupInput } from "../domain/inventory";
 import { reportAuth } from "./asset-reports-api";
 
 export type InventoryWriteResult<T> =
@@ -68,6 +68,16 @@ export async function cancelSessionAction(id: string, reason: string) {
   return coreCall<SessionDetail>("POST", `${idPath(id)}/cancel`, { reason });
 }
 
+/** Edit Assignments (Draft only): every asset now under `fromUserId` goes to `toUserId`. */
+export async function reassignAction(id: string, expectedUpdatedAt: string, moves: { fromUserId: string; toUserId: string }[]) {
+  return coreCall<Assignments>("PATCH", `${idPath(id)}/assignments`, { expectedUpdatedAt, moves });
+}
+
+/** Start Inventory: Core freezes the snapshot and creates one task per asset. */
+export async function startSessionAction(id: string, expectedUpdatedAt: string) {
+  return coreCall<SessionDetail>("POST", `${idPath(id)}/start`, { expectedUpdatedAt });
+}
+
 export interface ScopeAsset {
   id: string;
   name: string;
@@ -100,6 +110,35 @@ export async function searchAssetsAction(q: string): Promise<ScopeAsset[] | null
     });
     const json = await res.json().catch(() => null);
     return res.ok && Array.isArray(json?.data?.data) ? (json.data.data as ScopeAsset[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+export interface PersonChoice {
+  id: string;
+  name: string;
+  detail: string;
+}
+
+/** Edit Assignments picker: active members by name / employee code (`assets/registration-options/persons?q=`). */
+export async function searchPeopleAction(q: string): Promise<PersonChoice[] | null> {
+  const auth = await reportAuth();
+  if (!auth) return null;
+  const params = new URLSearchParams({ q: q.trim() });
+  try {
+    const res = await fetch(
+      `${env.coreApiUrl}/api/core/v2/tenants/${auth.tenantId}/asset-workspace/assets/registration-options/persons?${params}`,
+      { headers: { "x-api-key": env.coreApiKey, Authorization: `Bearer ${auth.token}` }, cache: "no-store" },
+    );
+    const json = await res.json().catch(() => null);
+    const items: unknown = json?.data?.items;
+    if (!res.ok || !Array.isArray(items)) return null;
+    return items.map((p: { id: string; name: string | null; secondary_label?: string; employee_code?: string | null }) => ({
+      id: p.id,
+      name: p.name?.trim() || "Unnamed person",
+      detail: p.secondary_label || p.employee_code || "",
+    }));
   } catch {
     return null;
   }

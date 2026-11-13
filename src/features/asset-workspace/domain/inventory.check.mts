@@ -1,6 +1,18 @@
 /** Run: node src/features/asset-workspace/domain/inventory.check.mts */
 import assert from "node:assert/strict";
-import { dueHint, EMPTY_SCOPE, scopeForMode, scopeReady, sessionHref, startedRange, validateSetup, wizardStep } from "./inventory.ts";
+import {
+  detailHref,
+  dueHint,
+  EMPTY_SCOPE,
+  scopeForMode,
+  scopeReady,
+  sessionActions,
+  sessionHref,
+  sessionProgress,
+  startedRange,
+  validateSetup,
+  wizardStep,
+} from "./inventory.ts";
 
 // Step 1
 const bad = validateSetup({ name: "  ", description: "x".repeat(501), dueDate: "", ownerUserId: "" });
@@ -36,5 +48,14 @@ assert.equal(wizardStep(undefined, null), 1);
 const draft = { scopeMode: "by_scope" as const, scope: { locations: [], orgUnits: [], categories: [], custodians: [], assetIds: [] } };
 assert.equal(wizardStep(undefined, draft), 2);
 assert.equal(wizardStep(undefined, { ...draft, scope: { ...draft.scope, locations: [{ id: "l1", name: "HQ" }] } }), 3);
+
+// Detail (I2)
+assert.deepEqual(sessionProgress({ expected: 8, verified: 3, mismatch: 1, notFound: 1, unexpected: 2, remaining: 3 }), {
+  done: 5, pct: 63, discrepancies: 4,
+});
+assert.equal(sessionProgress({ expected: 0, verified: 0, mismatch: 0, notFound: 0, unexpected: 0, remaining: 0 }).pct, 0);
+assert.deepEqual(sessionActions("In Progress"), { continue: true, cancel: true });
+assert.deepEqual(sessionActions("Completed"), { continue: false, cancel: false });
+assert.equal(detailHref("s1", "assets"), "/asset-workspace/inventory/s1/assets");
 
 console.log("inventory.check ok");

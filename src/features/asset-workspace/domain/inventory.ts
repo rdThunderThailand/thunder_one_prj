@@ -140,3 +140,94 @@ export function wizardStep(raw: string | undefined, detail: Pick<SessionDetail, 
   if (!detail) return 1;
   return scopeReady(detail.scopeMode, toScopeInput(detail.scope)) ? 3 : 2;
 }
+
+// ── Step 3 Review & Start · Session detail (slice I2) ──
+
+/** Why someone verifies a group (Core `inventory_session_assignments`). */
+export const REASON_LABEL: Record<string, string> = {
+  custodian: "Custodian",
+  org_unit_manager: "OU manager",
+  owner: "Session owner",
+  reassigned: "Reassigned",
+};
+
+export interface AssignmentGroup {
+  assignee: Person & { type: "person" };
+  reasons: string[];
+  expectedAssets: number;
+  done: number;
+  progressPct: number;
+  locations: Named[];
+  scopeLabel: string;
+  /** `null` before Start; `pending` after it: nothing is sent yet (D13). */
+  notificationStatus: "pending" | "sent" | "failed" | null;
+}
+
+export interface Assignments {
+  data: AssignmentGroup[];
+  updatedAt: string;
+}
+
+export const SESSION_ASSET_RESULTS = ["Verified", "Mismatch", "Not Found", "Remaining"] as const;
+export type SessionAssetResult = (typeof SESSION_ASSET_RESULTS)[number];
+
+export interface SessionAsset {
+  snapshotId: string;
+  assetId: string;
+  assetTag: string;
+  name: string;
+  serialNumber: string | null;
+  category: { id: string; name: string | null } | null;
+  expectedLocation: { id: string; name: string | null } | null;
+  expectedCustodian: (Named & { type: CustodianType }) | null;
+  /** `null` = no result yet (Remaining). */
+  result: Exclude<SessionAssetResult, "Remaining"> | null;
+  resultId: string | null;
+  resultUpdatedAt: string | null;
+  verifiedBy: Person | null;
+  verifiedAt: string | null;
+  assignee: Person | null;
+}
+
+export interface Breakdown {
+  id: string;
+  name: string;
+  expected: number;
+  done: number;
+}
+
+export interface SessionAssets {
+  data: SessionAsset[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  /** Every row the caller may see, before the filters. */
+  byLocation: Breakdown[];
+  byCategory: Breakdown[];
+}
+
+/** Overview numbers from the detail `counts`. Discrepancies = Mismatch + Not Found + Unexpected. */
+export function sessionProgress(counts: SessionDetail["counts"]) {
+  const done = counts.expected - counts.remaining;
+  return {
+    done,
+    pct: counts.expected ? Math.round((done / counts.expected) * 100) : 0,
+    discrepancies: counts.mismatch + counts.notFound + counts.unexpected,
+  };
+}
+
+/** Header actions this slice can do (§1.1): a Draft lives in the wizard; Complete / Close / Reconcile come in I3–I4. */
+export function sessionActions(status: SessionStatus) {
+  return { continue: status === "In Progress", cancel: status === "Draft" || status === "In Progress" };
+}
+
+export const DETAIL_TABS = [
+  { key: "overview", label: "Overview" },
+  { key: "assets", label: "Assets" },
+  { key: "discrepancies", label: "Discrepancies" },
+  { key: "activity", label: "Activity" },
+] as const;
+
+export const detailHref = (id: string, tab: (typeof DETAIL_TABS)[number]["key"] = "overview") =>
+  `${BASE}/${encodeURIComponent(id)}/${tab}`;

@@ -1,7 +1,7 @@
 // Core reads for the Inventory pages (PO 05 §4.9; checklist E:\ThunderOne\docs\inventory\asset-ws-inventory-checklist.md §2).
 // Server-only. Writes and the scope preview (a POST) are Server Actions in asset-inventory-actions.ts.
 import { cache } from "react";
-import { startedRange, type Person, type SessionDetail } from "../domain/inventory";
+import { startedRange, type Assignments, type Person, type SessionAssets, type SessionDetail } from "../domain/inventory";
 import { assetFiltersSchema, type AssetFilterOptions } from "./assets-list-types";
 import { query, reportAuth, reportGet, toListData, type Page, type SearchParams, type SessionRow } from "./asset-reports-api";
 
@@ -57,4 +57,21 @@ export async function getScopeOptions(): Promise<AssetFilterOptions | null> {
   if (!auth) return null;
   const parsed = assetFiltersSchema.safeParse(await reportGet<unknown>(`${base(auth.tenantId)}/assets/filters`, auth.token));
   return parsed.success ? parsed.data : null;
+}
+
+/** Verification Assignments (step 3, Overview). A non-Admin caller gets only their own group. */
+export async function getInventoryAssignments(sessionId: string): Promise<Assignments | null> {
+  const auth = await reportAuth();
+  if (!auth) return null;
+  const data = await reportGet<Assignments>(`${base(auth.tenantId)}/inventory-sessions/${encodeURIComponent(sessionId)}/assignments`, auth.token);
+  return data === "unavailable" ? null : data;
+}
+
+/** Assets tab / Overview breakdowns: `?q=&result=&category_id=&page=&pageSize=`. Empty before Start. */
+export async function getInventorySessionAssets(sessionId: string, sp: SearchParams): Promise<SessionAssets | null> {
+  const auth = await reportAuth();
+  if (!auth) return null;
+  const path = `${base(auth.tenantId)}/inventory-sessions/${encodeURIComponent(sessionId)}/assets${query(sp, ["q", "result", "category_id", "page", "pageSize"])}`;
+  const data = await reportGet<SessionAssets>(path, auth.token);
+  return data === "unavailable" ? null : data;
 }
