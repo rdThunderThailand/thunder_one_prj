@@ -6,11 +6,14 @@ import {
   EMPTY_SCOPE,
   scopeForMode,
   scopeReady,
+  scanMatch,
   sessionActions,
   sessionHref,
   sessionProgress,
   startedRange,
   validateSetup,
+  verifyInput,
+  findingChange,
   wizardStep,
 } from "./inventory.ts";
 
@@ -54,8 +57,27 @@ assert.deepEqual(sessionProgress({ expected: 8, verified: 3, mismatch: 1, notFou
   done: 5, pct: 63, discrepancies: 4,
 });
 assert.equal(sessionProgress({ expected: 0, verified: 0, mismatch: 0, notFound: 0, unexpected: 0, remaining: 0 }).pct, 0);
-assert.deepEqual(sessionActions("In Progress"), { continue: true, cancel: true });
-assert.deepEqual(sessionActions("Completed"), { continue: false, cancel: false });
+assert.deepEqual(sessionActions("In Progress"), { continue: true, cancel: true, complete: true });
+assert.deepEqual(sessionActions("Completed"), { continue: false, cancel: false, complete: false });
 assert.equal(detailHref("s1", "assets"), "/asset-workspace/inventory/s1/assets");
 
 console.log("inventory.check ok");
+
+// I3 Verify
+const vRow = { snapshotId: "s1", resultUpdatedAt: null };
+const vDraft = { result: "Verified" as const, locationId: "l2", custody: "", condition: "" as const, note: " ok " };
+assert.deepEqual(verifyInput(vRow, vDraft), { ok: true, input: { snapshotId: "s1", result: "Verified", note: "ok" } });
+const empty = verifyInput(vRow, { ...vDraft, result: "Mismatch", locationId: "" });
+assert.ok(!empty.ok && empty.field === "actual");
+assert.deepEqual(verifyInput({ snapshotId: "s1", resultUpdatedAt: "t" }, { ...vDraft, result: "Mismatch", custody: "org_unit:u1", condition: "Damaged", note: "" }), {
+  ok: true,
+  input: { snapshotId: "s1", result: "Mismatch", expectedUpdatedAt: "t", actualLocationId: "l2", actualCustodyType: "org_unit", actualCustodyId: "u1", condition: "Damaged" },
+});
+assert.ok(!verifyInput(vRow, { ...vDraft, note: "x".repeat(1001) }).ok);
+const vRows = [{ assetTag: "AT-1", serialNumber: "SN9" }, { assetTag: "AT-10", serialNumber: null }];
+assert.equal(scanMatch(vRows, " at-1 "), vRows[0]);
+assert.equal(scanMatch(vRows, "sn9"), vRows[0]);
+assert.equal(scanMatch(vRows, "AT"), null);
+assert.equal(scanMatch(vRows, undefined), null);
+assert.equal(findingChange({ type: "mismatch_condition", expectedCondition: "Good", foundCondition: "Damaged" } as never), "Good → Damaged");
+assert.equal(findingChange({ type: "not_found" } as never), null);

@@ -1,5 +1,6 @@
 // Inventory Sessions (PO 05 §4.5, §4.9 · 03 §2.5.1 · checklist E:\ThunderOne\docs\inventory\asset-ws-inventory-checklist.md).
 // Pure rules for the list, the Start Inventory wizard and the session header. Core enforces every rule again.
+import { ASSET_CONDITIONS } from "./asset-condition.ts";
 import type { SessionStatus } from "./report.ts";
 
 export type ScopeMode = "by_scope" | "specific_assets";
@@ -217,9 +218,147 @@ export function sessionProgress(counts: SessionDetail["counts"]) {
   };
 }
 
-/** Header actions this slice can do (§1.1): a Draft lives in the wizard; Complete / Close / Reconcile come in I3–I4. */
+/** Header actions (§1.1): a Draft lives in the wizard; Close / Reconcile come in I4. Verify and Report Unexpected
+ *  follow `continue` (In Progress only). */
 export function sessionActions(status: SessionStatus) {
-  return { continue: status === "In Progress", cancel: status === "Draft" || status === "In Progress" };
+  const inProgress = status === "In Progress";
+  return { continue: inProgress, cancel: status === "Draft" || inProgress, complete: inProgress };
+}
+
+// ── Verify · Report Unexpected · Discrepancies (slice I3) ──
+
+export const CONDITIONS = ASSET_CONDITIONS;
+export type Condition = (typeof ASSET_CONDITIONS)[number];
+export type VerifyResult = Exclude<SessionAssetResult, "Remaining">;
+export const VERIFY_RESULTS: readonly VerifyResult[] = ["Verified", "Mismatch", "Not Found"];
+export const NOTE_MAX = 1000;
+export const IDENTIFIER_MAX = 100;
+
+export interface VerifyDraft {
+  result: VerifyResult;
+  /** `""` = as expected. */
+  locationId: string;
+  /** `""` = as expected, else `person:<id>` / `org_unit:<id>`. */
+  custody: string;
+  /** `""` = not checked (stored as expected). */
+  condition: Condition | "";
+  note: string;
+}
+
+export interface VerifyInput {
+  snapshotId: string;
+  result: VerifyResult;
+  actualLocationId?: string;
+  actualCustodyType?: CustodianType;
+  actualCustodyId?: string;
+  condition?: Condition;
+  note?: string;
+  expectedUpdatedAt?: string;
+}
+
+/** Verify dialog → Core `verifications` body. Only Mismatch carries actual values, and needs at least one of them;
+ *  a changed result sends its `resultUpdatedAt` (STALE guard). Core checks again that the values really differ. */
+export function verifyInput(
+  row: Pick<SessionAsset, "snapshotId" | "resultUpdatedAt">,
+  draft: VerifyDraft,
+): { ok: true; input: VerifyInput } | { ok: false; field: "actual" | "note"; message: string } {
+  const note = draft.note.trim();
+  if (note.length > NOTE_MAX) return { ok: false, field: "note", message: `Use ${NOTE_MAX} characters or fewer.` };
+  const input: VerifyInput = {
+    snapshotId: row.snapshotId,
+    result: draft.result,
+    ...(note ? { note } : {}),
+    ...(row.resultUpdatedAt ? { expectedUpdatedAt: row.resultUpdatedAt } : {}),
+  };
+  if (draft.result !== "Mismatch") return { ok: true, input };
+  const [type, id] = draft.custody.split(":");
+  if (!draft.locationId && !id && !draft.condition) {
+    return { ok: false, field: "actual", message: "Choose what is different: location, custodian or condition." };
+  }
+  return {
+    ok: true,
+    input: {
+      ...input,
+      ...(draft.locationId ? { actualLocationId: draft.locationId } : {}),
+      ...(id ? { actualCustodyType: type as CustodianType, actualCustodyId: id } : {}),
+      ...(draft.condition ? { condition: draft.condition } : {}),
+    },
+  };
+}
+
+/** Scanner / typed search: the one row whose tag, serial (or barcode, matched by Core) equals the code opens Verify. */
+export function scanMatch<T extends Pick<SessionAsset, "assetTag" | "serialNumber">>(rows: T[], code: string | undefined) {
+  const c = code?.trim().toLowerCase();
+  if (!c) return null;
+  const hits = rows.filter((r) => r.assetTag.toLowerCase() === c || r.serialNumber?.toLowerCase() === c);
+  return hits.length === 1 ? hits[0] : null;
+}
+
+export const FINDING_TYPES = ["not_found", "unexpected", "mismatch_location", "mismatch_custody", "mismatch_condition"] as const;
+export type FindingType = (typeof FINDING_TYPES)[number];
+
+/** PO words (05 §4.9): never "Missing" / "Other Issues". */
+export const FINDING_LABEL: Record<FindingType, string> = {
+  not_found: "Not Found",
+  unexpected: "Unexpected",
+  mismatch_location: "Mismatch · Location",
+  mismatch_custody: "Mismatch · Custody",
+  mismatch_condition: "Mismatch · Condition",
+};
+
+/** Badge tone key (`INVENTORY_RESULT_TONE`). */
+export const findingResult = (type: FindingType) =>
+  type === "not_found" ? "Not Found" : type === "unexpected" ? "Unexpected" : "Mismatch";
+
+/** Result filter on the Discrepancies tab: `mismatch` = every subtype (Core). */
+export const FINDING_FILTERS = [
+  { value: "not_found", label: "Not Found" },
+  { value: "unexpected", label: "Unexpected" },
+  { value: "mismatch", label: "Mismatch (all)" },
+  { value: "mismatch_location", label: "Mismatch · Location" },
+  { value: "mismatch_custody", label: "Mismatch · Custody" },
+  { value: "mismatch_condition", label: "Mismatch · Condition" },
+];
+
+type Ref = { id: string; name: string | null } | null;
+
+export interface Finding {
+  id: string;
+  type: FindingType;
+  verificationId: string | null;
+  assetId: string | null;
+  unexpectedIdentifier: string | null;
+  asset: { id: string; name: string; assetTag: string; serialNumber: string | null } | null;
+  category: Ref;
+  expectedLocation: Ref;
+  foundLocation: Ref;
+  expectedCustodian: (Named & { type: CustodianType }) | null;
+  foundCustodian: (Named & { type: CustodianType }) | null;
+  expectedCondition: string | null;
+  foundCondition: string | null;
+  reportedBy: Person | null;
+  reportedAt: string;
+  note: string | null;
+  resolutionState: "open" | "dismissed" | "reconciled";
+}
+
+export interface Findings {
+  data: Finding[];
+  /** Every finding the caller may see, before the filters. */
+  counts: { total: number; open: number; notFound: number; unexpected: number; mismatch: { location: number; custody: number; condition: number } };
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+/** "Expected → Found" for a Mismatch row's subtype; `null` for the other types. */
+export function findingChange(f: Finding): string | null {
+  const pair = (a: string | null | undefined, b: string | null | undefined) => `${a || "—"} → ${b || "—"}`;
+  if (f.type === "mismatch_custody") return pair(f.expectedCustodian?.name, f.foundCustodian?.name);
+  if (f.type === "mismatch_condition") return pair(f.expectedCondition, f.foundCondition);
+  if (f.type === "mismatch_location") return pair(f.expectedLocation?.name, f.foundLocation?.name);
+  return null;
 }
 
 export const DETAIL_TABS = [
