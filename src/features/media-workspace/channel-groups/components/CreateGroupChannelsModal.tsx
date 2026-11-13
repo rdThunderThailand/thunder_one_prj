@@ -115,8 +115,8 @@ export function CreateGroupChannelsModal({
         </div>
       }
     >
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-border p-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <section className="min-w-0 rounded-xl border border-border p-3">
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-foreground">Available Channels</h3>
             <span className="text-xs text-muted-foreground">{available.length}</span>
@@ -136,7 +136,7 @@ export function CreateGroupChannelsModal({
           </div>
         </section>
 
-        <section className="rounded-xl border border-primary/30 bg-accent p-3">
+        <section className="min-w-0 rounded-xl border border-primary/30 bg-accent p-3">
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-foreground">{selectedTitle}</h3>
             <span className="text-xs text-primary">{draft.size} selected</span>
