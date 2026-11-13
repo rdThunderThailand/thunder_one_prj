@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MoreIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,

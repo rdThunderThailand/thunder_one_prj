@@ -2,7 +2,7 @@
 
 import { PlaySquareIcon as PlaySquare } from "@/components/ui/icons";
 import { useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { fetchPlaylist, formatDuration } from "@/features/media-workspace/playlists";
 import { fetchComposition } from "@/features/media-workspace/compositions/services/compositions-api";
 import { compositionContent, playlistContent, type ProgramContent, type ProgramEditState } from "../../program-edit";

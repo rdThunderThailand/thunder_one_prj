@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { ChevronDownIcon, ClipboardIcon, EyeIcon, MoreIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";

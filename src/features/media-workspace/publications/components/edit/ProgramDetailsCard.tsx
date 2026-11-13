@@ -2,7 +2,7 @@
 
 import { FileTextIcon as FileText, XIcon } from "@/components/ui/icons";
 import { useState } from "react";
-import { Input } from "@/components/ui/lovable/input";
+import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/lovable/label";
 import { Textarea } from "@/components/ui/lovable/textarea";
 import { PUBLICATION_LIMITS } from "@/config/limits";
@@ -86,7 +86,7 @@ export function ProgramDetailsCard({
               {!disabled && (
                 <Input
                   id="program-tag"
-                  className="h-8 w-40"
+                  className="h-8 w-40 py-1"
                   placeholder="+ Add tag"
                   value={tagDraft}
                   onChange={(event) => setTagDraft(event.target.value)}

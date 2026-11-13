@@ -80,7 +80,7 @@ export function CustomersPage() {
             </button>
           ))}
           <Button className="px-5">ค้นหา</Button>
-          <Button variant="secondary" className="px-5">
+          <Button variant="outline" className="px-5">
             รีเซ็ต
           </Button>
         </div>

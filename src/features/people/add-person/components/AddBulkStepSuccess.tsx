@@ -37,7 +37,7 @@ export function AddBulkStepSuccess({ submitResults, onImportNext }: AddBulkStepS
         </div>
       )}
       <div className="mt-1 flex items-center gap-2">
-        <Button variant="secondary" onClick={onImportNext}>
+        <Button variant="outline" onClick={onImportNext}>
           นำเข้าไฟล์ถัดไป
         </Button>
         <Link href="/people/new-hires" className={buttonClasses("primary")}>

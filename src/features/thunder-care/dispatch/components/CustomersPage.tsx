@@ -128,7 +128,7 @@ function DetailPanel({ customer }: { customer: CustomerRecord }) {
       {tab === "history" && <p className="text-xs text-t1-gray-400">ยังไม่มีประวัติการใช้บริการที่บันทึกไว้</p>}
 
       <div className="flex flex-col gap-2">
-        <Button variant="secondary" disabled title="ยังไม่เปิดใช้งาน">
+        <Button variant="outline" disabled title="ยังไม่เปิดใช้งาน">
           ดูประวัติการใช้บริการ
         </Button>
         <Button variant="primary" disabled title="ยังไม่เปิดใช้งาน">

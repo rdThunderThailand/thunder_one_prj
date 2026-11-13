@@ -118,7 +118,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
   ] as const;
 
   return (
-    <div className="grid items-stretch gap-4 xl:grid-cols-3 xl:grid-rows-[minmax(0,1fr)_auto]">
+    <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3 xl:grid-rows-[minmax(0,1fr)_auto]">
       <Card className="flex min-h-[509px] flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:row-span-2">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Today&apos;s Schedule</h2>

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { ChevronDownIcon, SearchIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { Input } from "@/components/ui/lovable/input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { fetchChannelGroups } from "../../channel-groups/services/channel-groups-api";
 import type { ChannelGroup } from "../../channel-groups/types";
 import { ALL_CHANNELS, sameScope, type ChannelScope } from "../channel-scope";
@@ -104,7 +104,7 @@ export function ChannelScopePicker({ value, onApply }: { value: ChannelScope; on
           </TabsList>
         </Tabs>
         <div className="relative">
-          <SearchIcon className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}

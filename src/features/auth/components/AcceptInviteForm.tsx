@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { TextField } from "@/components/ui/TextField";
 import { registerAndAcceptInvite } from "../services/auth.service";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -67,8 +67,8 @@ export function AcceptInviteForm({ token, email }: AcceptInviteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <Input label="Email" name="email" type="email" value={email} disabled readOnly />
-      <Input
+      <TextField label="Email" name="email" type="email" value={email} disabled readOnly />
+      <TextField
         label="First name"
         name="firstName"
         type="text"
@@ -77,7 +77,7 @@ export function AcceptInviteForm({ token, email }: AcceptInviteFormProps) {
         value={firstName}
         onChange={(event) => setFirstName(event.target.value)}
       />
-      <Input
+      <TextField
         label="Last name"
         name="lastName"
         type="text"
@@ -86,7 +86,7 @@ export function AcceptInviteForm({ token, email }: AcceptInviteFormProps) {
         value={lastName}
         onChange={(event) => setLastName(event.target.value)}
       />
-      <Input
+      <TextField
         label="Password"
         name="password"
         type="password"
@@ -96,7 +96,7 @@ export function AcceptInviteForm({ token, email }: AcceptInviteFormProps) {
         value={password}
         onChange={(event) => setPassword(event.target.value)}
       />
-      <Input
+      <TextField
         label="Confirm password"
         name="confirmPassword"
         type="password"

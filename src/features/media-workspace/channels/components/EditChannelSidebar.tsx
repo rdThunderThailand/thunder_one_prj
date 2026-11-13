@@ -101,7 +101,7 @@ export function EditChannelSidebar({
             <PlayIcon className="h-4 w-4" />
             Go to Programs
           </Link>
-          <Button type="button" variant="secondary" disabled className="w-full px-2.5 py-2 text-xs">
+          <Button type="button" variant="outline" disabled className="w-full px-2.5 py-2 text-xs">
             <CalendarIcon className="h-4 w-4" />
             Go to Calendar
           </Button>

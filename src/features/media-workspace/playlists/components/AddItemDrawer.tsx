@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { SearchIcon } from "@/components/ui/icons";
 import {

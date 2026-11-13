@@ -11,9 +11,9 @@
 // current name on every open — reset by remounting, not by effect (commit e877e4c).
 
 import { useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
-import { Input } from "@/components/ui/lovable/input";
+import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
+import { Input } from "@/components/ui/Input";
 
 export function SaveAsTemplateDialog({
   defaultName,

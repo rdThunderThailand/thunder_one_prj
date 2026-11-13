@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { addMonths, monthCells, selectDateRange } from "../../../calendar-month";
 
 const HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

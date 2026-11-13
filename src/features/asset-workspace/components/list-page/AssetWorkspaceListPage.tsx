@@ -7,12 +7,12 @@
 // `columns` and the render props are functions, which a Server Component cannot pass
 // to a Client one: each screen is a server page that fetches, plus a small "use client"
 // view that declares its columns and renders this.
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { StatTile } from "@/components/ui/StatTile";
-import { Tabs } from "@/components/ui/Tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/lovable/sheet";
 import { EmptyState, LoadingState } from "../states/states";
@@ -81,6 +81,10 @@ export function AssetWorkspaceListPage<Row>({
   panelTitle,
 }: AssetWorkspaceListPageProps<Row>) {
   const url = useListUrlState();
+  const panelId = useId();
+  const activeTab = url.get("tab") ?? tabs?.[0]?.key;
+  const hasTabs = Boolean(tabs?.length);
+  const labelledTab = tabs?.find((tab) => tab.key === activeTab);
   // ponytail: selection is per page — it is filtered to the rows on screen, so paging or
   // filtering drops it. Cross-page selection when bulk actions need it.
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -125,111 +129,130 @@ export function AssetWorkspaceListPage<Row>({
         </div>
       )}
 
-      {tabs && (
+      {hasTabs && (
         <Tabs
-          items={tabs.map((tab) => ({ ...tab, content: null }))}
-          activeKey={url.get("tab") ?? tabs[0]?.key}
-          onChange={(key) => url.set({ tab: key })}
-        />
-      )}
-
-      {filters && <div className="flex flex-wrap items-center gap-2">{filters(url)}</div>}
-
-      {showSelection && selectedIds.length > 0 && (
-        <div
-          role="toolbar"
-          aria-label="Bulk actions"
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-info-muted px-4 py-2 text-sm"
+          variant="underline"
+          activationMode="manual"
+          value={activeTab}
+          onValueChange={(key) => url.set({ tab: key })}
+          className="pb-4"
         >
-          <span className="font-medium text-foreground">{selectedIds.length} selected</span>
-          {bulkActions(selectedIds, () => setSelected(new Set()))}
-        </div>
+          <TabsList aria-label={`${title} views`}>
+            {tabs?.map((tab) => (
+              <TabsTrigger key={tab.key} value={tab.key} id={`${panelId}-${tab.key}`} aria-controls={panelId}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       )}
 
-      <Card className="p-4">
-        {url.isPending ? (
-          <LoadingState />
-        ) : data === null ? (
-          <ErrorState />
-        ) : rows.length === 0 ? (
-          <EmptyState
-            title={emptyTitle}
-            body={emptyBody}
-          />
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs text-muted-foreground">
-                    {showSelection && (
-                      <th className="w-10 py-2">
-                        <Checkbox
-                          aria-label="Select all rows"
-                          checked={allSelected ? true : selectedIds.length > 0 ? "indeterminate" : false}
-                          onCheckedChange={(checked) => toggleAll(checked === true)}
-                        />
-                      </th>
-                    )}
-                    {columns.map((column) => (
-                      <th
-                        key={column.key}
-                        className={`py-2 pr-4 font-medium ${column.className ?? ""}`}
-                      >
-                        {column.header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => {
-                    const id = getRowId(row);
-                    return (
-                      <tr
-                        key={id}
-                        onClick={renderPanel ? () => setOpenId(id) : undefined}
-                        className={`border-b border-border last:border-0 ${renderPanel ? "cursor-pointer hover:bg-muted" : ""}`}
-                      >
-                        {showSelection && (
-                          <td
-                            className="py-3"
-                            onClick={(event) => event.stopPropagation()}
-                          >
-                            <Checkbox
-                              aria-label={`Select row ${id}`}
-                              checked={selected.has(id)}
-                              onCheckedChange={(checked) => toggle(id, checked === true)}
-                            />
-                          </td>
-                        )}
-                        {columns.map((column) => (
-                          <td
-                            key={column.key}
-                            className={`py-3 pr-4 ${column.className ?? ""}`}
-                          >
-                            {column.render(row)}
-                          </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <Pagination
-              page={data.page}
-              totalPages={data.totalPages}
-              perPage={data.pageSize}
-              totalItems={data.total}
-              rangeStart={(data.page - 1) * data.pageSize + 1}
-              rangeEnd={Math.min(data.page * data.pageSize, data.total)}
-              itemLabel={itemLabel}
-              onPageChange={(page) => url.set({ page: String(page) })}
-              onPerPageChange={(size) => url.set({ pageSize: String(size) })}
-            />
-          </>
+      <div
+        id={hasTabs ? panelId : undefined}
+        role={hasTabs ? "tabpanel" : undefined}
+        aria-labelledby={hasTabs && labelledTab ? `${panelId}-${labelledTab.key}` : undefined}
+        aria-label={hasTabs && !labelledTab ? title : undefined}
+        tabIndex={hasTabs ? 0 : undefined}
+        className="space-y-3"
+      >
+        {filters && <div className="flex flex-wrap items-center gap-2">{filters(url)}</div>}
+
+        {showSelection && selectedIds.length > 0 && (
+          <div
+            role="toolbar"
+            aria-label="Bulk actions"
+            className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-info-muted px-4 py-2 text-sm"
+          >
+            <span className="font-medium text-foreground">{selectedIds.length} selected</span>
+            {bulkActions(selectedIds, () => setSelected(new Set()))}
+          </div>
         )}
-      </Card>
+
+        <Card className="p-4">
+          {url.isPending ? (
+            <LoadingState />
+          ) : data === null ? (
+            <ErrorState />
+          ) : rows.length === 0 ? (
+            <EmptyState
+              title={emptyTitle}
+              body={emptyBody}
+            />
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-xs text-muted-foreground">
+                      {showSelection && (
+                        <th className="w-10 py-2">
+                          <Checkbox
+                            aria-label="Select all rows"
+                            checked={allSelected ? true : selectedIds.length > 0 ? "indeterminate" : false}
+                            onCheckedChange={(checked) => toggleAll(checked === true)}
+                          />
+                        </th>
+                      )}
+                      {columns.map((column) => (
+                        <th
+                          key={column.key}
+                          className={`py-2 pr-4 font-medium ${column.className ?? ""}`}
+                        >
+                          {column.header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => {
+                      const id = getRowId(row);
+                      return (
+                        <tr
+                          key={id}
+                          onClick={renderPanel ? () => setOpenId(id) : undefined}
+                          className={`border-b border-border last:border-0 ${renderPanel ? "cursor-pointer hover:bg-muted" : ""}`}
+                        >
+                          {showSelection && (
+                            <td
+                              className="py-3"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <Checkbox
+                                aria-label={`Select row ${id}`}
+                                checked={selected.has(id)}
+                                onCheckedChange={(checked) => toggle(id, checked === true)}
+                              />
+                            </td>
+                          )}
+                          {columns.map((column) => (
+                            <td
+                              key={column.key}
+                              className={`py-3 pr-4 ${column.className ?? ""}`}
+                            >
+                              {column.render(row)}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination
+                page={data.page}
+                totalPages={data.totalPages}
+                perPage={data.pageSize}
+                totalItems={data.total}
+                rangeStart={(data.page - 1) * data.pageSize + 1}
+                rangeEnd={Math.min(data.page * data.pageSize, data.total)}
+                itemLabel={itemLabel}
+                onPageChange={(page) => url.set({ page: String(page) })}
+                onPerPageChange={(size) => url.set({ pageSize: String(size) })}
+              />
+            </>
+          )}
+        </Card>
+      </div>
 
       <Sheet
         open={openRow !== undefined}

@@ -192,6 +192,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
     <div className="flex flex-col gap-4">
       {/* 1. Header */}
       <PageHeader
+        titleInTopbar
         title={detail.name}
         subtitle={`Status: ${displayStatus}`}
         actions={
@@ -232,7 +233,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     {actionBusy ? "กำลังลบ…" : "ยืนยันลบ?"}
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     disabled={actionBusy}
                     onClick={() => setConfirming(false)}
                   >
@@ -262,7 +263,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     {actionBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     disabled={actionBusy}
                     onClick={() => setConfirming(false)}
                   >
@@ -310,7 +311,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                   {actionBusy ? "กำลังเผยแพร่ซ้ำ…" : "ยืนยันเผยแพร่ซ้ำ?"}
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   disabled={actionBusy}
                   onClick={() => setRepublishConfirming(false)}
                 >

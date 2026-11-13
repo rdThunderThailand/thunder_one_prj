@@ -9,7 +9,7 @@ import {
   PlaylistIcon as ListMusic,
   PauseCircleIcon as PauseCircle,
 } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { LibraryEmpty, LibrarySummary } from "../../content-library/LibraryChrome";
 import type { EmptyCause } from "../list-empty-state";
 

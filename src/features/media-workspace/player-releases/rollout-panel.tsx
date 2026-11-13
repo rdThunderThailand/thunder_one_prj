@@ -12,9 +12,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
-import { Input } from "@/components/ui/lovable/input";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/lovable/label";
 import {
   listAllDevices,

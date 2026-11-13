@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Input } from "@/components/ui/lovable/input";
+import { Input } from "@/components/ui/Input";
 import { addPilotMember, listAllDevices } from "./actions";
 import { countVersions, formatTime, isWindows, osOf, pilotBlocker, resolveVersion, type FleetDevice } from "./device-state";
 

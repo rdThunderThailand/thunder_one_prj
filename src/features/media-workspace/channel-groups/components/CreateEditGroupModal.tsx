@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { TextField } from "@/components/ui/TextField";
 import { Modal } from "@/components/ui/Modal";
 import { InfoIcon, MonitorIcon, PlusIcon, ShareNodesIcon, UsersIcon } from "@/components/ui/icons";
 import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
@@ -89,7 +89,7 @@ export function CreateEditGroupModal({
       showCloseButton
       footer={
         <div className="flex w-full justify-between gap-2">
-          <Button type="button" variant="secondary" disabled={saving} onClick={onClose}>
+          <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
             Cancel
           </Button>
           <Button type="button" disabled={saving} onClick={() => void save()}>
@@ -99,7 +99,7 @@ export function CreateEditGroupModal({
       }
       >
         <div className="flex flex-col gap-4">
-        <Input
+        <TextField
           name="group-name"
           label={<>Group Name <span className="text-error">*</span></>}
           value={name}
@@ -152,7 +152,7 @@ export function CreateEditGroupModal({
                 <h3 className="font-semibold text-foreground">Channels to Add ({selectedChannelIds.size})</h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">Selected channels will be added to this group.</p>
               </div>
-              <Button type="button" variant="secondary" className="!px-3 !py-2 text-xs" onClick={() => setManagingChannels(true)}>
+              <Button type="button" variant="outline" className="!px-3 !py-2 text-xs" onClick={() => setManagingChannels(true)}>
                 <PlusIcon className="h-4 w-4" />
                 Add More Channels
               </Button>
@@ -183,7 +183,7 @@ export function CreateEditGroupModal({
               <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <p>You can manage which channels belong to this group from the Manage Channels action.</p>
             </div>
-            <Button type="button" variant="secondary" className="shrink-0 !px-3 !py-2 text-xs" onClick={onManageChannels}>
+            <Button type="button" variant="outline" className="shrink-0 !px-3 !py-2 text-xs" onClick={onManageChannels}>
               Manage Channels
             </Button>
           </div>

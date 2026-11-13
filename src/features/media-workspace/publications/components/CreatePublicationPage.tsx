@@ -23,7 +23,7 @@ import { publicationSeedFromParams } from "../seed-resolver";
 import { requireCompleteDraftSave } from "../draft-save-policy";
 import { useCreateDraftEntry } from "../hooks/useCreateDraftEntry";
 import { DraftResumePrompt } from "./DraftResumePrompt";
-import { Button as LovableButton } from "@/components/ui/lovable/button";
+import { Button as LovableButton } from "@/components/ui/Button";
 import { type WizardStepId } from "../step-validation";
 import { ContentStep } from "./ContentStep";
 import { PrepareContentStep } from "./PrepareContentStep";
@@ -377,8 +377,9 @@ export function CreatePublicationPage() {
   return (
     <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-6">
       <PageHeader
+        titleInTopbar
         title="Create Publication"
-        subtitle="สร้างและเผยแพร่สื่อไปยังทุกช่องทางของคุณ"
+        subtitle="Create and publish content across your channels."
       />
 
       <DraftResumePrompt {...entry.prompt} />
@@ -396,7 +397,7 @@ export function CreatePublicationPage() {
         <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
           <span>มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ออกจากหน้านี้จะทำให้ข้อมูลหายไป ดำเนินการต่อ?</span>
           <div className="flex shrink-0 gap-2">
-            <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setConfirmingCancel(false)}>
+            <Button variant="outline" className="px-3 py-1.5 text-xs" onClick={() => setConfirmingCancel(false)}>
               Stay
             </Button>
             <Button
@@ -416,7 +417,7 @@ export function CreatePublicationPage() {
           <span>{revisionConflict}</span>
           <div className="flex shrink-0 gap-2">
             <Button
-              variant="secondary"
+              variant="outline"
               className="px-3 py-1.5 text-xs"
               onClick={handleReloadFromServer}
               disabled={conflictBusy}
@@ -489,11 +490,11 @@ export function CreatePublicationPage() {
       <Card className="mt-auto flex flex-col gap-3 p-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           {step > 1 ? (
-            <Button variant="secondary" onClick={goBack}>
+            <Button variant="outline" onClick={goBack}>
               <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
             </Button>
           ) : (
-            <Button variant="secondary" onClick={handleCancelClick} disabled={cancelBusy}>Cancel</Button>
+            <Button variant="outline" onClick={handleCancelClick} disabled={cancelBusy}>Cancel</Button>
           )}
           <div className="flex min-w-48 flex-1 items-center gap-3">
             <span className="whitespace-nowrap text-xs text-muted-foreground">
@@ -528,7 +529,7 @@ export function CreatePublicationPage() {
             <p className="text-xs font-medium text-error">{displayError}</p>
             {saveStatus === "error" && (
               <Button
-                variant="secondary"
+                variant="outline"
                 className="px-2.5 py-1 text-xs"
                 onClick={handleNext}
                 disabled={savingNext}

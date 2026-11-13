@@ -102,15 +102,15 @@ function TodayJobsCard() {
       </div>
       <ul className="flex flex-col divide-y divide-border">
         {todayJobs.map((job) => (
-          <li key={job.woId} className="flex items-center justify-between gap-3 py-2.5">
+          <li key={job.woId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-2.5 sm:flex sm:justify-between sm:gap-3">
             <span className="w-14 shrink-0 text-xs font-medium text-muted-foreground">{job.timeLabel}</span>
-            <div className="min-w-0 flex-1">
+            <div className="col-span-2 row-start-2 min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">
                 {job.woId} · {job.title}
               </p>
               <p className="truncate text-xs text-t1-gray-400">{job.customerName}</p>
             </div>
-            <Badge variant="pill" color={statusBadgeColor[job.status]}>
+            <Badge variant="pill" color={statusBadgeColor[job.status]} className="col-start-2 row-start-1 whitespace-nowrap">
               {JOB_STATUS_LABEL[job.status]}
             </Badge>
             <span className="w-16 shrink-0 text-right text-xs text-t1-gray-400">{job.distanceLabel}</span>

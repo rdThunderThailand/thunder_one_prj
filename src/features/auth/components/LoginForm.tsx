@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { TextField } from "@/components/ui/TextField";
 import { login } from "../services/auth.service";
 import { LOGIN_FAILURES, LoginError } from "../login-error";
 
@@ -37,7 +37,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <Input
+      <TextField
         label="Email"
         name="email"
         type="email"
@@ -46,7 +46,7 @@ export function LoginForm() {
         value={email}
         onChange={(event) => setEmail(event.target.value)}
       />
-      <Input
+      <TextField
         label="Password"
         name="password"
         type="password"

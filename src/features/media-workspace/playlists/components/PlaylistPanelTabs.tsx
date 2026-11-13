@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { fetchPublications } from "@/features/media-workspace/publications/services/publications-api";

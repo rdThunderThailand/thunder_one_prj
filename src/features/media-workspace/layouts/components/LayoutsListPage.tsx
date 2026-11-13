@@ -7,7 +7,7 @@ import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PlusIcon as Plus } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
 import { LibraryShell } from "../../content-library/LibraryShell";

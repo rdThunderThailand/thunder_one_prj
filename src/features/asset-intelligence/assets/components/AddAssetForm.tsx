@@ -258,7 +258,7 @@ export function AddAssetForm({ onClose }: { onClose: () => void }) {
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? "Adding..." : "Add Asset"}
           </Button>
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
         </div>

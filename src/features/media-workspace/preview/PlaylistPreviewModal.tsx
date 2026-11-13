@@ -3,7 +3,7 @@
 // Lovable `playlist-preview.tsx`: the Playlist preview as a sheet over the editor. The
 // BroadcastChannel tab (ADR 0061 §4) stays reachable from "Open full preview".
 
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { ExpandIcon } from "@/components/ui/icons";
 import { formatDuration } from "@/features/media-workspace/playlists/duration";
 import type { MediaAsset } from "@/types/domain";

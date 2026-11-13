@@ -2,15 +2,15 @@
 
 import { useState, type ReactNode } from "react";
 import { MenuIcon as Menu, SearchIcon as Search, XIcon as X } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { Input } from "@/components/ui/lovable/input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/lovable/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { cn } from "@/lib/utils";
 
-// Lovable `MediaFolderSidebar` tab: underline, no pill.
+// Library rail keeps its compact underline presentation.
 const railTabClass =
-  "h-10 flex-1 rounded-none text-[10px] shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none";
+  "h-10 flex-1 whitespace-nowrap rounded-none text-[10px] shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none";
 
 export type LibraryRail = {
   /** Folder rail; the function form learns whether it renders in the fixed aside (true) or
@@ -26,8 +26,8 @@ function Rail({ rail, inAside }: { rail: LibraryRail; inAside: boolean }) {
   const folders = typeof rail.folders === "function" ? rail.folders(inAside) : rail.folders;
   if (!rail.tags) return <div className="flex min-h-0 flex-1 flex-col p-2">{folders}</div>;
   return (
-    <Tabs defaultValue={rail.defaultTab ?? "folders"} className="flex min-h-0 flex-1 flex-col">
-      <TabsList className="h-10 w-full shrink-0 rounded-none border-b border-border bg-transparent p-0">
+    <Tabs variant="underline" defaultValue={rail.defaultTab ?? "folders"} className="flex min-h-0 flex-1 flex-col">
+      <TabsList className="h-10 w-full shrink-0 gap-0 rounded-none border-b border-border bg-transparent p-0">
         <TabsTrigger value="folders" className={railTabClass}>Folders</TabsTrigger>
         <TabsTrigger value="tags" className={railTabClass}>Tags</TabsTrigger>
       </TabsList>

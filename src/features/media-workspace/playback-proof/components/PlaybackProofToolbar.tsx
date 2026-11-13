@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { DownloadIcon as Download } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { SearchInput } from "@/components/ui/lovable/core";
-import { Input } from "@/components/ui/lovable/input";
+import { Button } from "@/components/ui/Button";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { Input } from "@/components/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { ChannelScopePicker } from "../../channels/components/ChannelScopePicker";
 import type { ChannelScope } from "../../channels/channel-scope";
@@ -59,7 +59,7 @@ function RangePicker({ range, today, onChange }: { range: DateRange; today: stri
           <Input
             type="date"
             aria-label="From"
-            className="h-9 w-36"
+            className="h-9 w-36 py-1"
             value={draft.from}
             max={today}
             onChange={(event) => setDraft((current) => ({ ...current, from: event.target.value }))}
@@ -68,7 +68,7 @@ function RangePicker({ range, today, onChange }: { range: DateRange; today: stri
           <Input
             type="date"
             aria-label="To"
-            className="h-9 w-36"
+            className="h-9 w-36 py-1"
             value={draft.to}
             max={today}
             onChange={(event) => setDraft((current) => ({ ...current, to: event.target.value }))}

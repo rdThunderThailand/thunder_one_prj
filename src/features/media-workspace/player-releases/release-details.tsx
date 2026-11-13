@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Button } from "@/components/ui/lovable/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/lovable/dialog";
+import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/Dialog";
 import { CopyIcon, DownloadIcon } from "@/components/ui/icons";
 import { downloadPlayerRelease } from "./actions";
 import { formatTime } from "./device-state";

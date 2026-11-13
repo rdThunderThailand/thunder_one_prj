@@ -116,7 +116,7 @@ function DetailPanel({ item }: { item: InventoryItem }) {
       )}
 
       <div className="flex flex-col gap-2">
-        <Button variant="secondary" disabled title="ยังไม่เปิดใช้งาน">
+        <Button variant="outline" disabled title="ยังไม่เปิดใช้งาน">
           แก้ไขข้อมูล
         </Button>
         <Button variant="primary" disabled title="ยังไม่เปิดใช้งาน">

@@ -5,7 +5,7 @@
 // right. Both preview modals share it so they only differ in body and actions (ADR 0076).
 
 import type { ReactNode } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/lovable/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/Dialog";
 import { XIcon } from "@/components/ui/icons";
 
 /** Outline button on the dark sheet — Lovable's `border-primary-foreground/20 bg-transparent`. */

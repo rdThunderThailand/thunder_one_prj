@@ -13,8 +13,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
