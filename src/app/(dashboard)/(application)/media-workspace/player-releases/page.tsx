@@ -12,13 +12,13 @@ export default async function PlayerReleasesPage() {
   const [releases, target] = await Promise.all([listPlayerReleases(), getPilotTarget()]);
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <PageHeader
         titleInTopbar
         title="Player releases"
         subtitle="Upload Windows Player builds and approve them for automatic update. Approved files are public."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Link href="/media-workspace/player-releases/all-devices" className="inline-flex h-9 items-center rounded-lg border border-border bg-card px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               All devices
             </Link>
