@@ -103,7 +103,7 @@ export function EditPersonnelModal({ row, tenantId, units, onClose }: EditPerson
       title={`แก้ไขข้อมูล — ${row.name}`}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
             ยกเลิก
           </Button>
           <Button type="submit" form="edit-personnel-form" variant="primary" disabled={submitting}>

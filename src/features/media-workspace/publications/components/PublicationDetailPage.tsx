@@ -232,7 +232,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     {actionBusy ? "กำลังลบ…" : "ยืนยันลบ?"}
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     disabled={actionBusy}
                     onClick={() => setConfirming(false)}
                   >
@@ -262,7 +262,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                     {actionBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     disabled={actionBusy}
                     onClick={() => setConfirming(false)}
                   >
@@ -310,7 +310,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
                   {actionBusy ? "กำลังเผยแพร่ซ้ำ…" : "ยืนยันเผยแพร่ซ้ำ?"}
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   disabled={actionBusy}
                   onClick={() => setRepublishConfirming(false)}
                 >

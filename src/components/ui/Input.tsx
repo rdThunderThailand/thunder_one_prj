@@ -1,40 +1,22 @@
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from "react";
+import * as React from "react";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: ReactNode;
-  error?: string;
-}
+import { cn } from "@/lib/utils";
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, id, className = "", ...props }, ref) => {
-    const inputId = id ?? props.name;
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
     return (
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor={inputId}
-          className="text-sm font-medium text-foreground"
-        >
-          {label}
-        </label>
-        <input
-          ref={ref}
-          id={inputId}
-          className={`rounded-lg border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-t1-gray-400 focus:ring-2 focus:ring-primary/30 ${
-            error
-              ? "border-error focus:border-error"
-              : "border-border focus:border-primary"
-          } ${className}`}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${inputId}-error` : undefined}
-          {...props}
-        />
-        {error && (
-          <p id={`${inputId}-error`} className="text-xs text-error">
-            {error}
-          </p>
+      <input
+        type={type}
+        className={cn(
+          "flex h-(--spacing-control) w-full rounded-(--radius-control) border border-input bg-card px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          className,
         )}
-      </div>
+        ref={ref}
+        {...props}
+      />
     );
   },
 );
 Input.displayName = "Input";
+
+export { Input };

@@ -137,7 +137,7 @@ export function DeliveryProgress({
         <div className="flex flex-wrap items-center gap-2">
           {retryableCount > 0 && (
             <Button
-              variant="secondary"
+              variant="outline"
               onClick={handleRetryAll}
               disabled={retrying}
             >

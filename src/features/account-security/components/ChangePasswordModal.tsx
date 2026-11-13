@@ -134,7 +134,7 @@ export function ChangePasswordModal({ onClose, onSuccess }: { onClose: () => voi
       title="เปลี่ยนรหัสผ่าน"
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose}>
             ยกเลิก
           </Button>
           <Button type="button" variant="primary" onClick={handleSubmit}>

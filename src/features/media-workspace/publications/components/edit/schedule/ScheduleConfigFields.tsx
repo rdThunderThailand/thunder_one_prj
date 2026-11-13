@@ -1,7 +1,7 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Input } from "@/components/ui/lovable/input";
+import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/lovable/label";
 import { WEEKDAYS } from "../../../schedule";
 import type { DraftErrors, ScheduleDraft } from "../../../schedule-preset";

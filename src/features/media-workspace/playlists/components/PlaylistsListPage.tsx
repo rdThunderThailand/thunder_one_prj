@@ -6,7 +6,7 @@ import { useListUrlState } from "@/hooks/use-list-url-state";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PlusIcon as Plus, TrashIcon as Trash2, UndoIcon as Undo2 } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
 import { LibrarySelectionBar, LibraryShell } from "../../content-library/LibraryShell";
 import { classifyApiError } from "@/lib/api/api-error";

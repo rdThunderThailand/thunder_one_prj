@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 
 export function CreateFolderModal({

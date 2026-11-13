@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Input } from "@/components/ui/lovable/input";
+import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/lovable/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { shiftYmd, TIMEZONES } from "../../../schedule";

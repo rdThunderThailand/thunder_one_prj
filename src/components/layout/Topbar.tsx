@@ -18,6 +18,7 @@ import { GlobalSearch } from "./GlobalSearch";
 import { NotificationBell } from "./NotificationBell";
 import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
 import { UserMenu } from "./UserMenu";
+import { MobileNavigationTrigger } from "./MobileNavigation";
 
 interface TopbarProps {
   userName: string;
@@ -51,17 +52,18 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, loc
   const title = meta?.title ?? fallbackTitle(pathname);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-6 backdrop-blur">
-      <div className="grid h-17 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4">
-        <div className="min-w-0">
+    <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-3 backdrop-blur md:px-6">
+      <div className="flex h-17 items-center gap-2 xl:grid xl:grid-cols-[auto_minmax(0,1fr)_auto] xl:gap-4">
+        <MobileNavigationTrigger />
+        <div className="min-w-0 flex-1 xl:flex-initial">
           {title && <h1 className="truncate text-xl font-extrabold tracking-tight text-foreground">{title}</h1>}
           {meta?.subtitle && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta.subtitle}</p>}
         </div>
 
         <GlobalSearch variant="media" />
 
-        <div className="flex items-center gap-2">
-          <span className="hidden h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground sm:flex">
+        <div className="flex shrink-0 items-center gap-1 md:gap-2">
+          <span className="hidden h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground xl:flex">
             <CalendarDays className="h-3.5 w-3.5 text-primary" />
             {todayLabel()}
           </span>
@@ -75,7 +77,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, loc
           >
             <CircleHelp className="h-4 w-4" />
           </HelpTrigger>
-          <div className="hidden items-center border-l border-border pl-3 lg:flex">
+          <div className="flex items-center lg:border-l lg:border-border lg:pl-3">
             <UserMenu userName={userName} roleLabel={roleLabel} avatarUrl={avatarUrl} variant="compact" />
           </div>
         </div>
@@ -96,9 +98,10 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: 
     // the design reference's own header (69px tall, px-6), and matches the
     // sidebar's logo row (also trimmed to h-[68px] today) so the two borders
     // still line up.
-    <header className="flex h-[68px] items-center gap-4 border-b border-border bg-card px-6">
+    <header className="flex h-[68px] shrink-0 items-center gap-2 border-b border-border bg-card px-3 md:gap-4 md:px-6">
       {/* h-12/px-4 -> h-9/px-3, icon 24px -> 16px, matching the reference's
           own 36px-tall search bar. */}
+      <MobileNavigationTrigger />
       <GlobalSearch variant="default" />
       {/* 2026-09-19: text-sm/font-bold -> text-xs/font-semibold, matching
           the design reference's own topbar controls (12px/600) — was
@@ -121,7 +124,7 @@ function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: 
         </HelpTrigger>
         <span
           aria-hidden="true"
-          className="mx-2 h-6 w-px bg-accent"
+          className="mx-2 hidden h-6 w-px bg-accent md:block"
         />
         <UserMenu
           userName={userName}
@@ -137,6 +140,10 @@ export function Topbar(props: TopbarProps) {
   const pathname = usePathname();
   const isMediaWorkspace = resolveActiveApp(pathname)?.id === "media-workspace";
   // Editors run in the focus shell (ADR 0077): the page header carries the title and back link.
-  if (isMediaWorkspace && isEditorRoute(pathname)) return null;
+  if (isMediaWorkspace && isEditorRoute(pathname)) return (
+    <header className="flex h-12 shrink-0 items-center border-b border-border bg-card px-3 md:hidden">
+      <MobileNavigationTrigger />
+    </header>
+  );
   return isMediaWorkspace ? <MediaWorkspaceTopbar {...props} pathname={pathname} /> : <DefaultTopbar {...props} />;
 }

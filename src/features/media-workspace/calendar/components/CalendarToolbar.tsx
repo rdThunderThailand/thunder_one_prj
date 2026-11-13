@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { Input } from "@/components/ui/lovable/input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { ChannelScopePicker } from "../../channels/components/ChannelScopePicker";
 import type { ChannelScope } from "../../channels/channel-scope";

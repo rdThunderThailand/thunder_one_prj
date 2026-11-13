@@ -19,7 +19,7 @@ import {
   ActivityIcon as Activity,
   XIcon as X,
 } from "@/components/ui/icons";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_LABEL, LOCALE_NAME, formatDate, t } from "../copy";
 import { RETURN_STORAGE_KEY, guideHref, helpHref } from "../navigation";

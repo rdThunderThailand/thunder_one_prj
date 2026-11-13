@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { Tabs } from "@/components/ui/Tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchChannels } from "../../channels/services/channels-api";
 import type { ChannelListItem } from "../../channels/types";
@@ -87,42 +87,45 @@ export function ChannelGroupsPage() {
         <div className={hasSidebar ? "min-h-0 min-w-0 xl:col-start-1 xl:row-start-3" : "flex min-h-0 min-w-0 flex-1"}>
           <Card className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4">
             <Tabs
-              activeKey={activeTab}
-              onChange={(key) => {
+              variant="underline"
+              activationMode="manual"
+              value={activeTab}
+              onValueChange={(key) => {
                 setActiveTab(key);
                 if (key !== "groups") setSelectedId(null);
                 if (key !== "ungrouped") setSelectedUngroupedId(null);
               }}
-              items={[
-                {
-                  key: "groups",
-                  label: `Channel Groups (${groups.length})`,
-                  content: <ChannelGroupsTable groups={groups} selectedId={selectedId} onSelect={(g) => {
+            >
+              <TabsList aria-label="Channel groups">
+                <TabsTrigger value="groups">Channel Groups ({groups.length})</TabsTrigger>
+                <TabsTrigger value="ungrouped">Ungrouped Channels ({ungrouped.length})</TabsTrigger>
+              </TabsList>
+              <TabsContent value="groups">
+                <ChannelGroupsTable
+                  groups={groups}
+                  selectedId={selectedId}
+                  onSelect={(g) => {
                     setSelectedUngroupedId(null);
                     setSelectedId(g.id);
-                  }} />,
-                },
-                {
-                  key: "ungrouped",
-                  label: `Ungrouped Channels (${ungrouped.length})`,
-                  content: (
-                    <UngroupedChannelsTable
-                      channels={ungrouped}
-                      groups={groups}
-                      selected={ungroupedSelection}
-                      selectedChannelId={selectedUngroupedId}
-                      onSelectionChange={setUngroupedSelection}
-                      onSelect={(channel) => {
-                        setSelectedId(null);
-                        setSelectedUngroupedId(channel.id);
-                      }}
-                      onCreateGroup={() => setCreating(true)}
-                      onGroupChanged={handleGroupChanged}
-                    />
-                  ),
-                },
-              ]}
-            />
+                  }}
+                />
+              </TabsContent>
+              <TabsContent value="ungrouped">
+                <UngroupedChannelsTable
+                  channels={ungrouped}
+                  groups={groups}
+                  selected={ungroupedSelection}
+                  selectedChannelId={selectedUngroupedId}
+                  onSelectionChange={setUngroupedSelection}
+                  onSelect={(channel) => {
+                    setSelectedId(null);
+                    setSelectedUngroupedId(channel.id);
+                  }}
+                  onCreateGroup={() => setCreating(true)}
+                  onGroupChanged={handleGroupChanged}
+                />
+              </TabsContent>
+            </Tabs>
           </Card>
 
         </div>

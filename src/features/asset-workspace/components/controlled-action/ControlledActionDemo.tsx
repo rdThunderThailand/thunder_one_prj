@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { Label } from "@/components/ui/lovable/label";
 import { actionsFor } from "../../domain/asset-actions";

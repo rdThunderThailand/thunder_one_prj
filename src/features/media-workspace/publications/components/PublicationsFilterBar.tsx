@@ -1,7 +1,7 @@
 "use client";
 
 import { FilterIcon, GridIcon, ListIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import {
   Select,
   SelectContent,

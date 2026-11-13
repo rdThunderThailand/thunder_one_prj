@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { isConflict } from "@/lib/api/api-error";
 import { fetchComposition, setCompositionZones } from "@/features/media-workspace/compositions/services/compositions-api";
 import { bindingsFromCompositionZones, toSetZonesPayload, withZonePlayModes } from "@/features/media-workspace/compositions/zone-bindings";

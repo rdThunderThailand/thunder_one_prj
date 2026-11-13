@@ -203,7 +203,7 @@ export function ChannelGroupInspector({
         title="Delete Channel Group?"
         footer={
           <>
-            <Button type="button" variant="secondary" disabled={busy} onClick={() => setConfirmingDelete(false)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setConfirmingDelete(false)}>
               Cancel
             </Button>
             <Button type="button" disabled={busy} onClick={() => void confirmDelete()}>

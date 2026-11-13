@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { DownloadIcon as Download } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { SearchInput } from "@/components/ui/lovable/core";
-import { Input } from "@/components/ui/lovable/input";
+import { Button } from "@/components/ui/Button";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { Input } from "@/components/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { ChannelScopePicker } from "../../channels/components/ChannelScopePicker";
 import type { ChannelScope } from "../../channels/channel-scope";

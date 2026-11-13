@@ -7,7 +7,7 @@ import {
   BroadcastIcon as Radio,
   type Icon,
 } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { WEEKDAYS } from "../../schedule";
 import { describeSchedule } from "../../schedule-describe";
 import type { ProgramEditState } from "../../program-edit";

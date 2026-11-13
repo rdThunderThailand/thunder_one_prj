@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { CONTENT_KIND_LABELS, ContentKindIcon } from "../../publications/components/now-next/ContentKindIcon";
 import { ProgramCover } from "../../publications/components/now-next/ProgramCover";
 import { PRIORITY_STYLES } from "../../publications/components/now-next/UpNextTimeline";
@@ -66,7 +66,7 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex min-w-0 items-center gap-2">
-          {isNowBlock(segment, now) && <Badge>Now</Badge>}
+          {isNowBlock(segment, now) && <Badge variant="default">Now</Badge>}
           <Link
             href={`/media-workspace/program/${first.id}`}
             className="truncate text-sm font-bold text-foreground hover:text-primary"

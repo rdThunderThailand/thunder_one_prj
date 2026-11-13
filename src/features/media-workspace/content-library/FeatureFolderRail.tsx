@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { FolderIcon as Folder } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
+import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
 import { ContentFolderRail, type FolderCollection } from "./ContentFolderRail";
 import { isDescendant } from "./folder-tree";
 import {

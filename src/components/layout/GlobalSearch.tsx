@@ -163,21 +163,23 @@ export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
           <button
             type="button"
             aria-keyshortcuts={`${shortcutAria(platform, "k")} /`}
-            className="relative mx-auto hidden h-9 w-full max-w-md items-center rounded-lg border border-border bg-card pl-9 pr-14 text-left text-xs text-muted-foreground hover:border-primary/40 md:flex"
+            aria-label="ค้นหาทุกอย่างใน ThunderOne"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-left text-xs text-muted-foreground hover:border-primary/40 xl:mx-auto xl:w-full xl:max-w-md xl:justify-start xl:pl-9 xl:pr-14"
           >
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            ค้นหาทุกอย่างใน ThunderOne...
-            <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
+            <Search className="pointer-events-none h-4 w-4 text-muted-foreground xl:absolute xl:left-3 xl:top-1/2 xl:-translate-y-1/2" />
+            <span className="hidden xl:block">ค้นหาทุกอย่างใน ThunderOne...</span>
+            <kbd className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground xl:block pointer-coarse:hidden">{shortcut}</kbd>
           </button>
         ) : (
           <button
             type="button"
             aria-keyshortcuts={`${shortcutAria(platform, "k")} /`}
-            className="flex h-9 w-full max-w-[700px] items-center gap-2.5 rounded-lg bg-accent px-3 text-left hover:bg-accent"
+            aria-label="ค้นหาทุกอย่างใน ThunderOne"
+            className="flex h-9 w-9 min-w-0 shrink-0 items-center justify-center gap-2.5 md:w-full md:max-w-[700px] md:justify-start md:shrink rounded-lg bg-accent px-2 md:px-3 text-left hover:bg-accent"
           >
             <SearchIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="w-full text-xs text-muted-foreground">ค้นหาทุกอย่างใน ThunderOne...</span>
-            <kbd className="shrink-0 whitespace-nowrap text-xs text-muted-foreground pointer-coarse:hidden">{shortcut}</kbd>
+            <span className="hidden w-full truncate text-xs text-muted-foreground md:block">ค้นหาทุกอย่างใน ThunderOne...</span>
+            <kbd className="hidden shrink-0 whitespace-nowrap text-xs text-muted-foreground lg:block pointer-coarse:hidden">{shortcut}</kbd>
           </button>
         )}
       </Dialog.Trigger>

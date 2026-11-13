@@ -75,7 +75,7 @@ export function ChannelGroupsPickerModal({
       size="lg"
       footer={
         <>
-          <Button type="button" variant="secondary" disabled={saving} onClick={onClose}>
+          <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
             Cancel
           </Button>
           <Button type="button" disabled={saving || options === null} onClick={() => void save()}>

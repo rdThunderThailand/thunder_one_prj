@@ -41,7 +41,7 @@ export function EditorLoadError({
       <p className="mx-auto mt-2 max-w-xl text-sm text-error">
         {error.message}
       </p>
-      <Button variant="secondary" className="mt-4" disabled={retrying} onClick={onRetry}>
+      <Button variant="outline" className="mt-4" disabled={retrying} onClick={onRetry}>
         {retrying ? "Retrying…" : "Retry"}
       </Button>
     </Card>

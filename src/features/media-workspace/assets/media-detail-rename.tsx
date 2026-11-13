@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { CheckIcon as Check, EditIcon as Pencil, XIcon as X } from "@/components/ui/icons";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
-import { Input } from "@/components/ui/lovable/input";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { classifyApiError } from "@/lib/api/api-error";
 import { renameMediaAsset } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";

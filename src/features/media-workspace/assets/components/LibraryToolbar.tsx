@@ -1,7 +1,7 @@
 "use client";
 
 import { GridIcon as Grid2X2, ListIcon as LayoutList } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { LibrarySearch } from "../../content-library/LibraryShell";
 

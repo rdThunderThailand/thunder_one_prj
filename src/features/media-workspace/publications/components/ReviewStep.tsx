@@ -88,7 +88,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
           <h1 className="text-xl font-extrabold tracking-tight text-foreground">Step 4 — Review</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">ตรวจสอบก่อนเผยแพร่</p>
         </div>
-        <Button variant="secondary" onClick={onEditProgram}><EditIcon className="h-4 w-4" /> Edit Program</Button>
+        <Button variant="outline" onClick={onEditProgram}><EditIcon className="h-4 w-4" /> Edit Program</Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">

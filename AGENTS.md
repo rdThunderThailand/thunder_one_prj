@@ -25,7 +25,12 @@ reviewing a screen. Where the skill and this file disagree, this file wins.
 - Icons: import from `src/components/ui/icons.tsx` (antd glyphs; platform concepts via `T1Icon`,
   Media concepts per the `media` profile map). Add a missing concept there; never import
   `@ant-design/icons` or SVG paths in feature code.
-- Components: reuse `src/components/ui/lovable/` primitives; Lovable is no longer a visual source.
+- Components: use canonical modules in `src/components/ui/` for Button, Tabs, Input/TextField,
+  SearchInput, Skeleton, ProgressBar, EmptyState, Badge/Tag and Dialog/Modal. Their `lovable/`
+  exports/adapters preserve compatibility; remaining primitives still live in `lovable/`.
+  Badge/Tag default to 10px with caller overrides retained (ADR 0111).
+  Before changing a shared API or default, read its ADR linked in
+  `docs/design-system/plan-component-consolidation.md`. Lovable is not a visual source.
 - Nav and terms follow `src/config/nav/media-workspace.tsx` where the profile disagrees (ADR 0096 §6).
 - Thai text: Noto Sans Thai via `next/font` after Manrope (ADR 0096 §7, local until OD-05 closes).
 - Do not run the design system's setup CLI here. Update by re-copying the skill and

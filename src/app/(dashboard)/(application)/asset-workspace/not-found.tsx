@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/lovable/button";
+import { buttonVariants } from "@/components/ui/Button";
 import { NotFoundState } from "@/features/asset-workspace/components/states/states";
 
 export default function AssetWorkspaceNotFound() {

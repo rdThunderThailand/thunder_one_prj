@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { Input } from "@/components/ui/lovable/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
+import { Input } from "@/components/ui/Input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import type { MediaAsset } from "@/types/domain";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";

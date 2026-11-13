@@ -77,7 +77,7 @@ export function EditProfileModal({ userId, firstName, lastName, firstNameTh, las
       title="แก้ไขข้อมูลส่วนตัว"
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
             ยกเลิก
           </Button>
           <Button type="submit" form="edit-profile-form" variant="primary" disabled={submitting}>

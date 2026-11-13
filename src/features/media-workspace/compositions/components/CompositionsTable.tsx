@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { EditIcon, MoreIcon, PlayIcon, TrashIcon, UndoIcon } from "@/components/ui/icons";

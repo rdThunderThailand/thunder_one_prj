@@ -106,7 +106,7 @@ export function CreateGroupChannelsModal({
       showCloseButton
       footer={
         <div className="flex w-full justify-end gap-2">
-          <Button type="button" variant="secondary" disabled={saving} onClick={onClose}>
+          <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
             Cancel
           </Button>
           <Button type="button" disabled={saving} onClick={() => void save()}>

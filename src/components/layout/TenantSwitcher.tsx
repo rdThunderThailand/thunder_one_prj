@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { BuildingIcon, CheckIcon, ChevronDownIcon, SearchIcon } from "@/components/ui/icons";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/lovable/dialog";
-import { Input } from "@/components/ui/lovable/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/Dialog";
+import { Input } from "@/components/ui/Input";
 import type { AvailableTenant } from "@/features/auth/services/get-session";
 
 interface TenantSwitcherProps {

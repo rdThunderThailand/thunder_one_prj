@@ -8,9 +8,9 @@ import {
   FolderIcon as Folder,
   SearchIcon as Search,
 } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { Input } from "@/components/ui/lovable/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
 import { cn } from "@/lib/utils";
 import { classifyApiError } from "@/lib/api/api-error";
 import { moveMediaAsset, restoreMediaAsset, trashMediaAsset } from "@/lib/api/media-api";

@@ -61,7 +61,7 @@ export function AddContactChannelModal({ onClose }: { onClose: () => void }) {
       title="เพิ่มช่องทางการติดต่อ"
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose}>
             ยกเลิก
           </Button>
           <Button type="submit" form="add-contact-channel-form" variant="primary">
