@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import type { ComponentType } from "react";
 import Link from "next/link";
 import { ChevronRightIcon, DownloadIcon, FileTextIcon, RefreshIcon, SpinnerIcon } from "@/components/ui/icons";
@@ -50,7 +51,7 @@ export function BulkImportNextSteps({
   const { created, createdWithWarning, notRegistered } = batch.counts;
   const registered = created + createdWithWarning;
   return (
-    <section className="shrink-0 space-y-3 rounded-card border border-border bg-card p-4">
+    <Card className="shrink-0 space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
       <h2 className="text-sm font-semibold">Next Steps</h2>
       <div
         className={cn(
@@ -88,6 +89,6 @@ export function BulkImportNextSteps({
           </Button>
         )}
       </div>
-    </section>
+    </Card>
   );
 }

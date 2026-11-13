@@ -1,0 +1,6 @@
+import { RETIRE_SUBTITLE, RETIRE_TITLE } from "@/features/asset-workspace/domain/asset-lifecycle-actions";
+import { ChangeStatusLoading } from "@/features/asset-workspace/components/lifecycle/ChangeStatusLoading";
+
+export default function Loading() {
+  return <ChangeStatusLoading from="assignments" title={RETIRE_TITLE} subtitle={RETIRE_SUBTITLE} />;
+}

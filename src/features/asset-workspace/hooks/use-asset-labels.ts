@@ -76,19 +76,22 @@ export function useAssetLabels(context: string, viewKey: string) {
   }
 
   function setFormat(format: LabelFormat) {
-    if (current.phase !== "preview" || controllerRef.current) return;
+    // "ready" too: the FE 06 page keeps settings on screen after a PDF; the dialog shows them only in preview.
+    if ((current.phase !== "preview" && current.phase !== "ready") || controllerRef.current) return;
     let error: AssetActionError | null = null;
     try { assertLabelFormat(current.labels, format); }
     catch (failure) { error = labelFailure(failure, current.scope); }
-    setState({ ...current, format, file: null, completed: 0, error });
+    setState({ ...current, phase: "preview", format, file: null, completed: 0, error });
   }
 
   function setField(field: LabelField, checked: boolean) {
-    if (current.phase !== "preview" || controllerRef.current) return;
-    setState({ ...current, fields: { ...current.fields, [field]: checked }, file: null, completed: 0 });
+    // "ready" too: the FE 06 page keeps settings on screen after a PDF; the dialog shows them only in preview.
+    if ((current.phase !== "preview" && current.phase !== "ready") || controllerRef.current) return;
+    setState({ ...current, phase: "preview", fields: { ...current.fields, [field]: checked }, file: null, completed: 0 });
   }
 
-  async function generate() {
+  /** `copies` repeats each label page (FE 06); callers without it get one page per asset as before. */
+  async function generate(copies = 1) {
     const guard = scopeRef.current;
     if (!current.labels.length || controllerRef.current || !guard?.active || guard.key !== key) return;
     const controller = new AbortController();
@@ -98,10 +101,11 @@ export function useAssetLabels(context: string, viewKey: string) {
     try {
       const { createAssetLabelsPdf } = await import("../services/asset-label-pdf");
       controller.signal.throwIfAborted();
-      const file = await createAssetLabelsPdf(current.labels, current.format, current.fields, controller.signal, (completed) => {
+      const pages = current.labels.flatMap((label) => Array.from({ length: copies }, () => label));
+      const file = await createAssetLabelsPdf(pages, current.format, current.fields, controller.signal, (completed) => {
         if (isCurrent()) setState((previous) => ({ ...previous, completed }));
       });
-      if (isCurrent()) setState({ ...current, phase: "ready", completed: current.labels.length + 1, file, error: null });
+      if (isCurrent()) setState({ ...current, phase: "ready", completed: pages.length + 1, file, error: null });
     } catch (error) {
       if (isCurrent()) setState({ ...current, phase: "preview", file: null,
         error: new AssetActionError(error instanceof AssetActionError ? error.message : "The PDF could not be generated. Try again.") });

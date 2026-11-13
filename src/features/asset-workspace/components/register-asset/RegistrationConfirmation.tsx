@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -51,7 +52,7 @@ export function RegistrationConfirmation({ confirmation, blocker, missingFiles, 
     else if (editStep !== undefined) onEdit(editStep);
   };
   return (
-    <section className="@container/confirmation mb-3 min-w-0 space-y-3 rounded-card border border-border bg-card p-4" aria-label="Confirmation status">
+    <Card role="region" className="@container/confirmation mb-3 min-w-0 space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4" aria-label="Confirmation status">
       <RegistrationProgressDialog
         open={busy || Boolean(failure)} busy={busy} stage={stage}
         files={progressFiles} waiting={Math.max(selected.length - progressFiles.length, 0)}
@@ -143,7 +144,7 @@ export function RegistrationConfirmation({ confirmation, blocker, missingFiles, 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </section>
+    </Card>
   );
 }
 
@@ -162,7 +163,7 @@ export function RegistrationReceipt({ result, draft, options, photo, onBack, onA
   ];
   return (
     <section className="h-full min-h-0 overflow-y-auto overscroll-contain py-2" aria-label="Registration succeeded">
-      <div className="mx-auto w-full max-w-xl space-y-5 rounded-card border border-border bg-card p-6 shadow-panel">
+      <Card className="mx-auto w-full max-w-xl space-y-5 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-6">
         <header className="flex flex-col items-center gap-3 text-center">
           <span aria-hidden="true" className="flex size-14 items-center justify-center rounded-full bg-success-muted text-success">
             <CheckIcon className="size-7" />
@@ -225,7 +226,7 @@ export function RegistrationReceipt({ result, draft, options, photo, onBack, onA
             </Button>
           </div>
         </div>
-      </div>
+      </Card>
     </section>
   );
 }

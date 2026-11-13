@@ -18,6 +18,7 @@ export const assetDetailSchema = z.object({
   custody: reference.extend({
     type: z.enum(["person", "org_unit"]), since: z.string().nullable().default(null),
     avatarUrl: z.string().nullable(), department: reference.nullable(),
+    note: z.string().nullable().default(null),
   }).nullable(),
   // Legacy values must remain visible without guessing their canonical meaning.
   lifecycleStatus: z.string(),
@@ -40,6 +41,8 @@ const file = z.object({
   uploadedAt: z.string(),
   // Signed for one hour; null when Storage could not sign the file.
   url: z.string().nullable(),
+  // BE 02 (2026-11-12): null when no uploader was recorded or the user no longer exists.
+  uploadedBy: reference.nullable().default(null),
 });
 export const assetFilesSchema = z.object({
   photos: z.array(file.extend({ thumbnailUrl: z.string().nullable() })),
@@ -56,24 +59,31 @@ export const assetWarrantiesSchema = z.array(z.object({
 }));
 export type AssetWarranty = z.infer<typeof assetWarrantiesSchema>[number];
 
-export const assetActivityPageSchema = z.object({
+const historyText = z.string().nullable();
+/** BE 03 `GET …/history`: one row per event; `from` / `to` are null when the event did not record them. */
+export const assetHistoryPageSchema = z.object({
   data: z.array(z.object({
-    id: z.string(), kind: z.enum(["registered", "details_edited", "photos_updated", "documents_updated", "other"]),
-    summary: z.string().nullable(), reason: z.string().nullable(),
-    actorName: z.string().nullable(), at: z.string(),
-    events: z.array(z.object({
-      id: z.string(), action: z.string(), summary: z.string().nullable(), reason: z.string().nullable(),
-      file: z.object({
-        fileId: z.string(), kind: z.enum(["photo", "document"]).nullable(), filename: z.string(), mimeType: z.string(),
-        url: z.string().nullable(), thumbnailUrl: z.string().nullable(),
-      }).nullable(),
-    })),
+    id: z.string(), at: z.string(), eventType: z.string(), action: z.string(), summary: historyText,
+    from: historyText, to: historyText, reason: historyText, actorName: historyText,
   })),
   page: z.number().int().positive(),
   pageSize: z.number().int().positive().max(100),
   total: z.number().int().nonnegative(),
   totalPages: z.number().int().nonnegative(),
-  expiresAt: z.string(),
 });
-export type AssetActivityPage = z.infer<typeof assetActivityPageSchema>;
-export type AssetActivityEntry = AssetActivityPage["data"][number];
+export type AssetHistoryPage = z.infer<typeof assetHistoryPageSchema>;
+export type AssetHistoryEvent = AssetHistoryPage["data"][number];
+
+const optionalText = z.string().nullable();
+export const assetStatusHistoryPageSchema = z.object({
+  data: z.array(z.object({
+    id: z.string(), at: z.string(), action: optionalText, fromStatus: optionalText, toStatus: optionalText,
+    fromCondition: optionalText, toCondition: optionalText, reason: optionalText, notes: optionalText, actorName: optionalText,
+  })),
+  page: z.number().int().positive(),
+  pageSize: z.number().int().positive().max(100),
+  total: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(),
+});
+export type AssetStatusHistoryPage = z.infer<typeof assetStatusHistoryPageSchema>;
+export type AssetStatusChange = AssetStatusHistoryPage["data"][number];

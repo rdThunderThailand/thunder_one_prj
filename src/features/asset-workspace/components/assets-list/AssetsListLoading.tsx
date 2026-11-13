@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/Card";
 
 export function AssetsSummaryLoading() {
   return (
-    <section aria-label="Loading asset totals" role="status" className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @6xl:grid-cols-6">
+    <section aria-label="Loading asset totals" role="status" className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @5xl:grid-cols-6">
       {Array.from({ length: 6 }, (_, index) => (
         <Card key={index} className="flex min-w-0 gap-3 p-4 motion-reduce:[&_*]:animate-none">
           <Skeleton className="size-10 shrink-0 rounded-full" />
@@ -31,26 +31,26 @@ export function AssetsFilterOptionsLoading() {
 export function AssetsTableLoading() {
   return (
     <div role="status" aria-label="Loading asset rows" className="min-w-0">
-      <div className="hidden @min-4xl/assets-results:block">
-        <div className="grid h-10 grid-cols-[2rem_minmax(0,2fr)_repeat(4,minmax(0,1fr))_2rem] items-center gap-3 border-y border-border bg-muted px-3">
-          {Array.from({ length: 7 }, (_, index) => (
+      <div className="hidden @min-5xl/assets-results:block">
+        <div className="grid h-10 grid-cols-[2rem_minmax(0,2fr)_repeat(7,minmax(0,1fr))_4rem] items-center gap-3 border-y border-border bg-muted px-3">
+          {Array.from({ length: 10 }, (_, index) => (
             <Skeleton key={index} className="h-3 w-full motion-reduce:animate-none" />
           ))}
         </div>
         {Array.from({ length: 8 }, (_, row) => (
-          <div key={row} className="grid h-13 grid-cols-[2rem_minmax(0,2fr)_repeat(4,minmax(0,1fr))_2rem] items-center gap-3 border-b border-border px-3">
+          <div key={row} className="grid h-12 grid-cols-[2rem_minmax(0,2fr)_repeat(7,minmax(0,1fr))_4rem] items-center gap-3 border-b border-border px-3">
             <Skeleton className="size-4 rounded-control motion-reduce:animate-none" />
             <div className="flex min-w-0 items-center gap-2">
               <Skeleton className="size-8 shrink-0 rounded-control motion-reduce:animate-none" />
               <Skeleton className="h-3 w-4/5 motion-reduce:animate-none" />
             </div>
-            {Array.from({ length: 5 }, (_, col) => (
+            {Array.from({ length: 8 }, (_, col) => (
               <Skeleton key={col} className="h-3 w-4/5 motion-reduce:animate-none" />
             ))}
           </div>
         ))}
       </div>
-      <div className="divide-y divide-border @min-4xl/assets-results:hidden">
+      <div className="divide-y divide-border @min-5xl/assets-results:hidden">
         {Array.from({ length: 5 }, (_, row) => (
           <div key={row} className="space-y-3 p-3">
             <div className="flex items-center gap-3">
@@ -89,7 +89,7 @@ export function AssetsListLoading() {
           <Skeleton className="h-10 w-48 max-w-full rounded-control motion-reduce:animate-none" />
         </div>
       </div>
-      <div className="@container/assets-results overflow-hidden rounded-card border border-border bg-card">
+      <Card className="@container/assets-results overflow-hidden motion-reduce:transition-none">
         <div className="flex h-12 items-center justify-between gap-3 px-3">
           <Skeleton className="h-7 w-1/2" />
           <Skeleton className="h-7 w-1/4" />
@@ -101,7 +101,7 @@ export function AssetsListLoading() {
           <Skeleton className="h-7 w-28" />
           <Skeleton className="h-7 w-60 max-w-full" />
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { RefreshIcon, SpinnerIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { ignoredHeaders, missingRequired } from "../../domain/asset-import-mapping";
@@ -12,7 +13,7 @@ export function BulkImportMappingCard({ flow }: { flow: AssetImportFlow }) {
   const missing = parsed ? missingRequired(mapping, options.columns) : [];
 
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-card border border-border bg-card p-4">
+    <Card className="flex min-w-0 flex-col gap-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
       <div className="space-y-1">
         <h2 className="flex min-h-8 items-center text-sm font-semibold">1. Map Columns</h2>
         <p className="text-xs leading-relaxed text-muted-foreground">
@@ -59,6 +60,6 @@ export function BulkImportMappingCard({ flow }: { flow: AssetImportFlow }) {
       {rowsSent && (
         <p className="text-xs text-muted-foreground">Change the mapping with Replace File.</p>
       )}
-    </section>
+    </Card>
   );
 }

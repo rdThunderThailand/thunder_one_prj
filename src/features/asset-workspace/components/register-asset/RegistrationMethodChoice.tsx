@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -143,9 +144,9 @@ export function RegistrationMethodChoice({
             />
           </RegistrationMethodCard>
         </div>
-        <section
+        <Card role="region"
           aria-labelledby="method-comparison-title"
-          className="space-y-2 rounded-card border border-border bg-card p-3"
+          className="space-y-2 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-3"
         >
           <h2
             id="method-comparison-title"
@@ -190,7 +191,7 @@ export function RegistrationMethodChoice({
               ))}
             </dl>
           </div>
-        </section>
+        </Card>
         <RegistrationResources
           options={bulkState.options}
           loading={bulkState.loading}

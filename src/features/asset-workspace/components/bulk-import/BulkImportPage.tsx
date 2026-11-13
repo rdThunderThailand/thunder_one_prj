@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -206,14 +207,14 @@ function BulkImportLoading({ step }: { step: number | null }) {
               : "items-start @min-5xl/upload:grid-cols-[minmax(0,1fr)_20rem]"
         }`}
       >
-        <div className="space-y-3 rounded-card border border-border bg-card p-4">
+        <Card className="space-y-3 motion-reduce:transition-none p-4">
           <Skeleton className="h-4 w-1/3 motion-reduce:animate-none" />
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-9 motion-reduce:animate-none" />
           ))}
-        </div>
+        </Card>
         {step !== 3 && (
-          <div className="space-y-3 rounded-card border border-border bg-card p-4">
+          <Card className="space-y-3 motion-reduce:transition-none p-4">
             <Skeleton className="h-4 w-1/2 motion-reduce:animate-none" />
             {Array.from({ length: 6 }, (_, index) => (
               <Skeleton
@@ -221,7 +222,7 @@ function BulkImportLoading({ step }: { step: number | null }) {
                 className="h-9 motion-reduce:animate-none"
               />
             ))}
-          </div>
+          </Card>
         )}
       </div>
     </div>

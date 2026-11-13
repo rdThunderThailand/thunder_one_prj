@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -55,13 +56,13 @@ function RecoveryContent({ tenantId, userId, message, status, onReset, initialCa
     <div className="h-full min-w-0 space-y-4 overflow-y-auto overscroll-contain">
       <PageHeader title="Register Asset" subtitle={uncertain ? "Recover the original registration result" : "Registration options are unavailable"} />
       {uncertain && record ? (
-        <section className="space-y-3 rounded-card border border-border bg-card p-4">
+        <Card className="space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
           <h2 className="break-words text-sm font-semibold">{record.draft.name}</h2>
           <p className="text-xs text-muted-foreground">The creation outcome is not confirmed. Your original request is retained. You can recover its result without loading registration options.</p>
           {busy && <p role="status" className="text-xs text-primary">Recovering the original result…</p>}
           {error && <p role="alert" className="text-xs text-error">{error}</p>}
           <Button disabled={busy || storageBlocked} onClick={() => { void confirmation.start(record.draft, [], () => {}); }}>Retry original request</Button>
-        </section>
+        </Card>
       ) : (
         <ErrorState title={accessTitle} body={accessMessage} onRetry={() => { if (!busy) void confirmation.refresh(); }} />
       )}

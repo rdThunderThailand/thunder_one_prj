@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ClipboardIcon, DownloadIcon, SpinnerIcon } from "@/components/ui/icons";
@@ -47,8 +48,8 @@ export function BulkImportValidationPanel({ flow }: {
   }
 
   return (
-    <section
-      className="@container/validate flex min-w-0 flex-col gap-3 rounded-card border border-border bg-card p-4"
+    <Card
+      className="@container/validate flex min-w-0 flex-col gap-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4"
       aria-busy={running}
     >
       <div className="space-y-1">
@@ -102,6 +103,6 @@ export function BulkImportValidationPanel({ flow }: {
           </Button>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

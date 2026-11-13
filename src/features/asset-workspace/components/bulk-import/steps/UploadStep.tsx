@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { useId, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -50,7 +51,7 @@ export function UploadStep({
         file && "@min-4xl/upload:items-stretch",
       )}>
         <div className="min-w-0 space-y-3">
-          <section className="@container/choose-file space-y-3 rounded-card border border-border bg-card p-4">
+          <Card className="@container/choose-file space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4">
             <h2 className="text-sm font-semibold">1. Choose File</h2>
             <p className="text-xs leading-relaxed text-muted-foreground">
               Upload an Excel or CSV UTF-8 file with your asset information, or download
@@ -106,7 +107,7 @@ export function UploadStep({
                 </span>
               </Button>
             </div>
-          </section>
+          </Card>
           <BulkImportUploadedFile
             key={`${file?.name ?? ""}:${file?.lastModified ?? ""}:${flow.parsed?.name ?? "reading"}`}
             flow={flow}

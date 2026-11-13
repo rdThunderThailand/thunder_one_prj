@@ -15,10 +15,16 @@ async function handle(request: Request, ctx: RouteCtx): Promise<NextResponse> {
   const joinedPath = path.join("/");
   const assetV2 = path[0] === "v2" && path[1] === "asset-workspace" && path[2] === "assets";
   const categoryV2 = path[0] === "v2" && path[1] === "asset-workspace" && path[2] === "categories";
-  const workspaceV2 = assetV2 || categoryV2;
+  const locationsV2 = path.length === 3 && joinedPath === "v2/asset-workspace/locations";
+  const workspaceV2 = assetV2 || categoryV2 || locationsV2;
   const privateHeaders = { "Cache-Control": "private, no-store" };
   const reject = (status: number, error: string) => NextResponse.json({ error, uncertain: false }, { status, headers: privateHeaders });
   if (path[0] === "v2" && !workspaceV2) return reject(404, "This v2 proxy path is not available.");
+  if (locationsV2 && request.method !== "GET" && request.method !== "HEAD") {
+    return NextResponse.json({ error: "The locations list is read-only.", uncertain: false }, {
+      status: 405, headers: { ...privateHeaders, Allow: "GET, HEAD" },
+    });
+  }
   let upstreamPath = `v1/${joinedPath}`;
 
   if (workspaceV2) {

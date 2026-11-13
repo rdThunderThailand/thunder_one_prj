@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/lovable/button";
@@ -20,9 +21,9 @@ export function BulkImportUploadedFile({ flow, fileFeedbackId }: {
   if (!file) return null;
 
   return (
-    <section
+    <Card
       id={fileFeedbackId}
-      className="space-y-3 rounded-card border border-border bg-card p-4"
+      className="space-y-3 focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none p-4"
       aria-busy={locked}
     >
       <h2 className="text-sm font-semibold">2. Uploaded File</h2>
@@ -125,6 +126,6 @@ export function BulkImportUploadedFile({ flow, fileFeedbackId }: {
           </p>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
