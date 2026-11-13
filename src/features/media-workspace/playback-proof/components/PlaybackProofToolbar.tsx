@@ -59,7 +59,7 @@ function RangePicker({ range, today, onChange }: { range: DateRange; today: stri
           <Input
             type="date"
             aria-label="From"
-            className="h-9 w-36"
+            className="h-9 w-36 py-1"
             value={draft.from}
             max={today}
             onChange={(event) => setDraft((current) => ({ ...current, from: event.target.value }))}
@@ -68,7 +68,7 @@ function RangePicker({ range, today, onChange }: { range: DateRange; today: stri
           <Input
             type="date"
             aria-label="To"
-            className="h-9 w-36"
+            className="h-9 w-36 py-1"
             value={draft.to}
             max={today}
             onChange={(event) => setDraft((current) => ({ ...current, to: event.target.value }))}

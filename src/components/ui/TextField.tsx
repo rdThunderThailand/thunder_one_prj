@@ -25,7 +25,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
           id={inputId}
           className={cn(
             "text-sm text-foreground",
-            error ? "border-error focus-visible:ring-error" : "border-border",
+            error ? "border-error focus:border-error focus-visible:ring-error" : "border-border",
             className,
           )}
           aria-invalid={error ? true : isInvalid ?? false}

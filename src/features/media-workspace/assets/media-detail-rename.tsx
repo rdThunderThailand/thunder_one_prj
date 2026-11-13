@@ -57,7 +57,7 @@ export function InlineRename({ asset, onRenamed }: { asset: MediaAsset; onRename
             if (e.key === "Escape") cancel();
           }}
           aria-label="Media name"
-          className="h-9 max-w-64 text-xs"
+          className="h-9 max-w-64 py-1 text-xs"
         />
         <Button size="icon" className="h-9 w-9" aria-label="Save media name" onClick={() => void save()}>
           <Check className="h-4 w-4" />

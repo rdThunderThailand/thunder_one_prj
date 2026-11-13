@@ -29,6 +29,7 @@ reviewing a screen. Where the skill and this file disagree, this file wins.
   SearchInput, Skeleton, ProgressBar, EmptyState, Badge/Tag and Dialog/Modal. Their `lovable/`
   exports/adapters preserve compatibility; remaining primitives still live in `lovable/`.
   Badge/Tag default to 10px with caller overrides retained (ADR 0111).
+  Input restores the original field appearance (~42px, no shadow); preserve compact overrides (ADR 0113).
   Before changing a shared API or default, read its ADR linked in
   `docs/design-system/plan-component-consolidation.md`. Lovable is not a visual source.
 - Nav and terms follow `src/config/nav/media-workspace.tsx` where the profile disagrees (ADR 0096 §6).

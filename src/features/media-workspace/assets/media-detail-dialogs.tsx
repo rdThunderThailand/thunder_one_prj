@@ -63,7 +63,7 @@ export function MoveToFolderDialog({
             <div className="flex items-center gap-2 border-b border-border p-2">
               <label className="relative flex-1">
                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search folders..." className="h-8 pl-8 text-[11px]" />
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search folders..." className="h-8 py-1 pl-8 text-[11px]" />
               </label>
             </div>
             <div className="max-h-64 overflow-y-auto p-2">

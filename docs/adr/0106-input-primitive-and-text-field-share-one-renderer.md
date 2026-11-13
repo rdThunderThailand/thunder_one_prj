@@ -1,5 +1,7 @@
 # Input primitive and TextField share one native input renderer
 
+Update2026-11-14: ADR0113 restores the original42px field appearance as the shared default. The32px visual decision below is historical; the single-renderer/API contract remains.
+
 **Status:** accepted · 2026-11-13
 **Source:** owner chose ui/Input + ui/TextField and 32px / 12px defaults
 **Extends:** ADR 0112; applies only to the Input family
