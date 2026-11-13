@@ -1,7 +1,7 @@
 # Button shares a Slot foundation with a compact local preview
 
 **Status:** provisional · local option A preview authorized · 2026-11-13
-**Extends:** ADR 0096, ADR 0098 and ADR 0104
+**Extends:** ADR 0096, ADR 0098 and ADR 0112
 **Source:** owner requested "try A first", agent browser verification, then continued after the preview
 
 Prepare option A locally: canonical `ui/Button` on the existing Slot/ref foundation, default height

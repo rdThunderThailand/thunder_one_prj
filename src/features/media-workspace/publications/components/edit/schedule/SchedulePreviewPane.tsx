@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { useAppLocale } from "@/lib/use-app-locale";
 import { TIMEZONES, WEEKDAYS, formatDmy, formatMonthDays, shiftYmd, ymdDow } from "../../../schedule";
 import { airsOn, upcomingDays, windowLabel, type ScheduleDraft } from "../../../schedule-preset";
 
@@ -30,6 +31,7 @@ function daysLine(draft: ScheduleDraft): { label: string; value: string } {
 
 /** Frames 08-12 right column: upcoming airings as a list or a week grid, and the summary. */
 export function SchedulePreviewPane({ draft, today, programName }: { draft: ScheduleDraft; today: string; programName: string }) {
+  const locale = useAppLocale();
   const [view, setView] = useState<"list" | "week">("list");
   const [weekOf, setWeekOf] = useState(() => mondayOf(upcomingDays(draft, today, 1)[0] ?? today));
   const daily = draft.allDay ? { start: "00:00", end: "24:00" } : { start: draft.dailyStart, end: draft.dailyEnd };
@@ -135,7 +137,7 @@ export function SchedulePreviewPane({ draft, today, programName }: { draft: Sche
         <p className="text-sm font-semibold text-foreground">Schedule Summary</p>
         {[
           [days.label, days.value],
-          ["Time Range", isContinuous ? "Continuous" : windowLabel(draft)],
+          ["Time Range", isContinuous ? "Continuous" : windowLabel(draft, locale)],
           ["Time Zone", zone],
         ].map(([label, value]) => (
           <div

@@ -35,6 +35,10 @@ assert.equal(
   describeSaveError("Invalid input: zone is used by composition(s) Lobby, Menu"),
   "ลบ Zone ไม่ได้ — Template นี้ยังถูกใช้ใน: Lobby, Menu",
 );
+assert.equal(
+  describeSaveError("Invalid input: zones 1 and 3 overlap"),
+  "บันทึกไม่ได้ — Zone ลำดับที่ 1 และ 3 ซ้อนทับกัน กรุณาปรับขนาดหรือตำแหน่งใหม่",
+);
 assert.equal(describeSaveError("Invalid input: something else"), "บันทึก Composition ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
 
 // Unbound-Zone names come straight from the RPC's own message.

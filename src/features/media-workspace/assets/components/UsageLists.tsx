@@ -71,7 +71,7 @@ export function UsageGroups({ usage }: { usage: AssetUsage }) {
   );
 }
 
-/** One collapsible row per in-use Asset: label, summary, expandable groups. */
+/** One collapsible row per in-use Asset: label, summary, expandable groups. Scrolls after max-h-64 so a long Trash list stays inside the dialog. */
 export function UsageEntries({ entries }: { entries: Array<{ id: string; label: string; usage: AssetUsage }> }) {
   return (
     <div className="max-h-64 space-y-1.5 overflow-y-auto">

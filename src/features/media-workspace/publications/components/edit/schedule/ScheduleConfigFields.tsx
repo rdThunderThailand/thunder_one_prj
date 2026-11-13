@@ -1,8 +1,6 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/lovable/label";
 import { WEEKDAYS } from "../../../schedule";
 import type { DraftErrors, ScheduleDraft } from "../../../schedule-preset";
 import { DatePickerField } from "./DatePickerField";
@@ -194,26 +192,20 @@ export function ScheduleConfigFields({
             className="contents"
           >
             <div className="grid gap-3 @sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)]">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="schedule-start-time">Start time</Label>
-                <Input
-                  id="schedule-start-time"
-                  type="time"
-                  value={draft.allDay ? "00:00" : draft.dailyStart}
-                  disabled={draft.allDay}
-                  onChange={(event) => onChange({ dailyStart: event.target.value })}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="schedule-end-time">End time</Label>
-                <Input
-                  id="schedule-end-time"
-                  type="time"
-                  value={draft.allDay ? "23:59" : draft.dailyEnd}
-                  disabled={draft.allDay}
-                  onChange={(event) => onChange({ dailyEnd: event.target.value })}
-                />
-              </div>
+              <TimeField
+                id="schedule-start-time"
+                label="Start time"
+                value={draft.allDay ? "00:00" : draft.dailyStart}
+                disabled={draft.allDay}
+                onChange={(dailyStart) => onChange({ dailyStart })}
+              />
+              <TimeField
+                id="schedule-end-time"
+                label="End time"
+                value={draft.allDay ? "23:59" : draft.dailyEnd}
+                disabled={draft.allDay}
+                onChange={(dailyEnd) => onChange({ dailyEnd })}
+              />
               {/* Explicit too: Radix Select opens on pointerdown, which a disabled fieldset does not stop. */}
               <TimezoneField
                 value={draft.timezone}

@@ -2,7 +2,7 @@
 
 **Status:** accepted · 2026-11-13
 **Source:** owner chose ui/Input + ui/TextField and 32px / 12px defaults
-**Extends:** ADR 0104; applies only to the Input family
+**Extends:** ADR 0112; applies only to the Input family
 
 Use ui/Input for the bare native input primitive and ui/TextField for the label/error composite.
 TextField renders Input. Move all 16 primitive caller imports and all 6 labeled-field callers

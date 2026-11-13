@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/lovable/select";
 import { LibrarySearch } from "../../content-library/LibraryShell";
 import { DISPLAY_STATUS_LABELS } from "../publication-list-display";
-import { DISPLAY_STATUSES, type PublicationListSort } from "../types";
+import { DISPLAY_STATUSES, NOT_ENDED_FILTER, type PublicationListSort } from "../types";
 
 export type FilterOptions = {
   channels: { id: string; name: string }[];
@@ -32,7 +32,7 @@ export type ListFilters = {
 
 export const DEFAULT_FILTERS: ListFilters = {
   search: "",
-  status: "all",
+  status: NOT_ENDED_FILTER,
   target: "all",
   tag: "all",
   sort: "updated_desc",
@@ -77,6 +77,7 @@ export function PublicationsFilterBar({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value={NOT_ENDED_FILTER}>All Active</SelectItem>
           <SelectItem value="all">All Status</SelectItem>
           {DISPLAY_STATUSES.map((status) => (
             <SelectItem

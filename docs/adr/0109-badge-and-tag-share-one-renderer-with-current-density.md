@@ -3,7 +3,7 @@
 Update 2026-11-13: ADR 0111 supersedes the 12px default below with owner-approved10px; other contracts remain.
 
 **Status:** accepted · 2026-11-13
-**Extends:** ADR 0096, ADR 0098 and ADR 0104
+**Extends:** ADR 0096, ADR 0098 and ADR 0112
 **Source:** owner selected option A in the shared-UI consolidation discussion
 
 Consolidate rendering in `ui/Badge`, preserving its dot default, pill presentation, 12px default

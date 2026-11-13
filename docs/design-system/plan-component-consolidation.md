@@ -1,10 +1,10 @@
 # Plan — one implementation per design-system component
 
 Status: **all planned families implemented locally; continued Button A remains a local preview with verification limits** · 2026-11-13
-Scope decision: [ADR 0104](../adr/0104-shared-ui-consolidation-is-delivered-by-component-family.md).
+Scope decision: [ADR 0112](../adr/0112-shared-ui-consolidation-is-delivered-by-component-family.md).
 Skeleton contract accepted separately by the owner: [ADR 0105](../adr/0105-skeleton-shares-neutral-four-pixel-primitive.md).
 Canonical families now include Skeleton, Progress, Input/TextField, SearchInput, Empty/Error,
-Tabs, Modal/Dialog, Badge/Tag and Button. Family decisions are recorded in ADRs 0105–0111.
+Tabs, Modal/Dialog, Badge/Tag and Button. Family decisions are recorded in ADRs 0105–0112.
 The owner continued after reviewing the Button A preview; keep A locally. ADR 0110 remains
 provisional for release/visual acceptance. No commit, push, sync or deployment has occurred.
 

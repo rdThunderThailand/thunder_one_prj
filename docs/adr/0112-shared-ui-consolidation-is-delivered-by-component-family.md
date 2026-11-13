@@ -1,5 +1,7 @@
 # Shared UI consolidation is delivered by component family
 
+Identifier note: originally numbered0104 on the feature branch; renumbered0112 when dev introduced ADR0104 for Failed badges. Historical scope text below is retained.
+
 **Status:** accepted · 2026-11-13 · scope decision only; implementation not started
 **Extends:** ADR 0096 and ADR 0098
 **Source:** owner acceptance of the shared-UI scope in the component-consolidation discussion

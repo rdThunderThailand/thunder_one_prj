@@ -1,7 +1,7 @@
 # Skeleton shares a neutral four-pixel primitive
 
 **Status:** accepted · 2026-11-13
-**Extends:** ADR 0104 (component-family consolidation)
+**Extends:** ADR 0112 (component-family consolidation)
 **Source:** owner chose option A, then requested `ui/...` as the canonical import/implementation name
 
 Use one Skeleton implementation in `src/components/ui/Skeleton.tsx` with

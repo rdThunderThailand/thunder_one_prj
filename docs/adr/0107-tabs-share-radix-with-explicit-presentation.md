@@ -1,7 +1,7 @@
 # Tabs share Radix with explicit presentation
 
 **Status:** accepted · 2026-11-13
-**Extends:** ADR 0096, ADR 0098 and ADR 0104
+**Extends:** ADR 0096, ADR 0098 and ADR 0112
 **Source:** owner selected option A in the shared-UI consolidation discussion
 
 Use one Radix Tabs foundation exported from `ui/Tabs`, with explicit `segmented` (default) and

@@ -32,13 +32,16 @@ export function ChannelLifecycleActions({
   const [pending, setPending] = useState<"deactivate" | "delete" | null>(null);
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isConfirmingDeactivate, setIsConfirmingDeactivate] = useState(false);
 
   const deactivate = async () => {
     setPending("deactivate");
     setError(null);
     try {
       onChanged(await deactivateChannel(channelId, revision));
+      setIsConfirmingDeactivate(false);
     } catch (caught) {
+      setIsConfirmingDeactivate(false);
       setError(classifyApiError(caught, "Could not deactivate this Channel. Try again."));
     } finally {
       setPending(null);
@@ -76,8 +79,8 @@ export function ChannelLifecycleActions({
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         {lifecycle === "active" && (
-          <Button type="button" variant="outline" disabled={busy} onClick={() => void deactivate()}>
-            {pending === "deactivate" ? "Deactivating…" : "Deactivate"}
+          <Button type="button" variant="outline" disabled={busy} onClick={() => setIsConfirmingDeactivate(true)}>
+            Deactivate
           </Button>
         )}
         {lifecycle === "draft" && (
@@ -92,6 +95,25 @@ export function ChannelLifecycleActions({
           </Button>
         )}
       </div>
+
+      {/* Spec §6.4: Disable/Deactivate is a sensitive action and needs a confirmation. */}
+      <Modal
+        open={isConfirmingDeactivate}
+        onClose={() => setIsConfirmingDeactivate(false)}
+        title="Deactivate this Channel?"
+        footer={
+          <>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setIsConfirmingDeactivate(false)}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={busy} onClick={() => void deactivate()}>
+              {pending === "deactivate" ? "Deactivating…" : "Deactivate"}
+            </Button>
+          </>
+        }
+      >
+        <p>The Channel stops reserving its devices. It is refused while a live Program still targets it.</p>
+      </Modal>
 
       <Modal
         open={confirmingDelete}

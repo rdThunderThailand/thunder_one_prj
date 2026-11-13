@@ -1,7 +1,7 @@
 # Modal composes the shared Radix Dialog
 
 **Status:** accepted · 2026-11-13
-**Extends:** ADR 0096, ADR 0098 and ADR 0104
+**Extends:** ADR 0096, ADR 0098 and ADR 0112
 **Source:** owner selected option A in the shared-UI consolidation discussion
 
 Use `ui/Dialog` as the canonical Radix compound foundation. Keep `ui/Modal` as a higher-level
