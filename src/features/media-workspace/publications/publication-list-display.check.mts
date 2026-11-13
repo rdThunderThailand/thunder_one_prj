@@ -1,6 +1,7 @@
 /** Run: node src/features/media-workspace/publications/publication-list-display.check.mts */
 import assert from "node:assert/strict";
 import {
+  DISPLAY_STATUS_LABELS,
   deliveryView,
   formatScheduleRange,
   formatTargetSummary,
@@ -12,6 +13,8 @@ const base = { id: "p", name: "n", status: "active", publication_type: "playlist
 
 assert.deepEqual(rowActionsFor("draft"), ["edit", "publish", "delete"]);
 assert.deepEqual(rowActionsFor("live"), ["open", "duplicate", "end"]);
+assert.deepEqual(rowActionsFor("failed"), ["open", "duplicate", "end"]);
+assert.equal(DISPLAY_STATUS_LABELS.failed, "Failed");
 assert.deepEqual(rowActionsFor("ended"), ["view", "duplicate"]);
 assert.ok(!rowActionsFor(undefined).includes("delete"));
 
@@ -37,4 +40,7 @@ const pub = deliveryView({ ...base, display_status: "publishing", delivery: { to
 assert.equal(pub.label, "Publishing…");
 assert.equal(pub.problems, "1 offline");
 assert.equal(deliveryView({ ...base, display_status: "live", delivery: { total: 1, stage3_done: 0, offline: 1, failed: 0 } }).label, "Not playing yet");
+const failedRow = deliveryView({ ...base, display_status: "failed", delivery: { total: 2, stage3_done: 0, offline: 0, failed: 2 } });
+assert.equal(failedRow.label, "Not playing yet");
+assert.equal(failedRow.problems, "2 failed");
 assert.equal(deliveryView({ ...base, display_status: "ended", delivery: { total: 1, stage3_done: 0, offline: 0, failed: 0 } }).label, "Ended");

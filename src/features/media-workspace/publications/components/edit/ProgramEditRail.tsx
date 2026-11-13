@@ -22,6 +22,7 @@ import { PRIORITIES, type Priority, type PublicationDetail, type PublicationDisp
 const STATUS_VARIANT = {
   draft: "info",
   publishing: "warning",
+  failed: "danger",
   scheduled: "info",
   live: "success",
   ended: "neutral",

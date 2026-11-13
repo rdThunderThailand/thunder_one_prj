@@ -17,6 +17,7 @@ import { PublicationRowActions } from "./PublicationRowActions";
 const BADGE_VARIANT: Record<PublicationDisplayStatus, BadgeProps["variant"]> = {
   draft: "outline",
   publishing: "info",
+  failed: "danger",
   scheduled: "warning",
   live: "success",
   ended: "neutral",
