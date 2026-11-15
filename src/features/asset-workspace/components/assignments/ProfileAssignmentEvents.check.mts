@@ -25,6 +25,11 @@ const mocks: Record<string, unknown> = {
   "../asset-profile/ProfileAllHistory": { ProfileAllHistory: container },
   "../asset-profile/ProfileStatusHistory": { ProfileStatusHistory: ({ layout }: Props) =>
     (layout as (content: ReactNode, panel: ReactNode) => ReactNode)(null, null) },
+  "../asset-profile/ProfileFileHistory": { ProfileFileHistory: ({ layout }: Props) =>
+    (layout as (content: ReactNode, panel: ReactNode) => ReactNode)(null, null) },
+  "../asset-profile/ProfileAuditLog": { ProfileAuditLog: ({ layout }: Props) =>
+    (layout as (content: ReactNode, panel: ReactNode) => ReactNode)(null, null) },
+  "../asset-profile/ProfileMaintenanceHistory": { ProfileMaintenanceHistory: () => createElement("p", null, "maintenance periods") },
   "../states/states": { EmptyState: ({ title, body }: Props) => createElement("p", null, `${title}: ${body}`) },
   "../asset-profile/ProfileParts": { formatDay: (value: string | null) => value?.slice(0, 10) ?? "—" },
   "./ProfileAssignmentEvents": { ProfileAssignmentEvents: ({ layout }: Props) =>
@@ -91,10 +96,9 @@ const nav = render(ProfileAssignmentHistory, { context: "tenant:user", asset: { 
 assert.match(nav, /All History.*Assignment History.*Location History.*Status History.*Maintenance History.*File History.*Audit Log/);
 assert.match(nav, /<button>Status History<\/button>/);
 assert.doesNotMatch(nav, /<p>Status History:/);
-for (const label of ["Maintenance History", "File History", "Audit Log"]) {
-  assert.match(nav, new RegExp(`<button>${label}</button>`));
-  assert.match(nav, new RegExp(`<p>${label}: This view will be available after Lifecycle &amp; Warranty is finished.</p>`));
-}
+for (const label of ["Maintenance History", "File History", "Audit Log"]) assert.match(nav, new RegExp(`<button>${label}</button>`));
+assert.match(nav, /<p>maintenance periods<\/p>/);
+assert.doesNotMatch(nav, /This view will be available after Lifecycle/);
 assert.match(nav, /<button>Location History<\/button>/);
 assert.equal((nav.match(/<button disabled=""/g) ?? []).length, 0);
 const layout = render(ProfileHistoryLayout, { children: "SUBTABS_TABLE", panel: createElement("aside", null, "EVENT_DETAILS") });

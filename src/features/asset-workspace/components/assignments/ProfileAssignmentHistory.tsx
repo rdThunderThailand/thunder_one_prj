@@ -5,8 +5,10 @@ import { ClockIcon, FileTextIcon, ListIcon, LocationIcon, ShieldIcon, ToolIcon, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import { DisabledHint } from "../asset-profile/ProfileControls";
-import { EmptyState } from "../states/states";
 import { ProfileAllHistory } from "../asset-profile/ProfileAllHistory";
+import { ProfileAuditLog } from "../asset-profile/ProfileAuditLog";
+import { ProfileFileHistory } from "../asset-profile/ProfileFileHistory";
+import { ProfileMaintenanceHistory } from "../asset-profile/ProfileMaintenanceHistory";
 import { ProfileStatusHistory } from "../asset-profile/ProfileStatusHistory";
 import { ProfileAssignmentEvents } from "./ProfileAssignmentEvents";
 import { ProfileLocationHistory } from "./ProfileLocationHistory";
@@ -21,8 +23,6 @@ export const profileHistoryTabs = [
   { id: "audit", label: "Audit Log", icon: ShieldIcon, disabled: false },
 ] as const;
 
-// Frames 12–14 wait for the Lifecycle & Warranty module (profile-tabs FE 05).
-const laterTabs = profileHistoryTabs.filter(({ id }) => id === "maintenance" || id === "file" || id === "audit");
 
 export function ProfileHistoryLayout({ children, panel }: { children: ReactNode; panel?: ReactNode }) {
   const grid = useRef<HTMLDivElement>(null);
@@ -73,7 +73,9 @@ export function ProfileHistoryLayout({ children, panel }: { children: ReactNode;
   );
 }
 
-export function ProfileAssignmentHistory({ context, asset, initialTab }: { context: string; asset: AssetDetail; initialTab?: string | null }) {
+export function ProfileAssignmentHistory({ context, asset, initialTab, onViewFiles }: {
+  context: string; asset: AssetDetail; initialTab?: string | null; onViewFiles: () => void;
+}) {
   // `?history=status` (Change Status result link) opens that sub-tab.
   const [tab, setTab] = useState(profileHistoryTabs.some(({ id, disabled }) => id === initialTab && !disabled) ? initialTab as string : "all");
   const nav = (
@@ -96,7 +98,9 @@ export function ProfileAssignmentHistory({ context, asset, initialTab }: { conte
       <ProfileAssignmentEvents context={context} asset={asset} enabled={tab === "assignment"} layout={(assignment, assignmentPanel) => (
         <ProfileLocationHistory context={context} assetId={asset.id} enabled={tab === "location"} layout={(location, locationPanel) => (
           <ProfileStatusHistory context={context} assetId={asset.id} enabled={tab === "status"} layout={(status, statusPanel) => (
-            <ProfileHistoryLayout panel={tab === "location" ? locationPanel : tab === "status" ? statusPanel : assignmentPanel}>
+            <ProfileFileHistory context={context} assetId={asset.id} enabled={tab === "file"} onViewFiles={onViewFiles} layout={(file, filePanel) => (
+            <ProfileAuditLog context={context} assetId={asset.id} enabled={tab === "audit"} layout={(audit, auditPanel) => (
+            <ProfileHistoryLayout panel={{ location: locationPanel, status: statusPanel, file: filePanel, audit: auditPanel }[tab] ?? assignmentPanel}>
               <TabsContent value="all" className="m-0">
                 <ProfileAllHistory context={context} assetId={asset.id} />
               </TabsContent>
@@ -109,12 +113,18 @@ export function ProfileAssignmentHistory({ context, asset, initialTab }: { conte
               <TabsContent value="status" className="m-0 min-w-0">
                 {status}
               </TabsContent>
-              {laterTabs.map(({ id, label }) => (
-                <TabsContent key={id} value={id} className="m-0 min-w-0">
-                  <EmptyState title={label} body="This view will be available after Lifecycle & Warranty is finished." />
-                </TabsContent>
-              ))}
+              <TabsContent value="maintenance" className="m-0 min-w-0">
+                <ProfileMaintenanceHistory context={context} assetId={asset.id} enabled={tab === "maintenance"} />
+              </TabsContent>
+              <TabsContent value="file" className="m-0 min-w-0">
+                {file}
+              </TabsContent>
+              <TabsContent value="audit" className="m-0 min-w-0">
+                {audit}
+              </TabsContent>
             </ProfileHistoryLayout>
+            )} />
+            )} />
           )} />
         )} />
       )} />

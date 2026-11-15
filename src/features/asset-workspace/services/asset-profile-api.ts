@@ -8,7 +8,7 @@ import {
 
 export type ProfileReadResult<T> = AssetReadResult<T> & { code?: string };
 
-async function readProfile<T>(context: string, path: string, schema: z.ZodType<T>, signal: AbortSignal): Promise<ProfileReadResult<T>> {
+export async function readProfile<T>(context: string, path: string, schema: z.ZodType<T>, signal: AbortSignal): Promise<ProfileReadResult<T>> {
   try {
     const parsed = schema.safeParse(await requestAssetWorkspace("GET", path, undefined, { context, signal, timeout: 20000 }));
     return parsed.success ? { ok: true, data: parsed.data }
