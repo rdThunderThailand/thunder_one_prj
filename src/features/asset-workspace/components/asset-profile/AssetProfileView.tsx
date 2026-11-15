@@ -163,7 +163,7 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
             </TabsContent>
             <TabsContent value="history" className="mt-3">
               <ProfileAssignmentHistory key={`${context}:${assetId}:${revision}`} context={context} asset={asset}
-                initialTab={search.get("history")} />
+                initialTab={search.get("history")} onViewFiles={() => setTab("files")} />
             </TabsContent>
           </Tabs>
         </div>
