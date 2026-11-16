@@ -5,14 +5,32 @@
 // The step lives in the URL (`?step=`), so a reload or a Draft link from the list resumes in place.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { DonutChart } from "@/components/ui/DonutChart";
 import { WizardSteps } from "@/components/ui/WizardSteps";
-import { InfoIcon, SearchIcon, XIcon } from "@/components/ui/icons";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  BoxIcon,
+  BuildingIcon,
+  CategoryIcon,
+  CheckCircleIcon,
+  ChevronRightIcon,
+  FileIcon,
+  GridIcon,
+  InfoIcon,
+  ListIcon,
+  LocationIcon,
+  SearchIcon,
+  ShareNodesIcon,
+  UserIcon,
+  WarningTriangleIcon,
+  XIcon,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { Input } from "@/components/ui/lovable/input";
 import { Label } from "@/components/ui/lovable/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
@@ -42,11 +60,12 @@ import {
 } from "../../services/asset-inventory-actions";
 import type { AssetFilterOptions } from "../../services/assets-list-types";
 import { MultiSelect, type MultiOption } from "./MultiSelect";
-import { Breakdown, CancelSessionDialog, FieldError, FormError } from "./parts";
+import { CancelSessionDialog, FieldError, FormError } from "./parts";
+import { AssetsDialog, CategoryBreakdown, CHART, SHOWN, share, topRows } from "./scope-parts";
 import { ReviewStep, type ReviewData } from "./ReviewStep";
 
 const STEPS = ["Session Setup", "Define Scope", "Review & Start"];
-const DESCRIPTIONS = ["Name, due date and owner", "Which assets to count", "Check and start"];
+const DESCRIPTIONS = ["Basic information", "Select which assets to include", "Confirm and begin"];
 const LIST = "/asset-workspace/inventory";
 const NO_OWNER = "none";
 
@@ -66,10 +85,31 @@ export interface WizardProps {
 export function InventoryWizard({ session, step, owners, options, today, review, prefillLocation }: WizardProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-4">
+    <div className="mx-auto w-full max-w-7xl space-y-4">
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground"
+      >
+        <Link
+          href={LIST}
+          className="hover:text-foreground hover:underline"
+        >
+          Inventory
+        </Link>
+        <ChevronRightIcon
+          aria-hidden="true"
+          className="h-3 w-3"
+        />
+        <span
+          aria-current="page"
+          className="font-medium text-foreground"
+        >
+          Start Inventory Session
+        </span>
+      </nav>
       <PageHeader
-        title="Start Inventory"
-        subtitle={session ? `Draft · ${session.name}` : "Set up a new inventory session."}
+        title="Start Inventory Session"
+        subtitle="Create a new inventory session to verify assets in your organization."
       />
       <WizardSteps
         steps={STEPS}
@@ -415,20 +455,50 @@ function ScopeStep({ session, options, prefillLocation, onCancel }: {
 
   const set = (key: keyof Picks) => (value: string[]) => setPicks((p) => ({ ...p, [key]: value }));
 
+  const fieldIcon = "h-4 w-4";
+  const fieldLabel = (icon: ReactNode, text: string, htmlFor: string, required = false) => (
+    <Label
+      htmlFor={htmlFor}
+      className="flex items-center gap-2 text-sm font-semibold"
+    >
+      <span
+        aria-hidden="true"
+        className="text-muted-foreground"
+      >
+        {icon}
+      </span>
+      {text}
+      {required && <span className="text-t1-red-700">*</span>}
+    </Label>
+  );
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <Card className="space-y-5 p-5">
-        <FormError message={error} />
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-semibold">Scope Type</legend>
-          <div className="grid gap-2 sm:grid-cols-2">
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_26rem]">
+        <Card className="space-y-6 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold">Define Scope</h2>
+              <p className="text-sm text-muted-foreground">Choose which assets to count in this session.</p>
+            </div>
+            <p className="flex max-w-sm items-start gap-3 rounded-lg bg-accent px-4 py-3 text-sm text-muted-foreground">
+              <InfoIcon
+                aria-hidden="true"
+                className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+              />
+              The expected assets are built from the scope you choose. They are frozen as a snapshot when the session starts.
+            </p>
+          </div>
+          <FormError message={error} />
+          <fieldset className="grid gap-3 sm:grid-cols-2">
+            <legend className="sr-only">Scope type</legend>
             {([
-              ["by_scope", "By Scope", "Locations, OUs, categories and custodians"],
-              ["specific_assets", "Specific Assets", "Pick assets one by one"],
-            ] as const).map(([value, label, help]) => (
+              ["by_scope", "By Scope", "Choose by location, unit, category or custodian", <GridIcon key="i" className="h-5 w-5" />, true],
+              ["specific_assets", "Specific Assets", "Pick assets one by one", <ListIcon key="i" className="h-5 w-5" />, false],
+            ] as const).map(([value, label, help, icon, recommended]) => (
               <label
                 key={value}
-                className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 has-checked:border-primary has-checked:bg-accent"
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-border p-4 hover:bg-muted has-checked:border-primary has-checked:bg-accent has-checked:ring-1 has-checked:ring-primary has-focus-visible:ring-2 has-focus-visible:ring-ring"
               >
                 <input
                   type="radio"
@@ -436,76 +506,112 @@ function ScopeStep({ session, options, prefillLocation, onCancel }: {
                   value={value}
                   checked={mode === value}
                   onChange={() => setMode(value)}
-                  className="mt-1 accent-(--color-primary)"
+                  className="sr-only"
                 />
-                <span>
-                  <span className="block text-sm font-semibold">{label}</span>
+                <span
+                  aria-hidden="true"
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${mode === value ? "text-primary" : "text-muted-foreground"}`}
+                >
+                  {icon}
+                </span>
+                <span className="min-w-0">
+                  <span className={`block text-sm font-semibold ${mode === value ? "text-primary" : ""}`}>
+                    {label}
+                    {recommended && <span className="ml-1.5 font-normal">(Recommended)</span>}
+                  </span>
                   <span className="block text-xs text-muted-foreground">{help}</span>
                 </span>
               </label>
             ))}
-          </div>
-        </fieldset>
+          </fieldset>
 
-        {options === null && mode === "by_scope" && (
-          <FormError message="The scope choices could not be loaded. Reload to try again." />
-        )}
+          {options === null && mode === "by_scope" && (
+            <FormError message="The scope choices could not be loaded. Reload to try again." />
+          )}
 
-        {mode === "by_scope" ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="scope-locations">Locations *</Label>
-              <MultiSelect
-                id="scope-locations"
-                options={locationOptions}
-                value={picks.locationIds}
-                onChange={set("locationIds")}
-                placeholder="Choose locations"
-              />
-              <p className="text-xs text-muted-foreground">Required. Sub-locations are included.</p>
+          {mode === "by_scope" ? (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                {fieldLabel(<LocationIcon className={fieldIcon} />, "Locations", "scope-locations", true)}
+                <MultiSelect
+                  id="scope-locations"
+                  options={locationOptions}
+                  value={picks.locationIds}
+                  onChange={set("locationIds")}
+                  placeholder="Choose locations"
+                  icon={<BuildingIcon className={fieldIcon} />}
+                />
+                <p className="text-xs text-muted-foreground">Choose one or more locations to count. Sub-locations are included.</p>
+              </div>
+              <div className="space-y-2">
+                {fieldLabel(<ShareNodesIcon className={fieldIcon} />, "Organization Units", "scope-ous")}
+                <MultiSelect
+                  id="scope-ous"
+                  options={orgUnitOptions}
+                  value={picks.orgUnitIds}
+                  onChange={set("orgUnitIds")}
+                  placeholder="All OUs"
+                  icon={<ShareNodesIcon className={fieldIcon} />}
+                />
+                <p className="text-xs text-muted-foreground">Leave empty to include every OU in the chosen locations.</p>
+              </div>
+              <div className="space-y-2">
+                {fieldLabel(<CategoryIcon className={fieldIcon} />, "Asset Categories", "scope-categories")}
+                <MultiSelect
+                  id="scope-categories"
+                  options={categoryOptions}
+                  value={picks.categoryIds}
+                  onChange={set("categoryIds")}
+                  placeholder="All categories"
+                  icon={<CategoryIcon className={fieldIcon} />}
+                />
+                <p className="text-xs text-muted-foreground">Leave empty to include every category.</p>
+              </div>
+              <div className="space-y-2">
+                {fieldLabel(<UserIcon className={fieldIcon} />, "Custodian (Person / OU)", "scope-custodians")}
+                <MultiSelect
+                  id="scope-custodians"
+                  options={custodianOptions}
+                  value={picks.custodianKeys}
+                  onChange={set("custodianKeys")}
+                  placeholder="All custodians"
+                  icon={<UserIcon className={fieldIcon} />}
+                />
+                <p className="text-xs text-muted-foreground">Leave empty to include every custodian. An asset must match every filter you set.</p>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="scope-ous">Organization Units</Label>
-              <MultiSelect
-                id="scope-ous"
-                options={orgUnitOptions}
-                value={picks.orgUnitIds}
-                onChange={set("orgUnitIds")}
-                placeholder="All OUs in these locations"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="scope-categories">Categories</Label>
-              <MultiSelect
-                id="scope-categories"
-                options={categoryOptions}
-                value={picks.categoryIds}
-                onChange={set("categoryIds")}
-                placeholder="All categories"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="scope-custodians">Custodian</Label>
-              <MultiSelect
-                id="scope-custodians"
-                options={custodianOptions}
-                value={picks.custodianKeys}
-                onChange={set("custodianKeys")}
-                placeholder="Any custodian"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2">Filters combine: an asset must match every one you set.</p>
-          </div>
-        ) : (
-          <AssetPicker
-            value={picks.assetIds}
-            onChange={set("assetIds")}
-            known={known}
-            onFound={remember}
-          />
-        )}
+          ) : (
+            <AssetPicker
+              value={picks.assetIds}
+              onChange={set("assetIds")}
+              known={known}
+              onFound={remember}
+            />
+          )}
+        </Card>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
+        <PreviewPanel
+          ready={ready}
+          mode={mode}
+          preview={current?.preview ?? null}
+          error={current?.error ?? null}
+          onViewAssets={() => setShowAssets(true)}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            disabled={!!sending}
+            onClick={() => router.push(setupHref(session.id, 1))}
+          >
+            <ArrowLeftIcon
+              aria-hidden="true"
+              className="mr-2 h-4 w-4"
+            />
+            Back
+          </Button>
           <Button
             variant="ghost"
             className="text-t1-red-700"
@@ -513,38 +619,32 @@ function ScopeStep({ session, options, prefillLocation, onCancel }: {
           >
             Cancel Session
           </Button>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              disabled={!!sending}
-              onClick={() => router.push(setupHref(session.id, 1))}
-            >
-              Back
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!!sending}
-              onClick={() => void save("draft")}
-            >
-              {sending === "draft" ? "Saving…" : "Save as Draft"}
-            </Button>
-            <Button
-              disabled={!!sending || !ready}
-              onClick={() => void save("next")}
-            >
-              {sending === "next" ? "Saving…" : "Next"}
-            </Button>
-          </div>
         </div>
-      </Card>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={!!sending}
+            onClick={() => void save("draft")}
+          >
+            <FileIcon
+              aria-hidden="true"
+              className="mr-2 h-4 w-4"
+            />
+            {sending === "draft" ? "Saving…" : "Save as Draft"}
+          </Button>
+          <Button
+            disabled={!!sending || !ready}
+            onClick={() => void save("next")}
+          >
+            {sending === "next" ? "Saving…" : "Next: Review & Start"}
+            <ArrowRightIcon
+              aria-hidden="true"
+              className="ml-2 h-4 w-4"
+            />
+          </Button>
+        </div>
+      </div>
 
-      <PreviewPanel
-        ready={ready}
-        mode={mode}
-        preview={current?.preview ?? null}
-        error={current?.error ?? null}
-        onViewAssets={() => setShowAssets(true)}
-      />
       <AssetsDialog
         open={showAssets}
         onOpenChange={setShowAssets}
@@ -659,12 +759,21 @@ function PreviewPanel({ ready, mode, preview, error, onViewAssets }: {
   error: string | null;
   onViewAssets: () => void;
 }) {
+  const total = preview?.total ?? 0;
+  const places = preview ? topRows(preview.byLocation, SHOWN) : [];
+
   return (
     <Card
-      className="h-fit space-y-4 p-5"
+      className="h-fit space-y-5 p-5"
       aria-live="polite"
     >
-      <h2 className="font-semibold">Expected Assets Preview</h2>
+      <h2 className="flex items-center gap-2 text-lg font-semibold">
+        <BoxIcon
+          aria-hidden="true"
+          className="h-5 w-5 text-primary"
+        />
+        Expected Assets (Preview)
+      </h2>
       {!ready ? (
         <p className="text-sm text-muted-foreground">
           {mode === "by_scope" ? "Choose at least one location to see the assets in scope." : "Select assets to see them here."}
@@ -675,27 +784,100 @@ function PreviewPanel({ ready, mode, preview, error, onViewAssets }: {
         <p className="text-sm text-muted-foreground">Counting assets…</p>
       ) : (
         <>
-          <p>
-            <span className="text-3xl font-semibold tabular-nums">{preview.total.toLocaleString()}</span>
-            <span className="ml-2 text-sm text-muted-foreground">{preview.total === 1 ? "asset" : "assets"}</span>
-          </p>
-          {preview.total === 0 && <p className="text-sm text-t1-amber-700">No assets match this scope. Change the filters before you start.</p>}
-          <Breakdown
-            title="By Location"
-            rows={preview.byLocation}
-          />
-          <Breakdown
-            title="By Category"
-            rows={preview.byCategory}
-          />
-          {preview.total > 0 && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={onViewAssets}
-            >
-              View Assets
-            </Button>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted p-4">
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary"
+              >
+                <BoxIcon className="h-6 w-6" />
+              </span>
+              <p>
+                <span className="block text-3xl font-semibold tabular-nums">{total.toLocaleString()}</span>
+                <span className="text-sm text-muted-foreground">{total === 1 ? "asset" : "assets"} in this scope</span>
+              </p>
+            </div>
+            {total > 0 && (
+              <Button
+                variant="outline"
+                onClick={onViewAssets}
+              >
+                View Assets
+                <ArrowRightIcon
+                  aria-hidden="true"
+                  className="ml-2 h-4 w-4"
+                />
+              </Button>
+            )}
+          </div>
+
+          {total > 0 && (
+            <>
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold">Breakdown by Location</h3>
+                <div className="flex flex-wrap items-center gap-5">
+                  <div className="relative shrink-0">
+                    <DonutChart
+                      segments={places.map((r, i) => ({ label: r.name, value: r.count, color: CHART[i % CHART.length] }))}
+                      size={124}
+                      strokeWidth={22}
+                      seamless
+                      className="relative z-10"
+                    />
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold tabular-nums">{total.toLocaleString()}</span>
+                      <span className="text-xs text-muted-foreground">assets</span>
+                    </div>
+                  </div>
+                  <ul className="min-w-44 flex-1 space-y-1.5">
+                    {places.map((r, i) => (
+                      <li
+                        key={r.id}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: CHART[i % CHART.length] }}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                        <span className="w-10 text-right font-semibold tabular-nums">{r.count.toLocaleString()}</span>
+                        <span className="w-12 text-right tabular-nums text-muted-foreground">{share(r.count, total)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+
+              <CategoryBreakdown
+                rows={preview.byCategory}
+                total={total}
+              />
+            </>
+          )}
+
+          {total === 0 ? (
+            <p className="flex items-start gap-3 rounded-xl bg-warning-muted p-4 text-sm">
+              <WarningTriangleIcon
+                aria-hidden="true"
+                className="mt-0.5 h-5 w-5 shrink-0 text-t1-amber-700"
+              />
+              No assets match this scope. Change the filters before you start.
+            </p>
+          ) : (
+            <p className="flex items-start gap-3 rounded-xl bg-success-muted p-4 text-sm">
+              <CheckCircleIcon
+                aria-hidden="true"
+                className="mt-0.5 h-5 w-5 shrink-0 text-success"
+              />
+              <span>
+                <span className="block font-semibold">Scope is ready</span>
+                <span className="text-muted-foreground">
+                  {total.toLocaleString()} expected {total === 1 ? "asset matches" : "assets match"} your selection. Continue to
+                  review who will check them and start the session.
+                </span>
+              </span>
+            </p>
           )}
         </>
       )}
@@ -703,97 +885,3 @@ function PreviewPanel({ ready, mode, preview, error, onViewAssets }: {
     </Card>
   );
 }
-
-function AssetsDialog({ open, onOpenChange, mode, scope, total }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  mode: ScopeMode;
-  scope: ScopeInput;
-  total: number;
-}) {
-  const [page, setPage] = useState(1);
-  const [result, setResult] = useState<{ key: string; data?: ScopePreview["assets"]; error?: string } | null>(null);
-  const key = JSON.stringify([mode, scope, page]);
-  const current = result?.key === key ? result : null;
-  const data = current?.data ?? null;
-  const error = current?.error ?? null;
-
-  useEffect(() => {
-    if (!open) return;
-    let live = true;
-    void previewScopeAction(mode, scope, page, 20).then((res) => {
-      if (live) setResult(res.ok ? { key, data: res.data.assets } : { key, error: res.message });
-    });
-    return () => {
-      live = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- key covers mode, scope and page
-  }, [open, key]);
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        onOpenChange(o);
-        if (!o) setPage(1);
-      }}
-    >
-      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-xl">
-        <DialogHeader>
-          <DialogTitle>Expected Assets ({total.toLocaleString()})</DialogTitle>
-          <DialogDescription>Assets that match the scope right now.</DialogDescription>
-        </DialogHeader>
-        <FormError message={error} />
-        {!data && !error && <p className="text-sm text-muted-foreground">Loading…</p>}
-        {data && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
-                <tr>
-                  <th className="py-2 pr-3 font-semibold">Asset</th>
-                  <th className="py-2 pr-3 font-semibold">Tag</th>
-                  <th className="py-2 pr-3 font-semibold">Category</th>
-                  <th className="py-2 font-semibold">Location</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {data.data.map((a) => (
-                  <tr key={a.id}>
-                    <td className="py-2 pr-3">{a.name}</td>
-                    <td className="py-2 pr-3 text-muted-foreground">{a.assetTag}</td>
-                    <td className="py-2 pr-3">{a.category?.name ?? "—"}</td>
-                    <td className="py-2">{a.location?.name ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {data && data.totalPages > 1 && (
-          <DialogFooter className="items-center gap-2 sm:justify-between sm:space-x-0">
-            <span className="text-xs text-muted-foreground">Page {data.page} of {data.totalPages}</span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= data.totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
