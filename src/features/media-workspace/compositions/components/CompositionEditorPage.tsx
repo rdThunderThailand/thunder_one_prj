@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchLayout, upsertLayout } from "@/features/media-workspace/layouts/services/layouts-api";
 import { seedCanvasSettings, takeCreateSeed } from "@/features/media-workspace/layouts/create-seed";

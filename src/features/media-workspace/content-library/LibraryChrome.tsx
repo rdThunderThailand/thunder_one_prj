@@ -6,7 +6,7 @@ import {
   ChevronRightIcon as ChevronRight,
   FileImageIcon as FileImage,
 } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { cn } from "@/lib/utils";
 

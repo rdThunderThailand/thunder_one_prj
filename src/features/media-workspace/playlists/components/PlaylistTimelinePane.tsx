@@ -37,7 +37,7 @@ export function PlaylistTimelinePane({
   assets: MediaAsset[];
   selectedId: string | null;
   nowPlayingId: string | null;
-  onSelect: (mediaAssetId: string) => void;
+  onSelect: (key: string) => void;
   onFrame: (frame: ZonePreviewFrame | null) => void;
   seekRequest: { seconds: number; id: number } | null;
   onSeek: (seconds: number) => void;
@@ -51,7 +51,7 @@ export function PlaylistTimelinePane({
       }),
     [name, items, playback],
   );
-  const previews = usePreviewUrls(useMemo(() => items.map((i) => i.mediaAssetId), [items]));
+  const previews = usePreviewUrls(useMemo(() => [...new Set(items.map((i) => i.mediaAssetId))], [items]));
   const assetById = useMemo(() => Object.fromEntries(assets.map((a) => [a.id, a])), [assets]);
   const totalSeconds = totalItemsDurationSeconds(items, assets, playback);
   const total = formatDuration(totalSeconds);
@@ -93,13 +93,13 @@ export function PlaylistTimelinePane({
             {items.map((item, index) => {
               const asset = assetById[item.mediaAssetId];
               const seconds = item.durationSeconds ?? asset?.duration_seconds ?? null;
-              const isSelected = selectedId === item.mediaAssetId;
+              const isSelected = selectedId === item.key;
               return (
-                <div key={item.mediaAssetId} className="w-[88px] shrink-0">
+                <div key={item.key} className="w-[88px] shrink-0">
                   <button
                     type="button"
                     onClick={() => {
-                      onSelect(item.mediaAssetId);
+                      onSelect(item.key);
                       onSeek(startSeconds[index] ?? 0);
                     }}
                     className="w-full text-left"
@@ -108,7 +108,7 @@ export function PlaylistTimelinePane({
                       className={`block overflow-hidden rounded-lg border-2 ${
                         isSelected
                           ? "border-primary"
-                          : nowPlayingId === item.mediaAssetId
+                          : nowPlayingId === item.key
                             ? "border-success"
                             : "border-transparent"
                       }`}

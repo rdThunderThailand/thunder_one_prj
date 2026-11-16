@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { WEEKDAYS } from "../schedule";
 import { describeSchedule } from "../schedule-describe";
 import { draftToSchedule, scheduleToDraft, todayIn, validateDraftNow } from "../schedule-preset";

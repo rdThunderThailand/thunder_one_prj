@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { CheckIcon as Check, EditIcon as Pencil, XIcon as X } from "@/components/ui/icons";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
-import { Input } from "@/components/ui/lovable/input";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { classifyApiError } from "@/lib/api/api-error";
 import { renameMediaAsset } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
@@ -57,7 +57,7 @@ export function InlineRename({ asset, onRenamed }: { asset: MediaAsset; onRename
             if (e.key === "Escape") cancel();
           }}
           aria-label="Media name"
-          className="h-9 max-w-64 text-xs"
+          className="h-9 max-w-64 py-1 text-xs"
         />
         <Button size="icon" className="h-9 w-9" aria-label="Save media name" onClick={() => void save()}>
           <Check className="h-4 w-4" />

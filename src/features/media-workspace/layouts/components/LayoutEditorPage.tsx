@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { LayoutInformationCard } from "@/features/media-workspace/compositions/components/LayoutInformationCard";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 // Reused rather than re-written — see docs/layouts/plan-layout-execution.md Task 7 Step 5.

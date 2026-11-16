@@ -226,7 +226,7 @@ export function usePublishDraft() {
     // the name is entered. `media_publication_upsert` refuses an empty name, so a draft with no
     // name yet has nothing to persist server-side — the selection lives in the localStorage
     // draft until step 2. Mirrors the same guard in `saveDraft`.
-    if (!policy.shouldPersist) return { kind: "skipped" };
+    if (!policy.shouldPersist) return { kind: "skipped", reason: state.basicInfo.name.trim() ? "content" : "name" };
     const channelResult = policy.sendTargets ? await channelsRequest.current : null;
     if (policy.sendTargets && (!channelResult || channelResult.failed)) {
       throw new DraftSaveError("โหลด Channels ไม่สำเร็จ กรุณาโหลดหน้าใหม่ก่อนบันทึก");

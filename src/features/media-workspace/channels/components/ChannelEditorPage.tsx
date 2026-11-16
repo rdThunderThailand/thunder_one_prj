@@ -111,6 +111,7 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
   return (
     <div data-testid="channel-editor" className="flex flex-col gap-4">
       <PageHeader
+        titleInTopbar
         title={
           <span className="inline-flex items-center gap-2">
             Edit Channel

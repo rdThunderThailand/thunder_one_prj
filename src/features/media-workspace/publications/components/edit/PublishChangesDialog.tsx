@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/lovable/dialog";
+} from "@/components/ui/Dialog";
 import type { ScheduleConflict } from "../../types";
 
 type ConflictState = { status: "checking" } | { status: "failed" } | { status: "done"; list: ScheduleConflict[] };

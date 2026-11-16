@@ -9,7 +9,7 @@ import {
   type Icon,
   MoreIcon,
 } from "@/components/ui/icons";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,

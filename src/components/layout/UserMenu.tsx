@@ -39,6 +39,7 @@ export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "def
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
+        aria-label={`Account: ${userName}`}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         className={
@@ -54,7 +55,7 @@ export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "def
             typography direction (bold name, small light role label) — was
             text-base (16px) and a bespoke 12.8px, both noticeably larger
             than the reference's own (very compact) 10px/8px. */}
-        <span className="text-left leading-tight">
+        <span className="hidden text-left leading-tight lg:block">
           <span className={compact ? "block max-w-36 truncate text-xs font-semibold text-foreground" : "block text-2xs font-bold text-foreground"}>
             {userName}
           </span>
@@ -62,7 +63,7 @@ export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "def
             <span className={compact ? "block text-[10px] text-muted-foreground" : "block text-3xs text-muted-foreground"}>{roleLabel}</span>
           )}
         </span>
-        <ChevronDownIcon className={compact ? "h-3.5 w-3.5 text-muted-foreground" : "h-4 w-4 text-muted-foreground"} />
+        <ChevronDownIcon className={compact ? "hidden h-3.5 w-3.5 text-muted-foreground lg:block" : "hidden h-4 w-4 text-muted-foreground lg:block"} />
       </button>
 
       {isOpen && (

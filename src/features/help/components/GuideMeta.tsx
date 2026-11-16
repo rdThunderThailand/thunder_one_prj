@@ -6,7 +6,7 @@ import {
   ToolIcon as Wrench,
   type Icon,
 } from "@/components/ui/icons";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Tag } from "@/components/ui/Tag";
 import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_LABEL, LOCALE_NAME, WORKSPACE_LABEL, t } from "../copy";
 import type { GuideCard } from "../repository";
@@ -44,26 +44,26 @@ export function ContentTypeIcon({ type, size = "md", className }: { type: Conten
 
 export function ContentTypeTag({ type }: { type: ContentType }) {
   return (
-    <Badge variant="outline" className="rounded-full border-border px-2 py-0 text-2xs font-semibold text-muted-foreground">
+    <Tag className="rounded-full border-border px-2 py-0 text-2xs font-semibold text-muted-foreground">
       {CONTENT_TYPE_LABEL[type]}
-    </Badge>
+    </Tag>
   );
 }
 
 export function WorkspaceTag({ workspace, locale }: { workspace: WorkspaceKey; locale: Locale }) {
   return (
-    <Badge variant="outline" className="rounded-full border-border px-2 py-0 text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <Tag className="rounded-full border-border px-2 py-0 text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
       {WORKSPACE_LABEL[workspace][locale]}
-    </Badge>
+    </Tag>
   );
 }
 
 /** Shown when a list item is in the other language, so a Thai title is never passed off as English (AC-010). */
 export function LocaleOnlyTag({ shown, locale }: { shown: Locale; locale: Locale }) {
   return (
-    <Badge variant="outline" className="rounded-full border-dashed border-border px-2 py-0 text-2xs font-semibold text-muted-foreground" lang={locale}>
+    <Tag className="rounded-full border-dashed border-border px-2 py-0 text-2xs font-semibold text-muted-foreground" lang={locale}>
       {t("onlyIn", locale, { lang: LOCALE_NAME[shown][locale] })}
-    </Badge>
+    </Tag>
   );
 }
 

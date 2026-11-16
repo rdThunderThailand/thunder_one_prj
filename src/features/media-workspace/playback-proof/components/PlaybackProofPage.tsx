@@ -9,7 +9,7 @@ import {
   TimerIcon as Timer,
 } from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ErrorState } from "@/components/ui/lovable/core";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { useListUrlState } from "@/hooks/use-list-url-state";
 import { ApiError } from "@/lib/api/api-error";
 import { ALL_CHANNELS, type ChannelScope } from "../../channels/channel-scope";

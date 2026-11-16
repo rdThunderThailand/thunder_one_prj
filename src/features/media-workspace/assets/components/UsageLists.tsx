@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import type { AssetDeleteBlockers, AssetUsage, AssetUsageRef } from "@/types/domain";
 import { blockerSummary, usageSummary } from "../asset-usage";
 
@@ -71,7 +71,7 @@ export function UsageGroups({ usage }: { usage: AssetUsage }) {
   );
 }
 
-/** One collapsible row per in-use Asset: label, summary, expandable groups. */
+/** One collapsible row per in-use Asset: label, summary, expandable groups. Scrolls after max-h-64 so a long Trash list stays inside the dialog. */
 export function UsageEntries({ entries }: { entries: Array<{ id: string; label: string; usage: AssetUsage }> }) {
   return (
     <div className="max-h-64 space-y-1.5 overflow-y-auto">
@@ -104,7 +104,7 @@ export function BlockedEntries({ entries }: { entries: Array<{ id: string; label
             {entry.blockers.playlists.length > 0 && (
               <Group title="Playlists">
                 {entry.blockers.playlists.map((playlist) => (
-                  <RefLink key={playlist.id} href={HREF.playlist(playlist.id)} note={playlist.trashed ? "in Trash" : undefined}>
+                  <RefLink key={playlist.id} href={HREF.playlist(playlist.id)}>
                     {playlist.name}
                   </RefLink>
                 ))}
@@ -113,7 +113,7 @@ export function BlockedEntries({ entries }: { entries: Array<{ id: string; label
             {entry.blockers.layouts.length > 0 && (
               <Group title="Layouts">
                 {entry.blockers.layouts.map((layout) => (
-                  <RefLink key={layout.id} href={HREF.layout(layout.id)} note={layout.trashed ? "in Trash" : undefined}>
+                  <RefLink key={layout.id} href={HREF.layout(layout.id)}>
                     {layout.name}
                   </RefLink>
                 ))}
@@ -127,11 +127,6 @@ export function BlockedEntries({ entries }: { entries: Array<{ id: string; label
                   </RefLink>
                 ))}
               </Group>
-            )}
-            {entry.blockers.history && (
-              <p className="text-xs text-muted-foreground">
-                This file has aired, so Playback Proof keeps it. Removing the references above does not make it deletable.
-              </p>
             )}
           </div>
         </details>

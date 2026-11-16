@@ -12,8 +12,8 @@ import {
   UserIcon,
   type Icon,
 } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
+import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
 import { ActionFields } from "./ActionFields";
 import {
   ACTION_LABELS,

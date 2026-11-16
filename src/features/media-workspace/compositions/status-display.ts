@@ -31,6 +31,10 @@ export function describeSaveError(message: string): string {
   if (message.includes("a layout named")) {
     return "บันทึกไม่ได้ — มี Template ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น";
   }
+  // `media_layout_upsert` numbers Zones by their order in the request (1-based), which is the
+  // editor's own order — the same list a duplicate is appended to.
+  const overlap = /zones (\d+) and (\d+) overlap/.exec(message);
+  if (overlap) return `บันทึกไม่ได้ — Zone ลำดับที่ ${overlap[1]} และ ${overlap[2]} ซ้อนทับกัน กรุณาปรับขนาดหรือตำแหน่งใหม่`;
   if (message.includes("Already exists") || /duplicate key|unique constraint/i.test(message)) {
     return "บันทึกไม่ได้ — มี Composition ชื่อนี้อยู่แล้ว";
   }

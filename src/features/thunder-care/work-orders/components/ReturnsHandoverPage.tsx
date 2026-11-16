@@ -22,7 +22,7 @@ export function ReturnsHandoverPage() {
           <p className="text-sm text-muted-foreground">ติดตามรายการคืนอุปกรณ์และการส่งมอบให้ลูกค้า</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" disabled title="ยังไม่เปิดใช้งาน">
+          <Button variant="outline" disabled title="ยังไม่เปิดใช้งาน">
             ส่งออก
           </Button>
           <Button variant="primary" disabled title="ยังไม่เปิดใช้งาน">

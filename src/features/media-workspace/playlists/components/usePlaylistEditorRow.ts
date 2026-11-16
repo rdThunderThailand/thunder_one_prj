@@ -6,6 +6,7 @@ import { classifyApiError, isConflict, type ClassifiedError } from "@/lib/api/ap
 import { fetchPlaylist, setPlaylistItems, upsertPlaylist } from "../services/playlists-api";
 import { encodeMetadata } from "../metadata";
 import { resolveDraftStatus } from "../resolve-draft-status";
+import { playlistDisplayStatus } from "../status-display";
 import type { UndoableState } from "../use-undoable-state";
 import { editorSnapshot, editorStateFromDetail, emptyEditorState, type EditorState } from "../playlist-editor-state";
 import type { PlaylistDetail, PlaylistInfo, PlaylistStatus } from "../types";
@@ -47,7 +48,7 @@ export function usePlaylistEditorRow({
     setSavedSnapshot(baseline(state, loadedInfo));
     setServerId(detail.id);
     setRevision(rev);
-    setStatus(detail.status);
+    setStatus(playlistDisplayStatus(detail));
     setInfo(loadedInfo);
   };
 

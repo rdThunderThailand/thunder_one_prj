@@ -22,6 +22,7 @@ export type PlaybackProofEntry = {
     title: string;
     kind: string;
     in_trash: boolean;
+    file_deleted?: boolean;
     width: number | null;
     height: number | null;
     duration_seconds: number | null;

@@ -26,12 +26,13 @@ export function AssetsFileProgress({ kind, description, stage, steps }: {
         </div>
       )}
       <Progress
-        value={percent}
-        indeterminate={!steps}
+        // No step count yet: a full striped bar says "working" without a fake percentage.
+        value={steps ? percent : 100}
+        animated={!steps}
+        aria-valuenow={percent}
         aria-valuetext={progressText}
         aria-label={kind === "assets" ? "Preparing asset export" : "Preparing import template"}
         className="h-2 bg-muted"
-        indicatorClassName="duration-500 ease-out motion-reduce:transition-none"
       />
       <p className="text-2xs leading-relaxed text-muted-foreground">
         Your browser will handle the download when the file is ready.

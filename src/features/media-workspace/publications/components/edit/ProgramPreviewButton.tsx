@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { fetchMediaAsset } from "@/lib/api/media-api";
 import { decodeMetadata, fetchPlaylist } from "@/features/media-workspace/playlists";
 import { loadCompositionPreview, type StagePreview } from "@/features/media-workspace/preview/composition-preview";

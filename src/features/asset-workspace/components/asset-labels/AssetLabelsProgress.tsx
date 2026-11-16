@@ -36,7 +36,7 @@ export function AssetLabelsProgress({ completed, total, preparation }: {
           <span className="font-semibold">{percent}%</span>
         </div>
         <Progress value={percent} aria-valuetext={progressText} aria-label={preparation ? "Preparing label preview" : "Preparing PDF"}
-          className="h-2 bg-muted" indicatorClassName="transition-transform duration-300 ease-out motion-reduce:transition-none" />
+          className="h-2 bg-muted" />
       </div>
       {steps && (
         <ul className="space-y-2 text-left text-xs">

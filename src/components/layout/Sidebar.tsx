@@ -353,10 +353,12 @@ export function Sidebar({
   tenantId,
   tenantName,
   availableTenants,
+  isMobile = false,
 }: {
   tenantId: string | null;
   tenantName: string | null;
   availableTenants: AvailableTenant[];
+  isMobile?: boolean;
 }) {
   const pathname = usePathname();
   const activeApp = resolveActiveApp(pathname);
@@ -372,7 +374,7 @@ export function Sidebar({
   // route change resets to the route's default so an editor never pins the
   // list pages collapsed and vice versa.
   const [choice, setChoice] = useState<{ pathname: string; collapsed: boolean } | null>(null);
-  const collapsed = choice?.pathname === pathname ? choice.collapsed : isMediaWorkspace && isEditorRoute(pathname);
+  const collapsed = !isMobile && (choice?.pathname === pathname ? choice.collapsed : isMediaWorkspace && isEditorRoute(pathname));
   const setCollapsed = (update: (v: boolean) => boolean) => setChoice({ pathname, collapsed: update(collapsed) });
 
   if (SETTINGS_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
@@ -439,6 +441,8 @@ export function Sidebar({
           />
         )}
         <button
+          hidden={isMobile}
+          aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
           type="button"
           onClick={() => setCollapsed((v) => !v)}
           className={

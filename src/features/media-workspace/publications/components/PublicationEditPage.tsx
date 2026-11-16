@@ -14,8 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
-import { ErrorState } from "@/components/ui/lovable/core";
+import { Button, buttonVariants } from "@/components/ui/Button";
+import { ErrorState } from "@/components/ui/EmptyState";
 import {
   cancelPublication,
   deletePublication,
@@ -65,7 +65,7 @@ export function PublicationEditPage({ id }: { id: string }) {
   const isDraft = displayStatus === "draft";
   const isEnded = displayStatus === "ended";
   // ADR 0090: on air, only the schedule's end may move.
-  const isOnAir = displayStatus === "live" || displayStatus === "publishing";
+  const isOnAir = displayStatus === "live" || displayStatus === "publishing" || displayStatus === "failed";
   const canPublish = state.name.trim().length > 0 && !busy;
   const partError = (part: string) => (failure?.part === part ? failure.message : undefined);
   const pageError = failure?.isStale

@@ -4,8 +4,8 @@
 // Composition editor has, on the Lovable `layout-editor` skeleton (ADR 0076). Kept together
 // because a Template has no content: none of them needs bindings, lock or hide state.
 
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { ArrowLeftIcon, LayoutIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { duplicateZone } from "../align-zones";
 import { parseResolution, referencePixels } from "../geometry";

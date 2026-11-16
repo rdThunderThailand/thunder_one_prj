@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { SearchIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import {
   Dialog,
@@ -11,9 +11,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/lovable/dialog";
-import { Input } from "@/components/ui/lovable/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
+} from "@/components/ui/Dialog";
+import { Input } from "@/components/ui/Input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { fetchChannelGroups } from "../../../channel-groups/services/channel-groups-api";
 import type { ChannelGroup } from "../../../channel-groups/types";
 import { channelStatus, channelTypeKey, channelTypeLabel, filterChannels } from "../../../channels/channel-logic";

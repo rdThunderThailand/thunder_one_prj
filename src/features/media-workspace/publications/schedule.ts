@@ -128,10 +128,11 @@ export function recurrenceAirsOn(recurrence: Recurrence, ymd: string): boolean {
   return rec.days.includes(ymdDow(ymd));
 }
 
-/** "HH:MM" comparison. An end at or before the start means the window wraps midnight. */
+/** "HH:MM" comparison. An end at or before the start means the window wraps midnight. An end of 23:59
+ *  runs through the end of the local day, like Thunder_Core's `recurrence_matches` (ADR 0012, #240). */
 function withinDailyWindow(time: string, start: string, end: string): boolean {
   if (!start || !end) return true;
-  if (start === "00:00" && end === "23:59") return true;
+  if (end === "23:59") return time >= start;
   return end > start ? time >= start && time < end : time >= start || time < end;
 }
 
