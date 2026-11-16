@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { TrashIcon as Trash2 } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { ZoneGeometryFields } from "@/features/media-workspace/layouts/components/ZoneGeometryFields";
 import type { LayoutZone } from "@/features/media-workspace/layouts/types";
 import type { MediaAsset, PlaylistItem, PlaylistListItem } from "@/types/domain";

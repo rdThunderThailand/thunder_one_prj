@@ -28,6 +28,7 @@ import { CreateChannelModal } from "./create-wizard/CreateChannelModal";
 function ChannelsHeader({ onCreate }: { onCreate: () => void }) {
   return (
     <PageHeader
+        titleInTopbar
       title="All Channels"
       subtitle="Manage and monitor all your channels, grouped by type, location, and purpose."
       actions={

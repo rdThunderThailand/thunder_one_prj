@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
-import { StatusBadge } from "@/components/ui/lovable/core";
+import { Button } from "@/components/ui/Button";
+import { StatusBadge } from "@/components/ui/Badge";
 import { CheckIcon, EditIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";

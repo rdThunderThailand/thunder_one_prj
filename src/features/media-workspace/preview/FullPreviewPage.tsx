@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { XIcon } from "@/components/ui/icons";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";

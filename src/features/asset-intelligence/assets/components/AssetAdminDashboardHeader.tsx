@@ -14,7 +14,7 @@ export function AssetAdminDashboardHeader() {
           ภาพรวมสถานะทรัพย์สินขององค์กร ณ วันนี้
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <span className="flex items-center gap-1.5 text-xs text-t1-gray-400">
           <RepeatIcon className="h-3.5 w-3.5" />
           อัปเดตล่าสุด 10:30 น.

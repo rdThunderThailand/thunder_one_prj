@@ -4,6 +4,7 @@ import type { PublicationDisplayStatus, PublicationListItem } from "./types";
 export const DISPLAY_STATUS_LABELS: Record<PublicationDisplayStatus, string> = {
   draft: "Draft",
   publishing: "Publishing",
+  failed: "Failed",
   scheduled: "Scheduled",
   live: "Live",
   ended: "Ended",
@@ -20,6 +21,7 @@ export function rowActionsFor(status: PublicationDisplayStatus | undefined): Row
     case "draft":
       return ["edit", "publish", "delete"];
     case "publishing":
+    case "failed":
     case "scheduled":
     case "live":
       return ["open", "duplicate", "end"];

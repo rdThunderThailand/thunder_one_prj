@@ -1,7 +1,8 @@
 "use client";
 
-// ponytail: native <dialog> — swap to a portal + animation library only if entry/exit transitions are ever needed
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from "./Dialog";
+import { cn } from "@/lib/utils";
 
 type ModalSize = "md" | "lg" | "form" | "xl" | "preview";
 
@@ -20,8 +21,6 @@ interface ModalProps {
   description?: string;
   children: ReactNode;
   footer: ReactNode;
-  /** "lg" for multi-step wizards that need room for a step form — every
-   *  existing caller keeps the original "md" width by omitting this. */
   size?: ModalSize;
   showCloseButton?: boolean;
   hideTitle?: boolean;
@@ -30,56 +29,50 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, description, children, footer, size = "md", showCloseButton = false, hideTitle = false, titleClassName = "", overflowVisible = false }: ModalProps) {
-  const ref = useRef<HTMLDialogElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (open) {
-      // showModal() throws if the dialog is already open
-      if (!el.open) el.showModal();
-    } else {
-      el.close();
-    }
-  }, [open]);
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    // Clicks on the backdrop have the <dialog> itself as target; content clicks bubble up with a different target.
-    if (e.target === ref.current) onClose();
-  };
-
-  // m-auto is not decoration: Tailwind preflight zeroes the UA `margin: auto` that
-  // centres a modal <dialog>, which otherwise pins itself to the top-left corner.
+  // Exit animation would delay the former native Modal's immediate close and focus return.
   return (
-    <dialog
-      ref={ref}
-      onClose={onClose}
-      onClick={handleBackdropClick}
-      className={`m-auto w-[calc(100%-2rem)] ${sizeClasses[size]} rounded-lg p-0 backdrop:bg-t1-black/40 ${overflowVisible ? "overflow-visible" : ""}`}
-    >
-      {/* The <dialog> stays mounted — the effect above needs its ref — but its contents do not.
-          A closed dialog is display:none, so everything inside it used to linger in the DOM:
-          invisible, unreachable by keyboard, and still found by document.querySelector. */}
-      {open && (
-        <div className="relative w-full rounded-lg border border-border bg-card p-5">
-          <div className={hideTitle ? "sr-only" : "mb-5 pr-8"}>
-            <h2 className={`text-base font-semibold text-foreground ${titleClassName}`}>{title}</h2>
-            {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        overlayClassName="bg-t1-black/40 data-[state=open]:animate-none data-[state=closed]:animate-none!"
+        className={cn(
+          "block w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] gap-0 rounded-lg border-0 bg-transparent p-0 shadow-none data-[state=open]:animate-none data-[state=closed]:animate-none!",
+          sizeClasses[size],
+          overflowVisible ? "overflow-visible" : "overflow-y-auto",
+        )}
+        onOpenAutoFocus={() => {
+          // Controlled Modal callers have no DialogTrigger for Radix to restore focus to.
+          opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (opener.current?.isConnected) opener.current.focus({ preventScroll: true });
+        }}
+      >
+        {open && (
+          <div className="relative w-full rounded-lg border border-border bg-card p-5">
+            <div className={hideTitle ? "sr-only" : "mb-5 pr-8"}>
+              <DialogTitle className={cn("text-base font-semibold leading-normal tracking-normal text-foreground", titleClassName)}>{title}</DialogTitle>
+              {description && <DialogDescription className="mt-1">{description}</DialogDescription>}
+            </div>
+            {showCloseButton && (
+              <DialogClose asChild>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-xl text-t1-gray-400 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  ×
+                </button>
+              </DialogClose>
+            )}
+            <div className="flex flex-col gap-2 text-sm text-foreground">{children}</div>
+            <div className="mt-4 flex justify-end gap-2">{footer}</div>
           </div>
-          {showCloseButton && (
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={onClose}
-              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-xl text-t1-gray-400 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              ×
-            </button>
-          )}
-          <div className="flex flex-col gap-2 text-sm text-foreground">{children}</div>
-          <div className="mt-4 flex justify-end gap-2">{footer}</div>
-        </div>
-      )}
-    </dialog>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

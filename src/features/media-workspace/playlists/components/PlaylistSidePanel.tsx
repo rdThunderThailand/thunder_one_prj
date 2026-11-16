@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Tabs } from "@/components/ui/Tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { XIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError } from "@/lib/api/api-error";
@@ -129,31 +129,26 @@ export function PlaylistSidePanel({
         </div>
       ) : (
         detail && (
-          <Tabs
-            key={playlist.id}
-            items={[
-              {
-                key: "details",
-                label: "Details",
-                content: <DetailsTab detail={detail} campaignName={campaignName} />,
-              },
-              {
-                key: "schedule",
-                label: "Schedule",
-                content: <ScheduleTab playlistId={playlist.id} />,
-              },
-              {
-                key: "content",
-                label: `Content (${detail.items.length})`,
-                content: <ContentTab detail={detail} />,
-              },
-              {
-                key: "history",
-                label: "History",
-                content: <HistoryTab playlistId={playlist.id} />,
-              },
-            ]}
-          />
+          <Tabs key={playlist.id} variant="underline" defaultValue="details" activationMode="manual">
+            <TabsList aria-label="Playlist details">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              <TabsTrigger value="content">Content ({detail.items.length})</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details">
+              <DetailsTab detail={detail} campaignName={campaignName} />
+            </TabsContent>
+            <TabsContent value="schedule">
+              <ScheduleTab playlistId={playlist.id} />
+            </TabsContent>
+            <TabsContent value="content">
+              <ContentTab detail={detail} />
+            </TabsContent>
+            <TabsContent value="history">
+              <HistoryTab playlistId={playlist.id} />
+            </TabsContent>
+          </Tabs>
         )
       )}
 

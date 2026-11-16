@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 
 export function DraftResumePrompt(props: {
   open: boolean;

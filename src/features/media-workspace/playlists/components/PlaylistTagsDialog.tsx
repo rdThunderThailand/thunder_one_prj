@@ -6,8 +6,8 @@
 // datalist of the tenant's existing vocabulary, so typing an existing name reuses it.
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
+import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
 import { XIcon } from "@/components/ui/icons";
 import { classifyApiError } from "@/lib/api/api-error";
 import { fetchTags, setPlaylistTags } from "@/lib/api/media-api";

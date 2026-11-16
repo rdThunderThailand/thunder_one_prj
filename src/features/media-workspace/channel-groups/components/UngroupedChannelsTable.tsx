@@ -52,7 +52,7 @@ function AddToGroupMenu({
     <span onClick={(event) => event.stopPropagation()}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="secondary" className="!px-2.5 !py-1.5 text-xs">
+          <Button type="button" variant="outline" className="!px-2.5 !py-1.5 text-xs">
             Add to Group
           </Button>
         </PopoverTrigger>

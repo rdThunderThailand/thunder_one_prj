@@ -78,7 +78,7 @@ export function EditAssetModal({ asset, onClose }: { asset: AssetListRow; onClos
       title={`แก้ไขทรัพย์สิน — ${asset.name}`}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
             ยกเลิก
           </Button>
           <Button type="submit" form="edit-asset-form" variant="primary" disabled={submitting}>

@@ -88,9 +88,12 @@ export type PublicationListItem = {
   delivery?: PublicationListDelivery | null;
 };
 
-export const DISPLAY_STATUSES = ["draft", "publishing", "scheduled", "live", "ended"] as const;
+export const DISPLAY_STATUSES = ["draft", "publishing", "failed", "scheduled", "live", "ended"] as const;
 
 export type PublicationDisplayStatus = (typeof DISPLAY_STATUSES)[number];
+
+/** ADR 0104: a filter value only. Core never returns it as a row's `display_status`. */
+export const NOT_ENDED_FILTER = "not_ended";
 
 export type PublicationListDelivery = {
   total: number;
@@ -105,7 +108,7 @@ export type PublicationListSort = (typeof LIST_SORTS)[number];
 
 /** Query for `GET /media/publications` (BE-1). `limit` omitted = every row, for the old callers. */
 export type PublicationListParams = {
-  display_status?: PublicationDisplayStatus;
+  display_status?: PublicationDisplayStatus | typeof NOT_ENDED_FILTER;
   channel_id?: string;
   group_id?: string;
   tag_id?: string;

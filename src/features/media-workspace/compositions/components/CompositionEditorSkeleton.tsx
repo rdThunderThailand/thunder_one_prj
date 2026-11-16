@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/lovable/skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 /** Editor-shaped placeholder while the Composition and its geometry load (#223). */
 export function CompositionEditorSkeleton() {

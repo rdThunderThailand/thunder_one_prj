@@ -11,7 +11,7 @@ export default function MyAssetsPage() {
         title="My Assets"
         subtitle="Equipment currently assigned to you."
         actions={
-          <Button variant="secondary">
+          <Button variant="outline">
             <SearchIcon className="h-4 w-4" /> Scan QR
           </Button>
         }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";

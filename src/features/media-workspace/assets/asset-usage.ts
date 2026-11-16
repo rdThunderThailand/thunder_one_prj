@@ -23,3 +23,7 @@ export const blockerSummary = (blockers: AssetDeleteBlockers) =>
 
 /** True when Core refused the delete. A result without `deleted` comes from an older route and counts as done. */
 export const isDeleteBlocked = (result: { deleted?: boolean }) => result.deleted === false;
+
+/** Loading line in Move to Trash. One file takes "is"; a batch takes "are". */
+export const trashUsageLoadingCopy = (count: number) =>
+  `Checking where ${count === 1 ? "this file is" : "these files are"} used…`;

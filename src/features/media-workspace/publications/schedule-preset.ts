@@ -1,4 +1,5 @@
 import { DEFAULT_TIMEZONE, shiftYmd, utcToZonedParts, ymdDow, zonedToUtcIso } from "./schedule.ts";
+import type { AppLocale } from "@/lib/app-locale";
 import type { PublicationSchedule } from "./types/index.ts";
 
 /**
@@ -274,10 +275,18 @@ export function upcomingDays(draft: ScheduleDraft, from: string, limit: number):
   return days;
 }
 
-export function windowLabel(draft: ScheduleDraft): string {
+/** "5 hours 29 minutes" / "5 ชั่วโมง 29 นาที": whole minutes, never a rounded decimal (#340). */
+function durationLabel(totalMinutes: number, locale: AppLocale): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (locale === "th") return `${hours} ชั่วโมง ${minutes} นาที`;
+  return `${hours} ${hours === 1 ? "hour" : "hours"} ${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+}
+
+export function windowLabel(draft: ScheduleDraft, locale: AppLocale): string {
   if (draft.allDay) return "All day (00:00 – 24:00)";
   const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
-  const hours = Math.round(((minutes(draft.dailyEnd) - minutes(draft.dailyStart)) / 60) * 10) / 10;
-  const length = `${hours}`;
-  return `${draft.dailyStart} – ${draft.dailyEnd} (${length} hour${hours === 1 ? "" : "s"})`;
+  // A daily end of 23:59 runs through the end of the day (ADR 0012, #240), so it counts to 24:00.
+  const end = draft.dailyEnd === "23:59" ? 24 * 60 : minutes(draft.dailyEnd);
+  return `${draft.dailyStart} – ${draft.dailyEnd} (${durationLabel(end - minutes(draft.dailyStart), locale)})`;
 }

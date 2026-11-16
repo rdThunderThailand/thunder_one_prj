@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { blockerSummary, isDeleteBlocked, isInUse, usageSummary } from "./asset-usage.ts";
+import { blockerSummary, isDeleteBlocked, isInUse, trashUsageLoadingCopy, usageSummary } from "./asset-usage.ts";
 
 const empty = { playlists: [], layouts: [], programs: [], coverOf: [], history: false };
 const used = {
@@ -22,6 +22,9 @@ assert.equal(
   blockerSummary({ playlists: [{ id: "p1", name: "Lobby" }], layouts: [{ id: "c1", name: "L" }], programs: [], history: true }),
   "1 Playlist · 1 Layout",
 );
+
+assert.equal(trashUsageLoadingCopy(1), "Checking where this file is used…");
+assert.equal(trashUsageLoadingCopy(2), "Checking where these files are used…");
 
 assert.equal(isDeleteBlocked({ deleted: false }), true);
 assert.equal(isDeleteBlocked({ deleted: true }), false);

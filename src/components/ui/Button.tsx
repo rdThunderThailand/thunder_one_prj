@@ -1,32 +1,60 @@
-import type { ButtonHTMLAttributes } from "react";
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+import { cn } from "@/lib/utils";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
+const buttonStyleVariants = cva(
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        primary: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border border-border bg-card text-foreground hover:bg-muted",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "text-muted-foreground hover:bg-muted hover:text-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-8 rounded-lg px-3 text-sm",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-11 rounded-lg px-6 text-sm",
+        icon: "h-9 w-9 rounded-lg",
+        "icon-sm": "h-8 w-8 rounded-lg",
+      },
+    },
+    defaultVariants: { variant: "default", size: "default" },
+  },
+);
+
+export function buttonVariants(options?: Parameters<typeof buttonStyleVariants>[0]): string {
+  return cn(buttonStyleVariants(options));
 }
 
-// 2026-09-19: colors/radius matched to the design reference's own button
-// treatment (semantic tokens + hover states measured directly off it) —
-// size/padding deliberately left unchanged (this component has 87 call
-// sites app-wide; the reference's own compact h-8/px-3 sizing was only
-// verified against media-workspace's overview page, not every one of them).
-const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/40",
-  secondary: "bg-card text-foreground border border-border hover:bg-muted disabled:text-muted-foreground",
-  ghost: "text-muted-foreground hover:text-foreground",
-};
-
-/** Button styling for elements that must not be a <button> — chiefly next/link,
- * since <a> wrapping <button> is invalid HTML and breaks keyboard navigation. */
-export function buttonClasses(variant: ButtonVariant = "primary", className = ""): string {
-  return `inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`;
+// The positional helper retains the former ui secondary meaning for existing links/native buttons.
+export function buttonClasses(variant: "primary" | "secondary" | "ghost" = "primary", className = ""): string {
+  return buttonVariants({ variant: variant === "secondary" ? "outline" : variant, className });
 }
 
-export function Button({
-  variant = "primary",
-  className = "",
-  ...props
-}: ButtonProps) {
-  return <button className={buttonClasses(variant, className)} {...props} />;
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
 }
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, type = "button", ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        ref={ref}
+        type={asChild ? undefined : type}
+        className={cn(buttonVariants({ variant, size }), className)}
+        {...props}
+      />
+    );
+  },
+);
+Button.displayName = "Button";

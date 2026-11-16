@@ -7,7 +7,7 @@ import {
   DesignIcon as PencilRuler,
   LayersIcon as SquareStack,
 } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { LibraryEmpty, LibrarySummary } from "../../content-library/LibraryChrome";
 
 export { LibraryRowsSkeleton as ListSkeleton, LibrarySummarySkeleton as SummarySkeleton } from "../../content-library/LibraryChrome";

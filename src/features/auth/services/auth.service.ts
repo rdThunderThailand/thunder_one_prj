@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/client";
+import { LoginError, loginErrorCode } from "../login-error";
 import type {
   AcceptInvitePayload,
   LoginCredentials,
@@ -10,20 +11,29 @@ import type {
 export async function login(
   credentials: LoginCredentials,
 ): Promise<{ userId: string }> {
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(credentials),
-  });
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    });
 
-  if (!res.ok) {
-    throw new Error("Invalid email or password.");
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new LoginError(loginErrorCode(res.status, body?.code));
+    }
+
+    const data = await res.json();
+    if (typeof data?.userId !== "string" || !data.userId.trim()) {
+      throw new LoginError("AUTH_SERVICE_UNAVAILABLE");
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof LoginError) throw error;
+    throw new LoginError("AUTH_SERVICE_UNAVAILABLE");
   }
-
-  const data = await res.json();
-  return data;
 }
 
 // No backend exists yet — this calls placeholder endpoints and will throw

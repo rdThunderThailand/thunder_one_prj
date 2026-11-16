@@ -118,7 +118,7 @@ export function ChannelGroupInspector({
       )}
 
       <div className="mt-4 flex flex-nowrap items-center gap-2">
-        <Link href={`/media-workspace/program/create?group=${group.id}`} className={buttonClasses("primary", "min-w-0 flex-1 whitespace-nowrap px-3")}>
+        <Link href={`/media-workspace/program/create`} className={buttonClasses("primary", "min-w-0 flex-1 whitespace-nowrap px-3")}>
           <PlusIcon />
           Create Program
         </Link>
@@ -203,7 +203,7 @@ export function ChannelGroupInspector({
         title="Delete Channel Group?"
         footer={
           <>
-            <Button type="button" variant="secondary" disabled={busy} onClick={() => setConfirmingDelete(false)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setConfirmingDelete(false)}>
               Cancel
             </Button>
             <Button type="button" disabled={busy} onClick={() => void confirmDelete()}>

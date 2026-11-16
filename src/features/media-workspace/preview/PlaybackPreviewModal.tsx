@@ -4,7 +4,7 @@
 // in the sheet, and a flat control bar as the footer.
 
 import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { EditIcon, ExpandIcon } from "@/components/ui/icons";
 import type { MediaAsset } from "@/types/domain";
 import { PreviewModalChrome, previewOutlineButton } from "./PreviewModalChrome";
