@@ -1,6 +1,6 @@
 // node device-state.check.mts
 import assert from "node:assert/strict";
-import { countVersions, isWindows, pilotBlocker, resolveVersion, type FleetDevice } from "./device-state.ts";
+import { countVersions, currentVersion, isWindows, pilotBlocker, resolveVersion, type FleetDevice } from "./device-state.ts";
 
 const base: FleetDevice = {
   id: "1", name: "d", tenant_id: "t", tenant_name: "T", registry_status: "registered", lifecycle_status: "ACTIVE",
@@ -18,12 +18,19 @@ assert.equal(resolveVersion(base), null);
 // blockers
 assert.equal(pilotBlocker(base), null);
 assert.equal(pilotBlocker({ ...base, os_version: "Android 7" }), null, "OS alone never blocks");
-assert.equal(pilotBlocker({ ...base, ring: "pilot" }), "Already in the test group");
+assert.equal(pilotBlocker({ ...base, ring: "pilot" }), "Already in the update group");
 assert.equal(pilotBlocker({ ...base, registry_status: "pending" }), "Not registered");
 assert.equal(pilotBlocker({ ...base, lifecycle_status: "decommissioned" }), "Decommissioned");
 assert.ok(pilotBlocker({ ...base, last_check: { ...check, update_track: "android" } })?.includes("android"));
 assert.ok(pilotBlocker({ ...base, last_check: { ...check, update_install_mode: "unsupported" } })?.includes("unsupported"));
 assert.equal(pilotBlocker({ ...base, last_check: check }), null);
+
+// 1.0.4 needs a signature, so it is installed by hand first; the report's version never decides (amendment 5 item 6)
+assert.equal(pilotBlocker({ ...base, app_version: "1.0.4" }), "Install 1.0.5 by hand first");
+assert.equal(pilotBlocker({ ...base, last_check: { ...check, app_version: "1.0.4" } }), "Install 1.0.5 by hand first");
+assert.equal(pilotBlocker({ ...base, app_version: "1.0.4", last_check: { ...check, app_version: "1.0.5" } }), null, "check wins over record");
+assert.equal(pilotBlocker({ ...base, reported_version: "1.0.4", last_check: { ...check, app_version: "1.0.5" } }), null, "stale report is ignored");
+assert.equal(currentVersion({ ...base, app_version: "0.9" }), "0.9");
 
 // counts keep raw strings apart
 const counted = countVersions([

@@ -34,6 +34,9 @@ export function resolveVersion(device: FleetDevice): ResolvedVersion | null {
   return null;
 }
 
+/** ADR 0028 amendment 5 item 6: the update-check's version, else the device record's. Never the update report, which a hand install does not refresh. */
+export const currentVersion = (device: FleetDevice) => device.last_check?.app_version ?? device.app_version;
+
 export const osOf = (device: FleetDevice) => device.last_check?.os_version ?? device.os_version;
 
 export const isWindows = (device: FleetDevice) => /windows/i.test(osOf(device) ?? "");
@@ -43,12 +46,13 @@ export const isWindows = (device: FleetDevice) => /windows/i.test(osOf(device) ?
  * OS is a hint and never blocks, because update-check eligibility rests on install mode and track (Decision 9).
  */
 export function pilotBlocker(device: FleetDevice): string | null {
-  if (device.ring) return "Already in the test group";
+  if (device.ring) return "Already in the update group";
   if (device.registry_status !== "registered") return "Not registered";
   if (device.lifecycle_status && RETIRED.has(device.lifecycle_status.toUpperCase())) return "Decommissioned";
   const check = device.last_check;
   if (check && check.update_track !== "windows-x64") return `Updates ${check.update_track}, not windows-x64`;
   if (check && check.update_install_mode !== "windows_managed") return `Install mode ${check.update_install_mode}`;
+  if (currentVersion(device) === "1.0.4") return "Install 1.0.5 by hand first";
   return null;
 }
 

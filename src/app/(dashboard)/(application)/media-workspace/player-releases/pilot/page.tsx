@@ -11,7 +11,7 @@ export default async function PilotRingPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="grid gap-6">
-      <PageHeader titleInTopbar title="Test group" subtitle="Devices that auto update first, before any wider rollout" />
+      <PageHeader titleInTopbar title="Update group" subtitle="Devices that auto update first, before any wider rollout" />
       <PilotPanel
         members={members}
         target={target}

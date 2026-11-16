@@ -42,7 +42,7 @@ type Result = { data: unknown } | { error: string };
 const BADGE = { not_approved: "neutral", approved: "success", withdrawn: "danger" } as const;
 const CONFIRM = {
   delete: "Files are removed and the version can be uploaded again. This cannot be undone.",
-  withdraw: "Devices stop installing this release and discard a pending download of it. If it is the version set for the test group, that version is cleared. This cannot be undone.",
+  withdraw: "Devices stop installing this release and discard a pending download of it. If it is the version set for the update group, that version is cleared. This cannot be undone.",
 };
 
 /**
@@ -71,7 +71,7 @@ export function ReleaseRow({ release, target }: { release: Release; target: { is
   const badges = (
     <>
       <Badge variant={BADGE[status]}>{STATUS_LABELS[status]}</Badge>
-      {target && <Badge variant={target.isPaused ? "warning" : "info"}>{target.isPaused ? "In test group · paused" : "In test group"}</Badge>}
+      {target && <Badge variant={target.isPaused ? "warning" : "info"}>{target.isPaused ? "In update group · paused" : "In update group"}</Badge>}
     </>
   );
 
@@ -103,7 +103,7 @@ export function ReleaseRow({ release, target }: { release: Release; target: { is
             )}
             {status === "approved" && release.admitted && (
               <DropdownMenuItem asChild>
-                <Link href={`/media-workspace/player-releases/pilot?release=${release.admitted.id}`}>Send to test group</Link>
+                <Link href={`/media-workspace/player-releases/pilot?release=${release.admitted.id}`}>Send to update group</Link>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onSelect={() => setIsRenaming(true)}>Rename</DropdownMenuItem>
