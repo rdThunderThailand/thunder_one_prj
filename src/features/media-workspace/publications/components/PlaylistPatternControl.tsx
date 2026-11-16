@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { setPlaylistPlayMode } from "@/features/media-workspace/playlists";
 import { fetchAffectedPrograms } from "@/features/media-workspace/publish-changes/publish-changes-api";
 import { applyPlaybackPattern } from "../playback-pattern-apply";

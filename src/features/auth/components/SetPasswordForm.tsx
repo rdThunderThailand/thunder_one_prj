@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { TextField } from "@/components/ui/TextField";
 import { setPassword } from "../services/auth.service";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -88,7 +88,7 @@ export function SetPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <Input
+      <TextField
         label="New password"
         name="password"
         type="password"
@@ -98,7 +98,7 @@ export function SetPasswordForm() {
         value={password}
         onChange={(event) => setPasswordValue(event.target.value)}
       />
-      <Input
+      <TextField
         label="Confirm password"
         name="confirmPassword"
         type="password"

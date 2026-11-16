@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { Input } from "@/components/ui/lovable/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
+import { Input } from "@/components/ui/Input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
 import type { MediaAsset } from "@/types/domain";
 import type { PlaylistListItem } from "@/features/media-workspace/playlists";
@@ -50,7 +50,7 @@ export function CompositionContentBrowser({ binding, selectedZoneLabel, assets, 
         </TabsList>
       </Tabs>
       <div className="space-y-2 border-b border-border p-3">
-        <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${tab}…`} className="h-8 text-xs md:text-xs" />
+        <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${tab}…`} className="h-8 py-1 text-xs md:text-xs" />
         {tab === "media" && (
           <div className="grid grid-cols-2 gap-2">
             <select aria-label="Media type" value={kind} onChange={(event) => setKind(event.target.value)} className="h-8 rounded-md border border-border bg-card px-2 text-xs"><option value="">All types</option><option value="image">Images</option><option value="video">Videos</option></select>

@@ -36,6 +36,8 @@ function load(url: URL): Record<string, unknown> {
     if (id.endsWith("/useListUrlState")) return { useListUrlState: () => ({ get: (key: string) => key === "tab" ? "history" : undefined, set() {}, isPending: false }) };
     if (id === "./AssignmentsWorkspace") return { AssignmentsWorkspace: ({ children }: Props) => createElement("div", null, children) };
     if (id === "./AssignmentsHistoryFilters") return { AssignmentsHistoryFilters: () => createElement("div") };
+    // Shared ui components import `cn` since dev's component consolidation (PR #387).
+    if (id === "@/lib/utils") return load(new URL("../../../../lib/utils.ts", import.meta.url));
     if (id.startsWith("@/components/ui/")) return load(new URL(`${id.split("/").at(-1)}.tsx`, ui));
     if (id.startsWith("../../domain/")) return require(fileURLToPath(new URL(`${id}.ts`, url)));
     if (id.startsWith(".")) return load(new URL(`${id}${id.endsWith("columns") || id.endsWith("error-text") ? ".ts" : ".tsx"}`, url));

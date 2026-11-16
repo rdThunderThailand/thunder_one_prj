@@ -84,26 +84,34 @@ export function itemStartSeconds(items: DraftItem[], assets: MediaAsset[], playb
   return starts;
 }
 
-/** #35: assets picked in the Add Item drawer land at the end, in selection order, skipping
- *  any already present. A video's per-item duration starts `null` (inherit the clip length);
- *  an image starts from the playlist's default image duration. */
+/** #35: assets picked in the Add Item drawer land at the end, in selection order. An asset
+ *  already in the Playlist is added again — repeats are allowed (ADR 0103). A video's per-item
+ *  duration starts `null` (inherit the clip length); an image starts from the playlist's
+ *  default image duration. */
 export function appendItems(
   items: DraftItem[],
   picked: { id: string; title?: string; kind?: "video" | "image" }[],
   playback: PlaylistPlayback,
 ): DraftItem[] {
-  const have = new Set(items.map((i) => i.mediaAssetId));
-  const additions = picked
-    .filter((a) => !have.has(a.id))
-    .map((a): DraftItem => ({
-      mediaAssetId: a.id,
-      title: a.title,
-      kind: a.kind,
-      durationSeconds:
-        a.kind === "video" ? null : (playback.defaultImageDuration ?? DEFAULT_IMAGE_DURATION_SECONDS),
-      transition: playback.defaultTransition ?? "fade",
-    }));
+  const additions = picked.map((a): DraftItem => ({
+    key: crypto.randomUUID(),
+    mediaAssetId: a.id,
+    title: a.title,
+    kind: a.kind,
+    durationSeconds:
+      a.kind === "video" ? null : (playback.defaultImageDuration ?? DEFAULT_IMAGE_DURATION_SECONDS),
+    transition: playback.defaultTransition ?? "fade",
+  }));
   return additions.length ? [...items, ...additions] : items;
+}
+
+/** The row's copy, with all its overrides, lands right after it under a new key. */
+export function duplicateItem(items: DraftItem[], key: string): DraftItem[] {
+  const index = items.findIndex((item) => item.key === key);
+  if (index < 0) return items;
+  const next = [...items];
+  next.splice(index + 1, 0, { ...items[index], key: crypto.randomUUID() });
+  return next;
 }
 
 /** Move an item within the list, no-op on an out-of-range target. */

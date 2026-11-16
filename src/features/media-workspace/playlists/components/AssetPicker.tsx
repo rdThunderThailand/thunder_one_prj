@@ -6,6 +6,7 @@ import { SearchIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { ContentFolder, MediaAsset, Tag } from "@/types/domain";
 import { formatDuration } from "../duration";
+import { useSeenIds } from "../use-seen-ids";
 import { Select, inputClasses } from "./form";
 
 const KIND_OPTIONS = [
@@ -53,8 +54,10 @@ export function AssetPicker({
     });
   }, [assets, filters]);
 
-  const visibleIds = useMemo(() => filtered.map((a) => a.id), [filtered]);
-  const previews = usePreviewUrls(visibleIds);
+  // Only rows that have scrolled near the viewport are signed — a 500-asset library would
+  // otherwise queue five slow batches before the first thumbnail paints.
+  const { seen, watch } = useSeenIds();
+  const previews = usePreviewUrls(seen);
 
   return (
     <div>
@@ -102,6 +105,8 @@ export function AssetPicker({
             return (
               <button
                 key={asset.id}
+                ref={watch}
+                data-asset-id={asset.id}
                 type="button"
                 onClick={() => onToggle(asset)}
                 aria-pressed={selected}

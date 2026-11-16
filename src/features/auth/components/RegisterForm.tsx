@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { TextField } from "@/components/ui/TextField";
 import { register } from "../services/auth.service";
 
 export function RegisterForm() {
@@ -38,7 +38,7 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <Input
+      <TextField
         label="Name"
         name="name"
         type="text"
@@ -47,7 +47,7 @@ export function RegisterForm() {
         value={name}
         onChange={(event) => setName(event.target.value)}
       />
-      <Input
+      <TextField
         label="Email"
         name="email"
         type="email"
@@ -56,7 +56,7 @@ export function RegisterForm() {
         value={email}
         onChange={(event) => setEmail(event.target.value)}
       />
-      <Input
+      <TextField
         label="Password"
         name="password"
         type="password"
@@ -65,7 +65,7 @@ export function RegisterForm() {
         value={password}
         onChange={(event) => setPassword(event.target.value)}
       />
-      <Input
+      <TextField
         label="Confirm password"
         name="confirmPassword"
         type="password"

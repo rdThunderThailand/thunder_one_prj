@@ -1,5 +1,5 @@
 import { BoxIcon, MonitorIcon } from "@/components/ui/icons";
-import { Input } from "@/components/ui/Input";
+import { TextField } from "@/components/ui/TextField";
 import type { CreateChannelDraft } from "../../create-wizard-state";
 import type { ChannelLocationOption, ChannelOutputKind } from "../../types";
 
@@ -58,7 +58,7 @@ export function Step1ChannelInfo({
         <h3 className="text-sm font-semibold text-foreground">2. Basic Information</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">Set the basic details for this channel.</p>
         <div className="mt-3 grid gap-4 md:grid-cols-2">
-          <Input
+          <TextField
             name="create-channel-name"
             label={<>Channel Name <span className="text-error">*</span></>}
             value={draft.name}

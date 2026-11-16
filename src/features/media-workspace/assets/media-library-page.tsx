@@ -15,7 +15,7 @@ import {
   UploadIcon as Upload,
 } from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import {
   fetchContentFolders,

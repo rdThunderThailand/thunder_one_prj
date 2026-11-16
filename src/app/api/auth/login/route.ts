@@ -4,10 +4,12 @@ import { env } from "@/config/env";
 import { TENANT_COOKIE } from "@/lib/core/tenant-selection";
 import { coreGet } from "@/lib/core/core-get";
 import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, languageFromTag } from "@/lib/app-locale";
+import { LOGIN_FAILURES, loginErrorCode } from "@/features/auth/login-error";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  let upstreamStatus: number | null = null;
   try {
     const body = await request.json();
     const { email, password } = body;
@@ -20,16 +22,25 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({ email, password }),
     });
+    upstreamStatus = upstreamRes.status;
 
     if (!upstreamRes.ok) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      const body = await upstreamRes.json().catch(() => null);
+      const code = loginErrorCode(upstreamRes.status, body?.code);
+      console.error("[auth/login] Core rejected login", { status: upstreamStatus, code });
+      const failure = LOGIN_FAILURES[code];
+      return NextResponse.json({ error: failure.message, code }, { status: failure.status });
     }
 
     const resData = await upstreamRes.json();
     const authData = resData?.data;
 
-    if (!authData?.access_token) {
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+    if (typeof authData?.access_token !== "string" || !authData.access_token.trim()
+      || typeof authData.user_id !== "string" || !authData.user_id.trim()) {
+      console.error("[auth/login] Invalid Core response", { status: upstreamStatus, category: "invalid_session" });
+      const code = "AUTH_SERVICE_UNAVAILABLE";
+      const failure = LOGIN_FAILURES[code];
+      return NextResponse.json({ error: failure.message, code }, { status: failure.status });
     }
 
     const cookieStore = await cookies();
@@ -63,6 +74,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ userId: authData.user_id });
   } catch {
-    return NextResponse.json({ error: "Authentication error" }, { status: 401 });
+    console.error("[auth/login] Sign-in unavailable", { status: upstreamStatus, category: "request_failed" });
+    const code = "AUTH_SERVICE_UNAVAILABLE";
+    const failure = LOGIN_FAILURES[code];
+    return NextResponse.json({ error: failure.message, code }, { status: failure.status });
   }
 }

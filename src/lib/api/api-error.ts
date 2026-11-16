@@ -108,6 +108,15 @@ export function trashedAssetNames(message: string): string | null {
 export const trashedAssetMessage = (names: string) =>
   `มีไฟล์ที่อยู่ในถังขยะ (${names}) กรุณานำออกจาก Playlist/Layout หรือกู้คืนไฟล์ก่อนเผยแพร่`;
 
+/** Same refusal for an Asset whose file was permanently deleted, so Recover is not an option (ADR 0101). */
+export function deletedFileNames(message: string): string | null {
+  const match = /file was deleted, replace it: ([^;]+)/.exec(message);
+  return match ? match[1].trim() : null;
+}
+
+export const deletedFileMessage = (names: string) =>
+  `ไฟล์ถูกลบถาวรแล้ว (${names}) กรุณาเปลี่ยนเป็นไฟล์อื่นใน Playlist/Layout ก่อนเผยแพร่`;
+
 /**
  * A request that never got a response — the browser is offline, the host is
  * unreachable, or it timed out. Axios reports it as `code: "ERR_NETWORK"` (or
@@ -193,6 +202,11 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
   const trashedNames = trashedAssetNames(message);
   if (trashedNames) {
     return { kind: "rejected", message: trashedAssetMessage(trashedNames) };
+  }
+
+  const deletedNames = deletedFileNames(message);
+  if (deletedNames) {
+    return { kind: "rejected", message: deletedFileMessage(deletedNames) };
   }
 
   const inactiveChannel = inactiveChannelMessage(message);

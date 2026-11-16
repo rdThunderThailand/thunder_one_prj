@@ -1,24 +1,29 @@
+import * as React from "react";
 import { SearchIcon } from "./icons";
+import { Input } from "./Input";
+import { cn } from "@/lib/utils";
 
-interface SearchInputProps {
-  placeholder?: string;
-  className?: string;
-}
-
-export function SearchInput({
-  placeholder = "Search anything...",
-  className = "",
-}: SearchInputProps) {
+export const SearchInput = React.forwardRef<
+  HTMLInputElement,
+  React.ComponentProps<typeof Input> & { label?: string }
+>(({ className, label, placeholder = "Search anything...", ...props }, ref) => {
+  const accessibleName = label ?? (typeof placeholder === "string" ? placeholder : "Search");
   return (
-    <div
-      className={`flex w-full items-center gap-2 rounded-lg border border-border bg-t1-gray-50 px-3 py-2 text-sm text-muted-foreground ${className}`}
-    >
-      <SearchIcon className="h-4 w-4 shrink-0" />
-      <input
-        type="text"
+    <div className={cn("relative w-full min-w-48", className)}>
+      <SearchIcon
+        aria-hidden="true"
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+      />
+      <Input
+        ref={ref}
+        type="search"
+        role="searchbox"
+        aria-label={accessibleName}
         placeholder={placeholder}
-        className="w-full bg-transparent outline-none placeholder:text-t1-gray-400"
+        className="pl-9"
+        {...props}
       />
     </div>
   );
-}
+});
+SearchInput.displayName = "SearchInput";

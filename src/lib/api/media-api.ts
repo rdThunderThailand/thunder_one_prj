@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/api-error";
-import type { AssetUsage, Campaign, ContentFolder, MediaAsset, MediaAssetPage, PermanentDeleteResult, PlaylistDetail, PlaylistListItem, Tag } from "@/types/domain";
+import type { AssetUsage, Campaign, ContentFolder, MediaAsset, MediaAssetPage, PermanentDeleteResult, PlaylistDetail, PlaylistListItem, Tag, TranscodeStatus } from "@/types/domain";
 
 /**
  * Shared transport for every `/api/proxy/media/*` call. Feature services build
@@ -9,12 +9,14 @@ import type { AssetUsage, Campaign, ContentFolder, MediaAsset, MediaAssetPage, P
 export async function requestApi<T>(
   method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
   path: string,
-  data?: unknown
+  data?: unknown,
+  options?: { timeoutMs?: number }
 ): Promise<T> {
   const res = await apiClient.request({
     url: `/api/proxy${path}`,
     method,
     data,
+    timeout: options?.timeoutMs,
     validateStatus: () => true,
   });
 
@@ -54,14 +56,27 @@ export type PreviewUrls = {
   thumbnailUrls: Record<string, string>;
 };
 
+/** The route rejects more than 100 ids with a 400, which used to blank every thumbnail of a
+ *  Playlist longer than that. */
+const PREVIEW_URL_BATCH = 100;
+
 /** Batch-signs 1h preview URLs (and, for videos with a captured poster, thumbnail URLs). */
 export async function fetchPreviewUrls(ids: string[]): Promise<PreviewUrls> {
-  if (ids.length === 0) return { urls: {}, thumbnailUrls: {} };
-  const data = await requestApi<{
-    urls?: Record<string, string>;
-    thumbnail_urls?: Record<string, string>;
-  }>("POST", "/media/videos/preview-urls", { ids });
-  return { urls: data.urls ?? {}, thumbnailUrls: data.thumbnail_urls ?? {} };
+  const unique = [...new Set(ids)];
+  const batches: string[][] = [];
+  for (let i = 0; i < unique.length; i += PREVIEW_URL_BATCH) batches.push(unique.slice(i, i + PREVIEW_URL_BATCH));
+  const pages = await Promise.all(
+    batches.map((batch) =>
+      requestApi<{
+        urls?: Record<string, string>;
+        thumbnail_urls?: Record<string, string>;
+      }>("POST", "/media/videos/preview-urls", { ids: batch }),
+    ),
+  );
+  return {
+    urls: Object.assign({}, ...pages.map((data) => data.urls ?? {})),
+    thumbnailUrls: Object.assign({}, ...pages.map((data) => data.thumbnail_urls ?? {})),
+  };
 }
 
 export async function fetchCampaigns(): Promise<Campaign[]> {
@@ -85,7 +100,8 @@ export async function fetchTags(): Promise<Tag[]> {
   return [];
 }
 
-/** The list endpoint is paginated; callers that need the whole library page through it. */
+/** The list endpoint is paginated; callers that need the whole library page through it.
+ *  The server may cap page_size below this (Core caps at 100), so stop on `total`, not on a short page. */
 const ASSET_PAGE_SIZE = 200;
 
 export async function fetchMediaAssets(params: {
@@ -99,7 +115,7 @@ export async function fetchMediaAssets(params: {
     const data = await fetchMediaAssetPage({ ...params, page, pageSize: ASSET_PAGE_SIZE });
     const items = Array.isArray(data?.items) ? data.items : [];
     assets.push(...items);
-    if (items.length < ASSET_PAGE_SIZE) return assets;
+    if (items.length === 0 || assets.length >= (data?.total ?? 0)) return assets;
   }
 }
 
@@ -154,6 +170,16 @@ export async function restoreMediaAsset(id: string): Promise<void> {
 /** Resolves `{ deleted: false, blockers }` when the Asset is still referenced (ADR 0091); it does not throw. */
 export async function permanentlyDeleteMediaAsset(id: string): Promise<PermanentDeleteResult> {
   return requestApi<PermanentDeleteResult>("DELETE", `/media/videos/${id}/permanent`);
+}
+
+/** Ids outside the tenant are omitted. Core caps one call at 100 ids. */
+export async function fetchTranscodeStatus(ids: string[]): Promise<TranscodeStatus[]> {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+  const pages = await Promise.all(
+    chunks.map((chunk) => requestApi<TranscodeStatus[]>("GET", `/media/videos/transcode-status?ids=${chunk.join(",")}`)),
+  );
+  return pages.flat();
 }
 
 /** Usage keyed by Asset id; ids outside the tenant are omitted. Core caps one call at 100 ids. */

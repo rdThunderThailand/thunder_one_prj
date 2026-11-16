@@ -9,7 +9,7 @@ import {
   TrashIcon as Trash2,
 } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,

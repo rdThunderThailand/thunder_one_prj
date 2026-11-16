@@ -1,7 +1,7 @@
 /**
- * What the media pipeline can actually store today. There is no transcoding step,
- * so whatever is uploaded is what every player and every preview has to decode —
- * a `.mov` that Chrome refuses to paint becomes a permanently blank card.
+ * What the media pipeline can actually store today. The only conversion is the H.264 profile
+ * repair (ADR 0071); the container and codec family are not changed, so a `.mov` that Chrome
+ * refuses to paint would still become a permanently blank card.
  */
 const ACCEPTED_MIME_TYPES = [
   "video/mp4",

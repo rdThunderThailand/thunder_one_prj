@@ -1,6 +1,6 @@
 // Run: node src/features/media-workspace/publications/draft-save-policy.check.mts
 import assert from "node:assert/strict";
-import { draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "./draft-save-policy.ts";
+import { draftHasContent, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "./draft-save-policy.ts";
 import { defaultScheduleDraft } from "./schedule-preset.ts";
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 
@@ -17,7 +17,7 @@ const draft: DraftFields = {
     tags: [],
   },
   assetItems: [],
-  playlistId: null,
+  playlistId: "pl-1",
   compositionId: null,
   channelIds: ["ch-1"],
   groupIds: [],
@@ -58,7 +58,7 @@ const completeResult: DraftPersistResult = {
   kind: "saved", publicationId: "pub-1", draft, isComplete: true,
 };
 assert.equal(requireCompleteDraftSave(completeResult), completeResult, "returns the captured successful save");
-assert.throws(() => requireCompleteDraftSave({ kind: "skipped" }));
+assert.throws(() => requireCompleteDraftSave({ kind: "skipped", reason: "name" }));
 assert.throws(() => requireCompleteDraftSave({ ...completeResult, draft: incomplete, isComplete: false }));
 
 // This models only the sequencing contract with the real completion guard.
@@ -76,7 +76,7 @@ async function transition(persist: () => Promise<DraftPersistResult>) {
 }
 
 assert.deepEqual(await transition(async () => completeResult), ["mark:pub-1", "clear", "apply"]);
-assert.deepEqual(await transition(async () => ({ kind: "skipped" })), ["error"]);
+assert.deepEqual(await transition(async () => ({ kind: "skipped", reason: "name" })), ["error"]);
 assert.deepEqual(
   await transition(async () => ({ ...completeResult, draft: incomplete, isComplete: false })),
   ["error"],
@@ -85,3 +85,14 @@ assert.deepEqual(
 assert.deepEqual(await transition(async () => { throw new Error("network failure"); }), ["error"]);
 
 console.log("draft-save-policy.check.mts — all assertions passed");
+
+// #331: nothing is saved until a content choice exists, whether the Draft is new or already saved.
+const empty = { ...draft, playlistId: null };
+assert.equal(draftHasContent(empty), false);
+assert.equal(draftSavePolicy(empty, false).shouldPersist, false, "named, no content");
+assert.equal(draftSavePolicy({ ...empty, compositionId: "co-1" }, false).shouldPersist, true);
+assert.equal(
+  draftSavePolicy({ ...empty, assetItems: [{ assetId: "a-1" } as unknown as DraftFields["assetItems"][number]] }, false).shouldPersist,
+  true,
+);
+assert.throws(() => requireCompleteDraftSave({ kind: "skipped", reason: "content" }), /Content/);

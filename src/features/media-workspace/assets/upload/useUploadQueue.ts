@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ContentFolder, Tag } from "@/types/domain";
+import type { ContentFolder, Tag, TranscodeStatus } from "@/types/domain";
+import { useTranscodeStatus } from "../use-transcode-status";
 import { fetchContentFolders, fetchTags } from "@/lib/api/media-api";
 import {
   EXPIRED_UPLOAD_ERROR,
@@ -15,6 +16,7 @@ import {
   nextToStart,
   reservationToRelease,
   retryPlan,
+  settleConverting,
   startItems,
   stageFiles,
   summarize,
@@ -70,6 +72,12 @@ export function useUploadQueue(initialFolderId: string | null = null) {
     const id = entry.id;
     const controller = new AbortController();
     abortControllers.current.set(id, controller);
+    // A cancel frees this row's slot at once and a Retry can start a new run before this one
+    // settles, so only the run that still owns the row may write to it.
+    const isCurrent = () => abortControllers.current.get(id) === controller;
+    const patchOwn = (patch: (item: UploadItem) => UploadItem) => {
+      if (isCurrent()) patchItem(id, patch);
+    };
 
     // Deferred to a microtask so the effect that triggers this never calls setState
     // synchronously in its own body (ESLint react-hooks/set-state-in-effect).
@@ -84,8 +92,11 @@ export function useUploadQueue(initialFolderId: string | null = null) {
           // Present only on a retry that may resume; the first attempt authorizes here and
           // reports the target back so a later retry has something to resume against.
           target: entry.target,
-          onTarget: (target) => patchItem(id, (item) => ({ ...item, target })),
-          onProgress: (pct) => patchItem(id, (item) => ({ ...item, pct })),
+          // Present only on a retry after the bytes landed: it registers again, nothing more.
+          registration: entry.registration,
+          onTarget: (target) => patchOwn((item) => ({ ...item, target })),
+          onTransferred: (registration) => patchOwn((item) => ({ ...item, registration })),
+          onProgress: (pct) => patchOwn((item) => ({ ...item, pct })),
         });
       })
       .then((registered) => {
@@ -93,19 +104,22 @@ export function useUploadQueue(initialFolderId: string | null = null) {
         // already judged the file on intake (see uploadOutcome for the failed/processing/ready
         // branches).
         const outcome = uploadOutcome(registered.status, registered.probe_verdict);
-        if (outcome.state === "failed") {
-          patchItem(id, (item) => ({ ...item, state: "failed", pct: 100, error: outcome.error }));
-        } else {
-          patchItem(id, (item) => ({ ...item, state: "completed", pct: 100, warning: outcome.warning }));
-        }
+        patchOwn((item) => ({
+          ...item,
+          state: outcome.state,
+          pct: 100,
+          error: undefined,
+          readiness: outcome.readiness ?? undefined,
+          assetId: registered.media_asset_id,
+        }));
       })
       .catch((error: unknown) => {
         const name = error instanceof Error ? error.name : "";
         const message = error instanceof Error ? error.message : "Upload failed";
-        patchItem(id, (item) => ({
+        patchOwn((item) => ({
           ...item,
           state: name === "AbortError" ? "canceled" : "failed",
-          error: message,
+          error: name === "AbortError" ? undefined : message,
           // Storage has lost the resumable session, so the stored target can no longer be
           // resumed — the next retry re-authorizes this file and only this file. The `files`
           // row it reserved does still exist, so the target is kept for releasing.
@@ -113,12 +127,13 @@ export function useUploadQueue(initialFolderId: string | null = null) {
         }));
       })
       .finally(() => {
+        if (!isCurrent()) return;
         abortControllers.current.delete(id);
         startedIds.current.delete(id);
       });
   }, [folderId, patchItem]);
 
-  // The whole two-worker scheduler: after every state change, start whatever
+  // The whole scheduler: after every state change, start whatever
   // `nextToStart` says should run. A failed/canceled item stops counting as active on
   // its own, so no separate "release the slot" step is needed anywhere else.
   useEffect(() => {
@@ -154,6 +169,9 @@ export function useUploadQueue(initialFolderId: string | null = null) {
   const cancelItem = useCallback((id: string) => {
     const item = items.find((entry) => entry.id === id);
     if (!item) return;
+    // Once the bytes are in Storage the registration request is on its way and cannot be
+    // withdrawn; it ends as Completed or Failed within its own time bound.
+    if (item.state === "uploading" && item.registration) return;
     abortControllers.current.get(id)?.abort();
     releaseReservation(reservationToRelease(item));
     patchItem(id, (entry) => ({
@@ -162,7 +180,10 @@ export function useUploadQueue(initialFolderId: string | null = null) {
       // cancel — dropping the target keeps a later Retry from asking Core to cancel it twice.
       isReservationDead: true,
       target: undefined,
-      state: entry.state === "waiting" ? "canceled" : entry.state,
+      registration: undefined,
+      // Canceled at once, in every stage: a row still preparing would otherwise hold its slot
+      // until the decoder answered.
+      state: "canceled",
     }));
   }, [items, patchItem, releaseReservation]);
 
@@ -180,6 +201,8 @@ export function useUploadQueue(initialFolderId: string | null = null) {
       // A resume keeps the bar where it stopped; a restart honestly returns to zero.
       pct: plan.shouldResume ? entry.pct : 0,
       target: plan.shouldResume ? entry.target : undefined,
+      // Kept only with the reservation it belongs to; a restart uploads the bytes again.
+      registration: plan.registration,
     }));
   }, [items, patchItem, releaseReservation]);
 
@@ -209,7 +232,14 @@ export function useUploadQueue(initialFolderId: string | null = null) {
     }
   }, [items, cancelItem, releaseReservation]);
 
+  const applySettled = useCallback(({ asset_id: assetId, status }: TranscodeStatus) => {
+    setItems((current) => current.map((item) => (item.assetId === assetId ? settleConverting(item, status) : item)));
+  }, []);
+  const convertingIds = items.flatMap((item) => (item.readiness === "converting" && item.assetId ? [item.assetId] : []));
+  const transcode = useTranscodeStatus(convertingIds, applySettled);
+
   return {
+    transcode,
     items,
     rejections,
     folders,

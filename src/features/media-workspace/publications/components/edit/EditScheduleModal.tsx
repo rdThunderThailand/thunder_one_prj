@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
+import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
 import { setPlaylistPlayMode } from "@/features/media-workspace/playlists";
 import { DEFAULT_TIMEZONE, utcToZonedParts } from "../../schedule";
 import {

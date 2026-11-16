@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { BoxIcon, MonitorIcon, MoreIcon, RepeatIcon } from "@/components/ui/icons";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
-import { Progress } from "@/components/ui/lovable/progress";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import type { NowNextRow } from "../../now-next";
 import { contentHref, editProgramHref, elapsedPercent, formatClock, formatRemaining, nextEntry, rowStatus } from "../../now-next-view";
 import { CONTENT_KIND_LABELS, ContentKindIcon } from "./ContentKindIcon";
@@ -97,7 +97,7 @@ function RemainingCell({ row, asOf }: { row: NowNextRow; asOf: string }) {
     <div className="flex flex-col gap-1.5">
       <span className="text-[11px] font-semibold tabular-nums text-foreground">{formatRemaining(row.current.remaining_seconds)}</span>
       {percent !== null && (
-        <Progress
+        <ProgressBar
           value={percent}
           className="h-1.5 w-20"
         />

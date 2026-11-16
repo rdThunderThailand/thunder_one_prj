@@ -17,14 +17,13 @@ export const isInUse = (usage?: AssetUsage) =>
 export const usageSummary = (usage: AssetUsage) =>
   parts(usage.playlists.length, usage.layouts.length, usage.programs.length).join(" · ");
 
-/** Same shape for a refused Permanent delete; broadcast history leads because it cannot be cleared. */
+/** Same shape for a refused Permanent delete. */
 export const blockerSummary = (blockers: AssetDeleteBlockers) =>
-  [
-    blockers.history && "Has broadcast history",
-    ...parts(blockers.playlists.length, blockers.layouts.length, blockers.programs.length),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  parts(blockers.playlists.length, blockers.layouts.length, blockers.programs.length).join(" · ");
 
 /** True when Core refused the delete. A result without `deleted` comes from an older route and counts as done. */
 export const isDeleteBlocked = (result: { deleted?: boolean }) => result.deleted === false;
+
+/** Loading line in Move to Trash. One file takes "is"; a batch takes "are". */
+export const trashUsageLoadingCopy = (count: number) =>
+  `Checking where ${count === 1 ? "this file is" : "these files are"} used…`;

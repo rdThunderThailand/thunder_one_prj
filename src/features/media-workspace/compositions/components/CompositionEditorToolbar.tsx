@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { ClipboardIcon, EyeIcon, LayoutIcon, LockIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { ALIGN_EDGES, alignZone, duplicateZone, type AlignEdge } from "@/features/media-workspace/layouts/align-zones";
 import { splitZone } from "@/features/media-workspace/layouts/split-zone";

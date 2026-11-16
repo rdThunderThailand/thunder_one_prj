@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { MoreIcon } from "@/components/ui/icons";
 import type { Sort, SortKey } from "../list-filtering";

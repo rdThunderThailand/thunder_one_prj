@@ -16,8 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
-import { EmptyState, ErrorState } from "@/components/ui/lovable/core";
+import { Button, buttonVariants } from "@/components/ui/Button";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { cn } from "@/lib/utils";
 import { LibraryPagination, LibraryRowsSkeleton } from "../../content-library/LibraryChrome";
@@ -146,7 +146,7 @@ export function PublicationsListPage() {
   const error = failure?.key === requestKey ? failure.error : null;
   const isLoading = !error && result?.key !== requestKey;
   const isFiltered =
-    filters.search.trim() !== "" || filters.status !== "all" || filters.target !== "all" || filters.tag !== "all";
+    filters.search.trim() !== "" || filters.status !== DEFAULT_FILTERS.status || filters.target !== "all" || filters.tag !== "all";
 
   const handleFilterChange = (patch: Partial<ListFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
@@ -218,7 +218,7 @@ export function PublicationsListPage() {
         <EmptyState
           icon={FileText}
           title={isFiltered ? "ไม่พบ Program ที่ตรงกับตัวกรอง" : "ยังไม่มี Program"}
-          description={isFiltered ? "ลองเปลี่ยนหรือล้างตัวกรอง" : "สร้าง Program แรกเพื่อเริ่มออกอากาศ"}
+          detail={isFiltered ? "ลองเปลี่ยนหรือล้างตัวกรอง" : "สร้าง Program แรกเพื่อเริ่มออกอากาศ"}
           action={
             isFiltered ? (
               <Button variant="outline" size="sm" onClick={clearFilters}>ล้างตัวกรอง</Button>
@@ -248,7 +248,7 @@ export function PublicationsListPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Programs"
-        subtitle="จัดการโปรแกรมที่ออกอากาศบนช่องของคุณ"
+        subtitle="Manage and schedule programs across your channels."
         titleInTopbar
         actions={
           <>

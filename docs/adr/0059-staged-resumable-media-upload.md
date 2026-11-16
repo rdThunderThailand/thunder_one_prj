@@ -43,6 +43,19 @@ This moves prefix enforcement from "Core chooses the key and the client is trust
 
 Revisit if Storage gains working presigned resumable uploads: the token path would let uploads work without exposing an access token to the page.
 
+## Amendment — queue concurrency and stalled files (2026-11-04)
+
+Replaces "at most two files upload concurrently" and extends "a failure affects only its file". Operators now upload batches of short clips, where per-file round trips cost more than shared bandwidth.
+
+- **At most four files upload concurrently**, a fixed constant. Ten stays rejected for the original reason; when the operator's uplink is the limit, four does not finish a queue sooner than two.
+- **No file holds a slot without a time bound.** Reading a video's duration, dimensions and thumbnail gets 15 seconds; on expiry the upload continues without those optional values. Each Core or token request has its own bound. A TUS transfer with no byte progress for 60 seconds ends as `Failed`, and registration gets 45 seconds, above Core's 30 second route limit.
+- **A stalled file fails, it is never canceled automatically.** The other files continue. Only the operator cancels.
+- **`Retry` continues from the stage that stopped.** Before the transfer finished, it resumes or restarts the transfer; a first POST that stalled has no stored URL, so that file restarts. After the transfer finished, it registers again, which Core treats as idempotent, because a timed-out registration may have created the Asset. A file Core refused has no `Retry`.
+- **Cancel works until registration starts.** A file canceled while it is being prepared stops before it authorizes or uploads, and a reservation that arrives after the cancel is released at once. A registration already sent cannot be withdrawn.
+- **`Completed` means the upload finished, nothing more.** A completed video row with a known verdict shows its Playback Readiness separately, in plain words and the app's language, and links to Media Detail. The text never claims a conversion is running, because a ready Asset's job may be absent, finished or failed. A refused file stays `Failed`.
+- **The queue follows conversions it started.** While a row's Asset is `processing` and the page is open, one request every 5 seconds covers all such rows and stops when none remain. The row shows its queue position, then a percentage while encoding. Nothing is restored after a refresh. A `ready` Asset gets no bar. ADR 0071 owns where the values come from.
+- The single-file picker in `useAssetUpload` shares these bounds. It has no `Retry`, so its stall message does not offer one.
+
 ## Considered options
 
 - Auto-start was rejected because it makes the selected Folder and `Start Upload` control race with active work.

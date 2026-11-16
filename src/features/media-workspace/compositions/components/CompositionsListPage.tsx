@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PlusIcon as Plus, TrashIcon as Trash2, UndoIcon as Undo2 } from "@/components/ui/icons";
 import { NoAccess } from "@/components/ui/NoAccess";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { LibraryPagination } from "../../content-library/LibraryChrome";
 import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import { LibrarySelectionBar, LibraryShell } from "../../content-library/LibraryShell";

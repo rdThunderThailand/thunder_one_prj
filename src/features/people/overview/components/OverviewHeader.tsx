@@ -12,12 +12,12 @@ export function OverviewHeader() {
         <h1 className="text-2xl font-semibold text-foreground">สวัสดีตอนเช้า 👋</h1>
         <p className="mt-1 text-sm text-muted-foreground">ภาพรวมงานบุคลากรและความสำคัญของวันนี้</p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <Button variant="secondary">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline">
           <ClipboardIcon className="h-4 w-4" />
           รายงาน
         </Button>
-        <Button variant="secondary">
+        <Button variant="outline">
           <UploadIcon className="h-4 w-4" />
           Export
         </Button>

@@ -141,6 +141,17 @@ const continuousToday = { ...continuousDraft, startDate: "2026-09-01", startTime
 assert.ok(validateDraft(continuousToday, TODAY, "15:00", true).endDate);
 assert.deepEqual(validateDraft(continuousToday, TODAY, "08:00", true), {});
 assert.deepEqual(upcomingDays(weeklyDraft, TODAY, 3), ["2026-10-01", "2026-10-02", "2026-10-05"]);
-assert.equal(windowLabel(weeklyDraft), "06:00 – 10:00 (4 hours)");
+// #340: whole hours and minutes in the app language, never a rounded decimal.
+assert.equal(windowLabel(weeklyDraft, "en"), "06:00 – 10:00 (4 hours 0 minutes)");
+assert.equal(windowLabel(weeklyDraft, "th"), "06:00 – 10:00 (4 ชั่วโมง 0 นาที)");
+const labelFor = (dailyStart: string, dailyEnd: string, locale: "th" | "en") => windowLabel({ ...weeklyDraft, dailyStart, dailyEnd }, locale);
+assert.equal(labelFor("00:00", "05:29", "th"), "00:00 – 05:29 (5 ชั่วโมง 29 นาที)");
+assert.equal(labelFor("00:00", "05:29", "en"), "00:00 – 05:29 (5 hours 29 minutes)");
+assert.equal(labelFor("00:00", "00:45", "th"), "00:00 – 00:45 (0 ชั่วโมง 45 นาที)");
+assert.equal(labelFor("00:00", "05:00", "th"), "00:00 – 05:00 (5 ชั่วโมง 0 นาที)");
+assert.equal(labelFor("09:00", "10:01", "en"), "09:00 – 10:01 (1 hour 1 minute)");
+// A daily end of 23:59 runs through the end of the day (#240): 11:00-23:59 airs 13 hours.
+assert.equal(labelFor("11:00", "23:59", "en"), "11:00 – 23:59 (13 hours 0 minutes)");
+assert.equal(windowLabel({ ...weeklyDraft, allDay: true }, "th"), "All day (00:00 – 24:00)");
 
 console.log("schedule-preset: ok");

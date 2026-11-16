@@ -1,10 +1,11 @@
 /**
- * Runnable check for the queue state machine and two-worker scheduler:
+ * Runnable check for the queue state machine and worker scheduler:
  *
  *     node src/features/media-workspace/assets/upload/upload-queue.check.mts
  */
 import assert from "node:assert/strict";
 import {
+  MAX_WORKERS,
   aggregateAction,
   nextToStart,
   reservationToRelease,
@@ -12,6 +13,7 @@ import {
   startItems,
   stageFiles,
   summarize,
+  settleConverting,
   uploadOutcome,
   type UploadItem,
 } from "./upload-queue.ts";
@@ -88,19 +90,28 @@ assert.equal(aggregateAction([item("1", "completed"), item("2", "failed")]), "cl
 
 // --- nextToStart ---
 
+assert.equal(MAX_WORKERS, 4, "ADR 0059 amendment 2026-11-04");
+
 {
-  const twoWaiting = [item("1", "waiting"), item("2", "waiting")];
-  assert.deepEqual(nextToStart(twoWaiting), ["1", "2"], "empty queue starts up to two workers");
+  const sixWaiting = Array.from({ length: 6 }, (_, i) => item(String(i + 1), "waiting"));
+  assert.deepEqual(nextToStart(sixWaiting), ["1", "2", "3", "4"], "an empty queue starts four workers");
 }
 
 {
   const oneActive = [item("1", "uploading"), item("2", "waiting"), item("3", "waiting")];
-  assert.deepEqual(nextToStart(oneActive), ["2"], "one active leaves one free slot");
+  assert.deepEqual(nextToStart(oneActive), ["2", "3"], "a free slot starts the next waiting rows");
 }
 
 {
-  const fullyActive = [item("1", "uploading"), item("2", "uploading"), item("3", "waiting")];
-  assert.deepEqual(nextToStart(fullyActive), [], "two active leaves no free slot");
+  const fullyActive = [...["1", "2", "3", "4"].map((id) => item(id, "uploading")), item("5", "waiting")];
+  assert.deepEqual(nextToStart(fullyActive), [], "four active leaves no free slot");
+}
+
+{
+  const afterCancel = [item("1", "canceled"), ...["2", "3", "4", "5"].map((id) => item(id, "uploading")), item("6", "waiting")];
+  assert.deepEqual(nextToStart(afterCancel), [], "a canceled row never counts as a slot taken");
+  const freed = [item("1", "canceled"), ...["2", "3", "4"].map((id) => item(id, "uploading")), item("5", "waiting")];
+  assert.deepEqual(nextToStart(freed), ["5"], "canceling a preparing row frees its slot at once");
 }
 
 {
@@ -138,6 +149,14 @@ const target = { file_id: "f-1" } as UploadTarget;
 }
 
 {
+  const registration = { duration_seconds: 12 };
+  const resume = retryPlan({ ...item("1", "failed"), target, registration });
+  assert.equal(resume.registration, registration, "a finished transfer keeps its draft, so Retry only registers");
+  const restart = retryPlan({ ...item("1", "failed"), target, registration, isReservationDead: true });
+  assert.equal(restart.registration, undefined, "a restart uploads the bytes again, so the draft is dropped");
+}
+
+{
   const plan = retryPlan(item("1", "failed"));
   assert.equal(plan.shouldResume, false, "a file that never authorized restarts");
   assert.equal(plan.release, undefined, "nothing to release when nothing was reserved");
@@ -164,44 +183,37 @@ assert.equal(
   "a cancel already dropped its target, so nothing is cancelled twice"
 );
 
-// --- uploadOutcome (ADR 0071: status -> queue-row outcome) ---
+// --- uploadOutcome (ADR 0071: status -> queue-row outcome; the sentence comes from playback-readiness) ---
 
-{
-  const outcome = uploadOutcome("failed", { code: "unsupported_profile", profile: "High" });
-  assert.equal(outcome.state, "failed");
-  assert.match((outcome as { error: string }).error, /High Profile/, "failed keeps ADR 0070's message");
-}
+assert.deepEqual(
+  uploadOutcome("failed", { code: "unsupported_profile", profile: "High" }),
+  { state: "failed", readiness: "unsupported_profile" },
+  "failed keeps the reason the verdict gives"
+);
+assert.deepEqual(
+  uploadOutcome("failed", null),
+  { state: "failed", readiness: "refused" },
+  "a failed row with no verdict falls back to a generic refusal"
+);
+assert.deepEqual(
+  uploadOutcome("processing", { code: "unsupported_profile", profile: "High" }),
+  { state: "completed", readiness: "converting" },
+  "processing is not a refusal, ADR 0071"
+);
+assert.deepEqual(
+  uploadOutcome("ready", { code: "unverified_preset", profile: "Main" }),
+  { state: "completed", readiness: "ready" },
+  "Main is ready to publish; the upload is Completed either way"
+);
+assert.deepEqual(uploadOutcome("ready", null), { state: "completed", readiness: null }, "an image or unprobed video says nothing");
 
-{
-  const outcome = uploadOutcome("failed", null);
-  assert.equal(outcome.state, "failed");
-  assert.equal(
-    (outcome as { error: string }).error,
-    "The server refused this file.",
-    "a failed row with no verdict falls back to a generic refusal"
-  );
-}
-
-{
-  const outcome = uploadOutcome("processing", { code: "unsupported_profile", profile: "High" });
-  assert.equal(outcome.state, "completed", "processing is not a refusal, ADR 0071");
-  assert.equal(
-    (outcome as { warning?: string }).warning,
-    "กำลังแปลงไฟล์ให้เล่นได้",
-    "processing shows the converting notice instead of ADR 0070's refusal"
-  );
-}
-
-{
-  const outcome = uploadOutcome("ready", { code: "unverified_preset", profile: "Main" });
-  assert.equal(outcome.state, "completed");
-  assert.match((outcome as { warning?: string }).warning!, /Main Profile/, "ready keeps ADR 0070's caveat");
-}
-
-{
-  const outcome = uploadOutcome("ready", null);
-  assert.equal(outcome.state, "completed");
-  assert.equal((outcome as { warning?: string }).warning, undefined, "the plain happy path has no caveat");
-}
+const converting = { id: "1", file: { name: "a.mp4", type: "video/mp4", size: 1 }, title: "a", state: "completed", pct: 100, readiness: "converting" } as const;
+assert.equal(settleConverting(converting, "ready").readiness, "ready", "a Rendition landed");
+assert.deepEqual(
+  { state: settleConverting(converting, "failed").state, readiness: settleConverting(converting, "failed").readiness },
+  { state: "failed", readiness: "unsupported_profile" },
+  "the conversion gave up"
+);
+assert.equal(settleConverting(converting, "processing"), converting, "still converting");
 
 console.log("upload-queue: all checks passed");

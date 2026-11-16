@@ -148,12 +148,12 @@ export function CreateChannelModal({
 
   const footer = step === "success" ? null : (
     <div className="flex w-full items-center justify-between">
-      <Button variant="secondary" onClick={step === 1 ? onClose : () => setStep((step === 3 ? 2 : 1) as WizardStep)}>
+      <Button variant="outline" onClick={step === 1 ? onClose : () => setStep((step === 3 ? 2 : 1) as WizardStep)}>
         {step === 1 ? "Cancel" : "← Back"}
       </Button>
       {step === 3 ? (
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={() => void handleSubmit()} disabled={submitting || Boolean(geometryWarning && !mismatchConfirmed)}>

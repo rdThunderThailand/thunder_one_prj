@@ -571,7 +571,7 @@ export function AddContractorWizardPage({ tenantId, roles, units, positionOption
       {!createdRow && (
         <div className="flex justify-end gap-2">
           {stepIndex > 0 && (
-            <Button variant="secondary" onClick={() => setStepIndex((i) => Math.max(i - 1, 0))} disabled={submitting}>
+            <Button variant="outline" onClick={() => setStepIndex((i) => Math.max(i - 1, 0))} disabled={submitting}>
               ย้อนกลับ
             </Button>
           )}

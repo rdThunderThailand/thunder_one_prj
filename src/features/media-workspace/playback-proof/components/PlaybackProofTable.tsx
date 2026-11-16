@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FileImageIcon as FileImage } from "@/components/ui/icons";
 import { LazyVideo } from "@/components/ui/LazyVideo";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { isVideoUrl } from "@/lib/media-kind";
 import type { PlaybackProofEntry } from "../playback-proof-api";
 import { FAILURE_LABELS, OUTCOME_BADGES, formatDuration, formatPlayedAt, sourceLabel } from "../playback-proof-view";
@@ -141,7 +141,7 @@ export function PlaybackProofTable({
                           variant="neutral"
                           className="mt-0.5 px-1.5 py-0 text-[9px]"
                         >
-                          In Trash
+                          {entry.media.file_deleted ? "File deleted" : "In Trash"}
                         </Badge>
                       )}
                     </div>

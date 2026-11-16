@@ -1,10 +1,11 @@
 # A quarantined video is transcoded instead of refused
 
-**Status:** proposed (2026-09-09) — **revised 2026-09-17 to a one-rule v1**; becomes `accepted` when the
-deployed Vercel benchmark (plan T1) passes. The 2026-09-10 draft — ffprobe assessment against ten
+**Status:** accepted (T1 passed 2026-09-17; live on prod 2026-09-18). Proposed 2026-09-09 and
+**revised 2026-09-17 to a one-rule v1**. The 2026-09-10 draft — ffprobe assessment against ten
 provisional ceilings, `unverified_preset` conversion, a manual admin CLI, recipe versioning, soft/hard
 timeout accounting — is not withdrawn; it is the v2 re-encode campaign, deferred under "Deferred to
-v2" with the triggers that bring it back. Nothing in this ADR is built yet.
+v2" with the triggers that bring it back. Read the amendments at the end before the body: they
+replace the envelope and the one-encode rule.
 
 Builds on ADR 0070, which refuses on intake a video whose H.264 profile the players cannot decode. This
 ADR keeps that byte-walk verdict as the only trigger and adds an automatic repair: a video that is
@@ -253,3 +254,81 @@ cadence is **not** part of T1 — Vercel runs crons on production deployments on
 cadence is proven in plan T4 on the develop environment's production deployment. Passing T1 makes
 this ADR `accepted`. The real-player playback check (plan T8) is a production rollout gate, not an
 acceptance gate: failing it revises or supersedes this ADR rather than returning it to proposed.
+
+## Amendment — T1 results (2026-09-17)
+
+Recorded here because the results table never landed from its working branch. Source length → encode
+wall time on Vercel: 15 s → 28 s; 4K60 20 s → 66 s; 144 s → 257 s; 200 s → 363 s. Cost follows seconds,
+not bytes (≈ 0.55 × realtime at 1080p30), so the envelope became **200 MB on intake plus 360 s in the
+worker**. The route's `maxDuration = 800` overrides the 30 s in `vercel.json`.
+
+## Amendment — conversion throughput (2026-11-04)
+
+Replaces "One encode per invocation" and adds a `-preset` to "Encode". The assumption that one start
+per minute goes unnoticed stopped holding once operators uploaded batches. Measured on prod on
+2026-11-04: 126 jobs in 14 days for clips averaging 29 s took a median 309 s from queue to done, and a
+batch of 18 took 18 minutes. Encoding is a small part of that wait. None of the 142 jobs on prod has
+failed or needed a second attempt, so this changes throughput, not reliability. A job that exceeds
+360 s ends on its first attempt: `media_transcode_fail` does not retry `too_long_to_convert`.
+
+**Target:** 20 clips of 30 s convert within 5 minutes, about 4 starts per minute. That needs each job to
+finish in about 33 s, so the target is measured, not assumed.
+
+**Phase 1 — order and speed.**
+
+- **Required conversions go first.** Claim orders jobs whose non-trashed Asset is `processing` ahead of
+  the rest, then by `created_at`. A `processing` Asset cannot be published; a Main Asset is already
+  playing its original, so Main waiting behind sustained High uploads is accepted.
+- **Recipe `cb-1080p30-v2`.** The encode adds `-preset veryfast`; every other property stays. A local
+  single-thread run on one synthetic clip halved the time and moved SSIM from 0.9949 to 0.9943, which
+  is an indication and not a Vercel result. Existing Renditions are not re-encoded. The recipe is
+  recorded on the job, because `media_transcode_install` runs at install time and the constant would
+  label jobs encoded earlier as v2. Jobs running or waiting to install at migration keep v1; queued jobs
+  have not been encoded and get v2.
+
+**Phase 2 — more starts per minute.**
+
+- **Claim while inside a window.** An invocation claims and encodes jobs one after another, and stops
+  claiming once a window measured from the start of the handler closes. The window is provisional at
+  100 s, and the benchmark sets it from the full wall time of the worst job: download, both ffprobe
+  runs, encode, checksum, upload and finalize. At v1 speed a 360 s clip takes about 653 s to encode
+  alone, so the remaining 700 s is not assumed to be enough. Encodes stay sequential inside an
+  invocation, but cron runs may overlap.
+- **Any failed job ends the loop.** `media_transcode_fail` returns a first failure to `queued` and claim
+  takes the oldest job, so continuing would spend the second attempt within seconds. Stopping keeps the
+  gap of at least one cron tick. If `media_transcode_fail` itself errors, the route returns an error.
+  Work directories stay per job.
+
+**Phase 3 — visible progress.** The worker reads ffmpeg's `-progress` output and stores a percentage on
+the running job at most every 5 seconds. Most of the wait is the queue, so position counts too: a job's
+position is its place in claim order. One read covers many Assets for a tenant. Only `processing` Assets
+show progress, and a failed write never fails an encode.
+
+**Assets that never got a verdict.** On 2026-11-04, 107 live videos on prod had no verdict and no job,
+because a register call without `p_probe_verdict` takes the `ready` path: 19 are High or HEVC and 68 are
+Main. Twelve of the High files are in active Programs, and the logs do not support a blanket "unplayable":
+on one device, one High file played 18,517 times without a failure while another stalled 12% of the time.
+A probing backfill brings them under this ADR in stages after Phase 1, with files not on air first,
+because a `processing` Asset installs its Rendition at once even while on air. It uses the same intake
+rules, separately from Phase 1. Every caller of `media_video_register` must pass a verdict for a video.
+
+**Amendment 2026-11-05: position ships before Phase 2, and carries an estimate.** Waiting without knowing how
+long is the operators' main complaint, and a queue position needs no benchmark, so Phase 3 no longer waits for
+Phase 2. Core returns a start estimate of position × 60 s, the one-start-per-tick rate, and owns the figure so
+Phase 2 changes one constant. It ignores the length of the files ahead, so the page calls it approximate.
+Showing no estimate was rejected: a position alone does not answer how long to wait.
+
+**Benchmark gate.** Under Fluid compute, enabled on this project, Vercel may share an instance between
+invocations, and its [in-function concurrency announcement](https://vercel.com/changelog/in-function-concurrency-now-in-public-beta)
+warned that purely CPU-bound work may see higher latency. Overlapping loops therefore risk `/tmp`
+(500 MB), memory and CPU, not only throughput. A preview deployment driven by manual GET measures encode
+time and quality on real high-motion files, including 360 s + 200 MB and 4K60. Overlap is measured on
+develop, where crons run, with 80 s / 143 MB files as well as the 30 s target. If throughput misses, the
+next steps in order are one running invocation at a time, Performance CPU (2 vCPU), then parallel encodes
+in one invocation. A dedicated worker stays the v2 trigger above.
+
+**Considered.** Parallel ffmpeg on Performance CPU first was rejected until measured, because it adds cost
+and memory handling. A dedicated worker was rejected for a peak of 72 jobs a day. Keeping strict FIFO was
+rejected because 67% of jobs in the 14 days were optional Main conversions queued ahead of unpublishable
+Assets. Stopping Main conversion was rejected because ADR 0070 still treats Main as uncertified. Vercel
+Queues keeps the same CPU, `/tmp` and memory limits and would duplicate the lease and attempt rules.
