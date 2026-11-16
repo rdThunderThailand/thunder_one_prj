@@ -36,7 +36,7 @@ export default async function DashboardLayout({
   // access-tier label; falls back to the tier label (e.g. "Company
   // Administrator") only for members with no job_title set.
   const roleLabel = jobTitle ?? resolveRoleLabel(resolveRole(session));
-  // "none" shows the admin nav; the Asset Workspace page gate shows NoAccess.
+  // "none" shows the admin nav; the Asset Workspace route gate redirects them.
   const workspaceAccess = resolveAssetWorkspaceRole(resolveRole(session));
   const assetWorkspaceRole = workspaceAccess === "none" ? "asset_admin" : workspaceAccess;
   const locale = await getAppLocale(session.preferredLanguage);

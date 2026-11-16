@@ -67,8 +67,9 @@ Routes must be fixed now: Help `screenKey`s, nav config and every later screen h
      code first (`employee_asset` → employee, `manager_assets` → manager; then role type
      super_admin / company_admin / department_admin → Asset Admin; no role at all → Asset Admin; anything
      else → no access). Admin and manager pages live in the `(admin)` route group, employee pages in
-     `(employee)`; each group's layout redirects the other portal's roles and shows NoAccess to the
-     rest. URLs are unchanged.
+     `(employee)`; each group's layout calls `requireAssetWorkspacePortal` (`config/asset-workspace-guard.ts`,
+     like `requireCeoAccess`), which sends the other portal's roles to their portal and everyone else to
+     their landing page. URLs are unchanged.
 5. **Feature flag** `NEXT_PUBLIC_ASSET_WORKSPACE_MVP`: `"1"` turns the App on; any other value or
    unset turns it off — every `/asset-workspace` route returns Not Found and the App is absent from
    the App Switcher and the Workspaces catalog. Set only in local and dev; production leaves it unset.
