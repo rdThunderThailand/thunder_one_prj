@@ -2,9 +2,9 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/lovable/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/lovable/dialog";
-import { Input } from "@/components/ui/lovable/input";
+import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/Dialog";
+import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/lovable/label";
 import { preparePlayerRelease, registerPlayerRelease } from "./actions";
 import { feedProblem } from "./feed-check";

@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
+import { Tag } from "@/components/ui/Tag";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
@@ -110,9 +111,9 @@ export function PlaylistsTable({
                       {playlist.tags && playlist.tags.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {playlist.tags.map((tag) => (
-                            <Badge key={tag.id} variant="neutral" className="rounded-full px-2 py-0 text-[8px]">
+                            <Tag key={tag.id} className="rounded-full px-2 py-0 text-[8px]">
                               {tag.name}
-                            </Badge>
+                            </Tag>
                           ))}
                         </div>
                       )}
@@ -120,10 +121,10 @@ export function PlaylistsTable({
                   </div>
                 </td>
                 <td className="px-3 py-2.5 text-[10px]">
-                  <Badge variant="outline" className="rounded-full px-2 py-0 text-[9px] font-medium">{(() => {
+                  <Tag className="rounded-full px-2 py-0 text-[9px] font-medium">{(() => {
                     const type = playlistContentType(playlist);
                     return type ? TYPE_LABELS[type] : "—";
-                  })()}</Badge>
+                  })()}</Tag>
                 </td>
                 <td className="px-3 py-2.5 text-[10px]">
                   {playlist.total_duration_seconds == null

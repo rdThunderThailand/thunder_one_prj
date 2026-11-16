@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { ShortcutPlatformProvider } from "@/components/layout/ShortcutPlatform";
 import { Topbar } from "@/components/layout/Topbar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
@@ -42,33 +42,31 @@ export default async function DashboardLayout({
   return (
     <ShortcutPlatformProvider platform={shortcutPlatform}>
       <div className="flex h-full">
-        <Sidebar
-          tenantId={tenantId}
-          tenantName={tenantName}
-          // A platform super admin (Nie, 2026-09-29) or a partner of a parent
-          // tenant (Thunder_Core ADR 0027, 2026-11-09) gets the tenant switcher;
-          // a member of several tenants still sees a plain label.
-          availableTenants={canSwitchTenant(session) ? availableTenants : []}
-        />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <Topbar
-            userName={userName}
-            roleLabel={roleLabel}
-            avatarUrl={avatarUrl}
-            locale={locale}
-            helpSupport={{
-              contactUrl: env.helpSupportUrl || undefined,
-              chatUrl: env.helpSupportChatUrl || undefined,
-              email: env.helpSupportEmail || undefined,
-              phone: env.helpSupportPhone || undefined,
-              hours: env.helpSupportHours || undefined,
-              statusUrl: env.helpStatusUrl || undefined,
-            }}
-          />
-          <main className="flex-1 overflow-y-auto bg-t1-gray-50 px-6 py-6">
-            {children}
-          </main>
-        </div>
+        <MobileNavigation sidebarProps={{
+          tenantId,
+          tenantName,
+          availableTenants: canSwitchTenant(session) ? availableTenants : [],
+        }}>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <Topbar
+              userName={userName}
+              roleLabel={roleLabel}
+              avatarUrl={avatarUrl}
+              locale={locale}
+              helpSupport={{
+                contactUrl: env.helpSupportUrl || undefined,
+                chatUrl: env.helpSupportChatUrl || undefined,
+                email: env.helpSupportEmail || undefined,
+                phone: env.helpSupportPhone || undefined,
+                hours: env.helpSupportHours || undefined,
+                statusUrl: env.helpStatusUrl || undefined,
+              }}
+            />
+            <main className="flex-1 min-w-0 overflow-y-auto bg-t1-gray-50 px-4 py-4 md:px-6 md:py-6">
+              {children}
+            </main>
+          </div>
+        </MobileNavigation>
       </div>
     </ShortcutPlatformProvider>
   );

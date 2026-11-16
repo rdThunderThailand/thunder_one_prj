@@ -12,6 +12,7 @@ export default async function AllDevicesPage() {
   return (
     <div className="grid gap-6">
       <PageHeader
+        titleInTopbar
         title="All devices"
         subtitle="Every Media device and the Player version it is running"
         actions={

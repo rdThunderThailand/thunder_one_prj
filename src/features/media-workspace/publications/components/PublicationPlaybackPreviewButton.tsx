@@ -35,7 +35,7 @@ export function PublicationPlaybackPreviewButton({
   return (
     <>
       <Button
-        variant="secondary"
+        variant="outline"
         className={`px-3 py-1.5 text-xs ${className}`}
         onClick={() => setOpen(true)}
         disabled={!hasContent || loading || !preview}

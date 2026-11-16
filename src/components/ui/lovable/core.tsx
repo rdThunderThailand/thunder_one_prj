@@ -1,14 +1,8 @@
 import * as React from "react";
-import {
-  WarningTriangleIcon as AlertTriangle,
-  SearchIcon as Search,
-  type Icon,
-} from "@/components/ui/icons";
+import { EmptyState as BaseEmptyState } from "../EmptyState";
 
-import { Badge, type BadgeProps } from "@/components/ui/lovable/badge";
-import { Button, type ButtonProps } from "@/components/ui/lovable/button";
-import { Input } from "@/components/ui/lovable/input";
-import { Skeleton } from "@/components/ui/lovable/skeleton";
+import { Button, type ButtonProps } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 
 export function VisuallyHidden({ children }: { children: React.ReactNode }) {
@@ -25,111 +19,15 @@ export function IconButton({ label, children, ...props }: ButtonProps & { label:
   );
 }
 
-export const SearchInput = React.forwardRef<
-  HTMLInputElement,
-  React.ComponentProps<typeof Input> & { label?: string }
->(({ className, label, placeholder, ...props }, ref) => {
-  const accessibleName = label ?? (typeof placeholder === "string" ? placeholder : "Search");
-  return (
-    <div className={cn("relative min-w-48", className)}>
-      <Search
-        aria-hidden="true"
-        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-      />
-      <Input
-        ref={ref}
-        type="search"
-        role="searchbox"
-        aria-label={accessibleName}
-        placeholder={placeholder}
-        className="pl-9"
-        {...props}
-      />
-    </div>
-  );
-});
-SearchInput.displayName = "SearchInput";
+export { SearchInput } from "../SearchInput";
 
-type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
+export { StatusBadge } from "../Badge";
 
-const statusMap: Record<string, StatusTone> = {
-  active: "success",
-  online: "success",
-  ready: "success",
-  published: "success",
-  completed: "success",
-  scheduled: "warning",
-  warning: "warning",
-  pending: "warning",
-  error: "danger",
-  failed: "danger",
-  offline: "danger",
-  blocked: "danger",
-  draft: "info",
-  processing: "info",
-  uploading: "info",
-  inactive: "neutral",
-  archived: "neutral",
-  unknown: "neutral",
-};
-
-export function StatusBadge({ status, label, className }: { status: string; label?: string; className?: string }) {
-  const tone = statusMap[status.toLowerCase()] ?? "neutral";
-  return (
-    <Badge variant={tone satisfies BadgeProps["variant"]} className={cn("gap-1.5", className)}>
-      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
-      <VisuallyHidden>Status: </VisuallyHidden>
-      {label ?? status}
-    </Badge>
-  );
+export function EmptyState({ description, ...props }: Omit<React.ComponentProps<typeof BaseEmptyState>, "detail"> & { description: string }) {
+  return <BaseEmptyState {...props} detail={description} />;
 }
 
-export function EmptyState({
-  icon: Icon,
-  title,
-  description,
-  action,
-  compact = false,
-  className,
-}: {
-  icon: Icon;
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-  compact?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={cn("grid place-items-center px-6 text-center", compact ? "min-h-28 py-4" : "min-h-52 py-8", className)}>
-      <div className="max-w-sm">
-        <span aria-hidden="true" className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-muted text-muted-foreground">
-          <Icon className="h-4 w-4" />
-        </span>
-        <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-        {action && <div className="mt-4">{action}</div>}
-      </div>
-    </div>
-  );
-}
-
-export function ErrorState({
-  title = "Something went wrong",
-  description = "Try again or return to the previous page.",
-  action,
-  compact = false,
-}: {
-  title?: string;
-  description?: string;
-  action?: React.ReactNode;
-  compact?: boolean;
-}) {
-  return (
-    <div role="alert">
-      <EmptyState icon={AlertTriangle} title={title} description={description} action={action} compact={compact} />
-    </div>
-  );
-}
+export { ErrorState } from "../EmptyState";
 
 export function LoadingState({
   rows = 4,

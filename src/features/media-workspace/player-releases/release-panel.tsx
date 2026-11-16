@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Input } from "@/components/ui/lovable/input";
+import { Input } from "@/components/ui/Input";
 import { getPilotTarget, listPlayerReleases } from "./actions";
 import { DEFAULT_STATUSES, filterReleases, STATUS_LABELS, type ReleaseStatus } from "./release-filter";
 import { ReleaseRow } from "./release-row";

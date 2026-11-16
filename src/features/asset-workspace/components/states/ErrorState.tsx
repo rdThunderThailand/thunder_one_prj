@@ -6,7 +6,7 @@
 import { useRouter } from "next/navigation";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AlertCircleIcon, RefreshIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 
 export function ErrorState({
   title = "Couldn't load this",

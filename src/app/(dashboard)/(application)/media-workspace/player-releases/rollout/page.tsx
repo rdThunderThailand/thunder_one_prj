@@ -11,7 +11,7 @@ export default async function RolloutPage() {
 
   return (
     <div className="grid gap-6">
-      <PageHeader title="Rollout" subtitle="Send an approved version to every device outside the test group, a few at a time" />
+      <PageHeader titleInTopbar title="Rollout" subtitle="Send an approved version to every device outside the test group, a few at a time" />
       <RolloutPanel
         status={status}
         releases={releases}

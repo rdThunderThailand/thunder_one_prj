@@ -13,9 +13,9 @@ import {
   UndoIcon as Undo2,
 } from "@/components/ui/icons";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -141,7 +141,7 @@ function CaseDetailPanel({ serviceCase, onClose }: { serviceCase: InboxCase; onC
         <Link href={`/thunder-care/service-ops/triage?case=${serviceCase.id}`} className={buttonClasses("primary")}>
           เริ่ม Triage
         </Link>
-        <Button variant="secondary" disabled title="ยังไม่เปิดใช้งาน">
+        <Button variant="outline" disabled title="ยังไม่เปิดใช้งาน">
           ต้องการข้อมูลเพิ่มเติม
         </Button>
       </div>

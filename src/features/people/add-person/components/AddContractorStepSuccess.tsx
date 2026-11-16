@@ -63,7 +63,7 @@ export function AddContractorStepSuccess({ createdRow, onAddNext }: AddContracto
       )}
 
       <div className="mx-auto flex items-center gap-2">
-        <Button variant="secondary" onClick={onAddNext}>
+        <Button variant="outline" onClick={onAddNext}>
           เพิ่มผู้รับเหมาคนถัดไป
         </Button>
         <Link href="/people/new-hires" className={buttonClasses("primary")}>

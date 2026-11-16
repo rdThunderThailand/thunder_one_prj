@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { isInUse } from "../asset-usage";
 import { useAssetUsage } from "../useAssetUsage";
 import { UsageGroups } from "./UsageLists";

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/lovable/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
+import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
 import { classifyApiError } from "@/lib/api/api-error";
 import { movePlaylist, permanentlyDeletePlaylist } from "@/lib/api/media-api";
 import type { ContentFolder } from "@/types/domain";

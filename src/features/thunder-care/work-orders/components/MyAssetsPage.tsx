@@ -18,7 +18,7 @@ export function MyAssetsPage() {
           <p className="text-sm text-muted-foreground">ทรัพย์สินทั้งหมดที่คุณรับผิดชอบ และเคยให้บริการ</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" disabled title="ยังไม่เปิดใช้งาน">
+          <Button variant="outline" disabled title="ยังไม่เปิดใช้งาน">
             ส่งออก
           </Button>
           <Button variant="primary" disabled title="ยังไม่เปิดใช้งาน">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import type { AssetDeleteBlockers, AssetUsage, AssetUsageRef } from "@/types/domain";
 import { blockerSummary, usageSummary } from "../asset-usage";
 

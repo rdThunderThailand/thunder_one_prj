@@ -6,7 +6,7 @@ import {
   SearchXIcon as SearchX,
   type Icon,
 } from "@/components/ui/icons";
-import { Skeleton } from "@/components/ui/lovable/skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { t } from "../copy";
 import { helpHref } from "../navigation";

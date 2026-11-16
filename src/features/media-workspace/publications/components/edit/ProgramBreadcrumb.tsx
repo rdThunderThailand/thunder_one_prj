@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { DISPLAY_STATUS_LABELS } from "../../publication-list-display";
 import type { PublicationDisplayStatus } from "../../types";
 

@@ -6,8 +6,9 @@ import {
   ExternalLinkIcon as ExternalLink,
   FileImageIcon as FileImage,
 } from "@/components/ui/icons";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button } from "@/components/ui/lovable/button";
+import { Badge } from "@/components/ui/Badge";
+import { Tag } from "@/components/ui/Tag";
+import { Button } from "@/components/ui/Button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/lovable/sheet";
 import { isVideoUrl } from "@/lib/media-kind";
 import type { PlaybackProofEntry } from "../playback-proof-api";
@@ -88,12 +89,11 @@ export function PlaybackProofDrawer({
               <MediaPreview url={media.thumbnail_url} />
               <div className="flex items-center gap-2">
                 <p className="min-w-0 truncate text-sm font-bold text-foreground">{media.title}</p>
-                <Badge
-                  variant="info"
+                <Tag
                   className="shrink-0 px-1.5 py-0 text-[10px] capitalize"
                 >
                   {media.kind}
-                </Badge>
+                </Tag>
                 {media.in_trash && (
                   <Badge
                     variant="neutral"

@@ -79,14 +79,14 @@ export function ChannelLifecycleActions({
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         {lifecycle === "active" && (
-          <Button type="button" variant="secondary" disabled={busy} onClick={() => setIsConfirmingDeactivate(true)}>
+          <Button type="button" variant="outline" disabled={busy} onClick={() => setIsConfirmingDeactivate(true)}>
             Deactivate
           </Button>
         )}
         {lifecycle === "draft" && (
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             disabled={busy}
             onClick={() => setConfirmingDelete(true)}
             className="text-error hover:bg-error-muted"
@@ -103,7 +103,7 @@ export function ChannelLifecycleActions({
         title="Deactivate this Channel?"
         footer={
           <>
-            <Button type="button" variant="secondary" disabled={busy} onClick={() => setIsConfirmingDeactivate(false)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setIsConfirmingDeactivate(false)}>
               Cancel
             </Button>
             <Button type="button" disabled={busy} onClick={() => void deactivate()}>
@@ -121,7 +121,7 @@ export function ChannelLifecycleActions({
         title="Delete this Channel?"
         footer={
           <>
-            <Button type="button" variant="secondary" disabled={busy} onClick={() => setConfirmingDelete(false)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setConfirmingDelete(false)}>
               Cancel
             </Button>
             <Button type="button" disabled={busy} onClick={() => void confirmDelete()}>

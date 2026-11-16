@@ -5,8 +5,8 @@
 // to reach into the page component to change them.
 
 import { useRef, useState } from "react";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
 import { saveAction } from "../status-display";

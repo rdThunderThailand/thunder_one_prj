@@ -14,8 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
-import { ErrorState } from "@/components/ui/lovable/core";
+import { Button, buttonVariants } from "@/components/ui/Button";
+import { ErrorState } from "@/components/ui/EmptyState";
 import {
   cancelPublication,
   deletePublication,

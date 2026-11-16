@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import type { ZonePreviewFrame } from "@/features/media-workspace/preview/preview-clock";

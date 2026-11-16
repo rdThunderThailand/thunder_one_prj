@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Badge, type BadgeProps } from "@/components/ui/lovable/badge";
-import { Progress } from "@/components/ui/lovable/progress";
+import { Badge, type BadgeProps } from "@/components/ui/Badge";
+import { Tag } from "@/components/ui/Tag";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import {
   DISPLAY_STATUS_LABELS,
@@ -93,13 +94,12 @@ export function PublicationsTable({
                       {item.tags.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {item.tags.map((tag) => (
-                            <Badge
+                            <Tag
                               key={tag}
-                              variant="neutral"
                               className="rounded-full px-1.5 py-0 text-[9px] font-medium"
                             >
                               {tag}
-                            </Badge>
+                            </Tag>
                           ))}
                         </div>
                       )}
@@ -125,7 +125,7 @@ export function PublicationsTable({
                   <p className="text-foreground">{delivery.label}</p>
                   {delivery.ratio && <p className="text-[9px] text-muted-foreground">{delivery.ratio}</p>}
                   {delivery.percent !== null && (
-                    <Progress
+                    <ProgressBar
                       value={delivery.percent}
                       className="mt-1 h-1"
                     />

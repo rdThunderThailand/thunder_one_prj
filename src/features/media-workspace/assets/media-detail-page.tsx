@@ -17,13 +17,13 @@ import {
   MoreIcon as MoreHorizontal,
   RatioIcon as Ratio,
   RefreshIcon as RefreshCw,
-  TagIcon as Tag,
+  TagIcon,
   TrashIcon as Trash2,
   UserIcon as User,
 } from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Button, buttonVariants } from "@/components/ui/lovable/button";
+import { Tag } from "@/components/ui/Tag";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
@@ -186,9 +186,9 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
             {asset.tags?.length ? (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {asset.tags.map((tag) => (
-                  <Badge key={tag.id} variant="secondary" className="bg-muted text-[10px] font-semibold text-foreground">
+                  <Tag key={tag.id} className="bg-muted text-[10px] font-semibold text-foreground">
                     {tag.name}
-                  </Badge>
+                  </Tag>
                 ))}
               </div>
             ) : null}
@@ -239,7 +239,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
           />
           <SectionCard
             title="Additional Information"
-            icon={Tag}
+            icon={TagIcon}
             rows={[
               ["Folder Path", `/ ${folderPath(folders, asset.folder_id)}`],
               ["Tags", asset.tags?.map((tag) => tag.name).join(", ")],

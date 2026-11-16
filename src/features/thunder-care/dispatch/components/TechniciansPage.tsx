@@ -222,10 +222,10 @@ export function TechniciansPage() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button variant="secondary" disabled title="ยังไม่เปิดใช้งาน">
+                  <Button variant="outline" disabled title="ยังไม่เปิดใช้งาน">
                     ดูตารางงาน
                   </Button>
-                  <Button variant="secondary" disabled title="ยังไม่เปิดใช้งาน">
+                  <Button variant="outline" disabled title="ยังไม่เปิดใช้งาน">
                     มอบหมายงาน
                   </Button>
                   <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg border border-error/30 px-4 py-2 text-sm font-medium text-error">

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/lovable/badge";
-import { Input } from "@/components/ui/lovable/input";
+import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
 import { formatTime, type FleetDevice } from "./device-state";
 import { StageBar } from "./rollout-bars";
 import {

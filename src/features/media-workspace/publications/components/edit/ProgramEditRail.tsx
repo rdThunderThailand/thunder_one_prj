@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import { Button } from "@/components/ui/Button";
 import {
   Select,
   SelectContent,
@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/lovable/select";
-import { Badge } from "@/components/ui/lovable/badge";
+import { Badge } from "@/components/ui/Badge";
 import { fetchNowNext, type NowNextRow } from "../../now-next";
 import { DEFAULT_TIMEZONE, utcToZonedParts } from "../../schedule";
 import { DISPLAY_STATUS_LABELS } from "../../publication-list-display";
