@@ -1,11 +1,12 @@
 /** Run: node src/config/nav/asset-workspace-nav.check.mts */
 import assert from "node:assert/strict";
-import { sectionsForRole, type AssetWorkspaceRole } from "./asset-workspace-roles.ts";
+import { sectionsForRole, standaloneLinksForRole, type AssetWorkspaceRole } from "./asset-workspace-roles.ts";
 
-// The pinned Overview (or My Assets for Employees) plus every section item.
+// The pinned Overview (or My Assets for Employees), every section item, then standalone links.
 const visible = (role: AssetWorkspaceRole) => [
   role === "employee" ? "My Assets" : "Overview",
   ...sectionsForRole(role).flatMap((section) => section.items.map((item) => item.label)),
+  ...standaloneLinksForRole(role).map((item) => item.label),
 ];
 
 assert.deepEqual(visible("asset_admin"), [
@@ -20,7 +21,11 @@ assert.deepEqual(visible("asset_admin"), [
   "Settings",
 ]);
 assert.deepEqual(visible("manager"), ["Overview", "Assets", "Assignments", "Inventory", "Reports"]);
-assert.deepEqual(visible("employee"), ["My Assets"]);
+assert.deepEqual(visible("employee"), ["My Assets", "My Tasks", "Scan Asset", "Home"]);
+// Employee links stay inert (no href) until their batch ships; admin and manager get none.
+assert.ok(standaloneLinksForRole("employee").every((item) => item.href === undefined));
+assert.deepEqual(standaloneLinksForRole("asset_admin"), []);
+assert.deepEqual(standaloneLinksForRole("manager"), []);
 
 assert.deepEqual(
   sectionsForRole("asset_admin").map((section) => section.label),
