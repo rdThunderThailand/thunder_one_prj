@@ -1,15 +1,21 @@
-import { PageHeader } from "@/components/layout/PageHeader";
-import { EmptyState } from "@/features/asset-workspace/components/states/states";
+import { MyAssetsView } from "@/features/asset-workspace/employee/my-assets/MyAssetsView";
+import { getMyAssetChoices, getMyAssets } from "@/features/asset-workspace/employee/my-assets/my-assets-api";
+import { myAssetsQuery } from "@/features/asset-workspace/employee/my-assets/my-assets-query";
+import type { AssetSearchParams } from "@/features/asset-workspace/services/assets-list-query";
 
-// Placeholder until the My Assets batch (EMP-02) replaces it.
-export default function MyAssetsPage() {
+// My Assets (EMP-02, UC-002). Search, filters, tab and page live in the URL; Core limits rows to the caller.
+export default async function MyAssetsPage({ searchParams }: { searchParams: Promise<AssetSearchParams> }) {
+  const sp = await searchParams;
+  const query = myAssetsQuery(sp);
+  const [data, choices] = await Promise.all([query ? getMyAssets(query) : null, getMyAssetChoices()]);
+  const filtered = ["q", "category_id", "location_id", "condition"].some((key) => sp[key]) || (sp.tab !== undefined && sp.tab !== "all");
+  const listSearch = new URLSearchParams(Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string")).toString();
   return (
-    <div className="space-y-4 p-6">
-      <PageHeader title="My Assets" />
-      <EmptyState
-        title="No assets yet"
-        body="Your assigned assets will appear here."
-      />
-    </div>
+    <MyAssetsView
+      data={data}
+      choices={choices}
+      filtered={filtered}
+      listSearch={listSearch}
+    />
   );
 }
