@@ -23,7 +23,10 @@ assert.deepEqual(visible("asset_admin"), [
 assert.deepEqual(visible("manager"), ["Overview", "Assets", "Assignments", "Inventory", "Reports"]);
 assert.deepEqual(visible("employee"), ["My Assets", "My Tasks", "Scan Asset", "Home"]);
 // Employee links stay inert (no href) until their batch ships; admin and manager get none.
-assert.ok(standaloneLinksForRole("employee").every((item) => item.href === undefined));
+assert.deepEqual(
+  standaloneLinksForRole("employee").map((item) => item.href),
+  ["/asset-workspace/my-tasks", undefined, undefined],
+);
 assert.deepEqual(standaloneLinksForRole("asset_admin"), []);
 assert.deepEqual(standaloneLinksForRole("manager"), []);
 
