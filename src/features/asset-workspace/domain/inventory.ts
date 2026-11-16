@@ -227,6 +227,8 @@ export function sessionActions(status: SessionStatus) {
     cancel: status === "Draft" || inProgress,
     complete: inProgress,
     close: status === "Completed",
+    /** Name / Description / Due Date / Owner only; the scope is locked once started (Core `SCOPE_LOCKED`). */
+    edit: inProgress,
   };
 }
 
@@ -492,4 +494,86 @@ export interface Activity {
   pageSize: number;
   total: number;
   totalPages: number;
+}
+
+/** The Verified / Mismatch / Not Found result an activity row records, read from `details.result` (verify) or
+ *  `details.after` (result_change); `null` for rows that carry none (lifecycle, reports, decisions). */
+export function activityResult(r: Pick<ActivityRow, "details">): VerifyResult | null {
+  const pick = (v: unknown): VerifyResult | null => {
+    if (typeof v === "string") return (VERIFY_RESULTS as readonly string[]).includes(v) ? (v as VerifyResult) : null;
+    if (v && typeof v === "object") {
+      const o = v as Record<string, unknown>;
+      return pick(o.result ?? o.result_status);
+    }
+    return null;
+  };
+  const d = r.details ?? {};
+  return pick(d.result) ?? pick(d.after) ?? pick(d.result_status);
+}
+
+type Json = Record<string, unknown>;
+const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+const count = (v: unknown) => (typeof v === "number" ? v : Array.isArray(v) ? v.length : null);
+const joinParts = (parts: (string | null | false)[]) => parts.filter(Boolean).join(" · ") || "—";
+const plural = (n: number, one: string, many: string) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
+
+/** The Activity table's second line and Details cell, from what Core logged (`details`). */
+export function activityText(r: Pick<ActivityRow, "action" | "details">): { subtitle: string; details: string } {
+  const d: Json = r.details ?? {};
+  const result = (v: unknown) => activityResult({ details: { after: v } });
+  switch (r.action) {
+    case "start": {
+      const assets = count(d.expected);
+      const people = count(d.assignees);
+      return {
+        subtitle: "Session status changed to In Progress",
+        details: joinParts([assets !== null && plural(assets, "asset", "assets"), people !== null && plural(people, "assignee", "assignees")]),
+      };
+    }
+    case "verify":
+      return { subtitle: "Result recorded", details: joinParts([text(d.condition) && `Condition: ${text(d.condition)}`, text(d.note)]) };
+    case "result_change":
+      return {
+        subtitle: "Result updated",
+        details: joinParts([`${result(d.before) ?? "—"} → ${result(d.after) ?? "—"}`, text((d.after as Json | undefined)?.note)]),
+      };
+    case "report_unexpected":
+      return { subtitle: "Asset found but not in this session", details: joinParts([text(d.note)]) };
+    case "reconcile": {
+      const decision = DECISION_LABEL[d.decision as Decision] ?? text(d.decision);
+      return { subtitle: "Discrepancy decision recorded", details: joinParts([decision && `${decision}: ${text(d.reason) ?? "—"}`, text(d.note)]) };
+    }
+    case "complete": {
+      const expected = count(d.expected);
+      const done = count(d.done);
+      const remaining = count(d.remaining);
+      return {
+        subtitle: "Session status changed to Completed",
+        details: joinParts([
+          expected !== null && done !== null && `${done.toLocaleString()} of ${expected.toLocaleString()} checked`,
+          remaining !== null && `${remaining.toLocaleString()} remaining`,
+        ]),
+      };
+    }
+    case "close": {
+      const open = count(d.open_findings) ?? 0;
+      return { subtitle: "Session status changed to Closed", details: open ? `${plural(open, "open discrepancy", "open discrepancies")} left` : "No open discrepancies" };
+    }
+    case "cancel":
+      return { subtitle: "Session status changed to Cancelled", details: joinParts([text(d.reason)]) };
+    case "create":
+      return { subtitle: "Draft session created", details: "—" };
+    case "update": {
+      const before = (d.before ?? {}) as Json;
+      const after = (d.after ?? {}) as Json;
+      const changed = Object.keys(after).filter((k) => JSON.stringify(after[k]) !== JSON.stringify(before[k]));
+      return { subtitle: "Session details updated", details: changed.length ? `Changed: ${changed.map((k) => k.replace(/_json$/, "").replace(/_/g, " ")).join(", ")}` : "—" };
+    }
+    case "assignments_change": {
+      const moves = count(d.moves);
+      return { subtitle: "Verification assignments updated", details: moves ? plural(moves, "group", "groups") + " reassigned" : "—" };
+    }
+    default:
+      return { subtitle: "", details: "—" };
+  }
 }

@@ -64,3 +64,41 @@ export const WARRANTY_TONE: Record<WarrantyStatus, StatusTone> = {
   Expired: "red",
   "No Warranty": "zinc",
 };
+
+/** A finding's state in the Discrepancies tab and the activity log. */
+export const FINDING_STATE_TONE = {
+  open: "yellow",
+  reconciled: "green",
+  dismissed: "zinc",
+} as const satisfies Record<"open" | "reconciled" | "dismissed", StatusTone>;
+
+/** Solid fill for a tone (a filled icon circle, white glyph on top). Same hues as the Badge tones. */
+export const TONE_SOLID: Record<StatusTone, string> = {
+  green: "bg-success",
+  blue: "bg-info",
+  yellow: "bg-warning",
+  red: "bg-error",
+  zinc: "bg-t1-gray-400",
+};
+
+/** The activity timeline shows positive entries (Verified, Completed, Reconciled) in blue, as in the design; every other
+ *  tone is unchanged. Badges and tables elsewhere keep green. */
+export const activityTone = (tone: StatusTone): StatusTone => (tone === "green" ? "blue" : tone);
+
+/** Soft background for a tone (a KPI tile or a notice). */
+export const TONE_SOFT: Record<StatusTone, string> = {
+  green: "bg-success-muted",
+  blue: "bg-info-muted",
+  yellow: "bg-warning-muted",
+  red: "bg-error-muted",
+  zinc: "bg-muted",
+};
+
+/** Icon colour for a tone on its soft tile (darker shade, for contrast). */
+export const TONE_ICON: Record<StatusTone, string> = {
+  green: "text-t1-green-700",
+  blue: "text-t1-blue-700",
+  yellow: "text-t1-amber-700",
+  red: "text-t1-red-700",
+  zinc: "text-muted-foreground",
+};

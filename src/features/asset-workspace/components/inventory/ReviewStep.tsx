@@ -37,7 +37,7 @@ import {
   type PersonChoice,
   type ScopePreview,
 } from "../../services/asset-inventory-actions";
-import { FormError } from "./parts";
+import { Avatar, FormError } from "./parts";
 import { AssetsDialog, CategoryBreakdown, CHART, share, topRows } from "./scope-parts";
 
 const LIST = "/asset-workspace/inventory";
@@ -314,24 +314,6 @@ export function ReviewStep({ session, review, today, onCancel }: {
         total={total}
       />
     </div>
-  );
-}
-
-function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-  return (
-    <span
-      aria-hidden="true"
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-primary"
-    >
-      {initials || "?"}
-    </span>
   );
 }
 

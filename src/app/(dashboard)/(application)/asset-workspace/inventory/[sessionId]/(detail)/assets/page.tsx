@@ -19,6 +19,7 @@ export default async function SessionAssetsPage({ params, searchParams }: {
   return (
     <SessionAssetsView
       sessionId={sessionId}
+      counts={typeof session === "object" && session !== null ? session.counts : null}
       data={data}
       canVerify={canVerify}
       options={{ locations: options?.locations ?? [], custodians: options?.custodyTargets ?? [] }}

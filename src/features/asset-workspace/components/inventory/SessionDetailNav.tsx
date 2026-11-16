@@ -5,8 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { buttonClasses } from "@/components/ui/Button";
+import { MoreIcon, PlayIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { DETAIL_TABS, detailHref, FINDING_LABEL, sessionActions, sessionProgress, type SessionDetail } from "../../domain/inventory";
 import { closeSessionAction, completeSessionAction, type UnresolvedFindings } from "../../services/asset-inventory-actions";
@@ -18,33 +20,9 @@ export function SessionHeaderActions({ session }: { session: SessionDetail }) {
   const [closeOpen, setCloseOpen] = useState(false);
   const can = sessionActions(session.status);
   if (!can.continue && !can.cancel && !can.complete && !can.close) return null;
+  const hasMenu = can.complete || can.close || can.cancel;
   return (
-    <div className="flex flex-wrap gap-2">
-      {can.cancel && (
-        <Button
-          variant="outline"
-          className="text-t1-red-700"
-          onClick={() => setCancelOpen(true)}
-        >
-          Cancel Session
-        </Button>
-      )}
-      {can.complete && (
-        <Button
-          variant="outline"
-          onClick={() => setCompleteOpen(true)}
-        >
-          Complete Inventory
-        </Button>
-      )}
-      {can.close && (
-        <Button
-          variant="outline"
-          onClick={() => setCloseOpen(true)}
-        >
-          Close Session
-        </Button>
-      )}
+    <div className="flex items-center gap-2">
       {can.close && (
         <Link
           href={`${detailHref(session.id, "discrepancies")}?state=open`}
@@ -58,8 +36,40 @@ export function SessionHeaderActions({ session }: { session: SessionDetail }) {
           href={detailHref(session.id, "assets")}
           className={buttonClasses("primary")}
         >
+          <PlayIcon
+            aria-hidden="true"
+            className="mr-2 h-4 w-4"
+          />
           Continue Inventory
         </Link>
+      )}
+      {hasMenu && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="More actions"
+            >
+              <MoreIcon
+                aria-hidden="true"
+                className="h-4 w-4"
+              />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {can.complete && <DropdownMenuItem onSelect={() => setCompleteOpen(true)}>Complete Inventory</DropdownMenuItem>}
+            {can.close && <DropdownMenuItem onSelect={() => setCloseOpen(true)}>Close Session</DropdownMenuItem>}
+            {can.cancel && (
+              <DropdownMenuItem
+                className="text-t1-red-700"
+                onSelect={() => setCancelOpen(true)}
+              >
+                Cancel Session
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
       <CancelSessionDialog
         session={session}
@@ -232,7 +242,7 @@ function CompleteSessionDialog({ session, onClose }: { session: SessionDetail; o
   );
 }
 
-export function SessionTabs({ sessionId }: { sessionId: string }) {
+export function SessionTabs({ sessionId, discrepancies = 0 }: { sessionId: string; discrepancies?: number }) {
   const pathname = usePathname();
   return (
     <nav
@@ -252,6 +262,11 @@ export function SessionTabs({ sessionId }: { sessionId: string }) {
             }`}
           >
             {tab.label}
+            {tab.key === "discrepancies" && discrepancies > 0 && (
+              <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-xs font-semibold text-white">
+                {discrepancies}
+              </span>
+            )}
           </Link>
         );
       })}

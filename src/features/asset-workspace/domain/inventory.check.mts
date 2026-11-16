@@ -14,6 +14,8 @@ import {
   validateSetup,
   verifyInput,
   findingChange,
+  activityResult,
+  activityText,
   assetActionHref,
   decisionsFor,
   findingStatus,
@@ -61,8 +63,8 @@ assert.deepEqual(sessionProgress({ expected: 8, verified: 3, mismatch: 1, notFou
   done: 5, pct: 63, discrepancies: 4,
 });
 assert.equal(sessionProgress({ expected: 0, verified: 0, mismatch: 0, notFound: 0, unexpected: 0, remaining: 0 }).pct, 0);
-assert.deepEqual(sessionActions("In Progress"), { continue: true, cancel: true, complete: true, close: false });
-assert.deepEqual(sessionActions("Completed"), { continue: false, cancel: false, complete: false, close: true });
+assert.deepEqual(sessionActions("In Progress"), { continue: true, cancel: true, complete: true, close: false, edit: true });
+assert.deepEqual(sessionActions("Completed"), { continue: false, cancel: false, complete: false, close: true, edit: false });
 assert.equal(detailHref("s1", "assets"), "/asset-workspace/inventory/s1/assets");
 
 console.log("inventory.check ok");
@@ -101,3 +103,23 @@ assert.deepEqual(reconcileInput({ decision: "register_asset", reason: "r", note:
 assert.equal(findingStatus({ resolutionState: "open", decision: null }), "Open");
 assert.equal(findingStatus({ resolutionState: "reconciled", decision: "mark_lost" }), "Reconciled · Mark as Lost");
 assert.equal(findingStatus({ resolutionState: "dismissed", decision: "dismiss" }), "Dismissed");
+
+// Activity result colour source
+assert.equal(activityResult({ details: { result: "Mismatch" } }), "Mismatch");
+assert.equal(activityResult({ details: { before: { result: "Verified" }, after: { result: "Not Found" } } }), "Not Found");
+assert.equal(activityResult({ details: { after: "Verified" } }), "Verified");
+assert.equal(activityResult({ details: { result: "Remaining" } }), null);
+assert.equal(activityResult({ details: null }), null);
+
+// Activity table text
+assert.deepEqual(activityText({ action: "complete", details: { expected: 80, done: 1, remaining: 79 } }), {
+  subtitle: "Session status changed to Completed", details: "1 of 80 checked · 79 remaining",
+});
+assert.equal(activityText({ action: "close", details: { open_findings: 0 } }).details, "No open discrepancies");
+assert.equal(activityText({ action: "close", details: { open_findings: 2 } }).details, "2 open discrepancies left");
+assert.equal(activityText({ action: "result_change", details: { before: { result: "Mismatch" }, after: { result: "Verified" } } }).details, "Mismatch → Verified");
+assert.equal(activityText({ action: "reconcile", details: { decision: "dismiss", reason: "dup" } }).details, "Dismiss: dup");
+assert.equal(activityText({ action: "update", details: { before: { name: "A", due_date: "1" }, after: { name: "B", due_date: "1" } } }).details, "Changed: name");
+assert.equal(activityText({ action: "start", details: { expected: 1, assignees: 4 } }).details, "1 asset · 4 assignees");
+assert.equal(activityText({ action: "verify", details: null }).details, "—");
+assert.equal(activityText({ action: "update", details: { before: { scope_json: 1 }, after: { scope_json: 2 } } }).details, "Changed: scope");

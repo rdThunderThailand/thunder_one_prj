@@ -8,20 +8,30 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { Button } from "@/components/ui/lovable/button";
-import { scanMatch, SESSION_ASSET_RESULTS, type SessionAsset, type SessionAssetResult, type SessionAssets } from "../../domain/inventory";
+import {
+  scanMatch,
+  SESSION_ASSET_RESULTS,
+  type SessionAsset,
+  type SessionAssetResult,
+  type SessionAssets,
+  type SessionDetail,
+} from "../../domain/inventory";
 import { INVENTORY_RESULT_TONE, type StatusTone } from "../../domain/status-tone";
 import { useListUrlState } from "../list-page/useListUrlState";
 import { ReportFilterBar } from "../reports/ReportFilterBar";
 import { EmptyState, LoadingState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
+import { AssetsKpi } from "./AssetsKpi";
 import { ReportUnexpectedDialog, VerifyDialog, type VerifyOptions } from "./VerifyDialogs";
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const TONE: Record<SessionAssetResult, StatusTone> = { ...INVENTORY_RESULT_TONE, Remaining: "zinc" };
 const HEADERS = ["Asset", "Asset Tag", "Category", "Expected Location", "Expected Custodian", "Result", "Verified By", "Verified Date"];
 
-export function SessionAssetsView({ sessionId, data, canVerify, options }: {
+export function SessionAssetsView({ sessionId, counts, data, canVerify, options }: {
   sessionId: string;
+  /** The session `counts` for the KPI row; `null` when the session could not be read. */
+  counts: SessionDetail["counts"] | null;
   data: SessionAssets | null;
   /** In Progress: Verify and Report Unexpected. Core still checks the row's assignee. */
   canVerify: boolean;
@@ -39,6 +49,7 @@ export function SessionAssetsView({ sessionId, data, canVerify, options }: {
 
   return (
     <div className="space-y-3">
+      {counts && <AssetsKpi counts={counts} />}
       <div className="flex flex-wrap items-center gap-2">
         <ReportFilterBar
           url={url}

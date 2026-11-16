@@ -7,9 +7,8 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
-import { StatTile } from "@/components/ui/StatTile";
 import { Button } from "@/components/ui/lovable/button";
-import { SearchXIcon, WarningTriangleIcon, XCircleIcon } from "@/components/ui/icons";
+import { LocationIcon, SearchXIcon, UserIcon, WarningTriangleIcon, XCircleIcon } from "@/components/ui/icons";
 import {
   FINDING_FILTERS,
   FINDING_LABEL,
@@ -25,13 +24,64 @@ import { useListUrlState } from "../list-page/useListUrlState";
 import { ReportFilterBar } from "../reports/ReportFilterBar";
 import { EmptyState, LoadingState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
+import { KpiTile, toneTile } from "./kpi-tile";
 import { ReconcileDialog } from "./ReconcileDialog";
+import { share } from "./scope-parts";
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const HEADERS = ["Asset", "Asset Tag", "Category", "Expected Location", "Result", "Found Location", "Verified By", "Date", "Status"];
 
-export function SessionDiscrepanciesView({ sessionId, data, canReconcile, options }: {
+function Kpi({ counts, expected }: { counts: Findings["counts"]; expected: number }) {
+  const notFound = INVENTORY_RESULT_TONE["Not Found"];
+  const unexpected = INVENTORY_RESULT_TONE.Unexpected;
+  const mismatch = INVENTORY_RESULT_TONE.Mismatch;
+  return (
+    <Card className="grid gap-3 p-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      <KpiTile
+        icon={<WarningTriangleIcon />}
+        {...toneTile("red")}
+        value={counts.total}
+        label="Total Discrepancies"
+        note={`${share(counts.total, expected)} of expected assets`}
+      />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiTile
+          icon={<XCircleIcon />}
+          {...toneTile(notFound)}
+          value={counts.notFound}
+          label="Not Found"
+          note="Not found during verification"
+        />
+        <KpiTile
+          icon={<SearchXIcon />}
+          {...toneTile(unexpected)}
+          value={counts.unexpected}
+          label="Unexpected"
+          note="Found but not in this session"
+        />
+        <KpiTile
+          icon={<LocationIcon />}
+          {...toneTile(mismatch)}
+          value={counts.mismatch.location}
+          label="Location Mismatch"
+          note="Found in a different location"
+        />
+        <KpiTile
+          icon={<UserIcon />}
+          {...toneTile("zinc")}
+          value={counts.mismatch.custody + counts.mismatch.condition}
+          label="Custody / Condition"
+          note="Different custodian or condition"
+        />
+      </div>
+    </Card>
+  );
+}
+
+export function SessionDiscrepanciesView({ sessionId, expected, data, canReconcile, options }: {
   sessionId: string;
+  /** Frozen asset count of the session, for the share in the Total tile. */
+  expected: number;
   data: Findings | null;
   /** Completed: Reconcile on open rows (Core: Asset Admin only). */
   canReconcile: boolean;
@@ -41,41 +91,11 @@ export function SessionDiscrepanciesView({ sessionId, data, canReconcile, option
   const [reconciling, setReconciling] = useState<Finding | null>(null);
   const filtered = Boolean(url.get("q") || url.get("type") || url.get("category_id") || url.get("location_id") || url.get("state"));
   const c = data?.counts;
-  const mismatch = c ? c.mismatch.location + c.mismatch.custody + c.mismatch.condition : 0;
   const opts = (list: { id: string; name: string | null }[]) => list.map((x) => ({ value: x.id, label: x.name ?? "Unnamed" }));
 
   return (
     <div className="space-y-3">
-      {c && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile
-            label="Total Discrepancies"
-            value={c.total.toLocaleString()}
-            hint={`${c.open.toLocaleString()} open`}
-            color="zinc"
-            icon={<WarningTriangleIcon aria-hidden="true" />}
-          />
-          <StatTile
-            label="Not Found"
-            value={c.notFound.toLocaleString()}
-            color="red"
-            icon={<XCircleIcon aria-hidden="true" />}
-          />
-          <StatTile
-            label="Unexpected"
-            value={c.unexpected.toLocaleString()}
-            color="blue"
-            icon={<SearchXIcon aria-hidden="true" />}
-          />
-          <StatTile
-            label="Mismatch"
-            value={mismatch.toLocaleString()}
-            trend={`Location ${c.mismatch.location} · Custody ${c.mismatch.custody} · Condition ${c.mismatch.condition}`}
-            color="amber"
-            icon={<WarningTriangleIcon aria-hidden="true" />}
-          />
-        </div>
-      )}
+      {c && <Kpi counts={c} expected={expected} />}
       <div className="flex flex-wrap items-center gap-2">
         <ReportFilterBar
           url={url}

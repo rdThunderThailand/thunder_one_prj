@@ -19,6 +19,7 @@ export default async function SessionDiscrepanciesPage({ params, searchParams }:
   return (
     <SessionDiscrepanciesView
       sessionId={sessionId}
+      expected={typeof session === "object" && session !== null ? session.counts.expected : 0}
       data={data}
       canReconcile={canReconcile}
       options={{ categories: options?.categories ?? [], locations: options?.locations ?? [] }}
