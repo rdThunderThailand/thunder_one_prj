@@ -1,7 +1,7 @@
 // Core reads for the Inventory pages (PO 05 §4.9; checklist E:\ThunderOne\docs\inventory\asset-ws-inventory-checklist.md §2).
 // Server-only. Writes and the scope preview (a POST) are Server Actions in asset-inventory-actions.ts.
 import { cache } from "react";
-import { startedRange, type Assignments, type Person, type SessionAssets, type SessionDetail } from "../domain/inventory";
+import { startedRange, type Activity, type Assignments, type Findings, type Person, type SessionAssets, type SessionDetail } from "../domain/inventory";
 import { assetFiltersSchema, type AssetFilterOptions } from "./assets-list-types";
 import { query, reportAuth, reportGet, toListData, type Page, type SearchParams, type SessionRow } from "./asset-reports-api";
 
@@ -73,5 +73,23 @@ export async function getInventorySessionAssets(sessionId: string, sp: SearchPar
   if (!auth) return null;
   const path = `${base(auth.tenantId)}/inventory-sessions/${encodeURIComponent(sessionId)}/assets${query(sp, ["q", "result", "category_id", "page", "pageSize"])}`;
   const data = await reportGet<SessionAssets>(path, auth.token);
+  return data === "unavailable" ? null : data;
+}
+
+/** Discrepancies tab: `?q=&type=&category_id=&location_id=&state=&page=&pageSize=`. `counts` cover every visible finding. */
+export async function getInventoryFindings(sessionId: string, sp: SearchParams): Promise<Findings | null> {
+  const auth = await reportAuth();
+  if (!auth) return null;
+  const path = `${base(auth.tenantId)}/inventory-sessions/${encodeURIComponent(sessionId)}/findings${query(sp, ["q", "type", "category_id", "location_id", "state", "page", "pageSize"])}`;
+  const data = await reportGet<Findings>(path, auth.token);
+  return data === "unavailable" ? null : data;
+}
+
+/** Activity tab / Overview Recent Activity: `?type=&actorId=&from=&to=&q=&page=&pageSize=` (from / to = Bangkok days). */
+export async function getInventoryActivity(sessionId: string, sp: SearchParams): Promise<Activity | null> {
+  const auth = await reportAuth();
+  if (!auth) return null;
+  const path = `${base(auth.tenantId)}/inventory-sessions/${encodeURIComponent(sessionId)}/activity${query(sp, ["type", "actorId", "from", "to", "q", "page", "pageSize"])}`;
+  const data = await reportGet<Activity>(path, auth.token);
   return data === "unavailable" ? null : data;
 }

@@ -1,14 +1,28 @@
-import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/features/asset-workspace/components/states/states";
+import { SessionDiscrepanciesView } from "@/features/asset-workspace/components/inventory/SessionDiscrepanciesView";
+import { sessionActions } from "@/features/asset-workspace/domain/inventory";
+import { getInventoryFindings, getInventorySession, getScopeOptions } from "@/features/asset-workspace/services/asset-inventory-api";
+import type { SearchParams } from "@/features/asset-workspace/services/asset-reports-api";
 
-// Session Discrepancies tab: slice I3 (checklist §1). The list's Issues link lands here.
-export default function SessionDiscrepanciesPage() {
+// Session Discrepancies tab: `?q=&type=&category_id=&location_id=&state=&page=&pageSize=` go to Core as they are. The
+// list's Issues link and Review & Reconcile land here.
+export default async function SessionDiscrepanciesPage({ params, searchParams }: {
+  params: Promise<{ sessionId: string }>;
+  searchParams: Promise<SearchParams>;
+}) {
+  const [{ sessionId }, sp] = await Promise.all([params, searchParams]);
+  const [session, data, options] = await Promise.all([
+    getInventorySession(sessionId),
+    getInventoryFindings(sessionId, sp),
+    getScopeOptions(),
+  ]);
+  const canReconcile = typeof session === "object" && session !== null && sessionActions(session.status).close;
   return (
-    <Card className="p-5">
-      <EmptyState
-        title="Not available yet"
-        body="Discrepancies for this session appear here in a later release."
-      />
-    </Card>
+    <SessionDiscrepanciesView
+      sessionId={sessionId}
+      expected={typeof session === "object" && session !== null ? session.counts.expected : 0}
+      data={data}
+      canReconcile={canReconcile}
+      options={{ categories: options?.categories ?? [], locations: options?.locations ?? [] }}
+    />
   );
 }

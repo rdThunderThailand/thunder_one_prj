@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
+import { CalendarIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { Avatar } from "@/features/asset-workspace/components/inventory/parts";
 import { SessionHeaderActions, SessionTabs } from "@/features/asset-workspace/components/inventory/SessionDetailNav";
 import { ErrorState } from "@/features/asset-workspace/components/states/ErrorState";
 import { NotFoundState } from "@/features/asset-workspace/components/states/states";
-import { bangkokToday, dueHint } from "@/features/asset-workspace/domain/inventory";
+import { bangkokToday, dueHint, sessionProgress } from "@/features/asset-workspace/domain/inventory";
 import { SESSION_STATUS_TONE } from "@/features/asset-workspace/domain/status-tone";
 import { getInventorySession } from "@/features/asset-workspace/services/asset-inventory-api";
 
@@ -50,24 +51,36 @@ export default async function SessionDetailLayout({ children, params }: {
   if (session.status === "Draft") redirect(`${LIST}/${session.id}/setup`);
 
   const hint = session.status === "In Progress" ? dueHint(session.dueDate, bangkokToday()) : null;
-  const meta: [string, ReactNode][] = [
-    ["Owner", session.owner?.name ?? "—"],
-    ["Start Date", session.startedAt ? dateFmt.format(new Date(session.startedAt)) : "—"],
-    [
-      "Due Date",
-      <>
-        {session.dueDate ? dateFmt.format(new Date(session.dueDate)) : "—"}
-        {hint && <span className={`ml-2 ${hint.overdue ? "text-t1-red-700" : "text-muted-foreground"}`}>({hint.text})</span>}
-      </>,
-    ],
-  ];
+  const due = session.dueDate ? dateFmt.format(new Date(session.dueDate)) : "—";
+  const start = session.startedAt ? dateFmt.format(new Date(session.startedAt)) : "—";
+  const subtitle = [session.scopeLabel, due !== "—" ? due : null].filter(Boolean);
 
   return (
-    <div className="space-y-3 p-6">
-      {back}
-      <PageHeader
-        title={
-          <span className="inline-flex flex-wrap items-center gap-2">
+    <div className="space-y-4 p-6">
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground"
+      >
+        <Link
+          href={LIST}
+          className="hover:text-foreground hover:underline"
+        >
+          Inventory
+        </Link>
+        <ChevronRightIcon
+          aria-hidden="true"
+          className="h-3 w-3"
+        />
+        <span
+          aria-current="page"
+          className="min-w-0 truncate font-medium text-foreground"
+        >
+          {session.name}
+        </span>
+      </nav>
+      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
+        <div className="min-w-0 space-y-2">
+          <h1 className="flex flex-wrap items-center gap-3 text-xl font-extrabold tracking-tight text-foreground">
             {session.name}
             <Badge
               variant="pill"
@@ -75,23 +88,58 @@ export default async function SessionDetailLayout({ children, params }: {
             >
               {session.status}
             </Badge>
-          </span>
-        }
-        subtitle={session.scopeLabel || undefined}
-        actions={<SessionHeaderActions session={session} />}
+          </h1>
+          {subtitle.length > 0 && <p className="text-sm text-muted-foreground">{subtitle.join("  |  ")}</p>}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <dl className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+            <div className="space-y-1">
+              <dt className="text-muted-foreground">Owner</dt>
+              <dd className="flex items-center gap-2">
+                {session.owner ? (
+                  <>
+                    <Avatar name={session.owner.name} />
+                    <span className="min-w-0">
+                      <span className="block max-w-40 truncate font-semibold">{session.owner.name}</span>
+                      <span className="text-xs text-muted-foreground">Asset Admin</span>
+                    </span>
+                  </>
+                ) : (
+                  "—"
+                )}
+              </dd>
+            </div>
+            <div className="space-y-1 border-l border-border pl-6">
+              <dt className="text-muted-foreground">Start Date</dt>
+              <dd className="flex items-center gap-2">
+                <CalendarIcon
+                  aria-hidden="true"
+                  className="h-4 w-4 text-muted-foreground"
+                />
+                {start}
+              </dd>
+            </div>
+            <div className="space-y-1 border-l border-border pl-6">
+              <dt className="text-muted-foreground">Due Date</dt>
+              <dd>
+                <span className="flex items-center gap-2">
+                  <CalendarIcon
+                    aria-hidden="true"
+                    className="h-4 w-4 text-muted-foreground"
+                  />
+                  {due}
+                </span>
+                {hint && <span className="block text-xs text-t1-red-700">{hint.text}</span>}
+              </dd>
+            </div>
+          </dl>
+          <SessionHeaderActions session={session} />
+        </div>
+      </div>
+      <SessionTabs
+        sessionId={session.id}
+        discrepancies={sessionProgress(session.counts).discrepancies}
       />
-      <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-        {meta.map(([label, value]) => (
-          <div
-            key={label}
-            className="flex gap-1.5"
-          >
-            <dt className="text-muted-foreground">{label}:</dt>
-            <dd className="font-medium">{value}</dd>
-          </div>
-        ))}
-      </dl>
-      <SessionTabs sessionId={session.id} />
       {children}
     </div>
   );

@@ -41,6 +41,24 @@ export function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
+export function Avatar({ name }: { name: string }) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+  return (
+    <span
+      aria-hidden="true"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-primary"
+    >
+      {initials || "?"}
+    </span>
+  );
+}
+
 export function Breakdown({ title, rows }: { title: string; rows: { id: string; name: string; count: number }[] }) {
   if (rows.length === 0) return null;
   return (
