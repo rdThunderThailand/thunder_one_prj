@@ -38,11 +38,11 @@ const ADMIN_SECTIONS: NavSection[] = [
 
 const MANAGER_ITEMS: ReadonlySet<string> = new Set(["Assets", "Assignments", "Inventory", "Reports"]);
 
-// Employee links under the pinned My Assets (persona map §3). No href until each batch ships, so they render inert.
+// Employee links under the pinned My Assets (persona map §3).
 const EMPLOYEE_LINKS: NavItem[] = [
   { label: "My Tasks", href: "/asset-workspace/my-tasks" },
   { label: "Scan Asset", href: "/asset-workspace/scan-asset" },
-  { label: "Home" },
+  { label: "Home", href: "/asset-workspace/home" },
 ];
 
 export function standaloneLinksForRole(role: AssetWorkspaceRole): NavItem[] {
