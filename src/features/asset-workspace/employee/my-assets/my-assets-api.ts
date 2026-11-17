@@ -71,3 +71,10 @@ export async function getMyAsset(assetId: string): Promise<MyAsset | "not-found"
   const parsed = myAssetSchema.safeParse(body);
   return parsed.success ? parsed.data : null;
 }
+
+/** The asset's list thumbnail: the `/me` detail allow-list carries no photo, the list row does.
+ *  shortcut: one extra list read by Asset Tag; add the photo to the detail allow-list if Core ever changes it. */
+export async function getMyAssetPhoto(asset: Pick<MyAsset, "id" | "assetTag">): Promise<string | null> {
+  const page = await readList({ page: 1, pageSize: 10, sort: "created_at", q: asset.assetTag });
+  return page?.rows.find((row) => row.id === asset.id)?.thumbnail_url ?? null;
+}

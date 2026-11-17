@@ -170,7 +170,7 @@ export function MyTaskView({ task, assets, findings }: {
                   key={f.id}
                   className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm"
                 >
-                  <span className="min-w-0 flex-1 wrap-anywhere">
+                  <span className="min-w-40 flex-1 wrap-anywhere">
                     {f.asset ? `${f.asset.name} (${f.asset.assetTag})` : f.unexpectedIdentifier ?? "—"}
                   </span>
                   <span className="text-muted-foreground">{FINDING_LABEL[f.type]}</span>

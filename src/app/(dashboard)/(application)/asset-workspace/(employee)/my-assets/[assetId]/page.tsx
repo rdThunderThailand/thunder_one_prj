@@ -1,5 +1,5 @@
 import { MyAssetView } from "@/features/asset-workspace/employee/my-assets/MyAssetView";
-import { getMyAsset } from "@/features/asset-workspace/employee/my-assets/my-assets-api";
+import { getMyAsset, getMyAssetPhoto } from "@/features/asset-workspace/employee/my-assets/my-assets-api";
 import { ErrorState } from "@/features/asset-workspace/components/states/ErrorState";
 import { NotFoundState } from "@/features/asset-workspace/components/states/states";
 
@@ -37,6 +37,7 @@ export default async function MyAssetPage({
   return (
     <MyAssetView
       asset={asset}
+      photo={await getMyAssetPhoto(asset)}
       backHref={backHref}
     />
   );

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { choicesFrom, myAssetsQuery } from "./my-assets-query.ts";
+import { choicesFrom, myAssetsQuery, warrantyLeft } from "./my-assets-query.ts";
 
 const id = "11111111-1111-4111-8111-111111111111";
 
@@ -31,3 +31,15 @@ assert.deepEqual(choices.categories, [{ value: "a", label: "Desk" }, { value: "b
 assert.deepEqual(choices.locations, [{ value: "x", label: "Unnamed" }]);
 
 console.log("my-assets-query: ok");
+
+// Warranty time left (asset view).
+{
+  assert.equal(warrantyLeft(null, null, "2026-11-16"), null);
+  assert.deepEqual(warrantyLeft("2026-01-01", "2026-11-26", "2026-11-16")?.text, "10 days left");
+  assert.equal(warrantyLeft(null, "2026-11-17", "2026-11-16")?.text, "1 day left");
+  assert.equal(warrantyLeft(null, "2026-11-16", "2026-11-16")?.text, "Ends today");
+  assert.equal(warrantyLeft(null, "2026-11-10", "2026-11-16")?.text, "Ended 6 days ago");
+  assert.equal(warrantyLeft("2026-11-01", "2026-11-21", "2026-11-11")?.usedPct, 50);
+  assert.equal(warrantyLeft("2026-11-01", "2026-11-21", "2026-12-30")?.usedPct, 100);
+  assert.equal(warrantyLeft(null, "2026-11-21", "2026-11-11")?.usedPct, null);
+}

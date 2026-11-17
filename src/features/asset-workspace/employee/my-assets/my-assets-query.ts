@@ -42,3 +42,19 @@ export function choicesFrom(rows: { asset_category_id: string | null; category_n
     locations: unique(rows.map((row) => [row.location_id, row.location_name])),
   };
 }
+
+const DAY = 86_400_000;
+const day = (value: string | null) => (value && /^\d{4}-\d{2}-\d{2}/.test(value) ? Date.parse(`${value.slice(0, 10)}T00:00:00Z`) : NaN);
+
+/** Warranty time left on the asset view: days until `endDate` (calendar dates, `today` = YYYY-MM-DD in Bangkok) and
+ *  how much of the period has passed. `null` = no end date. */
+export function warrantyLeft(startDate: string | null, endDate: string | null, today: string) {
+  const end = day(endDate);
+  const now = day(today);
+  if (Number.isNaN(end) || Number.isNaN(now)) return null;
+  const left = Math.round((end - now) / DAY);
+  const start = day(startDate);
+  const usedPct = Number.isNaN(start) || end <= start ? null : Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+  const text = left > 1 ? `${left} days left` : left === 1 ? "1 day left" : left === 0 ? "Ends today" : left === -1 ? "Ended 1 day ago" : `Ended ${-left} days ago`;
+  return { left, text, usedPct };
+}
