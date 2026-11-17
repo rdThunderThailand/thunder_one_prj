@@ -10,7 +10,7 @@ export type DeviceStatus =
 export const ROLLOUT_STATUSES = ["updated", "updating", "failed", "timed_out", "unsupported", "waiting"] as const;
 
 export const STATUS_LABEL: Record<DeviceStatus, string> = {
-  test_group: "In test group",
+  test_group: "In update group",
   updated: "Updated",
   failed: "Failed",
   timed_out: "Timed out",

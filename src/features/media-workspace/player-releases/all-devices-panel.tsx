@@ -2,6 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/lovable/alert-dialog";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
@@ -12,8 +22,12 @@ import { countVersions, formatTime, isWindows, osOf, pilotBlocker, resolveVersio
 const SELECT = "h-9 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const HEALTH = { online: "success", warning: "warning", offline: "neutral" } as const;
 
-/** ADR 0028 §11 items 3 and 4: every Media Device, its version, and a way to add devices to the test group. */
-export function AllDevicesPanel({ devices }: { devices: Awaited<ReturnType<typeof listAllDevices>> }) {
+/** ADR 0028 §11 items 3 and 4: every Media Device, its version, and a way to add devices to the update group. */
+export function AllDevicesPanel({ devices, offerLabel }: {
+  devices: Awaited<ReturnType<typeof listAllDevices>>;
+  /** The version the update group is offered right now, or null when none is set. */
+  offerLabel: string | null;
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [tenant, setTenant] = useState("");
@@ -23,6 +37,7 @@ export function AllDevicesPanel({ devices }: { devices: Awaited<ReturnType<typeo
   const [isBusy, setIsBusy] = useState(false);
   const [failures, setFailures] = useState<string[]>([]);
   const [added, setAdded] = useState(0);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const all = useMemo(() => ("data" in devices ? devices.data : []), [devices]);
   const counts = useMemo(() => countVersions(all), [all]);
@@ -50,6 +65,20 @@ export function AllDevicesPanel({ devices }: { devices: Awaited<ReturnType<typeo
     const next = new Set(current);
     if (isOn) next.add(id);
     else next.delete(id);
+    return next;
+  });
+
+  // ADR 0028 amendment 5 item 7: Select all covers the rows the filters show and skips rows that cannot be added.
+  const selectable = shown.filter((device) => pilotBlocker(device) === null);
+  const isAllPicked = selectable.length > 0 && selectable.every((device) => picked.has(device.id));
+  const pickedDevices = all.filter((device) => picked.has(device.id));
+  const pickedTenants = [...new Set(pickedDevices.map((device) => device.tenant_name ?? "Unnamed tenant"))].sort();
+  const toggleAll = (isOn: boolean) => setPicked((current) => {
+    const next = new Set(current);
+    for (const device of selectable) {
+      if (isOn) next.add(device.id);
+      else next.delete(device.id);
+    }
     return next;
   });
 
@@ -99,12 +128,12 @@ export function AllDevicesPanel({ devices }: { devices: Awaited<ReturnType<typeo
           Windows only
         </label>
         <span className="ml-auto text-sm text-muted-foreground">{shown.length} of {all.length} devices</span>
-        <Button disabled={isBusy || picked.size === 0} onClick={() => void addPicked()}>
-          {isBusy ? "Adding…" : `Add ${picked.size || ""} to test group`}
+        <Button disabled={isBusy || picked.size === 0} onClick={() => setIsConfirming(true)}>
+          {isBusy ? "Adding…" : `Add ${picked.size || ""} to update group`}
         </Button>
       </section>
 
-      {added > 0 && failures.length === 0 && <p role="status" className="text-sm text-success">Added {added} {added === 1 ? "device" : "devices"} to the test group.</p>}
+      {added > 0 && failures.length === 0 && <p role="status" className="text-sm text-success">Added {added} {added === 1 ? "device" : "devices"} to the update group.</p>}
       {failures.length > 0 && (
         <div role="alert" className="grid gap-1 text-sm text-error">
           <p>{added} added, {failures.length} failed:</p>
@@ -116,14 +145,21 @@ export function AllDevicesPanel({ devices }: { devices: Awaited<ReturnType<typeo
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border text-xs text-muted-foreground">
             <tr>
-              <th className="w-10 p-3"><span className="sr-only">Select</span></th>
+              <th className="w-10 p-3">
+                <Checkbox
+                  aria-label="Select all shown devices"
+                  checked={isAllPicked}
+                  disabled={isBusy || selectable.length === 0}
+                  onCheckedChange={(next) => toggleAll(next === true)}
+                />
+              </th>
               <th className="p-3">Device</th>
               <th className="p-3">Tenant</th>
               <th className="p-3">Active channel</th>
               <th className="p-3">OS</th>
               <th className="p-3">Version</th>
               <th className="p-3">Status</th>
-              <th className="p-3">Test group</th>
+              <th className="p-3">Update group</th>
             </tr>
           </thead>
           <tbody>
@@ -134,6 +170,32 @@ export function AllDevicesPanel({ devices }: { devices: Awaited<ReturnType<typeo
           </tbody>
         </table>
       </div>
+
+      <AlertDialog open={isConfirming} onOpenChange={(next) => { if (!isBusy && !next) setIsConfirming(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add {picked.size} {picked.size === 1 ? "device" : "devices"} to the update group?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`Tenants: ${pickedTenants.join(", ")}. `}
+              {offerLabel
+                ? `These devices will be offered ${offerLabel} and install it at their next update check.`
+                : "No version is set for the update group, so they will not be offered anything yet."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBusy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isBusy}
+              onClick={(event) => {
+                event.preventDefault();
+                void addPicked().then(() => setIsConfirming(false));
+              }}
+            >
+              {isBusy ? "Adding…" : "Add devices"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -169,7 +231,7 @@ function DeviceRow({ device, isPicked, isDisabled, onToggle }: {
         <span className="block text-xs text-muted-foreground">{formatTime(device.last_heartbeat_at)}</span>
       </td>
       <td className="p-3">
-        {device.ring ? <Badge variant="info">In test group</Badge> : blocker ? <span className="text-xs text-muted-foreground">{blocker}</span> : "—"}
+        {device.ring ? <Badge variant="info">In update group</Badge> : blocker ? <span className="text-xs text-muted-foreground">{blocker}</span> : "—"}
       </td>
     </tr>
   );

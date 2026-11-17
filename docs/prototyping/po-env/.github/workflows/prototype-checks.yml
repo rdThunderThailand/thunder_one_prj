@@ -1,0 +1,26 @@
+name: prototype-checks
+
+on:
+  pull_request:
+
+jobs:
+  prototype-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Guard (tokens, primitives, synced files, copy names)
+        run: node scripts/prototype-guard.mjs
+        env:
+          BASE: origin/${{ github.base_ref }}
+      - name: Guard self-test
+        run: node scripts/prototype-guard.check.mts
+      - name: Design-system copies match the skill
+        run: node src/design-system/design-system.check.mts
+      - run: npm run build

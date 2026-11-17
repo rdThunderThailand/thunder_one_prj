@@ -59,7 +59,7 @@ export function ReleasePanel({ releases, target }: {
           ))}
         </fieldset>
       </div>
-      {"error" in target && <p role="alert" className="text-sm text-error">Could not load the test group version: {target.error}</p>}
+      {"error" in target && <p role="alert" className="text-sm text-error">Could not load the update group version: {target.error}</p>}
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border text-xs text-muted-foreground">
