@@ -4,7 +4,7 @@
 // `v2/asset-workspace/assets`, and these need the same server-side token as the page read.
 // Core checks the role (Asset Admin = manager and above) and every rule; its messages are shown for VALIDATION only.
 import { env } from "@/config/env";
-import type { AssetSettings, SettingsChange } from "../domain/asset-settings";
+import type { AssetSettings, LabelIdentifier, SettingsChange } from "../domain/asset-settings";
 import { getAssetSettings, settingsPath, settingsSchema } from "./asset-settings-api";
 import { reportAuth } from "./asset-reports-api";
 
@@ -55,4 +55,10 @@ export async function saveSettingsAction(expectedUpdatedAt: string | null, chang
 export async function reloadSettingsAction(): Promise<{ ok: true; data: AssetSettings } | { ok: false }> {
   const read = await getAssetSettings();
   return read.ok ? { ok: true, data: read.data } : { ok: false };
+}
+
+/** The saved default identifier for the label dialog (05 §4.12.2). `null` for a non-admin (403) or any failure: the dialog keeps its own default. */
+export async function labelDefaultAction(): Promise<LabelIdentifier | null> {
+  const read = await getAssetSettings();
+  return read.ok ? read.data.labels.identifier : null;
 }

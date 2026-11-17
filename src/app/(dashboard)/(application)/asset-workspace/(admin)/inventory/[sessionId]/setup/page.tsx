@@ -9,6 +9,7 @@ import {
   getInventorySession,
   getScopeOptions,
 } from "@/features/asset-workspace/services/asset-inventory-api";
+import { getInventoryDefaults } from "@/features/asset-workspace/services/asset-settings-api";
 
 // Start Inventory wizard for a Draft (`?step=1|2|3`, `&location=` prefill). Any other status has left the wizard: open
 // its detail. Step 3 also reads the assignments and the expected-asset counts Start would freeze.
@@ -17,7 +18,12 @@ export default async function InventorySetupPage({ params, searchParams }: {
   searchParams: Promise<{ step?: string | string[]; location?: string | string[] }>;
 }) {
   const [{ sessionId }, sp] = await Promise.all([params, searchParams]);
-  const [session, owners, options] = await Promise.all([getInventorySession(sessionId), getInventoryOwners(), getScopeOptions()]);
+  const [session, owners, options, defaults] = await Promise.all([
+    getInventorySession(sessionId),
+    getInventoryOwners(),
+    getScopeOptions(),
+    getInventoryDefaults(),
+  ]);
   if (session === "not-found") notFound();
   if (!session) return <ErrorState />;
   if (session.status !== "Draft") redirect(detailHref(session.id));
@@ -37,6 +43,7 @@ export default async function InventorySetupPage({ params, searchParams }: {
       owners={owners}
       options={options}
       today={bangkokToday()}
+      defaults={defaults}
       review={review}
       prefillLocation={typeof sp.location === "string" ? sp.location : undefined}
     />

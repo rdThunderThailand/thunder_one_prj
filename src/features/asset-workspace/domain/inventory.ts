@@ -117,6 +117,13 @@ export function dueHint(dueDate: string | null, today: string): { text: string; 
 /** Today in Asia/Bangkok as `YYYY-MM-DD` (Core counts Due Soon the same way). */
 export const bangkokToday = (now = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(now);
 
+/** `date` (YYYY-MM-DD) plus whole days, as YYYY-MM-DD. UTC arithmetic, so no daylight-saving drift. */
+export function addDays(date: string, days: number) {
+  const next = new Date(`${date}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next.toISOString().slice(0, 10);
+}
+
 // ── Session list ──
 
 const BASE = "/asset-workspace/inventory";

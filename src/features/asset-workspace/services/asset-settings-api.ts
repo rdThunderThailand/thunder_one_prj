@@ -44,3 +44,9 @@ export async function getSettingsCategoryOptions(): Promise<{ value: string; lab
   const filters = await getAssetFilters(auth.token, auth.tenantId);
   return filters ? filters.categories.map((c) => ({ value: c.id, label: c.name ?? "Unnamed category" })) : null;
 }
+
+/** What a new Inventory Draft starts with (05 §4.12.3). `null` = not an Asset Admin or the read failed: the wizard then starts empty. */
+export async function getInventoryDefaults(): Promise<AssetSettings["inventoryDefaults"] | null> {
+  const read = await getAssetSettings();
+  return read.ok ? read.data.inventoryDefaults : null;
+}

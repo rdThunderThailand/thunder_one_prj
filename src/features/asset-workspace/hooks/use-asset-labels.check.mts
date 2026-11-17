@@ -34,6 +34,7 @@ vm.runInNewContext(compiled, { exports, AbortController, require: (name: string)
     useLayoutEffect(effect: () => void) { if (!mounted) { mounted = true; effect(); } },
   };
   if (name === "sonner") return { toast: { info() {} } };
+  if (name === "../services/asset-settings-actions") return { labelDefaultAction: async () => null };
   if (name === "../domain/asset-labels") return {
     assertLabelFormat() {}, DEFAULT_LABEL_FORMAT: "both", DEFAULT_LABEL_FIELDS: { assetTag: true, name: true, serialNumber: false },
     labelFailure: (error: unknown) => error, labelScope: (scope: unknown) => scope,

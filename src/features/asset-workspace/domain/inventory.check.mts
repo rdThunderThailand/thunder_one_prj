@@ -1,6 +1,7 @@
 /** Run: node src/features/asset-workspace/domain/inventory.check.mts */
 import assert from "node:assert/strict";
 import {
+  addDays,
   detailHref,
   dueHint,
   EMPTY_SCOPE,
@@ -123,3 +124,10 @@ assert.equal(activityText({ action: "update", details: { before: { name: "A", du
 assert.equal(activityText({ action: "start", details: { expected: 1, assignees: 4 } }).details, "1 asset · 4 assignees");
 assert.equal(activityText({ action: "verify", details: null }).details, "—");
 assert.equal(activityText({ action: "update", details: { before: { scope_json: 1 }, after: { scope_json: 2 } } }).details, "Changed: scope");
+
+// Settings default due date: today + N days, across month and year ends and a leap day.
+assert.equal(addDays("2026-11-17", 14), "2026-12-01");
+assert.equal(addDays("2026-12-25", 14), "2027-01-08");
+assert.equal(addDays("2028-02-20", 10), "2028-03-01");
+assert.equal(addDays("2026-11-17", 365), "2027-11-17");
+assert.equal(addDays("2026-11-17", 1), "2026-11-18");

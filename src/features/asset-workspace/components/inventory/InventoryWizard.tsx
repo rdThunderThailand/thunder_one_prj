@@ -49,6 +49,7 @@ import {
   type ScopeMode,
   type SessionDetail,
   type SetupDraft,
+  addDays,
 } from "../../domain/inventory";
 import {
   createSessionAction,
@@ -80,9 +81,11 @@ export interface WizardProps {
   review?: ReviewData;
   /** `?location=` from a Location's Start Inventory: added to an empty scope in step 2. */
   prefillLocation?: string;
+  /** Settings › Inventory Defaults (05 §4.12.3): what a new Draft starts with. `null` = none (not an Asset Admin, or the read failed). */
+  defaults?: { dueDays: number; categoryIds: string[] } | null;
 }
 
-export function InventoryWizard({ session, step, owners, options, today, review, prefillLocation }: WizardProps) {
+export function InventoryWizard({ session, step, owners, options, today, review, prefillLocation, defaults }: WizardProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
   return (
     <div className="mx-auto w-full max-w-7xl space-y-4">
@@ -123,6 +126,7 @@ export function InventoryWizard({ session, step, owners, options, today, review,
           owners={owners}
           today={today}
           prefillLocation={prefillLocation}
+          defaultDueDays={defaults?.dueDays}
           onCancel={() => setCancelOpen(true)}
         />
       )}
@@ -131,6 +135,7 @@ export function InventoryWizard({ session, step, owners, options, today, review,
           session={session}
           options={options}
           prefillLocation={prefillLocation}
+          defaultCategoryIds={defaults?.categoryIds}
           onCancel={() => setCancelOpen(true)}
         />
       )}
@@ -157,18 +162,20 @@ const setupHref = (id: string, step: number) => `${LIST}/${id}/setup?step=${step
 
 // ── Step 1 ──
 
-function SetupStep({ session, owners, today, prefillLocation, onCancel }: {
+function SetupStep({ session, owners, today, prefillLocation, defaultDueDays, onCancel }: {
   session: SessionDetail | null;
   owners: Person[] | null;
   today: string;
   prefillLocation?: string;
+  /** Only a brand-new Draft starts from it; an existing Draft keeps its own date. */
+  defaultDueDays?: number;
   onCancel: () => void;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<SetupDraft>({
     name: session?.name ?? "",
     description: session?.description ?? "",
-    dueDate: session?.dueDate ?? "",
+    dueDate: session?.dueDate ?? (defaultDueDays ? addDays(today, defaultDueDays) : ""),
     ownerUserId: session?.owner?.id ?? "",
   });
   const [fields, setFields] = useState<Partial<Record<keyof SetupDraft, string>>>({});
@@ -390,10 +397,12 @@ function choices(list: { id: string; name: string | null }[], saved: { id: strin
   return [...seen].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function ScopeStep({ session, options, prefillLocation, onCancel }: {
+function ScopeStep({ session, options, prefillLocation, defaultCategoryIds, onCancel }: {
   session: SessionDetail;
   options: AssetFilterOptions | null;
   prefillLocation?: string;
+  /** Settings default; only an empty scope takes it, and only categories the picker offers. */
+  defaultCategoryIds?: string[];
   onCancel: () => void;
 }) {
   const router = useRouter();
@@ -402,7 +411,9 @@ function ScopeStep({ session, options, prefillLocation, onCancel }: {
     const saved = toPicks(toScopeInput(session.scope));
     // A Location's Start Inventory: only an empty scope takes the prefill, so a saved choice is never overwritten.
     const empty = saved.locationIds.length === 0 && saved.assetIds.length === 0;
-    return prefillLocation && empty ? { ...saved, locationIds: [prefillLocation] } : saved;
+    const offered = new Set((options?.categories ?? []).map((c) => c.id));
+    const categoryIds = empty && saved.categoryIds.length === 0 ? (defaultCategoryIds ?? []).filter((id) => offered.has(id)) : saved.categoryIds;
+    return { ...saved, categoryIds, ...(prefillLocation && empty ? { locationIds: [prefillLocation] } : {}) };
   });
   // The preview answers one scope; it shows only while that scope is still on screen.
   const [result, setResult] = useState<{ key: string; preview?: ScopePreview; error?: string } | null>(null);
