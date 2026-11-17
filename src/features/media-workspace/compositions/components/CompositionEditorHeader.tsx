@@ -52,6 +52,7 @@ export function CompositionEditorHeader({
   aspectRatio,
   zoneCount,
   hasLayout,
+  hasZoneOverlap,
   isComplete,
   unboundZoneNames,
   onBack,
@@ -84,6 +85,8 @@ export function CompositionEditorHeader({
   aspectRatio: string;
   zoneCount: number;
   hasLayout: boolean;
+  /** Core refuses overlapping Zones (ADR 0044 §3), so the save is blocked here instead of failing there. */
+  hasZoneOverlap: boolean;
   isComplete: boolean;
   unboundZoneNames: string[];
   onBack: () => void;
@@ -117,7 +120,8 @@ export function CompositionEditorHeader({
   // The buttons own the reasons they are off, so the page does not have to restate them.
   const saveDisabledReason = !name.trim()
     ? "กรุณากรอกชื่อ Layout"
-    : !hasLayout ? "กรุณาเลือก Template หรือ Start blank" : null;
+    : !hasLayout ? "กรุณาเลือก Template หรือ Start blank"
+      : hasZoneOverlap ? "แก้ Zone ที่ซ้อนทับกันก่อนบันทึก" : null;
   // ADR 0049 §10 via ADR 0063 §8: the menu item states *how many* Zones are still unbound,
   // which the frames' single button had no room to say.
   const activateDisabledReason = saveDisabledReason

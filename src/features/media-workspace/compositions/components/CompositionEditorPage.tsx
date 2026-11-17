@@ -30,6 +30,7 @@ import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
 import { CompositionEditorSkeleton } from "./CompositionEditorSkeleton";
 import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
+import { validateZones } from "@/features/media-workspace/layouts/geometry";
 import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
 import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
 import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
@@ -255,6 +256,7 @@ export function CompositionEditorPage({
         referenceResolution={settings.referenceResolution} aspectRatio={settings.aspectRatio}
         zoneCount={layout?.zones.length ?? 0}
         hasLayout={!!layout}
+        hasZoneOverlap={validateZones(layout?.zones ?? []).some((error) => error.kind === "overlap")}
         isComplete={view.complete}
         unboundZoneNames={view.unboundZoneNames}
         onBack={() => (isDirty ? setConfirmLeave(true) : router.push(LIST_PATH))}
