@@ -6,10 +6,11 @@ import type { AssignTarget } from "../../domain/assignment-assign";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { referenceLabel, type ReferenceItem } from "../../services/registration-selector-contract";
 import { RegistrationReferenceSelect } from "../register-asset/RegistrationReferenceSelect";
+import { RegistrationTreeField } from "../register-asset/RegistrationTreeField";
 
 const tabs = [
-  { value: "person", label: "Person", icon: UserIcon, kind: "persons", picker: "Person" },
-  { value: "org_unit", label: "Team", icon: UsersIcon, kind: "orgUnits", picker: "Team" },
+  { value: "person", label: "Person", icon: UserIcon },
+  { value: "org_unit", label: "Organizational unit", icon: UsersIcon },
 ] as const;
 
 function toTarget(type: AssignTarget["type"], item: ReferenceItem): AssignTarget {
@@ -21,7 +22,6 @@ function labelFor(target: AssignTarget) {
     target.type === "person" ? "persons" : "orgUnits");
 }
 
-/** Person / Team tabs for FE 02–03, each one shared `RegistrationReferenceSelect`, unchanged. */
 export function CustodianTabs({ context, rules, prefix, tab, onTab, target, onTarget, error }: {
   context: string; rules: RegistrationOptions["referenceSelectors"]; prefix: string; tab: AssignTarget["type"];
   onTab: (tab: AssignTarget["type"]) => void; target: AssignTarget | null; onTarget: (target: AssignTarget) => void; error?: string;
@@ -39,35 +39,33 @@ export function CustodianTabs({ context, rules, prefix, tab, onTab, target, onTa
           <TabsTrigger
             key={value}
             value={value}
-            className="min-h-10 flex-1 gap-2 rounded-none border-b-2 border-transparent px-3 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none"
+            className="min-h-10 min-w-0 flex-1 gap-2 whitespace-normal rounded-none border-b-2 border-transparent px-3 py-1 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none motion-reduce:transition-none"
           >
             <Icon
               aria-hidden="true"
-              className="size-4"
+              className="size-4 shrink-0"
             />
             {label}
           </TabsTrigger>
         ))}
       </TabsList>
-      {tabs.map(({ value, kind, picker }) => (
-        <TabsContent
-          key={value}
-          value={value}
-          className="pt-2"
-        >
-          <RegistrationReferenceSelect
-            name={`${prefix}-${value}`}
-            label={picker}
-            value={target?.type === value ? target.id : ""}
-            selectedLabel={target?.type === value ? labelFor(target) : ""}
-            kind={kind}
-            context={context}
-            rules={rules}
-            error={target?.type === value ? error : undefined}
-            onChange={(item) => onTarget(toTarget(value, item))}
-          />
-        </TabsContent>
-      ))}
+      {tabs.map(({ value, label }) => {
+        const selected = target?.type === value ? target : null;
+        const field = {
+          name: `${prefix}-${value}`, label, value: selected?.id ?? "", selectedLabel: selected ? labelFor(selected) : "",
+          context, rules, error: selected ? error : undefined,
+          onChange: (item: ReferenceItem) => onTarget(toTarget(value, item)),
+        };
+        return (
+          <TabsContent key={value} value={value} className="pt-2">
+            {value === "person" ? (
+              <RegistrationReferenceSelect {...field} kind="persons" />
+            ) : (
+              <RegistrationTreeField {...field} kind="orgUnits" />
+            )}
+          </TabsContent>
+        );
+      })}
     </Tabs>
   );
 }

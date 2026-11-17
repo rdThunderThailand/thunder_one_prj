@@ -44,7 +44,7 @@ export function AssignFlowView({ context, assetId, from }: { context: string; as
             <AssignFlowTitle
               origin={origin}
               title="Assign Asset"
-              subtitle="Assign this asset to a person or team."
+              subtitle="Assign this asset to a person or an organizational unit."
               steps={flow.steps}
               step={flow.step}
               mockNote
@@ -88,7 +88,7 @@ function content(context: string, flow: AssignFlow, fromAssignments: boolean): {
       asset={flow.asset}
       thumbnailUrl={flow.picked?.thumbnailUrl ?? flow.photo}
       from={{ holder: null, empty: "No current custodian", location }}
-      to={{ holder: flow.target, empty: "Choose a person or team" }}
+      to={{ holder: flow.target, empty: "Choose a person or organizational unit" }}
       outcomes={assignOutcomes(flow.target?.name ?? null, location)}
       recent={flow.recent.result ?? null}
       noAsset={!flow.assetId}

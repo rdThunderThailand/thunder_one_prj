@@ -16,6 +16,15 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
   const kind = draft.custodyType === "person" ? "persons" : "orgUnits";
   const status = registrationInitialStatus(draft, options);
   const conditionConflict = !registrationInitialConditions(draft, options).includes(draft.condition);
+  const custodyField = {
+    name: "custodyId",
+    value: draft.custodyId,
+    context,
+    rules: options.referenceSelectors,
+    selectedLabel: selectedReferenceLabel(draft, kind),
+    onChange: (item: ReferenceItem) => onSelectReference(kind, item),
+    error: errors.custodyId,
+  };
   return (
     <div className="@container/ownership min-w-0 space-y-3">
       <RegistrationSection title="Location" icon={LocationIcon} description="Select where this asset is located.">
@@ -43,23 +52,15 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
             items={[
               { value: "none", label: "Unassigned" },
               { value: "person", label: "Person" },
-              { value: "org_unit", label: "Organizational Unit" },
+              { value: "org_unit", label: "Organizational unit" },
             ]}
             onChange={(value) => patch({ custodyType: value as typeof draft.custodyType })}
           />
-          {draft.custodyType !== "none" && (
-            <RegistrationReferenceSelect
-              key={draft.custodyType}
-              name="custodyId"
-              label={draft.custodyType === "person" ? "Person" : "Organizational Unit"}
-              value={draft.custodyId}
-              kind={kind}
-              context={context}
-              rules={options.referenceSelectors}
-              selectedLabel={selectedReferenceLabel(draft, kind)}
-              onChange={(item) => onSelectReference(kind, item)}
-              error={errors.custodyId}
-            />
+          {draft.custodyType === "person" && (
+            <RegistrationReferenceSelect {...custodyField} label="Person" kind="persons" />
+          )}
+          {draft.custodyType === "org_unit" && (
+            <RegistrationTreeField {...custodyField} label="Organizational unit" kind="orgUnits" />
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 rounded-control bg-muted p-3 text-xs leading-relaxed">

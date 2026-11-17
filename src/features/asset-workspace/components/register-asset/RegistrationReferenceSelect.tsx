@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { ArrowLeftIcon, CheckIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { distinctOrganizationCode } from "../../domain/registration-reference-tree";
 import { useRegistrationSelector } from "../../hooks/use-registration-selector";
 import { referenceLabel, type ReferenceItem, type SelectorKind } from "../../services/registration-selector-contract";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
@@ -10,9 +11,9 @@ import { RegistrationField } from "./RegistrationFields";
 import { RegistrationSelectorStatus } from "./RegistrationSelectorStatus";
 import { cn } from "@/lib/utils";
 
-export function RegistrationReferenceSelect({ name, label, value, selectedLabel, kind, context, rules, onChange, error }: {
+export function RegistrationReferenceSelect({ name, label, value, selectedLabel, kind, context, rules, onChange, error, hint }: {
   name: string; label: string; value: string; selectedLabel: string; kind: SelectorKind; context: string;
-  rules: RegistrationOptions["referenceSelectors"]; onChange: (item: ReferenceItem) => void; error?: string;
+  rules: RegistrationOptions["referenceSelectors"]; onChange: (item: ReferenceItem) => void; error?: string; hint?: string;
 }) {
   const [open, setOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -27,7 +28,7 @@ export function RegistrationReferenceSelect({ name, label, value, selectedLabel,
   }
 
   return (
-    <RegistrationField name={name} label={label} required error={error}>
+    <RegistrationField name={name} label={label} required error={error} hint={hint}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -37,7 +38,7 @@ export function RegistrationReferenceSelect({ name, label, value, selectedLabel,
             aria-label={`${label} (required): ${selectedLabel || "Not selected"}`}
             aria-invalid={Boolean(error)}
             title={selectedLabel || undefined}
-            aria-describedby={error ? `registration-${name}-error` : undefined}
+            aria-describedby={[hint && `registration-${name}-hint`, error && `registration-${name}-error`].filter(Boolean).join(" ") || undefined}
           >
             <span className="min-w-0 flex-1 whitespace-normal break-words leading-relaxed">
               {selectedLabel || `Select ${label.toLowerCase()}`}
@@ -59,7 +60,7 @@ export function RegistrationReferenceSelect({ name, label, value, selectedLabel,
             ref={input}
             type="search"
             aria-label={`Search ${collection}`}
-            placeholder={`Search all ${collection}…`}
+            placeholder={kind === "orgUnits" ? "Search organizational units…" : `Search all ${collection}…`}
             autoComplete="off"
             className="shrink-0 max-sm:h-10"
             maxLength={rules.search.maxLength}
@@ -88,7 +89,7 @@ export function RegistrationReferenceSelect({ name, label, value, selectedLabel,
                   className="text-accent-foreground max-sm:h-10"
                   onClick={() => choose(parent)}
                 >
-                  Select this parent
+                  {kind === "orgUnits" ? "Choose this unit as a whole" : "Select this parent"}
                 </Button>
               </div>
             )}
@@ -104,7 +105,7 @@ export function RegistrationReferenceSelect({ name, label, value, selectedLabel,
                 />
               ))}
             </ul>
-            <RegistrationSelectorStatus selector={selector} people={kind === "persons"} />
+            <RegistrationSelectorStatus selector={selector} people={kind === "persons"} organizational={kind === "orgUnits"} />
           </div>
         </PopoverContent>
       </Popover>
@@ -119,6 +120,9 @@ function ReferenceChoice({ item, kind, selected, onChoose, onBrowse }: {
   onChoose: () => void;
   onBrowse?: () => void;
 }) {
+  const organizational = kind === "orgUnits";
+  const code = organizational ? distinctOrganizationCode(item.name, item.code) : item.code;
+  const name = item.name || item.code || "this reference";
   return (
     <li className={cn("flex min-w-0 items-stretch gap-2 rounded-control", selected && "bg-accent")}>
       <Button
@@ -126,25 +130,26 @@ function ReferenceChoice({ item, kind, selected, onChoose, onBrowse }: {
         className={cn(
           "h-auto min-h-10 min-w-0 flex-1 items-start justify-start whitespace-normal px-3 py-2 text-left text-xs leading-relaxed text-foreground",
           selected && "text-accent-foreground",
+          organizational && "text-sm leading-snug",
         )}
         aria-current={selected ? "true" : undefined}
         onClick={onChoose}
       >
         <span className="min-w-0 flex-1 break-words">
-          {referenceLabel(item, kind)}
-          {item.code && <span className="mt-1 block text-muted-foreground">{item.code}</span>}
+          {organizational ? <span className="font-semibold">{referenceLabel(item, kind)}</span> : referenceLabel(item, kind)}
+          {code && <span className={cn("block text-muted-foreground", organizational ? "text-xs" : "mt-1")}>{code}</span>}
         </span>
         {selected && <CheckIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-accent-foreground" />}
       </Button>
       {onBrowse && (
         <Button
-          variant="outline"
-          size="sm"
-          className="h-auto min-h-10 self-stretch"
-          aria-label={`Browse children of ${item.name || item.code || "this reference"}`}
+          variant={organizational ? "ghost" : "outline"}
+          size={organizational ? "icon" : "sm"}
+          className={cn("h-auto min-h-10 self-stretch", organizational && "min-w-10 shrink-0")}
+          aria-label={organizational ? `Show units inside ${name}` : `Browse children of ${name}`}
           onClick={onBrowse}
         >
-          Browse
+          {!organizational && "Browse"}
           <ChevronRightIcon aria-hidden="true" className="size-3 shrink-0" />
         </Button>
       )}
