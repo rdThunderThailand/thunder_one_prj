@@ -13,6 +13,7 @@ import {
   inactiveChannelMessage,
   isConflict,
   isDuplicateName,
+  layoutNotReadyMessage,
   trashedAssetNames,
   deletedFileNames,
 } from "./api-error.ts";
@@ -172,5 +173,13 @@ for (const [raw, kept] of inactiveCases) {
   assert.ok(!/active|Invalid input/.test(c.message), `${raw} leaked English: ${c.message}`);
 }
 assert.equal(inactiveChannelMessage("Invalid input: the targets have no screens"), null);
+
+// Layout refusals from media_publication_activate: named in Thai, zone names kept, never the generic bucket.
+assert.ok(layoutNotReadyMessage("Invalid input: composition is not active — activate it before publishing")?.includes("Activate Layout"));
+assert.ok(layoutNotReadyMessage("Invalid input: cannot activate an incomplete composition — zone(s) Main, Side are unbound")?.includes("Main, Side"));
+assert.equal(layoutNotReadyMessage("Invalid input: the targets have no screens"), null);
+const notActive = classifyApiError(new ApiError("Invalid input: composition is not active — activate it before publishing", 400), FALLBACK);
+assert.equal(notActive.kind, "rejected");
+assert.ok(!notActive.message.includes("ข้อมูลที่กรอกยังไม่ครบ"));
 
 console.log("api-error.check.mts — all assertions passed");

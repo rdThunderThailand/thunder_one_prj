@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ArrowLeftIcon } from "@/components/ui/icons";
@@ -22,6 +23,7 @@ import {
   duplicatePublication,
 } from "../services/publications-api";
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
+import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { useProgramEdit } from "../hooks/useProgramEdit";
 import { publicationDrift } from "../publication-drift";
 import { safeReturnTo } from "../return-to";
@@ -46,6 +48,8 @@ export function PublicationEditPage({ id }: { id: string }) {
   const exitHref = returnTo ?? PROGRAM_HREF;
   const edit = useProgramEdit(id);
   const { detail, state, displayStatus, isDirty, busy, failure } = edit;
+  const layoutId = state?.content.type === "composition" ? state.content.compositionId : null;
+  const layoutBlock = useLayoutPublishBlock(layoutId);
   const [pending, setPending] = useState<PendingAction>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -67,6 +71,8 @@ export function PublicationEditPage({ id }: { id: string }) {
   // ADR 0090: on air, only the schedule's end may move.
   const isOnAir = displayStatus === "live" || displayStatus === "publishing" || displayStatus === "failed";
   const canPublish = state.name.trim().length > 0 && !busy;
+  // Only a first publish activates the Layout; a published Program's edits do not.
+  const publishBlock = isDraft ? layoutBlock : null;
   const partError = (part: string) => (failure?.part === part ? failure.message : undefined);
   const pageError = failure?.isStale
     ? "This Program was changed elsewhere. Reload to see the latest version."
@@ -143,7 +149,8 @@ export function PublicationEditPage({ id }: { id: string }) {
           {isDraft && (
             <Button
               size="sm"
-              disabled={!canPublish}
+              disabled={!canPublish || publishBlock !== null}
+              title={publishBlock ?? undefined}
               onClick={() => setPublishOpen(true)}
             >
               Publish
@@ -175,6 +182,20 @@ export function PublicationEditPage({ id }: { id: string }) {
           className="rounded-lg bg-error-muted px-4 py-3 text-sm text-error"
         >
           {pageError ?? actionError}
+        </p>
+      )}
+      {publishBlock && layoutId && (
+        <p
+          role="status"
+          className="rounded-lg bg-warning-muted px-4 py-3 text-sm text-warning"
+        >
+          {publishBlock}{" "}
+          <Link
+            href={`/media-workspace/layouts/${layoutId}`}
+            className="underline"
+          >
+            เปิด Layout
+          </Link>
         </p>
       )}
       {failure?.isStale && (

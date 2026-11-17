@@ -92,7 +92,10 @@ export function useProgramEdit(id: string) {
       await action();
       return null;
     } catch (err) {
-      const next = parseUpdatePublishedError(err instanceof Error ? err.message : "Publish failed");
+      const parsed = parseUpdatePublishedError(err instanceof Error ? err.message : "Publish failed");
+      // A `[part]`-tagged or stale message is already worded for this page; the rest is Core's raw text.
+      const next =
+        parsed.part || parsed.isStale ? parsed : { ...parsed, message: classifyApiError(err, parsed.message).message };
       setFailure(next);
       return next;
     } finally {

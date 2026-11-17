@@ -140,6 +140,25 @@ function isNoScreensTarget(message: string): boolean {
 }
 
 /**
+ * `media_publication_activate` refuses a Layout that is not Active, one with unbound Zones, and a
+ * snapshot that resolves to nothing playable. The unbound-Zone names are the operator's own, so
+ * they are kept; the English around them is not. Null when it is none of these.
+ */
+export function layoutNotReadyMessage(message: string): string | null {
+  if (message.includes("composition is not active")) {
+    return "Layout ที่เลือกยังไม่ Active กรุณา Activate Layout ก่อนเผยแพร่";
+  }
+  const unbound = /zone\(s\) (.+) are unbound/.exec(message);
+  if (unbound) {
+    return `Layout ยังไม่ได้ผูก Content ให้ Zone: ${unbound[1].trim()} กรุณาผูก Content แล้ว Activate Layout ก่อนเผยแพร่`;
+  }
+  if (message.includes("produced zero resolvable snapshot items")) {
+    return "ไม่มีเนื้อหาที่เล่นได้ใน Program นี้ กรุณาตรวจสอบว่า Playlist หรือ Layout มีสื่อที่ใช้งานได้";
+  }
+  return null;
+}
+
+/**
  * ADR 0099 guards: a Program reaches only active Channels, a Group takes only active Channels, and
  * a Channel in a Group cannot be deactivated. The raw text ends with the operator's own Channel or
  * Group names, which are safe to show; the English around them is not. Null when it is none of these.
@@ -219,6 +238,11 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
       kind: "rejected",
       message: "ช่องทางหรือกลุ่มที่เลือกยังไม่มีจอ กรุณาเพิ่มจอก่อนเผยแพร่",
     };
+  }
+
+  const layoutNotReady = layoutNotReadyMessage(message);
+  if (layoutNotReady) {
+    return { kind: "rejected", message: layoutNotReady };
   }
 
   // Everything the API rejects on shape — zod schema failures and the remaining

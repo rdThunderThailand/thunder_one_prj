@@ -1,6 +1,6 @@
 /** Run: node src/features/media-workspace/compositions/status-display.check.mts */
 import assert from "node:assert/strict";
-import { describeActivateError, describeSaveError, saveAction, statusBadge } from "./status-display.ts";
+import { describeActivateError, describeSaveError, layoutPublishBlock, saveAction, statusBadge } from "./status-display.ts";
 
 assert.deepEqual(statusBadge("draft"), { color: "yellow", label: "Draft" });
 assert.deepEqual(statusBadge("active"), { color: "green", label: "Active" });
@@ -54,5 +54,9 @@ assert.equal(
   describeActivateError('Already exists: a composition named "Menu" exists'),
   "บันทึกไม่ได้ — มี Composition ชื่อนี้อยู่แล้ว",
 );
+
+assert.equal(layoutPublishBlock("active"), null);
+assert.ok(layoutPublishBlock("draft")?.includes("Activate"));
+assert.ok(layoutPublishBlock("inactive")?.includes("ปิดใช้งาน")); // Core refuses Inactive too, not only Draft
 
 console.log("status-display.check.mts — all assertions passed");
