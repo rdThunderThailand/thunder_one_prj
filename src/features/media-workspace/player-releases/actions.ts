@@ -175,7 +175,7 @@ export async function pausePilotTarget(isPaused: boolean) {
   return coreRequest<{ policy_revision: number }>(PILOT_TARGET, { method: "PUT", body: { paused: isPaused }, showReason: true });
 }
 
-// Rollout page (ADR 0029): the production ring, every device not in the test group.
+// Rollout page (ADR 0029): the production ring, every device not in the update group.
 
 export async function getRolloutStatus() {
   return coreRequest<RolloutStatus>("player-update/rollouts/production/windows-x64");

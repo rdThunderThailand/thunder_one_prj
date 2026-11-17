@@ -207,7 +207,7 @@ export function RolloutPanel({ status, releases, devices }: {
             <AlertDialogTitle>{pending?.id ? `Send ${pending.label} to every device?` : "Stop updating all devices?"}</AlertDialogTitle>
             <AlertDialogDescription>
               {pending?.id
-                ? `Devices outside the test group will download this version, up to ${cap} at a time. The rollout pauses by itself after ${failureLimit} failures.`
+                ? `Devices outside the update group will download this version, up to ${cap} at a time. The rollout pauses by itself after ${failureLimit} failures.`
                 : "Devices will no longer be offered a version. A version they have already installed stays."}
             </AlertDialogDescription>
           </AlertDialogHeader>
