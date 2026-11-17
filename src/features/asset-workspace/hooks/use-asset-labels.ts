@@ -59,14 +59,16 @@ export function useAssetLabels(context: string, viewKey: string) {
             ...previous, preparation: { ...previous.preparation, [step]: true },
           }));
         }),
-        // The Settings default; a non-admin (or a failed read) keeps the built-in one.
+        // The Settings defaults; a non-admin (or a failed read) keeps the built-in ones.
         labelDefaultAction().catch(() => null),
       ]);
       let format = DEFAULT_LABEL_FORMAT;
       if (saved) {
-        try { assertLabelFormat(labels, saved); format = saved; } catch { /* e.g. a tag the barcode cannot encode: keep the built-in default */ }
+        try { assertLabelFormat(labels, saved.identifier); format = saved.identifier; } catch { /* e.g. a tag the barcode cannot encode: keep the built-in default */ }
       }
-      if (isCurrent()) setState({ ...empty(key), scope, labels, format, phase: "preview", preparation: { tools: true, data: true } });
+      // Category, Location and the logo are saved too but the label PDF does not draw them yet.
+      const fields = saved ? { ...DEFAULT_LABEL_FIELDS, name: saved.fields.name, serialNumber: saved.fields.serial } : DEFAULT_LABEL_FIELDS;
+      if (isCurrent()) setState({ ...empty(key), scope, labels, format, fields, phase: "preview", preparation: { tools: true, data: true } });
     } catch (error) {
       if (isCurrent()) setState({ ...empty(key), scope, phase: "error", error: labelFailure(error, scope) });
       controller.abort();

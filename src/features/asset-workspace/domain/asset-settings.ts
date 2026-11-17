@@ -11,9 +11,21 @@ export const LABEL_IDENTIFIER_COPY: Record<LabelIdentifier, { title: string; bod
   both: { title: "QR Code + Barcode", body: "Recommended. Prints both on every label." },
 };
 
+/** Optional label fields (Figma "Show on Asset Tag"). The Asset Tag and the identifier are always on the label. */
+export const LABEL_FIELD_KEYS = ["name", "serial", "category", "location", "logo"] as const;
+export type LabelFieldKey = (typeof LABEL_FIELD_KEYS)[number];
+export type LabelFieldSettings = Record<LabelFieldKey, boolean>;
+export const LABEL_FIELD_NAMES: Record<LabelFieldKey, string> = {
+  name: "Asset Name",
+  serial: "Serial Number",
+  category: "Category",
+  location: "Location",
+  logo: "Organization Logo",
+};
+
 export interface AssetSettings {
   assetTag: { prefix: string; /** `null` once every number is issued. */ nextTag: string | null; mode: "both" };
-  labels: { identifier: LabelIdentifier };
+  labels: { identifier: LabelIdentifier; fields: LabelFieldSettings };
   inventoryDefaults: { dueDays: number; /** Empty = all categories. */ categoryIds: string[] };
   /** `null` until the first save; sent back as `expectedUpdatedAt`. */
   updatedAt: string | null;
@@ -23,7 +35,7 @@ export interface AssetSettings {
 /** One tab's changes. Sent with `expectedUpdatedAt`; Core saves the sections that are present. */
 export type SettingsChange =
   | { assetTag: { prefix: string } }
-  | { labels: { identifier: LabelIdentifier } }
+  | { labels: { identifier?: LabelIdentifier; fields?: Partial<LabelFieldSettings> } }
   | { inventoryDefaults: { dueDays: number; categoryIds: string[] } };
 
 export const PREFIX_PATTERN = /^[A-Z0-9]{2,8}$/;

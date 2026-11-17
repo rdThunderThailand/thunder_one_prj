@@ -7,7 +7,10 @@ import { getAssetFilters, reportAuth } from "./asset-reports-api";
 
 export const settingsSchema = z.object({
   assetTag: z.object({ prefix: z.string(), nextTag: z.string().nullable(), mode: z.literal("both") }),
-  labels: z.object({ identifier: z.enum(LABEL_IDENTIFIERS) }),
+  labels: z.object({
+    identifier: z.enum(LABEL_IDENTIFIERS),
+    fields: z.object({ name: z.boolean(), serial: z.boolean(), category: z.boolean(), location: z.boolean(), logo: z.boolean() }),
+  }),
   inventoryDefaults: z.object({ dueDays: z.number(), categoryIds: z.array(z.string()) }),
   updatedAt: z.string().nullable(),
   updatedBy: z.object({ id: z.string(), name: z.string().nullable() }).nullable(),
