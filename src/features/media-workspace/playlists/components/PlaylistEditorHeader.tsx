@@ -68,6 +68,13 @@ export function PlaylistEditorHeader({
     setEditing(false);
   };
 
+  // An empty name is "Untitled Playlist" on screen, so a disabled Save gave no hint; the save guard
+  // states the reason, and the name field opens so the fix is one keystroke away.
+  const saveOrAskName = () => {
+    if (name.trim() === "") setEditing(true);
+    onSave();
+  };
+
   return (
     <div className="min-h-[70px] shrink-0 space-y-1">
       <button
@@ -170,7 +177,7 @@ export function PlaylistEditorHeader({
         >
           Preview
         </Button>
-        <Button size="sm" onClick={onSave} disabled={saving || name.trim() === ""}>
+        <Button size="sm" onClick={saveOrAskName} disabled={saving}>
           {saving ? "กำลังบันทึก..." : "Save"}
         </Button>
         <PublishSplitButton
