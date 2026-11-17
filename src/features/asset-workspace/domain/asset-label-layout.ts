@@ -10,13 +10,15 @@ export const LABEL_LAYOUT = {
     barcode: { x: 2, y: 20, width: 46, height: 8 },
     text: { x: 20, y: 3, width: 28, height: 14 },
   },
+  // QR only: a 22 mm code leaves a 22 x 24 mm column for the text.
   qr: {
-    qr: { x: 2, y: 2, width: 26, height: 26 },
-    text: { x: 30, y: 8, width: 18, height: 14 },
+    qr: { x: 2, y: 4, width: 22, height: 22 },
+    text: { x: 26, y: 3, width: 22, height: 24 },
   },
+  // Barcode only: text on top, barcode at the bottom like the "both" label, 11 mm tall so the bars still scan.
   barcode: {
-    barcode: { x: 2, y: 2, width: 46, height: 12 },
-    text: { x: 2, y: 17, width: 46, height: 11 },
+    barcode: { x: 2, y: 17, width: 46, height: 11 },
+    text: { x: 2, y: 2, width: 46, height: 13 },
   },
 } as const;
 export const labelLayout = (format: LabelFormat) => LABEL_LAYOUT[format];

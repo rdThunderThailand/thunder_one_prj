@@ -46,85 +46,92 @@ export function LabelsTab({
       onReload={reload}
     >
       <InfoBanner>Saving only changes the default in the label dialog. It never prints a label.</InfoBanner>
-      <fieldset
-        disabled={pending}
-        className="min-w-0 space-y-2"
-      >
-        <legend className="text-xs font-medium text-foreground">Identifier on label</legend>
-        <div className="grid gap-2 md:grid-cols-3">
-          {LABEL_IDENTIFIERS.map((value) => (
-            <label
-              key={value}
-              className="flex min-h-16 cursor-pointer items-start gap-3 rounded-lg border border-border bg-card p-3 has-[:checked]:border-primary has-[:checked]:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="min-w-0 space-y-5">
+          <div className="grid min-w-0 gap-6 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <fieldset
+              disabled={pending}
+              className="min-w-0 space-y-2"
             >
-              <input
-                type="radio"
-                name="label-identifier"
-                value={value}
-                checked={identifier === value}
-                onChange={() => setIdentifier(value)}
-                className="mt-1 accent-primary"
-              />
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-foreground">{LABEL_IDENTIFIER_COPY[value].title}</span>
-                <span className="block text-xs text-muted-foreground">{LABEL_IDENTIFIER_COPY[value].body}</span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <div className="grid min-w-0 gap-4 md:grid-cols-2">
-        <fieldset
-          disabled={pending}
-          className="min-w-0 space-y-2"
-        >
-          <legend className="text-xs font-medium text-foreground">Show on label</legend>
-          <label className="flex min-h-8 items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked
-              disabled
-              className="accent-primary"
-            />
-            <span>
-              Asset Tag <span className="text-muted-foreground">(Required)</span>
-            </span>
-          </label>
-          {LABEL_FIELD_KEYS.map((key) => (
-            <label
-              key={key}
-              className="flex min-h-8 cursor-pointer items-center gap-2 text-sm text-foreground"
+              <legend className="text-xs font-medium text-foreground">Identifier on label</legend>
+              {LABEL_IDENTIFIERS.map((value) => (
+                <label
+                  key={value}
+                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 has-[:checked]:border-primary has-[:checked]:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+                >
+                  <input
+                    type="radio"
+                    name="label-identifier"
+                    value={value}
+                    checked={identifier === value}
+                    onChange={() => setIdentifier(value)}
+                    className="accent-primary"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-foreground">{LABEL_IDENTIFIER_COPY[value].title}</span>
+                    <span className="block text-xs text-muted-foreground">{LABEL_IDENTIFIER_COPY[value].body}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+            <fieldset
+              disabled={pending}
+              className="min-w-0 space-y-1"
             >
-              <input
-                type="checkbox"
-                checked={fields[key]}
-                onChange={(event) => setFields((current) => ({ ...current, [key]: event.target.checked }))}
-                className="accent-primary"
-              />
-              <span>{LABEL_FIELD_NAMES[key]}</span>
-            </label>
-          ))}
+              <legend className="mb-1 text-xs font-medium text-foreground">Show on label</legend>
+              <label className="flex min-h-8 items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked
+                  disabled
+                  className="accent-primary"
+                />
+                <span>
+                  Asset Tag <span className="text-muted-foreground">(Required)</span>
+                </span>
+              </label>
+              {LABEL_FIELD_KEYS.map((key) => (
+                <label
+                  key={key}
+                  className="flex min-h-8 cursor-pointer items-center gap-2 text-sm text-foreground"
+                >
+                  <input
+                    type="checkbox"
+                    checked={fields[key]}
+                    onChange={(event) => setFields((current) => ({ ...current, [key]: event.target.checked }))}
+                    className="accent-primary"
+                  />
+                  <span>{LABEL_FIELD_NAMES[key]}</span>
+                </label>
+              ))}
+            </fieldset>
+          </div>
           <p className="text-xs text-muted-foreground">
             Serial Number, Category and Location are saved as your default. The label PDF draws the Asset Tag, Asset Name and Serial Number
             today; Category, Location and the logo follow once label data includes them.
           </p>
-        </fieldset>
-        <LabelPreview
-          identifier={identifier}
-          fields={fields}
-          tag={settings.assetTag.nextTag ?? `${settings.assetTag.prefix}-000001`}
-        />
+          <div className="min-w-0 space-y-1">
+            <p className="text-xs font-medium text-foreground">Default label size</p>
+            <p className="flex h-10 items-center rounded-lg border border-border bg-muted px-3 text-sm text-foreground">50 × 30 mm</p>
+            <p className="text-xs text-muted-foreground">Recommended size for most assets.</p>
+          </div>
+        </div>
+        <div className="min-w-0 space-y-4">
+          <div className="rounded-lg bg-muted p-4">
+            <LabelPreview
+              identifier={identifier}
+              fields={fields}
+              tag={settings.assetTag.nextTag ?? `${settings.assetTag.prefix}-000001`}
+            />
+          </div>
+          <div className="min-w-0 space-y-1 rounded-lg bg-muted p-4">
+            <h3 className="text-sm font-semibold text-foreground">Print &amp; download defaults</h3>
+            <p className="pt-2 text-xs font-medium text-foreground">Output format</p>
+            <p className="flex h-10 items-center rounded-lg border border-border bg-card px-3 text-sm text-foreground">PDF</p>
+            <p className="text-xs text-muted-foreground">File format for downloaded labels.</p>
+          </div>
+        </div>
       </div>
-      <dl className="grid gap-3 text-xs sm:grid-cols-3">
-        <div>
-          <dt className="text-muted-foreground">Size</dt>
-          <dd className="font-medium text-foreground">50 × 30 mm</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Output</dt>
-          <dd className="font-medium text-foreground">PDF</dd>
-        </div>
-      </dl>
     </SettingsSection>
   );
 }

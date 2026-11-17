@@ -3,14 +3,18 @@ import { assertLabelFormat, type AssetLabel, type LabelFormat } from "../domain/
 
 type Box = { x: number; y: number; width: number; height: number };
 
+/** Blank margin around each code, in modules. Smaller than the 4 (QR) and 10 (Code128) the specs recommend, so the code can be larger on a 50 × 30 mm label; scan a printed sample before relying on it. */
+export const QR_QUIET_MODULES = 2;
+export const BARCODE_QUIET_MODULES = 6;
+
 function barcodeRectangles(bits: string, box: Box): LabelRectangle[] {
-  const moduleWidth = mmToPoints(box.width) / (bits.length + 20); // Code128 quiet zones: 10 modules per side.
+  const moduleWidth = mmToPoints(box.width) / (bits.length + 2 * BARCODE_QUIET_MODULES);
   const rectangles: LabelRectangle[] = [];
   for (let index = 0; index < bits.length;) {
     if (bits[index] !== "1") { index += 1; continue; }
     const start = index;
     while (bits[index] === "1") index += 1;
-    rectangles.push({ x: mmToPoints(box.x) + (start + 10) * moduleWidth, y: mmToPoints(box.y),
+    rectangles.push({ x: mmToPoints(box.x) + (start + BARCODE_QUIET_MODULES) * moduleWidth, y: mmToPoints(box.y),
       width: (index - start) * moduleWidth, height: mmToPoints(box.height) });
   }
   return rectangles;
@@ -29,15 +33,15 @@ async function qrRectangles(qrValue: string, box: Box) {
   const QRCode = await import("qrcode");
   const qr = QRCode.create(qrValue, { errorCorrectionLevel: "M" });
   const size = qr.modules.size;
-  const unit = mmToPoints(box.width) / (size + 8); // Four-module QR quiet zone.
+  const unit = mmToPoints(box.width) / (size + 2 * QR_QUIET_MODULES);
   const rectangles: LabelRectangle[] = [];
   for (let row = 0; row < size; row += 1) {
     for (let column = 0; column < size;) {
       if (!qr.modules.get(row, column)) { column += 1; continue; }
       const start = column;
       while (column < size && qr.modules.get(row, column)) column += 1;
-      rectangles.push({ x: mmToPoints(box.x) + (start + 4) * unit,
-        y: mmToPoints(box.y) + (row + 4) * unit, width: (column - start) * unit, height: unit });
+      rectangles.push({ x: mmToPoints(box.x) + (start + QR_QUIET_MODULES) * unit,
+        y: mmToPoints(box.y) + (row + QR_QUIET_MODULES) * unit, width: (column - start) * unit, height: unit });
     }
   }
   return rectangles;
