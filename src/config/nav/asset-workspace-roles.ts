@@ -4,12 +4,9 @@
 // ./asset-workspace.tsx. Hiding an item is never authorization (02 §3.3).
 //
 // Items without `href` are screens not built yet — they render inert.
-import type { NavSection } from "./types";
+import type { NavItem, NavSection } from "./types";
 
 export type AssetWorkspaceRole = "asset_admin" | "manager" | "employee";
-
-// ponytail: Phase 1 has no role source — every user gets the Asset Admin nav. Real role wiring is Phase 6.
-export const DEFAULT_ASSET_WORKSPACE_ROLE: AssetWorkspaceRole = "asset_admin";
 
 const BASE = "/asset-workspace";
 
@@ -41,7 +38,18 @@ const ADMIN_SECTIONS: NavSection[] = [
 
 const MANAGER_ITEMS: ReadonlySet<string> = new Set(["Assets", "Assignments", "Inventory", "Reports"]);
 
-/** Sections under the pinned Overview. Employees get none — their nav is My Assets alone. */
+// Employee links under the pinned My Assets (persona map §3).
+const EMPLOYEE_LINKS: NavItem[] = [
+  { label: "My Tasks", href: "/asset-workspace/my-tasks" },
+  { label: "Scan Asset", href: "/asset-workspace/scan-asset" },
+  { label: "Home", href: "/asset-workspace/home" },
+];
+
+export function standaloneLinksForRole(role: AssetWorkspaceRole): NavItem[] {
+  return role === "employee" ? EMPLOYEE_LINKS : [];
+}
+
+/** Sections under the pinned Overview. Employees get none — their nav is My Assets plus standalone links. */
 export function sectionsForRole(role: AssetWorkspaceRole): NavSection[] {
   if (role === "asset_admin") return ADMIN_SECTIONS;
   if (role === "employee") return [];

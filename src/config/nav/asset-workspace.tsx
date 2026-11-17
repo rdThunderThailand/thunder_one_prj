@@ -10,13 +10,16 @@ import {
   ClipboardIcon,
   FileTextIcon,
   GaugeIcon,
+  CheckSquareIcon,
   GridIcon,
+  HomeIcon,
   InventoryIcon,
   LocationIcon,
+  ScanIcon,
   SettingsIcon,
   WarrantyIcon,
 } from "@/components/ui/icons";
-import { sectionsForRole, type AssetWorkspaceRole } from "./asset-workspace-roles";
+import { sectionsForRole, standaloneLinksForRole, type AssetWorkspaceRole } from "./asset-workspace-roles";
 import type { NavConfig } from "./types";
 
 const SECTION_ICONS: Record<string, ReactNode> = {
@@ -39,6 +42,12 @@ const ITEM_ICONS: Record<string, ReactNode> = {
   Settings: <SettingsIcon className={iconClass} />,
 };
 
+const STANDALONE_ICONS: Record<string, ReactNode> = {
+  "My Tasks": <CheckSquareIcon className="h-4 w-4" />,
+  "Scan Asset": <ScanIcon className="h-4 w-4" />,
+  Home: <HomeIcon className="h-4 w-4" />,
+};
+
 const overviewItem = {
   label: "Overview",
   href: "/asset-workspace",
@@ -52,6 +61,7 @@ const myAssetsItem = {
 };
 
 export function filterAssetWorkspaceNav(role: AssetWorkspaceRole): NavConfig {
+  const standaloneLinks = standaloneLinksForRole(role);
   return {
     overviewItem: role === "employee" ? myAssetsItem : overviewItem,
     sections: sectionsForRole(role).map((section) => ({
@@ -59,7 +69,7 @@ export function filterAssetWorkspaceNav(role: AssetWorkspaceRole): NavConfig {
       icon: SECTION_ICONS[section.label],
       items: section.items.map((item) => ({ ...item, icon: ITEM_ICONS[item.label] })),
     })),
-    standaloneLinks: [],
-    standaloneIcons: [],
+    standaloneLinks,
+    standaloneIcons: standaloneLinks.map((item) => STANDALONE_ICONS[item.label]),
   };
 }

@@ -59,9 +59,17 @@ Routes must be fixed now: Help `screenKey`s, nav config and every later screen h
    - Asset Admin — Overview · Asset Management (Assets, Assignments, Inventory) · Asset Structure
      (Categories, Locations) · Management (Lifecycle & Warranty, Reports, Settings) — 9 items.
    - Manager — Overview, Assets, Assignments, Inventory, Reports — 5 items.
-   - Employee — My Assets — 1 item; `/my-assets` is the Employee's entry point.
+   - Employee — My Assets pinned, then My Tasks, Scan Asset, Home (inert until each ships);
+     `/my-assets` is the Employee's entry point.
    - Hiding a nav item is never authorization (Spec §6.3): every page and action checks permission
-     on the server. Phase 1 defaults the role to `asset_admin`; real role wiring is Phase 6.
+     on the server.
+   - Amended 2026-11-16 (employee Shell): `config/asset-workspace-access.ts` resolves the role, role
+     code first (`employee_asset` → employee, `manager_assets` → manager; then role type
+     super_admin / company_admin / department_admin → Asset Admin; no role at all → Asset Admin; anything
+     else → no access). Admin and manager pages live in the `(admin)` route group, employee pages in
+     `(employee)`; each group's layout calls `requireAssetWorkspacePortal` (`config/asset-workspace-guard.ts`,
+     like `requireCeoAccess`), which sends the other portal's roles to their portal and everyone else to
+     their landing page. URLs are unchanged.
 5. **Feature flag** `NEXT_PUBLIC_ASSET_WORKSPACE_MVP`: `"1"` turns the App on; any other value or
    unset turns it off — every `/asset-workspace` route returns Not Found and the App is absent from
    the App Switcher and the Workspaces catalog. Set only in local and dev; production leaves it unset.
