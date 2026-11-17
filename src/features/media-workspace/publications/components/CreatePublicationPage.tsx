@@ -13,6 +13,10 @@ import { useHasHydratedDraft, useIsDraftDirty, usePublicationDraftStore } from "
 import { Modal } from "@/components/ui/Modal";
 import { usePublishDraft } from "../hooks/usePublishDraft";
 import { useLayoutAspectRatio } from "../hooks/useLayoutAspectRatio";
+import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
+import { publishCauseFix } from "../publish-cause-fix";
+import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
+import { PublishErrorFix } from "./PublishErrorFix";
 import { deletePublication, fetchPublication } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { detailToDraft } from "../detail-mapping";
@@ -73,6 +77,10 @@ export function CreatePublicationPage() {
   const setGroupNamesById = usePublicationDraftStore((s) => s.setGroupNamesById);
   const setSchedule = usePublicationDraftStore((s) => s.setSchedule);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
+  const playlistId = usePublicationDraftStore((s) => s.playlistId);
+  const publicationType = usePublicationDraftStore((s) => s.basicInfo.publicationType);
+  // ADR 0114: a Layout that is not Active is caught wherever the operator came from, not only in the picker.
+  const layoutGate = useLayoutPublishBlock(compositionId);
   const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
 
   const [resumedId, setResumedId] = useState<string | null>(null);
@@ -184,6 +192,7 @@ export function CreatePublicationPage() {
     loadingRefs,
     saving,
     error,
+    errorCause,
     setError,
     publishedId,
     conflicts,
@@ -323,6 +332,7 @@ export function CreatePublicationPage() {
         return;
       }
     }
+    setError(null); // a jump to the fix leaves the old refusal behind
     setStep(target);
   };
 
@@ -452,6 +462,8 @@ export function CreatePublicationPage() {
         />
       )}
 
+      {compositionId && (step === 2 || step === 5) && <LayoutNotActiveNotice compositionId={compositionId} gate={layoutGate} />}
+
       {/* Step 2 — Prepare Content */}
       {step === 2 && <PrepareContentStep assets={assets} tags={tags} showFieldErrors={showFieldErrors} />}
 
@@ -515,7 +527,7 @@ export function CreatePublicationPage() {
             {saving ? "Saving…" : "Save draft"}
           </LovableButton>
           {isLastStep ? (
-            <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish}>
+            <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish || !!layoutGate.reason}>
               <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
             </Button>
           ) : (
@@ -527,6 +539,10 @@ export function CreatePublicationPage() {
         {displayError && (
           <div className="flex items-center gap-2">
             <p className="text-xs font-medium text-error">{displayError}</p>
+            <PublishErrorFix
+              fix={error && errorCause ? publishCauseFix(errorCause, { type: publicationType, playlistId, compositionId }) : null}
+              onStep={(target) => void handleStepSelect(target)}
+            />
             {saveStatus === "error" && (
               <Button
                 variant="outline"

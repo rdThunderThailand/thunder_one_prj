@@ -1,3 +1,4 @@
+import type { PublishCause } from "@/lib/api/api-error";
 import type {
   Priority,
   PublicationDetail,
@@ -172,6 +173,8 @@ export type UpdatePublishedFailure = {
   /** True for `Already modified:` — reload, do not retry. */
   isStale: boolean;
   message: string;
+  /** ADR 0114: set when Core's refusal names a publish cause the page can offer a fix for. */
+  cause?: PublishCause;
 };
 
 const PART_TAG = /\[(details|content|targets|schedule|publish)\]\s*/;

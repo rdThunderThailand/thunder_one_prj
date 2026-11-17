@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
-import { saveAction } from "../status-display";
+import { layoutPublishBlock, saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
@@ -123,14 +123,15 @@ export function CompositionEditorHeader({
   const activateDisabledReason = saveDisabledReason
     ?? (!isComplete ? `ยังไม่ได้ผูก Content ให้ ${unboundZoneNames.length} Zone: ${unboundZoneNames.join(", ")}` : null);
   const saveState = saveAction(status);
-  // QA 2026-10-08 #4: a Draft Layout cannot air, so the wizard would refuse it at the end; say so
-  // here instead. Same rule as the wizard's Layout picker (non-draft), which also offers Inactive.
+  // QA 2026-10-08 #4: only an Active Layout can air (Core refuses Draft and Inactive alike); say so
+  // here instead of at the end of the wizard.
+  const layoutBlock = layoutPublishBlock(status);
   const publishDisabledReason = !isExisting
     ? "บันทึก Layout ก่อนเผยแพร่"
     : hasUnsavedChanges
       ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
-      : status === "draft"
-        ? `Activate Layout ก่อนเผยแพร่${isComplete ? "" : ` — ยังไม่ผูก Content ${unboundZoneNames.length} Zone`}`
+      : layoutBlock
+        ? `${layoutBlock}${status === "draft" && !isComplete ? ` — ยังไม่ผูก Content ${unboundZoneNames.length} Zone` : ""}`
         : null;
 
   const commitName = () => {

@@ -24,7 +24,8 @@ import type { ChannelListItem } from "../../channels/types";
 import { selectedChannelDeviceIds } from "../channels-logic";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
-import { classifyApiError, isConflict } from "@/lib/api/api-error";
+import { classifyApiError, isConflict, scheduleEndedMessage, type PublishCause } from "@/lib/api/api-error";
+import { formatDmy, utcToZonedParts } from "../schedule";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
 import { DraftSaveError, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
 
@@ -52,7 +53,11 @@ export function usePublishDraft() {
   const [channelsError, setChannelsError] = useState<string | null>(null);
   const channelsRequest = useRef<Promise<{ channels: ChannelListItem[]; failed: boolean }> | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // `cause` rides with the message so the page can offer the fix (ADR 0114); a plain setError clears it.
+  const [errorState, setErrorState] = useState<{ message: string; cause: PublishCause | null } | null>(null);
+  const error = errorState?.message ?? null;
+  const errorCause = errorState?.cause ?? null;
+  const setError = useCallback((message: string | null) => setErrorState(message ? { message, cause: null } : null), []);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [savingNext, setSavingNext] = useState(false);
   const [publishedId, setPublishedId] = useState<string | null>(null);
@@ -329,9 +334,21 @@ export function usePublishDraft() {
   };
 
   const publishNow = async (): Promise<void> => {
+    const state = usePublicationDraftStore.getState();
+    // Core refuses `ends_at <= now()` only after the draft is saved; say so before saving anything.
+    // Not gated on `isDraftValid`: an end that has just passed makes the draft invalid, which is the case to catch.
+    try {
+      const { ends_at, timezone } = draftToSchedule(state.schedule);
+      if (ends_at && Date.parse(ends_at) <= Date.now()) {
+        const end = utcToZonedParts(ends_at, timezone);
+        setErrorState({ message: scheduleEndedMessage(`${formatDmy(end.date)} ${end.time}`), cause: "schedule-ended" });
+        return;
+      }
+    } catch {
+      // ponytail: an incomplete schedule cannot be resolved here; step validation and Core still decide.
+    }
     setSaving(true);
     setError(null);
-    const state = usePublicationDraftStore.getState();
     try {
       const result = requireCompleteDraftSave(await persistDraft(true));
       const newId = result.publicationId;
@@ -349,7 +366,7 @@ export function usePublishDraft() {
         router.push(`/media-workspace/program/${state.publicationId}`);
         return;
       }
-      if (classified.kind !== "conflict") setError(classified.message);
+      if (classified.kind !== "conflict") setErrorState({ message: classified.message, cause: classified.cause ?? null });
     } finally {
       setSaving(false);
     }
@@ -366,6 +383,7 @@ export function usePublishDraft() {
     loadingRefs,
     saving,
     error,
+    errorCause,
     setError,
     publishedId,
     conflicts,
