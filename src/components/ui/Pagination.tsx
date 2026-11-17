@@ -26,7 +26,7 @@ export function Pagination({
   totalItems,
   rangeStart,
   rangeEnd,
-  itemLabel = "playlists",
+  itemLabel,
   perPageOptions = DEFAULT_PER_PAGE_OPTIONS,
   onPageChange,
   onPerPageChange,
@@ -37,7 +37,7 @@ export function Pagination({
   totalItems: number;
   rangeStart: number;
   rangeEnd: number;
-  itemLabel?: string;
+  itemLabel: string;
   perPageOptions?: number[];
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
