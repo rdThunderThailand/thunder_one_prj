@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
-import { saveAction } from "../status-display";
+import { layoutPublishBlock, saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
@@ -52,6 +52,7 @@ export function CompositionEditorHeader({
   aspectRatio,
   zoneCount,
   hasLayout,
+  hasZoneOverlap,
   isComplete,
   unboundZoneNames,
   onBack,
@@ -84,6 +85,8 @@ export function CompositionEditorHeader({
   aspectRatio: string;
   zoneCount: number;
   hasLayout: boolean;
+  /** Core refuses overlapping Zones (ADR 0044 §3), so the save is blocked here instead of failing there. */
+  hasZoneOverlap: boolean;
   isComplete: boolean;
   unboundZoneNames: string[];
   onBack: () => void;
@@ -117,20 +120,22 @@ export function CompositionEditorHeader({
   // The buttons own the reasons they are off, so the page does not have to restate them.
   const saveDisabledReason = !name.trim()
     ? "กรุณากรอกชื่อ Layout"
-    : !hasLayout ? "กรุณาเลือก Template หรือ Start blank" : null;
+    : !hasLayout ? "กรุณาเลือก Template หรือ Start blank"
+      : hasZoneOverlap ? "แก้ Zone ที่ซ้อนทับกันก่อนบันทึก" : null;
   // ADR 0049 §10 via ADR 0063 §8: the menu item states *how many* Zones are still unbound,
   // which the frames' single button had no room to say.
   const activateDisabledReason = saveDisabledReason
     ?? (!isComplete ? `ยังไม่ได้ผูก Content ให้ ${unboundZoneNames.length} Zone: ${unboundZoneNames.join(", ")}` : null);
   const saveState = saveAction(status);
-  // QA 2026-10-08 #4: a Draft Layout cannot air, so the wizard would refuse it at the end; say so
-  // here instead. Same rule as the wizard's Layout picker (non-draft), which also offers Inactive.
+  // QA 2026-10-08 #4: only an Active Layout can air (Core refuses Draft and Inactive alike); say so
+  // here instead of at the end of the wizard.
+  const layoutBlock = layoutPublishBlock(status);
   const publishDisabledReason = !isExisting
     ? "บันทึก Layout ก่อนเผยแพร่"
     : hasUnsavedChanges
       ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
-      : status === "draft"
-        ? `Activate Layout ก่อนเผยแพร่${isComplete ? "" : ` — ยังไม่ผูก Content ${unboundZoneNames.length} Zone`}`
+      : layoutBlock
+        ? `${layoutBlock}${status === "draft" && !isComplete ? ` — ยังไม่ผูก Content ${unboundZoneNames.length} Zone` : ""}`
         : null;
 
   const commitName = () => {
