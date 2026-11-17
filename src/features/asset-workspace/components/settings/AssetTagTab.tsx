@@ -22,7 +22,7 @@ export function AssetTagTab({
   const local = touched ? prefixError(prefix) : null;
   const fromCore = error?.code === "VALIDATION" ? error.fieldErrors?.prefix?.[0] : error?.code === "TAG_TAKEN" ? error.message : undefined;
   const dirty = prefix.trim().toUpperCase() !== settings.assetTag.prefix;
-  const preview = previewNextTag(settings.assetTag.nextTag, prefix);
+  const preview = prefixError(prefix) ? null : previewNextTag(settings.assetTag.nextTag, prefix);
 
   useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
 
@@ -66,10 +66,10 @@ export function AssetTagTab({
             aria-live="polite"
             className="flex h-10 items-center rounded-lg border border-border bg-muted px-3 text-sm font-semibold text-foreground"
           >
-            {preview ?? "All numbers are used"}
+            {preview ?? (settings.assetTag.nextTag ? "—" : "All numbers are used")}
           </p>
           <p className="text-xs text-muted-foreground">
-            {preview ? "The 6-digit number continues from the last tag." : "No more tags can be generated. Contact support."}
+            {settings.assetTag.nextTag ? "The 6-digit number continues from the last tag." : "No more tags can be generated. Contact support."}
           </p>
         </div>
       </div>

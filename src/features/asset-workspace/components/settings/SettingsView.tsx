@@ -2,7 +2,7 @@
 
 // Settings (05 §4.12): four tabs, Save per tab. Switching away from a tab with unsaved input asks first (checklist §1.1).
 import { useCallback, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
@@ -38,22 +38,19 @@ export function SettingsView({
   initial: AssetSettings;
   categories: MultiOption[] | null;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
   const params = useSearchParams();
   const requested = params.get("tab");
-  const tab: TabKey = isTab(requested) ? requested : "asset-id";
+  const [tab, setTab] = useState<TabKey>(isTab(requested) ? requested : "asset-id");
   const [settings, setSettings] = useState(initial);
   const [dirty, setDirty] = useState(false);
   const [target, setTarget] = useState<TabKey | null>(null);
 
-  const go = useCallback(
-    (next: TabKey) => {
-      setDirty(false);
-      router.replace(`${pathname}?tab=${next}`, { scroll: false });
-    },
-    [pathname, router],
-  );
+  // The tab is client state (the URL only mirrors it for reload and links), so a switch never re-runs the server read.
+  const go = useCallback((next: TabKey) => {
+    setDirty(false);
+    setTab(next);
+    window.history.replaceState(null, "", `?tab=${next}`);
+  }, []);
   const onChange = (value: string) => {
     if (!isTab(value) || value === tab) return;
     if (dirty) setTarget(value);
@@ -72,7 +69,10 @@ export function SettingsView({
         value={tab}
         onValueChange={onChange}
       >
-        <TabsList aria-label="Settings sections">
+        <TabsList
+          aria-label="Settings sections"
+          className="overflow-x-auto"
+        >
           {TABS.map((item) => (
             <TabsTrigger
               key={item.key}
