@@ -16,6 +16,8 @@ import {
   layoutNotReadyMessage,
   trashedAssetNames,
   deletedFileNames,
+  scheduleEndedMessage,
+  type PublishCause,
 } from "./api-error.ts";
 
 const FALLBACK = "Failed to save draft.";
@@ -60,14 +62,16 @@ assert.equal(classifyApiError(new ApiError("row version mismatch", 409), FALLBAC
 assert.equal(isConflict("Already in use: video is still referenced by a playlist"), false);
 
 // ADR 0074 §5 activation guard: unlike the generic "Invalid input:" catch-all below, these two
-// name the Group and the missing/conflicting Channels — they must reach the operator verbatim,
-// not get swallowed into the generic Thai "ข้อมูลที่กรอกยังไม่ครบ" message.
+// name the Group and the missing/conflicting Channels — the names are kept (ADR 0114 translates the
+// English around them), not swallowed into the generic Thai "ข้อมูลที่กรอกยังไม่ครบ" message.
 const incompleteGroup = classifyApiError(
   new ApiError("Invalid input: synchronized group target is incomplete — S (missing: C2)", 400),
   FALLBACK,
 );
 assert.equal(incompleteGroup.kind, "rejected");
-assert.equal(incompleteGroup.message, "Invalid input: synchronized group target is incomplete — S (missing: C2)");
+assert.equal(incompleteGroup.cause, "targets");
+assert.ok(incompleteGroup.message.includes("S (ขาด: C2)"));
+assert.ok(!/synchronized|missing/.test(incompleteGroup.message));
 
 const directInGroup = classifyApiError(
   new ApiError(
@@ -77,7 +81,9 @@ const directInGroup = classifyApiError(
   FALLBACK,
 );
 assert.equal(directInGroup.kind, "rejected");
-assert.ok(directInGroup.message.includes("group: S"));
+assert.equal(directInGroup.cause, "targets");
+assert.ok(directInGroup.message.includes("Screen 01") && directInGroup.message.includes("กลุ่ม: S"));
+assert.ok(!/synchronized|channel:/.test(directInGroup.message));
 
 // 4xx means the request itself was refused — retrying it unchanged is pointless.
 assert.equal(classifyApiError(new ApiError("Invalid input: name required", 400), FALLBACK).kind, "rejected");
@@ -181,5 +187,54 @@ assert.equal(layoutNotReadyMessage("Invalid input: the targets have no screens")
 const notActive = classifyApiError(new ApiError("Invalid input: composition is not active — activate it before publishing", 400), FALLBACK);
 assert.equal(notActive.kind, "rejected");
 assert.ok(!notActive.message.includes("ข้อมูลที่กรอกยังไม่ครบ"));
+
+// ADR 0114: every publish refusal names its cause, ahead of the generic and 404 buckets.
+const causeCases: [string, number, PublishCause][] = [
+  ["Invalid input: [schedule] end time is in the past", 400, "schedule-ended"],
+  ["Invalid input: starts_at is required", 400, "schedule-invalid"],
+  ["Invalid input: ends_at must be after starts_at", 400, "schedule-invalid"],
+  ["Invalid input: daily_start must be before daily_end", 400, "schedule-invalid"],
+  ["Invalid input: recurrence requires daily_start and daily_end", 400, "schedule-invalid"],
+  ["Invalid input: unknown timezone Mars/Base", 400, "schedule-invalid"],
+  ["Invalid input: recurrence.days must be integers 0-6 (0=Sun)", 400, "schedule-invalid"],
+  ["Invalid input: publication has no layout — add one before activating", 400, "no-content"],
+  ["Invalid input: publication has no playlist — add content before activating", 400, "no-content"],
+  ["not found: composition not found for this tenant", 404, "no-content"],
+  ["Invalid input: composition is not active — activate it before publishing", 400, "layout-not-active"],
+  ["Invalid input: cannot activate an incomplete composition — zone(s) Main, Side are unbound", 400, "zones-unbound"],
+  ["Invalid input: playlist 3f2a has no items — add content before activating", 400, "nothing-playable"],
+  ["Invalid input: composition 3f2a produced zero resolvable snapshot items", 400, "nothing-playable"],
+  ["Invalid input: at least one target is required", 400, "targets"],
+  ["not found: channel 3f2a not found for this tenant", 404, "targets"],
+  ["not found: channel group not found", 404, "targets"],
+  ["Invalid input: cannot activate a direct-target publication on Lobby — synchronized playback is enabled for that channel; disable synchronization or target the channel instead", 400, "targets"],
+  ["Invalid input: these channels are not active — activate them before publishing: Lobby", 400, "channels-inactive"],
+  ["Invalid input: the targets have no screens — add a screen", 400, "no-screens"],
+  ["Invalid input: cannot activate — replace this file: A.mp4", 400, "files"],
+];
+for (const [raw, status, cause] of causeCases) {
+  const c = classifyApiError(new ApiError(raw, status), FALLBACK);
+  assert.equal(c.cause, cause, raw);
+  assert.equal(c.kind, "rejected", raw);
+  assert.ok(/[฀-๿]/.test(c.message), `${raw} should be Thai: ${c.message}`);
+  assert.ok(!/Invalid input|not found:|cannot activate/.test(c.message), `${raw} leaked English: ${c.message}`);
+}
+// a channel *type* 404 and an overlap refusal are not publish causes
+assert.equal(classifyApiError(new ApiError("not found: channel type not found", 404), FALLBACK).cause, undefined);
+assert.equal(classifyApiError(new ApiError("Invalid input: cannot activate — equal-priority overlap with X; change priority", 400), FALLBACK).cause, undefined);
+assert.equal(classifyApiError(new ApiError("Invalid input: [schedule] end time is in the past — use End program instead", 400), FALLBACK).cause, undefined);
+assert.equal(classifyApiError(new ApiError("Invalid input: x", 400), FALLBACK).cause, undefined);
+
+// A mixed file refusal keeps every part and every name — none falls through to raw English.
+const mixed = classifyApiError(
+  new ApiError("Invalid input: cannot activate — replace this file: A.mp4; wait — conversion in flight: B.mp4; remove or restore from Trash: C.mp4; file was deleted, replace it: D.mp4", 400),
+  FALLBACK,
+);
+assert.equal(mixed.cause, "files");
+for (const name of ["A.mp4", "B.mp4", "C.mp4", "D.mp4"]) assert.ok(mixed.message.includes(name), name);
+assert.ok(!/replace this file|conversion in flight|Trash:/.test(mixed.message));
+
+assert.ok(scheduleEndedMessage("01/12/2026 09:00").includes("01/12/2026 09:00"));
+assert.ok(!scheduleEndedMessage().includes("undefined"));
 
 console.log("api-error.check.mts — all assertions passed");

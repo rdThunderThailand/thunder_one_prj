@@ -3,6 +3,19 @@
  * left the UI unable to tell "retry this" from "fix your input" from "this
  * already succeeded". `ApiError` keeps the status code so it can.
  */
+import { classifyPublishCause, inactiveChannelMessage, type PublishCause } from "./publish-cause.ts";
+
+export {
+  deletedFileMessage,
+  deletedFileNames,
+  inactiveChannelMessage,
+  layoutNotReadyMessage,
+  scheduleEndedMessage,
+  trashedAssetMessage,
+  trashedAssetNames,
+  type PublishCause,
+} from "./publish-cause.ts";
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -30,6 +43,8 @@ export interface ClassifiedError {
   kind: ApiErrorKind;
   /** Ready to show to the user, with the next action spelled out. */
   message: string;
+  /** Set for a publish-time refusal the page can turn into a button (ADR 0114). */
+  cause?: PublishCause;
 }
 
 /**
@@ -63,19 +78,6 @@ export function isDuplicateName(message: string): boolean {
 }
 
 /**
- * `media_publication_activate`'s first-activation guard (ADR 0074 §5) — an incomplete
- * synchronized Group, or a direct `device` target inside one. Both already name the Group and
- * the missing/conflicting Channels in the raw text, so it is shown as-is rather than routed
- * through the generic "Invalid input:" bucket below, which would otherwise swallow those names.
- */
-function isIncompleteSyncGroupTarget(message: string): boolean {
-  return (
-    message.includes("synchronized group target is incomplete") ||
-    message.includes("cannot activate a direct device target inside a synchronized group")
-  );
-}
-
-/**
  * `media_publication_set_content` raises this when any item points at an asset that
  * is not `approved`. The UI blocks picking one, so reaching here means the asset lost
  * its approval after it was chosen — the raw wording names neither the asset nor the
@@ -84,38 +86,6 @@ function isIncompleteSyncGroupTarget(message: string): boolean {
 function isUnapprovedAsset(message: string): boolean {
   return message.includes("media asset(s) are not approved");
 }
-
-/**
- * `media_publication_activate`'s codec-quarantine guard (Thunder_Core#66, ADR 0070) — a
- * `failed` or still-`processing` Asset in the snapshot. The raw text names every offending
- * file and tells the operator to replace it or wait, so it is shown as-is rather than routed
- * through the generic "Invalid input:" bucket below, which would otherwise swallow those names.
- */
-function isQuarantinedAsset(message: string): boolean {
-  return message.includes("cannot activate — replace this file:") || message.includes("wait — conversion in flight:");
-}
-
-/**
- * `media_publication_activate` refuses a snapshot that holds a trashed Asset (ADR 0091 Decision 2).
- * Returns the file names it lists, or null when the message is about something else. The names are
- * the operator's own titles, so they are safe to show; the surrounding English is not.
- */
-export function trashedAssetNames(message: string): string | null {
-  const match = /remove or restore from Trash: ([^;]+)/.exec(message);
-  return match ? match[1].trim() : null;
-}
-
-export const trashedAssetMessage = (names: string) =>
-  `มีไฟล์ที่อยู่ในถังขยะ (${names}) กรุณานำออกจาก Playlist/Layout หรือกู้คืนไฟล์ก่อนเผยแพร่`;
-
-/** Same refusal for an Asset whose file was permanently deleted, so Recover is not an option (ADR 0101). */
-export function deletedFileNames(message: string): string | null {
-  const match = /file was deleted, replace it: ([^;]+)/.exec(message);
-  return match ? match[1].trim() : null;
-}
-
-export const deletedFileMessage = (names: string) =>
-  `ไฟล์ถูกลบถาวรแล้ว (${names}) กรุณาเปลี่ยนเป็นไฟล์อื่นใน Playlist/Layout ก่อนเผยแพร่`;
 
 /**
  * A request that never got a response — the browser is offline, the host is
@@ -128,58 +98,6 @@ function isTransportFailure(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const code = (err as { code?: string }).code;
   return code === "ERR_NETWORK" || code === "ECONNABORTED" || err.message === "Network Error";
-}
-
-/**
- * `media_publication_activate` raises this when the Targets resolve to no device — a Channel or
- * Group with no screen (Thunder_Core#134). The raw wording is written for the backend, so it is
- * replaced with the way out rather than shown as-is or routed through the generic bucket below.
- */
-function isNoScreensTarget(message: string): boolean {
-  return message.includes("the targets have no screens");
-}
-
-/**
- * `media_publication_activate` refuses a Layout that is not Active, one with unbound Zones, and a
- * snapshot that resolves to nothing playable. The unbound-Zone names are the operator's own, so
- * they are kept; the English around them is not. Null when it is none of these.
- */
-export function layoutNotReadyMessage(message: string): string | null {
-  if (message.includes("composition is not active")) {
-    return "Layout ที่เลือกยังไม่ Active กรุณา Activate Layout ก่อนเผยแพร่";
-  }
-  const unbound = /zone\(s\) (.+) are unbound/.exec(message);
-  if (unbound) {
-    return `Layout ยังไม่ได้ผูก Content ให้ Zone: ${unbound[1].trim()} กรุณาผูก Content แล้ว Activate Layout ก่อนเผยแพร่`;
-  }
-  if (message.includes("produced zero resolvable snapshot items")) {
-    return "ไม่มีเนื้อหาที่เล่นได้ใน Program นี้ กรุณาตรวจสอบว่า Playlist หรือ Layout มีสื่อที่ใช้งานได้";
-  }
-  return null;
-}
-
-/**
- * ADR 0099 guards: a Program reaches only active Channels, a Group takes only active Channels, and
- * a Channel in a Group cannot be deactivated. The raw text ends with the operator's own Channel or
- * Group names, which are safe to show; the English around them is not. Null when it is none of these.
- */
-export function inactiveChannelMessage(message: string): string | null {
-  const notActive = /channels are not active — activate them before publishing: ([^\n]+)/.exec(message);
-  if (notActive) {
-    return `ช่องทาง ${notActive[1].trim()} ยังไม่เปิดใช้งาน กรุณาเปิดใช้งานช่องทางก่อนเผยแพร่`;
-  }
-  const notActiveMembers = /only active channels can join a group — not active: ([^\n]+)/.exec(message);
-  if (notActiveMembers) {
-    return `เพิ่มเข้ากลุ่มได้เฉพาะช่องทางที่เปิดใช้งาน — ${notActiveMembers[1].trim()} ยังไม่เปิดใช้งาน`;
-  }
-  if (message.includes("only active channels can join a group — activate this channel first")) {
-    return "เพิ่มเข้ากลุ่มได้เฉพาะช่องทางที่เปิดใช้งาน กรุณาเปิดใช้งานช่องทางนี้ก่อน";
-  }
-  const groups = /remove this channel from its groups before deactivating: ([^\n]+)/.exec(message);
-  if (groups) {
-    return `ช่องทางนี้ยังอยู่ในกลุ่ม ${groups[1].trim()} กรุณานำออกจากกลุ่มก่อนปิดใช้งาน`;
-  }
-  return null;
 }
 
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
@@ -210,39 +128,16 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
     };
   }
 
-  if (isIncompleteSyncGroupTarget(message)) {
-    return { kind: "rejected", message };
+  // ADR 0114: ahead of the generic `Invalid input:` and 404 branches below, whichever RPC raised it.
+  const publish = classifyPublishCause(message);
+  if (publish) {
+    return { kind: "rejected", message: publish.message, cause: publish.cause };
   }
 
-  if (isQuarantinedAsset(message)) {
-    return { kind: "rejected", message };
-  }
-
-  const trashedNames = trashedAssetNames(message);
-  if (trashedNames) {
-    return { kind: "rejected", message: trashedAssetMessage(trashedNames) };
-  }
-
-  const deletedNames = deletedFileNames(message);
-  if (deletedNames) {
-    return { kind: "rejected", message: deletedFileMessage(deletedNames) };
-  }
-
+  // Channel / Group management guards (ADR 0099) that are not a publish cause.
   const inactiveChannel = inactiveChannelMessage(message);
   if (inactiveChannel) {
     return { kind: "rejected", message: inactiveChannel };
-  }
-
-  if (isNoScreensTarget(message)) {
-    return {
-      kind: "rejected",
-      message: "ช่องทางหรือกลุ่มที่เลือกยังไม่มีจอ กรุณาเพิ่มจอก่อนเผยแพร่",
-    };
-  }
-
-  const layoutNotReady = layoutNotReadyMessage(message);
-  if (layoutNotReady) {
-    return { kind: "rejected", message: layoutNotReady };
   }
 
   // Everything the API rejects on shape — zod schema failures and the remaining

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ArrowLeftIcon } from "@/components/ui/icons";
@@ -24,6 +23,9 @@ import {
 } from "../services/publications-api";
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
+import { publishCauseFix, publishFixCard } from "../publish-cause-fix";
+import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
+import { PublishErrorFix } from "./PublishErrorFix";
 import { useProgramEdit } from "../hooks/useProgramEdit";
 import { publicationDrift } from "../publication-drift";
 import { safeReturnTo } from "../return-to";
@@ -49,7 +51,7 @@ export function PublicationEditPage({ id }: { id: string }) {
   const edit = useProgramEdit(id);
   const { detail, state, displayStatus, isDirty, busy, failure } = edit;
   const layoutId = state?.content.type === "composition" ? state.content.compositionId : null;
-  const layoutBlock = useLayoutPublishBlock(layoutId);
+  const layoutGate = useLayoutPublishBlock(layoutId);
   const [pending, setPending] = useState<PendingAction>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -72,11 +74,19 @@ export function PublicationEditPage({ id }: { id: string }) {
   const isOnAir = displayStatus === "live" || displayStatus === "publishing" || displayStatus === "failed";
   const canPublish = state.name.trim().length > 0 && !busy;
   // Only a first publish activates the Layout; a published Program's edits do not.
-  const publishBlock = isDraft ? layoutBlock : null;
-  const partError = (part: string) => (failure?.part === part ? failure.message : undefined);
+  const publishBlock = isDraft ? layoutGate.reason : null;
+  // A refusal with a named cause shows once, at page level, next to its fix button.
+  const partError = (part: string) => (failure?.part === part && !failure.cause ? failure.message : undefined);
+  const causeFix = failure?.cause
+    ? publishCauseFix(failure.cause, { type: state.content.type, playlistId: state.content.playlistId, compositionId: state.content.compositionId })
+    : null;
+  const goToCard = (step: 1 | 2 | 3) => {
+    if (!failure?.cause) return;
+    document.getElementById(`edit-card-${publishFixCard(failure.cause, step)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
   const pageError = failure?.isStale
     ? "This Program was changed elsewhere. Reload to see the latest version."
-    : failure && !failure.part
+    : failure && (!failure.part || failure.cause)
       ? failure.message
       : undefined;
 
@@ -181,22 +191,18 @@ export function PublicationEditPage({ id }: { id: string }) {
           role="alert"
           className="rounded-lg bg-error-muted px-4 py-3 text-sm text-error"
         >
-          {pageError ?? actionError}
+          {pageError ?? actionError}{" "}
+          <PublishErrorFix
+            fix={causeFix}
+            onStep={goToCard}
+          />
         </p>
       )}
-      {publishBlock && layoutId && (
-        <p
-          role="status"
-          className="rounded-lg bg-warning-muted px-4 py-3 text-sm text-warning"
-        >
-          {publishBlock}{" "}
-          <Link
-            href={`/media-workspace/layouts/${layoutId}`}
-            className="underline"
-          >
-            เปิด Layout
-          </Link>
-        </p>
+      {isDraft && layoutId && (
+        <LayoutNotActiveNotice
+          compositionId={layoutId}
+          gate={layoutGate}
+        />
       )}
       {failure?.isStale && (
         <p className="text-sm text-muted-foreground">
@@ -219,27 +225,33 @@ export function PublicationEditPage({ id }: { id: string }) {
             error={partError("details")}
             onChange={edit.patch}
           />
-          <ContentSourceCard
-            state={state}
-            disabled={isEnded}
-            error={partError("content")}
-            onChange={(content) => edit.patch({ content })}
-          />
+          <div id="edit-card-content">
+            <ContentSourceCard
+              state={state}
+              disabled={isEnded}
+              error={partError("content")}
+              onChange={(content) => edit.patch({ content })}
+            />
+          </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <TargetCard
-              state={state}
-              disabled={isEnded}
-              channels={edit.channels}
-              error={partError("targets")}
-              onChange={(targets) => edit.patch({ targets })}
-            />
-            <ScheduleCard
-              state={state}
-              disabled={isEnded}
-              isStartLocked={isOnAir}
-              error={partError("schedule")}
-              onChange={(schedule) => edit.patch({ schedule })}
-            />
+            <div id="edit-card-targets">
+              <TargetCard
+                state={state}
+                disabled={isEnded}
+                channels={edit.channels}
+                error={partError("targets")}
+                onChange={(targets) => edit.patch({ targets })}
+              />
+            </div>
+            <div id="edit-card-schedule">
+              <ScheduleCard
+                state={state}
+                disabled={isEnded}
+                isStartLocked={isOnAir}
+                error={partError("schedule")}
+                onChange={(schedule) => edit.patch({ schedule })}
+              />
+            </div>
           </div>
         </div>
         <ProgramEditRail

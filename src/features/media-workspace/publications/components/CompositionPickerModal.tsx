@@ -20,7 +20,6 @@ import {
   compositionOrientation,
   defaultCompositionPickerFilters,
   filterCompositionPickerItems,
-  publishableCompositions,
   type CompositionPickerFilters,
 } from "../composition-picker-filter";
 import { pickerFolderCounts, pickerFolderMatcher, type PickerFolder } from "../picker-folder";
@@ -65,9 +64,15 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
 
   useEffect(() => {
     let alive = true;
-    // ponytail: the endpoint's maximum page covers today's picker; page through it above 50 Layouts.
-    fetchCompositionLibrary({ pageSize: 50 })
-      .then((response) => { if (alive) setItems(publishableCompositions(response.data)); })
+    // ADR 0114: only Active Layouts are offered, so Core filters; a bound Layout that is not
+    // Active is dropped from the selection instead of staying selectable.
+    // ponytail: the endpoint's maximum page covers today's picker; page through it above 50 Active Layouts.
+    fetchCompositionLibrary({ pageSize: 50, status: "active" })
+      .then((response) => {
+        if (!alive) return;
+        setItems(response.data);
+        setStagedId((current) => (current && response.data.some((row) => row.id === current) ? current : null));
+      })
       .catch(() => { if (alive) setError("Failed to load Layouts."); });
     return () => { alive = false; };
   }, []);
@@ -152,23 +157,6 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
       <div className="grid h-[min(42rem,calc(100vh-15rem))] min-h-[30rem] grid-cols-[11rem_minmax(0,1fr)_16rem] overflow-hidden border-b border-border">
         <PickerFilterPanel onClear={() => { setFilters(defaultCompositionPickerFilters); setFolder("all"); setPage(1); }}>
           <PickerFolderSection folders={folders} counts={folderCounts} value={folder} onChange={(next) => { setFolder(next); setPage(1); }} />
-          <PickerFilterSection label="Status" divided>
-            <div role="radiogroup" aria-label="Status">
-              <PickerFilterChoice checked={filters.status === "all"} label="All Status" onClick={() => update({ status: "all" })} />
-              <PickerFilterChoice
-                checked={filters.status === "active"}
-                label="Active"
-                marker={<span className="h-2 w-2 rounded-full bg-success" />}
-                onClick={() => update({ status: "active" })}
-              />
-              <PickerFilterChoice
-                checked={filters.status === "inactive"}
-                label="Inactive"
-                marker={<span className="h-2 w-2 rounded-full bg-border" />}
-                onClick={() => update({ status: "inactive" })}
-              />
-            </div>
-          </PickerFilterSection>
           <PickerFilterSection label="Orientation" divided>
             <div role="radiogroup" aria-label="Orientation">
               <PickerFilterChoice checked={filters.orientation === "all"} label="All Orientation" onClick={() => update({ orientation: "all" })} />

@@ -94,8 +94,13 @@ export function useProgramEdit(id: string) {
     } catch (err) {
       const parsed = parseUpdatePublishedError(err instanceof Error ? err.message : "Publish failed");
       // A `[part]`-tagged or stale message is already worded for this page; the rest is Core's raw text.
-      const next =
-        parsed.part || parsed.isStale ? parsed : { ...parsed, message: classifyApiError(err, parsed.message).message };
+      // A named cause (ADR 0114) wins either way: Thai text plus a fix button, still bound to its part.
+      const classified = classifyApiError(err, parsed.message);
+      const next = classified.cause
+        ? { ...parsed, message: classified.message, cause: classified.cause }
+        : parsed.part || parsed.isStale
+          ? parsed
+          : { ...parsed, message: classified.message };
       setFailure(next);
       return next;
     } finally {
