@@ -226,6 +226,7 @@ export function ChannelsListPage() {
                     totalItems={filtered.length}
                     rangeStart={(page.page - 1) * state.perPage + 1}
                     rangeEnd={Math.min(page.page * state.perPage, filtered.length)}
+                    itemLabel="channels"
                     onPageChange={(p) => setState({ ...state, page: p })}
                     onPerPageChange={(per) => setState({ ...state, perPage: per, page: 1 })}
                   />
