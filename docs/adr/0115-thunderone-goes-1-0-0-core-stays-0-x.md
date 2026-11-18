@@ -10,7 +10,7 @@ Amends `docs/agents/versioning.md` ("stay on `0.x` … Do not bump to `1.0.0` wi
 - v1.0 is the full production release of the Media Workspace to every tenant. Its P0 list
   (`docs/media-workspace/plan-v1-p0.md`) shipped in `v0.22.0`; the Core changes it needs shipped in Core
   `v0.26.0` (stop logging the admin client, Layout copy keeps `canvas_mode`). What is left before the number
-  changes is #388 and a UAT pass on prod (`docs/media-workspace/plan-v1-release.md`).
+  changes is a UAT pass on prod (`docs/media-workspace/plan-v1-release.md`).
 - The app has no staging: `main` deploys to production on merge, and `dev` runs against Core `develop`, whose
   data differs from prod. UAT therefore runs on prod in the `thunder_qa` tenant.
 - Thunder_Core serves this app and the Asset Workspace. Its Asset Workspace v2 API (Core ADR 0024) is still
@@ -19,8 +19,10 @@ Amends `docs/agents/versioning.md` ("stay on `0.x` … Do not bump to `1.0.0` wi
 ## Decision
 
 1. **This app becomes `1.0.0`** in the release that follows a passing UAT on prod. The number marks the first
-   release for every tenant, not a feature set. If UAT finds bugs, they are fixed on `dev` and ship in the same
-   `1.0.0`; the tag is never cut before UAT passes.
+   release for every tenant, not a feature set. UAT runs on the build that will become v1.0: that build goes to
+   prod first as an ordinary release under the existing rules (`0.23.0`, because its diff adds a feature), QA
+   tests it there, bugs are fixed and released, and `1.0.0` is cut afterwards. The tag `v1.0.0` is never
+   created before UAT passes.
 2. **The contract that is now treated as stable** is the one operators use: the Media Workspace routes in
    `src/config/nav/media-workspace.tsx` and their workflows (upload, Playlist, Layout, Program wizard and edit,
    Now & Next, Calendar, Playback Proof, Channels). This app keeps calling the deployed Core; it pins no Core
@@ -41,9 +43,9 @@ Amends `docs/agents/versioning.md` ("stay on `0.x` … Do not bump to `1.0.0` wi
   stable; a Core MAJOR would then be forced by work that has nothing to do with this app.
 - **Release `0.23.0` and call it "v1.0" only in announcements.** The tag on `main` would disagree with what
   the team and customers call the release, and `versioning.md` would keep saying the contract is unstable.
-- **Tag `1.0.0` first and let QA test afterwards.** Prod already runs the same code (only #388 and the number
-  differ), so testing first costs nothing, and the first UAT bug would otherwise make the first stable release
-  a `1.0.1`.
+  (`0.23.0` still ships, but as the UAT candidate; it is not announced as v1.0.)
+- **Tag `1.0.0` first and let QA test afterwards.** Testing first costs one extra release, and the first UAT
+  bug would otherwise make the first stable release a `1.0.1`.
 
 ## Consequences
 

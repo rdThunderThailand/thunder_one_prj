@@ -25,24 +25,26 @@ Player updates stay checksum-only on the `pilot` ring (release note from v0.22.0
 
 ## Gate to v1.0 (in order)
 
-Decided 2026-11-18: QA runs UAT on prod now (prod already is v1.0 in function), `1.0.0` is tagged only after UAT
-passes; UAT bugs are fixed on `dev` and ship in the same `1.0.0`. Checklist: `uat-v1-checklist.md` (section B
-runs after step 5).
+Decided 2026-11-18 (revised the same day): UAT runs once on the build that will be v1.0, so the release
+candidate goes to prod first as an ordinary MINOR, `v0.23.0` (diff since `v0.22.0` = #388 bugfix + #405 new
+editor/publish flow + docs, so MINOR per `versioning.md`). QA tests it on prod, every item must pass (or be
+accepted by the owner as a known gap), UAT bugs are fixed on `dev` and released, and only then is `1.0.0` cut
+with no code beyond the fixes. Checklist: `uat-v1-checklist.md`.
 
 | # | Repo | Step | Who | Tag |
 |---|---|---|---|---|
-| 0 | One | QA runs round 1 of `uat-v1-checklist.md` (rows tagged R1) on prod v0.22.0 (thunder_qa, `zz-uat-` names); steps 1–4 run in parallel | QA | prod writes in test tenant only |
-| 1 | One | Merge #400 (#388) and #405 (UAT #404 fix) into `dev` | owner | — |
-| 2 | One | ADR 0115 "ThunderOne goes 1.0.0" (see below) + `versioning.md` edit, Draft PR → `dev` | Claude writes, owner merges | design fork (decided, ADR records it) |
-| 3 | One | Verify `dev`: `pnpm install --frozen-lockfile`, `tsc --noEmit`, `next build`, all exit 0 | Claude | R2 |
-| 4 | One | Release-prep `release/v1.0.0` → `dev`: `package.json` `1.0.0`, Draft | Claude, owner merges | R2 |
-| 4b | One | UAT result: every ❌ in A/C fixed on `dev` or accepted by the owner as a known gap | owner | gate |
-| 5 | One | Release PR `dev → main` "release v1.0.0: promote dev → main (#26 — v1.0)", Draft. Body: changes since `v0.22.0` (#388, ADR 0115), Core dependency `v0.26.0`, "merge = deploy to production immediately" | Claude opens, owner marks ready + merges | R0 (owner) |
-| 6 | One | After the merge deploys: QA runs round 2 (rows tagged R2: the #405 flows, B1) on prod; re-run of any item fixed after round 1; then clean up `zz-uat-` rows (list shown first) | QA, Claude | delete = R0 |
-| 7 | One | Tag `v1.0.0` on the merge commit, then versioning row PR | Claude, after yes | R0 |
-| 8 | Both | Release note to the team (Thai): what v1.0 is, Player updates checksum-only, known gaps below | Claude drafts, owner sends | outward = ask |
+| 1 | One | Merge #400 (#388), #405 (UAT #404 fix), #406 (docs) into `dev` | owner | done 2026-11-18 |
+| 2 | One | Verify `dev`: `pnpm install --frozen-lockfile`, `tsc --noEmit`, `next build`, all exit 0 | Claude | done 2026-11-18 |
+| 3 | One | Release-prep `release/v0.23.0` → `dev`: `package.json` `0.23.0`, UAT docs now target `v0.23.0`, Draft | Claude, owner merges | R2 |
+| 4 | One | Release PR `dev → main` "release v0.23.0: promote dev → main (#26 — UAT release candidate for v1.0)", Draft. Body: changes since `v0.22.0`, Core dependency `v0.26.0`, "merge = deploy to production immediately" | Claude opens, owner marks ready + merges | R0 (owner) |
+| 5 | One | Tag `v0.23.0` on the merge commit, then versioning row PR | Claude, after yes | R0 |
+| 6 | One | QA runs all of `uat-v1-checklist.md` on prod `v0.23.0` (thunder_qa, `zz-uat-` names). Bugs: fix on `dev`, release as the next MINOR/PATCH, QA re-runs the affected rows | QA, Claude | prod writes in test tenant only |
+| 7 | One | Gate: every ❌ fixed and re-tested, or accepted by the owner as a known gap | owner | gate |
+| 8 | One | Release-prep `release/v1.0.0` → `dev`: `package.json` `1.0.0`, Draft; then release PR `dev → main` "release v1.0.0: promote dev → main (#N — v1.0)", Draft | Claude opens, owner merges | R0 (owner) |
+| 9 | One | Tag `v1.0.0` on the merge commit, versioning row PR, clean up `zz-uat-` rows (list shown first) | Claude, after yes | R0 |
+| 10 | Both | Release note to the team (Thai): what v1.0 is, Player updates checksum-only, known gaps below | Claude drafts, owner sends | outward = ask |
 
-Nothing in Core blocks steps 1–8.
+Nothing in Core blocks steps 1–10.
 
 ### ADR 0115 content (step 2)
 
