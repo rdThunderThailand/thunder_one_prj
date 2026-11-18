@@ -30,6 +30,7 @@ import { UnsavedLeaveConfirm } from "./UnsavedLeaveConfirm";
 import { usePlaylistEditorRow } from "./usePlaylistEditorRow";
 import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
 import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
+import type { PublishPrep } from "@/features/media-workspace/publish-changes/PublishPrepDialog";
 import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { isModShortcut, isTypingTarget } from "@/lib/keyboard-shortcut";
@@ -158,7 +159,14 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     if (row.isDirty && !(await row.save())) throw new Error("save failed");
     return publishChanges("playlists", row.serverId!);
   };
-  const publish = () => router.push(`/media-workspace/program/create?playlistId=${row.serverId}`);
+  const publish = (id = row.serverId) => router.push(`/media-workspace/program/create?playlistId=${id}`);
+  // ADR 0116 §6: Publish to Channel… asks for the missing save / activation instead of being disabled.
+  const publishPrep: PublishPrep | null =
+    row.status === "draft"
+      ? { title: "Playlist นี้ยังเป็น Draft", description: "ต้องบันทึกและเปิดใช้งานก่อน จึงจะเผยแพร่ไปยัง Channel ได้", action: { label: "Save & Activate แล้วไปต่อ", run: () => row.save(true) } }
+      : row.isDirty
+        ? { title: "มีการแก้ไขที่ยังไม่บันทึก", description: "บันทึกการแก้ไขล่าสุดก่อน แล้วไปสร้าง Program ต่อ", action: { label: "Save แล้วไปต่อ", run: () => row.save() } }
+        : null;
   const publishDisabledReason = !row.serverId
     ? "บันทึก Playlist ก่อนเผยแพร่"
     : row.isDirty
@@ -187,12 +195,13 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         onRedo={history.redo}
         onCancel={goBack}
         onPreview={() => setPreviewOpen(true)}
-        onPublish={publish}
-        publishDisabledReason={publishDisabledReason}
+        onPublish={(id) => publish(id ?? row.serverId)}
+        publishPrep={publishPrep}
         affectedCount={affected.programs.length}
         onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
         onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
-        onSave={() => void row.save()}
+        onSave={() => void row.save(true)}
+        onSaveDraft={() => void row.save()}
       />
 
       {publishDialog && (

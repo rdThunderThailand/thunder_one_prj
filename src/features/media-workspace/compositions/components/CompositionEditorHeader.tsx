@@ -6,39 +6,15 @@
 
 import { useRef, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
-import { Button, buttonVariants } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
-import { layoutPublishBlock, saveAction } from "../status-display";
+import type { PublishPrep } from "@/features/media-workspace/publish-changes/PublishPrepDialog";
+import { SaveSplitButton } from "@/features/media-workspace/publish-changes/SaveSplitButton";
+import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
-
-/** One row of the split button's menu. Closes the `<details>` it lives in on the way out, so
- *  the menu is not left hanging over the page the operator just navigated away from. */
-function MenuItem({ label, reason, disabled, onSelect }: {
-  label: string;
-  /** Why this action is unavailable, shown on hover. `null` means it is available. */
-  reason: string | null;
-  disabled: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled || !!reason}
-      title={reason ?? undefined}
-      onClick={(event) => {
-        const menu = event.currentTarget.closest("details");
-        if (menu) menu.open = false;
-        onSelect();
-      }}
-      className="rounded px-3 py-2 text-left text-sm text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
-    >
-      {label}
-    </button>
-  );
-}
 
 export function CompositionEditorHeader({
   isExisting,
@@ -63,6 +39,7 @@ export function CompositionEditorHeader({
   onRedo,
   hasUnsavedChanges,
   onPublish,
+  onSaveForPublish,
   affectedCount,
   onPublishChanges,
   onShowPrograms,
@@ -97,7 +74,9 @@ export function CompositionEditorHeader({
   onRedo: () => void;
   hasUnsavedChanges: boolean;
   /** The editor has no schedule or target fields, so Publish hands the saved Composition to the wizard. */
-  onPublish: () => void;
+  onPublish: (id?: string) => void;
+  /** Saves (and with `activate`, activates) for Publish to Channel…; resolves to the id, `null` on failure. */
+  onSaveForPublish: (activate: boolean) => Promise<string | null>;
   /** Active or scheduled Programs Publish Changes would re-publish (ADR 0078). */
   affectedCount: number;
   onPublishChanges: () => void;
@@ -127,15 +106,23 @@ export function CompositionEditorHeader({
   const activateDisabledReason = saveDisabledReason
     ?? (!isComplete ? `ยังไม่ได้ผูก Content ให้ ${unboundZoneNames.length} Zone: ${unboundZoneNames.join(", ")}` : null);
   const saveState = saveAction(status);
-  // QA 2026-10-08 #4: only an Active Layout can air (Core refuses Draft and Inactive alike); say so
-  // here instead of at the end of the wizard.
-  const layoutBlock = layoutPublishBlock(status);
-  const publishDisabledReason = !isExisting
-    ? "บันทึก Layout ก่อนเผยแพร่"
-    : hasUnsavedChanges
-      ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
-      : layoutBlock
-        ? `${layoutBlock}${status === "draft" && !isComplete ? ` — ยังไม่ผูก Content ${unboundZoneNames.length} Zone` : ""}`
+  // QA 2026-10-08 #4: only an Active Layout can air (Core refuses Draft and Inactive alike). ADR 0116 §6:
+  // Publish to Channel… offers the save / activation it needs instead of a disabled item with a tooltip.
+  const publishPrep: PublishPrep | null =
+    status !== "active"
+      ? {
+          title: "Layout ต้อง Active ก่อนเผยแพร่",
+          description: activateDisabledReason
+            ? `ยังเปิดใช้งานไม่ได้: ${activateDisabledReason}`
+            : "ระบบจะบันทึกและเปิดใช้งาน Layout นี้ แล้วพาไปสร้าง Program ต่อ",
+          action: activateDisabledReason ? null : { label: "Save & Activate แล้วไปต่อ", run: () => onSaveForPublish(true) },
+        }
+      : hasUnsavedChanges
+        ? {
+            title: "มีการแก้ไขที่ยังไม่บันทึก",
+            description: saveDisabledReason ?? "บันทึกการแก้ไขล่าสุดก่อน แล้วไปสร้าง Program ต่อ",
+            action: saveDisabledReason ? null : { label: "Save แล้วไปต่อ", run: () => onSaveForPublish(false) },
+          }
         : null;
 
   const commitName = () => {
@@ -185,37 +172,17 @@ export function CompositionEditorHeader({
             Save as Template
           </Button>
 
-          <div className="flex">
-            <Button
-              size="sm"
-              className={saveState.canActivate ? "rounded-r-none" : undefined}
-              onClick={onSaveDraft}
-              disabled={saving || !!saveDisabledReason}
-              title={saveDisabledReason ?? undefined}
-            >
-              {saving ? "กำลังบันทึก..." : saveState.label}
-            </Button>
-            {saveState.canActivate && <details
-              className="relative"
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
-              }}
-            >
-              <summary
-                aria-label="ตัวเลือกการบันทึก"
-                className={`${buttonVariants({ size: "sm" })} cursor-pointer rounded-l-none border-l border-primary-foreground/25 px-2 list-none [&::-webkit-details-marker]:hidden`}
-              >
-                ▾
-              </summary>
-              <div className="absolute right-0 z-10 mt-1 flex w-56 flex-col rounded-lg border border-border bg-card p-1 shadow-lg">
-                <MenuItem label="Save & Activate" reason={activateDisabledReason} disabled={saving} onSelect={onActivate} />
-              </div>
-            </details>}
-          </div>
+          <SaveSplitButton
+            label={saveState.label}
+            saving={saving}
+            disabledReason={saveDisabledReason}
+            onSave={onSaveDraft}
+            alternate={saveState.canActivate ? { label: "Save & Activate", disabledReason: activateDisabledReason, onSelect: onActivate } : undefined}
+          />
           <PublishSplitButton
             disabled={saving}
             hasAffectedPrograms={affectedCount > 0}
-            publishToChannelDisabledReason={publishDisabledReason}
+            publishToChannelPrep={publishPrep}
             onPublishChanges={onPublishChanges}
             onPublishToChannel={onPublish}
           />

@@ -67,12 +67,14 @@ export function usePlaylistEditorRow({
 
   const isDirty = savedSnapshot !== null && baseline(history.present, info) !== savedSnapshot;
 
-  /** Resolves `true` only when the row was written; Publish Changes must not publish on a failed save. */
-  const save = async (): Promise<boolean> => {
+  /** Resolves to the saved row's id, or `null` when nothing was written; Publish Changes and the
+   *  publish prep dialog must not go on after a failed save. `activate` marks a draft ready (#404):
+   *  the editor's primary Save does it, "Save Draft" does not. */
+  const save = async (activate = false): Promise<string | null> => {
     const present = history.present;
     if (!present.name.trim()) {
       setSaveError("กรุณากรอกชื่อ Playlist ก่อนบันทึก");
-      return false;
+      return null;
     }
     setSaveError(null);
     setConflict(null);
@@ -81,7 +83,7 @@ export function usePlaylistEditorRow({
       const existingId = serverId ?? playlistId ?? null;
       const upserted = await upsertPlaylist({
         name: present.name.trim(),
-        status: resolveDraftStatus(existingId, false),
+        status: resolveDraftStatus(existingId, activate),
         metadata: encodeMetadata({ info, playback: present.playback }),
         playlistId: existingId,
         expectedRevision: revision,
@@ -107,8 +109,10 @@ export function usePlaylistEditorRow({
       setServerId(upserted.playlist_id);
       setSavedSnapshot(baseline(present, info));
       setLastSavedAt(new Date());
-      toast.success("บันทึกแล้ว");
-      return true;
+      // A ready Playlist no Program uses yet reads Inactive (ADR 0028), never Active.
+      if (activate) setStatus((current) => (current === "draft" ? "inactive" : current));
+      toast.success(activate && status === "draft" ? "บันทึกและเปิดใช้งานแล้ว" : "บันทึกแล้ว");
+      return upserted.playlist_id;
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       if (isConflict(message)) {
@@ -118,7 +122,7 @@ export function usePlaylistEditorRow({
       } else {
         setSaveError(classifyApiError(err, "บันทึก Playlist ไม่สำเร็จ").message);
       }
-      return false;
+      return null;
     } finally {
       setSaving(false);
     }
