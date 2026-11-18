@@ -41,19 +41,93 @@ export const osOf = (device: FleetDevice) => device.last_check?.os_version ?? de
 
 export const isWindows = (device: FleetDevice) => /windows/i.test(osOf(device) ?? "");
 
+export type CheckStatus = "pass" | "fail" | "unknown";
+
+/** One line of the modal's checklist. `reason` is the short blocker text, used only when the check fails. */
+export type PilotCheck = { label: string; status: CheckStatus; reason: string; note: string };
+
+/** A short reason for the row and a sentence that says what the device reported and what to do. */
+export type PilotBlocker = { reason: string; detail: string };
+
+const PASS_MODE = "windows_managed";
+const PASS_TRACK = "windows-x64";
+
 /**
- * Why a device cannot be ticked, or null. A One guard only: Core accepts any Media Device. Without an update-check the
- * OS is a hint and never blocks, because update-check eligibility rests on install mode and track (Decision 9).
+ * Every guard in the order they apply, each passing, failing or unknown (no update-check to judge by). A One guard
+ * only: Core accepts any Media Device. Without an update-check the OS is a hint and never blocks, because
+ * update-check eligibility rests on install mode and track (Decision 9).
  */
-export function pilotBlocker(device: FleetDevice): string | null {
-  if (device.ring) return "Already in the update group";
-  if (device.registry_status !== "registered") return "Not registered";
-  if (device.lifecycle_status && RETIRED.has(device.lifecycle_status.toUpperCase())) return "Decommissioned";
+export function pilotChecks(device: FleetDevice): PilotCheck[] {
   const check = device.last_check;
-  if (check && check.update_track !== "windows-x64") return `Updates ${check.update_track}, not windows-x64`;
-  if (check && check.update_install_mode !== "windows_managed") return `Install mode ${check.update_install_mode}`;
-  if (currentVersion(device) === "1.0.4") return "Install 1.0.5 by hand first";
-  return null;
+  const checkedAt = check ? formatTime(check.checked_at) : "";
+  const isConnected = ["active", "registered"].includes(device.registry_status) || !!device.last_heartbeat_at || !!check;
+  const isRetired = !!device.lifecycle_status && RETIRED.has(device.lifecycle_status.toUpperCase());
+  const status = (isFail: boolean, isKnown = true): CheckStatus => (isFail ? "fail" : isKnown ? "pass" : "unknown");
+  return [
+    {
+      label: "Not in an update group yet",
+      status: status(!!device.ring),
+      reason: "Already in the update group",
+      note: device.ring ? `It is in the ${device.ring} group. Remove it on the Pilot page first to add it again.` : "Not a member of any group.",
+    },
+    {
+      // ADR 0028 amendment 7: the Player picker's rule. Core writes pending, then active; registered is legacy seed data.
+      label: "Still registered with its tenant",
+      status: status(device.registry_status === "unregistered"),
+      reason: "Unregistered",
+      note: device.registry_status === "unregistered"
+        ? "This device was unregistered from its tenant. Register it again before adding it."
+        : `Registration is ${device.registry_status}.`,
+    },
+    {
+      label: "Has connected to Core",
+      status: status(!isConnected),
+      reason: "Never connected",
+      note: isConnected
+        ? "A heartbeat, an update check or an active registration was seen."
+        : `Registration is ${device.registry_status} and no heartbeat or update check has arrived. Activate the Player on the device and let it connect once.`,
+    },
+    {
+      label: "In service",
+      status: status(isRetired),
+      reason: "Decommissioned",
+      note: isRetired ? `Its lifecycle status is ${device.lifecycle_status}. Only devices in service can be added.` : `Lifecycle status is ${device.lifecycle_status ?? "not set"}.`,
+    },
+    {
+      label: `Updates the ${PASS_TRACK} track`,
+      status: status(!!check && check.update_track !== PASS_TRACK, !!check),
+      reason: `Updates ${check?.update_track}, not ${PASS_TRACK}`,
+      note: !check
+        ? "No update check yet, so this is not known. It does not block."
+        : check.update_track !== PASS_TRACK
+          ? `Its last update check (${checkedAt}) reported track ${check.update_track}. The update group only offers ${PASS_TRACK} builds.`
+          : `Its last update check (${checkedAt}) reported ${check.update_track}.`,
+    },
+    {
+      label: "Installs updates itself",
+      status: status(!!check && check.update_install_mode !== PASS_MODE, !!check),
+      reason: `Install mode ${check?.update_install_mode}`,
+      note: !check
+        ? "No update check yet, so this is not known. It does not block."
+        : check.update_install_mode !== PASS_MODE
+          ? `Its last update check (${checkedAt}) reported install mode ${check.update_install_mode}. The device must install updates itself (${PASS_MODE}).`
+          : `Its last update check (${checkedAt}) reported ${check.update_install_mode}.`,
+    },
+    {
+      label: "Not on 1.0.4",
+      status: status(currentVersion(device) === "1.0.4"),
+      reason: "Install 1.0.5 by hand first",
+      note: currentVersion(device) === "1.0.4"
+        ? "It runs 1.0.4, which only accepts signed updates. Install 1.0.5 by hand, then add it."
+        : `Version is ${currentVersion(device) ?? "unknown"}.`,
+    },
+  ];
+}
+
+/** The first failing check, or null when the device can be ticked. */
+export function pilotBlocker(device: FleetDevice): PilotBlocker | null {
+  const failed = pilotChecks(device).find((item) => item.status === "fail");
+  return failed ? { reason: failed.reason, detail: failed.note } : null;
 }
 
 /** Counts the version strings exactly as reported, so `1.0` and `1.0.0.0` count apart. Largest group first. */
