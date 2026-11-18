@@ -16,4 +16,4 @@ Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/do
 
 ### Versioning & release
 
-SemVer `0.x` in `package.json`; minor per `dev → main` promotion, annotated tag `vX.Y.Z` on `main`. See `docs/agents/versioning.md`.
+SemVer in `package.json` (`1.0.0` onward per ADR 0115); minor per `dev → main` promotion, annotated tag `vX.Y.Z` on `main`. See `docs/agents/versioning.md`.

@@ -5,11 +5,12 @@ agents — an agent opening a release PR follows this file literally.
 
 ## The number
 
-- **SemVer `0.MINOR.PATCH`**, stored in one place: `package.json` `"version"`. No CHANGELOG file,
+- **SemVer `MAJOR.MINOR.PATCH`**, stored in one place: `package.json` `"version"`. No CHANGELOG file,
   no version in the UI (upgrade path: read `process.env.npm_package_version` into the user menu
   when someone actually asks "which version am I on").
-- We stay on `0.x` until the frontend has a stable contract against Thunder_Core. Do not bump to
-  `1.0.0` without an ADR.
+- `1.0.0` is the first release for every tenant (ADR 0115). **MAJOR** = removes or renames a Media
+  Workspace nav route, removes a workflow step operators rely on, or needs a Core change the previous
+  release cannot run against. Thunder_Core keeps its own `0.x` numbering.
 - **MINOR** (`0.1.0 → 0.2.0`) = a release that adds backward-compatible functionality. A minor
   release may include bug fixes.
 - **PATCH** (`0.2.0 → 0.2.1`) = a release containing only backward-compatible bug fixes (plus
@@ -90,6 +91,7 @@ the count while bumping PATCH, not MINOR.
 | — | `v0.20.1` (hotfix straight to `main`, not a promotion) | #373 | 2026-11-11 |
 | — | `v0.20.2` (hotfix straight to `main`, not a promotion) | #376 | 2026-11-11 |
 | 24 | `v0.21.0` | #391 | 2026-11-17 |
+| 25 | `v0.22.0` | #398 | 2026-11-17 |
 
 Append a row for every release. This table is the only release log we keep.
 

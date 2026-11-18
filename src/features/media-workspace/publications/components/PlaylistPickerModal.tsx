@@ -47,7 +47,8 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
 
   useEffect(() => {
     let alive = true;
-    fetchPlaylists().then((rows) => { if (alive) setPlaylists(rows); }).catch(() => { if (alive) setError("Failed to load playlists."); });
+    // #404: drafts are listed too — the Draft filter matched nothing, and the editor's Publish already sends drafts here.
+    fetchPlaylists(true).then((rows) => { if (alive) setPlaylists(rows); }).catch(() => { if (alive) setError("Failed to load playlists."); });
     return () => { alive = false; };
   }, []);
 

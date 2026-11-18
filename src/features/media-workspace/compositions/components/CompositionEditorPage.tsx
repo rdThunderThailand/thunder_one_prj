@@ -196,6 +196,18 @@ export function CompositionEditorPage({
     }
     return publishChanges("compositions", id!);
   };
+  // ADR 0116 §6: the publish prep dialog's one-click fix; same flag pattern as Publish Changes above.
+  const saveForPublish = async (activate: boolean): Promise<string | null> => {
+    let savedId: string | null = null;
+    await save(async (result) => {
+      if (activate) {
+        await setCompositionStatus(result.compositionId, "active");
+        setStatus("active");
+      }
+      savedId = result.compositionId;
+    }, activate ? "เปิดใช้งาน Layout ไม่สำเร็จ" : "บันทึก Layout ไม่สำเร็จ");
+    return savedId;
+  };
   const handleForkLayout = async () => {
     if (!id) return;
     const confirmed = await confirm({
@@ -263,7 +275,8 @@ export function CompositionEditorPage({
         onPreview={() => setPreviewOpen(true)}
         canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo}
         hasUnsavedChanges={isDirty}
-        onPublish={() => router.push(`/media-workspace/program/create?compositionId=${id}`)}
+        onPublish={(savedId = id ?? undefined) => router.push(`/media-workspace/program/create?compositionId=${savedId}`)}
+        onSaveForPublish={saveForPublish}
         affectedCount={affected.programs.length}
         onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
         onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
