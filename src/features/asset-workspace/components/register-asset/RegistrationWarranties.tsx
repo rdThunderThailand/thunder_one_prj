@@ -22,7 +22,9 @@ export function RegistrationWarranties({ draft, options, errors, patch, document
     setPendingRemoval(null);
   }
   function addWarranty() {
-    const warranty = draft.savedWarranty ?? newWarranty();
+    const saved = draft.savedWarranty ?? newWarranty();
+    // The only row starts as Current (visible and editable), as in Lifecycle & Warranty Q16.
+    const warranty = draft.warranties.length ? saved : { ...saved, isCurrent: true };
     // Keep incomplete records open; completed records remain available in their summaries.
     setExpanded(new Set([warranty.clientId, ...draft.warranties
       .filter((row) => Object.keys(warrantyErrors(row)).length > 0 || documents.missingIds(row.clientId).length > 0

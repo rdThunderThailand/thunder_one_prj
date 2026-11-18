@@ -6,8 +6,7 @@ import { locationPath } from "../../domain/registration-validation";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { registrationInitialStatus } from "../../domain/registration-initial-state";
 import { registrationCategoryPath } from "../../domain/registration-categories";
-import { registrationCustodyLabel } from "../../domain/registration-reference-choices";
-import { selectedReference } from "../../domain/registration-references";
+import { selectedReference, selectedReferenceLabel } from "../../domain/registration-references";
 import type { RegistrationDocumentGroups } from "../../hooks/use-registration-documents";
 import { RegistrationReviewRows, type RegistrationReviewRow } from "./RegistrationReviewRows";
 
@@ -30,6 +29,11 @@ export function RegistrationReviewStep({ draft, options, onEdit, photoCount, nee
       value: missing ? `${names.join(", ")} · Reselect missing documents in Step 4 or remove their selections.`
         : names.length ? `${names.join(", ")} · ${verified ? "Verified" : "Local selection"}` : "" };
   }
+  // One row: "Unassigned", or the chosen holder with its type; empty (shown as missing) until a holder is chosen.
+  const custodyKind = draft.custodyType === "person" ? "persons" : "orgUnits";
+  const holder = selectedReferenceLabel(draft, custodyKind);
+  const custodian = draft.custodyType === "none" ? "Unassigned"
+    : holder && `${holder} · ${draft.custodyType === "person" ? "Person" : "Organizational unit"}`;
   const allPhotosVerified = draft.photoSelectionIds.length > 0
     && draft.photoSelectionIds.every((id) => verifiedFiles.some((file) => file.localId === id));
   const warrantyGroups = draft.warranties.map((warranty, index) => ({
@@ -63,12 +67,11 @@ export function RegistrationReviewStep({ draft, options, onEdit, photoCount, nee
     ] },
     { title: "Location & Ownership", step: 2, rows: [
       { label: "Location", value: locationPath(draft.locationId, draft), required: true },
-      { label: "Custody target type", value: draft.custodyType === "none" ? "Unassigned" : draft.custodyType === "person" ? "Person" : "Organizational Unit", required: true },
-      { label: "Custodian", value: registrationCustodyLabel(draft), required: true },
+      { label: "Custodian", value: custodian, required: true },
     ] },
     { title: "Acquisition & Warranty", step: 3, rows: [
       { label: "Acquisition Date", value: draft.purchaseDate },
-      { label: "Warranties", value: draft.warranties.length ? `${draft.warranties.length} records` : "" },
+      { label: "Warranties", value: draft.warranties.length ? `${draft.warranties.length} ${draft.warranties.length === 1 ? "record" : "records"}` : "" },
     ] },
     { title: "Additional information", step: 3, rows: [
       { label: "Asset Notes", value: draft.notes, long: true }, documentRow("asset", draft.hasDocumentSelections),

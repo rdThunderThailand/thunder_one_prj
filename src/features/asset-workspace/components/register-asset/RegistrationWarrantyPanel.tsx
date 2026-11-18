@@ -120,7 +120,6 @@ export function RegistrationWarrantyPanel({ warranty, index, errors, validationE
             value={warranty.status}
             onChange={(event) => onPatch({ status: event.target.value })}
             error={errors.status}
-            hint="Optional text describing this warranty; it does not select Current."
           />
           <div className="@min-lg/warranty:col-span-2">
             <RegistrationField name={`${prefix}-coverage`} label="Coverage Note" error={errors.coverageNote} hint={`${warranty.coverageNote.length}/5000 characters`}>

@@ -29,7 +29,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
   const categoryPath = registrationCategoryPath(draft.categoryId, draft.selectedReferences.categories);
   const custody = registrationCustodyLabel(draft);
   const detailedPreview = step >= 1;
-  const acquisitionSummary = `${draft.purchaseDate || "Acquisition date optional"} · ${draft.warranties.length ? `${draft.warranties.length} warranties` : "No warranties"}`;
+  const acquisitionSummary = `${draft.purchaseDate || "Acquisition date optional"} · ${draft.warranties.length ? `${draft.warranties.length} ${draft.warranties.length === 1 ? "warranty" : "warranties"}` : "No warranties"}`;
   const summaries = [draft.name || "Not entered", categoryPath || "Not selected", locationPath(draft.locationId, draft) || "Not selected", acquisitionSummary, step === 4 ? "Reviewing information" : "Not completed"];
   const checklist = step === 4 ? [...REGISTRATION_STEPS.slice(0, 4), "Additional information"] : REGISTRATION_STEPS;
   if (step === 4) summaries[4] = draft.notes || draft.hasDocumentSelections ? "Notes and documents reviewed" : "Optional information not provided";
@@ -47,8 +47,9 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
           <div
             className={cn(
               "relative flex shrink-0 items-center justify-center overflow-hidden rounded-control bg-muted",
-              !photo ? "h-12 w-12" : step === 0 ? "h-24 w-24" : "aspect-video max-h-48 w-full",
-              detailedPreview && photo && "max-h-none",
+              !photo ? "h-12 w-12" : step === 0 ? "h-24 w-24" : "aspect-video max-h-40 w-full",
+              // Review shows the whole photo; steps 1–3 keep it short so the details stay in view.
+              step === 4 && photo && "max-h-none",
             )}
           >
             {photo ? (
@@ -58,7 +59,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
                 fill
                 unoptimized
                 sizes={step === 0 ? "96px" : detailedPreview ? "(max-width: 1023px) 100vw, 36vw" : "352px"}
-                className="object-contain"
+                className={step === 4 ? "object-contain" : "object-cover"}
               />
             ) : (
               <BoxIcon className="h-5 w-5 text-muted-foreground" />
