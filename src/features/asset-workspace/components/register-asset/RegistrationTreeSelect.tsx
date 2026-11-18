@@ -4,7 +4,9 @@ import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, SearchIc
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
-import { searchTree, treePath, type ReferenceTree, type TreeNode } from "../../domain/registration-reference-tree";
+import {
+  distinctOrganizationCode, searchTree, treePath, type ReferenceTree, type ReferenceTreeKind, type TreeNode,
+} from "../../domain/registration-reference-tree";
 import { RegistrationField } from "./RegistrationFields";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +19,7 @@ export interface TreeSelectCopy {
   /** Heading over a parent's children, e.g. "Subcategories" / "Inside". */
   children: string;
   /** Where an administrator adds new rows, e.g. "Categories". */
-  adminPage: string;
+  adminPage?: string;
 }
 
 /**
@@ -25,11 +27,12 @@ export interface TreeSelectCopy {
  * A row with children opens them (count ›); a row without chooses; inside a level the parent comes first, labelled as
  * the parent, then its children indented under a guide line.
  */
-export function RegistrationTreeSelect({ name, label, copy, tree, value, selectedLabel = "", required = true, error, maxLength, onChange }: {
-  name: string; label: string; copy: TreeSelectCopy; tree: ReferenceTree; value: string;
+export function RegistrationTreeSelect({ name, label, kind, copy, tree, value, selectedLabel = "", required = true, error, hint, maxLength, onChange }: {
+  name: string; label: string; kind: ReferenceTreeKind; copy: TreeSelectCopy; tree: ReferenceTree; value: string;
   /** Shown when the value isn't in the active tree (e.g. an asset's current inactive category). */
-  selectedLabel?: string; required?: boolean; error?: string; maxLength: number; onChange: (node: TreeNode) => void;
+  selectedLabel?: string; required?: boolean; error?: string; hint?: string; maxLength: number; onChange: (node: TreeNode) => void;
 }) {
+  const organizational = kind === "orgUnits";
   const selectedPath = treePath(tree, value);
   const [open, setOpen] = useState(false);
   const [level, setLevel] = useState("");
@@ -50,12 +53,17 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, selecte
     onChange(node);
     setOpen(false);
   }
+  function openLevel(id: string, fromKeyboard: boolean) {
+    setLevel(id);
+    if (organizational && fromKeyboard) input.current?.focus();
+  }
   const option = (node: TreeNode, extra: Partial<OptionProps> = {}) => (
-    <Option key={node.id} tree={tree} node={node} selectedPath={selectedPath} onChoose={choose} onOpen={setLevel} {...extra} />
+    <Option key={node.id} tree={tree} node={node} selectedPath={selectedPath} organizational={organizational}
+      onChoose={choose} onOpen={openLevel} {...extra} />
   );
 
   return (
-    <RegistrationField name={name} label={label} required={required} error={error}>
+    <RegistrationField name={name} label={label} required={required} error={error} hint={hint}>
       <Popover open={open} onOpenChange={toggle}>
         <PopoverTrigger asChild>
           <Button
@@ -64,7 +72,7 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, selecte
             className="h-auto min-h-10 w-full justify-between gap-3 py-2 text-start font-normal"
             aria-label={`${label}${required ? " (required)" : ""}: ${names.join(" › ") || "Not selected"}`}
             aria-invalid={Boolean(error)}
-            aria-describedby={error ? `registration-${name}-error` : undefined}
+            aria-describedby={[hint && `registration-${name}-hint`, error && `registration-${name}-error`].filter(Boolean).join(" ") || undefined}
           >
             <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1 whitespace-normal">
               {names.length ? names.map((part, index) => (
@@ -74,7 +82,7 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, selecte
                     {part}
                   </span>
                 </span>
-              )) : <span className="text-muted-foreground">Select a {copy.one}</span>}
+              )) : <span className="text-muted-foreground">{organizational ? "Select organizational unit" : `Select a ${copy.one}`}</span>}
             </span>
             <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
           </Button>
@@ -82,7 +90,7 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, selecte
         <PopoverContent
           align="start"
           collisionPadding={12}
-          aria-label={`Choose a ${copy.one}`}
+          aria-label={`Choose ${organizational ? "an" : "a"} ${copy.one}`}
           className="flex max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-control p-0 motion-reduce:animate-none"
           onOpenAutoFocus={(event) => {
             event.preventDefault();
@@ -97,7 +105,8 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, selecte
               aria-label={`Search ${copy.many}`}
               placeholder={`Search ${copy.many}…`}
               autoComplete="off"
-              className="border-0 pl-9 shadow-none focus-visible:ring-0 max-sm:h-10"
+              className={cn("border-0 pl-9 shadow-none max-sm:h-10",
+                organizational ? "focus-visible:ring-2 focus-visible:ring-ring" : "focus-visible:ring-0")}
               maxLength={maxLength}
               value={search}
               aria-controls={listId}
@@ -106,7 +115,7 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, selecte
           </div>
           {!search.trim() && (parent ? (
             <button type="button" className={cn(rowClass, "shrink-0 rounded-none border-b border-border text-xs font-semibold text-muted-foreground")}
-              onClick={() => setLevel(parent.parentId && tree.byId.has(parent.parentId) ? parent.parentId : "")}>
+              onClick={(event) => openLevel(parent.parentId && tree.byId.has(parent.parentId) ? parent.parentId : "", event.detail === 0)}>
               <ChevronLeftIcon aria-hidden="true" className="size-3.5 shrink-0" />
               <span className="min-w-0 flex-1 wrap-anywhere">{parent.name}</span>
             </button>
@@ -121,7 +130,11 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, selecte
               })) : <Empty>No matching {copy.many}. Try another name.</Empty>
             ) : parent ? (
               <>
-                {option(parent, { onOpen: undefined, hint: `Parent ${copy.one} · choose it as a whole`, emphasis: true })}
+                {option(parent, {
+                  onOpen: undefined,
+                  hint: organizational ? "Choose this unit as a whole" : `Parent ${copy.one} · choose it as a whole`,
+                  emphasis: true,
+                })}
                 <li className="px-3 pb-1 pt-2 text-2xs font-medium text-muted-foreground">{copy.children} ({levelRows.length})</li>
                 <li>
                   {/* Indented under a guide line so children read as inside the parent. */}
@@ -131,7 +144,7 @@ export function RegistrationTreeSelect({ name, label, copy, tree, value, selecte
                 </li>
               </>
             ) : levelRows.length ? levelRows.map((node) => option(node))
-              : <Empty>No active {copy.many} yet. An administrator can add one in {copy.adminPage}.</Empty>}
+              : <Empty>No active {copy.many} yet.{copy.adminPage && ` An administrator can add one in ${copy.adminPage}.`}</Empty>}
           </ul>
         </PopoverContent>
       </Popover>
@@ -144,33 +157,39 @@ function Empty({ children }: { children: ReactNode }) {
 }
 
 interface OptionProps {
-  tree: ReferenceTree; node: TreeNode; selectedPath: string[]; hint?: string; emphasis?: boolean;
-  onChoose: (node: TreeNode) => void; onOpen?: (id: string) => void;
+  tree: ReferenceTree; node: TreeNode; selectedPath: string[]; organizational: boolean; hint?: string; emphasis?: boolean;
+  onChoose: (node: TreeNode) => void; onOpen?: (id: string, fromKeyboard: boolean) => void;
 }
 
-function Option({ tree, node, selectedPath, hint, emphasis = false, onChoose, onOpen }: OptionProps) {
+function Option({ tree, node, selectedPath, organizational, hint, emphasis = false, onChoose, onOpen }: OptionProps) {
   const count = tree.children.get(node.id)?.length ?? 0;
   const drills = Boolean(onOpen && count);
   const selected = selectedPath.at(-1) === node.id;
   const holdsSelection = drills && !selected && selectedPath.includes(node.id);
+  const code = organizational ? distinctOrganizationCode(node.name, node.code) : "";
+  const drillLabel = organizational
+    ? [`Show units inside ${node.name}`, code, node.tag, `${count} inside`, holdsSelection && "Contains your selection"].filter(Boolean).join(", ")
+    : `${node.name}, ${count} inside`;
   return (
     <li>
       <button
         type="button"
         aria-current={selected ? "true" : undefined}
-        aria-label={drills ? `${node.name}, ${count} inside` : undefined}
+        aria-label={drills ? drillLabel : undefined}
         className={cn(rowClass, selected && "bg-accent hover:bg-accent")}
-        onClick={() => (drills ? onOpen?.(node.id) : onChoose(node))}
+        onClick={(event) => (drills ? onOpen?.(node.id, event.detail === 0) : onChoose(node))}
       >
         <span className="min-w-0 flex-1">
-          <span className={cn("block wrap-anywhere text-foreground", (selected || emphasis) && "font-semibold")}>{node.name}</span>
+          <span className={cn("block wrap-anywhere text-foreground", (selected || emphasis || organizational) && "font-semibold")}>{node.name}</span>
+          {code && <span className="block wrap-anywhere text-xs text-muted-foreground">{code}</span>}
           {(hint || holdsSelection) && (
             <span className={cn("block text-xs wrap-anywhere", holdsSelection ? "text-accent-foreground" : "text-muted-foreground")}>
               {holdsSelection ? "Contains your selection" : hint}
             </span>
           )}
         </span>
-        {node.tag && <Badge color="zinc" variant="pill" className="shrink-0 whitespace-nowrap capitalize">{node.tag}</Badge>}
+        {node.tag && <Badge color="zinc" variant="pill" className={cn("shrink-0 capitalize",
+          organizational ? "max-w-1/3 whitespace-normal wrap-anywhere" : "whitespace-nowrap")}>{node.tag}</Badge>}
         {selected && <CheckIcon aria-hidden="true" className="size-4 shrink-0 text-accent-foreground" />}
         {drills && (
           <span aria-hidden="true" className="flex shrink-0 items-center gap-0.5 text-xs tabular-nums text-muted-foreground">

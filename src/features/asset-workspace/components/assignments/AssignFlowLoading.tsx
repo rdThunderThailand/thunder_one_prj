@@ -151,7 +151,7 @@ export function AssignLoadingPanel() {
 }
 
 /** Route loading has no params, so the header falls back to the Assignments origin. */
-export function AssignFlowLoading({ title = "Assign Asset", subtitle = "Assign this asset to a person or team.", steps, kind, mockNote = false }: {
+export function AssignFlowLoading({ title = "Assign Asset", subtitle = "Assign this asset to a person or an organizational unit.", steps, kind, mockNote = false }: {
   title?: string; subtitle?: string; steps?: string[]; kind?: "assign" | "transfer" | "return"; mockNote?: boolean;
 }) {
   const origin = assignOrigin(undefined, null);

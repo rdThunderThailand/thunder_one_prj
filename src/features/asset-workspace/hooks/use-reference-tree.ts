@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { referenceTree, type ReferenceTree, type TreeNode } from "../domain/registration-reference-tree";
+import { referenceTree, type ReferenceTree, type ReferenceTreeKind, type TreeNode } from "../domain/registration-reference-tree";
 import { getCategories } from "../services/asset-categories-api";
 import { getRegistrationLocations } from "../services/registration-location-tree";
+import { getRegistrationOrgUnits } from "../services/registration-org-unit-tree";
 
-async function loadRows(context: string, kind: "categories" | "locations", signal: AbortSignal): Promise<TreeNode[] | null> {
+async function loadRows(context: string, kind: ReferenceTreeKind, signal: AbortSignal): Promise<TreeNode[] | null> {
+  if (kind === "orgUnits") return getRegistrationOrgUnits(context, signal);
   if (kind === "categories") {
     const result = await getCategories(context, signal);
     return result.ok ? result.data.map((row) => ({
@@ -19,14 +21,16 @@ async function loadRows(context: string, kind: "categories" | "locations", signa
 }
 
 /** Whole active tree for a registration picker. "failed" → the step falls back to the registration options select. */
-export function useReferenceTree(context: string, kind: "categories" | "locations") {
-  const [tree, setTree] = useState<ReferenceTree | "failed" | null>(null);
+export function useReferenceTree(context: string, kind: ReferenceTreeKind) {
+  const [result, setResult] = useState<{ context: string; kind: ReferenceTreeKind; tree: ReferenceTree | "failed" } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
-    void loadRows(context, kind, controller.signal)
-      .then((rows) => setTree(rows ? referenceTree(rows) : "failed"))
-      .catch(() => { /* Abort only: both readers turn request failures into results. */ });
+    void loadRows(context, kind, controller.signal).then((rows) => {
+      if (!controller.signal.aborted) setResult({ context, kind, tree: rows ? referenceTree(rows) : "failed" });
+    }).catch(() => {
+      if (!controller.signal.aborted) setResult({ context, kind, tree: "failed" });
+    });
     return () => controller.abort();
   }, [context, kind]);
-  return tree;
+  return result?.context === context && result.kind === kind ? result.tree : null;
 }
