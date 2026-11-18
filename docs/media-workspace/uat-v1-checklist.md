@@ -3,7 +3,7 @@
 เวอร์ชันที่ทดสอบ: One `v0.23.0` + Core `v0.26.0` บน prod · ร่างเมื่อ 2026-11-18 · ปรับตาม UAT รอบแรก 2026-11-18
 แผนรวม: `plan-v1-release.md` · เกณฑ์ P0: `plan-v1-p0.md` · การตัดสินใจที่เปลี่ยน flow: ADR 0116
 
-**ทดสอบครั้งเดียวบน v0.23.0:** ต้องผ่านทุกข้อ (หรือ owner ยอมรับเป็น known gap) ก่อนจึงจะตัด `v1.0.0` ถ้าเจอบั๊ก ทีม dev แก้แล้วออกเวอร์ชันใหม่ให้ทดสอบข้อที่เกี่ยวข้องซ้ำ รอบ UAT แรก (บน v0.22.0) พบว่า flow ของ Playlist editor และปุ่ม Publish ซับซ้อน จึงปรับไว้ใน v0.23.0 (#405) ข้อที่เกี่ยวข้องคือ A2, A4, A8, A9, A13–A16, C3, C6
+**ทดสอบครั้งเดียวบน v0.23.0 (ขึ้น prod 18 พ.ย. 2026):** ต้องผ่านทุกข้อ (หรือ owner ยอมรับเป็น known gap) ก่อนจึงจะตัด `v1.0.0` ถ้าเจอบั๊ก ทีม dev แก้แล้วออกเวอร์ชันใหม่ให้ทดสอบข้อที่เกี่ยวข้องซ้ำ รอบ UAT แรก (บน v0.22.0) พบว่า flow ของ Playlist editor และปุ่ม Publish ซับซ้อน จึงปรับไว้ใน v0.23.0 (#405) ข้อที่เกี่ยวข้องคือ A2, A4, A8, A9, A13–A16, C3, C6
 
 ## ผลรอบแรก (บน v0.22.0, 18 พ.ย.) ที่รู้แล้ว
 
@@ -15,8 +15,10 @@
 
 - URL: https://app.thunderone.asia · login บัญชี QA ของ tenant **thunder_qa** เท่านั้น ห้ามทำใน tenant ลูกค้า
 - เครื่องเล่นทดสอบ: **Demo Kiosk Test 01** (Windows) ถ้าใช้เครื่องอื่นให้จดชื่อเครื่องและ OS ในช่องหมายเหตุ
-- ทุกอย่างที่สร้างใหม่ ให้ตั้งชื่อขึ้นต้นด้วย **`zz-uat-`** (เช่น `zz-uat-playlist-01`) เพื่อไล่ลบภายหลัง **ห้ามลบเอง** ให้ทีม dev ลบหลังจบ UAT
-- ห้ามแก้หรือ unpublish Program ที่ไม่ได้ขึ้นต้นด้วย `zz-uat-`
+- **ตรวจก่อนเริ่มว่า prod เป็น v0.23.0 แล้ว:** เปิด Playlist ใหม่ต้องเห็นปุ่ม **Save & Activate** และข้อ B1 ต้องขึ้นคำว่า channels ถ้ายังไม่ใช่ ให้ hard refresh (Cmd+Shift+R) แล้วแจ้งทีม dev ถ้ายังไม่เปลี่ยน
+- ทุกอย่างที่สร้างใหม่ ให้ตั้งชื่อขึ้นต้นด้วย **`zz-uat2-`** (รอบแรกใช้ `zz-uat-` ไปแล้ว ของเดิมยังอยู่ อย่าใช้ซ้ำ) ชื่อในตารางเขียนเป็น `zz-uat-…` ให้เติม `2` ทุกครั้ง เช่น `zz-uat2-playlist-01` **ห้ามลบเอง** ให้ทีม dev ลบหลังจบ UAT
+- **ข้อที่ต้องดูจอจริง (A11, A12, C7–C13):** ก่อนเริ่มเช็คที่ All Channels ว่า Demo Kiosk Test 01 เป็น **Online** ถ้า Offline แจ้งทีม dev ให้เปิดเครื่องก่อน รอบแรกข้อเหล่านี้ทดสอบไม่ได้เพราะเครื่อง Offline
+- ห้ามแก้หรือ unpublish Program ที่ไม่ได้ขึ้นต้นด้วย `zz-uat2-`
 - ผลแต่ละข้อ: ✅ ผ่าน / ❌ ไม่ผ่าน (แนบภาพหน้าจอ + เวลา + URL) / ⏭️ ข้าม (ระบุเหตุผล)
 - เจอบั๊ก: เปิด GitHub issue ที่ `rdThunderThailand/thunder_one_prj` ใส่ `[UAT v1.0]` นำหน้าชื่อ พร้อมขั้นตอน ผลที่ได้ ผลที่คาด และภาพ
 - ก่อนเปิดบั๊ก เช็ค **"Known gaps"** ท้ายไฟล์ก่อน ข้อที่อยู่ในนั้นไม่ต้องเปิด issue ใหม่
@@ -27,7 +29,7 @@
 |---|---|---|---|---|
 | A1 | สร้าง Layout `zz-uat-layout-draft` ใส่ Playlist ทุก Zone แต่**ไม่กด Activate** → Programs → สร้าง Program → เลือก Layout | ใน picker **ไม่มี** Layout ที่เป็น Draft/Inactive ให้เลือก | | |
 | A2 | เปิด Layout `zz-uat-layout-draft` (Draft, ผูก Playlist ครบ) → กด **Publish to Channel** → ในกล่องที่ขึ้นมา กด **Save & Activate แล้วไปต่อ** | ขึ้นกล่อง "Layout ต้อง Active ก่อนเผยแพร่" · กดแล้ว Layout เป็น Active และเข้า Program wizard โดยผูก Layout นี้ไว้แล้ว | | |
-| A3 | Programs → Create Program → เลือก Layout `zz-uat-layout-01` (Active) → ไปถึงขั้น 2 Prepare Content ค้างไว้ · อีกแท็บ: Layouts → ⋯ ของ `zz-uat-layout-01` → **Set inactive** · กลับมาแท็บ wizard → กด Next/Back เพื่อให้ขั้น 2 แสดงอีกครั้ง | มีคำเตือนภาษาไทยว่า Layout ยังไม่ Active พร้อมปุ่ม **Activate Layout** · กดแล้วคำเตือนหายโดยไม่ต้อง reload และไปต่อถึงขั้น 5 ได้ | | |
+| A3 | (ทำข้อ C4 ก่อนเพื่อให้มี `zz-uat-layout-01`) Programs → Create Program → เลือก Layout `zz-uat-layout-01` (Active) → ไปถึงขั้น 2 Prepare Content ค้างไว้ · อีกแท็บ: Layouts → ⋯ ของ `zz-uat-layout-01` → **Set inactive** · กลับมาแท็บ wizard → กด Next/Back เพื่อให้ขั้น 2 แสดงอีกครั้ง | มีคำเตือนภาษาไทยว่า Layout ยังไม่ Active พร้อมปุ่ม **Activate Layout** · กดแล้วคำเตือนหายโดยไม่ต้อง reload และไปต่อถึงขั้น 5 ได้ | | |
 | A4 | สร้าง Layout `zz-uat-layout-unbound` ที่มี Zone ว่าง (ไม่ผูก Playlist) → Save → กด **Publish to Channel** | กล่องบอกว่ายังเปิดใช้งานไม่ได้ พร้อมจำนวนและชื่อ Zone ที่ยังไม่ผูก · มีแค่ปุ่มปิด ไม่มีปุ่ม Activate | | |
 | A5 | ต่อจาก A3 ก่อนกด Activate Layout: ไปขั้น 5 Publish ขณะ Layout ยัง Inactive | ปุ่ม Publish กดไม่ได้ และบอกเหตุผล | | |
 | A6 | Program แบบ Draft ที่ผูก Layout แบบ Draft → หน้า Edit Program | มีคำเตือน + ลิงก์ไป Layout และปุ่ม Publish กดไม่ได้ | | |
@@ -46,7 +48,7 @@
 
 | ID | ขั้นตอน | ผลที่คาด | ผล | หมายเหตุ |
 |---|---|---|---|---|
-| B1 | All Channels → `10 / page` → ไปหน้า 2 (ต้องมีมากกว่า 10 Channel) | ท้ายตารางเขียน "Showing 11 to N of N **channels**" | | ทดสอบหลัง release เท่านั้น ก่อนหน้านั้นยังขึ้น "playlists" อยู่ |
+| B1 | All Channels → `10 / page` → ไปหน้า 2 (ต้องมีมากกว่า 10 Channel) | ท้ายตารางเขียน "Showing 11 to N of N **channels**" | | ถ้ายังขึ้น "playlists" แปลว่า prod ยังไม่เป็น v0.23.0 |
 
 ## C. Flow หลัก end-to-end
 
