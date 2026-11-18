@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { CheckIcon, EditIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
+import type { PublishPrep } from "@/features/media-workspace/publish-changes/PublishPrepDialog";
+import { SaveSplitButton } from "@/features/media-workspace/publish-changes/SaveSplitButton";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 
@@ -24,11 +26,12 @@ export function PlaylistEditorHeader({
   onCancel,
   onPreview,
   onPublish,
-  publishDisabledReason,
+  publishPrep,
   affectedCount,
   onPublishChanges,
   onShowPrograms,
   onSave,
+  onSaveDraft,
 }: {
   name: string;
   status: string;
@@ -43,13 +46,16 @@ export function PlaylistEditorHeader({
   onRedo: () => void;
   onCancel: () => void;
   onPreview: () => void;
-  onPublish: () => void;
-  publishDisabledReason: string | null;
+  onPublish: (id?: string) => void;
+  publishPrep: PublishPrep | null;
   /** Active or scheduled Programs Publish Changes would re-publish (ADR 0078). */
   affectedCount: number;
   onPublishChanges: () => void;
   onShowPrograms: () => void;
+  /** Saves and, for a draft, marks it ready so the Program wizard lists it (#404). */
   onSave: () => void;
+  /** Saves without changing the draft status; offered only while the Playlist is a draft. */
+  onSaveDraft: () => void;
 }) {
   // ⌘Z / ⇧⌘Z on Apple; Ctrl+Z / Ctrl+Y elsewhere (Ctrl+Shift+Z works too).
   const shortcutPlatform = useShortcutPlatform();
@@ -70,10 +76,11 @@ export function PlaylistEditorHeader({
 
   // An empty name is "Untitled Playlist" on screen, so a disabled Save gave no hint; the save guard
   // states the reason, and the name field opens so the fix is one keystroke away.
-  const saveOrAskName = () => {
+  const saveOrAskName = (save: () => void) => {
     if (name.trim() === "") setEditing(true);
-    onSave();
+    save();
   };
+  const isDraft = status === "draft";
 
   return (
     <div className="min-h-[70px] shrink-0 space-y-1">
@@ -177,13 +184,17 @@ export function PlaylistEditorHeader({
         >
           Preview
         </Button>
-        <Button size="sm" onClick={saveOrAskName} disabled={saving}>
-          {saving ? "กำลังบันทึก..." : "Save"}
-        </Button>
+        <SaveSplitButton
+          label={isDraft ? "Save & Activate" : "Save"}
+          saving={saving}
+          disabledReason={null}
+          onSave={() => saveOrAskName(onSave)}
+          alternate={isDraft ? { label: "Save Draft", disabledReason: null, onSelect: () => saveOrAskName(onSaveDraft) } : undefined}
+        />
         <PublishSplitButton
           disabled={saving}
           hasAffectedPrograms={affectedCount > 0}
-          publishToChannelDisabledReason={publishDisabledReason}
+          publishToChannelPrep={publishPrep}
           onPublishChanges={onPublishChanges}
           onPublishToChannel={onPublish}
         />
