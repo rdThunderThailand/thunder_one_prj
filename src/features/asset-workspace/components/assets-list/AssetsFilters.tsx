@@ -3,12 +3,11 @@ import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
-import { FilterIcon, RefreshIcon, SearchIcon } from "@/components/ui/icons";
+import { FilterIcon, RefreshIcon, SearchIcon, XIcon } from "@/components/ui/icons";
 import type { AssetFilterOptions, AssetReadResult } from "../../services/assets-list-types";
 import type { AssetsListUrlState } from "../../hooks/use-assets-list-url";
 import { ASSET_SEARCH_MAX_LENGTH } from "../../services/assets-list-query";
 import { AssetsFilterOptionsLoading } from "./AssetsListLoading";
-import { UnavailableAction } from "./AssetsListToolbar";
 
 interface FilterSelectProps {
   label: string;
@@ -39,11 +38,15 @@ function FilterSelect({ label, allLabel, value, options, pending, onChange }: Fi
   );
 }
 
-export function AssetsFilters({ result, url, loading = false, selectedCategory }: {
+export function AssetsFilters({ result, url, loading = false, selectedCategory, showClear = true, showApplied = false }: {
   result: AssetReadResult<AssetFilterOptions> | null;
   url: AssetsListUrlState;
   loading?: boolean;
   selectedCategory?: { id: string; name: string };
+  /** The Assets page shows Clear only while a filter is applied. */
+  showClear?: boolean;
+  /** Assets page: a removable chip for each applied filter under the bar. */
+  showApplied?: boolean;
 }) {
   const currentSearch = url.get("q") ?? "";
   const [input, setInput] = useState({ source: currentSearch, draft: currentSearch, submitted: undefined as string | undefined });
@@ -83,12 +86,26 @@ export function AssetsFilters({ result, url, loading = false, selectedCategory }
       ? `${category.label} and child categories` : category.label,
   }));
 
+  const custodyOptions = (options?.custodyTargets ?? []).map((target) => ({ value: `${target.type}:${target.id}`, label: `${target.name || target.id} (${target.type === "person" ? "Person" : "Organizational Unit"})` }));
+  const labelOf = (list: { value: string; label: string }[], value: string) => list.find((option) => option.value === value)?.label ?? "Current selection";
+  const applied: { key: string; label: string; clear: Record<string, undefined> }[] = [];
+  if (currentSearch) applied.push({ key: "q", label: `Search: “${currentSearch}”`, clear: { q: undefined } });
+  const categoryId = url.get("category_id");
+  if (categoryId) applied.push({ key: "category", label: `Category: ${labelOf(categoryOptions, categoryId)}`, clear: { category_id: undefined, include_child_categories: undefined } });
+  const locationId = url.get("location_id");
+  if (locationId) applied.push({ key: "location", label: `Location: ${labelOf(references(options?.locations ?? []), locationId)}`, clear: { location_id: undefined } });
+  const status = url.get("status");
+  if (status) applied.push({ key: "status", label: `Status: ${status}`, clear: { status: undefined } });
+  const condition = url.get("condition");
+  if (condition) applied.push({ key: "condition", label: `Condition: ${condition}`, clear: { condition: undefined } });
+  if (custody) applied.push({ key: "custody", label: `Assignee: ${labelOf(custodyOptions, custody)}`, clear: { custody_type: undefined, custody_id: undefined } });
+
   return (
     <section aria-label="Asset filters" className="@container/asset-filters min-w-0 space-y-3">
-      <div className="grid items-start gap-2 @min-2xl/asset-filters:grid-cols-[minmax(0,1fr)_auto] @min-6xl/asset-filters:grid-cols-[minmax(12rem,1.7fr)_minmax(0,4fr)_auto]">
+      <div className="grid items-start gap-2 @min-2xl/asset-filters:grid-cols-[minmax(0,1fr)_auto] @min-5xl/asset-filters:grid-cols-[minmax(11rem,1.3fr)_minmax(0,4fr)_auto]">
         <form
           role="search"
-          className="relative min-w-0 @min-2xl/asset-filters:col-span-2 @min-6xl/asset-filters:col-span-1"
+          className="relative min-w-0 @min-2xl/asset-filters:col-span-2 @min-5xl/asset-filters:col-span-1"
           onSubmit={(event) => { event.preventDefault(); applySearch(search.trim()); }}
         >
           <label htmlFor="assets-search" className="sr-only">Search assets by name, Asset Tag or serial number</label>
@@ -138,7 +155,7 @@ export function AssetsFilters({ result, url, loading = false, selectedCategory }
             label="Assignee"
             allLabel="All Assignees"
             value={custody}
-            options={(options?.custodyTargets ?? []).map((target) => ({ value: `${target.type}:${target.id}`, label: `${target.name || target.id} (${target.type === "person" ? "Person" : "Organizational Unit"})` }))}
+            options={custodyOptions}
             pending={pending}
             onChange={(value) => {
               const [type, id] = value?.split(":") ?? [];
@@ -165,21 +182,48 @@ export function AssetsFilters({ result, url, loading = false, selectedCategory }
               />
             </PopoverContent>
           </Popover>
-          <UnavailableAction className="h-10">Save View</UnavailableAction>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-10 text-primary"
-            onClick={url.clear}
-          >
-            <RefreshIcon
-              aria-hidden="true"
-              className="size-4"
-            />
-            Clear Filters
-          </Button>
+          {showClear && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-10 text-primary"
+              onClick={url.clear}
+            >
+              <RefreshIcon
+                aria-hidden="true"
+                className="size-4"
+              />
+              Clear Filters
+            </Button>
+          )}
         </div>
       </div>
+      {showApplied && applied.length > 0 && (
+        <ul
+          aria-label="Applied filters"
+          className="flex flex-wrap items-center gap-2"
+        >
+          {applied.map((filter) => (
+            <li key={filter.key}>
+              <button
+                type="button"
+                disabled={url.isPending}
+                onClick={() => url.set(filter.clear)}
+                aria-label={`Remove filter ${filter.label}`}
+                className="inline-flex h-7 max-w-80 items-center gap-1.5 rounded-pill border border-border bg-accent px-2.5 text-xs text-accent-foreground hover:border-foreground/20 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-60"
+              >
+                <span className="truncate">
+                  {filter.label}
+                </span>
+                <XIcon
+                  aria-hidden="true"
+                  className="size-3 shrink-0"
+                />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

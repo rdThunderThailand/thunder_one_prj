@@ -7,7 +7,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { assetListQueryString, readAssetListSearch } from "../../services/assets-list-query";
 import { useAssetsListData } from "../../hooks/use-assets-list-data";
 import { useAssetsListUrl } from "../../hooks/use-assets-list-url";
-import { Button } from "@/components/ui/lovable/button";
 import { AssetsFilters } from "./AssetsFilters";
 import { AssetsSummary } from "./AssetsSummary";
 import { AssetsPageActions } from "./AssetsListToolbar";
@@ -109,16 +108,15 @@ export function AssetsListView({ context }: { context: string }) {
         result={filters.data ? { ok: true, data: filters.data } : filters.error}
         loading={filters.pending && !filters.data} url={url}
         selectedCategory={selectedCategory}
+        showClear={hasFilters || !parsed.success || list.error?.status === 400}
+        showApplied
       />
       {filters.error && (
         <AssetsSectionError title="Couldn’t load filter options" message={filters.error.message} pending={filters.pending} retry={filters.retry} />
       )}
-      {(hasFilters || !parsed.success || list.error?.status === 400) && (
+      {parsed.success && query.import_batch_id && (
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          {parsed.success && query.import_batch_id && (
-            <AssetsImportBatchFilter context={context} batchId={query.import_batch_id} />
-          )}
-          <Button size="sm" variant="ghost" onClick={url.clear}>Clear filters</Button>
+          <AssetsImportBatchFilter context={context} batchId={query.import_batch_id} />
         </div>
       )}
       <AssetsListContent

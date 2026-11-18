@@ -11,7 +11,7 @@ import { AccessDeniedState, EmptyState } from "../states/states";
 import { AssetsTable } from "./AssetsTable";
 import { AssetsCompactList } from "./AssetsCompactList";
 import { AssetsPagination } from "./AssetsPagination";
-import { AssetsSelectionToolbar, AssetsSortControl, AssetsViewControls } from "./AssetsListToolbar";
+import { AssetsSelectionToolbar, AssetsSortControl } from "./AssetsListToolbar";
 import { AssetsTableLoading } from "./AssetsListLoading";
 import { AssetsSectionError } from "./AssetsSectionError";
 import type { AssetsSelection } from "../../hooks/use-assets-selection";
@@ -52,7 +52,6 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 @min-4xl/assets-results:justify-end">
           <AssetsSortControl value={query.sort} pending={pending} onChange={(sort) => url.set({ sort })} />
           {pagination && <AssetsPagination {...pagination} compact />}
-          <AssetsViewControls />
         </div>
       </div>
       {(pending || error) && (

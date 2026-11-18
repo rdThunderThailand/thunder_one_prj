@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode, RefObject } from "react";
+import type { RefObject } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import {
@@ -7,39 +7,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import type { AssetListQuery } from "../../services/assets-list-query";
 import {
-  ChevronDownIcon, GridIcon, InventoryIcon, ListIcon, PlusIcon, ScanIcon, XIcon,
+  ChevronDownIcon, PlusIcon, ScanIcon, XIcon,
 } from "@/components/ui/icons";
 import type { AssetListRow } from "../../services/assets-list-types";
 import { AssetsMoreActionsMenu, AssetsSelectedExportMenu } from "./AssetsExportMenus";
 import { AssetsSingleActions } from "./AssetsSingleActions";
-
-interface UnavailableActionProps {
-  children?: ReactNode;
-  icon?: ComponentType<{ className?: string }>;
-  label?: string;
-  className?: string;
-}
-
-const UNAVAILABLE_REASON = "Not available in this version of the Assets page";
-
-/** Aria-disabled keeps the explanation discoverable by keyboard users. No action is attached.
- *  Muted text instead of opacity, so it reads as "not yet" rather than broken. */
-export function UnavailableAction({ children, icon: Icon, label, className }: UnavailableActionProps) {
-  return (
-    <Button
-      aria-disabled="true"
-      aria-label={label}
-      aria-description={`${UNAVAILABLE_REASON}.`}
-      title={UNAVAILABLE_REASON}
-      variant="outline"
-      size={label ? "icon-sm" : "sm"}
-      className={`cursor-not-allowed text-muted-foreground hover:bg-card ${label ? "max-sm:size-10" : "px-2 max-sm:h-10"} ${className ?? ""}`}
-    >
-      {Icon && <Icon className="size-4" />}
-      {children}
-    </Button>
-  );
-}
 
 export function AssetsPageActions({ context, onScan, scanTriggerRef, onExport, exportDisabled, onLabels, labelsDisabled }: {
   context: string;
@@ -135,21 +107,9 @@ export function AssetsSelectionToolbar({ count, single, clear, onExport, exportD
             row={single}
             count={count}
           />
-          <UnavailableAction icon={InventoryIcon}>Add to Inventory</UnavailableAction>
           <AssetsSelectedExportMenu onExport={onExport} disabled={exportDisabled} onLabels={onLabels} labelsDisabled={exportDisabled} />
         </>
       )}
-    </div>
-  );
-}
-
-export function AssetsViewControls() {
-  return (
-    <div className="flex items-center gap-1" aria-label="Assets view">
-      <Button variant="secondary" size="icon-sm" className="bg-accent text-accent-foreground max-sm:size-10" aria-label="List view" aria-pressed="true">
-        <ListIcon className="size-4" />
-      </Button>
-      <UnavailableAction label="Grid view" icon={GridIcon} />
     </div>
   );
 }
@@ -161,7 +121,7 @@ export function AssetsSortControl({ value, pending, onChange }: {
     <Select value={value} disabled={pending} onValueChange={(next) => {
       if (next === "created_at" || next === "status_since") onChange(next);
     }}>
-      <SelectTrigger aria-label="Asset sort order" className="h-8 w-48 max-w-full text-xs max-sm:h-10">
+      <SelectTrigger aria-label="Asset sort order" className="h-8 w-44 max-w-full text-xs max-sm:h-10">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
