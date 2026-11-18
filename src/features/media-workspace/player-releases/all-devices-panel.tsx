@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
 import { Input } from "@/components/ui/Input";
 import { addPilotMember, listAllDevices } from "./actions";
+import { BlockerDialog } from "./blocker-dialog";
 import { countVersions, formatTime, isWindows, osOf, pilotBlocker, resolveVersion, type FleetDevice } from "./device-state";
 
 const SELECT = "h-9 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -212,8 +213,8 @@ function DeviceRow({ device, isPicked, isDisabled, onToggle }: {
     <tr className="border-b border-border last:border-0">
       <td className="p-3">
         <Checkbox
-          aria-label={blocker ? `${device.name} unavailable: ${blocker}` : `Select ${device.name}`}
-          title={blocker ?? undefined}
+          aria-label={blocker ? `${device.name} unavailable: ${blocker.reason}` : `Select ${device.name}`}
+          title={blocker?.reason}
           checked={isPicked}
           disabled={isDisabled || blocker !== null}
           onCheckedChange={(next) => onToggle(device.id, next === true)}
@@ -231,7 +232,13 @@ function DeviceRow({ device, isPicked, isDisabled, onToggle }: {
         <span className="block text-xs text-muted-foreground">{formatTime(device.last_heartbeat_at)}</span>
       </td>
       <td className="p-3">
-        {device.ring ? <Badge variant="info">In update group</Badge> : blocker ? <span className="text-xs text-muted-foreground">{blocker}</span> : "—"}
+        {device.ring ? (
+          <Badge variant="info">In update group</Badge>
+        ) : blocker ? (
+          <BlockerDialog device={device} blocker={blocker} />
+        ) : (
+          "—"
+        )}
       </td>
     </tr>
   );
