@@ -14,6 +14,13 @@ import { registrationCustodyLabel } from "../../domain/registration-reference-ch
 import { RegistrationHelp } from "./RegistrationFields";
 import { cn } from "@/lib/utils";
 
+const QUICK_TIPS = [
+  "Asset Tag is generated on creation, or enter your own.",
+  "Photos are optional and can be added later from the asset profile.",
+  "Status follows the initial custody you set in Step 3.",
+  "Purchase details and warranty are added in Step 4.",
+];
+
 export function RegistrationPreview({ draft, options, step, reviewed, onEdit, photo, needsPhotoReselection, locked = false, verifiedPhoto = false }: {
   draft: RegistrationDraft; options: RegistrationOptions; step: number; reviewed: boolean; onEdit: (step: number) => void;
   photo?: RegistrationPhoto; needsPhotoReselection: boolean; locked?: boolean; verifiedPhoto?: boolean;
@@ -94,9 +101,16 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
             <InfoIcon aria-hidden="true" className="h-4 w-4 shrink-0" />
             Quick tips
           </h2>
-          <p>Use a unique tag or generate it on creation. Photos are optional.</p>
+          <ul className="list-disc space-y-1 pl-5 marker:text-accent-foreground">
+            {QUICK_TIPS.map((tip) => (
+              <li key={tip}>
+                {tip}
+              </li>
+            ))}
+          </ul>
           <RegistrationHelp>
-            <p>Status follows initial custody selected in Step 3.</p>
+            <p>Automatic tags are allocated only when creation succeeds; the preview reserves no number.</p>
+            <p>Damaged requires valid initial custody.</p>
             <p>Keep browser storage available to restore selected files after refresh.</p>
           </RegistrationHelp>
         </section>

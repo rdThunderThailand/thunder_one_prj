@@ -32,17 +32,25 @@ export function BulkMethodAction({
   }, [options, loading, error, onOptionsChange]);
 
   if (loading) {
+    // Same height as the loaded hint + button, so the cards don't grow when settings arrive.
     return (
-      <Skeleton
+      <div
         aria-label="Loading bulk import settings"
-        className="mt-auto h-8 w-full"
-      />
+        className="mt-auto space-y-2"
+      >
+        <Skeleton className="h-4 w-48 max-w-full" />
+        <Skeleton className="h-8 w-full" />
+      </div>
     );
   }
 
   if (options?.ready && !error) {
     return (
-      <div className="mt-auto space-y-1">
+      <div className="mt-auto space-y-2">
+        <p className="h-4 text-2xs leading-4 text-muted-foreground tabular-nums">
+          XLSX or CSV · up to {formatBytes(options.file.maxBytes)} · up to{" "}
+          {formatCount(options.file.maxRows)} rows
+        </p>
         <Button
           asChild
           variant={selected ? "default" : "outline"}
@@ -54,10 +62,6 @@ export function BulkMethodAction({
             <ArrowRightIcon className="h-4 w-4" />
           </Link>
         </Button>
-        <p className="text-2xs text-muted-foreground tabular-nums">
-          XLSX or CSV · up to {formatBytes(options.file.maxBytes)} · up to{" "}
-          {formatCount(options.file.maxRows)} rows
-        </p>
       </div>
     );
   }
@@ -70,17 +74,7 @@ export function BulkMethodAction({
         : "Bulk registration is not available yet.";
 
   return (
-    <div className="mt-auto space-y-1">
-      <Button
-        variant={selected ? "default" : "outline"}
-        size="sm"
-        disabled
-        aria-describedby="bulk-registration-reason"
-        className="w-full"
-      >
-        Register Bulk Assets
-        <ArrowRightIcon className="h-4 w-4" />
-      </Button>
+    <div className="mt-auto space-y-2">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <p
           id="bulk-registration-reason"
@@ -106,6 +100,16 @@ export function BulkMethodAction({
           </Button>
         )}
       </div>
+      <Button
+        variant={selected ? "default" : "outline"}
+        size="sm"
+        disabled
+        aria-describedby="bulk-registration-reason"
+        className="w-full"
+      >
+        Register Bulk Assets
+        <ArrowRightIcon className="h-4 w-4" />
+      </Button>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useId, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { Input } from "@/components/ui/lovable/input";
+import { Tag } from "@/components/ui/Tag";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { FilterIcon, RefreshIcon, SearchIcon, XIcon } from "@/components/ui/icons";
@@ -210,15 +211,17 @@ export function AssetsFilters({ result, url, loading = false, selectedCategory, 
                 disabled={url.isPending}
                 onClick={() => url.set(filter.clear)}
                 aria-label={`Remove filter ${filter.label}`}
-                className="inline-flex h-7 max-w-80 items-center gap-1.5 rounded-pill border border-border bg-accent px-2.5 text-xs text-accent-foreground hover:border-foreground/20 focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-60"
+                className="rounded-full focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-60"
               >
-                <span className="truncate">
-                  {filter.label}
-                </span>
-                <XIcon
-                  aria-hidden="true"
-                  className="size-3 shrink-0"
-                />
+                <Tag className="h-7 max-w-80 gap-1.5 px-2.5 text-xs hover:text-foreground">
+                  <span className="truncate">
+                    {filter.label}
+                  </span>
+                  <XIcon
+                    aria-hidden="true"
+                    className="size-3 shrink-0"
+                  />
+                </Tag>
               </button>
             </li>
           ))}
