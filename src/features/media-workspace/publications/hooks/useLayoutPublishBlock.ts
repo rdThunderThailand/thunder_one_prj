@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchComposition } from "@/features/media-workspace/compositions/services/compositions-api";
 import { layoutPublishBlock } from "@/features/media-workspace/compositions/status-display";
 import type { CompositionStatus } from "@/features/media-workspace/compositions/types";
@@ -14,32 +14,42 @@ export type LayoutPublishGate = {
   setStatus: (status: CompositionStatus) => void;
 };
 
-/**
- * The gate for the Layout bound to a Program (ADR 0114). Fetched fresh on each mount and Layout
- * change rather than through `useContentSummary`: its page-lifetime cache would keep a Draft status
- * after the operator activates the Layout and comes back.
- */
-export function useLayoutPublishBlock(compositionId: string | null): LayoutPublishGate {
-  const [loaded, setLoaded] = useState<{ id: string; status: CompositionStatus | null; allBound: boolean } | null>(null);
+/** Read the bound Layout directly so returning from the Layout editor can refresh its status. */
+export function useLayoutPublishBlock(compositionId: string | null, wizardStep?: number): LayoutPublishGate {
+  const [loaded, setLoaded] = useState<{ id: string; status: CompositionStatus; allBound: boolean } | null>(null);
+  const latestRequest = useRef<{ id: string } | null>(null);
+  const refreshStep = wizardStep === 2 || wizardStep === 5 ? wizardStep : 0;
+  const isWizard = wizardStep !== undefined;
 
   useEffect(() => {
     if (!compositionId) return;
-    let cancelled = false;
-    fetchComposition(compositionId)
-      .then(
-        (composition) =>
-          !cancelled &&
-          setLoaded({ id: compositionId, status: composition.status, allBound: composition.zones.every((zone) => !!zone.playlist_id) }),
-      )
-      .catch(() => !cancelled && setLoaded({ id: compositionId, status: null, allBound: false }));
-    return () => {
-      cancelled = true;
+    const refresh = () => {
+      const request = { id: compositionId };
+      latestRequest.current = request;
+      void fetchComposition(compositionId)
+        .then((composition) => {
+          if (latestRequest.current !== request) return;
+          setLoaded({ id: compositionId, status: composition.status, allBound: composition.zones.every((zone) => !!zone.playlist_id) });
+        })
+        .catch(() => {
+          // Keep the last known status if the refresh fails. Core still checks on publish.
+        });
     };
-  }, [compositionId]);
+
+    if (!isWizard || refreshStep) refresh();
+    if (isWizard) window.addEventListener("focus", refresh);
+    return () => {
+      latestRequest.current = null;
+      if (isWizard) window.removeEventListener("focus", refresh);
+    };
+  }, [compositionId, isWizard, refreshStep]);
 
   const setStatus = useCallback(
-    (status: CompositionStatus) => setLoaded((current) => (current ? { ...current, status } : current)),
-    [],
+    (status: CompositionStatus) => {
+      if (latestRequest.current?.id === compositionId) latestRequest.current = null;
+      setLoaded((current) => (current && current.id === compositionId ? { ...current, status } : current));
+    },
+    [compositionId],
   );
 
   const current = compositionId && loaded?.id === compositionId ? loaded : null;

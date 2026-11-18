@@ -80,7 +80,7 @@ export function CreatePublicationPage() {
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const publicationType = usePublicationDraftStore((s) => s.basicInfo.publicationType);
   // ADR 0114: a Layout that is not Active is caught wherever the operator came from, not only in the picker.
-  const layoutGate = useLayoutPublishBlock(compositionId);
+  const layoutGate = useLayoutPublishBlock(compositionId, step);
   const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
 
   const [resumedId, setResumedId] = useState<string | null>(null);

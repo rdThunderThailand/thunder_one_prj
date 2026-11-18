@@ -53,9 +53,9 @@ export function PlaylistEditorHeader({
   onPublishChanges: () => void;
   onShowPrograms: () => void;
   /** Saves and, for a draft, marks it ready so the Program wizard lists it (#404). */
-  onSave: () => void;
+  onSave: (nameOverride?: string) => void;
   /** Saves without changing the draft status; offered only while the Playlist is a draft. */
-  onSaveDraft: () => void;
+  onSaveDraft: (nameOverride?: string) => void;
 }) {
   // ⌘Z / ⇧⌘Z on Apple; Ctrl+Z / Ctrl+Y elsewhere (Ctrl+Shift+Z works too).
   const shortcutPlatform = useShortcutPlatform();
@@ -76,9 +76,10 @@ export function PlaylistEditorHeader({
 
   // An empty name is "Untitled Playlist" on screen, so a disabled Save gave no hint; the save guard
   // states the reason, and the name field opens so the fix is one keystroke away.
-  const saveOrAskName = (save: () => void) => {
-    if (name.trim() === "") setEditing(true);
-    save();
+  const saveOrAskName = (save: (nameOverride?: string) => void) => {
+    const nameOverride = editing ? inputRef.current?.value : undefined;
+    setEditing(!(nameOverride ?? name).trim());
+    save(nameOverride);
   };
   const isDraft = status === "draft";
 
