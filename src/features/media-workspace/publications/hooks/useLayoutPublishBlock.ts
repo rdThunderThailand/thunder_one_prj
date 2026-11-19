@@ -14,7 +14,12 @@ export type LayoutPublishGate = {
   setStatus: (status: CompositionStatus) => void;
 };
 
-/** Read the bound Layout directly so returning from the Layout editor can refresh its status. */
+/**
+ * The gate for the Layout bound to a Program (ADR 0114). Fetched directly rather than through
+ * `useContentSummary`: its page-lifetime cache would keep a Draft status after the operator
+ * activates the Layout and comes back. In the wizard (`wizardStep` given) it refetches on entering
+ * steps 2 and 5 and on window focus, so a Layout set Inactive in another tab is caught (UAT A3/A5).
+ */
 export function useLayoutPublishBlock(compositionId: string | null, wizardStep?: number): LayoutPublishGate {
   const [loaded, setLoaded] = useState<{ id: string; status: CompositionStatus; allBound: boolean } | null>(null);
   const latestRequest = useRef<{ id: string } | null>(null);

@@ -69,8 +69,17 @@ export function PlaylistEditorHeader({
   const inputRef = useRef<HTMLInputElement>(null);
   const displayName = name.trim() || "Untitled Playlist";
   const isUnsaved = savedLabel.includes("unsaved") || savedLabel.includes("not saved");
+  // Leaving the field keeps what was typed, so a Save or Publish click that blurs it sees the new
+  // name (UAT A8). Enter / ✓ / Escape close the field themselves; their own blur is skipped.
+  const isClosingName = useRef(false);
   const commitName = () => {
-    onName(inputRef.current?.value ?? name);
+    isClosingName.current = true;
+    const value = inputRef.current?.value ?? name;
+    if (value !== name) onName(value);
+    setEditing(false);
+  };
+  const cancelName = () => {
+    isClosingName.current = true;
     setEditing(false);
   };
 
@@ -101,9 +110,15 @@ export function PlaylistEditorHeader({
                   ref={inputRef}
                   autoFocus
                   defaultValue={name}
+                  onFocus={() => {
+                    isClosingName.current = false;
+                  }}
+                  onBlur={() => {
+                    if (!isClosingName.current) commitName();
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") commitName();
-                    if (event.key === "Escape") setEditing(false);
+                    if (event.key === "Escape") cancelName();
                   }}
                   placeholder="Untitled Playlist"
                   maxLength={100}
