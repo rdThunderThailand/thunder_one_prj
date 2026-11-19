@@ -47,6 +47,19 @@ export function readAssetListSearch(search: string) {
   return readAssetListQuery(input);
 }
 
+/** The org's Workspace Preferences that start a list (page size, sort). The URL wins: they apply only when it names none. */
+export type AssetListDefaults = Pick<AssetListQuery, "pageSize" | "sort">;
+
+export function withListDefaults(query: AssetListQuery, search: string, defaults?: AssetListDefaults): AssetListQuery {
+  if (!defaults) return query;
+  const params = new URLSearchParams(search);
+  return {
+    ...query,
+    pageSize: params.has("pageSize") || params.has("page_size") ? query.pageSize : defaults.pageSize,
+    sort: params.has("sort") ? query.sort : defaults.sort,
+  };
+}
+
 export function assetListQueryString(query: AssetListQuery, options: { omitDefaultSort?: boolean } = {}): string {
   const params = new URLSearchParams();
   // The schema is the endpoint allowlist; UI-only and obsolete URL keys never reach Core.
