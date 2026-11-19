@@ -22,7 +22,7 @@ type Row = {
   status: string; condition: string | null; thumbnail: string | null;
 };
 const ALL = "__all__";
-const columns = ["Asset", "Asset ID", "Category", "Location", "Status", "Condition"];
+const columns = ["Asset", "Asset Tag", "Category", "Location", "Status", "Condition"];
 
 function FilterSelect({ label, value, options, onChange }: {
   label: string; value: string; options: { id: string; name: string | null }[]; onChange: (value: string) => void;
@@ -62,7 +62,7 @@ function AssetRow({ row, checked, pinned, onPick }: { row: Row; checked: boolean
           <div className="min-w-0">
             <p className="text-xs font-semibold text-foreground wrap-anywhere">{row.name}</p>
             <p className="text-2xs text-muted-foreground wrap-anywhere">
-              {pinned ? "Selected" : row.serial ? `S/N ${row.serial}` : "No serial number"}
+              {pinned ? "Selected" : row.serial ? `SN ${row.serial}` : "No serial number"}
             </p>
           </div>
         </div>
