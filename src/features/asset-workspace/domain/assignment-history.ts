@@ -35,9 +35,9 @@ export function assignmentHistoryQueryString(query: AssignmentHistoryQuery) {
 }
 
 export const ASSIGNMENT_EVENT_LABEL = { Assign: "Assignment", Transfer: "Transfer", Return: "Return" } as const;
-export const ASSIGNMENT_EVENT_TONE = { Assign: "blue", Transfer: "indigo", Return: "red" } as const;
-export const HISTORY_COLUMNS = ["#", "Asset", "Event Type", "From", "To / Custodian", "Date & Time",
-  "Location", "Condition at Return", "Performed By", "Notes / Reason"] as const;
+export const ASSIGNMENT_EVENT_TONE = { Assign: "blue", Transfer: "indigo", Return: "zinc" } as const;
+export const HISTORY_COLUMNS = ["Asset", "Event Type", "From", "To / Custodian", "Date & Time",
+  "Location", "Return Condition", "Performed By", "Notes / Reason"] as const;
 export const assignmentEventKey = (event: Pick<AssignmentHistoryEvent, "action" | "id">) => `${event.action}:${event.id}`;
 export const assignmentHistoryReason = (reason: string | null) => reason === "backfill" ? "—" : reason || "—";
 export const assignmentHistoryRowNumber = (page: number, pageSize: number, index: number) => (page - 1) * pageSize + index + 1;

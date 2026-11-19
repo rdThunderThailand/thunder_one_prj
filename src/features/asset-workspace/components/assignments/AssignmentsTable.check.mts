@@ -38,6 +38,7 @@ function load(name: string): Record<string, unknown> {
     if (id.endsWith("/Avatar")) return { Avatar: icon };
     if (id.endsWith("/AssetThumbnail")) return { AssetThumbnail: (props: Props) => createElement("img", { src: props.src || undefined, alt: "" }) };
     if (id.endsWith("/button")) return { Button: button };
+    if (id.endsWith("/StatusBadges")) return { ConditionBadge: (props: Props) => createElement("span", null, props.condition as string) };
     if (id.endsWith("/Skeleton")) return { Skeleton: (props: Props) => createElement("span", props) };
     if (id.endsWith("/icons")) return { UsersIcon: icon, EyeIcon: icon, MoreIcon: icon, ReturnIcon: icon, TransferIcon: icon };
     if (id.endsWith("/dropdown-menu")) return {
@@ -63,7 +64,7 @@ const row = {
 };
 const render = (entry: unknown, props = {}) => renderToStaticMarkup(createElement(entry as Component, props));
 const html = render(AssignmentsTable, { rows: [row] });
-const headers = ["Asset", "Asset Tag", "Category", "Current Custodian", "Location", "Assigned Date"];
+const headers = ["Asset", "Asset Tag", "Category", "Current Custodian", "Location", "Assigned Date", "Actions"];
 let previous = -1;
 for (const header of headers) {
   const position = html.indexOf(`>${header}</th>`);
@@ -77,11 +78,13 @@ assert.match(html, new RegExp(`href="/asset-workspace/assignments/${id}"`));
 assert.match(html, /\/assignments\/[^/"]+\/transfer"/);
 assert.match(html, /\/assignments\/[^/"]+\/return"/);
 assert.doesNotMatch(html, /checkbox|Asset ID/);
-assert.doesNotMatch(html, />Actions<\/th>/);
 assert.match(html, /<button[^>]*aria-label="Actions for Test laptop"/);
-assert.match(html, /Select a row for its actions/);
+assert.match(html, /Use the Actions button in each row/);
+assert.match(html, /No serial number/);
+assert.doesNotMatch(html, /Damaged/);
 const damaged = render(AssignmentsTable, { rows: [{ ...row, asset: { ...row.asset, condition: "Damaged" } }] });
 assert.match(damaged, /Return it instead/);
+assert.match(damaged, />Damaged</);
 assert.doesNotMatch(damaged, /\/assignments\/[^/"]+\/transfer"/);
 assert.match(damaged, /aria-disabled="true"/);
 const maintenance = render(AssignmentsTable, { rows: [{ ...row, asset: { ...row.asset, lifecycleStatus: "In Maintenance" } }] });

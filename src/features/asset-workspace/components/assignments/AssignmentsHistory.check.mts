@@ -56,17 +56,23 @@ const id = "c1111111-1111-1111-1111-111111111111";
 const event = { id, action: "Return", at: "2026-11-10T01:00:00Z", asset: { id, name: "Laptop One", assetTag: "AST-001" },
   from: { id, type: "person", name: "Jane Doe", avatarUrl: "https://images.example/avatar.jpg" }, to: null,
   performedBy: null, location: null, condition: "Good", reason: "backfill", evidence: [] };
-const table = render(AssignmentsHistoryTable, { rows: [event], page: 3, pageSize: 20, selectedKey: `Return:${id}`, onSelect() {} });
+const table = render(AssignmentsHistoryTable, { rows: [event], selectedKey: `Return:${id}`, onSelect() {} });
 const headerText = [...table.matchAll(/<th\b[^>]*>(.*?)<\/th>/g)].map((match) => match[1].replace(/<[^>]*>/g, "").replaceAll("&amp;", "&"));
-assert.deepEqual(headerText, HISTORY_COLUMNS.map((name) => name === "Date & Time" ? `${name} ↓` : name));
+assert.deepEqual(headerText, [...HISTORY_COLUMNS, "Details"]);
+assert.doesNotMatch(table, /↓/);
+assert.match(table, /title="Newest first"/);
+assert.match(table, /newest first/);
+assert.match(table, /<span class="sr-only">Details<\/span>/);
+assert.match(table, /line-clamp-2/);
+assert.match(table, /cursor-pointer/);
 assert.match(table, /aria-sort="descending"/);
-assert.match(table, /<td>41<\/td>/);
+assert.doesNotMatch(table, />#</);
 assert.match(table, /Unassigned/);
 assert.match(table, /System/);
 assert.match(table, /JD/);
 assert.match(table, /images.example\/avatar.jpg/);
 assert.match(table, /min-w-6xl/);
-assert.match(table, /whitespace-nowrap[^>]*>Return<\/span>/);
+assert.match(table, /bg-muted[^>]*whitespace-nowrap[^>]*>Return<\/span>/);
 assert.match(table, /whitespace-nowrap[^>]*>Good<\/span>/);
 for (const fallback of ["Unassigned", "System", "—"]) {
   assert.equal(render(AssignmentHistoryPerson, { person: null, fallback }), `<span>${fallback}</span>`);
@@ -84,12 +90,12 @@ assert.doesNotMatch(longName, /wrap-anywhere/);
 assert.match(table, /aria-selected="true"/);
 assert.match(table, /bg-accent/);
 assert.doesNotMatch(table, /backfill|checkbox|Transaction ID|Current<|Department|Organizational Unit/);
-const assignment = render(AssignmentsHistoryTable, { rows: [{ ...event, action: "Assign" }], page: 1, pageSize: 20, onSelect() {} });
+const assignment = render(AssignmentsHistoryTable, { rows: [{ ...event, action: "Assign" }], onSelect() {} });
 assert.match(assignment, />Assignment<\/span>/);
 const panelProps = { event, expiresAt: "2099-11-10T02:00:00Z", onClose() {}, onRefresh() {}, refreshing: false };
 const panel = render(AssignmentsHistoryPanel, panelProps);
 const labels = ["Assignment Event Details", "Date &amp; Time", "Performed By", "From Custodian", "To Custodian", "Location",
-  "Condition at Return", "Notes / Reason", "Evidence", "Related Information", "Asset Name", "Asset Tag"];
+  "Return Condition", "Notes / Reason", "Evidence", "Related Information", "Asset Name", "Asset Tag"];
 let last = -1;
 for (const label of labels) {
   const position = panel.indexOf(label);
@@ -102,17 +108,17 @@ assert.match(panel, /rounded-xl border border-border bg-card shadow-panel/);
 assert.match(panel, /group-data-\[bounded=true\]\/list-viewport:overflow-y-auto/);
 assert.doesNotMatch(panel, /sticky top-0|self-start|overflow-x-auto/);
 assert.match(panel, /No evidence attached\./);
-assert.match(panel, /Condition at Return<\/dt><dd[^>]*><span[^>]*>Good<\/span>/);
+assert.match(panel, /Return Condition<\/dt><dd[^>]*><span[^>]*>Good<\/span>/);
 for (const row of [
   { ...event, action: "Assign" },
   { ...event, action: "Transfer" },
   { ...event, condition: null },
 ]) {
-  const historyRow = render(AssignmentsHistoryTable, { rows: [row], page: 1, pageSize: 20, onSelect() {} });
+  const historyRow = render(AssignmentsHistoryTable, { rows: [row], onSelect() {} });
   const cells = [...historyRow.matchAll(/<td\b[^>]*>(.*?)<\/td>/g)];
-  assert.equal(cells[HISTORY_COLUMNS.indexOf("Condition at Return")]?.[1], "<span>—</span>");
+  assert.equal(cells[HISTORY_COLUMNS.indexOf("Return Condition")]?.[1], "<span>—</span>");
   const details = render(AssignmentsHistoryPanel, { ...panelProps, event: row });
-  assert.match(details, /Condition at Return<\/dt><dd[^>]*><span>—<\/span>/);
+  assert.match(details, /Return Condition<\/dt><dd[^>]*><span>—<\/span>/);
 }
 assert.doesNotMatch(panel, new RegExp(id));
 assert.doesNotMatch(panel, /Asset ID|Category|Transaction ID|backfill/);

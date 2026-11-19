@@ -70,7 +70,7 @@ export function AssignmentsHistoryPanel({ event, expiresAt, onClose, onRefresh, 
           <AssignmentHistoryPerson person={event.to} fallback={event.action === "Return" ? "Unassigned" : "—"} />
         </Detail>
         <Detail label="Location">{event.location?.name || "—"}</Detail>
-        <Detail label="Condition at Return">
+        <Detail label="Return Condition">
           <AssignmentHistoryCondition condition={event.action === "Return" ? event.condition : null} />
         </Detail>
         <Detail label="Notes / Reason">{assignmentHistoryReason(event.reason)}</Detail>
