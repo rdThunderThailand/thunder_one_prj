@@ -97,6 +97,7 @@ the count while bumping PATCH, not MINOR.
 | — | `v0.23.2` (hotfix straight to `main`, not a promotion) | #416 | 2026-11-19 |
 | — | `v0.23.3` (hotfix straight to `main`, not a promotion) | #419 | 2026-11-19 |
 | — | `v0.23.4` (hotfix straight to `main`, not a promotion) | #423 | 2026-11-19 |
+| 27 | `v1.0.0` (v1.0, first release for every tenant, ADR 0115) | #429 | 2026-11-19 |
 
 Append a row for every release. This table is the only release log we keep.
 
