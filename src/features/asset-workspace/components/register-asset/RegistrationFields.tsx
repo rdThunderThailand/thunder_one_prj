@@ -73,13 +73,13 @@ export function RegistrationTextField({ name, label, error, hint, required, ...p
   );
 }
 
-export function RegistrationSelect({ name, label, value, onChange, items, error, required, hint }: {
+export function RegistrationSelect({ name, label, value, onChange, items, error, required, hint, disabled }: {
   name: string; label: string; value: string; onChange: (value: string) => void;
-  items: { value: string; label: string; disabled?: boolean }[]; error?: string; required?: boolean; hint?: string;
+  items: { value: string; label: string; disabled?: boolean }[]; error?: string; required?: boolean; hint?: string; disabled?: boolean;
 }) {
   return (
     <RegistrationField name={name} label={label} error={error} hint={hint} required={required}>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger
           id={`registration-${name}`}
           aria-required={required}

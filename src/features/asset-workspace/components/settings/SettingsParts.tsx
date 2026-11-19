@@ -4,15 +4,39 @@ import { Button } from "@/components/ui/Button";
 import { InfoIcon } from "@/components/ui/icons";
 import type { SettingsSaveError } from "../../hooks/use-settings-save";
 
-export function InfoBanner({ children }: { children: ReactNode }) {
+export function InfoBanner({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <p className="flex items-start gap-2 rounded-lg bg-accent px-3 py-2 text-xs text-accent-foreground">
+    <div className="flex items-start gap-2 rounded-lg bg-accent px-3 py-2 text-xs text-accent-foreground">
       <InfoIcon
         aria-hidden="true"
         className="mt-0.5 size-4 shrink-0"
       />
-      <span>{children}</span>
-    </p>
+      <div className="min-w-0 space-y-1">
+        {title && <p className="font-semibold">{title}</p>}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** A titled block inside a tab's card; the tab still has one Save. */
+export function SettingsGroup({ id, title, description, children }: { id: string; title: string; description: string; children: ReactNode }) {
+  return (
+    <section
+      aria-labelledby={`${id}-title`}
+      className="space-y-3 rounded-lg border border-border p-4"
+    >
+      <div className="space-y-1">
+        <h3
+          id={`${id}-title`}
+          className="text-sm font-semibold text-foreground"
+        >
+          {title}
+        </h3>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </section>
   );
 }
 
