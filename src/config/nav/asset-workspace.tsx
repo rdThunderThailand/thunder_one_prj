@@ -43,9 +43,9 @@ const ITEM_ICONS: Record<string, ReactNode> = {
 };
 
 const STANDALONE_ICONS: Record<string, ReactNode> = {
+  "My Assets": <ClipboardIcon className="h-4 w-4" />,
   "My Tasks": <CheckSquareIcon className="h-4 w-4" />,
   "Scan Asset": <ScanIcon className="h-4 w-4" />,
-  Home: <HomeIcon className="h-4 w-4" />,
 };
 
 const overviewItem = {
@@ -54,16 +54,17 @@ const overviewItem = {
   icon: <GaugeIcon className="h-4 w-4 shrink-0" />,
 };
 
-const myAssetsItem = {
-  label: "My Assets",
-  href: "/asset-workspace/my-assets",
-  icon: <ClipboardIcon className="h-4 w-4 shrink-0" />,
+// Employees' pinned item: Home is their overview, like Overview for admins (persona map §3).
+const homeItem = {
+  label: "Home",
+  href: "/asset-workspace/home",
+  icon: <HomeIcon className="h-4 w-4 shrink-0" />,
 };
 
 export function filterAssetWorkspaceNav(role: AssetWorkspaceRole): NavConfig {
   const standaloneLinks = standaloneLinksForRole(role);
   return {
-    overviewItem: role === "employee" ? myAssetsItem : overviewItem,
+    overviewItem: role === "employee" ? homeItem : overviewItem,
     sections: sectionsForRole(role).map((section) => ({
       ...section,
       icon: SECTION_ICONS[section.label],
