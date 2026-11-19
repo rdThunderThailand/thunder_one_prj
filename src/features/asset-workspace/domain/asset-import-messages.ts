@@ -52,7 +52,10 @@ export function rowMessageText(
     case "SERIAL_REQUIRED":
       return "This category requires a Serial Number.";
     case "SERIAL_DUPLICATE":
-      return "Serial Number is already used.";
+      // In-file duplicates carry { rows, total }; existing assets carry a list.
+      return message.details && "rows" in message.details
+        ? "Serial Number appears more than once in this file."
+        : "Serial Number is already used.";
     case "TAG_TAKEN":
       return "Asset Tag is already used.";
     case "TAG_DUPLICATE_IN_FILE":

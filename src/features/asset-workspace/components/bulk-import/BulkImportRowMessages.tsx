@@ -20,7 +20,7 @@ import type { ImportRow, RowMessage, RowResult, Severity } from "../../domain/as
 import { cn } from "@/lib/utils";
 
 const SEVERITY_LABEL = {
-  valid: "Valid",
+  valid: "Ready",
   warning: "Warning",
   error: "Error",
 };
@@ -61,7 +61,7 @@ export function BulkImportRowMessages({
         <Button
           variant="link"
           size="sm"
-          className="h-auto min-h-8 whitespace-normal px-0 text-start text-2xs"
+          className="h-auto min-h-0 whitespace-normal p-0 align-baseline text-start text-2xs"
           aria-label={`Messages for row ${row.rowIndex}`}
         >
           {children ??

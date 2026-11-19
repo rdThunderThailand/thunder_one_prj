@@ -39,6 +39,8 @@ export type FlowState = {
   confirmation: ImportConfirmBody | null;
   previewStep: 0 | 1;
   justRegistered: boolean;
+  /** Edit Mapping is re-creating the batch from the same file: stay on Map & Validate meanwhile. */
+  remapping: boolean;
 };
 
 // Parsed bytes and retry intent remain memory-only and scoped to the authenticated context.
@@ -92,6 +94,7 @@ export function emptyState(context: string): FlowState {
     confirmation: null,
     previewStep: 0,
     justRegistered: false,
+    remapping: false,
   };
 }
 

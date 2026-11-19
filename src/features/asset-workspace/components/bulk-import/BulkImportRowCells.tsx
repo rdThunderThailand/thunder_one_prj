@@ -30,17 +30,18 @@ export function RowIssue({ row, result = false }: { row: ImportRow; result?: boo
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-x-2">
-      <p className="flex min-w-0 items-start gap-1">
-        {message.severity === "warning" ? (
-          <WarningTriangleIcon className="mt-0.5 size-3 shrink-0 text-warning" />
-        ) : (
-          <AlertCircleIcon className="mt-0.5 size-3 shrink-0 text-error" />
-        )}
-        <span>{rowMessageText(message, row.values)}</span>
-      </p>
-      <BulkImportRowMessages row={row} />
-    </div>
+    <p className="flex min-w-0 items-start gap-1">
+      {message.severity === "warning" ? (
+        <WarningTriangleIcon className="mt-0.5 size-3 shrink-0 text-warning" />
+      ) : (
+        <AlertCircleIcon className="mt-0.5 size-3 shrink-0 text-error" />
+      )}
+      {/* Details sits at the end of the message line so a row stays one or two lines tall. */}
+      <span className="min-w-0">
+        {rowMessageText(message, row.values)}{" "}
+        <BulkImportRowMessages row={row} />
+      </span>
+    </p>
   );
 }
 

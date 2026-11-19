@@ -28,7 +28,8 @@ export type ImportHttpResponse = {
 
 export type ImportHttpRequester = (config: {
   url: string;
-  method: "GET" | "POST" | "DELETE";
+  method: "GET" | "POST" | "PATCH" | "DELETE";
+  signal?: AbortSignal;
   headers: Record<string, string>;
   data?: unknown;
   responseType?: "json" | "blob";
@@ -45,6 +46,7 @@ export const defaultRequester: ImportHttpRequester = async (config) => {
     method: config.method,
     headers: config.headers,
     data: config.data,
+    signal: config.signal,
     responseType: config.responseType ?? "json",
     timeout: config.method === "GET" ? 15000 : 60000,
     validateStatus: () => true,
@@ -96,7 +98,7 @@ export function unwrapEnvelope(response: ImportHttpResponse): unknown {
 }
 
 export type ImportJsonCaller = (
-  method: "GET" | "POST" | "DELETE", path: string, data?: unknown,
+  method: "GET" | "POST" | "PATCH" | "DELETE", path: string, data?: unknown, signal?: AbortSignal,
 ) => Promise<unknown>;
 
 /** All JSON endpoints retain the same context header, envelope and safe errors. */
@@ -109,9 +111,10 @@ export function createImportJsonCaller(
   });
 
   async function callJson(
-    method: "GET" | "POST" | "DELETE",
+    method: "GET" | "POST" | "PATCH" | "DELETE",
     path: string,
     data?: unknown,
+    signal?: AbortSignal,
   ): Promise<unknown> {
     let response: ImportHttpResponse;
     try {
@@ -120,8 +123,10 @@ export function createImportJsonCaller(
         method,
         headers: baseHeaders(),
         data,
+        signal,
       });
     } catch (error) {
+      signal?.throwIfAborted();
       if (error instanceof ImportApiError) throw error;
       throw new ImportApiError("CONNECTION_FAILED", requestErrorText("CONNECTION_FAILED"), 0);
     }

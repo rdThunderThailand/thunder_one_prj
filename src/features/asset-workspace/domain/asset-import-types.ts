@@ -113,6 +113,7 @@ export type RowMessage = {
 };
 
 export type ImportBatch = {
+  editedCount?: number;
   id: string;
   batchCode: string;
   status: BatchStatus;
@@ -139,6 +140,9 @@ export type ImportBatch = {
 };
 
 export type ImportRow = {
+  version?: number;
+  editedAt?: string | null;
+  editedBy?: { id: string; name: string } | null;
   id: string;
   rowIndex: number;
   values: Partial<Record<ImportFieldKey, string>>;
@@ -179,7 +183,7 @@ export type SendRow = {
 };
 
 export type ConfirmMode = "ready_and_warnings" | "ready_only";
-export type ImportConfirmBody = { mode?: ConfirmMode; override_reason?: string };
+export type ImportConfirmBody = { mode?: ConfirmMode; override_reason?: string; limit?: number };
 
 export type ConfirmResult = {
   batchId: string;

@@ -55,40 +55,28 @@ function Panel({ title, hint, headers, children }: {
 
 export function BulkImportRowDetailsTables({ rowIndex, checks }: { rowIndex: number; checks: RowFieldCheck[] }) {
   return (
-    <div className="grid items-start gap-4 @min-4xl/details:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-      <Panel
-        title={<>Source Data <span className="font-normal">(from your file)</span></>}
-        hint={`This is the data from row ${rowIndex} in your file.`}
-        headers={["Field", "Value"]}
-      >
-        {checks.map(({ key, label, value, status }) => (
-          <tr key={key}>
-            <th scope="row" className="whitespace-nowrap px-2 py-1.5 font-semibold">{label}</th>
-            <td className={cn("wrap-anywhere whitespace-pre-wrap px-2 py-1.5", ROW_TONE[status])}>{value || "–"}</td>
-          </tr>
-        ))}
-      </Panel>
-      <Panel
-        title="Validation Results"
-        hint="Each field is checked using ThunderOne rules."
-        headers={["ThunderOne Field", "Value", "Validation Result", "Message"]}
-      >
-        {checks.map(({ key, label, value, status, message, messages }) => (
-          <tr key={key} className={ROW_TONE[status]}>
-            <th scope="row" className="whitespace-nowrap px-2 py-1.5 font-semibold">{label}</th>
-            <td className="wrap-anywhere whitespace-pre-wrap px-2 py-1.5">
-              {value || <span className="text-muted-foreground">(empty)</span>}
-            </td>
-            <td className="whitespace-nowrap px-2 py-1.5"><FieldStatus status={status} /></td>
-            <td className="wrap-anywhere space-y-1 px-2 py-1.5">
-              <p className={cn(status === "error" && "text-error")}>{message ?? "–"}</p>
-              {messages.map((item, index) => (
-                <ImportMessageDetails key={`${item.code}:${index}`} message={item} />
-              ))}
-            </td>
-          </tr>
-        ))}
-      </Panel>
-    </div>
+    <Panel
+      title="Row data"
+      hint={`Values from row ${rowIndex} of your file, checked using ThunderOne rules.`}
+      headers={["Field", "Value", "Result", "Message"]}
+    >
+      {checks.map(({ key, label, value, status, message, messages }) => (
+        <tr key={key} className={ROW_TONE[status]}>
+          <th scope="row" className="whitespace-nowrap px-2 py-1.5 font-semibold">{label}</th>
+          <td className="wrap-anywhere whitespace-pre-wrap px-2 py-1.5">
+            {value || <span className="text-muted-foreground">(empty)</span>}
+          </td>
+          <td className="whitespace-nowrap px-2 py-1.5">
+            <FieldStatus status={status} />
+          </td>
+          <td className="wrap-anywhere space-y-1 px-2 py-1.5">
+            <p className={cn(status === "error" && "text-error")}>{message ?? "–"}</p>
+            {messages.map((item, index) => (
+              <ImportMessageDetails key={`${item.code}:${index}`} message={item} />
+            ))}
+          </td>
+        </tr>
+      ))}
+    </Panel>
   );
 }
