@@ -96,6 +96,7 @@ the count while bumping PATCH, not MINOR.
 | — | `v0.23.1` (hotfix straight to `main`, not a promotion) | #410 | 2026-11-18 |
 | — | `v0.23.2` (hotfix straight to `main`, not a promotion) | #416 | 2026-11-19 |
 | — | `v0.23.3` (hotfix straight to `main`, not a promotion) | #419 | 2026-11-19 |
+| — | `v0.23.4` (hotfix straight to `main`, not a promotion) | #423 | 2026-11-19 |
 
 Append a row for every release. This table is the only release log we keep.
 
