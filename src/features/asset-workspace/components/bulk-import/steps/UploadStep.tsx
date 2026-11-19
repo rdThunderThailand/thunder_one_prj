@@ -18,6 +18,7 @@ import type { AssetImportContext } from "../../../services/asset-import-api";
 import { BulkImportFileDropzone } from "../BulkImportFileDropzone";
 import { BulkImportUploadedFile } from "../BulkImportUploadedFile";
 import { BulkImportTemplatePreview } from "../BulkImportTemplatePreview";
+import { BulkImportGuideSheet } from "../BulkImportGuideSheet";
 
 export function UploadStep({
   flow,
@@ -62,6 +63,7 @@ export function UploadStep({
               maxBytes={options.file.maxBytes}
               maxRows={options.file.maxRows}
               feedbackId={file ? fileFeedbackId : undefined}
+              selectedName={flow.parsed ? file?.name : undefined}
               onFiles={selectFiles}
             />
             <div className="flex items-center gap-3 text-2xs text-muted-foreground">
@@ -91,21 +93,23 @@ export function UploadStep({
                   </span>
                 </span>
               </Button>
-              <Button
-                variant="outline"
-                className="h-auto min-h-12 justify-start gap-3 p-3"
-                disabled
-              >
-                <BookIcon className="h-5 w-5 shrink-0 text-primary" />
-                <span className="min-w-0 whitespace-normal text-start">
-                  <span className="block text-xs font-semibold text-primary">
-                    View Import Guide
+              <BulkImportGuideSheet options={options}>
+                <Button
+                  variant="outline"
+                  className="h-auto min-h-12 justify-start gap-3 p-3"
+                  disabled={locked}
+                >
+                  <BookIcon aria-hidden="true" className="h-5 w-5 shrink-0 text-primary" />
+                  <span className="min-w-0 whitespace-normal text-start">
+                    <span className="block text-xs font-semibold text-accent-foreground">
+                      View Import Guide
+                    </span>
+                    <span className="block text-2xs text-muted-foreground">
+                      Step-by-step instructions
+                    </span>
                   </span>
-                  <span className="block text-2xs text-muted-foreground">
-                    Step-by-step instructions
-                  </span>
-                </span>
-              </Button>
+                </Button>
+              </BulkImportGuideSheet>
             </div>
           </Card>
           <BulkImportUploadedFile
@@ -138,7 +142,7 @@ export function UploadStep({
             aria-describedby={flow.preview ? "bulk-upload-preview-notice" : undefined}
             onClick={() => void flow.startBatch()}
           >
-            <span>{flow.busy ? "Please wait…" : "Next"}</span>
+            <span>{flow.busy ? (flow.progress?.creating ? "Creating…" : "Uploading…") : "Next"}</span>
             <ArrowRightIcon className="h-4 w-4" />
           </Button>
         </>,

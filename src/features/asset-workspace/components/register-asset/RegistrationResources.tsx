@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/lovable/button";
 import type { ImportOptions } from "../../domain/asset-import-types";
 import { useAssetImportTemplate } from "../../hooks/use-asset-import-template";
+import { BulkImportGuideSheet } from "../bulk-import/BulkImportGuideSheet";
 
 interface RegistrationResourcesProps {
   options: ImportOptions | null;
@@ -75,17 +76,32 @@ export function RegistrationResources({
           )}
         </div>
         <div className="rounded-control border border-border p-3">
-          <Button
-            variant="ghost"
-            disabled
-            className={resourceClassName}
-          >
-            <ResourceContent
-              label="View Import Guide"
-              description="Step-by-step guide for file import"
-              icon={<BookIcon className="h-6 w-6" />}
-            />
-          </Button>
+          {options && !loading ? (
+            <BulkImportGuideSheet options={options}>
+              <Button
+                variant="ghost"
+                className={resourceClassName}
+              >
+                <ResourceContent
+                  label="View Import Guide"
+                  description="Step-by-step guide for file import"
+                  icon={<BookIcon className="h-6 w-6" />}
+                />
+              </Button>
+            </BulkImportGuideSheet>
+          ) : (
+            <Button
+              variant="ghost"
+              disabled
+              className={resourceClassName}
+            >
+              <ResourceContent
+                label="View Import Guide"
+                description="Step-by-step guide for file import"
+                icon={<BookIcon className="h-6 w-6" />}
+              />
+            </Button>
+          )}
         </div>
         <div className="rounded-control border border-border p-3">
           {!loading ? (
