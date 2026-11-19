@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, MonitorIcon, PlayIcon } from "@/components/ui/icons";
-import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
+import { PreviewPanel } from "@/features/media-workspace/preview/PreviewPanel";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
@@ -46,7 +46,7 @@ export function ProgramSummaryRail({
   const { playlist, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
   // Same projection as Prepare Content's stage, so every content type previews here too (#199).
   // Loaded in the review variant as well — it is where a Layout's name comes from.
-  const { preview, branch, loading } = usePublicationStagePreview(assets, true, refreshKey);
+  const { preview, loading } = usePublicationStagePreview(assets, true, refreshKey);
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const isVideo = isVideoPreview(selectedAsset, undefined);
@@ -127,25 +127,14 @@ export function ProgramSummaryRail({
 
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <h2 className="text-base font-semibold text-foreground">{title}</h2>
-      <p className="-mt-3 text-xs text-muted-foreground">{subtitle}</p>
-
-      {preview ? (
-        <PreviewStage
-          zones={preview.zones}
-          assets={assets}
-          aspectRatio={preview.aspectRatio}
-          referenceResolution={preview.referenceResolution}
-          background={preview.background}
-          allowActualSize={branch !== "playlist"}
-          controlsPlacement="overlay"
-          fillWidth
-        />
-      ) : (
-        <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
-          <p className="text-xs">{loading ? "กำลังโหลดตัวอย่าง…" : "ตัวอย่างคอนเทนต์จะแสดงที่นี่"}</p>
-        </div>
-      )}
+      <PreviewPanel
+        title={title}
+        subtitle={subtitle}
+        preview={preview}
+        assets={assets}
+        loading={loading}
+        emptyMessage="ตัวอย่างคอนเทนต์จะแสดงที่นี่"
+      />
 
       <Section title="Content">
         <Row label="Type">

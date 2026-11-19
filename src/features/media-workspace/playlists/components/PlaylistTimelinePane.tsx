@@ -79,7 +79,6 @@ export function PlaylistTimelinePane({
             allowActualSize={false}
             onFrameChange={onFrame}
             seekRequest={seekRequest}
-            controlsPlacement="overlay"
             frameViewportHeight="34vh"
             fillWidth
           />
