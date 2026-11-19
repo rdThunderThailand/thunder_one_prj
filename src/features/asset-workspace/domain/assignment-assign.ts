@@ -9,7 +9,7 @@ type AssetLike = { id: string; lifecycleStatus: string; condition: string | null
 
 /** FE 02: the list route starts with Select Asset; the profile route already knows the asset. */
 export function assignSteps(selectAsset: boolean) {
-  return [...(selectAsset ? ["Select Asset"] : []), "Assign Details", "Review", "Confirm"];
+  return [...(selectAsset ? ["Select Asset"] : []), "Assign Details", "Review", "Done"];
 }
 
 export function assignOrigin(from: string | undefined, assetId: string | null) {

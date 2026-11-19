@@ -107,7 +107,8 @@ const plain = (value: unknown) => JSON.parse(JSON.stringify(value));
 const load = () => loadForm!(new AbortController().signal);
 
 let tree = draw();
-assert.match(html(tree), /Move Location.*Needs attention.*mock-up.*Reason \/ Note \(optional\)/);
+assert.match(html(tree), /Move Location.*Reason \/ Note \(optional\)/);
+assert.doesNotMatch(html(tree), /mock-up/);
 assert.equal(moveDisabled(tree), true);
 fire(props(tree, (node) => node.kind === "locations").onChange, { id: "from", name: "Current Room" });
 tree = draw();

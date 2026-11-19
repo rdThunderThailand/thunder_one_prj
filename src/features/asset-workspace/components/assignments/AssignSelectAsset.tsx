@@ -23,7 +23,7 @@ type Row = {
   condition: string | null; thumbnail: string | null; blocked?: boolean;
 };
 const ALL = "__all__";
-const columns = ["Asset", "Asset ID", "Category", "Location", "Condition"];
+const columns = ["Asset", "Asset Tag", "Category", "Location", "Condition"];
 
 function FilterSelect({ label, value, options, onChange }: {
   label: string; value: string; options: { id: string; name: string | null }[]; onChange: (value: string) => void;
@@ -64,7 +64,7 @@ function AssetRow({ row, checked, pinned, onPick }: { row: Row; checked: boolean
           <div className="min-w-0">
             <p className="text-xs font-semibold text-foreground wrap-anywhere">{row.name}</p>
             <p className="text-2xs text-muted-foreground wrap-anywhere">
-              {row.blocked ? "Has a custodian. Use Transfer." : pinned ? "Selected" : row.serial ? `S/N ${row.serial}` : "No serial number"}
+              {row.blocked ? "Has a custodian. Use Transfer." : pinned ? "Selected" : row.serial ? `SN ${row.serial}` : "No serial number"}
             </p>
           </div>
         </div>

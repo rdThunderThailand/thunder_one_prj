@@ -85,19 +85,23 @@ export function AssignSidePanel({ title, asset, thumbnailUrl, from, to, outcomes
         ) : (
           <p className="text-xs text-muted-foreground">Select an asset to see the summary.</p>
         )}
-        <Side
-          label="From (Current)"
-          side={from}
-        />
-        <ArrowRightIcon
-          aria-hidden="true"
-          className="mx-3 size-4 rotate-90 text-muted-foreground"
-        />
-        <Side
-          label={toLabel}
-          side={to}
-          live
-        />
+        {asset && (
+          <>
+            <Side
+              label="From (Current)"
+              side={from}
+            />
+            <ArrowRightIcon
+              aria-hidden="true"
+              className="mx-3 size-4 rotate-90 text-muted-foreground"
+            />
+            <Side
+              label={toLabel}
+              side={to}
+              live
+            />
+          </>
+        )}
       </Card>
       <Card className="space-y-2 p-4">
         <h2 className="text-sm font-semibold text-foreground">{outcomesTitle}</h2>
