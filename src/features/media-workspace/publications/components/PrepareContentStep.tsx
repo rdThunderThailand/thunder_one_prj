@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { ArrowRightIcon, EditIcon, ExpandIcon, ImageIcon, SettingsIcon } from "@/components/ui/icons";
-import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
+import { PreviewPanel } from "@/features/media-workspace/preview/PreviewPanel";
 import type { StagePreview } from "@/features/media-workspace/preview/composition-preview";
 import { zoneSchedule } from "@/features/media-workspace/preview/preview-clock";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
@@ -46,46 +46,29 @@ export function PrepareContentStep({
 
       {/* Centre — per-branch preview */}
       <Card className="flex flex-col gap-3 p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Preview</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">ตัวอย่างเนื้อหา</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setStep(1)} className="text-xs font-medium text-primary hover:text-primary">เปลี่ยนคอนเทนต์</button>
-            <button
-              type="button"
-              onClick={openFullPreview}
-              disabled={!preview}
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
-            >
-              Full Screen ({preview?.aspectRatio ?? "16:9"}) <ExpandIcon className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {!hasContent ? (
-          <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
-            <ImageIcon className="h-8 w-8" />
-            <p className="text-xs">เลือกคอนเทนต์ในขั้นตอนที่ 1 เพื่อดูตัวอย่าง</p>
-          </div>
-        ) : error ? (
-          <p className="text-sm text-error">โหลด preview ไม่สำเร็จ</p>
-        ) : loading || !preview ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">กำลังโหลด preview…</p>
-        ) : (
-          <PreviewStage
-            zones={preview.zones}
-            assets={assets}
-            aspectRatio={preview.aspectRatio}
-            referenceResolution={preview.referenceResolution}
-            background={preview.background}
-            allowActualSize={branch !== "playlist"}
-            seekRequest={seekRequest}
-            controlsPlacement="overlay"
-            frameViewportHeight="36vh"
-          />
-        )}
+        <PreviewPanel
+          title="Preview"
+          subtitle="ตัวอย่างเนื้อหา"
+          actions={
+            <>
+              <button type="button" onClick={() => setStep(1)} className="text-xs font-medium text-primary hover:text-primary">เปลี่ยนคอนเทนต์</button>
+              <button
+                type="button"
+                onClick={openFullPreview}
+                disabled={!preview}
+                className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
+              >
+                Full Screen ({preview?.aspectRatio ?? "16:9"}) <ExpandIcon className="h-3.5 w-3.5" />
+              </button>
+            </>
+          }
+          preview={preview}
+          assets={assets}
+          loading={hasContent && loading}
+          error={hasContent && !!error}
+          emptyMessage="เลือกคอนเทนต์ในขั้นตอนที่ 1 เพื่อดูตัวอย่าง"
+          seekRequest={seekRequest}
+        />
         {preview && (
           <PreviewAssetStrip
             preview={preview}

@@ -4,10 +4,10 @@ import { useMemo, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
-import { CalendarIcon, EditIcon, ImageIcon, InfoIcon, PlayIcon } from "@/components/ui/icons";
+import { CalendarIcon, EditIcon, InfoIcon, PlayIcon } from "@/components/ui/icons";
 import { formatBytes, formatResolution } from "@/features/media-workspace/assets/components/AssetCard";
 import { decodeMetadata, formatDuration } from "@/features/media-workspace/playlists";
-import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
+import { PreviewPanel } from "@/features/media-workspace/preview/PreviewPanel";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset, ScheduleConflict } from "../types";
@@ -46,7 +46,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
   const groupIds = usePublicationDraftStore((state) => state.groupIds);
   const groupNamesById = usePublicationDraftStore((state) => state.groupNamesById);
   const schedule = usePublicationDraftStore((state) => state.schedule);
-  const { preview, loading: previewLoading, branch } = usePublicationStagePreview(assets);
+  const { preview, loading: previewLoading } = usePublicationStagePreview(assets);
   const isPlaylist = basicInfo.publicationType === "playlist";
   const { playlist, coverAssetId, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
   const selectedChannels = toChannelItems(channels).filter((channel) => channelIds.includes(channel.id));
@@ -175,27 +175,14 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
 
           <Card className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:min-h-[430px]">
             <div className="lg:pr-2">
-              <div className="mb-3">
-                <h2 className="text-[11px] font-bold text-foreground">Preview on Screen</h2>
-                <p className="text-xs text-muted-foreground">ตัวอย่างการแสดงผลบนหน้าจอ</p>
-              </div>
-              {preview ? (
-                <PreviewStage
-                  zones={preview.zones}
-                  assets={assets}
-                  aspectRatio={preview.aspectRatio}
-                  referenceResolution={preview.referenceResolution}
-                  background={preview.background}
-                  allowActualSize={branch !== "playlist"}
-                  controlsPlacement="overlay"
-                  frameViewportHeight="36vh"
-                />
-              ) : (
-                <div className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
-                  <ImageIcon className="h-7 w-7" />
-                  <span className="ml-2 text-xs">{previewLoading ? "กำลังโหลด preview…" : "ไม่มี preview"}</span>
-                </div>
-              )}
+              <PreviewPanel
+                title="Preview on Screen"
+                subtitle="ตัวอย่างการแสดงผลบนหน้าจอ"
+                preview={preview}
+                assets={assets}
+                loading={previewLoading}
+                emptyMessage="ไม่มี preview"
+              />
             </div>
             <div className="flex min-h-full flex-col">
               <h2 className="text-[11px] font-bold text-foreground">Timeline <span className="font-normal text-muted-foreground">(ตัวอย่างลำดับการเล่น)</span></h2>
