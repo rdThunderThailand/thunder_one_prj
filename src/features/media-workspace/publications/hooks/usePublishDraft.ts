@@ -8,7 +8,7 @@ import {
   basicInfoToForm,
   targetsFromSelection,
 } from "../draft-mapping";
-import { draftToSchedule, isDraftValid } from "../schedule-preset";
+import { draftToSchedule, hasAiringLeft, isDraftValid, nowIn, upcomingDays } from "../schedule-preset";
 import {
   activatePublication,
   checkScheduleConflicts,
@@ -25,7 +25,7 @@ import { selectedChannelDeviceIds } from "../channels-logic";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
 import { classifyApiError, isConflict, scheduleEndedMessage, type PublishCause } from "@/lib/api/api-error";
-import { formatDmy, utcToZonedParts } from "../schedule";
+import { formatDmy, shiftYmd, utcToZonedParts } from "../schedule";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
 import { DraftSaveError, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
 
@@ -335,13 +335,23 @@ export function usePublishDraft() {
 
   const publishNow = async (): Promise<void> => {
     const state = usePublicationDraftStore.getState();
-    // Core refuses `ends_at <= now()` only after the draft is saved; say so before saving anything.
-    // Not gated on `isDraftValid`: an end that has just passed makes the draft invalid, which is the case to catch.
+    // Weekly and monthly ranges may stay open past their last daily window.
     try {
-      const { ends_at, timezone } = draftToSchedule(state.schedule);
-      if (ends_at && Date.parse(ends_at) <= Date.now()) {
-        const end = utcToZonedParts(ends_at, timezone);
-        setErrorState({ message: scheduleEndedMessage(`${formatDmy(end.date)} ${end.time}`), cause: "schedule-ended" });
+      const { schedule } = state;
+      const { ends_at, timezone } = draftToSchedule(schedule);
+      const now = nowIn(timezone);
+      if (!hasAiringLeft(schedule, now.date, now.time) || (ends_at && Date.parse(ends_at) <= Date.now())) {
+        let end = ends_at ? utcToZonedParts(ends_at, timezone) : null;
+        if ((schedule.mode === "weekly" || schedule.mode === "monthly") && schedule.endDate) {
+          // Even the 31st recurs within 62 days. The range end itself may have no airing.
+          const lastDay = upcomingDays(schedule, shiftYmd(schedule.endDate, -62), 63).at(-1);
+          const endsAtMidnight = schedule.allDay || schedule.dailyEnd === "23:59";
+          end = lastDay
+            ? { date: endsAtMidnight ? shiftYmd(lastDay, 1) : lastDay, time: endsAtMidnight ? "00:00" : schedule.dailyEnd }
+            : null;
+        }
+        const label = end ? `${formatDmy(end.date)} ${end.time}` : undefined;
+        setErrorState({ message: scheduleEndedMessage(label), cause: "schedule-ended" });
         return;
       }
     } catch {

@@ -200,8 +200,8 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         affectedCount={affected.programs.length}
         onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
         onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
-        onSave={() => void row.save(true)}
-        onSaveDraft={() => void row.save()}
+        onSave={(name) => void row.save(true, name)}
+        onSaveDraft={(name) => void row.save(false, name)}
       />
 
       {publishDialog && (
