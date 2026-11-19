@@ -8,7 +8,8 @@ import type { useCategoryAssetsUrl } from "../../hooks/use-category-assets-url";
 import { AccessDeniedState, EmptyState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { AssetsSectionError } from "../assets-list/AssetsSectionError";
-import { AssetsPagination } from "../assets-list/AssetsPagination";
+import { ASSET_PAGE_SIZES } from "../../services/assets-list-query";
+import { CategoriesPagination } from "./CategoriesPagination";
 import { CategoryAssetsFilters } from "./CategoryAssetsFilters";
 import { CategoryAssetsTable } from "./CategoryAssetsTable";
 import { CategoryAssetsPaginationLoading, CategoryAssetsRowsLoading } from "./CategoryAssetsLoading";
@@ -68,10 +69,19 @@ export function CategoryAssetsTab({ context, category, url }: {
       </div>
       {list.pending && !denied && query && <CategoryAssetsPaginationLoading />}
       {!list.pending && !list.error && !denied && list.data && query && (
-        <footer data-category-controls className="shrink-0 border-t border-border p-3">
-          <AssetsPagination data={list.data} pending={false} onPage={(page) => url.set({ page: String(page) })}
-            onPageSize={(size) => url.set({ pageSize: String(size) })} />
-        </footer>
+        <div className="@container/categories-results shrink-0">
+          <CategoriesPagination
+            page={list.data.page}
+            pageSize={list.data.pageSize}
+            total={list.data.total}
+            totalPages={Math.max(1, list.data.totalPages)}
+            rows={list.data.rows.length}
+            noun="assets"
+            sizes={ASSET_PAGE_SIZES}
+            onPage={(page) => url.set({ page: String(page) })}
+            onPageSize={(size) => url.set({ pageSize: String(size) })}
+          />
+        </div>
       )}
     </Card>
   );
