@@ -107,7 +107,7 @@ export function SettingsView({
           value="preferences"
           className="pt-4"
         >
-          <PreferencesTab />
+          <PreferencesTab {...common} />
         </TabsContent>
       </Tabs>
       <AlertDialog

@@ -2,7 +2,7 @@
 // Unlike reportGet, a 403 stays a 403: Manager / Employee get a no-access state, not an error.
 import { z } from "zod";
 import { env } from "@/config/env";
-import { LABEL_IDENTIFIERS, type AssetSettings } from "../domain/asset-settings";
+import { FIRST_DAYS, LABEL_IDENTIFIERS, PAGE_SIZES, PREFERENCE_SORTS, PREFERENCE_VIEWS, type AssetSettings } from "../domain/asset-settings";
 import { getAssetFilters, reportAuth } from "./asset-reports-api";
 
 export const settingsSchema = z.object({
@@ -10,6 +10,18 @@ export const settingsSchema = z.object({
   labels: z.object({
     identifier: z.enum(LABEL_IDENTIFIERS),
     fields: z.object({ name: z.boolean(), serial: z.boolean(), category: z.boolean(), location: z.boolean(), logo: z.boolean() }),
+  }),
+  preferences: z.object({
+    views: z.object({
+      assets: z.enum(PREFERENCE_VIEWS),
+      assignments: z.enum(PREFERENCE_VIEWS),
+      inventory: z.enum(PREFERENCE_VIEWS),
+      locations: z.enum(PREFERENCE_VIEWS),
+    }),
+    pageSize: z.union([z.literal(PAGE_SIZES[0]), z.literal(PAGE_SIZES[1]), z.literal(PAGE_SIZES[2]), z.literal(PAGE_SIZES[3])]),
+    sort: z.enum(PREFERENCE_SORTS),
+    rememberFilters: z.boolean(),
+    firstDayOfWeek: z.enum(FIRST_DAYS),
   }),
   inventoryDefaults: z.object({ dueDays: z.number(), categoryIds: z.array(z.string()) }),
   updatedAt: z.string().nullable(),
