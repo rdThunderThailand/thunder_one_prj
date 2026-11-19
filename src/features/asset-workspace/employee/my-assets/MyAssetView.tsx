@@ -135,7 +135,7 @@ function Warranty({ warranty }: { warranty: MyAsset["currentWarranty"] }) {
 
 export function MyAssetView({ asset, photo, backHref }: { asset: MyAsset; photo: string | null; backHref: string }) {
   return (
-    <div className="@container/my-asset space-y-4 p-4 sm:p-6">
+    <div className="@container/my-asset space-y-4">
       <Link
         href={backHref}
         className="inline-flex items-center gap-1 text-sm text-primary hover:underline"

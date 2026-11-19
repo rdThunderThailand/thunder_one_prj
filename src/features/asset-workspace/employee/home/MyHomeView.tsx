@@ -172,7 +172,7 @@ export function MyHomeView({
   tasks: ListData<SessionRow> | null;
 }) {
   return (
-    <div className="space-y-4 p-4 sm:p-6">
+    <div className="space-y-4">
       <PageHeader
         title={firstName ? `Hello, ${firstName}` : "Hello"}
         subtitle="Your assets and tasks in Asset Workspace."

@@ -115,138 +115,135 @@ export function EmployeeListPage<Row>({
   const busy = loading || url.isPending;
 
   return (
-    // Same side and top padding as the other employee pages; no bottom padding, so the fit counts `main`'s only.
-    <div className="px-4 pt-4 sm:px-6 sm:pt-6">
-      <div
-        ref={ref}
-        className="group/employee-list flex min-w-0 flex-col gap-4 [&>*]:shrink-0 data-[bounded=true]:h-(--employee-list-height) data-[bounded=true]:min-h-0 data-[bounded=true]:overflow-hidden"
-      >
-        <PageHeader
-          title={title}
-          subtitle={subtitle}
-        />
-        {tabs && tabs.length > 0 && (
-          <Tabs
-            variant="underline"
-            activationMode="manual"
-            value={activeTab}
-            onValueChange={(key) => url.set({ [tabParam]: key === tabs[0].key ? undefined : key })}
-          >
-            <TabsList
-              aria-label={`${title} views`}
-              className="max-w-full overflow-x-auto"
-            >
-              {tabs.map((tab) => (
-                <TabsTrigger
-                  key={tab.key}
-                  value={tab.key}
-                  className="whitespace-nowrap"
-                >
-                  {tab.label}
-                  {loading ? (
-                    <Skeleton className="ml-1.5 h-4 w-5 rounded-full" />
-                  ) : tab.count != null && (
-                    <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
-                      {tab.count.toLocaleString()}
-                    </span>
-                  )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        )}
-        {filters && <div className="flex flex-wrap items-center gap-2">{filters(url)}</div>}
-        <Card
-          data-list-results
-          className="flex min-w-0 flex-col overflow-hidden p-0 group-data-[bounded=true]/employee-list:min-h-0 group-data-[bounded=true]/employee-list:flex-1 group-data-[bounded=true]/employee-list:shrink"
+    <div
+      ref={ref}
+      className="group/employee-list flex min-w-0 flex-col gap-4 [&>*]:shrink-0 data-[bounded=true]:h-(--employee-list-height) data-[bounded=true]:min-h-0 data-[bounded=true]:overflow-hidden"
+    >
+      <PageHeader
+        title={title}
+        subtitle={subtitle}
+      />
+      {tabs && tabs.length > 0 && (
+        <Tabs
+          variant="underline"
+          activationMode="manual"
+          value={activeTab}
+          onValueChange={(key) => url.set({ [tabParam]: key === tabs[0].key ? undefined : key })}
         >
-          {busy ? (
-            <ListLoading
-              columns={columns}
-              thumbnails={thumbnails}
+          <TabsList
+            aria-label={`${title} views`}
+            className="max-w-full overflow-x-auto"
+          >
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.key}
+                value={tab.key}
+                className="whitespace-nowrap"
+              >
+                {tab.label}
+                {loading ? (
+                  <Skeleton className="ml-1.5 h-4 w-5 rounded-full" />
+                ) : tab.count != null && (
+                  <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+                    {tab.count.toLocaleString()}
+                  </span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+      {filters && <div className="flex flex-wrap items-center gap-2">{filters(url)}</div>}
+      <Card
+        data-list-results
+        className="flex min-w-0 flex-col overflow-hidden p-0 group-data-[bounded=true]/employee-list:min-h-0 group-data-[bounded=true]/employee-list:flex-1 group-data-[bounded=true]/employee-list:shrink"
+      >
+        {busy ? (
+          <ListLoading
+            columns={columns}
+            thumbnails={thumbnails}
+          />
+        ) : data === null ? (
+          <div className="grid flex-1 place-items-center p-4 *:w-full">
+            <ErrorState />
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="grid flex-1 place-items-center p-4 *:w-full">
+            <EmptyState
+              title={emptyTitle}
+              body={emptyBody}
             />
-          ) : data === null ? (
-            <div className="grid flex-1 place-items-center p-4 *:w-full">
-              <ErrorState />
+          </div>
+        ) : (
+          <>
+            <div
+              className="relative min-w-0 overflow-x-auto overscroll-contain group-data-[bounded=true]/employee-list:min-h-0 group-data-[bounded=true]/employee-list:flex-1 group-data-[bounded=true]/employee-list:overflow-auto"
+            >
+              <table className="w-full text-left text-sm">
+                <thead className="sticky top-0 z-10 bg-card">
+                  <tr className="border-b border-border text-xs text-muted-foreground">
+                    {columns.map((column) => (
+                      <th
+                        key={column.key}
+                        className={`px-4 py-3 font-medium ${column.className ?? ""}`}
+                      >
+                        {column.header}
+                      </th>
+                    ))}
+                    <th className="w-10 px-2 py-3">
+                      <span className="sr-only">Open</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr
+                      key={getRowId(row)}
+                      onClick={(event) => {
+                        if ((event.target as HTMLElement).closest("a,button")) return;
+                        router.push(rowHref(row));
+                      }}
+                      className="group/row cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/60"
+                    >
+                      {columns.map((column) => (
+                        <td
+                          key={column.key}
+                          className={`relative px-4 py-3 ${column.className ?? ""}`}
+                        >
+                          {column.render(row)}
+                        </td>
+                      ))}
+                      <td className="relative px-2 py-3 text-muted-foreground">
+                        <ChevronRightIcon
+                          aria-hidden="true"
+                          className="size-4 transition-transform group-hover/row:translate-x-0.5 group-hover/row:text-foreground"
+                        />
+                        <span className="sr-only">Open {rowLabel(row)}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : rows.length === 0 ? (
-            <div className="grid flex-1 place-items-center p-4 *:w-full">
-              <EmptyState
-                title={emptyTitle}
-                body={emptyBody}
+            <div
+              data-list-controls
+              className="border-t border-border px-4 py-1"
+            >
+              <Pagination
+                page={data.page}
+                totalPages={data.totalPages}
+                perPage={data.pageSize}
+                totalItems={data.total}
+                rangeStart={(data.page - 1) * data.pageSize + 1}
+                rangeEnd={Math.min(data.page * data.pageSize, data.total)}
+                itemLabel={itemLabel}
+                onPageChange={(page) => url.set({ page: String(page) })}
+                onPerPageChange={(size) => url.set({ pageSize: String(size) })}
               />
             </div>
-          ) : (
-            <>
-              <div
-                className="relative min-w-0 overflow-x-auto overscroll-contain group-data-[bounded=true]/employee-list:min-h-0 group-data-[bounded=true]/employee-list:flex-1 group-data-[bounded=true]/employee-list:overflow-auto"
-              >
-                <table className="w-full text-left text-sm">
-                  <thead className="sticky top-0 z-10 bg-card">
-                    <tr className="border-b border-border text-xs text-muted-foreground">
-                      {columns.map((column) => (
-                        <th
-                          key={column.key}
-                          className={`px-4 py-3 font-medium ${column.className ?? ""}`}
-                        >
-                          {column.header}
-                        </th>
-                      ))}
-                      <th className="w-10 px-2 py-3">
-                        <span className="sr-only">Open</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr
-                        key={getRowId(row)}
-                        onClick={(event) => {
-                          if ((event.target as HTMLElement).closest("a,button")) return;
-                          router.push(rowHref(row));
-                        }}
-                        className="group/row cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/60"
-                      >
-                        {columns.map((column) => (
-                          <td
-                            key={column.key}
-                            className={`relative px-4 py-3 ${column.className ?? ""}`}
-                          >
-                            {column.render(row)}
-                          </td>
-                        ))}
-                        <td className="relative px-2 py-3 text-muted-foreground">
-                          <ChevronRightIcon
-                            aria-hidden="true"
-                            className="size-4 transition-transform group-hover/row:translate-x-0.5 group-hover/row:text-foreground"
-                          />
-                          <span className="sr-only">Open {rowLabel(row)}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div
-                data-list-controls
-                className="border-t border-border px-4 py-1"
-              >
-                <Pagination
-                  page={data.page}
-                  totalPages={data.totalPages}
-                  perPage={data.pageSize}
-                  totalItems={data.total}
-                  rangeStart={(data.page - 1) * data.pageSize + 1}
-                  rangeEnd={Math.min(data.page * data.pageSize, data.total)}
-                  itemLabel={itemLabel}
-                  onPageChange={(page) => url.set({ page: String(page) })}
-                  onPerPageChange={(size) => url.set({ pageSize: String(size) })}
-                />
-              </div>
-            </>
-          )}
-        </Card>
-      </div>
+          </>
+        )}
+      </Card>
     </div>
   );
 }

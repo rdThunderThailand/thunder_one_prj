@@ -2,9 +2,9 @@
 import assert from "node:assert/strict";
 import { sectionsForRole, standaloneLinksForRole, type AssetWorkspaceRole } from "./asset-workspace-roles.ts";
 
-// The pinned Overview (or My Assets for Employees), every section item, then standalone links.
+// The pinned Overview (or Home for Employees), every section item, then standalone links.
 const visible = (role: AssetWorkspaceRole) => [
-  role === "employee" ? "My Assets" : "Overview",
+  role === "employee" ? "Home" : "Overview",
   ...sectionsForRole(role).flatMap((section) => section.items.map((item) => item.label)),
   ...standaloneLinksForRole(role).map((item) => item.label),
 ];
@@ -21,11 +21,11 @@ assert.deepEqual(visible("asset_admin"), [
   "Settings",
 ]);
 assert.deepEqual(visible("manager"), ["Overview", "Assets", "Assignments", "Inventory", "Reports"]);
-assert.deepEqual(visible("employee"), ["My Assets", "My Tasks", "Scan Asset", "Home"]);
+assert.deepEqual(visible("employee"), ["Home", "My Assets", "My Tasks", "Scan Asset"]);
 // Every employee link has its page; admin and manager get none.
 assert.deepEqual(
   standaloneLinksForRole("employee").map((item) => item.href),
-  ["/asset-workspace/my-tasks", "/asset-workspace/scan-asset", "/asset-workspace/home"],
+  ["/asset-workspace/my-assets", "/asset-workspace/my-tasks", "/asset-workspace/scan-asset"],
 );
 assert.deepEqual(standaloneLinksForRole("asset_admin"), []);
 assert.deepEqual(standaloneLinksForRole("manager"), []);
