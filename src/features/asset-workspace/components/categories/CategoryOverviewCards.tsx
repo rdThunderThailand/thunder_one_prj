@@ -25,6 +25,7 @@ export function CategoryOverviewCards({ category }: { category: AssetCategoryDet
         <h2 id="category-information-title" className="text-sm font-semibold">Category Information</h2>
         <dl className="mt-1 text-xs leading-relaxed">
           <InfoRow label="Category Name">{category.name}</InfoRow>
+          <InfoRow label="Code">{category.code}</InfoRow>
           <InfoRow label="Parent Category">
             {category.parent ? (
               <Link className={link} href={categoryDetailHref(category.parent.id)}>{category.parent.name}</Link>

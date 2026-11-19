@@ -68,7 +68,7 @@ export function AssignmentsCurrentFilters({ url, result }: { url: ListUrlState; 
           <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground" />
           <Input id={searchId} name="q" type="search" maxLength={200} value={search}
             onChange={(event) => setInput((previous) => ({ ...previous, draft: event.target.value }))}
-            placeholder="Search asset name, Asset Tag, serial number or custodian…" className="h-10 pl-9" />
+            placeholder="Search asset, tag, serial or person…" className="h-10 pl-9" />
         </form>
         <AssignmentFilter label="Category" all="All Categories" value={url.get("category_id") ?? ""}
           options={references(options?.categories ?? [])} disabled={disabled} onChange={(value) => url.set({ category_id: value })} />

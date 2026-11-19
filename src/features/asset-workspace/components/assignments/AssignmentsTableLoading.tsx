@@ -29,6 +29,8 @@ export function AssignmentsTableLoading() {
                       <Skeleton className="size-8 shrink-0 rounded-full" />
                       <Skeleton className="h-4 w-full" />
                     </div>
+                  ) : column.key === "actions" ? (
+                    <Skeleton className="mx-auto size-6" />
                   ) : (
                     <Skeleton className="h-4 w-full" />
                   )}

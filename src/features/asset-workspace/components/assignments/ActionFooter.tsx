@@ -6,8 +6,8 @@ import { ArrowRightIcon, CheckIcon } from "@/components/ui/icons";
  * FE 02–04 footer, as PO frames 16 / 20–22. Details: Cancel left, Next right.
  * Review: Back left; Confirm right, with Cancel before it when the frame shows one (Return, frame 22).
  */
-export function ActionFooter({ cancelHref, showBack, sending, review, reviewCancel = false, canNext, canConfirm, confirmLabel, sendingLabel, onBack, onNext, onConfirm }: {
-  cancelHref: string; showBack: boolean; sending: boolean; review: boolean; reviewCancel?: boolean; canNext: boolean; canConfirm: boolean;
+export function ActionFooter({ cancelHref, showBack, sending, review, reviewCancel = false, canNext, nextHint, canConfirm, confirmLabel, sendingLabel, onBack, onNext, onConfirm }: {
+  cancelHref: string; showBack: boolean; sending: boolean; review: boolean; reviewCancel?: boolean; canNext: boolean; nextHint?: string; canConfirm: boolean;
   confirmLabel: string; sendingLabel: string; onBack: () => void; onNext: () => void; onConfirm: () => void;
 }) {
   const cancel = (
@@ -35,7 +35,10 @@ export function ActionFooter({ cancelHref, showBack, sending, review, reviewCanc
   return (
     <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
       {review ? back || <span /> : cancel}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {!review && !canNext && nextHint && (
+          <p className="text-xs text-muted-foreground">{nextHint}</p>
+        )}
         {review ? (
           <>
             {reviewCancel && cancel}

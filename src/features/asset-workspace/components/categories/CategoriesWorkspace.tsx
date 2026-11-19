@@ -22,8 +22,8 @@ export function CategoriesWorkspace({ children }: { children: ReactNode }) {
       const gap = Number.parseFloat(getComputedStyle(workspace).rowGap) || 0;
       const controls = Array.from(workspace.querySelectorAll<HTMLElement>("[data-category-controls]"))
         .reduce((sum, block) => sum + block.offsetHeight, 0);
-      // Allow page flow only when the controls leave less than three usable rows.
-      const bounded = height - fixed - gap * Math.max(0, blocks.length - 1) - controls >= 160;
+      // Allow page flow only when the controls leave less than two usable rows (a 768px-tall laptop keeps the bounded layout).
+      const bounded = height - fixed - gap * Math.max(0, blocks.length - 1) - controls >= 112;
       const enteringBounded = bounded && workspace.dataset.bounded !== "true";
       workspace.style.setProperty("--categories-workspace-height", `${Math.max(0, height)}px`);
       workspace.dataset.bounded = String(bounded);

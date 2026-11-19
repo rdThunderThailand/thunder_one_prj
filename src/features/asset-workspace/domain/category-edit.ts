@@ -1,5 +1,5 @@
 import type { AssetCategory, AssetCategoryDetail } from "./asset-category.ts";
-import { validateCategoryDraft, type CategoryDraft } from "./category-form.ts";
+import { validateCategoryDraft, withCategoryPaths, type CategoryDraft } from "./category-form.ts";
 
 export function categoryEditDraft(category: AssetCategoryDetail): CategoryDraft {
   return { name: category.name, code: "", parentId: category.parentId ?? "",
@@ -38,5 +38,5 @@ export function categoryEditParents(categories: AssetCategory[], category: Asset
   }
   const options = categories.filter((row) => !excluded.has(row.id)
     && (row.status === "Active" || (row.id === category.parentId && row.id === selected)));
-  return options.sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true, sensitivity: "base" }));
+  return withCategoryPaths(options, categories);
 }

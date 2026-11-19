@@ -24,6 +24,8 @@ export function CategoryEditFields({ category, flow, categories, parentsPending 
         <RegistrationTextField name="category-name" label="Category Name" required value={draft.name}
           error={fields.name} autoComplete="off" className="h-10"
           onChange={(event) => patch({ name: event.target.value })} />
+        <RegistrationTextField name="category-code" label="Category Code" value={category.code} readOnly
+          hint="Can't be changed after creation." className="h-10 bg-muted text-muted-foreground" />
         <RegistrationField name="category-parent" label="Parent Category" error={fields.parentId}
           hint="Choose an active category. This category and its descendants are excluded.">
           <Select value={draft.parentId || "top-level"} disabled={flow.locked || parentsPending}
@@ -42,7 +44,7 @@ export function CategoryEditFields({ category, flow, categories, parentsPending 
               )}
               {parents.map((parent) => (
                 <SelectItem key={parent.id} value={parent.id} disabled={parent.status === "Inactive"} className="wrap-anywhere">
-                  {parent.name}{parent.status === "Inactive" ? " (Inactive)" : ""}
+                  {parent.label}{parent.status === "Inactive" ? " (Inactive)" : ""}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -50,11 +52,11 @@ export function CategoryEditFields({ category, flow, categories, parentsPending 
         </RegistrationField>
         <RegistrationField name="category-description" label="Description" error={fields.description}>
           <Textarea id="registration-category-description" value={draft.description} rows={4}
-            className="min-h-24 resize-y" aria-invalid={Boolean(fields.description)}
+            placeholder="Describe the assets that belong in this category." className="min-h-24 resize-y" aria-invalid={Boolean(fields.description)}
             aria-describedby={`category-edit-description-count${fields.description ? " registration-category-description-error" : ""}`}
             onChange={(event) => patch({ description: event.target.value })} />
           <p id="category-edit-description-count" className="text-right text-xs tabular-nums text-muted-foreground">
-            {characterCount(draft.description.trim())}/500
+            {characterCount(draft.description.trim())}/500 characters
           </p>
         </RegistrationField>
       </fieldset>

@@ -84,7 +84,7 @@ export function AssignmentsCurrentView({ result, filters, query, filtered, histo
   return (
     <AssignmentsWorkspace>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title="Assignments" subtitle="View current asset assignments, custodians and locations." />
+        <PageHeader title="Assignments" subtitle="View current assignments and their full history." />
         <Button asChild variant="primary" size="sm" className="max-sm:h-10">
           <Link href="/asset-workspace/assignments/assign">
             <PlusIcon aria-hidden="true" className="size-4" />

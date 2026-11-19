@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { AssetListRow } from "../../services/assets-list-types";
+import { AssetThumbnail } from "../AssetThumbnail";
 import { AssetsConditionValue, AssetsStatusValue } from "../assets-list/AssetsRowDetails";
 
 export function CategoryAssetsTable({ rows }: { rows: AssetListRow[] }) {
@@ -22,10 +23,20 @@ export function CategoryAssetsTable({ rows }: { rows: AssetListRow[] }) {
         {rows.map((row) => (
           <tr key={row.id} className="hover:bg-muted/60 focus-within:bg-muted/60">
             <td className={cell}>
-              <Link href={`/asset-workspace/assets/${encodeURIComponent(row.id)}`}
-                className="inline-block min-h-8 rounded-xs py-1 font-semibold text-accent-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring">
-                {row.name}
-              </Link>
+              <div className="flex min-w-0 items-center gap-3">
+                <AssetThumbnail src={row.thumbnail_url} />
+                <div className="min-w-0">
+                  <Link href={`/asset-workspace/assets/${encodeURIComponent(row.id)}`}
+                    className="inline-block rounded-xs py-0.5 font-semibold text-accent-foreground underline-offset-4 wrap-anywhere hover:underline focus-visible:outline-2 focus-visible:outline-ring">
+                    {row.name}
+                  </Link>
+                  {row.serial_number && (
+                    <p className="truncate text-muted-foreground" title={row.serial_number}>
+                      SN {row.serial_number}
+                    </p>
+                  )}
+                </div>
+              </div>
               <dl className="mt-1 space-y-1 text-muted-foreground @min-4xl/assets-results:hidden">
                 <div>
                   <dt className="inline">Location: </dt>

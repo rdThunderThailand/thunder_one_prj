@@ -97,7 +97,7 @@ export function WarrantyDetails({ flow, number }: { flow: WarrantyFlow; number: 
         <div className="flex items-center justify-between gap-2">
           {noteError && <p id="warranty-note-error" className="text-xs text-error">{noteError}</p>}
           <p id="warranty-note-count" className="ml-auto text-right text-2xs tabular-nums text-muted-foreground">
-            {draft.coverageNote.length} / {WARRANTY_LIMITS.coverageNote}
+            {draft.coverageNote.length}/{WARRANTY_LIMITS.coverageNote} characters
           </p>
         </div>
       </div>

@@ -19,7 +19,7 @@ const display = category(3, "Display", { ...parent, assetCount: 120 });
 const network = category(4, "Network Equipment", { ...parent, assetCount: 80 });
 const laptop = category(5, "Laptop", { parentId: computer.id, parent: { id: computer.id, name: computer.name }, assetCount: 50 });
 const furniture = category(6, "Furniture", { assetCount: 160 });
-// Core's order is meaningful and does not require parents to precede children.
+// Core's order does not require parents to precede children; the default view sorts by name.
 const categories = Object.freeze([computer, electronics, furniture, display, laptop, network].map((row) => Object.freeze(row)));
 const defaults: CategoryListQuery = { q: "", sort: "default", direction: "asc", page: 1, pageSize: 10, expanded: [] };
 const view = (updates: Partial<CategoryListQuery> = {}) => categoryListView(categories, { ...defaults, ...updates });
@@ -48,6 +48,8 @@ assert.deepEqual(view().parentOptions.map((row) => row.name), ["Computer", "Elec
 assert.deepEqual(names(view({ status: "Active", sort: "assets", direction: "desc" })),
   ["Computer", "Furniture", "Display", "Network Equipment", "Laptop"]);
 assert.equal(view({ q: "missing", page: 100 }).page, 1);
+assert.deepEqual(names(view({ status: "Active" })), ["Computer", "Display", "Furniture", "Laptop", "Network Equipment"],
+  "no chosen sort lists names A–Z");
 
 const many = Array.from({ length: 24 }, (_, index) => category(index + 20, `Item ${index}`));
 const paged = categoryListView(many, { ...defaults, page: 2 });

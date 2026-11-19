@@ -21,6 +21,8 @@ import { getAssetStatusHistory, getAssetWarranties } from "../../services/asset-
 import type { AssetDetail, AssetStatusChange } from "../../services/asset-profile-contract";
 import { formatDate, formatDay, SectionMessage, StatusValue, todayInBangkok } from "./ProfileParts";
 import { SetCurrentWarranty, WarrantyCardActions } from "../lifecycle-warranty/ProfileWarrantyActions";
+import { ProfileWarrantyFiles } from "../lifecycle-warranty/ProfileWarrantyFiles";
+import { warrantyStartsIn } from "../../domain/warranty-timing";
 
 // The tone comes from status-tone.ts; this only maps a tone to the step card surface.
 const TONE_CARD = {
@@ -156,7 +158,9 @@ function WarrantyInformation({ context, asset }: { context: string; asset: Asset
   const warranties = useProfileRead(`${context}:${asset.id}:warranties`, (signal) => getAssetWarranties(context, asset.id, signal), open);
   const current = asset.currentWarranty;
   const state = current ? profileWarranty(current.expiryStatus) : null;
-  const remaining = current && current.expiryStatus !== "Expired" ? warrantyRemaining(current.endDate, todayInBangkok()) : null;
+  const today = todayInBangkok();
+  const remaining = current && current.expiryStatus !== "Expired"
+    ? warrantyStartsIn(current.startDate, today) ?? warrantyRemaining(current.endDate, today) : null;
   const earlier = warranties.result?.ok ? warranties.result.data.filter((warranty) => !warranty.isCurrent) : [];
   return (
     <LifecycleCard icon={WarrantyIcon} title="Warranty Information" action={<WarrantyCardActions asset={asset} />}>
@@ -169,11 +173,12 @@ function WarrantyInformation({ context, asset }: { context: string; asset: Asset
           ["End Date", (
             <span key="end" className="inline-flex flex-wrap items-center gap-2">
               {formatDate(current.endDate)}
-              {remaining && <Badge variant="pill" color="yellow">{remaining}</Badge>}
+              {remaining && <Badge variant="pill" color={current.expiryStatus === "Expiring Soon" ? "yellow" : "zinc"}>{remaining}</Badge>}
             </span>
           )],
           ["Reference No.", current.referenceNo || "—"],
           ["Coverage", current.coverageNote || "—"],
+          ["Attachments", <ProfileWarrantyFiles key="files" context={context} assetId={asset.id} warrantyId={current.id} />],
         ]} />
       ) : <SectionMessage>No warranty recorded.</SectionMessage>}
       <details className="group/disclosure border-t border-border pt-2" onToggle={(event) => { if (event.currentTarget.open) setOpen(true); }}>

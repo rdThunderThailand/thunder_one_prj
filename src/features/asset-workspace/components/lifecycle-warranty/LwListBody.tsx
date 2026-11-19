@@ -84,7 +84,7 @@ export function LwListBody<Row>({ tab, url, list, columns, noun, emptyTitle, cle
           totalItems={list.total}
           rangeStart={(list.page - 1) * list.pageSize + 1}
           rangeEnd={Math.min(list.page * list.pageSize, list.total)}
-          itemLabel={noun}
+          itemLabel="assets"
           onPageChange={(value) => url.set({ page: String(value) })}
           onPerPageChange={(value) => url.set({ pageSize: String(value) })}
         />

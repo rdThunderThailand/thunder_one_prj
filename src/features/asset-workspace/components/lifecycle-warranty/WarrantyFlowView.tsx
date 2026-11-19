@@ -51,6 +51,8 @@ function WarrantyFooter({ flow, back, profile }: { flow: WarrantyFlow; back: str
   const sending = flow.save.phase === "sending";
   const review = flow.step === "review";
   const canGoBack = review || (flow.step === "details" && Boolean(flow.picked));
+  const blocked = !review && (flow.step === "select" ? !flow.picked : !flow.canNext);
+  const hint = flow.step === "select" ? "Select an asset to continue." : "Fill in the required fields to continue.";
   const cancel = sending ? (
     <Button variant="outline" size="sm" className={secondaryAction} disabled>Cancel</Button>
   ) : (
@@ -58,19 +60,23 @@ function WarrantyFooter({ flow, back, profile }: { flow: WarrantyFlow; back: str
       <Link href={back}>Cancel</Link>
     </Button>
   );
+  // Select Asset has no side panel, so its footer spans the full width like the table above it.
   return (
-    <footer className={`${changeStatusFooterFrame} ${changeStatusFooterColumns}`}>
+    <footer className={`${changeStatusFooterFrame} ${flow.step === "select" ? "" : changeStatusFooterColumns}`}>
       <div className={changeStatusFooterSurface}>
         {canGoBack ? (
           <Button type="button" variant="outline" size="sm" className={secondaryAction} disabled={sending} onClick={flow.back}>Back</Button>
         ) : cancel}
-        <div className="ml-auto flex flex-wrap justify-end gap-2">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           {canGoBack && cancel}
+          {blocked && !sending && (
+            <p className="text-xs text-muted-foreground">{hint}</p>
+          )}
           <Button
             type="button"
             size="sm"
             className={review ? "min-w-36 max-sm:h-10" : "min-w-28 max-sm:h-10"}
-            disabled={review ? !flow.canConfirm : flow.step === "select" ? !flow.picked : !flow.canNext}
+            disabled={review ? !flow.canConfirm : blocked}
             onClick={review ? flow.confirm : flow.next}
           >
             {review && !sending && <CheckIcon aria-hidden="true" className="size-4" />}

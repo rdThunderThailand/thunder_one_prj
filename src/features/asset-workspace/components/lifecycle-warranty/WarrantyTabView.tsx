@@ -50,15 +50,15 @@ export function WarrantyTabView({ data }: { data: WarrantyTabData }) {
       />
       <LwFilters
         url={url}
-        placeholder="Search asset name, Asset Tag or serial number…"
+        placeholder="Search name, tag or serial…"
         clear={WARRANTY_CLEAR}
         optionsFailed={!counts}
         selects={[
-          { key: "status", label: "Status", all: "All Statuses", value: status ?? "",
+          { key: "status", label: "Status", value: status ?? "",
             options: WARRANTY_STATUSES.map((value) => ({ value, label: value })) },
-          { key: "warranty_type", label: "Warranty Type", all: "All Types", value: url.get("warranty_type") ?? "",
+          { key: "warranty_type", label: "Warranty Type", value: url.get("warranty_type") ?? "",
             options: (counts?.byWarrantyType ?? []).map(({ warrantyType }) => ({ value: warrantyType, label: warrantyType })) },
-          { key: "provider", label: "Provider", all: "All Providers", value: url.get("provider") ?? "",
+          { key: "provider", label: "Provider", value: url.get("provider") ?? "",
             options: (counts?.byProvider ?? []).map(({ provider }) => ({ value: provider, label: provider })) },
         ]}
       />

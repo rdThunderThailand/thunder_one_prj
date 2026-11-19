@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/Card";
-import { ClockIcon } from "@/components/ui/icons";
+import { FileTextIcon, UsersIcon } from "@/components/ui/icons";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { AssignAssetCard } from "./AssignAssetCard";
@@ -22,7 +22,7 @@ export function AssignDetailsForm({ context, flow, asset, rules }: {
         thumbnailUrl={flow.picked?.thumbnailUrl ?? flow.photo}
       />
       <Card className="space-y-3 p-4">
-        <SectionTitle icon={ClockIcon}>{number}. Assign To</SectionTitle>
+        <SectionTitle icon={UsersIcon}>{number}. Assign To</SectionTitle>
         <CustodianTabs
           context={context}
           rules={rules.referenceSelectors}
@@ -34,7 +34,7 @@ export function AssignDetailsForm({ context, flow, asset, rules }: {
         />
       </Card>
       <Card className="space-y-3 p-4">
-        <SectionTitle icon={ClockIcon}>{number + 1}. Assignment Details</SectionTitle>
+        <SectionTitle icon={FileTextIcon}>{number + 1}. Assignment Details</SectionTitle>
         <ReasonField
           id="assign-reason"
           value={flow.reason}

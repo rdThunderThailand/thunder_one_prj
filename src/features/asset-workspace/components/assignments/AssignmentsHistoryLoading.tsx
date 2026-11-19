@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/Skeleton";
-import { assignmentHistoryColumns } from "./assignment-history-columns";
+import { assignmentHistoryColumns, HISTORY_DETAILS_COLUMN } from "./assignment-history-columns";
 
 export function AssignmentsHistoryLoading() {
   return (
@@ -14,7 +14,7 @@ export function AssignmentsHistoryLoading() {
           <tr>
             {assignmentHistoryColumns.map(({ label: heading }) => (
               <th key={heading} scope="col" className="border-b border-border px-3 py-3 font-medium">
-                {heading}{heading === "Date & Time" && <span> ↓</span>}
+                {heading === HISTORY_DETAILS_COLUMN ? "" : heading}
               </th>
             ))}
           </tr>
@@ -24,7 +24,7 @@ export function AssignmentsHistoryLoading() {
             <tr key={row}>
               {assignmentHistoryColumns.map(({ label: heading }) => (
                 <td key={heading} className="px-3 py-3 align-top">
-                  <Skeleton className={heading === "#" ? "h-8 w-4" : "h-8 w-full"} />
+                  <Skeleton className={heading === HISTORY_DETAILS_COLUMN ? "mx-auto size-4" : "h-8 w-full"} />
                 </td>
               ))}
             </tr>

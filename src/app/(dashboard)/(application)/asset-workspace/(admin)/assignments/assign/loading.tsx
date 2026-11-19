@@ -5,7 +5,6 @@ export default function Loading() {
   return (
     <AssignFlowLoading
       steps={assignSteps(true)}
-      mockNote
     />
   );
 }

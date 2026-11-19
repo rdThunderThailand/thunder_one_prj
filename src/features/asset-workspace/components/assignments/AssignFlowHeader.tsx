@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/lovable/button";
 import { ArrowLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { ActionSteps } from "./ActionSteps";
@@ -49,9 +48,9 @@ export function AssignFlowCrumb({ origin, assetId, assetName, title }: { origin:
 }
 
 /** Frame 16: back arrow, title and steps head the left column; the summary panel starts level with them.
- *  `mockNote` marks a flow the PO has not designed yet. */
-export function AssignFlowTitle({ origin, title, subtitle, steps, step, mockNote = false }: {
-  origin: Origin; title: string; subtitle: string; steps?: string[]; step?: number; mockNote?: boolean;
+ */
+export function AssignFlowTitle({ origin, title, subtitle, steps, step }: {
+  origin: Origin; title: string; subtitle: string; steps?: string[]; step?: number;
 }) {
   return (
     <div className="min-w-0 space-y-4 pb-1">
@@ -76,21 +75,6 @@ export function AssignFlowTitle({ origin, title, subtitle, steps, step, mockNote
           title={title}
           subtitle={subtitle}
         />
-        {/* shortcut: PO has no Assign design yet (decisions 2026-11-10), remove once PO approves this flow */}
-        {mockNote && (
-          <p
-            role="note"
-            className="flex min-w-0 flex-wrap items-center gap-2 self-center text-xs text-muted-foreground"
-          >
-            <Badge
-              color="yellow"
-              variant="pill"
-            >
-              Needs attention
-            </Badge>
-            <span className="wrap-anywhere">PO hasn&apos;t approved or provided a design for this flow. The current UI is a mock-up.</span>
-          </p>
-        )}
       </div>
       {steps && (
         <ActionSteps

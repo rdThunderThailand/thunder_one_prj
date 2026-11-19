@@ -14,7 +14,10 @@ export const categoryFieldTargets: Record<CategoryField, { id: string; label: st
   isSerialRequired: { id: "category-serial-optional", label: "Serial Number" },
 };
 
-export function CategoryInformation({ flow, parents }: { flow: CategoryCreateFlow; parents: AssetCategory[] }) {
+export function CategoryInformation({ flow, parents }: {
+  flow: CategoryCreateFlow;
+  parents: (AssetCategory & { label: string })[];
+}) {
   const { draft, fields, patch, blur } = flow;
   return (
     <Card role="region" aria-labelledby="category-information-title"
@@ -73,7 +76,7 @@ export function CategoryInformation({ flow, parents }: { flow: CategoryCreateFlo
               )}
               {parents.map((parent) => (
                 <SelectItem key={parent.id} value={parent.id} className="wrap-anywhere">
-                  {parent.name}
+                  {parent.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -100,13 +103,14 @@ export function CategoryInformation({ flow, parents }: { flow: CategoryCreateFlo
   );
 }
 
+/** Required comes first on both Add and Edit, as in the design. */
 export function CategoryRules({ flow, stacked = false }: {
   flow: Pick<CategoryCreateFlow, "draft" | "fields" | "locked" | "patch">;
   stacked?: boolean;
 }) {
   const options = [
-    { value: false, label: "Optional", hint: "Assets may be registered without a serial number." },
     { value: true, label: "Required", hint: "Assets must have a serial number when registered." },
+    { value: false, label: "Optional", hint: "Assets may be registered without a serial number." },
   ];
   return (
     <Card role="region" aria-labelledby="category-rules-title"
@@ -115,7 +119,7 @@ export function CategoryRules({ flow, stacked = false }: {
       <fieldset disabled={flow.locked} aria-describedby={flow.fields.isSerialRequired ? "category-serial-error" : undefined}>
         <legend className="mb-3 text-xs font-medium text-foreground">Serial Number</legend>
         <div className={`grid gap-3 ${stacked ? "" : "@min-2xl/category-form:grid-cols-2"}`}>
-          {(stacked ? [...options].reverse() : options).map((option) => (
+          {options.map((option) => (
             <label
               key={option.label}
               className={`flex cursor-pointer items-start gap-3 rounded-control border p-3 transition-colors motion-reduce:transition-none ${flow.draft.isSerialRequired === option.value ? "border-primary bg-accent" : "border-border hover:bg-muted"} ${flow.locked ? "cursor-default opacity-60" : ""}`}

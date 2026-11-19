@@ -20,7 +20,8 @@ export function categoryListView(categories: readonly AssetCategory[], query: Ca
   }
 
   function compare(left: AssetCategory, right: AssetCategory) {
-    const order = query.sort === "name" ? names.compare(left.name, right.name)
+    // No chosen sort lists names A–Z, so parents and their children read top to bottom.
+    const order = query.sort === "name" || query.sort === "default" ? names.compare(left.name, right.name)
       : query.sort === "parent" ? names.compare(left.parent?.name ?? "", right.parent?.name ?? "")
         : query.sort === "assets" ? left.assetCount - right.assetCount
           : query.sort === "status" ? names.compare(left.status, right.status) : 0;
