@@ -69,7 +69,7 @@ export function RegistrationTreeSelect({ name, label, kind, copy, tree, value, s
           <Button
             id={`registration-${name}`}
             variant="outline"
-            className="h-auto min-h-10 w-full justify-between gap-3 py-2 text-start font-normal"
+            className="h-auto min-h-10 w-full justify-between gap-3 py-2.5 text-start font-normal"
             aria-label={`${label}${required ? " (required)" : ""}: ${names.join(" › ") || "Not selected"}`}
             aria-invalid={Boolean(error)}
             aria-describedby={[hint && `registration-${name}-hint`, error && `registration-${name}-error`].filter(Boolean).join(" ") || undefined}
@@ -89,6 +89,9 @@ export function RegistrationTreeSelect({ name, label, kind, copy, tree, value, s
         </PopoverTrigger>
         <PopoverContent
           align="start"
+          // Always open below the field and shrink the list to the room left; flipping up covered the page header.
+          side="bottom"
+          avoidCollisions={false}
           collisionPadding={12}
           aria-label={`Choose ${organizational ? "an" : "a"} ${copy.one}`}
           className="flex max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-control p-0 motion-reduce:animate-none"

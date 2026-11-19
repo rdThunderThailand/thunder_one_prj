@@ -6,9 +6,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/lovable/alert-dialog";
 
-export function RegistrationNavigation({ step, editing, locked, busy, uncertain, canConfirm, onCancel, onBack }: {
+export function RegistrationNavigation({ step, editing, locked, busy, uncertain, canConfirm, onCancel, onBack, onNext }: {
   step: number; editing: boolean; locked: boolean; busy: boolean; uncertain: boolean; canConfirm: boolean;
-  onCancel: () => void; onBack: () => void;
+  onCancel: () => void; onBack: () => void; onNext: () => void;
 }) {
   const responsiveControl = "min-w-20 max-sm:h-10";
   return (
@@ -36,9 +36,23 @@ export function RegistrationNavigation({ step, editing, locked, busy, uncertain,
             )}
             {busy ? "Please wait…" : uncertain ? "Retry original request" : "Create Asset"}
           </Button>
+        ) : editing ? (
+          <>
+            {/* Not a submit button, so Enter in a field still returns to Review. */}
+            {step < 3 && (
+              <Button variant="outline" size="sm" className={cn(responsiveControl, "min-w-24")} disabled={locked} onClick={onNext}>
+                Next
+                <ArrowRightIcon className="h-4 w-4" />
+              </Button>
+            )}
+            <Button type="submit" size="sm" className={cn(responsiveControl, "min-w-32")} disabled={locked}>
+              <CheckIcon aria-hidden="true" className="h-4 w-4" />
+              Back to review
+            </Button>
+          </>
         ) : (
           <Button type="submit" size="sm" className={cn(responsiveControl, "min-w-24")} disabled={locked}>
-            {editing ? "Update" : "Next"}
+            Next
             <ArrowRightIcon className="h-4 w-4" />
           </Button>
         )}

@@ -62,8 +62,9 @@ export function useAssetImportReview(runtime: ImportFlowRuntime, createBatch: (l
       );
       if (!parsed) return;
       setParsedImportFile(parsed);
-      publish(lifecycle, { parsed, selectedFile: parsed.file, mapping });
+      publish(lifecycle, { parsed, selectedFile: parsed.file, mapping, remapping: true });
       await createBatch(lifecycle);
+      publish(lifecycle, { remapping: false });
     }, true);
   }
 

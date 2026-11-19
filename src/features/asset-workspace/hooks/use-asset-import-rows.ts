@@ -1,9 +1,19 @@
 "use client";
 
 import { useEffect, useEffectEvent, useState } from "react";
+import type { ImportEditResult } from "../domain/asset-import-edit.ts";
 import type { RowsPage, RowsQuery } from "../domain/asset-import-types.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { ImportApiError, type AssetImportApi } from "../services/asset-import-api.ts";
+
+export function useImportRowsSearch(search: string, query: string, onSearch: (value: string) => void) {
+  const publish = useEffectEvent(onSearch);
+  useEffect(() => {
+    if (search.trim() === query) return;
+    const timer = setTimeout(() => publish(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search, query]);
+}
 
 export function useAssetImportRows(
   api: AssetImportApi,
@@ -68,5 +78,13 @@ export function useAssetImportRows(
     loading: Boolean(batchId) && !current,
     error: current?.error ?? null,
     reload: () => setVersion((value) => value + 1),
+    replace: (result: ImportEditResult) => {
+      const updated = new Map([result.row, ...result.affectedRows].map((row) => [row.id, row]));
+      setSnapshot((previous) => previous?.page ? {
+        ...previous, page: { ...previous.page, rows: previous.page.rows.map((row) => updated.get(row.id) ?? row) },
+      } : previous);
+      // Core supplies the new filtered total and page membership, including rows entering/leaving a filter.
+      setVersion((value) => value + 1);
+    },
   };
 }

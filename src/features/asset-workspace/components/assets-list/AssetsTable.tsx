@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-import { Button } from "@/components/ui/lovable/button";
 import { Checkbox } from "@/components/ui/lovable/checkbox";
-import { EditIcon, EyeIcon } from "@/components/ui/icons";
 import type { AssetListRow } from "../../services/assets-list-types";
 import { AssetThumbnail } from "../AssetThumbnail";
 import { AssetsConditionValue, AssetsStatusValue, AssetsUpdatedAt } from "./AssetsRowDetails";
+import { AssetsRowMenu } from "./AssetsRowMenu";
 
 const profileHref = (id: string) => `/asset-workspace/assets/${encodeURIComponent(id)}`;
 const cell = "border-b border-border px-2 py-2 align-middle";
@@ -16,7 +15,7 @@ const COLUMNS: Record<string, { th: ReactNode; td: (row: AssetListRow) => ReactN
     th: (
       <th
         scope="col"
-        className="w-[22%] @min-[90rem]/assets-results:w-[28%]"
+        className="w-[20%] @min-[90rem]/assets-results:w-[26%]"
       >
         Asset
       </th>
@@ -35,18 +34,15 @@ const COLUMNS: Record<string, { th: ReactNode; td: (row: AssetListRow) => ReactN
               >
                 {name}
               </Link>
-              <span
-                className="block truncate text-2xs text-muted-foreground"
-                title={row.serial_number || undefined}
-              >
-                {row.serial_number ? (
-                  <>
-                    <span className="sr-only">Serial Number: </span>SN {row.serial_number}
-                  </>
-                ) : (
-                  "No serial number"
-                )}
-              </span>
+              {row.serial_number && (
+                <span
+                  className="block truncate text-2xs text-muted-foreground"
+                  title={row.serial_number}
+                >
+                  <span className="sr-only">Serial Number: </span>
+                  SN {row.serial_number}
+                </span>
+              )}
             </div>
           </div>
         </td>
@@ -77,7 +73,7 @@ const COLUMNS: Record<string, { th: ReactNode; td: (row: AssetListRow) => ReactN
     th: (
       <th
         scope="col"
-        className="w-28"
+        className="w-36"
       >
         Category
       </th>
@@ -175,7 +171,7 @@ const COLUMNS: Record<string, { th: ReactNode; td: (row: AssetListRow) => ReactN
     ),
     td: (row) => (
       <td className={`${cell} tabular-nums text-muted-foreground`}>
-        <AssetsUpdatedAt value={row.updated_at} />
+        <AssetsUpdatedAt value={row.updated_at} withTime />
       </td>
     ),
   },
@@ -223,7 +219,7 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending, lo
           ))}
           <th
             scope="col"
-            className="w-18 text-center"
+            className="w-14 text-center"
           >
             Actions
           </th>
@@ -250,41 +246,8 @@ export function AssetsTable({ rows, selected, onSelect, onSelectAll, pending, lo
               {columns.map((column) => (
                 <Fragment key={column.key}>{column.td(row)}</Fragment>
               ))}
-              <td className={cell}>
-                <div className="flex items-center justify-center gap-0.5">
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="icon-sm"
-                  >
-                    <Link
-                      href={profileHref(row.id)}
-                      aria-label={`View ${name}`}
-                      title="View"
-                    >
-                      <EyeIcon
-                        aria-hidden="true"
-                        className="size-4"
-                      />
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="icon-sm"
-                  >
-                    <Link
-                      href={`${profileHref(row.id)}/edit`}
-                      aria-label={`Edit ${name}`}
-                      title="Edit"
-                    >
-                      <EditIcon
-                        aria-hidden="true"
-                        className="size-4"
-                      />
-                    </Link>
-                  </Button>
-                </div>
+              <td className={`${cell} text-center`}>
+                <AssetsRowMenu row={row} />
               </td>
             </tr>
           );

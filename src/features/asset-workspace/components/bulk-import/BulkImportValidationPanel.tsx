@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/Card";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardIcon, DownloadIcon, SpinnerIcon } from "@/components/ui/icons";
+import { AlertCircleIcon, CheckCircleIcon, ClipboardIcon, DownloadIcon, SpinnerIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
 import { formatCount } from "../../domain/asset-import-format";
 import { missingRequired } from "../../domain/asset-import-mapping";
@@ -12,7 +12,9 @@ import type { AssetImportFlow } from "../../hooks/use-asset-import-flow";
 import { ImportApiError } from "../../services/asset-import-api";
 import { downloadBlob } from "../../services/asset-import-template";
 import { BulkImportCounts } from "./BulkImportCounts";
+import { BulkImportGuideSheet } from "./BulkImportGuideSheet";
 import { BulkImportRowsTable } from "./BulkImportRowsTable";
+import { BulkImportStartProgress } from "./BulkImportUploadedFile";
 import { BulkImportValidationProgress } from "./BulkImportValidationProgress";
 
 export function BulkImportValidationPanel({ flow }: {
@@ -28,7 +30,9 @@ export function BulkImportValidationPanel({ flow }: {
   if (!options) return null;
   const totalRows = batch?.totalRows ?? parsed?.rows.length ?? 0;
   const running = flow.busy && Boolean(flow.progress);
-  const requiredMissing = missingRequired(flow.mapping, options.columns).length > 0;
+  const missingLabels = missingRequired(flow.mapping, options.columns)
+    .map((key) => options.columns.find((column) => column.key === key)?.label ?? key);
+  const requiredMissing = missingLabels.length > 0;
 
   async function downloadErrors() {
     if (!batch || downloading || flow.busy) return;
@@ -55,13 +59,26 @@ export function BulkImportValidationPanel({ flow }: {
       <div className="space-y-1">
         <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-2">
           <h2 className="text-sm font-semibold">2. Validate Data</h2>
-          <Button variant="link" size="sm" className="px-0 text-xs" disabled>
-            View validation rules
-          </Button>
+          <BulkImportGuideSheet options={options}>
+            <Button variant="link" size="sm" className="px-0 text-xs">
+              View validation rules
+            </Button>
+          </BulkImportGuideSheet>
         </div>
         <p className="text-xs leading-relaxed text-muted-foreground">We check the data using ThunderOne rules.</p>
       </div>
-      {running && flow.progress ? (
+      {flow.remapping && flow.progress ? (
+        <div className="flex flex-1 flex-col justify-center gap-3 py-6">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Preparing a new check with the same file. You can change the mapping when it is ready.
+          </p>
+          <BulkImportStartProgress
+            label={flow.progress.label}
+            value={flow.progress.value}
+            creating={Boolean(flow.progress.creating)}
+          />
+        </div>
+      ) : running && flow.progress ? (
         <BulkImportValidationProgress progress={flow.progress} />
       ) : batch?.status === "validated" ? (
         <>
@@ -73,6 +90,9 @@ export function BulkImportValidationPanel({ flow }: {
             batch={batch}
             variant="validate"
             onReloadBatch={flow.reload}
+            editor={{ context: flow.context, mapping: flow.mapping, options,
+              disabled: flow.busy || flow.confirmation !== null || batch.createdBy.id !== flow.context.split(":")[1],
+              onSaved: flow.applyRowEdit, onReview: flow.showReview }}
             toolbar={batch.counts.error > 0 ? (
               <Button size="sm" variant="outline" disabled={downloading || flow.busy} onClick={() => void downloadErrors()}>
                 {downloading ? (
@@ -91,8 +111,22 @@ export function BulkImportValidationPanel({ flow }: {
           <p className="text-xs text-muted-foreground">
             {preview
               ? "Review your column mapping here. Validation requires an enabled backend; your file has not been sent."
-              : "Map the required fields, then validate your data."}
+              : "Check the mapping on the left, then validate. After you validate, the mapping can't change."}
           </p>
+          {!preview && parsed && (
+            <p
+              className={`flex items-center gap-1.5 text-xs ${requiredMissing ? "text-error" : "text-success"}`}
+            >
+              {requiredMissing ? (
+                <AlertCircleIcon aria-hidden="true" className="size-4 shrink-0" />
+              ) : (
+                <CheckCircleIcon aria-hidden="true" className="size-4 shrink-0" />
+              )}
+              <span>
+                {requiredMissing ? `Map ${missingLabels.join(", ")} to validate` : "All required fields are mapped"}
+              </span>
+            </p>
+          )}
           <Button
             size="sm"
             disabled={preview || !parsed || requiredMissing || flow.busy}

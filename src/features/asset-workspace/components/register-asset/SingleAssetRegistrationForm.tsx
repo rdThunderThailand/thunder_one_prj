@@ -41,6 +41,7 @@ export function SingleAssetRegistrationForm({ options: initialOptions, tenantId,
   const headingRef = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const continueEditing = useRef(false);
   const storageKey = registrationDraftKey(tenantId, userId);
   const confirmation = useRegistrationConfirmation(`${storageKey}:confirmation`, `${tenantId}:${userId}`, initialOptions);
   const { locked } = confirmation;
@@ -174,7 +175,10 @@ export function SingleAssetRegistrationForm({ options: initialOptions, tenantId,
         event.preventDefault();
         if (locked && !confirmation.uncertain) return;
         if (state.step === 4) { void submit(); return; }
-        const advanced = registration.advance(options);
+        // While editing, the footer's Next continues step by step; Enter and "Back to review" return to Review.
+        const next = continueEditing.current;
+        continueEditing.current = false;
+        const advanced = registration.advance(options, state.editing && !next);
         requestAnimationFrame(() => {
           if (!advanced) formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
           else {
@@ -230,6 +234,7 @@ export function SingleAssetRegistrationForm({ options: initialOptions, tenantId,
           canConfirm={!confirmation.storageBlocked && (confirmation.uncertain || !fileCache.restoring && !creationBlocker && !missingFiles)}
           onCancel={() => registration.dirty ? registration.setCancelOpen(true) : void discard()}
           onBack={() => { if (!locked) registration.back(); }}
+          onNext={() => { continueEditing.current = true; formRef.current?.requestSubmit(); }}
         />
       </form>
       <RegistrationCancelDialog

@@ -14,6 +14,13 @@ import { registrationCustodyLabel } from "../../domain/registration-reference-ch
 import { RegistrationHelp } from "./RegistrationFields";
 import { cn } from "@/lib/utils";
 
+const QUICK_TIPS = [
+  "Asset Tag is generated on creation, or enter your own.",
+  "Photos are optional and can be added later from the asset profile.",
+  "Status follows the initial custody you set in Step 3.",
+  "Purchase details and warranty are added in Step 4.",
+];
+
 export function RegistrationPreview({ draft, options, step, reviewed, onEdit, photo, needsPhotoReselection, locked = false, verifiedPhoto = false }: {
   draft: RegistrationDraft; options: RegistrationOptions; step: number; reviewed: boolean; onEdit: (step: number) => void;
   photo?: RegistrationPhoto; needsPhotoReselection: boolean; locked?: boolean; verifiedPhoto?: boolean;
@@ -22,7 +29,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
   const categoryPath = registrationCategoryPath(draft.categoryId, draft.selectedReferences.categories);
   const custody = registrationCustodyLabel(draft);
   const detailedPreview = step >= 1;
-  const acquisitionSummary = `${draft.purchaseDate || "Acquisition date optional"} · ${draft.warranties.length ? `${draft.warranties.length} warranties` : "No warranties"}`;
+  const acquisitionSummary = `${draft.purchaseDate || "Acquisition date optional"} · ${draft.warranties.length ? `${draft.warranties.length} ${draft.warranties.length === 1 ? "warranty" : "warranties"}` : "No warranties"}`;
   const summaries = [draft.name || "Not entered", categoryPath || "Not selected", locationPath(draft.locationId, draft) || "Not selected", acquisitionSummary, step === 4 ? "Reviewing information" : "Not completed"];
   const checklist = step === 4 ? [...REGISTRATION_STEPS.slice(0, 4), "Additional information"] : REGISTRATION_STEPS;
   if (step === 4) summaries[4] = draft.notes || draft.hasDocumentSelections ? "Notes and documents reviewed" : "Optional information not provided";
@@ -40,8 +47,9 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
           <div
             className={cn(
               "relative flex shrink-0 items-center justify-center overflow-hidden rounded-control bg-muted",
-              !photo ? "h-12 w-12" : step === 0 ? "h-24 w-24" : "aspect-video max-h-48 w-full",
-              detailedPreview && photo && "max-h-none",
+              !photo ? "h-12 w-12" : step === 0 ? "h-24 w-24" : "aspect-video max-h-40 w-full",
+              // Review shows the whole photo; steps 1–3 keep it short so the details stay in view.
+              step === 4 && photo && "max-h-none",
             )}
           >
             {photo ? (
@@ -51,7 +59,7 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
                 fill
                 unoptimized
                 sizes={step === 0 ? "96px" : detailedPreview ? "(max-width: 1023px) 100vw, 36vw" : "352px"}
-                className="object-contain"
+                className={step === 4 ? "object-contain" : "object-cover"}
               />
             ) : (
               <BoxIcon className="h-5 w-5 text-muted-foreground" />
@@ -94,9 +102,16 @@ export function RegistrationPreview({ draft, options, step, reviewed, onEdit, ph
             <InfoIcon aria-hidden="true" className="h-4 w-4 shrink-0" />
             Quick tips
           </h2>
-          <p>Use a unique tag or generate it on creation. Photos are optional.</p>
+          <ul className="list-disc space-y-1 pl-5 marker:text-accent-foreground">
+            {QUICK_TIPS.map((tip) => (
+              <li key={tip}>
+                {tip}
+              </li>
+            ))}
+          </ul>
           <RegistrationHelp>
-            <p>Status follows initial custody selected in Step 3.</p>
+            <p>Automatic tags are allocated only when creation succeeds; the preview reserves no number.</p>
+            <p>Damaged requires valid initial custody.</p>
             <p>Keep browser storage available to restore selected files after refresh.</p>
           </RegistrationHelp>
         </section>

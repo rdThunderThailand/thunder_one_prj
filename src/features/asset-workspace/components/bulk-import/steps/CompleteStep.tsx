@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/lovable/button";
 import { cn } from "@/lib/utils";
 import type { AssetImportFlow } from "../../../hooks/use-asset-import-flow";
 import { useAssetImportFiles } from "../../../hooks/use-asset-import-files";
+import { BulkImportCorrectedDownload } from "../BulkImportCorrectedDownload";
 import { BulkImportCounts } from "../BulkImportCounts";
 import { BulkImportErrorFileDialog } from "../BulkImportErrorFileDialog";
 import { BulkImportRowsTable } from "../BulkImportRowsTable";
@@ -42,6 +43,7 @@ export function CompleteStep({ flow, renderFooter }: {
       <div className={cn(enter("[animation-delay:120ms]"))}>
         <BulkImportCounts variant="result" batch={batch} animate={flow.justRegistered} />
       </div>
+      <BulkImportCorrectedDownload api={flow.api} batch={batch} mapping={flow.mapping} disabled={Boolean(busy)} />
       {/* Entry animation on a wrapper so its duration doesn't override the Card hover transition. */}
       <div className={cn("flex min-w-0 flex-col", enter("[animation-delay:240ms]"))}>
         <Card role="region"

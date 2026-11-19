@@ -1,7 +1,6 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { WizardSteps } from "@/components/ui/WizardSteps";
 import { REGISTRATION_STEPS } from "../../domain/registration-draft";
-import { RegistrationBreadcrumb } from "./RegistrationBreadcrumb";
 
 const DESCRIPTIONS = [
   "Asset details",
@@ -14,7 +13,6 @@ const DESCRIPTIONS = [
 export function RegistrationHeader({ step }: { step: number }) {
   return (
     <header className="min-w-0 shrink-0 space-y-3 pb-1">
-      <RegistrationBreadcrumb current="Single Asset" />
       <PageHeader
         title="Register Asset"
         subtitle={step === 4

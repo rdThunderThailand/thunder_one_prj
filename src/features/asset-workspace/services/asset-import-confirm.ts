@@ -8,6 +8,11 @@ import type { ImportProgress } from "./asset-import-start.ts";
 
 type ConfirmState = { batch: ImportBatch; progress: ImportProgress; retrying: boolean };
 
+/** Rows per Confirm call: about 20 progress steps, never more than Core's 100. */
+export function confirmLimit(totalRows: number): number {
+  return Math.min(100, Math.max(1, Math.ceil(totalRows / 20)));
+}
+
 export function waitForImportRetry(milliseconds: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     signal.throwIfAborted();
@@ -30,7 +35,7 @@ export async function confirmImportBatch(
   wait: (milliseconds: number, signal: AbortSignal) => Promise<void> = waitForImportRetry,
 ): Promise<ImportBatch> {
   let batch = initial;
-  const body = Object.freeze({ ...first });
+  const body = Object.freeze({ ...first, limit: confirmLimit(initial.totalRows) });
   let failures = 0;
   let refreshBeforeRetry = false;
   const publish = (retrying: boolean) => {

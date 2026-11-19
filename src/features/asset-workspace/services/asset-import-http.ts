@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createImportEditApi } from "./asset-import-edit.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import {
   ImportApiError,
@@ -45,6 +46,7 @@ export function createHttpImportApi(
   const callJson = createImportJsonCaller(context, requester);
 
   return {
+    ...createImportEditApi(callJson),
     async getOptions() {
       const data = await callJson("GET", "/imports/options");
       return parseImportResponse(importOptionsSchema, data);

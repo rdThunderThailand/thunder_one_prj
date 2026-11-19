@@ -69,6 +69,7 @@ export const rowMessageSchema: z.ZodType<RowMessage> = z.object({
 });
 
 export const importBatchSchema: z.ZodType<ImportBatch> = z.object({
+  editedCount: z.number().int().nonnegative().default(0),
   id: z.uuid(),
   batchCode: z.string().min(1),
   status: batchStatusSchema,
@@ -112,6 +113,9 @@ export const importBatchSchema: z.ZodType<ImportBatch> = z.object({
 });
 
 export const importRowSchema: z.ZodType<ImportRow> = z.object({
+  version: z.number().int().positive().optional(),
+  editedAt: z.string().nullable().optional(),
+  editedBy: z.object({ id: z.string(), name: z.string() }).nullable().optional(),
   id: z.uuid(),
   rowIndex: z.number().int().min(1).max(1048576),
   values: z.partialRecord(importFieldKeySchema, z.string()),
@@ -164,6 +168,7 @@ export const confirmResultSchema: z.ZodType<ConfirmResult> = z.object({
 export const confirmRequestSchema = z.object({
   mode: z.enum(["ready_only", "ready_and_warnings"]).optional(),
   override_reason: z.string().trim().min(1).max(1000).optional(),
+  limit: z.number().int().min(1).max(100).optional(),
 }).strict();
 
 export const createBatchResultSchema = z.object({

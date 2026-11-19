@@ -62,8 +62,8 @@ export function BulkImportRegistrationOptions({
                   </span>
                   <span className="block text-2xs text-muted-foreground">
                     {value === "ready_and_warnings"
-                      ? `Creates ${formatCount(counts.valid)} ready rows and ${formatCount(counts.warning)} rows with warnings. ${formatCount(counts.error)} error rows are skipped.`
-                      : `Creates ${formatCount(counts.valid)} ready rows. Warning rows are not registered.`}
+                      ? `Creates ${rows(counts.valid, "ready")} and ${rows(counts.warning, "warning")}.${counts.error ? ` ${rows(counts.error, "error")} skipped.` : ""}`
+                      : `Creates ${rows(counts.valid, "ready")}. Warning rows are not registered.`}
                   </span>
                 </span>
               </label>
@@ -119,4 +119,8 @@ export function BulkImportRegistrationOptions({
       )}
     </Card>
   );
+}
+
+function rows(count: number, kind: string) {
+  return `${formatCount(count)} ${kind} ${count === 1 ? "row" : "rows"}`;
 }

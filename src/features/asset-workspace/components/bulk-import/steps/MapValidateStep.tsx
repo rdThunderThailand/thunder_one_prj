@@ -21,7 +21,7 @@ export function MapValidateStep({ flow, renderFooter }: {
   const [replaceFailed, setReplaceFailed] = useState(false);
   const hintId = useId();
   const { batch, parsed, options } = flow;
-  if (!options || (!batch && !flow.preview)) return null;
+  if (!options || (!batch && !flow.preview && !flow.remapping)) return null;
   const validated = batch?.status === "validated";
   const canContinue = validated && batch.counts.valid + batch.counts.warning > 0;
 
@@ -96,14 +96,19 @@ export function MapValidateStep({ flow, renderFooter }: {
           <div className="flex min-w-0 flex-wrap items-center justify-end gap-3">
             {validated && !canContinue && (
               <p id={hintId} className="max-w-64 text-2xs text-error">
-                No rows can be registered. Fix the file and replace it.
+                No rows can be registered yet. Fix the rows with errors, or replace the file.
+              </p>
+            )}
+            {!validated && !flow.preview && !flow.busy && (
+              <p id={hintId} className="max-w-64 text-2xs text-muted-foreground">
+                Validate your data to continue.
               </p>
             )}
             <Button
               size="sm"
               className="min-w-24 max-sm:h-10"
               disabled={!canContinue || flow.busy}
-              aria-describedby={flow.preview ? "bulk-upload-preview-notice" : validated && !canContinue ? hintId : undefined}
+              aria-describedby={flow.preview ? "bulk-upload-preview-notice" : !canContinue && !flow.busy ? hintId : undefined}
               onClick={flow.showReview}
             >
               <span>Next</span>

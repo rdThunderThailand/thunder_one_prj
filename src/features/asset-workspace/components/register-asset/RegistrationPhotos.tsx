@@ -82,7 +82,7 @@ export function RegistrationPhotos({ photos, errors, rules, needsReselection, on
             variant="outline"
             className={cn(
               "h-auto min-h-32 flex-col gap-2 whitespace-normal border-dashed border-primary/30 bg-accent/30 p-4 text-accent-foreground hover:bg-accent",
-              !photos.length && !saved.length && "col-span-full min-h-40",
+              !photos.length && !saved.length && "col-span-full min-h-24 flex-row",
             )}
             disabled={!rules}
             aria-describedby="registration-photo-rules registration-photo-state"

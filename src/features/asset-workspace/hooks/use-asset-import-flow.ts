@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import type { ImportEditResult } from "../domain/asset-import-edit.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { stepFor } from "../domain/asset-import-step.ts";
 import { getAssetImportApi, ImportApiError, type AssetImportContext } from "../services/asset-import-api.ts";
@@ -197,8 +198,10 @@ export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
       ),
     ...state,
     routeBatch: batchId,
+    // A failed re-create ends busy, so the page falls back to Upload with the error and the file still chosen.
+    remapping: state.remapping && state.busy && Boolean(state.parsed),
     step: preview ? state.previewStep :
-      state.mappingView && state.batch?.status === "validated"
+      (state.mappingView && state.batch?.status === "validated") || (state.remapping && state.busy && state.parsed)
         ? (1 as const)
         : derived.step,
     error: optionsResource.error ?? state.error,
@@ -209,6 +212,14 @@ export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
     replaceFile: upload.clearFile,
     editMapping: review.editMapping,
     confirm: review.confirm,
+    applyRowEdit: (result: ImportEditResult) => {
+      const owner = lifecycleRef.current;
+      const batch = current.current.batch;
+      if (owner && batch) publish(owner, {
+        batch: { ...batch, editedCount: result.editedCount,
+          counts: { ...batch.counts, valid: result.counts.valid, warning: result.counts.warning, error: result.counts.error } },
+      });
+    },
     setMapping: review.setMapping,
     showMapping: review.showMapping,
     showReview: review.showReview,

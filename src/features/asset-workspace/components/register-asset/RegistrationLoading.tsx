@@ -1,13 +1,11 @@
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { RegistrationBreadcrumb } from "./RegistrationBreadcrumb";
 
 export function RegistrationLoading() {
   return (
     <div role="status" aria-label="Loading asset registration" className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3">
       <div className="@container/registration min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-3">
         <div className="space-y-3">
-          <RegistrationBreadcrumb current="Single Asset" />
           <Skeleton className="h-7 w-48 motion-reduce:animate-none" />
           <Skeleton className="h-3 w-80 max-w-full motion-reduce:animate-none" />
           <div aria-hidden="true" className="flex justify-between gap-3 py-1">

@@ -47,7 +47,7 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
         <div className="grid items-start gap-4 @min-lg/ownership:grid-cols-2">
           <RegistrationSelect
             name="custodyType"
-            label="Custody target type"
+            label="Custodian"
             value={draft.custodyType}
             items={[
               { value: "none", label: "Unassigned" },

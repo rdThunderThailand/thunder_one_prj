@@ -85,7 +85,7 @@ export function RegistrationSelect({ name, label, value, onChange, items, error,
           aria-required={required}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `registration-${name}-error` : hint ? `registration-${name}-hint` : undefined}
-          className="[&>span]:min-w-0 [&>span]:truncate"
+          className="h-auto py-2.5 [&>span]:min-w-0 [&>span]:truncate"
         >
           <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
         </SelectTrigger>
