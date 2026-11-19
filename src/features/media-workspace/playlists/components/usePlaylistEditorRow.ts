@@ -70,12 +70,14 @@ export function usePlaylistEditorRow({
   /** Resolves to the saved row's id, or `null` when nothing was written; Publish Changes and the
    *  publish prep dialog must not go on after a failed save. `activate` marks a draft ready (#404):
    *  the editor's primary Save does it, "Save Draft" does not. */
-  const save = async (activate = false): Promise<string | null> => {
-    const present = history.present;
+  const save = async (activate = false, nameOverride?: string): Promise<string | null> => {
+    const current = history.present;
+    const present = nameOverride === undefined ? current : { ...current, name: nameOverride };
     if (!present.name.trim()) {
       setSaveError("กรุณากรอกชื่อ Playlist ก่อนบันทึก");
       return null;
     }
+    if (present.name !== current.name) history.commit((state) => ({ ...state, name: present.name }));
     setSaveError(null);
     setConflict(null);
     setSaving(true);

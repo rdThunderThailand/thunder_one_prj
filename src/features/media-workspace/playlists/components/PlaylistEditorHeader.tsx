@@ -53,9 +53,9 @@ export function PlaylistEditorHeader({
   onPublishChanges: () => void;
   onShowPrograms: () => void;
   /** Saves and, for a draft, marks it ready so the Program wizard lists it (#404). */
-  onSave: () => void;
+  onSave: (nameOverride?: string) => void;
   /** Saves without changing the draft status; offered only while the Playlist is a draft. */
-  onSaveDraft: () => void;
+  onSaveDraft: (nameOverride?: string) => void;
 }) {
   // ⌘Z / ⇧⌘Z on Apple; Ctrl+Z / Ctrl+Y elsewhere (Ctrl+Shift+Z works too).
   const shortcutPlatform = useShortcutPlatform();
@@ -69,16 +69,26 @@ export function PlaylistEditorHeader({
   const inputRef = useRef<HTMLInputElement>(null);
   const displayName = name.trim() || "Untitled Playlist";
   const isUnsaved = savedLabel.includes("unsaved") || savedLabel.includes("not saved");
+  // Leaving the field keeps what was typed, so a Save or Publish click that blurs it sees the new
+  // name (UAT A8). Enter / ✓ / Escape close the field themselves; their own blur is skipped.
+  const isClosingName = useRef(false);
   const commitName = () => {
-    onName(inputRef.current?.value ?? name);
+    isClosingName.current = true;
+    const value = inputRef.current?.value ?? name;
+    if (value !== name) onName(value);
+    setEditing(false);
+  };
+  const cancelName = () => {
+    isClosingName.current = true;
     setEditing(false);
   };
 
   // An empty name is "Untitled Playlist" on screen, so a disabled Save gave no hint; the save guard
   // states the reason, and the name field opens so the fix is one keystroke away.
-  const saveOrAskName = (save: () => void) => {
-    if (name.trim() === "") setEditing(true);
-    save();
+  const saveOrAskName = (save: (nameOverride?: string) => void) => {
+    const nameOverride = editing ? inputRef.current?.value : undefined;
+    setEditing(!(nameOverride ?? name).trim());
+    save(nameOverride);
   };
   const isDraft = status === "draft";
 
@@ -100,9 +110,15 @@ export function PlaylistEditorHeader({
                   ref={inputRef}
                   autoFocus
                   defaultValue={name}
+                  onFocus={() => {
+                    isClosingName.current = false;
+                  }}
+                  onBlur={() => {
+                    if (!isClosingName.current) commitName();
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") commitName();
-                    if (event.key === "Escape") setEditing(false);
+                    if (event.key === "Escape") cancelName();
                   }}
                   placeholder="Untitled Playlist"
                   maxLength={100}

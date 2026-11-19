@@ -136,6 +136,25 @@ const oneTimeToday = { ...weeklyDraft, mode: "one-time" as const, startDate: TOD
 assert.ok(validateDraft(oneTimeToday, TODAY, "15:00").time);
 assert.deepEqual(validateDraft(oneTimeToday, TODAY, "10:00"), {}, "still airing");
 assert.deepEqual(validateDraft({ ...oneTimeToday, allDay: true }, TODAY, "15:00"), {});
+// A7: a recurrence needs an airing window left, even if its calendar range has not ended.
+const lastDay = { ...weeklyDraft, endDate: TODAY, dailyStart: "09:00", dailyEnd: "10:00" };
+assert.ok(validateDraft(lastDay, TODAY, "16:15").endDate, "weekly: today's final window ended");
+assert.ok(validateDraft({ ...lastDay, mode: "monthly", monthDays: [1] }, TODAY, "16:15").endDate);
+assert.ok(validateDraft({ ...lastDay, mode: "dates", dates: [TODAY, TODAY] }, TODAY, "16:15").dates);
+assert.ok(validateDraft(lastDay, TODAY, "10:00").endDate, "the daily end is exclusive");
+for (const draft of [
+  lastDay,
+  { ...lastDay, mode: "monthly" as const, monthDays: [1] },
+  { ...lastDay, mode: "dates" as const, dates: [TODAY] },
+]) {
+  assert.deepEqual(validateDraft(draft, TODAY, "08:00"), {});
+  assert.deepEqual(validateDraft({ ...draft, allDay: true }, TODAY, "23:59"), {});
+}
+assert.ok(validateDraft({ ...lastDay, days: [5] }, TODAY, "08:00").endDate);
+assert.deepEqual(validateDraft({ ...lastDay, endDate: "2026-10-02" }, TODAY, "16:15"), {});
+assert.deepEqual(validateDraft({ ...lastDay, dailyEnd: "23:59" }, TODAY, "23:59"), {});
+assert.deepEqual(validateDraft({ ...lastDay, startDate: "2028-10-05", endDate: "2028-10-05" }, TODAY), {});
+
 const continuousToday = { ...continuousDraft, startDate: "2026-09-01", startTime: "00:00", endDate: TODAY, endTime: "09:00" };
 // A Live continuous Program (start locked, ADR 0090) whose end is earlier today.
 assert.ok(validateDraft(continuousToday, TODAY, "15:00", true).endDate);

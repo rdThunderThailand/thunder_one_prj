@@ -152,18 +152,27 @@ export function scheduleToDraft(schedule: PublicationSchedule | null, today: str
 
 export type DraftErrors = Partial<Record<"days" | "dates" | "monthDays" | "startDate" | "endDate" | "time", string>>;
 
-const PAST_START = "Start date can't be in the past.";
+const PAST_START = "วันเริ่มต้องเป็นวันนี้หรือหลังจากวันนี้";
 
 function validateContinuous(draft: ScheduleDraft, today: string, nowTime: string, isStartLocked: boolean): DraftErrors {
   const errors: DraftErrors = {};
-  if (!draft.startDate) errors.startDate = "Pick a start date.";
+  if (!draft.startDate) errors.startDate = "กรุณาเลือกวันเริ่ม";
   else if (!isStartLocked && draft.startDate < today) errors.startDate = PAST_START;
   if (!draft.endDate) return errors;
   const startKey = `${draft.startDate} ${draft.startTime}`;
   const endKey = `${draft.endDate} ${draft.endTime}`;
-  if (endKey <= startKey) errors.endDate = "End must be after the start.";
-  else if (endKey <= `${today} ${nowTime}`) errors.endDate = "End is in the past.";
+  if (endKey <= startKey) errors.endDate = "วันและเวลาสิ้นสุดต้องอยู่หลังวันและเวลาเริ่ม";
+  else if (!hasAiringLeft(draft, today, nowTime)) errors.endDate = "วันและเวลาสิ้นสุดผ่านไปแล้ว";
   return errors;
+}
+
+/** Whether any airing window still remains in the draft's time zone. */
+export function hasAiringLeft(draft: ScheduleDraft, today: string, nowTime: string): boolean {
+  if (draft.mode === "continuous") return !draft.endDate || `${draft.endDate} ${draft.endTime}` > `${today} ${nowTime}`;
+  const endsAtMidnight = draft.allDay || ((draft.mode === "weekly" || draft.mode === "monthly") && draft.dailyEnd === "23:59");
+  const from = endsAtMidnight || draft.dailyEnd > nowTime ? today : shiftYmd(today, 1);
+  if (draft.mode === "one-time") return draft.startDate >= from;
+  return upcomingDays(draft, draft.mode !== "dates" && draft.startDate > from ? draft.startDate : from, 1).length > 0;
 }
 
 /**
@@ -174,24 +183,27 @@ function validateContinuous(draft: ScheduleDraft, today: string, nowTime: string
 export function validateDraft(draft: ScheduleDraft, today: string, nowTime = "00:00", isStartLocked = false): DraftErrors {
   const errors: DraftErrors = {};
   if (draft.mode === "continuous") return validateContinuous(draft, today, nowTime, isStartLocked);
-  if (!draft.allDay && !(draft.dailyStart < draft.dailyEnd)) errors.time = "End time must be after start time.";
+  if (!draft.allDay && !(draft.dailyStart < draft.dailyEnd)) errors.time = "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
   if (draft.mode === "weekly" || draft.mode === "monthly") {
-    if (draft.mode === "weekly" && draft.days.length === 0) errors.days = "Pick at least one day.";
-    if (draft.mode === "monthly" && draft.monthDays.length === 0) errors.monthDays = "Pick at least one day of the month.";
-    if (!draft.startDate) errors.startDate = "Pick a start date.";
+    if (draft.mode === "weekly" && draft.days.length === 0) errors.days = "กรุณาเลือกวันในสัปดาห์อย่างน้อย 1 วัน";
+    if (draft.mode === "monthly" && draft.monthDays.length === 0) errors.monthDays = "กรุณาเลือกวันที่ในเดือนอย่างน้อย 1 วัน";
+    if (!draft.startDate) errors.startDate = "กรุณาเลือกวันเริ่ม";
     else if (!isStartLocked && draft.startDate < today) errors.startDate = PAST_START;
-    if (draft.endDate && draft.endDate < draft.startDate) errors.endDate = "End date must be on or after the start date.";
-    else if (draft.endDate && draft.endDate < today) errors.endDate = "End date is in the past.";
+    if (draft.endDate && draft.endDate < draft.startDate) errors.endDate = "วันสิ้นสุดต้องเป็นวันเริ่มหรือหลังจากวันเริ่ม";
+    else if (draft.endDate && draft.endDate < today) errors.endDate = "วันสิ้นสุดผ่านไปแล้ว";
   }
   if (draft.mode === "dates") {
-    if (draft.dates.length === 0) errors.dates = "Pick at least one date.";
-    if (draft.dates.length > MAX_DATES) errors.dates = `Pick at most ${MAX_DATES} dates.`;
-    if (draft.dates.length > 0 && draft.dates.every((d) => d < today)) errors.dates = "Pick at least one date from today on.";
+    if (draft.dates.length === 0) errors.dates = "กรุณาเลือกวันที่อย่างน้อย 1 วัน";
+    if (draft.dates.length > MAX_DATES) errors.dates = `เลือกวันที่ได้สูงสุด ${MAX_DATES} วัน`;
+    if (draft.dates.length > 0 && draft.dates.every((d) => d < today)) errors.dates = "กรุณาเลือกวันนี้หรือวันหลังจากวันนี้อย่างน้อย 1 วัน";
   }
-  if (draft.mode === "one-time" && !draft.startDate) errors.startDate = "Pick a date.";
-  else if (draft.mode === "one-time" && draft.startDate < today) errors.startDate = "Pick today or a later date.";
-  else if (draft.mode === "one-time" && draft.startDate === today && !draft.allDay && draft.dailyEnd <= nowTime) {
-    errors.time = "This time has already passed today.";
+  if (draft.mode === "one-time" && !draft.startDate) errors.startDate = "กรุณาเลือกวันที่";
+  else if (draft.mode === "one-time" && draft.startDate < today) errors.startDate = "กรุณาเลือกวันนี้หรือวันหลังจากวันนี้";
+  else if (draft.mode === "one-time" && !hasAiringLeft(draft, today, nowTime)) {
+    errors.time = "ช่วงเวลาเล่นของวันนี้ผ่านไปแล้ว";
+  }
+  if (draft.mode !== "one-time" && Object.keys(errors).length === 0 && !hasAiringLeft(draft, today, nowTime)) {
+    errors[draft.mode === "dates" ? "dates" : "endDate"] = "ช่วงเวลาเล่นสุดท้ายผ่านไปแล้ว กรุณาแก้วันหรือเวลาสิ้นสุด";
   }
   return errors;
 }
