@@ -10,6 +10,7 @@ export function ContentStep({
   assetsLoading,
   assetsError,
   onContentSelected,
+  busy,
 }: {
   assets: MediaAsset[];
   tags: Tag[];
@@ -17,6 +18,7 @@ export function ContentStep({
   assetsLoading: boolean;
   assetsError: string | null;
   onContentSelected: () => void;
+  busy: boolean;
 }) {
-  return <AssetLibraryStep assets={assets} tags={tags} reloadAssets={reloadAssets} assetsLoading={assetsLoading} assetsError={assetsError} onContentSelected={onContentSelected} />;
+  return <AssetLibraryStep assets={assets} tags={tags} reloadAssets={reloadAssets} assetsLoading={assetsLoading} assetsError={assetsError} onContentSelected={onContentSelected} busy={busy} />;
 }
