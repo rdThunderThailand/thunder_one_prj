@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRightIcon, ExternalLinkIcon, FolderIcon, GridIcon, ImageIcon, InfoIcon, LightbulbIcon, ListIcon, PlusIcon } from "@/components/ui/icons";
+import { ArrowRightIcon, ExternalLinkIcon, FolderIcon, GridIcon, ImageIcon, InfoIcon, ListIcon, PlusIcon } from "@/components/ui/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,11 +24,46 @@ import { CompositionPickerModal } from "./CompositionPickerModal";
 
 type Branch = "media" | "playlist" | "composition";
 
-const branchCopy: Record<Branch, { title: string; description: string; detail: string; tone: string; text: string; panel: string }> = {
-  media: { title: "MEDIA", description: "ไฟล์เดี่ยว (ภาพ, วิดีโอ, เสียง, HTML)", detail: "ใช้สำหรับเล่นแบบเดี่ยวบนหน้าจอ", tone: "border-t1-green-300", text: "text-t1-green-700", panel: "bg-t1-green-50/60" },
-  playlist: { title: "PLAYLIST", description: "ลำดับการเล่นเนื้อหา", detail: "เล่นหลายรายการตามลำดับที่กำหนด", tone: "border-t1-blue-300", text: "text-t1-blue-600", panel: "bg-t1-blue-50/60" },
-  composition: { title: "LAYOUT", description: "ออกแบบหลายโซนและการจัดวาง", detail: "แบ่งหน้าจอเป็นหลายส่วนและวางเนื้อหา", tone: "border-t1-purple-300", text: "text-t1-purple-700", panel: "bg-t1-purple-50/60" },
+const branchCopy: Record<Branch, { title: string; description: string; detail: string; border: string; selected: string; icon: string; text: string; panel: string }> = {
+  media: {
+    title: "MEDIA",
+    description: "ไฟล์เดี่ยว (ภาพ, วิดีโอ, เสียง, HTML)",
+    detail: "ใช้สำหรับเล่นแบบเดี่ยวบนหน้าจอ",
+    border: "border-t1-green-100 hover:border-t1-green-300 hover:bg-t1-green-50/40",
+    selected: "border-t1-green-300 bg-t1-green-50/40",
+    icon: "text-t1-green-500",
+    text: "text-t1-green-700",
+    panel: "bg-t1-green-50/60",
+  },
+  playlist: {
+    title: "PLAYLIST",
+    description: "ลำดับการเล่นเนื้อหา",
+    detail: "เล่นหลายรายการตามลำดับที่กำหนด",
+    border: "border-t1-blue-100 hover:border-t1-blue-300 hover:bg-t1-blue-50/40",
+    selected: "border-t1-blue-300 bg-t1-blue-50/40",
+    icon: "text-t1-blue-500",
+    text: "text-t1-blue-600",
+    panel: "bg-t1-blue-50/60",
+  },
+  composition: {
+    title: "LAYOUT",
+    description: "ออกแบบหลายโซนและการจัดวาง",
+    detail: "แบ่งหน้าจอเป็นหลายส่วนและวางเนื้อหา",
+    border: "border-t1-purple-100 hover:border-t1-purple-300 hover:bg-t1-purple-50/40",
+    selected: "border-t1-purple-300 bg-t1-purple-50/40",
+    icon: "text-t1-purple-500",
+    text: "text-t1-purple-700",
+    panel: "bg-t1-purple-50/60",
+  },
 };
+
+const branchTips: Record<Exclude<Branch, "media">, { heading: string; items: string[] }> = {
+  playlist: { heading: "Playlist เหมาะสำหรับ", items: ["ต้องการเล่นหลายสื่อแบบต่อเนื่อง", "กำหนดลำดับและระยะเวลาได้", "ใช้งานซ้ำได้หลายหน้าจอ"] },
+  composition: { heading: "Layout เหมาะสำหรับ", items: ["แบ่งหน้าจอหลายโซน (Zones)", "แสดงสื่อหลายประเภทพร้อมกัน", "เหมาะกับหน้าจอขนาดใหญ่"] },
+};
+
+const optionClass = "flex min-h-14 w-full items-center gap-3 rounded-lg border border-border bg-card px-4 text-left text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30";
+const optionHint = "block text-xs font-normal text-muted-foreground";
 
 export function AssetLibraryStep({
   assets,
@@ -37,6 +72,7 @@ export function AssetLibraryStep({
   assetsLoading,
   assetsError,
   onContentSelected,
+  busy,
 }: {
   assets: MediaAsset[];
   tags: Tag[];
@@ -44,6 +80,7 @@ export function AssetLibraryStep({
   assetsLoading: boolean;
   assetsError: string | null;
   onContentSelected: () => void;
+  busy: boolean;
 }) {
   const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
   const assetItems = usePublicationDraftStore((s) => s.assetItems);
@@ -108,25 +145,125 @@ export function AssetLibraryStep({
     onContentSelected();
   };
 
+  const renderBranchBody = (branch: Branch) => {
+    const copy = branchCopy[branch];
+    if (branch === "media") {
+      return (
+        <>
+          <Dropzone
+            fileInputRef={fileInputRef}
+            onFileSelected={(file) => void uploadFile(file)}
+            disabled={uploadPct !== null || busy}
+            progress={uploadPct}
+            error={uploadError}
+          />
+          <button
+            type="button"
+            onClick={() => changeBranch("media", () => setPickerOpen(true))}
+            className={optionClass}
+          >
+            <FolderIcon className={`h-5 w-5 ${copy.icon}`} />
+            <span>
+              เลือกจาก Media Library
+              <span className={optionHint}>เลือกไฟล์ที่มีอยู่แล้ว</span>
+            </span>
+          </button>
+        </>
+      );
+    }
+    const isPlaylist = branch === "playlist";
+    const tips = branchTips[branch];
+    const hasSelection = isPlaylist ? playlistId : compositionId;
+    const name = isPlaylist ? "Playlist" : "Layout";
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => changeBranch(branch, () => (isPlaylist ? setPlaylistPickerOpen(true) : setCompositionPickerOpen(true)))}
+          className={optionClass}
+        >
+          {isPlaylist ? <ListIcon className={`h-5 w-5 ${copy.icon}`} /> : <GridIcon className={`h-5 w-5 ${copy.icon}`} />}
+          <span className="flex-1">
+            {hasSelection ? `เปลี่ยน ${name}` : `เลือก ${name} ที่มีอยู่`}
+            <span className={optionHint}>{isPlaylist ? "เลือกจากรายการที่มีอยู่แล้ว" : "เลือกจาก Layout ที่บันทึกไว้"}</span>
+          </span>
+          <ArrowRightIcon />
+        </button>
+        <a
+          href={isPlaylist ? "/media-workspace/playlists/create" : "/media-workspace/layouts/create"}
+          target="_blank"
+          rel="noreferrer"
+          className={optionClass}
+        >
+          <PlusIcon className={`h-5 w-5 ${copy.icon}`} />
+          <span className="flex-1">
+            สร้าง {name} ใหม่
+            <span className={optionHint}>{isPlaylist ? "จัดลำดับเนื้อหาและตั้งค่าการเล่น" : "ออกแบบการจัดวางและโซนเนื้อหา"}</span>
+          </span>
+          <ArrowRightIcon />
+        </a>
+        <div className={`mt-auto rounded-lg p-3 ${copy.panel}`}>
+          <p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}>
+            <InfoIcon />
+            {tips.heading}
+          </p>
+          <ul className="mt-1.5 list-disc space-y-0.5 pl-7 text-xs text-muted-foreground">
+            {tips.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </>
+    );
+  };
+
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <div><h1 className="text-xl font-extrabold tracking-tight text-foreground">STEP 1 — CHOOSE CONTENT</h1><p className="mt-1 text-sm text-muted-foreground">เลือกสิ่งที่จะสร้างหรือเผยแพร่</p></div>
-      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_16rem]">
+    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div>
+        <h1 className="text-base font-semibold text-foreground">Choose content</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">{busy ? "กำลังบันทึก…" : "เลือกสิ่งที่จะสร้างหรือเผยแพร่"}</p>
+      </div>
+      <fieldset disabled={busy} className="mt-3 grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_18rem]">
         {(Object.keys(branchCopy) as Branch[]).map((branch) => {
           const copy = branchCopy[branch];
-          const selected = selectedBranch === branch;
           const HeaderIcon = branch === "media" ? ImageIcon : branch === "playlist" ? ListIcon : GridIcon;
-          return <div key={branch} className={`flex min-h-[31rem] flex-col rounded-xl border-2 p-5 ${copy.tone} ${selected ? "ring-2 ring-primary" : ""}`}>
-            <button type="button" onClick={() => changeBranch(branch)} className="flex w-full gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30">
-              <HeaderIcon className={`h-12 w-12 shrink-0 ${copy.text}`} />
-              <span><span className={`block text-xl font-bold ${copy.text}`}>{copy.title}</span><span className="mt-1 block text-sm font-medium text-muted-foreground">{copy.description}</span><span className="mt-1 block text-sm text-muted-foreground">{copy.detail}</span></span>
-            </button>
-            {branch === "media" ? <div className="mt-5 flex flex-1 flex-col gap-3"><Dropzone fileInputRef={fileInputRef} onFileSelected={(file) => void uploadFile(file)} disabled={uploadPct !== null} progress={uploadPct} error={uploadError} /><button type="button" onClick={() => changeBranch("media", () => setPickerOpen(true))} className="flex min-h-16 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"><FolderIcon className="h-6 w-6 text-success" /><span>เลือกจาก Media Library<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกไฟล์ที่มีอยู่แล้ว</span></span></button><div className="mt-auto"><p className="text-sm font-semibold text-muted-foreground">รองรับไฟล์</p><div className="mt-2 flex flex-wrap gap-1.5">{["Image", "Video", "Audio", "HTML", "MP4", "JPG", "PNG"].map((type) => <span key={type} className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">{type}</span>)}</div></div></div> : branch === "playlist" ? <div className="mt-5 flex flex-1 flex-col gap-4"><button type="button" onClick={() => changeBranch("playlist", () => setPlaylistPickerOpen(true))} className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><ListIcon className="h-8 w-8 text-t1-blue-600" /><span className="flex-1">{playlistId ? "เปลี่ยน Playlist" : "เลือก Playlist ที่มีอยู่"}<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกจากรายการที่มีอยู่แล้ว</span></span><ArrowRightIcon /></button><a href="/media-workspace/playlists/create" target="_blank" rel="noreferrer" className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><PlusIcon className="h-8 w-8 text-t1-blue-600" /><span className="flex-1">สร้าง Playlist ใหม่<span className="mt-1 block text-xs font-normal text-muted-foreground">จัดลำดับเนื้อหาและตั้งค่าการเล่น</span></span><ArrowRightIcon /></a><div className={`mt-auto rounded-lg p-4 ${copy.panel}`}><p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}><InfoIcon />Playlist เหมาะสำหรับ</p><ul className="mt-2 list-disc space-y-1 pl-7 text-xs text-muted-foreground"><li>ต้องการเล่นหลายสื่อแบบต่อเนื่อง</li><li>กำหนดลำดับและระยะเวลาได้</li><li>ใช้งานซ้ำได้หลายหน้าจอ</li></ul></div></div> : <div className="mt-5 flex flex-1 flex-col gap-4"><button type="button" onClick={() => changeBranch("composition", () => setCompositionPickerOpen(true))} className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><GridIcon className="h-8 w-8 text-t1-purple-700" /><span className="flex-1">{compositionId ? "เปลี่ยน Layout" : "เลือก Layout ที่มีอยู่"}<span className="mt-1 block text-xs font-normal text-muted-foreground">เลือกจาก Layout ที่บันทึกไว้</span></span><ArrowRightIcon /></button><a href="/media-workspace/layouts/create" target="_blank" rel="noreferrer" className="flex min-h-20 w-full items-center gap-4 rounded-lg border border-border bg-card px-5 text-left text-sm font-semibold text-foreground hover:bg-muted"><PlusIcon className="h-8 w-8 text-t1-purple-700" /><span className="flex-1">สร้าง Layout ใหม่<span className="mt-1 block text-xs font-normal text-muted-foreground">ออกแบบการจัดวางและโซนเนื้อหา</span></span><ArrowRightIcon /></a><div className={`mt-auto rounded-lg p-4 ${copy.panel}`}><p className={`flex items-center gap-2 text-sm font-semibold ${copy.text}`}><InfoIcon />Layout เหมาะสำหรับ</p><ul className="mt-2 list-disc space-y-1 pl-7 text-xs text-muted-foreground"><li>แบ่งหน้าจอหลายโซน (Zones)</li><li>แสดงสื่อหลายประเภทพร้อมกัน</li><li>เหมาะกับหน้าจอขนาดใหญ่</li></ul></div></div>}
-          </div>;
+          return (
+            <div
+              key={branch}
+              className={`flex flex-col rounded-xl border p-4 transition-colors ${selectedBranch === branch ? copy.selected : copy.border}`}
+            >
+              <button
+                type="button"
+                onClick={() => changeBranch(branch)}
+                className="flex w-full gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+              >
+                <HeaderIcon className={`h-8 w-8 shrink-0 ${copy.icon}`} />
+                <span>
+                  <span className={`block text-base font-semibold ${copy.text}`}>{copy.title}</span>
+                  <span className="block text-sm font-medium text-muted-foreground">{copy.description}</span>
+                  <span className="block text-xs text-muted-foreground">{copy.detail}</span>
+                </span>
+              </button>
+              <div className="mt-3 flex flex-1 flex-col gap-2.5">{renderBranchBody(branch)}</div>
+            </div>
+          );
         })}
-        <aside className="rounded-xl border border-border p-5"><h2 className="text-lg font-semibold text-foreground">ไม่แน่ใจว่าจะเลือกอะไร?</h2><p className="mt-1 text-sm text-muted-foreground">นี่คือแนวทางการเลือกประเภทเนื้อหา</p><div className="mt-5 space-y-5"><Guide icon={ImageIcon} tone="text-success bg-success-muted" title="เลือก Media เมื่อ" items={["คุณมีไฟล์เดียวที่ต้องการแสดงผล", "ต้องการใช้ไฟล์ใน Playlist หรือ Layout", "ต้องการอัปโหลดไฟล์เก็บไว้ในคลังสื่อ"]} /><Guide icon={ListIcon} tone="text-t1-blue-600 bg-t1-blue-50" title="เลือก Playlist เมื่อ" items={["ต้องการเล่นสื่อหลายชิ้นต่อกัน", "ต้องการกำหนดเวลา / ระยะเวลาแต่ละชิ้น", "ต้องการบริหารลำดับสื่อ"]} /><Guide icon={GridIcon} tone="text-t1-purple-700 bg-t1-purple-50" title="เลือก Layout เมื่อ" items={["ต้องการแบ่งหน้าจอเป็นหลายส่วน", "ต้องการแสดงสื่อหลายประเภทพร้อมกัน", "เช่น ข่าว + สภาพอากาศ + โฆษณา"]} /></div><div className="mt-5 border-t border-border pt-4"><p className="text-sm font-medium text-foreground">เรียนรู้เพิ่มเติม</p><a href="#" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary">ดูคู่มือการใช้งาน <ExternalLinkIcon /></a></div></aside>
-      </div>
-      <div className="mt-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning"><LightbulbIcon className="h-4 w-4 shrink-0" />Tip: คุณสามารถเปลี่ยนประเภทเนื้อหาได้ในขั้นตอนถัดไป</div>
+        <aside className="rounded-xl border border-border p-4">
+          <h2 className="text-sm font-semibold text-foreground">ไม่แน่ใจว่าจะเลือกอะไร?</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">นี่คือแนวทางการเลือกประเภทเนื้อหา</p>
+          <div className="mt-3 space-y-3">
+            <Guide icon={ImageIcon} tone="text-t1-green-500 bg-t1-green-50" title="เลือก Media เมื่อ" items={["คุณมีไฟล์เดียวที่ต้องการแสดงผล", "ต้องการใช้ไฟล์ใน Playlist หรือ Layout", "ต้องการอัปโหลดไฟล์เก็บไว้ในคลังสื่อ"]} />
+            <Guide icon={ListIcon} tone="text-t1-blue-500 bg-t1-blue-50" title="เลือก Playlist เมื่อ" items={["ต้องการเล่นสื่อหลายชิ้นต่อกัน", "ต้องการกำหนดเวลา / ระยะเวลาแต่ละชิ้น", "ต้องการบริหารลำดับสื่อ"]} />
+            <Guide icon={GridIcon} tone="text-t1-purple-500 bg-t1-purple-50" title="เลือก Layout เมื่อ" items={["ต้องการแบ่งหน้าจอเป็นหลายส่วน", "ต้องการแสดงสื่อหลายประเภทพร้อมกัน", "เช่น ข่าว + สภาพอากาศ + โฆษณา"]} />
+          </div>
+          <div className="mt-3 border-t border-border pt-3">
+            <p className="text-xs font-medium text-foreground">เรียนรู้เพิ่มเติม</p>
+            <a href="#" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary">
+              ดูคู่มือการใช้งาน <ExternalLinkIcon />
+            </a>
+          </div>
+        </aside>
+      </fieldset>
       <AlertDialog open={kindMismatch !== null} onOpenChange={(open) => { if (!open) setKindMismatch(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -158,5 +295,19 @@ export function AssetLibraryStep({
 }
 
 function Guide({ icon: Icon, tone, title, items }: { icon: typeof ImageIcon; tone: string; title: string; items: string[] }) {
-  return <div className="border-b border-border pb-5 last:border-0 last:pb-0"><div className="flex items-center gap-3"><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${tone}`}><Icon className="h-5 w-5" /></span><p className="text-sm font-semibold text-foreground">{title}</p></div><ul className="mt-2 list-disc space-y-1 pl-12 text-xs leading-5 text-muted-foreground">{items.map((item) => <li key={item}>{item}</li>)}</ul></div>;
+  return (
+    <div className="border-b border-border pb-3 last:border-0 last:pb-0">
+      <div className="flex items-center gap-2.5">
+        <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${tone}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+      </div>
+      <ul className="mt-1.5 list-disc space-y-0.5 pl-10 text-xs leading-5 text-muted-foreground">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
 }

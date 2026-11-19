@@ -27,11 +27,10 @@ export function Dropzone({
     <div
       onDragOver={(event) => event.preventDefault()}
       onDrop={onDrop}
-      className="flex min-h-44 flex-col items-center justify-center rounded-xl border-2 border-dashed border-success/30 bg-success-muted p-6 text-center"
+      className="flex min-h-28 flex-col items-center justify-center rounded-xl border border-dashed border-success/30 bg-success-muted p-3 text-center"
     >
-      <span className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-success shadow-sm ring-1 ring-success/30"><UploadIcon className="h-6 w-6" /></span>
-      <p className="text-sm font-semibold text-foreground">ลากและวางไฟล์ที่นี่</p>
-      <p className="mt-1 text-xs text-muted-foreground">หรือ</p>
+      <span className="mb-1.5 grid h-9 w-9 place-items-center rounded-full bg-card text-success shadow-sm ring-1 ring-success/30"><UploadIcon className="h-5 w-5" /></span>
+      <p className="text-sm font-semibold text-foreground">ลากและวางไฟล์ที่นี่ หรือ</p>
       <input
         ref={fileInputRef}
         type="file"

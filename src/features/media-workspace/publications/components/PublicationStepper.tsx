@@ -46,19 +46,19 @@ export function PublicationStepper({
               <button
                 type="button"
                 onClick={() => onStepSelect(item.step)}
-                className="flex flex-col items-center gap-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                className="flex flex-col items-center gap-1.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
               >
                 {circle}
                 {label}
               </button>
             ) : (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1.5">
                 {circle}
                 {label}
               </div>
             )}
             {index < wizardSteps.length - 1 && (
-              <div className="mx-3 mb-5 h-px flex-1 bg-muted" />
+              <div className="mx-3 mb-4 h-px flex-1 bg-muted" />
             )}
           </div>
         );
