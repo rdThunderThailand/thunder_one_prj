@@ -48,7 +48,7 @@ export function PublishSplitButton({
       >
         {primary.label}
       </Button>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
             size="sm"
