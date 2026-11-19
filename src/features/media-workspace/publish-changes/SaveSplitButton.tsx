@@ -39,7 +39,7 @@ export function SaveSplitButton({
         {saving ? "กำลังบันทึก..." : label}
       </Button>
       {alternate && (
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               size="sm"
