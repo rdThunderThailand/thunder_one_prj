@@ -17,7 +17,7 @@ import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { publishCauseFix } from "../publish-cause-fix";
 import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
 import { PublishErrorFix } from "./PublishErrorFix";
-import { deletePublication, fetchPublication } from "../services/publications-api";
+import { fetchPublication } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { detailToDraft } from "../detail-mapping";
 import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
@@ -88,8 +88,6 @@ export function CreatePublicationPage() {
   const [resumeFailure, setResumeFailure] = useState<ClassifiedError | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showFieldErrors, setShowFieldErrors] = useState(false);
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
-  const [cancelBusy, setCancelBusy] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
   // Derived, not state: `resumedId` only settles once the fetch has finished, so
@@ -262,28 +260,6 @@ export function CreatePublicationPage() {
     }
   };
 
-  const performCancel = async () => {
-    setCancelBusy(true);
-    const state = usePublicationDraftStore.getState();
-    if (state.publicationId && !state.explicitlySaved) {
-      try {
-        await deletePublication(state.publicationId);
-      } catch {
-        // Best-effort cleanup of an orphaned empty draft — don't block navigation on it.
-      }
-    }
-    state.cancelDraft();
-    router.push("/media-workspace/program");
-  };
-
-  const handleCancelClick = () => {
-    if (isDirty) {
-      setConfirmingCancel(true);
-    } else {
-      performCancel();
-    }
-  };
-
   const handleNext = async () => {
     if (savingNext) return;
     let didSave = false;
@@ -348,6 +324,28 @@ export function CreatePublicationPage() {
       </>
     );
 
+  const displayError = error || resumeError || entry.seedError;
+
+  const errorBlock = displayError && (
+    <div className="flex items-center gap-2">
+      <p className="text-xs font-medium text-error">{displayError}</p>
+      <PublishErrorFix
+        fix={error && errorCause ? publishCauseFix(errorCause, { type: publicationType, playlistId, compositionId }) : null}
+        onStep={(target) => void handleStepSelect(target)}
+      />
+      {saveStatus === "error" && (
+        <Button
+          variant="outline"
+          className="px-2.5 py-1 text-xs"
+          onClick={handleNext}
+          disabled={savingNext}
+        >
+          Retry
+        </Button>
+      )}
+    </div>
+  );
+
   // Avoid flashing step-1 defaults before a restored draft (possibly on a
   // later step) loads from localStorage.
   if (!hasHydrated) return null;
@@ -383,9 +381,8 @@ export function CreatePublicationPage() {
     );
   }
 
-  const displayError = error || resumeError || entry.seedError;
   return (
-    <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-6">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col gap-4">
       <PageHeader
         titleInTopbar
         title="Create Publication"
@@ -402,25 +399,6 @@ export function CreatePublicationPage() {
       >
         {validationErrors.map((err, idx) => (<p key={idx}>{err}</p>))}
       </Modal>
-
-      {confirmingCancel && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
-          <span>มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ออกจากหน้านี้จะทำให้ข้อมูลหายไป ดำเนินการต่อ?</span>
-          <div className="flex shrink-0 gap-2">
-            <Button variant="outline" className="px-3 py-1.5 text-xs" onClick={() => setConfirmingCancel(false)}>
-              Stay
-            </Button>
-            <Button
-              variant="primary"
-              className="bg-error px-3 py-1.5 text-xs hover:bg-error"
-              onClick={performCancel}
-              disabled={cancelBusy}
-            >
-              {cancelBusy ? "Leaving…" : "Leave"}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {revisionConflict && (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
@@ -446,13 +424,15 @@ export function CreatePublicationPage() {
         </div>
       )}
 
-      <Card className="p-5">
+      <Card className="px-5 py-3">
         <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={(target) => void handleStepSelect(target)} />
       </Card>
 
       {/* Step 1 — Choose Content */}
+      {step === 1 && errorBlock}
       {step === 1 && (
         <ContentStep
+          busy={savingNext}
           assets={assets}
           tags={tags}
           reloadAssets={reloadAssets}
@@ -499,68 +479,48 @@ export function CreatePublicationPage() {
 
       {step === 5 && <PublishStep channels={channels} assets={assets} canPublish={canPublish} />}
 
-      <Card className="mt-auto flex flex-col gap-3 p-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          {step > 1 ? (
+      {step > 1 && (
+        <Card className="mt-auto flex flex-col gap-2 p-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
             <Button variant="outline" onClick={goBack}>
               <ArrowLeftIcon className="h-4 w-4" /> Back{prevStepLabel ? `: ${prevStepLabel}` : ""}
             </Button>
-          ) : (
-            <Button variant="outline" onClick={handleCancelClick} disabled={cancelBusy}>Cancel</Button>
-          )}
-          <div className="flex min-w-48 flex-1 items-center gap-3">
-            <span className="whitespace-nowrap text-xs text-muted-foreground">
-              {step} of {wizardSteps.length} steps completed
-            </span>
-            <div className="h-1.5 flex-1 rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${(step / wizardSteps.length) * 100}%` }}
-              />
+            <div className="flex min-w-48 flex-1 items-center gap-3">
+              <span className="whitespace-nowrap text-xs text-muted-foreground">
+                {step} of {wizardSteps.length} steps completed
+              </span>
+              <div className="h-1.5 flex-1 rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${(step / wizardSteps.length) * 100}%` }}
+                />
+              </div>
             </div>
-          </div>
-          <LovableButton
-            variant="outline"
-            disabled={saving || !draftName.trim()}
-            onClick={() => void saveDraft()}
-          >
-            {saving ? "Saving…" : "Save draft"}
-          </LovableButton>
-          {isLastStep ? (
-            <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish || !!layoutGate.reason}>
-              <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={handleNext} disabled={savingNext || step >= MAX_BUILT_STEP}>
-              {nextButtonContent}
-            </Button>
-          )}
-        </div>
-        {displayError && (
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-medium text-error">{displayError}</p>
-            <PublishErrorFix
-              fix={error && errorCause ? publishCauseFix(errorCause, { type: publicationType, playlistId, compositionId }) : null}
-              onStep={(target) => void handleStepSelect(target)}
-            />
-            {saveStatus === "error" && (
-              <Button
-                variant="outline"
-                className="px-2.5 py-1 text-xs"
-                onClick={handleNext}
-                disabled={savingNext}
-              >
-                Retry
+            <LovableButton
+              variant="outline"
+              disabled={saving || !draftName.trim()}
+              onClick={() => void saveDraft()}
+            >
+              {saving ? "Saving…" : "Save draft"}
+            </LovableButton>
+            {isLastStep ? (
+              <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish || !!layoutGate.reason}>
+                <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
+              </Button>
+            ) : (
+              <Button variant="primary" onClick={handleNext} disabled={savingNext || step >= MAX_BUILT_STEP}>
+                {nextButtonContent}
               </Button>
             )}
           </div>
-        )}
-        {publishedId && (
-          <p className="text-xs font-medium text-success">
-            Published successfully! (ID: {publishedId})
-          </p>
-        )}
-      </Card>
+          {errorBlock}
+          {publishedId && (
+            <p className="text-xs font-medium text-success">
+              Published successfully! (ID: {publishedId})
+            </p>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

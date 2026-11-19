@@ -41,7 +41,6 @@ export function PlaylistPreviewContent({ preview, assets, active = true }: {
           geometryOptions={[]}
           allowActualSize={false}
           active={active}
-          controlsPlacement="overlay"
           seekRequest={seekRequest}
           onFrameChange={setFrame}
         />
