@@ -30,7 +30,7 @@ function coverAssetId(playlist: PlaylistListItem): string | undefined {
   return playlist.cover_asset_id ?? decodeMetadata(playlist.metadata).info.coverAssetId;
 }
 
-export type RowAction = "duplicate" | "delete" | "mark-ready" | "move" | "tags" | "restore" | "permanent-delete";
+export type RowAction = "details" | "duplicate" | "delete" | "mark-ready" | "move" | "tags" | "restore" | "permanent-delete";
 const TYPE_LABELS: Record<"video" | "image" | "mixed", string> = {
   video: "Video",
   image: "Image",
@@ -266,6 +266,9 @@ function RowActions({
               </>
             ) : (
               <>
+                <DropdownMenuItem onSelect={() => onAction("details")}>
+                  Details
+                </DropdownMenuItem>
                 {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
                     moves the badge to Inactive, not Active, until a publication references it. */}
                 {isDraft && (

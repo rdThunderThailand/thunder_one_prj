@@ -1,3 +1,4 @@
+import type { PlaylistPermanentDeleteResult } from "@/lib/api/media-api";
 import type { PlaylistStatus } from "./types";
 
 type BadgeColor = "green" | "yellow" | "zinc";
@@ -53,4 +54,22 @@ export function describeDeleteError(message: string): string {
     return "ลบไม่ได้ — วิดีโอนี้เคย publish ไปแล้วจึงลบถาวรไม่ได้ ใช้ Archive แทน";
   }
   return "ลบ playlist ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+}
+
+/**
+ * `media_playlist_permanent_delete` answers `{deleted:false}` with a reason (ADR 0121): `published`
+ * (a Program ever pointed at it) or `in_layout` (a Layout zone still holds it, `layouts` names them).
+ * A Layout in Trash must be restored before it can drop the playlist, so that is said next to it.
+ */
+export function describePermanentDeleteRefusal(result: Pick<PlaylistPermanentDeleteResult, "reason" | "layouts">): string {
+  if (result.reason === "published") {
+    return "ลบถาวรไม่ได้ — playlist นี้เคยถูก publish จึงถูกล็อกไว้ถาวร";
+  }
+  if (result.reason === "in_layout" && result.layouts?.length) {
+    const names = result.layouts
+      .map((layout) => (layout.in_trash ? `${layout.name} (ในถังขยะ — กู้คืน Layout ก่อน)` : layout.name))
+      .join(", ");
+    return `ลบถาวรไม่ได้ — playlist นี้ยังอยู่ใน Layout: ${names} เอาออกจาก Layout ก่อน`;
+  }
+  return "ลบถาวรไม่ได้ กรุณาลองใหม่อีกครั้ง";
 }

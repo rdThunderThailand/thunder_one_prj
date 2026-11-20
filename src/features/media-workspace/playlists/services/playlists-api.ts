@@ -1,6 +1,6 @@
 import { fetchPlaylist, requestApi } from "@/lib/api/media-api";
 import { decodeMetadata, encodeMetadata } from "../metadata";
-import type { MediaFit, PlaylistStatus, PlayMode, Transition } from "../types";
+import type { MediaFit, PlaylistProgram, PlaylistStatus, PlayMode, Transition } from "../types";
 
 // Reads (fetchPlaylist, fetchPlaylists) live in src/lib/api/media-api.ts — see
 // docs/adr/0020 — since publications reads playlists too and a feature service
@@ -115,6 +115,12 @@ export async function setPlaylistPlayMode(id: string, playMode: PlayMode): Promi
     metadata: encodeMetadata({ ...metadata, playback: { ...metadata.playback, playMode } }),
     expectedRevision: playlist.revision,
   });
+}
+
+/** Every Program that holds the playlist, directly or through a Layout (ADR 0121), any status. */
+export async function fetchPlaylistPrograms(id: string): Promise<PlaylistProgram[]> {
+  const result = await requestApi<{ programs: PlaylistProgram[] }>("GET", `/media/playlists/${id}/programs`);
+  return result.programs;
 }
 
 export async function deletePlaylist(id: string): Promise<void> {
