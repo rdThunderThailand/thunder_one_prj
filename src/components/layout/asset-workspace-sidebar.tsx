@@ -24,7 +24,8 @@ function NavLink({
   collapsed: boolean;
   strong?: boolean;
 }) {
-  const active = isActivePath(pathname, item.href);
+  // The pinned Overview/Home is the app's root: only its own page highlights it, not every sub-page.
+  const active = strong ? pathname === item.href : isActivePath(pathname, item.href);
   const content = (
     <>
       <span className="flex h-4 w-4 shrink-0 items-center justify-center">{icon}</span>
