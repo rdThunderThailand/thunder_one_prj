@@ -1,4 +1,4 @@
-/** Run: node src/features/playlists/content-compatibility.check.mts */
+/** Run: node src/features/media-workspace/playlists/content-compatibility.check.mts */
 import assert from "node:assert/strict";
 import { checkContentCompatibility } from "./content-compatibility.ts";
 

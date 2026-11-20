@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 // These files are copies of the vendored skill's `assets/` (ADR 0096): theme code here, logos in
 // public/brand. They are never edited by hand: a stale or edited copy would let the app drift from
 // the skill agents follow. Paths are relative to the repo root.
-const SKILL = ".claude/skills/thunderone-ui/assets";
+const SKILL = ".agents/skills/thunderone-ui/assets";
 const pairs = [
   ["src/design-system/t1-tailwind-v4.css", `${SKILL}/code/tailwind/t1-tailwind-v4.css`],
   ["src/design-system/t1-icons.tsx", `${SKILL}/code/t1-icons.tsx`],

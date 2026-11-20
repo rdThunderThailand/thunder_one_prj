@@ -12,9 +12,10 @@ Write JSX with one element per line, matching the surrounding file. A `return` s
 
 ThunderOne workspace: media
 
-UI work follows the `thunderone-ui` skill (`.claude/skills/thunderone-ui/`, vendored unmodified at
-`v0.2.0`) and its `media` profile, as decided in ADR 0096. Read both before creating, editing or
-reviewing a screen. Where the skill and this file disagree, this file wins.
+UI work follows the `thunderone-ui` skill (`.agents/skills/thunderone-ui/`, vendored unmodified at
+`v0.2.0`; `.claude/skills/thunderone-ui` is a symlink to it for Claude Code) and its `media` profile, as
+decided in ADR 0096. Read both before creating, editing or reviewing a screen. Where the skill and this
+file disagree, this file wins.
 
 - Tokens come from `src/design-system/t1-tailwind-v4.css` (a copy of the skill's generated theme,
   imported by `src/app/globals.css`). Never edit the copy; `node src/design-system/design-system.check.mts`
@@ -31,7 +32,7 @@ reviewing a screen. Where the skill and this file disagree, this file wins.
   Badge/Tag default to 10px with caller overrides retained (ADR 0111).
   Input restores the original field appearance (~42px, no shadow); preserve compact overrides (ADR 0113).
   Before changing a shared API or default, read its ADR linked in
-  `docs/design-system/plan-component-consolidation.md`. Lovable is not a visual source.
+  `docs/shell/design-system/plan-component-consolidation.md`. Lovable is not a visual source.
 - Nav and terms follow `src/config/nav/media-workspace.tsx` where the profile disagrees (ADR 0096 §6).
 - Thai text: Noto Sans Thai via `next/font` after Manrope (ADR 0096 §7, local until OD-05 closes).
 - Do not run the design system's setup CLI here. Update by re-copying the skill and

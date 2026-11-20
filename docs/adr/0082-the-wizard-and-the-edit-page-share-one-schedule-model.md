@@ -1,6 +1,6 @@
 # 0082 — The Create wizard and the Edit page share one schedule model
 
-Status: accepted (2026-10-01, grilling session after v0.5.2). **§6 superseded by ADR 0083.** Amends ADR 0072 (wizard step 3 "When to Play") and `docs/program/plan-program-redesign.md` FE-E ("Wizard `ScheduleStep` is untouched").
+Status: accepted (2026-10-01, grilling session after v0.5.2). **§6 superseded by ADR 0083.** Amends ADR 0072 (wizard step 3 "When to Play") and `docs/media-workspace/program/plan-program-redesign.md` FE-E ("Wizard `ScheduleStep` is untouched").
 
 ## Context
 
@@ -59,4 +59,4 @@ So no UI can author a monthly schedule, a custom-dates Program cannot be created
 - Existing Programs whose schedule was `locked` (monthly, multi-day one-off) open on the matching preset and become editable.
 - The Edit-page and Detail-page "last day + 1" display is fixed by item 7.
 - No Core change: all four stored shapes already exist (`weekly`, `dates`, `monthly`, `{}`).
-- Delivery plan: `docs/program/plan-schedule-shared-model.md`.
+- Delivery plan: `docs/media-workspace/program/plan-schedule-shared-model.md`.

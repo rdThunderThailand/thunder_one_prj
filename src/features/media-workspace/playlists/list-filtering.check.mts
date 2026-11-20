@@ -1,4 +1,4 @@
-/** Run: node src/features/playlists/list-filtering.check.mts */
+/** Run: node src/features/media-workspace/playlists/list-filtering.check.mts */
 import assert from "node:assert/strict";
 import { copyName, filterPlaylists, paginate, playlistContentType, playlistType, summarize } from "./list-filtering.ts";
 import type { PlaylistListItem } from "../../../types/domain.ts";

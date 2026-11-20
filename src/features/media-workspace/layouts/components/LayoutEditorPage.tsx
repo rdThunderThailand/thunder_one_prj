@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { LayoutInformationCard } from "@/features/media-workspace/compositions/components/LayoutInformationCard";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-// Reused rather than re-written — see docs/layouts/plan-layout-execution.md Task 7 Step 5.
+// Reused rather than re-written — see docs/media-workspace/layouts/phase-0/plan-layout-execution.md Task 7 Step 5.
 import { UnsavedLeaveConfirm } from "../../playlists/components/UnsavedLeaveConfirm";
 import { deriveAspectRatio, parseResolution, sameRatio, validateZones } from "../geometry";
 import { fetchLayout, upsertLayout } from "../services/layouts-api";

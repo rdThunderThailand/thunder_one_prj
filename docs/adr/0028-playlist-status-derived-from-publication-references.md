@@ -28,7 +28,7 @@ Thunder_Core migration `098_playlists_publication_count.sql` adds a `publication
 `media_playlists_list` and `media_playlist_get` — the same `count(*)` subquery over
 `media_core.publications` that the delete guard uses. The frontend turns that count into a
 display status in exactly one place, `playlistDisplayStatus()` in
-`src/features/playlists/status-display.ts`:
+`src/features/media-workspace/playlists/status-display.ts`:
 
 - `status === "draft"` → `draft` (the stored column still decides draft / not-draft)
 - `publication_count === undefined` → the stored status, unchanged

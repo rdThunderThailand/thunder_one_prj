@@ -9,10 +9,10 @@ an `Active` tab and no `Ended` tab; filtering on the derived value would make ex
 vanish from the UI entirely."* That decision held the `Active` tab's meaning at "activated and not
 cancelled" and left every scheduled, currently-airing, and long-expired publication in one list,
 distinguished only by a status badge (`publicationDisplayStatus`,
-`src/features/publications/publication-status.ts`).
+`src/features/media-workspace/publications/publication-status.ts`).
 
 `status = 'cancelled'` is a separate case ADR 0004 did not address for the list page at all.
-`fetchPublications` (`src/features/publications/services/publications-api.ts:105-107`) only ever
+`fetchPublications` (`src/features/media-workspace/publications/services/publications-api.ts:105-107`) only ever
 accepts `"draft" | "active"` — there is no call site, today, that requests `status=cancelled`.
 Cancelled publications are written (via `cancelPublication`,
 `publications-api.ts:133-134`) and are readable through `fetchPublication(id)` for a single row,

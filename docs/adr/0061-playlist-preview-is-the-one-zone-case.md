@@ -3,7 +3,7 @@
 **Status:** accepted · **Date:** 2026-09-03
 **Extends:** ADR 0051 (pre-publish preview) · ADR 0060 §1, §3 (playlist editor, no publish authority)
 **Amends:** ADR 0051 §4 — the lifecycle sentence "saved work loads by id first", for `source: "playlist"` only
-**Design guideline:** `docs/playlists/v1/design-guideline-playlist-editor.md` (Preview section)
+**Design guideline:** `docs/media-workspace/playlists/v1/design-guideline-playlist-editor.md` (Preview section)
 **Issue:** #39, landing with #33
 
 ## Context

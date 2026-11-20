@@ -8,9 +8,12 @@ agents — an agent opening a release PR follows this file literally.
 - **SemVer `MAJOR.MINOR.PATCH`**, stored in one place: `package.json` `"version"`. No CHANGELOG file,
   no version in the UI (upgrade path: read `process.env.npm_package_version` into the user menu
   when someone actually asks "which version am I on").
-- `1.0.0` is the first release for every tenant (ADR 0115). **MAJOR** = removes or renames a Media
-  Workspace nav route, removes a workflow step operators rely on, or needs a Core change the previous
-  release cannot run against. Thunder_Core keeps its own `0.x` numbering.
+- **One number for the whole app.** Every Workspace ships in this one app and one deploy, so there is
+  no per-Workspace version; release notes group changes by Workspace instead (ADR 0115 amendment).
+- `1.0.0` is the first release for every tenant (ADR 0115). **MAJOR** = removes or renames a nav route
+  of a **Stable Workspace** (below), removes a workflow step its operators rely on, or needs a Core
+  change the previous release cannot run against. A Workspace that is not stable may change in a
+  MINOR. Thunder_Core keeps its own `0.x` numbering.
 - **MINOR** (`0.1.0 → 0.2.0`) = a release that adds backward-compatible functionality. A minor
   release may include bug fixes.
 - **PATCH** (`0.2.0 → 0.2.1`) = a release containing only backward-compatible bug fixes (plus
@@ -21,6 +24,19 @@ agents — an agent opening a release PR follows this file literally.
 - A version is **immutable once tagged**. Wrong tag → new patch release, never move or delete the
   tag.
 
+## Stable Workspaces
+
+A Workspace whose routes and workflows are a promise to operators. This list is the only place that
+says so; the launcher's `dataStatus` is a different fact (`live` = reads Thunder_Core).
+
+| Workspace | Stable since | UAT |
+|---|---|---|
+| Media Workspace | `v1.0.0` | `docs/media-workspace/uat-v1-checklist.md` + retests |
+
+To add one: the Workspace passes a UAT on prod in `thunder_qa`, the owner accepts it, the release-prep
+PR adds its row here, and the release is a MINOR whose release note announces it. Which tenants see a
+Workspace is a Core setting (`enabled_workspaces`), not this list.
+
 ## Where the number lives
 
 | Place | Form | Set when |
@@ -28,35 +44,61 @@ agents — an agent opening a release PR follows this file literally.
 | `package.json` | `"version": "0.2.0"` | in the release-prep PR into `dev`, **before** the release PR |
 | git tag on `main` | annotated `v0.2.0` on the merge commit | right after the release PR merges |
 | release PR title | `release v0.2.0: promote dev → main (#N — …)` | when the release PR is opened |
+| GitHub Release | `v0.2.0`, title `v0.2.0 (#N)`, Thai release note | with the tag, same approval |
 
 `main` is deployed to production on merge (Vercel, no staging). The tag therefore marks exactly
 what production runs.
 
-## Release sequence
+## Release sequence (`dev → main`)
 
-1. **Verify `dev`**: `pnpm install --frozen-lockfile && pnpm exec tsc --noEmit && pnpm exec next build`
-   — all three exit 0. Fix on `dev` via a normal PR first if not.
+Two PRs per release. Merge methods follow ADR 0118.
+
+1. **Verify `dev`**: `pnpm install --frozen-lockfile && pnpm exec tsc --noEmit && pnpm exec eslint . && pnpm exec next build`
+   — all exit 0. Fix on `dev` via a normal PR first if not. (`next build` no longer runs ESLint in
+   Next 16, so `eslint` is its own step.)
 2. **Release-prep PR → `dev`** from branch `release/vX.Y.Z`: choose MINOR or PATCH from the diff
-   since the current `main` release, then bump `package.json` only (plus any release-only docs).
-   Draft, Thai or English as the owner picks. Owner merges.
+   since the current `main` release, bump `package.json`, and add a row to **Stable Workspaces** if
+   this release makes one stable. Draft, Thai or English as the owner picks. Squash. Owner merges.
 3. **Release PR `dev → main`**, Draft. Title as above; `#N` is the promotion count (see below).
-   Body per `thunder-workflow`, with:
-   - the previous release PR and tag, and the commit / PR count since;
-   - Changes grouped **by module**, one bullet per merged PR (`gh pr list --state merged --base dev --search "merged:>=<last release date>"`);
-   - Verification: the three commands from step 1 with exit codes, and which pages were opened in
+   Body per `.github/pull_request_template.md`, with:
+   - the previous release and tag, and the commit / PR count since;
+   - Changes grouped **by Workspace** (`ws:*` label), one bullet per merged PR
+     (`gh pr list --state merged --base dev --search "merged:>=<last release date>"`);
+   - Verification: the commands from step 1 with exit codes, and which pages were opened in
      a browser (be explicit about what was **not**);
    - the line "merge = deploy to production immediately".
-   Owner marks ready and merges — an agent never does.
-4. **Tag** on `main` after the merge:
+   Owner marks ready and merges with a **merge commit** — an agent never merges.
+4. **Publish** once Vercel reports the production deploy of the merge commit as `success`
+   (`gh api repos/<owner>/<repo>/commits/<sha>/status`). One approval covers all three; an agent shows
+   the exact commands and the release-note text, then waits for a yes (R0):
    ```bash
-   git fetch origin && git tag -a v0.2.0 <merge-commit> -m "release v0.2.0 (#N)" && git push origin v0.2.0
+   git fetch origin && git tag -a vX.Y.Z <merge-commit> -m "release vX.Y.Z (#N)" && git push origin vX.Y.Z
+   gh release create vX.Y.Z --verify-tag --title "vX.Y.Z (#N)" --notes-file <release-note.md>
    ```
-   Pushing a tag is irreversible-ish (R0): an agent shows the exact command and waits for a yes.
-5. Diff between releases: `git log v0.1.0..v0.2.0 --first-parent --oneline`.
+   then a comment "ออกใน vX.Y.Z" on each ClickUp task linked (`Ticket:` / `CU-<id>`) from the shipped
+   PRs (ADR 0119). Close the version's milestone if one was used for planning.
+5. Diff between releases: `git log vA..vB --first-parent --oneline`.
+
+## Hotfix sequence (straight to `main`)
+
+Two PRs per hotfix.
+
+1. Branch `hotfix/vX.Y.Z-<slug>` from **`origin/main`**, never from `dev` (a `dev` branch carries
+   unreleased commits into `main`).
+2. The fix and the PATCH bump of `package.json` go in **one** PR → `main`, titled
+   `fix(scope): … (vX.Y.Z)` and saying `Refs #N` (a PR into `main` does not close issues). Draft until
+   verified on the layer the user uses. Owner merges with a **merge commit** (ADR 0118: `main` takes merge
+   commits only).
+3. Publish exactly as step 4 above (tag, GitHub Release, ClickUp comments). A hotfix is not a
+   promotion: its Release title has no `#N`.
+4. **Back-merge PR `main → dev`** right away, **merge commit**, carrying `Closes #N` for the hotfix's
+   issues. If `dev` already has a release-prep bump, `package.json` conflicts: keep `dev`'s version.
 
 ## Counting releases
 
-Count **promotions of `dev → main`**, not merges into `main`. Feature branches merged straight to
+Count **promotions of `dev → main`**, not merges into `main`. From `v1.0.0` on the count lives in the
+release PR title and the GitHub Release title (`v1.1.0 (#28)`): the next `#N` is the last promoted
+Release's `#N` plus one. Feature branches merged straight to
 `main` before `dev` existed (#6, #14, #15) are not releases.
 The promotion count is independent of the version component: a bugfix-only promotion increments
 the count while bumping PATCH, not MINOR.
@@ -99,7 +141,8 @@ the count while bumping PATCH, not MINOR.
 | — | `v0.23.4` (hotfix straight to `main`, not a promotion) | #423 | 2026-11-19 |
 | 27 | `v1.0.0` (v1.0, first release for every tenant, ADR 0115) | #429 | 2026-11-19 |
 
-Append a row for every release. This table is the only release log we keep.
+This table stops at `v1.0.0` (ADR 0115 amendment). Later releases are GitHub Releases:
+`gh release list`.
 
 ## Why this and not the alternatives
 

@@ -1,5 +1,5 @@
 /**
- * Run: node src/features/playlists/draft-from-detail.check.mts
+ * Run: node src/features/media-workspace/playlists/draft-from-detail.check.mts
  *
  * Regression guard for the metadata-loss bug: restoring a fetched playlist into the
  * draft must carry `info`/`playback` through, not just name/items/revision.

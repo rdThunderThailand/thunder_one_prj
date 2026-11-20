@@ -1,4 +1,4 @@
-/** Run: node src/features/publications/preview-kind.check.mts */
+/** Run: node src/features/media-workspace/publications/preview-kind.check.mts */
 import assert from "node:assert/strict";
 import { isVideoPreview } from "./preview-kind.ts";
 

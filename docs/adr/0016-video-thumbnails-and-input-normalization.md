@@ -6,7 +6,7 @@ The asset picker in the publication wizard (`AssetLibraryStep`, and the `MediaTh
 `AssetCard` grid cells under it) has no thumbnail to show for a video, so it renders the video
 itself: `<video src="…#t=0.1" preload="metadata">`. The `#t=0.1` media fragment forces the browser
 to seek and decode a real frame, which means downloading the file. Measured against the production
-library on 2026-08-14 (`.docs/SESSIONLOG-asset-preview-perf-2026-08-14.md`), that is 8 `video/mp4`
+library on 2026-08-14 ([`.docs/SESSIONLOG-asset-preview-perf-2026-08-14.md`](https://github.com/rdThunderThailand/thunder_one_prj/blob/65ea04da491c45241450493d9b73b4363e7d152f/.docs/SESSIONLOG-asset-preview-perf-2026-08-14.md)), that is 8 `video/mp4`
 files averaging 11 MB (max 24 MB) plus one `video/quicktime` at 27 MB — tens of megabytes pulled to
 paint a grid of still images. Two properties of the current system make it worse: `files` and
 `file_versions` carry only `storage_key` / `mime_type` / `file_size_bytes`, with no thumbnail,
@@ -23,12 +23,12 @@ The second, entangled question was whether Thunder should accept video in any fo
 server-side. The `.mov` sitting in production is the evidence that it currently accepts anything and
 fails later: the file input was `accept="video/*,image/*"` with no gate behind it. That has since
 been narrowed to `.mp4,.png,.jpg,.jpeg,.webp` with a real check in `handleFilePicked`
-(`src/features/publications/upload-limits.ts`) — a stopgap taken explicitly pending this decision.
+(`src/features/media-workspace/publications/upload-limits.ts`) — a stopgap taken explicitly pending this decision.
 
 Facts checked during the design pass that constrain the options:
 
 - The client `PUT`s bytes straight to Supabase Storage from a signed upload URL
-  (`uploadToStorage`, `src/features/publications/services/upload-api.ts:20-36`). The backend never
+  (`uploadToStorage`, `src/features/media-workspace/publications/services/upload-api.ts:20-36`). The backend never
   sees the bytes, so any server-side processing would mean downloading the file back out of
   storage first.
 - There are no edge functions in the Supabase project and `pg_net` is not installed, so the
@@ -81,7 +81,7 @@ which is what the bucket already enforces.
 reading the codec at upload time and recording it on the asset, giving Thunder real codec data on
 its own library. It changes no bytes. Pulling in `ffmpeg.wasm` (~30 MB of wasm shipped to
 every operator's browser) is deferred until the codec question is settled, because the display
-team's answer to `.mov` container support (`.docs/player_codec_capability_request.md`, question 6 —
+team's answer to `.mov` container support (`docs/media-workspace/player/player-codec-capability-request.md`, question 6 —
 document written, **not yet sent**) can delete the remux work entirely. Building the expensive half
 before that answer arrives risks building it for nothing.
 

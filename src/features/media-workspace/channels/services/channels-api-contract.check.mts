@@ -1,7 +1,7 @@
 /**
  * Runnable Channel request-contract check:
  *
- *     node src/features/channels/services/channels-api-contract.check.mts
+ *     node src/features/media-workspace/channels/services/channels-api-contract.check.mts
  */
 import assert from "node:assert/strict";
 import {

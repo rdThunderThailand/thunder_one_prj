@@ -5,7 +5,7 @@
 
 import type { ZoneRect } from "./types";
 
-/** Percentages carry three decimal places (docs/layouts/contract-v2-zones.md) — enough for
+/** Percentages carry three decimal places (docs/media-workspace/layouts/phase-0/contract-v2-zones.md) — enough for
  *  three equal columns across three monitors to land exactly on the bezels. Comparing them
  *  as thousandths keeps every check on integers, so 33.333 + 33.333 + 33.334 lands on
  *  exactly 100 instead of a float a hair over it that would fail the bounds test. */

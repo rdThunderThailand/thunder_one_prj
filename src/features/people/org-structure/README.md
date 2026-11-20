@@ -89,9 +89,9 @@ Nests under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
 - `OrgUnitListView.tsx` — new, 2026-09-15. รายชื่อหน่วยงาน tab is real now (was a permanent
   placeholder) — a flat, depth-indented table of the same real units the chart renders, click a row
   to select it (opens the same detail panel).
-- `mock-data.ts` — still the fallback shape reference and the source `people/new-hires`'s
-  `AddEmployeeModal` (re-exported via `index.ts`) reads its หน่วยงาน picker options from — that
-  consumer wasn't repointed at real data this round. `orgStatTiles`/`orgStructureUpdatedLabel`/
+- `mock-data.ts` — kept as the fallback shape reference. `index.ts` still re-exports `orgUnits`, but
+  nothing imports it any more: `AddEmployeeModal` (its former consumer) is gone, replaced by the
+  `people/add-person` wizards. `orgStatTiles`/`orgStructureUpdatedLabel`/
   `orgStructureUpdatedBy` were removed 2026-09-14 once `OrgStatTilesRow` started computing real
   tiles — see git history if needed. `OrgUnitNode` gained `headAvatarUrl`/`headEmail` (optional, so
   the ~22 existing mock entries didn't all need touching).
