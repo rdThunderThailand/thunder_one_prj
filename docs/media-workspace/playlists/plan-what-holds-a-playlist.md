@@ -7,7 +7,18 @@ are folded in below.
 
 **Status (2026-11-20).**
 
-- A1: done for develop. Prod is still open and must be done before release.
+- A1: done for develop and prod. Prod was checked read-only on 2026-11-20; its last migration is
+  20261120100000.
+  - `media_playlist_permanent_delete`: prod md5 `02d88d30…` equals the pre-migration body in the
+    rollback file.
+  - `media_composition_set_zones`: logic is identical. Prod lacks one two-line comment ("Completeness
+    is not required to save…") that develop has. After `db push`, prod gains that comment.
+  - `playlist_program_ids`, `media_publish_changes_programs` and `publication_effective_status`:
+    same md5 as develop.
+  - `media_playlist_programs` does not exist yet.
+  - `media_core.campaigns` exists. `compositions` has `deleted_at`, `name` and `tenant_id`.
+  - Grants match develop for all of these: `service_role` only, with no EXECUTE for PUBLIC, anon or
+    authenticated. `playlist_program_ids` is owner only.
 - A2–A4, B1–B4, C1–C6 and C4a: done. The dry-run passes 13/13.
 - Core#415 is merged and live on develop. The md5 of all three functions matches the migration file.
 - Verification 2–3 passed on develop on 2026-11-20, with two exceptions:
