@@ -1,5 +1,7 @@
 # 0028 — Playlist Active/Inactive is derived from publication references, not stored
 
+> Superseded by [ADR 0120](0120-playlist-in-use-counts-layout-programs-and-only-live-statuses.md) on which count drives the badge.
+
 ## Context
 
 The agreed business rule is that a playlist is **Active** when at least one publication

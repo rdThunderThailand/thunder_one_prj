@@ -3,19 +3,19 @@ import type { PlaylistStatus } from "./types";
 type BadgeColor = "green" | "yellow" | "zinc";
 
 /**
- * ADR 0028: active means "referenced by at least one publication (any status)",
- * inactive means "finished but referenced by none". The stored `status` column
- * defaults to 'active' and is never written as 'inactive', so it only still means
- * draft / not-draft. A missing `publication_count` (backend not deployed yet) falls
- * back to the stored value rather than claiming everything is inactive.
+ * ADR 0120 (supersedes the count in ADR 0028): active means "a draft or active Program plays
+ * it, directly or through a Layout zone" (`in_use_count`), inactive means "finished and not in
+ * use". The stored `status` column defaults to 'active' and is never written as 'inactive', so
+ * it only still means draft / not-draft. A missing `in_use_count` (backend not deployed yet)
+ * falls back to the stored value rather than claiming everything is inactive.
  */
 export function playlistDisplayStatus(playlist: {
   status: PlaylistStatus;
-  publication_count?: number;
+  in_use_count?: number;
 }): PlaylistStatus {
   if (playlist.status === "draft") return "draft";
-  if (playlist.publication_count === undefined) return playlist.status;
-  return playlist.publication_count > 0 ? "active" : "inactive";
+  if (playlist.in_use_count === undefined) return playlist.status;
+  return playlist.in_use_count > 0 ? "active" : "inactive";
 }
 
 /** Draft is yellow rather than zinc so it reads as in-progress, not switched off. */
