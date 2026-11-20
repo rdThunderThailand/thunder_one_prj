@@ -12,7 +12,7 @@ the source of truth; personal skills and agent settings point here rather than r
 | Plan | what is left to do in multi-phase work | `docs/<workspace>/plan-*.md` |
 | UAT checklist | what QA runs and what it found | `docs/<workspace>/uat-*.md` |
 | Agent / process rules | how we work | `docs/agents/*.md` |
-| Release log | what shipped in which version | GitHub Releases (`gh release list`); the table in `versioning.md` stops at `v1.0.0` |
+| Release log | what shipped in which version | GitHub Releases (`gh release list`); the table in `versioning.md` stops at `v1.0.1` |
 | Session log | what happened in one working session | `.docs/SESSIONLOG-<topic>-<date>.md`, **local only, not committed** |
 
 - `<workspace>` is the Workspace id from `src/config/apps.tsx` (`media-workspace`, `asset-intelligence`,

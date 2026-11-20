@@ -142,7 +142,7 @@ the count while bumping PATCH, not MINOR.
 | 27 | `v1.0.0` (v1.0, first release for every tenant, ADR 0115) | #429 | 2026-11-19 |
 | 28 | `v1.0.1` | #436 | 2026-11-20 |
 
-This table stops at `v1.0.0` (ADR 0115 amendment). Later releases are GitHub Releases:
+This table stops at `v1.0.1` (ADR 0115 amendment). Later releases are GitHub Releases:
 `gh release list`.
 
 ## Why this and not the alternatives
