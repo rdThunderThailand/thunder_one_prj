@@ -39,6 +39,10 @@ assert.equal(
   describeSaveError("Invalid input: zones 1 and 3 overlap"),
   "บันทึกไม่ได้ — Zone ลำดับที่ 1 และ 3 ซ้อนทับกัน กรุณาปรับขนาดหรือตำแหน่งใหม่",
 );
+assert.equal(
+  describeSaveError("Invalid input: playlist is in Trash: Summer Loop"),
+  "Playlist Summer Loop อยู่ในถังขยะ กู้คืนก่อนจึงจะใส่ใน Layout ได้",
+);
 assert.equal(describeSaveError("Invalid input: something else"), "บันทึก Composition ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
 
 // Unbound-Zone names come straight from the RPC's own message.

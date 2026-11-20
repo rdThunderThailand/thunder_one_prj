@@ -44,6 +44,9 @@ export function describeSaveError(message: string): string {
   // Only a shared Template still raises this — a Composition may drop Zones of its own Layout (#221).
   const zoneInUse = /zone is used by composition\(s\) (.+)/.exec(message);
   if (zoneInUse) return `ลบ Zone ไม่ได้ — Template นี้ยังถูกใช้ใน: ${zoneInUse[1]}`;
+  // `media_composition_set_zones` refuses a playlist in Trash that the Layout does not already hold (ADR 0121).
+  const trashed = /playlist is in Trash: (.+)$/.exec(message);
+  if (trashed) return `Playlist ${trashed[1]} อยู่ในถังขยะ กู้คืนก่อนจึงจะใส่ใน Layout ได้`;
   if (message.includes("cannot change the layout of an active composition")) {
     return "เปลี่ยน Layout ไม่ได้ขณะ Composition กำลัง Active";
   }

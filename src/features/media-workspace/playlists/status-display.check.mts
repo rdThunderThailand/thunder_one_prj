@@ -1,6 +1,6 @@
 /** Run: node src/features/media-workspace/playlists/status-display.check.mts */
 import assert from "node:assert/strict";
-import { describeDeleteError, playlistDisplayStatus, statusBadge } from "./status-display.ts";
+import { describeDeleteError, describePermanentDeleteRefusal, playlistDisplayStatus, statusBadge } from "./status-display.ts";
 
 assert.deepEqual(statusBadge("active"), { color: "green", label: "Active" });
 assert.deepEqual(statusBadge("draft"), { color: "yellow", label: "Draft" });
@@ -51,5 +51,39 @@ assert.equal(
   describeDeleteError("Already in use: video has been published and is part of a broadcast history snapshot"),
   "ลบไม่ได้ — วิดีโอนี้เคย publish ไปแล้วจึงลบถาวรไม่ได้ ใช้ Archive แทน"
 );
+
+// ADR 0121: permanent delete names what holds the playlist.
+assert.equal(
+  describePermanentDeleteRefusal({ reason: "published" }),
+  "ลบถาวรไม่ได้ — playlist นี้เคยถูก publish จึงถูกล็อกไว้ถาวร"
+);
+assert.equal(
+  describePermanentDeleteRefusal({ reason: "in_layout", layouts: [{ id: "1", name: "Lobby", in_trash: false }] }),
+  "ลบถาวรไม่ได้ — playlist นี้ยังอยู่ใน Layout: Lobby เอาออกจาก Layout ก่อน"
+);
+assert.equal(
+  describePermanentDeleteRefusal({
+    reason: "in_layout",
+    layouts: [
+      { id: "1", name: "Lobby", in_trash: false },
+      { id: "2", name: "Menu", in_trash: false },
+    ],
+  }),
+  "ลบถาวรไม่ได้ — playlist นี้ยังอยู่ใน Layout: Lobby, Menu เอาออกจาก Layout ก่อน"
+);
+// A trashed Layout must be restored first; mixed with a live one only the trashed one is flagged.
+assert.equal(
+  describePermanentDeleteRefusal({
+    reason: "in_layout",
+    layouts: [
+      { id: "1", name: "Lobby", in_trash: false },
+      { id: "2", name: "Menu", in_trash: true },
+    ],
+  }),
+  "ลบถาวรไม่ได้ — playlist นี้ยังอยู่ใน Layout: Lobby, Menu (ในถังขยะ — กู้คืน Layout ก่อน) เอาออกจาก Layout ก่อน"
+);
+// Unknown or missing reason degrades to a generic line.
+assert.equal(describePermanentDeleteRefusal({}), "ลบถาวรไม่ได้ กรุณาลองใหม่อีกครั้ง");
+assert.equal(describePermanentDeleteRefusal({ reason: "in_layout" }), "ลบถาวรไม่ได้ กรุณาลองใหม่อีกครั้ง");
 
 console.log("status-display.check.mts — all assertions passed");

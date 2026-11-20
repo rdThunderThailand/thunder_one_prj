@@ -8,7 +8,7 @@ import { movePlaylist, permanentlyDeletePlaylist } from "@/lib/api/media-api";
 import type { ContentFolder } from "@/types/domain";
 import { folderPath } from "../../content-library/folder-tree";
 import { deletePlaylist } from "../services/playlists-api";
-import { describeDeleteError } from "../status-display";
+import { describeDeleteError, describePermanentDeleteRefusal } from "../status-display";
 import type { PlaylistListItem } from "../types";
 
 /** Row actions that need a confirm step or an input — `restore` is handled immediately
@@ -44,7 +44,7 @@ export function PlaylistsListDialogs({
       if (action === "permanent-delete") {
         const result = await permanentlyDeletePlaylist(target.id);
         if (!result.deleted) {
-          onError("ลบถาวรไม่ได้ — playlist นี้เคยถูก publish จึงถูกล็อกไว้ถาวร");
+          onError(describePermanentDeleteRefusal(result));
           return;
         }
       }
