@@ -41,7 +41,9 @@ function correctCsv(bytes: ArrayBuffer, edits: CellEdit[]): string {
       const values = cells.map((cell) => text.slice(cell.start, cell.end));
       for (const edit of changes) {
         while (values.length <= edit.column) values.push("");
-        values[edit.column] = `"${edit.value.replaceAll('"', '""')}"`;
+        // A leading ' stops Excel running the edit as a formula; the CSV reader removes it again.
+        const value = /^[=+\-@\t\r]/.test(edit.value) ? `'${edit.value}` : edit.value;
+        values[edit.column] = `"${value.replaceAll('"', '""')}"`;
       }
       replacements.push({ start: cells[0].start, end, value: values.join(delimiter) });
     }

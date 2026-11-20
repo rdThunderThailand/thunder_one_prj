@@ -38,7 +38,9 @@ function readCsv(text: string, delimiter: string, maxRows: number): ParsedImport
   let totalRows = 0;
 
   function finishField() {
-    cells.push(field.trim());
+    const value = field.trim();
+    // Remove the ' that our template and corrected files put before a value that looks like a formula.
+    cells.push(/^'[=+\-@\t\r]/.test(value) ? value.slice(1) : value);
     field = "";
     closedQuote = false;
   }
