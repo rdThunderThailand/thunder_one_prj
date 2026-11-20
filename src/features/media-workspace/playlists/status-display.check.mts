@@ -6,15 +6,22 @@ assert.deepEqual(statusBadge("active"), { color: "green", label: "Active" });
 assert.deepEqual(statusBadge("draft"), { color: "yellow", label: "Draft" });
 assert.deepEqual(statusBadge("inactive"), { color: "zinc", label: "Inactive" });
 
-// A draft stays a draft however many publications point at it — the stored status is
+// A draft stays a draft however many Programs play it — the stored status is
 // still the only thing that decides draft / not-draft.
-assert.equal(playlistDisplayStatus({ status: "draft", publication_count: 3 }), "draft");
-// Nobody references it: inactive, whatever the (untrustworthy) stored value says.
-assert.equal(playlistDisplayStatus({ status: "active", publication_count: 0 }), "inactive");
-// Referenced: active, even on a row someone archived by hand before ADR 0028.
-assert.equal(playlistDisplayStatus({ status: "inactive", publication_count: 3 }), "active");
-// No count at all — a frontend deployed ahead of Thunder_Core 098 keeps the stored
+assert.equal(playlistDisplayStatus({ status: "draft", in_use_count: 3 }), "draft");
+// No draft or active Program plays it: inactive, whatever the (untrustworthy) stored value says.
+assert.equal(playlistDisplayStatus({ status: "active", in_use_count: 0 }), "inactive");
+// In use (directly or through a Layout, ADR 0120): active, even on a row someone archived by hand.
+assert.equal(playlistDisplayStatus({ status: "inactive", in_use_count: 3 }), "active");
+// `publication_count` (direct, any status) no longer drives the badge: a playlist reached only
+// through a Layout has 0 direct references and is still active.
+// (Callers pass whole playlist objects, so the extra key is fine there; mirror that here.)
+const viaLayout = { status: "active" as const, publication_count: 0, in_use_count: 1 };
+assert.equal(playlistDisplayStatus(viaLayout), "active");
+// No in_use_count at all — a frontend deployed ahead of Thunder_Core keeps the stored
 // value rather than declaring every playlist inactive.
+const noCount = { status: "active" as const, publication_count: 0 };
+assert.equal(playlistDisplayStatus(noCount), "active");
 assert.equal(playlistDisplayStatus({ status: "active" }), "active");
 assert.equal(playlistDisplayStatus({ status: "inactive" }), "inactive");
 
