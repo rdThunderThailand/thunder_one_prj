@@ -8,8 +8,12 @@ are folded in below.
 **Status (2026-11-20).**
 
 - A1: done for develop. Prod is still open and must be done before release.
-- A2–A4, B1–B4 and C1–C6: done in code. The dry-run passes 13/13.
-- The Release steps and Verification steps 2–4 are still open.
+- A2–A4, B1–B4, C1–C6 and C4a: done. The dry-run passes 13/13.
+- Core#415 is merged and live on develop. The md5 of all three functions matches the migration file.
+- Verification 2–3 passed on develop on 2026-11-20, with two exceptions:
+  - Empty Trash was not run, because it would delete other trashed playlists.
+  - The in-Trash Layout message variant is covered by the check only.
+- The Release step and Verification step 4 (prod) are still open.
 
 The work is two PRs, in this order:
 
@@ -278,6 +282,17 @@ Add `GET /media/playlists/{id}/programs` with the row schema.
   Layout Programs (ADR 0121). Keep the existing note that there are no dates.
 - The `publication-status.ts` helpers take the new type as is, because the row has `status` and
   `effective_status`.
+
+### C4a. Mount the panel again (added 2026-11-20, after browser verification)
+
+- `PlaylistSidePanel` was imported nowhere: commit `5c9a1e50` dropped it, so C4 had no visible effect.
+- `PlaylistsTable.tsx` gains a `details` row action, the first item of the list-view menu.
+- `PlaylistSidePanel.tsx` gains `PlaylistDetailsDrawer`, a fixed right-hand drawer, 380px wide and
+  full width on phones.
+- `PlaylistsListPage.tsx` holds `detailsId` and renders the drawer. The drawer is never shown in
+  Trash.
+- The panel's Details tab shows Campaign as "—", because the list page no longer loads campaign
+  names.
 
 ### C5. Layout editor error
 

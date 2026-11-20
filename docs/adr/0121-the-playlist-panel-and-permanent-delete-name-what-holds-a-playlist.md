@@ -80,6 +80,13 @@ ADR 0120 shipped on prod in Core v0.27.0 and One v1.0.1. It left three follow-up
      Layout. Each row carries `via_composition` (`{ id, name }` or null).
    - The panel keeps its own live/past split. A Layout row shows "ผ่าน Layout: <name>".
    - Core ships before the frontend. There is no client-side fallback.
+   - **The panel had not been mounted anywhere since commit `5c9a1e50` (2026-09-04).** The #38/#40/#41
+     list rewrite dropped it, and its commit message does not mention it. Browser verification on
+     2026-11-20 found this.
+   - It comes back as a right-hand drawer (`PlaylistDetailsDrawer`), opened from a new first row-menu
+     item, "Details". It is in list view only and not in Trash. A drawer was chosen over the old
+     two-column grid, so that the table does not reflow.
+   - While the drawer is open it covers the row-menu column. Close it to use another row's menu.
 6. **The 80% Active is not a bug.** No code and no data change.
    - The badge follows ADR 0120.
    - Decision 5 answers "why is this Active": the panel lists the drafts that hold the playlist, and
