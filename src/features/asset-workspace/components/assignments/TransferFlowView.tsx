@@ -133,7 +133,7 @@ function content(context: string, flow: TransferFlow, fromAssignments: boolean):
         asset={asset}
         thumbnailUrl={flow.photo}
         from={{ holder: custody && { ...custody, secondary: custody.department?.name }, empty: "No current custodian", location: current, since: custody?.since }}
-        to={{ holder: flow.target, empty: "Choose a person or team", location: flow.location && flow.location.id !== asset.location?.id ? next : current }}
+        to={{ holder: flow.target, empty: "Choose a person or organizational unit", location: flow.location && flow.location.id !== asset.location?.id ? next : current }}
         outcomes={transferOutcomes(flow.target?.name ?? null, current, flow.location && flow.location.id !== asset.location?.id ? next : null, flow.name === "Review")}
         outcomesTitle={flow.name === "Review" ? "What will happen after confirmation?" : undefined}
         recent={flow.recent.result ?? null}

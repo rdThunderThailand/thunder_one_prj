@@ -2,7 +2,6 @@
 
 import { useRef, useState, type FormEvent, type RefObject } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/lovable/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
@@ -120,10 +119,6 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
         </DialogHeader>
         <form onSubmit={submit} className="flex min-h-0 flex-col" aria-busy={waiting || sending}>
           <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain p-4">
-            <p role="note" className="flex flex-wrap items-center gap-2 rounded-control bg-muted p-3 text-xs text-muted-foreground">
-              <Badge color="yellow" variant="pill">Needs attention</Badge>
-              <span>PO hasn&apos;t approved or provided a design for this flow. The current UI is a mock-up.</span>
-            </p>
             {failure && (
               <div role="alert" className="flex flex-wrap items-center gap-2 rounded-control border border-error bg-error-muted p-3 text-xs">
                 <p className="min-w-0 flex-1">{moveLocationFailureText(failure)}</p>

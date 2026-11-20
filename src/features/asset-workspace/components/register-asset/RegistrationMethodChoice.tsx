@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/lovable/button";
 import { cn } from "@/lib/utils";
 import type { ImportOptions } from "../../domain/asset-import-types";
 import { BulkMethodAction } from "../bulk-import/BulkMethodAction";
-import { RegistrationBreadcrumb } from "./RegistrationBreadcrumb";
 import { RegistrationMethodCard, type RegistrationMethod } from "./RegistrationMethodCard";
 import { RegistrationResources } from "./RegistrationResources";
 
@@ -85,7 +84,6 @@ export function RegistrationMethodChoice({
         data-registration-scroll
         className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-4 pr-1"
       >
-        <RegistrationBreadcrumb />
         <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <PageHeader
             title="Register Asset"

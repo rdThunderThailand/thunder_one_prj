@@ -4,7 +4,6 @@ import { Textarea } from "@/components/ui/lovable/textarea";
 import { registrationInitialConditions, registrationInitialStatus } from "../../domain/registration-initial-state";
 import {
   RegistrationField,
-  RegistrationHelp,
   RegistrationSection,
   RegistrationSelect,
   RegistrationTextField,
@@ -78,7 +77,6 @@ export function BasicInformationStep({ draft, options, errors, patch }: Registra
               value={registrationInitialStatus(draft, options)}
               className="bg-muted max-sm:h-10"
               readOnly
-              hint="From initial custody in Step 3."
             />
             <RegistrationSelect
               name="condition"
@@ -94,14 +92,13 @@ export function BasicInformationStep({ draft, options, errors, patch }: Registra
               onChange={(value) => patch({ condition: value as typeof draft.condition })}
               error={conditionError}
             />
+            <p
+              className="text-xs text-muted-foreground @min-sm/basic-information:col-span-2"
+            >
+              Status follows initial custody in Step 3.
+            </p>
           </div>
         </div>
-      </div>
-      <div className="border-t border-border pt-1">
-        <RegistrationHelp>
-          <p>Automatic tags are allocated only when creation succeeds; the preview reserves no number.</p>
-          <p>Status follows initial custody in Step 3. Damaged requires valid initial custody.</p>
-        </RegistrationHelp>
       </div>
     </RegistrationSection>
   );

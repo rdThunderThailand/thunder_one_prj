@@ -36,11 +36,12 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
     setErrors({});
   }
 
-  function advance(currentOptions: RegistrationOptions = options): boolean {
+  /** `toReview` (default while editing) returns to Review; false moves to the next step and stays in editing mode. */
+  function advance(currentOptions: RegistrationOptions = options, toReview = state.editing): boolean {
     const conditionInvalid = state.step >= 2 && registrationErrors(state.draft, currentOptions, 0).condition;
     let invalid: number | null = null;
     if (conditionInvalid) invalid = 0;
-    else if (state.editing || state.step === 3) invalid = firstInvalidRegistrationStep(state.draft, currentOptions, true);
+    else if (toReview || state.step === 3) invalid = firstInvalidRegistrationStep(state.draft, currentOptions, true);
     const target = invalid ?? state.step;
     const found = registrationErrors(state.draft, currentOptions, target);
     setErrors(found);
@@ -48,15 +49,15 @@ export function useAssetRegistration(storageKey: string, options: RegistrationOp
       if (target !== state.step) commit({ ...state, step: target });
       return false;
     }
-    const nextStep = state.editing ? 4 : Math.min(state.step + 1, 4);
-    commit({ ...state, step: nextStep, editing: false, reviewed: state.reviewed || nextStep === 4 });
+    const nextStep = toReview ? 4 : Math.min(state.step + 1, 4);
+    commit({ ...state, step: nextStep, editing: state.editing && nextStep < 4, reviewed: state.reviewed || nextStep === 4 });
     return true;
   }
 
   function edit(step: number) {
     if (!Number.isInteger(step) || step < 0 || step >= 4) return;
     if (!state.reviewed && step >= state.step) return;
-    // Early edits keep normal Next navigation; Update is reserved for returning from Review.
+    // Early edits keep normal Next navigation; "Back to review" is reserved for edits made from Review.
     commit({ ...state, step, editing: state.reviewed });
     setErrors({});
   }

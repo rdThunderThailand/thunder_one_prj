@@ -7,6 +7,7 @@ import { CategoryIcon, ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, SearchI
 import type { CategoryChild } from "../../domain/asset-category";
 import { categoryAssetsHref, categoryChildrenView, categoryDetailHref, type ChildSort } from "../../domain/category-detail";
 import { CategoriesPagination } from "./CategoriesPagination";
+import { EmptyState } from "../states/states";
 import { CategoryStatusBadge } from "./CategoryStatusBadge";
 
 const columns = [
@@ -33,16 +34,23 @@ export function CategoryChildrenSection({ categories }: { categories: CategoryCh
           className="rounded-xs text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring">
           Child Categories ({categories.length.toLocaleString("en-GB")})
         </h2>
-        <div className="relative w-full @min-xl/categories-results:w-72">
-          <label htmlFor="child-category-search" className="sr-only">Search child categories by name</label>
-          <SearchIcon aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input id="child-category-search" type="search" value={query.q} placeholder="Search child categories…"
-            className="h-9 pl-9 text-sm max-sm:h-10"
-            onChange={(event) => setQuery((previous) => ({ ...previous, q: event.target.value, page: 1 }))} />
-        </div>
+        {categories.length > 0 && (
+          <div className="relative w-full @min-xl/categories-results:w-72">
+            <label htmlFor="child-category-search" className="sr-only">Search child categories by name</label>
+            <SearchIcon aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input id="child-category-search" type="search" value={query.q} placeholder="Search child categories…"
+              className="h-9 pl-9 text-sm max-sm:h-10"
+              onChange={(event) => setQuery((previous) => ({ ...previous, q: event.target.value, page: 1 }))} />
+          </div>
+        )}
       </div>
       {categories.length === 0 ? (
-        <p className="border-t border-border px-4 py-6 text-xs text-muted-foreground">No child categories</p>
+        <div className="border-t border-border">
+          <EmptyState
+            title="No child categories"
+            body="To add one, create a category and choose this one as its parent."
+          />
+        </div>
       ) : (
         <>
           <div className="overflow-x-auto">

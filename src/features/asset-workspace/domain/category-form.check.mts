@@ -36,6 +36,13 @@ const parent = (name: string, status: "Active" | "Inactive"): AssetCategory => (
 const options = Object.freeze([parent("Zulu", "Active"), parent("Inactive", "Inactive"), parent("Alpha", "Active")]);
 assert.deepEqual(activeCategoryParents(options).map((category) => category.name), ["Alpha", "Zulu"]);
 assert.equal(options[0].name, "Zulu", "sorting does not mutate read data");
+const tree = [
+  { ...parent("Computer & Hardware", "Active"), id: "c2", parentId: "c1" },
+  { ...parent("Zulu", "Active"), id: "c3" },
+  { ...parent("IT Accessory", "Active"), id: "c1" },
+];
+assert.deepEqual(activeCategoryParents(tree).map((category) => category.label),
+  ["IT Accessory", "IT Accessory › Computer & Hardware", "Zulu"], "children are labelled and listed under their parent");
 assert.ok(categoryCreateFeedback(409, "DUPLICATE_NAME", null, false).fields.name);
 assert.ok(categoryCreateFeedback(409, "DUPLICATE_CODE", null, false).fields.code);
 assert.ok(categoryCreateFeedback(400, "INVALID_PARENT", null, false).fields.parentId);

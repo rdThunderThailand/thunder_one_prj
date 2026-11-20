@@ -28,13 +28,13 @@ export function RegistrationReviewRows({ rows }: { rows: RegistrationReviewRow[]
 
 function ReviewValues({ rows }: { rows: RegistrationReviewRow[] }) {
   return (
-    <dl className="grid gap-x-6 gap-y-3 text-xs leading-relaxed @min-3xl/review-values:grid-cols-2">
+    <dl className="grid gap-x-6 gap-y-3 text-xs leading-relaxed @min-xl/review-values:grid-cols-2">
       {rows.map((row) => (
         <div
           key={row.label}
           className={cn(
             "grid min-w-0 items-start gap-1 @min-sm/review-values:grid-cols-[minmax(0,8rem)_minmax(0,1fr)] @min-sm/review-values:gap-3",
-            (row.long || row.warning) && "@min-3xl/review-values:col-span-2",
+            (row.long || row.warning) && "@min-xl/review-values:col-span-2",
           )}
         >
           <dt className="wrap-anywhere text-muted-foreground">{row.label}</dt>

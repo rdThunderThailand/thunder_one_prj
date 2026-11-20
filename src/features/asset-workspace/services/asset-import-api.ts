@@ -11,6 +11,7 @@ import type {
 } from "../domain/asset-import-types.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { createHttpImportApi } from "./asset-import-http.ts";
+import type { ImportCheckResult, ImportEditResult, ImportRowPatch } from "../domain/asset-import-edit.ts";
 
 export type AssetImportContext = {
   tenantId: string;
@@ -32,6 +33,8 @@ export class ImportApiError extends Error {
 }
 
 export interface AssetImportApi {
+  saveRow(batchId: string, rowId: string, body: ImportRowPatch): Promise<ImportEditResult>;
+  checkRow(batchId: string, rowId: string, values: import("../domain/asset-import-types.ts").ImportRow["values"], signal: AbortSignal): Promise<ImportCheckResult>;
   getOptions(): Promise<ImportOptions>;
   uploadSource(input: {
     batchId: string;

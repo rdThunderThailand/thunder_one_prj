@@ -3,7 +3,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { CATEGORY_PAGE_SIZES } from "../../domain/asset-category";
 
-export function CategoriesPagination({ page, pageSize, total, totalPages, rows, onPage, onPageSize }: {
+/** Categories' pager; the category Assets tab reuses it with its own noun and page sizes so both read alike. */
+export function CategoriesPagination({ page, pageSize, total, totalPages, rows, onPage, onPageSize,
+  noun = "categories", sizes = CATEGORY_PAGE_SIZES }: {
   page: number;
   pageSize: number;
   total: number;
@@ -11,6 +13,8 @@ export function CategoriesPagination({ page, pageSize, total, totalPages, rows, 
   rows: number;
   onPage: (page: number) => void;
   onPageSize: (size: number) => void;
+  noun?: string;
+  sizes?: readonly number[];
 }) {
   const pages = [...new Set([1, page - 1, page, page + 1, totalPages])]
     .filter((value) => value >= 1 && value <= totalPages).sort((left, right) => left - right);
@@ -19,10 +23,10 @@ export function CategoriesPagination({ page, pageSize, total, totalPages, rows, 
   return (
     <footer data-category-controls className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 text-xs">
       <p role="status" className="tabular-nums text-muted-foreground">
-        Showing {start}–{rows ? start + rows - 1 : 0} of {total.toLocaleString("en-GB")} visible categories
+        Showing {start}–{rows ? start + rows - 1 : 0} of {total.toLocaleString("en-GB")} {noun}
       </p>
       <div className="flex flex-wrap items-center gap-3">
-        <nav aria-label="Categories pages" className="flex items-center gap-1">
+        <nav aria-label={`${noun[0].toUpperCase()}${noun.slice(1)} pages`} className="flex items-center gap-1">
           <Button variant="ghost" size="icon-sm" className="max-sm:size-10" aria-label="Previous page" disabled={page <= 1} onClick={() => onPage(page - 1)}>
             <ChevronLeftIcon aria-hidden="true" className="size-3" />
           </Button>
@@ -51,11 +55,11 @@ export function CategoriesPagination({ page, pageSize, total, totalPages, rows, 
           </Button>
         </nav>
         <Select value={String(pageSize)} onValueChange={(value) => onPageSize(Number(value))}>
-          <SelectTrigger aria-label="Categories per page" className="h-8 w-28 text-xs max-sm:h-10">
+          <SelectTrigger aria-label={`${noun[0].toUpperCase()}${noun.slice(1)} per page`} className="h-8 w-28 text-xs max-sm:h-10">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {CATEGORY_PAGE_SIZES.map((size) => (
+            {Array.from(new Set([...sizes, pageSize])).sort((left, right) => left - right).map((size) => (
               <SelectItem key={size} value={String(size)}>{size} / page</SelectItem>
             ))}
           </SelectContent>

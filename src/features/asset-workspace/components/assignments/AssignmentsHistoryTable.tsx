@@ -2,21 +2,20 @@
 
 import Link from "next/link";
 import type { AssignmentHistoryEvent } from "../../services/asset-assignments-contract";
-import { assignmentEventKey, assignmentHistoryReason, assignmentHistoryRowNumber } from "../../domain/assignment-history";
+import { ChevronRightIcon } from "@/components/ui/icons";
+import { assignmentEventKey, assignmentHistoryReason } from "../../domain/assignment-history";
 import { profileHref } from "../../domain/assignment-assign";
-import { assignmentHistoryColumns } from "./assignment-history-columns";
+import { assignmentHistoryColumns, HISTORY_DETAILS_COLUMN } from "./assignment-history-columns";
 import { AssignmentEventPill, AssignmentHistoryCondition, AssignmentHistoryPerson, AssignmentHistoryTime } from "./AssignmentsHistoryValues";
 
-export function AssignmentsHistoryTable({ rows, page, pageSize, selectedKey, onSelect }: {
+export function AssignmentsHistoryTable({ rows, selectedKey, onSelect }: {
   rows: AssignmentHistoryEvent[];
-  page: number;
-  pageSize: number;
   selectedKey?: string;
   onSelect: (event: AssignmentHistoryEvent, opener: HTMLElement) => void;
 }) {
   return (
     <table className="relative w-full min-w-6xl table-fixed text-left text-xs">
-      <caption className="sr-only">Assignment history records</caption>
+      <caption className="sr-only">Assignment history records, newest first. Select a row to see its details.</caption>
       <colgroup>
         {assignmentHistoryColumns.map((column) => (
           <col key={column.label} className={column.width} />
@@ -26,14 +25,15 @@ export function AssignmentsHistoryTable({ rows, page, pageSize, selectedKey, onS
         <tr>
           {assignmentHistoryColumns.map(({ label: heading }) => (
             <th key={heading} scope="col" aria-sort={heading === "Date & Time" ? "descending" : undefined}
+              title={heading === "Date & Time" ? "Newest first" : undefined}
               className="border-b border-border px-3 py-3 font-semibold">
-              {heading}{heading === "Date & Time" && <span aria-hidden="true"> ↓</span>}
+              {heading === HISTORY_DETAILS_COLUMN ? <span className="sr-only">{heading}</span> : heading}
             </th>
           ))}
         </tr>
       </thead>
       <tbody className="divide-y divide-border">
-        {rows.map((event, index) => {
+        {rows.map((event) => {
           const key = assignmentEventKey(event);
           return (
             <tr key={key} tabIndex={0} aria-selected={key === selectedKey}
@@ -43,10 +43,9 @@ export function AssignmentsHistoryTable({ rows, page, pageSize, selectedKey, onS
                 press.preventDefault();
                 onSelect(event, press.currentTarget);
               }}
-              className={`outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${key === selectedKey
+              className={`group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${key === selectedKey
                 ? "bg-accent [&>td:first-child]:border-l-2 [&>td:first-child]:border-primary"
-                : "hover:bg-muted/50 focus-within:bg-muted/50"} [&>td:first-child]:tabular-nums [&>td:first-child]:text-muted-foreground [&>td]:px-3 [&>td]:py-2.5 [&>td]:align-middle [&>td]:wrap-anywhere`}>
-              <td>{assignmentHistoryRowNumber(page, pageSize, index)}</td>
+                : "hover:bg-muted/50 focus-within:bg-muted/50"} [&>td]:px-3 [&>td]:py-2.5 [&>td]:align-middle [&>td]:wrap-anywhere`}>
               <td>
                 <div className="min-w-0 space-y-0.5">
                   <Link href={profileHref(event.asset.id, true)} onClick={(click) => click.stopPropagation()}
@@ -70,14 +69,21 @@ export function AssignmentsHistoryTable({ rows, page, pageSize, selectedKey, onS
               <td>
                 <AssignmentHistoryTime at={event.at} />
               </td>
-              <td className="text-muted-foreground">{event.location?.name || "—"}</td>
+              <td>{event.location?.name || "—"}</td>
               <td className="text-muted-foreground">
                 <AssignmentHistoryCondition condition={event.action === "Return" ? event.condition : null} />
               </td>
               <td className="text-muted-foreground">
                 <AssignmentHistoryPerson person={event.performedBy} fallback="System" />
               </td>
-              <td className="whitespace-pre-wrap text-muted-foreground">{assignmentHistoryReason(event.reason)}</td>
+              <td className="text-muted-foreground">
+                <p className="line-clamp-2 whitespace-pre-wrap" title={assignmentHistoryReason(event.reason)}>
+                  {assignmentHistoryReason(event.reason)}
+                </p>
+              </td>
+              <td className="text-center">
+                <ChevronRightIcon aria-hidden="true" className="inline size-4 text-muted-foreground group-hover:text-foreground" />
+              </td>
             </tr>
           );
         })}

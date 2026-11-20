@@ -8,7 +8,7 @@ import { SearchIcon } from "@/components/ui/icons";
 import type { ListUrlState } from "../list-page/useListUrlState";
 
 export type LwSelect = {
-  key: string; label: string; all: string; value: string; options: { value: string; label: string }[];
+  key: string; label: string; value: string; options: { value: string; label: string }[];
   onChange?: (value?: string) => void;
 };
 
@@ -24,7 +24,7 @@ function LwFilter({ select, disabled, url }: { select: LwSelect; disabled: boole
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">{select.all}</SelectItem>
+          <SelectItem value="__all__">All</SelectItem>
           {select.value && !select.options.some((option) => option.value === select.value) && (
             <SelectItem value={select.value}>Current selection</SelectItem>
           )}

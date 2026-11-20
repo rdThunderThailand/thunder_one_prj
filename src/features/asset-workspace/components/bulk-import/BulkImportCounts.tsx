@@ -65,7 +65,7 @@ export function BulkImportCounts(props: Props) {
           tone: "bg-info-muted text-info",
         },
         {
-          label: review ? "Ready to Register" : "Valid",
+          label: review ? "Ready to Register" : "Ready",
           value: counts.valid,
           hint: review ? "Will be created" : "",
           icon: CheckCircleIcon,
@@ -93,7 +93,7 @@ export function BulkImportCounts(props: Props) {
         review
           ? "@min-2xl/summary:grid-cols-4"
           : props.variant === "validation"
-            ? "@min-lg/validate:grid-cols-4"
+            ? "@min-md/validate:grid-cols-4"
             : "@min-4xl/result:grid-cols-4"
       }`}
     >
@@ -103,19 +103,21 @@ export function BulkImportCounts(props: Props) {
           className={
             result
               ? "flex min-w-0 items-center gap-3 rounded-card border border-border bg-card p-4"
-              : "flex min-w-0 items-start gap-2 rounded-control border border-border p-3"
+              : review
+                ? "flex min-w-0 items-center gap-3 rounded-control border border-border p-3"
+                : "flex min-w-0 items-center gap-1.5 rounded-control border border-border p-2"
           }
         >
           <span
-            className={`flex shrink-0 items-center justify-center rounded-full ${result ? "size-12" : "size-8"} ${tone}`}
+            className={`flex shrink-0 items-center justify-center rounded-full ${result ? "size-12" : review ? "size-8" : "size-7"} ${tone}`}
           >
             <Icon className={result ? "size-6" : "size-4"} />
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className={`font-bold tabular-nums ${result ? "text-2xl" : "text-lg"}`}>
               {result && props.animate ? <AnimatedCount value={value} from={0} /> : formatCount(value)}
             </p>
-            <p className={`font-semibold ${result ? "text-xs" : "text-2xs"}`}>{label}</p>
+            <p className={`font-semibold ${result ? "text-xs" : "text-2xs"} ${review || result ? "" : "truncate"}`}>{label}</p>
             {hint && (
               <p className="mt-1 text-2xs text-muted-foreground">{hint}</p>
             )}

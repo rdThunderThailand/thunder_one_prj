@@ -1,49 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useRef, useState } from "react";
+import { useId } from "react";
+import { Button } from "@/components/ui/lovable/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
-import { EyeIcon, ReturnIcon, TransferIcon } from "@/components/ui/icons";
+import { EyeIcon, MoreIcon, ReturnIcon, TransferIcon } from "@/components/ui/icons";
 import { actionHref, profileHref } from "../../domain/assignment-assign";
 import { assignmentActions } from "../../domain/assignment-current";
 import type { CurrentAssignment } from "../../services/asset-assignments-contract";
 
-/** Point inside the row's first cell where the menu opens. */
-export interface RowMenuAnchor { x: number; y: number }
-
-/**
- * Row actions without a visible column (owner 2026-11-12): the row opens this menu where it was clicked. The trigger
- * is a visually hidden real button, so Tab, Enter/Space and screen readers reach it as before.
- */
-export function AssignmentRowMenu({ row, open, anchor, onOpenChange }: {
-  row: CurrentAssignment; open: boolean; anchor: RowMenuAnchor | null;
-  onOpenChange: (open: boolean, trigger: HTMLButtonElement) => void;
+/** Row actions in the Actions column (owner 2026-11-19, PO frame 01); a click elsewhere on the row opens it too. */
+export function AssignmentRowMenu({ row, open, onOpenChange }: {
+  row: CurrentAssignment; open: boolean; onOpenChange: (open: boolean) => void;
 }) {
   const description = useId();
-  const trigger = useRef<HTMLButtonElement>(null);
-  // Keep the last point while the menu fades out (another row may already own the anchor).
-  const [point, setPoint] = useState(anchor);
-  if (anchor && anchor !== point) setPoint(anchor);
   const reasons = assignmentActions(row);
   const path = profileHref(row.asset.id, true);
   return (
-    <DropdownMenu open={open} modal={false} onOpenChange={(next) => trigger.current && onOpenChange(next, trigger.current)}>
+    <DropdownMenu open={open} modal={false} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <button
-          ref={trigger}
-          type="button"
-          data-row-trigger
+        <Button
+          variant="ghost"
+          size="icon-sm"
           aria-label={`Actions for ${row.asset.name || "Unnamed asset"}`}
           aria-describedby={description}
-          className="pointer-events-none absolute size-px overflow-hidden opacity-0"
-          style={{ left: point?.x ?? "100%", top: point?.y ?? "50%" }}
-        />
+          title="Actions"
+        >
+          <MoreIcon aria-hidden="true" className="size-4" />
+        </Button>
       </DropdownMenuTrigger>
       <span id={description} className="sr-only">
         {reasons.transfer ? `Transfer unavailable: ${reasons.transfer} ` : ""}
         {reasons.return ? `Return unavailable: ${reasons.return}` : ""}
       </span>
-      <DropdownMenuContent align="start" sideOffset={4} collisionPadding={8} className="max-w-72">
+      <DropdownMenuContent align="end" sideOffset={4} collisionPadding={8} className="max-w-72">
         <DropdownMenuItem asChild>
           <Link href={path}>
             <EyeIcon aria-hidden="true" />

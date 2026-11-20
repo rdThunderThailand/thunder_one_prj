@@ -6,6 +6,8 @@ export type ImportAttempt = { batchId: string; uploadId: string };
 export type ImportProgress = {
   label: string;
   value: number;
+  /** Upload is done and Core is creating the batch: no percentage to show. */
+  creating?: boolean;
   validation?: {
     phase: "sending" | "validating" | "refreshing";
     sentRows: number;
@@ -74,7 +76,7 @@ export async function startImportBatch(
   }
 
   checkActive();
-  onProgress({ label: "Creating import…", value: 100 });
+  onProgress({ label: "Creating import…", value: 100, creating: true });
   try {
     await api.createBatch({
       batchId: attempt.batchId,

@@ -17,6 +17,8 @@ const tileColor = {
   green: "emerald", blue: "blue", yellow: "amber", red: "red", zinc: "zinc",
 } as const satisfies Record<StatusTone, string>;
 const number = new Intl.NumberFormat("en-GB");
+// Shorter tiles leave room for table rows on a laptop; labels stay on one line.
+const TILE = "items-center py-3 [&_p]:whitespace-nowrap";
 // Match Overview's one-decimal percentages without adding a trailing zero.
 const percentage = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
 
@@ -46,8 +48,8 @@ export function AssetsSummary({ result, status, onStatus }: {
           <StatTile
             label="Total Assets"
             value={number.format(result.data.total)}
-            trend="All statuses"
             icon={<BoxIcon />}
+            className={TILE}
           />
         </TileButton>
         {ASSET_STATUSES.map((status) => {
@@ -62,6 +64,7 @@ export function AssetsSummary({ result, status, onStatus }: {
                 hint={`${percentage.format(bucket?.percent ?? 0)}%`}
                 color={tileColor[STATUS_TONE[status]]}
                 icon={<Icon />}
+                className={TILE}
               />
             </TileButton>
           );

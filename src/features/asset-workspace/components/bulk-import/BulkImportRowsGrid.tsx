@@ -1,16 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
+import { EditIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import type { ImportRow } from "../../domain/asset-import-types";
 import { ImportSeverityBadge } from "./BulkImportRowMessages";
+import { BulkImportRowResultCells } from "./BulkImportRowResultCells";
+import { Tag } from "@/components/ui/Tag";
 import { ReviewCells, RowIssue } from "./BulkImportRowCells";
 
-export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
+export function BulkImportRowsGrid({ rows, variant, onViewRow, onEditRow, }: {
   rows: ImportRow[];
   variant: "validate" | "review" | "result";
   onViewRow: (row: ImportRow) => void;
+  onEditRow?: (row: ImportRow) => void;
 }) {
   const result = variant === "result";
   return (
@@ -47,7 +50,7 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
                 "p-2 font-semibold",
                 variant === "review"
                   ? "sticky left-10 z-10 w-36 bg-muted sm:left-14 sm:w-44"
-                  : variant === "validate" ? "w-1/3" : "w-36",
+                  : variant === "validate" ? "w-28 sm:w-36" : "w-36",
               )}
             >
               Asset Name
@@ -59,7 +62,7 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
                 </th>
                 <th
                   scope="col"
-                  className="w-24 p-2 font-semibold"
+                  className="w-20 p-2 font-semibold"
                 >
                   Status
                 </th>
@@ -103,6 +106,7 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
                 </th>
               ))
             )}
+            {!result && <th scope="col" className="w-20 p-2 font-semibold">Action</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -128,13 +132,21 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
                 {row.rowIndex}
               </td>
               <td
+                title={variant === "validate" ? row.values.name || undefined : undefined}
                 className={cn(
-                  "wrap-anywhere p-2 font-semibold",
+                  "p-2 font-semibold",
+                  variant === "validate" ? "truncate" : "wrap-anywhere",
                   variant === "review" &&
                     "sticky left-10 z-10 bg-card sm:left-14",
                 )}
               >
-                {row.values.name || "–"}
+                {result ? row.values.name || "–" : (
+                  <Button variant="ghost" className="min-h-11 w-full min-w-0 justify-start px-0 text-left text-xs text-foreground hover:text-accent-foreground hover:underline"
+                    aria-label={`View row ${row.rowIndex}: ${row.values.name || "Unnamed asset"}`} onClick={() => onViewRow(row)}>
+                    <span className="truncate">{row.values.name || "–"}</span>
+                  </Button>
+                )}
+                {row.editedAt && <Tag className="ml-1">Edited</Tag>}
               </td>
               {variant === "validate" ? (
                 <>
@@ -151,40 +163,22 @@ export function BulkImportRowsGrid({ rows, variant, onViewRow }: {
                 <ReviewCells row={row} />
               ) : (
                 <>
-                  <td className="wrap-anywhere p-2">
-                    {row.createdAsset ? (
-                      <Link
-                        href={`/asset-workspace/assets/${row.createdAsset.id}`}
-                        className="inline-flex min-h-8 items-center text-primary underline-offset-4 hover:underline"
-                      >
-                        {row.createdAsset.assetTag}
-                      </Link>
-                    ) : (
-                      <span>{row.values.asset_tag || "–"}</span>
-                    )}
-                    <span className="block text-2xs text-muted-foreground">
-                      {row.values.serial_number || "–"}
-                    </span>
-                  </td>
-                  <td className="wrap-anywhere p-2">
-                    {row.values.category || "–"}
-                  </td>
-                  <td className="wrap-anywhere p-2">
-                    {row.values.location || "–"}
-                  </td>
-                  <td className="wrap-anywhere p-2">
-                    <RowIssue row={row} result />
-                  </td>
-                  <td className="p-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onViewRow(row)}
-                    >
-                      View Row
-                    </Button>
-                  </td>
+                  <BulkImportRowResultCells row={row} onViewRow={onViewRow} />
                 </>
+              )}
+              {!result && (
+                <td className="p-2">
+                  <div className="flex flex-wrap gap-1">
+                    {onEditRow && (
+                      <Button size="sm" variant={row.severity === "valid" ? "ghost" : "outline"}
+                        className="relative h-8 gap-1.5 px-2.5 after:absolute after:-inset-1.5 after:content-['']"
+                        onClick={() => onEditRow(row)}>
+                        <EditIcon aria-hidden="true" className="size-3.5" />
+                        <span>{row.severity === "valid" ? "Edit" : "Fix"}</span>
+                      </Button>
+                    )}
+                  </div>
+                </td>
               )}
             </tr>
           ))}

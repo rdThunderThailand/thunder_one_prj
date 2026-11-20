@@ -9,28 +9,19 @@ import { AssetThumbnail } from "../AssetThumbnail";
 import { assignmentDate } from "../../domain/assignment-current";
 import { profileHref } from "../../domain/assignment-assign";
 import type { CurrentAssignment } from "../../services/asset-assignments-contract";
-import { AssignmentRowMenu, type RowMenuAnchor } from "./AssignmentRowMenu";
+import { ConditionBadge } from "../StatusBadges";
+import { AssignmentRowMenu } from "./AssignmentRowMenu";
 import { assignmentTableColumns } from "./assignment-table-columns";
 
 export function AssignmentsTable({ rows }: { rows: CurrentAssignment[] }) {
   const router = useRouter();
   const refreshed = useRef(new Set<string>());
-  // The anchor outlives `open` so a closing menu fades out in place instead of jumping to the default spot.
-  const [menu, setMenu] = useState<RowMenuAnchor & { id: string; open: boolean } | null>(null);
-  const openId = menu?.open ? menu.id : null;
-  const close = (id: string) => setMenu((current) => current?.id === id ? { ...current, open: false } : current);
+  const [openId, setOpenId] = useState<string | null>(null);
   // Row whose menu was open when the pointer went down: the menu's outside-dismiss closes it, and the click must not reopen it.
   const closing = useRef<string | null>(null);
-  // Anchor inside the row's first cell: the click point, or the row's right end when opened from the keyboard.
-  const openMenu = (id: string, cell: HTMLElement, x?: number, y?: number) => {
-    const box = cell.getBoundingClientRect();
-    const rowBox = cell.closest("tr")!.getBoundingClientRect();
-    setMenu({ id, open: true, x: (x ?? rowBox.right - 16) - box.left, y: (y ?? rowBox.bottom - 8) - box.top });
-  };
-
   return (
     <table className="w-full min-w-xl table-fixed text-left text-xs">
-      <caption className="sr-only">Assets with a current custodian. Select a row for its actions.</caption>
+      <caption className="sr-only">Assets with a current custodian. Use the Actions button in each row.</caption>
       <thead className="sticky top-0 z-10 bg-muted text-2xs text-muted-foreground">
         <tr>
           {assignmentTableColumns.map((column) => (
@@ -45,35 +36,25 @@ export function AssignmentsTable({ rows }: { rows: CurrentAssignment[] }) {
           <tr
             key={row.assignmentId}
             data-menu-open={openId === row.assignmentId}
-            className={`cursor-pointer transition-colors duration-150 motion-reduce:transition-none has-[[data-row-trigger]:focus-visible]:outline-2 has-[[data-row-trigger]:focus-visible]:-outline-offset-2 has-[[data-row-trigger]:focus-visible]:outline-ring ${openId === row.assignmentId ? "bg-accent" : "hover:bg-muted/50"}`}
+            className={`cursor-pointer transition-colors duration-150 motion-reduce:transition-none ${openId === row.assignmentId ? "bg-accent" : "hover:bg-muted/50"}`}
             onPointerDown={() => { closing.current = openId === row.assignmentId ? row.assignmentId : null; }}
             onClick={(event) => {
               const target = event.target as Element;
               if (closing.current === row.assignmentId) {
                 closing.current = null;
-                close(row.assignmentId);
                 return;
               }
-              // Links and the menu itself keep their own click; dragging to copy text doesn't open the menu.
+              // Links and buttons keep their own click; dragging to copy text doesn't open the menu.
               if (target.closest("a, button, [role=menu]") || window.getSelection()?.toString()) return;
-              openMenu(row.assignmentId, event.currentTarget.cells[0], event.clientX, event.clientY);
+              setOpenId(row.assignmentId);
             }}
           >
-            <td className="relative px-4 py-2.5 align-middle">
-              <AssignmentRowMenu
-                row={row}
-                open={openId === row.assignmentId}
-                anchor={menu?.id === row.assignmentId ? menu : null}
-                onOpenChange={(open, trigger) => {
-                  if (!open) close(row.assignmentId);
-                  else if (openId !== row.assignmentId) openMenu(row.assignmentId, trigger.parentElement!);
-                }}
-              />
+            <td className="px-4 py-2.5 align-middle">
               <div className="flex min-w-0 items-center gap-3">
                 <AssetThumbnail
                   src={row.asset.thumbnailUrl}
                   alt=""
-                  className="size-10 object-contain!"
+                  className="size-10"
                   onFailed={() => {
                     if (refreshed.current.has(row.asset.id)) return;
                     refreshed.current.add(row.asset.id);
@@ -87,12 +68,23 @@ export function AssignmentsTable({ rows }: { rows: CurrentAssignment[] }) {
                   >
                     {row.asset.name || "Unnamed asset"}
                   </Link>
-                  <p className="text-2xs text-muted-foreground wrap-anywhere">
+                  <p className="truncate text-2xs text-muted-foreground" title={row.asset.serialNumber ?? undefined}>
+                    {row.asset.serialNumber ? (
+                      <>
+                        <span className="sr-only">Serial Number: </span>
+                        SN {row.asset.serialNumber}
+                      </>
+                    ) : "No serial number"}
+                  </p>
+                  <p className="text-2xs text-muted-foreground wrap-anywhere @4xl/assignments:hidden">
                     {row.asset.category?.name || "Unnamed category"}
                   </p>
                   <p className="text-2xs text-muted-foreground @5xl/assignments:hidden">
                     {assignmentDate(row.assignedAt)}
                   </p>
+                  {(row.asset.condition === "Damaged" || row.asset.condition === "Unusable") && (
+                    <ConditionBadge condition={row.asset.condition} />
+                  )}
                 </div>
               </div>
             </td>
@@ -123,6 +115,13 @@ export function AssignmentsTable({ rows }: { rows: CurrentAssignment[] }) {
             <td className="px-4 py-2.5 align-middle wrap-anywhere text-muted-foreground">{row.location?.name || "No location"}</td>
             <td className="hidden px-4 py-2.5 align-middle tabular-nums text-muted-foreground @5xl/assignments:table-cell">
               <time dateTime={row.assignedAt} title={row.assignedAt}>{assignmentDate(row.assignedAt)}</time>
+            </td>
+            <td className="px-4 py-2.5 text-center align-middle">
+              <AssignmentRowMenu
+                row={row}
+                open={openId === row.assignmentId}
+                onOpenChange={(open) => setOpenId(open ? row.assignmentId : null)}
+              />
             </td>
           </tr>
         ))}

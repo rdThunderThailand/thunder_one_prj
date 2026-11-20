@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import type { ConfirmResult, ImportBatch, ImportConfirmBody } from "../domain/asset-import-types.ts";
 import { ImportApiError } from "./asset-import-api.ts";
-import { confirmImportBatch, waitForImportRetry } from "./asset-import-confirm.ts";
+import { confirmImportBatch, confirmLimit, waitForImportRetry } from "./asset-import-confirm.ts";
 import { createHttpImportApi, type ImportHttpResponse } from "./asset-import-http.ts";
 
 const tenantId = "11111111-1111-4111-8111-111111111111";
@@ -80,7 +80,9 @@ function setup(scenario: Scenario = {}, initialProcessed = 0) {
 const rejectsCode = (operation: () => Promise<unknown>, code: string) =>
   assert.rejects(operation, (error) => error instanceof ImportApiError && error.code === code);
 const sameBodies = (test: ReturnType<typeof setup>, expected: ImportConfirmBody) =>
-  assert.ok(test.bodies.length && test.bodies.every((value) => value === JSON.stringify(expected)), "every POST, including retry, keeps exactly the original body");
+  assert.ok(test.bodies.length && test.bodies.every((value) => value === JSON.stringify({ ...expected, limit: 100 })), "every POST, including retry, keeps exactly the original body");
+
+assert.deepEqual([1, 10, 500, 2000, 5000].map(confirmLimit), [1, 1, 25, 100, 100]);
 
 const normal = setup();
 const completed = await normal.run();

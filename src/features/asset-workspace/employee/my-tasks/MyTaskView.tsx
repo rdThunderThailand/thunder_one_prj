@@ -85,7 +85,7 @@ export function MyTaskView({ task, assets, findings }: {
   ];
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
+    <div className="space-y-4">
       <Link
         href="/asset-workspace/my-tasks"
         className="inline-flex items-center gap-1 text-sm text-primary hover:underline"

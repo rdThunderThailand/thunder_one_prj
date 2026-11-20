@@ -8,8 +8,8 @@ assert.equal(profileHref("a1", false), "/asset-workspace/assets/a1");
 assert.ok(inAssignments("/asset-workspace/assignments/a1") && inAssignments("/asset-workspace/assignments"));
 assert.ok(!inAssignments("/asset-workspace/assets/a1") && !inAssignments("/asset-workspace/assignmentsx"));
 
-assert.deepEqual(assignSteps(true), ["Select Asset", "Assign Details", "Review", "Confirm"]);
-assert.deepEqual(assignSteps(false), ["Assign Details", "Review", "Confirm"]);
+assert.deepEqual(assignSteps(true), ["Select Asset", "Assign Details", "Review", "Done"]);
+assert.deepEqual(assignSteps(false), ["Assign Details", "Review", "Done"]);
 
 assert.equal(assignOrigin("assignments", "a1").href, "/asset-workspace/assignments");
 assert.equal(assignOrigin(undefined, "a 1").href, "/asset-workspace/assets/a%201");

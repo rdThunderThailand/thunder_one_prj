@@ -43,9 +43,24 @@ export function validateCategoryDraft(draft: CategoryDraft) {
 }
 export type CategoryCreateInput = Extract<ReturnType<typeof validateCategoryDraft>, { ok: true }>["input"];
 
+const pathOrder = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
+
+/** Adds a "Parent › Child" label and sorts by it, so the parent picker shows where each category sits. */
+export function withCategoryPaths<T extends AssetCategory>(options: readonly T[], categories: readonly AssetCategory[]) {
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  return options.map((option) => {
+    const names = [option.name];
+    const seen = new Set([option.id]);
+    for (let parent = byId.get(option.parentId ?? ""); parent && !seen.has(parent.id); parent = byId.get(parent.parentId ?? "")) {
+      seen.add(parent.id);
+      names.unshift(parent.name);
+    }
+    return { ...option, label: names.join(" › ") };
+  }).sort((left, right) => pathOrder.compare(left.label, right.label));
+}
+
 export function activeCategoryParents(categories: readonly AssetCategory[]) {
-  return categories.filter((category) => category.status === "Active")
-    .sort((left, right) => left.name.localeCompare(right.name, "en", { numeric: true, sensitivity: "base" }));
+  return withCategoryPaths(categories.filter((category) => category.status === "Active"), categories);
 }
 
 export function categoryCreateFeedback(status: number, code: string, details: unknown, uncertain: boolean) {

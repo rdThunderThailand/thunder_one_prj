@@ -55,19 +55,19 @@ export function LifecycleTabView({ data }: { data: LifecycleTabData }) {
       />
       <LwFilters
         url={url}
-        placeholder="Search asset name, Asset Tag or serial number…"
+        placeholder="Search name, tag or serial…"
         clear={LIFECYCLE_CLEAR}
         optionsFailed={!data.filters}
         selects={[
-          { key: "status", label: "Status", all: "All Statuses", value: current.status ?? "",
+          { key: "status", label: "Status", value: current.status ?? "",
             options: ASSET_STATUSES.map((value) => ({ value, label: value })) },
-          { key: "condition", label: "Condition", all: "All Conditions", value: current.condition ?? "",
+          { key: "condition", label: "Condition", value: current.condition ?? "",
             options: ASSET_CONDITIONS.map((value) => ({ value, label: value })) },
-          { key: "category_id", label: "Category", all: "All Categories", value: url.get("category_id") ?? "",
+          { key: "category_id", label: "Category", value: url.get("category_id") ?? "",
             options: references(data.filters?.categories) },
-          { key: "location_id", label: "Location", all: "All Locations", value: url.get("location_id") ?? "",
+          { key: "location_id", label: "Location", value: url.get("location_id") ?? "",
             options: references(data.filters?.locations) },
-          { key: "custody", label: "Custodian", all: "All Custodians", value: custody,
+          { key: "custody", label: "Custodian", value: custody,
             options: (data.filters?.custodyTargets ?? []).map((target) => ({
               value: `${target.type}:${target.id}`,
               label: `${target.name || "Unnamed custodian"} (${target.type === "person" ? "Person" : "Organizational Unit"})`,

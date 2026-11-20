@@ -177,7 +177,13 @@ function ImportWorkspace({
         data-registration-footer
         className="z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card py-2 sm:py-3"
       >
-        {!ready && back}
+        {flow.loading ? (
+          // Same footprint as the step footers (left action, right Next), so nothing jumps when the step loads.
+          <>
+            <Skeleton className="h-8 w-20 motion-reduce:animate-none" />
+            <Skeleton className="h-8 w-24 motion-reduce:animate-none" />
+          </>
+        ) : !ready && back}
       </footer>
     </div>
   );

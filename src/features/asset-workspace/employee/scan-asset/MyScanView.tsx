@@ -116,7 +116,7 @@ export function MyScanView() {
   }
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
+    <div className="space-y-4">
       <PageHeader
         title="Scan Asset"
         subtitle="Scan a QR code or enter an identifier to open one of your assets."

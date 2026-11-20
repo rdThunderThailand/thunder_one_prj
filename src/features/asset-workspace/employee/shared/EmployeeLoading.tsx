@@ -49,7 +49,7 @@ export function MyHomeLoading() {
   return (
     <Loading
       label="Loading home"
-      className="space-y-4 p-4 sm:p-6"
+      className="space-y-4"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
@@ -114,7 +114,7 @@ export function MyAssetLoading() {
   return (
     <Loading
       label="Loading asset"
-      className="@container/my-asset space-y-4 p-4 sm:p-6"
+      className="@container/my-asset space-y-4"
     >
       <BackLink />
       <div className="grid min-w-0 items-start gap-4 @min-5xl/my-asset:grid-cols-[minmax(0,1fr)_20rem]">
@@ -189,7 +189,7 @@ export function MyTaskLoading() {
   return (
     <Loading
       label="Loading task"
-      className="space-y-4 p-4 sm:p-6"
+      className="space-y-4"
     >
       <BackLink />
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -246,7 +246,7 @@ export function MyScanLoading() {
   return (
     <Loading
       label="Loading scanner"
-      className="space-y-4 p-4 sm:p-6"
+      className="space-y-4"
     >
       <PageHeader
         title="Scan Asset"

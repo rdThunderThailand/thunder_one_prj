@@ -71,6 +71,7 @@ export function LifecycleAssetsTable({ rows }: { rows: AssetListRow[] }) {
                   {row.name || "Unnamed asset"}
                 </Link>
                 <p className="text-2xs text-muted-foreground wrap-anywhere @4xl/lw:hidden">{row.location_name || "No location"}</p>
+                <p className="text-2xs text-muted-foreground wrap-anywhere @6xl/lw:hidden">Custodian: {row.custody?.name || "—"}</p>
               </td>
               <td className="px-3 py-2 align-middle tabular-nums wrap-anywhere text-muted-foreground">{row.asset_code || "Not available"}</td>
               <td className="hidden px-3 py-2 align-middle wrap-anywhere text-muted-foreground @5xl/lw:table-cell">{row.category_name || "Unnamed category"}</td>

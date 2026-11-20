@@ -4,20 +4,8 @@ import { Card } from "@/components/ui/Card";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeftIcon,
-  ArrowRightIcon,
-  SpinnerIcon,
 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/lovable/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/lovable/alert-dialog";
 import { formatCount } from "../../../domain/asset-import-format";
 import type {
   ConfirmMode,
@@ -33,6 +21,9 @@ import { BulkImportRegistrationSummary } from "../BulkImportRegistrationSummary"
 import { BulkImportRegistrationOptions } from "../BulkImportRegistrationOptions";
 import { BulkImportConfirmProgress } from "../BulkImportConfirmProgress";
 import { BulkImportFileBar } from "../BulkImportFileBar";
+import { BulkImportCorrectedDownload } from "../BulkImportCorrectedDownload";
+import { BulkImportReviewFooter } from "../BulkImportReviewFooter";
+import { BulkImportReviewDialogs } from "../BulkImportReviewDialogs";
 import { BulkImportRowsTable } from "../BulkImportRowsTable";
 
 export function ReviewConfirmStep({
@@ -126,6 +117,7 @@ export function ReviewConfirmStep({
             </p>
           )}
           <BulkImportRegistrationSummary batch={batch} />
+          <BulkImportCorrectedDownload api={flow.api} batch={batch} mapping={flow.mapping} disabled={flow.busy} />
           <div className="grid flex-1 grid-rows-[auto_1fr] gap-3 @min-5xl/review:grid-cols-[minmax(0,1fr)_20rem] @min-5xl/review:grid-rows-[1fr]">
             <BulkImportRegistrationOptions
               counts={batch.counts}
@@ -152,99 +144,18 @@ export function ReviewConfirmStep({
                 batch={batch}
                 variant="review"
                 onReloadBatch={flow.reload}
+                editor={{ context: flow.context, mapping: flow.mapping, options,
+                  disabled: flow.busy || frozen || !creator, onSaved: flow.applyRowEdit, onReview: flow.showReview }}
               />
             </Card>
           </div>
         </>
       )}
-      <AlertDialog
-        open={dialog !== null}
-        onOpenChange={(open) => {
-          if (!open) setDialog(null);
-        }}
-      >
-        <AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {dialog === "mapping"
-                ? "Change the mapping?"
-                : `Register ${formatCount(toRegister)} assets?`}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {dialog === "mapping"
-                ? "Current results will be removed and the file checked again."
-                : `This cannot be undone. ${formatCount(error)} error rows${
-                    reviewMode === "ready_only" && warning
-                      ? ` and ${formatCount(warning)} warning rows`
-                      : ""
-                  } will be skipped.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={flow.busy}>
-              {dialog === "mapping" ? "Keep" : "Cancel"}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              disabled={flow.busy || !creator}
-              onClick={() => {
-                if (dialog === "mapping") void flow.editMapping();
-                else if (!missingReason && creator) void flow.confirm(mode, reason);
-                else setTouched(true);
-              }}
-            >
-              {dialog === "mapping" ? "Change mapping" : "Register"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <BulkImportReviewDialogs {...{ dialog, setDialog, batch, toRegister, error, reviewMode, warning,
+        flow, creator, missingReason, mode, reason, setTouched }} />
       {renderFooter(
-        <>
-          <Button
-            size="sm"
-            variant="outline"
-            className="min-w-20 max-sm:h-10"
-            disabled={flow.busy || processing || frozen}
-            onClick={flow.showMapping}
-          >
-            <ArrowLeftIcon className="size-4" />
-            <span>Back</span>
-          </Button>
-          <div className="flex min-w-0 flex-wrap items-center justify-end gap-3">
-            <div className="text-right">
-              <p className="text-xs font-semibold">
-                {processing ? "Registration in progress" : `Register ${formatCount(toRegister)} Assets`}
-              </p>
-              {!processing && (
-                <p className="text-2xs text-muted-foreground">
-                  {formatCount(valid)} ready + {formatCount(selectedWarnings)} with warnings
-                </p>
-              )}
-            </div>
-            <Button
-              size="sm"
-              className="min-w-24 max-sm:h-10"
-              disabled={
-                (!frozen && (!toRegister || missingReason)) || flow.busy || processing || !creator || !options.ready
-              }
-              aria-label={`Register ${formatCount(toRegister)} Assets`}
-              aria-describedby={
-                missingReason ? `${reasonId}-hint` : undefined
-              }
-              onClick={() => {
-                if (frozen) { void flow.confirm(reviewMode, reviewReason); return; }
-                setTouched(true);
-                if (!missingReason) setDialog("confirm");
-              }}
-            >
-              <span>{processing ? "Registering…" : frozen ? "Retry registration" : "Register Assets"}</span>
-              {processing ? (
-                <SpinnerIcon className="size-4 animate-spin motion-reduce:animate-none" />
-              ) : (
-                <ArrowRightIcon className="size-4" />
-              )}
-            </Button>
-          </div>
-        </>,
+        <BulkImportReviewFooter {...{ flow, processing, frozen, toRegister, missingReason, creator,
+          reasonId, valid, selectedWarnings, reviewMode, reviewReason, setTouched, setDialog }} />,
       )}
     </div>
   );

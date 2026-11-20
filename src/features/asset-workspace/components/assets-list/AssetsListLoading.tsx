@@ -5,12 +5,11 @@ export function AssetsSummaryLoading() {
   return (
     <section aria-label="Loading asset totals" role="status" className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @5xl:grid-cols-6">
       {Array.from({ length: 6 }, (_, index) => (
-        <Card key={index} className="flex min-w-0 gap-3 p-4 motion-reduce:[&_*]:animate-none">
+        <Card key={index} className="flex min-w-0 items-center gap-3 px-4 py-3 motion-reduce:[&_*]:animate-none">
           <Skeleton className="size-10 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1 space-y-1.5">
             <Skeleton className="h-5 w-20 max-w-full" />
             <Skeleton className="h-8 w-12" />
-            {index === 0 && <Skeleton className="h-4 w-20 max-w-full" />}
           </div>
         </Card>
       ))}
@@ -83,8 +82,8 @@ export function AssetsListLoading() {
       </div>
       <AssetsSummaryLoading />
       <div className="@container/asset-filters">
-        <div className="grid gap-2 @min-2xl/asset-filters:grid-cols-[minmax(0,1fr)_auto] @min-6xl/asset-filters:grid-cols-[minmax(12rem,1.7fr)_minmax(0,4fr)_auto]">
-          <Skeleton className="h-10 w-full rounded-control motion-reduce:animate-none @min-2xl/asset-filters:col-span-2 @min-6xl/asset-filters:col-span-1" />
+        <div className="grid gap-2 @min-2xl/asset-filters:grid-cols-[minmax(0,1fr)_auto] @min-5xl/asset-filters:grid-cols-[minmax(11rem,1.3fr)_minmax(0,4fr)_auto]">
+          <Skeleton className="h-10 w-full rounded-control motion-reduce:animate-none @min-2xl/asset-filters:col-span-2 @min-5xl/asset-filters:col-span-1" />
           <AssetsFilterOptionsLoading />
           <Skeleton className="h-10 w-48 max-w-full rounded-control motion-reduce:animate-none" />
         </div>

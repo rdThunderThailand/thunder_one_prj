@@ -8,12 +8,18 @@ import { ConditionBadge, StatusBadge } from "../StatusBadges";
 const dateFormat = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeZone: "Asia/Bangkok" });
 const timeFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Bangkok" });
 
-export function AssetsUpdatedAt({ value }: { value: string | null }) {
+/** `withTime`: date with the time on a second line, as the PO Last Updated column. */
+export function AssetsUpdatedAt({ value, withTime = false }: { value: string | null; withTime?: boolean }) {
   if (!value || !Number.isFinite(Date.parse(value))) return <span>—</span>;
   const date = new Date(value);
   return (
     <time dateTime={value} title={`${dateFormat.format(date)} ${timeFormat.format(date)} Asia/Bangkok`}>
       {dateFormat.format(date)}
+      {withTime && (
+        <span className="block text-2xs">
+          {timeFormat.format(date)}
+        </span>
+      )}
     </time>
   );
 }

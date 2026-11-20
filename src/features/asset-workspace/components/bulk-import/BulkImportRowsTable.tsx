@@ -1,30 +1,29 @@
 "use client";
 
-import { useEffect, useId, useState, type ReactNode } from "react";
-import { CheckCircleIcon, SearchIcon, WarningTriangleIcon, XCircleIcon } from "@/components/ui/icons";
-import { Input } from "@/components/ui/lovable/input";
+import { useId, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from "@/components/ui/lovable/tabs";
 import type { AssetImportApi } from "../../services/asset-import-api";
 import type {
   ImportBatch,
+  ImportRow,
   RowResult,
   Severity,
 } from "../../domain/asset-import-types";
-import { formatCount } from "../../domain/asset-import-format";
 import { useAssetImportBatch } from "../../hooks/use-asset-import-batch";
-import { useAssetImportRows } from "../../hooks/use-asset-import-rows";
+import { useAssetImportRows, useImportRowsSearch } from "../../hooks/use-asset-import-rows";
 import { ErrorState } from "../states/ErrorState";
 import { BulkImportPagination } from "./BulkImportPagination";
 import { BulkImportRowsGrid } from "./BulkImportRowsGrid";
 import { BulkImportRowsEmpty } from "./BulkImportRowsEmpty";
 import { BulkImportRowDetails } from "./BulkImportRowDetails";
 import { BulkImportRowsLoading } from "./BulkImportRowsLoading";
+
+import { BulkImportRowsToolbar, importRowsTabs } from "./BulkImportRowsToolbar";
+import { BulkImportRowEditor, type ImportEditorContext } from "./BulkImportRowEditor";
 
 type Tab = "all" | Severity | RowResult;
 
@@ -38,6 +37,7 @@ type Props = {
   onReloadBatch?: () => void;
   onReimport?: () => void;
   reimporting?: boolean;
+  editor?: ImportEditorContext;
 };
 
 export function BulkImportRowsTable({
@@ -49,7 +49,7 @@ export function BulkImportRowsTable({
   toolbar,
   onReloadBatch,
   onReimport,
-  reimporting,
+  reimporting, editor,
 }: Props) {
   const [query, setQuery] = useState({
     tab: initialTab,
@@ -60,6 +60,14 @@ export function BulkImportRowsTable({
   const [search, setSearch] = useState("");
   const [viewIndex, setViewIndex] = useState<number | null>(null);
   const searchId = useId();
+  const [editRow, setEditRow] = useState<ImportRow | null>(null);
+  const [editFirst, setEditFirst] = useState(true);
+  const [trigger, setTrigger] = useState<HTMLElement | null>(null);
+  function openEditor(row: ImportRow, editing: boolean) {
+    setTrigger(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    setEditFirst(editing);
+    setEditRow(row);
+  }
   const batchResource = useAssetImportBatch(api, batch ? null : batchId);
   const currentBatch = batch ?? batchResource.batch;
   const result = variant === "result";
@@ -78,19 +86,7 @@ export function BulkImportRowsTable({
     onBatchUnavailable: onReloadBatch,
   });
 
-  useEffect(() => {
-    if (search.trim() === query.q) return;
-    const timer = setTimeout(
-      () =>
-        setQuery((previous) => ({
-          ...previous,
-          q: search.trim(),
-          page: 1,
-        })),
-      300,
-    );
-    return () => clearTimeout(timer);
-  }, [search, query.q]);
+  useImportRowsSearch(search, query.q, (q) => setQuery((previous) => ({ ...previous, q, page: 1 })));
 
   const viewPosition = viewIndex === null ? 0 : (query.page - 1) * query.pageSize + viewIndex;
   function stepRow(delta: 1 | -1) {
@@ -101,20 +97,7 @@ export function BulkImportRowsTable({
     setViewIndex(delta > 0 ? 0 : query.pageSize - 1);
   }
 
-  const counts = currentBatch?.counts;
-  const tabs: { key: Tab; label: string; count?: number; icon?: ReactNode }[] = result
-    ? [
-        { key: "all", label: "All Rows", count: currentBatch?.totalRows },
-        { key: "created", label: "Created", count: counts?.created, icon: <CheckCircleIcon className="size-4 text-success" /> },
-        { key: "created_with_warning", label: "Created with Warnings", count: counts?.createdWithWarning, icon: <WarningTriangleIcon className="size-4 text-warning" /> },
-        { key: "not_registered", label: "Not Registered", count: counts?.notRegistered, icon: <XCircleIcon className="size-4 text-error" /> },
-      ]
-    : [
-        { key: "all", label: "All", count: currentBatch?.totalRows },
-        { key: "valid", label: "Valid", count: counts?.valid, icon: <CheckCircleIcon className="size-4 text-success" /> },
-        { key: "warning", label: "Warnings", count: counts?.warning, icon: <WarningTriangleIcon className="size-4 text-warning" /> },
-        { key: "error", label: "Errors", count: counts?.error, icon: <XCircleIcon className="size-4 text-error" /> },
-      ];
+  const tabs = importRowsTabs(currentBatch, result);
 
   return (
     <div
@@ -132,50 +115,7 @@ export function BulkImportRowsTable({
           }))
         }
       >
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <TabsList
-            className={cn(
-              "h-auto max-w-full flex-wrap justify-start gap-1 bg-muted p-1",
-              validate && "w-full basis-full",
-            )}
-          >
-            {tabs.map((tab) => (
-              <TabsTrigger
-                key={tab.key}
-                value={tab.key}
-                className={cn(
-                  "min-h-8 gap-1 whitespace-normal text-2xs sm:text-xs",
-                  validate && "flex-1",
-                )}
-              >
-                {tab.icon}
-                {tab.label} (
-                {tab.count === undefined ? "…" : formatCount(tab.count)})
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <div className="relative min-w-0 flex-1 basis-52">
-            <label htmlFor={searchId} className="sr-only">
-              Search import rows
-            </label>
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id={searchId}
-              value={search}
-              maxLength={100}
-              onChange={(event) => setSearch(event.target.value)}
-              className="h-9 pl-9 text-xs"
-              placeholder={
-                result
-                  ? "Search by row number, asset name, error message…"
-                  : variant === "review"
-                    ? "Search by asset name, asset tag, serial number…"
-                    : "Search by row number, asset name, issue…"
-              }
-            />
-          </div>
-          {toolbar}
-        </div>
+        <BulkImportRowsToolbar {...{ tabs, validate, result, variant, searchId, search, setSearch, toolbar }} />
         <TabsContent
           value={query.tab}
           className={cn("mt-3 space-y-3", fill)}
@@ -204,7 +144,9 @@ export function BulkImportRowsTable({
                   <BulkImportRowsGrid
                     rows={rows.page.rows}
                     variant={variant}
-                    onViewRow={(row) => setViewIndex(rows.page?.rows.indexOf(row) ?? null)}
+                    onViewRow={(row) => editor && currentBatch ? openEditor(row, false) : setViewIndex(rows.page?.rows.indexOf(row) ?? null)}
+                    onEditRow={editor && currentBatch?.status === "validated" && !editor.disabled
+                      ? (row) => openEditor(row, true) : undefined}
                   />
                 ) : (
                   <BulkImportRowsEmpty tab={query.tab} searching={Boolean(query.q)} />
@@ -228,6 +170,12 @@ export function BulkImportRowsTable({
           )}
         </TabsContent>
       </Tabs>
+      {editRow && editor && currentBatch && (
+        <BulkImportRowEditor key={editRow.id} api={api} batch={currentBatch} row={editRow} initialEditing={editFirst}
+          editor={{ ...editor, onSaved: (result) => { rows.replace(result); editor.onSaved(result); } }}
+          onClose={() => setEditRow(null)} onReloadBatch={onReloadBatch}
+          returnFocus={() => { if (trigger?.isConnected) trigger.focus(); else document.getElementById(searchId)?.focus(); }} />
+      )}
       {viewIndex !== null && (
         <BulkImportRowDetails
           row={rows.page?.rows[viewIndex] ?? null}

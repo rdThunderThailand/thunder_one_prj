@@ -5,4 +5,5 @@ export const assignmentTableColumns = [
   { key: "custodian", label: "Current Custodian", className: "w-[22%]" },
   { key: "location", label: "Location", className: "w-[15%]" },
   { key: "assigned", label: "Assigned Date", className: "hidden w-[12%] @5xl/assignments:table-cell" },
+  { key: "actions", label: "Actions", className: "w-20 text-center" },
 ] as const;
