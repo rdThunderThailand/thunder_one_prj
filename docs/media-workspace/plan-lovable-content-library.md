@@ -56,7 +56,7 @@ comparison at 1440px and 1024px. The original run remains in history; the correc
 | 8 | `2739dc2` — Layout modal and full playlist preview chrome |
 
 Run-2 verification and the remaining intentional product-contract deltas are recorded in
-`.docs/SESSIONLOG-lovable-content-library-run2-2026-09-20.md`.
+[`.docs/SESSIONLOG-lovable-content-library-run2-2026-09-20.md`](https://github.com/rdThunderThailand/thunder_one_prj/blob/65ea04da491c45241450493d9b73b4363e7d152f/.docs/SESSIONLOG-lovable-content-library-run2-2026-09-20.md).
 
 ## Sequence
 

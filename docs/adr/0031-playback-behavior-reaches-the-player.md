@@ -67,4 +67,4 @@ actually ship in a firmware build — flagged here so nobody assumes it's alread
 
 `media_job_poll`'s other keys, ordering, and semantics are unchanged; a player that ignores
 `playback` entirely keeps behaving exactly as it did before this migration, per the compatibility
-rules already documented in `.docs/player_contract_timeline.md`.
+rules already documented in `docs/media-workspace/player/player-contract-timeline.md`.

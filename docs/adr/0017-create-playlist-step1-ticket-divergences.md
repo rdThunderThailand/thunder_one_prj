@@ -4,7 +4,7 @@
 
 Ticket [86d3xxk5b](https://app.clickup.com/t/86d3xxk5b) (`[FLOW] Create Playlist – Step 1: Basic
 Info`) was verified line by line against `thunder_one_prj` @ `ae37fa6`; the gap analysis lives in
-`docs/playlists/plan-create-playlist-step1.md`. Fourteen of its acceptance criteria are already
+`docs/media-workspace/playlists/v0/plan-create-playlist-step1.md`. Fourteen of its acceptance criteria are already
 satisfied and five are simply unimplemented, but three of them describe behaviour the codebase
 deliberately does the opposite way — each backed by a decision already made, shipped, and in one
 case already recorded as an ADR. Those three could not be coded around: implementing the ticket
@@ -75,7 +75,7 @@ that the implementation knowingly does not meet.
 The verdict on the ticket does not change to "passed". Five acceptance criteria (12, 14, 16's
 upload half now removed, 26, 30) remain genuinely unimplemented, and AC 10 — whether `dynamic`,
 `loop`, and `manual` playlist types are producible at all — is still an open product question.
-Those are tracked in `docs/playlists/plan-create-playlist-step1.md`.
+Those are tracked in `docs/media-workspace/playlists/v0/plan-create-playlist-step1.md`.
 
 AC 7 and AC 22/29 are both cheap to reverse if product overrules this; AC 16/17 is not — building
 the upload later is the same amount of work as building it now, no more and no less, since nothing

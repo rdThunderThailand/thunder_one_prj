@@ -1,7 +1,7 @@
 /**
  * Runnable check for Channels step logic:
  *
- *     node src/features/publications/channels-logic.check.mts
+ *     node src/features/media-workspace/publications/channels-logic.check.mts
  */
 import assert from "node:assert/strict";
 import {

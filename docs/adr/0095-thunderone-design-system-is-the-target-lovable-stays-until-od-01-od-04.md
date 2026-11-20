@@ -78,3 +78,12 @@ Facts that shaped the decision:
   thunder_one_prj#281 links to the upstream issue rdThunderThailand/-thunder-design-system#2, which
   asks for an OD covering the v4/oklch layering problem, lucide in Lovable-sourced projects, and the
   `media` profile mismatches above.
+
+## Amendment — the skill lives in `.agents/skills` (2026-11-20)
+
+Point 6 changes where the vendored copy sits, not how it is updated. The team uses several coding agents;
+Codex and most others read project skills from `.agents/skills/`, while Claude Code reads only
+`.claude/skills/`. The one real copy is now `.agents/skills/thunderone-ui/`, and
+`.claude/skills/thunderone-ui` is a committed symlink to it. `src/design-system/design-system.check.mts`
+compares against the `.agents` path. A clone needs symlink support (on Windows: Developer Mode and
+`git config core.symlinks true`), or Claude Code will not see the skill.

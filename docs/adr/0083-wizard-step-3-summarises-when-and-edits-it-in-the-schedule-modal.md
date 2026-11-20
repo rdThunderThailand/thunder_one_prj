@@ -1,6 +1,6 @@
 # 0083 — Wizard step 3 summarises "When" and edits it in the Edit Schedule modal
 
-Status: accepted (2026-10-01, grilling session on #199; plan reviewed twice). Amends ADR 0082 §1 (the wizard renders the schedule fields inline) and **supersedes ADR 0082 §6** (Playback Pattern stays out of the wizard). Plan: `docs/program/plan-wizard-step3-summary-modal.md`.
+Status: accepted (2026-10-01, grilling session on #199; plan reviewed twice). Amends ADR 0082 §1 (the wizard renders the schedule fields inline) and **supersedes ADR 0082 §6** (Playback Pattern stays out of the wizard). Plan: `docs/media-workspace/program/plan-wizard-step3-summary-modal.md`.
 
 ## Context
 

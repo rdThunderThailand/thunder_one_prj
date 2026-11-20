@@ -2,7 +2,7 @@
 
 Status: accepted (2026-10-06, grilling session on the FigJam board "Now & Next → Calendar → Program Editor";
 scrutiny round 1 applied). Amends ADR 0057 (controls, vocabulary, summary labels, mock fallback) and the
-"Program" UI-word rule in `CONTEXT.md`. Companion: ADR 0085 (Calendar). Plan: `docs/program/plan-now-next-calendar.md`.
+"Program" UI-word rule in `CONTEXT.md`. Companion: ADR 0085 (Calendar). Plan: `docs/media-workspace/program/plan-now-next-calendar.md`.
 
 ## Context
 

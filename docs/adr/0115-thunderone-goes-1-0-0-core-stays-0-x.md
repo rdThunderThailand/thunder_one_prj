@@ -56,3 +56,24 @@ Amends `docs/agents/versioning.md` ("stay on `0.x` … Do not bump to `1.0.0` wi
 - Known gaps at `1.0.0` are listed in `docs/media-workspace/uat-v1-checklist.md` section D (no-verdict videos,
   missing posters, Calendar "Now", Layout cover on Edit, Channel delete, empty-Playlist Zone, checksum-only
   Player updates, Android devices without playback logs). They are P1 work after `1.0.0`, not blockers.
+
+## Amendment — several Workspaces, one number (2026-11-20)
+
+Owner decisions in a grilling session after `v1.0.0`. The app now ships seven Workspaces (the `APPS` registry in
+`src/config/apps.tsx`), all in one Next.js app, one `package.json`, one Vercel deploy.
+
+1. **One SemVer for the whole app.** No per-Workspace version: a Workspace cannot be deployed or rolled back on
+   its own, so its own number would describe nothing. Release notes group changes by Workspace instead.
+2. **Stable Workspace.** A Workspace whose routes and workflows are a promise to operators. The list lives in
+   `docs/agents/versioning.md`; at this amendment it is **Media Workspace** only. It is separate from the
+   launcher's `dataStatus` (`live` means "reads Thunder_Core", not "ready for customers": Asset Intelligence,
+   People and Lead Approval are `live` and not stable).
+3. **MAJOR applies to Stable Workspaces.** Decision 3's MAJOR rule now reads: removes or renames a nav route of a
+   Stable Workspace, removes a workflow step its operators rely on, or needs a Core change the previous release
+   cannot run against. A Workspace that is not stable may change in a MINOR.
+4. **Becoming stable** follows Decision 1's pattern: the Workspace passes a UAT on prod in `thunder_qa`, the owner
+   accepts it, the release-prep PR adds it to the list, and it ships as a MINOR whose release note announces
+   it. Which tenants see a Workspace stays a Core setting (`enabled_workspaces`).
+5. **The release log moves to GitHub Releases.** The promotion table in `versioning.md` stops at `v1.0.1` (its row
+   landed in #437 before this amendment merged); each tag from `v1.0.2` on gets a GitHub Release with the Thai
+   release note. No `docs/record-*` PR. The full sequence is in `versioning.md`; merge methods are ADR 0118.

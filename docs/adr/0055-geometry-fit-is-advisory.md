@@ -24,7 +24,7 @@ by data, not by principle.
 `media_device_profile_set` writes `orientation`, `screen_width`, `screen_height`, `screen_ratio`,
 `dpi_scale` at boot. `media_heartbeat` writes `screen_dimension` and `screen_ratio` every sixty
 seconds. **`screen_ratio` is written by both**, so the heartbeat's value wins in practice. The
-player contract (`.docs/player_contract_timeline.md`) already marks `screen_dimension` and
+player contract (`docs/media-workspace/player/player-contract-timeline.md`) already marks `screen_dimension` and
 `screen_ratio` deprecated in favour of the split integer fields.
 
 Measured on production, 2026-08-27 — all four profiled Devices heartbeating that day:

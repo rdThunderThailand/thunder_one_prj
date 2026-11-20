@@ -190,3 +190,31 @@ export function PlaylistSidePanel({
     </aside>
   );
 }
+
+/** The panel as a right-hand drawer over the list, opened from a row's Details action. The list
+ *  page lost its inline panel in the #38/#40/#41 rewrite; a drawer brings it back without
+ *  reflowing the table (ADR 0121). */
+export function PlaylistDetailsDrawer({
+  playlist,
+  busy,
+  onClose,
+  onAction,
+}: {
+  playlist: PlaylistListItem;
+  busy: boolean;
+  onClose: () => void;
+  onAction: (action: "duplicate" | "delete") => void;
+}) {
+  return (
+    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-[380px] overflow-y-auto p-4">
+      <PlaylistSidePanel
+        key={playlist.id}
+        playlist={playlist}
+        busy={busy}
+        onClose={onClose}
+        onDuplicate={() => onAction("duplicate")}
+        onDelete={() => onAction("delete")}
+      />
+    </div>
+  );
+}

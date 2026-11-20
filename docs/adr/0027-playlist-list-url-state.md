@@ -29,7 +29,7 @@ Persist `{ tab, filters, sort, page, perPage }` in the URL query string.
   write doesn't trigger a Next.js navigation/re-render on every keystroke or filter change, so no
   debouncing is needed, and it doesn't push one history entry per filter change (which would make
   Back annoying to use).
-- `useSearchParams()` requires a `<Suspense>` boundary, so `src/app/(dashboard)/playlists/page.tsx`
+- `useSearchParams()` requires a `<Suspense>` boundary, so `src/app/(dashboard)/(application)/media-workspace/playlists/page.tsx`
   now wraps `<PlaylistsListPage>` in one (same pattern already used by `/playlists/create`).
 
 ## Alternatives considered

@@ -1,4 +1,4 @@
-/** Run: node src/features/playlists/list-empty-state.check.mts */
+/** Run: node src/features/media-workspace/playlists/list-empty-state.check.mts */
 import assert from "node:assert/strict";
 import { emptyCause, hasActiveFilters } from "./list-empty-state.ts";
 

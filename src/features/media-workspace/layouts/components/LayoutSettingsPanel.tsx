@@ -18,7 +18,7 @@ type Settings = {
 
 /** The inspector's "no Zone selected" face: name / resolution (or, for a legacy Layout,
  *  aspect ratio) / background / status. No Publish button and no content picker anywhere in
- *  here: that is the central decision of ADR 0044 §1 (docs/layouts/plan-layout-execution.md
+ *  here: that is the central decision of ADR 0044 §1 (docs/media-workspace/layouts/phase-0/plan-layout-execution.md
  *  Task 7 Step 4). */
 export function LayoutSettingsPanel({
   name,

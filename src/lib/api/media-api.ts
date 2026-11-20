@@ -246,12 +246,19 @@ export async function restorePlaylist(id: string): Promise<void> {
   await requestApi("POST", `/media/playlists/${id}/restore`);
 }
 
-/** Permanently delete a trashed playlist. Resolves to `{ deleted: false, reason: "published" }`
- *  — not an error — when the playlist has ever been published (`publications.playlist_id`
- *  is `ON DELETE RESTRICT`); the caller explains that instead of retrying. */
+export type PlaylistPermanentDeleteResult = {
+  deleted: boolean;
+  reason?: "published" | "in_layout";
+  layouts?: { id: string; name: string; in_trash: boolean }[];
+};
+
+/** Permanently delete a trashed playlist. Resolves to `{ deleted: false, reason }` — not an
+ *  error — when the playlist has ever been published (`publications.playlist_id` is
+ *  `ON DELETE RESTRICT`) or a Layout zone still holds it (ADR 0121, `layouts` names them);
+ *  the caller explains that instead of retrying. */
 export async function permanentlyDeletePlaylist(
   id: string
-): Promise<{ deleted: boolean; reason?: string }> {
+): Promise<PlaylistPermanentDeleteResult> {
   return requestApi("DELETE", `/media/playlists/${id}/permanent`);
 }
 

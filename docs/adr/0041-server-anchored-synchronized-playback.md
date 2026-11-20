@@ -254,7 +254,7 @@ only wakes the player to poll immediately; poll remains the sole source of timel
 that is merely heartbeat-online but not wake-reachable falls back to the existing 55–65 second
 poll. Offline devices have no bounded receipt time but cannot restore an older version after
 receiving the higher resolved version or tombstone. This wake-to-poll path amends the fixed-interval
-Phase 1 decision in `.docs/adr/0001-hybrid-poll-device-communication.md` without making push a
+Phase 1 decision in `docs/adr/legacy/0001-hybrid-poll-device-communication.md` without making push a
 second source of timeline truth.
 
 ### Channel Group changes preserve active snapshots and history

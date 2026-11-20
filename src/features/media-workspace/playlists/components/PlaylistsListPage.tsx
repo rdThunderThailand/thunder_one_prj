@@ -31,6 +31,7 @@ import { PlaylistsListDialogs, type PlaylistDialogAction } from "./PlaylistsList
 import { PlaylistBatchMoveDialog } from "./PlaylistBatchMoveDialog";
 import { PlaylistTagsDialog } from "./PlaylistTagsDialog";
 import { CreatePlaylistDialog } from "./CreatePlaylistDialog";
+import { PlaylistDetailsDrawer } from "./PlaylistSidePanel";
 import { TagsRail } from "../../content-library/TagsRail";
 import { emptyCause, hasActiveFilters } from "../list-empty-state";
 import { ListEmpty, ListError, ListSkeleton, PlaylistsSummary, SummarySkeleton } from "./PlaylistsListStates";
@@ -57,6 +58,7 @@ export function PlaylistsListPage() {
   const [tagsTarget, setTagsTarget] = useState<PlaylistListItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [batchMoveOpen, setBatchMoveOpen] = useState(false);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
   const isGrid = useSyncExternalStore(subscribeView, readView, () => false);
 
   const inTrash = collection === "trash";
@@ -140,6 +142,7 @@ export function PlaylistsListPage() {
   };
 
   const handleAction = async (action: RowAction, playlist: PlaylistListItem) => {
+    if (action === "details") return setDetailsId(playlist.id);
     if (action === "restore") return void runImmediate(playlist, () => restorePlaylist(playlist.id), "กู้คืน playlist ไม่สำเร็จ");
     if (action === "move") return setDialog({ action: "move", target: playlist });
     if (action === "tags") return setTagsTarget(playlist);
@@ -165,6 +168,7 @@ export function PlaylistsListPage() {
 
   if (error?.kind === "forbidden" && !playlists) return <NoAccess />;
 
+  const details = inTrash ? null : (playlists ?? []).find((playlist) => playlist.id === detailsId) ?? null;
   const stats = playlists !== null ? summarize(playlists) : null;
   const totalItems = (playlists ?? []).reduce((total, playlist) => total + playlist.item_count, 0);
   const totalDuration = (playlists ?? []).reduce((total, playlist) => total + (playlist.total_duration_seconds ?? 0), 0);
@@ -301,6 +305,7 @@ export function PlaylistsListPage() {
         onCreated={(playlistId) => router.push(`/media-workspace/playlists/${playlistId}`)}
         onError={(message) => { setActionError(message); setCreateOpen(false); }}
       />
+      {details && <PlaylistDetailsDrawer playlist={details} busy={busyId === details.id} onClose={() => setDetailsId(null)} onAction={(action) => void handleAction(action, details)} />}
       {confirmDialog}
       <EmptyTrashDialog open={emptyTrashOpen} busy={emptyTrashBusy} targets={emptyTrashTargets.length} locked={emptyTrashLocked} onOpenChange={setEmptyTrashOpen} onConfirm={handleEmptyTrash} />
     </div>

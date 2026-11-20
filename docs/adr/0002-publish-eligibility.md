@@ -2,7 +2,7 @@
 
 ## Context
 
-`CLICKUP_FLOW_AUDIT_GAPS.md` P0.2. Three independent, disagreeing validity checks exist
+`docs/media-workspace/publications/v1/clickup-flow-audit-gaps.md` P0.2. Three independent, disagreeing validity checks exist
 (confirmed by reading the code, not guessing):
 
 - `usePublishDraft.ts` `canPublish` (gates the actual Publish button) —
@@ -20,7 +20,7 @@
 One pure function, colocated with [[0001-wizard-step-contract]]'s `validateStep`:
 
 ```ts
-// src/features/publications/publish-eligibility.ts
+// src/features/media-workspace/publications/publish-eligibility.ts
 export interface EligibilityCheck { status: "pass" | "fail" | "unknown" }
 export interface EligibilityResult { checks: EligibilityCheck[]; canPublish: boolean }
 

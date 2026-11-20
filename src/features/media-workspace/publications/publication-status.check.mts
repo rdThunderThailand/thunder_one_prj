@@ -1,4 +1,4 @@
-/** Run: node src/features/publications/publication-status.check.mts */
+/** Run: node src/features/media-workspace/publications/publication-status.check.mts */
 import assert from "node:assert/strict";
 import {
   isPastPublication,

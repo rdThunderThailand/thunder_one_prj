@@ -59,7 +59,7 @@ playlists to add two additive keys. `width`/`height` are new optional keys under
 **4.4 (Output Profile validation) is field-level only — no cross-field combination rule.** Every
 field individually must be one of its allowed values; there is no rule like "no 4K at 60fps".
 Writing such a rule would require real player-capability data, which does not exist yet — the
-firmware questionnaire (`.docs/player_codec_capability_request.md`) that would answer it is still
+firmware questionnaire (`docs/media-workspace/player/player-codec-capability-request.md`) that would answer it is still
 unanswered, exactly the reasoning ADR 0019 already used to exclude frame rate and codec from the
 Step 2 compatibility check.
 

@@ -17,7 +17,7 @@ Departures roster + offboarding detail panel (`/people/departures`) — HR Manag
   - `DeparturesFilterBar` — search + 4 dropdown filters + view toggle, all inert, same convention as
     `people/personnel`'s `PersonnelFilterBar`
   - `DepartureTableControls` — decorative pagination, single page (7 rows), same as
-    `people/new-hires`'s `NewHireTableControls`
+    `people/personnel`'s `PersonnelTableControls`
   - `DepartureTable` — **real row selection** (click opens the row in `DepartureDetailPanel`, same
     pattern as `people/new-hires`'s table). A cancelled row (`"d-7"`) shows "-" instead of an exit
     date/progress bar, matching the mockup. Exports `departureStatusBadge`, reused by the detail

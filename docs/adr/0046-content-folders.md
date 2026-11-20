@@ -19,7 +19,7 @@ media_core.media_assets.folder_id   → content_folders(id) ON DELETE RESTRICT  
 
 ## Why now
 
-`docs/layouts/plan-layout-ui.md` §2.2 flagged the folder tree in the Layouts mockup as scope with no
+`docs/media-workspace/layouts/phase-0/plan-layout-ui.md` §2.2 flagged the folder tree in the Layouts mockup as scope with no
 model behind it, and recommended shipping the list flat. The counter-argument won: the folders drawn
 in that mockup — `Lobby & Reception`, `Menu Boards`, `Retail Stores` — are obviously not
 Layout-specific. The same operator wants the Playlist for the lobby and the video for the lobby in
@@ -144,7 +144,7 @@ Library pages, which follows when those pages are next touched (§6).
 
 ## Consequences
 
-- `docs/layouts/plan-layout-ui.md` §2.2 is superseded: the Layouts list ships **with** the folder
+- `docs/media-workspace/layouts/phase-0/plan-layout-ui.md` §2.2 is superseded: the Layouts list ships **with** the folder
   sidebar, not flat. Its `Tags` tab and `Trash` folder stay cut.
 - `CONTEXT.md` gains a **Folder** glossary entry.
 - Deleting content is unaffected — `folder_id` is on the content row, so deleting a Playlist takes
