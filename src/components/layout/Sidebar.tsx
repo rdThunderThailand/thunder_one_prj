@@ -19,6 +19,7 @@ import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon, ChevronRightIcon } from
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { recordWorkspaceVisit } from "@/lib/workspace-prefs";
 import type { AvailableTenant } from "@/features/auth/services/get-session";
+import { AssetWorkspaceNav } from "./asset-workspace-sidebar";
 import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
 import { TenantSwitcher } from "./TenantSwitcher";
 
@@ -250,6 +251,9 @@ function AppNav({
 
   if (isMediaWorkspace) {
     return <MediaWorkspaceNav nav={nav} pathname={pathname} collapsed={collapsed} />;
+  }
+  if (appId === "asset-workspace") {
+    return <AssetWorkspaceNav nav={nav} pathname={pathname} collapsed={collapsed} />;
   }
 
   const overviewActive = isActivePath(pathname, nav.overviewItem.href);
