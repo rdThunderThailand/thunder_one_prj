@@ -189,6 +189,7 @@ export type PlaylistListItem = {
    *  Optional for the same deploy-ordering reason as the fields above; when it is
    *  missing the display status falls back to the stored `status`. */
   publication_count?: number;
+  in_use_count?: number;
   /** Distinct `media_assets.kind` values held by the playlist's items — Thunder_Core
    *  migration 20260902160000. Optional for the same deploy-ordering reason; absent or
    *  empty renders the list's Type column as "—". */
@@ -210,4 +211,5 @@ export type PlaylistDetail = {
   created_by?: Creator;
   /** Publications pointing at this playlist, any status — Thunder_Core migration 098. */
   publication_count?: number;
+  in_use_count?: number;
 };
