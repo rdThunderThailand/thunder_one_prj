@@ -46,5 +46,13 @@ for (const delimiter of [",", ";"]) {
   assert.equal(parsed.rows[0].cells[1], 'N"EW');
   assert.equal(parsed.rows[1].rowIndex, 4);
 }
+// An edit that looks like a formula is written with a leading ' and reads back unchanged.
+const formula = '=HYPERLINK("http://example.test")';
+const plainCsv = new TextEncoder().encode("Equipment,Group\r\nDesk,OLD\r\n").buffer;
+const safe = await buildCorrectedImport(plainCsv, "assets.csv", ["name", "category"], [row(2, { name: "Desk", category: formula })]);
+assert.equal(await safe.blob.text(), `Equipment,Group\r\nDesk,"'=HYPERLINK(""http://example.test"")"\r\n`);
+assert.equal(readImportCsv(await safe.blob.arrayBuffer(), 5000).rows[0].cells[1], formula);
+// Only the ' before a formula character is removed.
+assert.equal(readImportCsv(new TextEncoder().encode("A\r\n'Plain\r\n").buffer, 5000).rows[0].cells[0], "'Plain");
 await assert.rejects(() => buildCorrectedImport(bytes, "assets.xlsx", [], [row(3, values)]), /mapping/);
 console.log("Corrected import CSV/XLSX checks passed");
