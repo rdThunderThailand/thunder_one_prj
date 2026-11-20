@@ -24,7 +24,14 @@ are folded in below.
 - Verification 2–3 passed on develop on 2026-11-20, with two exceptions:
   - Empty Trash was not run, because it would delete other trashed playlists.
   - The in-Trash Layout message variant is covered by the check only.
-- The Release step and Verification step 4 (prod) are still open.
+- Released on 2026-11-20.
+  - Core v0.28.0 (#26) went out as a selective release in two PRs. #417 carried the migration, which
+    was pushed to prod with `db push` (md5 matches). #418 carried the route. Tagged on `70a1d26`.
+  - One v1.0.2 (#29) went out in #441, tagged on `024f37c5`.
+  - Swagger for `/programs` is not on Core `main` yet. It ships with the release that brings
+    `swagger-core-v1-one.json` to `main`.
+- Verification step 4 passed on prod, read-only, on Robinson: "Lat Krabang (Suwannaphum)" lists "Lad
+  Krabang" with the line "ผ่าน Layout: Lad Krabang".
 
 The work is two PRs, in this order:
 
