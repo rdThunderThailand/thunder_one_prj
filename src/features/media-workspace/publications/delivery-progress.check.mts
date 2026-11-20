@@ -1,7 +1,7 @@
 /**
  * Runnable check for publication delivery progress (ADR 0021):
  *
- *     node src/features/publications/delivery-progress.check.mts
+ *     node src/features/media-workspace/publications/delivery-progress.check.mts
  */
 import assert from "node:assert/strict";
 import {

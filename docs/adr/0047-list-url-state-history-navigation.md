@@ -11,7 +11,7 @@ pages leaves the page entirely instead of undoing the last filter/sort/page chan
 no entry to land on. Channels additionally had no popstate handling at all, and wrote a bare
 `"?"` into the URL when state was at its default instead of a clean path.
 
-This surfaced in Task 8 Step 3 browser verification of `docs/layouts/plan-layout-execution.md`
+This surfaced in Task 8 Step 3 browser verification of `docs/media-workspace/layouts/phase-0/plan-layout-execution.md`
 (2026-08-25, item 2: "Search, status filter and sort each change the rows and the URL; ... back/
 forward works").
 

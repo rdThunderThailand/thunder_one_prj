@@ -48,4 +48,4 @@ assert.strictEqual(roundtrip("page=abc"), "");
 assert.deepEqual(readListState(new URLSearchParams("health=degraded")).filters, DEFAULT_STATE.filters);
 assert.equal(writeListState({ ...DEFAULT_STATE, filters: { ...DEFAULT_STATE.filters, lifecycle: "draft" } }), "lifecycle=draft");
 
-console.log("src/features/channels/list-url-state.check.mts — all assertions passed");
+console.log("src/features/media-workspace/channels/list-url-state.check.mts — all assertions passed");

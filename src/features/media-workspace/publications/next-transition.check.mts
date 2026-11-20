@@ -1,7 +1,7 @@
 /**
  * Runnable check for the Next-click transition and the resume guard:
  *
- *     node src/features/publications/next-transition.check.mts
+ *     node src/features/media-workspace/publications/next-transition.check.mts
  *
  * ponytail: node:assert plus Node's native TS stripping, same as
  * schedule.check.mts. Everything imported here is React-free on purpose —

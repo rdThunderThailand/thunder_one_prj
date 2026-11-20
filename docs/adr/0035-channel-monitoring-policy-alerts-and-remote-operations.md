@@ -42,7 +42,7 @@ operator (default 'LT'), threshold, severity, is_enabled, event_code`.
 `notification_action_logs`.
 
 Device-level health thresholds already exist on the frontend too:
-`src/features/publications/channels-logic.ts:5-8` — over 2 minutes is `warning`, over 5 minutes is
+`src/features/media-workspace/publications/channels-logic.ts:5-8` — over 2 minutes is `warning`, over 5 minutes is
 `offline`.
 
 ## Decision
@@ -124,7 +124,7 @@ No Media-specific notification subsystem is built. Alerts link to incidents with
 `notification_inbox` is the in-app payload and has no `channel_code`; `notification_action_logs`
 records what the *user* did; `notification_providers.status` is provider-level. `FAILED /
 UNCONFIGURED` and the idempotency key therefore need a new `notification_deliveries` table. This is
-recorded as a known gap in `docs/channels/plan-channels-monitoring.md`, not discovered during
+recorded as a known gap in `docs/media-workspace/channels/v1/plan-channels-monitoring.md`, not discovered during
 implementation.
 
 **Quiet hours and mute do not silence a high-severity alert.** `notification_preferences` carries

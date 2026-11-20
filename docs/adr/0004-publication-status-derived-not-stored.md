@@ -31,7 +31,7 @@ schedule window — not the status column — is already the authority on timing
 to what operators are shown in the Publications list and detail pages.
 
 The frontend already derives an airing state this way: `classifyPublicationAiring`
-(`src/features/publications/schedule.ts`) computes `live` / `next` / `ended` from the schedule and
+(`src/features/media-workspace/publications/schedule.ts`) computes `live` / `next` / `ended` from the schedule and
 drives Overview's "Now & Next". That derivation is correct and unaffected — it is simply not
 available to the list page, which reads `status`.
 

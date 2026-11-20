@@ -1,6 +1,6 @@
 # governance
 
-The department_admin / manager_it_asset ("manager") variant of the shell's shared Governance page (landing page at `/governance`) — `config/rbac.ts`'s `resolveShellVariant`. No CEO variant exists yet; every other role still sees the route's original "Not built yet" stub.
+The manager and employee variants of the shell's shared Governance page (landing page at `/governance`) — `config/rbac.ts`'s `resolveShellVariant` picks `ManagerGovernancePage` (department_admin / manager_it_asset) or `EmployeeGovernancePage`. No CEO variant exists yet; every other role still sees the route's original "Not built yet" stub.
 
 > R&D placeholder — mock data matching the reference mockup exactly, no backend yet.
 
@@ -15,4 +15,5 @@ The department_admin / manager_it_asset ("manager") variant of the shell's share
   - `IncidentsReportsCard` — 4 mini incident stats
   - `AuditAssessmentCard` — internal (in-progress) and external (completed/scored) audits
   - `MyGovernanceTasksCard`, `PolicyUpdatesCard`, `QuickLinksCard` — right rail
+- Employee variant (`EmployeeGovernancePage`, an individual view) — `EmployeeGovernanceHeader`, `EmployeeGovernanceStatTiles`, `EmployeeGovernanceTasksCard`, `EmployeeApprovalsCard`, `EmployeeExceptionsCard`, `EmployeePolicyUpdatesCard`, plus `OrganizationInfoCard`, `PolicyFrameworkCard`, `GovernanceMonitoringRow` and the shared `QuickLinksCard`
 - `mock-data.ts` — same "Marketing Manager" persona/team as the other manager variants (Mission Control, My Work, Intelligence, Workspaces)

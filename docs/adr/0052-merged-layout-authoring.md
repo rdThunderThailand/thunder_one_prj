@@ -2,7 +2,7 @@
 
 **Status:** accepted · 2026-08-26
 **Extends:** `0049-composition-layout-with-content.md` §1, §2, §3, §5, §10
-**Source:** `docs/layouts/Figjam - Media Workspace*.png` (three frames, reviewed 2026-08-26)
+**Source:** `docs/media-workspace/layouts/Figjam - Media Workspace*.png` (three frames, reviewed 2026-08-26)
 
 ## Context
 

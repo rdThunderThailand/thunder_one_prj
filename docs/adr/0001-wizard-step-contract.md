@@ -2,7 +2,7 @@
 
 ## Context
 
-`CLICKUP_FLOW_AUDIT_GAPS.md` P0.1: `Next` in `CreatePublicationPage.tsx` only does
+`docs/media-workspace/publications/v1/clickup-flow-audit-gaps.md` P0.1: `Next` in `CreatePublicationPage.tsx` only does
 `goNextAction(MAX_BUILT_STEP)` — no validation, no persistence. `usePublishDraft.ts`
 already has a working `persistDraft(forPublish)` but it's only called from `saveDraft`
 (the explicit "Save as Draft" button) and `publishNow`, never from `Next`.
@@ -17,7 +17,7 @@ Three independent, disagreeing validity notions already exist:
 A single pure function, not a per-step interface/class:
 
 ```ts
-// src/features/publications/step-validation.ts
+// src/features/media-workspace/publications/step-validation.ts
 export type WizardStepId = 1 | 2 | 3 | 4; // 5 = Review, has no Next
 export interface StepValidationResult { valid: boolean; errors: string[] }
 export function validateStep(step: WizardStepId, state: DraftFields): StepValidationResult

@@ -4,7 +4,7 @@
 
 Media Upload is a dedicated workflow at `/media-workspace/assets/upload`. The Figma mockup is a visual direction, not authority to expose unsupported formats, quota figures or controls.
 
-**Design reference:** [`Figjam - Media Workspace (8).png`](../layouts/Figjam%20-%20Media%20Workspace%20(8).png). It governs visual hierarchy and relative placement only; the decisions below govern behavior, supported formats, limits and control availability.
+**Design reference:** [`Figjam - Media Workspace (8).png`](../media-workspace/layouts/phase-0/Figjam%20-%20Media%20Workspace%20(8).png). It governs visual hierarchy and relative placement only; the decisions below govern behavior, supported formats, limits and control availability.
 
 ## Decision
 

@@ -1,7 +1,7 @@
 /**
  * Runnable check for resume-prompt logic:
  *
- *     node src/features/publications/resume-prompt.check.mts
+ *     node src/features/media-workspace/publications/resume-prompt.check.mts
  */
 import assert from "node:assert/strict";
 import { defaultScheduleDraft } from "./schedule-preset.ts";

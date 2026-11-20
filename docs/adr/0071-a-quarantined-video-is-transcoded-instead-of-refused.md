@@ -211,7 +211,7 @@ route by hand → add the cron → backfill last, as its own migration (develop 
 `processing` + job; Main `ready` → job, status unchanged). Prod repeats the same order after the
 develop run is verified, and the real-player check comes after prod backfill. Replaced functions keep
 their signatures and use `CREATE OR REPLACE`; only a new signature is dropped first. Detail in
-`docs/media-library/plan-transcode.md`.
+`docs/media-workspace/media-library/plan-transcode.md`.
 
 ## Considered and rejected
 

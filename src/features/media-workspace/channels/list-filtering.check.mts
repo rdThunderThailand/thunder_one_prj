@@ -60,4 +60,4 @@ assert.deepStrictEqual(
   ["I", "H", "G", "F"],
 );
 
-console.log("src/features/channels/list-filtering.check.mts — all assertions passed");
+console.log("src/features/media-workspace/channels/list-filtering.check.mts — all assertions passed");

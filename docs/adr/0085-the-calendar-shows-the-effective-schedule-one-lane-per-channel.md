@@ -4,7 +4,7 @@ Status: accepted (2026-10-06, grilling session on the FigJam board "Now & Next �
 scrutiny round 1 applied). Rev.2 (2026-10-06, before release): overridden Programs can be shown in expandable
 lanes (§1, §2, §10). Rev.3 (2026-10-07, after release v0.8.0): "part of" dropped, whole-day blocks read
 "All day", the Now chip is one colour (§9, §11). Fills the "Schedule Preview/Calendar" slot ADR 0057 left open. Companion: ADR 0084.
-Plan: `docs/program/plan-now-next-calendar.md`.
+Plan: `docs/media-workspace/program/plan-now-next-calendar.md`.
 
 ## Context
 

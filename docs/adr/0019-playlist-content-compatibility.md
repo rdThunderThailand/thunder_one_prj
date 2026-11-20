@@ -4,7 +4,7 @@
 
 Ticket [86d3xxk5b](https://app.clickup.com/t/86d3xxk5b) AC 12 requires the playlist's Output
 Profile to be used for checking content compatibility in Step 2. The ticket never defines
-"incompatible", which is why `docs/playlists/plan-create-playlist-step1.md` Phase 3.1 listed the
+"incompatible", which is why `docs/media-workspace/playlists/v0/plan-create-playlist-step1.md` Phase 3.1 listed the
 definition as the check's entire spec.
 
 What the system actually has, verified 2026-08-17:
@@ -28,7 +28,7 @@ check written against these columns today would be silent on every asset in the 
 
 There is no frame-rate column on an asset at all — not NULL, absent — so a frame-rate check would
 need a migration before it could be written. Codec compatibility is a different question with a
-different owner: it is what the firmware questionnaire in `.docs/player_codec_capability_request.md`
+different owner: it is what the firmware questionnaire in `docs/media-workspace/player/player-codec-capability-request.md`
 exists to answer, and ADR 0016 already decided the system does not re-encode.
 
 ## Decision

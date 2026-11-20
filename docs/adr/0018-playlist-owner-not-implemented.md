@@ -4,7 +4,7 @@
 
 Ticket [86d3xxk5b](https://app.clickup.com/t/86d3xxk5b) AC 14 requires Owner and Created By to be
 two separate fields, and AC 15 requires the Owner to belong to the same workspace as the playlist.
-`docs/playlists/plan-create-playlist-step1.md` Phase 2 planned an `owner_id` column to satisfy
+`docs/media-workspace/playlists/v0/plan-create-playlist-step1.md` Phase 2 planned an `owner_id` column to satisfy
 them. Before starting that work the backend was checked directly rather than taken from the plan
 (`Thunder_Core`, verified 2026-08-17):
 

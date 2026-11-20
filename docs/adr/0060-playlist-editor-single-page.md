@@ -3,7 +3,7 @@
 **Status:** accepted · **Date:** 2026-09-02
 **Supersedes:** ADR 0012 and ADR 0013 (the four-step create wizard and its browser-local draft)
 **Extends:** ADR 0028 (playlist active/inactive is derived) · ADR 0031 (playback behaviour reaching the player) · ADR 0045 (publication snapshot materialization) · ADR 0056 (nested feature folders and Trash)
-**Design guideline:** `docs/playlists/v1/design-guideline-playlist-editor.md` (Figma reference for this area)
+**Design guideline:** `docs/media-workspace/playlists/v1/design-guideline-playlist-editor.md` (Figma reference for this area)
 
 ## Context
 
@@ -104,7 +104,7 @@ behavioural gain. The four columns are carried through `publication_snapshot_ite
 `media_job_poll` payload in the same change: a field that stops at the schema is lost at activation,
 silently, because the poll reads snapshots and never `playlist_items`. Whether the Windows and
 Android players act on them is their own repository's work, tracked through
-`docs/layouts/contract-v2-zones.md`.
+`docs/media-workspace/layouts/phase-0/contract-v2-zones.md`.
 
 **5a. What the four columns resolve to when nobody set them** (settled 2026-09-03, implementing §5).
 Only two of the four inherit, because only two have a playlist-level counterpart. `fit` and

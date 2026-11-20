@@ -1,4 +1,4 @@
-/** Run: node src/features/playlists/duration.check.mts */
+/** Run: node src/features/media-workspace/playlists/duration.check.mts */
 import assert from "node:assert/strict";
 import { formatDuration, totalDurationSeconds } from "./duration.ts";
 

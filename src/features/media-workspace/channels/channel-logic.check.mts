@@ -1,4 +1,4 @@
-/** Run: node src/features/channels/channel-logic.check.mts */
+/** Run: node src/features/media-workspace/channels/channel-logic.check.mts */
 import assert from "node:assert/strict";
 import {
   channelStatus,

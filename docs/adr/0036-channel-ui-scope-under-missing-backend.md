@@ -7,7 +7,7 @@ Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and 
 
 A Figma mock covering three surfaces — Channels list, Create Channel, Edit Channel — proposes far
 more than the backend can serve. The channel API surface, verified against
-`src/features/channels/services/channels-api.ts`, is five channel routes plus `reference-data` plus
+`src/features/media-workspace/channels/services/channels-api.ts`, is five channel routes plus `reference-data` plus
 `/media/screens`. There is no monitoring, telemetry, history, screenshot, command or link-count
 endpoint.
 
@@ -20,7 +20,7 @@ Output, View History, Linked Items counts, per-device IP Address and Output/Scre
 Current Content / Next Content / Uptime / Player Version / Storage Used — has no column, no endpoint,
 or both.
 
-`docs/channels/plan-channels-monitoring.md` §11 already states the rule: *"A control ships only when
+`docs/media-workspace/channels/v1/plan-channels-monitoring.md` §11 already states the rule: *"A control ships only when
 its end-to-end contract works. No button appears before the thing behind it responds."* §12 lists
 what blocks each: milestone 14.2 policy storage is specified but not migrated, 14.3 remote operations
 are gated on unverified Player command polling, and the telemetry slice (uptime, player version,

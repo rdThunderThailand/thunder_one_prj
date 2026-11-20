@@ -3,7 +3,7 @@
 // The drag-resize surface. Coordinates never leave percent — the container's CSS
 // aspect-ratio makes it the same shape the display will be, so a pointer delta divided
 // by the container's own measured box is already the right unit, with no px/frame
-// conversion layer to get wrong (docs/layouts/plan-layout-execution.md Task 7 Step 2).
+// conversion layer to get wrong (docs/media-workspace/layouts/phase-0/plan-layout-execution.md Task 7 Step 2).
 
 import { useEffect, useRef, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";

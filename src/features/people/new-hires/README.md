@@ -8,7 +8,7 @@ under `people/` per `docs/adr/0034-feature-folders-nest-under-app.md`.
 > existing members-list endpoint rather than adding a new Lifecycle/stage column Core never built).
 > `mock-data.ts`'s `newHireRows` is unused now but kept as a shape reference (same discipline as
 > `people/org-structure`'s `mock-data.ts` after its own real-data wiring) — `NewHireFunnelRow`'s
-> header counts and `NewHireSidebar` are still mock, out of this round's scope.
+> header counts and `NewHireSidebar` are both computed from the fetched rows.
 >
 > **2026-09-01**: redesigned from a table + status-tabs + click-to-select detail panel into a
 > 4-stage Kanban board (**Pre-boarding → Onboarding → Ready to Work → Active**), per the FigJam

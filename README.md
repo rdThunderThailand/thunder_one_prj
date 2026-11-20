@@ -1,77 +1,48 @@
-# Thunder One
+# ThunderOne
 
-DOOH (Digital Out-of-Home) video publishing platform — MVP.
-
-Stack: Next.js (App Router) + TypeScript + Tailwind CSS + axios, package-managed with **pnpm**.
-
-> Status: R&D. `auth` (login/register) and `overview` (dashboard home) have
-> real UI, backed by mock data / placeholder endpoints — no backend exists
-> yet. Everything else is folder/file scaffolding only.
+The ThunderOne web app: one shell with several Workspaces (Media, Asset Intelligence, People, Thunder Care,
+…), backed by the Thunder_Core API. Next.js (App Router) + TypeScript + Tailwind CSS, managed with **pnpm**.
+Released versions and their notes are on GitHub Releases; the versioning rules are in
+`docs/agents/versioning.md`.
 
 ## Getting started
 
 ```bash
 pnpm install
+cp .env.example .env.local   # then fill in the values
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). The browser talks to Thunder_Core through
+`/api/proxy`; `CORE_API_URL` decides which Core deployment that is (`/api/proxy/__config` shows it).
 
-Copy `.env.example` to `.env.local` and fill in values as they become available.
-
-## Architecture: feature-first
-
-```
-src/
-  app/                 Routes only (App Router). Thin: compose features, no business logic.
-    (auth)/              Unauthenticated shell — no sidebar/topbar
-      login/page.tsx
-      register/page.tsx
-      layout.tsx
-    (dashboard)/         Authenticated shell — Sidebar + Topbar + ShortcutsBar
-      page.tsx            Overview (dashboard home, route "/")
-      assets/page.tsx
-      channels/page.tsx
-      playlists/page.tsx
-      layout.tsx
-
-  features/            One folder per business domain. This is where most work happens.
-    overview/          Dashboard home — composes widgets from other features
-    assets/            Central Asset repository (upload/list/manage media files)
-    channels/          Channel registry — publishing destinations, each backed by a Device
-    playlists/         Ordered sequences of Assets (no scheduling/targeting — see Publication)
-    auth/              Authentication / session — LoginForm, RegisterForm
-      components/      Feature-scoped UI
-      hooks/           Feature-scoped React hooks
-      services/        API calls for this feature (axios), via src/lib/api/client
-      types/           TypeScript types for this feature's domain
-      index.ts         Public API of the feature — only export what's needed outside it
-
-  components/          Shared/cross-feature UI
-    ui/                 Design-system primitives (Button, Input, Card, Badge, ...)
-    layout/             App shell pieces (Sidebar, Topbar, PageHeader, ShortcutsBar)
-
-  hooks/               Shared/cross-feature hooks
-  lib/
-    api/client.ts       Shared axios instance
-    utils/               Shared utility functions
-  config/              Typed env/config access
-  constants/           Shared constants/enums
-  types/               Shared/global TypeScript types
-```
-
-### Rules of thumb
-
-- A route file under `app/` should mostly import from `features/*` and render — avoid putting logic directly in `app/`.
-- A feature should not reach into another feature's internals — only import from another feature's `index.ts`.
-- Anything used by 2+ features belongs in `components/`, `hooks/`, `lib/`, or `types/` at the top level, not inside a feature.
-- All HTTP calls go through `src/lib/api/client.ts` (axios instance), wrapped in a feature's `services/`.
-
-## Scripts
+## Checks
 
 ```bash
-pnpm dev      # start dev server
-pnpm build    # production build
-pnpm start    # start production server
-pnpm lint     # eslint
+pnpm lint                      # eslint (next build does not run it)
+pnpm build                     # type-check + production build
+node path/to/file.check.mts    # one logic check; there is no test runner by design
 ```
+
+## Where things are
+
+| Path | What it holds |
+|---|---|
+| `AGENTS.md` | Rules for every coding agent and contributor. `CLAUDE.md` imports it and adds Claude-only pointers. |
+| `CONTEXT.md` | Glossary: what each domain term means. |
+| `docs/adr/` | Decisions (one numbering for the whole repo). |
+| `docs/agents/` | How we work: git workflow, versioning, issues and labels, docs SOP. |
+| `docs/<workspace>/` | Plans, specs, UAT checklists for one Workspace (`media-workspace`, `asset-intelligence`, `people`, …). |
+| `docs/shell/` | The shell shared by every Workspace: auth, design system. |
+| `.agents/skills/` | Project skills for coding agents. `.claude/skills/` holds symlinks to them for Claude Code. |
+| `.github/` | PR and issue templates. |
+| `src/app/` | Routes only; they compose features. |
+| `src/features/<workspace>/<area>/` | The code for one Workspace area; shell features (`auth`, `profile`, `governance`, …) sit at `src/features/<feature>/`. Most have a README. |
+| `src/components/` | Shared UI (`ui/`) and the app shell (`layout/`). |
+| `src/config/` | App registry (`apps.tsx`), navigation, RBAC, env access. |
+| `src/lib/api/` | Browser-side HTTP clients (`client.ts`, `media-api.ts`) used by features' `services/`. |
+| `src/lib/core/` | Server-only calls straight to Core (`core-get.ts`; needs `CORE_API_KEY`). |
+| `src/design-system/` | Copies of the ThunderOne theme; never edit them by hand (`AGENTS.md`). |
+
+Local only, never committed: `.env.local`, `.docs/` (session logs), `.backups/`. The full list and the rules
+for adding documents are in `docs/agents/docs-sop.md`.

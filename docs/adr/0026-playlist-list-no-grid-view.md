@@ -11,7 +11,7 @@ it assumes a Grid view exists and constrains it, but does not itself require one
 
 The list page was actually built against a different ticket, 86d3xxp90 ("1.3 Page
 Initialization"), in the session recorded at
-`.docs/SESSIONLOG-playlists-overview-2026-08-19.md`. That session's plan
+[`.docs/SESSIONLOG-playlists-overview-2026-08-19.md`](https://github.com/rdThunderThailand/thunder_one_prj/blob/65ea04da491c45241450493d9b73b4363e7d152f/.docs/SESSIONLOG-playlists-overview-2026-08-19.md). That session's plan
 (`/Users/arty/.claude-thunder/plans/1-2-share-with-eager-pearl.md:19`) trimmed the filter set
 against the mock ("ตัด Channel/Location และ More Filters") but never discussed a Grid/card view —
 the mock it was built from only showed a table. `PlaylistsTable.tsx` is the only rendering of the

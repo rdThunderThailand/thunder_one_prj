@@ -1,4 +1,4 @@
-/** Run: node src/features/playlists/output-profile.check.mts */
+/** Run: node src/features/media-workspace/playlists/output-profile.check.mts */
 import assert from "node:assert/strict";
 import { RESOLUTIONS, aspectRatio, parseResolution, resolutionLabel } from "./output-profile.ts";
 

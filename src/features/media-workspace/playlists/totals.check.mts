@@ -1,4 +1,4 @@
-/** Run: node src/features/playlists/totals.check.mts */
+/** Run: node src/features/media-workspace/playlists/totals.check.mts */
 import assert from "node:assert/strict";
 import { formatBytes, computePlaylistTotals } from "./totals.ts";
 import type { MediaAsset } from "../../../types/domain.ts";

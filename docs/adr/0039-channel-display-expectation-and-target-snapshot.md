@@ -10,7 +10,7 @@ ADR, 0035 (monitoring, alerts, notifications).
 
 Three geometry vocabularies already exist in this codebase and a fourth was about to be invented:
 
-- **Playlist Output Profile** — ADR 0032, `src/features/playlists/output-profile.ts`: the
+- **Playlist Output Profile** — ADR 0032, `src/features/media-workspace/playlists/output-profile.ts`: the
   `resolution` selector plus derived `width`/`height` and a computed aspect ratio, stored in
   `playlists.metadata.info`, validated field-by-field on the Thunder_Core routes.
 - **Content compatibility** — ADR 0019: an asset whose geometry differs from the playlist's profile
@@ -121,13 +121,13 @@ value is compared numerically on every assignment, and a jsonb key that is valid
 `playlists.metadata.playback` sat unread for two ADRs (0010 → 0031).
 
 **Give Channels their own resolution vocabulary.** Rejected: ADR 0032 already trimmed and pinned
-the list, and `src/features/playlists/output-profile.ts` is import-free precisely so other code can
+the list, and `src/features/media-workspace/playlists/output-profile.ts` is import-free precisely so other code can
 reuse it. A second list would drift.
 
 ## Consequences
 
 - Two new Channel columns (orientation, resolution expectation) plus their CHECK constraints; shape
-  and migration order live in `docs/channels/plan-channels-monitoring.md`.
+  and migration order live in `docs/media-workspace/channels/v1/plan-channels-monitoring.md`.
 - Assignment gains a confirmation step that the API must model, not just the UI: the warning
   confirmation is a parameter on the assign RPC, so an API caller cannot bypass what the UI
   enforces.

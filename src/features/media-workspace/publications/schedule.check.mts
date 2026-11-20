@@ -1,7 +1,7 @@
 /**
  * Runnable check for the airing classifier:
  *
- *     node src/features/publications/schedule.check.mts
+ *     node src/features/media-workspace/publications/schedule.check.mts
  *
  * ponytail: node:assert plus Node's native TS stripping, so this repo needs no
  * test runner. If vitest ever lands, rename to *.test.ts and wrap in it()/expect().

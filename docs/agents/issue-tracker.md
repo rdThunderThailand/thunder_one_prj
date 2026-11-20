@@ -1,6 +1,44 @@
-# Issue tracker: GitHub
+# Issue tracker: ClickUp for intake, GitHub for delivery
 
-Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Why: ADR 0119. Labels and milestones: `docs/agents/triage-labels.md`.
+
+## Where a ticket lives
+
+| Kind of work | Starts in | Moves to |
+|---|---|---|
+| Idea, customer request, product decision | ClickUp space **Product: ThunderOne** (Raw Capture / Customer Requests) | GitHub issue when the task reaches **promoted** |
+| Bug or request from a customer, PO, sales | ClickUp **Raw Capture** | GitHub issue after triage, if it needs code |
+| Bug found by QA (UAT or regression) | GitHub issue, directly (`.github/ISSUE_TEMPLATE/bug.md`) | — |
+| Engineering work with no product question (refactor, CI, docs) | GitHub issue | — |
+
+ClickUp gets no delivery list or delivery statuses; a task is done at *promoted*. Pace holds no
+ThunderOne tickets.
+
+## Promoting a ClickUp task
+
+1. Open a GitHub issue with `.github/ISSUE_TEMPLATE/from-clickup.md`; its first line is
+   `ClickUp: <task url>`.
+2. Paste the issue URL into the ClickUp task (comment or Linked Doc field), then set it to *promoted*.
+3. PRs for the issue carry `Ticket: <task url>` and `CU-<task id>` in the body.
+
+## Closing the loop
+
+- A PR closes its issue with `Closes #N` only when it merges into the default branch, `dev`. A hotfix PR
+  targets `main`, so it says `Refs #N`, and the back-merge PR (`main → dev`) carries `Closes #N`.
+- Use `Refs #N` everywhere when QA must retest on prod before the issue closes; close it by hand with a comment
+  naming the retest once it passes.
+- At release, the publish step in `docs/agents/versioning.md` comments "ออกใน vX.Y.Z" on every ClickUp task
+  linked from the shipped PRs.
+
+## Tools
+
+- GitHub: the `gh` CLI for every operation.
+- ClickUp: the ClickUp connector. Creating, updating or commenting on a task is outward-facing; an agent asks
+  first unless the step is part of an approved release publish.
+- ClickUp's GitHub integration is not connected yet (2026-11-20). Until it is, the `Ticket:` URL is the link;
+  `CU-<id>` starts linking automatically once the owner connects it.
+
+<!-- Skill hooks below: read by the engineering skills (/triage, /wayfinder, …). Same text as before ADR 0119. -->
 
 ## Conventions
 
@@ -27,7 +65,7 @@ GitHub shares one number space across issues and PRs, so a bare `#42` may be eit
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue.
+Create a GitHub issue. Skills never write to ClickUp; ClickUp changes are a person's step or an approved release step.
 
 ## When a skill says "fetch the relevant ticket"
 
