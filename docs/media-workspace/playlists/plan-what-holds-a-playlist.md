@@ -7,13 +7,31 @@ are folded in below.
 
 **Status (2026-11-20).**
 
-- A1: done for develop. Prod is still open and must be done before release.
+- A1: done for develop and prod. Prod was checked read-only on 2026-11-20; its last migration is
+  20261120100000.
+  - `media_playlist_permanent_delete`: prod md5 `02d88d30…` equals the pre-migration body in the
+    rollback file.
+  - `media_composition_set_zones`: logic is identical. Prod lacks one two-line comment ("Completeness
+    is not required to save…") that develop has. After `db push`, prod gains that comment.
+  - `playlist_program_ids`, `media_publish_changes_programs` and `publication_effective_status`:
+    same md5 as develop.
+  - `media_playlist_programs` does not exist yet.
+  - `media_core.campaigns` exists. `compositions` has `deleted_at`, `name` and `tenant_id`.
+  - Grants match develop for all of these: `service_role` only, with no EXECUTE for PUBLIC, anon or
+    authenticated. `playlist_program_ids` is owner only.
 - A2–A4, B1–B4, C1–C6 and C4a: done. The dry-run passes 13/13.
 - Core#415 is merged and live on develop. The md5 of all three functions matches the migration file.
 - Verification 2–3 passed on develop on 2026-11-20, with two exceptions:
   - Empty Trash was not run, because it would delete other trashed playlists.
   - The in-Trash Layout message variant is covered by the check only.
-- The Release step and Verification step 4 (prod) are still open.
+- Released on 2026-11-20.
+  - Core v0.28.0 (#26) went out as a selective release in two PRs. #417 carried the migration, which
+    was pushed to prod with `db push` (md5 matches). #418 carried the route. Tagged on `70a1d26`.
+  - One v1.0.2 (#29) went out in #441, tagged on `024f37c5`.
+  - Swagger for `/programs` is not on Core `main` yet. It ships with the release that brings
+    `swagger-core-v1-one.json` to `main`.
+- Verification step 4 passed on prod, read-only, on Robinson: "Lat Krabang (Suwannaphum)" lists "Lad
+  Krabang" with the line "ผ่าน Layout: Lad Krabang".
 
 The work is two PRs, in this order:
 
