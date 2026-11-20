@@ -74,6 +74,6 @@ Owner decisions in a grilling session after `v1.0.0`. The app now ships seven Wo
 4. **Becoming stable** follows Decision 1's pattern: the Workspace passes a UAT on prod in `thunder_qa`, the owner
    accepts it, the release-prep PR adds it to the list, and it ships as a MINOR whose release note announces
    it. Which tenants see a Workspace stays a Core setting (`enabled_workspaces`).
-5. **The release log moves to GitHub Releases.** The promotion table in `versioning.md` stops at `v1.0.0`; each
-   tag from then on gets a GitHub Release with the Thai release note. No `docs/record-*` PR. The full sequence
-   is in `versioning.md`; merge methods are ADR 0118.
+5. **The release log moves to GitHub Releases.** The promotion table in `versioning.md` stops at `v1.0.1` (its row
+   landed in #437 before this amendment merged); each tag from `v1.0.2` on gets a GitHub Release with the Thai
+   release note. No `docs/record-*` PR. The full sequence is in `versioning.md`; merge methods are ADR 0118.
