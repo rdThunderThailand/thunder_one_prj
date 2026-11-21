@@ -44,8 +44,9 @@ export function step1Valid(draft: CreateChannelDraft): boolean {
   return draft.name.trim().length > 0;
 }
 
-export function step2Valid(draft: CreateChannelDraft): boolean {
-  return draft.playerId !== null;
+/** ADR 0122 rule 4: "No player yet" — the Channel saves as a Draft. */
+export function withoutPlayer(draft: CreateChannelDraft): CreateChannelDraft {
+  return { ...draft, playerId: null };
 }
 
 /** QA 2026-10-08 #2: picking a single-screen Player that reports its screen size takes that size,
@@ -78,7 +79,7 @@ export interface CreateChannelPayload {
   name: string;
   description: string | null;
   location_id: string | null;
-  player_id: string;
+  player_id: string | null;
   output_kind: ChannelOutputKind;
   expected_resolution: string | null;
   display_config: ReturnType<typeof buildDisplayConfig> | null;
@@ -91,7 +92,6 @@ export interface CreateChannelPayload {
 /** The exact body `POST /media/channels` needs — `expected_resolution` xor `display_config`
  *  depending on Display Mode (`media_core.channel_canvas` refuses both being non-null). */
 export function toCreateChannelPayload(draft: CreateChannelDraft, confirmedMismatch = false): CreateChannelPayload {
-  if (!draft.playerId) throw new Error("toCreateChannelPayload: playerId is required");
   const arrangement = arrangementByKey(draft.arrangementKey);
   return {
     name: draft.name.trim(),
