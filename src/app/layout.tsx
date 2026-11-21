@@ -82,7 +82,20 @@ export default async function RootLayout({
     >
       <body className="h-full flex flex-col">
         {children}
-        <Toaster position="top-right" richColors />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            // unstyled: sonner's own stylesheet is unlayered and would beat these token utilities
+            unstyled: true,
+            classNames: {
+              toast:
+                "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-4 text-sm text-foreground shadow-lg",
+              success: "border-success bg-success-muted text-success",
+              error: "border-error bg-error-muted text-error",
+              actionButton: "ml-auto rounded-md px-2 py-1 text-xs font-semibold underline",
+            },
+          }}
+        />
       </body>
     </html>
   );

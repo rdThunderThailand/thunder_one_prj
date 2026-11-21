@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import { classifyApiError, isDuplicateName, type ClassifiedError } from "@/lib/api/api-error";
-import { draftFromChannel, geometryMismatch, step1Valid, step2Valid, toUpdateChannelPayload, type CreateChannelDraft } from "../create-wizard-state";
+import { draftFromChannel, geometryMismatch, step1Valid, toUpdateChannelPayload, type CreateChannelDraft } from "../create-wizard-state";
 import { fetchChannel, fetchChannelReferenceData } from "../services/channels-api";
 import { updateChannelV2 } from "../services/channel-write-api";
 import { fetchChannelPlayerCandidates } from "../services/player-candidates-api";
@@ -80,13 +81,13 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
       setNameError("Channel name is required");
       return;
     }
-    if (!step2Valid(draft)) return;
     if (geometryWarning && !mismatchConfirmed) return;
     setNameError(undefined);
     setSaving(true);
     setSaveError(null);
     try {
       const updated = await updateChannelV2(channelId, toUpdateChannelPayload(draft, channel.revision, mismatchConfirmed));
+      toast.success("Channel saved");
       router.push("/media-workspace/channels");
       return updated;
     } catch (caught) {
@@ -144,6 +145,7 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
               candidatesLoading={candidatesLoading}
               nameError={nameError}
               excludeChannelId={channelId}
+              allowNoPlayer={channel.status !== "active"}
               onChange={setDraft}
               onRefreshCandidates={refreshCandidates}
             />

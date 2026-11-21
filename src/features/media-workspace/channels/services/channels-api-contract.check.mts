@@ -5,6 +5,7 @@
  */
 import assert from "node:assert/strict";
 import {
+  buildActivateChannelRequest,
   buildChannelListPath,
   buildChannelReferenceDataRequest,
   buildDeactivateChannelRequest,
@@ -45,6 +46,12 @@ assert.deepEqual(buildDeactivateChannelRequest("channel-1", 6), {
   path: "/media/channels/channel-1/deactivate",
   body: { expected_revision: 6 },
 });
+assert.deepEqual(buildActivateChannelRequest("channel-1", 6), {
+  method: "POST",
+  path: "/media/channels/channel-1/activate",
+  body: { expected_revision: 6 },
+});
+assert.throws(() => buildActivateChannelRequest("channel-1", 0));
 assert.throws(() => buildDeleteDraftChannelRequest("channel-1", 0));
 assert.throws(() => buildDeactivateChannelRequest("channel-1", -1));
 

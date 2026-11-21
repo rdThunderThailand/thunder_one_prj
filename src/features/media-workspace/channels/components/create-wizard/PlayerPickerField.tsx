@@ -46,7 +46,9 @@ export function PlayerPickerField({
   selectedId,
   loading,
   excludeChannelId,
+  allowNone,
   onSelect,
+  onClear,
   onRefresh,
 }: {
   candidates: ChannelPlayerCandidate[];
@@ -55,7 +57,10 @@ export function PlayerPickerField({
   /** The edit page's own Channel — its current Player reads as available, not "in use". Omit on
    *  the create wizard, where every reservation belongs to some other Channel. */
   excludeChannelId?: string;
+  /** ADR 0122 rule 4: offer "No player yet" as the first row (a Draft or Inactive Channel). */
+  allowNone?: boolean;
   onSelect: (candidate: ChannelPlayerCandidate) => void;
+  onClear?: () => void;
   onRefresh: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -114,6 +119,19 @@ export function PlayerPickerField({
             <p className="px-1 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Available players ({available.length})
             </p>
+            {allowNone && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClear?.();
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-foreground hover:bg-muted"
+              >
+                <MonitorIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
+                No player yet
+              </button>
+            )}
             {available.length === 0 && <p className="px-3 py-2 text-sm text-muted-foreground">No available players</p>}
             {available.map((candidate) => (
               <CandidateRow

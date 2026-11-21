@@ -5,34 +5,50 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { deactivateChannel, deleteDraftChannel } from "../services/channels-api";
+import { toast } from "sonner";
+import { lifecycleActionsFor } from "../lifecycle-actions";
+import { activateChannel, deactivateChannel, deleteDraftChannel } from "../services/channels-api";
 import type { ChannelDetail, ChannelLifecycle } from "../types";
 
 /**
- * Deactivate / Delete for an existing Channel. Split out of ChannelEditorPage (already at the
- * file-size limit) and only rendered in edit mode.
+ * Activate / Deactivate / Delete for an existing Channel. Split out of ChannelEditorPage (already at
+ * the file-size limit) and only rendered in edit mode.
  *
- * There is no Activate here by design (ADR 0037): a Channel is committed by the Create button and
- * reads Active only while a Publication targets it. Deactivate remains the operator's way to
- * release the Channel's device reservations, and is refused while a live Publication needs them.
+ * Actions follow the STORED status (ADR 0122 rule 3): Deactivate releases the Channel's device
+ * reservations and is refused while a live Publication needs them; Activate needs a Player.
  */
 export function ChannelLifecycleActions({
   channelId,
-  lifecycle,
+  status,
+  playerName,
   revision,
   onChanged,
   onDeleted,
 }: {
   channelId: string;
-  lifecycle: ChannelLifecycle;
+  status: ChannelLifecycle;
+  playerName: string | null;
   revision: number;
   onChanged: (detail: ChannelDetail) => void;
   onDeleted: () => void;
 }) {
-  const [pending, setPending] = useState<"deactivate" | "delete" | null>(null);
+  const [pending, setPending] = useState<"activate" | "deactivate" | "delete" | null>(null);
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isConfirmingDeactivate, setIsConfirmingDeactivate] = useState(false);
+
+  const activate = async () => {
+    setPending("activate");
+    setError(null);
+    try {
+      onChanged(await activateChannel(channelId, revision));
+      toast.success("Channel activated");
+    } catch (caught) {
+      setError(classifyApiError(caught, "Could not activate this Channel. Try again."));
+    } finally {
+      setPending(null);
+    }
+  };
 
   const deactivate = async () => {
     setPending("deactivate");
@@ -40,6 +56,7 @@ export function ChannelLifecycleActions({
     try {
       onChanged(await deactivateChannel(channelId, revision));
       setIsConfirmingDeactivate(false);
+      toast.success(playerName ? `Channel deactivated — ${playerName} is free` : "Channel deactivated");
     } catch (caught) {
       setIsConfirmingDeactivate(false);
       setError(classifyApiError(caught, "Could not deactivate this Channel. Try again."));
@@ -64,10 +81,7 @@ export function ChannelLifecycleActions({
   };
 
   const busy = pending !== null;
-  // ADR 0037 derives `inactive` for a committed Channel that nothing publishes to, and neither
-  // action applies to it — without this the card renders as an empty box under the summary, which
-  // reads as a missing Delete button rather than as "there is nothing to do here".
-  if (lifecycle === "inactive") return null;
+  const actions = lifecycleActionsFor({ status, hasPlayer: playerName !== null });
 
   return (
     <Card className="p-5">
@@ -78,12 +92,22 @@ export function ChannelLifecycleActions({
         </p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
-        {lifecycle === "active" && (
+        {actions.canDeactivate && (
           <Button type="button" variant="outline" disabled={busy} onClick={() => setIsConfirmingDeactivate(true)}>
             Deactivate
           </Button>
         )}
-        {lifecycle === "draft" && (
+        {status !== "active" && (
+          <Button
+            type="button"
+            disabled={busy || !actions.canActivate}
+            title={actions.activateBlockedReason ?? undefined}
+            onClick={() => void activate()}
+          >
+            {pending === "activate" ? "Activating…" : "Activate"}
+          </Button>
+        )}
+        {actions.canDelete && (
           <Button
             type="button"
             variant="outline"

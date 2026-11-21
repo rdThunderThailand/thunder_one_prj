@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { MonitorIcon } from "@/components/ui/icons";
 import { ARRANGEMENT_OPTIONS } from "../display-config";
-import { canvasResolutionFor, withAutoMappedScreens, type CreateChannelDraft } from "../create-wizard-state";
+import { canvasResolutionFor, withAutoMappedScreens, withoutPlayer, type CreateChannelDraft } from "../create-wizard-state";
 import type { ChannelPlayerCandidate } from "../player-candidates";
 import type { ChannelLocationOption, ChannelOutputKind } from "../types";
 import { OutputMappingTable } from "./create-wizard/OutputMappingTable";
@@ -50,6 +50,7 @@ export function ChannelEditorForm({
   candidatesLoading,
   nameError,
   excludeChannelId,
+  allowNoPlayer,
   onChange,
   onRefreshCandidates,
 }: {
@@ -59,6 +60,8 @@ export function ChannelEditorForm({
   candidatesLoading: boolean;
   nameError?: string;
   excludeChannelId: string;
+  /** "No player yet" is offered unless the Channel is Active (ADR 0122 rule 4). */
+  allowNoPlayer: boolean;
   onChange: (next: CreateChannelDraft) => void;
   onRefreshCandidates: () => void;
 }) {
@@ -200,7 +203,9 @@ export function ChannelEditorForm({
           selectedId={draft.playerId}
           loading={candidatesLoading}
           excludeChannelId={excludeChannelId}
+          allowNone={allowNoPlayer}
           onSelect={(candidate) => onChange({ ...draft, playerId: candidate.id })}
+          onClear={() => onChange(withoutPlayer(draft))}
           onRefresh={onRefreshCandidates}
         />
         {selectedPlayer && (

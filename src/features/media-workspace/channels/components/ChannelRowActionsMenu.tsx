@@ -6,6 +6,7 @@ import { MoreIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/Modal";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { classifyApiError } from "@/lib/api/api-error";
+import { lifecycleActionsFor } from "../lifecycle-actions";
 import { deactivateChannel } from "../services/channels-api";
 import type { ChannelListItem } from "../types";
 
@@ -28,7 +29,7 @@ export function ChannelRowActionsMenu({
   const [error, setError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  const canDisable = channel.lifecycle === "active";
+  const canDisable = lifecycleActionsFor({ status: channel.status, hasPlayer: true }).canDeactivate;
 
   const disable = async () => {
     setPending(true);

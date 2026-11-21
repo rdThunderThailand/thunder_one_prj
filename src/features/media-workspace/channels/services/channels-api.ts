@@ -305,6 +305,18 @@ export function buildDeactivateChannelRequest(
   };
 }
 
+export function buildActivateChannelRequest(
+  id: string,
+  expectedRevision: number,
+): ChannelRequestDescriptor {
+  assertExpectedRevision(expectedRevision);
+  return {
+    method: "POST",
+    path: `/media/channels/${id}/activate`,
+    body: { expected_revision: expectedRevision },
+  };
+}
+
 export function parseChannelList(data: unknown): ChannelListItem[] {
   const unwrapped = unwrapData(data);
   const channels = Array.isArray(unwrapped)
@@ -368,6 +380,12 @@ export async function deleteDraftChannel(id: string, expectedRevision: number): 
 export async function deactivateChannel(id: string, expectedRevision: number): Promise<ChannelDetail> {
   return parseChannelDetail(
     await requestChannelApi<unknown>(buildDeactivateChannelRequest(id, expectedRevision)),
+  );
+}
+
+export async function activateChannel(id: string, expectedRevision: number): Promise<ChannelDetail> {
+  return parseChannelDetail(
+    await requestChannelApi<unknown>(buildActivateChannelRequest(id, expectedRevision)),
   );
 }
 
