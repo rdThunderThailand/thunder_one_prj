@@ -1,4 +1,5 @@
 # 0038 — Channel lifecycle is `Draft → Active ↔ Inactive`, retirement is one-way, concurrency reuses ADR 0003
+> **Partially superseded (2026-11-20)** by `0122-deleting-an-unused-channel-tombstones-it-and-frees-its-player.md`: "`activated_at` is the retirement evidence" and the rejected "Soft-delete every Channel" option no longer hold — a Channel that is not in use can be deleted in any status: removed if it was never used, kept as a Tombstone if it has history.
 
 Part of the Channel set: 0030 (membership and exclusivity), this ADR, 0039 (configuration boundary
 and target snapshot), 0035 (monitoring, alerts, notifications).

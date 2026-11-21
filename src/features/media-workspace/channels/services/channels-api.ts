@@ -1,4 +1,5 @@
 import type {
+  BlockingProgram,
   ChannelCategory,
   ChannelDetail,
   ChannelDevice,
@@ -273,7 +274,7 @@ export function buildChannelReferenceDataRequest(): ChannelRequestDescriptor {
   return { method: "GET", path: "/media/channels/reference-data" };
 }
 
-export function buildDeleteDraftChannelRequest(
+export function buildDeleteChannelRequest(
   id: string,
   expectedRevision: number,
 ): ChannelRequestDescriptor {
@@ -305,6 +306,18 @@ export function buildDeactivateChannelRequest(
   };
 }
 
+export function buildActivateChannelRequest(
+  id: string,
+  expectedRevision: number,
+): ChannelRequestDescriptor {
+  assertExpectedRevision(expectedRevision);
+  return {
+    method: "POST",
+    path: `/media/channels/${id}/activate`,
+    body: { expected_revision: expectedRevision },
+  };
+}
+
 export function parseChannelList(data: unknown): ChannelListItem[] {
   const unwrapped = unwrapData(data);
   const channels = Array.isArray(unwrapped)
@@ -318,13 +331,24 @@ export function parseChannelList(data: unknown): ChannelListItem[] {
   return channels.map(parseChannelListItem);
 }
 
+function parseBlockingProgram(value: unknown): BlockingProgram {
+  if (!isRecord(value) || !isString(value.id) || !isString(value.name)) {
+    throw new TypeError("Channel blocking program data is malformed");
+  }
+  return { id: value.id, name: value.name };
+}
+
 export function parseChannelDetail(data: unknown): ChannelDetail {
   const unwrapped = unwrapData(data);
   const channel = parseChannelListItem(unwrapped);
   if (!isRecord(unwrapped) || !isTimestamp(unwrapped.created_at)) {
     throw new TypeError("Channel detail data is malformed");
   }
-  return { ...channel, created_at: unwrapped.created_at };
+  const blocking = unwrapped.blocking_programs ?? [];
+  if (!Array.isArray(blocking)) {
+    throw new TypeError("Channel detail data is malformed");
+  }
+  return { ...channel, created_at: unwrapped.created_at, blocking_programs: blocking.map(parseBlockingProgram) };
 }
 
 export function parseChannelReferenceData(data: unknown): ChannelReferenceData {
@@ -361,13 +385,19 @@ export async function fetchChannelReferenceData(): Promise<ChannelReferenceData>
   );
 }
 
-export async function deleteDraftChannel(id: string, expectedRevision: number): Promise<void> {
-  await requestChannelApi<unknown>(buildDeleteDraftChannelRequest(id, expectedRevision));
+export async function deleteChannel(id: string, expectedRevision: number): Promise<void> {
+  await requestChannelApi<unknown>(buildDeleteChannelRequest(id, expectedRevision));
 }
 
 export async function deactivateChannel(id: string, expectedRevision: number): Promise<ChannelDetail> {
   return parseChannelDetail(
     await requestChannelApi<unknown>(buildDeactivateChannelRequest(id, expectedRevision)),
+  );
+}
+
+export async function activateChannel(id: string, expectedRevision: number): Promise<ChannelDetail> {
+  return parseChannelDetail(
+    await requestChannelApi<unknown>(buildActivateChannelRequest(id, expectedRevision)),
   );
 }
 

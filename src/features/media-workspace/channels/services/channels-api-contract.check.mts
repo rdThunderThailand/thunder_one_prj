@@ -5,10 +5,11 @@
  */
 import assert from "node:assert/strict";
 import {
+  buildActivateChannelRequest,
   buildChannelListPath,
   buildChannelReferenceDataRequest,
   buildDeactivateChannelRequest,
-  buildDeleteDraftChannelRequest,
+  buildDeleteChannelRequest,
   buildFetchChannelRequest,
   buildFetchChannelsRequest,
   parseChannelDetail,
@@ -35,7 +36,7 @@ assert.deepEqual(buildChannelReferenceDataRequest(), {
 });
 
 // Every non-create mutation carries the revision token through its method/path/body descriptor.
-assert.deepEqual(buildDeleteDraftChannelRequest("channel-1", 4), {
+assert.deepEqual(buildDeleteChannelRequest("channel-1", 4), {
   method: "DELETE",
   path: "/media/channels/channel-1",
   body: { expected_revision: 4 },
@@ -45,7 +46,13 @@ assert.deepEqual(buildDeactivateChannelRequest("channel-1", 6), {
   path: "/media/channels/channel-1/deactivate",
   body: { expected_revision: 6 },
 });
-assert.throws(() => buildDeleteDraftChannelRequest("channel-1", 0));
+assert.deepEqual(buildActivateChannelRequest("channel-1", 6), {
+  method: "POST",
+  path: "/media/channels/channel-1/activate",
+  body: { expected_revision: 6 },
+});
+assert.throws(() => buildActivateChannelRequest("channel-1", 0));
+assert.throws(() => buildDeleteChannelRequest("channel-1", 0));
 assert.throws(() => buildDeactivateChannelRequest("channel-1", -1));
 
 const player = {
@@ -98,9 +105,13 @@ assert.equal("created_at" in parsedList[0]!, false);
 assert.equal("publication_count" in parsedList[0]!, false);
 assert.deepEqual(parsedList[0]?.player, player);
 assert.deepEqual(parsedList[0]?.groups, channel.groups);
-const expectedDetail = { ...channel, publication_count: undefined };
+const expectedDetail = { ...channel, publication_count: undefined, blocking_programs: [] };
 delete expectedDetail.publication_count;
+// `blocking_programs` is detail-only; a missing key means nothing blocks (ADR 0122 rule 7).
 assert.deepEqual(parseChannelDetail({ data: channel }), expectedDetail);
+const blockers = [{ id: "program-1", name: "Summer Sale" }];
+assert.deepEqual(parseChannelDetail({ data: { ...channel, blocking_programs: blockers } }).blocking_programs, blockers);
+assert.throws(() => parseChannelDetail({ data: { ...channel, blocking_programs: [{ id: "program-1" }] } }));
 
 // Multi-screen Channel, Player-less Draft (`player`/`health` both null).
 const multiDraft = {

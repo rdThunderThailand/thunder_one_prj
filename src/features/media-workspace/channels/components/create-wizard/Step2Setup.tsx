@@ -2,7 +2,7 @@ import { RESOLUTIONS, parseResolution, resolutionLabel } from "@/features/media-
 import { Badge } from "@/components/ui/Badge";
 import { MonitorIcon } from "@/components/ui/icons";
 import { ARRANGEMENT_OPTIONS, arrangementByKey } from "../../display-config";
-import { canvasResolutionFor, withAutoMappedScreens, withPlayer, type CreateChannelDraft } from "../../create-wizard-state";
+import { canvasResolutionFor, withAutoMappedScreens, withoutPlayer, withPlayer, type CreateChannelDraft } from "../../create-wizard-state";
 import type { ChannelPlayerCandidate } from "../../player-candidates";
 import { OutputMappingTable } from "./OutputMappingTable";
 import { PlayerPickerField } from "./PlayerPickerField";
@@ -144,7 +144,9 @@ export function Step2Setup({
             selectedId={draft.playerId}
             loading={candidatesLoading}
             excludeChannelId={excludeChannelId}
+            allowNone
             onSelect={(candidate) => onChange(withPlayer(draft, candidate))}
+            onClear={() => onChange(withoutPlayer(draft))}
             onRefresh={onRefreshCandidates}
           />
         </div>

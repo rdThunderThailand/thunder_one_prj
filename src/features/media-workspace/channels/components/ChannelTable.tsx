@@ -59,12 +59,14 @@ function ChannelRow({
   selected,
   onSelect,
   onChanged,
+  onDeleted,
 }: {
   channel: ChannelListItem;
   occurrence: NowNextOccurrence | null | undefined;
   selected: boolean;
   onSelect: (channel: ChannelListItem, trigger?: HTMLButtonElement) => void;
   onChanged: (updated: ChannelListItem) => void;
+  onDeleted: (id: string) => void;
 }) {
   const status = STATUS_BADGE[channelStatus(channel)];
   const TypeIcon = TYPE_ICON[channelTypeKey(channel)];
@@ -141,7 +143,7 @@ function ChannelRow({
         {remaining && <p className="mt-0.5 text-muted-foreground">{remaining}</p>}
       </td>
       <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()}>
-        <ChannelRowActionsMenu channel={channel} onChanged={onChanged} />
+        <ChannelRowActionsMenu channel={channel} onChanged={onChanged} onDeleted={onDeleted} />
       </td>
     </tr>
   );
@@ -155,6 +157,7 @@ export function ChannelTable({
   selectedId,
   onSelect,
   onChanged,
+  onDeleted,
 }: {
   channels: ChannelListItem[];
   nowNext: Map<string, NowNextOccurrence | null>;
@@ -163,6 +166,7 @@ export function ChannelTable({
   selectedId: string | null;
   onSelect: (channel: ChannelListItem, trigger?: HTMLButtonElement) => void;
   onChanged: (updated: ChannelListItem) => void;
+  onDeleted: (id: string) => void;
 }) {
   return (
     <div className="min-h-0 flex-1 overflow-auto">
@@ -187,6 +191,7 @@ export function ChannelTable({
               selected={channel.id === selectedId}
               onSelect={onSelect}
               onChanged={onChanged}
+              onDeleted={onDeleted}
             />
           ))}
         </tbody>
