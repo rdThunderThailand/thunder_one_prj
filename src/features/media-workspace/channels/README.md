@@ -12,7 +12,7 @@ Channel registry for business-facing publishing destinations. A Channel represen
 
 All calls go through `requestApi` in `@/lib/api/media-api` against Thunder_Core's Media API:
 
-- `channels-api.ts` — `fetchChannels` (`GET /media/channels`), `fetchChannel`, `fetchChannelReferenceData` (`/media/channels/reference-data`), `deleteDraftChannel`, `deactivateChannel`, `fetchChannelGroupOptions` (`GET /media/channel-groups`), `setChannelGroups` (`PUT /media/channels/{id}/groups`), plus the response parsers
+- `channels-api.ts` — `fetchChannels` (`GET /media/channels`), `fetchChannel`, `fetchChannelReferenceData` (`/media/channels/reference-data`), `deleteChannel`, `deactivateChannel`, `fetchChannelGroupOptions` (`GET /media/channel-groups`), `setChannelGroups` (`PUT /media/channels/{id}/groups`), plus the response parsers
 - `channel-write-api.ts` — `createChannelV2` (`POST /media/channels`) and `updateChannelV2` (`PATCH /media/channels/{id}`)
 - `channel-groups-api.ts` — the Channel Groups count (`GET /media/channel-groups`)
 - `player-candidates-api.ts` — Player candidates for the create/edit pickers (`GET /media/channels/player-candidates`)

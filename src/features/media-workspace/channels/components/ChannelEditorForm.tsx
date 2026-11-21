@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { MonitorIcon } from "@/components/ui/icons";
 import { ARRANGEMENT_OPTIONS } from "../display-config";
 import { canvasResolutionFor, withAutoMappedScreens, withoutPlayer, type CreateChannelDraft } from "../create-wizard-state";
 import type { ChannelPlayerCandidate } from "../player-candidates";
-import type { ChannelLocationOption, ChannelOutputKind } from "../types";
+import type { BlockingProgram, ChannelLocationOption, ChannelOutputKind } from "../types";
 import { OutputMappingTable } from "./create-wizard/OutputMappingTable";
 import { PlayerPickerField } from "./create-wizard/PlayerPickerField";
 
@@ -51,6 +52,7 @@ export function ChannelEditorForm({
   nameError,
   excludeChannelId,
   allowNoPlayer,
+  blockingPrograms,
   onChange,
   onRefreshCandidates,
 }: {
@@ -62,6 +64,8 @@ export function ChannelEditorForm({
   excludeChannelId: string;
   /** "No player yet" is offered unless the Channel is Active (ADR 0122 rule 4). */
   allowNoPlayer: boolean;
+  /** Live or scheduled Programs lock the Player (ADR 0122 rule 7). */
+  blockingPrograms: BlockingProgram[];
   onChange: (next: CreateChannelDraft) => void;
   onRefreshCandidates: () => void;
 }) {
@@ -198,12 +202,27 @@ export function ChannelEditorForm({
       </EditorSection>
 
       <EditorSection number={3} title="Player & Output Mapping" subtitle="Assign the Player device and configure each screen output.">
+        {blockingPrograms.length > 0 && (
+          <p role="status" className="mb-3 rounded-lg border border-warning/30 bg-warning-muted px-3 py-2 text-sm text-foreground">
+            Player is locked while these Programs are live or scheduled:{" "}
+            {blockingPrograms.map((program, index) => (
+              <span key={program.id}>
+                {index > 0 && ", "}
+                <Link href={`/media-workspace/program/${program.id}`} className="font-medium text-primary underline">
+                  {program.name}
+                </Link>
+              </span>
+            ))}
+            . Cancel them or wait for them to end.
+          </p>
+        )}
         <PlayerPickerField
           candidates={candidates}
           selectedId={draft.playerId}
           loading={candidatesLoading}
           excludeChannelId={excludeChannelId}
           allowNone={allowNoPlayer}
+          disabled={blockingPrograms.length > 0}
           onSelect={(candidate) => onChange({ ...draft, playerId: candidate.id })}
           onClear={() => onChange(withoutPlayer(draft))}
           onRefresh={onRefreshCandidates}

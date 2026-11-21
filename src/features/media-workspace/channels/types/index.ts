@@ -104,8 +104,16 @@ export interface ChannelListItem {
   updated_at: string;
 }
 
+/** A Program that is live or scheduled and reaches a Channel (ADR 0122 rule 7). */
+export interface BlockingProgram {
+  id: string;
+  name: string;
+}
+
 export interface ChannelDetail extends ChannelListItem {
   created_at: string;
+  /** Only the detail endpoint returns it; empty when nothing blocks. */
+  blocking_programs: BlockingProgram[];
 }
 
 /** "multi" is a Channel whose `display_config.mode` is `"multi"`, independent of its Output Kind. */
