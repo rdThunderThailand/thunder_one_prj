@@ -106,6 +106,7 @@ function channelDetail(over: Partial<ChannelDetail> = {}): ChannelDetail {
     revision: 2,
     updated_at: "2026-09-14T00:00:00Z",
     created_at: "2026-08-01T00:00:00Z",
+    blocking_programs: [],
     ...over,
   };
 }

@@ -146,6 +146,7 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
               nameError={nameError}
               excludeChannelId={channelId}
               allowNoPlayer={channel.status !== "active"}
+              blockingPrograms={channel.blocking_programs}
               onChange={setDraft}
               onRefreshCandidates={refreshCandidates}
             />

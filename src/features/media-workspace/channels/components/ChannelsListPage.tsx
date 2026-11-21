@@ -137,6 +137,10 @@ export function ChannelsListPage() {
     setChannels((current) => current?.map((c) => (c.id === updated.id ? updated : c)) ?? current);
   };
 
+  const handleDeleted = (id: string) => {
+    setChannels((current) => current?.filter((c) => c.id !== id) ?? current);
+  };
+
   const handleCreated = (created: ChannelDetail) => {
     setChannels((current) => (current ? [created, ...current] : current));
   };
@@ -217,6 +221,7 @@ export function ChannelsListPage() {
                     setSelectedId(channel.id);
                   }}
                   onChanged={handleChanged}
+                  onDeleted={handleDeleted}
                 />
                 <div className="shrink-0 border-t border-border px-4 py-3">
                   <Pagination
