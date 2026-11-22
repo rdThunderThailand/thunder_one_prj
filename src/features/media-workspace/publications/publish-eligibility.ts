@@ -1,7 +1,10 @@
-import type { DraftFields } from "./store/usePublicationDraftStore";
-import type { MediaAsset, ScheduleConflict } from "./types";
-import { validateStep } from "./step-validation.ts";
-import { isDraftValid } from "./schedule-preset.ts";
+import type { DraftFields } from "./store/usePublicationDraftStore.ts";
+import type { MediaAsset, PublicationSchedule, ScheduleConflict } from "./types/index.ts";
+import type { ProgramContent, ProgramEditState } from "./program-edit.ts";
+import type { ChannelListItem } from "../channels/types/index.ts";
+import { draftToSchedule, isDraftValid, scheduleToDraft, validateDraft } from "./schedule-preset.ts";
+import { DEFAULT_TIMEZONE } from "./schedule.ts";
+import { targetsFromSelection } from "./draft-mapping.ts";
 
 export type EligibilityStatus = "pass" | "fail" | "unknown";
 
@@ -15,6 +18,41 @@ export interface EligibilityCheck {
 export interface EligibilityResult {
   checks: EligibilityCheck[];
   canPublish: boolean;
+  /** The first failing gating check, worded for a tooltip. Null when nothing definite blocks. */
+  blockReason: string | null;
+}
+
+/** The wire shape of a Program, so the wizard and the Edit page share one gate (ADR 0002). */
+export type ProgramGateInput = Pick<ProgramEditState, "name" | "targets" | "schedule"> & {
+  content: Pick<ProgramContent, "type" | "playlistId" | "compositionId"> & { items: { media_asset_id: string }[] };
+};
+
+export function programGateInputFromDraft(draft: DraftFields, channels: ChannelListItem[]): ProgramGateInput {
+  return {
+    name: draft.basicInfo.name,
+    content: {
+      type: draft.basicInfo.publicationType,
+      playlistId: draft.playlistId,
+      compositionId: draft.compositionId,
+      items: draft.assetItems,
+    },
+    targets: targetsFromSelection(draft.channelIds, draft.groupIds, draft.groupNamesById, channels),
+    schedule: isDraftValid(draft.schedule) ? draftToSchedule(draft.schedule) : null,
+  };
+}
+
+/** The saved schedule if it passes the wizard's rules on `today`/`nowTime` in its own timezone, else null. */
+export function strictWireSchedule(
+  schedule: PublicationSchedule | null,
+  today: string,
+  nowTime: string,
+): PublicationSchedule | null {
+  if (!schedule) {
+    return null;
+  }
+  const timezone = schedule.timezone || DEFAULT_TIMEZONE;
+  const errors = validateDraft(scheduleToDraft(schedule, today, timezone), today, nowTime);
+  return Object.keys(errors).length === 0 ? schedule : null;
 }
 
 export interface PriorityConflictSummary {
@@ -60,46 +98,46 @@ export function isAllGatingPassed(checks: EligibilityCheck[]): boolean {
 }
 
 export function computeEligibility(params: {
-  draft: DraftFields;
-  assets: MediaAsset[];
-  conflicts: ScheduleConflict[];
-  conflictsError: string | null;
+  program: ProgramGateInput;
+  basicInfoOk: boolean;
+  /** Null skips the library lookup: an item then counts as found (the Edit page holds no library). */
+  assets: MediaAsset[] | null;
   loadingRefs: boolean;
-  checkingConflicts: boolean;
+  conflicts?: ScheduleConflict[];
+  conflictsError?: string | null;
+  checkingConflicts?: boolean;
 }): EligibilityResult {
-  const { draft, assets, conflicts, conflictsError, loadingRefs, checkingConflicts } = params;
+  const { program, basicInfoOk, assets, loadingRefs, conflicts, conflictsError, checkingConflicts } = params;
+  const { content } = program;
 
   let contentCheckStatus: EligibilityStatus;
-  if (draft.basicInfo.publicationType === "playlist") {
-    contentCheckStatus = draft.playlistId ? "pass" : "fail";
-  } else if (draft.basicInfo.publicationType === "composition") {
-    // Without this branch the else below reads a composition draft's empty assetItems as
+  if (content.type === "playlist") {
+    contentCheckStatus = content.playlistId ? "pass" : "fail";
+  } else if (content.type === "composition") {
+    // Without this branch the else below reads a composition's empty items as
     // "no content" and marks it ineligible — its content lives on the Composition, not here
     // (ADR 0049 §5).
-    contentCheckStatus = draft.compositionId ? "pass" : "fail";
-  } else if (draft.assetItems.length === 0) {
+    contentCheckStatus = content.compositionId ? "pass" : "fail";
+  } else if (content.items.length === 0) {
     contentCheckStatus = "fail";
   } else {
     // Every held item must resolve against the loaded library; an unresolved one reads as
     // "unknown" until the library load finishes. Approval is no longer a gate (ADR 0073).
-    const allFound = draft.assetItems.every((item) =>
-      assets.some((a) => a.id === item.media_asset_id),
-    );
+    const allFound =
+      assets === null || content.items.every((item) => assets.some((a) => a.id === item.media_asset_id));
     contentCheckStatus = allFound ? "pass" : "unknown";
   }
 
-  // The ver02 Program step (3) gates channels and schedule together; the checklist still
-  // reports them as separate rows, so each reads its own primitive rather than the step.
-  const scheduleCheckStatus: EligibilityStatus = isDraftValid(draft.schedule) ? "pass" : "fail";
+  // The caller decides how strict the schedule is: the gate only asks whether one was handed in.
+  const scheduleCheckStatus: EligibilityStatus = program.schedule !== null ? "pass" : "fail";
   // A Channel picked directly and one reached through a Channel Group are independent
   // intents (ADR 0074 §6) — either alone is a complete target selection.
-  const channelsCheckStatus: EligibilityStatus =
-    draft.channelIds.length > 0 || draft.groupIds.length > 0 ? "pass" : "fail";
+  const channelsCheckStatus: EligibilityStatus = program.targets.length > 0 ? "pass" : "fail";
   const policyCheckStatus: EligibilityStatus = "unknown";
   // ADR 0068: an overlap warns, it never refuses. The check still flags that conflicts exist so
-  // the checklist shows it, but it is read as advice rather than a gate.
+  // the checklist shows it, but it is read as advice rather than a gate. No input reads as unknown.
   const conflictsCheckStatus: EligibilityStatus =
-    checkingConflicts || conflictsError
+    checkingConflicts || conflictsError || !conflicts
       ? "unknown"
       : conflicts.some((conflict) => conflict.would_be_suppressed)
         ? "fail"
@@ -113,14 +151,25 @@ export function computeEligibility(params: {
     { id: "conflicts", status: conflictsCheckStatus },
   ];
 
-  // Step 2 (Prepare Content) owns the name/type gate after the ver02 re-cut (ADR 0072 §2).
-  const basicInfoOk = validateStep(2, draft).valid;
   // Content, schedule and channels only — conflicts are advisory (ADR 0068), so the button no
   // longer waits on a result that cannot block anything.
   const canPublish = basicInfoOk && !loadingRefs && isAllGatingPassed(checks);
 
+  // First definite failure, in the order an operator fixes them. "unknown" never names a reason.
+  let blockReason: string | null = null;
+  if (!basicInfoOk) {
+    blockReason = "Give this Program a name before publishing.";
+  } else if (contentCheckStatus === "fail") {
+    blockReason = "Choose content for this Program before publishing.";
+  } else if (channelsCheckStatus === "fail") {
+    blockReason = "Choose at least one Channel or Channel Group before publishing.";
+  } else if (scheduleCheckStatus === "fail") {
+    blockReason = "Set a schedule that starts today or later before publishing.";
+  }
+
   return {
     checks,
     canPublish,
+    blockReason,
   };
 }
