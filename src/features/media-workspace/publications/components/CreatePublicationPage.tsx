@@ -17,7 +17,7 @@ import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { publishCauseFix } from "../publish-cause-fix";
 import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
 import { WizardProblemTargetsNotice } from "./ProblemTargetsNotice";
-import { useLoadProblemTargets } from "../hooks/useWizardProblemTargets";
+import { showProblemTargets, useLoadProblemTargets } from "../hooks/useWizardProblemTargets";
 import { PublishErrorFix } from "./PublishErrorFix";
 import { fetchPublication } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
@@ -115,6 +115,7 @@ export function CreatePublicationPage() {
       }
 
       const draft = detailToDraft(detail, playlist);
+      showProblemTargets(detail);
 
       setBasicInfo(draft.basicInfo);
       usePublicationDraftStore.getState().setPlaylistId(draft.playlistId);

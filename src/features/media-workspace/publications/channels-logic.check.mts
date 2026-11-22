@@ -10,11 +10,12 @@ import {
   filterBySearch,
   formatPlayerSummary,
   selectedGroupItems,
-  selectedChannelDeviceIds,
   statusPercent,
   summarizeGeometryFit,
   toChannelItems,
 } from "./channels-logic.ts";
+import { targetsFromSelection } from "./draft-mapping.ts";
+import { targetDeviceIds } from "./program-edit.ts";
 import type { ChannelDevice, ChannelListItem } from "../channels/types/index.ts";
 
 function device(id: string, health: ChannelDevice["health"], resolution: string | null = null): ChannelDevice {
@@ -70,10 +71,14 @@ assert.equal(items[1].status, "warning"); // the Player's health is the card sta
 assert.equal(items[1].category, "in-store"); // domain `in_store` -> wizard `in-store`
 assert.equal(items[2].status, "offline"); // no Player, no liveness to report
 
-// --- selectedChannelDeviceIds: media_schedule_conflicts is still device-level ---
-assert.deepEqual(selectedChannelDeviceIds(channels, []), []);
-assert.deepEqual(selectedChannelDeviceIds(channels, ["c1", "c2"]), ["d1", "d2"]);
-assert.deepEqual(selectedChannelDeviceIds(channels, ["c4"]), []); // channel with no Player
+// --- wizard conflict check: media_schedule_conflicts is device-level, Groups expand to their Players ---
+const wizardDevices = (channelIds: string[], groupIds: string[]) =>
+  targetDeviceIds(channels, targetsFromSelection(channelIds, groupIds, {}, channels)).sort();
+assert.deepEqual(wizardDevices([], []), []);
+assert.deepEqual(wizardDevices(["c1", "c2"], []), ["d1", "d2"]);
+assert.deepEqual(wizardDevices(["c4"], []), []); // channel with no Player
+assert.deepEqual(wizardDevices([], ["g1"]), ["d1", "d2"]); // Group-only Draft
+assert.deepEqual(wizardDevices(["c1"], ["g1"]), ["d1", "d2"]); // overlap counted once
 assert.deepEqual(selectedGroupItems(channels, ["g1"], {}), [
   { id: "g1", name: "All Screens", channelCount: 2 },
 ]);
