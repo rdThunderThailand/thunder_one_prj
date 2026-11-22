@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -17,7 +17,7 @@ import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { publishCauseFix } from "../publish-cause-fix";
 import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
 import { WizardProblemTargetsNotice } from "./ProblemTargetsNotice";
-import { showProblemTargets, useLoadProblemTargets } from "../hooks/useWizardProblemTargets";
+import { useRefreshProblemTargets } from "../hooks/useWizardProblemTargets";
 import { PublishErrorFix } from "./PublishErrorFix";
 import { fetchPublication } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
@@ -42,6 +42,21 @@ import { ReviewStep } from "./ReviewStep";
 function landOnResumeStep() {
   const step = resumeStep(usePublicationDraftStore.getState());
   usePublicationDraftStore.setState({ step, furthestStep: step });
+}
+
+// Shared by the `?id=` resume effect and the revision-conflict banner's "โหลดใหม่" action — both fully
+// overwrite local state from the server, on the premise that any local edits are not worth keeping.
+async function loadDraft(id: string): Promise<void> {
+  const detail = await fetchPublication(id);
+  let playlist: PlaylistDetail | null = null;
+  if (detail.playlist?.id) {
+    try {
+      playlist = await fetchPlaylist(detail.playlist.id);
+    } catch {
+      // Ignore playlist error per spec
+    }
+  }
+  usePublicationDraftStore.getState().openDraft(detailToDraft(detail, playlist));
 }
 
 // The five ver02 Create steps (ADR 0072 §2):
@@ -70,20 +85,13 @@ export function CreatePublicationPage() {
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
   const goBack = usePublicationDraftStore((s) => s.goBack);
 
-  const setPublicationId = usePublicationDraftStore((s) => s.setPublicationId);
   const setStep = usePublicationDraftStore((s) => s.setStep);
-  const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
-  const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
-  const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
-  const setGroupIds = usePublicationDraftStore((s) => s.setGroupIds);
-  const setGroupNamesById = usePublicationDraftStore((s) => s.setGroupNamesById);
-  const setSchedule = usePublicationDraftStore((s) => s.setSchedule);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const publicationType = usePublicationDraftStore((s) => s.basicInfo.publicationType);
   // ADR 0114: a Layout that is not Active is caught wherever the operator came from, not only in the picker.
   const layoutGate = useLayoutPublishBlock(compositionId, step);
-  useLoadProblemTargets(publicationId);
+  useRefreshProblemTargets({ hasHydrated, idParam });
   const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
 
   const [resumedId, setResumedId] = useState<string | null>(null);
@@ -99,40 +107,6 @@ export function CreatePublicationPage() {
   // frame of the wrong publication.
   const resumePending = isResumePending(idParam, resumedId, publicationId);
 
-  // Shared by the `?id=` resume effect below and the revision-conflict banner's
-  // "โหลดใหม่" action — both fully overwrite local state from the server, on
-  // the premise that any local edits are the ones in question, not worth keeping.
-  const loadPublicationIntoDraft = useCallback(
-    async (id: string) => {
-      const detail = await fetchPublication(id);
-      let playlist: PlaylistDetail | null = null;
-      if (detail.playlist?.id) {
-        try {
-          playlist = await fetchPlaylist(detail.playlist.id);
-        } catch {
-          // Ignore playlist error per spec
-        }
-      }
-
-      const draft = detailToDraft(detail, playlist);
-      showProblemTargets(detail);
-
-      setBasicInfo(draft.basicInfo);
-      usePublicationDraftStore.getState().setPlaylistId(draft.playlistId);
-      setAssetItems(draft.assetItems);
-      setChannelIds(draft.channelIds);
-      setGroupIds(draft.groupIds);
-      setGroupNamesById(draft.groupNamesById);
-      setSchedule(draft.schedule);
-      usePublicationDraftStore.getState().setCompositionId(draft.compositionId);
-      setPublicationId(detail.id);
-      usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
-      usePublicationDraftStore.getState().markSaved();
-      usePublicationDraftStore.getState().setExplicitlySaved(true);
-    },
-    [setBasicInfo, setAssetItems, setChannelIds, setGroupIds, setGroupNamesById, setSchedule, setPublicationId]
-  );
-
   useEffect(() => {
     if (!hasHydrated) return;
     if (!idParam) return;
@@ -147,7 +121,7 @@ export function CreatePublicationPage() {
     const load = async () => {
       setResumeFailure(null);
       try {
-        await loadPublicationIntoDraft(idParam);
+        await loadDraft(idParam);
         if (!alive) return;
         landOnResumeStep();
       } catch (err) {
@@ -165,7 +139,7 @@ export function CreatePublicationPage() {
     return () => {
       alive = false;
     };
-  }, [hasHydrated, idParam, loadPublicationIntoDraft]);
+  }, [hasHydrated, idParam]);
 
   const [retrying, setRetrying] = useState(false);
 
@@ -174,7 +148,7 @@ export function CreatePublicationPage() {
     setRetrying(true);
     setResumeFailure(null);
     try {
-      await loadPublicationIntoDraft(idParam);
+      await loadDraft(idParam);
       landOnResumeStep();
     } catch (err) {
       setResumeFailure(classifyApiError(err, "โหลด draft ไม่สำเร็จ"));
@@ -237,7 +211,7 @@ export function CreatePublicationPage() {
     if (!publicationId) return;
     setConflictBusy(true);
     try {
-      await loadPublicationIntoDraft(publicationId);
+      await loadDraft(publicationId);
       setRevisionConflict(null);
     } catch (err) {
       setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");

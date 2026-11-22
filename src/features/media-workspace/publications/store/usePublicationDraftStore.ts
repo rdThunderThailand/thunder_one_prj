@@ -15,6 +15,9 @@ import { DEFAULT_IMAGE_DURATION_SECONDS } from "../draft-mapping";
 import type { DraftAssetItem } from "../types";
 import { priorities } from "../mock-data";
 import type { BasicInfoState } from "../components/BasicInfoForm";
+import type { ResumedDraft } from "../detail-mapping";
+import type { ProblemTarget } from "../problem-targets";
+import { seedContent, type PublicationSeed, type ReadySeed } from "../seed-resolver";
 
 const defaultBasicInfo: BasicInfoState = {
   publicationType: "image",
@@ -79,9 +82,17 @@ interface PublicationDraftStore extends DraftFields {
    * `null` until the first save/load — omitting `expected_revision` on that
    * first write is what `media_publication_upsert` treats as "no check". */
   revision: number | null;
+  /** ADR 0122 rule 17: Channel targets Publish would refuse, from the server's detail. Not a draft field —
+   * the operator cannot edit it, so it never enters the dirty check. */
+  problemTargets: ProblemTarget[];
   markSaved: (draft?: DraftFields) => void;
   setExplicitlySaved: (v: boolean) => void;
   setRevision: (revision: number | null) => void;
+  setProblemTargets: (targets: ProblemTarget[]) => void;
+  /** Replaces the draft with a Publication the caller already fetched, as saved. Leaves `step` to the caller. */
+  openDraft: (opened: ResumedDraft) => void;
+  /** Replaces the draft with an editor seed and lands on step 2 (ADR 0086). */
+  applySeed: (seed: PublicationSeed, ready: ReadySeed) => void;
   setPublicationId: (id: string | null) => void;
   setPlaylistId: (id: string | null) => void;
   setCompositionId: (id: string | null) => void;
@@ -120,10 +131,42 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       savedSnapshot: serializeDraftFields(getDefaultDraft()),
       explicitlySaved: false,
       revision: null,
+      problemTargets: [],
       // #228: snapshot the request, not edits made while it was in flight.
       markSaved: (draft) => set((s) => ({ savedSnapshot: serializeDraftFields(draft ?? s) })),
       setExplicitlySaved: (explicitlySaved) => set({ explicitlySaved }),
       setRevision: (revision) => set({ revision }),
+      setProblemTargets: (problemTargets) => set({ problemTargets }),
+      openDraft: (opened) => set({
+        basicInfo: opened.basicInfo,
+        assetItems: opened.assetItems,
+        playlistId: opened.playlistId,
+        compositionId: opened.compositionId,
+        channelIds: opened.channelIds,
+        groupIds: opened.groupIds,
+        groupNamesById: opened.groupNamesById,
+        schedule: opened.schedule,
+        publicationId: opened.publicationId,
+        revision: opened.revision,
+        problemTargets: opened.problemTargets,
+        savedSnapshot: serializeDraftFields(opened),
+        explicitlySaved: true,
+      }),
+      // No clearStorage(): persist writes the whole new state on set().
+      applySeed: (seed, ready) => {
+        const { publicationType, ...content } = seedContent(seed, ready);
+        set({
+          ...getDefaultDraft(),
+          lastAutoName: "",
+          savedSnapshot: serializeDraftFields(getDefaultDraft()),
+          explicitlySaved: false,
+          revision: null,
+          problemTargets: [],
+          basicInfo: { ...defaultBasicInfo, publicationType },
+          ...content,
+          step: 2,
+        });
+      },
       setPublicationId: (publicationId) => set({ publicationId }),
       setPlaylistId: (playlistId) => set({ playlistId }),
       setCompositionId: (compositionId) => set({ compositionId }),
@@ -198,6 +241,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
           savedSnapshot: serializeDraftFields(getDefaultDraft()),
           explicitlySaved: false,
           revision: null,
+          problemTargets: [],
         });
         usePublicationDraftStore.persist.clearStorage();
       },
@@ -227,6 +271,8 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // there would count as auto-filled and be overwritten; it is dropped instead.
       // v14: `scheduleForm` is replaced by `schedule`, a ScheduleDraft shared with the Edit page
       // (ADR 0082). A v13 draft has no `schedule`, so it is dropped rather than migrated.
+      // `problemTargets` (added after v14) is absent from an older v14 draft and shallow-merges to its
+      // default of [] — the same reasoning as `furthestStep`, so the key is not bumped.
       name: "thunderone.publications.create-draft.v14",
       storage: createJSONStorage(() => localStorage),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
