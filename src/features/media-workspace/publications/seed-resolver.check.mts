@@ -1,6 +1,6 @@
 // Run: node src/features/media-workspace/publications/seed-resolver.check.mts
 import assert from "node:assert/strict";
-import { publicationSeedFromParams, resolveSeed } from "./seed-resolver.ts";
+import { publicationSeedFromParams, resolveSeed, seedContent } from "./seed-resolver.ts";
 
 // The four rows from ticket #78 / plan Phase 0 item 4.
 
@@ -73,5 +73,24 @@ for (const kind of ["asset", "playlist", "composition"] as const) {
   assert.equal(resolveSeed({ seedPresent, isEditMode: false, draftHasUnfinishedWork: true, choice: "continue" }), "discard", kind);
   assert.equal(resolveSeed({ seedPresent, isEditMode: true, draftHasUnfinishedWork: true, choice: "fresh" }), "discard", kind);
 }
+
+// seedContent: each seed kind fills only its own slot.
+const emptySeed = { assetItems: [], playlistId: null, compositionId: null };
+assert.deepEqual(
+  seedContent({ kind: "composition", id: "composition-1" }, { name: "Menu", publicationType: "composition" }),
+  { ...emptySeed, publicationType: "composition", compositionId: "composition-1" },
+);
+assert.deepEqual(
+  seedContent({ kind: "playlist", id: "playlist-1" }, { name: "Loop", publicationType: "playlist" }),
+  { ...emptySeed, publicationType: "playlist", playlistId: "playlist-1" },
+);
+assert.deepEqual(
+  seedContent({ kind: "asset", id: "asset-1" }, { name: "Poster", publicationType: "image" }),
+  { ...emptySeed, publicationType: "image", assetItems: [{ media_asset_id: "asset-1", duration_seconds: 10, transition: "cut" }] },
+);
+assert.deepEqual(
+  seedContent({ kind: "asset", id: "asset-2" }, { name: "Clip", publicationType: "video" }),
+  { ...emptySeed, publicationType: "video", assetItems: [{ media_asset_id: "asset-2", duration_seconds: null, transition: "cut" }] },
+);
 
 console.log("seed-resolver.check.mts — all assertions passed");

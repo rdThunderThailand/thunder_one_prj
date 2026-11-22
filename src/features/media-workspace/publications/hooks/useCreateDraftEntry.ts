@@ -6,31 +6,14 @@ import { fetchComposition } from "../../compositions/services/compositions-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { classifyApiError } from "@/lib/api/api-error";
 import { hasUnfinishedDraft, shouldShowResumePrompt } from "../resume-prompt";
-import { resolveSeed, type PublicationSeed } from "../seed-resolver";
+import { resolveSeed, type PublicationSeed, type ReadySeed } from "../seed-resolver";
 import { DraftSaveError, draftSavePolicy, type DraftPersistResult } from "../draft-save-policy";
-import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
+import { isImageAsset } from "../draft-mapping";
 import { isDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import type { MediaAsset, PublicationType } from "../types";
+import type { MediaAsset } from "../types";
 
 const CREATE_URL = "/media-workspace/program/create";
 type Entry = { seed: PublicationSeed | null; isEditMode: boolean; unfinished: boolean; hasServerDraft: boolean; dropsSchedule: boolean };
-type ReadySeed = { name: string; publicationType: PublicationType };
-
-function applySeed(seed: PublicationSeed, ready: ReadySeed) {
-  const store = usePublicationDraftStore.getState();
-  store.cancelDraft();
-  store.setBasicInfo({ ...usePublicationDraftStore.getState().basicInfo, publicationType: ready.publicationType });
-  if (seed.kind === "composition") store.setCompositionId(seed.id);
-  if (seed.kind === "playlist") store.setPlaylistId(seed.id);
-  if (seed.kind === "asset") {
-    store.setAssetItems([{
-      media_asset_id: seed.id,
-      duration_seconds: ready.publicationType === "image" ? DEFAULT_IMAGE_DURATION_SECONDS : null,
-      transition: "cut",
-    }]);
-  }
-  store.setStep(2);
-}
 
 export function useCreateDraftEntry(input: {
   hasHydrated: boolean;
@@ -109,7 +92,7 @@ export function useCreateDraftEntry(input: {
       setReadySeed(ready);
       if (resolveSeed({ seedPresent: true, isEditMode: false, draftHasUnfinishedWork: entry.unfinished, choice: null }) === "apply") {
         resolved.current = true;
-        applySeed(seed, ready);
+        usePublicationDraftStore.getState().applySeed(seed, ready);
         setDismissed(true);
         router.replace(CREATE_URL);
       }
@@ -152,7 +135,7 @@ export function useCreateDraftEntry(input: {
         }
       }
       resolved.current = true;
-      if (entry.seed && readySeed) applySeed(entry.seed, readySeed);
+      if (entry.seed && readySeed) usePublicationDraftStore.getState().applySeed(entry.seed, readySeed);
       else usePublicationDraftStore.getState().cancelDraft();
       setDismissed(true);
       if (entry.seed) router.replace(CREATE_URL);
