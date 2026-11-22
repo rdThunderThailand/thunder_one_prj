@@ -23,7 +23,8 @@ import { fetchChannels } from "../../channels/services/channels-api";
 import type { ChannelListItem } from "../../channels/types";
 import { targetDeviceIds } from "../program-edit";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import { computeEligibility } from "../publish-eligibility";
+import { computeEligibility, programGateInputFromDraft } from "../publish-eligibility";
+import { validateStep } from "../step-validation";
 import { classifyApiError, isConflict, scheduleEndedMessage, type PublishCause } from "@/lib/api/api-error";
 import { formatDmy, shiftYmd, utcToZonedParts } from "../schedule";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
@@ -82,8 +83,11 @@ export function usePublishDraft() {
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
 
+  const draft = { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, groupIds, groupNamesById, schedule };
   const eligibility = computeEligibility({
-    draft: { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, groupIds, groupNamesById, schedule },
+    program: programGateInputFromDraft(draft, channels),
+    // Step 2 (Prepare Content) owns the name/type gate after the ver02 re-cut (ADR 0072 §2).
+    basicInfoOk: validateStep(2, draft).valid,
     assets,
     conflicts,
     conflictsError,
