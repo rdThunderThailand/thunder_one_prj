@@ -1,22 +1,34 @@
 import { useEffect, useMemo } from "react";
 import { create } from "zustand";
+import { fetchPublication } from "../services/publications-api";
 import { problemTargets, type ProblemTarget } from "../problem-targets";
-import type { PublicationTarget } from "../types";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 // Not persisted with the draft: the wizard's own store holds ids only, and a deleted Channel has no
 // entry in the Channel list to take a name from, so the saved names come from the Program's detail.
 const useLoadedTargets = create<{ targets: ProblemTarget[] }>(() => ({ targets: [] }));
 
-/** Called where the wizard loads a Draft's detail, so no second request is needed. */
-export function setLoadedProblemTargets(targets: readonly PublicationTarget[]) {
-  useLoadedTargets.setState({ targets: problemTargets(targets) });
-}
-
-/** Call once at the wizard root: a new Program (no id) carries no saved problem targets. */
-export function useResetProblemTargets(publicationId: string | null) {
+/**
+ * Call once at the wizard root. Fetches on its own rather than riding the `?id=` load, because a
+ * Draft reopened from its persisted local copy skips that load entirely.
+ */
+export function useLoadProblemTargets(publicationId: string | null) {
   useEffect(() => {
-    if (!publicationId) useLoadedTargets.setState({ targets: [] });
+    if (!publicationId) {
+      useLoadedTargets.setState({ targets: [] });
+      return;
+    }
+    let alive = true;
+    void fetchPublication(publicationId)
+      .then((detail) => {
+        if (alive) useLoadedTargets.setState({ targets: problemTargets(detail.publication_targets ?? []) });
+      })
+      .catch(() => {
+        // Publish still refuses a bad target by name, so a failed read only loses the early notice.
+      });
+    return () => {
+      alive = false;
+    };
   }, [publicationId]);
 }
 
