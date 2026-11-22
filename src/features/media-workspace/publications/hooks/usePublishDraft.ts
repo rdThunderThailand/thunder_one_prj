@@ -21,7 +21,7 @@ import {
 } from "../services/publications-api";
 import { fetchChannels } from "../../channels/services/channels-api";
 import type { ChannelListItem } from "../../channels/types";
-import { selectedChannelDeviceIds } from "../channels-logic";
+import { targetDeviceIds } from "../program-edit";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility } from "../publish-eligibility";
 import { classifyApiError, isConflict, scheduleEndedMessage, type PublishCause } from "@/lib/api/api-error";
@@ -153,7 +153,7 @@ export function usePublishDraft() {
   useEffect(() => {
     let cancelled = false;
 
-    if (channelIds.length === 0 || scheduleKey === "") {
+    if ((channelIds.length === 0 && groupIds.length === 0) || scheduleKey === "") {
       // Deferred by a tick on purpose: this repo's lint (React Compiler rules)
       // rejects a synchronous setState inside an effect body.
       const resetTimer = setTimeout(() => {
@@ -174,7 +174,8 @@ export function usePublishDraft() {
       const payload = JSON.parse(scheduleKey) as PublicationSchedule;
       checkScheduleConflicts({
         publication_id: publicationId,
-        device_ids: selectedChannelDeviceIds(channels, channelIds),
+        // Same Group expansion as the edit page: a Group-only Draft still reaches Players (ADR 0080).
+        device_ids: targetDeviceIds(channels, targetsFromSelection(channelIds, groupIds, groupNamesById, channels)),
         starts_at: payload.starts_at,
         ends_at: payload.ends_at,
         recurrence: payload.recurrence,
@@ -206,6 +207,8 @@ export function usePublishDraft() {
     channels,
     channelIds,
     channelIdsStr,
+    groupIds,
+    groupNamesById,
     scheduleKey,
     basicInfo.priorityId,
   ]);

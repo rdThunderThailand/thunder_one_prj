@@ -36,19 +36,6 @@ export function toChannelItems(channels: ChannelListItem[]): ChannelItem[] {
     }));
 }
 
-/** The Player behind each selected Channel. `media_schedule_conflicts` is still
- * device-level, so the Channel selection has to be flattened before it is asked. */
-export function selectedChannelDeviceIds(
-  channels: ChannelListItem[],
-  selectedIds: string[],
-): string[] {
-  const ids = new Set<string>();
-  for (const channel of channels) {
-    if (selectedIds.includes(channel.id) && channel.player !== null) ids.add(channel.player.id);
-  }
-  return [...ids];
-}
-
 export function selectedGroupItems(
   channels: ChannelListItem[],
   groupIds: readonly string[],

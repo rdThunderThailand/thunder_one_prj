@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { fetchPublication } from "../services/publications-api";
+import type { PublicationDetail } from "../types";
 import { problemTargets, type ProblemTarget } from "../problem-targets";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
@@ -30,6 +31,11 @@ export function useLoadProblemTargets(publicationId: string | null) {
       alive = false;
     };
   }, [publicationId]);
+}
+
+/** For a load that already holds the detail. "โหลดใหม่" keeps the same id, so the hook above never refetches. */
+export function showProblemTargets(detail: PublicationDetail) {
+  useLoadedTargets.setState({ targets: problemTargets(detail.publication_targets ?? []) });
 }
 
 /** The loaded problem targets that are still selected; Remove drops an id from the draft. */
