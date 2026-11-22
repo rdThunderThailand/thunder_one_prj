@@ -1,7 +1,8 @@
 # 0122 — Deleting an unused Channel frees its Player; a Channel with history becomes a Tombstone
 
 Status: accepted (2026-11-20, owner decisions in a grilling session on "move a Player to a new Channel
-and delete the old one"; scrutiny round 1 applied the same day).
+and delete the old one"; scrutiny round 1 applied the same day). Phase 2 (rules 11–20) amended
+2026-11-22.
 **Workspace:** media-workspace
 
 Supersedes the hard-delete rule of [ADR 0038](0038-channel-lifecycle-retirement-and-concurrency.md)
@@ -103,48 +104,133 @@ Gaps found on the way:
 
 ### Phase 2 — Tombstone for a Channel with history
 
-Phase 2 starts only after items 14–16 are in place.
+Amended 2026-11-22: owner decisions in a second grilling session, then scrutiny the same day.
 
-11. **Delete of a Channel that is not in use but has history is a Tombstone.** One transaction: set
-    `deleted_at` and `status = 'inactive'`, and delete its `channel_device_reservations` and
-    `channel_devices` rows. The Channel row stays, so `publication_targets`, Playback Proof and the
-    rollup still resolve its name. There is no undo: the Player may already be reserved elsewhere.
-12. **A deleted Channel is out of every live surface.** Lists, counts, pickers (Program targets, Group
-    members, Player candidates), the calendar and Now & Next filter `deleted_at IS NULL`. History screens
-    show `<name> (deleted)`. The 24 Core functions that read `media_core.channels` on prod on 2026-11-20
-    are each checked: `channel_audit`, `channel_group_rows`, `channel_lock`, `channel_rows`,
-    `channel_set_devices`, `playback_proof_check_args`, `playback_proof_rows`,
-    `publication_group_warnings`, `media_calendar_get`, `media_channel_activate`, `media_channel_create`,
-    `media_channel_deactivate`, `media_channel_delete`, `media_channel_groups_set_members`,
-    `media_channel_groups_update`, `media_channel_player_candidates`, `media_channel_set_groups`,
-    `media_channel_update`, `media_job_poll`, `media_now_next_get`, `media_publication_activate`,
-    `media_publication_get`, `media_publication_upsert`, `player_update_devices_list`.
-13. **The name can be reused.** `channels_tenant_id_name_key` is a UNIQUE constraint caught as
-    `unique_violation` by the create/update paths. Drop the constraint and create a partial unique index
-    on `(tenant_id, name) WHERE deleted_at IS NULL`. `media_channel_create` and `media_channel_update`
-    catch `unique_violation` without matching the constraint name (prod, 2026-11-20), so the index
-    raises the error they already handle.
-14. **A Tombstone cannot come back.** `channel_lock` refuses `deleted_at IS NOT NULL` with `not found`.
-    That one check covers update, activate, deactivate and delete. Both Group writers
-    (`media_channel_groups_set_members`, `media_channel_set_groups`) refuse a deleted Channel.
-15. **No race with Program activation or Group edits.** `media_publication_activate` and both Group
-    writers take `FOR SHARE` on every target Channel (direct and Group members) and re-check `status`
-    and `deleted_at` after the lock.
-16. **Draft Programs keep their targets and say so.** `media_publication_get` returns each Channel
-    target's name, status and deleted flag. The FE cannot read these from its Channel list once deleted
-    Channels leave it. A Draft whose direct target is deleted or not Active shows a notice on open
-    (`<name> was deleted` / `<name> isn't active — choose another Channel before publishing.`), modelled
-    on `LayoutNotActiveNotice` (ADR 0114). Publish already refuses it (ADR 0099), so the notice explains
-    and does not guard. Group targets need no notice: rule 2 keeps a Group's members live.
-17. The delete dialog adds: Draft Programs that lose this Channel, and that past Programs and Playback
-    Proof keep its name marked deleted.
+Measured read-only on prod on 2026-11-22: 84 Channels are not in use. 68 of them have no history
+(rule 8 removes them), 4 are in a Group, 2 have history only through Draft or Cancelled Programs and 10
+have playback logs. Those 12 need this phase, and every Channel that airs joins them once its Programs
+end.
+
+**Delivery order.** Phase 2 ships as three steps, and nothing creates a Tombstone before the last one:
+
+- **S1 + S2** — one Core release, no behaviour change: rules 12, 13, 14, 15, 16 and the Core parts of
+  17, 18 and 20.
+- **S4** — the FE parts of rules 16, 17, 18 and 20, on top of that release.
+- **S3** — the Core release that turns the Tombstone on: rules 11 and 19.
+
+11. **Delete has one button, and Core chooses what it does.**
+    - A Channel with no history is hard-deleted exactly as in rule 8. The history test is one helper,
+      shared with rule 8.
+    - A Channel with history becomes a **Tombstone** in one transaction: set `deleted_at` and
+      `status = 'inactive'`, and delete its `channel_device_reservations` and `channel_devices` rows.
+      The Channel row stays, so `publication_targets`, Playback Proof and the rollup still resolve its
+      name.
+    - There is no undo: the Player may already be reserved elsewhere.
+    - The result names the mode (`removed` or `tombstoned`), so the success toast says the right thing.
+12. **Schema.**
+    - Add `deleted_at timestamptz` only. `channel_audit` already records who deleted the Channel.
+    - Add CHECK `deleted_at IS NULL OR status = 'inactive'`. Every check that requires
+      `status = 'active'` then refuses a Tombstone without testing `deleted_at`: in
+      `media_publication_activate`, both Group writers and `channel_set_devices`.
+    - A Draft Channel with history leaves the lifecycle by going straight from Draft to a Tombstone,
+      which is inactive. Prod had no Draft Channels on 2026-11-22.
+13. **Readers change only where a Tombstone can reach them.**
+    - **Scope:** every function that reads `media_core.channels`, plus every function that passes on a
+      Channel id read from another table (`publication_targets`, `publication_snapshot_group_members`,
+      `channel_group_members`, `playback_logs`, the reservations). Examples of the second kind:
+      `media_publication_duplicate`, `publish_changes_apply`, `now_next_candidates`,
+      `publication_channel_ids`, `media_publications_list`, `media_channel_groups_delete`,
+      `media_playback_log`, `media_playback_proof_list`, `media_playback_proof_export`.
+    - **The 24 functions that read `media_core.channels` on prod on 2026-11-22:** `channel_audit`,
+      `channel_group_rows`, `channel_lock`, `channel_rows`, `channel_set_devices`,
+      `playback_proof_check_args`, `playback_proof_rows`, `publication_group_warnings`,
+      `media_calendar_get`, `media_channel_activate`, `media_channel_create`,
+      `media_channel_deactivate`, `media_channel_delete`, `media_channel_groups_set_members`,
+      `media_channel_groups_update`, `media_channel_player_candidates`, `media_channel_set_groups`,
+      `media_channel_update`, `media_job_poll`, `media_now_next_get`, `media_publication_activate`,
+      `media_publication_get`, `media_publication_upsert`, `player_update_devices_list`.
+    - **Each gets a written verdict.** The phase 2 plan records, for each function, "changed" or
+      "unchanged because …".
+    - **Valid reasons for "unchanged":** a Tombstone has no reservation; it is never in an Active or
+      Scheduled Program; it is always inactive (rule 12); it is never in a Group (rule 2); the function
+      reads no Channel row or name, only ids, counts or existence; it resolves history, where a Tombstone
+      must still resolve. The Playback Proof CSV export keeps the plain name.
+    - **What changed readers do:** live surfaces (lists, the Channel detail, pickers) filter
+      `deleted_at IS NULL`. History readers return a `deleted` boolean, as ADR 0101 does for Assets.
+14. **A Tombstone cannot come back.** `channel_lock` refuses `deleted_at IS NOT NULL` with its existing
+    `not found: channel not found`. That one check covers update, activate, deactivate and delete. The
+    Group writers already refuse a Tombstone through the status rule (rule 12).
+15. **No race with Program activation or Group edits.** Each writer takes `FOR SHARE` before its status
+    check:
+    - `media_publication_activate` locks every Channel it reaches (direct targets and Group members),
+      with `FOR SHARE … ORDER BY id`.
+    - `media_channel_groups_set_members` locks the Channels it adds.
+    - `media_channel_set_groups` locks its one Channel.
+    - `media_channel_groups_update` changes only the Group's own attributes and stays as it is.
+
+    Against `channel_lock`'s `FOR UPDATE` this closes the race in both orders under READ COMMITTED. It
+    also closes the existing race between Deactivate and Publish. The foreign key's `KEY SHARE` lock
+    is not enough on its own: it is taken at the `INSERT`, after the status check has read the row.
+16. **Publish names a deleted target.**
+    - `media_publication_activate` checks for deleted targets before it checks "not active". It raises
+      `these channels were deleted — remove them from this Program: <names>`.
+    - The FE maps it in `publish-cause.ts` as its own cause, in the same Thai as the existing
+      `these channels are not active` mapping.
+    - `media_publication_upsert` is unchanged, so a Draft with a deleted target still saves. Publish is
+      the guard.
+17. **Draft targets stay and say so.**
+    - `media_publication_get` returns each Channel target's `status` and `deleted`.
+    - A Draft is edited and published in the wizard (`/program/create?id=`), and the Program edit page
+      lists targets too.
+    - **Both screens:** show a notice for a target that is deleted or not Active, modelled on
+      `LayoutNotActiveNotice` (ADR 0114) and in the same Thai as the other publish notices. Both also list such a target under its saved name, with
+      Remove. Today the wizard draws targets from the Channel list, so it hides any id missing from that
+      list while still counting it.
+    - **Duplicates:** duplicating an Ended Program copies its targets (`media_publication_duplicate`),
+      so a new Draft can carry a Tombstone the same way. Publish refuses it by name, as ADR 0101 does
+      for Assets.
+    - **Group targets:** need no notice, because rule 2 keeps a Group's members live.
+18. **History keeps the name.** Program detail and Playback Proof show `<name> (deleted)` with no link,
+    as Playback Proof already does for a source that is gone. `media_publications_list` counts stay as
+    stored.
+19. **The name can be reused.**
+    - Drop `channels_tenant_id_name_key` and create a partial unique index on `(tenant_id, name) WHERE
+      deleted_at IS NULL`. `media_channel_create` and `media_channel_update` catch `unique_violation`
+      without matching the constraint name (prod, 2026-11-20), so the index raises the error they
+      already handle.
+    - History may then show "Lobby (deleted)" next to a new "Lobby".
+    - There is no view of deleted Channels, since there is no undo.
+    - Before the constraint is dropped, check every writer of `media_core.channels` outside Core, such as
+      Aurora-migrate, for `ON CONFLICT (tenant_id, name)`.
+20. **The delete dialog knows the mode before the click.**
+    - The dialog fetches the Channel detail when it opens, also from the list row menu. The detail adds
+      `draft_programs: [{ id, name }]` and `has_history`.
+    - With no history, the text is as in rule 9.
+    - For a Tombstone, it lists the Draft Programs that lose this Channel and says past Programs and
+      Playback Proof keep its name, marked deleted.
+    - Both modes say "This can't be undone."
+    - The text is advisory, because Core decides when Delete is confirmed. A target added in between can
+      change the mode, and both modes are irreversible.
 
 ## Considered options
 
 - **Keep ADR 0038's hard-delete rule.** Rejected: since ADR 0037 it blocks every created Channel, and
   it leaves a Channel the owner has finished with occupying its name forever.
-- **Tombstone everything in one step.** Rejected for now: 24 readers to filter plus the three guards
-  in 14–16, while a hard delete with no history behind it already solves 68 of the 72 cases.
+- **Tombstone everything in one step.** Rejected for now: 24 readers to filter plus the guards in
+  rules 14–16, while a hard delete with no history behind it already solves 68 of the 72 cases.
+- **Deactivate, rename and hide Inactive Channels by default instead of a Tombstone** (2026-11-22, for
+  the 12 left after phase 1). Rejected for three reasons:
+  - History readers resolve the Channel name live, so a rename rewrites past Programs and Playback
+    Proof.
+  - Inactive means paused and may come back, so hiding it by default hides paused Channels too.
+  - The 12 grow as every Channel that aired finishes.
+- **Tombstone every delete, including a Channel with no history.** Rejected: rule 8 already removes such
+  a Channel cleanly, and keeping its row adds nothing to any history.
+- **`media_publication_upsert` refuses a deleted target.** Rejected: a Draft could not save any other
+  edit until the target was removed. Publish is the guard (rule 16).
+- **Ship the Tombstone (S3) with or before its FE (S4).** Rejected: there would be a window in which
+  Delete creates Tombstones while the dialog still describes phase 1, and the wizard hides the deleted
+  target that blocks Publish.
 - **Hard delete a Channel with history, copying its name into `playback_logs`, the rollup and
   `publication_targets` at delete time.** Rejected: an update of up to millions of rows per delete, and
   `publication_targets` still cascades, so its FK and one-ref CHECK would have to change. The Channel
@@ -179,3 +265,7 @@ Phase 2 starts only after items 14–16 are in place.
   Proof keeps its name" holds for rows already stored. Not changed here.
 - Removing a member from a Group while its Program is live stays allowed. Rule 1 makes that Channel
   still count as in use until the Program ends or is republished.
+- Phase 2 needs two Core releases (S1 + S2, then S3) with an FE release between them. Dropping the
+  unique constraint in S3 is a prod schema change that is approved on its own.
+- A Draft or a duplicated Program can carry a Tombstone target indefinitely. Nothing removes it
+  automatically; the notice (rule 17) and Publish (rule 16) make the operator do it.
