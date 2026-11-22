@@ -14,6 +14,7 @@ import {
   buildFetchChannelsRequest,
   parseChannelDetail,
   parseChannelList,
+  parseDeleteResult,
   parseChannelReferenceData,
 } from "./channels-api.ts";
 
@@ -105,13 +106,31 @@ assert.equal("created_at" in parsedList[0]!, false);
 assert.equal("publication_count" in parsedList[0]!, false);
 assert.deepEqual(parsedList[0]?.player, player);
 assert.deepEqual(parsedList[0]?.groups, channel.groups);
-const expectedDetail = { ...channel, publication_count: undefined, blocking_programs: [] };
+const expectedDetail = { ...channel, publication_count: undefined, blocking_programs: [], draft_programs: [], has_history: false };
 delete expectedDetail.publication_count;
 // `blocking_programs` is detail-only; a missing key means nothing blocks (ADR 0122 rule 7).
 assert.deepEqual(parseChannelDetail({ data: channel }), expectedDetail);
 const blockers = [{ id: "program-1", name: "Summer Sale" }];
 assert.deepEqual(parseChannelDetail({ data: { ...channel, blocking_programs: blockers } }).blocking_programs, blockers);
 assert.throws(() => parseChannelDetail({ data: { ...channel, blocking_programs: [{ id: "program-1" }] } }));
+
+// ADR 0122 rule 20: `draft_programs` and `has_history` are additive. Missing reads as [] / false (above);
+// present is kept; malformed throws.
+const drafts = [{ id: "program-2", name: "Spring Draft" }];
+const withHistory = parseChannelDetail({ data: { ...channel, draft_programs: drafts, has_history: true } });
+assert.deepEqual(withHistory.draft_programs, drafts);
+assert.equal(withHistory.has_history, true);
+assert.equal(parseChannelDetail({ data: { ...channel, has_history: false } }).has_history, false);
+assert.throws(() => parseChannelDetail({ data: { ...channel, draft_programs: [{ id: "program-2" }] } }));
+assert.throws(() => parseChannelDetail({ data: { ...channel, draft_programs: "none" } }));
+assert.throws(() => parseChannelDetail({ data: { ...channel, has_history: "yes" } }));
+
+// The delete result's `mode` is optional until Core's tombstone PR.
+assert.deepEqual(parseDeleteResult({ data: { id: "channel-1", deleted: true } }), {});
+assert.deepEqual(parseDeleteResult({ id: "channel-1", deleted: true, mode: "removed" }), { mode: "removed" });
+assert.deepEqual(parseDeleteResult({ data: { id: "channel-1", deleted: true, mode: "tombstoned" } }), { mode: "tombstoned" });
+assert.deepEqual(parseDeleteResult({ data: { mode: "archived" } }), {});
+assert.deepEqual(parseDeleteResult(null), {});
 
 // Multi-screen Channel, Player-less Draft (`player`/`health` both null).
 const multiDraft = {

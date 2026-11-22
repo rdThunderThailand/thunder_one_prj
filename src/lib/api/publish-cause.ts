@@ -13,6 +13,7 @@ export type PublishCause =
   | "nothing-playable"
   | "targets"
   | "channels-inactive"
+  | "channels-deleted"
   | "no-screens"
   | "files";
 
@@ -82,6 +83,12 @@ export function inactiveChannelMessage(message: string): string | null {
     return `ช่องทางนี้ยังอยู่ในกลุ่ม ${groups[1].trim()} กรุณานำออกจากกลุ่มก่อนปิดใช้งาน`;
   }
   return null;
+}
+
+/** ADR 0122 rule 16: `media_publication_activate` names Channels that were deleted. Null when it is not that. */
+export function deletedChannelMessage(message: string): string | null {
+  const deleted = /these channels were deleted — remove them from this Program: ([^\n]+)/.exec(message);
+  return deleted ? `ช่องทาง ${deleted[1].trim()} ถูกลบแล้ว กรุณานำออกจาก Program นี้ก่อนเผยแพร่` : null;
 }
 
 /**
@@ -178,6 +185,8 @@ export function classifyPublishCause(message: string): PublishCauseResult | null
     return { cause: "targets", message: "ไม่พบช่องทางหรือกลุ่มที่เลือก อาจถูกลบไปแล้ว กรุณาเลือกปลายทางใหม่" };
   }
 
+  const deletedChannels = deletedChannelMessage(message);
+  if (deletedChannels) return { cause: "channels-deleted", message: deletedChannels };
   if (message.includes("channels are not active — activate them before publishing")) {
     return { cause: "channels-inactive", message: inactiveChannelMessage(message) as string };
   }

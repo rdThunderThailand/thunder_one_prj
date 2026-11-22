@@ -16,6 +16,8 @@ import { useLayoutAspectRatio } from "../hooks/useLayoutAspectRatio";
 import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { publishCauseFix } from "../publish-cause-fix";
 import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
+import { WizardProblemTargetsNotice } from "./ProblemTargetsNotice";
+import { useLoadProblemTargets } from "../hooks/useWizardProblemTargets";
 import { PublishErrorFix } from "./PublishErrorFix";
 import { fetchPublication } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
@@ -81,6 +83,7 @@ export function CreatePublicationPage() {
   const publicationType = usePublicationDraftStore((s) => s.basicInfo.publicationType);
   // ADR 0114: a Layout that is not Active is caught wherever the operator came from, not only in the picker.
   const layoutGate = useLayoutPublishBlock(compositionId, step);
+  useLoadProblemTargets(publicationId);
   const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
 
   const [resumedId, setResumedId] = useState<string | null>(null);
@@ -443,6 +446,8 @@ export function CreatePublicationPage() {
       )}
 
       {compositionId && (step === 2 || step === 5) && <LayoutNotActiveNotice compositionId={compositionId} gate={layoutGate} />}
+
+      {(step === 3 || step === 4) && <WizardProblemTargetsNotice />}
 
       {/* Step 2 — Prepare Content */}
       {step === 2 && <PrepareContentStep assets={assets} tags={tags} showFieldErrors={showFieldErrors} />}

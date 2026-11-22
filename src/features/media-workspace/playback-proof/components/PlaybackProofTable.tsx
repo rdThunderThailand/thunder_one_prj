@@ -5,6 +5,7 @@ import { FileImageIcon as FileImage } from "@/components/ui/icons";
 import { LazyVideo } from "@/components/ui/LazyVideo";
 import { Badge } from "@/components/ui/Badge";
 import { isVideoUrl } from "@/lib/media-kind";
+import { deletedChannelLabel } from "../../channels/channel-logic";
 import type { PlaybackProofEntry } from "../playback-proof-api";
 import { FAILURE_LABELS, OUTCOME_BADGES, formatDuration, formatPlayedAt, sourceLabel } from "../playback-proof-view";
 
@@ -97,7 +98,11 @@ export function PlaybackProofTable({
                   </button>
                 </td>
                 <td className="max-w-56 px-4 py-3">
-                  {entry.channel ? (
+                  {entry.channel?.deleted ? (
+                    <span className="block truncate text-[11px] font-semibold text-muted-foreground">
+                      {deletedChannelLabel(entry.channel.name, true)}
+                    </span>
+                  ) : entry.channel ? (
                     <Link
                       href={`/media-workspace/channels?channel=${entry.channel.id}`}
                       onClick={(event) => event.stopPropagation()}

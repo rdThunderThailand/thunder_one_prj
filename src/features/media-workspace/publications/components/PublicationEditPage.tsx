@@ -25,6 +25,8 @@ import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { publishCauseFix, publishFixCard } from "../publish-cause-fix";
 import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
+import { ProblemTargetsNotice } from "./ProblemTargetsNotice";
+import { problemTargets } from "../problem-targets";
 import { PublishErrorFix } from "./PublishErrorFix";
 import { useProgramEdit } from "../hooks/useProgramEdit";
 import { publicationDrift } from "../publication-drift";
@@ -202,6 +204,12 @@ export function PublicationEditPage({ id }: { id: string }) {
         <LayoutNotActiveNotice
           compositionId={layoutId}
           gate={layoutGate}
+        />
+      )}
+      {isDraft && (
+        <ProblemTargetsNotice
+          targets={problemTargets(state.targets)}
+          onRemove={(channelId) => edit.patch({ targets: state.targets.filter((target) => target.channel_id !== channelId) })}
         />
       )}
       {failure?.isStale && (

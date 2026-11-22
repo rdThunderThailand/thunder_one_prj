@@ -114,7 +114,14 @@ export interface ChannelDetail extends ChannelListItem {
   created_at: string;
   /** Only the detail endpoint returns it; empty when nothing blocks. */
   blocking_programs: BlockingProgram[];
+  /** Draft Programs that lose this Channel when it is deleted (ADR 0122 rule 20); `[]` from a Core without it. */
+  draft_programs: BlockingProgram[];
+  /** Whether Delete would Tombstone the Channel instead of removing it; `false` from a Core without it. */
+  has_history: boolean;
 }
+
+/** What `DELETE /media/channels/{id}` did (ADR 0122 rule 11); absent from a Core that predates it. */
+export type ChannelDeleteMode = "removed" | "tombstoned";
 
 /** "multi" is a Channel whose `display_config.mode` is `"multi"`, independent of its Output Kind. */
 export type ChannelTypeFilter = ChannelOutputKind | "multi";

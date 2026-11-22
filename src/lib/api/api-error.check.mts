@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import {
   ApiError,
   classifyApiError,
+  deletedChannelMessage,
   inactiveChannelMessage,
   isConflict,
   isDuplicateName,
@@ -168,6 +169,7 @@ const inactiveCases: [string, string][] = [
     "Invalid input: [publish] these channels are not active — activate them before publishing: boe_55, testandroid 1",
     "boe_55, testandroid 1",
   ],
+  ["Invalid input: these channels were deleted — remove them from this Program: Lobby, Hall", "Lobby, Hall"],
   ["Invalid input: only active channels can join a group — not active: Lobby", "Lobby"],
   ["Invalid input: only active channels can join a group — activate this channel first", "ช่องทางนี้"],
   ["Invalid input: remove this channel from its groups before deactivating: Floor 1, Floor 2", "Floor 1, Floor 2"],
@@ -179,6 +181,12 @@ for (const [raw, kept] of inactiveCases) {
   assert.ok(!/active|Invalid input/.test(c.message), `${raw} leaked English: ${c.message}`);
 }
 assert.equal(inactiveChannelMessage("Invalid input: the targets have no screens"), null);
+// ADR 0122 rule 16: a deleted target is its own cause, checked before "not active".
+assert.equal(
+  classifyApiError(new ApiError("Invalid input: these channels were deleted — remove them from this Program: Lobby", 400), FALLBACK).cause,
+  "channels-deleted",
+);
+assert.equal(deletedChannelMessage("Invalid input: the targets have no screens"), null);
 
 // Layout refusals from media_publication_activate: named in Thai, zone names kept, never the generic bucket.
 assert.ok(layoutNotReadyMessage("Invalid input: composition is not active — activate it before publishing")?.includes("Activate Layout"));
@@ -209,6 +217,7 @@ const causeCases: [string, number, PublishCause][] = [
   ["not found: channel group not found", 404, "targets"],
   ["Invalid input: cannot activate a direct-target publication on Lobby — synchronized playback is enabled for that channel; disable synchronization or target the channel instead", 400, "targets"],
   ["Invalid input: these channels are not active — activate them before publishing: Lobby", 400, "channels-inactive"],
+  ["Invalid input: these channels were deleted — remove them from this Program: Lobby", 400, "channels-deleted"],
   ["Invalid input: the targets have no screens — add a screen", 400, "no-screens"],
   ["Invalid input: cannot activate — replace this file: A.mp4", 400, "files"],
 ];
