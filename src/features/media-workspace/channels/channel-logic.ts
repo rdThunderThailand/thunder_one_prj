@@ -79,3 +79,8 @@ export function formatChannelLastSeen(iso: string | null | undefined, now = Date
   if (hours < 24) return `Last seen ${hours}h ago`;
   return `Last seen ${Math.floor(hours / 24)}d ago`;
 }
+
+/** ADR 0122 rule 18: history keeps a deleted Channel's name, marked. */
+export function deletedChannelLabel(name: string, deleted: boolean | undefined): string {
+  return deleted ? `${name} (deleted)` : name;
+}

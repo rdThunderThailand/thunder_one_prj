@@ -6,6 +6,7 @@
 import { classifyPublishCause, inactiveChannelMessage, type PublishCause } from "./publish-cause.ts";
 
 export {
+  deletedChannelMessage,
   deletedFileMessage,
   deletedFileNames,
   inactiveChannelMessage,

@@ -25,6 +25,8 @@ assert.equal(publishCauseFix("zones-unbound", video), null); // no Layout bound,
 
 assert.equal(publishFixCard("schedule-invalid", 3), "schedule");
 assert.equal(publishFixCard("targets", 3), "targets");
+assert.equal(publishFixCard("channels-deleted", 3), "targets");
+assert.equal((publishCauseFix("channels-deleted", layout) as { step: number }).step, 3);
 assert.equal(publishFixCard("no-content", 1), "content");
 assert.equal(publishFixCard("files", 2), "content");
 

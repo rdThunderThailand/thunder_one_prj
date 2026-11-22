@@ -1,6 +1,7 @@
 import type {
   BlockingProgram,
   ChannelCategory,
+  ChannelDeleteMode,
   ChannelDetail,
   ChannelDevice,
   ChannelDisplayArrangement,
@@ -345,10 +346,25 @@ export function parseChannelDetail(data: unknown): ChannelDetail {
     throw new TypeError("Channel detail data is malformed");
   }
   const blocking = unwrapped.blocking_programs ?? [];
-  if (!Array.isArray(blocking)) {
+  const drafts = unwrapped.draft_programs ?? [];
+  const hasHistory = unwrapped.has_history ?? false;
+  if (!Array.isArray(blocking) || !Array.isArray(drafts) || typeof hasHistory !== "boolean") {
     throw new TypeError("Channel detail data is malformed");
   }
-  return { ...channel, created_at: unwrapped.created_at, blocking_programs: blocking.map(parseBlockingProgram) };
+  return {
+    ...channel,
+    created_at: unwrapped.created_at,
+    blocking_programs: blocking.map(parseBlockingProgram),
+    draft_programs: drafts.map(parseBlockingProgram),
+    has_history: hasHistory,
+  };
+}
+
+/** `mode` is optional until Core's tombstone PR; anything else reads as "unknown mode". */
+export function parseDeleteResult(data: unknown): { mode?: ChannelDeleteMode } {
+  const unwrapped = unwrapData(data);
+  const mode = isRecord(unwrapped) ? unwrapped.mode : undefined;
+  return mode === "removed" || mode === "tombstoned" ? { mode } : {};
 }
 
 export function parseChannelReferenceData(data: unknown): ChannelReferenceData {
@@ -385,8 +401,8 @@ export async function fetchChannelReferenceData(): Promise<ChannelReferenceData>
   );
 }
 
-export async function deleteChannel(id: string, expectedRevision: number): Promise<void> {
-  await requestChannelApi<unknown>(buildDeleteChannelRequest(id, expectedRevision));
+export async function deleteChannel(id: string, expectedRevision: number): Promise<{ mode?: ChannelDeleteMode }> {
+  return parseDeleteResult(await requestChannelApi<unknown>(buildDeleteChannelRequest(id, expectedRevision)));
 }
 
 export async function deactivateChannel(id: string, expectedRevision: number): Promise<ChannelDetail> {

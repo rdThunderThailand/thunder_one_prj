@@ -1,6 +1,7 @@
 /** Run: node src/features/media-workspace/channels/channel-logic.check.mts */
 import assert from "node:assert/strict";
 import {
+  deletedChannelLabel,
   channelStatus,
   channelTypeKey,
   channelTypeLabel,
@@ -192,5 +193,9 @@ assert.equal(
   formatChannelLastSeen(fixtures[0]!.player!.last_heartbeat_at, Date.parse("2026-08-20T00:01:00.000Z")),
   "Last seen 1m ago",
 );
+
+assert.equal(deletedChannelLabel("Lobby", true), "Lobby (deleted)");
+assert.equal(deletedChannelLabel("Lobby", false), "Lobby");
+assert.equal(deletedChannelLabel("Lobby", undefined), "Lobby");
 
 console.log("channel-logic.check.mts — all assertions passed");

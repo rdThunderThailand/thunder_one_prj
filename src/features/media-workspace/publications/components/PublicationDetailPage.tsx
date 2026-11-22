@@ -19,6 +19,7 @@ import { publicationDrift, type DriftFinding } from "../publication-drift";
 import type { PlaylistDetail, PublicationDetail } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
+import { deletedChannelLabel } from "../../channels/channel-logic";
 import { DeliveryProgress } from "./DeliveryProgress";
 import { formatMonthDays } from "../schedule";
 import { lastAiringDay } from "../schedule-describe";
@@ -474,7 +475,9 @@ export function PublicationDetailPage({ id }: { id: string }) {
                 {detail.publication_targets.map((target, idx) => (
                   <tr key={idx} className="border-t border-border">
                     <td className="py-2.5 pr-3 font-medium text-foreground">
-                      {target.name ?? target.device_id ?? target.channel_id ?? "—"}
+                      {target.name
+                        ? deletedChannelLabel(target.name, target.target_type === "channel" && target.deleted)
+                        : target.device_id ?? target.channel_id ?? "—"}
                     </td>
                     <td className="py-2.5 text-right text-muted-foreground">
                       {target.target_type}

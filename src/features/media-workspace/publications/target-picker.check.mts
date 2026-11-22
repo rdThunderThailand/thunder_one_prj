@@ -36,4 +36,13 @@ assert.deepEqual(next.map((t) => `${t.target_type}:${t.name}`), ["device:Legacy"
 assert.deepEqual(toggleId(["a"], "b"), ["a", "b"]);
 assert.deepEqual(toggleId(["a", "b"], "a"), ["b"]);
 assert.equal(facetCounts(["x", "y", "x"]).get("x"), 2);
+// A Tombstone is not in the list: what Core saved about it (ADR 0122 rule 17) survives Apply.
+const kept = targetsFromSelection(
+  [{ target_type: "channel", channel_id: "gone", name: "Lobby", status: "inactive", deleted: true }],
+  { channelIds: ["gone"], groupIds: [] },
+  channels,
+  [],
+);
+assert.deepEqual(kept, [{ target_type: "channel", channel_id: "gone", name: "Lobby", status: "inactive", deleted: true }]);
+assert.deepEqual(next.filter((t) => t.channel_id === "b").map((t) => "deleted" in t), [false]);
 console.log("target-picker ok");
