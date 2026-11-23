@@ -1,5 +1,6 @@
 import { CalendarIcon, CheckCircleIcon, FileTextIcon, InventoryIcon, WarningTriangleIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/lovable/button";
+import Link from "next/link";
+import { buttonClasses } from "@/components/ui/Button";
 import { LocationTabHeader } from "@/features/asset-workspace/components/locations/LocationHero";
 import { LocationInventorySection } from "@/features/asset-workspace/components/reports/ReportViews";
 import { KpiGrid } from "@/features/asset-workspace/components/reports/ReportWidgets";
@@ -9,7 +10,8 @@ const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short
 const OPEN = new Set(["Draft", "In Progress"]);
 const DISCREPANCIES = ["Mismatch", "Not Found", "Unexpected"] as const;
 
-// Inventory sessions whose scope includes this location (05 §4.9). Start Inventory waits on the Inventory module.
+// Inventory sessions whose scope includes this location (05 §4.9). Start Inventory opens the wizard with this location
+// prefilled in step 2's Locations.
 export default async function LocationInventoryTab({
   params,
   searchParams,
@@ -39,13 +41,13 @@ export default async function LocationInventoryTab({
         count={known ? all.data!.total : null}
         subtitle="Stocktake and verification sessions that cover this location."
         action={
-          <Button
-            disabled
-            title="Available when the Inventory module is ready"
+          <Link
+            href={`/asset-workspace/inventory/new?location=${encodeURIComponent(locationId)}`}
+            className={buttonClasses("primary")}
           >
             <InventoryIcon className="h-4 w-4" />
             Start Inventory
-          </Button>
+          </Link>
         }
       />
       <KpiGrid
