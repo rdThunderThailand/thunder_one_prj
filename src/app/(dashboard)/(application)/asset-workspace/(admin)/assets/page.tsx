@@ -1,11 +1,12 @@
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 import { AssetsListView } from "@/features/asset-workspace/components/assets-list/AssetsListView";
-import { getWorkspacePreferences } from "@/features/asset-workspace/services/asset-settings-api";
+import type { AssetSearchParams } from "@/features/asset-workspace/services/assets-list-query";
+import { startAssetsFirstData } from "@/features/asset-workspace/services/assets-list-server";
 import { AccessDeniedState, EmptyState } from "@/features/asset-workspace/components/states/states";
 import { Button } from "@/components/ui/lovable/button";
 
-export default async function AssetsPage() {
-  const [session, token] = await Promise.all([getSession(), getAuthToken()]);
+export default async function AssetsPage({ searchParams }: { searchParams: Promise<AssetSearchParams> }) {
+  const [session, token, params] = await Promise.all([getSession(), getAuthToken(), searchParams]);
   if (!token) {
     return (
       <EmptyState
@@ -20,13 +21,13 @@ export default async function AssetsPage() {
   }
   if (session === "forbidden" || !session.tenantId || !session.userId) return <AccessDeniedState />;
   const context = `${session.tenantId}:${session.userId}`;
-  // The org's page size and sort start the list when the URL names none; any failure keeps the built-in defaults.
-  const preferences = await getWorkspacePreferences();
+  const { listDefaults, seeds } = await startAssetsFirstData(token, session.tenantId, params);
   return (
     <AssetsListView
       key={context}
       context={context}
-      listDefaults={preferences ? { pageSize: preferences.pageSize, sort: preferences.sort } : undefined}
+      listDefaults={listDefaults}
+      seeds={seeds}
     />
   );
 }

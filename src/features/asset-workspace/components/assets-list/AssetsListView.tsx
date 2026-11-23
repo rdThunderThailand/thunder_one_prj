@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { assetListQueryString, readAssetListSearch, withListDefaults, type AssetListDefaults } from "../../services/assets-list-query";
+import type { AssetsListSeeds } from "../../services/assets-list-seed";
 import { useAssetsListData } from "../../hooks/use-assets-list-data";
 import { useAssetsListUrl } from "../../hooks/use-assets-list-url";
 import { AssetsFilters } from "./AssetsFilters";
@@ -23,13 +24,13 @@ import { useAssetsSelection } from "../../hooks/use-assets-selection";
 import { AssetLabelsDialog } from "../asset-labels/AssetLabelsDialog";
 import { useCategoryFilterLabel } from "../../hooks/use-category-filter-label";
 
-export function AssetsListView({ context, listDefaults }: { context: string; listDefaults?: AssetListDefaults }) {
+export function AssetsListView({ context, listDefaults, seeds }: { context: string; listDefaults?: AssetListDefaults; seeds?: AssetsListSeeds }) {
   const url = useAssetsListUrl();
   const parsed = readAssetListSearch(url.search);
   const defaults = readAssetListSearch("");
   if (!defaults.success) throw new Error("Invalid default asset query");
   const query = withListDefaults(parsed.success ? parsed.data : defaults.data, url.search, listDefaults);
-  const { summary, filters, list } = useAssetsListData(context, parsed.success ? query : null, url.search);
+  const { summary, filters, list } = useAssetsListData(context, parsed.success ? query : null, url.search, seeds);
   const missingCategoryOption = Boolean(parsed.success && filters.data && query.category_id
     && !filters.data.categories.some((category) => category.id === query.category_id));
   const selectedCategory = useCategoryFilterLabel(context, query.category_id, missingCategoryOption);

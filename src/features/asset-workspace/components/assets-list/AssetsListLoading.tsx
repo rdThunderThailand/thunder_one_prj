@@ -71,7 +71,7 @@ export function AssetsTableLoading() {
 
 export function AssetsListLoading() {
   return (
-    <div role="status" aria-label="Loading assets" className="@container min-w-0 space-y-3">
+    <div role="status" aria-label="Loading assets" className="@container h-full min-w-0 space-y-3 overflow-hidden">
       <Skeleton className="h-8 w-32 motion-reduce:animate-none" />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
