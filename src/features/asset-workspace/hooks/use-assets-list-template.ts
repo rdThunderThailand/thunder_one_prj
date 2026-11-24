@@ -46,14 +46,18 @@ export function useAssetsListTemplate(context: string) {
     try {
       const [tenantId, userId] = context.split(":");
       const importContext = { tenantId, userId };
-      const options = await getAssetImportApi(importContext).getOptions();
+      const api = getAssetImportApi(importContext);
+      const references = api.getReferences(controller.signal);
+      // A failure is handled when the template needs the list.
+      references.catch(() => undefined);
+      const options = await api.getOptions(controller.signal);
       if (!isCurrent()) return;
       if (!options.ready) {
         throw new ImportApiError("IMPORT_UNAVAILABLE", "Bulk import is not available yet.");
       }
       const { createImportTemplate } = await import("../services/asset-import-xlsx-template");
       if (!isCurrent()) return;
-      const file = await createImportTemplate(options, importContext, undefined, async (stage) => {
+      const file = await createImportTemplate(options, importContext, () => references, async (stage) => {
         if (!isCurrent()) throw new DOMException("Template preparation cancelled", "AbortError");
         setState({ context, stage, error: null });
         if (stage === "workbook") {

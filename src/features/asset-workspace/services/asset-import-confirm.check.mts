@@ -82,7 +82,7 @@ const rejectsCode = (operation: () => Promise<unknown>, code: string) =>
 const sameBodies = (test: ReturnType<typeof setup>, expected: ImportConfirmBody) =>
   assert.ok(test.bodies.length && test.bodies.every((value) => value === JSON.stringify({ ...expected, limit: 100 })), "every POST, including retry, keeps exactly the original body");
 
-assert.deepEqual([1, 10, 500, 2000, 5000].map(confirmLimit), [1, 1, 25, 100, 100]);
+assert.deepEqual([1, 125, 200, 500, 5000].map(confirmLimit), [25, 25, 40, 100, 100]);
 
 const normal = setup();
 const completed = await normal.run();

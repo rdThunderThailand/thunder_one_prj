@@ -1,10 +1,8 @@
 import type { ImportOptions } from "../domain/asset-import-types.ts";
-import type { AssetImportContext } from "./asset-import-api.ts";
+import { getAssetImportApi, type AssetImportContext } from "./asset-import-api.ts";
 import {
-  loadImportReferences,
   templateRows,
   type ImportReferences,
-  type ReferencePageFetcher,
 } from "./asset-import-template.ts";
 
 export const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -56,19 +54,19 @@ export async function buildTemplateXlsx(
   return new Blob([bytes], { type: XLSX_MIME });
 }
 
-/** Selector failures must not block downloading the blank Assets template. */
+/** A failed reference read must not block downloading the blank Assets template. */
 export async function createImportTemplate(
   options: ImportOptions,
   context: AssetImportContext,
-  fetcher?: ReferencePageFetcher,
+  readReferences: () => Promise<ImportReferences> = () => getAssetImportApi(context).getReferences(),
   onStage?: (stage: ImportTemplateStage) => void | Promise<void>,
 ): Promise<{ blob: Blob; filename: string; referenceUnavailable: boolean }> {
   let references: ImportReferences | null = null;
   await onStage?.("references");
   try {
-    references = await loadImportReferences(context, fetcher);
+    references = await readReferences();
   } catch {
-    // The caller reports the missing reference sheet; never export a partial hierarchy.
+    // The caller reports the missing reference sheet; never export a partial list.
   }
   await onStage?.("workbook");
   return {

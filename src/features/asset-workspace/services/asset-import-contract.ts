@@ -202,6 +202,12 @@ export const validateResultSchema = z.object({
   }),
 });
 
+// The categories and locations a file may use, for the template's reference sheet.
+export const importReferencesSchema = z.object({
+  categories: z.array(z.object({ code: z.string().nullable(), name: z.string(), serialRequired: z.boolean() })),
+  locations: z.array(z.object({ code: z.string().nullable(), path: z.string() })),
+});
+
 export const sourceFileUrlSchema = z.object({
   url: reservedRegistrationUploadSchema.shape.signedUploadUrl.unwrap(),
   expiresAt: z.iso.datetime({ offset: true }),
