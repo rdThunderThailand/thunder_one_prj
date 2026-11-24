@@ -183,6 +183,8 @@ export function CompositionEditorPage({
       setBindings(result.bindings);
       setSavedAt(new Date());
       absorbLayout(result.refreshedLayout, result.layoutId);
+      // #454: what was saved is the new baseline — Publish Changes keeps the editor open after a save.
+      setInitialSnapshot(draftSnapshot({ name, layoutId: result.layoutId, bindings: result.bindings, folderId, tags }));
     },
   );
   const affected = useAffectedPrograms("compositions", id);
