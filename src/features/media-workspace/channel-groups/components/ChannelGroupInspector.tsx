@@ -1,0 +1,220 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { buttonClasses } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { EditIcon, MonitorIcon, MoreIcon, PlusIcon, XIcon } from "@/components/ui/icons";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
+import { classifyApiError } from "@/lib/api/api-error";
+import { deleteChannelGroup, isGroupInUse, updateChannelGroup } from "../services/channel-groups-api";
+import { memberHealthCounts } from "../channel-groups-logic";
+import type { ChannelListItem } from "../../channels/types";
+import type { ChannelGroup } from "../types";
+import { CreateEditGroupModal } from "./CreateEditGroupModal";
+import { ChannelGroupInspectorSections } from "./ChannelGroupInspectorSections";
+import { ManageChannelsModal } from "./ManageChannelsModal";
+
+const STATUS_BADGE: Record<ChannelGroup["status"], { label: string; color: BadgeColor }> = {
+  active: { label: "Active", color: "green" },
+  disabled: { label: "Inactive", color: "zinc" },
+};
+
+/** D11 §2's Group Inspector — actions A (Create Program), B (Edit Group), C (Manage Channels),
+ *  D (More → Disable / Delete). */
+export function ChannelGroupInspector({
+  group,
+  channels,
+  onClose,
+  onChanged,
+  onDeleted,
+}: {
+  group: ChannelGroup;
+  channels: ChannelListItem[];
+  onClose: () => void;
+  onChanged: (updated: ChannelGroup) => void;
+  onDeleted: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [managingChannels, setManagingChannels] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const status = STATUS_BADGE[group.status];
+  const health = memberHealthCounts(group, new Map(channels.map((c) => [c.id, c])));
+
+  const toggleStatus = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      onChanged(await updateChannelGroup(group.id, { status: group.status === "active" ? "disabled" : "active" }));
+      setMenuOpen(false);
+    } catch (caught) {
+      setError(classifyApiError(caught, "Could not update this Group. Try again.").message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteChannelGroup(group.id);
+      setConfirmingDelete(false);
+      onDeleted();
+    } catch (caught) {
+      setConfirmingDelete(false);
+      const message = caught instanceof Error && isGroupInUse(caught.message)
+        ? caught.message
+        : classifyApiError(caught, "Could not delete this Group. Try again.").message;
+      setError(message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card
+      role="region"
+      aria-label={`${group.name} detail`}
+      className="relative h-full overflow-y-auto p-5 xl:sticky xl:top-0 xl:self-start"
+    >
+      <div className="grid h-28 place-items-center rounded-xl border border-dashed border-border bg-muted p-4 text-center">
+        <div>
+          <MonitorIcon className="mx-auto h-6 w-6 text-muted-foreground" />
+          <p className="mt-1 text-sm font-medium text-muted-foreground">No preview available yet</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Program content will appear here.</p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="truncate text-lg font-semibold text-foreground">{group.name}</h2>
+          <Badge color={status.color} variant="pill">{status.label}</Badge>
+        </div>
+        <button
+          type="button"
+          aria-label="Close group detail"
+          onClick={onClose}
+          className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <XIcon />
+        </button>
+      </div>
+      {group.description && (
+        <p className="mt-2 text-sm leading-5 text-muted-foreground">{group.description}</p>
+      )}
+
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-error">
+          {error}
+        </p>
+      )}
+
+      <div className="mt-4 flex flex-nowrap items-center gap-2">
+        <Link href={`/media-workspace/program/create`} className={buttonClasses("primary", "min-w-0 flex-1 whitespace-nowrap px-3")}>
+          <PlusIcon />
+          Create Program
+        </Link>
+        <button type="button" onClick={() => setEditing(true)} className={buttonClasses("secondary", "min-w-0 flex-1 whitespace-nowrap px-3")}>
+          <EditIcon />
+          Edit Group
+        </button>
+        {/* QA 2026-10-08 #10: portalled, so the inspector's scroll area cannot clip it. */}
+        <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+          <PopoverTrigger
+            aria-haspopup="menu"
+            className="rounded-lg border border-border p-2.5 text-muted-foreground hover:bg-muted"
+          >
+            <MoreIcon />
+          </PopoverTrigger>
+          <PopoverContent
+            role="menu"
+            align="end"
+            className="w-44 p-0 py-1"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              disabled={busy}
+              onClick={() => void toggleStatus()}
+              className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted disabled:cursor-not-allowed"
+            >
+              {group.status === "active" ? "Disable Group" : "Enable Group"}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={busy}
+              onClick={() => {
+                setMenuOpen(false);
+                setConfirmingDelete(true);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-muted disabled:cursor-not-allowed"
+            >
+              Delete Group
+            </button>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <ChannelGroupInspectorSections
+        group={group}
+        health={health}
+        onManageChannels={() => setManagingChannels(true)}
+      />
+
+      {editing && (
+        <CreateEditGroupModal
+          group={group}
+          onManageChannels={() => {
+            setEditing(false);
+            setManagingChannels(true);
+          }}
+          onClose={() => setEditing(false)}
+          onSaved={(updated) => {
+            onChanged(updated);
+            setEditing(false);
+          }}
+        />
+      )}
+
+      {managingChannels && (
+        <ManageChannelsModal
+          group={group}
+          channels={channels}
+          onClose={() => setManagingChannels(false)}
+          onSaved={(updated) => {
+            onChanged(updated);
+            setManagingChannels(false);
+          }}
+        />
+      )}
+
+      <Modal
+        open={confirmingDelete}
+        onClose={() => setConfirmingDelete(false)}
+        title="Delete Channel Group?"
+        footer={
+          <>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setConfirmingDelete(false)}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={busy} onClick={() => void confirmDelete()}>
+              {busy ? "Deleting…" : "Delete Group"}
+            </Button>
+          </>
+        }
+      >
+        <p>This will permanently delete the group &ldquo;{group.name}&rdquo;.</p>
+        <p className="text-muted-foreground">Channels in this group will not be deleted — they become ungrouped.</p>
+      </Modal>
+    </Card>
+  );
+}

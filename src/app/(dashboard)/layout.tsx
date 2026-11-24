@@ -1,19 +1,74 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { MobileNavigation } from "@/components/layout/MobileNavigation";
+import { ShortcutPlatformProvider } from "@/components/layout/ShortcutPlatform";
+import { Topbar } from "@/components/layout/Topbar";
+import { resolveRoleLabel, resolveRole } from "@/config/rbac";
+import { env } from "@/config/env";
+import { canSwitchTenant, getSession } from "@/features/auth/services/get-session";
+import { headers } from "next/headers";
+import { getAppLocale } from "@/lib/app-locale.server";
+import { platformFromHeaders } from "@/lib/keyboard-shortcut";
 
-// Route-group layout for the dashboard shell (nav placeholder only).
-export default function DashboardLayout({
+// Everything behind login is private tenant data — never index it, even if
+// a crawler somehow gets a session (robots.ts also disallows crawling).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
+// Route-group layout for the authenticated dashboard shell. Gates the whole
+// shell on tenant access so a member of no served tenant never reaches a page
+// that would only fail request by request. /no-access deliberately lives
+// outside this group — inside it, the redirect below would loop.
+export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+  if (session === "forbidden") {
+    redirect("/no-access");
+  }
+  const { userName, avatarUrl, tenantId, tenantName, availableTenants, jobTitle } = session;
+  // 2026-09-16 — the Topbar shows the person's real job title (Personnel's
+  // own `job_title` field) when their membership has one, not the RBAC
+  // access-tier label; falls back to the tier label (e.g. "Company
+  // Administrator") only for members with no job_title set.
+  const roleLabel = jobTitle ?? resolveRoleLabel(resolveRole(session));
+  const locale = await getAppLocale(session.preferredLanguage);
+  // ⌘ on Apple devices, Ctrl elsewhere, for every shortcut hint in the shell (lib/keyboard-shortcut).
+  const shortcutPlatform = platformFromHeaders(await headers());
+
   return (
-    <div className="flex min-h-full flex-col">
-      <nav className="flex gap-4 border-b border-black/10 px-6 py-4 dark:border-white/10">
-        <Link href="/videos">Videos</Link>
-        <Link href="/screens">Screens</Link>
-        <Link href="/playlists">Playlists</Link>
-      </nav>
-      <main className="flex-1 px-6 py-8">{children}</main>
-    </div>
+    <ShortcutPlatformProvider platform={shortcutPlatform}>
+      <div className="flex h-full">
+        <MobileNavigation sidebarProps={{
+          tenantId,
+          tenantName,
+          availableTenants: canSwitchTenant(session) ? availableTenants : [],
+        }}>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <Topbar
+              userName={userName}
+              roleLabel={roleLabel}
+              avatarUrl={avatarUrl}
+              locale={locale}
+              helpSupport={{
+                contactUrl: env.helpSupportUrl || undefined,
+                chatUrl: env.helpSupportChatUrl || undefined,
+                email: env.helpSupportEmail || undefined,
+                phone: env.helpSupportPhone || undefined,
+                hours: env.helpSupportHours || undefined,
+                statusUrl: env.helpStatusUrl || undefined,
+              }}
+            />
+            <main className="flex-1 min-w-0 overflow-y-auto bg-t1-gray-50 px-4 py-4 md:px-6 md:py-6">
+              {children}
+            </main>
+          </div>
+        </MobileNavigation>
+      </div>
+    </ShortcutPlatformProvider>
   );
 }
+

@@ -40,3 +40,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.docs
+
+# pre-migration row dumps from production — keep local, never in history
+.backups
+
+# personal agent state and skill scratch output (docs/agents/docs-sop.md)
+.claude/settings.local.json
+.claude/RESUME.md
+.superpowers/
+
+# Claude Desktop (Electron) renderer bundles dumped into CWD — not project files
+/index.js
+/mainView.js
+/mainWindow.js
+
+# Program redesign mockups: only the downscaled JPEGs are committed
+docs/media-workspace/program/figma-mockup/*.png

@@ -1,0 +1,442 @@
+import { cache } from "react";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { env } from "@/config/env";
+import { getSelectedTenantId } from "@/lib/core/tenant-selection";
+import { languageFromTag } from "@/lib/app-locale";
+
+// Core's role_type tier system (thunder_core_prj's src/utils/supabase/rbac.ts).
+// department_admin/tenant/system exist as raw DB values (thunder_core_prj's
+// src/lib/core/member-view.ts notes the live DB has them) but aren't part of
+// Core's own typed/prioritized tier system yet.
+export type RoleType =
+  | "super_admin"
+  | "company_admin"
+  | "executive_viewer"
+  | "operator"
+  | "viewer_auditor"
+  | "department_admin"
+  | "tenant"
+  | "system";
+
+export interface Session {
+  userName: string;
+  /** `public.users.id` — the same id `created_by` carries on every media row, so the
+   *  playlists page can tell "mine" from "everyone's" without a second lookup. */
+  userId: string | null;
+  /** `public.users.avatar_url` from `/session` — the profile picture, or
+   *  `null` (initials are shown instead). */
+  avatarUrl: string | null;
+  tenantName: string | null;
+  /** `public.tenants.id` — needed for any additional tenant-scoped Core call a
+   *  page makes beyond session/membership (e.g. `GET /tenants/{id}/assets/*`).
+   *  Pair with `getAuthToken()` below rather than re-deriving the token. */
+  tenantId: string | null;
+  roleType: RoleType | null;
+  /** The winning role's `roles.code` — e.g. "operator_technician", "manager_it_asset",
+   * or a tenant-authored persona code like "CEO". Finer-grained than roleType (the tier);
+   * not yet used for access gates (those stay keyed on roleType), only for display and
+   * as a foundation for a second, code-level RBAC layer later. */
+  roleCode: string | null;
+  /** The winning role's `roles.name` — the human-readable label to show in the UI
+   * (e.g. Topbar), preferred over any generic tier label. */
+  roleName: string | null;
+  /** The caller's own `job_title` on their current tenant's membership row
+   * (e.g. "Senior Software Engineer") — the same field Personnel reads/
+   * writes, not an RBAC concept. Neither `/session` nor `/me/memberships`
+   * carry it, so it's a best-effort lookup against `/tenants/:id/members`
+   * (see `resolveMembershipExtras` below); `null` when the member has none
+   * set or the lookup failed. The Topbar prefers this over `roleName` — a
+   * person's actual position reads better under their name than their
+   * access tier. */
+  jobTitle: string | null;
+  /** This tenant's `tenant_applications.role` for Thunder One — "owner" for
+   * Thunder Enterprise Master, "viewer" for every other tenant today. Decides
+   * which Apps the tenant sees (config/tenant-access.ts). `null` when Core
+   * doesn't send it (older Core) — treated as owner, failing open. */
+  tenantAppRole: string | null;
+  /** Core's `/session` `enabled_workspaces`: the App ids a platform super admin
+   * switched on for this tenant (core_prj_Frontend → Tenant › Applications).
+   * `null` when Core sends none (no workspace catalog yet, or older Core) —
+   * config/tenant-access.ts then keeps its previous rule. */
+  enabledWorkspaces: string[] | null;
+  /** Every tenant this user may switch into (Core's `available_tenants`):
+   * all tenants Thunder One serves for a platform super admin, otherwise the
+   * tenants they're an active member of. The Sidebar shows a tenant switcher
+   * when there's more than one. Empty when Core doesn't send it. */
+  availableTenants: AvailableTenant[];
+  /** Holds Core's `super_admin` role on any membership — Core's own
+   * isPlatformSuperAdmin rule. Only a platform super admin gets the tenant
+   * switcher. */
+  isSuperAdmin: boolean;
+  /** Set when this tenant is reached only as a partner of its parent tenant
+   * (Core's `/session` `partner_access`, Thunder_Core ADR 0027): the user has
+   * no membership here and acts with company_admin rights. */
+  partnerAccess: { parentTenantId: string | null } | null;
+  /** `public.users.preferred_language` as Core stores it ("th-TH", "en-US"; older rows "th"), or `null`. The user's
+   * primary language for the whole app; `getAppLocale(session.preferredLanguage)` turns it into
+   * the render language (lib/app-locale). */
+  preferredLanguage: string | null;
+}
+
+export interface AvailableTenant {
+  id: string;
+  name: string;
+  /** This tenant's `tenant_applications.role` — "owner" / "viewer". */
+  role: string | null;
+  /** The tenant's logo/cover for the switcher card (Core's `logo_url`), or
+   * `null`. Core doesn't send it yet (requested 2026-11-06); the card shows
+   * the tenant's initials until it does. */
+  logoUrl: string | null;
+  /** How the user reaches it: own membership, partner of its parent, or platform
+   * super admin. `null` when Core doesn't send it (older Core). */
+  access: "member" | "partner" | "platform" | null;
+}
+
+/**
+ * `"forbidden"` means the account is authenticated but holds no membership in a
+ * tenant this application serves (ADR 0007) — a different outcome from "not
+ * logged in", and the caller must not treat it as one.
+ */
+export type SessionResult = Session | "forbidden";
+
+const FALLBACK_NAME = "Account";
+const NO_ROLE = { roleType: null, roleCode: null, roleName: null } as const;
+const PARTNER_ROLE = { roleType: "company_admin", roleCode: "partner", roleName: "Partner" } as const;
+
+/** May use the tenant switcher: a platform super admin, or a partner with child tenants to reach. */
+export const canSwitchTenant = (s: Session) => s.isSuperAdmin || s.availableTenants.some((t) => t.access === "partner");
+
+// Mirrors Core's own priority order (thunder_core_prj's src/lib/core/member-view.ts
+// toPrimaryRole — not the buggy src/utils/supabase/rbac.ts getUserRole, which
+// starts its "best so far" at priority 0 and so silently mis-resolves a
+// department_admin-only user to "operator"). Types absent here score 0 via
+// `?? 0` below rather than being dropped, so they still surface when nothing
+// higher-priority exists.
+const ROLE_PRIORITY: Partial<Record<RoleType, number>> = {
+  super_admin: 100,
+  company_admin: 70,
+  executive_viewer: 50,
+  viewer_auditor: 20,
+  operator: 10,
+};
+
+const KNOWN_ROLE_TYPES = new Set<string>([
+  "super_admin",
+  "company_admin",
+  "executive_viewer",
+  "operator",
+  "viewer_auditor",
+  "department_admin",
+  "tenant",
+  "system",
+]);
+
+/**
+ * Validates a raw `role_type` string against the known union at runtime — a
+ * bare `as RoleType` cast let any unrecognized Core value through disguised
+ * as a real tier, which (via resolveLandingPage's default case pointing at a
+ * gated page) caused an infinite redirect loop the first time a role whose
+ * `role_type` didn't match one of these 8 logged in. Better to resolve to no
+ * role (fails open — see getSession's docstring) than to trust an unchecked
+ * string.
+ */
+function isKnownRoleType(value: string): value is RoleType {
+  return KNOWN_ROLE_TYPES.has(value);
+}
+
+/**
+ * Single bootstrap call for the authenticated shell: resolves the display name,
+ * the tenant, and the caller's role in this tenant (ADR 0008 covers name+tenant;
+ * role is a second, parallel call to Core's `/me/memberships` since `/session`
+ * deliberately does not return it — see that ADR's "Findings deliberately not
+ * acted on").
+ *
+ * Fails open on transport or server errors, for both calls — a Core outage
+ * should degrade the Topbar to a generic name and role-based routing to its
+ * default, not lock every user out of the app. Real access denials arrive as
+ * an explicit 403, and each tenant-scoped request enforces the boundary again
+ * on its own, so nothing is trusted to this check alone. Role resolution here
+ * is a courtesy for picking a landing page, not a permission gate.
+ *
+ * ครอบด้วย `React.cache()` (ดูท้ายไฟล์) — (dashboard)/layout.tsx เรียกฟังก์ชัน
+ * นี้ทุกหน้าอยู่แล้วเพื่อ gate การเข้าถึง แล้วเกือบทุก page.tsx ใน People
+ * Workspace (add/employee, add/contractor, add/bulk, personnel,
+ * org-structure ฯลฯ) ก็เรียกซ้ำอีกรอบเพื่อเอา tenantId — ถ้าไม่ cache จะยิง
+ * `/session` + `/me/memberships` สองรอบไปที่ Core ทุกครั้งที่โหลดหน้า โดยได้
+ * ผลลัพธ์เดิมเป๊ะทั้งสองรอบ (cookie เดียวกันภายใน request เดียวกัน).
+ */
+async function getSessionUncached(): Promise<SessionResult> {
+  const token = (await cookies()).get("to_at")?.value;
+  if (!token) {
+    redirect("/login");
+  }
+
+  // The Sidebar's tenant switcher (lib/core/tenant-selection.ts); Core
+  // resolves /session to this tenant instead of the user's default one.
+  const selectedTenantId = await getSelectedTenantId();
+  const authHeaders: Record<string, string> = {
+    "x-api-key": env.coreApiKey,
+    Authorization: `Bearer ${token}`,
+    ...(selectedTenantId ? { "x-tenant-id": selectedTenantId } : {}),
+  };
+
+  let sessionRes: Response;
+  let membershipsRes: Response | null;
+  try {
+    [sessionRes, membershipsRes] = await Promise.all([
+      fetch(`${env.coreApiUrl}/api/core/v1/session`, { headers: authHeaders, cache: "no-store" }),
+      fetch(`${env.coreApiUrl}/api/core/v1/me/memberships`, { headers: authHeaders, cache: "no-store" }).catch(
+        () => null,
+      ),
+    ]);
+  } catch {
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, enabledWorkspaces: null, availableTenants: [], isSuperAdmin: false, partnerAccess: null, preferredLanguage: null };
+  }
+
+  if (sessionRes.status === 401) {
+    redirect("/login");
+  }
+  // A picked tenant Core no longer lets this user into (membership ended,
+  // tenant unserved): drop the choice rather than lock them out.
+  if (selectedTenantId && (sessionRes.status === 403 || sessionRes.status === 400)) {
+    redirect("/api/auth/tenant");
+  }
+  if (sessionRes.status === 403) {
+    return "forbidden";
+  }
+  if (!sessionRes.ok) {
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName: null, tenantId: null, ...NO_ROLE, jobTitle: null, tenantAppRole: null, enabledWorkspaces: null, availableTenants: [], isSuperAdmin: false, partnerAccess: null, preferredLanguage: null };
+  }
+
+  const body = await sessionRes.json().catch(() => null);
+  const user = body?.data?.user;
+  const tenantId: string | null = body?.data?.tenant?.id ?? null;
+  const tenantName: string | null = body?.data?.tenant?.name ?? null;
+  const tenantAppRole: string | null =
+    typeof body?.data?.tenant_application?.role === "string" ? body.data.tenant_application.role : null;
+  const availableTenants = parseAvailableTenants(body?.data?.available_tenants);
+  const enabledWorkspaces = parseEnabledWorkspaces(body?.data?.enabled_workspaces);
+  const pa = body?.data?.partner_access;
+  const partnerAccess = pa && typeof pa === "object" ? { parentTenantId: typeof pa.parent_tenant_id === "string" ? pa.parent_tenant_id : null } : null;
+  const userEmail = typeof user?.email === "string" ? user.email : null;
+  const rawUserId = typeof user?.id === "string" ? user.id : null;
+  const memberships = await readMemberships(membershipsRes);
+  const isSuperAdmin = memberships.some(hasSuperAdminRole);
+  const [memberRole, membershipExtras] = await Promise.all([
+    resolveRole(memberships, tenantId),
+    extrasFromSession(body?.data) ?? resolveMembershipExtras(authHeaders, tenantId, userEmail, rawUserId),
+  ]);
+  const { jobTitle } = membershipExtras;
+  // A partner has no membership in the child tenant, so no role resolves from
+  // /me/memberships; Core grants company_admin there (partner_access).
+  const role = partnerAccess && memberRole.roleType === null ? PARTNER_ROLE : memberRole;
+
+  if (!user) {
+    return { userName: FALLBACK_NAME, userId: null, avatarUrl: null, tenantName, tenantId, ...role, jobTitle, tenantAppRole, enabledWorkspaces, availableTenants, isSuperAdmin, partnerAccess, preferredLanguage: null };
+  }
+
+  const userId = typeof user.id === "string" ? user.id : null;
+  const avatarUrl = typeof user.avatar_url === "string" && user.avatar_url ? user.avatar_url : null;
+  const preferredLanguage = typeof user.preferred_language === "string" ? user.preferred_language : null;
+  return { userName: resolveUserName(user, membershipExtras), userId, avatarUrl, tenantName, tenantId, ...role, jobTitle, tenantAppRole, enabledWorkspaces, availableTenants, isSuperAdmin, partnerAccess, preferredLanguage };
+}
+
+function parseEnabledWorkspaces(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.filter((id): id is string => typeof id === "string");
+}
+
+function parseAvailableTenants(value: unknown): AvailableTenant[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) =>
+    row && typeof row.id === "string" && typeof row.name === "string"
+      ? [
+          {
+            id: row.id,
+            name: row.name,
+            role: typeof row.role === "string" ? row.role : null,
+            logoUrl: typeof row.logo_url === "string" && row.logo_url ? row.logo_url : null,
+            access: row.access === "member" || row.access === "partner" || row.access === "platform" ? row.access : null,
+          },
+        ]
+      : [],
+  );
+}
+
+/**
+ * `/session` carries job_title + Thai names itself once Core adds them
+ * (requested 2026-09-25 to drop the member-search round trip below from
+ * every page load — ~420 ms measured). The fields are additive: `null`
+ * here means "this Core doesn't send them yet", so the caller falls back
+ * to `resolveMembershipExtras`.
+ */
+function extrasFromSession(
+  data: { user?: Record<string, unknown>; membership?: { job_title?: unknown } | null } | undefined
+): { jobTitle: string | null; firstNameTh: string | null; lastNameTh: string | null } | null {
+  if (!data || !("membership" in data)) return null;
+  const text = (value: unknown) => (typeof value === "string" && value.trim() ? value : null);
+  return {
+    jobTitle: text(data.membership?.job_title),
+    firstNameTh: text(data.user?.first_name_th),
+    lastNameTh: text(data.user?.last_name_th),
+  };
+}
+
+/**
+ * Fallback for a Core without the `/session` fields above: best-effort
+ * lookup of two fields neither `/session` nor `/me/memberships`
+ * carry: the caller's `job_title` on their current tenant's membership, and
+ * their `first_name_th`/`last_name_th` (both live on the `/tenants/:id/
+ * members` list row's nested `user` — same shape Personnel already reads,
+ * and the same row already needed for job_title, so this is one lookup for
+ * both rather than two). Rather than pulling the whole roster just for a
+ * couple of fields, this reuses that endpoint's own `search` filter (by
+ * email, unique per account) to narrow it to a handful of rows, then
+ * confirms the match by `user.id` before trusting it, since `search`'s
+ * match semantics aren't a guaranteed-exact `user_id` filter. Returns all
+ * `null` (callers fall back to their non-Thai/RBAC defaults) on any failure
+ * — this is a display nicety, not worth failing the whole session over.
+ */
+async function resolveMembershipExtras(
+  authHeaders: Record<string, string>,
+  tenantId: string | null,
+  email: string | null,
+  userId: string | null,
+): Promise<{ jobTitle: string | null; firstNameTh: string | null; lastNameTh: string | null }> {
+  const empty = { jobTitle: null, firstNameTh: null, lastNameTh: null };
+  if (!tenantId || !email || !userId) return empty;
+  try {
+    const res = await fetch(
+      `${env.coreApiUrl}/api/core/v1/tenants/${tenantId}/members?limit=5&search=${encodeURIComponent(email)}`,
+      { headers: authHeaders, cache: "no-store" },
+    );
+    if (!res.ok) return empty;
+    const body = await res.json().catch(() => null);
+    const rows: Array<{ job_title?: unknown; user?: { id?: unknown; first_name_th?: unknown; last_name_th?: unknown } }> =
+      body?.data?.data ?? [];
+    const match = rows.find((r) => r.user?.id === userId);
+    if (!match) return empty;
+    const jobTitle = typeof match.job_title === "string" && match.job_title.trim() ? match.job_title : null;
+    const firstNameTh =
+      typeof match.user?.first_name_th === "string" && match.user.first_name_th.trim() ? match.user.first_name_th : null;
+    const lastNameTh =
+      typeof match.user?.last_name_th === "string" && match.user.last_name_th.trim() ? match.user.last_name_th : null;
+    return { jobTitle, firstNameTh, lastNameTh };
+  } catch {
+    return empty;
+  }
+}
+
+/** Public entry point — memoized per request via `React.cache()`. See
+ *  `getSessionUncached`'s docstring above for why. `redirect()` inside the
+ *  wrapped function still works correctly: it throws to interrupt rendering
+ *  rather than returning a value, so there's nothing for `cache()` to
+ *  memoize on that path, and in practice it only ever fires from the
+ *  layout's call — the one that runs first in any request. */
+export const getSession = cache(getSessionUncached);
+
+/** Same `to_at` cookie `getSession()` reads, exposed for pages that need to
+ *  make an additional tenant-scoped Core call beyond session/membership
+ *  (e.g. the Asset List page's list/summary/filters endpoints) without a
+ *  second round-trip to derive it. */
+export async function getAuthToken(): Promise<string | null> {
+  return (await cookies()).get("to_at")?.value ?? null;
+}
+
+/** One membership row from `GET /me/memberships`, loosely typed — it's an external response. */
+interface MembershipRow {
+  tenant_id?: string;
+  membership_roles?: {
+    roles?: { role_type?: string; code?: string; name?: string } | { role_type?: string; code?: string; name?: string }[];
+  }[];
+}
+
+async function readMemberships(membershipsRes: Response | null): Promise<MembershipRow[]> {
+  if (!membershipsRes?.ok) return [];
+  const body = await membershipsRes.json().catch(() => null);
+  return Array.isArray(body?.data) ? body.data : [];
+}
+
+/** Same test as Core's isPlatformSuperAdmin: a `super_admin` role code on
+ *  any of the caller's active memberships, whichever tenant it's in. */
+function hasSuperAdminRole(membership: MembershipRow): boolean {
+  return (membership.membership_roles ?? []).some((mr) => {
+    const roles = Array.isArray(mr.roles) ? mr.roles : [mr.roles];
+    return roles.some((role) => role?.code === "super_admin");
+  });
+}
+
+async function resolveRole(
+  memberships: MembershipRow[],
+  tenantId: string | null,
+): Promise<{ roleType: RoleType | null; roleCode: string | null; roleName: string | null }> {
+  if (!tenantId) return NO_ROLE;
+
+  const membership = memberships.find((m) => m.tenant_id === tenantId);
+  if (!membership) return NO_ROLE;
+
+  let bestType: RoleType | null = null;
+  let bestPriority = -1;
+  let bestCode: string | null = null;
+  let bestName: string | null = null;
+
+  // Display fallback: the first code/name seen, regardless of whether its
+  // role_type is one we recognize. Whether a role_type is a *known tier* only
+  // matters for routing/access decisions (isKnownRoleType guards those below)
+  // — showing "CEO" in the header doesn't need role_type validated at all,
+  // so an unrecognized tier must not blank out a perfectly real code/name.
+  let anyCode: string | null = null;
+  let anyName: string | null = null;
+
+  for (const mr of membership.membership_roles ?? []) {
+    const rolesField = mr.roles;
+    const role = Array.isArray(rolesField) ? rolesField[0] : rolesField;
+    const code = typeof role?.code === "string" ? role.code : null;
+    const name = typeof role?.name === "string" ? role.name : null;
+    if (anyCode === null && anyName === null && (code !== null || name !== null)) {
+      anyCode = code;
+      anyName = name;
+    }
+
+    const rawRoleType = role?.role_type;
+    if (!rawRoleType || !isKnownRoleType(rawRoleType)) continue;
+    const roleType = rawRoleType;
+
+    const priority = ROLE_PRIORITY[roleType] ?? 0;
+    if (priority > bestPriority) {
+      bestPriority = priority;
+      bestType = roleType;
+      bestCode = code;
+      bestName = name;
+    }
+  }
+
+  return { roleType: bestType, roleCode: bestCode ?? anyCode, roleName: bestName ?? anyName };
+}
+
+/** Never falls back to `user.email` — an email address isn't a display name,
+ * and showing one in the Topbar profile chip is exactly what Nie asked to
+ * stop happening (2026-08-25). Falls to the generic `FALLBACK_NAME` instead
+ * when Core has neither a display_name nor a first/last name for the user.
+ *
+ * Prefers the Thai name (`extras`, from `resolveMembershipExtras`) over
+ * `display_name` when `preferred_language` is "th" and one is actually set
+ * — same real-field-driven preference `ProfilePage` uses, so the Topbar and
+ * Profile agree instead of one silently staying English (Nie, 2026-09-16). */
+function resolveUserName(
+  user: Record<string, unknown>,
+  extras: { firstNameTh: string | null; lastNameTh: string | null },
+): string {
+  const preferredLanguage = languageFromTag(user.preferred_language);
+  const thaiName = [extras.firstNameTh, extras.lastNameTh].filter(Boolean).join(" ");
+  if (preferredLanguage === "th" && thaiName) return thaiName;
+
+  const displayName = String(user.display_name ?? "").trim();
+  if (displayName) return displayName;
+
+  const fullName = `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim();
+  if (fullName) return fullName;
+
+  return FALLBACK_NAME;
+}

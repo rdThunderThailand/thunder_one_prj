@@ -1,0 +1,6 @@
+import { PublicationDetailPage } from "@/features/media-workspace/publications";
+
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <PublicationDetailPage id={id} />;
+}

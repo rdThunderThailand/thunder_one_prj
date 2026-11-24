@@ -1,0 +1,67 @@
+"use client";
+
+import Link from "next/link";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ChevronRightIcon, ClockIcon } from "@/components/ui/icons";
+import { timeAgo } from "@/lib/time-ago";
+import { useRecentWorkspaces } from "@/lib/workspace-prefs";
+import type { WorkspaceEntry } from "../catalog";
+import { workspaceIcon } from "./workspace-ui";
+
+/**
+ * Real per-browser history: the Sidebar records each App this viewer opens
+ * (lib/workspace-prefs.ts). Shared by all three variants — `showCount`
+ * swaps "2 hours ago" for "Opened 3 times". Empty until the viewer opens a
+ * Workspace in this browser. Looked up in `workspaces`, so history for an
+ * App the tenant can't see is skipped.
+ */
+export function RecentlyOpenedRow({ workspaces, showCount = false }: { workspaces: WorkspaceEntry[]; showCount?: boolean }) {
+  const recents = useRecentWorkspaces()
+    .map((recent) => ({ recent, workspace: workspaces.find((w) => w.id === recent.id) }))
+    .filter((entry) => entry.workspace?.href);
+  const now = new Date();
+
+  return (
+    <div>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">Recently Opened</h2>
+      {recents.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={ClockIcon}
+            title="Nothing opened yet"
+            detail="Workspaces you open in this browser will show here."
+            compact
+          />
+        </Card>
+      ) : (
+        <div className="flex flex-wrap gap-3">
+          {recents.slice(0, 5).map(({ recent, workspace }) =>
+            workspace?.href ? (
+              <Link
+                key={recent.id}
+                href={workspace.href}
+                className="min-w-52 flex-1 sm:flex-none"
+              >
+                <Card className="flex items-center gap-2.5 p-3 transition-colors hover:border-t1-blue-200">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${workspace.tone}`}>
+                    {workspaceIcon(workspace.icon, "h-4 w-4")}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{workspace.name}</p>
+                    <p className="truncate text-xs text-t1-gray-400">
+                      {showCount
+                        ? `Opened ${recent.openCount} time${recent.openCount === 1 ? "" : "s"}`
+                        : timeAgo(recent.lastOpenedAt, now)}
+                    </p>
+                  </div>
+                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-t1-gray-400" />
+                </Card>
+              </Link>
+            ) : null
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,33 +1,102 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist_Mono, Manrope, Noto_Sans_Thai } from "next/font/google";
+import { Toaster } from "sonner";
+import { getAppLocale } from "@/lib/app-locale.server";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+});
+
+// Manrope has no Thai glyphs; Thai text falls through to this face (ADR 0096 §7) instead of
+// whatever the OS provides. Only the Thai subset: Latin always resolves to Manrope first.
+const notoSansThai = Noto_Sans_Thai({
+  variable: "--font-noto-sans-thai",
+  subsets: ["thai"],
+});
+
+const SITE_NAME = "ThunderOne";
+const TAGLINE = "Empowered People. Connected Organization.";
+const DESCRIPTION =
+  "ThunderOne รวมทุก Workspace ขององค์กรไว้ในที่เดียว — บุคลากร สินทรัพย์ สื่อและจอแสดงผล งานบริการ และลูกค้า เพื่อให้ทุกทีมทำงานร่วมกันได้อย่างไม่มีสะดุด";
+
+// Absolute URLs for Open Graph/Twitter images and canonical links. Set
+// NEXT_PUBLIC_SITE_URL per environment; on Vercel the production domain is
+// picked up automatically when it isn't set.
+function siteUrl(): URL {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  if (explicit) return new URL(explicit);
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercel) return new URL(`https://${vercel}`);
+  return new URL("http://localhost:3000");
+}
+
+// Tab titles read "ThunderOne | Empowered People. Connected Organization."
+// on pages without their own title, and "<page> | ThunderOne" everywhere
+// else (each App's layout and the shell pages set theirs).
 export const metadata: Metadata = {
-  title: "Thunder One",
-  description: "Thunder One — DOOH video publishing MVP",
+  metadataBase: siteUrl(),
+  title: {
+    default: `${SITE_NAME} | ${TAGLINE}`,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: ["ThunderOne", "Thunder One", "workspace", "HR", "asset management", "digital signage", "DOOH", "Thunder"],
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} | ${TAGLINE}`,
+    description: DESCRIPTION,
+    locale: "th_TH",
+    alternateLocale: ["en_US"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} | ${TAGLINE}`,
+    description: DESCRIPTION,
+  },
+  formatDetection: { telephone: false, email: false, address: false },
 };
 
-export default function RootLayout({
+export const viewport: Viewport = {
+  themeColor: "#286EF9",
+};
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // The user's language (lib/app-locale): the cookie, seeded at login from preferred_language.
+      lang={await getAppLocale()}
+      className={`${manrope.variable} ${notoSansThai.variable} ${geistMono.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="h-full flex flex-col">
+        {children}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            // unstyled: sonner's own stylesheet is unlayered and would beat these token utilities
+            unstyled: true,
+            classNames: {
+              toast:
+                "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-4 text-sm text-foreground shadow-lg",
+              success: "border-success bg-success-muted text-success",
+              error: "border-error bg-error-muted text-error",
+              actionButton: "ml-auto rounded-md px-2 py-1 text-xs font-semibold underline",
+            },
+          }}
+        />
+      </body>
     </html>
   );
 }

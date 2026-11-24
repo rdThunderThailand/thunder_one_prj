@@ -1,0 +1,57 @@
+import type { DraftFields } from "./store/usePublicationDraftStore";
+// Explicit .ts extension so the .check.mts beside this file can load it under
+// Node's ESM resolver, which does no extension guessing.
+import { validateStep, type WizardStepId } from "./step-validation.ts";
+
+/**
+ * What a Next click resolved to. `saved` is the only outcome that may advance
+ * the step — keeping that decision in one discriminated union is the point of
+ * this file, since a save failure silently advancing loses the user's work.
+ */
+export type NextOutcome =
+  | { kind: "invalid"; errors: string[] }
+  | { kind: "saved" }
+  | { kind: "failed"; message: string };
+
+/**
+ * Validate the current step, then persist. `persist` runs only when the step is
+ * valid, so the caller can hang its "saving…" state flip inside that callback
+ * and have it fire at exactly the right moment.
+ */
+export async function attemptNext(
+  step: WizardStepId,
+  state: DraftFields,
+  persist: () => Promise<unknown>
+): Promise<NextOutcome> {
+  const result = validateStep(step, state);
+  if (!result.valid) return { kind: "invalid", errors: result.errors };
+
+  try {
+    await persist();
+    return { kind: "saved" };
+  } catch (err) {
+    return { kind: "failed", message: err instanceof Error ? err.message : "Failed to save draft." };
+  }
+}
+
+/**
+ * Where a re-opened server draft lands: the first gated step it still fails,
+ * else Review. The server keeps no "furthest step", and every Next saves, so a
+ * draft may have been saved from any step — validation is the only honest signal.
+ */
+export function resumeStep(state: DraftFields): WizardStepId {
+  const gated: WizardStepId[] = [1, 2, 3];
+  return gated.find((step) => !validateStep(step, state).valid) ?? 4;
+}
+
+/**
+ * True while a `?id=` draft is still being fetched, so the wizard can render
+ * nothing instead of one frame of the previous draft's values.
+ */
+export function isResumePending(
+  idParam: string | null,
+  resumedId: string | null,
+  publicationId: string | null
+): boolean {
+  return Boolean(idParam) && idParam !== resumedId && idParam !== publicationId;
+}

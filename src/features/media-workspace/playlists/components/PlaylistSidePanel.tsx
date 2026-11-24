@@ -1,0 +1,220 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Badge } from "@/components/ui/Badge";
+import { Button, buttonVariants } from "@/components/ui/Button";
+import { MediaThumb } from "@/components/ui/MediaThumb";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
+import { XIcon } from "@/components/ui/icons";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { classifyApiError } from "@/lib/api/api-error";
+import { fetchPlaylist } from "../services/playlists-api";
+import { decodeMetadata, resolveCoverAssetId } from "../metadata";
+import { playlistDisplayStatus, statusBadge } from "../status-display";
+import type { PlaylistDetail, PlaylistListItem } from "../types";
+import { ContentTab, DetailsTab, HistoryTab, ScheduleTab } from "./PlaylistPanelTabs";
+
+export function PlaylistSidePanel({
+  playlist,
+  campaignName,
+  busy,
+  onClose,
+  onDuplicate,
+  onDelete,
+}: {
+  playlist: PlaylistListItem;
+  campaignName?: string;
+  busy: boolean;
+  onClose: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  // Keyed by playlist id so a slow response for the previously selected row can never
+  // render under this header — same guard the detail page uses.
+  const [result, setResult] = useState<
+    { id: string; detail: PlaylistDetail } | { id: string; error: string } | null
+  >(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  // Extracted into a named function so the error branch can call it again for retry.
+  // The result object is keyed by playlist.id, so the id guard at line 57 stays intact.
+  const load = () => {
+    let alive = true;
+    fetchPlaylist(playlist.id)
+      .then((detail) => alive && setResult({ id: playlist.id, detail }))
+      .catch(
+        (err) =>
+          alive &&
+          setResult({
+            id: playlist.id,
+            error: classifyApiError(err, "โหลดรายละเอียดไม่สำเร็จ").message,
+          })
+      );
+    return () => {
+      alive = false;
+    };
+  };
+
+  useEffect(() => {
+    return load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playlist.id]);
+
+  const current = result?.id === playlist.id ? result : null;
+  const detail = current && "detail" in current ? current.detail : null;
+  const error = current && "error" in current ? current.error : null;
+
+  const coverId =
+    playlist.cover_asset_id ??
+    resolveCoverAssetId(decodeMetadata(playlist.metadata).info.coverAssetId, detail?.items ?? []);
+  const previews = usePreviewUrls(useMemo(() => (coverId ? [coverId] : []), [coverId]));
+  const badge = statusBadge(playlistDisplayStatus(playlist));
+
+  return (
+    <aside className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="truncate text-base font-semibold text-foreground">
+            {playlist.name}
+          </h2>
+          <Badge variant={badge.color === "green" ? "success" : badge.color === "yellow" ? "warning" : "neutral"} className="rounded-full">
+            {badge.label}
+          </Badge>
+        </div>
+        <button
+          type="button"
+          aria-label="Close panel"
+          onClick={onClose}
+          className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <XIcon />
+        </button>
+      </div>
+
+      <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
+        <MediaThumb
+          url={coverId ? previews.urls[coverId] : undefined}
+          thumbnailUrl={coverId ? previews.thumbnailUrls[coverId] : undefined}
+          alt={playlist.name}
+          className="h-full w-full rounded-none"
+        />
+      </div>
+
+      {error && (
+        <div>
+          <p className="text-sm text-error">{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setResult(null);
+              load();
+            }}
+            className="mt-2 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted"
+          >
+            ลองใหม่
+          </button>
+        </div>
+      )}
+
+      {!detail && !error ? (
+        // Loading skeleton sized like the Details tab
+        <div className="space-y-3 py-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      ) : (
+        detail && (
+          <Tabs key={playlist.id} variant="underline" defaultValue="details" activationMode="manual">
+            <TabsList aria-label="Playlist details">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              <TabsTrigger value="content">Content ({detail.items.length})</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details">
+              <DetailsTab detail={detail} campaignName={campaignName} />
+            </TabsContent>
+            <TabsContent value="schedule">
+              <ScheduleTab playlistId={playlist.id} />
+            </TabsContent>
+            <TabsContent value="content">
+              <ContentTab detail={detail} />
+            </TabsContent>
+            <TabsContent value="history">
+              <HistoryTab playlistId={playlist.id} />
+            </TabsContent>
+          </Tabs>
+        )
+      )}
+
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-4">
+        <Link
+          href={`/media-workspace/playlists/${playlist.id}`}
+          className={buttonVariants({ variant: "outline" })}
+        >
+          Edit Playlist
+        </Link>
+        <Button variant="primary" disabled={busy} onClick={onDuplicate}>
+          Duplicate
+        </Button>
+        {confirmingDelete ? (
+          <>
+            <Button
+              variant="primary"
+              className="bg-error hover:bg-error"
+              disabled={busy}
+              onClick={onDelete}
+            >
+              {busy ? "กำลังลบ…" : "ยืนยันลบ?"}
+            </Button>
+            <Button variant="outline" disabled={busy} onClick={() => setConfirmingDelete(false)}>
+              ไม่
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="ghost"
+            className="text-error hover:bg-error-muted"
+            disabled={busy}
+            onClick={() => setConfirmingDelete(true)}
+          >
+            Delete
+          </Button>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+/** The panel as a right-hand drawer over the list, opened from a row's Details action. The list
+ *  page lost its inline panel in the #38/#40/#41 rewrite; a drawer brings it back without
+ *  reflowing the table (ADR 0121). */
+export function PlaylistDetailsDrawer({
+  playlist,
+  busy,
+  onClose,
+  onAction,
+}: {
+  playlist: PlaylistListItem;
+  busy: boolean;
+  onClose: () => void;
+  onAction: (action: "duplicate" | "delete") => void;
+}) {
+  return (
+    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-[380px] overflow-y-auto p-4">
+      <PlaylistSidePanel
+        key={playlist.id}
+        playlist={playlist}
+        busy={busy}
+        onClose={onClose}
+        onDuplicate={() => onAction("duplicate")}
+        onDelete={() => onAction("delete")}
+      />
+    </div>
+  );
+}

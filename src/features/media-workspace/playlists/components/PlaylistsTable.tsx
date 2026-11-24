@@ -1,0 +1,298 @@
+"use client";
+
+import { useMemo } from "react";
+import Link from "next/link";
+import { Badge } from "@/components/ui/Badge";
+import { Tag } from "@/components/ui/Tag";
+import { MediaThumb } from "@/components/ui/MediaThumb";
+import { Checkbox } from "@/components/ui/lovable/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/lovable/dropdown-menu";
+import { EditIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { decodeMetadata } from "../metadata";
+import { formatDuration } from "../duration";
+import { playlistContentType, type Sort, type SortKey } from "../list-filtering";
+import { playlistDisplayStatus, statusBadge } from "../status-display";
+import type { PlaylistListItem } from "../types";
+
+function formatUpdatedAt(iso?: string): string {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return `${date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })} ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+function coverAssetId(playlist: PlaylistListItem): string | undefined {
+  return playlist.cover_asset_id ?? decodeMetadata(playlist.metadata).info.coverAssetId;
+}
+
+export type RowAction = "details" | "duplicate" | "delete" | "mark-ready" | "move" | "tags" | "restore" | "permanent-delete";
+const TYPE_LABELS: Record<"video" | "image" | "mixed", string> = {
+  video: "Video",
+  image: "Image",
+  mixed: "Mixed",
+};
+const statusVariant = (color: string) => color === "green" ? "success" : color === "yellow" ? "warning" : "neutral";
+
+export function PlaylistsTable({
+  rows,
+  busyId,
+  sort,
+  inTrash = false,
+  onAction,
+  onPreview,
+  onSortChange,
+  selectedIds,
+  onSelectionChange,
+}: {
+  rows: PlaylistListItem[];
+  busyId: string | null;
+  sort: Sort;
+  inTrash?: boolean;
+  onAction: (action: RowAction, playlist: PlaylistListItem) => void;
+  onPreview: (playlist: PlaylistListItem) => void;
+  onSortChange: (key: SortKey) => void;
+  selectedIds: Set<string>;
+  onSelectionChange: (ids: Set<string>) => void;
+}) {
+  const coverIds = useMemo(
+    () => [...new Set(rows.map(coverAssetId).filter((id): id is string => !!id))],
+    [rows]
+  );
+  const previews = usePreviewUrls(coverIds);
+  const isAllSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-[10px]">
+        <thead>
+          <tr className="border-b border-border text-[9px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <th className="w-8 px-3 py-2"><Checkbox aria-label="Select all playlists on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
+            <SortHeader label="Playlist" sortKey="name" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Duration" sortKey="duration" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <th className="px-3 py-2">Items</th>
+            <SortHeader label="Last Modified" sortKey="updated" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
+            <th className="px-3 py-2 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((playlist) => {
+            const cover = coverAssetId(playlist);
+            const badge = statusBadge(playlistDisplayStatus(playlist));
+            const metadata = decodeMetadata(playlist.metadata);
+
+            return (
+              <tr
+                key={playlist.id}
+                className="border-b border-border last:border-0 hover:bg-muted"
+              >
+                <td className="px-3 py-2.5"><Checkbox aria-label={`Select ${playlist.name}`} checked={selectedIds.has(playlist.id)} onCheckedChange={(value) => { const next = new Set(selectedIds); if (value === true) next.add(playlist.id); else next.delete(playlist.id); onSelectionChange(next); }} /></td>
+                <td className="px-3 py-2.5">
+                  <div className="flex items-center gap-3">
+                    <MediaThumb
+                      url={cover ? previews.urls[cover] : undefined}
+                      thumbnailUrl={cover ? previews.thumbnailUrls[cover] : undefined}
+                      alt={playlist.name}
+                      className="h-11 w-16"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-semibold text-foreground">
+                        {playlist.name}
+                      </p>
+                      <p className="mt-0.5 truncate text-[9px] text-muted-foreground">
+                        {metadata.info.description || "No description"}
+                      </p>
+                      {playlist.tags && playlist.tags.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {playlist.tags.map((tag) => (
+                            <Tag key={tag.id} className="rounded-full px-2 py-0 text-[8px]">
+                              {tag.name}
+                            </Tag>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-2.5 text-[10px]">
+                  <Tag className="rounded-full px-2 py-0 text-[9px] font-medium">{(() => {
+                    const type = playlistContentType(playlist);
+                    return type ? TYPE_LABELS[type] : "—";
+                  })()}</Tag>
+                </td>
+                <td className="px-3 py-2.5 text-[10px]">
+                  {playlist.total_duration_seconds == null
+                    ? "—"
+                    : formatDuration(playlist.total_duration_seconds)}
+                </td>
+                <td className="px-3 py-2.5 text-[10px]">
+                  {playlist.item_count.toLocaleString()}
+                </td>
+                <td className="px-3 py-2.5">
+                  {playlist.created_by?.display_name && <p className="text-[10px] font-semibold">{playlist.created_by.display_name}</p>}
+                  <p className="text-[9px] text-muted-foreground">{formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}</p>
+                </td>
+                <td className="px-3 py-2.5">
+                  <Badge variant={statusVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge>
+                </td>
+                <td className="px-3 py-2.5 text-right">
+                  <RowActions
+                    playlist={playlist}
+                    isDraft={playlist.status === "draft"}
+                    inTrash={inTrash}
+                    canPermanentDelete={(playlist.publication_count ?? 0) === 0}
+                    disabled={busyId === playlist.id}
+                    onAction={(action) => onAction(action, playlist)}
+                    onPreview={() => onPreview(playlist)}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SortHeader({
+  label,
+  sortKey,
+  sort,
+  onSortChange,
+  className,
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: Sort;
+  onSortChange: (key: SortKey) => void;
+  className?: string;
+}) {
+  const active = sort.key === sortKey;
+  return (
+    <th className={className} aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+      <button
+        type="button"
+        onClick={() => onSortChange(sortKey)}
+        className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+      >
+        {label}
+        {active && <span aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span>}
+      </button>
+    </th>
+  );
+}
+
+function RowActions({
+  playlist,
+  isDraft,
+  inTrash,
+  canPermanentDelete,
+  disabled,
+  onAction,
+  onPreview,
+}: {
+  playlist: PlaylistListItem;
+  isDraft: boolean;
+  inTrash: boolean;
+  canPermanentDelete: boolean;
+  disabled: boolean;
+  onAction: (action: RowAction) => void;
+  onPreview: () => void;
+}) {
+  const danger = "text-error focus:text-error";
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      {!inTrash && (
+        <>
+          <button
+            type="button"
+            onClick={onPreview}
+            disabled={disabled}
+            aria-label={`Preview ${playlist.name}`}
+            title="Preview"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-accent disabled:opacity-50"
+          >
+            <PlayIcon />
+          </button>
+          <Link
+            href={`/media-workspace/playlists/${playlist.id}`}
+            aria-label={`Edit ${playlist.name}`}
+            title="Edit"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-accent"
+          >
+            <EditIcon />
+          </Link>
+        </>
+      )}
+      {/* QA 2026-10-08 #10: a portalled menu, so the table's overflow cannot clip it. The span stops
+          clicks (React bubbles them out of the portal too) from reaching the row. */}
+      <span onClick={(event) => event.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`More actions for ${playlist.name}`}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <MoreIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-48"
+          >
+            {inTrash ? (
+              <>
+                <DropdownMenuItem disabled={disabled} onSelect={() => onAction("restore")}>
+                  Recover
+                </DropdownMenuItem>
+                {/* #40: a playlist that has ever been published can never be permanently
+                    deleted (publications.playlist_id is ON DELETE RESTRICT) — explain it
+                    rather than offer a button that always fails. */}
+                {canPermanentDelete ? (
+                  <DropdownMenuItem className={danger} disabled={disabled} onSelect={() => onAction("permanent-delete")}>
+                    Permanent delete
+                  </DropdownMenuItem>
+                ) : (
+                  <p className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                    Permanent delete unavailable — this playlist has been published.
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem onSelect={() => onAction("details")}>
+                  Details
+                </DropdownMenuItem>
+                {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
+                    moves the badge to Inactive, not Active, until a publication references it. */}
+                {isDraft && (
+                  <DropdownMenuItem disabled={disabled} onSelect={() => onAction("mark-ready")}>
+                    Mark as ready
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem disabled={disabled} onSelect={() => onAction("duplicate")}>
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={disabled} onSelect={() => onAction("move")}>
+                  Move to folder…
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={disabled} onSelect={() => onAction("tags")}>
+                  Edit tags…
+                </DropdownMenuItem>
+                <DropdownMenuItem className={danger} disabled={disabled} onSelect={() => onAction("delete")}>
+                  Move to Trash
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </span>
+    </div>
+  );
+}

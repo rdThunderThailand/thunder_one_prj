@@ -1,0 +1,43 @@
+"use client";
+
+import { useEffect, type ReactNode } from "react";
+import { publishPageHeader } from "./page-header-store";
+
+interface PageHeaderProps {
+  /** ReactNode so a page can put an inline rename input in the heading slot. */
+  title: ReactNode;
+  subtitle?: string;
+  actions?: ReactNode;
+  /** Media Workspace only (docs/adr/0075 §4): the Topbar renders the title/subtitle
+   *  itself, so this publishes them there instead of rendering its own heading row —
+   *  every other caller is unaffected and keeps rendering the heading in `main`. */
+  titleInTopbar?: boolean;
+}
+
+export function PageHeader({ title, subtitle, actions, titleInTopbar = false }: PageHeaderProps) {
+  useEffect(() => {
+    if (!titleInTopbar) return;
+    publishPageHeader({ title, subtitle });
+    return () => publishPageHeader(null);
+  }, [titleInTopbar, title, subtitle]);
+
+  if (titleInTopbar) {
+    return actions ? <div className="flex shrink-0 items-center justify-end gap-2">{actions}</div> : null;
+  }
+
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        {/* 2026-09-19: matched to the Media Workspace design reference's
+            page title (20px/extrabold/tight tracking) and subtitle
+            (10px) — was text-2xl/font-semibold (24px/600) and text-sm
+            (14px), both noticeably heavier/larger than the reference. */}
+        <h1 className="text-xl font-extrabold tracking-tight text-foreground">{title}</h1>
+        {subtitle && (
+          <p className="mt-1 text-2xs text-muted-foreground">{subtitle}</p>
+        )}
+      </div>
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+    </div>
+  );
+}

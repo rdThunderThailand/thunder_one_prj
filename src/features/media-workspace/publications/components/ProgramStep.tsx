@@ -1,0 +1,203 @@
+"use client";
+
+import { useState, type ReactNode } from "react";
+import { Card } from "@/components/ui/Card";
+import { ChevronDownIcon } from "@/components/ui/icons";
+import type { MediaAsset, ScheduleConflict } from "../types";
+import type { ChannelListItem } from "../../channels/types";
+import { priorities } from "../mock-data";
+import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
+import { HowToPlayPanel } from "./HowToPlayPanel";
+import { ProgramSummaryRail } from "./ProgramSummaryRail";
+import { ScheduleStep } from "./ScheduleStep";
+import { WhereToPlayPanel } from "./WhereToPlayPanel";
+
+export interface ProgramStepProps {
+  channels: ChannelListItem[];
+  loadingChannels: boolean;
+  channelsError: string | null;
+  aspectRatio: string | null;
+  fitCheckFailed: boolean;
+  assets: MediaAsset[];
+  conflicts: ScheduleConflict[];
+  checkingConflicts: boolean;
+  conflictsError: string | null;
+  showFieldErrors: boolean;
+}
+
+export function ProgramStep({
+  channels,
+  loadingChannels,
+  channelsError,
+  aspectRatio,
+  fitCheckFailed,
+  assets,
+  conflicts,
+  checkingConflicts,
+  conflictsError,
+  showFieldErrors,
+}: ProgramStepProps) {
+  // Bumped when How to Play changes the Playlist's or Layout's playback, so the rail reloads its preview (ADR 0083).
+  const [contentRevision, setContentRevision] = useState(0);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight text-foreground">Step 3 — Program</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">กำหนดที่ / เวลา / วิธีเล่น</p>
+        </div>
+        <DisabledControl label="Load from Template" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 gap-6 min-[1400px]:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            <ProgramColumn index={1} title="Where to Play" subtitle="เลือกช่องทาง / หน้าจอ">
+              <WhereToPlayPanel
+                channels={channels}
+                loadingChannels={loadingChannels}
+                channelsError={channelsError}
+                aspectRatio={aspectRatio}
+                fitCheckFailed={fitCheckFailed}
+              />
+            </ProgramColumn>
+
+            <ProgramColumn index={2} title="When to Play" subtitle="กำหนดช่วงเวลา">
+              <ScheduleStep
+                conflicts={conflicts}
+                checkingConflicts={checkingConflicts}
+                conflictsError={conflictsError}
+                showErrors={showFieldErrors}
+              />
+            </ProgramColumn>
+
+            <ProgramColumn index={3} title="How to Play" subtitle="ตั้งค่าการเล่น">
+              <HowToPlayPanel assets={assets} refreshKey={contentRevision} onContentChanged={() => setContentRevision((n) => n + 1)} />
+            </ProgramColumn>
+          </div>
+
+          <AdditionalSettings />
+        </div>
+
+        <ProgramSummaryRail channels={channels} assets={assets} refreshKey={contentRevision} />
+      </div>
+    </div>
+  );
+}
+
+function ProgramColumn({
+  index,
+  title,
+  subtitle,
+  children,
+}: {
+  index: number;
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card className="flex flex-col gap-4 p-5">
+      <div className="flex items-baseline gap-2 border-b border-border pb-3">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-primary">
+          {index}
+        </span>
+        <div>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+/** Priority lived on step 2 (Frame 2) deliberately; ver02 moves it here. `basicInfo.priorityId`
+ *  is unchanged — only the control's home moves. */
+function AdditionalSettings() {
+  const basicInfo = usePublicationDraftStore((s) => s.basicInfo);
+  const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
+  const priorityId = basicInfo.priorityId;
+
+  return (
+    <Card className="p-5">
+      <h2 className="text-base font-semibold text-foreground">
+        Additional Settings <span className="text-sm font-normal text-muted-foreground">(optional)</span>
+      </h2>
+      <p className="mt-0.5 text-xs text-muted-foreground">ตั้งค่าเพิ่มเติม</p>
+
+      <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-muted-foreground">Priority</label>
+          <p className="text-xs text-muted-foreground">ตั้งลำดับความสำคัญของการเล่น (สำหรับกรณีเนื้อหาทับกัน)</p>
+          <div className="relative">
+            <span
+              className={`pointer-events-none absolute left-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
+                priorities.find((p) => p.id === priorityId)?.color ?? "bg-success"
+              }`}
+            />
+            <select
+              value={priorityId}
+              onChange={(e) => setBasicInfo({ ...basicInfo, priorityId: e.target.value })}
+              className="w-full appearance-none rounded-lg border border-border bg-card py-2.5 pl-7 pr-9 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
+            >
+              {priorities.map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
+            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5 opacity-60">
+          <label className="text-sm font-medium text-muted-foreground">
+            Playback Behaviour when offline
+          </label>
+          <p className="text-xs text-muted-foreground">ยังไม่เปิดใช้งาน</p>
+          <div className="mt-1 flex flex-col gap-2">
+            {[
+              ["Play last cached content", "เล่นเนื้อหาล่าสุดที่แคชไว้"],
+              ["Show offline message", "แสดงข้อความเมื่อออฟไลน์"],
+              ["Do nothing", "ไม่ทำอะไร"],
+            ].map(([label, sublabel], i) => (
+              <label
+                key={label}
+                title="ยังไม่เปิดใช้งาน"
+                className="flex cursor-not-allowed items-start gap-2 text-sm text-muted-foreground"
+              >
+                <input
+                  type="radio"
+                  name="offline-behaviour"
+                  disabled
+                  checked={i === 0}
+                  readOnly
+                  className="mt-0.5 h-4 w-4"
+                />
+                <span>
+                  {label}
+                  <span className="block text-xs text-muted-foreground">{sublabel}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/** DISABLED, not built yet — precedent `ScheduleStep.tsx` advanced-options block. */
+function DisabledControl({ label }: { label: string }) {
+  return (
+    <button
+      type="button"
+      disabled
+      title="ยังไม่เปิดใช้งาน"
+      className="flex shrink-0 cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-muted px-3 py-1.5 text-sm text-muted-foreground"
+    >
+      {label}
+      <ChevronDownIcon className="h-4 w-4" />
+    </button>
+  );
+}

@@ -1,0 +1,471 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { resolveActiveApp } from "@/config/apps";
+import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
+import { filterAssetWorkspaceNav } from "@/config/nav/asset-workspace";
+import { DEFAULT_ASSET_WORKSPACE_ROLE } from "@/config/nav/asset-workspace-roles";
+import { customerWorkspaceNav } from "@/config/nav/customer-workspace";
+import { leadApprovalNav } from "@/config/nav/lead-approval";
+import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
+import { peopleNav } from "@/config/nav/people";
+import { settingsNavItems } from "@/config/nav/settings";
+import { shellNavItems } from "@/config/nav/shell";
+import { resolveThunderCareNav } from "@/config/nav/thunder-care";
+import type { NavConfig, NavItem, NavSection } from "@/config/nav/types";
+import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { isEditorRoute } from "@/config/nav/editor-routes";
+import { recordWorkspaceVisit } from "@/lib/workspace-prefs";
+import type { AvailableTenant } from "@/features/auth/services/get-session";
+import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
+import { TenantSwitcher } from "./TenantSwitcher";
+
+const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
+
+// Media Workspace has one nav for the whole app; Asset Intelligence and
+// ThunderCare each have one nav per persona, resolved from the route (see
+// config/nav/asset-intelligence.tsx, config/nav/thunder-care.tsx). A null
+// appId means the route belongs to no App — Thunder One's shell nav
+// (config/nav/shell.tsx) applies instead — docs/adr/0033.
+function resolveAppNavConfig(appId: string, pathname: string): NavConfig {
+  if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
+  if (appId === "asset-workspace") return filterAssetWorkspaceNav(DEFAULT_ASSET_WORKSPACE_ROLE);
+  if (appId === "thunder-care") return resolveThunderCareNav(pathname);
+  if (appId === "people") return peopleNav;
+  if (appId === "customer-workspace") return customerWorkspaceNav;
+  if (appId === "lead-approval") return leadApprovalNav;
+  return mediaWorkspaceNav;
+}
+
+function isActivePath(pathname: string, href?: string) {
+  if (!href) return false;
+  // Exact-match only for Apps whose "overview" href is flat (no further
+  // path segments distinguish it from its own sub-pages) — otherwise the
+  // prefix check below double-highlights both the overview row and
+  // whichever sub-page is actually active, since every sub-page's path
+  // starts with the overview href too.
+  if (href === "/media-workspace" || href === "/customer-workspace") return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function NavBadge({ badge }: { badge?: string }) {
+  if (!badge) return null;
+
+  const isAlert = /^\d+$/.test(badge);
+  return (
+    <span
+      className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+        isAlert ? "bg-error text-error-foreground" : "bg-accent text-primary"
+      }`}
+    >
+      {badge}
+    </span>
+  );
+}
+
+function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
+  // 2026-09-19: matched to the Media Workspace design reference's own nav
+  // item typography (12px/500) — was text-sm/font-semibold (14px/600),
+  // noticeably heavier/larger than the reference.
+  // 2026-09-19: dimensions matched to the design reference too, not just
+  // type — was min-h-9/px-2.5 (36px row, 10px padding); reference measures
+  // an exact 32px row with 12px horizontal padding.
+  const baseClasses =
+    "flex h-8 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium transition-colors";
+  const icon = item.icon ? <span className="h-4 w-4 shrink-0 text-muted-foreground">{item.icon}</span> : null;
+
+  if (!item.href) {
+    return (
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-t1-gray-50 text-t1-gray-400 opacity-75`} title="Not built yet">
+        {icon}
+        {item.label}
+        <NavBadge badge={item.badge} />
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={item.href}
+      className={`${baseClasses} ${
+        active
+          ? "bg-accent text-primary"
+          : "text-foreground hover:bg-muted hover:text-primary"
+      }`}
+    >
+      {icon}
+      {item.label}
+      <NavBadge badge={item.badge} />
+    </Link>
+  );
+}
+
+function SubLink({ item, active }: { item: NavItem; active: boolean }) {
+  // 2026-09-19: same typography fix as TopLevelLink above.
+  const baseClasses =
+    "flex h-8 items-center gap-2 rounded-[10px] py-1.5 pl-8 pr-3 text-xs font-medium transition-colors";
+
+  if (!item.href) {
+    return (
+      <span className={`${baseClasses} cursor-not-allowed select-none bg-t1-gray-50 text-t1-gray-400 opacity-75`} title="Not built yet">
+        {item.label}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={item.href}
+      className={`${baseClasses} ${
+        active
+          ? "bg-accent text-primary"
+          : "text-foreground hover:bg-muted hover:text-primary"
+      }`}
+    >
+      {item.label}
+    </Link>
+  );
+}
+
+function SidebarSection({ section, pathname }: { section: NavSection; pathname: string }) {
+  const [open, setOpen] = useState(true);
+
+  // 2026-09-19: section-label size matched to the design reference (~9px,
+  // uppercase, bold) via the text-3xs token (globals.css); trigger button
+  // matched to TopLevelLink's own 2026-09-19 fix (text-xs/font-medium).
+  if (!section.icon) {
+    return (
+      <section className="border-b border-border pb-4 last:border-b-0">
+        <h2 className="mb-2 px-3 text-3xs font-bold uppercase text-muted-foreground">{section.label}</h2>
+        <div className="space-y-0.5">
+          {section.items.map((item) => (
+            <TopLevelLink key={item.label} item={item} active={isActivePath(pathname, item.href)} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="border-b border-border pb-4 last:border-b-0">
+      <h2 className="mb-2 px-3 text-3xs font-bold uppercase text-muted-foreground">{section.label}</h2>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-8 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+      >
+        <span className="h-4 w-4 shrink-0 text-muted-foreground">{section.icon}</span>
+        <span className="flex-1 text-left">{section.triggerLabel ?? section.label}</span>
+        <ChevronDownIcon
+          className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="relative mt-0.5 space-y-0.5 before:absolute before:bottom-1 before:left-[19px] before:top-1 before:w-px before:bg-muted">
+          {section.items.map((item) => (
+            <SubLink key={item.label} item={item} active={isActivePath(pathname, item.href)} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Rendered on every shell-level route (no active App) — config/nav/shell.tsx.
+// Restyled 2026-09-17 to match the compact list every App's own nav already
+// uses (AppNav/TopLevelLink below): dense single-line rows and a subtle
+// indigo-50 active state, replacing the earlier bespoke navy/solid-blue
+// "card" treatment (which no longer matched once Media Workspace's sidebar
+// became the reference). "หน้าแรก" is pinned/always-highlighted the same way
+// Media Workspace's own "Overview" row is (compare config/nav/media-
+// workspace.tsx's overviewItem + AppNav below) — it's the app's home anchor,
+// not just another active-conditional link. Sublabels no longer have a
+// second line to live in at this density; kept as a title tooltip instead of
+// dropped outright. The logo/header above this nav is unrelated and unchanged.
+function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolean }) {
+  const [home, ...rest] = shellNavItems;
+
+  return (
+    <nav className={`min-h-0 flex-1 space-y-1 overflow-y-auto pb-3 pt-3 ${collapsed ? "px-3" : "px-2"}`}>
+      <Link
+        href={home.href}
+        title={collapsed ? home.label : home.sublabel}
+        className={`flex items-center gap-3 rounded-xl bg-accent text-primary ${
+          collapsed ? "h-8 justify-center px-3 py-2" : "min-h-10 px-3 py-2 text-sm font-semibold"
+        }`}
+      >
+        <span className="h-4 w-4 shrink-0">{home.icon}</span>
+        {!collapsed && <span className="flex-1 truncate">{home.label}</span>}
+      </Link>
+
+      {rest.map((item) => {
+        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            title={collapsed ? item.label : item.sublabel}
+            className={`flex h-8 items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium transition-colors ${
+              active
+                ? "bg-accent text-primary"
+                : "text-foreground hover:bg-muted hover:text-primary"
+            } ${collapsed ? "justify-center" : ""}`}
+          >
+            <span className="h-4 w-4 shrink-0 text-muted-foreground">{item.icon}</span>
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate">{item.label}</span>
+                {item.badge !== undefined && (
+                  <span className="ml-auto shrink-0 rounded-full bg-error px-1.5 py-0.5 text-[10px] font-bold leading-none text-error-foreground">
+                    {item.badge}
+                  </span>
+                )}
+                {item.chevron && <ChevronRightIcon className="ml-1.5 h-3.5 w-3.5 shrink-0 text-t1-gray-400" />}
+              </>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Rendered on any App route (Media Workspace, Asset Intelligence, ThunderCare)
+// — the existing per-persona sectioned nav, restyled to the light theme.
+function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: string; collapsed: boolean }) {
+  const nav = resolveAppNavConfig(appId, pathname);
+  const isMediaWorkspace = appId === "media-workspace";
+
+  if (isMediaWorkspace) {
+    return <MediaWorkspaceNav nav={nav} pathname={pathname} collapsed={collapsed} />;
+  }
+
+  const overviewActive = isActivePath(pathname, nav.overviewItem.href);
+
+  if (collapsed) {
+    return (
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+        <Link
+          href={nav.overviewItem.href!}
+          title={nav.overviewItem.label}
+          className="flex items-center justify-center rounded-[10px] bg-accent px-3 py-2 text-accent-foreground"
+        >
+          {nav.overviewItem.icon}
+        </Link>
+      </nav>
+    );
+  }
+
+  return (
+    <nav className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-2 pt-3 pb-4 tracking-normal">
+      <div>
+        {/* 2026-09-19: font-bold -> font-semibold + rounded-md -> rounded-xl
+            + px-2.5 -> px-3, matching the design reference's pinned
+            "Overview" row (14px/600, 12px radius, 12px padding). */}
+        <div
+          className={`flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+            overviewActive
+              ? "bg-accent text-primary"
+              : "text-foreground hover:bg-muted hover:text-primary"
+          }`}
+        >
+          <span className="h-4 w-4">{nav.overviewItem.icon}</span>
+          <Link href={nav.overviewItem.href!} className="flex-1">
+            {nav.overviewItem.label}
+          </Link>
+        </div>
+      </div>
+
+      {nav.sections.map((section) => (
+        <SidebarSection key={section.label} section={section} pathname={pathname} />
+      ))}
+
+      {nav.standaloneLinks.length > 0 && (
+        <div className="space-y-0.5 border-t border-border pt-3">
+          {nav.standaloneLinks.map((item, index) => (
+            <div key={item.label} className="flex items-center gap-2.5">
+              <span className="pl-2.5 text-t1-gray-400">{nav.standaloneIcons[index]}</span>
+              <TopLevelLink item={item} active={isActivePath(pathname, item.href)} />
+            </div>
+          ))}
+        </div>
+      )}
+    </nav>
+  );
+}
+
+// A distinct, narrower nav shown only on /profile and /account-security —
+// matches the Figma account-settings mockup, which has its own sidebar
+// (back-link + 3 flat items) rather than the regular shell/app nav. No
+// collapse toggle or tenant switcher here — the mockup doesn't have them,
+// and a 3-item settings menu doesn't need to collapse.
+//
+// Sizing/row/active-state tokens now match the main shell nav exactly
+// (w-56, h-[68px] header, indigo-50 active pill, 16px icons) — this used to
+// run its own oversized/solid-blue treatment (300px wide, 88px header,
+// bg-primary active fill, 28px icons), which read as a different app once
+// you landed here from anywhere else in the shell.
+function SettingsSidebar({ pathname }: { pathname: string }) {
+  return (
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-card">
+      <Link
+        href="/"
+        className="flex h-[68px] items-center border-b border-border px-5 hover:bg-t1-gray-50"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo; no next/image optimization needed */}
+        <img src="/brand/thunderone-logo-horizontal-color.svg" alt="ThunderOne" className="h-10 w-auto" />
+      </Link>
+      <div className="px-3 pb-1 pt-3">
+        <Link
+          href="/mission-control"
+          className="flex items-center gap-2 rounded-[10px] px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+        >
+          <ArrowLeftIcon className="h-4 w-4 shrink-0" />
+          กลับไป ThunderOne
+        </Link>
+      </div>
+      <nav className="flex flex-col gap-0.5 px-2 pt-1">
+        {settingsNavItems.map((item) => {
+          const active = item.id !== "settings" && (pathname === item.href || pathname.startsWith(`${item.href}/`));
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`flex h-8 items-center gap-3 rounded-[10px] px-3 py-2 text-xs font-medium transition-colors ${
+                active
+                  ? "bg-accent text-primary"
+                  : "text-foreground hover:bg-muted hover:text-primary"
+              }`}
+            >
+              <span className="h-4 w-4 shrink-0 text-muted-foreground">{item.icon}</span>
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+
+export function Sidebar({
+  tenantId,
+  tenantName,
+  availableTenants,
+  isMobile = false,
+}: {
+  tenantId: string | null;
+  tenantName: string | null;
+  availableTenants: AvailableTenant[];
+  isMobile?: boolean;
+}) {
+  const pathname = usePathname();
+  const activeApp = resolveActiveApp(pathname);
+  const activeAppId = activeApp?.id ?? null;
+  const isMediaWorkspace = activeAppId === "media-workspace";
+
+  // Feeds the Workspaces launcher's "Recently Opened" (per-browser only —
+  // lib/workspace-prefs.ts). Fires once per App entered, not per sub-page.
+  useEffect(() => {
+    if (activeAppId) recordWorkspaceVisit(activeAppId);
+  }, [activeAppId]);
+  // Editors start collapsed (focus shell, ADR 0077); a click still expands. Any
+  // route change resets to the route's default so an editor never pins the
+  // list pages collapsed and vice versa.
+  const [choice, setChoice] = useState<{ pathname: string; collapsed: boolean } | null>(null);
+  const collapsed = !isMobile && (choice?.pathname === pathname ? choice.collapsed : isMediaWorkspace && isEditorRoute(pathname));
+  const setCollapsed = (update: (v: boolean) => boolean) => setChoice({ pathname, collapsed: update(collapsed) });
+
+  if (SETTINGS_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    return <SettingsSidebar pathname={pathname} />;
+  }
+
+  return (
+    <aside
+      // 2026-09-19: 300px/76px -> 224px/64px (w-56/w-16) — measured directly
+      // off the design reference's own sidebar (exactly 224px wide); this
+      // was the single biggest contributor to the whole shell reading as
+      // "bloated" next to it, more than any font-size difference.
+      className={`flex h-full shrink-0 flex-col border-r ${
+        isMediaWorkspace ? "border-sidebar-border bg-sidebar" : "border-border bg-card"
+      } transition-[width] duration-150 ${
+        collapsed ? "w-16" : "w-56"
+      }`}
+    >
+      <Link
+        href="/"
+        // 2026-09-19: h-[88px] -> h-[68px], matching the reference's own
+        // logo-row height (68px, measured); px-10 -> px-5 since the row is
+        // no longer wide enough for 40px of padding on each side.
+        className={`flex items-center ${
+          isMediaWorkspace
+            ? `h-[68px] gap-3 border-b border-sidebar-border hover:bg-accent px-4 ${collapsed ? "justify-center px-2" : ""}`
+            : `h-[68px] border-b border-border hover:bg-t1-gray-50 ${collapsed ? "justify-center px-2" : "px-5"}`
+        }`}
+      >
+        {isMediaWorkspace ? (
+          <MediaWorkspaceBrand collapsed={collapsed} />
+        ) : collapsed ? (
+          // eslint-disable-next-line @next/next/no-img-element -- real brand SVG, not a photo
+          <img src="/brand/thunderone-mark-t1-dark.svg" alt="ThunderOne" className="h-8 w-8 max-w-none" />
+        ) : (
+          // Every App shows the design system's horizontal lockup (DS-10, brand.md); the wordmark is
+          // never re-typed as live text.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/brand/thunderone-logo-horizontal-color.svg" alt="ThunderOne" className="h-10 w-auto" />
+        )}
+      </Link>
+
+      {activeApp ? (
+        <AppNav appId={activeApp.id} pathname={pathname} collapsed={collapsed} />
+      ) : (
+        <ShellNav pathname={pathname} collapsed={collapsed} />
+      )}
+
+      {/* 2026-09-19: px-5 pb-5 pt-3 + two h-14 (56px) rows -> p-2 + two h-9
+          (36px) rows, matching the reference's own compact bottom area
+          (57px total, p-2 padding) — was nearly twice as tall. */}
+      <div className={`mt-auto ${isMediaWorkspace ? "border-t border-sidebar-border p-2" : "border-t border-border p-2"}`}>
+        {isMediaWorkspace ? (
+          !collapsed && <p className="sr-only">{tenantName ?? "Thunder One"}</p>
+        ) : (
+          // 2026-09-16 shell redesign — tenant name shown for real now (was
+          // sr-only-only before). A switcher when the user can enter more
+          // than one tenant (./TenantSwitcher.tsx).
+          <TenantSwitcher
+            tenantId={tenantId}
+            tenantName={tenantName}
+            tenants={availableTenants}
+            collapsed={collapsed}
+          />
+        )}
+        <button
+          hidden={isMobile}
+          aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          className={
+            isMediaWorkspace
+              ? `flex h-9 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-foreground transition-colors hover:bg-accent hover:text-primary ${
+                  collapsed ? "justify-center" : ""
+                }`
+              : "flex h-9 w-full items-center justify-center gap-2.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground transition-colors hover:bg-t1-gray-50"
+          }
+        >
+          {isMediaWorkspace ? (
+            <>
+              <MediaWorkspaceCollapseIcon open={collapsed} />
+              {!collapsed && "Collapse"}
+            </>
+          ) : (
+            <>
+              {collapsed ? <ArrowRightIcon className="h-4 w-4" /> : <ArrowLeftIcon className="h-4 w-4" />}
+              {!collapsed && "ย่อเมนู"}
+            </>
+          )}
+        </button>
+      </div>
+    </aside>
+  );
+}

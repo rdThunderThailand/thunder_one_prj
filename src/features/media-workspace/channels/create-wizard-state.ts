@@ -1,0 +1,145 @@
+import { ARRANGEMENT_OPTIONS, arrangementByKey, autoMapScreens, buildDisplayConfig, canvasResolution } from "./display-config.ts";
+import type { ChannelPlayerCandidate } from "./player-candidates.ts";
+import type { ChannelDetail, ChannelDisplayConfigScreen, ChannelOutputKind } from "./types/index.ts";
+
+export interface CreateChannelDraft {
+  outputKind: ChannelOutputKind;
+  name: string;
+  locationId: string | null;
+  description: string;
+  displayMode: "single" | "multi";
+  arrangementKey: string;
+  screenResolution: string;
+  /** Multi only — seeded by Auto Map on arrangement/resolution change, then user-editable. */
+  screens: ChannelDisplayConfigScreen[];
+  playerId: string | null;
+}
+
+export const DEFAULT_CREATE_CHANNEL_DRAFT: CreateChannelDraft = {
+  outputKind: "screen",
+  name: "",
+  locationId: null,
+  description: "",
+  displayMode: "single",
+  arrangementKey: "1x3",
+  screenResolution: "1920x1080",
+  screens: [],
+  playerId: null,
+};
+
+/** Re-seeds `screens` from Auto Map — call whenever `displayMode`, `arrangementKey` or
+ *  `screenResolution` changes, so the mapping table never shows a stale screen count. */
+export function withAutoMappedScreens(draft: CreateChannelDraft): CreateChannelDraft {
+  if (draft.displayMode === "single") return { ...draft, screens: [] };
+  return { ...draft, screens: autoMapScreens(arrangementByKey(draft.arrangementKey), draft.screenResolution) };
+}
+
+export function canvasResolutionFor(draft: CreateChannelDraft): string {
+  return draft.displayMode === "single"
+    ? draft.screenResolution
+    : canvasResolution(arrangementByKey(draft.arrangementKey), draft.screenResolution);
+}
+
+export function step1Valid(draft: CreateChannelDraft): boolean {
+  return draft.name.trim().length > 0;
+}
+
+/** ADR 0122 rule 4: "No player yet" — the Channel saves as a Draft. */
+export function withoutPlayer(draft: CreateChannelDraft): CreateChannelDraft {
+  return { ...draft, playerId: null };
+}
+
+/** QA 2026-10-08 #2: picking a single-screen Player that reports its screen size takes that size,
+ *  so the ADR 0079 warning only appears when the operator then picks another. Unknown size (null)
+ *  leaves the field as it was; multi-screen is untouched — the Player reports one display, not the canvas. */
+export function withPlayer(
+  draft: CreateChannelDraft,
+  player: Pick<ChannelPlayerCandidate, "id" | "resolution">,
+): CreateChannelDraft {
+  const next = { ...draft, playerId: player.id };
+  return draft.displayMode === "single" && player.resolution ? { ...next, screenResolution: player.resolution } : next;
+}
+
+export function geometryMismatch(
+  draft: CreateChannelDraft,
+  player: Pick<ChannelPlayerCandidate, "name" | "orientation" | "resolution"> | null,
+): string | null {
+  if (draft.displayMode !== "single" || !player) return null;
+  const [width, height] = draft.screenResolution.split("x").map(Number);
+  const expectedOrientation = width >= height ? "landscape" : "portrait";
+  if ((player.orientation !== null && player.orientation !== expectedOrientation) ||
+      (player.resolution !== null && player.resolution !== draft.screenResolution)) {
+    const reported = [player.resolution, player.orientation].filter(Boolean).join(" · ");
+    return `Channel expects ${draft.screenResolution} (${expectedOrientation}), but ${player.name} reports ${reported}. Playback may be rotated or scaled incorrectly.`;
+  }
+  return null;
+}
+
+export interface CreateChannelPayload {
+  name: string;
+  description: string | null;
+  location_id: string | null;
+  player_id: string | null;
+  output_kind: ChannelOutputKind;
+  expected_resolution: string | null;
+  display_config: ReturnType<typeof buildDisplayConfig> | null;
+  confirm_mismatch: boolean;
+  // `channelCreateSchema` (Thunder_Core) declares this `.nullable()` but not `.optional()` — the
+  // key must be present or zod 400s. A default playlist has no place in this wizard.
+  default_playlist_id: null;
+}
+
+/** The exact body `POST /media/channels` needs — `expected_resolution` xor `display_config`
+ *  depending on Display Mode (`media_core.channel_canvas` refuses both being non-null). */
+export function toCreateChannelPayload(draft: CreateChannelDraft, confirmedMismatch = false): CreateChannelPayload {
+  const arrangement = arrangementByKey(draft.arrangementKey);
+  return {
+    name: draft.name.trim(),
+    description: draft.description.trim() || null,
+    location_id: draft.locationId,
+    player_id: draft.playerId,
+    output_kind: draft.outputKind,
+    expected_resolution: draft.displayMode === "single" ? draft.screenResolution : null,
+    display_config: draft.displayMode === "multi" ? buildDisplayConfig(arrangement, draft.screens) : null,
+    confirm_mismatch: confirmedMismatch,
+    default_playlist_id: null,
+  };
+}
+
+export interface UpdateChannelPayload extends CreateChannelPayload {
+  expected_revision: number;
+  overwrite: boolean;
+}
+
+/** `PATCH /media/channels/:id` — `channelUpdateSchema` is `channelCreateSchema` plus
+ *  `expected_revision`/`overwrite`, same always-present-nullable fields. `overwrite` is always
+ *  `false` here: this editor has no conflict-resolution UI, so a stale revision surfaces as an
+ *  ordinary save error instead of silently clobbering a concurrent edit. */
+export function toUpdateChannelPayload(draft: CreateChannelDraft, expectedRevision: number, confirmedMismatch = false): UpdateChannelPayload {
+  return { ...toCreateChannelPayload(draft, confirmedMismatch), expected_revision: expectedRevision, overwrite: false };
+}
+
+/** Seeds the editor from the Channel Core v2 already returned — the inverse of
+ *  `toCreateChannelPayload`/`toUpdateChannelPayload`. A legacy Channel with no `display_config` but
+ *  more than one `devices[]` entry has no wizard-shape representation yet (ticket 09 scope: the
+ *  one-Player model only) and is not expected to reach this editor. */
+export function draftFromChannel(channel: ChannelDetail): CreateChannelDraft {
+  const displayMode: CreateChannelDraft["displayMode"] = channel.display_config ? "multi" : "single";
+  const arrangement = channel.display_config?.arrangement;
+  const arrangementKey =
+    (arrangement && ARRANGEMENT_OPTIONS.find((option) => option.rows === arrangement.rows && option.cols === arrangement.cols)?.key) ??
+    DEFAULT_CREATE_CHANNEL_DRAFT.arrangementKey;
+  const screenResolution =
+    channel.display_config?.screens[0]?.resolution ?? channel.expected_resolution ?? DEFAULT_CREATE_CHANNEL_DRAFT.screenResolution;
+  return {
+    outputKind: channel.output_kind,
+    name: channel.name,
+    locationId: channel.location?.id ?? null,
+    description: channel.description ?? "",
+    displayMode,
+    arrangementKey,
+    screenResolution,
+    screens: channel.display_config?.screens ?? [],
+    playerId: channel.player?.id ?? null,
+  };
+}

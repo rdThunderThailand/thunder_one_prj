@@ -1,0 +1,73 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { Button } from "@/components/ui/Button";
+import { TextField } from "@/components/ui/TextField";
+import { login } from "../services/auth.service";
+import { LOGIN_FAILURES, LoginError } from "../login-error";
+
+export function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setPending(true);
+    try {
+      await login({ email, password });
+      // Only ever follow a same-origin relative path — `next` comes from a
+      // URL query string, so treating it as a trusted redirect target
+      // (e.g. accepting an absolute or protocol-relative URL) would be an
+      // open-redirect hole.
+      const next = searchParams.get("next");
+      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+    } catch (error) {
+      setError(error instanceof LoginError ? error.message : LOGIN_FAILURES.AUTH_SERVICE_UNAVAILABLE.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <TextField
+        label="Email"
+        name="email"
+        type="email"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+      />
+      <TextField
+        label="Password"
+        name="password"
+        type="password"
+        autoComplete="current-password"
+        required
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+      />
+      {error && <p className="text-sm text-error">{error}</p>}
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? "Signing in..." : "Sign in"}
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link
+          href="/register"
+          className="font-medium text-primary hover:text-accent-foreground"
+        >
+          Create one
+        </Link>
+      </p>
+    </form>
+  );
+}

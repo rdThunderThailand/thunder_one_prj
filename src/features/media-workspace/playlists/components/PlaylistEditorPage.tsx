@@ -1,0 +1,292 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { fetchMediaAssets } from "@/lib/api/media-api";
+import type { MediaAsset } from "@/types/domain";
+import type { ZonePreviewFrame } from "@/features/media-workspace/preview/preview-clock";
+import { PlaylistPreviewModal } from "@/features/media-workspace/preview/PlaylistPreviewModal";
+import { draftItemToPreview, playlistPreviewStage } from "@/features/media-workspace/preview/playlist-preview";
+import { useUndoableState } from "../use-undoable-state";
+import { usePlaylistPreviewHandoff } from "../use-playlist-preview-handoff";
+import {
+  appendItems,
+  duplicateItem,
+  emptyEditorState,
+  moveItem,
+  savedStateLabel,
+  type EditorState,
+} from "../playlist-editor-state";
+import type { DraftItem, PlaylistInfo, PlaylistPlayback } from "../types";
+import { AddItemDrawer } from "./AddItemDrawer";
+import { PlaylistEditorHeader } from "./PlaylistEditorHeader";
+import { PlaylistItemsPane } from "./PlaylistItemsPane";
+import { PlaylistTimelinePane } from "./PlaylistTimelinePane";
+import { PlaylistPlaybackSettings } from "./PlaylistPlaybackSettings";
+import { PlaylistPropertiesPane } from "./PlaylistPropertiesPane";
+import { RevisionConflictCard } from "./RevisionConflictCard";
+import { UnsavedLeaveConfirm } from "./UnsavedLeaveConfirm";
+import { usePlaylistEditorRow } from "./usePlaylistEditorRow";
+import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
+import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
+import type { PublishPrep } from "@/features/media-workspace/publish-changes/PublishPrepDialog";
+import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
+import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
+import { isModShortcut, isTypingTarget } from "@/lib/keyboard-shortcut";
+
+const LIST_PATH = "/media-workspace/playlists";
+
+export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null }) {
+  const router = useRouter();
+  const history = useUndoableState<EditorState>(emptyEditorState());
+  const { present } = history;
+
+  const [info, setInfo] = useState<PlaylistInfo>({ playlistType: "standard" });
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [assetsLoading, setAssetsLoading] = useState(true);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [nowPlayingItemId, setNowPlayingItemId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [propTab, setPropTab] = useState<"item" | "playlist">("item");
+  const [seekRequest, setSeekRequest] = useState<{ seconds: number; id: number } | null>(null);
+
+  const row = usePlaylistEditorRow({ playlistId, history, info, setInfo });
+  const affected = useAffectedPrograms("playlists", row.serverId);
+  const [publishDialog, setPublishDialog] = useState<"changes" | "list" | null>(null);
+
+  // Undo ⌘Z / Ctrl+Z; redo ⇧⌘Z on Apple, Ctrl+Y or Ctrl+Shift+Z elsewhere (lib/keyboard-shortcut).
+  const shortcutPlatform = useShortcutPlatform();
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (isTypingTarget(event.target)) return;
+      const redo =
+        isModShortcut(event, "z", shortcutPlatform, { shift: true }) ||
+        (shortcutPlatform === "other" && isModShortcut(event, "y", shortcutPlatform));
+      const undo = !redo && isModShortcut(event, "z", shortcutPlatform);
+      if (!redo && !undo) return;
+      event.preventDefault();
+      if (redo) history.redo();
+      else history.undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [history, shortcutPlatform]);
+
+  useEffect(() => {
+    if (!row.isDirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [row.isDirty]);
+
+  useEffect(() => {
+    let alive = true;
+    fetchMediaAssets()
+      .then((data) => alive && setAssets(data))
+      .catch(() => undefined)
+      .finally(() => alive && setAssetsLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const setName = (name: string) => history.commit((s) => ({ ...s, name }));
+  const setPlayback = (patch: Partial<PlaylistPlayback>) =>
+    history.commit((s) => ({ ...s, playback: { ...s.playback, ...patch } }));
+  const patchItem = (key: string, patch: Partial<DraftItem>) =>
+    history.commit((s) => ({
+      ...s,
+      items: s.items.map((i) => (i.key === key ? { ...i, ...patch } : i)),
+    }));
+  const removeItem = (key: string) => {
+    history.commit((s) => ({ ...s, items: s.items.filter((i) => i.key !== key) }));
+    setSelectedItemId((current) => (current === key ? null : current));
+  };
+  const duplicate = (key: string) => history.commit((s) => ({ ...s, items: duplicateItem(s.items, key) }));
+
+  const addAssets = (picked: MediaAsset[]) =>
+    history.commit((s) => ({ ...s, items: appendItems(s.items, picked, s.playback) }));
+
+  const selectItem = (key: string) => {
+    setSelectedItemId(key);
+    setPropTab("item");
+  };
+
+  const referencedAssets = useMemo(() => {
+    const ids = new Set(present.items.map((i) => i.mediaAssetId));
+    return assets.filter((a) => ids.has(a.id));
+  }, [assets, present.items]);
+  const { openPreview } = usePlaylistPreviewHandoff(() => ({
+    id: row.serverId,
+    name: present.name,
+    items: present.items,
+    playback: present.playback,
+    assets: referencedAssets,
+  }));
+
+  // Lovable `playlist-preview`: the sheet reads the live draft; the new-tab handoff stays behind
+  // its "Open full preview" button.
+  const previewStage = useMemo(
+    () => playlistPreviewStage({ name: present.name, items: present.items.map(draftItemToPreview), playback: present.playback }),
+    [present.name, present.items, present.playback],
+  );
+
+  const goBack = () => {
+    if (row.isDirty) {
+      setConfirmLeave(true);
+      return;
+    }
+    router.push(LIST_PATH);
+  };
+
+  if (row.loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
+  if (row.loadError) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-6">
+        <p className="text-sm text-error">{row.loadError.message}</p>
+        <Button className="mt-4" variant="outline" onClick={() => router.push(LIST_PATH)}>
+          กลับไป Playlists
+        </Button>
+      </div>
+    );
+  }
+
+  // ADR 0078 §6: unsaved edits are saved first, and a failed save stops the flow before any re-publish.
+  const publishPlaylistChanges = async () => {
+    if (row.isDirty && !(await row.save())) throw new Error("save failed");
+    return publishChanges("playlists", row.serverId!);
+  };
+  const publish = (id = row.serverId) => router.push(`/media-workspace/program/create?playlistId=${id}`);
+  // ADR 0116 §6: Publish to Channel… asks for the missing save / activation instead of being disabled.
+  const publishPrep: PublishPrep | null =
+    row.status === "draft"
+      ? { title: "Playlist นี้ยังเป็น Draft", description: "ต้องบันทึกและเปิดใช้งานก่อน จึงจะเผยแพร่ไปยัง Channel ได้", action: { label: "Save & Activate แล้วไปต่อ", run: () => row.save(true) } }
+      : row.isDirty
+        ? { title: "มีการแก้ไขที่ยังไม่บันทึก", description: "บันทึกการแก้ไขล่าสุดก่อน แล้วไปสร้าง Program ต่อ", action: { label: "Save แล้วไปต่อ", run: () => row.save() } }
+        : null;
+  const publishDisabledReason = !row.serverId
+    ? "บันทึก Playlist ก่อนเผยแพร่"
+    : row.isDirty
+      ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
+      : null;
+  const savedLabel = savedStateLabel(row.isDirty, row.lastSavedAt, !!row.serverId);
+  const effectiveSelectedItemId = selectedItemId ?? present.items[0]?.key ?? null;
+  const selectedItem = present.items.find((i) => i.key === effectiveSelectedItemId) ?? null;
+  // `itemIndex` is the authored index, so a repeated asset lights up only the row on air.
+  const onFrame = (frame: ZonePreviewFrame | null) =>
+    setNowPlayingItemId(frame?.itemIndex != null ? (present.items[frame.itemIndex]?.key ?? null) : null);
+
+  return (
+    <div className="flex min-h-[calc(100dvh-3rem)] flex-col gap-4 xl:h-[calc(100dvh-3rem)] xl:min-h-0 xl:overflow-hidden">
+      <PlaylistEditorHeader
+        name={present.name}
+        status={row.status}
+        savedLabel={savedLabel}
+        lastUpdatedAt={row.lastSavedAt}
+        hasItems={present.items.length > 0}
+        saving={row.saving}
+        canUndo={history.canUndo}
+        canRedo={history.canRedo}
+        onName={setName}
+        onUndo={history.undo}
+        onRedo={history.redo}
+        onCancel={goBack}
+        onPreview={() => setPreviewOpen(true)}
+        onPublish={(id) => publish(id ?? row.serverId)}
+        publishPrep={publishPrep}
+        affectedCount={affected.programs.length}
+        onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
+        onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
+        onSave={(name) => void row.save(true, name)}
+        onSaveDraft={(name) => void row.save(false, name)}
+      />
+
+      {publishDialog && (
+        <PublishChangesDialog
+          contentLabel="playlist"
+          programs={affected.programs}
+          onConfirm={publishDialog === "changes" ? publishPlaylistChanges : undefined}
+          onPublished={affected.reload}
+          onClose={() => setPublishDialog(null)}
+        />
+      )}
+
+      {confirmLeave && (
+        <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />
+      )}
+      {row.saveError && (
+        <div className="rounded-lg border border-error/30 bg-error-muted p-4">
+          <p className="text-sm text-error">{row.saveError}</p>
+        </div>
+      )}
+      {row.conflict && <RevisionConflictCard message={row.conflict} onReload={row.reloadFromServer} />}
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 xl:grid-cols-[300px_minmax(0,1fr)_290px] xl:overflow-hidden">
+        <PlaylistItemsPane
+          items={present.items}
+          playback={present.playback}
+          assets={assets}
+          selectedId={effectiveSelectedItemId}
+          nowPlayingId={nowPlayingItemId}
+          onSelect={selectItem}
+          onMove={(from, to) => history.commit((s) => ({ ...s, items: moveItem(s.items, from, to) }))}
+          onRemove={removeItem}
+          onDuplicate={duplicate}
+          onSeek={(seconds) => setSeekRequest((current) => ({ seconds, id: (current?.id ?? 0) + 1 }))}
+          onAddItem={() => setDrawerOpen(true)}
+        />
+
+        <div className="flex min-h-0 flex-col rounded-xl border border-border bg-card p-3 shadow-panel xl:overflow-y-auto">
+          <PlaylistTimelinePane
+            name={present.name}
+            items={present.items}
+            playback={present.playback}
+            assets={assets}
+            selectedId={effectiveSelectedItemId}
+            nowPlayingId={nowPlayingItemId}
+            onSelect={selectItem}
+            onFrame={onFrame}
+            seekRequest={seekRequest}
+            onSeek={(seconds) => setSeekRequest((current) => ({ seconds, id: (current?.id ?? 0) + 1 }))}
+          />
+          <PlaylistPlaybackSettings playback={present.playback} onPlayback={setPlayback} />
+        </div>
+
+        <PlaylistPropertiesPane
+          tab={propTab}
+          onTab={setPropTab}
+          selectedItem={selectedItem}
+          asset={selectedItem ? assets.find((a) => a.id === selectedItem.mediaAssetId) : undefined}
+          info={info}
+          playback={present.playback}
+          onItemPatch={(patch) => selectedItem && patchItem(selectedItem.key, patch)}
+          onItemRemove={() => selectedItem && removeItem(selectedItem.key)}
+          onInfoChange={(patch) => setInfo((c) => ({ ...c, ...patch }))}
+        />
+      </div>
+
+      {previewOpen && (
+        <PlaylistPreviewModal
+          open
+          onClose={() => setPreviewOpen(false)}
+          preview={previewStage}
+          assets={referencedAssets}
+          onOpenFullPreview={openPreview}
+          onPublish={publish}
+          publishDisabledReason={publishDisabledReason}
+        />
+      )}
+
+      <AddItemDrawer
+        open={drawerOpen}
+        assets={assets}
+        loading={assetsLoading}
+        onAdd={addAssets}
+        onClose={() => setDrawerOpen(false)}
+      />
+    </div>
+  );
+}

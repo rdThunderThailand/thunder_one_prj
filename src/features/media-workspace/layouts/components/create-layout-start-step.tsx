@@ -1,0 +1,283 @@
+"use client";
+
+import { useState } from "react";
+import { LockIcon } from "@/components/ui/icons";
+import type { ContentFolder } from "@/types/domain";
+import { deriveAspectRatio, pairedResolutionDimension, parseResolution } from "../geometry";
+import type { PickerEntry } from "../template-picker";
+import { LayoutWireframe } from "./LayoutWireframe";
+
+export type StartChoice = "blank" | "template";
+
+export type StartDetails = {
+  name: string;
+  folderId: string;
+  tags: string;
+  width: string;
+  height: string;
+  background: string;
+};
+
+const inputClasses =
+  "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
+
+const canvasLabelClasses = "grid grid-rows-[20px_40px] gap-1.5";
+
+function ChoiceIcon({ kind }: { kind: StartChoice }) {
+  return kind === "blank" ? (
+    <svg viewBox="0 0 40 40" fill="none" className="h-5 w-5" aria-hidden="true">
+      <rect x="6" y="7" width="25" height="25" rx="3" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" />
+      <path d="M27 27h9m-4.5-4.5v9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 40 40" fill="none" className="h-5 w-5" aria-hidden="true">
+      <rect x="4" y="8" width="26" height="21" rx="3" stroke="currentColor" strokeWidth="2" />
+      <rect x="10" y="13" width="26" height="21" rx="3" fill="white" stroke="currentColor" strokeWidth="2" />
+      <path d="M15 29h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ChoiceCard({
+  choice,
+  selected,
+  title,
+  description,
+  selectedTemplate,
+  onSelect,
+}: {
+  choice: StartChoice;
+  selected: boolean;
+  title: string;
+  description: string;
+  selectedTemplate?: PickerEntry | null;
+  onSelect: (choice: StartChoice) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={() => onSelect(choice)}
+      className={`relative flex items-center gap-3 rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-2 ${
+        selected
+          ? "border-primary bg-accent ring-1 ring-primary"
+          : "border-border hover:border-primary/30"
+      }`}
+    >
+      <span
+        className={`absolute left-3 top-3 h-3.5 w-3.5 rounded-full border ${
+          selected ? "border-[5px] border-primary" : "border-border"
+        }`}
+      />
+      <span className={`ml-5 grid shrink-0 place-items-center rounded-lg bg-accent text-primary ${selectedTemplate ? "h-9 w-16" : "h-9 w-9"}`}>
+        {selectedTemplate ? (
+          <LayoutWireframe
+            zones={selectedTemplate.zones}
+            background="var(--program)"
+            aspectRatio={selectedTemplate.aspectRatio}
+            programStyle
+            className="h-9 w-16 rounded-md border border-primary/30 shadow-sm"
+          />
+        ) : (
+          <ChoiceIcon kind={choice} />
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        {selectedTemplate ? (
+          <>
+            <span className="flex items-center justify-between gap-2">
+              <span className="block truncate text-sm font-semibold text-primary">
+                {selectedTemplate.name}
+              </span>
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-primary">
+                {selectedTemplate.behaviour === "copied" ? "Copied" : "Shared"}
+              </span>
+            </span>
+            <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+              {selectedTemplate.referenceResolution?.replace("x", " × ") ?? "Resolution not set"}
+              {" · "}{selectedTemplate.zoneCount} {selectedTemplate.zoneCount === 1 ? "Zone" : "Zones"}
+            </span>
+            <span className="mt-1 block text-xs font-medium text-primary">Change template →</span>
+          </>
+        ) : (
+          <>
+            <span className="block text-sm font-semibold text-foreground">{title}</span>
+            <span className="mt-1 block text-sm leading-5 text-muted-foreground">{description}</span>
+          </>
+        )}
+      </span>
+    </button>
+  );
+}
+
+export function CreateLayoutStartStep({
+  choice,
+  details,
+  folders,
+  tagNames,
+  selectedTemplate,
+  resolutionLocked = false,
+  onTemplateChange,
+  onChoiceChange,
+  onDetailsChange,
+}: {
+  choice: StartChoice;
+  details: StartDetails;
+  folders: ContentFolder[];
+  tagNames: string[];
+  selectedTemplate?: PickerEntry | null;
+  resolutionLocked?: boolean;
+  onTemplateChange?: () => void;
+  onChoiceChange: (choice: StartChoice) => void;
+  onDetailsChange: (details: StartDetails) => void;
+}) {
+  const set = (patch: Partial<StartDetails>) => onDetailsChange({ ...details, ...patch });
+  const initialResolution = parseResolution(`${details.width}x${details.height}`);
+  const [isAspectLocked, setIsAspectLocked] = useState(true);
+  const [lockedAspectRatio, setLockedAspectRatio] = useState(
+    initialResolution ? deriveAspectRatio(initialResolution[0], initialResolution[1]) : "16:9",
+  );
+  const resolution = `${details.width}x${details.height}`;
+  const presets = ["1920x1080", "1080x1920", "3840x2160"];
+  const isPreset = presets.includes(resolution);
+
+  const setDimension = (value: string, changed: "width" | "height") => {
+    const patch: Partial<StartDetails> = { [changed]: value };
+    if (isAspectLocked) {
+      const paired = pairedResolutionDimension(Number(value), changed, lockedAspectRatio);
+      if (paired !== null) patch[changed === "width" ? "height" : "width"] = String(paired);
+    }
+    set(patch);
+  };
+
+  return (
+    <div className="space-y-6">
+      <fieldset>
+        <legend className="mb-3 text-sm font-semibold text-foreground">Choose how to start</legend>
+        <div role="radiogroup" className="grid gap-3 sm:grid-cols-2">
+          <ChoiceCard
+            choice="blank"
+            selected={choice === "blank"}
+            title="Blank Layout"
+            description="Start with an empty canvas"
+            onSelect={onChoiceChange}
+          />
+          <ChoiceCard
+            choice="template"
+            selected={choice === "template"}
+            title="From Template"
+            description="Use a ready-made layout"
+            selectedTemplate={selectedTemplate}
+            onSelect={(next) => {
+              onChoiceChange(next);
+              if (selectedTemplate) onTemplateChange?.();
+            }}
+          />
+        </div>
+      </fieldset>
+
+      {(choice === "blank" || resolutionLocked) && (
+        <>
+          <fieldset className="space-y-3">
+            <legend className="mb-3 text-sm font-semibold text-foreground">Layout information</legend>
+            <label className="block space-y-1.5">
+              <span className="text-sm font-medium text-muted-foreground">Layout name <span className="text-error">*</span></span>
+              <input
+                autoFocus
+                maxLength={100}
+                value={details.name}
+                onChange={(event) => set({ name: event.target.value })}
+                placeholder="e.g. Corporate Lobby 3-Zone"
+                className={inputClasses}
+              />
+              <span className="block text-right text-xs text-muted-foreground">{details.name.length}/100</span>
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={canvasLabelClasses}>
+                <span className="text-sm font-medium text-muted-foreground">Folder <span className="font-normal text-muted-foreground">(Optional)</span></span>
+                <select value={details.folderId} onChange={(event) => set({ folderId: event.target.value })} className={inputClasses}>
+                  <option value="">Uncategorized</option>
+                  {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
+                </select>
+              </label>
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-muted-foreground">Tags <span className="font-normal text-muted-foreground">(Optional)</span></span>
+                <input
+                  list="new-layout-tags"
+                  value={details.tags}
+                  onChange={(event) => set({ tags: event.target.value })}
+                  placeholder="Add tags, separated by commas"
+                  className={inputClasses}
+                />
+                <datalist id="new-layout-tags">{tagNames.map((tag) => <option key={tag} value={tag} />)}</datalist>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="mb-3 text-sm font-semibold text-foreground">Canvas settings</legend>
+            <div className="grid gap-3 sm:grid-cols-4">
+              <label className="space-y-1.5">
+                <span className="flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground">
+                  Resolution
+                  {resolutionLocked && <span className="whitespace-nowrap text-xs font-normal text-muted-foreground">Locked</span>}
+                </span>
+                <select
+                  value={isPreset ? resolution : "custom"}
+                  disabled={resolutionLocked}
+                  onChange={(event) => {
+                    if (event.target.value === "custom") return;
+                    const [width, height] = event.target.value.split("x");
+                    setLockedAspectRatio(deriveAspectRatio(Number(width), Number(height)));
+                    set({ width, height });
+                  }}
+                  className={inputClasses}
+                >
+                  <option value="1920x1080">1920 × 1080 (16:9)</option>
+                  <option value="1080x1920">1080 × 1920 (9:16)</option>
+                  <option value="3840x2160">3840 × 2160 (16:9)</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </label>
+              <div className="grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)] items-end gap-2 sm:col-span-2">
+                <label className={canvasLabelClasses}>
+                  <span className="text-sm font-medium text-muted-foreground">Width</span>
+                  <input type="number" min={100} max={99999} value={details.width} disabled={resolutionLocked} onChange={(event) => setDimension(event.target.value, "width")} className={inputClasses} />
+                </label>
+                <button
+                  type="button"
+                  aria-label={isAspectLocked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                  aria-pressed={isAspectLocked}
+                  title={isAspectLocked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                  disabled={resolutionLocked}
+                  onClick={() => {
+                    if (!isAspectLocked) {
+                      const current = parseResolution(resolution);
+                      if (current) setLockedAspectRatio(deriveAspectRatio(current[0], current[1]));
+                    }
+                    setIsAspectLocked((current) => !current);
+                  }}
+                  className={`mb-1 grid h-8 w-8 place-items-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isAspectLocked ? "border-primary/30 bg-accent text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
+                >
+                  <LockIcon className="h-3.5 w-3.5" />
+                </button>
+                <label className={canvasLabelClasses}>
+                  <span className="text-sm font-medium text-muted-foreground">Height</span>
+                  <input type="number" min={100} max={99999} value={details.height} disabled={resolutionLocked} onChange={(event) => setDimension(event.target.value, "height")} className={inputClasses} />
+                </label>
+              </div>
+              <label className={canvasLabelClasses}>
+                <span className="text-sm font-medium text-muted-foreground">Background</span>
+                <span className={`${inputClasses} flex items-center gap-2`}>
+                  <input type="color" value={details.background} onChange={(event) => set({ background: event.target.value })} className="h-5 w-6 cursor-pointer border-0 bg-transparent p-0" />
+                  <span className="font-mono text-xs uppercase">{details.background}</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+        </>
+      )}
+    </div>
+  );
+}

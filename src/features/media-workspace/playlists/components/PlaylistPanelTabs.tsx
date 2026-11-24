@@ -1,0 +1,275 @@
+"use client";
+
+// The three data-backed tabs of the playlist side panel, split out to keep the panel
+// itself readable.
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Badge } from "@/components/ui/Badge";
+import { MediaThumb } from "@/components/ui/MediaThumb";
+import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import {
+  isPastPublication,
+  publicationDisplayStatus,
+  publicationStatusColor,
+} from "@/features/media-workspace/publications/publication-status";
+import { decodeMetadata } from "../metadata";
+import { resolutionLabel } from "../output-profile";
+import { formatDuration, totalDurationSeconds } from "../duration";
+import { paginate } from "../list-filtering";
+import { fetchPlaylistPrograms } from "../services/playlists-api";
+import type { PlaylistDetail, PlaylistProgram } from "../types";
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-2 text-sm">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="text-right font-medium text-foreground">{value}</span>
+    </div>
+  );
+}
+
+export function DetailsTab({
+  detail,
+  campaignName,
+}: {
+  detail: PlaylistDetail;
+  campaignName?: string;
+}) {
+  const metadata = decodeMetadata(detail.metadata);
+  const duration = formatDuration(
+    totalDurationSeconds(
+      detail.items.map((i) => ({
+        mediaAssetId: i.media_asset_id,
+        durationSeconds: i.duration_seconds ?? null,
+      }))
+    )
+  );
+
+  return (
+    <div className="divide-y divide-border">
+      <Row label="Playlist Type" value={metadata.info.playlistType ?? "—"} />
+      <Row label="Campaign" value={campaignName ?? "—"} />
+      <Row label="Items" value={detail.items.length} />
+      <Row label="Duration" value={duration} />
+      <Row label="Play Mode" value={metadata.playback.playMode ?? "—"} />
+      <Row
+        label="Start Playback From"
+        value={metadata.playback.startFrom === "resume" ? "Resume last successful item" : "First item"}
+      />
+      <Row label="Resolution" value={resolutionLabel(metadata.info.resolution)} />
+      <Row label="Created By" value={detail.created_by?.display_name ?? "—"} />
+      {metadata.info.description && (
+        <p className="pt-3 text-sm text-muted-foreground">
+          {metadata.info.description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Compact enough for a 380px column — resolution and file-size columns have nowhere
+ *  to go here. */
+export function ContentTab({ detail }: { detail: PlaylistDetail }) {
+  const items = useMemo(
+    () => [...detail.items].sort((a, b) => a.position - b.position),
+    [detail.items]
+  );
+  const previews = usePreviewUrls(useMemo(() => items.map((i) => i.media_asset_id), [items]));
+
+  if (items.length === 0) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">Playlist นี้ยังไม่มีสื่อ</p>;
+  }
+
+  return (
+    <ul className="flex flex-col gap-2">
+      {items.map((item, index) => (
+        <li key={`${item.media_asset_id}-${item.position}`} className="flex items-center gap-3">
+          <span className="w-4 text-xs text-muted-foreground">{index + 1}</span>
+          <MediaThumb
+            url={previews.urls[item.media_asset_id]}
+            thumbnailUrl={previews.thumbnailUrls[item.media_asset_id]}
+            alt={item.title ?? "media"}
+            className="h-9 w-12"
+          />
+          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+            {item.title ?? item.media_asset_id.slice(0, 8)}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {item.duration_seconds != null ? `${item.duration_seconds}s` : "—"}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** A playlist has no schedule of its own (ADR 0011) — what it has is the publications
+ *  that point at it, so these tabs list those, split into what's live and what's past
+ *  (ADR 0015). Loaded only when a tab is first opened. The rows come from the playlist's own
+ *  endpoint and include Programs that hold it through a Layout (ADR 0121).
+ *  ponytail: no dates — the rows carry no starts_at, that would need one
+ *  detail call per publication. */
+const PER_PAGE = 5;
+
+function usePlaylistPrograms(playlistId: string) {
+  const [publications, setPublications] = useState<PlaylistProgram[] | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetchPlaylistPrograms(playlistId)
+      .then((programs) => {
+        if (alive) setPublications(programs);
+      })
+      .catch(() => alive && setFailed(true));
+    return () => {
+      alive = false;
+    };
+  }, [playlistId]);
+
+  return { publications, failed };
+}
+
+function PageNav({
+  page,
+  totalPages,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  onChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
+      <button
+        type="button"
+        disabled={page <= 1}
+        onClick={() => onChange(page - 1)}
+        className="rounded px-2 py-1 hover:bg-muted disabled:opacity-40"
+      >
+        ก่อนหน้า
+      </button>
+      <span>
+        {page} / {totalPages}
+      </span>
+      <button
+        type="button"
+        disabled={page >= totalPages}
+        onClick={() => onChange(page + 1)}
+        className="rounded px-2 py-1 hover:bg-muted disabled:opacity-40"
+      >
+        ถัดไป
+      </button>
+    </div>
+  );
+}
+
+function PublicationRow({ publication }: { publication: PlaylistProgram }) {
+  const color = publicationStatusColor(publication.effective_status ?? publication.status);
+  return (
+    <li className="flex items-center justify-between gap-2 rounded-lg border border-border p-2">
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/media-workspace/program/${publication.id}`}
+          className="block truncate text-sm text-primary hover:underline"
+        >
+          {publication.name}
+        </Link>
+        {publication.via_composition && (
+          <span className="block truncate text-xs text-muted-foreground">
+            ผ่าน Layout: {publication.via_composition.name}
+          </span>
+        )}
+      </div>
+      <span className="shrink-0 text-xs text-muted-foreground">
+        {publication.campaign_name ?? "—"}
+      </span>
+      <Badge variant={color === "green" ? "success" : color === "yellow" ? "warning" : color === "red" ? "danger" : "neutral"} className="rounded-full">
+        {publicationDisplayStatus(publication)}
+      </Badge>
+    </li>
+  );
+}
+
+const SCHEDULE_STATUS_RANK: Record<string, number> = { active: 0, scheduled: 1, draft: 2 };
+
+export function ScheduleTab({ playlistId }: { playlistId: string }) {
+  const { publications, failed } = usePlaylistPrograms(playlistId);
+  const [page, setPage] = useState(1);
+
+  if (failed) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">โหลดตารางเวลาไม่สำเร็จ</p>;
+  }
+  if (publications === null) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">กำลังโหลด...</p>;
+  }
+
+  const live = publications.filter((p) => !isPastPublication(p));
+  if (live.length === 0) {
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">
+        ยังไม่มี publication ที่กำลังใช้ playlist นี้
+      </p>
+    );
+  }
+
+  // active first, then scheduled, then draft — status the operator most needs to act
+  // on floats to the top.
+  const sorted = [...live].sort(
+    (a, b) =>
+      (SCHEDULE_STATUS_RANK[a.effective_status ?? a.status] ?? 3) -
+      (SCHEDULE_STATUS_RANK[b.effective_status ?? b.status] ?? 3)
+  );
+  const { rows, totalPages, page: current } = paginate(sorted, page, PER_PAGE);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2">
+        {rows.map((publication) => (
+          <PublicationRow key={publication.id} publication={publication} />
+        ))}
+      </ul>
+      <PageNav page={current} totalPages={totalPages} onChange={setPage} />
+    </div>
+  );
+}
+
+export function HistoryTab({ playlistId }: { playlistId: string }) {
+  const { publications, failed } = usePlaylistPrograms(playlistId);
+  const [page, setPage] = useState(1);
+
+  if (failed) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">โหลดประวัติไม่สำเร็จ</p>;
+  }
+  if (publications === null) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">กำลังโหลด...</p>;
+  }
+
+  const past = publications.filter(isPastPublication);
+  if (past.length === 0) {
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">ยังไม่มี publication ที่จบไปแล้ว</p>
+    );
+  }
+
+  // ล่าสุดก่อน
+  const sorted = [...past].sort(
+    (a, b) =>
+      new Date(b.updated_at ?? b.created_at ?? 0).getTime() -
+      new Date(a.updated_at ?? a.created_at ?? 0).getTime()
+  );
+  const { rows, totalPages, page: current } = paginate(sorted, page, PER_PAGE);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2">
+        {rows.map((publication) => (
+          <PublicationRow key={publication.id} publication={publication} />
+        ))}
+      </ul>
+      <PageNav page={current} totalPages={totalPages} onChange={setPage} />
+    </div>
+  );
+}

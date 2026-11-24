@@ -1,0 +1,90 @@
+// Registry of Apps reached from inside Thunder One's shell. The URL
+// (`basePath`) is the source of truth for which App is active — see
+// docs/adr/0022-app-switcher-multi-app-shell.md. Add a new App by adding an
+// entry here; Sidebar reads this list, it does not hardcode App names.
+//
+// No App owns "/" — that belongs to Thunder One's shell root since
+// docs/adr/0033-thunder-one-shell-launcher-not-dropdown.md. resolveActiveApp
+// returns null there (and on other shell-level routes like /mission-control,
+// /my-work, /work-space, /intelligence, /governance), and Sidebar falls back
+// to config/nav/shell.tsx's nav in that case.
+import type { ReactNode } from "react";
+import { env } from "@/config/env";
+import { BoxIcon, CheckCircleIcon, GridIcon, PhoneIcon, SmileIcon, UsersIcon } from "@/components/ui/icons";
+
+export interface AppConfig {
+  id: string;
+  label: string;
+  tagline: string;
+  icon: ReactNode;
+  basePath: string;
+}
+
+export const APPS: AppConfig[] = [
+  {
+    id: "media-workspace",
+    label: "Media Workspace",
+    tagline: "Media Workspace",
+    icon: <GridIcon className="h-4 w-4" />,
+    basePath: "/media-workspace",
+  },
+  {
+    id: "asset-intelligence",
+    label: "Asset Intelligence",
+    tagline: "Asset Workspace",
+    icon: <BoxIcon className="h-4 w-4" />,
+    basePath: "/asset-intelligence",
+  },
+  // ADR 0097: built beside Asset Intelligence behind the flag; replaces it at release.
+  ...(env.assetWorkspaceMvp
+    ? [
+        {
+          id: "asset-workspace",
+          label: "Asset Workspace",
+          tagline: "Asset Workspace",
+          icon: <BoxIcon className="h-4 w-4" />,
+          basePath: "/asset-workspace",
+        },
+      ]
+    : []),
+  {
+    id: "thunder-care",
+    label: "ThunderCare",
+    tagline: "Service OS",
+    icon: <PhoneIcon className="h-4 w-4" />,
+    basePath: "/thunder-care",
+  },
+  {
+    id: "people",
+    label: "People",
+    tagline: "People Workspace",
+    icon: <UsersIcon className="h-4 w-4" />,
+    basePath: "/people",
+  },
+  {
+    id: "customer-workspace",
+    label: "Customer",
+    tagline: "Customer Workspace",
+    icon: <SmileIcon className="h-4 w-4" />,
+    basePath: "/customer-workspace",
+  },
+  {
+    // Deliberately small/short-lived (Nie, 2026-09-23) — a temporary tool
+    // for Ops to approve/reject incoming Partner applications (approval is
+    // what makes a tenant a partner — there is no reviewer-chosen type), not
+    // a full department app. One page, no sub-nav.
+    id: "lead-approval",
+    label: "Lead Approval",
+    tagline: "Lead Approval Workspace",
+    icon: <CheckCircleIcon className="h-4 w-4" />,
+    basePath: "/lead-approval",
+  },
+];
+
+// Longest basePath first so a more specific App wins over a shorter prefix
+// that happens to also match — see the matcher in Sidebar.tsx. Returns null
+// when pathname belongs to no App (Thunder One's shell owns it instead).
+export function resolveActiveApp(pathname: string): AppConfig | null {
+  const sorted = [...APPS].sort((a, b) => b.basePath.length - a.basePath.length);
+  return sorted.find((app) => pathname.startsWith(app.basePath)) ?? null;
+}

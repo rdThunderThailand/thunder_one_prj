@@ -1,0 +1,57 @@
+"use client";
+
+import { ZoneGeometryFields } from "./ZoneGeometryFields";
+import type { LayoutZone } from "../types";
+
+const inputClasses =
+  "h-9 w-full rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
+const labelClasses = "text-[9px] font-medium uppercase tracking-wide text-muted-foreground";
+
+/** Editing a number here is just another path into the same validated state as
+ *  dragging on the canvas — both go through `roundPercent`, so stored geometry always
+ *  carries exactly one decimal place either way. */
+export function ZoneProperties({
+  zone,
+  zoneIndex,
+  referenceResolution = null,
+  onChange,
+  onRemove,
+  canRemove,
+}: {
+  zone: LayoutZone;
+  zoneIndex: number;
+  referenceResolution?: string | null;
+  onChange: (next: LayoutZone) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[11px] font-bold text-foreground">Zone Properties</p>
+          <p className="text-xs font-semibold text-primary">Zone {String.fromCharCode(65 + zoneIndex)} ({zone.name})</p>
+        </div>
+        <button
+          type="button"
+          disabled={!canRemove}
+          onClick={onRemove}
+          className="text-xs font-medium text-error hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground"
+        >
+          Remove
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className={labelClasses}>Zone Name</label>
+        <input
+          value={zone.name}
+          onChange={(e) => onChange({ ...zone, name: e.target.value })}
+          className={inputClasses}
+        />
+      </div>
+
+      <ZoneGeometryFields zone={zone} referenceResolution={referenceResolution} onChange={onChange} />
+    </div>
+  );
+}

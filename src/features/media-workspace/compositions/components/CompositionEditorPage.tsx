@@ -1,0 +1,396 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { fetchLayout, upsertLayout } from "@/features/media-workspace/layouts/services/layouts-api";
+import { seedCanvasSettings, takeCreateSeed } from "@/features/media-workspace/layouts/create-seed";
+import { LayoutTemplatePicker } from "@/features/media-workspace/layouts/components/LayoutTemplatePicker";
+import { deriveAspectRatio, parseResolution } from "@/features/media-workspace/layouts/geometry";
+import type { LayoutListItem, LayoutZone } from "@/features/media-workspace/layouts/types";
+import { PlaybackPreviewDialog } from "@/features/media-workspace/preview/PlaybackPreviewDialog";
+import { useConfirmDialog } from "../../content-library/useConfirmDialog";
+import { editorGeometryOptions } from "@/features/media-workspace/preview/preview-geometry";
+import { setCompositionStatus } from "../services/compositions-api";
+import { forkLayoutForComposition, type LayoutSettingsDraft } from "../save-composition";
+import { draftSnapshot, loadCompositionDraft, resolveCreateSeed } from "../load-composition-draft";
+import type { CompositionStatus } from "../types";
+import { applyPlaybackToAll, durationEditKey, keepStoredIds, upsertBinding, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
+import { useCompositionEditorData } from "../hooks/useCompositionEditorData";
+import { useCompositionPreview } from "../hooks/useCompositionPreview";
+import { useCompositionSave } from "../hooks/useCompositionSave";
+import { useEditorLayout } from "../hooks/useEditorLayout";
+import { settingsEditKey, useZoneEditGuard, zoneEditKey } from "../hooks/useZoneEditGuard";
+import type { EditorSnapshot } from "../hooks/useZoneHistory";
+import { CompositionCanvasPane, ZoneOverview } from "./CompositionCanvasPane";
+import { CompositionContentBrowser } from "./CompositionContentBrowser";
+import { CompositionEditorHeader } from "./CompositionEditorHeader";
+import { CompositionEditorToolbar } from "./CompositionEditorToolbar";
+import { CompositionEditorOverlays } from "./CompositionEditorOverlays";
+import { CompositionEditorSkeleton } from "./CompositionEditorSkeleton";
+import { LayoutPropertiesPanel } from "./LayoutPropertiesPanel";
+import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
+import { validateZones } from "@/features/media-workspace/layouts/geometry";
+import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
+import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
+import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
+const LIST_PATH = "/media-workspace/layouts";
+export function CompositionEditorPage({
+  compositionId,
+  initialPreview = false,
+}: {
+  compositionId?: string | null;
+  initialPreview?: boolean;
+}) {
+  const router = useRouter();
+  const data = useCompositionEditorData();
+  const [id, setId] = useState<string | null>(compositionId ?? null);
+  const [name, setName] = useState("");
+  const [layoutId, setLayoutId] = useState<string | null>(null);
+  const [blankZones, setBlankZones] = useState<LayoutZone[] | null>(null);
+  const [editedZones, setEditedZones] = useState<LayoutZone[] | null>(null);
+  const [layoutSettings, setLayoutSettings] = useState<LayoutSettingsDraft | null>(null);
+  const [folderId, setFolderId] = useState<string | null | undefined>(undefined);
+  const [tags, setTags] = useState<string[] | undefined>(undefined);
+  const [status, setStatus] = useState<CompositionStatus>("draft");
+  const [revision, setRevision] = useState<number | null>(null);
+  const [bindings, setBindings] = useState<ZoneBindingDraft[]>([]);
+  const [initialSnapshot, setInitialSnapshot] = useState("");
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(initialPreview);
+  const [loading, setLoading] = useState(!!compositionId);
+  const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [namingTemplate, setNamingTemplate] = useState(false);
+  const [templateSavedName, setTemplateSavedName] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [lockedZoneIds, setLockedZoneIds] = useState<Set<string>>(() => new Set());
+  const [hiddenZoneIds, setHiddenZoneIds] = useState<Set<string>>(() => new Set());
+  const view = useEditorLayout({
+    layouts: data.layouts, layoutId, name, blankZones, editedZones, layoutSettings, bindings,
+  });
+  const { layout, settings, sharedTemplateUsage } = view;
+  const [createSeed] = useState(() => (compositionId ? null : takeCreateSeed()));
+  useEffect(() => {
+    if (compositionId) return;
+    let alive = true;
+    void resolveCreateSeed(createSeed).then((seed) => {
+      if (!alive || !seed) return;
+      const seededSettings = seedCanvasSettings(createSeed); if (seededSettings) setLayoutSettings(seededSettings);
+      if (createSeed?.details) {
+        const resolution = createSeed.details.referenceResolution
+          ? parseResolution(createSeed.details.referenceResolution)
+          : null;
+        setName(createSeed.details.name);
+        setFolderId(createSeed.details.folderId);
+        setTags(createSeed.details.tags);
+        if (createSeed.kind === "scratch") {
+          setLayoutSettings({
+            aspectRatio: resolution ? deriveAspectRatio(resolution[0], resolution[1]) : "16:9",
+            referenceResolution: createSeed.details.referenceResolution,
+            background: createSeed.details.background,
+          });
+        }
+      }
+      if (seed.kind === "zones") {
+        setBlankZones(seed.zones);
+        return;
+      }
+      const { layout: seeded } = seed;
+      if (createSeed?.details) {
+        setLayoutSettings({
+          aspectRatio: seeded.aspect_ratio,
+          referenceResolution: createSeed.details.referenceResolution,
+          background: createSeed.details.background,
+        });
+      }
+      data.setLayouts((current) => [...current.filter((candidate) => candidate.id !== seeded.id), seeded]);
+      setLayoutId(seeded.id);
+      view.setSelectedZoneId(seeded.zones[0]?.id ?? null);
+    });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compositionId]);
+  useEffect(() => {
+    if (!compositionId) return;
+    let alive = true;
+    // #223: geometry is part of the load — without it the editor renders the empty Template Picker state.
+    loadCompositionDraft(compositionId)
+      .then((draft) => fetchLayout(draft.detail.layout_id).then((loaded) => ({ draft, loaded })))
+      .then(({ draft, loaded }) => {
+        if (!alive) return;
+        setId(draft.detail.id);
+        setName(draft.detail.name);
+        setLayoutId(draft.detail.layout_id);
+        setStatus(draft.detail.status);
+        setRevision(draft.detail.revision);
+        setFolderId(draft.folderId);
+        setTags(draft.tags);
+        setBindings(draft.bindings);
+        setSavedAt(draft.detail.updated_at ? new Date(draft.detail.updated_at) : null);
+        setInitialSnapshot(draft.snapshot);
+        data.absorbPlaylistDetails(draft.slices);
+        data.setLayouts((current) => [...current.filter((candidate) => candidate.id !== loaded.id), loaded]);
+      })
+      .catch((err) => alive && setLoadError(classifyApiError(err, "โหลด Layout ไม่สำเร็จ")))
+      .finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compositionId]);
+  const preview = useCompositionPreview({ compositionId: id, layout, bindings, ...data });
+  const isDirty = editedZones !== null || layoutSettings !== null || draftSnapshot({ name, layoutId, bindings, folderId, tags }) !== initialSnapshot;
+  // ADR 0087 §1: Undo/Redo restore the raw draft state, keeping the ids a save already stored.
+  const restoreSnapshot = (snapshot: EditorSnapshot) => {
+    setEditedZones(snapshot.editedZones);
+    setLayoutSettings(snapshot.layoutSettings);
+    setBindings((current) => keepStoredIds(snapshot.bindings, current));
+  };
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const { beginZoneEdit, checkpoint, resetApproval, undo, redo, reset: resetHistory, canUndo, canRedo } =
+    useZoneEditGuard({ editedZones, layoutSettings, bindings }, sharedTemplateUsage, restoreSnapshot, () => confirm({
+      title: "Change a shared Template?",
+      description: `This Template is used by ${sharedTemplateUsage} Layouts. Changing it affects all of them. After you confirm, make the edit again.`,
+      confirmLabel: "Continue editing",
+    }));
+  // ADR 0087 §2: a binding change is one step; a duration typed into one row is one step per focus.
+  const setBinding = (next: ZoneBindingDraft) => {
+    checkpoint(durationEditKey(bindings.find((binding) => binding.layoutZoneId === next.layoutZoneId), next) ?? undefined);
+    if (next.playlistId && !Object.hasOwn(data.playlistItemsById, next.playlistId)) {
+      data.hydratePlaylist(next.playlistId);
+    }
+    setBindings((prev) => upsertBinding(prev, next));
+  };
+  const applyPlaybackToAllZones = (playback: ZonePlayback) => {
+    checkpoint();
+    setBindings((prev) => applyPlaybackToAll(view.layoutZoneIds, prev, playback));
+  };
+  const absorbLayout = (saved: LayoutListItem | null, savedId = saved?.id) => {
+    if (saved) data.setLayouts((current) => [...current.filter((c) => c.id !== saved.id), saved]);
+    if (savedId) setLayoutId(savedId);
+    setBlankZones(null); setEditedZones(null); setLayoutSettings(null);
+    resetHistory();
+  };
+  const { save, run, saving, saveError } = useCompositionSave(
+    () => ({
+      compositionId: id, name, revision, layoutId, layout, layoutSettings,
+      savedZoneIds: new Set((data.layouts.find((c) => c.id === layoutId)?.zones ?? []).flatMap((z) => (z.id ? [z.id] : []))),
+      editedZones, blankZones, layoutZoneIds: view.layoutZoneIds, bindings, folderId, tags,
+      onLayoutCreated: setLayoutId, onCompositionCreated: setId, onBindingsChanged: setBindings, onLayoutSaved: absorbLayout,
+    }),
+    (result) => {
+      setId(result.compositionId);
+      setRevision(result.revision);
+      setBindings(result.bindings);
+      setSavedAt(new Date());
+      absorbLayout(result.refreshedLayout, result.layoutId);
+    },
+  );
+  const affected = useAffectedPrograms("compositions", id);
+  const [publishDialog, setPublishDialog] = useState<"changes" | "list" | null>(null);
+  // ADR 0078 §6: unsaved edits are saved first, and a failed save stops the flow before any re-publish.
+  const publishCompositionChanges = async () => {
+    if (isDirty) {
+      let isSaved = false;
+      await save(() => { isSaved = true; }, "บันทึก Layout ไม่สำเร็จ");
+      if (!isSaved) throw new Error("save failed");
+    }
+    return publishChanges("compositions", id!);
+  };
+  // ADR 0116 §6: the publish prep dialog's one-click fix; same flag pattern as Publish Changes above.
+  const saveForPublish = async (activate: boolean): Promise<string | null> => {
+    let savedId: string | null = null;
+    await save(async (result) => {
+      if (activate) {
+        await setCompositionStatus(result.compositionId, "active");
+        setStatus("active");
+      }
+      savedId = result.compositionId;
+    }, activate ? "เปิดใช้งาน Layout ไม่สำเร็จ" : "บันทึก Layout ไม่สำเร็จ");
+    return savedId;
+  };
+  const handleForkLayout = async () => {
+    if (!id) return;
+    const confirmed = await confirm({
+      title: "Make this Layout its own copy?",
+      description: `This Template is used by ${sharedTemplateUsage} Layouts. This Layout gets a private copy, so later edits no longer affect the others.`,
+      confirmLabel: "Make a copy",
+    });
+    if (!confirmed) return;
+    void run(async () => {
+      const forked = await forkLayoutForComposition(id, revision);
+      setLayoutId(forked.layout.id);
+      setRevision(forked.revision);
+      setBindings(forked.bindings);
+      data.setLayouts((current) => [...current.filter((c) => c.id !== forked.layout.id), forked.layout]);
+      view.setSelectedZoneId(forked.layout.zones[0]?.id ?? null);
+      setEditedZones(null);
+      setLayoutSettings(null);
+      resetApproval();
+      resetHistory();
+    }, "สร้าง Layout ส่วนตัวไม่สำเร็จ");
+  };
+  const saveAsTemplate = (templateName: string) => {
+    setNamingTemplate(false);
+    if (!layout) return;
+    void run(async () => {
+      const { layout_id } = await upsertLayout({ name: templateName, aspectRatio: settings.aspectRatio, referenceResolution: settings.referenceResolution,
+        background: settings.background, status: "active", zones: layout.zones.map(({ name, x, y, width, height }) => ({ name, x, y, width, height })) });
+      const created = await fetchLayout(layout_id);
+      data.setLayouts((current) => [...current.filter((c) => c.id !== created.id), created]);
+      setTemplateSavedName(templateName);
+    }, "บันทึกเป็น Template ไม่สำเร็จ");
+  };
+  if (loading) return <CompositionEditorSkeleton />;
+  const fatal = loadError ?? data.loadError;
+  if (fatal) return (
+    <div className="rounded-lg border border-border bg-card p-6">
+      <p className="text-sm text-error">{fatal.message}</p>
+      <Button className="mt-4" variant="outline" onClick={() => router.push(LIST_PATH)}>กลับไป Layouts</Button>
+    </div>
+  );
+  const activeZoneIndex = layout && view.activeZone ? layout.zones.findIndex((z) => z.id === view.activeZone?.id) : -1;
+  const selectedZoneLabel = activeZoneIndex >= 0 && view.activeZone
+    ? `${String.fromCharCode(65 + activeZoneIndex)} · ${view.activeZone.name}`
+    : null;
+  // Full-bleed like the Lovable reference (ADR 0077 focus shell): the negative margin cancels
+  // the dashboard <main> padding so header, toolbar and columns run edge to edge.
+  return (
+    <div className="-m-6 flex h-dvh flex-col overflow-hidden bg-background">
+      <div className="shrink-0 border-b border-border bg-card px-4">
+      <CompositionEditorHeader
+        isExisting={!!id}
+        name={name}
+        onNameChange={setName}
+        savedAt={savedAt}
+        saving={saving}
+        canPreview={!!layout}
+        status={status}
+        referenceResolution={settings.referenceResolution} aspectRatio={settings.aspectRatio}
+        zoneCount={layout?.zones.length ?? 0}
+        hasLayout={!!layout}
+        hasZoneOverlap={validateZones(layout?.zones ?? []).some((error) => error.kind === "overlap")}
+        isComplete={view.complete}
+        unboundZoneNames={view.unboundZoneNames}
+        onBack={() => (isDirty ? setConfirmLeave(true) : router.push(LIST_PATH))}
+        onPreview={() => setPreviewOpen(true)}
+        canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo}
+        hasUnsavedChanges={isDirty}
+        onPublish={(savedId = id ?? undefined) => router.push(`/media-workspace/program/create?compositionId=${savedId}`)}
+        onSaveForPublish={saveForPublish}
+        affectedCount={affected.programs.length}
+        onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
+        onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
+        onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Composition ไม่สำเร็จ")}
+        onSaveAsTemplate={() => { setTemplateSavedName(null); setNamingTemplate(true); }}
+        onActivate={() => void save(async (result) => {
+          await setCompositionStatus(result.compositionId, "active");
+          router.push(LIST_PATH);
+        }, "เปิดใช้งาน Composition ไม่สำเร็จ")}
+      />
+      </div>
+      {publishDialog && (
+        <PublishChangesDialog
+          contentLabel="layout"
+          programs={affected.programs}
+          onConfirm={publishDialog === "changes" ? publishCompositionChanges : undefined}
+          onPublished={affected.reload}
+          onClose={() => setPublishDialog(null)}
+        />
+      )}
+      <CompositionEditorOverlays
+        confirmLeave={confirmLeave}
+        onStay={() => setConfirmLeave(false)}
+        onLeave={() => router.push(LIST_PATH)}
+        namingTemplate={namingTemplate} templateDefaultName={name}
+        takenTemplateNames={data.layouts.flatMap((c) => (c.kind === "template" ? [c.name] : [])).concat(templateSavedName ?? [])}
+        onCloseNaming={() => setNamingTemplate(false)}
+        onConfirmTemplate={saveAsTemplate}
+        templateSavedName={templateSavedName}
+        saveError={saveError} sharedTemplateUsage={sharedTemplateUsage} saving={saving}
+        onForkLayout={handleForkLayout}
+      />
+      {confirmDialog}
+      <PlaybackPreviewDialog
+        open={previewOpen} onClose={() => setPreviewOpen(false)}
+        zones={preview.playbackPreviewZones} assets={data.assets}
+        aspectRatio={settings.aspectRatio} previewUrls={data.previews}
+        geometryOptions={editorGeometryOptions(settings.referenceResolution)}
+        referenceResolution={settings.referenceResolution}
+        background={settings.background}
+        layoutName={name}
+        canOpenFullPreview={!!id && !!layout}
+        onOpenFullPreview={() => preview.openFullPreview(isDirty)}
+      />
+      <LayoutTemplatePicker open={pickerOpen} folders={data.folders} tagNames={tags ?? []} hasUnsavedChanges={isDirty} onClose={() => setPickerOpen(false)} onStarted={() => window.location.reload()} />
+      <div className="min-h-0 flex-1 overflow-x-auto">
+      <div className="flex h-full min-w-[1060px] flex-col">
+        {layout && (
+          <CompositionEditorToolbar
+            zones={layout.zones}
+            activeZoneId={view.selectedZoneId}
+            lockedZoneIds={lockedZoneIds}
+            hiddenZoneIds={hiddenZoneIds}
+            onLockedZoneIds={setLockedZoneIds}
+            onHiddenZoneIds={setHiddenZoneIds}
+            onSelectZone={view.setSelectedZoneId}
+            onChangeStart={beginZoneEdit}
+            onChange={setEditedZones}
+            onDelete={() => { if (layout.zones.length <= 1 || !beginZoneEdit()) return; const index = layout.zones.findIndex((zone) => zone.id === view.activeZone?.id); const zones = layout.zones.filter((zone) => zone.id !== view.activeZone?.id).map((zone, position) => ({ ...zone, position })); setEditedZones(zones); view.setSelectedZoneId(zones[Math.min(index, zones.length - 1)]?.id ?? null); }}
+          />
+        )}
+      <div className="grid min-h-0 flex-1 grid-cols-[230px_minmax(560px,1fr)_270px] items-stretch">
+        <CompositionContentBrowser
+          binding={view.binding ?? null}
+          selectedZoneLabel={selectedZoneLabel}
+          assets={data.assets}
+          playlists={data.playlists}
+          previews={data.previews}
+          playlistPreviews={preview.playlistPreviews}
+          onChange={setBinding}
+        />
+        {layout ? (
+          <main className="flex min-h-0 flex-col gap-3 overflow-y-auto bg-muted/40 p-3">
+            <CompositionCanvasPane
+              zones={layout.zones} background={settings.background} aspectRatio={settings.aspectRatio}
+              referenceResolution={settings.referenceResolution} zonePreviews={preview.zonePreviews}
+              activeZoneId={view.selectedZoneId} onSelectZone={view.setSelectedZoneId}
+              onChangeStart={beginZoneEdit} onChange={setEditedZones}
+              lockedZoneIds={lockedZoneIds}
+              hiddenZoneIds={hiddenZoneIds}
+            />
+            <div className="grid shrink-0 grid-cols-2 gap-3">
+              <section className="rounded-lg border border-border bg-card p-3">
+                <LayoutPropertiesPanel
+                  folders={data.folders}
+                  folderId={folderId ?? null} onFolderChange={setFolderId}
+                  tags={tags ?? []} onTagsChange={setTags} settings={settings}
+                  onSettingsChange={(next) => beginZoneEdit(settingsEditKey(settings, next)) && setLayoutSettings(next)}
+                  sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
+                />
+              </section>
+              <section className="rounded-lg border border-border bg-card p-3"><ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} /></section>
+            </div>
+          </main>
+        ) : (
+          <main className="flex min-h-40 flex-col items-center justify-center gap-3 bg-muted text-sm text-muted-foreground">
+            <p>Start from the Template Picker to see Zones here</p>
+            <Button onClick={() => setPickerOpen(true)}>+ New Layout</Button>
+          </main>
+        )}
+        <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-border bg-card p-3">
+          {view.binding && view.activeZone ? <>
+            <p className="text-[11px] font-bold text-foreground">Zone Properties</p>
+            <ZonePropertiesPanel
+              zone={view.activeZone} referenceResolution={settings.referenceResolution} binding={view.binding}
+              onZoneChange={(next) => beginZoneEdit(zoneEditKey(view.activeZone, next)) && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}
+              onApplyPlaybackToAllZones={applyPlaybackToAllZones} assets={data.assets} previews={data.previews}
+              playlists={data.playlists} playlistDurations={data.playlistDurations} playlistItemsById={data.playlistItemsById}
+            />
+          </> : <p className="text-sm text-muted-foreground">Select a Zone to edit its properties.</p>}
+        </aside>
+      </div>
+      </div>
+      </div>
+    </div>
+  );
+}

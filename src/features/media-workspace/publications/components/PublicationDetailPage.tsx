@@ -1,0 +1,552 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Badge } from "@/components/ui/Badge";
+import { Button, buttonClasses } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import {
+  cancelPublication,
+  deletePublication,
+  fetchPublication,
+  republishPublication,
+} from "../services/publications-api";
+import { fetchPlaylist } from "@/features/media-workspace/playlists";
+import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
+import { publicationDrift, type DriftFinding } from "../publication-drift";
+import type { PlaylistDetail, PublicationDetail } from "../types";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { NoAccess } from "@/components/ui/NoAccess";
+import { DeliveryProgress } from "./DeliveryProgress";
+import { formatMonthDays } from "../schedule";
+import { lastAiringDay } from "../schedule-describe";
+import { publicationPreviewTarget } from "@/features/media-workspace/preview/publication-preview-target";
+
+/** Names what changed, so re-publishing is a decision rather than a guess (ADR 0049 §11). */
+function describeDrift(finding: DriftFinding): string {
+  switch (finding.level) {
+    case "composition":
+      return "Composition ถูกแก้ไขหลังเผยแพร่";
+    case "layout":
+      return "Layout ของ Composition ถูกแก้ไขหลังเผยแพร่";
+    case "playlist":
+      return finding.zoneName
+        ? `Playlist "${finding.playlistName}" ในโซน "${finding.zoneName}" ถูกแก้ไขหลังเผยแพร่`
+        : `Playlist "${finding.playlistName}" ถูกแก้ไขหลังเผยแพร่`;
+    case "group": {
+      const changes = [
+        finding.added.length > 0 ? `+${finding.added.join(", ")}` : null,
+        finding.removed.length > 0 ? `−${finding.removed.join(", ")}` : null,
+      ].filter(Boolean);
+      return `Group "${finding.groupName}" เปลี่ยนสมาชิกหลังเผยแพร่: ${changes.join(" / ")}`;
+    }
+  }
+}
+
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return "—";
+  try {
+    return new Date(dateStr).toLocaleString();
+  } catch {
+    return dateStr;
+  }
+}
+
+export function PublicationDetailPage({ id }: { id: string }) {
+  const router = useRouter();
+  const [detail, setDetail] = useState<PublicationDetail | null>(null);
+  const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
+  const [playlistError, setPlaylistError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ClassifiedError | null>(null);
+
+  const [confirming, setConfirming] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [republishConfirming, setRepublishConfirming] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+
+    fetchPublication(id)
+      .then((pubDetail) => {
+        if (!alive) return;
+        setDetail(pubDetail);
+        setLoading(false);
+
+        if (pubDetail.playlist?.id) {
+          fetchPlaylist(pubDetail.playlist.id)
+            .then((pl) => {
+              if (alive) setPlaylist(pl);
+            })
+            .catch((err) => {
+              if (alive) {
+                setPlaylistError(
+                  err instanceof Error ? err.message : "ไม่สามารถโหลด playlist ได้"
+                );
+              }
+            });
+        }
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setError(classifyApiError(err, "โหลด publication ไม่สำเร็จ"));
+        setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [id]);
+
+  const handleDelete = async () => {
+    try {
+      setActionBusy(true);
+      setActionError(null);
+      await deletePublication(id);
+      router.push("/media-workspace/program");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
+      setActionBusy(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      setActionBusy(true);
+      setActionError(null);
+      await cancelPublication(id);
+      router.push("/media-workspace/program");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
+      setActionBusy(false);
+    }
+  };
+
+  const handleRepublish = async () => {
+    try {
+      setActionBusy(true);
+      setActionError(null);
+      await republishPublication(id);
+      // A fresh snapshot and a fresh job, so every recorded revision and the whole delivery
+      // table are new — re-read rather than patching the copy in hand.
+      const fresh = await fetchPublication(id);
+      setDetail(fresh);
+      setRepublishConfirming(false);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "เผยแพร่ซ้ำไม่สำเร็จ");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <p className="text-center text-sm text-muted-foreground">กำลังโหลด…</p>
+      </Card>
+    );
+  }
+
+  if (error || !detail) {
+    return (
+      <>
+        {error?.kind === "forbidden" ? (
+          <NoAccess message={error.message} />
+        ) : (
+          <Card className="p-6">
+            <p className="text-center text-sm text-error">
+              {error ? error.message : "ไม่พบ publication"}
+            </p>
+          </Card>
+        )}
+        <div className="mt-4 flex justify-center">
+          <Link href="/media-workspace/program" className={buttonClasses("secondary")}>
+            กลับไปยังรายการ
+          </Link>
+        </div>
+      </>
+    );
+  }
+
+  // Behaviour gates read the STORED status: whether this can be edited or
+  // cancelled follows from whether an operator activated it, not from whether
+  // the schedule window has since closed (docs/adr/0004).
+  const isDraft = detail.status === "draft";
+  const isActive = detail.status === "active";
+  // The label, by contrast, is the clock-aware one.
+  const displayStatus = publicationDisplayStatus(detail);
+  const statusColor = publicationStatusColor(displayStatus);
+
+  const playlistItems = playlist?.items
+    ? [...playlist.items].sort((a, b) => a.position - b.position)
+    : [];
+
+  // Empty unless this is an active composition Publication whose Composition, Layout or one of
+  // its Zone Playlists changed since it was published (ADR 0049 §11).
+  const drift = publicationDrift(detail);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* 1. Header */}
+      <PageHeader
+        titleInTopbar
+        title={detail.name}
+        subtitle={`Status: ${displayStatus}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link href="/media-workspace/program" className={buttonClasses("secondary")}>
+              กลับ
+            </Link>
+
+            {isDraft && (
+              <Link
+                href={`/media-workspace/program/create?id=${id}`}
+                className={buttonClasses("secondary")}
+              >
+                Edit
+              </Link>
+            )}
+
+            {publicationPreviewTarget(detail) && (
+              <Link
+                href={`/media-workspace/preview/publication/${id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClasses("secondary")}
+              >
+                Open full preview
+              </Link>
+            )}
+
+            {isDraft &&
+              (confirming ? (
+                <>
+                  <Button
+                    variant="primary"
+                    disabled={actionBusy}
+                    onClick={handleDelete}
+                    className="bg-error hover:bg-error"
+                  >
+                    {actionBusy ? "กำลังลบ…" : "ยืนยันลบ?"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={actionBusy}
+                    onClick={() => setConfirming(false)}
+                  >
+                    ไม่
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="ghost"
+                  disabled={actionBusy}
+                  onClick={() => setConfirming(true)}
+                  className="text-error hover:bg-error-muted"
+                >
+                  Delete
+                </Button>
+              ))}
+
+            {isActive &&
+              (confirming ? (
+                <>
+                  <Button
+                    variant="primary"
+                    disabled={actionBusy}
+                    onClick={handleCancel}
+                    className="bg-error hover:bg-error"
+                  >
+                    {actionBusy ? "กำลังยกเลิก…" : "ยืนยันยกเลิก?"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={actionBusy}
+                    onClick={() => setConfirming(false)}
+                  >
+                    ไม่
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="ghost"
+                  disabled={actionBusy}
+                  onClick={() => setConfirming(true)}
+                  className="text-error hover:bg-error-muted"
+                >
+                  Cancel
+                </Button>
+              ))}
+          </div>
+        }
+      />
+
+      {actionError && (
+        <p className="text-sm text-error">{actionError}</p>
+      )}
+
+      {/* The snapshot rule is not weakened: what is airing is still the frozen copy taken at
+          publish. This says the source has moved on since, and offers the one action that
+          closes the gap — a deliberate re-publish (ADR 0049 §7). */}
+      {drift.length > 0 && (
+        <Card className="border-warning/30 p-5">
+          <h2 className="text-base font-semibold text-warning">
+            มีการแก้ไขหลังเผยแพร่
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            สิ่งที่ออกจอตอนนี้ยังเป็นเวอร์ชันที่เผยแพร่ไว้ เผยแพร่ซ้ำเพื่อส่งของใหม่ขึ้นจอ
+          </p>
+          <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground">
+            {drift.map((finding, idx) => (
+              <li key={idx}>{describeDrift(finding)}</li>
+            ))}
+          </ul>
+          <div className="mt-4 flex items-center gap-2">
+            {republishConfirming ? (
+              <>
+                <Button variant="primary" disabled={actionBusy} onClick={handleRepublish}>
+                  {actionBusy ? "กำลังเผยแพร่ซ้ำ…" : "ยืนยันเผยแพร่ซ้ำ?"}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={actionBusy}
+                  onClick={() => setRepublishConfirming(false)}
+                >
+                  ไม่
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                disabled={actionBusy}
+                onClick={() => setRepublishConfirming(true)}
+              >
+                เผยแพร่ซ้ำ
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* A draft has never been activated, so there are no publish jobs to report on —
+          and nothing to poll for either. */}
+      {!isDraft && <DeliveryProgress id={id} initialDetail={detail} />}
+
+      {/* 2. Overview */}
+      <Card className="p-5">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
+          Overview
+        </h2>
+        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Status</dt>
+            <dd className="mt-1">
+              <Badge color={statusColor} variant="pill">
+                {displayStatus}
+              </Badge>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Type</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {detail.publication_type}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Priority</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {detail.priority}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Language</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {detail.language ?? "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Campaign ID</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {detail.campaign_id ?? "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Tags</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {detail.tags && detail.tags.length > 0 ? detail.tags.join(", ") : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Created At</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {formatDate(detail.created_at)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Activated At</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {formatDate(detail.activated_at)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Published By</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {detail.published_by?.display_name ?? "ไม่ทราบผู้เผยแพร่"}
+            </dd>
+          </div>
+          {detail.created_by && detail.created_by.id !== detail.published_by?.id ? (
+            <div>
+              <dt className="text-xs font-medium text-muted-foreground">Created By</dt>
+              <dd className="mt-1 text-sm text-foreground">
+                {detail.created_by.display_name}
+              </dd>
+            </div>
+          ) : null}
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">Job Status</dt>
+            <dd className="mt-1 text-sm text-foreground">
+              {detail.job_status ?? "—"}
+            </dd>
+          </div>
+        </dl>
+      </Card>
+
+      {/* 3. Content */}
+      <Card className="p-5">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
+          Content
+        </h2>
+        {playlistError ? (
+          <p className="text-xs text-warning">{playlistError}</p>
+        ) : playlistItems.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs font-medium text-muted-foreground">
+                  <th className="py-2 pr-3">Position</th>
+                  <th className="py-2 pr-3">Title / Media Asset ID</th>
+                  <th className="py-2 text-right">Duration (s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {playlistItems.map((item, idx) => (
+                  <tr
+                    key={item.media_asset_id + idx}
+                    className="border-t border-border"
+                  >
+                    <td className="py-2.5 pr-3 text-muted-foreground">
+                      {item.position}
+                    </td>
+                    <td className="py-2.5 pr-3 font-medium text-foreground">
+                      {item.title || item.media_asset_id}
+                    </td>
+                    <td className="py-2.5 text-right text-muted-foreground">
+                      {item.duration_seconds ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">ไม่มีรายการคอนเทนต์</p>
+        )}
+      </Card>
+
+      {/* 4. Channels */}
+      <Card className="p-5">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
+          Channels
+        </h2>
+        {detail.publication_targets && detail.publication_targets.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs font-medium text-muted-foreground">
+                  <th className="py-2 pr-3">Name / Target ID</th>
+                  <th className="py-2 text-right">Target Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detail.publication_targets.map((target, idx) => (
+                  <tr key={idx} className="border-t border-border">
+                    <td className="py-2.5 pr-3 font-medium text-foreground">
+                      {target.name ?? target.device_id ?? target.channel_id ?? "—"}
+                    </td>
+                    <td className="py-2.5 text-right text-muted-foreground">
+                      {target.target_type}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">ไม่มีเป้าหมายการส่งสื่อ</p>
+        )}
+      </Card>
+
+      {/* 5. Schedule */}
+      <Card className="p-5">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
+          Schedule
+        </h2>
+        {detail.schedule ? (
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-xs font-medium text-muted-foreground">Starts At</dt>
+              <dd className="mt-1 text-sm text-foreground">
+                {formatDate(detail.schedule.starts_at)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-muted-foreground">Ends At</dt>
+              <dd className="mt-1 text-sm text-foreground">
+                {"freq" in detail.schedule.recurrence
+                  ? (lastAiringDay(detail.schedule) ?? "—")
+                  : formatDate(detail.schedule.ends_at)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-muted-foreground">Timezone</dt>
+              <dd className="mt-1 text-sm text-foreground">
+                {detail.schedule.timezone}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-muted-foreground">Recurrence</dt>
+              <dd className="mt-1 text-sm text-foreground">
+                {detail.schedule.recurrence && "freq" in detail.schedule.recurrence ? (
+                  <>
+                    <span>
+                      {detail.schedule.recurrence.freq === "monthly"
+                        ? `Monthly: ${formatMonthDays(detail.schedule.recurrence.month_days)}`
+                        : detail.schedule.recurrence.freq === "dates"
+                          ? `Dates: ${detail.schedule.recurrence.dates.join(", ")}`
+                          : `Days: ${detail.schedule.recurrence.days.join(", ")}`}
+                    </span>
+                    <br />
+                    <span>
+                      Hours: {detail.schedule.recurrence.daily_start}–
+                      {detail.schedule.recurrence.daily_end}
+                    </span>
+                  </>
+                ) : (
+                  "One-time"
+                )}
+              </dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="text-sm text-muted-foreground">ยังไม่ได้ตั้งเวลา</p>
+        )}
+      </Card>
+
+      {/* 6. Delivery */}
+      
+    </div>
+  );
+}

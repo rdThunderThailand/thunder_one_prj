@@ -1,0 +1,144 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
+import {
+  CalendarIcon as CalendarDays,
+  HelpIcon as CircleHelp,
+  HelpIcon,
+} from "@/components/ui/icons";
+import { resolveActiveApp } from "@/config/apps";
+import { isEditorRoute } from "@/config/nav/editor-routes";
+import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
+import { HelpTrigger } from "@/features/help/components/HelpTrigger";
+import type { HelpSupportConfig } from "@/features/help/support";
+import type { AppLocale } from "@/lib/app-locale";
+import { LanguageSwitch } from "./LanguageSwitch";
+import { GlobalSearch } from "./GlobalSearch";
+import { NotificationBell } from "./NotificationBell";
+import { getPageHeaderSnapshot, subscribePageHeader } from "./page-header-store";
+import { UserMenu } from "./UserMenu";
+import { MobileNavigationTrigger } from "./MobileNavigation";
+
+interface TopbarProps {
+  userName: string;
+  roleLabel?: string | null;
+  avatarUrl?: string | null;
+  /** Help panel Support Channels, read from env on the server (config/env.ts). */
+  helpSupport?: HelpSupportConfig;
+  /** The user's primary language: device cookie, then users.preferred_language (lib/app-locale). */
+  locale: AppLocale;
+}
+
+// Overview has no page action row; keep its title visible before the page publishes.
+function fallbackTitle(pathname: string): string | null {
+  if (pathname !== mediaWorkspaceNav.overviewItem.href) return null;
+  return mediaWorkspaceNav.overviewItem.label;
+}
+
+function todayLabel() {
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Bangkok" }).format(new Date());
+}
+
+// Media Workspace's header, restyled to match the Lovable reference
+// (docs/adr/0075). Every other App keeps the Topbar below unchanged.
+function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale, pathname }: TopbarProps & { pathname: string }) {
+  const meta = useSyncExternalStore(subscribePageHeader, getPageHeaderSnapshot, () => null);
+  const title = meta?.title ?? fallbackTitle(pathname);
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-3 backdrop-blur md:px-6">
+      <div className="flex h-17 items-center gap-2 xl:grid xl:grid-cols-[auto_minmax(0,1fr)_auto] xl:gap-4">
+        <MobileNavigationTrigger />
+        <div className="min-w-0 flex-1 xl:flex-initial">
+          {title && <h1 className="truncate text-xl font-extrabold tracking-tight text-foreground">{title}</h1>}
+          {meta?.subtitle && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta.subtitle}</p>}
+        </div>
+
+        <GlobalSearch variant="media" />
+
+        <div className="flex shrink-0 items-center gap-1 md:gap-2">
+          <span className="hidden h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground xl:flex">
+            <CalendarDays className="h-3.5 w-3.5 text-primary" />
+            {todayLabel()}
+          </span>
+          {/* ADR 0075 §5 removed a non-functional TH pill from this header; this switch works (sets the app language). */}
+          <LanguageSwitch initialLocale={locale} className="hidden text-muted-foreground hover:bg-accent hover:text-foreground sm:flex" />
+          <NotificationBell variant="media" />
+          {/* Visible on phones too: Help's mobile surface is the full-screen drawer (Help Spec AC-025). */}
+          <HelpTrigger
+            className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+            support={helpSupport}
+          >
+            <CircleHelp className="h-4 w-4" />
+          </HelpTrigger>
+          <div className="flex items-center lg:border-l lg:border-border lg:pl-3">
+            <UserMenu userName={userName} roleLabel={roleLabel} avatarUrl={avatarUrl} variant="compact" />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// 2026-09-16 shell redesign — dropped the date pill (not in the new
+// mockup); added a language indicator. 2026-10-06: the indicator is now a
+// working switch (LanguageSwitch) that sets the app language. Search bar is a bespoke,
+// Figma-matched treatment rather than the shared `SearchInput` (that
+// component's default look is shared with several thunder-care pages this
+// task shouldn't touch).
+function DefaultTopbar({ userName, roleLabel, avatarUrl, helpSupport, locale }: TopbarProps) {
+  return (
+    // 2026-09-19: h-[88px]/px-9/gap-5 -> h-[68px]/px-6/gap-4 — measured off
+    // the design reference's own header (69px tall, px-6), and matches the
+    // sidebar's logo row (also trimmed to h-[68px] today) so the two borders
+    // still line up.
+    <header className="flex h-[68px] shrink-0 items-center gap-2 border-b border-border bg-card px-3 md:gap-4 md:px-6">
+      {/* h-12/px-4 -> h-9/px-3, icon 24px -> 16px, matching the reference's
+          own 36px-tall search bar. */}
+      <MobileNavigationTrigger />
+      <GlobalSearch variant="default" />
+      {/* 2026-09-19: text-sm/font-bold -> text-xs/font-semibold, matching
+          the design reference's own topbar controls (12px/600) — was
+          14px/700, noticeably heavier/larger than the reference. Bell/Help
+          icons 28px -> 20px, gap-5 -> gap-4, to match the tighter density.
+          2026-09-29: every control sits in the same 36px box (like the Media
+          Workspace Topbar) with one gap, so TH / bell / help / divider /
+          profile are spaced evenly — the bare icons made the gaps uneven. */}
+      <div className="ml-auto flex items-center gap-1">
+        <LanguageSwitch
+          initialLocale={locale}
+          className="hidden text-muted-foreground hover:bg-t1-gray-50 hover:text-foreground sm:flex"
+        />
+        <NotificationBell variant="default" />
+        <HelpTrigger
+          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-t1-gray-50 hover:text-foreground"
+          support={helpSupport}
+        >
+          <HelpIcon className="h-5 w-5" />
+        </HelpTrigger>
+        <span
+          aria-hidden="true"
+          className="mx-2 hidden h-6 w-px bg-accent md:block"
+        />
+        <UserMenu
+          userName={userName}
+          roleLabel={roleLabel}
+          avatarUrl={avatarUrl}
+        />
+      </div>
+    </header>
+  );
+}
+
+export function Topbar(props: TopbarProps) {
+  const pathname = usePathname();
+  const isMediaWorkspace = resolveActiveApp(pathname)?.id === "media-workspace";
+  // Editors run in the focus shell (ADR 0077): the page header carries the title and back link.
+  if (isMediaWorkspace && isEditorRoute(pathname)) return (
+    <header className="flex h-12 shrink-0 items-center border-b border-border bg-card px-3 md:hidden">
+      <MobileNavigationTrigger />
+    </header>
+  );
+  return isMediaWorkspace ? <MediaWorkspaceTopbar {...props} pathname={pathname} /> : <DefaultTopbar {...props} />;
+}

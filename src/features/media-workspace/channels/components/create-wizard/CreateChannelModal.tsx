@@ -1,0 +1,229 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
+import {
+  DEFAULT_CREATE_CHANNEL_DRAFT,
+  geometryMismatch,
+  step1Valid,
+  toCreateChannelPayload,
+  type CreateChannelDraft,
+} from "../../create-wizard-state";
+import { createChannelV2 } from "../../services/channel-write-api";
+import { fetchChannelPlayerCandidates } from "../../services/player-candidates-api";
+import { fetchChannelReferenceData } from "../../services/channels-api";
+import type { ChannelPlayerCandidate } from "../../player-candidates";
+import type { ChannelDetail, ChannelLocationOption } from "../../types";
+import { CreateChannelSuccessCard } from "./CreateChannelSuccessCard";
+import { Step1ChannelInfo } from "./Step1ChannelInfo";
+import { Step2Setup } from "./Step2Setup";
+import { Step3Review } from "./Step3Review";
+
+type WizardStep = 1 | 2 | 3 | "success";
+
+const WIZARD_STEPS = ["Channel", "Setup", "Review"];
+
+function WizardProgress({ step }: { step: Exclude<WizardStep, "success"> }) {
+  return (
+    <ol className="mx-auto mb-6 flex w-full max-w-md items-center">
+      {WIZARD_STEPS.map((label, index) => {
+        const number = index + 1;
+        const completed = number < step;
+        const current = number === step;
+        return (
+          <li key={label} className="flex flex-1 items-center last:flex-none" aria-current={current ? "step" : undefined}>
+            <span
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-semibold ${
+                completed || current
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-primary/30 bg-card text-primary"
+              }`}
+            >
+              {completed ? "✓" : number}
+            </span>
+            <span className={`ml-2 text-sm font-medium ${current ? "text-primary" : "text-muted-foreground"}`}>{label}</span>
+            {number < WIZARD_STEPS.length && (
+              <span className={`mx-3 h-px flex-1 ${number < step ? "bg-accent" : "bg-muted"}`} aria-hidden="true" />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/**
+ * The parent mounts this only while the wizard should be open (`{isCreateOpen && <CreateChannelModal
+ * .../>}`) rather than passing an `open` boolean through — that makes every re-open a fresh mount
+ * with clean state for free, no reset-on-reopen effect needed (this repo's `set-state-in-effect`
+ * lint rule forbids resetting state synchronously in an effect body anyway).
+ */
+export function CreateChannelModal({
+  onClose,
+  onCreated,
+  onViewChannel,
+}: {
+  onClose: () => void;
+  onCreated: (channel: ChannelDetail) => void;
+  onViewChannel: (channelId: string) => void;
+}) {
+  const [step, setStep] = useState<WizardStep>(1);
+  const [draft, setDraft] = useState<CreateChannelDraft>(DEFAULT_CREATE_CHANNEL_DRAFT);
+  const [nameError, setNameError] = useState<string | undefined>();
+  const [locations, setLocations] = useState<ChannelLocationOption[]>([]);
+  const [candidates, setCandidates] = useState<ChannelPlayerCandidate[]>([]);
+  // Starts true: the mount effect below fetches immediately, and only flips this in a .then/.finally
+  // callback — never synchronously in the effect body (this repo's set-state-in-effect lint rule).
+  const [candidatesLoading, setCandidatesLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [createdChannel, setCreatedChannel] = useState<ChannelDetail | null>(null);
+  const [confirmedMismatchKey, setConfirmedMismatchKey] = useState<string | null>(null);
+
+  // Only for the "Refresh" button (a click handler, not an effect body) — the mount fetch below
+  // does not call this, so the effect never triggers a synchronous setState through a callee either.
+  const refreshCandidates = () => {
+    setCandidatesLoading(true);
+    fetchChannelPlayerCandidates()
+      .then(setCandidates)
+      .catch(() => {})
+      .finally(() => setCandidatesLoading(false));
+  };
+
+  useEffect(() => {
+    fetchChannelReferenceData()
+      .then((reference) => setLocations(reference.locations))
+      .catch(() => {});
+    fetchChannelPlayerCandidates()
+      .then(setCandidates)
+      .catch(() => {})
+      .finally(() => setCandidatesLoading(false));
+  }, []);
+
+  const selectedPlayer = candidates.find((c) => c.id === draft.playerId) ?? null;
+  const geometryWarning = geometryMismatch(draft, selectedPlayer);
+  const mismatchKey = geometryWarning ? `${draft.playerId}:${geometryWarning}` : null;
+  const mismatchConfirmed = mismatchKey !== null && confirmedMismatchKey === mismatchKey;
+
+  const handleNext = () => {
+    if (step === 1) {
+      if (!step1Valid(draft)) {
+        setNameError("Channel name is required");
+        return;
+      }
+      setNameError(undefined);
+      setStep(2);
+    } else if (step === 2) {
+      setStep(3);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (geometryWarning && !mismatchConfirmed) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const channel = await createChannelV2(toCreateChannelPayload(draft, mismatchConfirmed));
+      onCreated(channel);
+      setCreatedChannel(channel);
+      setStep("success");
+    } catch (caught) {
+      if (caught instanceof Error && isDuplicateName(caught.message)) {
+        setSubmitError("A Channel with this name already exists.");
+        setStep(1);
+      } else if (caught instanceof Error && caught.message.includes("confirm to continue")) {
+        setSubmitError("The Player display information changed. Refresh the Player list, review the warning, and confirm again.");
+        setConfirmedMismatchKey(null);
+        refreshCandidates();
+      } else {
+        setSubmitError(classifyApiError(caught, "Could not create Channel. Try again.").message);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const footer = step === "success" ? null : (
+    <div className="flex w-full items-center justify-between">
+      <Button variant="outline" onClick={step === 1 ? onClose : () => setStep((step === 3 ? 2 : 1) as WizardStep)}>
+        {step === 1 ? "Cancel" : "← Back"}
+      </Button>
+      {step === 3 ? (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => void handleSubmit()} disabled={submitting || Boolean(geometryWarning && !mismatchConfirmed)}>
+            {submitting ? "Creating…" : draft.playerId ? "Create Channel" : "Save as Draft"}
+          </Button>
+        </div>
+      ) : (
+        <Button onClick={handleNext}>
+          Next →
+        </Button>
+      )}
+    </div>
+  );
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Create Channel"
+      description="Register a new channel to manage your screens, TVs, or kiosks."
+      titleClassName="text-2xl"
+      footer={footer}
+      size={step === 3 ? "xl" : "preview"}
+      showCloseButton
+      overflowVisible={step === 2}
+    >
+      {step !== "success" && <WizardProgress step={step} />}
+      {step === 1 && (
+        <Step1ChannelInfo draft={draft} locations={locations} nameError={nameError} onChange={setDraft} />
+      )}
+      {step === 2 && (
+        <Step2Setup
+          draft={draft}
+          candidates={candidates}
+          candidatesLoading={candidatesLoading}
+          onChange={setDraft}
+          onRefreshCandidates={refreshCandidates}
+        />
+      )}
+      {step === 3 && (
+        <Step3Review
+          draft={draft}
+          locations={locations}
+          player={selectedPlayer}
+          geometryWarning={geometryWarning}
+          mismatchConfirmed={mismatchConfirmed}
+          onConfirmMismatch={(confirmed) => setConfirmedMismatchKey(confirmed ? mismatchKey : null)}
+          onEditChannel={() => setStep(1)}
+          onEditSetup={() => setStep(2)}
+        />
+      )}
+      {step === "success" && createdChannel && (
+        <CreateChannelSuccessCard
+          channelName={createdChannel.name}
+          isDraft={createdChannel.status === "draft"}
+          onViewChannel={() => {
+            onViewChannel(createdChannel.id);
+            onClose();
+          }}
+          onCreateAnother={() => {
+            setDraft(DEFAULT_CREATE_CHANNEL_DRAFT);
+            setConfirmedMismatchKey(null);
+            setStep(1);
+          }}
+        />
+      )}
+      {submitError && (
+        <p role="alert" className="mt-2 text-sm text-error">
+          {submitError}
+        </p>
+      )}
+    </Modal>
+  );
+}
