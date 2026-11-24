@@ -1,6 +1,6 @@
 /** Run: node src/features/asset-workspace/services/asset-label-preparation.check.mts */
 import assert from "node:assert/strict";
-import { prepareAssetLabels, type LabelPreparationStep } from "./asset-label-preparation.ts";
+import { prepareAssetLabels, startLabelTasks, type LabelPreparationStep } from "./asset-label-preparation.ts";
 
 const asset = { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", name: "จอภาพ", assetTag: "AST-000001", status: "Available" };
 const labels = [{ ...asset, qrValue: "https://app.example/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/assets/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }];
@@ -51,4 +51,28 @@ await assert.rejects(() => prepareAssetLabels("context", [asset], new AbortContr
   loadLabels: async () => { throw denied; },
 }), (error) => error === denied);
 assert.equal(failedSteps.includes("data"), false, "failed requests never count as completed data");
+// An early start by id: a good answer is used once the asset is known, with the asset's serial; anything else asks again.
+for (const early of ["good", "failed", "other asset"] as const) {
+  const asked: string[] = [];
+  const tasks = startLabelTasks("context", asset.id, new AbortController().signal, {
+    loadTools: async () => {},
+    loadLabels: async (_context, scope) => {
+      asked.push(scope[0].name);
+      if (early === "failed" && asked.length === 1) throw denied;
+      return labels;
+    },
+  }, async () => { throw new Error("tools failed to load early"); });
+  assert.deepEqual(asked, [""], "the label is asked for before the asset is known");
+  const scope = [{ ...asset, id: early === "other asset" ? "cccccccc-cccc-4ccc-8ccc-cccccccccccc" : asset.id, serialNumber: "SN-1" }];
+  const result = await prepareAssetLabels("context", scope, new AbortController().signal, () => {}, tasks);
+  assert.deepEqual(asked, early === "good" ? [""] : ["", asset.name]);
+  if (early === "good") assert.equal(result[0].serialNumber, "SN-1");
+}
+const left = new AbortController();
+const slow = Promise.withResolvers<typeof labels>();
+const leaving = prepareAssetLabels("context", [asset], left.signal, () => {},
+  startLabelTasks("context", asset.id, left.signal, { loadTools: async () => {}, loadLabels: () => slow.promise }, async () => {}));
+left.abort();
+slow.resolve(labels);
+await assert.rejects(leaving, (error) => error instanceof DOMException && error.name === "AbortError");
 console.log("Label preparation: parallel tasks, completion-only progress, both completion orders, failure and cancellation passed without network calls.");

@@ -21,6 +21,7 @@ import { changeStatusBodyClass, changeStatusFooterFrame, changeStatusFooterSurfa
 import { readStoredHandoff } from "./export-handoff";
 import { ExportFieldsCard, ExportFormatCard, ExportOptionsCard, ExportPreviewCard, ExportSelectCard } from "./ExportPanels";
 
+const PREVIEW_ROWS = 5;
 const listQuery = (filters: Record<string, string>, pageSize: number) =>
   ({ page: 1, pageSize, sort: "created_at", ...filters }) as AssetListQuery;
 const noSubscribe = () => () => {};
@@ -47,11 +48,14 @@ export function ExportPageView({ context }: { context: string }) {
   const filters = scope?.kind === "filtered" ? scope.filters : null;
 
   const filterOptions = useProfileRead(`${context}:export-filters`, (signal) => getAssetsFilters(context, signal));
-  const all = useProfileRead(`${context}:export-all`, (signal) => getAssetsList(context, listQuery({}, 1), signal));
+  // The All and filtered reads give both the number beside the choice and the preview rows.
+  const all = useProfileRead(`${context}:export-all`, (signal) => getAssetsList(context, listQuery({}, PREVIEW_ROWS), signal));
   const filtered = useProfileRead(`${context}:export-filtered:${JSON.stringify(handoff?.filters ?? {})}`,
-    (signal) => getAssetsList(context, listQuery(handoff?.filters ?? {}, 1), signal), Boolean(handoff?.filters));
-  const preview = useProfileRead(`${context}:export-preview:${JSON.stringify(filters)}`,
-    (signal) => getAssetsList(context, listQuery(filters ?? {}, 5), signal), filters !== null);
+    (signal) => getAssetsList(context, listQuery(handoff?.filters ?? {}, PREVIEW_ROWS), signal), Boolean(handoff?.filters));
+  const picked = useProfileRead(`${context}:export-preview:${JSON.stringify(filters)}`,
+    (signal) => getAssetsList(context, listQuery(filters ?? {}, PREVIEW_ROWS), signal),
+    filters !== null && option !== "all" && option !== "filtered");
+  const preview = option === "all" ? all : option === "filtered" ? filtered : picked;
 
   const count = scope?.kind === "selected" ? scope.ids.length : filters && !preview.pending ? total(preview) : null;
   const issue = count === null ? null : exportCountIssue(count);
