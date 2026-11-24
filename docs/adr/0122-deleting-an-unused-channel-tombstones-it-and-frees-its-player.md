@@ -2,7 +2,8 @@
 
 Status: accepted (2026-11-20, owner decisions in a grilling session on "move a Player to a new Channel
 and delete the old one"; scrutiny round 1 applied the same day). Phase 2 (rules 11–20) amended
-2026-11-22.
+2026-11-22. Rule 17 amended 2026-11-24 (unsaved picks the Channel picker cannot show, and the fix
+button no longer saves first).
 **Workspace:** media-workspace
 
 Supersedes the hard-delete rule of [ADR 0038](0038-channel-lifecycle-retirement-and-concurrency.md)
@@ -10,7 +11,9 @@ Supersedes the hard-delete rule of [ADR 0038](0038-channel-lifecycle-retirement-
 Amends [ADR 0037](0037-channel-status-derived-from-publications.md) (Deactivate is no longer the only
 lifecycle button) and [ADR 0074](0074-channel-one-player-and-channel-group.md) §1 (an Inactive Channel
 may be Player-less). Keeps [ADR 0099](0099-programs-reach-only-active-channels.md)'s rule that Group
-edits are explicit. The reservation table of ADR 0030 is unchanged.
+edits are explicit. The reservation table of ADR 0030 is unchanged. Rule 17's 2026-11-24 amendment
+amends [ADR 0114](0114-final-step-publish-errors-name-the-cause-and-lead-to-the-fix.md) §5 in the
+wizard: a fix's step jump no longer saves first, and every failed save carries its `cause`.
 
 ## Context
 
@@ -190,6 +193,48 @@ end.
       so a new Draft can carry a Tombstone the same way. Publish refuses it by name, as ADR 0101 does
       for Assets.
     - **Group targets:** need no notice, because rule 2 keeps a Group's members live.
+    - **Unsaved picks the Channel picker cannot show** (amended 2026-11-24, owner decisions in a grilling
+      session, then two scrutiny rounds the same day). FE only, with no Core change; it ships on its own
+      and does not wait for S3, because rule 8's hard delete is already live. The wizard's
+      **problem targets** are the saved Channel targets that `media_publication_get` flags deleted or
+      not Active; the wizard reads them when it opens a Draft. A pick that lives only in the local Create draft is not among them. The Channel
+      list here is the wizard's one `GET /media/channels` read: every status, no Tombstones, read once
+      when the wizard opens. The picker shows only its Active rows (`toChannelItems`).
+      - **Unlisted pick:** a selected id that is neither in the Channel list nor a problem target, once
+        the list has loaded without error. Rule 8 refuses a Channel that any `publication_targets` row
+        names, but a local pick holds nothing, so its Channel can be hard deleted. Then
+        `media_publication_upsert` refuses every save that sends targets
+        (`not found: channel … not found for this tenant`), and the wizard showed nothing to remove.
+        After S3 a local pick can also become a Tombstone: it is unlisted too, saves, and only Publish
+        refuses it. The notice adds one line for all unlisted picks,
+        `ช่องทางที่เลือกไว้ N รายการไม่มีในระบบแล้ว — นำออกก่อนบันทึกหรือเผยแพร่`, with one Remove that
+        drops them all. The draft keeps no Channel names, so the line cannot name them.
+      - **Inactive pick:** a selected id that is in the Channel list but not Active, and not a problem
+        target. Save accepts it, Publish refuses it as not active, and the picker hides it. It gets the
+        existing not-Active line under its name from the list, with Remove.
+      - The wizard shows the whole notice on every step, not only Program and Review. Once Program has
+        been reached, every save sends targets (`draftSavePolicy`), so the notice warns before the
+        next save fails, on whichever step that save is made.
+      - **The error's fix goes straight to its step** (amends ADR 0114 §5). The fix button beside a
+        refusal (for this one, `แก้ปลายทาง` to Program) no longer saves first, for every cause. It used
+        `handleStepSelect`, which saves a dirty server Draft first (#226), and that save returned the
+        same refusal, so the button led nowhere. The stepper itself still saves first, and an edit made
+        before a fix jump stays in the local draft until the next save.
+      - **Every failed save in the wizard carries its cause** (amends ADR 0114 §5). Next, the stepper
+        jump and Save draft all show a failed save through `classifyApiError` and keep its `cause`, so
+        the fix button shows beside each. Next and the stepper jump showed Core's raw text, and Save
+        draft dropped the cause. This refusal then reads
+        `ไม่พบช่องทางหรือกลุ่มที่เลือก อาจถูกลบไปแล้ว กรุณาเลือกปลายทางใหม่`.
+      - Nothing removes an unlisted or inactive pick automatically, as for a Tombstone.
+      - The publish gate still counts an unlisted pick, and Core refuses it. The summary rail lists the
+        names it knows, so an unlisted pick shows only in its "N channel(s)" fallback, used when no
+        selected target has a name.
+      - **Picked Groups get no notice.** The wizard reads no Group list at its root; `GroupsStep` reads
+        its own (`GET /media/channel-groups`, every status, filtered to Active on the client per ADR 0074
+        §5). A Group picked only in the local draft can be hard deleted, and every save then fails with
+        `not found: channel group …`. The Program step shows every picked Group as a removable chip, and
+        the fix button reaches it from any step.
+      - The Program edit page keeps no local picks, so only the wizard changes.
 18. **History keeps the name.** Program detail and Playback Proof show `<name> (deleted)` with no link,
     as Playback Proof already does for a source that is gone. `media_publications_list` counts stay as
     stored.
@@ -250,6 +295,34 @@ end.
   with the Player team. Deferred to its own issue if a broken-hardware swap becomes a real need.
 - **A "move here" action in the Player picker that deactivates the holder.** Rejected: a destructive
   cross-Channel action hidden inside another Channel's editor.
+- **Drop an unlisted pick from the draft once the Channel list loads, then say so** (2026-11-24).
+  Rejected for two reasons:
+  - It changes the draft without the user asking.
+  - Core's problem targets come from a separate read that can fail silently. A saved Tombstone target
+    is missing from the Channel list too, so it would be dropped whenever that read is late or fails,
+    against "Draft targets stay".
+- **Leave unlisted picks out of the targets a save sends** (2026-11-24). Rejected:
+  - The local draft and the saved Draft disagree.
+  - The ghost id stays in local storage.
+  - The wizard's `targetsFromSelection` (`draft-mapping.ts`) would drop a saved Tombstone target the
+    same way unless it also knew the problem targets.
+- **The fix button removes the id that Core's refusal names** (2026-11-24, raised in scrutiny). It
+  would cover Groups and a Channel deleted while the wizard is open. Rejected:
+  - It changes the cause mapping and fix modules that the Program edit page shares.
+  - Core stops at the first missing target, so it removes one id per failed save.
+  - A fix button that goes straight to Program already reaches both the notice and the Group chips.
+- **Hide the fix button for this refusal** (2026-11-24). Rejected: a Group picked on Prepare Content
+  would then have no way to its chip.
+- **A stepper jump whose save fails still moves to its step and keeps the error** (2026-11-24, raised
+  in scrutiny; the wizard already does this for an invalid schedule, ADR 0086 §2). The fix button could
+  then keep using `handleStepSelect`. Rejected: it changes #226 for every jump, so no refused save would
+  hold the operator on the step any more. Only the fix button exists to lead away from the refusal.
+- **Read the Group list at the wizard root and name a deleted Group in the notice** (2026-11-24).
+  Rejected for now: one more read every time the wizard opens, beside the one `GroupsStep` makes, while
+  the chip and the fix button already reach Remove.
+- **Keep `channelNamesById` beside `groupNamesById` so the line can name Channels** (2026-11-24).
+  Rejected: every draft would carry a second copy of Channel names for a rare case, and drafts written
+  before it would still have none.
 
 ## Consequences
 
@@ -269,3 +342,18 @@ end.
   unique constraint in S3 is a prod schema change that is approved on its own.
 - A Draft or a duplicated Program can carry a Tombstone target indefinitely. Nothing removes it
   automatically; the notice (rule 17) and Publish (rule 16) make the operator do it.
+- Until Core's problem targets load, or if that read fails, a saved Tombstone target shows on the
+  unnamed unlisted-pick line instead of under its name. It is still visible and removable.
+- The rule 17 lines for saved targets now also show on Choose Content, Prepare Content and Publish.
+- A hard-deleted Group that is picked only in the local draft still makes every save fail until its
+  chip is removed. The save error names the cause and its fix button leads to the chip, but the jump
+  clears the error, and the chip itself shows only `<name> · 0 channels`.
+- The Channel list is read once when the wizard opens. A Channel deleted or deactivated while the
+  wizard is open stays in that list as a selected card the operator can untick, but nothing says which
+  card it is until the page reloads.
+- The resume prompt (ADR 0086) saves the old draft before it starts new content. When that save is
+  refused because of a missing target, the prompt shows its generic `บันทึก draft เดิมไม่สำเร็จ
+  กรุณาลองอีกครั้ง`, and retrying cannot pass. Continuing the old draft still opens the wizard, where
+  the notice shows Remove. Left to the ADR 0086 §9 work, which changes the same hook.
+- `classifyApiError` still passes an unmapped 4xx message through as it is, on every save path. That
+  breaks the rule that the UI never shows raw backend text; accepted for now and left as a follow-up.

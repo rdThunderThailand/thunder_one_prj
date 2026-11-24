@@ -22,7 +22,7 @@ import { PublishErrorFix } from "./PublishErrorFix";
 import { fetchPublication } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { detailToDraft } from "../detail-mapping";
-import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending, resumeStep } from "../next-transition";
 import { publicationSeedFromParams } from "../seed-resolver";
@@ -170,6 +170,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
     error,
     errorCause,
     setError,
+    showFailure,
     publishedId,
     conflicts,
     checkingConflicts,
@@ -268,8 +269,9 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
       goNextAction(MAX_BUILT_STEP);
     } else {
       setSaveStatus("error");
+      const failure = classifyApiError(outcome.error, "Failed to save draft.");
       // The revision-conflict banner already shows this — avoid saying it twice.
-      if (!isConflict(outcome.message)) setError(outcome.message);
+      if (failure.kind !== "conflict") showFailure(failure);
     }
   };
 
@@ -280,12 +282,19 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
       try {
         await persistForNavigation();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "บันทึก draft ไม่สำเร็จ";
+        const failure = classifyApiError(err, "บันทึก draft ไม่สำเร็จ");
         // The revision-conflict banner already shows a conflict.
-        if (!isConflict(message)) setError(message);
+        if (failure.kind !== "conflict") showFailure(failure);
         return;
       }
     }
+    setError(null);
+    setStep(target);
+  };
+
+  // ADR 0122 rule 17: saving first would return the refusal the fix is for, so the fix only jumps.
+  // The edit stays in the local draft until the next save.
+  const jumpToFix = (target: number) => {
     setError(null); // a jump to the fix leaves the old refusal behind
     setStep(target);
   };
@@ -309,7 +318,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
       <p className="text-xs font-medium text-error">{displayError}</p>
       <PublishErrorFix
         fix={error && errorCause ? publishCauseFix(errorCause, { type: publicationType, playlistId, compositionId }) : null}
-        onStep={(target) => void handleStepSelect(target)}
+        onStep={jumpToFix}
       />
       {saveStatus === "error" && (
         <Button
@@ -422,7 +431,8 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
 
       {compositionId && (step === 2 || step === 5) && <LayoutNotActiveNotice compositionId={compositionId} gate={layoutGate} />}
 
-      {(step === 3 || step === 4) && <WizardProblemTargetsNotice />}
+      {/* Every step: once Program is reached, any save sends these targets (ADR 0122 rule 17). */}
+      <WizardProblemTargetsNotice channels={loadingRefs || channelsError ? null : channels} />
 
       {/* Step 2 — Prepare Content */}
       {step === 2 && <PrepareContentStep assets={assets} tags={tags} showFieldErrors={showFieldErrors} />}

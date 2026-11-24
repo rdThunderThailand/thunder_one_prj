@@ -25,7 +25,7 @@ import { targetDeviceIds } from "../program-edit";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility, programGateInputFromDraft } from "../publish-eligibility";
 import { validateStep } from "../step-validation";
-import { classifyApiError, isConflict, scheduleEndedMessage, type PublishCause } from "@/lib/api/api-error";
+import { classifyApiError, isConflict, scheduleEndedMessage, type ClassifiedError, type PublishCause } from "@/lib/api/api-error";
 import { formatDmy, shiftYmd, utcToZonedParts } from "../schedule";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
 import { DraftSaveError, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
@@ -59,6 +59,8 @@ export function usePublishDraft() {
   const error = errorState?.message ?? null;
   const errorCause = errorState?.cause ?? null;
   const setError = useCallback((message: string | null) => setErrorState(message ? { message, cause: null } : null), []);
+  // Every failed save keeps its cause, so the fix shows beside it (ADR 0122 rule 17 amends ADR 0114 §5).
+  const showFailure = useCallback((failure: ClassifiedError) => setErrorState({ message: failure.message, cause: failure.cause ?? null }), []);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [savingNext, setSavingNext] = useState(false);
   const [publishedId, setPublishedId] = useState<string | null>(null);
@@ -331,7 +333,7 @@ export function usePublishDraft() {
       const classified = classifyApiError(err, "Failed to save draft.");
       // The revision-conflict banner already shows this — avoid saying it twice.
       if (classified.kind !== "conflict") {
-        setError(classified.message);
+        showFailure(classified);
         toast.error(classified.message);
       }
       return null;
@@ -402,6 +404,7 @@ export function usePublishDraft() {
     error,
     errorCause,
     setError,
+    showFailure,
     publishedId,
     conflicts,
     checkingConflicts,
