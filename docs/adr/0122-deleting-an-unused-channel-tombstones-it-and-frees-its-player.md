@@ -222,8 +222,9 @@ end.
         before a fix jump stays in the local draft until the next save.
       - **Every failed save in the wizard carries its cause** (amends ADR 0114 §5). Next, the stepper
         jump and Save draft all show a failed save through `classifyApiError` and keep its `cause`, so
-        the fix button shows beside each. Next and the stepper jump showed Core's raw text, and Save
-        draft dropped the cause. This refusal then reads
+        the fix button shows beside each. A refused stepper jump shows its error under the stepper, not
+        in the footer below the step (ADR 0123 rule 2). Next and the stepper jump showed Core's raw
+        text, and Save draft dropped the cause. This refusal then reads
         `ไม่พบช่องทางหรือกลุ่มที่เลือก อาจถูกลบไปแล้ว กรุณาเลือกปลายทางใหม่`.
       - Nothing removes an unlisted or inactive pick automatically, as for a Tombstone.
       - The publish gate still counts an unlisted pick, and Core refuses it. The summary rail lists the

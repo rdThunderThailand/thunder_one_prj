@@ -99,6 +99,8 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
   const [resumeFailure, setResumeFailure] = useState<ClassifiedError | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showFieldErrors, setShowFieldErrors] = useState(false);
+  // ADR 0123 rule 2: a refused stepper jump shows its error beside the stepper, not in the footer below the step.
+  const [isStepperError, setIsStepperError] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
   // Derived, not state: `resumedId` only settles once the fetch has finished, so
@@ -241,6 +243,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
 
   const handleNext = async () => {
     if (savingNext) return;
+    setIsStepperError(false);
     let didSave = false;
     const outcome = await attemptNext(
       step as WizardStepId,
@@ -278,6 +281,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
   // #226: a stepper jump on a server draft saves first, like Next — otherwise a content change
   // made before the jump lives only in this browser.
   const handleStepSelect = async (target: number) => {
+    setIsStepperError(true);
     if (publicationId && isDirty) {
       try {
         await persistForNavigation();
@@ -415,8 +419,10 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
         <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={(target) => void handleStepSelect(target)} />
       </Card>
 
+      {/* Step 1 has no footer, so its errors show here, as does a refused stepper jump on any step. */}
+      {(step === 1 || isStepperError) && errorBlock}
+
       {/* Step 1 — Choose Content */}
-      {step === 1 && errorBlock}
       {step === 1 && (
         <ContentStep
           busy={savingNext}
@@ -489,12 +495,22 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
             <LovableButton
               variant="outline"
               disabled={saving || !draftName.trim()}
-              onClick={() => void saveDraft()}
+              onClick={() => {
+                setIsStepperError(false);
+                void saveDraft();
+              }}
             >
               {saving ? "Saving…" : "Save draft"}
             </LovableButton>
             {isLastStep ? (
-              <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish || !!layoutGate.reason}>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setIsStepperError(false);
+                  void publishNow();
+                }}
+                disabled={saving || !canPublish || !!layoutGate.reason}
+              >
                 <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
               </Button>
             ) : (
@@ -503,7 +519,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
               </Button>
             )}
           </div>
-          {errorBlock}
+          {!isStepperError && errorBlock}
           {publishedId && (
             <p className="text-xs font-medium text-success">
               Published successfully! (ID: {publishedId})
