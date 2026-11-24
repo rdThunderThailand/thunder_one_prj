@@ -78,6 +78,13 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   }, [layoutId]);
 
   const isDirty = JSON.stringify(draft) !== JSON.stringify(initial);
+  // #455: reload / tab close asks first, as the Playlist editor does (ADR 0060).
+  useEffect(() => {
+    if (!isDirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isDirty]);
   const geometryErrors = validateZones(draft.zones);
   const selectedZone = selectedIndex !== null ? (draft.zones[selectedIndex] ?? null) : null;
 

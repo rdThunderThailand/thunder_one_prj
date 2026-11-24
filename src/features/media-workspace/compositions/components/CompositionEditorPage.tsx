@@ -139,6 +139,13 @@ export function CompositionEditorPage({
   }, [compositionId]);
   const preview = useCompositionPreview({ compositionId: id, layout, bindings, ...data });
   const isDirty = editedZones !== null || layoutSettings !== null || draftSnapshot({ name, layoutId, bindings, folderId, tags }) !== initialSnapshot;
+  // #455: reload / tab close asks first, as the Playlist editor does (ADR 0060).
+  useEffect(() => {
+    if (!isDirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isDirty]);
   // ADR 0087 §1: Undo/Redo restore the raw draft state, keeping the ids a save already stored.
   const restoreSnapshot = (snapshot: EditorSnapshot) => {
     setEditedZones(snapshot.editedZones);
