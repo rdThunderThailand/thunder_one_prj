@@ -4,6 +4,9 @@ import { nextHistoryOp, type SequencerState } from "@/hooks/use-list-url-state";
 
 const filterKeys = ["page", "pageSize", "page_size", "q", "category_id", "include_child_categories", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id", "sort", "direction"];
 
+/** Any of these in the URL means the list opens filtered. */
+export const LIST_FILTER_KEYS = ["q", "category_id", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id"];
+
 export function useAssetsListUrl() {
   const pathname = usePathname();
   const searchParams = useSearchParams();

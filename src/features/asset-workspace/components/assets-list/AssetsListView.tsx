@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { assetListQueryString, readAssetListSearch, withListDefaults, type AssetListDefaults } from "../../services/assets-list-query";
 import type { AssetsListSeeds } from "../../services/assets-list-seed";
 import { useAssetsListData } from "../../hooks/use-assets-list-data";
-import { useAssetsListUrl } from "../../hooks/use-assets-list-url";
+import { LIST_FILTER_KEYS, useAssetsListUrl } from "../../hooks/use-assets-list-url";
 import { AssetsFilters } from "./AssetsFilters";
 import { AssetsSummary } from "./AssetsSummary";
 import { AssetsPageActions } from "./AssetsListToolbar";
@@ -37,7 +37,7 @@ export function AssetsListView({ context, listDefaults, seeds }: { context: stri
   const denied = list.denied;
   const [scanOpen, setScanOpen] = useState(false);
   const scanTriggerRef = useRef<HTMLButtonElement>(null);
-  const hasFilters = ["q", "category_id", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id"].some((key) => url.get(key));
+  const hasFilters = LIST_FILTER_KEYS.some((key) => url.get(key));
   // Arriving with a filter (e.g. from an Overview tile) starts with the totals folded so the filtered rows get the room.
   const [folded, setFolded] = useState(hasFilters);
   const summaryRef = useRef<HTMLDivElement>(null);

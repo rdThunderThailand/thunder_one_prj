@@ -3,7 +3,6 @@ import { useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import { PlusIcon } from "@/components/ui/icons";
-import { Skeleton } from "@/components/ui/Skeleton";
 import type { AssetsListResource } from "../../hooks/use-assets-list-data";
 import type { AssetsListUrlState } from "../../hooks/use-assets-list-url";
 import type { AssetListQuery } from "../../services/assets-list-query";
@@ -12,7 +11,7 @@ import { AssetsTable } from "./AssetsTable";
 import { AssetsCompactList } from "./AssetsCompactList";
 import { AssetsPagination } from "./AssetsPagination";
 import { AssetsSelectionToolbar, AssetsSortControl } from "./AssetsListToolbar";
-import { AssetsTableLoading } from "./AssetsListLoading";
+import { AssetsPaginationLoading, AssetsRowsLoading } from "./AssetsListPageLoading";
 import { AssetsSectionError } from "./AssetsSectionError";
 import type { AssetsSelection } from "../../hooks/use-assets-selection";
 
@@ -36,7 +35,7 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
   return (
     <Card role="region"
       data-assets-table aria-label="Assets list" aria-busy={pending}
-      className="@container/assets-results flex min-w-0 flex-col overflow-hidden focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1"
+      className="@container/assets-results flex min-w-0 flex-col overflow-hidden focus-within:border-foreground/20 focus-within:shadow-float motion-reduce:transition-none min-[60rem]:group-data-[bounded=true]/assets-workspace:min-h-0 min-[60rem]:group-data-[bounded=true]/assets-workspace:flex-1"
     >
       <div data-assets-controls className="flex shrink-0 flex-wrap items-center gap-2 px-3 py-2">
         <div className="min-w-0 flex-1 basis-48">
@@ -51,12 +50,13 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
         </div>
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 @min-4xl/assets-results:justify-end">
           <AssetsSortControl value={query.sort} pending={pending} onChange={(sort) => url.set({ sort })} />
-          {pagination && <AssetsPagination {...pagination} compact />}
+          {pagination ? <AssetsPagination {...pagination} compact /> : pending && <AssetsPaginationLoading compact />}
         </div>
       </div>
-      {(pending || error) && (
+      {pending && !data && <p role="status" className="sr-only">Loading assets…</p>}
+      {((pending && data) || error) && (
         <div data-assets-controls className="shrink-0 space-y-2 border-t border-border px-3 py-2">
-          {pending && <p role="status" className="text-xs text-muted-foreground">{data ? "Updating assets — showing previous results until the new request finishes." : "Loading assets…"}</p>}
+          {pending && data && <p role="status" className="text-xs text-muted-foreground">Updating assets — showing previous results until the new request finishes.</p>}
           {error && <AssetsSectionError title={data ? "Couldn’t update assets — showing previous results" : "Couldn’t load assets"} message={error.message} pending={pending} retry={retry} />}
         </div>
       )}
@@ -64,9 +64,9 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
         ref={scroll} data-assets-scroll tabIndex={0} aria-label="Assets results"
         onScroll={(event) => onRowsScroll?.(event.currentTarget)}
         onWheel={(event) => { if (event.deltaY < 0) onRowsScroll?.(event.currentTarget, true); }}
-        className="relative min-w-0 overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[bounded=true]/assets-workspace:min-h-0 group-data-[bounded=true]/assets-workspace:flex-1 group-data-[bounded=true]/assets-workspace:overflow-y-auto"
+        className="relative min-w-0 overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-[60rem]:group-data-[bounded=true]/assets-workspace:min-h-0 min-[60rem]:group-data-[bounded=true]/assets-workspace:flex-1 min-[60rem]:group-data-[bounded=true]/assets-workspace:overflow-y-auto"
       >
-        {!data ? pending ? <AssetsTableLoading /> : error?.status === 403 ? (
+        {!data ? pending ? <AssetsRowsLoading /> : error?.status === 403 ? (
           <AccessDeniedState body={error.message} />
         ) : error?.status === 401 ? (
           <EmptyState title="Sign in to view assets" body={error.message} action={
@@ -113,7 +113,7 @@ export function AssetsListContent({ resource, query, requestedKey, url, filtered
         )}
       </div>
       <div data-assets-controls className="shrink-0 border-t border-border px-3 py-2">
-        {pagination ? <AssetsPagination {...pagination} /> : <Skeleton className="h-8 w-full" />}
+        {pagination ? <AssetsPagination {...pagination} /> : <AssetsPaginationLoading />}
       </div>
     </Card>
   );
