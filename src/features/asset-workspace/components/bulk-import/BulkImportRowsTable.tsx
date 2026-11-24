@@ -15,6 +15,7 @@ import type {
 } from "../../domain/asset-import-types";
 import { useAssetImportBatch } from "../../hooks/use-asset-import-batch";
 import { useAssetImportRows, useImportRowsSearch } from "../../hooks/use-asset-import-rows";
+import { useImportEditorResources } from "../../hooks/use-import-editor-resources";
 import { ErrorState } from "../states/ErrorState";
 import { BulkImportPagination } from "./BulkImportPagination";
 import { BulkImportRowsGrid } from "./BulkImportRowsGrid";
@@ -63,7 +64,10 @@ export function BulkImportRowsTable({
   const [editRow, setEditRow] = useState<ImportRow | null>(null);
   const [editFirst, setEditFirst] = useState(true);
   const [trigger, setTrigger] = useState<HTMLElement | null>(null);
+  const resources = useImportEditorResources(api, batchId, editor?.context ?? "");
   function openEditor(row: ImportRow, editing: boolean) {
+    // The kept rows are older than the table: read them again.
+    if (resources.rows.get()?.some((kept) => kept.id === row.id && kept.version !== row.version)) resources.rows.clear();
     setTrigger(document.activeElement instanceof HTMLElement ? document.activeElement : null);
     setEditFirst(editing);
     setEditRow(row);
@@ -129,7 +133,7 @@ export function BulkImportRowsTable({
               onRetry={
                 rows.error.status === 404 && onReloadBatch
                   ? onReloadBatch
-                  : rows.reload
+                  : () => { resources.stop(); rows.reload(); }
               }
             />
           ) : batchResource.error ? (
@@ -171,7 +175,7 @@ export function BulkImportRowsTable({
         </TabsContent>
       </Tabs>
       {editRow && editor && currentBatch && (
-        <BulkImportRowEditor key={editRow.id} api={api} batch={currentBatch} row={editRow} initialEditing={editFirst}
+        <BulkImportRowEditor key={editRow.id} api={api} batch={currentBatch} row={editRow} resources={resources} initialEditing={editFirst}
           editor={{ ...editor, onSaved: (result) => { rows.replace(result); editor.onSaved(result); } }}
           onClose={() => setEditRow(null)} onReloadBatch={onReloadBatch}
           returnFocus={() => { if (trigger?.isConnected) trigger.focus(); else document.getElementById(searchId)?.focus(); }} />

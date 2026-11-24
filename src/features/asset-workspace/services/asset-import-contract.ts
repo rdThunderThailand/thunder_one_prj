@@ -149,7 +149,7 @@ export const importRowSchema: z.ZodType<ImportRow> = z.object({
 export const rowsPageSchema: z.ZodType<RowsPage> = z.object({
   rows: z.array(importRowSchema),
   page: z.number().int().positive(),
-  pageSize: z.number().int().min(1).max(100),
+  pageSize: z.number().int().min(1).max(1000),
   total: z.number().int().nonnegative(),
 });
 

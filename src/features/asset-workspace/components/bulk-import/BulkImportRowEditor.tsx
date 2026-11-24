@@ -8,6 +8,7 @@ import type { ImportEditResult } from "../../domain/asset-import-edit";
 import type { ColumnMapping, ImportBatch, ImportOptions, ImportRow } from "../../domain/asset-import-types";
 import { useAssetImportEdit } from "../../hooks/use-asset-import-edit";
 import { useAssetImportEditNavigation } from "../../hooks/use-asset-import-edit-navigation";
+import type { ImportEditorResources } from "../../hooks/use-import-editor-resources";
 import type { AssetImportApi } from "../../services/asset-import-api";
 import { BulkImportRowDetails } from "./BulkImportRowDetails";
 import { BulkImportRowEditForm } from "./BulkImportRowEditForm";
@@ -18,12 +19,12 @@ export type ImportEditorContext = {
   onSaved: (result: ImportEditResult) => void; onReview: () => void;
 };
 
-export function BulkImportRowEditor({ api, batch, row, editor, onClose, onReloadBatch, returnFocus, initialEditing = true }: {
-  api: AssetImportApi; batch: ImportBatch; row: ImportRow; editor: ImportEditorContext;
+export function BulkImportRowEditor({ api, batch, row, resources, editor, onClose, onReloadBatch, returnFocus, initialEditing = true }: {
+  api: AssetImportApi; batch: ImportBatch; row: ImportRow; resources: ImportEditorResources; editor: ImportEditorContext;
   onClose: () => void; onReloadBatch?: () => void; returnFocus: () => void;
   initialEditing?: boolean;
 }) {
-  const navigation = useAssetImportEditNavigation(api, batch.id, row);
+  const navigation = useAssetImportEditNavigation(resources.rows, row);
   const [editing, setEditing] = useState(initialEditing);
   const [locked, setLocked] = useState(false);
   const [allFixed, setAllFixed] = useState(false);
@@ -32,16 +33,16 @@ export function BulkImportRowEditor({ api, batch, row, editor, onClose, onReload
   const canEdit = batch.status === "validated" && !editor.disabled && !locked && editor.mapping.some(Boolean);
   return (
     <RowEditorSession
-      key={navigation.selected.id} {...{ api, batch, editor, onClose, returnFocus, editing, setEditing,
+      key={navigation.selected.id} {...{ api, batch, resources, editor, onClose, returnFocus, editing, setEditing,
         navigation, allFixed, setAllFixed, affected, setAffected, pending, setPending, canEdit }}
       onLocked={() => { setLocked(true); setEditing(false); onReloadBatch?.(); }}
     />
   );
 }
 
-function RowEditorSession({ api, batch, editor, onClose, returnFocus, editing, setEditing, navigation,
+function RowEditorSession({ api, batch, resources, editor, onClose, returnFocus, editing, setEditing, navigation,
   allFixed, setAllFixed, affected, setAffected, pending, setPending, canEdit, onLocked }: {
-  api: AssetImportApi; batch: ImportBatch; editor: ImportEditorContext; onClose: () => void; returnFocus: () => void;
+  api: AssetImportApi; batch: ImportBatch; resources: ImportEditorResources; editor: ImportEditorContext; onClose: () => void; returnFocus: () => void;
   editing: boolean; setEditing: (value: boolean) => void;
   navigation: ReturnType<typeof useAssetImportEditNavigation>; allFixed: boolean; setAllFixed: (value: boolean) => void;
   affected: ImportRow[]; setAffected: (rows: ImportRow[]) => void;
@@ -59,6 +60,11 @@ function RowEditorSession({ api, batch, editor, onClose, returnFocus, editing, s
     if (edit.saving) return;
     if (editing && edit.dirty) setPending(() => action);
     else action();
+  }
+  async function reloadRow(discard = true) {
+    await edit.reload(discard);
+    // Another person may have changed more rows than this one.
+    navigation.reload();
   }
   async function save(next: boolean) {
     const result = await edit.save();
@@ -97,14 +103,14 @@ function RowEditorSession({ api, batch, editor, onClose, returnFocus, editing, s
                 <p>{edit.error}</p>
                 {edit.recovery && (
                   <Button variant="outline" className="min-h-11" disabled={edit.saving} onClick={() => {
-                    if (edit.recovery === "stale") guard(() => void edit.reload());
-                    else void edit.reload(false);
+                    if (edit.recovery === "stale") guard(() => void reloadRow());
+                    else void reloadRow(false);
                   }}>{edit.recovery === "stale" ? "Reload" : "Re-read row"}</Button>
                 )}
               </div>
             )}
             <BulkImportRowEditForm
-              edit={edit} context={editor.context} mapping={editor.mapping} options={editor.options}
+              edit={edit} context={editor.context} resources={resources} mapping={editor.mapping} options={editor.options}
               rows={navigation.rows} rowsReady={!navigation.loading && !navigation.error}
             />
             {(navigation.loading || navigation.error) && (

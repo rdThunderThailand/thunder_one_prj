@@ -3,14 +3,15 @@ import { AlertCircleIcon } from "@/components/ui/icons";
 import { sameValueRows, isImportPicker } from "../../domain/asset-import-edit";
 import type { ImportColumn, ImportRow } from "../../domain/asset-import-types";
 import type { useAssetImportEdit } from "../../hooks/use-asset-import-edit";
+import type { ImportEditorResources } from "../../hooks/use-import-editor-resources";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { RegistrationSelect, RegistrationTextField } from "../register-asset/RegistrationFields";
 import { RegistrationDateField } from "../register-asset/RegistrationDateField";
 import { BulkImportRowEditReferences } from "./BulkImportRowEditReferences";
 
-export function BulkImportRowEditField({ column, edit, context, rules, rows, conditions, rowsReady }: {
+export function BulkImportRowEditField({ column, edit, context, resources, rules, rows, conditions, rowsReady }: {
   column: ImportColumn; edit: ReturnType<typeof useAssetImportEdit>; context: string;
-  rules: RegistrationOptions["referenceSelectors"]; rows: ImportRow[]; conditions: string[]; rowsReady: boolean;
+  resources: ImportEditorResources; rules: RegistrationOptions["referenceSelectors"]; rows: ImportRow[]; conditions: string[]; rowsReady: boolean;
 }) {
   const field = column.key;
   const messages = edit.messages.filter((message) => message.field === field);
@@ -27,7 +28,7 @@ export function BulkImportRowEditField({ column, edit, context, rules, rows, con
     <div id={`import-field-${field}`} tabIndex={-1} className="min-w-0 scroll-mt-4 space-y-1 rounded-control focus-visible:outline-2 focus-visible:outline-ring">
       {picker ? (
         <BulkImportRowEditReferences
-          field={field} label={column.label} value={value} context={context} rules={rules} error={error}
+          field={field} label={column.label} value={value} context={context} resources={resources} rules={rules} error={error}
           onChange={(value) => edit.change(field, value)}
         />
       ) : field === "condition" ? (

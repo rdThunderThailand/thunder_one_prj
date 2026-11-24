@@ -22,6 +22,14 @@ export function BulkImportCorrectedDownload({ api, batch, mapping, disabled }: {
   }, []);
   // shortcut: the column mapping is not kept after Confirm, so a reloaded finished import cannot build the file; hide it until mapping recovery is decided.
   if (!batch.editedCount || !mapping.some(Boolean)) return null;
+  async function readSource(signal: AbortSignal) {
+    const source = await api.sourceFileUrl(batch.id);
+    const response = await fetch(source.url, { signal, credentials: "omit", cache: "no-store" });
+    if (!response.ok) throw new Error("Source download failed");
+    const bytes = await response.arrayBuffer();
+    if (batch.sourceFile && bytes.byteLength !== batch.sourceFile.sizeBytes) throw new Error("Source file size mismatch");
+    return { source, bytes };
+  }
   async function download() {
     if (lock.current) return;
     lock.current = true;
@@ -29,18 +37,16 @@ export function BulkImportCorrectedDownload({ api, batch, mapping, disabled }: {
     controller.current = request;
     setProgress("Fetching source file…");
     try {
-      const source = await api.sourceFileUrl(batch.id);
-      const response = await fetch(source.url, { signal: request.signal, credentials: "omit", cache: "no-store" });
-      if (!response.ok) throw new Error("Source download failed");
-      const bytes = await response.arrayBuffer();
-      if (batch.sourceFile && bytes.byteLength !== batch.sourceFile.sizeBytes) throw new Error("Source file size mismatch");
-      const rows = await readAllImportRows(api, batch.id, request.signal);
+      const [{ source, bytes }, rows] = await Promise.all([
+        readSource(request.signal), readAllImportRows(api, batch.id, request.signal),
+      ]);
       request.signal.throwIfAborted();
       const { buildCorrectedImport } = await import("../../services/asset-import-corrected");
       const file = await buildCorrectedImport(bytes, source.name, mapping, rows,
         (label) => { if (alive.current) setProgress(label); });
       if (alive.current) downloadBlob(file.blob, file.filename);
     } catch {
+      request.abort();
       if (alive.current) toast.error("Couldn't build the corrected file. Try again.");
     } finally {
       lock.current = false;
