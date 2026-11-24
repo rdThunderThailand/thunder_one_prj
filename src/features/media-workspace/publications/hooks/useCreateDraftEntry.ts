@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { fetchComposition } from "../../compositions/services/compositions-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { classifyApiError } from "@/lib/api/api-error";
@@ -114,6 +115,23 @@ export function useCreateDraftEntry(input: {
     if (entry?.seed) router.replace(CREATE_URL);
   };
 
+  // Saving the old draft and discarding its edits leave the prompt the same way.
+  const leaveOldDraft = () => {
+    resolved.current = true;
+    if (entry?.seed && readySeed) usePublicationDraftStore.getState().applySeed(entry.seed, readySeed);
+    else usePublicationDraftStore.getState().cancelDraft();
+    setDismissed(true);
+    if (entry?.seed) router.replace(CREATE_URL);
+  };
+
+  // ADR 0086 §9: drops only the local edits; nothing is sent to or deleted from the server.
+  const discardChanges = () => {
+    if (saving.current || !entry || (entry.seed && !readySeed)) return;
+    input.setRevisionConflict(null);
+    leaveOldDraft();
+    toast.success("ทิ้งการแก้ไขที่ยังไม่บันทึกแล้ว");
+  };
+
   const handleUseContent = async () => {
     if (saving.current || !entry || (entry.seed && !readySeed)) return;
     saving.current = true;
@@ -121,7 +139,8 @@ export function useCreateDraftEntry(input: {
     setPromptError(null);
     try {
       const state = usePublicationDraftStore.getState();
-      if (state.publicationId) {
+      const savesOldDraft = Boolean(state.publicationId);
+      if (savesOldDraft) {
         if (input.loadingChannels) throw new DraftSaveError("กำลังโหลด Channels กรุณารอสักครู่");
         if (input.channelsError) throw new DraftSaveError(input.channelsError);
         if (!state.basicInfo.name.trim()) throw new DraftSaveError("กรุณากรอกชื่อ Program ก่อนบันทึกร่าง");
@@ -134,11 +153,9 @@ export function useCreateDraftEntry(input: {
           throw new DraftSaveError("มีการแก้ไขระหว่างบันทึก กรุณาลองอีกครั้งหรือทำต่อจาก draft เดิม");
         }
       }
-      resolved.current = true;
-      if (entry.seed && readySeed) usePublicationDraftStore.getState().applySeed(entry.seed, readySeed);
-      else usePublicationDraftStore.getState().cancelDraft();
-      setDismissed(true);
-      if (entry.seed) router.replace(CREATE_URL);
+      leaveOldDraft();
+      // ADR 0123 rules 1 and 5: the save this prompt made reports itself.
+      if (savesOldDraft) toast.success("บันทึก draft เดิมแล้ว");
     } catch (error) {
       const classified = classifyApiError(error, "บันทึก draft เดิมไม่สำเร็จ กรุณาลองอีกครั้ง");
       setPromptError(error instanceof DraftSaveError || classified.kind === "conflict"
@@ -151,22 +168,29 @@ export function useCreateDraftEntry(input: {
     }
   };
 
-  const genericLabel = entry?.seed?.kind === "composition" ? "Use the published Layout"
-    : entry?.seed?.kind === "playlist" ? "Use the published Playlist" : "Use the published media";
+  const seedName = readySeed?.name || (entry?.seed?.kind === "composition" ? "the published Layout"
+    : entry?.seed?.kind === "playlist" ? "the published Playlist" : "the published media");
+  const nextAction = entry?.seed ? `use ${seedName}` : "start new";
+  const hasServerDraft = entry?.hasServerDraft ?? false;
   return {
     isInitializing: !entry || Boolean(!entry.unfinished && entry.seed && !entry.isEditMode && !dismissed),
     seedError,
     prompt: {
       open: shouldShowResumePrompt({ hadUnfinishedWorkAtHydration: entry?.unfinished ?? false, isEditMode: entry?.isEditMode ?? true, dismissed }),
-      label: entry?.seed ? readySeed?.name ? `Use ${readySeed.name}` : genericLabel : "Start a new Program",
-      hasServerDraft: entry?.hasServerDraft ?? false,
+      // ADR 0086 §9: beside Discard, the primary button must say that it saves.
+      label: hasServerDraft ? `Save and ${nextAction}` : entry?.seed ? `Use ${seedName}` : "Start a new Program",
+      hasServerDraft,
       dropsSchedule: entry?.dropsSchedule ?? false,
       busy,
       waiting: Boolean(entry?.seed && !readySeed) || Boolean(entry?.hasServerDraft && input.loadingChannels),
       conflict: conflict || Boolean(input.revisionConflict),
       error: promptError || (entry?.hasServerDraft ? input.channelsError : null),
+      discardLabel: `Discard and ${nextAction}`,
+      discardNextStep: entry?.seed ? `จากนั้นจะใช้ ${seedName}` : "จากนั้นจะเริ่ม Program ใหม่",
+      canDiscard: !busy && !(entry?.seed && !readySeed),
       onUse: () => { void handleUseContent(); },
       onContinue: continueDraft,
+      onDiscard: discardChanges,
     },
   };
 }
