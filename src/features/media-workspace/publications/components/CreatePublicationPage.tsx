@@ -29,6 +29,7 @@ import { publicationSeedFromParams } from "../seed-resolver";
 import { requireCompleteDraftSave } from "../draft-save-policy";
 import { useCreateDraftEntry } from "../hooks/useCreateDraftEntry";
 import { DraftResumePrompt } from "./DraftResumePrompt";
+import { CreateCancelButton } from "./CreateCancelButton";
 import { Button as LovableButton } from "@/components/ui/Button";
 import { type WizardStepId } from "../step-validation";
 import { ContentStep } from "./ContentStep";
@@ -277,6 +278,8 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
   // made before the jump lives only in this browser.
   const handleStepSelect = async (target: number) => {
     if (publicationId && isDirty) {
+      // ADR 0124 §1: Cancel stays disabled until this save lands.
+      setSavingNext(true);
       try {
         await persistForNavigation();
       } catch (err) {
@@ -284,6 +287,8 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
         // The revision-conflict banner already shows a conflict.
         if (!isConflict(message)) setError(message);
         return;
+      } finally {
+        setSavingNext(false);
       }
     }
     setError(null); // a jump to the fix leaves the old refusal behind
@@ -365,6 +370,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
         titleInTopbar
         title="Create Publication"
         subtitle="Create and publish content across your channels."
+        actions={<CreateCancelButton disabled={saving || savingNext || conflictBusy} />}
       />
 
       <DraftResumePrompt {...entry.prompt} />

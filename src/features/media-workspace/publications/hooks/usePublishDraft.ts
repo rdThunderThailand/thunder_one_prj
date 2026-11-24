@@ -324,7 +324,6 @@ export function usePublishDraft() {
       if (result.kind === "saved") router.replace(`/media-workspace/program/create?id=${encodeURIComponent(result.publicationId)}`);
       const complete = requireCompleteDraftSave(result);
       usePublicationDraftStore.getState().markSaved(complete.draft);
-      usePublicationDraftStore.getState().setExplicitlySaved(true);
       toast.success("บันทึกร่างแล้ว");
       return complete.publicationId;
     } catch (err) {
