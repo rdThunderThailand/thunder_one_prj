@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { LoadFailure } from "@/features/people/shared";
-import type { ContractorRow, ContractorTab } from "../mock-data";
+import type { ContractorRow, ContractorTab } from "../types";
 import { ContractorFilterPanel } from "./ContractorFilterPanel";
 import { ContractorStatTilesRow } from "./ContractorStatTilesRow";
 import { ContractorTable } from "./ContractorTable";

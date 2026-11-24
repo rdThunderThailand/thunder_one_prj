@@ -14,7 +14,7 @@ the roster/management view of contractors already in the org, not the flow that 
 > internal coordinator, contract start/end dates) are still genuinely unbacked — no such columns
 > exist anywhere in Core's schema (not even in the separate `membership_contract` table, which only
 > has `contract_number`/`contract_date`/`contract_value`/`payment_format`/`payment_cycle`, and only
-> per-member, not at list level) — see `mock-data.ts` and `core-mapper.ts` for exactly what's real
+> per-member, not at list level) — see `types.ts` and `core-mapper.ts` for exactly what's real
 > vs. still "-".
 
 - `core-mapper.ts` — real, added 2026-09-15. `mapCoreContractors()` filters `GET /tenants/:id/
@@ -26,10 +26,8 @@ the roster/management view of contractors already in the org, not the flow that 
   (active→active, invited→pending-approval, suspended/removed/archived→expired) rather than
   inventing a new tab. "expiring-soon" will never populate from real data — see the function's own
   comment for the full reasoning.
-- `mock-data.ts` — `contractorRows` unused now, kept as a shape reference (same discipline as
-  other people/* features after their own real-data wiring); `contractorStatTiles`/`contractorTabs`
-  carry the mockup's own header numbers (48 total, etc.) — still **not** derived from real rows,
-  same "mockup number vs. small sample" gap every other people/* mock-data.ts documents for itself.
+- `types.ts` — `ContractorRow`/`ContractorStatus`/`ContractorTab`. Replaced `mock-data.ts` on
+  2026-11-24: its rows, stat tiles and tab counts were no longer used by anything.
 - `components/`
   - `ContractorsPage` — takes `rows: ContractorRow[] | null` (fetched server-side by
     `app/.../people/contractors/page.tsx`); `null` renders an explicit error message rather than
@@ -51,11 +49,12 @@ the roster/management view of contractors already in the org, not the flow that 
   - `ContractorTable` — the roster table (person, company, role/unit, internal coordinator,
     contract dates, status badge, inert view/more actions) — unchanged markup, now rendering "-"
     for the fields `core-mapper.ts` leaves `null`.
-  - `ContractorFilterPanel` — search + 4 dropdowns + 2 date filters + decorative ค้นหา/ล้างตัวกรอง
-    buttons, all inert, same "renders inert" convention as every other unbuilt filter in this app.
+  - `ContractorFilterPanel` — ค้นหา and หน่วยงาน filter the fetched rows client-side, and ล้างตัวกรอง
+    resets them. บริษัท, ผู้ประสานงานภายใน and both contract-date filters stay inert: Core has no
+    list-level data for them.
 
-**Not built yet**: every filter/search on `ContractorFilterPanel`, sort, pagination, row actions,
+**Not built yet**: the 4 inert filters above, sort, pagination, row actions,
 and any real link between a contractor created via `people/add-person`'s wizard and this roster
 (that wizard's real Core row instead hands off into `people/new-hires`' Kanban board — this page
-stays fully mock, deliberately not wired to that handoff, since prepending a fabricated
+deliberately does not prepend that new row optimistically, since prepending a fabricated
 `ContractorRow` here would misrepresent contract-specific fields Core doesn't actually have).

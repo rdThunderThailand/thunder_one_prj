@@ -1,7 +1,7 @@
 import type { OrgUnitNode } from "@/features/people/org-structure";
 import type { CoreMemberRow } from "@/features/people/personnel";
 import { formatThaiDate } from "@/lib/thai-date";
-import type { ContractorRow, ContractorStatus } from "./mock-data";
+import type { ContractorRow, ContractorStatus } from "./types";
 
 function unitLabel(departmentId: string | null, units: Record<string, OrgUnitNode>): string {
   if (!departmentId) return "-";
@@ -14,7 +14,7 @@ function unitLabel(departmentId: string | null, units: Record<string, OrgUnitNod
 /**
  * `ContractorStatus` was designed around contract-lifecycle dates
  * (active/expiring-soon/expired/pending-approval) that Core doesn't expose
- * at list level (see mock-data.ts's header comment) — there is no real
+ * at list level (see types.ts's header comment) — there is no real
  * signal to ever populate "expiring-soon" from, and mapping account status
  * onto a contract-lifecycle label is an approximation, not a fact. Kept
  * honest about what it actually reflects: real account state, relabeled

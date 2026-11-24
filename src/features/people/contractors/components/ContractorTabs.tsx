@@ -1,4 +1,4 @@
-import type { ContractorRow, ContractorTab } from "../mock-data";
+import type { ContractorRow, ContractorTab } from "../types";
 
 const TAB_DEFS: { id: ContractorTab["id"]; label: string }[] = [
   { id: "all", label: "ทั้งหมด" },
