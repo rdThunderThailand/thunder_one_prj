@@ -143,6 +143,7 @@ export function ReviewConfirmStep({
                 batchId={batch.id}
                 batch={batch}
                 variant="review"
+                keptPages={flow.keptPages}
                 onReloadBatch={flow.reload}
                 editor={{ context: flow.context, mapping: flow.mapping, options,
                   disabled: flow.busy || frozen || !creator, onSaved: flow.applyRowEdit, onReview: flow.showReview }}

@@ -17,11 +17,11 @@ export function useAssetImportBatch(api: AssetImportApi, batchId: string | null)
 
   useEffect(() => {
     if (!batchId) return;
-    let active = true;
+    const controller = new AbortController();
     void api
-      .getBatch(batchId)
+      .getBatch(batchId, controller.signal)
       .then((batch) => {
-        if (active) setSnapshot({ api, batchId, version, batch, error: null });
+        if (!controller.signal.aborted) setSnapshot({ api, batchId, version, batch, error: null });
       })
       .catch((caught: unknown) => {
         const error =
@@ -33,10 +33,10 @@ export function useAssetImportBatch(api: AssetImportApi, batchId: string | null)
                 caught.details,
               )
             : new ImportApiError("INTERNAL", requestErrorText("INTERNAL"));
-        if (active) setSnapshot({ api, batchId, version, batch: null, error });
+        if (!controller.signal.aborted) setSnapshot({ api, batchId, version, batch: null, error });
       });
     return () => {
-      active = false;
+      controller.abort();
     };
   }, [api, batchId, version]);
 

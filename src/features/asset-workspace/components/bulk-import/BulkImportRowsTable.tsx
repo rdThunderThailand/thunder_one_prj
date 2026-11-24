@@ -6,6 +6,7 @@ import {
   Tabs,
   TabsContent,
 } from "@/components/ui/lovable/tabs";
+import type { KeptImportPages } from "../../services/kept-import-pages";
 import type { AssetImportApi } from "../../services/asset-import-api";
 import type {
   ImportBatch,
@@ -39,6 +40,7 @@ type Props = {
   onReimport?: () => void;
   reimporting?: boolean;
   editor?: ImportEditorContext;
+  keptPages?: KeptImportPages;
 };
 
 export function BulkImportRowsTable({
@@ -50,7 +52,7 @@ export function BulkImportRowsTable({
   toolbar,
   onReloadBatch,
   onReimport,
-  reimporting, editor,
+  reimporting, editor, keptPages,
 }: Props) {
   const [query, setQuery] = useState({
     tab: initialTab,
@@ -88,7 +90,7 @@ export function BulkImportRowsTable({
   }, {
     onResetPage: () => setQuery((previous) => ({ ...previous, page: 1 })),
     onBatchUnavailable: onReloadBatch,
-  });
+  }, keptPages && { pages: keptPages, status: currentBatch?.status });
 
   useImportRowsSearch(search, query.q, (q) => setQuery((previous) => ({ ...previous, q, page: 1 })));
 

@@ -56,6 +56,7 @@ export function CompleteStep({ flow, renderFooter }: {
             batchId={batch.id}
             batch={batch}
             variant="result"
+            keptPages={flow.keptPages}
             onReloadBatch={flow.reload}
             initialTab={batch.counts.notRegistered ? "not_registered" : "all"}
             onReimport={() => setErrorFileChoice({ reimport: true })}
