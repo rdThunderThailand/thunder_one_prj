@@ -180,6 +180,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
     canPublish,
     eligibilityChecks,
     persistDraft,
+    isStaleDraft,
     saveDraft,
     saveStatus,
     setSaveStatus,
@@ -189,7 +190,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
 
   const entry = useCreateDraftEntry({
     hasHydrated, idParam, seed, assets, assetsLoading, assetsError,
-    loadingChannels: loadingRefs, channelsError, revisionConflict, setRevisionConflict, persistDraft,
+    loadingChannels: loadingRefs, channelsError, revisionConflict, setRevisionConflict, persistDraft, isStaleDraft,
   });
 
   const persistForNavigation = async () => {
@@ -276,7 +277,8 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
   // #226: a stepper jump on a server draft saves first, like Next — otherwise a content change
   // made before the jump lives only in this browser.
   const handleStepSelect = async (target: number) => {
-    if (publicationId && isDirty) {
+    // ADR 0086 §10: a stale id has no row to save to; the jump lets step 1 reach Save as new draft.
+    if (publicationId && isDirty && !isStaleDraft) {
       try {
         await persistForNavigation();
       } catch (err) {
@@ -311,7 +313,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
         fix={error && errorCause ? publishCauseFix(errorCause, { type: publicationType, playlistId, compositionId }) : null}
         onStep={(target) => void handleStepSelect(target)}
       />
-      {saveStatus === "error" && (
+      {saveStatus === "error" && !isStaleDraft && (
         <Button
           variant="outline"
           className="px-2.5 py-1 text-xs"
@@ -481,7 +483,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
               disabled={saving || !draftName.trim()}
               onClick={() => void saveDraft()}
             >
-              {saving ? "Saving…" : "Save draft"}
+              {saving ? "Saving…" : isStaleDraft ? "Save as new draft" : "Save draft"}
             </LovableButton>
             {isLastStep ? (
               <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish || !!layoutGate.reason}>

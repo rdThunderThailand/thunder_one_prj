@@ -3,7 +3,8 @@
 **Status:** accepted · 2026-10-07
 **Supersedes:** `0072-the-create-wizard-reshapes-the-steps-not-the-publication.md` §3, second paragraph (the resume-prompt rule). The rest of §3 — editors hand off through a seed parameter, no `returnTo` round-trip — stands.
 **Source:** MW-003 BUG-07, issue #228; triage in `docs/media-workspace/bug-triage-mw-003.md`
-**Amended:** 2026-11-24 — §9 (the prompt offers to discard the unsaved edits of a saved draft)
+**Amended:** 2026-11-24 — §9 (the prompt offers to discard the unsaved edits of a saved draft);
+2026-11-24 — §10 (a stale draft id creates a new Program only when the operator chooses Save as new)
 
 ## Context
 
@@ -70,6 +71,7 @@ button, Discard changes…, which also shows during a revision conflict.*
   - If the save cannot run or fails, stay on the prompt and show why:
     - an empty name, which `persistDraft` today skips silently;
     - a network or server error;
+    - a server row that was deleted, cancelled or published elsewhere (§10);
     - a revision conflict. Only "Continue the previous draft" is offered then, plus Discard
       changes… (§9), because the reload/overwrite banner sits behind the prompt.
   - An invalid schedule after Program has been reached does not block. Save the other fields, drop
@@ -197,7 +199,56 @@ Facts found while deciding (2026-11-24, read from the code, not run):
   publications can be edited` as a stale id and creates a new draft (`isStaleDraftError` in
   `usePublishDraft.ts`). That frees the operator only when the create succeeds. In the prod case it
   most likely failed too: `media_publication_upsert` checks the id before the targets, so the create
-  hit the foreign Channel.
+  hit the foreign Channel. §10 has since stopped that create from happening on its own.
+
+### 10. A stale draft id creates a new Program only when the operator chooses Save as new
+
+*Amended 2026-11-24, owner decisions in a grilling session.*
+
+The local draft keeps its `publicationId` after its server row was deleted, cancelled or published
+somewhere else: in another tab, by another operator, or from the Programs list. `persistDraft` used
+to recover from that without asking. On `publication not found for this tenant` or `only draft
+publications can be edited` (`isStaleDraftError`), it re-minted the idempotency key and created a new
+draft from the local fields. Every save went that way: Next, a stepper jump, Save draft, Publish,
+and the prompt's primary button. As a result:
+
+- the Programs list gained a Program the operator did not ask for, and the toast said the old draft
+  had been saved ("บันทึก draft เดิมแล้ว" in the prompt, "บันทึกร่างแล้ว" in the wizard);
+- Publish created that row and then activated it (`publishNow` runs `persistDraft(true)`, then
+  `activatePublication`). A draft someone had deleted came back on air, and a draft already
+  published elsewhere aired a second time.
+
+The decision:
+
+- **One rule for every save.** `persistDraft` no longer creates a row by itself. On a stale id it
+  throws "draft เดิมถูกลบ ยกเลิก หรือเผยแพร่ไปแล้ว จึงบันทึกลงไปไม่ได้", and the page remembers that
+  this id is stale. It creates a new row only when called with `{ asNew: true }`, and only a button
+  the operator presses after seeing that message passes it. `isStaleDraftError` stays the one test,
+  so the prompt and the wizard cannot drift apart.
+- **Found on save, not checked up front.** Nothing fetches the row when the prompt or the wizard
+  opens. The operator learns about it on the first save, which is when it matters.
+- **The prompt** (§3, §9). The primary button's save fails with that message. The button then reads
+  **Save as new and start new** or **Save as new and use <content name>**. Pressing it saves the old
+  draft's fields as a new draft, then goes on as in §3. Discard changes… and Continue the previous
+  draft are unchanged. The discard confirmation keeps its text, which stays true because nothing is
+  sent to the server.
+- **The wizard.** The same message shows in the error block. While it applies, the footer's
+  **Save draft** reads **Save as new draft** and saves with `{ asNew: true }`. No second button is
+  added. Retry is hidden, since it would only fail again. Next and Publish keep failing with the
+  message until the operator saves as new. After that the wizard stays on its step, as Save draft
+  always does, so Publish never creates a row and airs it in one click.
+- **Step 1** has no footer. While the id is known to be stale, a stepper jump does not save first,
+  because there is no row to save to and the fields stay in localStorage. That keeps Save as new
+  draft reachable on step 2.
+- **Toast** after a save as new, in the prompt and in the wizard: "บันทึกเป็น draft ใหม่แล้ว", with no
+  action (ADR 0123 rules 1 and 5).
+- **What is remembered** is the stale id itself, in component state. It is not persisted, so the
+  store shape and its storage key do not change. It stops applying as soon as the draft's
+  `publicationId` changes, after a save as new or a discard. A reload forgets it, and the next save
+  finds it again.
+
+Saving as new stays a choice the operator makes after reading why, never something a failure makes
+for them. This is the same rule as §9.
 
 ## Considered and rejected
 
@@ -246,6 +297,19 @@ Facts found while deciding (2026-11-24, read from the code, not run):
   follow-up. It would not replace §9, which also covers a 403 and a server that keeps failing.
 - **Show the classified error in place of the generic one** (§9). In the prod case it would have said
   to pick other targets, but the foreign Channel was not in the picker to remove.
+- **On a stale id, skip the create in the prompt and treat it as Discard** (§10). The edits would be
+  lost because of a failure, not because the operator chose to lose them, and §9 rules that out.
+- **Hide the prompt's primary button, as during a revision conflict, and leave Continue and Discard**
+  (§10). To keep the edits and still use the published content, the operator would have to Continue,
+  press Save draft, go back to the editor and press Publish again.
+- **Keep the silent create and fix only the toast** (§10). The operator would still get a row they
+  did not ask for, and Publish would still put a deleted or already published Program back on air.
+- **Stop the silent create on Publish only** (§10). That closes the on-air risk but leaves two rules,
+  and Next and Save draft would keep leaving stray drafts.
+- **Check the id when the prompt or the wizard opens** (§10). That is an extra request on every
+  visit, for a case that is rare.
+- **A separate Save as new draft button beside the error** (§10). The footer's Save draft can do it.
+  One button whose label says what it does is enough.
 
 ## Consequences
 
@@ -269,7 +333,10 @@ Facts found while deciding (2026-11-24, read from the code, not run):
   as a blank `/create` and falls under §5. That is out of scope here.
 - §9 adds a confirmation view and, for a saved draft, a third button to `DraftResumePrompt`. The
   persisted store shape does not change, so the storage key stays as it is.
-- §9 leaves one surprise in place (out of scope, noted 2026-11-24). When the server draft was deleted,
-  the primary button's save goes through `isStaleDraftError` and creates a new server row from the
-  old draft before starting fresh. The operator gets a Program they did not ask for, and the toast
-  "บันทึก draft เดิมแล้ว" then says the old draft was saved, which is not quite what happened.
+- §10 changes what every wizard save does with a stale id: it fails until the operator chooses Save
+  as new. The old comment's worry, a wizard bricked by a dead id, does not come back, because Save as
+  new draft can always be reached (from step 1 through the stepper).
+- A Publish retried after a timed-out activation now stops at the stale message instead of creating
+  and airing a duplicate. `persistDraft` runs before `activatePublication`, so on that retry the save
+  is refused first and `publishNow`'s `already-active` branch is not reached (read from the code, not
+  run). Showing that case as published is left open.

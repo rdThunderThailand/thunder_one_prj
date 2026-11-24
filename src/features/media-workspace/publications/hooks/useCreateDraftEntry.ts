@@ -27,7 +27,8 @@ export function useCreateDraftEntry(input: {
   channelsError: string | null;
   revisionConflict: string | null;
   setRevisionConflict: (message: string | null) => void;
-  persistDraft: (forPublish: boolean) => Promise<DraftPersistResult>;
+  persistDraft: (forPublish: boolean, options?: { asNew?: boolean }) => Promise<DraftPersistResult>;
+  isStaleDraft: boolean;
 }) {
   const router = useRouter();
   const captured = useRef(false);
@@ -140,13 +141,15 @@ export function useCreateDraftEntry(input: {
     try {
       const state = usePublicationDraftStore.getState();
       const savesOldDraft = Boolean(state.publicationId);
+      // ADR 0086 §10: a new row only after the first save showed why and relabelled the button.
+      const asNew = input.isStaleDraft;
       if (savesOldDraft) {
         if (input.loadingChannels) throw new DraftSaveError("กำลังโหลด Channels กรุณารอสักครู่");
         if (input.channelsError) throw new DraftSaveError(input.channelsError);
         if (!state.basicInfo.name.trim()) throw new DraftSaveError("กรุณากรอกชื่อ Program ก่อนบันทึกร่าง");
         // ADR 0086 §3: save like a stepper jump, without validateStep. An invalid schedule is
         // dropped rather than blocking: choosing the new content overrides it.
-        const saved = await input.persistDraft(false);
+        const saved = await input.persistDraft(false, { asNew });
         if (saved.kind === "skipped") throw new DraftSaveError("กรุณากรอกชื่อ Program ก่อนบันทึกร่าง");
         state.markSaved(saved.draft);
         if (isDraftDirty(usePublicationDraftStore.getState())) {
@@ -155,7 +158,7 @@ export function useCreateDraftEntry(input: {
       }
       leaveOldDraft();
       // ADR 0123 rules 1 and 5: the save this prompt made reports itself.
-      if (savesOldDraft) toast.success("บันทึก draft เดิมแล้ว");
+      if (savesOldDraft) toast.success(asNew ? "บันทึกเป็น draft ใหม่แล้ว" : "บันทึก draft เดิมแล้ว");
     } catch (error) {
       const classified = classifyApiError(error, "บันทึก draft เดิมไม่สำเร็จ กรุณาลองอีกครั้ง");
       setPromptError(error instanceof DraftSaveError || classified.kind === "conflict"
@@ -178,7 +181,8 @@ export function useCreateDraftEntry(input: {
     prompt: {
       open: shouldShowResumePrompt({ hadUnfinishedWorkAtHydration: entry?.unfinished ?? false, isEditMode: entry?.isEditMode ?? true, dismissed }),
       // ADR 0086 §9: beside Discard, the primary button must say that it saves.
-      label: hasServerDraft ? `Save and ${nextAction}` : entry?.seed ? `Use ${seedName}` : "Start a new Program",
+      label: hasServerDraft ? `${input.isStaleDraft ? "Save as new" : "Save"} and ${nextAction}`
+        : entry?.seed ? `Use ${seedName}` : "Start a new Program",
       hasServerDraft,
       dropsSchedule: entry?.dropsSchedule ?? false,
       busy,
