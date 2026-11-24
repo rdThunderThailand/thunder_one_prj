@@ -123,15 +123,23 @@ interface PublicationDraftStore extends DraftFields {
   cancelDraft: () => void;
 }
 
+function emptyDraftState() {
+  return {
+    ...getDefaultDraft(),
+    lastAutoName: "",
+    savedSnapshot: serializeDraftFields(getDefaultDraft()),
+    explicitlySaved: false,
+    revision: null,
+    problemTargets: [],
+  };
+}
+
+const DRAFT_KEY = "thunderone.publications.create-draft.v14";
+
 export const usePublicationDraftStore = create<PublicationDraftStore>()(
   persist(
     (set, get) => ({
-      ...getDefaultDraft(),
-      lastAutoName: "",
-      savedSnapshot: serializeDraftFields(getDefaultDraft()),
-      explicitlySaved: false,
-      revision: null,
-      problemTargets: [],
+      ...emptyDraftState(),
       // #228: snapshot the request, not edits made while it was in flight.
       markSaved: (draft) => set((s) => ({ savedSnapshot: serializeDraftFields(draft ?? s) })),
       setExplicitlySaved: (explicitlySaved) => set({ explicitlySaved }),
@@ -235,14 +243,7 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       },
       setSchedule: (schedule) => set({ schedule }),
       cancelDraft: () => {
-        set({
-          ...getDefaultDraft(),
-          lastAutoName: "",
-          savedSnapshot: serializeDraftFields(getDefaultDraft()),
-          explicitlySaved: false,
-          revision: null,
-          problemTargets: [],
-        });
+        set(emptyDraftState());
         usePublicationDraftStore.persist.clearStorage();
       },
     }),
@@ -273,8 +274,11 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       // (ADR 0082). A v13 draft has no `schedule`, so it is dropped rather than migrated.
       // `problemTargets` (added after v14) is absent from an older v14 draft and shallow-merges to its
       // default of [] — the same reasoning as `furthestStep`, so the key is not bumped.
-      name: "thunderone.publications.create-draft.v14",
+      // A placeholder: useHasHydratedDraft suffixes the owner before the first read.
+      name: DRAFT_KEY,
       storage: createJSONStorage(() => localStorage),
+      // Nothing stored for this owner starts empty: memory may still hold the previous sign-in's draft.
+      merge: (persisted, current) => ({ ...current, ...(persisted ? (persisted as Partial<PublicationDraftStore>) : emptyDraftState()) }),
       // Hydration is triggered manually via useHasHydratedDraft(), not on
       // store creation — required to avoid a hydration mismatch, since the
       // server always renders with defaultDraft (no localStorage there).
@@ -289,15 +293,19 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
  *
  * Starts at `false` unconditionally (never touches `.persist` during
  * render) — on the server, `storage` is unavailable so the middleware never
- * assigns `api.persist` at all, and calling it there would throw. */
-export function useHasHydratedDraft() {
+ * assigns `api.persist` at all, and calling it there would throw.
+ *
+ * `owner` is "<userId>:<tenantId>". A tenant switch or another sign-in reloads server state only, and a
+ * draft carried into another tenant fails every save, so each person keeps one draft per tenant. */
+export function useHasHydratedDraft(owner: string) {
   const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
     const unsubscribe = usePublicationDraftStore.persist.onFinishHydration(() => setHasHydrated(true));
+    usePublicationDraftStore.persist.setOptions({ name: `${DRAFT_KEY}:${owner}` });
     usePublicationDraftStore.persist.rehydrate();
     return unsubscribe;
-  }, []);
+  }, [owner]);
 
   return hasHydrated;
 }

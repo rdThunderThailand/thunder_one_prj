@@ -63,7 +63,7 @@ async function loadDraft(id: string): Promise<void> {
 //   1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish
 const MAX_BUILT_STEP = 5;
 
-export function CreatePublicationPage() {
+export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const idParam = searchParams.get("id");
@@ -76,7 +76,7 @@ export function CreatePublicationPage() {
     [searchParams],
   );
 
-  const hasHydrated = useHasHydratedDraft();
+  const hasHydrated = useHasHydratedDraft(draftOwner);
   const isDirty = useIsDraftDirty();
   const step = usePublicationDraftStore((s) => s.step);
   const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
