@@ -190,8 +190,8 @@ export function RegistrationProgressDialog({
   const outcome = !busy && failure ? registrationOutcome(failure, canOverride) : null;
   const total = files.length + waiting;
   const done = files.filter((file) => file.done).length;
-  // Count the file in flight as half done so the bar moves during a long upload.
-  const inFlight = stage === "uploading" && files.some((file) => file.active) ? 0.5 : 0;
+  // Count the files in flight as half done so the bar moves during a long upload.
+  const inFlight = stage === "uploading" ? files.filter((file) => file.active).length / 2 : 0;
   const percent = registrationProgress(stage, done + inFlight, total);
   const recovering = stage === "recovering";
   const OutcomeIcon = outcome ? outcomeIcon[outcome.tone] : UploadIcon;

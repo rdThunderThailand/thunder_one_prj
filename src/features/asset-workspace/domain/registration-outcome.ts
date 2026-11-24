@@ -9,6 +9,12 @@ export interface RegistrationFailure {
   message: string;
 }
 
+/** Only text written for the user is shown: failed format checks and browser errors carry technical text. */
+export function localFailureMessage(thrown: unknown): string {
+  return thrown instanceof Error && thrown.name === "Error" ? thrown.message
+    : "Something in this registration couldn't be processed. Your information has been kept. Review it and try again.";
+}
+
 export interface SerialDuplicate { id: string; assetTag: string | null; name: string }
 
 /** "retry": run the confirmation again (the same submission id never creates a second asset).

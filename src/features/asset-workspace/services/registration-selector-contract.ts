@@ -14,7 +14,9 @@ export const selectedReferencesSchema = z.object({
   orgUnits: referenceItemSchema.nullable().default(null), persons: referenceItemSchema.nullable().default(null),
 });
 export type SelectedReferences = z.infer<typeof selectedReferencesSchema>;
-export type ReferenceValidation = Partial<Record<SelectorKind, { id: string; status: "pending" | "valid" | "unavailable" | "error"; message?: string }>>;
+export type ReferenceValidation = Partial<Record<SelectorKind, { id: string; status: "pending" | "valid" | "unavailable" | "error"; message?: string;
+  /** The first check of a value the user did not pick here (a link or a saved draft). */
+  first?: boolean }>>;
 export const selectorQuerySchema = z.object({
   kind: z.enum(selectorKinds), q: z.string().trim().max(200).optional(),
   page: z.coerce.number().int().min(1).max(100000).optional(), page_size: z.coerce.number().int().min(1).max(100).optional(),

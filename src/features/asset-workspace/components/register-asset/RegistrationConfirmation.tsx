@@ -37,11 +37,11 @@ export function RegistrationConfirmation({ confirmation, blocker, missingFiles, 
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const { record, options, busy, uncertain, storageBlocked, message, error, stage, failure } = confirmation;
+  const { record, options, busy, uncertain, storageBlocked, message, activeUploads, error, stage, failure } = confirmation;
   const selected = record ? selectedFileIds(record.draft) : [];
   const uploads = record?.uploads.filter((upload) => selected.includes(upload.localId)) ?? [];
   const progressFiles = uploads.map((upload) => ({
-    id: upload.uploadId, name: upload.filename, done: validReceipt(upload), active: !validReceipt(upload) && message.endsWith(upload.filename),
+    id: upload.uploadId, name: upload.filename, done: validReceipt(upload), active: !validReceipt(upload) && activeUploads.includes(upload.uploadId),
   }));
   const openOverride = () => { setOverrideOpen(true); setReason(""); setConfirmed(false); };
   const act = (action: OutcomeAction) => {

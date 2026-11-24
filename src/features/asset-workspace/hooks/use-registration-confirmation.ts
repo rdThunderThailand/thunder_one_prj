@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { RegistrationFailure, RegistrationStage } from "../domain/registration-outcome";
+import { localFailureMessage, type RegistrationFailure, type RegistrationStage } from "../domain/registration-outcome";
 import { confirmationPayload, missingRegistrationFiles, type ConfirmationRecord, type UploadCandidate } from "../domain/registration-confirmation";
 import type { RegistrationDraft } from "../domain/registration-draft";
 import { firstInvalidRegistrationStep } from "../domain/registration-validation";
@@ -22,6 +22,7 @@ export function useRegistrationConfirmation(key: string, context: string, initia
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [activeUploads, setActiveUploads] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [errorStatus, setErrorStatus] = useState<number>();
   const [options, setOptions] = useState(initialOptions);
@@ -89,11 +90,9 @@ export function useRegistrationConfirmation(key: string, context: string, initia
         if (!next?.requestJson) throw new Error("The original request is unavailable. Keep this tab and contact support.");
       } else {
         setMessage("Checking current registration options");
-        const fresh = await refreshRegistrationOptions(context);
+        const [fresh, resolved] = await Promise.all([refreshRegistrationOptions(context), resolveSelectedReferences(context, draft)]);
         run.check();
         setOptions(fresh);
-        const resolved = await resolveSelectedReferences(context, draft);
-        run.check();
         draft = resolved.draft;
         const validatedOptions = { ...fresh, referenceValidation: resolved.validation };
         const invalid = firstInvalidRegistrationStep(draft, validatedOptions);
@@ -111,7 +110,10 @@ export function useRegistrationConfirmation(key: string, context: string, initia
         };
         persist(next);
         setStage("uploading");
-        next = await uploadRegistrationFiles(context, next, candidates, fresh, persist, setMessage, run.check);
+        next = await uploadRegistrationFiles(context, next, candidates, fresh, persist, (text, uploading) => {
+          setMessage(text);
+          setActiveUploads(uploading);
+        }, run.check);
         next = { ...next, requestJson: confirmationPayload(draft, next, overrideReason) };
       }
       if (!next?.requestJson) throw new Error("The confirmation request is unavailable.");
@@ -150,7 +152,7 @@ export function useRegistrationConfirmation(key: string, context: string, initia
         if (!saveConfirmation(key, next)) setStorageBlocked(true);
       }
       const text = unknown ? "The asset may have been created. Retry the original request to recover its result. Editing is locked to prevent a second creation."
-        : thrown instanceof Error ? thrown.message : "Confirmation failed. Your registration has been kept.";
+        : requestError?.message ?? localFailureMessage(thrown);
       setError(text);
       setFailure({ code: requestError?.code, status: requestError?.status, details: requestError?.details, uncertain: unknown, message: text });
     } finally { run?.finish(); operation.current = null; active.current = false; setBusy(false); setStage(null); }
@@ -165,5 +167,5 @@ export function useRegistrationConfirmation(key: string, context: string, initia
     if (active.current || uncertain) return false;
     return removeConfirmation(key);
   }
-  return { record, options, busy, locked, uncertain, storageBlocked, message, error, errorStatus, stage, failure, start, refresh, retryStorage, dismissFailure, discard };
+  return { record, options, busy, locked, uncertain, storageBlocked, message, activeUploads, error, errorStatus, stage, failure, start, refresh, retryStorage, dismissFailure, discard };
 }
