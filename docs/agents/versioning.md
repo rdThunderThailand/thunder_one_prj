@@ -43,13 +43,14 @@ Workspace is a Core setting (`enabled_workspaces`), not this list.
 |---|---|---|
 | `package.json` | `"version": "0.2.0"` | in the release-prep PR into `dev`, **before** the release PR |
 | git tag on `main` | annotated `v0.2.0` on the merge commit | right after the release PR merges |
-| release PR title | `release v0.2.0: promote dev → main (#N — …)` | when the release PR is opened |
+| release PR title | `release v0.2.0: promote staging → main (#N — …)` | when the release PR is opened |
 | GitHub Release | `v0.2.0`, title `v0.2.0 (#N)`, Thai release note | with the tag, same approval |
 
-`main` is deployed to production on merge (Vercel, no staging). The tag therefore marks exactly
-what production runs.
+`main` is deployed to production on merge (Vercel). `staging` is deployed to the Vercel **Staging**
+environment on merge and is where a release is checked before it reaches `main` (ENV-01, decision ข,
+2026-11-24). The tag marks exactly what production runs.
 
-## Release sequence (`dev → main`)
+## Release sequence (`dev → staging → main`)
 
 Two PRs per release. Merge methods follow ADR 0118.
 
@@ -59,16 +60,20 @@ Two PRs per release. Merge methods follow ADR 0118.
 2. **Release-prep PR → `dev`** from branch `release/vX.Y.Z`: choose MINOR or PATCH from the diff
    since the current `main` release, bump `package.json`, and add a row to **Stable Workspaces** if
    this release makes one stable. Draft, Thai or English as the owner picks. Squash. Owner merges.
-3. **Release PR `dev → main`**, Draft. Title as above; `#N` is the promotion count (see below).
+3. **Staging PR `dev → staging`**, merge commit. Once Vercel's Staging deploy succeeds, open the
+   Staging URL and check the pages the release touches. Fix on `dev` and repeat if anything fails.
+   Release PR **`staging → main`** (below) only after staging has been checked.
+4. **Release PR `staging → main`**, Draft. Title as above; `#N` is the promotion count (see below).
    Body per `.github/pull_request_template.md`, with:
    - the previous release and tag, and the commit / PR count since;
    - Changes grouped **by Workspace** (`ws:*` label), one bullet per merged PR
      (`gh pr list --state merged --base dev --search "merged:>=<last release date>"`);
    - Verification: the commands from step 1 with exit codes, and which pages were opened in
      a browser (be explicit about what was **not**);
+   - the Staging deployment URL that was checked;
    - the line "merge = deploy to production immediately".
    Owner marks ready and merges with a **merge commit** — an agent never merges.
-4. **Publish** once Vercel reports the production deploy of the merge commit as `success`
+5. **Publish** once Vercel reports the production deploy of the merge commit as `success`
    (`gh api repos/<owner>/<repo>/commits/<sha>/status`). One approval covers all three; an agent shows
    the exact commands and the release-note text, then waits for a yes (R0):
    ```bash
@@ -77,7 +82,7 @@ Two PRs per release. Merge methods follow ADR 0118.
    ```
    then a comment "ออกใน vX.Y.Z" on each ClickUp task linked (`Ticket:` / `CU-<id>`) from the shipped
    PRs (ADR 0119). Close the version's milestone if one was used for planning.
-5. Diff between releases: `git log vA..vB --first-parent --oneline`.
+6. Diff between releases: `git log vA..vB --first-parent --oneline`.
 
 ## Hotfix sequence (straight to `main`)
 
@@ -89,9 +94,9 @@ Two PRs per hotfix.
    `fix(scope): … (vX.Y.Z)` and saying `Refs #N` (a PR into `main` does not close issues). Draft until
    verified on the layer the user uses. Owner merges with a **merge commit** (ADR 0118: `main` takes merge
    commits only).
-3. Publish exactly as step 4 above (tag, GitHub Release, ClickUp comments). A hotfix is not a
+3. Publish exactly as step 5 above (tag, GitHub Release, ClickUp comments). A hotfix is not a
    promotion: its Release title has no `#N`.
-4. **Back-merge PR `main → dev`** right away, **merge commit**, carrying `Closes #N` for the hotfix's
+4. **Back-merge PR `main → staging`**, then **`main → dev`**, right away, **merge commit**, carrying `Closes #N` for the hotfix's
    issues. If `dev` already has a release-prep bump, `package.json` conflicts: keep `dev`'s version.
 
 ## Counting releases
