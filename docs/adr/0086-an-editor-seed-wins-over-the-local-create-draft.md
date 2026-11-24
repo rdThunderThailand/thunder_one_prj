@@ -289,12 +289,16 @@ for them. This is the same rule as §9.
   serves every visit, and the removed Cancel also deleted the server row of a draft that was not
   explicitly saved. It is left to a decision of its own. §9 removes the trap inside the prompt
   without touching the server. An operator who pressed Continue first gets the choice again on the
-  next visit to a blank `/create`.
+  next visit to a blank `/create`. Decided since in
+  `0124-the-create-wizard-cancel-clears-only-the-local-draft.md`: a Cancel on every step that clears
+  only the local draft.
 - **Fix the unremovable pick at its source instead** (§9). The wizard shows only Channels in the
   loaded list (`ChannelsStep`, `ProgramSummaryRail`), while `targetsFromSelection` still sends a
   picked id that is missing from it. The problem-target notice covers only targets Core returns.
   Extending that notice to local picks missing from the list, in line with ADR 0122 rule 17, is worth a
   follow-up. It would not replace §9, which also covers a 403 and a server that keeps failing.
+  Done since as the rule 17 amendment of
+  `0122-deleting-an-unused-channel-tombstones-it-and-frees-its-player.md`.
 - **Show the classified error in place of the generic one** (§9). In the prod case it would have said
   to pick other targets, but the foreign Channel was not in the picker to remove.
 - **On a stale id, skip the create in the prompt and treat it as Discard** (§10). The edits would be
