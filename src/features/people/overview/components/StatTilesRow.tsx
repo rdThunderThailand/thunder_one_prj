@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { ArrowRightIcon } from "@/components/ui/icons";
-import type { StatTileColor } from "../mock-data";
+
+type StatTileColor = "indigo" | "emerald" | "amber" | "blue" | "red";
 
 const valueColor: Record<StatTileColor, string> = {
   indigo: "text-primary",

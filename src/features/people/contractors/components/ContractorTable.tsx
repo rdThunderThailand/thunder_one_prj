@@ -2,7 +2,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EyeIcon, MoreIcon } from "@/components/ui/icons";
-import type { ContractorRow, ContractorStatus } from "../mock-data";
+import type { ContractorRow, ContractorStatus } from "../types";
 
 const statusBadge: Record<ContractorStatus, { label: string; color: BadgeColor }> = {
   active: { label: "กำลังปฏิบัติงาน", color: "green" },
