@@ -21,7 +21,7 @@ import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { deletedChannelLabel } from "../../channels/channel-logic";
 import { DeliveryProgress } from "./DeliveryProgress";
-import { formatMonthDays } from "../schedule";
+import { formatMonthDays, WEEKDAYS } from "../schedule";
 import { lastAiringDay } from "../schedule-describe";
 import { publicationPreviewTarget } from "@/features/media-workspace/preview/publication-preview-target";
 
@@ -29,9 +29,9 @@ import { publicationPreviewTarget } from "@/features/media-workspace/preview/pub
 function describeDrift(finding: DriftFinding): string {
   switch (finding.level) {
     case "composition":
-      return "Composition ถูกแก้ไขหลังเผยแพร่";
+      return "Layout ถูกแก้ไขหลังเผยแพร่";
     case "layout":
-      return "Layout ของ Composition ถูกแก้ไขหลังเผยแพร่";
+      return "Template ของ Layout ถูกแก้ไขหลังเผยแพร่";
     case "playlist":
       return finding.zoneName
         ? `Playlist "${finding.playlistName}" ในโซน "${finding.zoneName}" ถูกแก้ไขหลังเผยแพร่`
@@ -533,7 +533,9 @@ export function PublicationDetailPage({ id }: { id: string }) {
                         ? `Monthly: ${formatMonthDays(detail.schedule.recurrence.month_days)}`
                         : detail.schedule.recurrence.freq === "dates"
                           ? `Dates: ${detail.schedule.recurrence.dates.join(", ")}`
-                          : `Days: ${detail.schedule.recurrence.days.join(", ")}`}
+                          : detail.schedule.recurrence.days.length === WEEKDAYS.length
+                            ? "Every day"
+                            : `Weekly: ${[...detail.schedule.recurrence.days].sort((a, b) => a - b).map((day) => WEEKDAYS[day]?.label ?? day).join(", ")}`}
                     </span>
                     <br />
                     <span>

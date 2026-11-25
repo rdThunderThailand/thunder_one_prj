@@ -33,10 +33,10 @@ export function describeSaveError(message: string): string {
   const overlap = /zones (\d+) and (\d+) overlap/.exec(message);
   if (overlap) return `บันทึกไม่ได้ — Zone ลำดับที่ ${overlap[1]} และ ${overlap[2]} ซ้อนทับกัน กรุณาปรับขนาดหรือตำแหน่งใหม่`;
   if (message.includes("Already exists") || /duplicate key|unique constraint/i.test(message)) {
-    return "บันทึกไม่ได้ — มี Composition ชื่อนี้อยู่แล้ว";
+    return "บันทึกไม่ได้ — มี Layout ชื่อนี้อยู่แล้ว";
   }
   if (message.includes("Already modified")) {
-    return "Composition นี้ถูกแก้ไขจากที่อื่น กรุณาโหลดใหม่แล้วลองอีกครั้ง";
+    return "Layout นี้ถูกแก้ไขจากที่อื่น กรุณาโหลดใหม่แล้วลองอีกครั้ง";
   }
   // Only a shared Template still raises this — a Composition may drop Zones of its own Layout (#221).
   const zoneInUse = /zone is used by composition\(s\) (.+)/.exec(message);
@@ -45,9 +45,9 @@ export function describeSaveError(message: string): string {
   const trashed = /playlist is in Trash: (.+)$/.exec(message);
   if (trashed) return `Playlist ${trashed[1]} อยู่ในถังขยะ กู้คืนก่อนจึงจะใส่ใน Layout ได้`;
   if (message.includes("cannot change the layout of an active composition")) {
-    return "เปลี่ยน Layout ไม่ได้ขณะ Composition กำลัง Active";
+    return "เปลี่ยน Template ไม่ได้ขณะ Layout กำลัง Active";
   }
-  return "บันทึก Composition ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+  return "บันทึก Layout ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
 }
 
 /** `media_composition_set_zones` / `media_composition_set_status` name the unbound Zones in
@@ -57,7 +57,7 @@ export function describeActivateError(message: string): string {
   const match = /zone\(s\) (.+) are unbound/.exec(message);
   if (match) return `เปิดใช้งานไม่ได้ — ยังไม่ได้ผูก Content ให้ Zone: ${match[1]}`;
   if (message.includes("cannot move a composition back to draft")) {
-    return "ย้าย Composition กลับไป Draft ไม่ได้";
+    return "ย้าย Layout กลับไป Draft ไม่ได้";
   }
   return describeSaveError(message);
 }

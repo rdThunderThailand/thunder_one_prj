@@ -289,12 +289,12 @@ export function CompositionEditorPage({
         affectedCount={affected.programs.length}
         onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
         onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
-        onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Composition ไม่สำเร็จ")}
+        onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Layout ไม่สำเร็จ")}
         onSaveAsTemplate={() => { setTemplateSavedName(null); setNamingTemplate(true); }}
         onActivate={() => void save(async (result) => {
           await setCompositionStatus(result.compositionId, "active");
           router.push(LIST_PATH);
-        }, "เปิดใช้งาน Composition ไม่สำเร็จ")}
+        }, "เปิดใช้งาน Layout ไม่สำเร็จ")}
       />
       </div>
       {publishDialog && (
