@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { MediaAsset } from "@/types/domain";
+import { classifyApiError } from "@/lib/api/api-error";
 import { fetchMediaAsset } from "@/lib/api/media-api";
 import { uploadAndRegisterAsset } from "@/features/media-workspace/publications/services/upload-api";
 import { rejectUploadReason } from "@/features/media-workspace/publications/upload-limits";
@@ -39,7 +40,7 @@ export function useAssetUpload(
         : null;
       await onUploaded(asset, isVideoFile);
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      setUploadError(classifyApiError(err, "Upload failed").message);
     } finally {
       setUploadPct(null);
     }

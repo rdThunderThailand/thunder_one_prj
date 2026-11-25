@@ -48,7 +48,7 @@ export function CreateEditGroupModal({
 
   const save = async () => {
     if (name.trim() === "") {
-      setNameError("Group name is required");
+      setNameError("กรุณากรอกชื่อ Group");
       return;
     }
     setNameError(undefined);
@@ -65,11 +65,11 @@ export function CreateEditGroupModal({
       onSaved(withMembers);
     } catch (caught) {
       if (caught instanceof Error && isDuplicateName(caught.message)) {
-        setNameError("A Channel Group with this name already exists.");
+        setNameError("มี Channel Group ชื่อนี้อยู่แล้ว");
       } else if (caught instanceof Error && isSyncConflict(caught.message)) {
-        setError("A channel can only belong to one synchronized Group at a time. Remove it from the other Group first.");
+        setError("Channel หนึ่งอยู่ใน Group แบบ Synchronized ได้เพียง Group เดียว กรุณานำออกจาก Group เดิมก่อน");
       } else {
-        setError(classifyApiError(caught, "Could not save this Channel Group. Try again.").message);
+        setError(classifyApiError(caught, "บันทึก Channel Group ไม่สำเร็จ กรุณาลองใหม่").message);
       }
     } finally {
       setSaving(false);

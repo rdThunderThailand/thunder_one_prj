@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { SearchIcon } from "@/components/ui/icons";
+import { classifyApiError } from "@/lib/api/api-error";
 import { fetchChannelGroups } from "../../channel-groups/services/channel-groups-api";
 import type { ChannelGroup } from "../../channel-groups/types";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
@@ -23,7 +24,7 @@ export function GroupsStep() {
     let alive = true;
     fetchChannelGroups()
       .then((data) => alive && setGroups(data))
-      .catch((caught) => alive && setError(caught instanceof Error ? caught.message : "Could not load Channel Groups."));
+      .catch((caught) => alive && setError(classifyApiError(caught, "Could not load Channel Groups.").message));
     return () => {
       alive = false;
     };

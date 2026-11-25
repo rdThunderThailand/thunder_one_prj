@@ -159,7 +159,7 @@ export function PublicationsListPage() {
       setActionError(null);
       await work();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : fallback);
+      setActionError(classifyApiError(err, fallback).message);
     } finally {
       setBusyId(null);
     }

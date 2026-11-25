@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/lovable/label";
+import { classifyApiError } from "@/lib/api/api-error";
 import { preparePlayerRelease, registerPlayerRelease } from "./actions";
 import { feedProblem } from "./feed-check";
 
@@ -86,7 +87,7 @@ export function NewReleaseDialog() {
       setDraft({ id: result.data.id, selection });
       setStatus("Files uploaded.");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not upload files.");
+      setError(classifyApiError(cause, "Could not upload files.").message);
       setStatus("");
     } finally {
       setIsBusy(false);
@@ -105,7 +106,7 @@ export function NewReleaseDialog() {
       change(false);
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not register the release.");
+      setError(classifyApiError(cause, "Could not register the release.").message);
       setStatus("");
       setIsBusy(false);
     }

@@ -85,7 +85,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
             .catch((err) => {
               if (alive) {
                 setPlaylistError(
-                  err instanceof Error ? err.message : "ไม่สามารถโหลด playlist ได้"
+                  classifyApiError(err, "ไม่สามารถโหลด playlist ได้").message
                 );
               }
             });
@@ -109,7 +109,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       await deletePublication(id);
       router.push("/media-workspace/program");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
+      setActionError(classifyApiError(err, "ลบไม่สำเร็จ").message);
       setActionBusy(false);
     }
   };
@@ -121,7 +121,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       await cancelPublication(id);
       router.push("/media-workspace/program");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
+      setActionError(classifyApiError(err, "ยกเลิกไม่สำเร็จ").message);
       setActionBusy(false);
     }
   };
@@ -137,7 +137,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       setDetail(fresh);
       setRepublishConfirming(false);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "เผยแพร่ซ้ำไม่สำเร็จ");
+      setActionError(classifyApiError(err, "เผยแพร่ซ้ำไม่สำเร็จ").message);
     } finally {
       setActionBusy(false);
     }

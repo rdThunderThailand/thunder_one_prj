@@ -219,7 +219,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
       await loadDraft(publicationId);
       setRevisionConflict(null);
     } catch (err) {
-      setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
+      setResumeError(classifyApiError(err, "โหลด draft ไม่สำเร็จ").message);
     } finally {
       setConflictBusy(false);
     }
@@ -237,7 +237,7 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
       usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
       setRevisionConflict(null);
     } catch (err) {
-      setResumeError(err instanceof Error ? err.message : "โหลดข้อมูลล่าสุดไม่สำเร็จ");
+      setResumeError(classifyApiError(err, "โหลดข้อมูลล่าสุดไม่สำเร็จ").message);
     } finally {
       setConflictBusy(false);
     }

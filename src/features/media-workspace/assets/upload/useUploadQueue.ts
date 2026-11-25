@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ContentFolder, Tag, TranscodeStatus } from "@/types/domain";
 import { useTranscodeStatus } from "../use-transcode-status";
+import { classifyApiError } from "@/lib/api/api-error";
 import { fetchContentFolders, fetchTags } from "@/lib/api/media-api";
 import {
   EXPIRED_UPLOAD_ERROR,
@@ -115,7 +116,7 @@ export function useUploadQueue(initialFolderId: string | null = null) {
       })
       .catch((error: unknown) => {
         const name = error instanceof Error ? error.name : "";
-        const message = error instanceof Error ? error.message : "Upload failed";
+        const message = classifyApiError(error, "Upload failed").message;
         patchOwn((item) => ({
           ...item,
           state: name === "AbortError" ? "canceled" : "failed",

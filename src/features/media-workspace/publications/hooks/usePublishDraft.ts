@@ -25,7 +25,7 @@ import { targetDeviceIds } from "../program-edit";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility, programGateInputFromDraft } from "../publish-eligibility";
 import { validateStep } from "../step-validation";
-import { classifyApiError, isConflict, scheduleEndedMessage, type ClassifiedError, type PublishCause } from "@/lib/api/api-error";
+import { classifyApiError, isConflict, UserFacingError, scheduleEndedMessage, type ClassifiedError, type PublishCause } from "@/lib/api/api-error";
 import { formatDmy, shiftYmd, utcToZonedParts } from "../schedule";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
 import { DraftSaveError, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
@@ -116,7 +116,7 @@ export function usePublishDraft() {
         })
         .catch((err) => {
           setAssets([]);
-          setAssetsError(err instanceof Error ? err.message : "Failed to load assets.");
+          setAssetsError(classifyApiError(err, "Failed to load assets.").message);
           return [];
         })
         .finally(() => setAssetsLoading(false)),
@@ -202,7 +202,7 @@ export function usePublishDraft() {
           if (!cancelled) {
             setConflicts([]);
             setCheckingConflicts(false);
-            setConflictsError(err instanceof Error ? err.message : "Failed to check schedule conflicts.");
+            setConflictsError(classifyApiError(err, "Failed to check schedule conflicts.").message);
           }
         });
     }, 400);
@@ -237,7 +237,7 @@ export function usePublishDraft() {
     // (media_publication_upsert, ADR 0049 §12, revised 2026-08-26) exactly like an unpicked
     // Playlist. Publishing still requires it; that guard stays.
     if (forPublish && state.basicInfo.publicationType === "composition" && !state.compositionId) {
-      throw new Error("กรุณาเลือก Layout ก่อนบันทึก");
+      throw new UserFacingError("กรุณาเลือก Layout ก่อนบันทึก");
     }
     // ver02 (ADR 0072 §2) runs Choose Content (step 1) before Prepare Content (step 2), where
     // the name is entered. `media_publication_upsert` refuses an empty name, so a draft with no
@@ -384,7 +384,7 @@ export function usePublishDraft() {
       state.cancelDraft();
       router.push(`/media-workspace/program/${newId}`);
     } catch (err) {
-      const classified = classifyApiError(err, "Failed to publish publication.");
+      const classified = classifyApiError(err, "เผยแพร่ Program ไม่สำเร็จ กรุณาลองใหม่");
       // A retry after a timed-out publish lands here: the backend refused because
       // the first attempt already activated it, so this is a success reaching us late.
       if (classified.kind === "already-active" && state.publicationId) {
