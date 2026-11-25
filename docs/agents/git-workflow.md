@@ -72,4 +72,7 @@ merging):
 - Automatically delete head branches on.
 - Rulesets: `main` — PR required, no force-push, no deletion, merge commits only. `dev` — PR required, no
   force-push, no deletion.
-- No required status check until CI exists (#431: install, `tsc`, `eslint`, `next build`).
+- Required status check `check` on both rulesets. It is the `CI` workflow (`.github/workflows/ci.yml`, #431):
+  `pnpm install --frozen-lockfile`, `tsc --noEmit`, `eslint .`, `next build` on every PR into `dev` or `main`.
+  Until the rulesets require it, a red `check` is not enforced; do not merge on red. `*.check.mts` are not
+  in CI; run the ones your change touches locally.
