@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { fetchPublication } from "../services/publications-api";
-import { problemTargets } from "../problem-targets";
+import type { ChannelListItem } from "../../channels/types";
+import { problemTargets, selectedProblemTargets } from "../problem-targets";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 
 /**
@@ -27,11 +28,22 @@ export function useRefreshProblemTargets(input: { hasHydrated: boolean; idParam:
   }, [input.hasHydrated, input.idParam]);
 }
 
-/** The loaded problem targets that are still selected; Remove drops an id from the draft. */
-export function useWizardProblemTargets() {
+/**
+ * The selected Channels the notice lists; Remove drops ids from the draft. Without `channels` (not
+ * loaded, or failed) only the loaded problem targets count.
+ */
+export function useWizardProblemTargets(channels: ChannelListItem[] | null = null) {
   const loaded = usePublicationDraftStore((s) => s.problemTargets);
   const channelIds = usePublicationDraftStore((s) => s.channelIds);
   const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
-  const targets = useMemo(() => loaded.filter((target) => channelIds.includes(target.id)), [loaded, channelIds]);
-  return { targets, remove: (id: string) => setChannelIds(channelIds.filter((existing) => existing !== id)) };
+  const { targets, unlistedIds } = useMemo(
+    () => selectedProblemTargets(channelIds, loaded, channels),
+    [channelIds, loaded, channels],
+  );
+  return {
+    targets,
+    unlistedIds,
+    remove: (id: string) => setChannelIds(channelIds.filter((existing) => existing !== id)),
+    removeUnlisted: () => setChannelIds(channelIds.filter((existing) => !unlistedIds.includes(existing))),
+  };
 }

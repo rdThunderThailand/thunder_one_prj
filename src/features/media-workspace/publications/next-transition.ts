@@ -11,7 +11,8 @@ import { validateStep, type WizardStepId } from "./step-validation.ts";
 export type NextOutcome =
   | { kind: "invalid"; errors: string[] }
   | { kind: "saved" }
-  | { kind: "failed"; message: string };
+  /** The caller classifies `error`, so the message and its cause match the other save paths. */
+  | { kind: "failed"; error: unknown };
 
 /**
  * Validate the current step, then persist. `persist` runs only when the step is
@@ -29,8 +30,8 @@ export async function attemptNext(
   try {
     await persist();
     return { kind: "saved" };
-  } catch (err) {
-    return { kind: "failed", message: err instanceof Error ? err.message : "Failed to save draft." };
+  } catch (error) {
+    return { kind: "failed", error };
   }
 }
 
