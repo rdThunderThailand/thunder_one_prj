@@ -44,20 +44,26 @@ async function send<T>(method: "GET" | "POST" | "PATCH", path: string, body: unk
 
 /** FE 04 Select Asset: every status except Disposed (Disposed warranties are view only, Q26). */
 export type WarrantyAssetSearch = { q: string; page: number; category_id: string; location_id: string };
-export function searchWarrantyAssets(context: string, search: WarrantyAssetSearch, signal: AbortSignal, requester = request) {
+export const FIRST_WARRANTY_SEARCH: WarrantyAssetSearch = { q: "", page: 1, category_id: "", location_id: "" };
+export function warrantyAssetsPath(search: WarrantyAssetSearch) {
   const query = new URLSearchParams({ status: "Available,Assigned,In Maintenance,Retired", pageSize: "10" });
   if (search.page > 1) query.set("page", String(search.page));
   if (search.q) query.set("q", search.q);
   if (search.category_id) query.set("category_id", search.category_id);
   if (search.location_id) query.set("location_id", search.location_id);
-  return send("GET", `/list?${query}`, undefined, assetListSchema, context, signal, requester);
+  return `/list?${query}`;
 }
 
+export function searchWarrantyAssets(context: string, search: WarrantyAssetSearch, signal: AbortSignal, requester = request) {
+  return send("GET", warrantyAssetsPath(search), undefined, assetListSchema, context, signal, requester);
+}
+
+export const warrantyRecordsSchema = z.array(warrantyRecordSchema);
 const one = z.object({ warranty: warrantyRecordSchema });
 const asset = (assetId: string) => `/${encodeURIComponent(assetId)}/warranties`;
 
 export const getWarrantyRecords = (context: string, assetId: string, signal: AbortSignal, requester = request) =>
-  send("GET", asset(assetId), undefined, z.array(warrantyRecordSchema), context, signal, requester);
+  send("GET", asset(assetId), undefined, warrantyRecordsSchema, context, signal, requester);
 
 export const addWarranty = (context: string, assetId: string, body: unknown, signal: AbortSignal, requester = request) =>
   send("POST", asset(assetId), body, one, context, signal, requester);
