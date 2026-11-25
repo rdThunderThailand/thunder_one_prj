@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -198,12 +199,15 @@ export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
   });
 
   const persistForNavigation = async () => {
+    const isFirstSave = !usePublicationDraftStore.getState().publicationId;
     const result = await persistDraft(false);
     if (result.kind === "skipped") {
       if (step !== 1 || publicationId) requireCompleteDraftSave(result);
       return false;
     }
     router.replace(`/media-workspace/program/create?id=${encodeURIComponent(result.publicationId)}`);
+    // #426: Next / a stepper jump creates the Draft without Save draft (ADR 0086), so say so once, when the row first appears.
+    if (isFirstSave) toast.success("บันทึกเป็น Draft แล้ว — ดูได้ที่หน้า Programs");
     // ADR 0086 §2: a withheld invalid schedule stays dirty but must not block the way back to fix it.
     if (!result.isComplete) return false;
     usePublicationDraftStore.getState().markSaved(result.draft);
