@@ -2,13 +2,14 @@ import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/lovable/textarea";
 import type { useAssetEdit } from "../../hooks/use-asset-edit";
 import type { AssetEditOptions } from "../../services/asset-edit-options";
+import type { KeptReferenceTrees } from "../../services/kept-reference-trees";
 import type { ReferenceItem } from "../../services/registration-selector-contract";
 import { RegistrationField, RegistrationTextField } from "../register-asset/RegistrationFields";
 import { RegistrationTreeField } from "../register-asset/RegistrationTreeField";
 import { RegistrationDateField } from "../register-asset/RegistrationDateField";
 
-export function AssetEditFields({ context, flow, options, selected, onSelect }: {
-  context: string; flow: ReturnType<typeof useAssetEdit>; options: AssetEditOptions;
+export function AssetEditFields({ context, keptTrees, flow, options, selected, onSelect }: {
+  context: string; keptTrees: KeptReferenceTrees; flow: ReturnType<typeof useAssetEdit>; options: AssetEditOptions;
   selected: ReferenceItem | null; onSelect: (item: ReferenceItem) => void;
 }) {
   const { asset, draft, fields, patch } = flow;
@@ -27,7 +28,7 @@ export function AssetEditFields({ context, flow, options, selected, onSelect }: 
         />
         <div className="space-y-1">
           <RegistrationTreeField
-            name="asset-edit-category" label="Category" kind="categories" context={context}
+            name="asset-edit-category" label="Category" kind="categories" context={context} keptTrees={keptTrees}
             rules={options.rules.referenceSelectors} value={draft.categoryId} selectedLabel={label}
             error={fields.categoryId} onChange={onSelect}
           />

@@ -1,14 +1,13 @@
 "use client";
 
-import { useProfileRead } from "../../hooks/use-asset-profile";
-import { getAssetFiles } from "../../services/asset-profile-api";
+import type { AssetFiles } from "../../services/asset-profile-contract";
+import type { AssetReadResult } from "../../services/assets-list-types";
 
-/** The current warranty's attachments on the profile card; read here so the profile page itself stays unchanged. */
-export function ProfileWarrantyFiles({ context, assetId, warrantyId }: { context: string; assetId: string; warrantyId: string }) {
-  const files = useProfileRead(`${context}:${assetId}:warranty-card-files`, (signal) => getAssetFiles(context, assetId, signal));
-  if (!files.result) return <span className="text-muted-foreground">Loading…</span>;
-  if (!files.result.ok) return <span className="text-muted-foreground">Couldn&apos;t load attachments</span>;
-  const own = files.result.data.warrantyDocuments.filter((file) => file.warrantyId === warrantyId);
+/** The current warranty's attachments on the profile card, from the files the profile already read. */
+export function ProfileWarrantyFiles({ files, warrantyId }: { files: AssetReadResult<AssetFiles> | null; warrantyId: string }) {
+  if (!files) return <span className="text-muted-foreground">Loading…</span>;
+  if (!files.ok) return <span className="text-muted-foreground">Couldn&apos;t load attachments</span>;
+  const own = files.data.warrantyDocuments.filter((file) => file.warrantyId === warrantyId);
   if (!own.length) return <span>None</span>;
   return (
     <ul className="space-y-1">

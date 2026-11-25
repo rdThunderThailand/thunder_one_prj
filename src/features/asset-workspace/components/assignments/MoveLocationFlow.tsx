@@ -12,6 +12,7 @@ import {
 } from "../../domain/assignment-move-location";
 import { locationTrail } from "../../domain/asset-profile";
 import { useProfileRead } from "../../hooks/use-asset-profile";
+import { useKeptReferenceTrees } from "../../hooks/use-kept-reference-trees";
 import { moveAssetLocation, type AssignResult } from "../../services/asset-assignments-write";
 import { getAssetDetail, type ProfileReadResult } from "../../services/asset-profile-api";
 import type { AssetDetail } from "../../services/asset-profile-contract";
@@ -23,14 +24,10 @@ import { getAssignOptions } from "./use-assign-flow";
 
 type Failure = Extract<AssignResult, { ok: false }>;
 type MoveForm = { asset: AssetDetail; rules: RegistrationOptions["referenceSelectors"]; unavailableId?: string };
-const blocked = "Only Available, Assigned or In Maintenance assets can be moved.";
 
 export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFocus }: {
-  context: string;
-  assetId: string;
-  onSaved: (asset: AssetDetail) => void;
-  onClose: (refresh: boolean) => void;
-  restoreFocus: () => void;
+  context: string; assetId: string;
+  onSaved: (asset: AssetDetail) => void; onClose: (refresh: boolean) => void; restoreFocus: () => void;
 }) {
   const [destination, setDestination] = useState<ReferenceItem | null>(null);
   const [reason, setReason] = useState("");
@@ -42,6 +39,7 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
   const submitting = useRef(false);
   const stepHeading = useRef<HTMLHeadingElement>(null);
 
+  const keptTrees = useKeptReferenceTrees(context, 1); // Step 1: the location list starts now, together with the asset.
   const form = useProfileRead<MoveForm>(`${context}:${assetId}:move-location`, async (signal) => {
     const [detail, options] = await Promise.all([getAssetDetail(context, assetId, signal), getAssignOptions(context, signal)]);
     if (!detail.ok) return detail;
@@ -78,6 +76,8 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
     setCheckId(destination?.id ?? null);
     setFailure(null);
     setRefreshOnClose(true);
+    keptTrees.clear();
+    void keptTrees.load("locations");
     form.reload();
   }
 
@@ -138,7 +138,7 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
             ) : !allowed ? (
               <div role="alert" className="space-y-1 rounded-control bg-warning-muted p-3 text-xs">
                 <p className="font-semibold">This asset can&apos;t be moved.</p>
-                <p>{blocked}</p>
+                <p>Only Available, Assigned or In Maintenance assets can be moved.</p>
               </div>
             ) : reviewing && destination ? (
               <MoveReview
@@ -156,9 +156,8 @@ export function MoveLocationFlow({ context, assetId, onSaved, onClose, restoreFo
                     {locationTrail(current.asset.locationPath, current.asset.location) || "No location assigned."}
                   </p>
                 </div>
-                <RegistrationTreeField name="move-location" label="To Location" kind="locations" context={context}
-                  rules={current.rules} value={destination?.id ?? ""}
-                  selectedLabel={destination ? referenceLabel(destination, "locations") : ""}
+                <RegistrationTreeField name="move-location" label="To Location" kind="locations" context={context} keptTrees={keptTrees}
+                  rules={current.rules} value={destination?.id ?? ""} selectedLabel={destination ? referenceLabel(destination, "locations") : ""}
                   error={destinationError} onChange={(value) => {
                     if (locked || submitting.current) return;
                     setDestination(value);

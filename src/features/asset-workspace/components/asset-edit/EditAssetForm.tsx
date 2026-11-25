@@ -9,7 +9,9 @@ import { locationTrail } from "../../domain/asset-profile";
 import { useAssetEdit } from "../../hooks/use-asset-edit";
 import { useAssetEditLeave } from "../../hooks/use-asset-edit-leave";
 import { useProfileRead } from "../../hooks/use-asset-profile";
+import type { EditFirstData } from "../../services/asset-edit-first-data";
 import { getAssetEditOptions } from "../../services/asset-edit-options";
+import type { KeptReferenceTrees } from "../../services/kept-reference-trees";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import type { ReferenceItem } from "../../services/registration-selector-contract";
 import { ErrorState } from "../states/ErrorState";
@@ -21,9 +23,15 @@ import { AssetEditHeader } from "./AssetEditHeader";
 import { AssetEditFormLoading } from "./AssetEditLoading";
 import { AssetEditDuplicate, AssetEditFeedback } from "./AssetEditFeedback";
 
-export function EditAssetForm({ context, asset }: { context: string; asset: AssetDetail }) {
+export function EditAssetForm({ context, asset, first, keptTrees }: {
+  context: string; asset: AssetDetail; first?: EditFirstData; keptTrees: KeptReferenceTrees;
+}) {
   const flow = useAssetEdit(context, asset);
-  const refs = useProfileRead(`${context}:${asset.id}:${flow.asset.updatedAt}:edit-options`, (signal) => getAssetEditOptions(context, flow.asset, signal));
+  const refs = useProfileRead(`${context}:${asset.id}:${flow.asset.updatedAt}:edit-options`, (signal) => {
+    // A reloaded asset reads the category list again too.
+    if (flow.asset !== asset) keptTrees.clear();
+    return getAssetEditOptions(context, flow.asset, signal, first);
+  });
   const [selected, setSelected] = useState<ReferenceItem | null>(null);
   const feedback = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -57,7 +65,7 @@ export function EditAssetForm({ context, asset }: { context: string; asset: Asse
             {flow.reloading && <p role="status" className="rounded-control bg-muted p-3 text-xs">Reloading asset… Your input remains until the latest details load.</p>}
             <div className="grid min-w-0 items-start gap-3 @min-4xl/asset-edit-workspace:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)]">
               <div className="min-w-0 space-y-3">
-                <AssetEditFields context={context} flow={flow} options={refs.result.data} selected={selected} onSelect={(item) => { setSelected(item); flow.patch({ categoryId: item.id }); }} />
+                <AssetEditFields context={context} keptTrees={keptTrees} flow={flow} options={refs.result.data} selected={selected} onSelect={(item) => { setSelected(item); flow.patch({ categoryId: item.id }); }} />
                 <AssetEditDuplicate flow={flow} />
               </div>
               <ProfileSection title="Current details">

@@ -42,7 +42,11 @@ const setCurrentText = (code?: string, uncertain = false) =>
   code === "STALE" && !uncertain ? "The current warranty changed. Reload to see it." : warrantyWriteText(code, uncertain);
 
 /** FE 05 Set as Current on an earlier record, behind the house confirm (Q16, G6-01). */
-export function SetCurrentWarranty({ context, asset, warrantyId }: { context: string; asset: AssetDetail; warrantyId: string }) {
+export function SetCurrentWarranty({ context, asset, warrantyId, onChanged }: {
+  context: string; asset: AssetDetail; warrantyId: string;
+  /** Reads the profile again in place. */
+  onChanged: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<{ code: string; uncertain: boolean } | null>(null);
@@ -52,9 +56,7 @@ export function SetCurrentWarranty({ context, asset, warrantyId }: { context: st
     setPending(true);
     setFailure(null);
     const result = await setCurrentWarranty(context, asset.id, warrantyId, asset.currentWarranty?.id ?? null, new AbortController().signal);
-    // shortcut: a full reload refreshes the profile detail and warranty list without touching AssetProfileView;
-    // swap for a revision bump once the profile exposes one to its tabs.
-    if (result.ok) { window.location.reload(); return; }
+    if (result.ok) { onChanged(); return; }
     setPending(false);
     setFailure({ code: result.code, uncertain: result.uncertain });
   }
@@ -65,7 +67,7 @@ export function SetCurrentWarranty({ context, asset, warrantyId }: { context: st
       {failure && !open && (
         <>
           <p role="alert" className="text-xs text-error">{setCurrentText(failure.code, failure.uncertain)}</p>
-          {reload && <Button type="button" variant="outline" size="sm" onClick={() => window.location.reload()}>Reload</Button>}
+          {reload && <Button type="button" variant="outline" size="sm" onClick={onChanged}>Reload</Button>}
         </>
       )}
       <AlertDialog open={open} onOpenChange={(next) => { if (!pending) setOpen(next); }}>

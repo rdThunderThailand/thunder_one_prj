@@ -24,11 +24,9 @@ export function ProfileLocationHistory({ context, assetId, enabled, layout }: {
   layout: (content: ReactNode, panel: ReactNode) => ReactNode;
 }) {
   const [selection, setSelection] = useState<Selection>({ page: 1, index: 0 });
-  const [opened, setOpened] = useState(false);
-  if (enabled && !opened) setOpened(true);
   const history = useProfileRead(`${context}:${assetId}:location-history:${selection.page}`,
     (signal) => getAssetLocationHistory(context, assetId, { page: selection.page, pageSize: PAGE_SIZE }, signal), enabled);
-  const paths = useProfileRead(`${context}:history-location-paths`, (signal) => getLocationHistoryLocations(context, signal), enabled || opened);
+  const paths = useProfileRead(`${context}:history-location-paths`, (signal) => getLocationHistoryLocations(context, signal), enabled);
   const locations = useMemo(() => new Map(paths.result?.ok ? paths.result.data.map((location) => [location.id, location]) : []),
     [paths.result]);
 

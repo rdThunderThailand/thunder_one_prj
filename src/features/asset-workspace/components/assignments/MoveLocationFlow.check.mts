@@ -21,6 +21,7 @@ let index = 0;
 let hooks: unknown[] = [];
 let pending = false;
 let reloads = 0;
+let cleared = 0;
 let observed: unknown;
 let closed: unknown;
 let loadForm: ((signal: AbortSignal) => Promise<unknown>) | undefined;
@@ -57,6 +58,7 @@ const mocks: Record<string, unknown> = {
     loadForm = loader;
     return { result, pending, reload: () => { reloads++; pending = true; } };
   } },
+  "../../hooks/use-kept-reference-trees": { useKeptReferenceTrees: () => ({ clear: () => { cleared++; }, load: async () => null }) },
   "../../services/asset-assignments-write": { moveAssetLocation: async (context: string, id: string, body: unknown) => {
     calls.push({ context, id, body });
     return moveResult;
@@ -147,6 +149,7 @@ assert.match(html(tree), /Review move.*Repair Bench.*Bench check/);
 fire(props(tree, (node) => node.children === "Reload").onClick);
 tree = draw();
 assert.equal(reloads, 1);
+assert.equal(cleared, 1);
 assert.match(html(tree), /Loading asset and locations…/);
 assert.equal(calls.length, 1);
 
