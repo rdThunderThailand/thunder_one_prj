@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/lovable/button";
 import type { AssetCategoryDetail } from "../../domain/asset-category";
 import { useCategoryAssetsData } from "../../hooks/use-category-assets-data";
 import type { useCategoryAssetsUrl } from "../../hooks/use-category-assets-url";
+import type { CategoryAssetsSeeds } from "../../services/category-first-data";
 import { AccessDeniedState, EmptyState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { AssetsSectionError } from "../assets-list/AssetsSectionError";
@@ -14,11 +15,11 @@ import { CategoryAssetsFilters } from "./CategoryAssetsFilters";
 import { CategoryAssetsTable } from "./CategoryAssetsTable";
 import { CategoryAssetsPaginationLoading, CategoryAssetsRowsLoading } from "./CategoryAssetsLoading";
 
-export function CategoryAssetsTab({ context, category, url }: {
-  context: string; category: AssetCategoryDetail; url: ReturnType<typeof useCategoryAssetsUrl>;
+export function CategoryAssetsTab({ context, category, url, seeds }: {
+  context: string; category: AssetCategoryDetail; url: ReturnType<typeof useCategoryAssetsUrl>; seeds?: CategoryAssetsSeeds;
 }) {
   const query = url.parsed.success ? url.parsed.data : null;
-  const resource = useCategoryAssetsData(context, query, url.search);
+  const resource = useCategoryAssetsData(context, query, url.search, seeds);
   const { list, filters } = resource;
   const scroll = useRef<HTMLDivElement>(null);
   useEffect(() => { scroll.current?.scrollTo({ top: 0 }); }, [resource.key]);

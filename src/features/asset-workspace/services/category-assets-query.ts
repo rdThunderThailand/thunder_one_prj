@@ -1,5 +1,6 @@
 import { readAssetListQuery, type AssetSearchParams } from "./assets-list-query.ts";
 
+export const CATEGORY_ASSETS_FILTERS_KEY = "category-assets-filters";
 export const CATEGORY_ASSET_KEYS = ["q", "status", "location_id", "condition", "page", "pageSize"] as const;
 
 export function readCategoryAssetsSearch(categoryId: string, search: string) {

@@ -4,18 +4,23 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/lovable/button";
 import { ArrowLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
+import type { AssetCategory } from "../../domain/asset-category";
 import { categoryDetailHref } from "../../domain/category-detail";
 import { useCategoryDetail } from "../../hooks/use-category-detail";
 import { useCategoryListData } from "../../hooks/use-category-list-data";
+import type { SectionSeed } from "../../services/assets-list-seed";
+import type { CategoryDetailFirstData } from "../../services/category-first-data";
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { CategoriesWorkspace } from "./CategoriesWorkspace";
 import { EditCategoryForm } from "./EditCategoryForm";
 import { CategoryEditFormLoading } from "./CategoryEditLoading";
 
-export function EditCategoryView({ context, categoryId }: { context: string; categoryId: string }) {
-  const detail = useCategoryDetail(context, categoryId);
-  const parents = useCategoryListData(context);
+export function EditCategoryView({ context, categoryId, firstData, parentsSeed }: {
+  context: string; categoryId: string; firstData?: CategoryDetailFirstData; parentsSeed?: SectionSeed<AssetCategory[]>;
+}) {
+  const detail = useCategoryDetail(context, categoryId, firstData?.detail);
+  const parents = useCategoryListData(context, parentsSeed);
   const href = categoryDetailHref(categoryId);
   let state;
   if (detail.error?.status === 400 || detail.error?.status === 404) {

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { AssetCategoryDetail, CategoryReadResult, CategoryStatus } from "../domain/asset-category";
 import { getCategory } from "../services/asset-categories-api";
+import type { SectionSeed } from "../services/assets-list-seed";
+import { seededRead } from "../services/seeded-read";
 import { setAssetCategoryStatus, type CategoryStatusFailure } from "../services/asset-category-status";
 
 interface Snapshot {
@@ -10,7 +12,9 @@ interface Snapshot {
 }
 
 /** The route keys this hook's owner by tenant, user and category ID. */
-export function useCategoryDetail(context: string, id: string) {
+export function useCategoryDetail(context: string, id: string, seed?: SectionSeed<AssetCategoryDetail>) {
+  // Refreshing the route sends new first data; an open page keeps what it started with.
+  const [first] = useState(seed);
   const [version, setVersion] = useState(0);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [sending, setSending] = useState(false);
@@ -27,7 +31,7 @@ export function useCategoryDetail(context: string, id: string) {
   useEffect(() => {
     let alive = true;
     const controller = new AbortController();
-    void getCategory(context, id, controller.signal).then((result) => {
+    void seededRead(first, `${context}:${id}`, () => getCategory(context, id, controller.signal)).then((result) => {
       if (alive) setSnapshot({ version, result });
     }).catch(() => {
       if (alive && !controller.signal.aborted) setSnapshot({ version, result: {
@@ -35,7 +39,7 @@ export function useCategoryDetail(context: string, id: string) {
       } });
     });
     return () => { alive = false; controller.abort(); };
-  }, [context, id, version]);
+  }, [context, id, version, first]);
 
   useEffect(() => {
     if (!sending) return;

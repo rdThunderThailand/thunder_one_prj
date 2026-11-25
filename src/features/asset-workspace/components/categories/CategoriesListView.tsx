@@ -6,10 +6,11 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/lovable/button";
 import { PlusIcon } from "@/components/ui/icons";
-import type { CategoryListQuery, CategorySortKey } from "../../domain/asset-category";
+import type { AssetCategory, CategoryListQuery, CategorySortKey } from "../../domain/asset-category";
 import { categoryListView } from "../../domain/category-list";
 import { useCategoryListData } from "../../hooks/use-category-list-data";
 import { useCategoryListUrl } from "../../hooks/use-category-list-url";
+import type { SectionSeed } from "../../services/assets-list-seed";
 import { AccessDeniedState, EmptyState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { CategoriesFilters } from "./CategoriesFilters";
@@ -20,9 +21,9 @@ import { CategoriesPaginationLoading, CategoriesTableLoading } from "./Categorie
 
 const defaults: CategoryListQuery = { q: "", sort: "default", direction: "asc", page: 1, pageSize: 10, expanded: [] };
 
-export function CategoriesListView({ context }: { context: string }) {
+export function CategoriesListView({ context, seed }: { context: string; seed?: SectionSeed<AssetCategory[]> }) {
   const url = useCategoryListUrl();
-  const resource = useCategoryListData(context);
+  const resource = useCategoryListData(context, seed);
   const query = url.parsed.success ? url.parsed.data : defaults;
   const view = useMemo(() => categoryListView(resource.data ?? [], query), [resource.data, query]);
   const denied = resource.error?.status === 403;
