@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ChevronDownIcon, PlusIcon, SparklesIcon } from "@/components/ui/icons";
+import { PlusIcon, SparklesIcon } from "@/components/ui/icons";
 import { getSession } from "@/features/auth/services/get-session";
 import { OverviewDashboard } from "@/features/media-workspace/overview";
 
@@ -33,7 +33,6 @@ export default async function OverviewPage() {
             >
               <PlusIcon className="h-3.5 w-3.5" />
               Create
-              <ChevronDownIcon className="h-3 w-3" />
             </Link>
           </>
         }
