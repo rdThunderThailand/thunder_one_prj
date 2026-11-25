@@ -31,6 +31,7 @@ export function AssignDetailsForm({ context, flow, asset, rules }: {
           onTab={flow.chooseTab}
           target={flow.target}
           onTarget={flow.setTarget}
+          keptTrees={flow.keptTrees}
         />
       </Card>
       <Card className="space-y-3 p-4">

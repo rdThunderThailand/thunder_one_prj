@@ -7,6 +7,7 @@ import { locationTrail } from "../../domain/asset-profile";
 import { assignOrigin, profileHref } from "../../domain/assignment-assign";
 import { assetReturnBlock, returnOutcomes } from "../../domain/assignment-return";
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { ErrorState } from "../states/ErrorState";
 import { ActionFooter } from "./ActionFooter";
 import { ActionLayout, AssignFlowCrumb, AssignFlowTitle } from "./AssignFlowHeader";
@@ -21,8 +22,10 @@ import { useReturnFlow, type ReturnFlow } from "./use-return-flow";
 export const RETURN_TITLE = { title: "Return Asset", subtitle: "Return this asset from its current custodian." };
 const denied = (code?: string) => code === "PERMISSION_DENIED" || code === "UNAUTHENTICATED";
 
-export function ReturnFlowView({ context, assetId, from }: { context: string; assetId: string; from?: string }) {
-  const flow = useReturnFlow(context, assetId);
+export function ReturnFlowView({ context, assetId, from, firstData }: {
+  context: string; assetId: string; from?: string; firstData?: ActionFirstData;
+}) {
+  const flow = useReturnFlow(context, assetId, firstData);
   const origin = assignOrigin(from, assetId);
   const body = content(flow, from === "assignments");
   return (

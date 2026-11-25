@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovabl
 import { UserIcon, UsersIcon } from "@/components/ui/icons";
 import type { AssignTarget } from "../../domain/assignment-assign";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
+import type { KeptReferenceTrees } from "../../services/kept-reference-trees";
 import { referenceLabel, type ReferenceItem } from "../../services/registration-selector-contract";
 import { RegistrationReferenceSelect } from "../register-asset/RegistrationReferenceSelect";
 import { RegistrationTreeField } from "../register-asset/RegistrationTreeField";
@@ -22,9 +23,10 @@ function labelFor(target: AssignTarget) {
     target.type === "person" ? "persons" : "orgUnits");
 }
 
-export function CustodianTabs({ context, rules, prefix, tab, onTab, target, onTarget, error }: {
+export function CustodianTabs({ context, rules, prefix, tab, onTab, target, onTarget, error, keptTrees }: {
   context: string; rules: RegistrationOptions["referenceSelectors"]; prefix: string; tab: AssignTarget["type"];
   onTab: (tab: AssignTarget["type"]) => void; target: AssignTarget | null; onTarget: (target: AssignTarget) => void; error?: string;
+  keptTrees: KeptReferenceTrees;
 }) {
   return (
     <Tabs
@@ -61,7 +63,7 @@ export function CustodianTabs({ context, rules, prefix, tab, onTab, target, onTa
             {value === "person" ? (
               <RegistrationReferenceSelect {...field} kind="persons" />
             ) : (
-              <RegistrationTreeField {...field} kind="orgUnits" />
+              <RegistrationTreeField {...field} keptTrees={keptTrees} kind="orgUnits" />
             )}
           </TabsContent>
         );

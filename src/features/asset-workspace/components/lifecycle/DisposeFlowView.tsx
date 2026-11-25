@@ -7,6 +7,7 @@ import { ArrowRightIcon, ChevronRightIcon, TrashIcon } from "@/components/ui/ico
 import { DISPOSE_STEPS, DISPOSE_SUBTITLE, DISPOSE_TITLE } from "../../domain/asset-lifecycle-actions";
 import { profileHref } from "../../domain/assignment-assign";
 import { useDisposeFlow, type DisposeFlow } from "../../hooks/use-dispose-flow";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { ActionLayout, AssignFlowTitle } from "../assignments/AssignFlowHeader";
 import { AssignFlowWorkspace } from "../assignments/AssignFlowWorkspace";
 import { lifecycleWriteText } from "../assignments/assignment-error-text";
@@ -65,10 +66,12 @@ function DisposeFooter({ flow, href }: { flow: DisposeFlow; href: string }) {
   );
 }
 
-export function DisposeFlowView({ context, assetId, from }: { context: string; assetId: string; from?: string }) {
+export function DisposeFlowView({ context, assetId, from, firstData }: {
+  context: string; assetId: string; from?: string; firstData?: ActionFirstData;
+}) {
   const fromAssignments = from === "assignments";
   const href = profileHref(assetId, fromAssignments);
-  const flow = useDisposeFlow(context, assetId, href);
+  const flow = useDisposeFlow(context, assetId, href, firstData);
   const listHref = fromAssignments ? "/asset-workspace/assignments" : "/asset-workspace/assets";
   const name = flow.asset ? `${flow.asset.name} (${flow.asset.assetTag})` : "Asset Profile";
   const waiting = !flow.detail.result || !flow.options.result;

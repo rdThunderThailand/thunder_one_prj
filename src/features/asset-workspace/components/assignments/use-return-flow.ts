@@ -5,14 +5,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { assetReturnBlock, returnBody, returnCondition, returnNeedsReload, RETURN_STEPS } from "../../domain/assignment-return";
 import { ASSIGN_REASON_MAX } from "../../domain/assignment-assign";
 import { useProfileRead } from "../../hooks/use-asset-profile";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { getAssetDetail, getAssetFiles } from "../../services/asset-profile-api";
+import { seededRead } from "../../services/seeded-read";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import { getRecentAssignments, returnAsset } from "../../services/asset-assignments-write";
 import type { ActionSave } from "./SaveAlert";
 import { getAssignOptions } from "./use-assign-flow";
 import { useAssignEvidence } from "./use-assign-evidence";
 
-export function useReturnFlow(context: string, assetId: string) {
+export function useReturnFlow(context: string, assetId: string, firstData?: ActionFirstData) {
+  // Refreshing the route sends new first data; an open form keeps what it started with.
+  const [first] = useState(firstData);
   const router = useRouter();
   const search = useSearchParams();
   const [step, setStep] = useState(0);
@@ -21,8 +25,9 @@ export function useReturnFlow(context: string, assetId: string) {
   const [save, setSave] = useState<ActionSave>({ phase: "idle" });
   const [saved, setSaved] = useState<{ before: AssetDetail; after: AssetDetail } | null>(null);
   const sending = useRef(false);
-  const options = useProfileRead(`${context}:assign-options`, (signal) => getAssignOptions(context, signal));
-  const detail = useProfileRead(`${context}:${assetId}:return-detail`, (signal) => getAssetDetail(context, assetId, signal));
+  const options = useProfileRead(`${context}:assign-options`, (signal) => seededRead(first?.options, context, () => getAssignOptions(context, signal)));
+  const detail = useProfileRead(`${context}:${assetId}:return-detail`,
+    (signal) => seededRead(first?.detail, `${context}:${assetId}`, () => getAssetDetail(context, assetId, signal)));
   const recent = useProfileRead(`${context}:${assetId}:return-recent`, (signal) => getRecentAssignments(context, assetId, signal));
   const files = useProfileRead(`${context}:${assetId}:return-files`, (signal) => getAssetFiles(context, assetId, signal));
   const evidence = useAssignEvidence(context, options.result?.ok ? options.result.data : null);

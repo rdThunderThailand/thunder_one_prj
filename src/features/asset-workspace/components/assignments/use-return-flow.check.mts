@@ -57,6 +57,7 @@ vm.runInNewContext(compiled, { exports, AbortController, require: (name: string)
       return new Promise<AssignResult>((resolve) => { finish = resolve; });
     },
   };
+  if (name === "../../services/seeded-read") return { seededRead() {} };
   if (name === "./use-assign-flow") return { getAssignOptions() {} };
   if (name === "./use-assign-evidence") return { useAssignEvidence: () => evidence };
   if (name.startsWith("../../domain/")) return require(fileURLToPath(new URL(`${name}.ts`, import.meta.url)));

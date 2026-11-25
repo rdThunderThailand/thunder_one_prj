@@ -4,7 +4,11 @@ import { useRef, useState } from "react";
 import type { AssignTarget } from "../../domain/assignment-assign";
 import { conditionBlocksTransfer, isCurrentHolder, TRANSFER_STEPS, transferBody } from "../../domain/assignment-transfer";
 import { useProfileRead } from "../../hooks/use-asset-profile";
+import { loadReferenceRows } from "../../hooks/use-reference-tree";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { getAssetDetail, getAssetFiles } from "../../services/asset-profile-api";
+import { keepReferenceTrees } from "../../services/kept-reference-trees";
+import { seededRead } from "../../services/seeded-read";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import { getRecentAssignments, transferAsset } from "../../services/asset-assignments-write";
 import type { ActionSave } from "./SaveAlert";
@@ -14,7 +18,11 @@ import { useAssignEvidence } from "./use-assign-evidence";
 export type TransferLocation = { id: string; name: string };
 
 /** FE 03 state. Input survives a Reload of the asset. Condition starts as the asset's own condition. */
-export function useTransferFlow(context: string, assetId: string) {
+export function useTransferFlow(context: string, assetId: string, firstData?: ActionFirstData) {
+  // Refreshing the route sends new first data; an open form keeps what it started with.
+  const [first] = useState(firstData);
+  // Location and organizational unit lists: Back shows them again without another read.
+  const [keptTrees] = useState(() => keepReferenceTrees((kind) => loadReferenceRows(context, kind, new AbortController().signal)));
   const [step, setStep] = useState(0);
   const [target, setTarget] = useState<AssignTarget | null>(null);
   const [tab, setTab] = useState<AssignTarget["type"]>("person");
@@ -24,8 +32,9 @@ export function useTransferFlow(context: string, assetId: string) {
   const [save, setSave] = useState<ActionSave>({ phase: "idle" });
   const [saved, setSaved] = useState<{ before: AssetDetail; after: AssetDetail } | null>(null);
   const sending = useRef(false);
-  const options = useProfileRead(`${context}:assign-options`, (signal) => getAssignOptions(context, signal));
-  const detail = useProfileRead(`${context}:${assetId}:transfer-detail`, (signal) => getAssetDetail(context, assetId, signal));
+  const options = useProfileRead(`${context}:assign-options`, (signal) => seededRead(first?.options, context, () => getAssignOptions(context, signal)));
+  const detail = useProfileRead(`${context}:${assetId}:transfer-detail`,
+    (signal) => seededRead(first?.detail, `${context}:${assetId}`, () => getAssetDetail(context, assetId, signal)));
   const recent = useProfileRead(`${context}:${assetId}:transfer-recent`, (signal) => getRecentAssignments(context, assetId, signal));
   const files = useProfileRead(`${context}:${assetId}:transfer-files`, (signal) => getAssetFiles(context, assetId, signal));
   const evidence = useAssignEvidence(context, options.result?.ok ? options.result.data : null);
@@ -69,7 +78,7 @@ export function useTransferFlow(context: string, assetId: string) {
   return {
     steps: TRANSFER_STEPS, step, name, next: () => canNext && setStep(step + 1), back: () => setStep(Math.max(0, step - 1)), canNext,
     asset, photo, detail, recent, options, target, setTarget, tab, chooseTab, sameHolder, condition, setCondition, location, setLocation,
-    reason, setReason, evidence, save, saved, confirm, reload,
+    reason, setReason, evidence, save, saved, confirm, reload, keptTrees,
   };
 }
 export type TransferFlow = ReturnType<typeof useTransferFlow>;

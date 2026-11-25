@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/lovable/button";
 import { locationTrail } from "../../domain/asset-profile";
 import { actionHref, assignOrigin, profileHref } from "../../domain/assignment-assign";
 import { assetTransferBlock, transferBlockText, transferOutcomes } from "../../domain/assignment-transfer";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
 import { ActionFooter } from "./ActionFooter";
@@ -23,8 +24,10 @@ const denied = (code?: string) => code === "PERMISSION_DENIED" || code === "UNAU
 export const TRANSFER_TITLE = { title: "Transfer Asset", subtitle: "Transfer this asset to a new custodian." };
 
 /** FE 03 Transfer flow: `/assignments/{id}/transfer` from the FE 01 row menu, `/assets/{id}/transfer` from the profile. */
-export function TransferFlowView({ context, assetId, from }: { context: string; assetId: string; from?: string }) {
-  const flow = useTransferFlow(context, assetId);
+export function TransferFlowView({ context, assetId, from, firstData }: {
+  context: string; assetId: string; from?: string; firstData?: ActionFirstData;
+}) {
+  const flow = useTransferFlow(context, assetId, firstData);
   const origin = assignOrigin(from, assetId);
   const fromAssignments = from === "assignments";
   const body = content(context, flow, fromAssignments);
