@@ -18,7 +18,7 @@ import type { CompositionStatus } from "../types";
 import { applyPlaybackToAll, durationEditKey, keepStoredIds, upsertBinding, type ZoneBindingDraft, type ZonePlayback } from "../zone-bindings";
 import { useCompositionEditorData } from "../hooks/useCompositionEditorData";
 import { useCompositionPreview } from "../hooks/useCompositionPreview";
-import { useCompositionSave } from "../hooks/useCompositionSave";
+import { savedCompositionSnapshot, useCompositionSave, type CompositionSnapshot } from "../hooks/useCompositionSave";
 import { useEditorLayout } from "../hooks/useEditorLayout";
 import { settingsEditKey, useZoneEditGuard, zoneEditKey } from "../hooks/useZoneEditGuard";
 import type { EditorSnapshot } from "../hooks/useZoneHistory";
@@ -34,6 +34,7 @@ import { validateZones } from "@/features/media-workspace/layouts/geometry";
 import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
 import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
 import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
+import { useEditorLifecycle } from "@/features/media-workspace/editor-lifecycle/useEditorLifecycle";
 const LIST_PATH = "/media-workspace/layouts";
 export function CompositionEditorPage({
   compositionId,
@@ -55,12 +56,10 @@ export function CompositionEditorPage({
   const [status, setStatus] = useState<CompositionStatus>("draft");
   const [revision, setRevision] = useState<number | null>(null);
   const [bindings, setBindings] = useState<ZoneBindingDraft[]>([]);
-  const [initialSnapshot, setInitialSnapshot] = useState("");
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [previewOpen, setPreviewOpen] = useState(initialPreview);
   const [loading, setLoading] = useState(!!compositionId);
   const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
-  const [confirmLeave, setConfirmLeave] = useState(false);
   const [namingTemplate, setNamingTemplate] = useState(false);
   const [templateSavedName, setTemplateSavedName] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -111,41 +110,7 @@ export function CompositionEditorPage({
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [compositionId]);
-  useEffect(() => {
-    if (!compositionId) return;
-    let alive = true;
-    // #223: geometry is part of the load — without it the editor renders the empty Template Picker state.
-    loadCompositionDraft(compositionId)
-      .then((draft) => fetchLayout(draft.detail.layout_id).then((loaded) => ({ draft, loaded })))
-      .then(({ draft, loaded }) => {
-        if (!alive) return;
-        setId(draft.detail.id);
-        setName(draft.detail.name);
-        setLayoutId(draft.detail.layout_id);
-        setStatus(draft.detail.status);
-        setRevision(draft.detail.revision);
-        setFolderId(draft.folderId);
-        setTags(draft.tags);
-        setBindings(draft.bindings);
-        setSavedAt(draft.detail.updated_at ? new Date(draft.detail.updated_at) : null);
-        setInitialSnapshot(draft.snapshot);
-        data.absorbPlaylistDetails(draft.slices);
-        data.setLayouts((current) => [...current.filter((candidate) => candidate.id !== loaded.id), loaded]);
-      })
-      .catch((err) => alive && setLoadError(classifyApiError(err, "โหลด Layout ไม่สำเร็จ")))
-      .finally(() => alive && setLoading(false));
-    return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [compositionId]);
   const preview = useCompositionPreview({ compositionId: id, layout, bindings, ...data });
-  const isDirty = editedZones !== null || layoutSettings !== null || draftSnapshot({ name, layoutId, bindings, folderId, tags }) !== initialSnapshot;
-  // #455: reload / tab close asks first, as the Playlist editor does (ADR 0060).
-  useEffect(() => {
-    if (!isDirty) return;
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [isDirty]);
   // ADR 0087 §1: Undo/Redo restore the raw draft state, keeping the ids a save already stored.
   const restoreSnapshot = (snapshot: EditorSnapshot) => {
     setEditedZones(snapshot.editedZones);
@@ -177,7 +142,7 @@ export function CompositionEditorPage({
     setBlankZones(null); setEditedZones(null); setLayoutSettings(null);
     resetHistory();
   };
-  const { save, run, saving, saveError } = useCompositionSave(
+  const { write, run, busy, runError } = useCompositionSave(
     () => ({
       compositionId: id, name, revision, layoutId, layout, layoutSettings,
       savedZoneIds: new Set((data.layouts.find((c) => c.id === layoutId)?.zones ?? []).flatMap((z) => (z.id ? [z.id] : []))),
@@ -190,32 +155,71 @@ export function CompositionEditorPage({
       setBindings(result.bindings);
       setSavedAt(new Date());
       absorbLayout(result.refreshedLayout, result.layoutId);
-      // #454: what was saved is the new baseline — Publish Changes keeps the editor open after a save.
-      setInitialSnapshot(draftSnapshot({ name, layoutId: result.layoutId, bindings: result.bindings, folderId, tags }));
     },
   );
+  // ADR 0127 §3: a new Composition's baseline is its first render; only a stored row calls `resetBaseline`.
+  const snapshot: CompositionSnapshot = {
+    draft: draftSnapshot({ name, layoutId, bindings, folderId, tags }),
+    pendingGeometry: editedZones !== null || layoutSettings !== null || (blankZones !== null && !layoutId),
+  };
+  const lifecycle = useEditorLifecycle({
+    snapshot, hasRow: id != null, write, savedSnapshot: savedCompositionSnapshot, fallbackError: "บันทึก Layout ไม่สำเร็จ",
+    // ADR 0127 §5: Reload also drops this tab's geometry edits and undo history, so it shows the other tab's version.
+    reload: async () => {
+      setEditedZones(null); setLayoutSettings(null); setBlankZones(null); resetHistory();
+      await loadDraft(id ?? compositionId!);
+    },
+  });
+  const isBusy = lifecycle.isSaving || busy;
+  // #223: geometry is part of the load — without it the editor renders the empty Template Picker state.
+  const loadDraft = (targetId: string, isAlive: () => boolean = () => true) =>
+    loadCompositionDraft(targetId)
+      .then((draft) => fetchLayout(draft.detail.layout_id).then((loaded) => ({ draft, loaded })))
+      .then(({ draft, loaded }) => {
+        if (!isAlive()) return;
+        setId(draft.detail.id);
+        setName(draft.detail.name);
+        setLayoutId(draft.detail.layout_id);
+        setStatus(draft.detail.status);
+        setRevision(draft.detail.revision);
+        setFolderId(draft.folderId);
+        setTags(draft.tags);
+        setBindings(draft.bindings);
+        setSavedAt(draft.detail.updated_at ? new Date(draft.detail.updated_at) : null);
+        lifecycle.resetBaseline({ draft: draft.snapshot, pendingGeometry: false });
+        data.absorbPlaylistDetails(draft.slices);
+        data.setLayouts((current) => [...current.filter((candidate) => candidate.id !== loaded.id), loaded]);
+      });
+  useEffect(() => {
+    if (!compositionId) return;
+    let alive = true;
+    loadDraft(compositionId, () => alive)
+      .catch((err) => alive && setLoadError(classifyApiError(err, "โหลด Layout ไม่สำเร็จ")))
+      .finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compositionId]);
   const affected = useAffectedPrograms("compositions", id);
   const [publishDialog, setPublishDialog] = useState<"changes" | "list" | null>(null);
   // ADR 0078 §6: unsaved edits are saved first, and a failed save stops the flow before any re-publish.
   const publishCompositionChanges = async () => {
-    if (isDirty) {
-      let isSaved = false;
-      await save(() => { isSaved = true; }, "บันทึก Layout ไม่สำเร็จ");
-      if (!isSaved) throw new Error("save failed");
-    }
+    if (!(await lifecycle.ensureSaved())) throw new Error("save failed");
     return publishChanges("compositions", id!);
   };
-  // ADR 0116 §6: the publish prep dialog's one-click fix; same flag pattern as Publish Changes above.
+  // ADR 0116 §6: the publish prep dialog's one-click fix. Activation is a write of its own (ADR 0127 §11):
+  // a failed one shows in the `run` error slot and never un-saves the draft; `isActivated` is the success flag.
   const saveForPublish = async (activate: boolean): Promise<string | null> => {
-    let savedId: string | null = null;
-    await save(async (result) => {
-      if (activate) {
+    const result = await lifecycle.save();
+    if (!result) return null;
+    let isActivated = !activate;
+    if (activate) {
+      await run(async () => {
         await setCompositionStatus(result.compositionId, "active");
         setStatus("active");
-      }
-      savedId = result.compositionId;
-    }, activate ? "เปิดใช้งาน Layout ไม่สำเร็จ" : "บันทึก Layout ไม่สำเร็จ");
-    return savedId;
+        isActivated = true;
+      }, "เปิดใช้งาน Layout ไม่สำเร็จ");
+    }
+    return isActivated ? result.compositionId : null;
   };
   const handleForkLayout = async () => {
     if (!id) return;
@@ -271,7 +275,7 @@ export function CompositionEditorPage({
         name={name}
         onNameChange={setName}
         savedAt={savedAt}
-        saving={saving}
+        saving={isBusy}
         canPreview={!!layout}
         status={status}
         referenceResolution={settings.referenceResolution} aspectRatio={settings.aspectRatio}
@@ -280,21 +284,18 @@ export function CompositionEditorPage({
         hasZoneOverlap={validateZones(layout?.zones ?? []).some((error) => error.kind === "overlap")}
         isComplete={view.complete}
         unboundZoneNames={view.unboundZoneNames}
-        onBack={() => (isDirty ? setConfirmLeave(true) : router.push(LIST_PATH))}
+        onBack={() => lifecycle.requestLeave(LIST_PATH)}
         onPreview={() => setPreviewOpen(true)}
         canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo}
-        hasUnsavedChanges={isDirty}
+        hasUnsavedChanges={lifecycle.isDirty}
         onPublish={(savedId = id ?? undefined) => router.push(`/media-workspace/program/create?compositionId=${savedId}`)}
         onSaveForPublish={saveForPublish}
         affectedCount={affected.programs.length}
         onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
         onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
-        onSaveDraft={() => void save(() => router.push(LIST_PATH), "บันทึก Layout ไม่สำเร็จ")}
+        onSaveDraft={() => void lifecycle.save().then((result) => result && router.push(LIST_PATH))}
         onSaveAsTemplate={() => { setTemplateSavedName(null); setNamingTemplate(true); }}
-        onActivate={() => void save(async (result) => {
-          await setCompositionStatus(result.compositionId, "active");
-          router.push(LIST_PATH);
-        }, "เปิดใช้งาน Layout ไม่สำเร็จ")}
+        onActivate={() => void saveForPublish(true).then((savedId) => savedId && router.push(LIST_PATH))}
       />
       </div>
       {publishDialog && (
@@ -307,18 +308,17 @@ export function CompositionEditorPage({
         />
       )}
       <CompositionEditorOverlays
-        confirmLeave={confirmLeave}
-        onStay={() => setConfirmLeave(false)}
-        onLeave={() => router.push(LIST_PATH)}
         namingTemplate={namingTemplate} templateDefaultName={name}
         takenTemplateNames={data.layouts.flatMap((c) => (c.kind === "template" ? [c.name] : [])).concat(templateSavedName ?? [])}
         onCloseNaming={() => setNamingTemplate(false)}
         onConfirmTemplate={saveAsTemplate}
         templateSavedName={templateSavedName}
-        saveError={saveError} sharedTemplateUsage={sharedTemplateUsage} saving={saving}
+        saveError={lifecycle.saveError ?? runError} sharedTemplateUsage={sharedTemplateUsage} saving={isBusy}
+        conflict={lifecycle.conflict} onReloadConflict={lifecycle.reloadFromServer}
         onForkLayout={handleForkLayout}
       />
       {confirmDialog}
+      {lifecycle.leaveDialog}
       <PlaybackPreviewDialog
         open={previewOpen} onClose={() => setPreviewOpen(false)}
         zones={preview.playbackPreviewZones} assets={data.assets}
@@ -328,9 +328,9 @@ export function CompositionEditorPage({
         background={settings.background}
         layoutName={name}
         canOpenFullPreview={!!id && !!layout}
-        onOpenFullPreview={() => preview.openFullPreview(isDirty)}
+        onOpenFullPreview={() => preview.openFullPreview(lifecycle.isDirty)}
       />
-      <LayoutTemplatePicker open={pickerOpen} folders={data.folders} tagNames={tags ?? []} hasUnsavedChanges={isDirty} onClose={() => setPickerOpen(false)} onStarted={() => window.location.reload()} />
+      <LayoutTemplatePicker open={pickerOpen} folders={data.folders} tagNames={tags ?? []} hasUnsavedChanges={lifecycle.isDirty} onClose={() => setPickerOpen(false)} onStarted={() => window.location.reload()} />
       <div className="min-h-0 flex-1 overflow-x-auto">
       <div className="flex h-full min-w-[1060px] flex-col">
         {layout && (
@@ -374,7 +374,7 @@ export function CompositionEditorPage({
                   folderId={folderId ?? null} onFolderChange={setFolderId}
                   tags={tags ?? []} onTagsChange={setTags} settings={settings}
                   onSettingsChange={(next) => beginZoneEdit(settingsEditKey(settings, next)) && setLayoutSettings(next)}
-                  sharedTemplateUsage={sharedTemplateUsage} disabled={saving}
+                  sharedTemplateUsage={sharedTemplateUsage} disabled={isBusy}
                 />
               </section>
               <section className="rounded-lg border border-border bg-card p-3"><ZoneOverview zones={layout.zones} bindings={bindings} unboundZoneIds={view.unboundZoneIds} activeZoneId={view.selectedZoneId} referenceResolution={settings.referenceResolution} onSelectZone={view.setSelectedZoneId} /></section>

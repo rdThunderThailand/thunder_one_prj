@@ -1,7 +1,8 @@
 "use client";
 
-// The bridge between the editor's draft and save-composition.ts: holds the in-flight and
-// error state, calls the write sequence, and folds the result back into the draft.
+// The bridge between the editor's draft and save-composition.ts: `write` is the adapter
+// `useEditorLifecycle` calls (ADR 0127), `run` carries the editor's other writes with their
+// own in-flight flag and error slot.
 //
 // Paired with save-composition.ts by ticket 25 so ticket 28 has both halves of the save path
 // in files of its own.
@@ -9,35 +10,44 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { classifyApiError } from "@/lib/api/api-error";
+import type { CompositionDraftFields } from "../load-composition-draft";
 import { persistComposition, type PersistInput, type PersistResult } from "../save-composition";
 
-export function useCompositionSave(buildInput: () => PersistInput, applyResult: (result: PersistResult) => void) {
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+/** What the editor compares against its baseline: the draft fields, plus whether geometry edits are pending. */
+export type CompositionSnapshot = { draft: CompositionDraftFields; pendingGeometry: boolean };
 
-  /** Any write the editor makes, sharing one in-flight flag and one error slot. */
+/** `persistComposition` rewrites `layoutId` and `bindings` while it saves (idempotency keys, inline Playlist
+ *  ids, a created Layout), so the saved baseline is built from its result, not from the start (#454, ADR 0127 §3). */
+export function savedCompositionSnapshot(start: CompositionSnapshot, result: PersistResult): CompositionSnapshot {
+  return { draft: { ...start.draft, layoutId: result.layoutId, bindings: result.bindings }, pendingGeometry: false };
+}
+
+export function useCompositionSave(buildInput: () => PersistInput, applyResult: (result: PersistResult) => void) {
+  const [busy, setBusy] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+
+  /** The editor's writes other than Save (fork Layout, Save as Template, activation), sharing one in-flight flag and one error slot. */
   const run = async (operation: () => Promise<void>, fallback: string) => {
-    setSaveError(null);
-    setSaving(true);
+    setRunError(null);
+    setBusy(true);
     try {
       await operation();
     } catch (err) {
-      setSaveError(classifyApiError(err, fallback).message);
+      setRunError(classifyApiError(err, fallback).message);
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   };
 
-  const save = (after: (result: PersistResult) => Promise<void> | void, fallback: string) =>
-    run(async () => {
-      const result = await persistComposition(buildInput());
-      applyResult(result);
-      // The core save succeeded — `applyResult` has marked the editor saved. A filing step
-      // (folder move, tags) that failed rides in `warnings`: a toast survives the navigation
-      // `after` may do, where the header's error slot would not.
-      if (result.warnings.length > 0) toast.warning(result.warnings.join(" · "));
-      await after(result);
-    }, fallback);
+  const write = async (): Promise<PersistResult> => {
+    const result = await persistComposition(buildInput());
+    applyResult(result);
+    // The core save succeeded — `applyResult` has marked the editor saved. A filing step
+    // (folder move, tags) that failed rides in `warnings`: a toast survives the navigation
+    // the caller may do, where the header's error slot would not.
+    if (result.warnings.length > 0) toast.warning(result.warnings.join(" · "));
+    return result;
+  };
 
-  return { save, run, saving, saveError };
+  return { write, run, busy, runError };
 }

@@ -1,18 +1,15 @@
 "use client";
 
-// Everything the editor layers on top of its canvas: the leave confirm, the Save-as-Template
-// naming dialog, the save-error banner, and ADR 0052 §3's shared-Template fork card. Split out
+// Everything the editor layers on top of its canvas: the Save-as-Template naming dialog, the
+// save-error banner, the revision-conflict card, and ADR 0052 §3's shared-Template fork card. Split out
 // of CompositionEditorPage only to keep that file under the 300-line ceiling — the handlers
 // still live there because they touch the draft.
 
 import { Button } from "@/components/ui/Button";
-import { UnsavedLeaveConfirm } from "@/features/media-workspace/editor-lifecycle/components/UnsavedLeaveConfirm";
+import { RevisionConflictCard } from "@/features/media-workspace/editor-lifecycle/components/RevisionConflictCard";
 import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";
 
 export function CompositionEditorOverlays({
-  confirmLeave,
-  onStay,
-  onLeave,
   namingTemplate,
   templateDefaultName,
   takenTemplateNames,
@@ -20,13 +17,12 @@ export function CompositionEditorOverlays({
   onConfirmTemplate,
   templateSavedName,
   saveError,
+  conflict,
+  onReloadConflict,
   sharedTemplateUsage,
   saving,
   onForkLayout,
 }: {
-  confirmLeave: boolean;
-  onStay: () => void;
-  onLeave: () => void;
   namingTemplate: boolean;
   templateDefaultName: string;
   takenTemplateNames: string[];
@@ -34,14 +30,14 @@ export function CompositionEditorOverlays({
   onConfirmTemplate: (name: string) => void;
   templateSavedName: string | null;
   saveError: string | null;
+  conflict: string | null;
+  onReloadConflict: () => void;
   sharedTemplateUsage: number;
   saving: boolean;
   onForkLayout: () => void;
 }) {
   return (
     <>
-      {confirmLeave && <UnsavedLeaveConfirm onStay={onStay} onLeave={onLeave} />}
-
       {namingTemplate && (
         <SaveAsTemplateDialog
           defaultName={templateDefaultName}
@@ -54,6 +50,12 @@ export function CompositionEditorOverlays({
       {saveError && (
         <div className="shrink-0 border-b border-error/30 bg-error-muted px-4 py-2">
           <p className="text-sm text-error">{saveError}</p>
+        </div>
+      )}
+
+      {conflict && (
+        <div className="shrink-0 px-4 py-2">
+          <RevisionConflictCard message={conflict} onReload={onReloadConflict} />
         </div>
       )}
 
