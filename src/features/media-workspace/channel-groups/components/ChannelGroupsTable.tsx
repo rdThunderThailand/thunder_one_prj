@@ -1,13 +1,9 @@
 "use client";
 
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { ShareNodesIcon, UsersIcon } from "@/components/ui/icons";
+import { mediaStatus } from "../../media-status";
 import type { ChannelGroup } from "../types";
-
-const STATUS_BADGE: Record<ChannelGroup["status"], { label: string; color: BadgeColor }> = {
-  active: { label: "Active", color: "green" },
-  disabled: { label: "Inactive", color: "zinc" },
-};
 
 const MODE_ICON = { synchronized: ShareNodesIcon, independent: UsersIcon } as const;
 
@@ -40,7 +36,7 @@ export function ChannelGroupsTable({
         </thead>
         <tbody>
           {groups.map((group) => {
-            const status = STATUS_BADGE[group.status];
+            const status = mediaStatus(group.status === "disabled" ? "inactive" : group.status);
             const ModeIcon = MODE_ICON[group.playback_mode];
             const selected = group.id === selectedId;
             return (

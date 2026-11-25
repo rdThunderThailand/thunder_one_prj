@@ -184,6 +184,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
       <PlaylistEditorHeader
         name={present.name}
         status={row.status}
+        inUseCount={row.inUseCount}
         savedLabel={savedLabel}
         lastUpdatedAt={row.lastSavedAt}
         hasItems={present.items.length > 0}

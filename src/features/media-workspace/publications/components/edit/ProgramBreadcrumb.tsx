@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { DISPLAY_STATUS_LABELS } from "../../publication-list-display";
+import { mediaStatus } from "../../../media-status";
 import type { PublicationDisplayStatus } from "../../types";
 
 /** The Edit page's first row: where you are, plus the Program's status (the title is in the Topbar). */
@@ -23,10 +23,11 @@ export function ProgramBreadcrumb({ listHref, name, status }: { listHref: string
         <span className="font-medium text-foreground">Edit</span>
       </nav>
       <Badge
-        variant={status === "live" ? "success" : "neutral"}
-        className="rounded-full px-2 py-0 text-[9px]"
+        variant="pill"
+        color={mediaStatus(status).color}
+        className="px-2 py-0 text-[9px]"
       >
-        {DISPLAY_STATUS_LABELS[status]}
+        {mediaStatus(status).label}
       </Badge>
     </div>
   );

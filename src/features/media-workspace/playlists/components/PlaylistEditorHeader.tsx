@@ -2,11 +2,14 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { StatusBadge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
+import { Tag } from "@/components/ui/Tag";
 import { CheckIcon, EditIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
 import type { PublishPrep } from "@/features/media-workspace/publish-changes/PublishPrepDialog";
 import { SaveSplitButton } from "@/features/media-workspace/publish-changes/SaveSplitButton";
+import { mediaStatus } from "@/features/media-workspace/media-status";
+import { playlistInUseLabel } from "@/features/media-workspace/playlists/status-display";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 
@@ -14,6 +17,7 @@ import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 export function PlaylistEditorHeader({
   name,
   status,
+  inUseCount,
   savedLabel,
   lastUpdatedAt,
   hasItems,
@@ -35,6 +39,8 @@ export function PlaylistEditorHeader({
 }: {
   name: string;
   status: string;
+  /** Programs holding this Playlist (ADR 0120); the tag shows only when above zero. */
+  inUseCount?: number;
   savedLabel: string;
   lastUpdatedAt: Date | null;
   hasItems: boolean;
@@ -67,6 +73,8 @@ export function PlaylistEditorHeader({
       : `${shortcutAria(shortcutPlatform, "y")} ${shortcutAria(shortcutPlatform, "z", { shift: true })}`;
   const [editing, setEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const badge = mediaStatus(status);
+  const inUse = playlistInUseLabel({ in_use_count: inUseCount });
   const displayName = name.trim() || "Untitled Playlist";
   const isUnsaved = savedLabel.includes("unsaved") || savedLabel.includes("not saved");
   // Leaving the field keeps what was typed, so a Save or Publish click that blurs it sees the new
@@ -138,7 +146,8 @@ export function PlaylistEditorHeader({
                 <h1 className="min-w-0 break-words text-lg font-semibold leading-tight text-foreground">
                   {displayName}
                 </h1>
-                <StatusBadge status={status} label={status[0].toUpperCase() + status.slice(1)} />
+                <Badge variant="pill" color={badge.color}>{badge.label}</Badge>
+                {inUse && <Tag>{inUse}</Tag>}
                 <button
                   type="button"
                   onClick={() => setEditing(true)}

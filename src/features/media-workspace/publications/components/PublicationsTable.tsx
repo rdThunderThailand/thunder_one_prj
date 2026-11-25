@@ -1,28 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Badge, type BadgeProps } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { Tag } from "@/components/ui/Tag";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import {
-  DISPLAY_STATUS_LABELS,
   deliveryView,
   formatNextAiring,
   formatScheduleRange,
   formatTargetSummary,
 } from "../publication-list-display";
-import type { PublicationDisplayStatus, PublicationListItem } from "../types";
+import { mediaStatus } from "../../media-status";
+import type { PublicationListItem } from "../types";
 import { PublicationRowActions } from "./PublicationRowActions";
-
-const BADGE_VARIANT: Record<PublicationDisplayStatus, BadgeProps["variant"]> = {
-  draft: "outline",
-  publishing: "info",
-  failed: "danger",
-  scheduled: "warning",
-  live: "success",
-  ended: "neutral",
-};
 
 const HEADERS = ["Program", "Status", "Target", "Schedule", "Deployment / Progress", "Last Updated", "Created by"];
 
@@ -109,10 +100,11 @@ export function PublicationsTable({
                 <td className="px-3 py-2.5">
                   {item.display_status && (
                     <Badge
-                      variant={BADGE_VARIANT[item.display_status]}
-                      className="rounded-full px-2 py-0 text-[9px]"
+                      variant="pill"
+                      color={mediaStatus(item.display_status).color}
+                      className="px-2 py-0 text-[9px]"
                     >
-                      {DISPLAY_STATUS_LABELS[item.display_status]}
+                      {mediaStatus(item.display_status).label}
                     </Badge>
                   )}
                 </td>

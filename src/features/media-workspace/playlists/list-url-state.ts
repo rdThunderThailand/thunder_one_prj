@@ -2,7 +2,7 @@
 // string so refresh, back/forward and copy-paste all reproduce the same view — see
 // docs/adr/0027-playlist-list-url-state.md. Kept pure so it's checkable without React.
 
-import { PLAYLIST_STATUSES, type PlaylistStatus } from "./types/index.ts";
+import { PLAYLIST_DISPLAY_STATUSES } from "./status-display.ts";
 import {
   CONTENT_TYPES,
   SORT_KEYS,
@@ -48,7 +48,7 @@ export function readListState(params: URLSearchParams): ListState {
   const tagId = params.get("tag");
   const collection: Collection = tagId ? "all" : params.get("folder") || "all";
   const query = params.get("q") ?? "";
-  const status = oneOf<PlaylistStatus>(PLAYLIST_STATUSES, params.get("status")) ?? "all";
+  const status = oneOf(PLAYLIST_DISPLAY_STATUSES, params.get("status")) ?? "all";
   const type = oneOf<ContentType>(CONTENT_TYPES, params.get("type")) ?? "all";
 
   // Key and dir travel together: an unrecognised (or absent) key resets dir too, so a
