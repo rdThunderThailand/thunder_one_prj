@@ -4,7 +4,8 @@ import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { useAppLocale } from "@/lib/use-app-locale";
 import { TIMEZONES, WEEKDAYS, formatDmy, formatMonthDays, shiftYmd, ymdDow } from "../../../schedule";
-import { airsOn, upcomingDays, windowLabel, type ScheduleDraft } from "../../../schedule-preset";
+import { airsOn, upcomingDays } from "../../../schedule-airing";
+import { toStoredSchedule, windowLabel, type ScheduleDraft } from "../../../schedule-preset";
 
 const LIST_LIMIT = 10;
 const WEEKDAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" });
@@ -33,9 +34,10 @@ function daysLine(draft: ScheduleDraft): { label: string; value: string } {
 export function SchedulePreviewPane({ draft, today, programName }: { draft: ScheduleDraft; today: string; programName: string }) {
   const locale = useAppLocale();
   const [view, setView] = useState<"list" | "week">("list");
-  const [weekOf, setWeekOf] = useState(() => mondayOf(upcomingDays(draft, today, 1)[0] ?? today));
+  const stored = toStoredSchedule(draft);
+  const [weekOf, setWeekOf] = useState(() => mondayOf((stored ? upcomingDays(stored, today, 1)[0] : undefined) ?? today));
   const daily = draft.allDay ? { start: "00:00", end: "24:00" } : { start: draft.dailyStart, end: draft.dailyEnd };
-  const upcoming = upcomingDays(draft, today, LIST_LIMIT);
+  const upcoming = stored ? upcomingDays(stored, today, LIST_LIMIT) : [];
   const zone = TIMEZONES.find((z) => z.id === draft.timezone)?.label ?? draft.timezone;
   const days = daysLine(draft);
   const isContinuous = draft.mode === "continuous";
@@ -102,7 +104,7 @@ export function SchedulePreviewPane({ draft, today, programName }: { draft: Sche
           </div>
           <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: 7 }, (_, i) => shiftYmd(weekOf, i)).map((ymd) => {
-              const isOn = airsOn(draft, ymd);
+              const isOn = stored ? airsOn(stored, ymd) : false;
               const top = (minutes(daily.start) / 1440) * 100;
               const height = ((minutes(daily.end) - minutes(daily.start)) / 1440) * 100;
               return (
