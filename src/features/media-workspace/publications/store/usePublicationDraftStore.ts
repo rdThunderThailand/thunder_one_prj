@@ -77,7 +77,6 @@ interface PublicationDraftStore extends DraftFields {
    * equals this, so a name the operator typed is never overwritten. */
   lastAutoName: string;
   savedSnapshot: string;
-  explicitlySaved: boolean;
   /** Optimistic-lock counter from the last successful save (docs/adr/0003).
    * `null` until the first save/load — omitting `expected_revision` on that
    * first write is what `media_publication_upsert` treats as "no check". */
@@ -86,7 +85,6 @@ interface PublicationDraftStore extends DraftFields {
    * the operator cannot edit it, so it never enters the dirty check. */
   problemTargets: ProblemTarget[];
   markSaved: (draft?: DraftFields) => void;
-  setExplicitlySaved: (v: boolean) => void;
   setRevision: (revision: number | null) => void;
   setProblemTargets: (targets: ProblemTarget[]) => void;
   /** Replaces the draft with a Publication the caller already fetched, as saved. Leaves `step` to the caller. */
@@ -128,7 +126,6 @@ function emptyDraftState() {
     ...getDefaultDraft(),
     lastAutoName: "",
     savedSnapshot: serializeDraftFields(getDefaultDraft()),
-    explicitlySaved: false,
     revision: null,
     problemTargets: [],
   };
@@ -142,7 +139,6 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
       ...emptyDraftState(),
       // #228: snapshot the request, not edits made while it was in flight.
       markSaved: (draft) => set((s) => ({ savedSnapshot: serializeDraftFields(draft ?? s) })),
-      setExplicitlySaved: (explicitlySaved) => set({ explicitlySaved }),
       setRevision: (revision) => set({ revision }),
       setProblemTargets: (problemTargets) => set({ problemTargets }),
       openDraft: (opened) => set({
@@ -158,7 +154,6 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
         revision: opened.revision,
         problemTargets: opened.problemTargets,
         savedSnapshot: serializeDraftFields(opened),
-        explicitlySaved: true,
       }),
       // No clearStorage(): persist writes the whole new state on set().
       applySeed: (seed, ready) => {
@@ -167,7 +162,6 @@ export const usePublicationDraftStore = create<PublicationDraftStore>()(
           ...getDefaultDraft(),
           lastAutoName: "",
           savedSnapshot: serializeDraftFields(getDefaultDraft()),
-          explicitlySaved: false,
           revision: null,
           problemTargets: [],
           basicInfo: { ...defaultBasicInfo, publicationType },

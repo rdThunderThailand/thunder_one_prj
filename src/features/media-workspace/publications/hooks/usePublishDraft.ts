@@ -71,8 +71,11 @@ export function usePublishDraft() {
   // (media_schedule_conflicts). This is the draft revision optimistic-lock
   // conflict (docs/adr/0003), a different domain entirely.
   const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
+  // ADR 0086 §10: the id a save found dead. Keyed by id, so a save as new or a discard ends it.
+  const [staleDraftId, setStaleDraftId] = useState<string | null>(null);
 
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
+  const isStaleDraft = staleDraftId !== null && staleDraftId === publicationId;
   const idempotencyKey = usePublicationDraftStore((s) => s.idempotencyKey);
   const step = usePublicationDraftStore((s) => s.step);
   const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
@@ -225,9 +228,9 @@ export function usePublishDraft() {
    * which step the user is on: activation is refused without either. On a plain
    * draft save, targets go once Program has been reached — the backend treats a
    * received `targets` as authoritative, so sending an empty array earlier would
-   * wipe targets that were already saved.
+   * wipe targets that were already saved. `asNew` lets a stale id be saved as a new draft.
    */
-  const persistDraft = async (forPublish: boolean): Promise<DraftPersistResult> => {
+  const persistDraft = async (forPublish: boolean, options: { asNew?: boolean } = {}): Promise<DraftPersistResult> => {
     const state = usePublicationDraftStore.getState();
     const policy = draftSavePolicy(state, forPublish);
     // A composition draft may be saved before step 2 picks a Composition — the backend allows it
@@ -256,9 +259,13 @@ export function usePublishDraft() {
       res = await saveBasicInfo(basicForm, state.publicationId, targets, state.revision, state.idempotencyKey);
     } catch (err) {
       // The draft id lives in localStorage forever, but the row it points at can be
-      // deleted (or leave `draft` via cancel/activate) from the /publications page —
-      // which used to brick the wizard until the user hit Cancel. Re-create instead.
+      // deleted (or leave `draft` via cancel/activate) elsewhere. ADR 0086 §10: a new
+      // row only when the operator chose Save as new after reading this message.
       if (state.publicationId && isStaleDraftError(err)) {
+        if (!options.asNew) {
+          setStaleDraftId(state.publicationId);
+          throw new DraftSaveError("draft เดิมถูกลบ ยกเลิก หรือเผยแพร่ไปแล้ว จึงบันทึกลงไปไม่ได้");
+        }
         // Re-minting first: reusing the old key would resolve the retry back to
         // the same dead row instead of creating a fresh draft (docs/adr/0007 media).
         state.resetIdempotencyKey();
@@ -321,13 +328,14 @@ export function usePublishDraft() {
     }
     setSaving(true);
     setError(null);
+    // ADR 0086 §10: once a save found the id stale, the same button reads "Save as new draft".
+    const asNew = isStaleDraft;
     try {
-      const result = await persistDraft(false);
+      const result = await persistDraft(false, { asNew });
       if (result.kind === "saved") router.replace(`/media-workspace/program/create?id=${encodeURIComponent(result.publicationId)}`);
       const complete = requireCompleteDraftSave(result);
       usePublicationDraftStore.getState().markSaved(complete.draft);
-      usePublicationDraftStore.getState().setExplicitlySaved(true);
-      toast.success("บันทึกร่างแล้ว");
+      toast.success(asNew ? "บันทึกเป็น draft ใหม่แล้ว" : "บันทึกร่างแล้ว");
       return complete.publicationId;
     } catch (err) {
       const classified = classifyApiError(err, "Failed to save draft.");
@@ -416,6 +424,7 @@ export function usePublishDraft() {
     canPublish,
     eligibilityChecks,
     persistDraft,
+    isStaleDraft,
     saveStatus,
     setSaveStatus,
     savingNext,
