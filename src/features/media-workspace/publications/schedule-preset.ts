@@ -258,7 +258,7 @@ export function draftToSchedule(draft: ScheduleDraft): PublicationSchedule {
 
 /**
  * The stored shape of a draft the module in schedule-airing.ts can read, or null while it is too
- * incomplete to convert (no start date, or custom dates with no dates). Never throws (ADR 0128 §2).
+ * incomplete to convert (no start date, or custom dates with no dates). Never throws for drafts the editor can produce (times are always HH:MM) (ADR 0128 §2).
  */
 export function toStoredSchedule(draft: ScheduleDraft): PublicationSchedule | null {
   if (draft.mode === "dates" ? draft.dates.length === 0 : !draft.startDate) return null;

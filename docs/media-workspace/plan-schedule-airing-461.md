@@ -27,6 +27,8 @@ Do the steps in order. Run the check named in a step before starting the next on
 
 ### Step 1 — Delete the dead code (ADR 0128 §5)
 
+Done in `aaaf4a43`. grep for the deleted names returns nothing; `schedule.check.mts` passes.
+
 - `schedule.ts`:
   - Delete `AiringState` and `classifyPublicationAiring` (≈ lines 83-118, including the "airing state"
     section comment).
@@ -43,6 +45,8 @@ Do the steps in order. Run the check named in a step before starting the next on
   - `node src/features/media-workspace/publications/schedule.check.mts` passes.
 
 ### Step 2 — `END_OF_DAY` and the module (ADR 0128 §1, §3, §4)
+
+Done in `4fc444c7`. `schedule-airing.check.mts` passes.
 
 - `schedule.ts`: add `export const END_OF_DAY = "23:59";` with a one-line comment: "a daily end that plays
   through the end of the local day in weekly, monthly and custom-dates Schedules (Core
@@ -97,6 +101,8 @@ Do the steps in order. Run the check named in a step before starting the next on
   so far).
 
 ### Step 3 — The adapter and the Draft side (ADR 0128 §2)
+
+Done in `659f9e02`. Every `*.check.mts` under `publications/` passes (38 files).
 
 - `schedule-preset.ts`:
   - Add `toStoredSchedule(draft: ScheduleDraft): PublicationSchedule | null`.
@@ -154,6 +160,8 @@ Do the steps in order. Run the check named in a step before starting the next on
 
 ### Step 4 — `publishNow` (ADR 0128 §6)
 
+Done in `659f9e02`. `tsc --noEmit` clean.
+
 - `hooks/usePublishDraft.ts` (`publishNow`, ≈ lines 341-364): replace the block from
   `// Weekly and monthly ranges…` through the closing `catch {}` with:
   - `const stored = toStoredSchedule(state.schedule);`
@@ -174,6 +182,8 @@ Do the steps in order. Run the check named in a step before starting the next on
 
 ### Step 5 — The editor preview (ADR 0128 §8)
 
+Done in `659f9e02`.
+
 - `components/edit/schedule/SchedulePreviewPane.tsx`:
   - Compute `const stored = toStoredSchedule(draft);` once per render.
   - Replace `upcomingDays(draft, …)` (≈ lines 36, 38) with `stored ? upcomingDays(stored, …) : []`.
@@ -184,6 +194,8 @@ Do the steps in order. Run the check named in a step before starting the next on
 - With a blank start date the preview shows no airing days (ADR 0128 §9). Add no Draft-side fallback.
 
 ### Step 6 — Import paths and the Detail page (ADR 0128 §7)
+
+Done in `4fc444c7` (import paths) and `5dc13ce8` (Detail page, as a local `ScheduleFields` component in the same file). `tsc` and `eslint` clean.
 
 - Change `"../schedule-describe"` / `"../../schedule-describe"` to `schedule-airing` in
   `components/ReviewStep.tsx`, `components/ProgramSummaryRail.tsx`, `components/ScheduleStep.tsx`,
@@ -208,6 +220,8 @@ Do the steps in order. Run the check named in a step before starting the next on
 
 ### Step 7 — Final checks
 
+Done. `grep schedule-describe` is empty; the `"23:59"` grep shows only the four allowed hits; `tsc --noEmit`, `eslint` and `npm run build` pass.
+
 - `grep -rn "schedule-describe" src/` returns nothing.
 - `grep -rn '"23:59"' --include='*.ts' --include='*.tsx' src/features/media-workspace/publications | grep -v check.mts`
   shows exactly:
@@ -222,6 +236,8 @@ Do the steps in order. Run the check named in a step before starting the next on
 - `npm run build` passes. Run it in the background; it is slow.
 
 ## 2. Verification at the user's layer (ask the owner before each browser run)
+
+**Not run yet.** The executor ran no browser checks; each run waits for the owner's go-ahead.
 
 Run the local dev server against develop. Fixtures: develop `a2b2c262` (Weekly Mon–Fri from 2027-06-15) and
 `f3f595e2` `zz-monthly-ui-19` (monthly draft).

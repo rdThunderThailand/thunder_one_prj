@@ -54,7 +54,7 @@ forbids.
 
    No "on air at this minute" function: no screen asks it (YAGNI).
 2. **The Draft enters through one adapter.** `toStoredSchedule(draft): PublicationSchedule | null` in
-   `schedule-preset.ts` never throws. It returns null for the two inputs `draftToSchedule` cannot convert: a
+   `schedule-preset.ts` never throws for drafts the editor can produce (times are always HH:MM). It returns null for the two inputs `draftToSchedule` cannot convert: a
    custom-dates draft with no dates, or any other draft with no start date. `draftToSchedule` keeps its
    contract (valid drafts only). `schedule-preset.ts` keeps the editing side only: presets, `validateDraft`
    (same signature), and the `scheduleToDraft` / `draftToSchedule` round trip. Its own `airsOn`,
@@ -80,7 +80,8 @@ forbids.
 7. **Program Detail page uses the module.** Recurrence uses `describeSchedule`: `title · hours · range`, the
    same line as the wizard's "When to Play", with weekday names on a second line for a weekly Schedule.
    Starts At and Ends At use `scheduleEdges` (`formatDmy(date), time`; "No end date" when open-ended),
-   read in the Schedule's own time zone. `formatDate` stays for `created_at` / `activated_at`.
+   read in the Schedule's own time zone. `formatDate` stays for `created_at` / `activated_at`. Ends At on Program
+   Detail is the configured end, like the wizard; only the schedule-ended label uses `lastAiring`.
 8. **The editor preview keeps its own text.** `daysLine` and `windowLabel` describe what is being typed,
    including drafts that are not valid yet. `describeSchedule` describes what was saved. Only the 23:59
    literal in `windowLabel` changes, to `END_OF_DAY`. The preview's day list and week grid switch to the
@@ -140,5 +141,9 @@ forbids.
     This is a bug from before this ADR.
   - The duplicate `FALLBACK_TIMEZONE` in `overview/todays-schedule.ts` (ADR 0085 §2).
   - The Calendar's occurrence labels (`calendar-day.ts`). They work on occurrences, not Schedules.
+  - The schedule summary line is assembled in four places (`PublicationDetailPage.tsx`,
+    `ProgramSummaryRail.tsx`, `ReviewStep.tsx`, `ScheduleStep.tsx`): `WEEKDAYS.filter(...).join(", ")` and
+    `[title, hours, range].filter(Boolean).join(" · ")`. A shared `scheduleLine(summary)` is the upgrade
+    path, not in this PR.
 - Glossary: `CONTEXT.md` **Schedule** now defines its inclusive last day and the 23:59 rule.
 - Delivery plan: `docs/media-workspace/plan-schedule-airing-461.md`.
