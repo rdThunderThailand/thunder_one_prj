@@ -8,6 +8,7 @@ import { RETIRE_STEPS, RETIRE_SUBTITLE, RETIRE_TITLE } from "../../domain/asset-
 import { profileHref } from "../../domain/assignment-assign";
 import { useAssetExport } from "../../hooks/use-asset-export";
 import { useRetireFlow, type RetireFlow } from "../../hooks/use-retire-flow";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { AssetsExportDialog } from "../assets-list/AssetsExportDialog";
 import { ActionLayout, AssignFlowTitle } from "../assignments/AssignFlowHeader";
 import { AssignFlowWorkspace } from "../assignments/AssignFlowWorkspace";
@@ -84,8 +85,10 @@ function RetireFooter({ flow, href, onExport }: { flow: RetireFlow; href: string
   );
 }
 
-export function RetireFlowView({ context, assetId, from }: { context: string; assetId: string; from?: string }) {
-  const flow = useRetireFlow(context, assetId);
+export function RetireFlowView({ context, assetId, from, firstData }: {
+  context: string; assetId: string; from?: string; firstData?: ActionFirstData;
+}) {
+  const flow = useRetireFlow(context, assetId, firstData);
   const exportFlow = useAssetExport(context, assetId);
   const fromAssignments = from === "assignments";
   const href = profileHref(assetId, fromAssignments);

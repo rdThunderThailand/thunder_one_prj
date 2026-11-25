@@ -8,12 +8,16 @@ import type { ActionSave } from "../components/assignments/SaveAlert";
 import {
   allowedConditions, changeStatusBody, changeStatusErrors, lifecycleNeedsReload, REVIEW_CLICK_GUARD_MS, type ChangeStatusDraft,
 } from "../domain/asset-lifecycle-actions";
+import type { ActionFirstData } from "../services/asset-action-first-data";
 import { getAssetDetail, getAssetFiles } from "../services/asset-profile-api";
+import { seededRead } from "../services/seeded-read";
 import { getRecentAssignments, postLifecycle } from "../services/asset-assignments-write";
 import type { AssetDetail } from "../services/asset-profile-contract";
 import { useProfileRead } from "./use-asset-profile";
 
-export function useChangeStatusFlow(context: string, assetId: string) {
+export function useChangeStatusFlow(context: string, assetId: string, firstData?: ActionFirstData) {
+  // Refreshing the route sends new first data; an open form keeps what it started with.
+  const [first] = useState(firstData);
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
@@ -27,10 +31,11 @@ export function useChangeStatusFlow(context: string, assetId: string) {
   const sending = useRef(false);
   // A double-click on Next must not also press Confirm: ignore Confirm briefly after Review opens.
   const reviewOpenedAt = useRef(0);
-  const detail = useProfileRead(`${context}:${assetId}:change-status-detail`, (signal) => getAssetDetail(context, assetId, signal));
+  const detail = useProfileRead(`${context}:${assetId}:change-status-detail`,
+    (signal) => seededRead(first?.detail, `${context}:${assetId}`, () => getAssetDetail(context, assetId, signal)));
   const files = useProfileRead(`${context}:${assetId}:change-status-files`, (signal) => getAssetFiles(context, assetId, signal));
   const recent = useProfileRead(`${context}:${assetId}:change-status-recent`, (signal) => getRecentAssignments(context, assetId, signal));
-  const options = useProfileRead(`${context}:assign-options`, (signal) => getAssignOptions(context, signal));
+  const options = useProfileRead(`${context}:assign-options`, (signal) => seededRead(first?.options, context, () => getAssignOptions(context, signal)));
   const evidence = useAssignEvidence(context, options.result?.ok ? options.result.data : null);
   const asset = detail.result?.ok ? detail.result.data : null;
   const photoFile = files.result?.ok ? files.result.data.photos[0] : undefined;

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { locationTrail } from "../../domain/asset-profile";
 import { actionHref, profileHref, assetAssignBlock, assignBlockText, assignOrigin, assignOutcomes } from "../../domain/assignment-assign";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { ErrorState } from "../states/ErrorState";
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
 import { ActionFooter } from "./ActionFooter";
@@ -22,8 +23,10 @@ import { useAssignFlow, type AssignFlow } from "./use-assign-flow";
 const denied = (code?: string) => code === "PERMISSION_DENIED" || code === "UNAUTHENTICATED";
 
 /** FE 02 Assign flow: `/assignments/assign` (with Select Asset), `/assignments/{id}/assign` or `/assets/{id}/assign` (asset known). */
-export function AssignFlowView({ context, assetId, from }: { context: string; assetId: string | null; from?: string }) {
-  const flow = useAssignFlow(context, assetId);
+export function AssignFlowView({ context, assetId, from, firstData }: {
+  context: string; assetId: string | null; from?: string; firstData?: ActionFirstData;
+}) {
+  const flow = useAssignFlow(context, assetId, firstData);
   const origin = assignOrigin(from, assetId);
   const body = content(context, flow, from === "assignments" || !assetId);
   const showFooter = !flow.saved && body.form;
@@ -49,7 +52,17 @@ export function AssignFlowView({ context, assetId, from }: { context: string; as
               step={flow.step}
             />
           )}
-          main={body.node}
+          main={(
+            <>
+              {!assetId && !flow.saved && (
+                // Hidden, not removed: Back shows the same search, filters, page and rows without reading them again.
+                <div hidden={body.node !== null}>
+                  <AssignSelectAsset context={context} flow={flow} />
+                </div>
+              )}
+              {body.node}
+            </>
+          )}
           panel={body.panel}
         />
       </div>
@@ -76,8 +89,10 @@ export function AssignFlowView({ context, assetId, from }: { context: string; as
 function content(context: string, flow: AssignFlow, fromAssignments: boolean): { node: ReactNode; panel?: ReactNode; form: boolean } {
   const options = flow.options.result;
   if (flow.saved) return { node: <AssignResult before={flow.saved.before} after={flow.saved.after} />, form: false };
-  if (!options) return { node: <AssignLoadingMain />, panel: <AssignLoadingPanel />, form: false };
-  if (!options.ok) {
+  // Select Asset does not use the options, so it does not wait for them.
+  const selecting = flow.name === "Select Asset";
+  if (!options && !selecting) return { node: <AssignLoadingMain />, panel: <AssignLoadingPanel />, form: false };
+  if (options && !options.ok) {
     return { form: false, node: denied(options.code) ? <AccessDeniedState body={assignmentWriteText(options.code ?? "")} />
       : <ErrorState title="Couldn't load the assign form" body="The custodian options could not be loaded. Check your connection and retry." onRetry={flow.options.reload} /> };
   }
@@ -94,7 +109,7 @@ function content(context: string, flow: AssignFlow, fromAssignments: boolean): {
       noAsset={!flow.assetId}
     />
   );
-  if (flow.name === "Select Asset") return { node: <AssignSelectAsset context={context} flow={flow} />, panel, form: true };
+  if (!options || selecting) return { node: null, panel, form: true };
   const detail = flow.detail.result;
   if (!detail) return { node: <AssignLoadingMain />, panel: <AssignLoadingPanel />, form: false };
   if (!detail.ok) {

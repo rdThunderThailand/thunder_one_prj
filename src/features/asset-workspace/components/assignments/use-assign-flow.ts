@@ -3,7 +3,11 @@
 import { useRef, useState } from "react";
 import { assignBody, assignSteps, type AssignTarget } from "../../domain/assignment-assign";
 import { useProfileRead } from "../../hooks/use-asset-profile";
+import { loadReferenceRows } from "../../hooks/use-reference-tree";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { getAssetDetail, getAssetFiles, type ProfileReadResult } from "../../services/asset-profile-api";
+import { keepReferenceTrees } from "../../services/kept-reference-trees";
+import { seededRead } from "../../services/seeded-read";
 import type { AssetDetail } from "../../services/asset-profile-contract";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
 import { assignAsset, getRecentAssignments } from "../../services/asset-assignments-write";
@@ -22,7 +26,11 @@ export async function getAssignOptions(context: string, signal: AbortSignal): Pr
 }
 
 /** FE 02 state. Input (target, reason, files) survives a Reload of the asset; changing the asset clears it. */
-export function useAssignFlow(context: string, routeAssetId: string | null) {
+export function useAssignFlow(context: string, routeAssetId: string | null, firstData?: ActionFirstData) {
+  // Refreshing the route sends new first data; an open form keeps what it started with.
+  const [first] = useState(firstData);
+  // Location and organizational unit lists: Back shows them again without another read.
+  const [keptTrees] = useState(() => keepReferenceTrees((kind) => loadReferenceRows(context, kind, new AbortController().signal)));
   const steps = assignSteps(!routeAssetId);
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<{ id: string; thumbnailUrl: string | null } | null>(null);
@@ -33,8 +41,9 @@ export function useAssignFlow(context: string, routeAssetId: string | null) {
   const [saved, setSaved] = useState<{ before: AssetDetail; after: AssetDetail } | null>(null);
   const sending = useRef(false);
   const assetId = routeAssetId ?? picked?.id ?? null;
-  const options = useProfileRead(`${context}:assign-options`, (signal) => getAssignOptions(context, signal));
-  const detail = useProfileRead(`${context}:${assetId}:assign-detail`, (signal) => getAssetDetail(context, assetId ?? "", signal), Boolean(assetId));
+  const options = useProfileRead(`${context}:assign-options`, (signal) => seededRead(first?.options, context, () => getAssignOptions(context, signal)));
+  const detail = useProfileRead(`${context}:${assetId}:assign-detail`,
+    (signal) => seededRead(first?.detail, `${context}:${assetId}`, () => getAssetDetail(context, assetId ?? "", signal)), Boolean(assetId));
   const recent = useProfileRead(`${context}:${assetId}:assign-recent`, (signal) => getRecentAssignments(context, assetId ?? "", signal), Boolean(assetId));
   const files = useProfileRead(`${context}:${assetId}:assign-files`, (signal) => getAssetFiles(context, assetId ?? "", signal), Boolean(assetId));
   const evidence = useAssignEvidence(context, options.result?.ok ? options.result.data : null);
@@ -82,7 +91,7 @@ export function useAssignFlow(context: string, routeAssetId: string | null) {
   return {
     steps, step, name, setStep, next: () => canNext && setStep(step + 1), back: () => setStep(Math.max(0, step - 1)), canNext,
     picked, pick, assetId, asset, photo, detail, recent, options, target, setTarget, tab, chooseTab, reason, setReason,
-    evidence, save, saved, confirm, reload,
+    evidence, save, saved, confirm, reload, keptTrees,
   };
 }
 export type AssignFlow = ReturnType<typeof useAssignFlow>;

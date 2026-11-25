@@ -40,6 +40,7 @@ export function TransferDetailsForm({ context, flow, asset, rules, returnHref }:
           onTab={flow.chooseTab}
           target={flow.target}
           onTarget={flow.setTarget}
+          keptTrees={flow.keptTrees}
           error={flow.sameHolder ? "Already the current holder" : undefined}
         />
       </Card>
@@ -66,6 +67,7 @@ export function TransferDetailsForm({ context, flow, asset, rules, returnHref }:
               kind="locations"
               context={context}
               rules={rules.referenceSelectors}
+              keptTrees={flow.keptTrees}
               onChange={(item) => flow.setLocation({ id: item.id, name: item.name?.trim() || "Unnamed location" })}
             />
             {!flow.location && <p className="text-2xs text-muted-foreground">Optional. Leave empty to keep the current location.</p>}

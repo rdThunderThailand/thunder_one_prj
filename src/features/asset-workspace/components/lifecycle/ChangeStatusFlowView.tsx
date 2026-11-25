@@ -9,6 +9,7 @@ import {
 } from "../../domain/asset-lifecycle-actions";
 import { profileHref } from "../../domain/assignment-assign";
 import { useChangeStatusFlow, type ChangeStatusFlow } from "../../hooks/use-change-status-flow";
+import type { ActionFirstData } from "../../services/asset-action-first-data";
 import { ActionLayout, AssignFlowTitle } from "../assignments/AssignFlowHeader";
 import { AssignFlowWorkspace } from "../assignments/AssignFlowWorkspace";
 import { lifecycleWriteText } from "../assignments/assignment-error-text";
@@ -83,10 +84,10 @@ function ChangeStatusFooter({ flow, href }: { flow: ChangeStatusFlow; href: stri
   );
 }
 
-export function ChangeStatusFlowView({ context, assetId, from, actor }: {
-  context: string; assetId: string; from?: string; actor: string;
+export function ChangeStatusFlowView({ context, assetId, from, actor, firstData }: {
+  context: string; assetId: string; from?: string; actor: string; firstData?: ActionFirstData;
 }) {
-  const flow = useChangeStatusFlow(context, assetId);
+  const flow = useChangeStatusFlow(context, assetId, firstData);
   const fromAssignments = from === "assignments";
   const href = profileHref(assetId, fromAssignments);
   const origin = { href, label: "Asset Profile" };
