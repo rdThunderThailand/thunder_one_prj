@@ -50,6 +50,13 @@ assert.equal(conflicted.baseline, x);
 const reloaded = reduceLifecycle(conflicted, { type: "reset", baseline: JSON.stringify({ name: "w" }) });
 assert.equal(reloaded.conflict, null);
 assert.equal(reloaded.baseline, JSON.stringify({ name: "w" }));
+// a failed reload (error) keeps the conflict so Reload stays available; `clear-error` leaves the conflict too
+const reloadFailed = reduceLifecycle(conflicted, { type: "save-failure", kind: "error", message: "reload failed" });
+assert.equal(reloadFailed.conflict, "changed elsewhere");
+assert.equal(reloadFailed.saveError, "reload failed");
+assert.equal(reduceLifecycle(reloadFailed, { type: "clear-error" }).saveError, null);
+assert.equal(reduceLifecycle(reloadFailed, { type: "clear-error" }).conflict, "changed elsewhere");
+assert.equal(reduceLifecycle(failed, { type: "clear-error" }).saveError, null);
 // a new save also clears the previous error and conflict
 assert.equal(reduceLifecycle(failed, { type: "save-start" }).saveError, null);
 assert.equal(reduceLifecycle(conflicted, { type: "save-start" }).conflict, null);

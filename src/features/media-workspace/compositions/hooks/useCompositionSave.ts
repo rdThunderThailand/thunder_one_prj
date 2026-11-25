@@ -39,7 +39,10 @@ export function useCompositionSave(buildInput: () => PersistInput, applyResult: 
     }
   };
 
+  // Deliberately ignores the lifecycle's `snapshot` argument: it saves the latest render through `buildInput`, so
+  // `lifecycle.save` must not be given an override snapshot here (ADR 0127 §2). Starting a save clears a stale `run` error.
   const write = async (): Promise<PersistResult> => {
+    setRunError(null);
     const result = await persistComposition(buildInput());
     applyResult(result);
     // The core save succeeded — `applyResult` has marked the editor saved. A filing step

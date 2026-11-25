@@ -44,6 +44,8 @@ export type EditorLifecycle<S, I, R> = {
   saveError: string | null;
   conflict: string | null;
   reloadFromServer: () => Promise<void>;
+  /** A newer write elsewhere in the editor took over the error slot. */
+  clearError: () => void;
   /** After a load / hydrate / reload. */
   resetBaseline: (snapshot: S) => void;
   /** The editor's own back button. */
@@ -87,8 +89,14 @@ export function useEditorLifecycle<S, I = undefined, R = void>(options: Lifecycl
   };
   const ensureSaved = () => ensureSavedWith(isDirty, () => save());
   const resetBaseline = (next: S) => dispatch({ type: "reset", baseline: JSON.stringify(next) });
+  const clearError = () => dispatch({ type: "clear-error" });
+  // A failed reload shows as an error and leaves the conflict card (and its Reload button) in place.
   const reloadFromServer = async () => {
-    await reload?.();
+    try {
+      await reload?.();
+    } catch (err) {
+      dispatch({ type: "save-failure", kind: "error", message: classifyApiError(err, options.fallbackError).message });
+    }
   };
 
   const [pendingHref, setPendingHref] = useState<string | null>(null);
@@ -120,6 +128,7 @@ export function useEditorLifecycle<S, I = undefined, R = void>(options: Lifecycl
     saveError: state.saveError,
     conflict: state.conflict,
     reloadFromServer,
+    clearError,
     resetBaseline,
     requestLeave,
     leaveDialog,

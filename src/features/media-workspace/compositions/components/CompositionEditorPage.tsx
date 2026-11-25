@@ -150,10 +150,8 @@ export function CompositionEditorPage({
       onLayoutCreated: setLayoutId, onCompositionCreated: setId, onBindingsChanged: setBindings, onLayoutSaved: absorbLayout,
     }),
     (result) => {
-      setId(result.compositionId);
-      setRevision(result.revision);
-      setBindings(result.bindings);
-      setSavedAt(new Date());
+      setId(result.compositionId); setRevision(result.revision);
+      setBindings(result.bindings); setSavedAt(new Date());
       absorbLayout(result.refreshedLayout, result.layoutId);
     },
   );
@@ -171,6 +169,8 @@ export function CompositionEditorPage({
     },
   });
   const isBusy = lifecycle.isSaving || busy;
+  // One error slot: the newest write's outcome shows, so starting a write clears the other slot's error.
+  const runWrite: typeof run = (operation, fallback) => { lifecycle.clearError(); return run(operation, fallback); };
   // #223: geometry is part of the load — without it the editor renders the empty Template Picker state.
   const loadDraft = (targetId: string, isAlive: () => boolean = () => true) =>
     loadCompositionDraft(targetId)
@@ -213,7 +213,7 @@ export function CompositionEditorPage({
     if (!result) return null;
     let isActivated = !activate;
     if (activate) {
-      await run(async () => {
+      await runWrite(async () => {
         await setCompositionStatus(result.compositionId, "active");
         setStatus("active");
         isActivated = true;
@@ -229,7 +229,7 @@ export function CompositionEditorPage({
       confirmLabel: "Make a copy",
     });
     if (!confirmed) return;
-    void run(async () => {
+    void runWrite(async () => {
       const forked = await forkLayoutForComposition(id, revision);
       setLayoutId(forked.layout.id);
       setRevision(forked.revision);
@@ -245,7 +245,7 @@ export function CompositionEditorPage({
   const saveAsTemplate = (templateName: string) => {
     setNamingTemplate(false);
     if (!layout) return;
-    void run(async () => {
+    void runWrite(async () => {
       const { layout_id } = await upsertLayout({ name: templateName, aspectRatio: settings.aspectRatio, referenceResolution: settings.referenceResolution,
         background: settings.background, status: "active", zones: layout.zones.map(({ name, x, y, width, height }) => ({ name, x, y, width, height })) });
       const created = await fetchLayout(layout_id);
