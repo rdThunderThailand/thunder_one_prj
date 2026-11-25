@@ -62,7 +62,7 @@ A skipped empty-name save never marks the draft saved; Next from step 1 can stil
 ### 3. The prompt names the content and says what happens
 
 *For a saved draft, §9 renames the primary button, rewords the description, and adds a third
-button, Discard changes…, which also shows during a revision conflict.*
+button, Discard changes, which also shows during a revision conflict.*
 
 - **Primary — "Use <content name>"**
   - If the old draft has a `publicationId`, save its pending edits first through the stepper-jump
@@ -158,20 +158,24 @@ discard them. A trapped operator gets the same way out.
   - Primary: **Save and start new**, or **Save and use <content name>** (generic labels: "Save and
     use the published Layout", "… Playlist", "… media"). It behaves as in §3. The new label says
     that it saves, because the button beside it does not.
-  - **Discard changes…**, left of the other two and with less emphasis (`ghost`). It shows from the
+  - **Discard changes**, below the other two and with less emphasis (`ghost`, error text). The
+    three buttons stack full width, primary on top (amended 2026-11-25: the row wrapped and read as
+    unordered). It shows from the
     start, and also during a revision conflict, when the primary button is hidden. It is disabled
     while a save runs and while a seed's content is still loading, because applying the seed needs
     it. It does not wait for the Channel list, because it saves nothing.
   - **Continue the previous draft**, unchanged.
-- **Description.** "draft เดิมมีการแก้ไขที่ยังไม่บันทึก บันทึกไว้ก่อนเริ่ม Program ใหม่ หรือทิ้งการแก้ไขนั้นก็ได้"
-  replaces the sentence saying that the previous draft stays in the Programs list. That sentence was
+- **Title and description.** Title "Program ก่อนหน้ายังมีการแก้ไขที่ไม่ได้บันทึก" (a never-saved draft:
+  "Program ก่อนหน้ายังไม่ได้บันทึก"; the confirmation: "ทิ้งการแก้ไขที่ยังไม่บันทึก?"). Description
+  "เลือกว่าจะบันทึกหรือทิ้งการแก้ไขนั้นก่อนไปต่อ หรือกลับไปทำ draft เดิมต่อ" (amended 2026-11-25, was
+  "draft เดิมมีการแก้ไขที่ยังไม่บันทึก บันทึกไว้ก่อนเริ่ม Program ใหม่ หรือทิ้งการแก้ไขนั้นก็ได้"). It replaces the sentence saying that the previous draft stays in the Programs list. That sentence was
   not always true. In the prod case the draft belonged to the other tenant, and the save had already
   failed to create a new one.
-- **Confirmation.** Pressing Discard changes… shows a confirmation inside the same dialog. There is
+- **Confirmation.** Pressing Discard changes shows a confirmation inside the same dialog. There is
   no second dialog, so §4's focus trap still holds, and focus moves to **Back**. The text is
   "การแก้ไขที่ยังไม่บันทึกของ draft เดิมจะหายไปและกู้คืนไม่ได้ ส่วนที่บันทึกไว้แล้วไม่ถูกแตะ",
   followed by "จากนั้นจะเริ่ม Program ใหม่" or "จากนั้นจะใช้ <content name>". **Back** returns to the
-  prompt, with focus on Discard changes…. **Discard and start new** or **Discard and use <content name>** (`destructive`) goes ahead.
+  prompt, with focus on Discard changes. **Discard and start new** or **Discard and use <content name>** (`destructive`) goes ahead.
 - **What discarding does.** It runs `cancelDraft()` only, which clears the local draft. Nothing is
   sent to or deleted from the server (§8), so whatever was saved before is not touched. The
   revision-conflict banner is cleared as well, because it was about the edits just discarded. Then
@@ -229,7 +233,7 @@ The decision:
   opens. The operator learns about it on the first save, which is when it matters.
 - **The prompt** (§3, §9). The primary button's save fails with that message. The button then reads
   **Save as new and start new** or **Save as new and use <content name>**. Pressing it saves the old
-  draft's fields as a new draft, then goes on as in §3. Discard changes… and Continue the previous
+  draft's fields as a new draft, then goes on as in §3. Discard changes and Continue the previous
   draft are unchanged. The discard confirmation keeps its text, which stays true because nothing is
   sent to the server.
 - **The wizard.** The same message shows in the error block. While it applies, the footer's

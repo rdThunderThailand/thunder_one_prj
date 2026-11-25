@@ -36,7 +36,13 @@ export function DraftResumePrompt(props: {
     <AlertDialog open={props.open}>
       <AlertDialogContent onEscapeKeyDown={(event) => event.preventDefault()}>
         <AlertDialogHeader>
-          <AlertDialogTitle>มี draft ที่ยังบันทึกไม่ครบ</AlertDialogTitle>
+          <AlertDialogTitle>
+            {isConfirmingDiscard
+              ? "ทิ้งการแก้ไขที่ยังไม่บันทึก?"
+              : props.hasServerDraft
+                ? "Program ก่อนหน้ายังมีการแก้ไขที่ไม่ได้บันทึก"
+                : "Program ก่อนหน้ายังไม่ได้บันทึก"}
+          </AlertDialogTitle>
           {isConfirmingDiscard ? (
             <AlertDialogDescription>
               {`การแก้ไขที่ยังไม่บันทึกของ draft เดิมจะหายไปและกู้คืนไม่ได้ ส่วนที่บันทึกไว้แล้วไม่ถูกแตะ ${props.discardNextStep}`}
@@ -44,7 +50,7 @@ export function DraftResumePrompt(props: {
           ) : (
             <AlertDialogDescription>
               {props.hasServerDraft
-                ? "draft เดิมมีการแก้ไขที่ยังไม่บันทึก บันทึกไว้ก่อนเริ่ม Program ใหม่ หรือทิ้งการแก้ไขนั้นก็ได้"
+                ? "เลือกว่าจะบันทึกหรือทิ้งการแก้ไขนั้นก่อนไปต่อ หรือกลับไปทำ draft เดิมต่อ"
                 : "การเริ่มใหม่จะทำให้ชื่อ คำอธิบาย และ tags ที่ยังไม่บันทึกสูญหาย ส่วน draft ที่เคยบันทึกยังอยู่ในหน้า Programs"}
             </AlertDialogDescription>
           )}
@@ -74,26 +80,26 @@ export function DraftResumePrompt(props: {
             </Button>
           </AlertDialogFooter>
         ) : (
-          <AlertDialogFooter className="gap-2 sm:flex-wrap sm:space-x-0">
+          <AlertDialogFooter className="gap-2 sm:flex-col sm:space-x-0">
+            {!props.conflict && (
+              <Button className="w-full" onClick={props.onUse} disabled={props.busy || props.waiting}>
+                {props.busy ? "Saving…" : props.label}
+              </Button>
+            )}
+            <AlertDialogCancel asChild>
+              <Button variant="outline" className="w-full" onClick={props.onContinue} disabled={props.busy}>
+                Continue the previous draft
+              </Button>
+            </AlertDialogCancel>
             {props.hasServerDraft && (
               <Button
                 variant="ghost"
-                className="sm:mr-auto"
+                className="w-full text-error"
                 autoFocus={isBackFromConfirm}
                 onClick={() => setIsConfirmingDiscard(true)}
                 disabled={!props.canDiscard}
               >
-                Discard changes…
-              </Button>
-            )}
-            <AlertDialogCancel asChild>
-              <Button variant="outline" onClick={props.onContinue} disabled={props.busy}>
-                Continue the previous draft
-              </Button>
-            </AlertDialogCancel>
-            {!props.conflict && (
-              <Button onClick={props.onUse} disabled={props.busy || props.waiting}>
-                {props.busy ? "Saving…" : props.label}
+                Discard changes
               </Button>
             )}
           </AlertDialogFooter>
