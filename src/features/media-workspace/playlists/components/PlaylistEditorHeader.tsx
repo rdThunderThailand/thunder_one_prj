@@ -19,6 +19,7 @@ export function PlaylistEditorHeader({
   status,
   inUseCount,
   savedLabel,
+  isUnsaved,
   lastUpdatedAt,
   hasItems,
   saving,
@@ -42,6 +43,7 @@ export function PlaylistEditorHeader({
   /** Programs holding this Playlist (ADR 0120); the tag shows only when above zero. */
   inUseCount?: number;
   savedLabel: string;
+  isUnsaved: boolean;
   lastUpdatedAt: Date | null;
   hasItems: boolean;
   saving: boolean;
@@ -76,7 +78,6 @@ export function PlaylistEditorHeader({
   const badge = mediaStatus(status);
   const inUse = playlistInUseLabel({ in_use_count: inUseCount });
   const displayName = name.trim() || "Untitled Playlist";
-  const isUnsaved = savedLabel.includes("unsaved") || savedLabel.includes("not saved");
   // Leaving the field keeps what was typed, so a Save or Publish click that blurs it sees the new
   // name (UAT A8). Enter / ✓ / Escape close the field themselves; their own blur is skipped.
   const isClosingName = useRef(false);
