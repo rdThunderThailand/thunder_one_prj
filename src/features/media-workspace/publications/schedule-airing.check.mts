@@ -1,10 +1,10 @@
 /**
- * Runnable check for the schedule summary formatter:
+ * Runnable check for when a stored schedule airs, ends and is described:
  *
- *     node src/features/media-workspace/publications/schedule-describe.check.mts
+ *     node src/features/media-workspace/publications/schedule-airing.check.mts
  */
 import assert from "node:assert/strict";
-import { describeSchedule, lastAiringDay, scheduleEdges } from "./schedule-describe.ts";
+import { describeSchedule, lastAiringDay, scheduleEdges } from "./schedule-airing.ts";
 import type { PublicationSchedule } from "./types/index.ts";
 
 const TZ = "Asia/Bangkok"; // UTC+7, no DST
@@ -68,4 +68,4 @@ const monthly: PublicationSchedule = {
 };
 assert.equal(describeSchedule(monthly).title, "Day 1, 15");
 
-console.log("schedule-describe.check.mts: ok");
+console.log("schedule-airing.check.mts: ok");

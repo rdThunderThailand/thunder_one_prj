@@ -22,7 +22,7 @@ import { NoAccess } from "@/components/ui/NoAccess";
 import { deletedChannelLabel } from "../../channels/channel-logic";
 import { DeliveryProgress } from "./DeliveryProgress";
 import { formatMonthDays, WEEKDAYS } from "../schedule";
-import { lastAiringDay } from "../schedule-describe";
+import { lastAiringDay } from "../schedule-airing";
 import { publicationPreviewTarget } from "@/features/media-workspace/preview/publication-preview-target";
 
 /** Names what changed, so re-publishing is a decision rather than a guess (ADR 0049 §11). */

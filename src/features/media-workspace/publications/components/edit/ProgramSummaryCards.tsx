@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/Button";
 import { WEEKDAYS } from "../../schedule";
-import { describeSchedule } from "../../schedule-describe";
+import { describeSchedule } from "../../schedule-airing";
 import type { ProgramEditState } from "../../program-edit";
 import type { ChannelListItem } from "../../../channels/types";
 import type { PublicationSchedule, PublicationTarget } from "../../types";

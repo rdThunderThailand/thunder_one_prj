@@ -1,5 +1,9 @@
 export const DEFAULT_TIMEZONE = "Asia/Bangkok";
 
+// A daily end that plays through the end of the local day in weekly, monthly and custom-dates Schedules
+// (Core `recurrence_matches`); a one-off stops at its stored end (ADR 0128 §3).
+export const END_OF_DAY = "23:59";
+
 // ponytail: a short fixed list is enough for a Thailand-first product. The
 // helpers below are DST-correct via Intl, so adding a DST zone here needs no
 // other change.
