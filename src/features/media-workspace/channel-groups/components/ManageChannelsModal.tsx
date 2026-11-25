@@ -1,7 +1,7 @@
 "use client";
 
 import { classifyApiError } from "@/lib/api/api-error";
-import { isSyncConflict, setChannelGroupMembers } from "../services/channel-groups-api";
+import { setChannelGroupMembers } from "../services/channel-groups-api";
 import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
 import { CreateGroupChannelsModal } from "./CreateGroupChannelsModal";
@@ -23,9 +23,6 @@ export function ManageChannelsModal({
       onSaved(await setChannelGroupMembers(group.id, Array.from(selected)));
       onClose();
     } catch (caught) {
-      if (caught instanceof Error && isSyncConflict(caught.message)) {
-        return "Channel หนึ่งอยู่ใน Group แบบ Synchronized ได้เพียง Group เดียว กรุณานำออกจาก Group เดิมก่อน";
-      }
       return classifyApiError(caught, "อัปเดต Channel ใน Group ไม่สำเร็จ กรุณาลองใหม่").message;
     }
   };

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
+import { classifyApiError } from "@/lib/api/api-error";
 import {
   DEFAULT_CREATE_CHANNEL_DRAFT,
   geometryMismatch,
@@ -130,15 +130,13 @@ export function CreateChannelModal({
       setCreatedChannel(channel);
       setStep("success");
     } catch (caught) {
-      if (caught instanceof Error && isDuplicateName(caught.message)) {
-        setSubmitError("A Channel with this name already exists.");
+      const failure = classifyApiError(caught, "สร้าง Channel ไม่สำเร็จ กรุณาลองใหม่");
+      setSubmitError(failure.message);
+      if (failure.reason === "duplicate-name") {
         setStep(1);
-      } else if (caught instanceof Error && caught.message.includes("confirm to continue")) {
-        setSubmitError("The Player display information changed. Refresh the Player list, review the warning, and confirm again.");
+      } else if (failure.reason === "needs-confirm") {
         setConfirmedMismatchKey(null);
         refreshCandidates();
-      } else {
-        setSubmitError(classifyApiError(caught, "Could not create Channel. Try again.").message);
       }
     } finally {
       setSubmitting(false);

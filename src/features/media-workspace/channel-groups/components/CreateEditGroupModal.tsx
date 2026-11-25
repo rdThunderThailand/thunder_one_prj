@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Modal } from "@/components/ui/Modal";
 import { InfoIcon, MonitorIcon, PlusIcon, ShareNodesIcon, UsersIcon } from "@/components/ui/icons";
-import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
-import { createChannelGroup, isSyncConflict, setChannelGroupMembers, updateChannelGroup } from "../services/channel-groups-api";
+import { classifyApiError } from "@/lib/api/api-error";
+import { createChannelGroup, setChannelGroupMembers, updateChannelGroup } from "../services/channel-groups-api";
 import type { ChannelListItem } from "../../channels/types";
 import { CreateGroupChannelsModal } from "./CreateGroupChannelsModal";
 import type { ChannelGroup, PlaybackMode } from "../types";
@@ -64,12 +64,11 @@ export function CreateEditGroupModal({
           : saved;
       onSaved(withMembers);
     } catch (caught) {
-      if (caught instanceof Error && isDuplicateName(caught.message)) {
-        setNameError("มี Channel Group ชื่อนี้อยู่แล้ว");
-      } else if (caught instanceof Error && isSyncConflict(caught.message)) {
-        setError("Channel หนึ่งอยู่ใน Group แบบ Synchronized ได้เพียง Group เดียว กรุณานำออกจาก Group เดิมก่อน");
+      const failure = classifyApiError(caught, "บันทึก Channel Group ไม่สำเร็จ กรุณาลองใหม่");
+      if (failure.reason === "duplicate-name") {
+        setNameError(failure.message);
       } else {
-        setError(classifyApiError(caught, "บันทึก Channel Group ไม่สำเร็จ กรุณาลองใหม่").message);
+        setError(failure.message);
       }
     } finally {
       setSaving(false);

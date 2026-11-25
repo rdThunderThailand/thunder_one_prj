@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { EditIcon, MonitorIcon, MoreIcon, PlusIcon, XIcon } from "@/components/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { classifyApiError } from "@/lib/api/api-error";
-import { deleteChannelGroup, groupInUseNames, updateChannelGroup } from "../services/channel-groups-api";
+import { deleteChannelGroup, updateChannelGroup } from "../services/channel-groups-api";
 import { memberHealthCounts } from "../channel-groups-logic";
 import { mediaStatus } from "../../media-status";
 import type { ChannelListItem } from "../../channels/types";
@@ -66,12 +66,7 @@ export function ChannelGroupInspector({
       onDeleted();
     } catch (caught) {
       setConfirmingDelete(false);
-      const inUse = caught instanceof Error ? groupInUseNames(caught.message) : null;
-      setError(
-        inUse
-          ? `Group นี้ยังถูกใช้ใน Program: ${inUse} กรุณายกเลิกหรือย้าย Program เหล่านี้ก่อนลบ`
-          : classifyApiError(caught, "ลบ Group ไม่สำเร็จ กรุณาลองใหม่").message,
-      );
+      setError(classifyApiError(caught, "ลบ Group ไม่สำเร็จ กรุณาลองใหม่").message);
     } finally {
       setBusy(false);
     }

@@ -90,8 +90,55 @@ export const CORE_REFUSAL_RULES: readonly RefusalRule[] = [
   },
   {
     prefix: "Already exists: ",
-    match: /^a channel(?: group)? named /,
-    build: () => rejected("ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่นแล้วลองใหม่", { reason: "duplicate-name" }),
+    match: /^a channel named /,
+    build: () => rejected("มี Channel ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น", { reason: "duplicate-name" }),
+  },
+  {
+    prefix: "Already exists: ",
+    match: /^a channel group named /,
+    build: () => rejected("มี Channel Group ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น", { reason: "duplicate-name" }),
+  },
+
+  // Channels and Channel Groups (ADR 0074, 0122). The `cannot remove` rule must stay ahead of any
+  // looser "target this channel" match; the delete and deactivate refusals share one verb-free line.
+  {
+    prefix: "Already in use: ",
+    match: /^cannot remove .+ while these publications target this channel/,
+    build: () => rejected("เปลี่ยน Player ไม่ได้ เพราะยังมี Program ที่ Active หรือกำหนดเวลาไว้ใช้ Channel นี้อยู่"),
+  },
+  {
+    prefix: "Invalid input: ",
+    match: /confirm to continue/,
+    build: () =>
+      rejected("ข้อมูลการแสดงผลของ Player เปลี่ยนไป กรุณารีเฟรชรายการ Player ตรวจสอบคำเตือน แล้วยืนยันอีกครั้ง", {
+        reason: "needs-confirm",
+      }),
+  },
+  {
+    prefix: "Invalid input: ",
+    match: /^remove this channel from its groups before deleting: (.+)$/,
+    build: (found) => rejected(`ลบ Channel นี้ไม่ได้ — ยังอยู่ใน Group: ${found[1]} กรุณานำออกจาก Group ก่อน`),
+  },
+  {
+    prefix: "Already in use: ",
+    match: /^these publications still target this channel: (.+)$/,
+    build: (found) => rejected(`ยังมี Program ใช้ Channel นี้อยู่: ${found[1]} กรุณายกเลิกหรือย้าย Program เหล่านี้ก่อน`),
+  },
+  {
+    prefix: "Already in use: ",
+    match: /^this channel has Program or playback history and cannot be deleted yet/,
+    build: () => rejected("ลบ Channel นี้ไม่ได้ เพราะมีประวัติ Program หรือการเล่นอยู่ กรุณาปิดใช้งานแทน"),
+  },
+  {
+    prefix: "Already in use: ",
+    match: /^remove this group from these publications first: (.+)$/,
+    build: (found) => rejected(`Group นี้ยังถูกใช้ใน Program: ${found[1]} กรุณายกเลิกหรือย้าย Program เหล่านี้ก่อนลบ`),
+  },
+  {
+    // One partial unique index (ADR 0074 §5) behind five raises in three RPCs.
+    prefix: "Invalid input: ",
+    match: /already synchronized elsewhere|already in another synchronized group|only one synchronized group/,
+    build: () => rejected("Channel หนึ่งอยู่ใน Group แบบ Synchronized ได้เพียง Group เดียว กรุณานำออกจาก Group เดิมก่อน"),
   },
 
   // Program edit. Both set_zones and update_published refusals must sit ahead of `classifyPublishCause`,

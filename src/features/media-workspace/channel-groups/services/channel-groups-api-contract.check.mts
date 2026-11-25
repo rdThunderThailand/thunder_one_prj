@@ -1,6 +1,6 @@
 /** Run: node src/features/media-workspace/channel-groups/services/channel-groups-api-contract.check.mts */
 import assert from "node:assert/strict";
-import { groupInUseNames, isSyncConflict, parseChannelGroup, parseChannelGroupList } from "./channel-groups-api.ts";
+import { parseChannelGroup, parseChannelGroupList } from "./channel-groups-api.ts";
 
 const group = {
   id: "g1",
@@ -21,13 +21,5 @@ assert.throws(() => parseChannelGroup({ ...group, members: "not-array" }));
 assert.equal(parseChannelGroupList({ success: true, data: [group] }).length, 1);
 assert.equal(parseChannelGroupList([]).length, 0);
 assert.throws(() => parseChannelGroupList({ not: "an array" }));
-
-assert.equal(isSyncConflict('Invalid input: cannot add to synchronized group "X", already synchronized elsewhere: Y'), true);
-assert.equal(isSyncConflict("Invalid input: a channel in this selection is already in another synchronized group"), true);
-assert.equal(isSyncConflict("Invalid input: channel group name is required"), false);
-
-assert.equal(groupInUseNames("Already in use: remove this group from these publications first: Promo A, Promo B"), "Promo A, Promo B");
-assert.equal(groupInUseNames("Already exists: a channel group named X already exists"), null);
-assert.equal(groupInUseNames("Already in use: something else"), null);
 
 console.log("channel-groups-api-contract.check.mts — all assertions passed");

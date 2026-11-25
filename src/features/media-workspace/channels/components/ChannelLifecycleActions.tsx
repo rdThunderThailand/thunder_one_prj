@@ -51,7 +51,7 @@ export function ChannelLifecycleActions({
       onChanged(await activateChannel(channelId, revision));
       toast.success("Channel activated");
     } catch (caught) {
-      setError(classifyApiError(caught, "Could not activate this Channel. Try again."));
+      setError(classifyApiError(caught, "เปิดใช้งาน Channel นี้ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setPending(null);
     }
@@ -66,7 +66,7 @@ export function ChannelLifecycleActions({
       toast.success(playerName ? `Channel deactivated — ${playerName} is free` : "Channel deactivated");
     } catch (caught) {
       setIsConfirmingDeactivate(false);
-      setError(classifyApiError(caught, "Could not deactivate this Channel. Try again."));
+      setError(classifyApiError(caught, "ปิดใช้งาน Channel นี้ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setPending(null);
     }

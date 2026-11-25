@@ -46,7 +46,7 @@ export function ChannelRowActionsMenu({
     } catch (caught) {
       setIsConfirming(false);
       setIsOpen(true);
-      setError(classifyApiError(caught, "Could not disable this Channel. Try again.").message);
+      setError(classifyApiError(caught, "ปิดใช้งาน Channel นี้ไม่สำเร็จ กรุณาลองใหม่").message);
     } finally {
       setPending(false);
     }
