@@ -96,6 +96,10 @@ forbids.
    - (§7) Detail page text.
    - (§8) The preview shows no airing days while the start date is blank. Before, a weekly, monthly or
      continuous draft with a blank start showed matching days. Without a start, no day can be said to air.
+   - (§4) A one-time, not all-day draft whose daily end is "00:00" (for example 09:00–00:00, which already fails
+     validation with a `time` error) shows an empty preview. Before, the preview still showed that day. The
+     stored end is the start day's midnight, so the module reads it as ending the day before. Accepted by the
+     owner; no code change.
 
    Any other difference the executor finds is a question for the owner, never the executor's choice.
 
