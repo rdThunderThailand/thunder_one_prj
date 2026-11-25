@@ -1,21 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { InfoIcon } from "@/components/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
 import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
 import { isSyncConflict, setChannelGroupMembers } from "../services/channel-groups-api";
-import type { ChannelListItem, ChannelStatusFilter } from "../../channels/types";
+import { mediaStatus } from "../../media-status";
+import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
-
-const STATUS_BADGE: Record<ChannelStatusFilter, { label: string; color: BadgeColor }> = {
-  online: { label: "Online", color: "green" },
-  warning: { label: "Warning", color: "yellow" },
-  offline: { label: "Offline", color: "red" },
-  no_player: { label: "No player", color: "zinc" },
-};
 
 function AddToGroupMenu({
   channel,
@@ -148,7 +142,7 @@ export function UngroupedChannelsTable({
           </thead>
           <tbody>
             {channels.map((channel) => {
-              const status = STATUS_BADGE[channel.health ?? "no_player"];
+              const status = mediaStatus(channel.health ?? "no_player");
               return (
                 <tr
                   key={channel.id}

@@ -1,9 +1,9 @@
-import { playlistDisplayStatus } from "../playlists/status-display.ts";
-import type { PlaylistListItem, PlaylistStatus } from "@/types/domain";
+import { playlistDisplayStatus, type PlaylistDisplayStatus } from "../playlists/status-display.ts";
+import type { PlaylistListItem } from "@/types/domain";
 
 export type PlaylistPickerFilters = {
   query: string;
-  status: PlaylistStatus | "all";
+  status: PlaylistDisplayStatus | "all";
   creatorId: string;
   tagId: string;
   minDuration: string;

@@ -10,4 +10,6 @@ const rows: PlaylistListItem[] = [
 assert.deepEqual(filterPlaylistPickerItems(rows, { ...defaultPlaylistPickerFilters, query: "promo" }).map((row) => row.id), ["a"]);
 assert.deepEqual(filterPlaylistPickerItems(rows, { ...defaultPlaylistPickerFilters, creatorId: "u2" }).map((row) => row.id), ["b"]);
 assert.deepEqual(filterPlaylistPickerItems(rows, { ...defaultPlaylistPickerFilters, tagId: "t1", minDuration: "60", maxDuration: "120" }).map((row) => row.id), ["a"]);
+assert.deepEqual(filterPlaylistPickerItems(rows, { ...defaultPlaylistPickerFilters, status: "draft" }).map((row) => row.id), ["b"]);
+assert.deepEqual(filterPlaylistPickerItems(rows, { ...defaultPlaylistPickerFilters, status: "active" }).map((row) => row.id), ["a"]);
 console.log("playlist-picker-filter checks passed");

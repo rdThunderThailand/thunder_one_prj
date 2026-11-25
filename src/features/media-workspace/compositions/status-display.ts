@@ -1,12 +1,9 @@
 import type { CompositionStatus } from "./types";
+import { mediaStatus, type MediaStatusEntry } from "../media-status.ts";
 
-type BadgeColor = "green" | "yellow" | "zinc";
-
-/** draft → active ↔ inactive, copied from Playlist's lifecycle (ADR 0049 §10). */
-export function statusBadge(status: CompositionStatus): { color: BadgeColor; label: string } {
-  if (status === "active") return { color: "green", label: "Active" };
-  if (status === "draft") return { color: "yellow", label: "Draft" };
-  return { color: "zinc", label: "Inactive" };
+/** draft → active ↔ inactive, copied from Playlist's lifecycle (ADR 0049 §10); tones per ADR 0125. */
+export function statusBadge(status: CompositionStatus): MediaStatusEntry {
+  return mediaStatus(status);
 }
 
 export function saveAction(status: CompositionStatus): { label: "Save Layout" | "Save"; canActivate: boolean } {

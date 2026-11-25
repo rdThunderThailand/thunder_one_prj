@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -12,16 +12,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable
 import { classifyApiError } from "@/lib/api/api-error";
 import { deleteChannelGroup, isGroupInUse, updateChannelGroup } from "../services/channel-groups-api";
 import { memberHealthCounts } from "../channel-groups-logic";
+import { mediaStatus } from "../../media-status";
 import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
 import { CreateEditGroupModal } from "./CreateEditGroupModal";
 import { ChannelGroupInspectorSections } from "./ChannelGroupInspectorSections";
 import { ManageChannelsModal } from "./ManageChannelsModal";
-
-const STATUS_BADGE: Record<ChannelGroup["status"], { label: string; color: BadgeColor }> = {
-  active: { label: "Active", color: "green" },
-  disabled: { label: "Inactive", color: "zinc" },
-};
 
 /** D11 §2's Group Inspector — actions A (Create Program), B (Edit Group), C (Manage Channels),
  *  D (More → Disable / Delete). */
@@ -45,7 +41,7 @@ export function ChannelGroupInspector({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const status = STATUS_BADGE[group.status];
+  const status = mediaStatus(group.status === "disabled" ? "inactive" : group.status);
   const health = memberHealthCounts(group, new Map(channels.map((c) => [c.id, c])));
 
   const toggleStatus = async () => {

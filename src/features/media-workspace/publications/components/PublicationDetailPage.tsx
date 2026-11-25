@@ -14,7 +14,7 @@ import {
   republishPublication,
 } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
-import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
+import { mediaStatus } from "../../media-status";
 import { publicationDrift, type DriftFinding } from "../publication-drift";
 import type { PlaylistDetail, PublicationDetail } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
@@ -177,9 +177,9 @@ export function PublicationDetailPage({ id }: { id: string }) {
   // the schedule window has since closed (docs/adr/0004).
   const isDraft = detail.status === "draft";
   const isActive = detail.status === "active";
-  // The label, by contrast, is the clock-aware one.
-  const displayStatus = publicationDisplayStatus(detail);
-  const statusColor = publicationStatusColor(displayStatus);
+  // The badge and subtitle show the server's `display_status` (ADR 0125 decision 4). It is absent
+  // only on a Core that predates ADR 0080, and then no badge shows rather than a guessed one.
+  const status = detail.display_status ? mediaStatus(detail.display_status) : null;
 
   const playlistItems = playlist?.items
     ? [...playlist.items].sort((a, b) => a.position - b.position)
@@ -195,7 +195,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       <PageHeader
         titleInTopbar
         title={detail.name}
-        subtitle={`Status: ${displayStatus}`}
+        subtitle={status ? `Status: ${status.label}` : undefined}
         actions={
           <div className="flex items-center gap-2">
             <Link href="/media-workspace/program" className={buttonClasses("secondary")}>
@@ -345,9 +345,13 @@ export function PublicationDetailPage({ id }: { id: string }) {
           <div>
             <dt className="text-xs font-medium text-muted-foreground">Status</dt>
             <dd className="mt-1">
-              <Badge color={statusColor} variant="pill">
-                {displayStatus}
-              </Badge>
+              {status ? (
+                <Badge color={status.color} variant="pill">
+                  {status.label}
+                </Badge>
+              ) : (
+                "—"
+              )}
             </dd>
           </div>
           <div>

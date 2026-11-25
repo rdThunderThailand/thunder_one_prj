@@ -1,29 +1,24 @@
 /** Run: node src/features/media-workspace/playlists/status-display.check.mts */
 import assert from "node:assert/strict";
-import { describeDeleteError, describePermanentDeleteRefusal, playlistDisplayStatus, statusBadge } from "./status-display.ts";
+import { describeDeleteError, describePermanentDeleteRefusal, playlistDisplayStatus, playlistInUseLabel, statusBadge } from "./status-display.ts";
 
 assert.deepEqual(statusBadge("active"), { color: "green", label: "Active" });
-assert.deepEqual(statusBadge("draft"), { color: "yellow", label: "Draft" });
+assert.deepEqual(statusBadge("draft"), { color: "zinc", label: "Draft" });
 assert.deepEqual(statusBadge("inactive"), { color: "zinc", label: "Inactive" });
 
-// A draft stays a draft however many Programs play it — the stored status is
-// still the only thing that decides draft / not-draft.
-assert.equal(playlistDisplayStatus({ status: "draft", in_use_count: 3 }), "draft");
-// No draft or active Program plays it: inactive, whatever the (untrustworthy) stored value says.
-assert.equal(playlistDisplayStatus({ status: "active", in_use_count: 0 }), "inactive");
-// In use (directly or through a Layout, ADR 0120): active, even on a row someone archived by hand.
-assert.equal(playlistDisplayStatus({ status: "inactive", in_use_count: 3 }), "active");
-// `publication_count` (direct, any status) no longer drives the badge: a playlist reached only
-// through a Layout has 0 direct references and is still active.
-// (Callers pass whole playlist objects, so the extra key is fine there; mirror that here.)
-const viaLayout = { status: "active" as const, publication_count: 0, in_use_count: 1 };
-assert.equal(playlistDisplayStatus(viaLayout), "active");
-// No in_use_count at all — a frontend deployed ahead of Thunder_Core keeps the stored
-// value rather than declaring every playlist inactive.
-const noCount = { status: "active" as const, publication_count: 0 };
-assert.equal(playlistDisplayStatus(noCount), "active");
+// ADR 0125: Draft or Active only; use (`in_use_count`) never changes the badge.
+assert.equal(playlistDisplayStatus({ status: "draft" }), "draft");
 assert.equal(playlistDisplayStatus({ status: "active" }), "active");
-assert.equal(playlistDisplayStatus({ status: "inactive" }), "inactive");
+// A stored `inactive` row (no frontend caller writes it) displays as Active.
+assert.equal(playlistDisplayStatus({ status: "inactive" }), "active");
+// Callers pass whole playlist objects, so extra keys are fine; mirror that here.
+assert.equal(playlistDisplayStatus({ status: "active", in_use_count: 0 } as { status: "active" }), "active");
+assert.equal(playlistDisplayStatus({ status: "draft", in_use_count: 3 } as { status: "draft" }), "draft");
+
+// The in-use tag shows only for a positive count; 0 and a missing count show none.
+assert.equal(playlistInUseLabel({ in_use_count: 3 }), "ใช้ใน 3 Program");
+assert.equal(playlistInUseLabel({ in_use_count: 0 }), null);
+assert.equal(playlistInUseLabel({}), null);
 
 // #40 wording: the publication names survive, the prefix does not.
 assert.equal(

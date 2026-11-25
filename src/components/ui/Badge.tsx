@@ -77,37 +77,3 @@ export function Badge({ color = "zinc", variant = "dot", children, className, ..
     </span>
   );
 }
-
-type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
-
-const statusMap: Record<string, StatusTone> = {
-  active: "success",
-  online: "success",
-  ready: "success",
-  published: "success",
-  completed: "success",
-  scheduled: "warning",
-  warning: "warning",
-  pending: "warning",
-  error: "danger",
-  failed: "danger",
-  offline: "danger",
-  blocked: "danger",
-  draft: "info",
-  processing: "info",
-  uploading: "info",
-  inactive: "neutral",
-  archived: "neutral",
-  unknown: "neutral",
-};
-
-export function StatusBadge({ status, label, className }: { status: string; label?: string; className?: string }) {
-  const tone = statusMap[status.toLowerCase()] ?? "neutral";
-  return (
-    <Badge variant={tone} className={cn("gap-1.5", className)}>
-      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
-      <span className="sr-only">Status: </span>
-      {label ?? status}
-    </Badge>
-  );
-}

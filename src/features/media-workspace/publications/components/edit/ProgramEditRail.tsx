@@ -13,20 +13,11 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { fetchNowNext, type NowNextRow } from "../../now-next";
 import { DEFAULT_TIMEZONE, utcToZonedParts } from "../../schedule";
-import { DISPLAY_STATUS_LABELS } from "../../publication-list-display";
+import { mediaStatus } from "../../../media-status";
 import type { ProgramEditState } from "../../program-edit";
 import type { ChannelListItem } from "../../../channels/types";
 import { reachedChannels, selectionFromTargets } from "../../target-picker";
 import { PRIORITIES, type Priority, type PublicationDetail, type PublicationDisplayStatus } from "../../types";
-
-const STATUS_VARIANT = {
-  draft: "info",
-  publishing: "warning",
-  failed: "danger",
-  scheduled: "info",
-  live: "success",
-  ended: "neutral",
-} as const;
 
 function formatDateTime(iso?: string): string {
   if (!iso) return "—";
@@ -47,10 +38,11 @@ function StatusCard({
     <div className="rounded-xl border border-border bg-card p-4 shadow-panel">
       <h2 className="mb-3 text-sm font-bold text-foreground">Program Status</h2>
       <Badge
-        variant={STATUS_VARIANT[status]}
-        className="rounded-full px-2 py-0 text-[9px]"
+        variant="pill"
+        color={mediaStatus(status).color}
+        className="px-2 py-0 text-[9px]"
       >
-        {DISPLAY_STATUS_LABELS[status]}
+        {mediaStatus(status).label}
       </Badge>
       {status === "live" && (
         <p className="mt-2 text-xs text-muted-foreground">

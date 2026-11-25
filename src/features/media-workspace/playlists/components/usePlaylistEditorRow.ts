@@ -32,6 +32,7 @@ export function usePlaylistEditorRow({
   const [serverId, setServerId] = useState<string | null>(playlistId ?? null);
   const [revision, setRevision] = useState<number | null>(null);
   const [status, setStatus] = useState<PlaylistStatus>("draft");
+  const [inUseCount, setInUseCount] = useState<number | undefined>(undefined);
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(
     playlistId ? null : baseline(emptyEditorState(), info),
   );
@@ -49,6 +50,7 @@ export function usePlaylistEditorRow({
     setServerId(detail.id);
     setRevision(rev);
     setStatus(playlistDisplayStatus(detail));
+    setInUseCount(detail.in_use_count);
     setInfo(loadedInfo);
   };
 
@@ -111,8 +113,8 @@ export function usePlaylistEditorRow({
       setServerId(upserted.playlist_id);
       setSavedSnapshot(baseline(present, info));
       setLastSavedAt(new Date());
-      // A ready Playlist no Program uses yet reads Inactive (ADR 0028), never Active.
-      if (activate) setStatus((current) => (current === "draft" ? "inactive" : current));
+      // Save & Activate reads Active at once, whether or not a Program uses it yet (ADR 0125).
+      if (activate) setStatus((current) => (current === "draft" ? "active" : current));
       toast.success(activate && status === "draft" ? "บันทึกและเปิดใช้งานแล้ว" : "บันทึกแล้ว");
       return upserted.playlist_id;
     } catch (err) {
@@ -137,5 +139,5 @@ export function usePlaylistEditorRow({
     setConflict(null);
   };
 
-  return { serverId, status, isDirty, lastSavedAt, loading, loadError, saving, saveError, conflict, save, reloadFromServer };
+  return { serverId, status, inUseCount, isDirty, lastSavedAt, loading, loadError, saving, saveError, conflict, save, reloadFromServer };
 }

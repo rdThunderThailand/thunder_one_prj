@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
@@ -12,22 +12,10 @@ import { nowPlayingAllNames, nowPlayingRemaining, nowPlayingThumbnail, nowPlayin
 import { fetchChannel } from "../services/channels-api";
 import type { NowNextOccurrence } from "../../publications/now-next";
 import { fetchPublication } from "../../publications/services/publications-api";
-import type { ChannelLifecycle, ChannelListItem, ChannelStatusFilter } from "../types";
+import { mediaStatus } from "../../media-status";
+import type { ChannelListItem } from "../types";
 import { ChannelGroupsPickerModal } from "./ChannelGroupsPickerModal";
 import { ChannelStructureTree } from "./ChannelStructureTree";
-
-const STATUS_BADGE: Record<ChannelStatusFilter, { label: string; color: BadgeColor }> = {
-  online: { label: "Online", color: "green" },
-  warning: { label: "Warning", color: "yellow" },
-  offline: { label: "Offline", color: "red" },
-  no_player: { label: "No player", color: "zinc" },
-};
-
-const LIFECYCLE_BADGE: Record<ChannelLifecycle, { label: string; color: BadgeColor }> = {
-  draft: { label: "Draft", color: "zinc" },
-  active: { label: "Active", color: "green" },
-  inactive: { label: "Inactive", color: "zinc" },
-};
 
 // Same stand-ins as ChannelTable: no TV/Kiosk pictograms exist, Monitor covers every
 // screen-like Output Kind and Box covers Kiosk.
@@ -106,8 +94,8 @@ export function ChannelDetailPanel({
 
   const viaGroups = viaGroupsResult?.key === viaGroupsKey ? viaGroupsResult.groups : null;
 
-  const status = STATUS_BADGE[channel.health ?? "no_player"];
-  const lifecycle = LIFECYCLE_BADGE[channel.lifecycle];
+  const status = mediaStatus(channel.health ?? "no_player");
+  const lifecycle = mediaStatus(channel.lifecycle);
   const TypeIcon = TYPE_ICON[channelTypeKey(channel)];
   const groups = channel.groups ?? [];
   const cover = nowPlayingThumbnail(occurrence);

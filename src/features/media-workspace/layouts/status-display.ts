@@ -1,12 +1,10 @@
 import type { LayoutStatus } from "./types";
-
-type BadgeColor = "green" | "zinc";
+import { mediaStatus, type MediaStatusEntry } from "../media-status.ts";
 
 /** Unlike Playlist (ADR 0028), a Layout's status is never derived — it is the stored
- *  column directly, active ↔ inactive with no hard delete (ADR 0044 §6). */
-export function statusBadge(status: LayoutStatus): { color: BadgeColor; label: string } {
-  if (status === "active") return { color: "green", label: "Active" };
-  return { color: "zinc", label: "Inactive" };
+ *  column directly, active ↔ inactive with no hard delete (ADR 0044 §6). Tones per ADR 0125. */
+export function statusBadge(status: LayoutStatus): MediaStatusEntry {
+  return mediaStatus(status);
 }
 
 /**

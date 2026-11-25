@@ -12,7 +12,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";
 import { formatDuration } from "../duration";
 import { playlistContentType, type Sort, type SortKey } from "../list-filtering";
-import { playlistDisplayStatus, statusBadge } from "../status-display";
+import { playlistDisplayStatus, playlistInUseLabel, statusBadge } from "../status-display";
 import type { PlaylistListItem } from "../types";
 
 function formatUpdatedAt(iso?: string): string {
@@ -85,6 +85,7 @@ export function PlaylistsTable({
           {rows.map((playlist) => {
             const cover = coverAssetId(playlist);
             const badge = statusBadge(playlistDisplayStatus(playlist));
+            const inUse = playlistInUseLabel(playlist);
             const metadata = decodeMetadata(playlist.metadata);
 
             return (
@@ -140,6 +141,7 @@ export function PlaylistsTable({
                 </td>
                 <td className="px-3 py-2.5">
                   <Badge variant={statusVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge>
+                  {inUse && <Tag className="ml-1.5 rounded-full px-2 py-0 text-[9px]">{inUse}</Tag>}
                 </td>
                 <td className="px-3 py-2.5 text-right">
                   <RowActions
@@ -270,7 +272,7 @@ function RowActions({
                   Details
                 </DropdownMenuItem>
                 {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
-                    moves the badge to Inactive, not Active, until a publication references it. */}
+                    moves the badge to Active (ADR 0125). */}
                 {isDraft && (
                   <DropdownMenuItem disabled={disabled} onSelect={() => onAction("mark-ready")}>
                     Mark as ready

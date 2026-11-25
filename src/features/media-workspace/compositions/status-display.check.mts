@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describeActivateError, describeSaveError, layoutPublishBlock, saveAction, statusBadge } from "./status-display.ts";
 
-assert.deepEqual(statusBadge("draft"), { color: "yellow", label: "Draft" });
+assert.deepEqual(statusBadge("draft"), { color: "zinc", label: "Draft" });
 assert.deepEqual(statusBadge("active"), { color: "green", label: "Active" });
 assert.deepEqual(statusBadge("inactive"), { color: "zinc", label: "Inactive" });
 assert.deepEqual(saveAction("draft"), { label: "Save Layout", canActivate: true });

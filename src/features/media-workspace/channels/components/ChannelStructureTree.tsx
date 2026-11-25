@@ -1,19 +1,15 @@
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { BoxIcon, MonitorIcon } from "@/components/ui/icons";
 import { structureNodes } from "../display-structure";
+import { mediaStatus } from "../../media-status";
 import type { ChannelListItem } from "../types";
 
-const HEALTH_COLOR: Record<"online" | "warning" | "offline", BadgeColor> = {
-  online: "green",
-  warning: "yellow",
-  offline: "red",
-};
-
 function HealthBadge({ health }: { health: "online" | "warning" | "offline" | null }) {
-  if (health === null) return <Badge color="zinc">No player</Badge>;
+  const status = mediaStatus(health ?? "no_player");
+  if (health === null) return <Badge color={status.color}>{status.label}</Badge>;
   return (
-    <Badge color={HEALTH_COLOR[health]} variant="pill">
-      {health[0]!.toUpperCase() + health.slice(1)}
+    <Badge color={status.color} variant="pill">
+      {status.label}
     </Badge>
   );
 }

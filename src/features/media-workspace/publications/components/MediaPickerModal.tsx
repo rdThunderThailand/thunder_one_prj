@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ExternalLinkIcon, GridIcon, ImageIcon, ListIcon, PlayIcon, SearchIcon } from "@/components/ui/icons";
+import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
@@ -11,12 +12,13 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { formatBytes } from "@/features/media-workspace/playlists/totals";
 import type { MediaAsset, Tag } from "@/types/domain";
 import { assetKind, defaultAssetPickerFilters, filterAssets, type AssetPickerFilters } from "../asset-filter";
+import { mediaStatus } from "../../media-status";
 import { AssetCard } from "./AssetCard";
 
 const PER_PAGE_OPTIONS = [9, 18, 36];
 const STATUS_OPTIONS = [
   { value: "all", label: "All Status" },
-  { value: "ready", label: "Active" },
+  { value: "ready", label: "Ready" },
   { value: "draft", label: "Draft" },
   { value: "archived", label: "Archived" },
   { value: "expired", label: "Expired" },
@@ -41,7 +43,7 @@ function AssetDetail({ asset, previewUrl, thumbnailUrl }: { asset?: MediaAsset; 
 
   return <div className="space-y-4 p-4">
     <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">{imageUrl && <Image src={imageUrl} alt={filename} fill sizes="260px" className="object-cover" />}</div>
-    <div className="flex items-start justify-between gap-2"><h3 className="min-w-0 break-words text-sm font-semibold text-foreground">{filename}</h3><span className="rounded-full bg-success-muted px-2 py-0.5 text-[10px] font-medium text-success">{asset.status === "ready" ? "Active" : asset.status ?? "—"}</span></div>
+    <div className="flex items-start justify-between gap-2"><h3 className="min-w-0 break-words text-sm font-semibold text-foreground">{filename}</h3>{asset.status ? <Badge variant="pill" color={mediaStatus(asset.status).color} className="shrink-0">{mediaStatus(asset.status).label}</Badge> : <span className="text-xs text-muted-foreground">—</span>}</div>
     <dl className="space-y-2 text-xs">{fields.map(([label, value]) => <div key={label} className="flex justify-between gap-3"><dt className="text-muted-foreground">{label}</dt><dd className="text-right text-foreground">{value}</dd></div>)}</dl>
     <div><p className="text-xs text-muted-foreground">Tags</p><div className="mt-1 flex flex-wrap gap-1">{asset.tags?.length ? asset.tags.map((tag) => <span key={tag.id} className="rounded-full bg-accent px-2 py-0.5 text-[10px] text-primary">{tag.name}</span>) : <span className="text-xs text-muted-foreground">—</span>}</div></div>
     <div><p className="text-xs text-muted-foreground">Description</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{asset.title ?? "—"}</p></div>

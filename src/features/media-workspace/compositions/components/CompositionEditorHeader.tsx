@@ -13,6 +13,7 @@ import type { PublishPrep } from "@/features/media-workspace/publish-changes/Pub
 import { SaveSplitButton } from "@/features/media-workspace/publish-changes/SaveSplitButton";
 import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
+import { statusBadge } from "../status-display";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 
@@ -130,7 +131,7 @@ export function CompositionEditorHeader({
     setEditing(false);
   };
   const updatedLabel = savedAt ? `Updated ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Not saved";
-  const statusVariant: Record<CompositionStatus, "warning" | "success" | "neutral"> = { draft: "warning", active: "success", inactive: "neutral" };
+  const badge = statusBadge(status);
 
   return (
     <div className="flex min-h-[68px] shrink-0 flex-wrap items-center justify-between gap-3 py-2">
@@ -156,7 +157,7 @@ export function CompositionEditorHeader({
           </>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={statusVariant[status]} className="rounded-full px-2 py-0 text-[10px]">{status[0].toUpperCase() + status.slice(1)}</Badge>
+            <Badge variant="pill" color={badge.color} className="px-2 py-0 text-[10px]">{badge.label}</Badge>
             <span className="text-xs text-muted-foreground">{referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · {updatedLabel}</span>
             {affectedCount > 0 && <button type="button" onClick={onShowPrograms} className="text-xs font-medium text-primary hover:underline">Used by {affectedCount} program{affectedCount === 1 ? "" : "s"}</button>}
           </div>
