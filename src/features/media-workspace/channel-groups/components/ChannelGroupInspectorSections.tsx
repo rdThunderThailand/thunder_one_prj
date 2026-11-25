@@ -44,6 +44,10 @@ export function ChannelGroupInspectorSections({
           <p className="text-[11px] text-muted-foreground">Offline</p>
         </div>
         <div className="rounded-lg border border-border bg-muted px-2 py-2 text-center">
+          <p className="text-lg font-semibold text-warning">{health.warning}</p>
+          <p className="text-[11px] text-muted-foreground">Warning</p>
+        </div>
+        <div className="col-span-4 rounded-lg border border-border bg-muted px-2 py-2 text-center">
           <p className="truncate text-sm font-semibold text-primary">{playbackMode}</p>
           <p className="text-[11px] text-muted-foreground">Playback</p>
         </div>
