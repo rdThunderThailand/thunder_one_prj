@@ -11,6 +11,8 @@ import { useProfileRead } from "../../hooks/use-asset-profile";
 import { getRecentAssignments } from "../../services/asset-assignments-write";
 import { getAssetDetail, getAssetFiles } from "../../services/asset-profile-api";
 import type { AssetDetail } from "../../services/asset-profile-contract";
+import { seededRead } from "../../services/seeded-read";
+import type { WarrantyFirstData } from "../../services/warranty-first-data";
 import { addWarranty, asProfileRead, getWarrantyRecords, updateWarranty, type WarrantyRecord } from "../../services/warranty-write";
 import { getAssignOptions } from "../assignments/use-assign-flow";
 import type { ActionSave } from "../assignments/SaveAlert";
@@ -20,8 +22,10 @@ export type WarrantyStep = "select" | "details" | "review" | "result";
 const NONE = "00000000-0000-4000-8000-000000000000";
 
 /** FE 04 Add / Edit Warranty. `assetId` null = list route, which starts with Select Asset. */
-export function useWarrantyFlow(context: string, assetId: string | null, warrantyId: string | null) {
+export function useWarrantyFlow(context: string, assetId: string | null, warrantyId: string | null, firstData?: WarrantyFirstData) {
   const router = useRouter();
+  // Refreshing the route sends new first data; an open form keeps what it started with.
+  const [first] = useState(firstData);
   const [picked, setPicked] = useState<{ id: string; thumbnailUrl: string | null } | null>(null);
   const id = assetId ?? picked?.id ?? null;
   const [step, setStep] = useState<WarrantyStep>(assetId ? "details" : "select");
@@ -31,12 +35,13 @@ export function useWarrantyFlow(context: string, assetId: string | null, warrant
   const sending = useRef(false);
   const reviewOpenedAt = useRef(0);
   const target = id ?? NONE;
-  const detail = useProfileRead(`${context}:${target}:warranty-detail`, (signal) => getAssetDetail(context, target, signal), Boolean(id));
+  const detail = useProfileRead(`${context}:${target}:warranty-detail`,
+    (signal) => seededRead(first?.detail, `${context}:${target}`, () => getAssetDetail(context, target, signal)), Boolean(id));
   const records = useProfileRead(`${context}:${target}:warranty-records`,
-    async (signal) => asProfileRead(await getWarrantyRecords(context, target, signal)), Boolean(id));
+    (signal) => seededRead(first?.records, `${context}:${target}`, async () => asProfileRead(await getWarrantyRecords(context, target, signal))), Boolean(id));
   const files = useProfileRead(`${context}:${target}:warranty-files`, (signal) => getAssetFiles(context, target, signal), Boolean(id));
   const recent = useProfileRead(`${context}:${target}:warranty-recent`, (signal) => getRecentAssignments(context, target, signal), Boolean(id));
-  const options = useProfileRead(`${context}:assign-options`, (signal) => getAssignOptions(context, signal));
+  const options = useProfileRead(`${context}:assign-options`, (signal) => seededRead(first?.options, context, () => getAssignOptions(context, signal)));
   const asset: AssetDetail | null = detail.result?.ok ? detail.result.data : null;
   const list = records.result?.ok ? records.result.data : null;
   const record = warrantyId && list ? list.find((item) => item.id === warrantyId) ?? null : null;
@@ -103,7 +108,7 @@ export function useWarrantyFlow(context: string, assetId: string | null, warrant
   return {
     step, asset, record, currentId, list, photo, picked, draft: value, errors, documents, linked, disposed, save, saved,
     detail, records, files, recent, options, needsReload, ready, canNext, canConfirm, set, next, confirm, reload,
-    edit: Boolean(warrantyId),
+    edit: Boolean(warrantyId), first,
     pick: (assetPick: string, thumbnailUrl: string | null) => { setPicked({ id: assetPick, thumbnailUrl }); setDraft(null); },
     back: () => {
       if (sending.current) return;

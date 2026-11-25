@@ -18,6 +18,17 @@ export function readLwTab(value: unknown): LwTab {
 export const LIFECYCLE_FILTER_KEYS = ["q", "status", "condition", "category_id", "location_id", "custody_type", "custody_id"] as const;
 export const LIFECYCLE_CLEAR = Object.fromEntries(LIFECYCLE_FILTER_KEYS.map((key) => [key, undefined]));
 
+/** The Core query for one Lifecycle URL; the server and the browser build the same one. Other keys stay out. */
+export function lifecycleListQuery(search: string): string {
+  const params = new URLSearchParams(search);
+  const query = new URLSearchParams();
+  for (const key of [...LIFECYCLE_FILTER_KEYS, "page", "pageSize"]) {
+    const values = params.getAll(key);
+    if (values.length === 1 && values[0]) query.set(key, values[0]);
+  }
+  return query.toString();
+}
+
 // Q4: Condition Issues = Damaged or Unusable, Disposed left out (Disposed is view only, PO 05 §4.2).
 const ISSUE_FILTER = { status: "Available,Assigned,In Maintenance,Retired", condition: "Damaged,Unusable" };
 export const LIFECYCLE_TILES = [

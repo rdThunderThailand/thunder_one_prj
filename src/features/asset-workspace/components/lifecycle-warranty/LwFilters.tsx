@@ -10,6 +10,8 @@ import type { ListUrlState } from "../list-page/useListUrlState";
 export type LwSelect = {
   key: string; label: string; value: string; options: { value: string; label: string }[];
   onChange?: (value?: string) => void;
+  /** Options are still being read. */
+  loading?: boolean;
 };
 
 /** One labelled select pill, as AssignmentsCurrentFilters. */
@@ -76,7 +78,7 @@ export function LwFilters({ url, placeholder, selects, clear, optionsFailed }: {
             placeholder={placeholder} className="h-10 pl-9" />
         </form>
         {selects.map((select) => (
-          <LwFilter key={select.key} select={select} url={url} disabled={url.isPending} />
+          <LwFilter key={select.key} select={select} url={url} disabled={url.isPending || Boolean(select.loading)} />
         ))}
       </div>
       {filtered && <Button size="sm" variant="ghost" disabled={url.isPending} onClick={() => url.set(clear)}>Clear filters</Button>}

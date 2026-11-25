@@ -1,21 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/lovable/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/lovable/select";
 import { SearchIcon } from "@/components/ui/icons";
 import type { AssetCondition } from "../../domain/asset-condition";
 import type { AssetStatus } from "../../domain/asset-status";
-import { useProfileRead } from "../../hooks/use-asset-profile";
-import { getAssetsFilters } from "../../services/assets-list-api";
-import { asProfileRead, searchWarrantyAssets } from "../../services/warranty-write";
 import { AssetThumbnail } from "../AssetThumbnail";
 import { ConditionBadge, StatusBadge } from "../StatusBadges";
 import { AssetsPagination } from "../assets-list/AssetsPagination";
 import { ErrorState } from "../states/ErrorState";
 import { EmptyState, LoadingState } from "../states/states";
 import type { WarrantyFlow } from "./use-warranty-flow";
+import type { WarrantySelect } from "./use-warranty-select";
 
 type Row = {
   id: string; name: string; code: string; serial: string | null; category: string | null; location: string | null;
@@ -77,16 +74,8 @@ function AssetRow({ row, checked, pinned, onPick }: { row: Row; checked: boolean
 }
 
 /** Step 1 on the list route (Q23): any asset except Disposed, found by search, category, location and page. */
-export function WarrantySelectAsset({ context, flow }: { context: string; flow: WarrantyFlow }) {
-  const [search, setSearch] = useState("");
-  const [query, setQuery] = useState({ q: "", page: 1, category_id: "", location_id: "" });
-  useEffect(() => {
-    const timer = setTimeout(() => setQuery((previous) => previous.q === search.trim() ? previous : { ...previous, q: search.trim(), page: 1 }), 350);
-    return () => clearTimeout(timer);
-  }, [search]);
-  const list = useProfileRead(`${context}:warranty-search:${JSON.stringify(query)}`,
-    async (signal) => asProfileRead(await searchWarrantyAssets(context, query, signal)));
-  const filters = useProfileRead(`${context}:assign-filters`, (signal) => getAssetsFilters(context, signal));
+export function WarrantySelectAsset({ flow, select }: { flow: WarrantyFlow; select: WarrantySelect }) {
+  const { search, setSearch, query, setQuery, list, filters } = select;
   const options = filters.result?.ok ? filters.result.data : { categories: [], locations: [] };
   const page = list.result?.ok ? list.result.data : null;
   const rows: Row[] = (page?.rows ?? []).map((row) => ({

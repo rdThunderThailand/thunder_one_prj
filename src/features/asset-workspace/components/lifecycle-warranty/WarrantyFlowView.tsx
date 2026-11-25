@@ -8,6 +8,7 @@ import { profileHref } from "../../domain/assignment-assign";
 import {
   ADD_WARRANTY_TITLE, DISPOSED_WARRANTY_TEXT, EDIT_WARRANTY_TITLE, WARRANTY_SUBTITLE, warrantySteps, warrantyWriteText,
 } from "../../domain/warranty-form";
+import type { WarrantyFirstData } from "../../services/warranty-first-data";
 import { ActionLayout, AssignFlowTitle } from "../assignments/AssignFlowHeader";
 import { AssignFlowWorkspace } from "../assignments/AssignFlowWorkspace";
 import {
@@ -17,6 +18,7 @@ import {
 import { AccessDeniedState, EmptyState, NotFoundState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { useWarrantyFlow, type WarrantyFlow } from "./use-warranty-flow";
+import { useWarrantySelect } from "./use-warranty-select";
 import { WarrantyDetails } from "./WarrantyDetails";
 import { WarrantyResult, WarrantyReview } from "./WarrantyReview";
 import { WarrantySelectAsset } from "./WarrantySelectAsset";
@@ -90,10 +92,11 @@ function WarrantyFooter({ flow, back, profile }: { flow: WarrantyFlow; back: str
 }
 
 /** FE 04 Add / Edit Warranty, laid out like Retire. `assetId` null = list route (starts with Select Asset). */
-export function WarrantyFlowView({ context, assetId, warrantyId, from }: {
-  context: string; assetId: string | null; warrantyId: string | null; from?: string;
+export function WarrantyFlowView({ context, assetId, warrantyId, from, firstData }: {
+  context: string; assetId: string | null; warrantyId: string | null; from?: string; firstData?: WarrantyFirstData;
 }) {
-  const flow = useWarrantyFlow(context, assetId, warrantyId);
+  const flow = useWarrantyFlow(context, assetId, warrantyId, firstData);
+  const select = useWarrantySelect(context, flow.first, !assetId);
   const id = assetId ?? flow.picked?.id ?? null;
   const profile = id ? profileHref(id, false) : null;
   const back = from === "profile" && profile ? profile : WARRANTY_TAB;
@@ -151,7 +154,7 @@ export function WarrantyFlowView({ context, assetId, warrantyId, from }: {
                 </div>
               )}
               {flow.step === "select"
-                ? <WarrantySelectAsset context={context} flow={flow} />
+                ? <WarrantySelectAsset flow={flow} select={select} />
                 : <WarrantyContent flow={flow} profile={profile} number={number} />}
             </div>
           )}
