@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/lovable/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/lovable/tabs";
 import { ChevronRightIcon } from "@/components/ui/icons";
@@ -14,13 +14,20 @@ import { CategoryOverviewCards } from "./CategoryOverviewCards";
 import { CategoryChildrenSection } from "./CategoryChildrenSection";
 import { CategoryDetailLoading } from "./CategoryDetailLoading";
 import { useCategoryAssetsUrl } from "../../hooks/use-category-assets-url";
+import type { CategoryDetailFirstData } from "../../services/category-first-data";
 import { CategoryAssetsTab } from "./CategoryAssetsTab";
 
 const listHref = "/asset-workspace/categories";
 
-export function CategoryDetailView({ context, categoryId }: { context: string; categoryId: string }) {
-  const detail = useCategoryDetail(context, categoryId);
+export function CategoryDetailView({ context, categoryId, firstData }: {
+  context: string; categoryId: string; firstData?: CategoryDetailFirstData;
+}) {
+  const detail = useCategoryDetail(context, categoryId, firstData?.detail);
   const url = useCategoryAssetsUrl(categoryId);
+  // Refreshing the route sends new first data; an open page keeps what it started with.
+  const [assetsSeeds] = useState(firstData?.assets);
+  const [assetsOpened, setAssetsOpened] = useState(url.tab === "assets");
+  if (url.tab === "assets" && !assetsOpened) setAssetsOpened(true);
   const feedback = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (detail.failure) feedback.current?.focus();
@@ -97,8 +104,9 @@ export function CategoryDetailView({ context, categoryId }: { context: string; c
               <CategoryOverviewCards category={category} />
               <CategoryChildrenSection categories={category.children} />
             </TabsContent>
-            <TabsContent value="assets" className="mt-0 flex min-w-0 flex-col p-1 pt-3 data-[state=inactive]:hidden group-data-[bounded=true]/categories-workspace:min-h-0 group-data-[bounded=true]/categories-workspace:flex-1">
-              {url.tab === "assets" && <CategoryAssetsTab context={context} category={category} url={url} />}
+            {/* Hidden, not removed, after it was opened: switching tabs does not read the assets again. */}
+            <TabsContent value="assets" forceMount={assetsOpened || undefined} className="mt-0 flex min-w-0 flex-col p-1 pt-3 data-[state=inactive]:hidden group-data-[bounded=true]/categories-workspace:min-h-0 group-data-[bounded=true]/categories-workspace:flex-1">
+              {assetsOpened && <CategoryAssetsTab context={context} category={category} url={url} seeds={assetsSeeds} />}
             </TabsContent>
           </Tabs>
         )}

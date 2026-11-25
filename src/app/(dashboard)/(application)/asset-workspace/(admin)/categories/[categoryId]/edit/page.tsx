@@ -3,6 +3,7 @@ import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 import { Button } from "@/components/ui/lovable/button";
 import { EditCategoryView } from "@/features/asset-workspace/components/categories/EditCategoryView";
 import { AccessDeniedState, EmptyState } from "@/features/asset-workspace/components/states/states";
+import { startCategoryDetail, startCategoryList } from "@/features/asset-workspace/services/category-first-data";
 
 export default async function EditCategoryPage({ params }: { params: Promise<{ categoryId: string }> }) {
   const [{ categoryId }, session, token] = await Promise.all([params, getSession(), getAuthToken()]);
@@ -17,5 +18,16 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ c
   }
   if (session === "forbidden" || !session.tenantId || !session.userId) return <AccessDeniedState />;
   const context = `${session.tenantId}:${session.userId}`;
-  return <EditCategoryView key={`${context}:${categoryId}`} context={context} categoryId={categoryId} />;
+  const [firstData, parentsSeed] = await Promise.all([
+    startCategoryDetail(token, session.tenantId, context, categoryId), startCategoryList(token, session.tenantId, context),
+  ]);
+  return (
+    <EditCategoryView
+      key={`${context}:${categoryId}`}
+      context={context}
+      categoryId={categoryId}
+      firstData={firstData}
+      parentsSeed={parentsSeed}
+    />
+  );
 }

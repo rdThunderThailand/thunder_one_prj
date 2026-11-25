@@ -7,9 +7,11 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/lovable/button";
 import { ChevronRightIcon, PlusIcon } from "@/components/ui/icons";
+import type { AssetCategory } from "../../domain/asset-category";
 import { activeCategoryParents, type CategoryField } from "../../domain/category-form";
 import { useCategoryListData } from "../../hooks/use-category-list-data";
 import { useCategoryCreate } from "../../hooks/use-category-create";
+import type { SectionSeed } from "../../services/assets-list-seed";
 import { AccessDeniedState, EmptyState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { CategoriesWorkspace } from "./CategoriesWorkspace";
@@ -19,9 +21,9 @@ import { AddCategoryFieldsLoading } from "./AddCategoryLoading";
 
 const listHref = "/asset-workspace/categories";
 
-export function AddCategoryView({ context }: { context: string }) {
+export function AddCategoryView({ context, seed }: { context: string; seed?: SectionSeed<AssetCategory[]> }) {
   const router = useRouter();
-  const parents = useCategoryListData(context);
+  const parents = useCategoryListData(context, seed);
   const flow = useCategoryCreate(context, parents.retry);
   const summary = useRef<HTMLDivElement>(null);
   const issues = (Object.keys(categoryFieldTargets) as CategoryField[]).filter((key) => flow.fields[key]);
