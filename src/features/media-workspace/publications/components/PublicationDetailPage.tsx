@@ -16,13 +16,13 @@ import {
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { mediaStatus } from "../../media-status";
 import { publicationDrift, type DriftFinding } from "../publication-drift";
-import type { PlaylistDetail, PublicationDetail } from "../types";
+import type { PlaylistDetail, PublicationDetail, PublicationSchedule } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { deletedChannelLabel } from "../../channels/channel-logic";
 import { DeliveryProgress } from "./DeliveryProgress";
-import { formatMonthDays, WEEKDAYS } from "../schedule";
-import { lastAiringDay } from "../schedule-airing";
+import { formatDmy, WEEKDAYS } from "../schedule";
+import { describeSchedule, scheduleEdges } from "../schedule-airing";
 import { publicationPreviewTarget } from "@/features/media-workspace/preview/publication-preview-target";
 
 /** Names what changed, so re-publishing is a decision rather than a guess (ADR 0049 §11). */
@@ -53,6 +53,47 @@ function formatDate(dateStr?: string | null): string {
   } catch {
     return dateStr;
   }
+}
+
+/** The Schedule card's fields: the same summary text the wizard prints, read in the Schedule's own zone (ADR 0128 §7). */
+function ScheduleFields({ schedule }: { schedule: PublicationSchedule }) {
+  const summary = describeSchedule(schedule);
+  const edges = scheduleEdges(schedule);
+  const weekdays = WEEKDAYS.filter((d) => summary.days.includes(d.value)).map((d) => d.label).join(", ");
+  return (
+    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <dt className="text-xs font-medium text-muted-foreground">Starts At</dt>
+        <dd className="mt-1 text-sm text-foreground">
+          {`${formatDmy(edges.startDate)}, ${edges.startTime}`}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-xs font-medium text-muted-foreground">Ends At</dt>
+        <dd className="mt-1 text-sm text-foreground">
+          {edges.endDate ? `${formatDmy(edges.endDate)}${edges.endTime ? `, ${edges.endTime}` : ""}` : "No end date"}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-xs font-medium text-muted-foreground">Timezone</dt>
+        <dd className="mt-1 text-sm text-foreground">
+          {schedule.timezone}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-xs font-medium text-muted-foreground">Recurrence</dt>
+        <dd className="mt-1 text-sm text-foreground">
+          <span>{[summary.title, summary.hours, summary.range].filter(Boolean).join(" · ")}</span>
+          {summary.days.length > 0 && (
+            <>
+              <br />
+              <span>{weekdays}</span>
+            </>
+          )}
+        </dd>
+      </div>
+    </dl>
+  );
 }
 
 export function PublicationDetailPage({ id }: { id: string }) {
@@ -502,53 +543,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
           Schedule
         </h2>
         {detail.schedule ? (
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">Starts At</dt>
-              <dd className="mt-1 text-sm text-foreground">
-                {formatDate(detail.schedule.starts_at)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">Ends At</dt>
-              <dd className="mt-1 text-sm text-foreground">
-                {"freq" in detail.schedule.recurrence
-                  ? (lastAiringDay(detail.schedule) ?? "—")
-                  : formatDate(detail.schedule.ends_at)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">Timezone</dt>
-              <dd className="mt-1 text-sm text-foreground">
-                {detail.schedule.timezone}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">Recurrence</dt>
-              <dd className="mt-1 text-sm text-foreground">
-                {detail.schedule.recurrence && "freq" in detail.schedule.recurrence ? (
-                  <>
-                    <span>
-                      {detail.schedule.recurrence.freq === "monthly"
-                        ? `Monthly: ${formatMonthDays(detail.schedule.recurrence.month_days)}`
-                        : detail.schedule.recurrence.freq === "dates"
-                          ? `Dates: ${detail.schedule.recurrence.dates.join(", ")}`
-                          : detail.schedule.recurrence.days.length === WEEKDAYS.length
-                            ? "Every day"
-                            : `Weekly: ${[...detail.schedule.recurrence.days].sort((a, b) => a - b).map((day) => WEEKDAYS[day]?.label ?? day).join(", ")}`}
-                    </span>
-                    <br />
-                    <span>
-                      Hours: {detail.schedule.recurrence.daily_start}–
-                      {detail.schedule.recurrence.daily_end}
-                    </span>
-                  </>
-                ) : (
-                  "One-time"
-                )}
-              </dd>
-            </div>
-          </dl>
+          <ScheduleFields schedule={detail.schedule} />
         ) : (
           <p className="text-sm text-muted-foreground">ยังไม่ได้ตั้งเวลา</p>
         )}
