@@ -436,9 +436,3 @@ export async function setChannelGroups(id: string, groupIds: string[]): Promise<
     await requestChannelApi<unknown>(buildSetChannelGroupsRequest(id, groupIds)),
   );
 }
-
-/** Same partial-unique-index text as `media_channel_groups_set_members` on the other side of
- *  this many-to-many (ADR 0074 §5) — shown as-is rather than the generic "Invalid input:" text. */
-export function isChannelGroupSyncConflict(message: string): boolean {
-  return message.includes("already in another synchronized group") || message.includes("only one synchronized group");
-}

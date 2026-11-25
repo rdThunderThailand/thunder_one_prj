@@ -59,18 +59,6 @@ export interface ClassifiedError {
 }
 
 /**
- * Raised by any RPC guarding a per-tenant unique name. The raw text names the
- * colliding value in English ("Already exists: a channel named X already exists"),
- * and `api-utils.ts` buckets it into the same 409 as every other "already" message,
- * so without this case it reaches the screen untranslated.
- *
- * ponytail: Channels and Channel Groups still branch on this until their refusals move into the table (#460 PR 2).
- */
-export function isDuplicateName(message: string): boolean {
-  return message.startsWith("Already exists:");
-}
-
-/**
  * A request that never got a response — the browser is offline, the host is
  * unreachable, or it timed out. Axios reports it as `code: "ERR_NETWORK"` (or
  * `"ECONNABORTED"` on timeout) with the bare English `message` "Network Error",

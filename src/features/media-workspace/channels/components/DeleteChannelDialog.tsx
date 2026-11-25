@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { deleteRefusalMessage } from "../delete-refusal";
+import { classifyApiError } from "@/lib/api/api-error";
 import { deleteChannel, fetchChannel } from "../services/channels-api";
 import { deleteDialogLines, deleteSuccessMessage } from "../delete-dialog-copy";
 import type { ChannelDetail } from "../types";
@@ -66,7 +66,7 @@ export function DeleteChannelDialog({
       close();
       onDeleted();
     } catch (caught) {
-      setError(deleteRefusalMessage(caught, "Could not delete this Channel. Try again."));
+      setError(classifyApiError(caught, "ลบ Channel นี้ไม่สำเร็จ กรุณาลองใหม่").message);
     } finally {
       setPending(false);
     }

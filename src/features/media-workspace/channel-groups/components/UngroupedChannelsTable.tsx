@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { InfoIcon } from "@/components/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
-import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
-import { isSyncConflict, setChannelGroupMembers } from "../services/channel-groups-api";
+import { classifyApiError } from "@/lib/api/api-error";
+import { setChannelGroupMembers } from "../services/channel-groups-api";
 import { mediaStatus } from "../../media-status";
 import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
@@ -31,11 +31,7 @@ function AddToGroupMenu({
       onAdded(await setChannelGroupMembers(group.id, [...group.members.map((m) => m.id), channel.id]));
       setOpen(false);
     } catch (caught) {
-      const message =
-        caught instanceof Error && (isSyncConflict(caught.message) || isDuplicateName(caught.message))
-          ? "Channel นี้อยู่ใน Group แบบ Synchronized อื่นแล้ว"
-          : classifyApiError(caught, "เพิ่ม Channel เข้า Group ไม่สำเร็จ กรุณาลองใหม่").message;
-      setError(message);
+      setError(classifyApiError(caught, "เพิ่ม Channel เข้า Group ไม่สำเร็จ กรุณาลองใหม่").message);
     } finally {
       setBusy(false);
     }

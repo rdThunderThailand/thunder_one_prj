@@ -90,7 +90,7 @@ export function ChannelsListPage() {
     let alive = true;
     load().catch((caught) => {
       if (!alive) return;
-      setError(classifyApiError(caught, "Could not load Channels. Try again."));
+      setError(classifyApiError(caught, "โหลดรายการ Channel ไม่สำเร็จ กรุณาลองใหม่"));
     });
     // Now Playing and the Groups tile are read-only extras — a failure here shows as an empty
     // "–" / skeleton rather than the page-level LoadError, so it must not throw into `load()`.
@@ -112,7 +112,7 @@ export function ChannelsListPage() {
   const retry = () => {
     setRetrying(true);
     load()
-      .catch((caught) => setError(classifyApiError(caught, "Could not load Channels. Try again.")))
+      .catch((caught) => setError(classifyApiError(caught, "โหลดรายการ Channel ไม่สำเร็จ กรุณาลองใหม่")))
       .finally(() => setRetrying(false));
   };
 
