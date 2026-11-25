@@ -56,7 +56,9 @@ Two PRs per release. Merge methods follow ADR 0118.
 
 1. **Verify `dev`**: `pnpm install --frozen-lockfile && pnpm exec tsc --noEmit && pnpm exec eslint . && pnpm exec next build`
    — all exit 0. Fix on `dev` via a normal PR first if not. (`next build` no longer runs ESLint in
-   Next 16, so `eslint` is its own step.)
+   Next 16, so `eslint` is its own step.) The `CI` workflow runs the same four commands on every PR
+   (`.github/workflows/ci.yml`), so a green `check` on the last PR merged into `dev` is the evidence; run
+   them by hand only when CI is down or `dev` moved since.
 2. **Release-prep PR → `dev`** from branch `release/vX.Y.Z`: choose MINOR or PATCH from the diff
    since the current `main` release, bump `package.json`, and add a row to **Stable Workspaces** if
    this release makes one stable. Draft, Thai or English as the owner picks. Squash. Owner merges.
