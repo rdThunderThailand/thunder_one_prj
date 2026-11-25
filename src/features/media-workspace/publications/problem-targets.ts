@@ -1,5 +1,6 @@
 import type { PublicationTarget } from "./types";
 import type { ChannelListItem } from "../channels/types";
+import { canBeProgramTarget } from "../channels/lifecycle-actions.ts";
 
 export type ProblemTarget = { id: string; name: string; deleted: boolean };
 
@@ -26,7 +27,7 @@ export function problemTargets(targets: readonly PublicationTarget[]): ProblemTa
 export function selectedProblemTargets(
   channelIds: readonly string[],
   loaded: readonly ProblemTarget[],
-  channels: readonly Pick<ChannelListItem, "id" | "name" | "status">[] | null,
+  channels: readonly Pick<ChannelListItem, "id" | "name" | "lifecycle">[] | null,
 ): { targets: ProblemTarget[]; unlistedIds: string[] } {
   const targets = loaded.filter((target) => channelIds.includes(target.id));
   const unlistedIds: string[] = [];
@@ -35,7 +36,7 @@ export function selectedProblemTargets(
     if (targets.some((target) => target.id === id)) continue;
     const channel = channels.find((item) => item.id === id);
     if (!channel) unlistedIds.push(id);
-    else if (channel.status !== "active") targets.push({ id, name: channel.name, deleted: false });
+    else if (!canBeProgramTarget(channel)) targets.push({ id, name: channel.name, deleted: false });
   }
   return { targets, unlistedIds };
 }

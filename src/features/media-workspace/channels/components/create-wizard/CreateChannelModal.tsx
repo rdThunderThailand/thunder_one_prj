@@ -205,7 +205,7 @@ export function CreateChannelModal({
       {step === "success" && createdChannel && (
         <CreateChannelSuccessCard
           channelName={createdChannel.name}
-          isDraft={createdChannel.status === "draft"}
+          isDraft={createdChannel.lifecycle === "draft"}
           onViewChannel={() => {
             onViewChannel(createdChannel.id);
             onClose();

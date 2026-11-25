@@ -35,7 +35,7 @@ export function ChannelRowActionsMenu({
   const [isConfirming, setIsConfirming] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
-  const canDisable = lifecycleActionsFor({ status: channel.status, hasPlayer: true, blockingPrograms: [] }).canDeactivate;
+  const canDisable = lifecycleActionsFor({ lifecycle: channel.lifecycle, hasPlayer: true, blockingPrograms: [] }).canDeactivate;
 
   const disable = async () => {
     setPending(true);

@@ -116,7 +116,7 @@ export function EditChannelSidebar({
       <ChannelLifecycleActions
         channelId={channel.id}
         channelName={channel.name}
-        status={channel.status}
+        lifecycle={channel.lifecycle}
         playerName={channel.player?.name ?? null}
         blockingPrograms={channel.blocking_programs}
         revision={channel.revision}

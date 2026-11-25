@@ -8,7 +8,6 @@ import type {
   ChannelDisplayConfig,
   ChannelDisplayConfigScreen,
   ChannelGroupSummary,
-  ChannelLifecycle,
   ChannelListItem,
   ChannelLocationOption,
   ChannelReferenceData,
@@ -25,7 +24,6 @@ export interface ChannelRequestDescriptor {
 
 export interface ChannelListQuery {
   category?: ChannelCategory;
-  lifecycle?: ChannelLifecycle;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -194,7 +192,6 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !isString(value.id) ||
     !isString(value.name) ||
     !isNullableString(value.description) ||
-    !isOneOf(value.lifecycle, ["draft", "active", "inactive"]) ||
     !isOneOf(value.status, ["draft", "active", "inactive"]) ||
     !isOneOf(value.category, ["dooh", "in_store", "online", "social"]) ||
     !(value.channel_type === null || isRecord(value.channel_type)) ||
@@ -229,8 +226,8 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     id: value.id,
     name: value.name,
     description: value.description,
-    lifecycle: value.lifecycle,
-    status: value.status,
+    // Core's `lifecycle` key is the ADR 0037 derived value, which One does not read (ADR 0129).
+    lifecycle: value.status,
     category: value.category,
     channel_type: channelType,
     location,
@@ -256,7 +253,6 @@ async function requestChannelApi<T>(request: ChannelRequestDescriptor): Promise<
 export function buildChannelListPath(query: ChannelListQuery = {}): string {
   const searchParams = new URLSearchParams();
   if (query.category) searchParams.set("category", query.category);
-  if (query.lifecycle) searchParams.set("lifecycle", query.lifecycle);
   const suffix = searchParams.toString();
   return suffix ? `/media/channels?${suffix}` : "/media/channels";
 }

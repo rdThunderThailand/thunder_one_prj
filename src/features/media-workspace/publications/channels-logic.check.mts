@@ -26,7 +26,6 @@ function channel(over: Partial<ChannelListItem> & Pick<ChannelListItem, "id" | "
   return {
     description: null,
     lifecycle: "active",
-    status: "active",
     category: "dooh",
     channel_type: null,
     location: null,
@@ -55,28 +54,27 @@ assert.deepEqual(toChannelItems([]), []);
 const channels: ChannelListItem[] = [
   channel({ id: "c1", name: "Lobby", player: device("d1", "online"), groups: [{ id: "g1", name: "All Screens", playback_mode: "independent" }], expected_resolution: "1920x1080" }),
   channel({ id: "c2", name: "Foyer", category: "in_store", player: device("d2", "warning"), groups: [{ id: "g1", name: "All Screens", playback_mode: "independent" }] }),
-  channel({ id: "c3", name: "Staged", lifecycle: "draft", status: "draft" }),
-  channel({ id: "c4", name: "Empty", lifecycle: "inactive" }),
-  channel({ id: "c5", name: "Switched off", lifecycle: "inactive", status: "inactive" }),
+  channel({ id: "c3", name: "Staged", lifecycle: "draft" }),
+  channel({ id: "c5", name: "Switched off", lifecycle: "inactive" }),
 ];
 const items = toChannelItems(channels);
 
-// Only an active Channel holds device reservations (ADR 0099): a Draft or deactivated one is not
-// publishable, while an active one with no Program yet (lifecycle "inactive") still is.
-assert.deepEqual(items.map((i) => i.id), ["c1", "c2", "c4"]);
+// Only an Active Channel holds device reservations (ADR 0099, 0129): a Draft or deactivated one is
+// not publishable.
+assert.deepEqual(items.map((i) => i.id), ["c1", "c2"]);
 assert.equal(items[0].status, "online");
 assert.equal(items[0].resolution, "1920x1080");
 assert.equal(items[0].subLabel, "d1 · online");
 assert.equal(items[1].status, "warning"); // the Player's health is the card status (ADR 0074 §4)
 assert.equal(items[1].category, "in-store"); // domain `in_store` -> wizard `in-store`
-assert.equal(items[2].status, "offline"); // no Player, no liveness to report
+assert.equal(toChannelItems([channel({ id: "c6", name: "No player" })])[0].status, "offline"); // no Player, no liveness to report
 
 // --- wizard conflict check: media_schedule_conflicts is device-level, Groups expand to their Players ---
 const wizardDevices = (channelIds: string[], groupIds: string[]) =>
   targetDeviceIds(channels, targetsFromSelection(channelIds, groupIds, {}, channels)).sort();
 assert.deepEqual(wizardDevices([], []), []);
 assert.deepEqual(wizardDevices(["c1", "c2"], []), ["d1", "d2"]);
-assert.deepEqual(wizardDevices(["c4"], []), []); // channel with no Player
+assert.deepEqual(wizardDevices(["c5"], []), []); // channel with no Player
 assert.deepEqual(wizardDevices([], ["g1"]), ["d1", "d2"]); // Group-only Draft
 assert.deepEqual(wizardDevices(["c1"], ["g1"]), ["d1", "d2"]); // overlap counted once
 assert.deepEqual(selectedGroupItems(channels, ["g1"], {}), [
@@ -90,12 +88,12 @@ assert.deepEqual(selectedGroupItems(channels, ["gone"], { gone: "Saved Group" })
 assert.equal(filterBySearch(items, "lob").length, 1);
 assert.equal(filterBySearch(items, "  LOBBY  ").length, 1); // trims + case-insensitive
 assert.equal(filterBySearch(items, "nope").length, 0);
-assert.equal(filterBySearch(items, "").length, 3);
+assert.equal(filterBySearch(items, "").length, 2);
 
 // --- computeCategoryCounts ---
 const counts = computeCategoryCounts(items);
-assert.equal(counts.all, 3);
-assert.equal(counts.dooh, 2);
+assert.equal(counts.all, 2);
+assert.equal(counts.dooh, 1);
 assert.equal(counts["in-store"], 1);
 assert.equal(counts.social, 0);
 
@@ -105,8 +103,8 @@ assert.deepEqual(empty, { online: 0, warning: 0, offline: 0, total: 0 });
 assert.equal(statusPercent(empty.online, empty.total), 0); // NaN guard
 
 const mixed = computeStatusCounts(items);
-assert.deepEqual(mixed, { online: 1, warning: 1, offline: 1, total: 3 });
-assert.equal(statusPercent(mixed.online, mixed.total), 33);
+assert.deepEqual(mixed, { online: 1, warning: 1, offline: 0, total: 2 });
+assert.equal(statusPercent(mixed.online, mixed.total), 50);
 
 // --- summarizeGeometryFit ---
 // Canvas unset: the Player's own reported resolution is compared; null reads as unprofiled.

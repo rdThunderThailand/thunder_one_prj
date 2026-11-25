@@ -1,6 +1,7 @@
 import type { ChannelCategory as ChannelDomainCategory, ChannelListItem } from "../channels/types";
 import { channelCategories, type ChannelCategory, type ChannelItem } from "./mock-data.ts";
 import { deviceFit } from "../layouts/geometry.ts";
+import { canBeProgramTarget } from "../channels/lifecycle-actions.ts";
 
 /** The Channel domain and this wizard spell the same categories differently
  * (`in_store` vs `in-store`), and the wizard carries an extra `others` bucket
@@ -20,11 +21,11 @@ export function formatPlayerSummary(player: ChannelListItem["player"]): string {
 
 /**
  * A Publication targets active Channels only — a Draft or deactivated Channel holds no device
- * reservations, so publishing to one would drive screens nothing has claimed (ADR 0099).
+ * reservations, so publishing to one would drive screens nothing has claimed (ADR 0099, 0129).
  */
 export function toChannelItems(channels: ChannelListItem[]): ChannelItem[] {
   return channels
-    .filter((channel) => channel.status === "active")
+    .filter(canBeProgramTarget)
     .map((channel) => ({
       id: channel.id,
       name: channel.name,

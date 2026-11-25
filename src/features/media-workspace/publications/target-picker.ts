@@ -1,11 +1,12 @@
 import type { ChannelListItem } from "../channels/types/index.ts";
+import { canBeProgramTarget } from "../channels/lifecycle-actions.ts";
 import type { PublicationTarget } from "./types";
 
 export type TargetSelection = { channelIds: string[]; groupIds: string[] };
 
 /** A Program targets active Channels only — only they hold a device reservation (ADR 0099). */
 export function targetableChannels(channels: readonly ChannelListItem[]): ChannelListItem[] {
-  return channels.filter((channel) => channel.status === "active");
+  return channels.filter(canBeProgramTarget);
 }
 
 export function selectionFromTargets(targets: readonly PublicationTarget[]): TargetSelection {

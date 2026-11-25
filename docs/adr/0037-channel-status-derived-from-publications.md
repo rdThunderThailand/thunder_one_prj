@@ -1,5 +1,10 @@
 # 0037 — Channel status is derived from Publications; commitment replaces activation
 
+**Amended by:** [ADR 0129](0129-a-channel-has-one-lifecycle-the-stored-one.md) — One no longer reads the
+derived value from *One status, three values, derived*. The Channel badge and the list filter show the
+stored status. The derived value never meant "carrying content right now": it counts every Program
+that names the Channel directly, in any status, and skips Group targets.
+
 Part of the Channel set: 0030 (membership and exclusivity), 0038 (lifecycle and concurrency, which
 this ADR partly **supersedes**), 0039 (configuration boundary and target snapshot), 0035
 (monitoring), 0036 (UI scope, whose *Status is a read-only pill* section this ADR **amends**).
