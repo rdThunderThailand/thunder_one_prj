@@ -8,11 +8,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import {
-  isPastPublication,
-  publicationDisplayStatus,
-  publicationStatusColor,
-} from "@/features/media-workspace/publications/publication-status";
+import { isPastPublication } from "@/features/media-workspace/publications/publication-status";
+import { mediaStatus } from "@/features/media-workspace/media-status";
 import { decodeMetadata } from "../metadata";
 import { resolutionLabel } from "../output-profile";
 import { formatDuration, totalDurationSeconds } from "../duration";
@@ -167,7 +164,8 @@ function PageNav({
 }
 
 function PublicationRow({ publication }: { publication: PlaylistProgram }) {
-  const color = publicationStatusColor(publication.effective_status ?? publication.status);
+  // The same badge as the Programs list (ADR 0125 decision 4); none on a Core that predates the key.
+  const status = publication.display_status ? mediaStatus(publication.display_status) : null;
   return (
     <li className="flex items-center justify-between gap-2 rounded-lg border border-border p-2">
       <div className="min-w-0 flex-1">
@@ -186,9 +184,11 @@ function PublicationRow({ publication }: { publication: PlaylistProgram }) {
       <span className="shrink-0 text-xs text-muted-foreground">
         {publication.campaign_name ?? "—"}
       </span>
-      <Badge variant={color === "green" ? "success" : color === "yellow" ? "warning" : color === "red" ? "danger" : "neutral"} className="rounded-full">
-        {publicationDisplayStatus(publication)}
-      </Badge>
+      {status && (
+        <Badge variant="pill" color={status.color}>
+          {status.label}
+        </Badge>
+      )}
     </li>
   );
 }
