@@ -18,6 +18,9 @@ async function fetchStorageAccessToken(): Promise<string> {
     if ((error as Error)?.name === "TimeoutError") {
       throw namedError(UPLOAD_TIMEOUT_ERROR, "เซิร์ฟเวอร์ไม่ตอบกลับภายใน 45 วินาที");
     }
+    // `fetch` rejects with a bare TypeError when the request never got a response; `classifyApiError`
+    // reads the axios code `ERR_NETWORK` as a transport failure, and treats a bare TypeError as a bug.
+    if (error instanceof TypeError) throw Object.assign(error, { code: "ERR_NETWORK" });
     throw error;
   }
   if (!response.ok) throw new UserFacingError("เซสชันหมดอายุ — กรุณาเข้าสู่ระบบใหม่ก่อนอัปโหลด");

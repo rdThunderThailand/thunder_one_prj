@@ -8,7 +8,7 @@ import { movePlaylist, permanentlyDeletePlaylist } from "@/lib/api/media-api";
 import type { ContentFolder } from "@/types/domain";
 import { folderPath } from "../../content-library/folder-tree";
 import { deletePlaylist } from "../services/playlists-api";
-import { describeDeleteError, describePermanentDeleteRefusal } from "../status-display";
+import { describePermanentDeleteRefusal } from "../status-display";
 import type { PlaylistListItem } from "../types";
 
 /** Row actions that need a confirm step or an input — `restore` is handled immediately
@@ -50,8 +50,7 @@ export function PlaylistsListDialogs({
       }
       onDone();
     } catch (err) {
-      const raw = err instanceof Error ? err.message : "";
-      onError(action === "trash" ? describeDeleteError(raw) : classifyApiError(err, "ทำรายการไม่สำเร็จ").message);
+      onError(classifyApiError(err, action === "trash" ? "ลบ playlist ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง" : "ทำรายการไม่สำเร็จ").message);
     } finally {
       setBusy(false);
     }

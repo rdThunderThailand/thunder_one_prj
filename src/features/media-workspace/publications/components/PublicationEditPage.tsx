@@ -99,7 +99,7 @@ export function PublicationEditPage({ id }: { id: string }) {
     if (!failure?.cause) return;
     document.getElementById(`edit-card-${publishFixCard(failure.cause, step)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
-  const pageError = failure?.isStale
+  const pageError = failure?.kind === "conflict"
     ? "This Program was changed elsewhere. Reload to see the latest version."
     : failure && (!failure.part || failure.cause)
       ? failure.message
@@ -226,7 +226,7 @@ export function PublicationEditPage({ id }: { id: string }) {
           onRemove={(channelId) => edit.patch({ targets: state.targets.filter((target) => target.channel_id !== channelId) })}
         />
       )}
-      {failure?.isStale && (
+      {failure?.kind === "conflict" && (
         <p className="text-sm text-muted-foreground">
           This Program changed elsewhere.{" "}
           <button

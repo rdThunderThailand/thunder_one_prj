@@ -9,7 +9,6 @@ import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { UnsavedLeaveConfirm } from "../../playlists/components/UnsavedLeaveConfirm";
 import { deriveAspectRatio, parseResolution, sameRatio, validateZones } from "../geometry";
 import { fetchLayout, upsertLayout } from "../services/layouts-api";
-import { describeSaveError } from "../status-display";
 import { DEFAULT_ASPECT_RATIO, DEFAULT_BACKGROUND, DEFAULT_RESOLUTION, type LayoutDraft, type LayoutZone } from "../types";
 import { LayoutCanvas } from "./LayoutCanvas";
 import { LayoutEditorHeader, LayoutEditorToolbar, LayoutZoneOverview } from "./LayoutEditorChrome";
@@ -154,8 +153,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       });
       router.push("/media-workspace/layouts/templates");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      setSaveError(message.startsWith("Invalid input:") ? describeSaveError(message) : classifyApiError(err, "บันทึก Layout ไม่สำเร็จ").message);
+      setSaveError(classifyApiError(err, "บันทึก Layout ไม่สำเร็จ").message);
     } finally {
       setSaving(false);
     }

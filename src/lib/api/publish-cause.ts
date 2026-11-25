@@ -54,10 +54,6 @@ function syncGroupMessage(message: string): string | null {
   if (direct) {
     return `จอ ${direct[1].replace("channel:", "ช่องทาง:").replace("group:", "กลุ่ม:").trim()} อยู่ในกลุ่มซิงค์ จึงเลือกจอเดี่ยวไม่ได้ กรุณาเลือกทั้งกลุ่มหรือเอาจอนี้ออก`;
   }
-  const directChannel = /direct-target publication on (.+?) — synchronized playback is enabled/.exec(message);
-  if (directChannel) {
-    return `ช่องทาง ${directChannel[1].trim()} เปิดการซิงค์อยู่ จึงเลือกจอเดี่ยวไม่ได้ กรุณาเลือกเป็นช่องทางแทน หรือปิดการซิงค์`;
-  }
   return null;
 }
 
@@ -102,7 +98,7 @@ export function layoutNotReadyMessage(message: string): string | null {
   }
   const unbound = /zone\(s\) (.+) are unbound/.exec(message);
   if (unbound) {
-    return `Layout ยังไม่ได้ผูก Content ให้ Zone: ${unbound[1].trim()} กรุณาผูก Content แล้ว Activate Layout ก่อนเผยแพร่`;
+    return `Layout ยังไม่ได้ผูก Content ให้ Zone: ${unbound[1].trim()} กรุณาผูก Content ให้ครบทุก Zone`;
   }
   if (message.includes("produced zero resolvable snapshot items")) return NOTHING_PLAYABLE;
   return null;

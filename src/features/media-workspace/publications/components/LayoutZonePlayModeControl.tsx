@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { isConflict } from "@/lib/api/api-error";
+import { classifyApiError } from "@/lib/api/api-error";
 import { fetchComposition, setCompositionZones } from "@/features/media-workspace/compositions/services/compositions-api";
 import { bindingsFromCompositionZones, toSetZonesPayload, withZonePlayModes } from "@/features/media-workspace/compositions/zone-bindings";
 import { formatDuration } from "@/features/media-workspace/playlists";
@@ -59,7 +59,7 @@ export function LayoutZonePlayModeControl({
           const bindings = withZonePlayModes(bindingsFromCompositionZones(detail.zones), picked);
           await setCompositionZones(id, toSetZonesPayload(detail.zones.map((zone) => zone.layout_zone_id), bindings), detail.revision);
         } catch (err) {
-          sawConflict.current = isConflict(err instanceof Error ? err.message : String(err));
+          sawConflict.current = classifyApiError(err, "บันทึกรูปแบบการเล่นไม่สำเร็จ — ลองอีกครั้ง").kind === "conflict";
           throw err;
         }
       },

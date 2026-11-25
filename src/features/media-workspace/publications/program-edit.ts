@@ -1,4 +1,3 @@
-import type { PublishCause } from "@/lib/api/api-error";
 import type {
   Priority,
   PublicationDetail,
@@ -164,29 +163,6 @@ export function removedTargetLabels(
 ): string[] {
   const kept = new Set(edited.map(targetKey));
   return stored.filter((t) => !kept.has(targetKey(t))).map((t) => t.name || targetKey(t));
-}
-
-export type UpdatePublishedFailure = {
-  /** Set when the backend tagged the message `[details]`, `[content]`, `[targets]`, `[schedule]`
-   *  or `[publish]`; the card to bind the error to. */
-  part: "details" | "content" | "targets" | "schedule" | "publish" | null;
-  /** True for `Already modified:` — reload, do not retry. */
-  isStale: boolean;
-  message: string;
-  /** ADR 0114: set when Core's refusal names a publish cause the page can offer a fix for. */
-  cause?: PublishCause;
-};
-
-const PART_TAG = /\[(details|content|targets|schedule|publish)\]\s*/;
-
-export function parseUpdatePublishedError(raw: string): UpdatePublishedFailure {
-  const isStale = raw.startsWith("Already modified:");
-  const match = PART_TAG.exec(raw);
-  return {
-    part: match ? (match[1] as UpdatePublishedFailure["part"]) : null,
-    isStale,
-    message: match ? raw.replace(PART_TAG, "") : raw,
-  };
 }
 
 type ChannelLike = {

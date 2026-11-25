@@ -10,10 +10,8 @@ import {
   checkEditConflicts,
   detailToEditState,
   isProgramDirty,
-  parseUpdatePublishedError,
   removedTargetLabels,
   type ProgramEditState,
-  type UpdatePublishedFailure,
 } from "../program-edit";
 import {
   activatePublication,
@@ -33,7 +31,7 @@ export function useProgramEdit(id: string) {
   const [channels, setChannels] = useState<ChannelListItem[]>([]);
   const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
   const [busy, setBusy] = useState(false);
-  const [failure, setFailure] = useState<UpdatePublishedFailure | null>(null);
+  const [failure, setFailure] = useState<ClassifiedError | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -85,22 +83,14 @@ export function useProgramEdit(id: string) {
   }, [id, state]);
 
   /** Runs a write; resolves `null` on success, otherwise the failure (also kept in `failure`). */
-  const run = useCallback(async (action: () => Promise<void>): Promise<UpdatePublishedFailure | null> => {
+  const run = useCallback(async (action: () => Promise<void>): Promise<ClassifiedError | null> => {
     setBusy(true);
     setFailure(null);
     try {
       await action();
       return null;
     } catch (err) {
-      const parsed = parseUpdatePublishedError(err instanceof Error ? err.message : "Publish failed");
-      // A `[part]`-tagged or stale message is already worded for this page; the rest gets the classified text.
-      // A named cause (ADR 0114) wins either way: Thai text plus a fix button, still bound to its part.
-      const classified = classifyApiError(err, "บันทึก Program ไม่สำเร็จ กรุณาลองใหม่");
-      const next = classified.cause
-        ? { ...parsed, message: classified.message, cause: classified.cause }
-        : parsed.part || parsed.isStale
-          ? parsed
-          : { ...parsed, message: classified.message };
+      const next = classifyApiError(err, "บันทึก Program ไม่สำเร็จ กรุณาลองใหม่");
       setFailure(next);
       return next;
     } finally {

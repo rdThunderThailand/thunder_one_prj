@@ -102,7 +102,7 @@ export async function duplicatePlaylist(
 /**
  * Move to Trash — soft delete (Thunder_Core #40). The RPC refuses while a `draft` or
  * `active` publication points at the playlist, naming it, so a caller must surface that
- * message — see `describeDeleteError`. Reversible via `restorePlaylist`.
+ * message — `classifyApiError` words it. Reversible via `restorePlaylist`.
  */
 /** Changes only the Playlist's play mode (Program Edit Schedule, plan §2 FE-E); every other metadata
  *  field is written back unchanged. Refused with a revision conflict if the Playlist moved meanwhile. */
