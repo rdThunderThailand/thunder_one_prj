@@ -1,5 +1,3 @@
-import type { PublicationSchedule, Recurrence } from "./types";
-
 export const DEFAULT_TIMEZONE = "Asia/Bangkok";
 
 // ponytail: a short fixed list is enough for a Thailand-first product. The
@@ -75,67 +73,6 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-/** Day-of-month for a pure "YYYY-MM-DD". A month without that day simply never matches. */
-function ymdDay(ymd: string): number {
-  return Number(ymd.slice(8, 10));
-}
-
-// --- airing state, for the Overview "Now & Next" card ------------------------
-// Time-of-day granularity (the Edit/Create previews are day granularity): this answers "on air
-// at this minute?", so a weekly window of 08:00-17:00 is not live at 22:00.
-
-export type AiringState = "live" | "next" | "ended";
-
-/**
- * Is the publication on air now, still to come, or finished?
- *
- * `null` means "cannot tell" — no schedule, or one we can't parse. Callers must
- * surface that rather than guessing a bucket; claiming something is live when we
- * don't know is the bug this function exists to prevent.
- */
-export function classifyPublicationAiring(
-  schedule: PublicationSchedule | null | undefined,
-  now: Date = new Date()
-): AiringState | null {
-  if (!schedule?.starts_at) return null;
-
-  const start = Date.parse(schedule.starts_at);
-  if (Number.isNaN(start)) return null;
-  const end = schedule.ends_at ? Date.parse(schedule.ends_at) : null;
-  const instant = now.getTime();
-
-  if (instant < start) return "next";
-  if (end !== null && !Number.isNaN(end) && instant >= end) return "ended";
-
-  const rec = schedule.recurrence;
-  if (!rec || !("freq" in rec)) return "live"; // one-off: the whole window is on air
-
-  // Weekly/monthly: inside the overall window, but only on listed days and within
-  // the daily time window — both read in the publication's own timezone.
-  const { date, time } = utcToZonedParts(now.toISOString(), schedule.timezone);
-  if (!recurrenceAirsOn(rec, date)) return "next";
-  return withinDailyWindow(time, rec.daily_start, rec.daily_end) ? "live" : "next";
-}
-
-/** Does a weekly / monthly / dates recurrence air on this local "YYYY-MM-DD"? Mirrors Thunder_Core's
- *  `media_core.recurrence_airs_on` (ADR 0012, 0014); the daily window is checked separately. */
-export function recurrenceAirsOn(recurrence: Recurrence, ymd: string): boolean {
-  if (!("freq" in recurrence)) return true;
-  // `in` does not narrow away the `{}` member (it has an index signature), so narrow by hand.
-  const rec = recurrence as Exclude<Recurrence, Record<string, never>>;
-  if (rec.freq === "dates") return rec.dates.includes(ymd);
-  if (rec.freq === "monthly") return rec.month_days.includes(ymdDay(ymd));
-  return rec.days.includes(ymdDow(ymd));
-}
-
-/** "HH:MM" comparison. An end at or before the start means the window wraps midnight. An end of 23:59
- *  runs through the end of the local day, like Thunder_Core's `recurrence_matches` (ADR 0012, #240). */
-function withinDailyWindow(time: string, start: string, end: string): boolean {
-  if (!start || !end) return true;
-  if (end === "23:59") return time >= start;
-  return end > start ? time >= start && time < end : time >= start || time < end;
-}
-
 export function shiftYmd(ymd: string, days: number): string {
   const [y, m, d] = ymd.split("-").map(Number);
   const t = new Date(Date.UTC(y, m - 1, d + days));
@@ -147,26 +84,6 @@ export function shiftYmd(ymd: string, days: number): string {
 export function formatDmy(ymd: string): string {
   const [year, month, day] = ymd.split("-");
   return `${day}/${month}/${year}`;
-}
-
-/** The card's "Start Time" cell: a daily window when weekly, else the start instant. */
-export function formatScheduleStart(
-  schedule: PublicationSchedule | null | undefined,
-  now: Date = new Date()
-): string {
-  if (!schedule?.starts_at) return "—";
-
-  const rec = schedule.recurrence;
-  if (rec && "freq" in rec && rec.daily_start && rec.daily_end) {
-    return `${rec.daily_start}–${rec.daily_end}`;
-  }
-
-  const start = utcToZonedParts(schedule.starts_at, schedule.timezone);
-  const today = utcToZonedParts(now.toISOString(), schedule.timezone).date;
-  if (start.date === today) return `วันนี้ ${start.time}`;
-  if (start.date === shiftYmd(today, 1)) return `พรุ่งนี้ ${start.time}`;
-  if (start.date === shiftYmd(today, -1)) return `เมื่อวาน ${start.time}`;
-  return `${formatDmy(start.date)} ${start.time}`;
 }
 
 /** "Day 1, 15, 31" — the month days of a monthly schedule, ascending. */
