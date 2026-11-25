@@ -6,7 +6,7 @@
 // still live there because they touch the draft.
 
 import { Button } from "@/components/ui/Button";
-import { UnsavedLeaveConfirm } from "@/features/media-workspace/playlists/components/UnsavedLeaveConfirm";
+import { UnsavedLeaveConfirm } from "@/features/media-workspace/editor-lifecycle/components/UnsavedLeaveConfirm";
 import { SaveAsTemplateDialog } from "./SaveAsTemplateDialog";
 
 export function CompositionEditorOverlays({

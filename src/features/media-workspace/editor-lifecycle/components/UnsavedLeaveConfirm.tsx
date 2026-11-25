@@ -13,8 +13,8 @@ export function UnsavedLeaveConfirm({
     <AlertDialog open onOpenChange={(open) => { if (!open) onStay(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>ออกโดยไม่บันทึกร่าง?</AlertDialogTitle>
-          <AlertDialogDescription>ยังไม่ได้บันทึกร่างนี้ลงระบบ — ออกไปตอนนี้ร่างจะค้างอยู่ในเครื่องและถูกทับเมื่อเปิด playlist อื่น</AlertDialogDescription>
+          <AlertDialogTitle>ออกโดยไม่บันทึก?</AlertDialogTitle>
+          <AlertDialogDescription>การแก้ไขที่ยังไม่บันทึกจะหายไป</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onStay}>อยู่ต่อ</AlertDialogCancel>
