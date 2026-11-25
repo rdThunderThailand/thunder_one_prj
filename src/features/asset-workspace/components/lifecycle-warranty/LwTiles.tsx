@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { StatTile } from "@/components/ui/StatTile";
 import type { StatusTone } from "../../domain/status-tone";
 
@@ -11,7 +12,16 @@ const number = new Intl.NumberFormat("en-GB");
 export type LwTile = { key: string; label: string; count: number | null; tone: StatusTone; icon: ReactNode; onClick: () => void };
 
 /** Four count tiles; a click toggles the tile's filter (Q5: no highlight, so no pressed state is shown). */
-export function LwTiles({ label, tiles, disabled }: { label: string; tiles: LwTile[]; disabled: boolean }) {
+export function LwTiles({ label, tiles, disabled, loading = false }: {
+  label: string; tiles: LwTile[]; disabled: boolean; loading?: boolean;
+}) {
+  if (loading) {
+    return (
+      <section role="status" aria-label={`Loading ${label.toLowerCase()}`} className="grid grid-cols-2 gap-3 motion-reduce:[&_*]:animate-none @4xl/lw:grid-cols-4">
+        {tiles.map((tile) => <Skeleton key={tile.key} className="h-20 rounded-card" />)}
+      </section>
+    );
+  }
   return (
     <section aria-label={label} className="grid grid-cols-2 gap-3 @4xl/lw:grid-cols-4">
       {tiles.map((tile) => (

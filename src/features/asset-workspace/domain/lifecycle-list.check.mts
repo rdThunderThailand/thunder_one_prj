@@ -1,6 +1,6 @@
 // node src/features/asset-workspace/domain/lifecycle-list.check.mts
 import assert from "node:assert/strict";
-import { lifecycleRowMenu, lifecycleTileUpdate, readLwTab } from "./lifecycle-list.ts";
+import { lifecycleListQuery, lifecycleRowMenu, lifecycleTileUpdate, readLwTab } from "./lifecycle-list.ts";
 import { warrantyRowMenu, warrantyTileUpdate } from "./warranty-list.ts";
 
 // FE 01 tab parsing
@@ -8,6 +8,11 @@ assert.equal(readLwTab(undefined), "lifecycle");
 assert.equal(readLwTab("warranty"), "warranty");
 assert.equal(readLwTab("WARRANTY"), "lifecycle");
 assert.equal(readLwTab(["warranty"]), "lifecycle");
+
+// The list query keeps only the tab's keys, and drops empty or repeated ones
+assert.equal(lifecycleListQuery("tab=lifecycle&provider=x&page=2&q=a+b&status="), "q=a+b&page=2");
+assert.equal(lifecycleListQuery("page=1&page=2&pageSize=10"), "pageSize=10");
+assert.equal(lifecycleListQuery(""), "");
 
 // FE 02 tiles: set, then the same tile clears; another tile replaces
 const issues = lifecycleTileUpdate("Condition Issues", {});

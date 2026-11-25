@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   DisposeIcon, EyeIcon, HeartIcon, LocationIcon, RefreshIcon, RetireIcon,
@@ -25,9 +24,8 @@ const asStatus = (value: string) => (ASSET_STATUSES as readonly string[]).includ
 const asCondition = (value: string | null) =>
   value && (ASSET_CONDITIONS as readonly string[]).includes(value) ? value as AssetCondition : null;
 
-export function LifecycleAssetsTable({ rows }: { rows: AssetListRow[] }) {
+export function LifecycleAssetsTable({ rows, onPhotoFailed }: { rows: AssetListRow[]; onPhotoFailed: () => void }) {
   const router = useRouter();
-  const refreshed = useRef(new Set<string>());
   return (
     <table className="w-full min-w-2xl table-fixed text-left text-xs">
       <caption className="sr-only">Assets with their lifecycle status and condition. Select a row to open the asset.</caption>
@@ -59,11 +57,7 @@ export function LifecycleAssetsTable({ rows }: { rows: AssetListRow[] }) {
                   src={row.thumbnail_url}
                   alt=""
                   className="size-10 object-contain!"
-                  onFailed={() => {
-                    if (refreshed.current.has(row.id)) return;
-                    refreshed.current.add(row.id);
-                    router.refresh();
-                  }}
+                  onFailed={onPhotoFailed}
                 />
               </td>
               <td className="px-3 py-2 align-middle">

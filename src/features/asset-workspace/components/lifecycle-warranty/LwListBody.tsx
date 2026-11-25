@@ -44,14 +44,14 @@ export function LwTableLoading({ columns, label }: { columns: readonly Column[];
 }
 
 /** Loading, read error, empty and paged states around a tab's table. */
-export function LwListBody<Row>({ tab, url, list, columns, noun, emptyTitle, clear, scrollKey, children }: {
+export function LwListBody<Row>({ tab, url, list, columns, noun, emptyTitle, clear, scrollKey, onRetry, children }: {
   tab: LwTab; url: ListUrlState; list: ListData<Row> | null; columns: readonly Column[]; noun: string;
-  emptyTitle: string; clear: Record<string, undefined>; scrollKey: string; children: (rows: Row[]) => ReactNode;
+  emptyTitle: string; clear: Record<string, undefined>; scrollKey: string; onRetry?: () => void; children: (rows: Row[]) => ReactNode;
 }) {
   const hasRows = Boolean(list?.rows.length);
   let content: ReactNode;
   if (url.isPending) content = <LwTableLoading columns={columns} label={`Loading ${noun}`} />;
-  else if (!list) content = <ErrorState title={`Couldn't load ${noun}`} body="Check your connection, then retry." />;
+  else if (!list) content = <ErrorState title={`Couldn't load ${noun}`} body="Check your connection, then retry." onRetry={onRetry} />;
   else if (!hasRows && list.total > 0) {
     content = (
       <EmptyState title={`No ${noun} on this page`} body="Go to the first page to see the list." action={(
