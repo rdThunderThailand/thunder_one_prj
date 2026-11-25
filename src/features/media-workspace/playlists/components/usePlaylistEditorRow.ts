@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { classifyApiError, isConflict, type ClassifiedError } from "@/lib/api/api-error";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { fetchPlaylist, setPlaylistItems, upsertPlaylist } from "../services/playlists-api";
 import { encodeMetadata } from "../metadata";
 import { resolveDraftStatus } from "../resolve-draft-status";
@@ -118,13 +118,11 @@ export function usePlaylistEditorRow({
       toast.success(activate && status === "draft" ? "บันทึกและเปิดใช้งานแล้ว" : "บันทึกแล้ว");
       return upserted.playlist_id;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      if (isConflict(message)) {
-        setConflict(
-          classifyApiError(err, "มีการแก้ไข Playlist นี้จากที่อื่นหลังจากคุณเปิดหน้านี้ — กด โหลดใหม่ เพื่อดูเวอร์ชันล่าสุด").message,
-        );
+      const classified = classifyApiError(err, "บันทึก Playlist ไม่สำเร็จ");
+      if (classified.kind === "conflict") {
+        setConflict(classified.message);
       } else {
-        setSaveError(classifyApiError(err, "บันทึก Playlist ไม่สำเร็จ").message);
+        setSaveError(classified.message);
       }
       return null;
     } finally {

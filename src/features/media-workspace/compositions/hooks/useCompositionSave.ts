@@ -9,7 +9,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { classifyApiError } from "@/lib/api/api-error";
-import { describeActivateError } from "../status-display";
 import { persistComposition, type PersistInput, type PersistResult } from "../save-composition";
 
 export function useCompositionSave(buildInput: () => PersistInput, applyResult: (result: PersistResult) => void) {
@@ -23,12 +22,7 @@ export function useCompositionSave(buildInput: () => PersistInput, applyResult: 
     try {
       await operation();
     } catch (err) {
-      // set_zones raises the same "zone(s) … are unbound" wording as activation once the
-      // Composition is active (ADR 0049 §10), so describeActivateError covers both paths.
-      const message = err instanceof Error ? err.message : "";
-      setSaveError(message.startsWith("Invalid input:") || message.startsWith("Already")
-        ? describeActivateError(message)
-        : classifyApiError(err, fallback).message);
+      setSaveError(classifyApiError(err, fallback).message);
     } finally {
       setSaving(false);
     }

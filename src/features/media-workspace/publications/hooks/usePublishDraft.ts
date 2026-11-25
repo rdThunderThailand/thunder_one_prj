@@ -25,21 +25,10 @@ import { targetDeviceIds } from "../program-edit";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility, programGateInputFromDraft } from "../publish-eligibility";
 import { validateStep } from "../step-validation";
-import { classifyApiError, isConflict, UserFacingError, scheduleEndedMessage, type ClassifiedError, type PublishCause } from "@/lib/api/api-error";
+import { classifyApiError, UserFacingError, scheduleEndedMessage, type ClassifiedError, type PublishCause } from "@/lib/api/api-error";
 import { formatDmy, shiftYmd, utcToZonedParts } from "../schedule";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
 import { DraftSaveError, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
-
-/** The two backend rejections that mean "the persisted draft id is no longer usable":
- * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
- * Matched on the message because the proxy only forwards `{ error: string }`. */
-function isStaleDraftError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : "";
-  return (
-    msg.includes("publication not found for this tenant") ||
-    msg.includes("only draft publications can be edited")
-  );
-}
 
 export function usePublishDraft() {
   const router = useRouter();
@@ -261,7 +250,8 @@ export function usePublishDraft() {
       // The draft id lives in localStorage forever, but the row it points at can be
       // deleted (or leave `draft` via cancel/activate) elsewhere. ADR 0086 §10: a new
       // row only when the operator chose Save as new after reading this message.
-      if (state.publicationId && isStaleDraftError(err)) {
+      const failure = classifyApiError(err, "บันทึก draft ไม่สำเร็จ กรุณาลองใหม่");
+      if (state.publicationId && failure.reason === "stale-draft") {
         if (!options.asNew) {
           setStaleDraftId(state.publicationId);
           throw new DraftSaveError("draft เดิมถูกลบ ยกเลิก หรือเผยแพร่ไปแล้ว จึงบันทึกลงไปไม่ได้");
@@ -273,9 +263,7 @@ export function usePublishDraft() {
       } else {
         // Surfaced as a dedicated banner (CreatePublicationPage), not the generic
         // error text — "reload" / "overwrite" are actions, not just a message.
-        if (err instanceof Error && isConflict(err.message)) {
-          setRevisionConflict(classifyApiError(err, err.message).message);
-        }
+        if (failure.kind === "conflict") setRevisionConflict(failure.message);
         throw err;
       }
     }

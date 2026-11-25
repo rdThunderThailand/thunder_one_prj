@@ -10,7 +10,6 @@ import {
   compositionContent,
   detailToEditState,
   isProgramDirty,
-  parseUpdatePublishedError,
   playlistContent,
   programEditSubtitle,
   removedTargetLabels,
@@ -68,15 +67,6 @@ assert.equal("playlist_id" in imageBody, false);
 // 4. removed targets: a Group counts once by name; unchanged targets do not
 assert.deepEqual(removedTargetLabels(base.targets, base.targets.slice(0, 1)), ["Lobby group"]);
 assert.deepEqual(removedTargetLabels(base.targets, base.targets), []);
-
-// 5. error parsing binds a tagged message to its card and flags a stale revision
-assert.deepEqual(parseUpdatePublishedError("[targets] Pick a channel"), {
-  part: "targets",
-  isStale: false,
-  message: "Pick a channel",
-});
-assert.equal(parseUpdatePublishedError("Already modified: reload").isStale, true);
-assert.equal(parseUpdatePublishedError("Program has ended").part, null);
 
 // 6. a published Program without a schedule cannot be sent
 assert.throws(() => buildUpdatePublishedBody({ ...base, schedule: null }, 1));

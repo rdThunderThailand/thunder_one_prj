@@ -14,7 +14,6 @@ import { LibraryShell } from "../../content-library/LibraryShell";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { duplicateLayout, fetchLayouts, setLayoutStatus } from "../services/layouts-api";
 import { copyName, filterLayouts, paginate, sortLayouts, summarize } from "../list-filtering";
-import { describeSaveError } from "../status-display";
 import { readListState, writeListState, DEFAULT_STATE } from "../list-url-state";
 import type { ListFilters, Sort, SortKey } from "../list-filtering";
 import type { LayoutListItem } from "../types";
@@ -110,8 +109,7 @@ export function LayoutsListPage() {
       await run();
       await reload();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      setActionError(message.startsWith("Invalid input:") ? describeSaveError(message) : classifyApiError(err, fallback).message);
+      setActionError(classifyApiError(err, fallback).message);
     } finally {
       setBusyId(null);
     }
