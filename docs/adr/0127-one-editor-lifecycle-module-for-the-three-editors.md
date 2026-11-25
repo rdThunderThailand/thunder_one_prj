@@ -81,7 +81,9 @@ useEditorLifecycle<S, I, R>({
 - `save`'s optional `snapshot` is the value to write when the caller holds a fresher one than the last
   render: the Playlist's Save click while the name field is still open, where the typed name has not
   reached state yet (`nameOverride`; UAT A8 found a Save that dropped the typed name). It defaults to
-  the latest rendered `snapshot`, and `write` always receives the snapshot being saved.
+  the latest rendered `snapshot`, and the module hands `write` the snapshot being saved. An adapter whose
+  `write` rebuilds its input from live editor state (the Composition's, through `buildInput`) ignores that
+  argument, so its `save` must not be given an override.
 - Loading stays with each editor: the ADR 0086 seed and `load-composition-draft.ts` differ too much to
   share. The editor calls `resetBaseline` with the value it loaded.
 - Revision tokens stay in the adapter (`expected_revision` in, new revision out).
@@ -129,7 +131,8 @@ three). While dirty the module guards: tab close and reload (`beforeunload`), ev
 (sidebar, breadcrumb — `useLeaveGuard`'s capture-phase click), and the editor's own back button
 (`requestLeave`). Not guarded: the browser's back button (`popstate`) and programmatic `router.push`.
 Next 16.2 has no navigation-blocking API (`node_modules/next/dist/docs`: only per-Link `onNavigate`), and
-a fake history entry is fragile. This is a known limit, not an oversight.
+a fake history entry is fragile. This is a known limit, not an oversight. Another unguarded programmatic
+navigation: Global Search (Cmd+K, `GlobalSearch.tsx`, `router.push`) opens a hit without asking.
 
 **7. The shared pieces move into the module.** `useLeaveGuard`, `UnsavedLeaveConfirm` and
 `RevisionConflictCard` move to `src/features/media-workspace/editor-lifecycle/`. `PublicationEditPage`

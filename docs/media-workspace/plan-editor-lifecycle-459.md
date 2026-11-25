@@ -3,12 +3,21 @@
 Issue: https://github.com/rdThunderThailand/thunder_one_prj/issues/459 (tracking #464).
 Decision: [ADR 0127](../adr/0127-one-editor-lifecycle-module-for-the-three-editors.md). Read it first; this
 plan does not repeat its reasons.
-Base: `dev` @ 7ea41ca8. Branch: `refactor/459-editor-lifecycle`. One PR, one commit per step 1–4.
+Base: `dev` @ cf6e195f (planned on 7ea41ca8). Branch: `refactor/459-editor-lifecycle`. One PR, one commit per step 1–4.
 Risk: R1 (cross-file, reversible, frontend only, no Core change).
 
 Names: code names below. **Composition** = "Layout" in the UI, **Layout** = "Template" in the UI.
 
-**Status.** Ready to run. Nothing done yet.
+**Status.** Steps 1–4 done on `refactor/459-editor-lifecycle` (one commit each); step 5 checks ran green;
+browser verification **not run yet** (the owner is asked first, CLAUDE.md §3). Review fixes landed after the
+four step commits: one Composition error slot (a new write clears the other slot), a failed Reload shows an
+error and keeps the conflict card, and the `write` adapter's comment.
+
+Where the build differs from the text below, none outside "Files touched": the conflict card renders in
+`CompositionEditorOverlays` (props `conflict`, `onReloadConflict`) because `CompositionEditorPage.tsx` sits at
+405 lines; `useCompositionSave.ts` also exports `CompositionSnapshot` and `savedCompositionSnapshot`;
+`draftSnapshot` builds the typed `CompositionDraftFields` in a fixed key order; `editor-lifecycle.ts` also
+exports `ensureSavedWith`, and the save slot is created lazily inside `save` (`react-hooks/refs`).
 
 ## Ground rules for the executor
 
@@ -35,7 +44,7 @@ Names: code names below. **Composition** = "Layout" in the UI, **Layout** = "Tem
 
 ## Steps
 
-### 1. The module (commit: `refactor(media-workspace): add the editor lifecycle module`)
+### 1. The module (commit: `refactor(media-workspace): add the editor lifecycle module`) — done
 
 Create `src/features/media-workspace/editor-lifecycle/`:
 
@@ -130,7 +139,7 @@ Change `UnsavedLeaveConfirm`'s text only: title `ออกโดยไม่บ�
 Checks: the 1b check; `npx tsc --noEmit`; `npx eslint src/features/media-workspace/editor-lifecycle
 src/features/media-workspace/publications/components/PublicationEditPage.tsx`.
 
-### 2. Playlist (commit: `refactor(media-workspace): run the Playlist editor on the lifecycle module`)
+### 2. Playlist (commit: `refactor(media-workspace): run the Playlist editor on the lifecycle module`) — done
 
 **`playlists/components/usePlaylistEditorRow.ts`**
 
@@ -175,7 +184,7 @@ strings as today. `editorSnapshot` stays if anything else uses it; otherwise del
 Checks: `node src/features/media-workspace/playlists/playlist-editor-state.check.mts`, every other
 `*.check.mts` in `playlists/`, `npx tsc --noEmit`, `npx eslint` on the changed files.
 
-### 3. Composition (commit: `refactor(media-workspace): run the Composition editor on the lifecycle module`)
+### 3. Composition (commit: `refactor(media-workspace): run the Composition editor on the lifecycle module`) — done
 
 **3a. `compositions/hooks/useCompositionSave.ts`** — becomes the adapter plus the non-lifecycle writes:
 
@@ -243,7 +252,7 @@ Enter / ✓ commit, Escape cancels. Nothing else in the header changes; it keeps
 Checks: every `*.check.mts` in `compositions/` (`node <file>`), `npx tsc --noEmit`, `npx eslint` on the
 changed files. `CompositionEditorPage.tsx` must end ≤ 405 lines.
 
-### 4. Layout (commit: `refactor(media-workspace): run the Layout editor on the lifecycle module`)
+### 4. Layout (commit: `refactor(media-workspace): run the Layout editor on the lifecycle module`) — done
 
 **`layouts/components/LayoutEditorPage.tsx`**
 
@@ -261,7 +270,7 @@ changed files. `CompositionEditorPage.tsx` must end ≤ 405 lines.
 
 Checks: every `*.check.mts` in `layouts/`, `npx tsc --noEmit`, `npx eslint` on the changed files.
 
-### 5. Final checks (no commit)
+### 5. Final checks (no commit) — done
 
 - `node` every `*.check.mts` under `src/features/media-workspace/editor-lifecycle/`, `playlists/`,
   `compositions/`, `layouts/`, `publications/`.
@@ -274,7 +283,21 @@ Checks: every `*.check.mts` in `layouts/`, `npx tsc --noEmit`, `npx eslint` on t
 - `rg -n "UnsavedLeaveConfirm|RevisionConflictCard|useLeaveGuard" src` → imports only from
   `editor-lifecycle/`.
 
-## Browser verification (the main session asks the owner first — CLAUDE.md §3)
+**Results** (2026-11-25, after the review fixes; run from the worktree):
+
+| Command | Result |
+|---|---|
+| `node` on every `*.check.mts` under the five folders (69 files) | 0 failures |
+| `node src/design-system/design-system.check.mts` | exit 0 |
+| `rm -rf .next/dev/types; npx tsc --noEmit` | exit 0 |
+| `npm run lint` | 0 errors, 2 existing `<img>` warnings (`Avatar.tsx`, `CompositionLibraryPreview.tsx`) |
+| `rg "beforeunload" src/features/media-workspace` | `useLeaveGuard.ts` plus the five unrelated users only |
+| `rg "UnsavedLeaveConfirm\|RevisionConflictCard\|useLeaveGuard" src` (imports) | only `editor-lifecycle/` and its callers |
+| `git diff cf6e195f -- src/lib/api compositions/save-composition.ts` | empty |
+
+`CompositionEditorPage.tsx` ends at 405 lines.
+
+## Browser verification (the main session asks the owner first — CLAUDE.md §3) — not run yet
 
 Against the local dev server on the develop backend, in each editor (Playlist, Composition, Layout):
 
