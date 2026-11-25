@@ -33,8 +33,8 @@ function AddToGroupMenu({
     } catch (caught) {
       const message =
         caught instanceof Error && (isSyncConflict(caught.message) || isDuplicateName(caught.message))
-          ? "This channel is already in another synchronized Group."
-          : classifyApiError(caught, "Could not add this channel to the Group. Try again.").message;
+          ? "Channel นี้อยู่ใน Group แบบ Synchronized อื่นแล้ว"
+          : classifyApiError(caught, "เพิ่ม Channel เข้า Group ไม่สำเร็จ กรุณาลองใหม่").message;
       setError(message);
     } finally {
       setBusy(false);

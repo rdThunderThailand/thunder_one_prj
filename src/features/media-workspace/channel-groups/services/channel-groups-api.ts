@@ -103,9 +103,9 @@ export async function setChannelGroupMembers(id: string, channelIds: string[]): 
 }
 
 /** `media_channel_groups_set_members` / `_update` / `media_channel_set_groups` all raise this
- *  shape from the same partial unique index (ADR 0074 §5) — the raw text already names both
- *  Groups, so it is shown as-is rather than routed through `classifyApiError`'s generic
- *  "Invalid input:" bucket, which would otherwise swallow the names. */
+ *  shape from the same partial unique index (ADR 0074 §5). Callers check it before
+ *  `classifyApiError`, whose generic "Invalid input:" bucket would otherwise swallow it,
+ *  and show their own line instead of the raw text. */
 export function isSyncConflict(message: string): boolean {
   return (
     message.includes("already synchronized elsewhere") ||
@@ -114,7 +114,10 @@ export function isSyncConflict(message: string): boolean {
   );
 }
 
-/** `media_channel_groups_delete` refuses while any Publication still targets the Group. */
-export function isGroupInUse(message: string): boolean {
-  return message.startsWith("Already in use:");
+const GROUP_IN_USE_PREFIX = "Already in use: remove this group from these publications first: ";
+
+/** `media_channel_groups_delete` refuses while any Publication still targets the Group; the
+ *  Program names it lists, or null for any other message. */
+export function groupInUseNames(message: string): string | null {
+  return message.startsWith(GROUP_IN_USE_PREFIX) ? message.slice(GROUP_IN_USE_PREFIX.length) : null;
 }

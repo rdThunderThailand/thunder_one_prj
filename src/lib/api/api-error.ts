@@ -27,6 +27,9 @@ export class ApiError extends Error {
   }
 }
 
+/** Text written by the frontend for the user; `classifyApiError` shows it as-is. */
+export class UserFacingError extends Error {}
+
 export type ApiErrorKind =
   | "forbidden"
   /** The draft is gone or the id is wrong — retrying cannot help. */
@@ -102,6 +105,8 @@ function isTransportFailure(err: unknown): boolean {
 }
 
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
+  if (err instanceof UserFacingError) return { kind: "rejected", message: err.message };
+
   const message = err instanceof Error && err.message ? err.message : fallback;
 
   if (isAlreadyActive(message)) {
@@ -173,12 +178,14 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
         message: "เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง",
       };
     }
-    return { kind: "retryable", message };
+    console.error(err);
+    return { kind: "retryable", message: fallback };
   }
 
+  console.error(err);
   if (err.status >= 400 && err.status < 500) {
-    return { kind: "rejected", message };
+    return { kind: "rejected", message: fallback };
   }
 
-  return { kind: "retryable", message };
+  return { kind: "retryable", message: fallback };
 }

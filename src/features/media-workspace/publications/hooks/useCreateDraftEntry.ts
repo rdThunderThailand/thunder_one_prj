@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { fetchComposition } from "../../compositions/services/compositions-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
-import { classifyApiError } from "@/lib/api/api-error";
+import { classifyApiError, UserFacingError } from "@/lib/api/api-error";
 import { hasUnfinishedDraft, shouldShowResumePrompt } from "../resume-prompt";
 import { resolveSeed, type PublicationSeed, type ReadySeed } from "../seed-resolver";
 import { DraftSaveError, draftSavePolicy, type DraftPersistResult } from "../draft-save-policy";
@@ -86,7 +86,7 @@ export function useCreateDraftEntry(input: {
         return { name: detail.name, publicationType: "playlist" };
       }
       const asset = assets?.find((item) => item.id === seed.id);
-      if (assetsError || !asset) throw new Error("ไม่พบ media ที่เลือก");
+      if (assetsError || !asset) throw new UserFacingError("ไม่พบ media ที่เลือก");
       return { name: asset.title ?? asset.file?.original_filename ?? asset.id, publicationType: isImageAsset(asset) ? "image" : "video" };
     };
     void loadSeed().then((ready) => {

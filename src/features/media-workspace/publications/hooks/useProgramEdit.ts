@@ -93,9 +93,9 @@ export function useProgramEdit(id: string) {
       return null;
     } catch (err) {
       const parsed = parseUpdatePublishedError(err instanceof Error ? err.message : "Publish failed");
-      // A `[part]`-tagged or stale message is already worded for this page; the rest is Core's raw text.
+      // A `[part]`-tagged or stale message is already worded for this page; the rest gets the classified text.
       // A named cause (ADR 0114) wins either way: Thai text plus a fix button, still bound to its part.
-      const classified = classifyApiError(err, parsed.message);
+      const classified = classifyApiError(err, "บันทึก Program ไม่สำเร็จ กรุณาลองใหม่");
       const next = classified.cause
         ? { ...parsed, message: classified.message, cause: classified.cause }
         : parsed.part || parsed.isStale

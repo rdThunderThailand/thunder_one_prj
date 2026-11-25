@@ -1,4 +1,5 @@
 import { Upload } from "tus-js-client";
+import { UserFacingError } from "@/lib/api/api-error";
 import { resolveUploadMimeType } from "../upload-limits";
 import { REQUEST_TIMEOUT_MS, UPLOAD_TIMEOUT_ERROR, abortError, namedError, throwIfAborted } from "./upload-bounds";
 import type { UploadTarget } from "./upload-api";
@@ -19,7 +20,7 @@ async function fetchStorageAccessToken(): Promise<string> {
     }
     throw error;
   }
-  if (!response.ok) throw new Error("เซสชันหมดอายุ — กรุณาเข้าสู่ระบบใหม่ก่อนอัปโหลด");
+  if (!response.ok) throw new UserFacingError("เซสชันหมดอายุ — กรุณาเข้าสู่ระบบใหม่ก่อนอัปโหลด");
   const { access_token } = (await response.json()) as { access_token: string };
   return access_token;
 }
@@ -100,7 +101,7 @@ export async function uploadToStorage(
       onError: (error) => {
         settle();
         if (!isReservationGone(error)) return reject(error);
-        const expired = new Error("การอนุญาตอัปโหลดหมดอายุ — ระบบจะเริ่มไฟล์นี้ใหม่");
+        const expired = new UserFacingError("การอนุญาตอัปโหลดหมดอายุ — ระบบจะเริ่มไฟล์นี้ใหม่");
         expired.name = EXPIRED_UPLOAD_ERROR;
         reject(expired);
       },

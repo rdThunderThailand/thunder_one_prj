@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import {
   ApiError,
   classifyApiError,
+  UserFacingError,
   deletedChannelMessage,
   inactiveChannelMessage,
   isConflict,
@@ -116,7 +117,10 @@ assert.equal(offline.kind, "retryable");
 assert.ok(offline.message.includes("เชื่อมต่อ"), "network failure should surface in Thai");
 assert.ok(!offline.message.includes("Network Error"));
 assert.equal(classifyApiError(Object.assign(new Error("timeout of 0ms exceeded"), { code: "ECONNABORTED" }), FALLBACK).message, offline.message);
-assert.equal(classifyApiError(new Error("อะไรบางอย่างพัง"), FALLBACK).message, "อะไรบางอย่างพัง");
+// Text the frontend wrote on purpose passes through; any other plain Error shows the fallback.
+assert.equal(classifyApiError(new UserFacingError("อะไรบางอย่างพัง"), FALLBACK).message, "อะไรบางอย่างพัง");
+assert.equal(classifyApiError(new Error("x"), FALLBACK).message, FALLBACK);
+assert.equal(classifyApiError(new TypeError("x"), FALLBACK).message, FALLBACK);
 
 // media_publication_activate refuses Targets that resolve to no device (Thunder_Core#134). The
 // backend wording must not reach the screen, and it must not fall into the generic "Invalid input:"
@@ -153,7 +157,10 @@ assert.ok(!trashed.message.includes("Invalid input"));
 // The fallback fills in only when there is no message to show.
 assert.equal(classifyApiError(undefined, FALLBACK).message, FALLBACK);
 assert.equal(classifyApiError(new Error(""), FALLBACK).message, FALLBACK);
-assert.equal(classifyApiError(new ApiError("HTTP Error 500", 500), FALLBACK).message, "HTTP Error 500");
+assert.equal(classifyApiError(new ApiError("HTTP Error 500", 500), FALLBACK).message, FALLBACK);
+const unmatched4xx = classifyApiError(new ApiError("Some Core text", 422), FALLBACK);
+assert.equal(unmatched4xx.kind, "rejected");
+assert.equal(unmatched4xx.message, FALLBACK);
 
 // ApiError must survive `instanceof Error` so existing message-matching keeps working
 // (usePublishDraft's isStaleDraftError relies on it).
