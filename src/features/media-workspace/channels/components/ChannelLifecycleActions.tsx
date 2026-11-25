@@ -15,15 +15,15 @@ import { DeleteChannelDialog } from "./DeleteChannelDialog";
  * Activate / Deactivate / Delete for an existing Channel. Split out of ChannelEditorPage (already at
  * the file-size limit) and only rendered in edit mode.
  *
- * Actions follow the STORED status (ADR 0122 rule 3): Deactivate releases the Channel's device
- * reservations and is refused while a live Publication needs them; Activate needs a Player; Delete
- * (any status) is refused by Core once the Channel was ever used. Programs that are live or scheduled
- * disable Deactivate and Delete up front (`blockingPrograms`).
+ * Actions follow the Channel's lifecycle (ADR 0122 rule 3, ADR 0129): Deactivate releases the
+ * Channel's device reservations and is refused while a live Publication needs them; Activate needs a
+ * Player; Delete (any lifecycle) is refused by Core once the Channel was ever used. Programs that are
+ * live or scheduled disable Deactivate and Delete up front (`blockingPrograms`).
  */
 export function ChannelLifecycleActions({
   channelId,
   channelName,
-  status,
+  lifecycle,
   playerName,
   blockingPrograms,
   revision,
@@ -32,7 +32,7 @@ export function ChannelLifecycleActions({
 }: {
   channelId: string;
   channelName: string;
-  status: ChannelLifecycle;
+  lifecycle: ChannelLifecycle;
   playerName: string | null;
   blockingPrograms: BlockingProgram[];
   revision: number;
@@ -73,7 +73,7 @@ export function ChannelLifecycleActions({
   };
 
   const busy = pending !== null;
-  const actions = lifecycleActionsFor({ status, hasPlayer: playerName !== null, blockingPrograms });
+  const actions = lifecycleActionsFor({ lifecycle, hasPlayer: playerName !== null, blockingPrograms });
 
   return (
     <Card className="p-5">
@@ -84,7 +84,7 @@ export function ChannelLifecycleActions({
         </p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
-        {status === "active" && (
+        {lifecycle === "active" && (
           <Button
             type="button"
             variant="outline"
@@ -95,7 +95,7 @@ export function ChannelLifecycleActions({
             Deactivate
           </Button>
         )}
-        {status !== "active" && (
+        {lifecycle !== "active" && (
           <Button
             type="button"
             disabled={busy || !actions.canActivate}

@@ -33,7 +33,6 @@ const channel = {
   name: "Lobby",
   description: null,
   lifecycle: "active",
-  status: "active",
   category: "dooh",
   channel_type: null,
   location: null,

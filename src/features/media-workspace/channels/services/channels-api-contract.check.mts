@@ -20,12 +20,12 @@ import {
 
 // A wrong query key or order would make filtering silently diverge from the future API contract.
 assert.deepEqual(
-  buildChannelListPath({ category: "in_store", lifecycle: "active" }),
-  "/media/channels?category=in_store&lifecycle=active",
+  buildChannelListPath({ category: "in_store" }),
+  "/media/channels?category=in_store",
 );
-assert.deepEqual(buildFetchChannelsRequest({ category: "in_store", lifecycle: "active" }), {
+assert.deepEqual(buildFetchChannelsRequest({ category: "in_store" }), {
   method: "GET",
-  path: "/media/channels?category=in_store&lifecycle=active",
+  path: "/media/channels?category=in_store",
 });
 assert.deepEqual(buildFetchChannelRequest("channel-1"), {
   method: "GET",
@@ -106,8 +106,9 @@ assert.equal("created_at" in parsedList[0]!, false);
 assert.equal("publication_count" in parsedList[0]!, false);
 assert.deepEqual(parsedList[0]?.player, player);
 assert.deepEqual(parsedList[0]?.groups, channel.groups);
-const expectedDetail = { ...channel, publication_count: undefined, blocking_programs: [], draft_programs: [], has_history: false };
+const expectedDetail = { ...channel, publication_count: undefined, status: undefined, blocking_programs: [], draft_programs: [], has_history: false };
 delete expectedDetail.publication_count;
+delete expectedDetail.status; // ADR 0129: Core's `status` is read into `lifecycle`
 // `blocking_programs` is detail-only; a missing key means nothing blocks (ADR 0122 rule 7).
 assert.deepEqual(parseChannelDetail({ data: channel }), expectedDetail);
 const blockers = [{ id: "program-1", name: "Summer Sale" }];
@@ -208,11 +209,12 @@ assert.throws(() => parseChannelDetail({
   ...channel,
   category: "dooh",
 }));
-assert.equal(parseChannelDetail({ ...channel, lifecycle: "active" }).lifecycle, "active");
-assert.throws(() => parseChannelDetail({ ...channel, lifecycle: "retired" }));
-// ADR 0099: the stored status is part of the contract; a payload without it is malformed.
-assert.equal(parseChannelDetail({ ...channel, status: "inactive" }).status, "inactive");
+// ADR 0129: the FE `lifecycle` comes from Core's stored `status`; the derived `lifecycle` key is ignored.
+assert.equal(parseChannelDetail({ ...channel, lifecycle: "inactive", status: "active" }).lifecycle, "active");
+assert.doesNotThrow(() => parseChannelDetail({ ...channel, lifecycle: undefined }));
+assert.throws(() => parseChannelDetail({ ...channel, status: "retired" }));
 assert.throws(() => parseChannelDetail({ ...channel, status: undefined }));
+assert.equal("status" in parseChannelDetail(channel), false);
 assert.throws(() => parseChannelDetail({
   ...channel,
   expected_resolution: "full-hd",

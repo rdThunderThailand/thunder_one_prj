@@ -42,9 +42,9 @@ assert.equal(problemTargetText(flagged[1]), "ช่องทาง Floor 2 ย�
 // The wizard's selected problem targets (ADR 0122 rule 17, 2026-11-24).
 const saved = [{ id: "tomb", name: "Old lobby", deleted: true }, { id: "gone", name: "Unselected", deleted: true }];
 const list = [
-  { id: "ok", name: "Lobby", status: "active" as const },
-  { id: "off", name: "Floor 2", status: "inactive" as const },
-  { id: "draft", name: "New one", status: "draft" as const },
+  { id: "ok", name: "Lobby", lifecycle: "active" as const },
+  { id: "off", name: "Floor 2", lifecycle: "inactive" as const },
+  { id: "draft", name: "New one", lifecycle: "draft" as const },
 ];
 
 // Before the list loads (or when it failed), only saved problem targets that are still selected count.

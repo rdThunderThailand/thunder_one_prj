@@ -49,7 +49,6 @@ const channels: ChannelListItem[] = [
     name: "Screen 1",
     description: null,
     lifecycle: "active",
-    status: "active",
     category: "dooh",
     channel_type: null,
     location: null,
