@@ -89,6 +89,7 @@ export function BulkImportValidationPanel({ flow }: {
             batchId={batch.id}
             batch={batch}
             variant="validate"
+            keptPages={flow.keptPages}
             onReloadBatch={flow.reload}
             editor={{ context: flow.context, mapping: flow.mapping, options,
               disabled: flow.busy || flow.confirmation !== null || batch.createdBy.id !== flow.context.split(":")[1],

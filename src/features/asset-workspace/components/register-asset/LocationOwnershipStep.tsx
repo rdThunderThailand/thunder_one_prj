@@ -2,14 +2,15 @@ import { LocationIcon, UserIcon, WarningTriangleIcon } from "@/components/ui/ico
 import { Button } from "@/components/ui/lovable/button";
 import { registrationInitialConditions, registrationInitialStatus } from "../../domain/registration-initial-state";
 import { selectedReference, selectedReferenceLabel } from "../../domain/registration-references";
+import type { KeptReferenceTrees } from "../../services/kept-reference-trees";
 import type { ReferenceItem, SelectorKind } from "../../services/registration-selector-contract";
 import { StatusBadge } from "../StatusBadges";
 import { RegistrationHelp, RegistrationSection, RegistrationSelect, type RegistrationStepProps } from "./RegistrationFields";
 import { RegistrationReferenceSelect } from "./RegistrationReferenceSelect";
 import { RegistrationTreeField } from "./RegistrationTreeField";
 
-export function LocationOwnershipStep({ draft, options, errors, patch, onReviewCondition, context, onSelectReference }: RegistrationStepProps & {
-  onReviewCondition: () => void; context: string; onSelectReference: (kind: SelectorKind, item: ReferenceItem) => void;
+export function LocationOwnershipStep({ draft, options, errors, patch, onReviewCondition, context, keptTrees, onSelectReference }: RegistrationStepProps & {
+  onReviewCondition: () => void; context: string; keptTrees?: KeptReferenceTrees; onSelectReference: (kind: SelectorKind, item: ReferenceItem) => void;
 }) {
   const location = selectedReference(draft, "locations");
   const locationLabel = selectedReferenceLabel(draft, "locations");
@@ -34,6 +35,8 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
           label="Location"
           value={draft.locationId}
           context={context}
+          keptTrees={keptTrees}
+          checking={options.referenceValidation?.locations?.first}
           rules={options.referenceSelectors}
           selectedLabel={locationLabel}
           onChange={(item) => onSelectReference("locations", item)}
@@ -60,7 +63,7 @@ export function LocationOwnershipStep({ draft, options, errors, patch, onReviewC
             <RegistrationReferenceSelect {...custodyField} label="Person" kind="persons" />
           )}
           {draft.custodyType === "org_unit" && (
-            <RegistrationTreeField {...custodyField} label="Organizational unit" kind="orgUnits" />
+            <RegistrationTreeField {...custodyField} keptTrees={keptTrees} label="Organizational unit" kind="orgUnits" />
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 rounded-control bg-muted p-3 text-xs leading-relaxed">

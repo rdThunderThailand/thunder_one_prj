@@ -71,7 +71,7 @@ const reopened = await parseImportFile(new File([excel.blob], excel.filename), {
   file: { extensions: [".csv", ".xlsx"], maxBytes: 1_000_000, maxRows: 10 },
 } as ImportOptions);
 assert.deepEqual(reopened.headers, ["Asset Name", "Acquisition Date", "Import ID", "Source Row", "Error Message"]);
-assert.deepEqual(reopened.rows[0].cells, ["จอ, ใหญ่", "2026-01-01", batchId, "12", "'=SUM(1,2)"]);
+assert.deepEqual(reopened.rows[0].cells, ["จอ, ใหญ่", "2026-01-01", batchId, "12", "=SUM(1,2)"]);
 assert.deepEqual(reopened.reimport, { originalImportId: batchId, sourceRowColumn: 3 });
 for (const [status, code] of [[404, "NOT_FOUND"], [409, "INVALID_STATE"], [503, "IMPORT_UNAVAILABLE"]] as const) {
   errorStatus = status;

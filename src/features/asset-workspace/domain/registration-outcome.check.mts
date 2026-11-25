@@ -1,6 +1,7 @@
 /** Run: node src/features/asset-workspace/domain/registration-outcome.check.mts */
 import assert from "node:assert/strict";
-import { registrationOutcome, registrationProgress } from "./registration-outcome.ts";
+import { z } from "zod";
+import { localFailureMessage, registrationOutcome, registrationProgress } from "./registration-outcome.ts";
 
 const base = { uncertain: false, message: "Service message." };
 
@@ -38,6 +39,13 @@ assert.equal(registrationOutcome({ ...base, code: "INTERNAL", status: 500 }, tru
 // Local checks (no code) keep their own message.
 const local = registrationOutcome({ ...base, message: "Check the highlighted registration step before confirming." }, true);
 assert.deepEqual([local.title, local.body, local.primary], ["Check your registration", "Check the highlighted registration step before confirming.", "edit"]);
+
+// Technical text from format checks and the browser never reaches the popup.
+assert.equal(localFailureMessage(new Error("Reselect the file.")), "Reselect the file.");
+const rejected = z.array(z.string()).max(2).safeParse(["1", "2", "3"]).error;
+for (const technical of [rejected, new TypeError("Failed to fetch"), new DOMException("signal timed out", "TimeoutError"), "text", undefined]) {
+  assert.match(localFailureMessage(technical), /^Something in this registration couldn't be processed/);
+}
 
 // Progress moves forward through the stages.
 assert.equal(registrationProgress("checking", 0, 0), 8);

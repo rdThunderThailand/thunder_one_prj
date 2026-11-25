@@ -4,7 +4,8 @@ import { isCalendarDate } from "../domain/registration-warranty-dates.ts";
 const reference = z.guid().transform((value) => value.toLowerCase());
 const date = z.string().refine(isCalendarDate);
 const text = (max: number) => z.string().trim().min(1).max(max).optional();
-const fileIds = z.array(reference).max(2).optional();
+// How many files are allowed comes from the registration options, and the asset service checks it again.
+const fileIds = z.array(reference).optional();
 export const createRegistrationSchema = z.object({
   submission_id: z.uuid(), name: z.string().trim().min(1).max(250), asset_code: text(100),
   asset_category_id: reference, location_id: reference, condition: z.enum(["Good", "Fair", "Damaged"]),

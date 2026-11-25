@@ -14,6 +14,7 @@ import {
   ImportApiError,
   type AssetImportContext,
 } from "../../services/asset-import-api";
+import type { ImportFirstData } from "../../services/asset-import-first-data";
 import { AccessDeniedState, EmptyState } from "../states/states";
 import { ErrorState } from "../states/ErrorState";
 import { BulkImportHeader } from "./BulkImportHeader";
@@ -22,11 +23,12 @@ import { MapValidateStep } from "./steps/MapValidateStep";
 import { ReviewConfirmStep } from "./steps/ReviewConfirmStep";
 import { CompleteStep } from "./steps/CompleteStep";
 
-export function BulkImportPage(context: AssetImportContext) {
+export function BulkImportPage({ tenantId, userId, firstData }: AssetImportContext & { firstData?: ImportFirstData }) {
   return (
     <ImportWorkspace
-      key={`${context.tenantId}:${context.userId}`}
-      context={context}
+      key={`${tenantId}:${userId}`}
+      context={{ tenantId, userId }}
+      firstData={firstData}
     />
   );
 }
@@ -35,10 +37,14 @@ const neverChanges = () => () => {};
 
 function ImportWorkspace({
   context,
+  firstData,
 }: {
   context: AssetImportContext;
+  firstData?: ImportFirstData;
 }) {
-  const flow = useAssetImportFlow(context);
+  // A new address renders the page again without first data; the open import keeps what it started with.
+  const [first] = useState(firstData);
+  const flow = useAssetImportFlow(context, first);
   const { routeBatch } = flow;
   // The server cannot see this tab's storage, so it renders no active step rather than a wrong one.
   const rememberedStep = useSyncExternalStore(

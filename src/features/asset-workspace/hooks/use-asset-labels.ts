@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AssetActionError } from "../domain/asset-action-error";
 import { assertLabelFormat, DEFAULT_LABEL_FIELDS, DEFAULT_LABEL_FORMAT, labelFailure, labelScope, type AssetLabel, type LabelCandidate, type LabelField, type LabelFields, type LabelFormat } from "../domain/asset-labels";
-import { prepareAssetLabels } from "../services/asset-label-preparation";
+import { prepareAssetLabels, startLabelTasks } from "../services/asset-label-preparation";
 import { downloadBlob } from "../services/asset-import-template";
 import { printAssetLabelsPdf } from "../services/asset-label-print";
 import { labelDefaultAction } from "../services/asset-settings-actions";
@@ -22,6 +22,12 @@ const empty = (key: string): LabelState => ({
   key, scope: [], labels: [], phase: null, completed: 0, file: null, error: null, format: DEFAULT_LABEL_FORMAT, fields: DEFAULT_LABEL_FIELDS,
   preparation: { tools: false, data: false },
 });
+
+/** Starts one asset's label reads before the asset itself has loaded. Pass the result to `open`. */
+export function startAssetLabels(context: string, id: string, signal: AbortSignal) {
+  return { tasks: startLabelTasks(context, id, signal), saved: labelDefaultAction().catch(() => null) };
+}
+export type StartedLabels = ReturnType<typeof startAssetLabels>;
 
 /** Same account/query, abort and focus lifecycle as useAssetExport. No result survives a scope change. */
 export function useAssetLabels(context: string, viewKey: string) {
@@ -45,7 +51,7 @@ export function useAssetLabels(context: string, viewKey: string) {
     setState(empty(key));
   }
 
-  async function load(scope: LabelCandidate[]) {
+  async function load(scope: LabelCandidate[], started?: StartedLabels) {
     const guard = scopeRef.current;
     if (!guard?.active || guard.key !== key || controllerRef.current) return;
     const controller = new AbortController();
@@ -58,9 +64,9 @@ export function useAssetLabels(context: string, viewKey: string) {
           if (isCurrent()) setState((previous) => ({
             ...previous, preparation: { ...previous.preparation, [step]: true },
           }));
-        }),
+        }, started?.tasks),
         // The Settings defaults; a non-admin (or a failed read) keeps the built-in ones.
-        labelDefaultAction().catch(() => null),
+        started?.saved ?? labelDefaultAction().catch(() => null),
       ]);
       let format = DEFAULT_LABEL_FORMAT;
       if (saved) {
@@ -77,11 +83,11 @@ export function useAssetLabels(context: string, viewKey: string) {
     }
   }
 
-  function open(candidates: LabelCandidate[], trigger: HTMLElement | null): boolean {
+  function open(candidates: LabelCandidate[], trigger: HTMLElement | null, started?: StartedLabels): boolean {
     if (controllerRef.current) return false;
     if (!candidates.length) { toast.info("Select assets first to generate labels."); return false; }
     triggerRef.current = trigger;
-    try { void load(labelScope(candidates)); }
+    try { void load(labelScope(candidates), started); }
     catch (error) { setState({ ...empty(key), phase: "error", error: labelFailure(error, candidates) }); }
     return true;
   }

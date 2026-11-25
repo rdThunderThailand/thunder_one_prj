@@ -5,23 +5,30 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/lovable/button";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
+import { isFreshSeed, markSeedShown, type SectionSeed } from "../../services/assets-list-seed";
 import { loadRegistrationCategory } from "../../services/registration-category-prefill";
+import type { ReferenceItem } from "../../services/registration-selector-contract";
 import { RegistrationLoading } from "./RegistrationLoading";
 import { SingleAssetWizard } from "./SingleAssetWizard";
 
-export function RegistrationCategoryEntry({ tenantId, userId, categoryId, options }: {
-  tenantId: string; userId: string; categoryId: string | string[]; options: RegistrationOptions;
+export function RegistrationCategoryEntry({ tenantId, userId, categoryId, options, seed }: {
+  tenantId: string; userId: string; categoryId: string | string[]; options: RegistrationOptions; seed?: SectionSeed<ReferenceItem>;
 }) {
   const [attempt, setAttempt] = useState(0);
   const [snapshot, setSnapshot] = useState<{ attempt: number; result: Awaited<ReturnType<typeof loadRegistrationCategory>> } | null>(null);
   useEffect(() => {
     let alive = true;
     const controller = new AbortController();
-    void loadRegistrationCategory(`${tenantId}:${userId}`, categoryId, controller.signal).then((result) => {
+    const context = `${tenantId}:${userId}`;
+    const browserRead = () => loadRegistrationCategory(context, categoryId, controller.signal);
+    const reading = isFreshSeed(seed, context)
+      ? Promise.resolve(seed.data).catch(() => null).then((category) => category ? { ok: true as const, category } : browserRead()) : browserRead();
+    if (seed) queueMicrotask(() => markSeedShown(seed));
+    void reading.then((result) => {
       if (alive) setSnapshot({ attempt, result });
     }).catch(() => { /* Abort only: the service converts request failures to safe results. */ });
     return () => { alive = false; controller.abort(); };
-  }, [tenantId, userId, categoryId, attempt]);
+  }, [tenantId, userId, categoryId, attempt, seed]);
   if (!snapshot || snapshot.attempt !== attempt) return <RegistrationLoading />;
   if (snapshot.result.ok) {
     return <SingleAssetWizard tenantId={tenantId} userId={userId} options={options} initialCategory={snapshot.result.category} />;

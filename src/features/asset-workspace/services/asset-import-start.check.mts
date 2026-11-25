@@ -25,7 +25,7 @@ const parsed: ParsedImportFile = {
 let uploadingFile = file;
 let uploadingMime = "text/csv";
 const batch: ImportBatch = {
-  id: batchId, batchCode: "IMP-20261104-0001", status: "uploaded", totalRows: 1,
+  id: batchId, editedCount: 0, batchCode: "IMP-20261104-0001", status: "uploaded", totalRows: 1,
   createdAt: "2026-11-04T00:00:00.000Z", createdBy: { id: userId, name: "Test manager" },
   sourceFile: { id: uploadId, name: file.name, sizeBytes: file.size, mimeType: "text/csv" },
   counts: { valid: 0, warning: 0, error: 0, created: 0, createdWithWarning: 0, notRegistered: 0, pending: 0 },

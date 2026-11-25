@@ -8,9 +8,9 @@ import type { ImportProgress } from "./asset-import-start.ts";
 
 type ConfirmState = { batch: ImportBatch; progress: ImportProgress; retrying: boolean };
 
-/** Rows per Confirm call: about 20 progress steps, never more than Core's 100. */
+/** Rows per Confirm call: about 5 progress steps, at least 25 rows, never more than Core's 100. */
 export function confirmLimit(totalRows: number): number {
-  return Math.min(100, Math.max(1, Math.ceil(totalRows / 20)));
+  return Math.min(100, Math.max(25, Math.ceil(totalRows / 5)));
 }
 
 export function waitForImportRetry(milliseconds: number, signal: AbortSignal): Promise<void> {

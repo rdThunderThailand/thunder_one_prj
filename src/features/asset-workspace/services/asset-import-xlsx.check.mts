@@ -133,24 +133,21 @@ async function templateChecks() {
   assert.equal(roundTrip.rows.length, 1, "text-formatted blank date cells are not data rows");
   assert.equal(roundTrip.columnCount, 9);
 
-  const calls: string[] = [];
+  let reads = 0;
   const stages: string[] = [];
-  const complete = await createImportTemplate(OPTIONS, context, async (header, kind, query) => {
-    assert.equal(header, `${context.tenantId}:${context.userId}`);
-    calls.push(`${kind}:${query.parentId ?? "root"}:${query.page}`);
-    const items = query.parentId ? [] : kind === "categories"
-      ? [{ id: `category-${query.page}`, name: `Category ${query.page}`, code: `CAT${query.page}`, is_serial_required: false }]
-      : [{ id: "hq", name: "HQ", code: "HQ" }];
-    const hasMore = kind === "categories" && !query.parentId && query.page === 1;
-    return { items, pageSize: 50, page: query.page, hasMore, nextPage: hasMore ? 2 : null };
-  }, async (stage) => {
+  const complete = await createImportTemplate(OPTIONS, context, async () => {
+    reads += 1;
+    return {
+      categories: [1, 2].map((n) => ({ code: `CAT${n}`, name: `Category ${n}`, serialRequired: false, active: true })),
+      locations: [{ code: "HQ", path: "HQ" }],
+    };
+  }, (stage) => {
     stages.push(stage);
-    if (stage === "workbook") assert.ok(calls.includes("categories:root:2"));
+    assert.equal(reads, stage === "workbook" ? 1 : 0);
   });
   assert.deepEqual(stages, ["references", "workbook"], "stages follow the actual reference and workbook work");
   assert.equal(complete.filename, "asset-import-template.xlsx");
   assert.equal(complete.referenceUnavailable, false);
-  assert.ok(calls.includes("categories:root:2"));
   const completeWorkbook = await readBlob(complete.blob);
   assert.ok(utils.sheet_to_csv(completeWorkbook.Sheets.Reference).includes("CAT2"));
 
@@ -167,9 +164,7 @@ async function templateChecks() {
   await assert.rejects(() => createImportTemplate(OPTIONS, context, async () => {
     throw new Error("Reference loading must not start after cancellation");
   }, () => { throw cancelled; }), (error) => error === cancelled);
-  await assert.rejects(() => createImportTemplate(OPTIONS, context, async () => ({
-    items: [], page: 1, pageSize: 50, hasMore: false, nextPage: null,
-  }), (stage) => { if (stage === "workbook") throw cancelled; }), (error) => error === cancelled);
+  await assert.rejects(() => createImportTemplate(OPTIONS, context, async () => ({ categories: [], locations: [] }), (stage) => { if (stage === "workbook") throw cancelled; }), (error) => error === cancelled);
 }
 
 await parserChecks();

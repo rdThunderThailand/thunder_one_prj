@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/lovable/button";
 import { ChevronRightIcon, DownloadIcon, PrintIcon } from "@/components/ui/icons";
 import { LABEL_SUBTITLE, LABEL_TITLE } from "../../domain/asset-lifecycle-actions";
 import { profileHref } from "../../domain/assignment-assign";
-import { useAssetLabels, type AssetLabelsFlow } from "../../hooks/use-asset-labels";
+import { startAssetLabels, useAssetLabels, type AssetLabelsFlow, type StartedLabels } from "../../hooks/use-asset-labels";
 import { useProfileRead } from "../../hooks/use-asset-profile";
 import { getAssetDetail, getAssetFiles } from "../../services/asset-profile-api";
 import type { AssetDetail } from "../../services/asset-profile-contract";
@@ -62,9 +62,17 @@ export function LabelFlowView({ context, assetId, from }: { context: string; ass
     && labels.error?.code !== "INVALID_TAG";
   const name = asset ? `${asset.name} (${asset.assetTag})` : "Asset Profile";
 
+  // The label needs only the asset id, so it is asked for while the asset loads.
+  const started = useRef<StartedLabels | undefined>(undefined);
+  useEffect(() => {
+    const controller = new AbortController();
+    started.current = startAssetLabels(context, assetId, controller.signal);
+    return () => { controller.abort(); started.current = undefined; };
+  }, [context, assetId]);
+
   const start = useEffectEvent(() => {
     if (!asset) return;
-    labels.open([{ id: asset.id, name: asset.name, assetTag: asset.assetTag, status: asset.lifecycleStatus, serialNumber: asset.serialNumber }], null);
+    labels.open([{ id: asset.id, name: asset.name, assetTag: asset.assetTag, status: asset.lifecycleStatus, serialNumber: asset.serialNumber }], null, started.current);
   });
   useEffect(() => { if (asset?.id && !disposed) start(); }, [asset?.id, disposed]);
 

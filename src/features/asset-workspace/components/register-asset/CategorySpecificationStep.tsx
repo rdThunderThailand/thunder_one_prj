@@ -1,10 +1,11 @@
 import { selectedReference, selectedReferenceLabel } from "../../domain/registration-references";
+import type { KeptReferenceTrees } from "../../services/kept-reference-trees";
 import type { ReferenceItem } from "../../services/registration-selector-contract";
 import { RegistrationHelp, RegistrationSection, RegistrationTextField, type RegistrationStepProps } from "./RegistrationFields";
 import { RegistrationTreeField } from "./RegistrationTreeField";
 
-export function CategorySpecificationStep({ draft, options, errors, patch, context, onSelectReference }: RegistrationStepProps & {
-  context: string; onSelectReference: (kind: "categories", item: ReferenceItem) => void;
+export function CategorySpecificationStep({ draft, options, errors, patch, context, keptTrees, onSelectReference }: RegistrationStepProps & {
+  context: string; keptTrees?: KeptReferenceTrees; onSelectReference: (kind: "categories", item: ReferenceItem) => void;
 }) {
   const selected = selectedReference(draft, "categories");
   const serialError = errors.serialNumber ?? (selected?.is_serial_required && !draft.serialNumber.trim() ? "This category requires a serial number." : undefined);
@@ -13,7 +14,8 @@ export function CategorySpecificationStep({ draft, options, errors, patch, conte
       <RegistrationSection title="Category & specification" description="Choose what kind of asset this is, then add its serial number.">
         <div className="max-w-xl space-y-4">
           <RegistrationTreeField kind="categories" name="categoryId" label="Category" value={draft.categoryId}
-            selectedLabel={draft.categoryId ? selectedReferenceLabel(draft, "categories") : ""} context={context}
+            selectedLabel={draft.categoryId ? selectedReferenceLabel(draft, "categories") : ""} context={context} keptTrees={keptTrees}
+            checking={options.referenceValidation?.categories?.first}
             rules={options.referenceSelectors} error={errors.categoryId} onChange={(item) => onSelectReference("categories", item)} />
           <RegistrationTextField
             name="serialNumber"

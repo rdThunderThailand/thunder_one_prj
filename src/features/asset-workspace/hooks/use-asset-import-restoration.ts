@@ -8,6 +8,7 @@ import { isFinishedImport, restoredMappingView } from "../domain/asset-import-st
 import type { ImportBatch, ImportConfirmBody } from "../domain/asset-import-types.ts";
 import { ImportApiError } from "../services/asset-import-api.ts";
 import { restoreImportFile } from "../services/asset-import-restore.ts";
+import { isFreshSeed, markSeedShown, type SectionSeed } from "../services/assets-list-seed.ts";
 import { getParsedImportFile, readImportSession, setParsedImportFile, takeImportNotice } from "../services/asset-import-session.ts";
 import { clearFinishedImport, assertActive, importFlowMemory, type FlowState, type ImportFlowRuntime, type Lifecycle } from "./asset-import-flow-state.ts";
 
@@ -17,6 +18,7 @@ export function useAssetImportRestoration(
   state: FlowState,
   requestedUrlRef: RefObject<{ batchId: string | null; superseded: Set<string | null> } | null>,
   confirmLoop: (lifecycle: Lifecycle, batch: ImportBatch, first?: ImportConfirmBody) => Promise<void>,
+  seed?: SectionSeed<ImportBatch>,
 ) {
   const { api, options, userId, context, preview, batchId, routeKey, current, publish, run, clearLocal } = runtime;
 
@@ -69,7 +71,10 @@ export function useAssetImportRestoration(
       }
       let batch: ImportBatch;
       try {
-        batch = await api.getBatch(batchId);
+        const known = isFreshSeed(seed, `${context}:${batchId}`) ? Promise.resolve(seed.data).catch(() => null) : null;
+        // Only the first open may use it: later reads need the current state.
+        if (seed) markSeedShown(seed);
+        batch = await known ?? await api.getBatch(batchId);
       } catch (error) {
         if (!(error instanceof ImportApiError) || error.status !== 404) throw error;
         assertActive(lifecycle);

@@ -57,22 +57,25 @@ async function apiFails(operation: () => Promise<unknown>, code: string, status?
 
 async function referenceChecks() {
   const calls: string[] = [];
-  const result = await loadReferenceCsv(context, async (header, kind, query) => {
-    assert.equal(header, `${tenantId}:${userId}`);
-    calls.push(`${kind}:${query.parentId ?? "root"}:${query.page}`);
-    const items = kind === "categories" && !query.parentId
-      ? [{ id: tenantId, name: "อุปกรณ์สำนักงาน", code: "OFFICE", is_serial_required: false }]
-      : kind === "locations" && !query.parentId
-        ? [{ id: userId, name: "HQ", code: "HQ" }]
-        : kind === "locations" && query.parentId === userId
-          ? [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "ชั้น 1", code: null }]
-          : [];
-    return { items, page: query.page, pageSize: 50, hasMore: false, nextPage: null };
+  let data: unknown = {
+    categories: [
+      { code: "OFFICE", name: "อุปกรณ์สำนักงาน", serialRequired: true },
+      { code: null, name: "No code", serialRequired: false },
+    ],
+    locations: [{ code: "HQ", path: "HQ" }, { code: null, path: "HQ > ชั้น 1" }],
+  };
+  const api = createHttpImportApi(context, async (request) => {
+    assert.equal(request.headers["x-registration-context"], `${tenantId}:${userId}`);
+    calls.push(`${request.method} ${request.url}`);
+    return { status: 200, data: { success: true, data } };
   });
-  assert.ok(result.includes("อุปกรณ์สำนักงาน"));
-  assert.ok(result.includes("HQ > ชั้น 1"));
-  assert.ok(calls.includes(`locations:${userId}:1`));
-  await assert.rejects(() => loadReferenceCsv(context, async () => { throw new Error("Unavailable"); }));
+  const result = await loadReferenceCsv(() => api.getReferences());
+  assert.deepEqual(result.split("\r\n").slice(1), [
+    "Category,OFFICE,อุปกรณ์สำนักงาน,Yes", "Category,,No code,No", "Location,HQ,HQ,", "Location,,HQ > ชั้น 1,",
+  ]);
+  assert.deepEqual(calls, ["GET /api/proxy/v2/asset-workspace/assets/imports/references"], "one read for the whole list");
+  data = { categories: [] };
+  await apiFails(() => api.getReferences(), "INVALID_RESPONSE", 502);
 }
 
 async function utilityChecks() {

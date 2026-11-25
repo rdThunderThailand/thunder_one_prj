@@ -149,7 +149,7 @@ export const importRowSchema: z.ZodType<ImportRow> = z.object({
 export const rowsPageSchema: z.ZodType<RowsPage> = z.object({
   rows: z.array(importRowSchema),
   page: z.number().int().positive(),
-  pageSize: z.number().int().min(1).max(100),
+  pageSize: z.number().int().min(1).max(1000),
   total: z.number().int().nonnegative(),
 });
 
@@ -200,6 +200,12 @@ export const validateResultSchema = z.object({
     warning: z.number().int().nonnegative(),
     error: z.number().int().nonnegative(),
   }),
+});
+
+// The categories and locations a file may use, for the template's reference sheet.
+export const importReferencesSchema = z.object({
+  categories: z.array(z.object({ code: z.string().nullable(), name: z.string(), serialRequired: z.boolean() })),
+  locations: z.array(z.object({ code: z.string().nullable(), path: z.string() })),
 });
 
 export const sourceFileUrlSchema = z.object({

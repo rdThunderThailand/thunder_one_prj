@@ -6,7 +6,6 @@ import { importChanges, importPatch, isImportPicker, type ImportCheckResult, typ
   type ImportPicker, type ImportValues } from "../domain/asset-import-edit";
 import type { ImportFieldKey, ImportRow } from "../domain/asset-import-types";
 import { ImportApiError, type AssetImportApi } from "../services/asset-import-api";
-import { readAllImportRows } from "../services/asset-import-edit";
 
 export function useAssetImportEdit(api: AssetImportApi, batchId: string, initial: ImportRow,
   onSaved: (result: ImportEditResult) => void, onLocked: () => void, actor?: { id: string; name: string }) {
@@ -70,7 +69,9 @@ export function useAssetImportEdit(api: AssetImportApi, batchId: string, initial
     locked.current = true;
     setSaving(true);
     try {
-      const row = (await readAllImportRows(api, batchId)).find((row) => row.id === base.id);
+      // A whole-number search matches the row number, so this reads only this row.
+      const page = await api.listRows(batchId, { page: 1, pageSize: 100, q: String(base.rowIndex) });
+      const row = page.rows.find((row) => row.id === base.id);
       if (!row) throw new Error("This row is no longer available.");
       if (!alive.current) return;
       if (!discard && row.version !== base.version) {

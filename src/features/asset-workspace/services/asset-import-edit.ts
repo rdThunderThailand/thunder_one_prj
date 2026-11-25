@@ -34,15 +34,21 @@ export function createImportEditApi(call: ImportJsonCaller) {
   };
 }
 
-/** Read every server page: apply counts, next issue and export must not stop at the visible page. */
+// Core's largest rows page.
+const ALL_ROWS_PAGE = 1000;
+
+/** Read every row: apply counts, next issue and export must not stop at the visible page. */
 export async function readAllImportRows(api: AssetImportApi, batchId: string, signal?: AbortSignal): Promise<ImportRow[]> {
-  const rows: ImportRow[] = [];
-  for (let page = 1; ; page += 1) {
+  const read = async (page: number) => {
     signal?.throwIfAborted();
-    const result = await api.listRows(batchId, { page, pageSize: 100 });
+    const result = await api.listRows(batchId, { page, pageSize: ALL_ROWS_PAGE }, signal);
     signal?.throwIfAborted();
-    rows.push(...result.rows);
-    if (rows.length >= result.total) return rows;
-    if (!result.rows.length) throw new Error("The import rows could not be read completely.");
-  }
+    return result;
+  };
+  const first = await read(1);
+  const pages = Math.ceil(first.total / ALL_ROWS_PAGE);
+  const rest = await Promise.all(Array.from({ length: Math.max(0, pages - 1) }, (_, index) => read(index + 2)));
+  const rows = [first, ...rest].flatMap((page) => page.rows);
+  if (rows.length !== first.total) throw new Error("The import rows could not be read completely.");
+  return rows;
 }

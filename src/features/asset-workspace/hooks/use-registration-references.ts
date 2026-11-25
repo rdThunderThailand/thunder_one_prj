@@ -10,6 +10,9 @@ export function useRegistrationReferences(context: string, draft: RegistrationDr
   const [validation, setValidation] = useState<ReferenceValidation>({});
   const [attempt, setAttempt] = useState(0);
   const requests = useRef(new Map<SelectorKind, { key: string; controller?: AbortController }>());
+  // Category and location lists are read one step early, so their check is too. Only the answer is read here: it is applied when
+  // its step opens, and a failed early read is dropped so that step asks again.
+  const early = useRef(new Map<SelectorKind, { key: string; controller: AbortController; item: Promise<ReferenceItem> }>());
   const latest = useRef({ draft, patch });
   useEffect(() => { latest.current = { draft, patch }; });
   const ids = selectorKinds.map((kind) => referenceId(draft, kind)).join(":");
@@ -24,11 +27,27 @@ export function useRegistrationReferences(context: string, draft: RegistrationDr
         previous?.controller?.abort();
         requests.current.delete(kind);
       }
-      if (!id || step < (kind === "categories" ? 1 : 2) || requests.current.get(kind)?.key === key) continue;
-      const controller = new AbortController();
+      const firstStep = kind === "categories" ? 1 : 2;
+      const ahead = early.current.get(kind);
+      if (ahead && (ahead.key !== key || step < 0)) {
+        ahead.controller.abort();
+        early.current.delete(kind);
+      }
+      if (!id || requests.current.get(kind)?.key === key) continue;
+      if (step < firstStep) {
+        if (step !== firstStep - 1 || kind === "orgUnits" || kind === "persons" || early.current.has(kind)) continue;
+        const controller = new AbortController();
+        const item = resolveReference(context, current, kind, controller.signal);
+        early.current.set(kind, { key, controller, item });
+        item.catch(() => { if (early.current.get(kind)?.item === item) early.current.delete(kind); });
+        continue;
+      }
+      const started = early.current.get(kind);
+      early.current.delete(kind);
+      const controller = started?.controller ?? new AbortController();
       requests.current.set(kind, { key, controller });
-      setValidation((previous) => ({ ...previous, [kind]: { id, status: "pending" } }));
-      void resolveReference(context, current, kind, controller.signal).then((item) => {
+      setValidation((previous) => ({ ...previous, [kind]: { id, status: "pending", first: !previous[kind] || previous[kind].first } }));
+      void (started?.item ?? resolveReference(context, current, kind, controller.signal)).then((item) => {
         if (controller.signal.aborted || requests.current.get(kind)?.key !== key || referenceId(latest.current.draft, kind) !== id) return;
         latest.current.patch((draft) => ({ selectedReferences: { ...draft.selectedReferences, [kind]: item } }));
         setValidation((previous) => ({ ...previous, [kind]: { id, status: "valid" } }));
@@ -42,9 +61,11 @@ export function useRegistrationReferences(context: string, draft: RegistrationDr
 
   useEffect(() => {
     const pending = requests.current;
+    const reading = early.current;
     return () => {
-      pending.forEach((request) => request.controller?.abort());
+      [...pending.values(), ...reading.values()].forEach((request) => request.controller?.abort());
       pending.clear();
+      reading.clear();
     };
   }, []);
 

@@ -11,6 +11,7 @@ import type {
 } from "../domain/asset-import-types.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { createHttpImportApi } from "./asset-import-http.ts";
+import type { ImportReferences } from "./asset-import-template.ts";
 import type { ImportCheckResult, ImportEditResult, ImportRowPatch } from "../domain/asset-import-edit.ts";
 
 export type AssetImportContext = {
@@ -35,7 +36,8 @@ export class ImportApiError extends Error {
 export interface AssetImportApi {
   saveRow(batchId: string, rowId: string, body: ImportRowPatch): Promise<ImportEditResult>;
   checkRow(batchId: string, rowId: string, values: import("../domain/asset-import-types.ts").ImportRow["values"], signal: AbortSignal): Promise<ImportCheckResult>;
-  getOptions(): Promise<ImportOptions>;
+  getOptions(signal?: AbortSignal): Promise<ImportOptions>;
+  getReferences(signal?: AbortSignal): Promise<ImportReferences>;
   uploadSource(input: {
     batchId: string;
     uploadId: string;
@@ -56,8 +58,8 @@ export interface AssetImportApi {
     counts: { total: number; valid: number; warning: number; error: number };
   }>;
   discard(batchId: string): Promise<void>;
-  getBatch(batchId: string): Promise<ImportBatch>;
-  listRows(batchId: string, query: RowsQuery): Promise<RowsPage>;
+  getBatch(batchId: string, signal?: AbortSignal): Promise<ImportBatch>;
+  listRows(batchId: string, query: RowsQuery, signal?: AbortSignal): Promise<RowsPage>;
   confirm(
     batchId: string,
     body: ImportConfirmBody,

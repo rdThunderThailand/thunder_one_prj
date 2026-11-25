@@ -6,24 +6,23 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { AlertCircleIcon } from "@/components/ui/icons";
 import type { ColumnMapping, ImportOptions, ImportRow } from "../../domain/asset-import-types";
 import type { useAssetImportEdit } from "../../hooks/use-asset-import-edit";
-import type { RegistrationOptions } from "../../services/asset-registration-contract";
-import { refreshRegistrationOptions } from "../../services/asset-registration-client";
+import type { ImportEditorResources } from "../../hooks/use-import-editor-resources";
 import { BulkImportRowEditField } from "./BulkImportRowEditField";
 
-export function BulkImportRowEditForm({ edit, mapping, options, context, rows, rowsReady }: {
+export function BulkImportRowEditForm({ edit, mapping, options, context, resources, rows, rowsReady }: {
   edit: ReturnType<typeof useAssetImportEdit>; mapping: ColumnMapping; options: ImportOptions;
-  context: string; rows: ImportRow[]; rowsReady: boolean;
+  context: string; resources: ImportEditorResources; rows: ImportRow[]; rowsReady: boolean;
 }) {
-  const [rules, setRules] = useState<RegistrationOptions["referenceSelectors"] | null>(null);
+  const [rules, setRules] = useState(() => resources.rules.get() ?? null);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
-    const controller = new AbortController();
-    void refreshRegistrationOptions(context, controller.signal).then((options) => {
-      if (!controller.signal.aborted) { setRules(options.referenceSelectors); setFailed(false); }
-    }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
-    return () => controller.abort();
-  }, [context, retry]);
+    let active = true;
+    void resources.rules.load().then((rules) => {
+      if (active) { setRules(rules); setFailed(false); }
+    }).catch(() => { if (active) setFailed(true); });
+    return () => { active = false; };
+  }, [resources, retry]);
   if (!rules) {
     return failed ? (
       <div role="alert" className="space-y-3 text-sm">
@@ -66,7 +65,7 @@ export function BulkImportRowEditForm({ edit, mapping, options, context, rows, r
         <legend className="sr-only">Mapped import fields</legend>
         {options.columns.filter((column) => mapping.includes(column.key)).map((column) => (
           <BulkImportRowEditField
-            key={column.key} column={column} edit={edit} context={context} rules={rules}
+            key={column.key} column={column} edit={edit} context={context} resources={resources} rules={rules}
             rows={rows} conditions={options.conditions} rowsReady={rowsReady}
           />
         ))}

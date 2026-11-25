@@ -2,6 +2,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { treeReference, type ReferenceTreeKind } from "../../domain/registration-reference-tree";
 import { useReferenceTree } from "../../hooks/use-reference-tree";
 import type { RegistrationOptions } from "../../services/asset-registration-contract";
+import type { KeptReferenceTrees } from "../../services/kept-reference-trees";
 import type { ReferenceItem } from "../../services/registration-selector-contract";
 import { RegistrationReferenceSelect } from "./RegistrationReferenceSelect";
 import { RegistrationTreeSelect, type TreeSelectCopy } from "./RegistrationTreeSelect";
@@ -13,13 +14,16 @@ const COPY: Record<ReferenceTreeKind, TreeSelectCopy> = {
 };
 
 /** Tree dropdown when the whole list can be read; otherwise the registration options select (one level at a time). */
-export function RegistrationTreeField({ kind, name, label, value, selectedLabel, required = true, context, rules, error, onChange }: {
+export function RegistrationTreeField({ kind, name, label, value, selectedLabel, required = true, context, rules, error, onChange, keptTrees, checking }: {
   kind: ReferenceTreeKind; name: string; label: string; value: string; selectedLabel: string; required?: boolean;
   context: string; rules: RegistrationOptions["referenceSelectors"]; error?: string; onChange: (item: ReferenceItem) => void;
+  keptTrees?: KeptReferenceTrees;
+  /** Keeps the loading box while a value from a link or a saved draft is first checked: the step cannot be passed yet. */
+  checking?: boolean;
 }) {
-  const tree = useReferenceTree(context, kind);
+  const tree = useReferenceTree(context, kind, keptTrees);
   const hint = kind === "orgUnits" ? "Department, division, section or branch" : undefined;
-  if (tree === null) {
+  if (tree === null || checking) {
     return (
       <div role="status" aria-label={`Loading ${COPY[kind].many}`} className="space-y-1 motion-reduce:[&_*]:animate-none">
         <Skeleton className="h-4 w-20" />

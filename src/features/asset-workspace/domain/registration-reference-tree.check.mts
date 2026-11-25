@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
+import { keepReferenceTrees } from "../services/kept-reference-trees.ts";
 import { getRegistrationOrgUnits } from "../services/registration-org-unit-tree.ts";
 import {
   distinctOrganizationCode, flattenOrganizationTree, referenceTree, searchTree, treePath, treeReference,
-  type OrganizationTreeRow,
+  type OrganizationTreeRow, type TreeNode,
 } from "./registration-reference-tree.ts";
 
 const A = "aaaaaaaa-0000-4000-8000-000000000001";
@@ -84,5 +85,32 @@ assert.equal(await getRegistrationOrgUnits(context, signal, async () =>
   new Response(null, { status: 403 })), null, "a failed read triggers fallback");
 assert.equal(await getRegistrationOrgUnits(context, signal, async () =>
   Response.json({ success: true, data: [{ id: A }] })), null, "incomplete data triggers fallback");
+
+// Lists kept while a form is open: read once, shared while running; failed and empty reads are not kept.
+let reads = 0;
+let answer: TreeNode[] | null = organizationRows;
+const trees = keepReferenceTrees(async () => {
+  reads += 1;
+  if (!answer) throw new Error("no connection");
+  return answer;
+});
+assert.equal(trees.get("orgUnits"), undefined);
+const both = await Promise.all([trees.load("orgUnits"), trees.load("orgUnits")]);
+assert.equal(both[0], both[1]);
+assert.equal(await trees.load("orgUnits"), trees.get("orgUnits"));
+assert.equal(reads, 1, "one read for the same list");
+const beforeClear = trees.load("categories");
+trees.clear();
+await beforeClear;
+assert.equal(trees.get("categories"), undefined, "a read from before the clear is not kept");
+assert.equal(trees.get("orgUnits"), undefined);
+answer = null;
+assert.equal(await trees.load("orgUnits"), null);
+answer = [];
+assert.equal((await trees.load("orgUnits"))?.byId.size, 0);
+assert.equal(trees.get("orgUnits"), undefined);
+answer = organizationRows;
+assert.ok((await trees.load("orgUnits"))?.byId.size, "reads again after a failed or empty read");
+assert.equal(reads, 5);
 
 console.log("registration-reference-tree: ok");

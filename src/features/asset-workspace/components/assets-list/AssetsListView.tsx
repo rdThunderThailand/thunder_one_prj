@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { assetListQueryString, readAssetListSearch, withListDefaults, type AssetListDefaults } from "../../services/assets-list-query";
+import type { AssetsListSeeds } from "../../services/assets-list-seed";
 import { useAssetsListData } from "../../hooks/use-assets-list-data";
-import { useAssetsListUrl } from "../../hooks/use-assets-list-url";
+import { LIST_FILTER_KEYS, useAssetsListUrl } from "../../hooks/use-assets-list-url";
 import { AssetsFilters } from "./AssetsFilters";
 import { AssetsSummary } from "./AssetsSummary";
 import { AssetsPageActions } from "./AssetsListToolbar";
@@ -23,20 +24,20 @@ import { useAssetsSelection } from "../../hooks/use-assets-selection";
 import { AssetLabelsDialog } from "../asset-labels/AssetLabelsDialog";
 import { useCategoryFilterLabel } from "../../hooks/use-category-filter-label";
 
-export function AssetsListView({ context, listDefaults }: { context: string; listDefaults?: AssetListDefaults }) {
+export function AssetsListView({ context, listDefaults, seeds }: { context: string; listDefaults?: AssetListDefaults; seeds?: AssetsListSeeds }) {
   const url = useAssetsListUrl();
   const parsed = readAssetListSearch(url.search);
   const defaults = readAssetListSearch("");
   if (!defaults.success) throw new Error("Invalid default asset query");
   const query = withListDefaults(parsed.success ? parsed.data : defaults.data, url.search, listDefaults);
-  const { summary, filters, list } = useAssetsListData(context, parsed.success ? query : null, url.search);
+  const { summary, filters, list } = useAssetsListData(context, parsed.success ? query : null, url.search, seeds);
   const missingCategoryOption = Boolean(parsed.success && filters.data && query.category_id
     && !filters.data.categories.some((category) => category.id === query.category_id));
   const selectedCategory = useCategoryFilterLabel(context, query.category_id, missingCategoryOption);
   const denied = list.denied;
   const [scanOpen, setScanOpen] = useState(false);
   const scanTriggerRef = useRef<HTMLButtonElement>(null);
-  const hasFilters = ["q", "category_id", "location_id", "status", "condition", "custody_type", "custody_id", "import_batch_id"].some((key) => url.get(key));
+  const hasFilters = LIST_FILTER_KEYS.some((key) => url.get(key));
   // Arriving with a filter (e.g. from an Overview tile) starts with the totals folded so the filtered rows get the room.
   const [folded, setFolded] = useState(hasFilters);
   const summaryRef = useRef<HTMLDivElement>(null);

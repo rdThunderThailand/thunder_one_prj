@@ -9,11 +9,17 @@ import {
   type AssetImportApi,
   type AssetImportContext,
 } from "../services/asset-import-api.ts";
+import { isFreshSeed, markSeedShown, type SectionSeed } from "../services/assets-list-seed.ts";
+
+// Register Asset shows these settings on its bulk card, so the import page opened from it does not read them again.
+let kept: SectionSeed<ImportOptions> | null = null;
 
 export function useAssetImportOptions(
   { tenantId, userId }: AssetImportContext,
   suppliedApi?: AssetImportApi,
+  seed?: SectionSeed<ImportOptions>,
 ) {
+  const key = `${tenantId}:${userId}`;
   const api = useMemo(
     () => suppliedApi ?? getAssetImportApi({ tenantId, userId }),
     [suppliedApi, tenantId, userId],
@@ -27,11 +33,20 @@ export function useAssetImportOptions(
   } | null>(null);
 
   useEffect(() => {
-    let active = true;
-    void api
-      .getOptions()
+    const controller = new AbortController();
+    const read = async () => {
+      const first = version > 0 ? undefined : [seed, kept].find((known) => isFreshSeed(known, key));
+      if (seed) queueMicrotask(() => markSeedShown(seed));
+      const known = first && await Promise.resolve(first.data).catch(() => null);
+      if (known) return known;
+      const at = Date.now();
+      const options = await api.getOptions(controller.signal);
+      kept = options.ready ? { key, at, data: Promise.resolve(options) } : null;
+      return options;
+    };
+    void read()
       .then((options) => {
-        if (active) setSnapshot({ api, version, options, error: null });
+        if (!controller.signal.aborted) setSnapshot({ api, version, options, error: null });
       })
       .catch((caught: unknown) => {
         const error =
@@ -43,12 +58,12 @@ export function useAssetImportOptions(
                 caught.details,
               )
             : new ImportApiError("INTERNAL", requestErrorText("INTERNAL"));
-        if (active) setSnapshot({ api, version, options: null, error });
+        if (!controller.signal.aborted) setSnapshot({ api, version, options: null, error });
       });
     return () => {
-      active = false;
+      controller.abort();
     };
-  }, [api, version]);
+  }, [api, version, key, seed]);
 
   const current =
     snapshot?.api === api && snapshot.version === version ? snapshot : null;

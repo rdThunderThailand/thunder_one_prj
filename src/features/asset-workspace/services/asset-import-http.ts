@@ -14,6 +14,7 @@ import {
   createBatchResultSchema,
   importBatchSchema,
   importOptionsSchema,
+  importReferencesSchema,
   rowsPageSchema,
   sourceFileUrlSchema,
   validateResultSchema,
@@ -47,9 +48,17 @@ export function createHttpImportApi(
 
   return {
     ...createImportEditApi(callJson),
-    async getOptions() {
-      const data = await callJson("GET", "/imports/options");
+    async getOptions(signal) {
+      const data = await callJson("GET", "/imports/options", undefined, signal);
       return parseImportResponse(importOptionsSchema, data);
+    },
+
+    async getReferences(signal) {
+      const data = parseImportResponse(importReferencesSchema, await callJson("GET", "/imports/references", undefined, signal));
+      return {
+        categories: data.categories.map((category) => ({ ...category, code: category.code ?? "", active: true })),
+        locations: data.locations,
+      };
     },
 
     uploadSource(input) {
@@ -109,8 +118,8 @@ export function createHttpImportApi(
       parseImportResponse(z.object({ deleted: z.literal(true) }), data);
     },
 
-    async getBatch(batchId) {
-      const data = await callJson("GET", `/imports/${encodeURIComponent(batchId.toLowerCase())}`);
+    async getBatch(batchId, signal) {
+      const data = await callJson("GET", `/imports/${encodeURIComponent(batchId.toLowerCase())}`, undefined, signal);
       const batch = parseImportResponse(importBatchSchema, data);
       if (batch.id !== batchId.toLowerCase()) {
         throw new ImportApiError("INVALID_RESPONSE", requestErrorText("INVALID_RESPONSE"), 502);
@@ -118,7 +127,7 @@ export function createHttpImportApi(
       return batch;
     },
 
-    async listRows(batchId, query) {
+    async listRows(batchId, query, signal) {
       const params = new URLSearchParams({
         page: String(query.page),
         pageSize: String(query.pageSize),
@@ -129,6 +138,8 @@ export function createHttpImportApi(
       const data = await callJson(
         "GET",
         `/imports/${encodeURIComponent(batchId.toLowerCase())}/rows?${params.toString()}`,
+        undefined,
+        signal,
       );
       const page = parseImportResponse(rowsPageSchema, data);
       if (page.page !== query.page || page.pageSize !== query.pageSize || page.rows.length > page.pageSize) {

@@ -24,7 +24,7 @@ const options: Pick<ImportOptions, "columns" | "chunks"> = {
 };
 const counts = { valid: 4798, warning: 1, error: 1, created: 0, createdWithWarning: 0, notRegistered: 0, pending: 0 };
 const batch: ImportBatch = {
-  id: batchId, batchCode: "IMP-20261104-0001", status: "validated", totalRows: rows.length,
+  id: batchId, editedCount: 0, batchCode: "IMP-20261104-0001", status: "validated", totalRows: rows.length,
   createdAt: "2026-11-04T00:00:00Z", createdBy: { id: userId, name: "Test manager" }, sourceFile: null,
   counts, original: null, registeredAssetsPath: `/assets/list?import_batch_id=${batchId}`,
 };

@@ -7,6 +7,7 @@ import { referenceItemSchema } from "../services/registration-selector-contract.
 import { registrationOptionsSchema, type RegistrationOptions } from "../services/asset-registration-contract.ts";
 import { readRegistrationDraft, registrationDraftKey, removeRegistrationDraft, saveRegistrationDraft } from "../services/asset-registration-draft-storage.ts";
 
+import { createRegistrationSchema } from "../services/asset-registration-write-contract.ts";
 import { newWarranty, warrantyErrors } from "./registration-warranties.ts";
 
 const category = "33333333-3333-4333-8333-333333333333";
@@ -30,6 +31,12 @@ assert.equal(referenceItemSchema.safeParse({ id: legacyId, name: "Legacy" }).suc
 for (const id of ["not-a-uuid", "12345678-1234-0234-1234-123456789abg", ""]) {
   assert.equal(referenceItemSchema.safeParse({ id, name: "Invalid" }).success, false);
 }
+
+// The file count limit belongs to the registration options, so the request accepts the four photos the form allows.
+assert.equal(createRegistrationSchema.safeParse({
+  submission_id: category, name: "Four photos", asset_category_id: category, location_id: location, condition: "Good",
+  photo_file_ids: ["1", "2", "3", "4"].map((digit) => `${digit.repeat(8)}-1111-4111-8111-111111111111`),
+}).success, true);
 
 assert.equal(isCalendarDate("2026-04-31"), false);
 assert.equal(isCalendarDate("2024-02-29"), true);

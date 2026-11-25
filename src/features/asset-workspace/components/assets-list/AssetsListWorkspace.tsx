@@ -41,9 +41,11 @@ export function AssetsListWorkspace({ children }: { children: ReactNode }) {
     };
   }, []);
   return (
+    // Starts bounded: the server HTML would scroll the whole page until fit() runs. Below 60rem it is never bounded.
     <div
       ref={ref}
-      className="@container group/assets-workspace flex min-w-0 flex-col gap-3 [&>*]:shrink-0 data-[bounded=true]:h-full data-[bounded=true]:min-h-0 data-[bounded=true]:overflow-hidden"
+      data-bounded="true"
+      className="@container group/assets-workspace relative flex min-w-0 flex-col gap-3 [&>*]:shrink-0 min-[60rem]:data-[bounded=true]:h-full min-[60rem]:data-[bounded=true]:min-h-0 min-[60rem]:data-[bounded=true]:overflow-hidden"
     >
       {children}
     </div>

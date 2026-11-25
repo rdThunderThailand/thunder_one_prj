@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/lovable/button";
 import { RegistrationNavigation, RegistrationCancelDialog } from "./RegistrationNavigation";
 import { REGISTRATION_STEPS } from "../../domain/registration-draft";
+import { useKeptReferenceTrees } from "../../hooks/use-kept-reference-trees";
 import { useRegistrationReferences } from "../../hooks/use-registration-references";
 import { RegistrationReferenceState } from "./RegistrationReferenceState";
 import { useAssetRegistration } from "../../hooks/use-asset-registration";
@@ -53,6 +54,7 @@ export function SingleAssetRegistrationForm({ options: initialOptions, tenantId,
     ? { ...editableState, step: 4, draft: confirmation.record.draft } : editableState;
   const references = useRegistrationReferences(`${tenantId}:${userId}`, state.draft,
     confirmation.uncertain || confirmation.record?.phase === "succeeded" ? -1 : state.step, patch);
+  const keptTrees = useKeptReferenceTrees(`${tenantId}:${userId}`, state.step);
   const options = { ...rules, referenceValidation: references.validation };
   const receipts = confirmation.record?.uploads ?? [];
   const verifiedFiles = receipts.filter(validReceipt);
@@ -87,11 +89,12 @@ export function SingleAssetRegistrationForm({ options: initialOptions, tenantId,
   const missingFiles = missingRegistrationFiles(state.draft, candidates, receipts);
   const creationBlocker = registrationCreationBlocker(state.draft, options, receipts);
   const edit = (step: number) => { if (!locked) registration.edit(step); };
-  const stepProps = { context: `${tenantId}:${userId}`, onSelectReference: references.select, draft: state.draft, options, errors, patch, documents, onReviewCondition: () => edit(0) };
+  const stepProps = { context: `${tenantId}:${userId}`, keptTrees, onSelectReference: references.select, draft: state.draft, options, errors, patch, documents, onReviewCondition: () => edit(0) };
   const Step = [BasicInformationStep, CategorySpecificationStep, LocationOwnershipStep, AcquisitionWarrantyStep][state.step];
   const submit = (reason?: string) => {
     if (!fileCache.restoring || confirmation.uncertain) {
       return confirmation.start(state.draft, candidates, (resolved, validatedOptions, invalidStep) => {
+        if (invalidStep !== null) keptTrees?.clear();
         references.accept(validatedOptions.referenceValidation ?? {});
         registration.validateForConfirmation(resolved, validatedOptions, invalidStep);
       }, reason);

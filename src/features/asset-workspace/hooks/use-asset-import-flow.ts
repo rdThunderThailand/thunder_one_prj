@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ImportEditResult } from "../domain/asset-import-edit.ts";
 import { requestErrorText } from "../domain/asset-import-messages.ts";
 import { stepFor } from "../domain/asset-import-step.ts";
 import { getAssetImportApi, ImportApiError, type AssetImportContext } from "../services/asset-import-api.ts";
+import type { ImportFirstData } from "../services/asset-import-first-data.ts";
 import { readImportSession, removeImportSession, saveImportSession, setParsedImportFile } from "../services/asset-import-session.ts";
+import { keepImportPages } from "../services/kept-import-pages.ts";
 import { assertActive, emptyState, importFlowMemory, safeError, type ImportFlowRuntime, type Lifecycle } from "./asset-import-flow-state.ts";
 import { useAssetImportOptions } from "./use-asset-import-options.ts";
 import { useAssetImportLifecycle } from "./use-asset-import-lifecycle.ts";
@@ -14,10 +16,11 @@ import { useAssetImportReview } from "./use-asset-import-review.ts";
 import { useAssetImportRestoration } from "./use-asset-import-restoration.ts";
 
 /** Public flow API: one state owner and one guarded request runner for all steps. */
-export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
+export function useAssetImportFlow({ tenantId, userId }: AssetImportContext, first?: ImportFirstData) {
   const context = `${tenantId}:${userId}`;
   const api = useMemo(() => getAssetImportApi({ tenantId, userId }), [tenantId, userId]);
-  const optionsResource = useAssetImportOptions({ tenantId, userId }, api);
+  const optionsResource = useAssetImportOptions({ tenantId, userId }, api, first?.options);
+  const [keptPages] = useState(keepImportPages);
   const options = optionsResource.options;
   const lifecycle = useAssetImportLifecycle(api, context);
   const {
@@ -180,7 +183,7 @@ export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
   };
   const upload = useAssetImportUpload(runtime);
   const review = useAssetImportReview(runtime, upload.createBatch);
-  const restoration = useAssetImportRestoration(runtime, state, lifecycle.requestedUrl, review.confirmLoop);
+  const restoration = useAssetImportRestoration(runtime, state, lifecycle.requestedUrl, review.confirmLoop, first?.batch);
   const ready = !preview && Boolean(options?.ready);
 
   const derived = stepFor(state.batch, Boolean(state.parsed) || state.restoringFile || state.restoreFailed);
@@ -188,6 +191,7 @@ export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
     api,
     preview,
     options,
+    keptPages,
     loading:
       optionsResource.loading ||
       Boolean(
@@ -225,6 +229,7 @@ export function useAssetImportFlow({ tenantId, userId }: AssetImportContext) {
     showReview: review.showReview,
     retryFileRestore: restoration.retryFileRestore,
     reload: () => {
+      keptPages.clear();
       optionsResource.reload();
       lifecycle.reloadRoute();
     },
