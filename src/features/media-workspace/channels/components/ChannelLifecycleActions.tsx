@@ -79,7 +79,7 @@ export function ChannelLifecycleActions({
 
   return (
     <Card className="p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lifecycle</p>
+      <p className="text-ui font-semibold uppercase tracking-wide text-muted-foreground">Lifecycle</p>
       {error &&
         (error.reason === "in-use" ? (
           <InUseRefusal

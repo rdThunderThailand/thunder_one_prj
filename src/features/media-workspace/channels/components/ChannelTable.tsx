@@ -166,7 +166,7 @@ export function ChannelTable({
     <div className="min-h-0 flex-1 overflow-auto">
       <table className="w-full min-w-[1080px] text-left text-sm">
         <thead>
-          <tr className="border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border bg-muted text-ui font-semibold uppercase tracking-wide text-muted-foreground">
             <SortHeader label="Channel" sortKey="name" sort={sort} onSortChange={onSortChange} className="w-64 px-4 py-2.5" />
             <th className="px-3 py-2.5">Type</th>
             <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="px-3 py-2.5" />

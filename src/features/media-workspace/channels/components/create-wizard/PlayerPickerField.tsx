@@ -120,7 +120,7 @@ export function PlayerPickerField({
               />
             </div>
 
-            <p className="px-1 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <p className="px-1 py-1 text-ui font-semibold uppercase tracking-wide text-muted-foreground">
               Available players ({available.length})
             </p>
             {allowNone && (
@@ -152,7 +152,7 @@ export function PlayerPickerField({
 
             {unavailable.length > 0 && (
               <>
-                <p className="mt-2 px-1 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <p className="mt-2 px-1 py-1 text-ui font-semibold uppercase tracking-wide text-muted-foreground">
                   Unavailable players ({unavailable.length})
                 </p>
                 {unavailable.map((candidate) => (

@@ -34,7 +34,7 @@ export function ChannelStructureTree({
         <BoxIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
         <div className="text-left">
           <p className="text-xs font-semibold text-foreground">{tree.player.name}</p>
-          <p className="text-[11px] text-muted-foreground">{tree.player.code}</p>
+          <p className="text-ui text-muted-foreground">{tree.player.code}</p>
         </div>
         <HealthBadge health={tree.player.health} />
       </div>
@@ -46,8 +46,8 @@ export function ChannelStructureTree({
           <div key={screen.key} className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
             <MonitorIcon className="h-4 w-4 text-muted-foreground" />
             <p className="text-xs font-semibold text-foreground">{screen.label}</p>
-            <p className="text-[11px] text-muted-foreground">{screen.resolution}</p>
-            {screen.output && <p className="text-[11px] text-muted-foreground">{screen.output}</p>}
+            <p className="text-ui text-muted-foreground">{screen.resolution}</p>
+            {screen.output && <p className="text-ui text-muted-foreground">{screen.output}</p>}
           </div>
         ))}
       </div>

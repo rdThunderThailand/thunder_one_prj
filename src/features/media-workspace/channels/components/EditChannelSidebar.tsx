@@ -62,7 +62,7 @@ export function EditChannelSidebar({
 
       <Card className="p-5">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Groups ({groups.length})</p>
+          <p className="text-ui font-semibold uppercase tracking-wide text-muted-foreground">Groups ({groups.length})</p>
           <button
             type="button"
             onClick={() => setManagingGroups(true)}
