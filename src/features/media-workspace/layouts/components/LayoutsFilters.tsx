@@ -34,7 +34,7 @@ export function LayoutsFilters({
     <>
       <LibrarySearch value={value.query} onChange={(query) => onChange({ ...value, query })} placeholder="Search by template name..." />
       <Select value={value.status} onValueChange={(status) => onChange({ ...value, status: status as ListFilters["status"] })}>
-        <SelectTrigger className="h-9 w-30 text-[10px] shadow-none" aria-label="Status"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="h-9 w-30 text-2xs shadow-none" aria-label="Status"><SelectValue /></SelectTrigger>
         <SelectContent>{STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>)}</SelectContent>
       </Select>
       {onClearAll && <Button variant="ghost" size="sm" onClick={onClearAll}><X className="h-3.5 w-3.5" />Clear filters</Button>}

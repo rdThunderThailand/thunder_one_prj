@@ -41,10 +41,10 @@ export function LayoutEditorHeader({ isExisting, name, status, referenceResoluti
           <ArrowLeftIcon />
         </button>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <p className="text-[11px] text-muted-foreground">Templates <span aria-hidden="true">›</span> {title}</p>
+          <p className="text-ui text-muted-foreground">Templates <span aria-hidden="true">›</span> {title}</p>
           <h1 className="min-w-0 break-words text-sm font-bold leading-tight text-foreground">{title}</h1>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={status === "active" ? "success" : "neutral"} className="rounded-full px-2 py-0 text-[10px]">{status === "active" ? "Active" : "Inactive"}</Badge>
+            <Badge variant={status === "active" ? "success" : "neutral"} className="rounded-full px-2 py-0 text-2xs">{status === "active" ? "Active" : "Inactive"}</Badge>
             <span className="text-xs text-muted-foreground">
               {referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · <span aria-live="polite" className={isDirty ? "font-semibold text-warning" : undefined}>{isDirty ? "Unsaved changes" : "Saved"}</span>
             </span>
@@ -100,7 +100,7 @@ export function LayoutEditorToolbar({ zones, selectedIndex, onSelectIndex, onCha
       ))}
       <span className="mx-1 h-6 w-px bg-border" aria-hidden="true" />
       <Button size="sm" variant="ghost" className="text-error" disabled={!hasSelection || zones.length <= 1} onClick={remove}><TrashIcon /> Delete Zone</Button>
-      <span className="ml-auto whitespace-nowrap text-[11px] text-muted-foreground">{hasSelection ? `Selected: Zone ${zoneLetter(selectedIndex)}` : "No zone selected"}</span>
+      <span className="ml-auto whitespace-nowrap text-ui text-muted-foreground">{hasSelection ? `Selected: Zone ${zoneLetter(selectedIndex)}` : "No zone selected"}</span>
     </div>
   );
 }
@@ -114,7 +114,7 @@ export function LayoutZoneOverview({ zones, selectedIndex, referenceResolution, 
   const resolution = referenceResolution ? parseResolution(referenceResolution) : null;
   return (
     <section className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
-      <h2 className="text-[11px] font-bold text-foreground">Zone Overview</h2>
+      <h2 className="text-ui font-bold text-foreground">Zone Overview</h2>
       {zones.map((zone, index) => (
         <button
           key={zone.id ?? zone.position}

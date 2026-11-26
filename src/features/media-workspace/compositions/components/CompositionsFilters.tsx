@@ -8,7 +8,7 @@ import { LibraryViewToggle } from "../../assets/components/LibraryToolbar";
 import { COMPOSITION_STATUSES } from "../types";
 import type { ListFilters, SortKey } from "../list-url-state";
 
-const triggerClass = "h-9 w-30 text-[10px] shadow-none";
+const triggerClass = "h-9 w-30 text-2xs shadow-none";
 // Radix Select cannot hold an empty-string value.
 const ANY_RESOLUTION = "__any__";
 
