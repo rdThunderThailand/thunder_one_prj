@@ -60,7 +60,7 @@ export function UserMenu({ userName, roleLabel, avatarUrl = null, variant = "def
             {userName}
           </span>
           {roleLabel && (
-            <span className={compact ? "block text-[10px] text-muted-foreground" : "block text-3xs text-muted-foreground"}>{roleLabel}</span>
+            <span className={compact ? "block text-2xs text-muted-foreground" : "block text-3xs text-muted-foreground"}>{roleLabel}</span>
           )}
         </span>
         <ChevronDownIcon className={compact ? "hidden h-3.5 w-3.5 text-muted-foreground lg:block" : "hidden h-4 w-4 text-muted-foreground lg:block"} />

@@ -18,7 +18,7 @@ export function PopularTopicsCard() {
       <ul className="flex flex-col divide-y divide-border">
         {popularTopics.map((topic) => (
           <li key={topic.rank} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-ui font-semibold text-muted-foreground">
               {topic.rank}
             </span>
             <span className="min-w-0 flex-1 truncate text-sm text-foreground">{topic.label}</span>

@@ -15,7 +15,7 @@ export function DataSourcesCard() {
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Data Sources</h2>
-        <span className="rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-medium text-t1-green-700">
+        <span className="rounded-full bg-success-muted px-2 py-0.5 text-ui font-medium text-t1-green-700">
           All connected
         </span>
       </div>

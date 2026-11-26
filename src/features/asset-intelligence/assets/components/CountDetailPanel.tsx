@@ -60,7 +60,7 @@ export function CountDetailPanel() {
             <DonutChart segments={countDetail.resultSegments} size={110} strokeWidth={14} />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-lg font-semibold text-foreground">{countDetail.resultTotal}</span>
-              <span className="text-[9px] text-t1-gray-400">ทั้งหมด</span>
+              <span className="text-2xs text-t1-gray-400">ทั้งหมด</span>
             </div>
           </div>
           <ul className="flex-1 space-y-1.5 text-xs">

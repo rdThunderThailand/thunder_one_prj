@@ -216,7 +216,7 @@ export function CasesInboxPage() {
                       </td>
                       <td className="px-3 py-2.5">
                         <p className="font-medium text-foreground">{row.id}</p>
-                        <p className="text-[11px] text-primary">ใหม่</p>
+                        <p className="text-ui text-primary">ใหม่</p>
                       </td>
                       <td className="px-3 py-2.5 text-foreground">{row.title}</td>
                       <td className="px-3 py-2.5 text-muted-foreground">

@@ -35,7 +35,7 @@ export function OnboardingStatusCard({ summary, rows }: OnboardingStatusCardProp
       <dl className="mb-3 grid grid-cols-4 gap-2 border-b border-border pb-3">
         {summaryItems.map(({ key, label }) => (
           <div key={key}>
-            <dt className="text-[11px] text-t1-gray-400">{label}</dt>
+            <dt className="text-ui text-t1-gray-400">{label}</dt>
             <dd className="text-lg font-semibold text-foreground">{summary[key]}</dd>
           </div>
         ))}

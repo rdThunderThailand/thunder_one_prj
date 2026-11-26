@@ -43,7 +43,7 @@ export function GovernanceMonitoringRow() {
             <DonutChart segments={employeeRiskOverview.segments} size={140} strokeWidth={18} />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-semibold text-foreground">{employeeRiskOverview.total}</span>
-              <span className="text-[10px] text-t1-gray-400">Total Risks</span>
+              <span className="text-2xs text-t1-gray-400">Total Risks</span>
             </div>
           </div>
           <ul className="mt-4 w-full space-y-1.5 text-sm">

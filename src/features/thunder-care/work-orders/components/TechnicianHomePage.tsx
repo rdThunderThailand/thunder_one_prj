@@ -82,7 +82,7 @@ function QuickActionsCard() {
                 <Icon className="h-4 w-4" />
               </span>
               <span className="text-xs font-medium text-foreground">{action.title}</span>
-              <span className="text-[11px] text-t1-gray-400">{action.detail}</span>
+              <span className="text-ui text-t1-gray-400">{action.detail}</span>
             </button>
           );
         })}
@@ -135,13 +135,13 @@ function MiniMapCard() {
           <span
             key={pin.woId}
             style={{ left: `${pin.xPercent}%`, top: `${pin.yPercent}%` }}
-            className={`absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[10px] font-semibold shadow ${statusColor[pin.status]}`}
+            className={`absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-2xs font-semibold shadow ${statusColor[pin.status]}`}
           >
             {i + 1}
           </span>
         ))}
       </div>
-      <div className="flex gap-3 text-[11px] text-muted-foreground">
+      <div className="flex gap-3 text-ui text-muted-foreground">
         <span className="flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-warning" /> รอดำเนินการ
         </span>

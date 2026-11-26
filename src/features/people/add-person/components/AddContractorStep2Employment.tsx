@@ -243,7 +243,7 @@ export function AddContractorStep2Employment({
               วันที่เริ่มงาน
               <input type="date" value={startDate} onChange={(e) => onStartDateChange(e.target.value)} className={inputClasses} />
               {startDate && (
-                <span className="text-[11px] font-normal text-t1-gray-400">
+                <span className="text-ui font-normal text-t1-gray-400">
                   {formatThaiDate(startDate)} ({formatDaysUntilThai(startDate)})
                 </span>
               )}

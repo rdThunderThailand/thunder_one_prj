@@ -17,7 +17,7 @@ function NavBadge({ badge }: { badge?: string }) {
   const isAlert = /^\d+$/.test(badge);
   return (
     <span
-      className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase ${
+      className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-3xs font-bold uppercase ${
         isAlert ? "bg-error text-error-foreground" : "bg-accent text-primary"
       }`}
     >

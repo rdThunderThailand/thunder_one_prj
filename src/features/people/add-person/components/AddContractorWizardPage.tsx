@@ -584,7 +584,7 @@ export function AddContractorWizardPage({ tenantId, roles, units, positionOption
               <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
                 {submitting ? "กำลังบันทึก..." : "สร้างผู้รับเหมา"}
               </Button>
-              <span className="text-[11px] text-t1-gray-400">สร้างข้อมูลและบันทึกสถานะเป็น Pre-boarding</span>
+              <span className="text-ui text-t1-gray-400">สร้างข้อมูลและบันทึกสถานะเป็น Pre-boarding</span>
             </div>
           )}
         </div>

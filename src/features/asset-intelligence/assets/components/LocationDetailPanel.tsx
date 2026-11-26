@@ -74,7 +74,7 @@ export function LocationDetailPanel() {
             <div key={tile.label} className="rounded-lg border border-border p-2.5">
               <span className={`flex h-7 w-7 items-center justify-center rounded-md ${tile.tone}`}>{tile.icon}</span>
               <p className="mt-1.5 text-sm font-semibold text-foreground">{tile.value}</p>
-              <p className="text-[11px] leading-tight text-t1-gray-400">{tile.label}</p>
+              <p className="text-ui leading-tight text-t1-gray-400">{tile.label}</p>
             </div>
           ))}
         </div>
