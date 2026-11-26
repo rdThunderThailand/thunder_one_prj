@@ -150,7 +150,7 @@ export function ProgramSummaryRail({
         <Row label="Name">{basicInfo.name || "—"}</Row>
         <Row label="Content">{contentLabel}</Row>
         {isMismatch && (
-          <p className="text-right text-[11px] text-warning">
+          <p className="text-right text-ui text-warning">
             Selected asset is a {selectedAsset?.kind} while publication type is {basicInfo.publicationType}.
           </p>
         )}
@@ -205,7 +205,7 @@ function ReviewFact({ icon, label, value }: { icon: React.ReactNode; label: stri
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border-t border-border pt-3">
-      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="mb-2 text-2xs font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
       <dl className="flex flex-col gap-2 text-sm">{children}</dl>
     </div>
   );
